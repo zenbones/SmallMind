@@ -129,7 +129,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
 
         ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onDelivery(packet);
       } catch (IOException | InterruptedException | TimeoutException | ExecutionException exception) {
-        LoggerManager.getLogger(WebSocketEndpoint.class).error(exception);
+        LoggerManager.getLogger(WebSocketEndpoint.class).log(server.getMessageLogLevel(), exception);
       }
     }
   }
@@ -165,7 +165,7 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
           }
         }, messages);
       } catch (IOException ioException) {
-        LoggerManager.getLogger(WebSocketEndpoint.class).error(ioException);
+        LoggerManager.getLogger(WebSocketEndpoint.class).log(server.getMessageLogLevel(), ioException);
       }
     });
   }
