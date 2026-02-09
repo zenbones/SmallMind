@@ -30,23 +30,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.batch.spring;
+package org.smallmind.web.json.scaffold.fault;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import tools.jackson.core.JacksonException;
 
 /**
- * Runtime exception thrown when an expected job or execution cannot be located.
+ * Convenience {@link JacksonException} that formats its message with the supplied arguments.
  */
-public class MissingJobException extends FormattedRuntimeException {
+public class FormatteJacksonException extends JacksonException {
 
   /**
-   * Constructs a missing job exception with a formatted message.
+   * Creates an exception with a formatted message.
    *
-   * @param message the format string explaining what is missing
-   * @param args    values referenced by the format string
+   * @param message message template (may be {@code null})
+   * @param args    format arguments
    */
-  public MissingJobException (String message, Object... args) {
+  public FormatteJacksonException (String message, Object... args) {
 
-    super(message, args);
+    super(message == null ? null : String.format(message, args));
   }
 }

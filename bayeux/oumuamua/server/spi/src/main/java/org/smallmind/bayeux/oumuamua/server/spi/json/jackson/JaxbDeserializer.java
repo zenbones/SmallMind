@@ -34,8 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.jackson;
 
 import java.io.IOException;
 import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
@@ -45,6 +43,8 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeType;
 
 /**
  * Jackson-based deserializer that converts JSON payloads into Bayeux message/value structures.

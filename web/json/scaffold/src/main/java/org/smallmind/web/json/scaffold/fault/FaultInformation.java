@@ -38,8 +38,8 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
+import tools.jackson.databind.node.ArrayNode;
 
 /**
  * Structured payload conveying a code, template, and argument list for rendering user-facing fault messages.

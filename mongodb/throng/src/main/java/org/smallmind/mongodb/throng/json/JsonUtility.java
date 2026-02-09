@@ -33,10 +33,6 @@
 package org.smallmind.mongodb.throng.json;
 
 import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDecimal128;
@@ -50,6 +46,10 @@ import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utility methods for converting between Jackson {@link JsonNode} trees and BSON values or readers/writers.

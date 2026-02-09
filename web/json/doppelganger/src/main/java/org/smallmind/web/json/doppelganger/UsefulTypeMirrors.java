@@ -37,8 +37,8 @@ import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 import jakarta.validation.constraints.NotNull;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.smallmind.nutsnbolts.reflection.OverlayNullifier;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Caches commonly used {@link TypeMirror} instances to avoid repeated lookups during processing.

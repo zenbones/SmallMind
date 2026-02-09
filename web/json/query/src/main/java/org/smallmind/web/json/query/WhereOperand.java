@@ -35,9 +35,9 @@ package org.smallmind.web.json.query;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 
 /**
  * Base type for operands that can appear on the right-hand side of a where field comparison.

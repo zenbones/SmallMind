@@ -34,8 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
 import java.io.IOException;
 import java.io.Writer;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
+import tools.jackson.core.io.JsonStringEncoder;
 
 /**
  * Text value implementation for the orthodox codec.
@@ -77,7 +77,7 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
     throws IOException {
 
     writer.write('"');
-    writer.write(JsonStringEncoder.getInstance().quoteAsString(text));
+    writer.write(JsonStringEncoder.getInstance().quoteAsCharArray(text));
     writer.write('"');
   }
 }

@@ -30,12 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.fluentbit;
 
 import java.util.Date;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.scribe.pen.LoggerContext;
+import org.smallmind.scribe.pen.Parameter;
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.RecordElement;
+import org.smallmind.scribe.pen.Timestamp;
+
+// TODO: The underlying org.msgpack.jackson.dataformat will be dependent on jackson 2.x for the foreseeable future
 
 /**
  * Serializes records into a MessagePack-friendly JSON structure for Fluent Bit.

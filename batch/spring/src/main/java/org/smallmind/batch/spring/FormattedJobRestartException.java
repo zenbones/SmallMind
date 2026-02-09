@@ -30,17 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.fault;
+package org.smallmind.batch.spring;
 
-import tools.jackson.databind.node.ObjectNode;
+import org.springframework.batch.core.launch.NoSuchJobException;
 
 /**
- * Marker for exceptions that can supply additional structured information beyond the message/stack trace.
+ * Runtime exception thrown when an expected job or execution cannot be located.
  */
-public interface Informed {
+public class FormattedJobRestartException extends NoSuchJobException {
 
-  /**
-   * @return JSON object containing supplemental diagnostic information
-   */
-  ObjectNode getInformation ();
+  public FormattedJobRestartException (String message, Object... args) {
+
+    super(message == null ? "Unknown job logical name" : String.format(message, args));
+  }
+
+  public FormattedJobRestartException (Throwable throwable, String message, Object... args) {
+
+    super(message == null ? "Unknown job logical name" : String.format(message, args), throwable);
+  }
 }

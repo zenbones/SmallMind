@@ -30,24 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.batch.spring;
 
-import org.smallmind.nutsnbolts.lang.FormattedIOException;
+import org.springframework.batch.core.launch.NoSuchJobException;
 
 /**
- * IOException thrown when a Fluent Bit connection cannot be established or maintained.
+ * Runtime exception thrown when an expected job or execution cannot be located.
  */
-public class FluentBitConnectionException extends FormattedIOException {
+public class FormattedNoSuchJobException extends NoSuchJobException {
 
-  /**
-   * Creates the exception with a cause and formatted message.
-   *
-   * @param throwable cause of the connection failure
-   * @param message   message template
-   * @param args      message arguments
-   */
-  public FluentBitConnectionException (Throwable throwable, String message, Object... args) {
+  public FormattedNoSuchJobException (String message, Object... args) {
 
-    super(throwable, message, args);
+    super(message == null ? "Unknown job logical name" : String.format(message, args));
+  }
+
+  public FormattedNoSuchJobException (Throwable throwable, String message, Object... args) {
+
+    super(message == null ? "Unknown job logical name" : String.format(message, args), throwable);
   }
 }

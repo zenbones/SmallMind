@@ -35,14 +35,13 @@ package org.smallmind.web.json.scaffold.util;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
 import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * JAXB adapter that marshals/unmarshals polymorphic types by storing a dedicated attribute pointing
@@ -89,7 +88,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
       Class<?> polymorphicSubClass;
       String polymorphicKey;
 
-      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = polymorphicKeyNode.asText())) == null) {
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = polymorphicKeyNode.asString())) == null) {
         throw new JAXBProcessingException("Unable to map the root element name(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
       } else {
 
@@ -123,11 +122,9 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
    *
    * @param value object to serialize
    * @return JSON node carrying the payload and polymorphic attribute
-   * @throws JsonProcessingException if serialization fails or if the root class is used directly
    */
   @Override
-  public ObjectNode marshal (T value)
-    throws JsonProcessingException {
+  public ObjectNode marshal (T value) {
 
     if (value.getClass().equals(baseClass)) {
       throw new JAXBProcessingException("Attempting to serialize the polymorphic root class(%s) would be infinitely recursive", baseClass.getName());

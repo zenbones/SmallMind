@@ -33,12 +33,14 @@
 package org.smallmind.web.json.scaffold.util;
 
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
 import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
+import tools.jackson.databind.DeserializationConfig;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.deser.std.StdValueInstantiator;
 
 /**
  * Value instantiator that ensures Jackson updates the real polymorphic instance by creating a proxy
@@ -50,12 +52,13 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   private final Class<?> polymorphicSubClass;
 
   /**
-   * @param src                 source instantiator being decorated
-   * @param polymorphicSubClass concrete subclass that should be instantiated
+   * @param deserializationConfig the deserialization config passed to the module
+   * @param javaType              the java type of the bean reference being bound in the module
+   * @param polymorphicSubClass   concrete subclass that should be instantiated
    */
-  public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {
+  public PolymorphicValueInstantiator (DeserializationConfig deserializationConfig, JavaType javaType, Class<?> polymorphicSubClass) {
 
-    super(src);
+    super(deserializationConfig, javaType);
 
     this.polymorphicSubClass = polymorphicSubClass;
   }

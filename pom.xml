@@ -101,8 +101,8 @@
     <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
     <!-- docker java uses this earlier version internally -->
     <!-- <httpcomponents5.core.version>5.4.0</httpcomponents5.core.version> -->
-    <jackson.version>2.20.1</jackson.version>
-    <jackson.annotations.version>2.20</jackson.annotations.version>
+    <jackson.version>3.0.4</jackson.version>
+    <jackson.annotations.version>2.21</jackson.annotations.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.el.version>6.0.1</jakarta.el.version>
@@ -149,10 +149,8 @@
     <siphash.version>3.0.0</siphash.version>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.5</snakeyaml.version>
-    <spring.version>7.0.2</spring.version>
-    <spring.batch.version>5.2.4</spring.batch.version>
-    <!-- big upgrade, lots to do -->
-    <!-- <spring.batch.version>6.0.1</spring.batch.version> -->
+    <spring.version>7.0.3</spring.version>
+    <spring.batch.version>6.0.2</spring.batch.version>
     <spring.jcl.version>6.2.15</spring.jcl.version>
     <spring.rabbit.version>4.0.1</spring.rabbit.version>
     <sshd.version>2.16.0</sshd.version>
@@ -201,36 +199,6 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>${jackson.annotations.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-json-org</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-afterburner</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-jsonSchema</artifactId>
-        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
@@ -1133,6 +1101,36 @@
         <groupId>tanukisoft</groupId>
         <artifactId>wrapper</artifactId>
         <version>${tanukisoft.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-json-org</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.module</groupId>
+        <artifactId>jackson-module-afterburner</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.module</groupId>
+        <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.module</groupId>
+        <artifactId>jackson-module-jsonSchema</artifactId>
+        <version>${jackson.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -33,16 +33,16 @@
 package org.smallmind.web.json.scaffold.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationIntrospector;
-import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
+import tools.jackson.core.Version;
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationIntrospector;
+import tools.jackson.module.jakarta.xmlbind.PackageVersion;
 
 /**
  * Jackson module that registers the Jakarta XML Bind annotation introspector with configurable
  * priority and inclusion handling for non-nillable properties.
  */
-public class JakartaXmlBindAnnotationModule extends Module {
+public class JakartaXmlBindAnnotationModule extends JacksonModule {
 
   public enum Priority {PRIMARY, SECONDARY}
 
@@ -82,16 +82,13 @@ public class JakartaXmlBindAnnotationModule extends Module {
   @Override
   public void setupModule (SetupContext context) {
 
-    JakartaXmlBindAnnotationIntrospector intr = new JakartaXmlBindAnnotationIntrospector(context.getTypeFactory());
+    JakartaXmlBindAnnotationIntrospector intr = new JakartaXmlBindAnnotationIntrospector();
 
     intr.setNonNillableInclusion(_nonNillableInclusion);
-    switch (_priority) {
-      case PRIMARY:
-        context.insertAnnotationIntrospector(intr);
-        break;
-      case SECONDARY:
-        context.appendAnnotationIntrospector(intr);
-        break;
+
+    switch (this._priority) {
+      case PRIMARY -> context.insertAnnotationIntrospector(intr);
+      case SECONDARY -> context.appendAnnotationIntrospector(intr);
     }
   }
 

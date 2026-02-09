@@ -38,11 +38,11 @@ import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.ConsoleAppender;
 import org.smallmind.scribe.pen.DateFormatTimestamp;
 import org.smallmind.scribe.pen.DefaultErrorHandler;
-import org.smallmind.scribe.pen.FluentBitAppender;
 import org.smallmind.scribe.pen.PatternFormatter;
+import org.smallmind.scribe.pen.fluentbit.FluentBitAppender;
 
 /*
-          <bean class="org.smallmind.scribe.pen.FluentAppender">
+          <bean class="org.smallmind.scribe.pen.fluentbit.FluentAppender">
             <constructor-arg index="0" name="name" value="${epicenter.artifact}"/>
             <property name="host" value="${log.fluent.host}"/>
             <property name="port" value="${log.fluent.port}"/>

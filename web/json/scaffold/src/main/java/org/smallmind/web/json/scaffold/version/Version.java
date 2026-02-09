@@ -33,7 +33,6 @@
 package org.smallmind.web.json.scaffold.version;
 
 import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
@@ -67,10 +66,8 @@ public interface Version<V extends Enum<V> & Version<V>> {
    *
    * @param versioned instance to serialize
    * @return JSON representation
-   * @throws JsonProcessingException if serialization fails
    */
-  default String toJson (Versioned<V> versioned)
-    throws JsonProcessingException {
+  default String toJson (Versioned<V> versioned) {
 
     return JsonCodec.writeAsString(versioned);
   }

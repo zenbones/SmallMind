@@ -35,7 +35,6 @@ package org.smallmind.phalanx.wire.signal;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import jakarta.ws.rs.core.MediaType;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -81,8 +80,7 @@ public class JsonSignalCodec implements SignalCodec {
    * Encodes the signal to JSON bytes and optionally logs the result.
    */
   @Override
-  public byte[] encode (Signal signal)
-    throws JsonProcessingException {
+  public byte[] encode (Signal signal) {
 
     byte[] bytes = JsonCodec.writeAsBytes(signal);
 
@@ -119,11 +117,7 @@ public class JsonSignalCodec implements SignalCodec {
   /**
    * Utility wrapper to log byte arrays as UTF-8 strings.
    */
-  private static class StringConverter {
-
-    private final byte[] buffer;
-    private final int offset;
-    private final int len;
+  private record StringConverter(byte[] buffer, int offset, int len) {
 
     /**
      * Wraps an entire byte array for conversion.
@@ -142,11 +136,8 @@ public class JsonSignalCodec implements SignalCodec {
      * @param offset start offset
      * @param len    number of bytes to include
      */
-    public StringConverter (byte[] buffer, int offset, int len) {
+    private StringConverter {
 
-      this.buffer = buffer;
-      this.offset = offset;
-      this.len = len;
     }
 
     /**

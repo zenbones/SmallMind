@@ -34,10 +34,10 @@ package org.smallmind.claxon.registry.json;
 
 import java.util.concurrent.TimeUnit;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.time.Stint;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * JAXB/Jackson adapter for serializing and deserializing {@link Stint}.
@@ -76,6 +76,6 @@ public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
   @Override
   public Stint unmarshal (JsonNode node) {
 
-    return (node == null) ? null : new Stint(node.get("time").longValue(), TimeUnit.valueOf(node.get("timeUnit").asText()));
+    return (node == null) ? null : new Stint(node.get("time").longValue(), TimeUnit.valueOf(node.get("timeUnit").asString()));
   }
 }

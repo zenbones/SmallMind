@@ -35,15 +35,15 @@ package org.smallmind.web.json.scaffold.util;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
 import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * JAXB adapter that serializes polymorphic types by wrapping them in a single-key object whose key
@@ -81,7 +81,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
       Class<?> polymorphicSubClass;
       String polymorphicKey;
 
-      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = node.fieldNames().next())) == null) {
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = node.propertyNames().iterator().next())) == null) {
         throw new JAXBProcessingException("Unable to map the root element name(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
       } else {
 

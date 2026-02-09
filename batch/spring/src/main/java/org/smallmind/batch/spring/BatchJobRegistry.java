@@ -35,8 +35,8 @@ package org.smallmind.batch.spring;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.configuration.ListableJobLocator;
+import org.springframework.batch.core.configuration.JobRegistry;
+import org.springframework.batch.core.job.Job;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -44,24 +44,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-/**
- * Job locator that captures Spring Batch job beans during context initialization and exposes them to the framework.
- */
-public class BatchJobLocator implements ListableJobLocator, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
+public class BatchJobRegistry implements JobRegistry, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
   private final HashSet<String> jobNameSet = new HashSet<>();
   private ApplicationContext applicationContext;
-
-  /**
-   * Stores the refreshed application context so jobs can be retrieved later.
-   *
-   * @param event the context refreshed event
-   */
-  @Override
-  public void onApplicationEvent (ContextRefreshedEvent event) {
-
-    applicationContext = event.getApplicationContext();
-  }
 
   /**
    * Retrieves a job bean by name from the application context.
@@ -84,6 +70,29 @@ public class BatchJobLocator implements ListableJobLocator, ApplicationListener<
   public Collection<String> getJobNames () {
 
     return Collections.unmodifiableSet(jobNameSet);
+  }
+
+  @Override
+  public void register (Job job) {
+
+    throw new UnsupportedOperationException("Job instances should be declared in spring context");
+  }
+
+  @Override
+  public void unregister (String jobName) {
+
+    throw new UnsupportedOperationException("Job instances should be declared in spring context - so cannot be 'deregistered'");
+  }
+
+  /**
+   * Stores the refreshed application context so jobs can be retrieved later.
+   *
+   * @param event the context refreshed event
+   */
+  @Override
+  public void onApplicationEvent (ContextRefreshedEvent event) {
+
+    applicationContext = event.getApplicationContext();
   }
 
   /**

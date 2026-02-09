@@ -34,9 +34,9 @@ package org.smallmind.web.json.scaffold.util;
 
 import java.util.Map;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * JAXB adapter for maps with string keys, representing them as JSON objects where {@code null}

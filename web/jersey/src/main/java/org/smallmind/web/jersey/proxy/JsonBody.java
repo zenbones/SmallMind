@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.hc.core5.http.ContentType;
 import org.smallmind.web.jersey.aop.Envelope;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -60,10 +59,8 @@ public class JsonBody {
    * Serializes an {@link Envelope} to JSON.
    *
    * @param envelope request envelope to serialize
-   * @throws JsonProcessingException if serialization fails
    */
-  public JsonBody (Envelope envelope)
-    throws JsonProcessingException {
+  public JsonBody (Envelope envelope) {
 
     this.bodyAsBytes = JsonCodec.writeAsBytes(envelope);
     this.contentType = ContentType.APPLICATION_JSON;
@@ -73,10 +70,8 @@ public class JsonBody {
    * Serializes an arbitrary object using {@link JsonCodec}.
    *
    * @param obj object to serialize
-   * @throws JsonProcessingException if serialization fails
    */
-  public JsonBody (Object obj)
-    throws JsonProcessingException {
+  public JsonBody (Object obj) {
 
     this.bodyAsBytes = JsonCodec.writeAsBytes(obj);
     this.contentType = ContentType.APPLICATION_JSON;

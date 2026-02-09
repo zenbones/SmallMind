@@ -32,16 +32,15 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
-import com.fasterxml.jackson.module.jakarta.xmlbind.PackageVersion;
+import tools.jackson.core.Version;
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.module.jakarta.xmlbind.PackageVersion;
 
 /**
  * Jackson module that installs {@link PolymorphicValueInstantiator} to ensure proxies resolve to
  * their underlying polymorphic subclasses during deserialization.
  */
-public class PolymorphicModule extends Module {
+public class PolymorphicModule extends JacksonModule {
 
   /**
    * @return module name for registration
@@ -69,16 +68,11 @@ public class PolymorphicModule extends Module {
   @Override
   public void setupModule (final SetupContext context) {
 
-    context.addValueInstantiators((deserializationConfig, beanDescription, valueInstantiator) -> {
+    context.addValueInstantiators((deserializationConfig, beanDescripRef) -> {
 
       Class<?> polymorphicSubClass;
 
-      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicClassForProxyClass(beanDescription.getBeanClass())) != null) {
-
-        return new PolymorphicValueInstantiator((StdValueInstantiator)valueInstantiator, polymorphicSubClass);
-      }
-
-      return valueInstantiator;
+      return ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicClassForProxyClass(beanDescripRef.getBeanClass())) == null) ? null : new PolymorphicValueInstantiator(deserializationConfig, beanDescripRef.getType(), polymorphicSubClass);
     });
   }
 }

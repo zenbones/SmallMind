@@ -9,8 +9,6 @@
     <constructor-arg name="dataSource" index="0" ref="batchDataSource"/>
   </bean>
 
-  <bean id="jobLocator" class="org.smallmind.batch.spring.BatchJobLocator"/>
-
   <bean id="jobRepository" class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
     <property name="databaseType" value="mysql"/>
     <property name="dataSource" ref="batchDataSource"/>
@@ -20,29 +18,18 @@
     <property name="isolationLevelForCreate" value="REPEATABLE_READ"/>
   </bean>
 
-  <bean id="jobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean">
-    <property name="dataSource" ref="batchDataSource"/>
-  </bean>
+  <bean id="jobRegistry" class="org.smallmind.batch.spring.BatchJobRegistry"/>
 
-  <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.TaskExecutorJobLauncher">
+  <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
     <property name="jobRepository" ref="jobRepository"/>
     <property name="taskExecutor">
       <bean class="org.smallmind.batch.spring.BatchJobExecutor"/>
     </property>
   </bean>
 
-  <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
-    <property name="jobRepository" ref="jobRepository"/>
-    <property name="jobExplorer" ref="jobExplorer"/>
-    <property name="jobLauncher" ref="jobLauncher"/>
-    <property name="jobRegistry" ref="jobLocator"/>
-  </bean>
-
   <bean id="jobFactory" class="org.smallmind.batch.spring.BatchJobFactory">
-    <property name="jobLocator" ref="jobLocator"/>
-    <property name="jobLauncher" ref="jobLauncher"/>
+    <property name="jobRegistry" ref="jobRegistry"/>
+    <property name="jobRepository" ref="jobRepository"/>
     <property name="jobOperator" ref="jobOperator"/>
-    <property name="jobExplorer" ref="jobExplorer"/>
   </bean>
-
 </beans>

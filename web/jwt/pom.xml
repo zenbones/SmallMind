@@ -12,11 +12,6 @@
   <description>JWT Token API</description>
   <dependencies>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.bitbucket.b_c</groupId>
       <artifactId>jose4j</artifactId>
       <scope>compile</scope>
@@ -29,6 +24,11 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>web-json-scaffold</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>

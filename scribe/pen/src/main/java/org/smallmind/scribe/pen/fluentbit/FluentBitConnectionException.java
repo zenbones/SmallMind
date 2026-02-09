@@ -30,23 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.fault;
+package org.smallmind.scribe.pen.fluentbit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.smallmind.nutsnbolts.lang.FormattedIOException;
+
+// TODO: The underlying org.msgpack.jackson.dataformat will be dependent on jackson 2.x for the foreseeable future
 
 /**
- * Convenience {@link JsonProcessingException} that formats its message with the supplied arguments.
+ * IOException thrown when a Fluent Bit connection cannot be established or maintained.
  */
-public class FormattedJsonProcessingException extends JsonProcessingException {
+public class FluentBitConnectionException extends FormattedIOException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates the exception with a cause and formatted message.
    *
-   * @param message message template (may be {@code null})
-   * @param args    format arguments
+   * @param throwable cause of the connection failure
+   * @param message   message template
+   * @param args      message arguments
    */
-  public FormattedJsonProcessingException (String message, Object... args) {
+  public FluentBitConnectionException (Throwable throwable, String message, Object... args) {
 
-    super(message == null ? null : String.format(message, args));
+    super(throwable, message, args);
   }
 }

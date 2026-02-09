@@ -74,9 +74,7 @@
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="1712884845061-6">
-    <!-- For Spring Batch 6.x -->
-    <!-- <createTable tableName="BATCH_JOB_INSTANCE_SEQ"> -->
-    <createTable tableName="BATCH_JOB_SEQ">
+    <createTable tableName="BATCH_JOB_INSTANCE_SEQ">
       <column name="ID" type="BIGINT">
         <constraints nullable="false"/>
       </column>

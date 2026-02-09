@@ -38,8 +38,8 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.scribe.pen.LoggerManager;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Structured fault representation that can be serialized to JSON/XML, carrying stack trace,
@@ -90,7 +90,7 @@ public class Fault implements Serializable, Informed {
   /**
    * Creates a fault from a throwable, capturing stack trace and optional native encoding.
    *
-   * @param throwable             thrown exception
+   * @param throwable thrown exception
    */
   public Fault (Throwable throwable) {
 
@@ -100,8 +100,8 @@ public class Fault implements Serializable, Informed {
   /**
    * Creates a contextual fault from a throwable, capturing stack trace and optional native encoding.
    *
-   * @param context               context element describing the call site
-   * @param throwable             thrown exception
+   * @param context   context element describing the call site
+   * @param throwable thrown exception
    */
   public Fault (FaultElement context, Throwable throwable) {
 

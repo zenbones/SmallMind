@@ -37,7 +37,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -352,11 +351,7 @@ public class BeanReflector {
         }
       }
 
-      try {
-        throw new BeanAccessException("No method(name=%s, arguments=%s) found in class(%s)", name, JsonCodec.writeAsString(arguments), target.getClass().getName());
-      } catch (JsonProcessingException jsonProcessingException) {
-        throw new BeanAccessException(jsonProcessingException);
-      }
+      throw new BeanAccessException("No method(name=%s, arguments=%s) found in class(%s)", name, JsonCodec.writeAsString(arguments), target.getClass().getName());
     }
   }
 

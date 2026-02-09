@@ -46,7 +46,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
@@ -153,12 +152,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     Backbone<V> backbone;
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
-
-    try {
-      LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
-    } catch (JsonProcessingException jsonProcessingException) {
-      throw new ServletException(jsonProcessingException);
-    }
+    LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
 
     if ((backbone = getBackbone()) != null) {
       try {

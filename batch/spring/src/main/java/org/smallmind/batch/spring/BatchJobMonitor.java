@@ -34,26 +34,27 @@ package org.smallmind.batch.spring;
 
 import java.util.concurrent.TimeUnit;
 import org.springframework.batch.core.ExitStatus;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.launch.NoSuchJobException;
+import org.springframework.batch.core.repository.JobRepository;
 
 /**
  * Utility for polling a Spring Batch job execution until a desired {@link ExitStatus} is observed.
  */
 public class BatchJobMonitor {
 
-  private final JobExplorer jobExplorer;
+  private final JobRepository jobRepository;
   private final Long jobId;
 
   /**
    * Creates a monitor for a specific job id.
    *
-   * @param jobExplorer explorer used to query job executions
-   * @param jobId       the job id to monitor
+   * @param jobRepository repository used to query job executions
+   * @param jobId         the job id to monitor
    */
-  public BatchJobMonitor (JobExplorer jobExplorer, Long jobId) {
+  public BatchJobMonitor (JobRepository jobRepository, Long jobId) {
 
-    this.jobExplorer = jobExplorer;
+    this.jobRepository = jobRepository;
     this.jobId = jobId;
   }
 
@@ -64,11 +65,11 @@ public class BatchJobMonitor {
    * @param timeUnit     the time unit for the timeout value
    * @param exitStatuses acceptable terminal statuses; if none are provided the method returns immediately
    * @return {@code true} if an acceptable exit status was reached before timing out, otherwise {@code false}
+   * @throws NoSuchJobException   if the job execution cannot be found
    * @throws InterruptedException if the monitoring thread is interrupted while waiting
-   * @throws MissingJobException  if the job execution cannot be found
    */
   public boolean await (long timeout, TimeUnit timeUnit, ExitStatus... exitStatuses)
-    throws InterruptedException {
+    throws NoSuchJobException, InterruptedException {
 
     if ((exitStatuses == null) || (exitStatuses.length == 0)) {
 
@@ -77,15 +78,15 @@ public class BatchJobMonitor {
 
       long total = timeUnit.toMillis(timeout);
       long end = System.currentTimeMillis() + total;
-      long pulse = Math.max(1000, Math.min(10, total / 10));
+      long pulse = Math.max(1000, total / 10);
       long remaining;
 
       while ((remaining = end - System.currentTimeMillis()) > 0) {
 
         JobExecution jobExecution;
 
-        if ((jobExecution = jobExplorer.getJobExecution(jobId)) == null) {
-          throw new MissingJobException("No such job(%d)", jobId);
+        if ((jobExecution = jobRepository.getJobExecution(jobId)) == null) {
+          throw new FormattedNoSuchJobException("No such job(%d)", jobId);
         } else {
 
           ExitStatus exitStatus = jobExecution.getExitStatus();

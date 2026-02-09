@@ -36,14 +36,13 @@ import java.util.LinkedList;
 import java.util.Map;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.phalanx.wire.WireContextManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * JAXB adapter that marshals and unmarshals {@link WireContext} arrays as JSON payloads.
@@ -63,7 +62,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
     LinkedList<WireContext> contextList = new LinkedList<>();
 
     if (node != null) {
-      for (JsonNode elementNode : new IterableIterator<>(node.elements())) {
+      for (JsonNode elementNode : new IterableIterator<>(node.iterator())) {
         if (elementNode.size() == 1) {
 
           Map.Entry<String, JsonNode> topEntry = elementNode.properties().iterator().next();
@@ -89,11 +88,9 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
    *
    * @param wireContexts contexts to serialize
    * @return JSON representation or {@code null} when none are provided
-   * @throws JsonProcessingException if serialization fails
    */
   @Override
-  public JsonNode marshal (WireContext[] wireContexts)
-    throws JsonProcessingException {
+  public JsonNode marshal (WireContext[] wireContexts) {
 
     if ((wireContexts == null) || (wireContexts.length == 0)) {
 

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.fluentbit;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -46,7 +46,17 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.scribe.pen.AbstractAppender;
+import org.smallmind.scribe.pen.DateFormatTimestamp;
+import org.smallmind.scribe.pen.ErrorHandler;
+import org.smallmind.scribe.pen.Logger;
+import org.smallmind.scribe.pen.LoggerException;
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.RecordElement;
+import org.smallmind.scribe.pen.Timestamp;
 import org.springframework.beans.factory.InitializingBean;
+
+// TODO: The underlying org.msgpack.jackson.dataformat will be dependent on jackson 2.x for the foreseeable future
 
 /**
  * Appender that batches records and ships them to Fluent Bit over TCP using MessagePack.
@@ -55,7 +65,7 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
-  private final SynchronousQueue<Record<?>> recordQueue = new SynchronousQueue<>();
+  private final SynchronousQueue<org.smallmind.scribe.pen.Record<?>> recordQueue = new SynchronousQueue<>();
   private CountDownLatch finishedLatch;
   private MessagePackFormatter formatter;
   private Map<String, String> additionalEventData;
@@ -212,7 +222,7 @@ public class FluentBitAppender extends AbstractAppender implements InitializingB
    * @throws InterruptedException if interrupted while enqueuing
    */
   @Override
-  public synchronized void handleOutput (Record<?> record)
+  public synchronized void handleOutput (org.smallmind.scribe.pen.Record<?> record)
     throws LoggerException, InterruptedException {
 
     if (closed.get()) {

@@ -38,18 +38,16 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
-import org.smallmind.nutsnbolts.util.IterableIterator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.module.afterburner.AfterburnerModule;
 
 /**
  * Centralized Jackson configuration and convenience helpers for reading/writing JSON and converting
@@ -82,10 +80,8 @@ public class JsonCodec {
    *
    * @param aString JSON payload
    * @return parsed node
-   * @throws JsonProcessingException if parsing fails
    */
-  public static JsonNode readAsJsonNode (String aString)
-    throws JsonProcessingException {
+  public static JsonNode readAsJsonNode (String aString) {
 
     return OBJECT_MAPPER.readTree(aString);
   }
@@ -142,10 +138,8 @@ public class JsonCodec {
    * @param clazz   target class
    * @param <T>     target type
    * @return deserialized object
-   * @throws JsonProcessingException if parsing fails
    */
-  public static <T> T read (String aString, Class<T> clazz)
-    throws JsonProcessingException {
+  public static <T> T read (String aString, Class<T> clazz) {
 
     return OBJECT_MAPPER.readValue(aString, clazz);
   }
@@ -187,10 +181,8 @@ public class JsonCodec {
    * @param clazz target class
    * @param <T>   target type
    * @return converted value
-   * @throws JsonProcessingException if conversion fails
    */
-  public static <T> T read (JsonNode node, Class<T> clazz)
-    throws JsonProcessingException {
+  public static <T> T read (JsonNode node, Class<T> clazz) {
 
     return OBJECT_MAPPER.treeToValue(node, clazz);
   }
@@ -211,10 +203,8 @@ public class JsonCodec {
    *
    * @param obj object to serialize
    * @return byte representation
-   * @throws JsonProcessingException if serialization fails
    */
-  public static byte[] writeAsBytes (Object obj)
-    throws JsonProcessingException {
+  public static byte[] writeAsBytes (Object obj) {
 
     return OBJECT_MAPPER.writeValueAsBytes(obj);
   }
@@ -224,10 +214,8 @@ public class JsonCodec {
    *
    * @param obj object to serialize
    * @return JSON string
-   * @throws JsonProcessingException if serialization fails
    */
-  public static String writeAsString (Object obj)
-    throws JsonProcessingException {
+  public static String writeAsString (Object obj) {
 
     return OBJECT_MAPPER.writeValueAsString(obj);
   }
@@ -237,10 +225,8 @@ public class JsonCodec {
    *
    * @param obj object to serialize
    * @return formatted JSON string
-   * @throws JsonProcessingException if serialization fails
    */
-  public static String writeAsPrettyPrintedString (Object obj)
-    throws JsonProcessingException {
+  public static String writeAsPrettyPrintedString (Object obj) {
 
     return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(sort(OBJECT_MAPPER.valueToTree(obj)));
   }
@@ -323,16 +309,12 @@ public class JsonCodec {
     } else if (node.isObject()) {
 
       ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
-      LinkedList<String> sortedFieldNameList = new LinkedList<>();
+      LinkedList<String> sortedPropertyNameList = new LinkedList<>(node.propertyNames());
 
-      for (String fieldName : new IterableIterator<>(node.fieldNames())) {
-        sortedFieldNameList.add(fieldName);
-      }
+      sortedPropertyNameList.sort(ALPHA_NUMERIC_COMPARATOR);
 
-      sortedFieldNameList.sort(ALPHA_NUMERIC_COMPARATOR);
-
-      for (String sortedFieldName : sortedFieldNameList) {
-        objectNode.set(sortedFieldName, sort(node.get(sortedFieldName)));
+      for (String sortedPropertyName : sortedPropertyNameList) {
+        objectNode.set(sortedPropertyName, sort(node.get(sortedPropertyName)));
       }
 
       return objectNode;

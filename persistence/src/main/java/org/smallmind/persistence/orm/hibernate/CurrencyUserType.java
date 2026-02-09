@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Currency;
 import java.util.Objects;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.usertype.UserType;
 
 /**
@@ -162,13 +162,12 @@ public class CurrencyUserType implements UserType<Currency> {
    *
    * @param rs       result set positioned at the current row
    * @param position column index to read
-   * @param session  current Hibernate session
-   * @param owner    owning entity (unused)
+   * @param options  configuration options
    * @return {@code Currency} instance, or {@code null} if the column is SQL NULL
    * @throws SQLException if the JDBC driver reports a read error
    */
   @Override
-  public Currency nullSafeGet (ResultSet rs, int position, SharedSessionContractImplementor session, Object owner)
+  public Currency nullSafeGet (ResultSet rs, int position, WrapperOptions options)
     throws SQLException {
 
     String code = rs.getString(position);
@@ -182,11 +181,11 @@ public class CurrencyUserType implements UserType<Currency> {
    * @param st      prepared statement being populated
    * @param value   currency to write, or {@code null}
    * @param index   parameter index
-   * @param session current Hibernate session
+   * @param options configuration options
    * @throws SQLException if the JDBC driver reports a write error
    */
   @Override
-  public void nullSafeSet (PreparedStatement st, Currency value, int index, SharedSessionContractImplementor session)
+  public void nullSafeSet (PreparedStatement st, Currency value, int index, WrapperOptions options)
     throws SQLException {
 
     if (value == null) {
