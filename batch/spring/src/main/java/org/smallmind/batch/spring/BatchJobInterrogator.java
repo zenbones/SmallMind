@@ -83,7 +83,7 @@ public class BatchJobInterrogator {
       connection.setAutoCommit(false);
       ResultSet uncompletedJobResultSet;
 
-      uncompletedJobResultSet = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).executeQuery("select cpount(*) from " + schemaName + ".BATCH_JOB_EXECUTION where STATUS != 'COMPLETED'");
+      uncompletedJobResultSet = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY).executeQuery("select count(*) from " + schemaName + ".BATCH_JOB_EXECUTION where STATUS != 'COMPLETED'");
       if (uncompletedJobResultSet.next()) {
 
         return uncompletedJobResultSet.getLong(1);
