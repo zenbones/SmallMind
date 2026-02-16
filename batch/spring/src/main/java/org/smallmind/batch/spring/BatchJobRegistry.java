@@ -44,6 +44,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+/**
+ * Spring-based {@link JobRegistry} implementation that discovers jobs from the application context.
+ */
 public class BatchJobRegistry implements JobRegistry, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
   private final HashSet<String> jobNameSet = new HashSet<>();
@@ -72,12 +75,24 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
     return Collections.unmodifiableSet(jobNameSet);
   }
 
+  /**
+   * Unsupported operation because jobs are discovered from the Spring context.
+   *
+   * @param job the job instance to register
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public void register (Job job) {
 
     throw new UnsupportedOperationException("Job instances should be declared in spring context");
   }
 
+  /**
+   * Unsupported operation because jobs are discovered from the Spring context.
+   *
+   * @param jobName the job name to unregister
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public void unregister (String jobName) {
 

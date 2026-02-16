@@ -35,15 +35,28 @@ package org.smallmind.batch.spring;
 import org.springframework.batch.core.launch.NoSuchJobException;
 
 /**
- * Runtime exception thrown when an expected job or execution cannot be located.
+ * Runtime exception thrown when an expected job or execution cannot be restarted (often due to being unable to locate the job).
  */
 public class FormattedJobRestartException extends NoSuchJobException {
 
+  /**
+   * Builds an exception with a formatted message.
+   *
+   * @param message format string, or {@code null} for a default message
+   * @param args arguments applied to the format string
+   */
   public FormattedJobRestartException (String message, Object... args) {
 
     super(message == null ? "Unknown job logical name" : String.format(message, args));
   }
 
+  /**
+   * Builds an exception with a formatted message and root cause.
+   *
+   * @param throwable the underlying cause
+   * @param message format string, or {@code null} for a default message
+   * @param args arguments applied to the format string
+   */
   public FormattedJobRestartException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? "Unknown job logical name" : String.format(message, args), throwable);

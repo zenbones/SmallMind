@@ -39,11 +39,24 @@ import org.springframework.batch.core.launch.NoSuchJobException;
  */
 public class FormattedNoSuchJobException extends NoSuchJobException {
 
+  /**
+   * Builds an exception with a formatted message.
+   *
+   * @param message format string, or {@code null} for a default message
+   * @param args arguments applied to the format string
+   */
   public FormattedNoSuchJobException (String message, Object... args) {
 
     super(message == null ? "Unknown job logical name" : String.format(message, args));
   }
 
+  /**
+   * Builds an exception with a formatted message and root cause.
+   *
+   * @param throwable the underlying cause
+   * @param message format string, or {@code null} for a default message
+   * @param args arguments applied to the format string
+   */
   public FormattedNoSuchJobException (Throwable throwable, String message, Object... args) {
 
     super(message == null ? "Unknown job logical name" : String.format(message, args), throwable);

@@ -32,6 +32,11 @@
  */
 package org.smallmind.batch.base;
 
+/**
+ * Base wrapper for a typed batch parameter value and its job identity flag.
+ *
+ * @param <T> the wrapped parameter type
+ */
 public abstract class BatchParameter<T> {
 
   private final T value;

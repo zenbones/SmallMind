@@ -64,11 +64,21 @@ public class BatchJobFactory implements JobFactory {
   private JobRegistry jobRegistry;
   private JobOperator jobOperator;
 
+  /**
+   * Injects the {@link JobRepository} used to query historical executions.
+   *
+   * @param jobRepository the repository to use
+   */
   public void setJobRepository (JobRepository jobRepository) {
 
     this.jobRepository = jobRepository;
   }
 
+  /**
+   * Injects the {@link JobRegistry} used to resolve jobs by logical name.
+   *
+   * @param jobRegistry the registry to use
+   */
   public void setJobRegistry (JobRegistry jobRegistry) {
 
     this.jobRegistry = jobRegistry;

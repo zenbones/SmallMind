@@ -38,21 +38,43 @@ import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
+/**
+ * Polls Spring Batch metadata tables to detect when all job executions have quiesced.
+ */
 public class BatchJobInterrogator {
 
   private DataSource dataSource;
   private String schemaName;
 
+  /**
+   * Injects the data source used to inspect batch execution state.
+   *
+   * @param dataSource the data source to query
+   */
   public void setDataSource (DataSource dataSource) {
 
     this.dataSource = dataSource;
   }
 
+  /**
+   * Sets the schema containing Spring Batch metadata tables.
+   *
+   * @param schemaName the database schema name
+   */
   public void setSchemaName (String schemaName) {
 
     this.schemaName = schemaName;
   }
 
+  /**
+   * Waits until no non-completed job executions remain, or the timeout expires.
+   *
+   * @param timeout  the maximum duration to wait
+   * @param timeUnit the unit for {@code timeout}
+   * @return {@code true} if quiescence is reached before timing out, otherwise {@code false}
+   * @throws SQLException if the batch metadata query fails
+   * @throws InterruptedException if interrupted while sleeping between checks
+   */
   public boolean awaitQuiescence (long timeout, TimeUnit timeUnit)
     throws SQLException, InterruptedException {
 
@@ -74,6 +96,12 @@ public class BatchJobInterrogator {
     return false;
   }
 
+  /**
+   * Counts batch job executions whose status is not {@code COMPLETED}.
+   *
+   * @return the count of non-completed executions
+   * @throws SQLException if the metadata query cannot be executed
+   */
   private long uncompletedCount ()
     throws SQLException {
 
