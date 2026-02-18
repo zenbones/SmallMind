@@ -78,7 +78,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.28.0</amqp.client.version>
     <asm.version>9.9.1</asm.version>
-    <aspectj.version>1.9.25</aspectj.version>
+    <aspectj.version>1.9.25.1</aspectj.version>
     <aspectj.maven.plugin.version>1.14.1</aspectj.maven.plugin.version>
     <aws.version>2.41.6</aws.version>
     <bouncycastle.version>1.83</bouncycastle.version>
