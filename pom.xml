@@ -74,7 +74,7 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.28.0</amqp.client.version>
     <asm.version>9.9.1</asm.version>
@@ -99,8 +99,6 @@
     <hibernate.enhance.maven.plugin.version>6.6.40.Final</hibernate.enhance.maven.plugin.version>
     <httpcomponents5.client.version>5.6</httpcomponents5.client.version>
     <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
-    <!-- docker java uses this earlier version internally -->
-    <!-- <httpcomponents5.core.version>5.4.0</httpcomponents5.core.version> -->
     <jackson.version>3.0.4</jackson.version>
     <jackson.annotations.version>2.21</jackson.annotations.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
@@ -131,11 +129,11 @@
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.15.2</maven.plugin.annotations.version>
     <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>
-    <maven.resolver.version>1.9.25</maven.resolver.version>
+    <maven.resolver.version>1.9.26</maven.resolver.version>
     <!-- this all needs to upgrade at once I think -->
     <!-- <maven.resolver.version>2.0.14</maven.resolver.version> -->
-    <maven.resolver.supplier.version>1.9.25</maven.resolver.supplier.version>
-    <maven.resolver.transport.http.version>1.9.25</maven.resolver.transport.http.version>
+    <maven.resolver.supplier.version>1.9.26</maven.resolver.supplier.version>
+    <maven.resolver.transport.http.version>1.9.26</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
     <mongodb.driver.version>5.6.2</mongodb.driver.version>
@@ -1343,6 +1341,16 @@
           <source>${maven.compiler.release}</source>
           <target>${maven.compiler.release}</target>
           <release>${maven.compiler.release}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.smallmind</groupId>
+              <artifactId>web-json-doppelganger</artifactId>
+              <version>${project.version}</version>
+            </path>
+          </annotationProcessorPaths>
+          <compilerArgs>
+            <arg>-proc:full</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
