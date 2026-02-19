@@ -1343,14 +1343,22 @@
           <release>${maven.compiler.release}</release>
           <annotationProcessorPaths>
             <path>
+              <groupId>com.querydsl</groupId>
+              <artifactId>querydsl-apt</artifactId>
+              <classifier>jakarta</classifier>
+              <version>${querydsl.version}</version>
+            </path>
+            <path>
+              <groupId>jakarta.persistence</groupId>
+              <artifactId>jakarta.persistence-api</artifactId>
+              <version>${jakarta.persistence.version}</version>
+            </path>
+            <path>
               <groupId>org.smallmind</groupId>
               <artifactId>web-json-doppelganger</artifactId>
               <version>${project.version}</version>
             </path>
           </annotationProcessorPaths>
-          <compilerArgs>
-            <arg>-proc:full</arg>
-          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
