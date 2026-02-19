@@ -71,7 +71,7 @@ import org.smallmind.web.json.doppelganger.translator.TranslatorFactory;
  * when needed and validates annotation usage.
  */
 @SupportedAnnotationTypes("org.smallmind.web.json.doppelganger.Doppelganger")
-@SupportedSourceVersion(SourceVersion.RELEASE_21)
+@SupportedSourceVersion(SourceVersion.RELEASE_25)
 @SupportedOptions("prefix")
 @AutoService(Processor.class)
 public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
@@ -93,6 +93,7 @@ public class DoppelgangerAnnotationProcessor extends AbstractProcessor {
 
     for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Doppelganger.class)) {
       try {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Processing element " + annotatedElement.getSimpleName() + "...", annotatedElement);
         generate((TypeElement)annotatedElement);
       } catch (Exception exception) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, exception.getMessage());
