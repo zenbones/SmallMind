@@ -44,6 +44,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
@@ -67,6 +68,17 @@ public class ClassWalker {
    */
   public static void walk (ProcessingEnvironment processingEnvironment, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors)
     throws IOException, DefinitionException {
+
+    //TODO: remove when resolved
+    /*
+    processingEnvironment.getMessager().printMessage(Diagnostic.Kind.WARNING, "CW0:" + classElement.getSimpleName() + ":----------------------------------------------");
+    for (Element enclosedElement : classElement.getEnclosedElements()) {
+      processingEnvironment.getMessager().printMessage(Diagnostic.Kind.WARNING, "CW1:" + classElement.getSimpleName() + ":" + enclosedElement.getSimpleName());
+      for (AnnotationMirror annotationMirror : enclosedElement.getAnnotationMirrors()) {
+        processingEnvironment.getMessager().printMessage(Diagnostic.Kind.WARNING, "CW2:" + annotationMirror.getAnnotationType());
+      }
+    }
+     */
 
     HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
     HashSet<Name> getMethodNameSet = new HashSet<>();
