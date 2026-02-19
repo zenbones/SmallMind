@@ -1359,6 +1359,7 @@
               <version>${project.version}</version>
             </path>
           </annotationProcessorPaths>
+          <proc>full</proc>
         </configuration>
       </plugin>
       <plugin>

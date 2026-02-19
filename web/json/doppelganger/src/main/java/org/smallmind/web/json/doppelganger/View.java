@@ -41,7 +41,9 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 /**
  * Marks a field or accessor to be included in generated views, allowing idiom-specific overrides.
  */
-@Retention(RetentionPolicy.SOURCE)
+// Must have retention policy 'class' to allow annotated fields to be picked up in modules outside of
+// the source module of the annotated class, when that class is used as an annotated field in a class in another module.
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface View {
 
