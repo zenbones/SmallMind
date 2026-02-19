@@ -47,7 +47,6 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.module.afterburner.AfterburnerModule;
 
 /**
  * Centralized Jackson configuration and convenience helpers for reading/writing JSON and converting
@@ -57,7 +56,9 @@ public class JsonCodec {
 
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
-                                                      .addModule(new AfterburnerModule())
+                                                      // TODO: Bring back when fixed
+                                                      // AfterBurner fails with Jackson 3.x parsing impemented methods of an interface (multiple definitions of method <methode> found)
+                                                      // .addModule(new AfterburnerModule())
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
