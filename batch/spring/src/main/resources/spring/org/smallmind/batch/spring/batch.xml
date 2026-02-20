@@ -23,7 +23,9 @@
   <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
     <property name="jobRepository" ref="jobRepository"/>
     <property name="taskExecutor">
-      <bean class="org.smallmind.batch.spring.BatchJobExecutor"/>
+      <bean class="org.smallmind.batch.spring.BatchJobExecutorFactory">
+        <property name="concurrencyLimit" value="1"/>
+      </bean>
     </property>
   </bean>
 

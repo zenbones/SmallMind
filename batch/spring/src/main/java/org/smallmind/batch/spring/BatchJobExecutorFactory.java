@@ -33,18 +33,54 @@
 package org.smallmind.batch.spring;
 
 import java.util.concurrent.Executors;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
 /**
- * Simple {@link org.springframework.core.task.TaskExecutor} wrapper that runs batch jobs on a dedicated single thread.
+ * Spring {@link FactoryBean} that creates a {@link TaskExecutorAdapter} backed by a scheduled thread pool for batch
+ * job execution.
  */
-public class BatchJobExecutor extends TaskExecutorAdapter {
+public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<TaskExecutorAdapter> {
+
+  private TaskExecutorAdapter taskExecutorAdapter;
+  private int concurrencyLimit = 1;
 
   /**
-   * Builds an executor backed by a single-threaded pool suitable for sequential batch execution.
+   * Sets the concurrency limit used when creating the underlying thread pool.
+   *
+   * @param concurrencyLimit The configured concurrency limit.
    */
-  public BatchJobExecutor () {
+  public void setConcurrencyLimit (int concurrencyLimit) {
 
-    super(Executors.newSingleThreadExecutor());
+    this.concurrencyLimit = Math.min(1, concurrencyLimit);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public @Nullable Class<?> getObjectType () {
+
+    return TaskExecutorAdapter.class;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public @Nullable TaskExecutorAdapter getObject () {
+
+    return taskExecutorAdapter;
+  }
+
+  /**
+   * Initializes this factory by creating the {@link TaskExecutorAdapter} instance.
+   */
+  @Override
+  public void afterPropertiesSet () {
+
+    taskExecutorAdapter = new TaskExecutorAdapter(Executors.newScheduledThreadPool(concurrencyLimit));
   }
 }
