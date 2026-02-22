@@ -177,18 +177,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
       case STRING:
         return factory.textValue(node.textValue());
       case NUMBER:
-        switch (node.numberType()) {
-          case LONG:
-            return factory.numberValue(node.longValue());
-          case INT:
-            return factory.numberValue(node.intValue());
-          case DOUBLE:
-            return factory.numberValue(node.doubleValue());
-          case FLOAT:
-            return factory.numberValue(node.doubleValue());
-          default:
-            throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
-        }
+        return switch (node.numberType()) {
+          case LONG -> factory.numberValue(node.longValue());
+          case INT -> factory.numberValue(node.intValue());
+          case DOUBLE -> factory.numberValue(node.doubleValue());
+          case FLOAT -> factory.numberValue(node.doubleValue());
+          default -> throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
+        };
       case BOOLEAN:
         return factory.booleanValue(node.booleanValue());
       case NULL:
