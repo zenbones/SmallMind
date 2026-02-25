@@ -207,6 +207,17 @@ public class TimeUtility {
   }
 
   /**
+   * Formats a {@link LocalDateTime} as an ISO-8601 offset date-time string.
+   *
+   * @param localDateTime date-time to format; may be {@code null}
+   * @return formatted string or {@code null} when input is {@code null}
+   */
+  public static String format (LocalDateTime localDateTime) {
+
+    return (localDateTime == null) ? null : ISO_OFFSET_DATE_TIME_FORMATTER.format(localDateTime);
+  }
+
+  /**
    * Formats a {@link ZonedDateTime} as an ISO-8601 offset date-time string.
    *
    * @param zonedDateTime date-time to format; may be {@code null}

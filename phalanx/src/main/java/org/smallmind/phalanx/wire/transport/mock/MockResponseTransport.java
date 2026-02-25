@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.mock;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -200,7 +200,7 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);
     message.getProperties().setContentType(signalCodec.getContentType());
     message.getProperties().setMessageId(UUID.randomUUID().toString());
-    message.getProperties().setTimestamp(new Date());
+    message.getProperties().setTimestamp(LocalDateTime.now());
     message.getProperties().setCorrelationId(correlationId.getBytes(StandardCharsets.UTF_8));
 
     messageRouter.getResponseTopic().send(message);

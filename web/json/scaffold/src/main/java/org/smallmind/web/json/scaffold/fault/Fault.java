@@ -90,7 +90,7 @@ public class Fault implements Serializable, Informed {
   /**
    * Creates a fault from a throwable, capturing stack trace and optional native encoding.
    *
-   * @param throwable             thrown exception
+   * @param throwable thrown exception
    */
   public Fault (Throwable throwable) {
 
@@ -100,8 +100,8 @@ public class Fault implements Serializable, Informed {
   /**
    * Creates a contextual fault from a throwable, capturing stack trace and optional native encoding.
    *
-   * @param context               context element describing the call site
-   * @param throwable             thrown exception
+   * @param context   context element describing the call site
+   * @param throwable thrown exception
    */
   public Fault (FaultElement context, Throwable throwable) {
 

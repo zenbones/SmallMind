@@ -32,22 +32,38 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
- * Validator that treats dates at the epoch start as {@code null}.
+ * Validates whether a {@link LocalDateTime} value represents the Unix epoch instant and should be
+ * treated as equivalent to {@code null}.
  */
-public class StartOfEpochNullifierValidator implements OverlayNullifierValidator<EmptyStringNullifier, Date> {
+public class StartOfEpochNullifierValidator implements OverlayNullifierValidator<StartOfEpochNullifier, LocalDateTime> {
+
+  private StartOfEpochNullifier constraintAnnotation;
 
   /**
-   * Returns {@code true} when the supplied date represents the start of the Unix epoch.
+   * Initializes this validator with the constraint configuration declared on the target field.
    *
-   * @param date the value being evaluated
-   * @return {@code true} if the value should be treated as {@code null}
+   * @param constraintAnnotation the annotation instance containing validator settings
    */
   @Override
-  public boolean equivalentToNull (Date date) {
+  public void initialize (StartOfEpochNullifier constraintAnnotation) {
 
-    return date.getTime() == 0;
+    this.constraintAnnotation = constraintAnnotation;
+  }
+
+  /**
+   * Determines whether the supplied date-time resolves to epoch millisecond {@code 0} in the
+   * configured zone.
+   *
+   * @param date the date-time value to evaluate
+   * @return {@code true} if the value maps to the start of the Unix epoch; otherwise {@code false}
+   */
+  @Override
+  public boolean equivalentToNull (LocalDateTime date) {
+
+    return date.atZone(ZoneId.of(constraintAnnotation.zoneId())).toInstant().toEpochMilli() == 0;
   }
 }

@@ -140,40 +140,40 @@ public class WireInvocationCircuit {
 
     }
 
-      /**
-       * @return service name represented by this key.
-       */
-      @Override
-      public String service () {
+    /**
+     * @return service name represented by this key.
+     */
+    @Override
+    public String service () {
 
-        return service;
-      }
-
-      /**
-       * @return service version represented by this key.
-       */
-      @Override
-      public int version () {
-
-        return version;
-      }
-
-      /**
-       * Generates a hash combining service and version to support map lookups.
-       */
-      @Override
-      public int hashCode () {
-
-        return service.hashCode() ^ version;
-      }
-
-      /**
-       * Keys are equal when both service name and version match.
-       */
-      @Override
-      public boolean equals (Object obj) {
-
-        return (obj instanceof ServiceKey) && ((ServiceKey)obj).service().equals(service) && (((ServiceKey)obj).version() == version);
-      }
+      return service;
     }
+
+    /**
+     * @return service version represented by this key.
+     */
+    @Override
+    public int version () {
+
+      return version;
+    }
+
+    /**
+     * Generates a hash combining service and version to support map lookups.
+     */
+    @Override
+    public int hashCode () {
+
+      return service.hashCode() ^ version;
+    }
+
+    /**
+     * Keys are equal when both service name and version match.
+     */
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof ServiceKey) && ((ServiceKey)obj).service().equals(service) && (((ServiceKey)obj).version() == version);
+    }
+  }
 }

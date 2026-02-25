@@ -30,37 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql;
+package org.smallmind.scribe.pen.spring;
 
-import java.math.BigInteger;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-/**
- * Utility for identifying primitive wrapper types and other JDBC-friendly values.
- */
-public class SqlType {
+public class DateTimeFormatterFactoryBean implements InitializingBean, FactoryBean<DateTimeFormatter> {
 
-  private static final Class[] KNOWN_TYPES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class, String.class, BigInteger.class, Date.class};
+  private DateTimeFormatter formatter;
+  private String pattern;
 
-  /**
-   * Determines whether the supplied class is a primitive or one of the known JDBC compatible types.
-   *
-   * @param aClass candidate class to test
-   * @return {@code true} if the type is primitive or explicitly listed, otherwise {@code false}
-   */
-  public static boolean isKnownType (Class aClass) {
+  @Override
+  public @Nullable Class<?> getObjectType () {
 
-    if (!aClass.isPrimitive()) {
-      for (Class known : KNOWN_TYPES) {
-        if (known.equals(aClass)) {
+    return DateTimeFormatter.class;
+  }
 
-          return true;
-        }
-      }
+  @Override
+  public @Nullable DateTimeFormatter getObject ()
+    throws Exception {
 
-      return false;
-    }
+    return formatter;
+  }
 
-    return true;
+  public void setPattern (String pattern) {
+
+    this.pattern = pattern;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws Exception {
+
+    formatter = DateTimeFormatter.ofPattern(pattern);
   }
 }

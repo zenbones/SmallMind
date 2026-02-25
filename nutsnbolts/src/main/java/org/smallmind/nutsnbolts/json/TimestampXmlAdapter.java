@@ -32,7 +32,9 @@
  */
 package org.smallmind.nutsnbolts.json;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
@@ -40,7 +42,7 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
  */
 public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
 
-  private static final DateXmlAdapter DATE_XML_ADAPTER = new DateXmlAdapter();
+  private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   /**
    * Parses an ISO-8601 string into a millisecond timestamp.
@@ -51,7 +53,7 @@ public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
   @Override
   public Long unmarshal (String value) {
 
-    return (value == null) ? null : DATE_XML_ADAPTER.unmarshal(value).getTime();
+    return (value == null) ? null : ZONED_DATE_TIME_XML_ADAPTER.unmarshal(value).toInstant().toEpochMilli();
   }
 
   /**
@@ -63,6 +65,6 @@ public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
   @Override
   public String marshal (Long timestamp) {
 
-    return (timestamp == null) ? null : DATE_XML_ADAPTER.marshal(new Date(timestamp));
+    return (timestamp == null) ? null : ZONED_DATE_TIME_XML_ADAPTER.marshal(ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault()));
   }
 }

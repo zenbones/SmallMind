@@ -32,7 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -73,7 +75,7 @@ public class MessagePackFormatter {
     for (RecordElement recordElement : recordElements) {
       switch (recordElement) {
         case DATE:
-          messageNode.put("date", timestamp.getTimestamp(new Date(record.getMillis())));
+          messageNode.put("date", timestamp.getTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(record.getMillis()), ZoneId.systemDefault())));
           break;
         case MILLISECONDS:
           messageNode.put("milliseconds", record.getMillis());

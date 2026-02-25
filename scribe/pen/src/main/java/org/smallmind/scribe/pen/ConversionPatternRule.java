@@ -32,7 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
@@ -201,7 +203,7 @@ public class ConversionPatternRule implements PatternRule {
     switch (conversion) {
       case 'd':
 
-        return trimToWidthAndPad(timestamp.getTimestamp(new Date(record.getMillis())));
+        return trimToWidthAndPad(timestamp.getTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(record.getMillis()), ZoneId.systemDefault())));
       case 't':
 
         return trimToWidthAndPad(String.valueOf(record.getMillis()));
@@ -393,10 +395,10 @@ public class ConversionPatternRule implements PatternRule {
           return field;
         case RIGHT:
 
-          return new StringBuilder(field).append(" ".repeat(width - field.length())).toString();
+          return field + " ".repeat(width - field.length());
         case LEFT:
 
-          return new StringBuilder(" ".repeat(width - field.length())).append(field).toString();
+          return " ".repeat(width - field.length()) + field;
         default:
           throw new UnknownSwitchCaseException(padding.name());
       }

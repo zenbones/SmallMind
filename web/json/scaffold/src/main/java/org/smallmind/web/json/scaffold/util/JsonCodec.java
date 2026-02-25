@@ -43,10 +43,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
@@ -60,8 +62,10 @@ public class JsonCodec {
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
                                                       .addModule(new AfterburnerModule())
+                                                      .addModule(new JavaTimeModule())
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
+                                                      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   /**

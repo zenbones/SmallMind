@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * Timestamp implementation that always returns an empty string.
@@ -45,7 +45,7 @@ public class NullTimestamp implements Timestamp {
    * @param date ignored
    * @return empty string
    */
-  public String getTimestamp (Date date) {
+  public String getTimestamp (LocalDateTime date) {
 
     return "";
   }

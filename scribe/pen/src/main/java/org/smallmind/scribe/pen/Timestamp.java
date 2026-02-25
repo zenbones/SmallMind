@@ -32,10 +32,10 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
- * Converts a {@link Date} into a timestamp string for log output.
+ * Converts a {@link LocalDateTime} into a timestamp string for log output.
  */
 public interface Timestamp {
 
@@ -45,5 +45,5 @@ public interface Timestamp {
    * @param date date to format
    * @return timestamp string
    */
-  String getTimestamp (Date date);
+  String getTimestamp (LocalDateTime date);
 }

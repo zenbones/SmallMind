@@ -36,7 +36,6 @@ import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import jakarta.activation.DataHandler;
@@ -195,7 +194,7 @@ public class Postman {
 
           synchronized (templateMap) {
             if ((template = templateMap.get(sha256Key)) == null) {
-              templateMap.put(sha256Key, template = new Template(new String(sha256Key.getHash(), StandardCharsets.UTF_8), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
+              templateMap.put(sha256Key, template = new Template(new String(sha256Key.hash(), StandardCharsets.UTF_8), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
             }
           }
 
@@ -206,7 +205,7 @@ public class Postman {
         multipart.addBodyPart(textPart);
       }
 
-      if ((mail.getAttachments() != null) && (mail.getAttachments().length > 0)) {
+      if ((mail.getAttachments() != null)) {
         for (DataSource attachment : mail.getAttachments()) {
 
           MimeBodyPart filePart = new MimeBodyPart();
@@ -243,47 +242,7 @@ public class Postman {
   /**
    * Wrapper key used to cache templates by the SHA-256 hash of their source.
    */
-  private static class SHA256Key {
+  private record SHA256Key(byte[] hash) {
 
-    private final byte[] hash;
-
-    /**
-     * @param hash SHA-256 digest of the template text
-     */
-    public SHA256Key (byte[] hash) {
-
-      this.hash = hash;
-    }
-
-    /**
-     * @return raw hash bytes
-     */
-    public byte[] getHash () {
-
-      return hash;
-    }
-
-    /**
-     * Generates a hash code based on the underlying digest.
-     *
-     * @return hash value for map use
-     */
-    @Override
-    public int hashCode () {
-
-      return Arrays.hashCode(hash);
-    }
-
-    /**
-     * Compares keys by hash content.
-     *
-     * @param obj other key
-     * @return {@code true} when hashes match
-     */
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof SHA256Key) && Arrays.equals(hash, ((SHA256Key)obj).getHash());
-    }
   }
 }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ContextException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
@@ -132,7 +132,7 @@ public class MockWireTest {
   @Test(dependsOnMethods = "testPrimitiveArguments")
   public void testComplexArguments () {
 
-    Date now = new Date();
+    LocalDateTime now = LocalDateTime.now();
     Color[] colors = new Color[] {new Color("red"), new Color("white"), new Color("blue")};
 
     Assert.assertEquals(wireTestingService.echoString("The quick brown fox"), "The quick brown fox");

@@ -32,21 +32,21 @@
  */
 package org.smallmind.web.json.query;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.smallmind.nutsnbolts.json.DateXmlAdapter;
+import org.smallmind.nutsnbolts.json.LocalDateTimeXmlAdapter;
 
 /**
  * Date literal operand.
  */
 @XmlRootElement(name = "date", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class DateWhereOperand extends WhereOperand<Date> {
+public class DateWhereOperand extends WhereOperand<LocalDateTime> {
 
-  private Date value;
+  private LocalDateTime value;
 
   /**
    * No-arg constructor for JAXB/Jackson.
@@ -60,7 +60,7 @@ public class DateWhereOperand extends WhereOperand<Date> {
    *
    * @param value date literal
    */
-  public DateWhereOperand (Date value) {
+  public DateWhereOperand (LocalDateTime value) {
 
     this.value = value;
   }
@@ -71,7 +71,7 @@ public class DateWhereOperand extends WhereOperand<Date> {
    * @param value date literal
    * @return operand instance
    */
-  public static DateWhereOperand instance (Date value) {
+  public static DateWhereOperand instance (LocalDateTime value) {
 
     return new DateWhereOperand(value);
   }
@@ -103,7 +103,7 @@ public class DateWhereOperand extends WhereOperand<Date> {
    */
   @Override
   @XmlTransient
-  public Date get () {
+  public LocalDateTime get () {
 
     return value;
   }
@@ -114,8 +114,8 @@ public class DateWhereOperand extends WhereOperand<Date> {
    * @return date literal or {@code null}
    */
   @XmlElement(name = "value", required = true)
-  @XmlJavaTypeAdapter(DateXmlAdapter.class)
-  public Date getValue () {
+  @XmlJavaTypeAdapter(LocalDateTimeXmlAdapter.class)
+  public LocalDateTime getValue () {
 
     return value;
   }
@@ -125,7 +125,7 @@ public class DateWhereOperand extends WhereOperand<Date> {
    *
    * @param value date literal
    */
-  public void setValue (Date value) {
+  public void setValue (LocalDateTime value) {
 
     this.value = value;
   }

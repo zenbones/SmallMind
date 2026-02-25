@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.hibernate.boot.model.FunctionContributions;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.type.BasicType;
@@ -62,7 +62,7 @@ public class H2Dialect extends org.hibernate.dialect.H2Dialect {
     SqmFunctionRegistry functionRegistry = functionContributions.getFunctionRegistry();
     TypeConfiguration typeConfiguration = functionContributions.getTypeConfiguration();
     BasicTypeRegistry basicTypeRegistry = typeConfiguration.getBasicTypeRegistry();
-    BasicType<Date> timestampType = basicTypeRegistry.resolve(StandardBasicTypes.TIMESTAMP);
+    BasicType<LocalDateTime> timestampType = basicTypeRegistry.resolve(StandardBasicTypes.LOCAL_DATE_TIME);
     BasicType<Integer> integerType = basicTypeRegistry.resolve(StandardBasicTypes.INTEGER);
 
     functionRegistry.patternDescriptorBuilder("org_smallmind_day_diff", "timestampdiff(SQL_TSI_DAY, ?1, ?2)")

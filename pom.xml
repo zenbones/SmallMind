@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>6.15.0-SNAPSHOT</version>
+  <version>7.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -215,6 +215,11 @@
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-json-org</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
         <version>${jackson.version}</version>
       </dependency>
       <dependency>

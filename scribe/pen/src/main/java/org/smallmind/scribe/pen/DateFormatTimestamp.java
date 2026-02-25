@@ -33,8 +33,9 @@
 package org.smallmind.scribe.pen;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Timestamp implementation that formats dates using a {@link DateFormat}.
@@ -43,24 +44,24 @@ public class DateFormatTimestamp implements Timestamp {
 
   private static final DateFormatTimestamp STANDARD_TIMESTAMP = new DateFormatTimestamp();
 
-  private DateFormat dateFormat;
+  private DateTimeFormatter dateTimeFormatter;
 
   /**
    * Constructs a timestamp using the default ISO-like pattern.
    */
   public DateFormatTimestamp () {
 
-    this(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+    this(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
   }
 
   /**
    * Constructs a timestamp using the supplied {@link DateFormat}.
    *
-   * @param dateFormat formatter to use
+   * @param dateTimeFormatter formatter to use
    */
-  public DateFormatTimestamp (DateFormat dateFormat) {
+  public DateFormatTimestamp (DateTimeFormatter dateTimeFormatter) {
 
-    this.dateFormat = dateFormat;
+    this.dateTimeFormatter = dateTimeFormatter;
   }
 
   /**
@@ -78,19 +79,19 @@ public class DateFormatTimestamp implements Timestamp {
    *
    * @return current date formatter
    */
-  public DateFormat getDateFormat () {
+  public DateTimeFormatter getDateTimeFormatter () {
 
-    return dateFormat;
+    return dateTimeFormatter;
   }
 
   /**
    * Sets the {@link DateFormat} used to render timestamps.
    *
-   * @param dateFormat formatter to use
+   * @param dateTimeFormatter formatter to use
    */
-  public void setDateFormat (DateFormat dateFormat) {
+  public void setDateTimeFormatter (DateTimeFormatter dateTimeFormatter) {
 
-    this.dateFormat = dateFormat;
+    this.dateTimeFormatter = dateTimeFormatter;
   }
 
   /**
@@ -100,8 +101,8 @@ public class DateFormatTimestamp implements Timestamp {
    * @return formatted timestamp
    * @throws RuntimeException if the underlying {@link DateFormat} fails
    */
-  public synchronized String getTimestamp (Date date) {
+  public synchronized String getTimestamp (LocalDateTime date) {
 
-    return dateFormat.format(date);
+    return dateTimeFormatter.format(date.atZone(ZoneId.systemDefault()));
   }
 }

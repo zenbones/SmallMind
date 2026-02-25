@@ -152,8 +152,6 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
     }
   }
 
-  // Due to the fact that object is not of type 'capture of ?'
-
   /**
    * Performs encoding of a value with the given codec, avoiding wildcard capture issues.
    *
@@ -163,6 +161,7 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
    * @param encoderContext encoder context
    * @param <U>            value type
    */
+  // Due to the fact that object is not of type 'capture of ?'
   protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 
     codec.encode(writer, (U)stuff, encoderContext);
