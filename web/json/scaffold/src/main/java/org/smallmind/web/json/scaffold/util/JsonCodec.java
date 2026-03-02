@@ -57,11 +57,10 @@ public class JsonCodec {
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
                                                       // TODO: Bring back when fixed
-                                                      // AfterBurner fails with Jackson 3.x parsing impemented methods of an interface (multiple definitions of method <methode> found)
+                                                      // AfterBurner fails with Jackson 3.x parsing implemented methods of an interface (multiple definitions of method <methode> found)
                                                       // .addModule(new AfterburnerModule())
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
-                                                      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   /**
