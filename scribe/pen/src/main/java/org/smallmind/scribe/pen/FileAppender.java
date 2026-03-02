@@ -39,7 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * Appender that writes formatted log output to a file with optional rollover and cleanup policies.
@@ -463,7 +463,7 @@ public class FileAppender extends AbstractFormattedAppender {
     if (outputStream != null) {
       if ((rollover != null) && rollover.willRollover(fileSize, lastModified, formattedBytes.length)) {
 
-        Path rolloverPath = FileNameUtility.calculateUniquePath(logPath, rollover.getSeparator(), rollover.getTimestampSuffix(new Date()), true);
+        Path rolloverPath = FileNameUtility.calculateUniquePath(logPath, rollover.getSeparator(), rollover.getTimestampSuffix(LocalDateTime.now()), true);
 
         try {
           outputStream.close();

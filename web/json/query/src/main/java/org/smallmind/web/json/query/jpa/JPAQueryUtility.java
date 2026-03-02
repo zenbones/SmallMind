@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.json.query.jpa;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -140,8 +140,8 @@ public class JPAQueryUtility {
     rootSet.add(wherePath.getRoot());
 
     return switch (whereField.getOperator()) {
-      case LT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case LE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case LT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<LocalDateTime>)wherePath.getPath(), (LocalDateTime)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case LE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThanOrEqualTo((Path<LocalDateTime>)wherePath.getPath(), (LocalDateTime)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EQ -> {
         if (fieldValue == null) {
           yield criteriaBuilder.isNull(wherePath.getPath());
@@ -156,8 +156,8 @@ public class JPAQueryUtility {
           yield criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
       }
-      case GE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
-      case GT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case GE -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThanOrEqualTo((Path<LocalDateTime>)wherePath.getPath(), (LocalDateTime)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+      case GT -> OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<LocalDateTime>)wherePath.getPath(), (LocalDateTime)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EXISTS -> Boolean.TRUE.equals(fieldValue) ? criteriaBuilder.isNotNull(wherePath.getPath()) : criteriaBuilder.isNull(wherePath.getPath());
       case LIKE -> criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
       case UNLIKE -> criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));

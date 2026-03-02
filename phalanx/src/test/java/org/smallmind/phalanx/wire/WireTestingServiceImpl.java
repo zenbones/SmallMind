@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.WiredService;
@@ -129,7 +129,7 @@ public class WireTestingServiceImpl implements WireTestingService, WiredService 
   }
 
   @Override
-  public Date echoDate (@Argument("date") Date date) {
+  public LocalDateTime echoDate (@Argument("date") LocalDateTime date) {
 
     return date;
   }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen.spring.plan;
 
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.ConsoleAppender;
@@ -66,7 +66,7 @@ import org.smallmind.scribe.pen.fluentbit.FluentBitAppender;
  */
 public class FluentBitLoggingPlan extends LoggingPlan {
 
-  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
   private Map<String, String> additionalEventData;
   private String name;
   private String host;

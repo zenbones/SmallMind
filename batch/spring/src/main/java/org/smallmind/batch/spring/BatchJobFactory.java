@@ -224,7 +224,7 @@ public class BatchJobFactory implements JobFactory {
       for (Map.Entry<String, BatchParameter<?>> parameterEntry : parameterMap.entrySet()) {
         switch (parameterEntry.getValue().getType()) {
           case DATE:
-            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
+            jobParametersBuilder.addLocalDateTime(parameterEntry.getKey(), ((DateBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());
             break;
           case DOUBLE:
             jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleBatchParameter)parameterEntry.getValue()).getValue(), parameterEntry.getValue().isIdentifying());

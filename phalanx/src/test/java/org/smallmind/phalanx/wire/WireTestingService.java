@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ExpectedContexts;
 
 public interface WireTestingService {
@@ -62,7 +62,7 @@ public interface WireTestingService {
 
   String echoString (@Argument("string") String string);
 
-  Date echoDate (@Argument("date") Date date);
+  LocalDateTime echoDate (@Argument("date") LocalDateTime date);
 
   Color[] echoColors (@Argument("colors") Color... colors);
 

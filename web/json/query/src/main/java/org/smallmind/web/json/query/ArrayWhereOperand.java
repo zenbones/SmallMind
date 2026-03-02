@@ -32,14 +32,13 @@
  */
 package org.smallmind.web.json.query;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
+import org.smallmind.nutsnbolts.json.LocalDateTimeXmlAdapter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.nutsnbolts.time.TimeUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
@@ -51,7 +50,7 @@ import tools.jackson.databind.node.JsonNodeFactory;
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
-  private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
+  private static final LocalDateTimeXmlAdapter LOCAL_DATE_TIME_XML_ADAPTER = new LocalDateTimeXmlAdapter();
 
   private ArrayNode value;
   private Hint hint;
@@ -94,11 +93,11 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
     } else if (Character.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.CHARACTER);
       value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
-    } else if (Date.class.equals(componentClass)) {
+    } else if (LocalDateTime.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DATE);
       value = JsonNodeFactory.instance.arrayNode();
       for (Object obj : array) {
-        value.add(ZONED_DATE_TIME_XML_ADAPTER.marshal(TimeUtility.fromDate((Date)obj)));
+        value.add(LOCAL_DATE_TIME_XML_ADAPTER.marshal((LocalDateTime)obj));
       }
     } else if (Double.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DOUBLE);
@@ -222,10 +221,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               return characterArray;
             case DATE:
 
-              Date[] dates = new Date[value.size()];
+              LocalDateTime[] dates = new LocalDateTime[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                dates[index] = (value.get(index) == null) ? null : Date.from(ZONED_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class)).toInstant());
+                dates[index] = (value.get(index) == null) ? null : LOCAL_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class));
               }
 
               return dates;

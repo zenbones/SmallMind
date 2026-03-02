@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.mock;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.smallmind.phalanx.wire.ConversationType;
@@ -129,7 +129,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
     }
 
     message.getProperties().setMessageId(messageId);
-    message.getProperties().setTimestamp(new Date());
+    message.getProperties().setTimestamp(LocalDateTime.now());
     message.getProperties().setContentType(signalCodec.getContentType());
     message.getProperties().setHeader(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
     message.getProperties().setHeader(WireProperty.SERVICE_GROUP.getKey(), voice.getServiceGroup());

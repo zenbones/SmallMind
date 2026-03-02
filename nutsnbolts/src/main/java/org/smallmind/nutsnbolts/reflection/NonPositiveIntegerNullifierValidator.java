@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.reflection;
 /**
  * Validator that nullifies integer values that are zero or negative.
  */
-public class NonPositiveIntegerNullifierValidator implements OverlayNullifierValidator<NegativeIntegerNullifier, Integer> {
+public class NonPositiveIntegerNullifierValidator implements OverlayNullifierValidator<NonPositiveIntegerNullifier, Integer> {
 
   /**
    * Returns {@code true} when the supplied integer is less than or equal to zero.

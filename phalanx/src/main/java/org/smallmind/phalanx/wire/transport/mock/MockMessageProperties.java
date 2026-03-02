@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
@@ -41,7 +41,7 @@ import java.util.HashMap;
 public class MockMessageProperties {
 
   private final HashMap<String, Object> headerMap = new HashMap<>();
-  private Date timestamp;
+  private LocalDateTime timestamp;
   private String contentType;
   private String expiration;
   private String messageId;
@@ -72,7 +72,7 @@ public class MockMessageProperties {
   /**
    * @return message timestamp.
    */
-  public synchronized Date getTimestamp () {
+  public synchronized LocalDateTime getTimestamp () {
 
     return timestamp;
   }
@@ -80,7 +80,7 @@ public class MockMessageProperties {
   /**
    * @param timestamp timestamp to assign.
    */
-  public synchronized void setTimestamp (Date timestamp) {
+  public synchronized void setTimestamp (LocalDateTime timestamp) {
 
     this.timestamp = timestamp;
   }

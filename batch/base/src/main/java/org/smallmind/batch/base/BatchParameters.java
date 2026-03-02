@@ -32,7 +32,7 @@
  */
 package org.smallmind.batch.base;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
@@ -41,15 +41,15 @@ import java.util.HashMap;
 public class BatchParameters extends HashMap<String, BatchParameter<?>> {
 
   /**
-   * Adds a {@link Date} parameter.
+   * Adds a {@link LocalDateTime} parameter.
    *
-   * @param key         the parameter name expected by the job
-   * @param aDate       the date value to supply
-   * @param identifying whether the value helps identify the job instance
+   * @param key            the parameter name expected by the job
+   * @param aLocalDateTime the date value to supply
+   * @param identifying    whether the value helps identify the job instance
    */
-  public void putDate (String key, Date aDate, boolean identifying) {
+  public void putDate (String key, LocalDateTime aLocalDateTime, boolean identifying) {
 
-    put(key, new DateBatchParameter(aDate, identifying));
+    put(key, new DateBatchParameter(aLocalDateTime, identifying));
   }
 
   /**

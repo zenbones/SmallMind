@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Convenience configuration for tests to bootstrap a console logger with pattern formatting.
@@ -44,7 +44,7 @@ public class TestLoggerConfiguration {
    */
   public static void setup () {
 
-    DateFormatTimestamp fullTimeStamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+    DateFormatTimestamp fullTimeStamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
     PatternFormatter patternFormatter = new PatternFormatter(fullTimeStamp, "%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s");
     ConsoleAppender consoleAppender = new ConsoleAppender(patternFormatter);
     DefaultTemplate defaultTemplate = new DefaultTemplate(Level.DEBUG, true, consoleAppender);

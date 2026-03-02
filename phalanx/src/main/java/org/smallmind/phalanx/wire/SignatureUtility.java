@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.web.json.scaffold.fault.Fault;
 
@@ -92,7 +92,7 @@ public class SignatureUtility {
         }
       } else if (clazz.equals(String.class)) {
         codeBuilder.insert(0, BuiltInType.STRING.getCode());
-      } else if (clazz.equals(Date.class)) {
+      } else if (clazz.equals(LocalDateTime.class)) {
         codeBuilder.insert(0, BuiltInType.DATE.getCode());
       } else if (clazz.equals(Fault.class)) {
         codeBuilder.insert(0, BuiltInType.FAULT.getCode());

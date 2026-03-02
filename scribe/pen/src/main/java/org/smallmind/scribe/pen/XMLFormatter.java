@@ -32,7 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
@@ -169,7 +171,7 @@ public class XMLFormatter implements Formatter {
     for (RecordElement recordElement : recordElements) {
       switch (recordElement) {
         case DATE:
-          appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), false, 1);
+          appendElement(formatBuilder, "date", timestamp.getTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(record.getMillis()), ZoneId.systemDefault())), false, 1);
           break;
         case MILLISECONDS:
           appendElement(formatBuilder, "milliseconds", String.valueOf(record.getMillis()), false, 1);

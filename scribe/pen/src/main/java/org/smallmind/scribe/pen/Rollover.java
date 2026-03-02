@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * Aggregates rollover rules and timestamp formatting for naming rolled log files.
@@ -122,7 +122,7 @@ public class Rollover {
    * @param date date to format
    * @return formatted timestamp suffix
    */
-  public String getTimestampSuffix (Date date) {
+  public String getTimestampSuffix (LocalDateTime date) {
 
     return timestamp.getTimestamp(date);
   }

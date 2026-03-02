@@ -35,7 +35,7 @@ package org.smallmind.scribe.pen.spring.plan;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.scribe.pen.Appender;
@@ -60,8 +60,8 @@ import org.smallmind.scribe.pen.TimestampRolloverRule;
 public class FileLoggingPlan extends LoggingPlan {
 
   private Path logPath = Paths.get("/var/log");
-  private DateFormatTimestamp shortTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd"));
-  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+  private DateFormatTimestamp shortTimestamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
   private TimestampQuantifier rolloverPeriod = TimestampQuantifier.TOP_OF_DAY;
   private long retentionDays = 31;
   private long rolloverMegabyteLimit = 100;

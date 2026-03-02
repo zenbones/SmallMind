@@ -61,6 +61,7 @@ public class JsonCodec {
                                                       // .addModule(new AfterburnerModule())
                                                       .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
                                                       .addModule(new PolymorphicModule())
+                                                      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   /**

@@ -33,7 +33,7 @@
 package org.smallmind.persistence.orm.throng;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.mongodb.throng.index.IndexType;
 import org.smallmind.mongodb.throng.index.annotation.Indexed;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
@@ -48,15 +48,15 @@ import org.smallmind.mongodb.throng.mapping.annotation.Property;
 public abstract class TimestampedThrongDurable<I extends Serializable & Comparable<I>, D extends TimestampedThrongDurable<I, D>> extends ThrongDurable<I, D> {
 
   @Property("created")
-  private Date created;
+  private LocalDateTime created;
   @Property("lastUpdated")
   @Indexed(IndexType.DESCENDING)
-  private Date lastUpdated;
+  private LocalDateTime lastUpdated;
 
   /**
    * @return the creation timestamp
    */
-  public Date getCreated () {
+  public LocalDateTime getCreated () {
 
     return created;
   }
@@ -66,7 +66,7 @@ public abstract class TimestampedThrongDurable<I extends Serializable & Comparab
    *
    * @param created timestamp
    */
-  public void setCreated (Date created) {
+  public void setCreated (LocalDateTime created) {
 
     this.created = created;
   }
@@ -74,7 +74,7 @@ public abstract class TimestampedThrongDurable<I extends Serializable & Comparab
   /**
    * @return the last update timestamp
    */
-  public Date getLastUpdated () {
+  public LocalDateTime getLastUpdated () {
 
     return lastUpdated;
   }
@@ -84,7 +84,7 @@ public abstract class TimestampedThrongDurable<I extends Serializable & Comparab
    *
    * @param lastUpdated timestamp
    */
-  public void setLastUpdated (Date lastUpdated) {
+  public void setLastUpdated (LocalDateTime lastUpdated) {
 
     this.lastUpdated = lastUpdated;
   }
@@ -96,9 +96,9 @@ public abstract class TimestampedThrongDurable<I extends Serializable & Comparab
   public void prePersist () {
 
     if (created == null) {
-      created = new Date();
+      created = LocalDateTime.now();
     }
 
-    lastUpdated = new Date();
+    lastUpdated = LocalDateTime.now();
   }
 }

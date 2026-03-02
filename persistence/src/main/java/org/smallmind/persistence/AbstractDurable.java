@@ -53,7 +53,7 @@ import org.smallmind.nutsnbolts.reflection.Overlay;
  */
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
-  private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
+  private static final ThreadLocal<Set<Durable<?>>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
 
   /**
    * Compares this durable to another, ordering by identifier when both ids are populated.
@@ -119,10 +119,10 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   public boolean equals (Object obj) {
 
     if (obj instanceof Durable) {
-      if ((((Durable)obj).getId() == null) || (getId() == null)) {
+      if ((((Durable<?>)obj).getId() == null) || (getId() == null)) {
         return super.equals(obj);
       } else {
-        return ((Durable)obj).getId().equals(getId());
+        return ((Durable<?>)obj).getId().equals(getId());
       }
     }
 
@@ -135,9 +135,16 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
    * @param durable the durable to compare against
    * @return {@code true} when all properties except the id match, otherwise {@code false}
    */
-  public boolean mirrors (Durable durable) {
+  public boolean mirrors (Durable<?> durable) {
 
-    return mirrors(durable, FieldUtility.getFieldAccessor(this.getClass(), "id").getField());
+    FieldAccessor fieldAccessor;
+
+    if ((fieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id")) == null) {
+      throw new DataIntegrityException("The durable(%s) does not contain an 'id' field", this.getClass().getName());
+    } else {
+
+      return mirrors(durable, fieldAccessor.getField());
+    }
   }
 
   /**
@@ -148,7 +155,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
    * @return {@code true} when the two objects match on all non-excluded fields
    * @throws PersistenceException if an exclusion does not belong to this durable type
    */
-  public boolean mirrors (Durable durable, Field... exclusions) {
+  public boolean mirrors (Durable<?> durable, Field... exclusions) {
 
     if (this.getClass().isAssignableFrom(durable.getClass())) {
 
@@ -159,7 +166,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
 
           excluded = false;
 
-          if ((exclusions != null) && (exclusions.length > 0)) {
+          if (exclusions != null) {
             for (Field exclusion : exclusions) {
               if (exclusion != null) {
                 if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {

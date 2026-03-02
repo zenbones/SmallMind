@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * Timestamp implementation that uses {@link String#format(String, Object...)} with a format string.
@@ -85,7 +85,7 @@ public class FormatStringTimestamp implements Timestamp {
    * @param date date to format
    * @return formatted timestamp
    */
-  public String getTimestamp (Date date) {
+  public String getTimestamp (LocalDateTime date) {
 
     return String.format(format, date);
   }

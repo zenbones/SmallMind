@@ -32,13 +32,11 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Currency;
-import java.util.Objects;
 import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.usertype.UserType;
 
@@ -50,7 +48,6 @@ public class CurrencyUserType implements UserType<Currency> {
 
   /**
    * {@inheritDoc}
-   * <p>
    * Currencies are immutable so the value never changes.
    */
   @Override
@@ -84,31 +81,6 @@ public class CurrencyUserType implements UserType<Currency> {
   /**
    * {@inheritDoc}
    *
-   * @param currency the currency to hash
-   * @return the hash code or zero for null
-   */
-  @Override
-  public int hashCode (Currency currency) {
-
-    return Objects.hashCode(currency);
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @param x first currency
-   * @param y second currency
-   * @return true when both are equal or both null
-   */
-  @Override
-  public boolean equals (Currency x, Currency y) {
-
-    return Objects.equals(x, y);
-  }
-
-  /**
-   * {@inheritDoc}
-   *
    * @param value the value to copy
    * @return the same immutable instance
    */
@@ -120,51 +92,14 @@ public class CurrencyUserType implements UserType<Currency> {
 
   /**
    * {@inheritDoc}
+   * Reads a three-letter ISO currency code from the configured column position and
+   * resolves it to a {@link Currency} instance.
    *
-   * @param cached the cached value
-   * @param owner  entity that owns the value
-   * @return the cached currency instance
-   */
-  @Override
-  public Currency assemble (Serializable cached, Object owner) {
-
-    return (Currency)cached;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @param value the currency to cache
-   * @return the same instance because currencies are immutable
-   */
-  @Override
-  public Serializable disassemble (Currency value) {
-
-    return value;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @param detached detached state
-   * @param managed  managed state (ignored)
-   * @param owner    owning entity (ignored)
-   * @return the detached value as the authoritative instance
-   */
-  @Override
-  public Currency replace (Currency detached, Currency managed, Object owner) {
-
-    return detached;
-  }
-
-  /**
-   * Reads the currency code from the result set and converts it to a {@link Currency}.
-   *
-   * @param rs       result set positioned at the current row
-   * @param position column index to read
-   * @param options  configuration options
-   * @return {@code Currency} instance, or {@code null} if the column is SQL NULL
-   * @throws SQLException if the JDBC driver reports a read error
+   * @param rs       the result set to read from
+   * @param position the 1-based column position
+   * @param options  Hibernate wrapper options
+   * @return the resolved {@link Currency}, or {@code null} if the column is SQL {@code NULL}
+   * @throws SQLException if JDBC access fails
    */
   @Override
   public Currency nullSafeGet (ResultSet rs, int position, WrapperOptions options)
@@ -176,22 +111,24 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * Writes the currency code to the prepared statement, or sets {@code NULL} if absent.
+   * {@inheritDoc}
+   * Writes the {@link Currency#getCurrencyCode() ISO currency code} for the value at the configured
+   * column position, or writes SQL {@code NULL} when the value is {@code null}.
    *
-   * @param st      prepared statement being populated
-   * @param value   currency to write, or {@code null}
-   * @param index   parameter index
-   * @param options configuration options
-   * @throws SQLException if the JDBC driver reports a write error
+   * @param st       the prepared statement to write to
+   * @param value    the currency value to persist
+   * @param position the 1-based parameter position
+   * @param options  Hibernate wrapper options
+   * @throws SQLException if JDBC access fails
    */
   @Override
-  public void nullSafeSet (PreparedStatement st, Currency value, int index, WrapperOptions options)
+  public void nullSafeSet (PreparedStatement st, Currency value, int position, WrapperOptions options)
     throws SQLException {
 
     if (value == null) {
-      st.setNull(index, Types.CHAR);
+      st.setNull(position, Types.CHAR);
     } else {
-      st.setString(index, value.getCurrencyCode());
+      st.setString(position, value.getCurrencyCode());
     }
   }
 }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.schedule.quartz;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 import org.quartz.InterruptableJob;
@@ -54,8 +54,8 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   private final AtomicReference<SuccessOrFailure> statusRef = new AtomicReference<>(SuccessOrFailure.SUCCESS);
   private final LinkedList<Throwable> throwableList;
 
-  private Date startTime;
-  private Date stopTime;
+  private LocalDateTime startTime;
+  private LocalDateTime stopTime;
   private int count = 0;
 
   /**
@@ -97,7 +97,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
    * @return start time, or {@code null} if the job has not run
    */
   @Override
-  public Date getStartTime () {
+  public LocalDateTime getStartTime () {
 
     return startTime;
   }
@@ -108,7 +108,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
    * @return stop time, or {@code null} if the job has not run
    */
   @Override
-  public Date getStopTime () {
+  public LocalDateTime getStopTime () {
 
     return stopTime;
   }
@@ -219,7 +219,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   public void execute (JobExecutionContext jobExecutionContext) {
 
     if (isEnabled()) {
-      startTime = new Date();
+      startTime = LocalDateTime.now();
 
       try {
         threadRef.set(Thread.currentThread());
@@ -233,7 +233,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
         SuccessOrFailure status;
 
         threadRef.set(null);
-        stopTime = new Date();
+        stopTime = LocalDateTime.now();
         status = statusRef.get();
 
         if (SuccessOrFailure.INTERRUPTED.equals(status)) {

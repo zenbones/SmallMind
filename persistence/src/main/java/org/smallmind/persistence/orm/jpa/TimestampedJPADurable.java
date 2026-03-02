@@ -33,11 +33,9 @@
 package org.smallmind.persistence.orm.jpa;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
@@ -51,17 +49,16 @@ import org.smallmind.persistence.Durable;
 @MappedSuperclass
 public abstract class TimestampedJPADurable<I extends Serializable & Comparable<I>, D extends TimestampedJPADurable<I, D>> extends JPADurable<I, D> {
 
-  private Date created;
-  private Date lastUpdated;
+  private LocalDateTime created;
+  private LocalDateTime lastUpdated;
 
   /**
    * @return the creation timestamp set by the persistence provider
    */
 
   @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created", nullable = false, updatable = false)
-  public synchronized Date getCreated () {
+  public synchronized LocalDateTime getCreated () {
 
     return created;
   }
@@ -72,7 +69,7 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
    * @param created the timestamp to set
    * @return this instance for chaining
    */
-  public synchronized D setCreated (Date created) {
+  public synchronized D setCreated (LocalDateTime created) {
 
     this.created = created;
 
@@ -83,9 +80,8 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
    * @return the last update timestamp set by the persistence provider
    */
   @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "last_updated")
-  public synchronized Date getLastUpdated () {
+  public synchronized LocalDateTime getLastUpdated () {
 
     return lastUpdated;
   }
@@ -96,7 +92,7 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
    * @param lastUpdated the timestamp to set
    * @return this instance for chaining
    */
-  public synchronized D setLastUpdated (Date lastUpdated) {
+  public synchronized D setLastUpdated (LocalDateTime lastUpdated) {
 
     this.lastUpdated = lastUpdated;
 
@@ -110,7 +106,7 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
    * @return {@code true} when all other fields mirror
    */
   @Override
-  public boolean mirrors (Durable durable) {
+  public boolean mirrors (Durable<?> durable) {
 
     FieldAccessor idFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id");
     FieldAccessor createdFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "created");

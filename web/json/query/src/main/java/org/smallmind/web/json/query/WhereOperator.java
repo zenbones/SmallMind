@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
 /**
@@ -49,7 +49,7 @@ public enum WhereOperator {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) < 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((Date)op2.get()).before((Date)op1.get());
+          return ((LocalDateTime)op2.get()).isBefore((LocalDateTime)op1.get());
         }
       }
 
@@ -64,7 +64,7 @@ public enum WhereOperator {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) <= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op2.get().equals(op1.get()) || ((Date)op2.get()).before((Date)op1.get());
+          return op2.get().equals(op1.get()) || ((LocalDateTime)op2.get()).isBefore((LocalDateTime)op1.get());
         }
       }
 
@@ -121,7 +121,7 @@ public enum WhereOperator {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) >= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op2.get().equals(op1.get()) || ((Date)op2.get()).after((Date)op1.get());
+          return op2.get().equals(op1.get()) || ((LocalDateTime)op2.get()).isAfter((LocalDateTime)op1.get());
         }
       }
 
@@ -136,7 +136,7 @@ public enum WhereOperator {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) > 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((Date)op2.get()).after((Date)op1.get());
+          return ((LocalDateTime)op2.get()).isAfter((LocalDateTime)op1.get());
         }
       }
       throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());

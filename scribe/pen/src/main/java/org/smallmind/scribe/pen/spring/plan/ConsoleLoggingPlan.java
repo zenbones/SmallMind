@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen.spring.plan;
 
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.ConsoleAppender;
 import org.smallmind.scribe.pen.DateFormatTimestamp;
@@ -43,7 +43,7 @@ import org.smallmind.scribe.pen.PatternFormatter;
  */
 public class ConsoleLoggingPlan extends LoggingPlan {
 
-  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+  private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
   /**
    * Overrides the timestamp format for the console pattern.

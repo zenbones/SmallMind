@@ -32,7 +32,7 @@
  */
 package org.smallmind.schedule.base;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 
 /**
@@ -83,16 +83,16 @@ public interface ProxyJob {
   /**
    * Start time of the current or last execution.
    *
-   * @return the start {@link Date}, or {@code null} if not yet executed
+   * @return the start {@link LocalDateTime}, or {@code null} if not yet executed
    */
-  Date getStartTime ();
+  LocalDateTime getStartTime ();
 
   /**
    * Stop time of the current or last execution.
    *
-   * @return the stop {@link Date}, or {@code null} if not yet executed
+   * @return the stop {@link LocalDateTime}, or {@code null} if not yet executed
    */
-  Date getStopTime ();
+  LocalDateTime getStopTime ();
 
   /**
    * Collection of errors encountered during execution. Implementations may

@@ -39,9 +39,9 @@
 
   <!-- Logging Framework Setup -->
   <bean id="fullTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
-    <property name="dateFormat">
-      <bean class="java.text.SimpleDateFormat">
-        <constructor-arg index="0" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
+    <property name="dateTimeFormatter">
+      <bean class="org.smallmind.scribe.pen.spring.DateTimeFormatterFactoryBean">
+        <property name="pattern" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
       </bean>
     </property>
   </bean>
@@ -62,5 +62,6 @@
   <bean id="logAppender" class="org.smallmind.scribe.pen.AsynchronousAppender">
     <constructor-arg index="0" name="internalAppender" ref="consoleAppender"/>
     <constructor-arg index="1" name="bufferSize" value="100"/>
+    <constructor-arg index="2" name="concurrencyLimit" value="1"/>
   </bean>
 </beans>
