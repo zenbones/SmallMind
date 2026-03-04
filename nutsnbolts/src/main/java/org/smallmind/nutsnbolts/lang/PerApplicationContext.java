@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Holds application-scoped data in an {@link InheritableThreadLocal} map keyed by a
@@ -108,6 +109,17 @@ public class PerApplicationContext {
   }
 
   /**
+   * Wraps a {@link ThreadFactory} so each created thread receives the current per-application context.
+   *
+   * @param threadFactory the delegate factory used to create threads
+   * @return a factory that propagates the current per-application context map to produced threads
+   */
+  public static ThreadFactory wrapThreadFactory (ThreadFactory threadFactory) {
+
+    return new WrappingThreadFactory(PER_APPLICATION_MAP_LOCAL.get(), threadFactory);
+  }
+
+  /**
    * Attaches the current per-application map to the thread, making it available to child threads.
    */
   public void prepareThread () {
@@ -133,6 +145,42 @@ public class PerApplicationContext {
     public void prepareThread () {
 
       PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+    }
+  }
+
+  /**
+   * {@link ThreadFactory} wrapper that propagates a captured per-application context map to each new thread.
+   */
+  public static class WrappingThreadFactory implements ThreadFactory {
+
+    private final ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+    private final ThreadFactory threadFactory;
+
+    /**
+     * Creates a thread factory wrapper bound to the provided per-application context map.
+     *
+     * @param perApplicationMap the context map to attach to threads created by the delegate
+     * @param threadFactory     the delegate factory used to create threads
+     */
+    public WrappingThreadFactory (ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap, ThreadFactory threadFactory) {
+
+      this.perApplicationMap = perApplicationMap;
+      this.threadFactory = threadFactory;
+    }
+
+    /**
+     * Creates a thread that attaches the captured per-application context before running the delegate task.
+     *
+     * @param runnable the task to execute
+     * @return a new thread created by the delegate factory with context propagation applied
+     */
+    @Override
+    public Thread newThread (Runnable runnable) {
+
+      return threadFactory.newThread(() -> {
+        PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+        runnable.run();
+      });
     }
   }
 }
