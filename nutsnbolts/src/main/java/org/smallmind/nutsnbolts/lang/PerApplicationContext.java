@@ -98,10 +98,41 @@ public class PerApplicationContext {
   }
 
   /**
+   * Captures the currently attached per-application context map for later reuse in another thread.
+   *
+   * @return a carrier containing the current thread's per-application map, or {@code null} map if none is attached
+   */
+  public static ContextCarrier generateCarrier () {
+
+    return new ContextCarrier(PER_APPLICATION_MAP_LOCAL.get());
+  }
+
+  /**
    * Attaches the current per-application map to the thread, making it available to child threads.
    */
   public void prepareThread () {
 
     PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+  }
+
+  /**
+   * Captures and re-attaches a per-application context map to another thread.
+   */
+  public static class ContextCarrier {
+
+    private final ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+
+    private ContextCarrier (ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap) {
+
+      this.perApplicationMap = perApplicationMap;
+    }
+
+    /**
+     * Attaches the captured per-application map to the current thread.
+     */
+    public void prepareThread () {
+
+      PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+    }
   }
 }
