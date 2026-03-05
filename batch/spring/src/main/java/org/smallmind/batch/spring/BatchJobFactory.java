@@ -203,6 +203,16 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
+   * Creates a watcher that can block until all known Spring Batch jobs finish.
+   *
+   * @return a watcher bound to this factory's {@link JobRepository}
+   */
+  public BatchJobWatcher watch () {
+
+    return new BatchJobWatcher(jobRepository);
+  }
+
+  /**
    * Launches a job with the supplied parameters.
    *
    * @param logicalName  the logical job name to resolve
