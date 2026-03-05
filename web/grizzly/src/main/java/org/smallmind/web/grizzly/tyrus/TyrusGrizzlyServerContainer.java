@@ -46,6 +46,7 @@ import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.servlet.WebappContext;
+import org.glassfish.tyrus.container.grizzly.server.WebSocketAddOn;
 import org.glassfish.tyrus.core.DebugContext;
 import org.glassfish.tyrus.core.TyrusWebSocketEngine;
 import org.glassfish.tyrus.core.Utils;
@@ -68,7 +69,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   private final String contextPath;
 
   /**
-   * Creates and configures the Tyrus WebSocket engine and attaches a {@link TyrusWebSocketAddOn} to the provided
+   * Creates and configures the Tyrus WebSocket engine and attaches a {@link WebSocketAddOn} to the provided
    * listener.
    *
    * @param httpServer                   Grizzly HTTP server hosting the application
@@ -119,7 +120,7 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
     // idle timeout set to indefinite.
     networkListener.getKeepAlive().setIdleTimeoutInSeconds(-1);
-    networkListener.registerAddOn(new TyrusWebSocketAddOn(this, webappContext.getContextPath(), new HashMap<>()));
+    networkListener.registerAddOn(new WebSocketAddOn(this, webappContext.getContextPath()));
 
     if (includeWsadlSupport) {
       httpServer.getServerConfiguration().addHttpHandler(new WsadlHttpHandler(engine, staticHttpHandler));
