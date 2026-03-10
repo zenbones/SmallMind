@@ -91,6 +91,8 @@
     <glassfish.jaxb.version>4.0.6</glassfish.jaxb.version>
     <google.autoservice.version>1.1.1</google.autoservice.version>
     <grizzly.version>4.0.2</grizzly.version>
+    <!-- 5.0.0 references a snapshot version of the BOM -->
+    <!-- <grizzly.version>5.0.0</grizzly.version> -->
     <grizzly.npn.version>2.0.0</grizzly.npn.version>
     <hdrhistogram.version>2.2.2</hdrhistogram.version>
     <hibernate.version>7.2.0.Final</hibernate.version>
