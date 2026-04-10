@@ -126,7 +126,7 @@
     <jose4j.version>0.9.6</jose4j.version>
     <kafka.version>4.1.1</kafka.version>
     <liquibase.version>5.0.1</liquibase.version>
-    <log4j.version>2.25.3</log4j.version>
+    <log4j.version>2.25.4</log4j.version>
     <maven.version>3.9.12</maven.version>
     <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
     <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
