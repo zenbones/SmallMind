@@ -1,0 +1,1124 @@
+[[memcached, Memcached]]
+= Memcached
+
+[partintro]
+Smallmind Memcached provides two focused modules:
+
+* `memcached-cubby`: a non-blocking memcached client with explicit lifecycle, pluggable routing, key translation, codecs, and optional Spring factory beans
+* `memcached-utility`: a portability layer centered on `ProxyMemcachedClient`, plus an in-memory implementation and simple server descriptors
+
+The design stays library-safe. Startup and shutdown are explicit, higher layers can depend on a narrow cache contract, and memcached-specific decisions such as routing, key encoding, serialization, and reconnect behavior remain visible.
+
+Audience: developers wiring memcached into applications or reusable libraries.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<memcached-reading-paths,Reading Paths>>
+* <<memcached-at-a-glance,At A Glance>>
+* <<memcached-choose-module,Choose A Module>>
+* <<memcached-why-use,Why Use Smallmind Memcached>>
+* <<memcached-comparison,Comparison To Other Clients>>
+* <<memcached-layout,Project Layout>>
+* <<memcached-installation,Installation>>
+* <<memcached-quick-start,Quick Start>>
+* <<memcached-core-types,Core Types>>
+* <<memcached-use-cases,API By Use Case>>
+* <<memcached-configuration,Configuration And Presets>>
+* <<memcached-routing,Routing And Key Translation>>
+* <<memcached-codecs,Codecs And Value Design>>
+* <<memcached-advanced,Advanced Command API>>
+* <<memcached-spring,Spring Wiring>>
+* <<memcached-inmemory,In-Memory Client>>
+* <<memcached-lifecycle,Lifecycle And Failure Handling>>
+* <<memcached-errors,Error Model>>
+* <<memcached-defaults,Defaults Reference>>
+* <<memcached-edge-cases,Behavioral Edge Cases>>
+* <<memcached-troubleshooting,Troubleshooting>>
+* <<memcached-verification,Verification Checklist>>
+
+[[memcached-reading-paths, Reading Paths]]
+== Reading Paths
+
+First-time integration path:
+
+1. <<memcached-choose-module,Choose A Module>>
+2. <<memcached-why-use,Why Use Smallmind Memcached>>
+3. <<memcached-comparison,Comparison To Other Clients>>
+4. <<memcached-installation,Installation>>
+5. <<memcached-quick-start,Quick Start>>
+6. <<memcached-use-cases,API By Use Case>>
+7. <<memcached-configuration,Configuration And Presets>>
+8. <<memcached-routing,Routing And Key Translation>>
+9. <<memcached-codecs,Codecs And Value Design>>
+10. <<memcached-spring,Spring Wiring>> if you use Spring
+
+Reference and operations path:
+
+* <<memcached-core-types,Core Types>>
+* <<memcached-defaults,Defaults Reference>>
+* <<memcached-edge-cases,Behavioral Edge Cases>>
+* <<memcached-troubleshooting,Troubleshooting>>
+
+[[memcached-at-a-glance, At A Glance]]
+== At A Glance
+
+=== Integration Model In 60 Seconds
+
+1. Depend on `ProxyMemcachedClient` in higher-level code when you want to swap real and test implementations cleanly.
+2. Use `CubbyMemcachedClient` for production memcached traffic and `InMemoryMemcachedClient` for deterministic local tests.
+3. Build a `CubbyConfiguration` explicitly so routing, key translation, codecs, authentication, and timeouts are visible.
+4. Start `CubbyMemcachedClient` before first use and stop or shut it down explicitly on application shutdown.
+5. Keep memcached host names stable because routing strategies use them as identities.
+6. Choose `DefaultKeyLocator` or `MaglevKeyLocator` deliberately, and remember that `DefaultKeyTranslator` base64-encodes every key.
+7. Use the higher-level methods for ordinary cache work and `send (Command, Long)` only for add, replace, append, prepend, arithmetic, or other low-level cases.
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Memcached parent
+|`org.smallmind:smallmind-memcached`
+|Aggregator POM
+
+|Cubby client
+|`org.smallmind:memcached-cubby`
+|NIO memcached client, meta text protocol command layer, routing and codec extension points, and Spring factory beans
+
+|Utility
+|`org.smallmind:memcached-utility`
+|`ProxyMemcachedClient`, `ProxyCASResponse`, in-memory substitute, `MemcachedServer`, and utility Spring beans
+|===
+
+[[memcached-choose-module, Choose A Module]]
+== Choose A Module
+
+[cols="2,4",options="header"]
+|===
+|If you need... |Use...
+
+|A real memcached client with explicit lifecycle and routing control
+|`memcached-cubby`
+
+|A portability boundary for higher-level code
+|`memcached-utility`
+
+|A deterministic test or local-only implementation with no server dependency
+|`memcached-utility` and `InMemoryMemcachedClient`
+
+|A real client plus a neutral abstraction for the code above it
+|both modules, usually by depending on `memcached-cubby` because it already brings in `memcached-utility`
+
+|Spring bean materialization around memcached configuration and server lists
+|`memcached-cubby` for the client factory beans, optionally `memcached-utility` for the array-based server factory bean
+|===
+
+[[memcached-why-use, Why Use Smallmind Memcached]]
+== Why Use Smallmind Memcached
+
+Use this module when you want memcached integration to stay explicit and library-safe.
+
+What it does well:
+
+* keeps application code decoupled from the concrete client through `ProxyMemcachedClient`
+* exposes the real integration decisions instead of hiding them behind a framework cache abstraction
+* uses memcached meta text commands directly through focused command types such as `GetCommand`, `SetCommand`, `DeleteCommand`, and `ArithmeticCommand`
+* gives you first-class extension points for routing, key translation, and serialization
+* includes a built-in in-memory substitute for tests and local-only execution
+* keeps Spring support optional and limited to object construction and lifecycle handoff
+
+This module is a good fit when:
+
+* you need one small cache contract that libraries and applications can both depend on
+* you want explicit startup, shutdown, reconnect, and timeout behavior
+* you want to control how keys are mapped, encoded, and serialized
+* you need add, replace, append, prepend, or arithmetic commands without adopting a larger cache framework
+
+It works especially well for explicit lifecycle management, narrow cache contracts in shared code, and integrations that want routing, key translation, and serialization policy to stay visible.
+
+[[memcached-comparison, Comparison To Other Clients]]
+== Comparison To Other Clients
+
+Whalin and XMemcached are the natural comparison points.
+Cubby emphasizes explicit lifecycle, a narrow cache contract for higher layers, visible routing and serialization policy, and optional Spring wiring that stops at object construction.
+
+=== Compared To Whalin
+
+Whalin's `MemCachedClient` is built around `SockIOPool` setup and a direct client API with pool names, optional hash-code overloads, and server-wide operations such as `flushAll ()`, `stats ()`, and `getMulti (...)`.
+Cubby is a better fit when you want:
+
+* client lifecycle on the instance itself through `start ()`, `stop ()`, and `shutdown ()` rather than a shared static pool
+* one explicit `CubbyConfiguration` for codec, key translation, routing, authentication, and timeout policy
+* Use of the latest meta text protocol
+* higher-level code typed to `ProxyMemcachedClient` instead of the concrete client
+
+Choose Whalin when you already have a `SockIOPool`-centric integration or need that exact API.
+Choose Cubby when you want per-client ownership, smaller portability seams, and fewer global assumptions.
+
+=== Compared To XMemcached
+
+XMemcached is a broader direct client with dynamic server management, client state listeners, connection pool controls, heartbeat and failure-mode settings, and transcoder-oriented APIs.
+Cubby is a better fit when you want the memcached integration surface to stay smaller and more explicit:
+
+* most application code can depend on `ProxyMemcachedClient`, leaving Cubby-only methods in infrastructure code
+* routing, key translation, and codec selection are first-class collaborators instead of incidental configuration
+* Use of the latest meta text protocol
+* the advanced surface is focused on memcached command types through `send (Command, Long)` rather than a very large general client interface
+
+Choose XMemcached when you want a feature-rich direct client and are comfortable exposing that client model more widely.
+Choose Cubby when you want a library-safe abstraction boundary and explicit control over routing, keys, and value encoding.
+
+[[memcached-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`memcached/`
+|`org.smallmind:smallmind-memcached`
+|Aggregator POM
+
+|`memcached/cubby/`
+|`org.smallmind:memcached-cubby`
+|Client implementation and Spring helpers in `org.smallmind.memcached.cubby`
+
+|`memcached/utility/`
+|`org.smallmind:memcached-utility`
+|Neutral interfaces, in-memory client, and server helpers in `org.smallmind.memcached.utility`
+|===
+
+[[memcached-installation, Installation]]
+== Installation
+
+=== Real Client Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>memcached-cubby</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependencies declared by `memcached/cubby/pom.xml`:
+
+* `org.smallmind:memcached-utility`
+* `org.smallmind:scribe-pen`
+* `org.smallmind:smallmind-nutsnbolts`
+* `org.springframework:spring-beans`
+* `io.whitfin:siphash` as an optional dependency
+
+[IMPORTANT]
+====
+If you use `MaglevKeyLocator` or `CubbyConfiguration.OPTIMAL`, declare `io.whitfin:siphash` explicitly in your application. The dependency is optional in the POM and may not be present on your runtime classpath otherwise.
+====
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.whitfin</groupId>
+  <artifactId>siphash</artifactId>
+</dependency>
+----
+
+=== Abstraction And Test Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>memcached-utility</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+`memcached-utility` only requires `smallmind-nutsnbolts` directly. Its Spring dependency is optional.
+
+[NOTE]
+====
+`memcached-cubby` logs lifecycle and reconnect events through Scribe's `LoggerManager`. If you want those messages, include the Scribe runtime pieces your application normally uses.
+====
+
+[[memcached-quick-start, Quick Start]]
+== Quick Start
+
+=== Explicit Production-Style Client Wiring
+
+Use a fresh `CubbyConfiguration` rather than mutating `CubbyConfiguration.DEFAULT` or `CubbyConfiguration.OPTIMAL` directly.
+
+[source,java]
+----
+import org.smallmind.memcached.cubby.CubbyConfiguration;
+import org.smallmind.memcached.cubby.CubbyMemcachedClient;
+import org.smallmind.memcached.cubby.MemcachedHost;
+import org.smallmind.memcached.cubby.codec.LargeValueCompressingCodec;
+import org.smallmind.memcached.cubby.codec.ObjectStreamCubbyCodec;
+import org.smallmind.memcached.cubby.locator.MaglevKeyLocator;
+import org.smallmind.memcached.cubby.translator.DefaultKeyTranslator;
+import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
+
+CubbyConfiguration configuration = new CubbyConfiguration()
+    .setCodec(new LargeValueCompressingCodec(new ObjectStreamCubbyCodec()))
+    .setKeyLocator(new MaglevKeyLocator())
+    .setKeyTranslator(new LargeKeyHashingTranslator(new DefaultKeyTranslator()))
+    .setDefaultRequestTimeoutMilliseconds(1500)
+    .setConnectionTimeoutMilliseconds(2000)
+    .setReadTimeoutMilliseconds(5000)
+    .setKeepAliveSeconds(15)
+    .setResuscitationSeconds(10)
+    .setConnectionsPerHost(2);
+
+CubbyMemcachedClient client = new CubbyMemcachedClient(
+    configuration,
+    new MemcachedHost("cache-a", "cache-a.example.net", 11211),
+    new MemcachedHost("cache-b", "cache-b.example.net", 11211)
+);
+
+client.start();
+try {
+  client.set("session:42", 900, "signed-in");
+
+  String value = client.get("session:42");
+  String refreshedValue = client.getAndTouch("session:42", 900);
+  boolean deleted = client.delete("session:42");
+} finally {
+  client.stop();
+}
+----
+
+That example mirrors the built-in `OPTIMAL` preset without sharing the preset instance itself.
+
+=== First CAS Update
+
+[source,java]
+----
+import org.smallmind.memcached.utility.ProxyCASResponse;
+
+ProxyCASResponse<String> current = client.casGet("leader");
+
+if (current == null) {
+  client.set("leader", 60, "node-a");
+} else {
+  boolean updated = client.casSet(
+      "leader",
+      60,
+      current.getValue() + ",node-b",
+      current.getCas()
+  );
+
+  if (!updated) {
+    // another writer won the race; re-read and retry if your use case requires it
+  }
+}
+----
+
+=== First In-Memory Test
+
+[source,java]
+----
+import org.smallmind.memcached.utility.InMemoryMemcachedClient;
+import org.smallmind.memcached.utility.ProxyMemcachedClient;
+import org.testng.Assert;
+
+ProxyMemcachedClient client = new InMemoryMemcachedClient();
+
+client.set("session:42", 30, "active");
+Assert.assertEquals(client.get("session:42"), "active");
+
+client.clear();
+Assert.assertNull(client.get("session:42"));
+----
+
+[[memcached-core-types, Core Types]]
+== Core Types
+
+[cols="2,2,4",options="header"]
+|===
+|Type |Module |Role
+
+|`ProxyMemcachedClient`
+|`memcached-utility`
+|Minimal cache contract for get, set, CAS, delete, touch, get-and-touch, clear, and shutdown
+
+|`ProxyCASResponse<T>`
+|`memcached-utility`
+|Portable value plus CAS token wrapper
+
+|`InMemoryMemcachedClient`
+|`memcached-utility`
+|Synchronized in-memory implementation for tests and local-only execution
+
+|`MemcachedServer`
+|`memcached-utility`
+|Simple host and port value object
+
+|`CubbyMemcachedClient`
+|`memcached-cubby`
+|Real memcached client with explicit `start ()`, `stop ()`, and low-level `send (Command, Long)`
+
+|`CASValue<T>`
+|`memcached-cubby`
+|Cubby implementation of `ProxyCASResponse<T>`
+
+|`CubbyConfiguration`
+|`memcached-cubby`
+|Holder for codec, routing, translation, authentication, and timeout decisions
+
+|`MemcachedHost`
+|`memcached-cubby`
+|Host identity used by Cubby for routing and reconnection
+|===
+
+[NOTE]
+====
+`CubbyMemcachedClient` adds `start ()`, `stop ()`, `send (Command, Long)`, and `casGetAndTouch (...)` beyond the `ProxyMemcachedClient` interface. Keep those extra methods in infrastructure code, not deep in higher-level libraries, unless your library deliberately exposes Cubby-specific behavior.
+====
+
+[[memcached-use-cases, API By Use Case]]
+== API By Use Case
+
+=== Keep Higher Layers Typed To `ProxyMemcachedClient`
+
+[source,java]
+----
+import org.smallmind.memcached.utility.ProxyMemcachedClient;
+
+public class SessionCache {
+
+  private final ProxyMemcachedClient memcachedClient;
+
+  public SessionCache (ProxyMemcachedClient memcachedClient) {
+
+    this.memcachedClient = memcachedClient;
+  }
+
+  public void put (String sessionId, String state)
+    throws Exception {
+
+    memcachedClient.set("session:" + sessionId, 900, state);
+  }
+
+  public String get (String sessionId)
+    throws Exception {
+
+    return memcachedClient.get("session:" + sessionId);
+  }
+}
+----
+
+That keeps application logic portable. Production can inject `CubbyMemcachedClient`; tests can inject `InMemoryMemcachedClient`.
+
+=== Refresh TTL Without Fetching The Value
+
+[source,java]
+----
+boolean refreshed = client.touch("session:42", 900);
+----
+
+`touch (...)` returns `false` when the key is missing or expired.
+
+=== Read And Refresh In One Call
+
+[source,java]
+----
+String value = client.getAndTouch("session:42", 900);
+----
+
+Use `CubbyMemcachedClient.casGetAndTouch (...)` when you need the CAS token and the TTL refresh together.
+
+=== Fetch Several Keys
+
+[source,java]
+----
+import java.util.Arrays;
+import java.util.Map;
+
+Map<String, String> values = client.get(Arrays.asList(
+    "session:1",
+    "session:2",
+    "session:3"
+));
+----
+
+On Cubby, this is currently implemented as a sequence of single-key gets rather than one multi-key protocol request.
+
+=== Delete Conditionally With CAS
+
+[source,java]
+----
+import org.smallmind.memcached.utility.ProxyCASResponse;
+
+ProxyCASResponse<String> existing = client.casGet("lease:42");
+
+if (existing != null) {
+  boolean removed = client.casDelete("lease:42", existing.getCas());
+}
+----
+
+[[memcached-configuration, Configuration And Presets]]
+== Configuration And Presets
+
+`CubbyConfiguration` holds every meaningful client decision in one place.
+
+=== Built-In Presets
+
+[cols="2,3,4",options="header"]
+|===
+|Preset |Composition |When To Use It
+
+|`CubbyConfiguration.DEFAULT`
+|`ObjectStreamCubbyCodec`, `DefaultKeyLocator`, `DefaultKeyTranslator`
+|Simple setups where Java serialization is acceptable and you do not need long-key hashing or Maglev routing
+
+|`CubbyConfiguration.OPTIMAL`
+|`LargeValueCompressingCodec(new ObjectStreamCubbyCodec())`, `MaglevKeyLocator`, `LargeKeyHashingTranslator(new DefaultKeyTranslator())`
+|Most production-style deployments, provided `io.whitfin:siphash` is on the classpath
+|===
+
+[IMPORTANT]
+====
+`CubbyConfiguration.DEFAULT` and `CubbyConfiguration.OPTIMAL` are shared mutable instances, not factories and not defensive copies. Treat them as templates only. If you want to override any setting safely, construct a fresh `CubbyConfiguration` and apply the collaborators explicitly.
+====
+
+=== Property Reference
+
+[cols="2,2,4",options="header"]
+|===
+|Property |Meaning |When To Change It
+
+|`codec`
+|Value serializer and deserializer
+|Change it when you do not want Java object serialization or you want a custom wire format
+
+|`keyLocator`
+|Routing strategy from translated key to host
+|Change it when cluster rebalance behavior matters
+
+|`keyTranslator`
+|Translation layer from application key to memcached-safe wire key
+|Change it when you need a specific key encoding or long-key handling policy
+
+|`authentication`
+|Username and password sent when each connection starts
+|Set it only if your memcached deployment expects credentials
+
+|`defaultRequestTimeoutMilliseconds`
+|How long normal client calls wait for a response
+|Set it in production unless indefinite waits are acceptable
+
+|`connectionTimeoutMilliseconds`
+|Socket connect timeout
+|Shorten or lengthen it to match your network path and startup expectations
+
+|`readTimeoutMilliseconds`
+|Socket read timeout used by the reconnect probe socket
+|Change it when reconnect probe timing needs adjustment
+
+|`keepAliveSeconds`
+|Idle interval before Cubby sends a noop
+|Tune it if you need more or less frequent liveness traffic
+
+|`resuscitationSeconds`
+|Delay between probes of inactive hosts
+|Tune it to change how aggressively Cubby attempts reconnection
+
+|`connectionsPerHost`
+|Number of independent connection coordinators per host set
+|Increase it only after measuring throughput and thread impact
+|===
+
+=== Authentication Example
+
+[source,java]
+----
+import org.smallmind.memcached.cubby.Authentication;
+import org.smallmind.memcached.cubby.CubbyConfiguration;
+
+CubbyConfiguration configuration = new CubbyConfiguration()
+    .setAuthentication(new Authentication("memcached-user", "memcached-password"));
+----
+
+If authentication is not required, leave the property unset. Cubby sends the configured credentials when each connection starts.
+
+[[memcached-routing, Routing And Key Translation]]
+== Routing And Key Translation
+
+Cubby routes by translated key, not by the original application key.
+
+=== Routing Strategies
+
+[cols="2,3,4",options="header"]
+|===
+|Type |Behavior |Notes
+
+|`DefaultKeyLocator`
+|Hashes keys across the active host set
+|Simple and dependency-free
+
+|`MaglevKeyLocator`
+|Uses Maglev-style consistent routing over virtual hosts
+|Better fit when the active host set changes and you want more stable distribution; requires `io.whitfin:siphash`
+|===
+
+=== Stable Host Names Matter
+
+`MemcachedHost` takes both a routing name and a network address.
+The name is not cosmetic. Routing strategies use it as the host identity.
+Keep names unique and stable across deployments if you want predictable distribution.
+
+[source,java]
+----
+new MemcachedHost("cache-a", "10.20.0.11", 11211)
+new MemcachedHost("cache-b", "10.20.0.12", 11211)
+----
+
+=== Key Translators
+
+[cols="2,3,4",options="header"]
+|===
+|Type |Behavior |Notes
+
+|`DefaultKeyTranslator`
+|Base64-encodes every key
+|Even short plain ASCII keys become encoded wire keys
+
+|`LargeKeyHashingTranslator`
+|Delegates first, then hashes when the translated key exceeds memcached's 250 character limit
+|Wrap it around another translator, usually `DefaultKeyTranslator`
+|===
+
+[NOTE]
+====
+If you inspect memcached directly, the stored keys will usually not match your application keys. With the default translator they are base64-encoded, and with the large-key translator very long keys become SHA3-512 hashes encoded with base64.
+====
+
+[[memcached-codecs, Codecs And Value Design]]
+== Codecs And Value Design
+
+=== Built-In Codecs
+
+[cols="2,3,4",options="header"]
+|===
+|Type |Behavior |Notes
+
+|`ObjectStreamCubbyCodec`
+|Uses standard Java object streams
+|Values must be serializable; `null` values are rejected
+
+|`LargeValueCompressingCodec`
+|Decorates another codec and compresses payloads whose serialized form is at least 16384 bytes
+|When used with the built-in object stream codec, compressed payloads are wrapped in `GzipObjectWrapper`
+|===
+
+`ObjectStreamCubbyCodec` resolves classes first through normal object stream lookup and then through the thread context class loader. That makes it a practical default for container and plugin-style environments.
+
+=== Simple Custom Codec Example
+
+[source,java]
+----
+import java.nio.charset.StandardCharsets;
+import org.smallmind.memcached.cubby.codec.CubbyCodec;
+
+public class Utf8StringCodec implements CubbyCodec {
+
+  @Override
+  public byte[] serialize (Object obj) {
+
+    if (obj == null) {
+      throw new NullPointerException("Can not serialize a null value");
+    }
+
+    return ((String)obj).getBytes(StandardCharsets.UTF_8);
+  }
+
+  @Override
+  public Object deserialize (byte[] bytes) {
+
+    return new String(bytes, StandardCharsets.UTF_8);
+  }
+}
+----
+
+Use it like this:
+
+[source,java]
+----
+CubbyConfiguration configuration = new CubbyConfiguration()
+    .setCodec(new Utf8StringCodec());
+----
+
+[IMPORTANT]
+====
+If you wrap a custom codec in `LargeValueCompressingCodec`, the delegate codec must be able to serialize and deserialize `GzipObjectWrapper` instances as well as your domain values.
+====
+
+[[memcached-advanced, Advanced Command API]]
+== Advanced Command API
+
+The high-level client methods intentionally cover the common cache operations only:
+
+* `get`
+* `casGet`
+* `set`
+* `casSet`
+* `delete`
+* `casDelete`
+* `touch`
+* `getAndTouch`
+* `casGetAndTouch` on `CubbyMemcachedClient`
+
+For add, replace, append, prepend, or arithmetic commands, use `send (Command, Long)` with the command types in `org.smallmind.memcached.cubby.command`.
+
+=== Available Command Types
+
+[cols="2,4",options="header"]
+|===
+|Command |Purpose
+
+|`GetCommand`
+|Low-level get, get-with-cas, touch, and get-and-touch command construction
+
+|`SetCommand`
+|Set plus `SetMode.ADD`, `SetMode.REPLACE`, `SetMode.APPEND`, and `SetMode.PREPEND`
+
+|`DeleteCommand`
+|Delete with optional CAS token
+
+|`ArithmeticCommand`
+|Increment and decrement with optional initial value, expiration, and CAS token
+
+|`NoopCommand`
+|Explicit noop for liveness or transport testing
+|===
+
+=== Add If Absent
+
+[source,java]
+----
+import java.nio.charset.StandardCharsets;
+import org.smallmind.memcached.cubby.command.SetCommand;
+import org.smallmind.memcached.cubby.command.SetMode;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
+
+SetCommand add = new SetCommand()
+    .setKey("lease:42")
+    .setMode(SetMode.ADD)
+    .setExpiration(30)
+    .setValue("claimed".getBytes(StandardCharsets.UTF_8));
+
+Response addResponse = client.send(add, null);
+boolean created = ResponseCode.HD.equals(addResponse.getCode());
+----
+
+=== Increment A Counter
+
+[source,java]
+----
+import java.nio.charset.StandardCharsets;
+import org.smallmind.memcached.cubby.command.ArithmeticCommand;
+import org.smallmind.memcached.cubby.response.Response;
+import org.smallmind.memcached.cubby.response.ResponseCode;
+
+Response response = client.send(
+    new ArithmeticCommand()
+        .setKey("counter:jobs")
+        .setInitial(0)
+        .setDelta(1),
+    1000L
+);
+
+if (!ResponseCode.VA.equals(response.getCode())) {
+  throw new IllegalStateException("Counter update failed: " + response.getCode());
+}
+
+long currentValue = Long.parseLong(new String(response.getValue(), StandardCharsets.UTF_8));
+----
+
+[NOTE]
+====
+The second argument to `send (Command, Long)` is currently applied as milliseconds even though the parameter name says `timeoutSeconds`. Pass `1000L` for roughly one second, `0L` to wait indefinitely, or `null` to use `defaultRequestTimeoutMilliseconds`.
+====
+
+=== Append Or Prepend With Vivify
+
+`SetCommand.setVivify (true)` only matters for append and prepend modes. When enabled, Cubby asks memcached to create the key if it does not already exist, using the supplied expiration or `0` if none is supplied.
+
+[[memcached-spring, Spring Wiring]]
+== Spring Wiring
+
+Spring support stays narrow. The factory beans construct values and, in the client case, bridge startup and shutdown.
+They do not add cache policy, discovery, or hidden runtime behavior.
+
+=== XML Example
+
+[source,xml]
+----
+<bean id="memcachedConfiguration"
+      class="org.smallmind.memcached.cubby.spring.CubbyConfigurationFactoryBean">
+  <property name="initial" value="OPTIMAL"/>
+  <property name="defaultRequestTimeoutMilliseconds" value="1500"/>
+  <property name="connectionTimeoutMilliseconds" value="2000"/>
+  <property name="keepAliveSeconds" value="15"/>
+  <property name="resuscitationSeconds" value="10"/>
+  <property name="connectionsPerHost" value="2"/>
+</bean>
+
+<bean id="memcachedServers"
+      class="org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean">
+  <property name="serverPattern" value="cache-#.example.net:11211"/>
+  <property name="serverSpread" value="1-3"/>
+</bean>
+
+<bean id="memcachedClient"
+      class="org.smallmind.memcached.cubby.spring.CubbyMemcachedClientFactoryBean">
+  <property name="configuration" ref="memcachedConfiguration"/>
+  <property name="servers" ref="memcachedServers"/>
+</bean>
+----
+
+That expands the server map to three named entries:
+
+* `1 -> cache-1.example.net:11211`
+* `2 -> cache-2.example.net:11211`
+* `3 -> cache-3.example.net:11211`
+
+When the pattern does not contain `#`, `MemcachedServerMapFactoryBean` creates a single entry named `memcached` and uses port `11211` when no port is provided.
+
+=== Available Factory Beans
+
+[cols="2,4",options="header"]
+|===
+|Factory bean |Purpose
+
+|`CubbyConfigurationFactoryBean`
+|Materializes a `CubbyConfiguration` from a preset plus optional overrides
+
+|`MemcachedServerMapFactoryBean`
+|Builds `Map<String, MemcachedServer>` from a server pattern and a spread
+
+|`CubbyMemcachedClientFactoryBean`
+|Creates, starts, and later stops `CubbyMemcachedClient`
+
+|`MemcachedServerFactoryBean`
+|Builds a `MemcachedServer[]` from a pattern and a spread for array-based use cases outside Cubby's map-based client factory
+|===
+
+[IMPORTANT]
+====
+`CubbyConfigurationFactoryBean` starts from the shared `DEFAULT` or `OPTIMAL` configuration instance and then mutates it. It also does not expose a `readTimeoutMilliseconds` property. If you need isolated configuration objects or a non-default read timeout, declare `CubbyConfiguration` directly as a Spring bean instead of relying on the preset factory bean.
+====
+
+[NOTE]
+====
+`CubbyMemcachedClientFactoryBean` produces no client when `enabled` is `false` or the `servers` map is empty. In those cases `getObject ()` returns `null`.
+====
+
+[[memcached-inmemory, In-Memory Client]]
+== In-Memory Client
+
+`InMemoryMemcachedClient` is useful when you want deterministic tests or a local-only execution mode without a running memcached server.
+
+What it does:
+
+* stores values in a synchronized `HashMap`
+* tracks CAS tokens with an internal counter
+* honors expiration times in seconds
+* supports `clear ()`
+* treats `shutdown ()` as a no-op
+
+=== Example
+
+[source,java]
+----
+import org.smallmind.memcached.utility.InMemoryMemcachedClient;
+import org.smallmind.memcached.utility.ProxyCASResponse;
+
+InMemoryMemcachedClient client = new InMemoryMemcachedClient();
+
+client.set("counter", 10, "1");
+ProxyCASResponse<String> current = client.casGet("counter");
+client.casSet("counter", 10, "2", current.getCas());
+client.clear();
+----
+
+=== Important Differences From Cubby
+
+[cols="2,3,4",options="header"]
+|===
+|Area |Cubby |In-memory
+
+|`get (Collection<String>)` miss handling
+|Returns every requested key, including misses as `null` values
+|Returns only keys that were found
+
+|`casSet (...)` when the key is missing
+|Fails unless you deliberately use the Cubby add-style `cas == 0` path
+|Currently inserts the value even when the supplied CAS is non-zero
+
+|`clear ()`
+|Throws `UnsupportedOperationException`
+|Clears the internal map
+
+|`getDefaultTimeout ()`
+|Uses `defaultRequestTimeoutMilliseconds` from the configuration, which defaults to `0`
+|Always returns `5000`
+|===
+
+If those differences matter to your tests, verify the behavior against a real Cubby client as well.
+
+[[memcached-lifecycle, Lifecycle And Failure Handling]]
+== Lifecycle And Failure Handling
+
+[cols="2,4",options="header"]
+|===
+|Concern |Behavior
+
+|Startup
+|`CubbyMemcachedClient.start ()` opens all configured connections and sends credentials if authentication is configured
+
+|Shutdown
+|`stop ()` closes connections explicitly; `shutdown ()` delegates to `stop ()`
+
+|Threads
+|Each connection coordinator starts one defibrillator thread plus one connection thread per host. Total thread count is roughly `connectionsPerHost * (hostCount + 1)`.
+
+|Keepalive
+|Idle connections issue a `NoopCommand` after `keepAliveSeconds` with no selector activity
+
+|Host failure
+|Unexpected disconnects mark the host inactive and remove it from routing
+
+|Reconnect
+|The defibrillator probes inactive hosts every `resuscitationSeconds` and restores them to routing when they respond
+
+|No active host
+|Routing fails with `NoAvailableHostException`
+
+|Request waiting
+|Normal client methods wait for `defaultRequestTimeoutMilliseconds`; `0` means wait indefinitely
+
+|Probe read timeout
+|`readTimeoutMilliseconds` is used by the reconnect probe socket, not by the normal request wait path
+|===
+
+[[memcached-errors, Error Model]]
+== Error Model
+
+`ProxyMemcachedClient` uses broad `throws Exception` signatures because the interface has to cover both the real and in-memory implementations.
+When you work directly with Cubby, the common checked failures are more specific.
+
+[cols="2,4",options="header"]
+|===
+|Exception |Meaning
+
+|`CubbyOperationException`
+|Logical or protocol-adjacent failure such as a stopped client, missing routed connection, or routing installation problem
+
+|`ConnectionTimeoutException`
+|A socket could not connect within `connectionTimeoutMilliseconds`
+
+|`ResponseTimeoutException`
+|The client waited longer than the configured or supplied request timeout for a response
+
+|`NoAvailableHostException`
+|No active memcached host could be selected for the key
+
+|`ServerClosedException`
+|The remote server closed the socket while Cubby was reading
+
+|`IncomprehensibleRequestException`
+|A request could not be encoded or the server returned a generic `ERROR`
+
+|`IncomprehensibleResponseException`
+|Cubby could not parse the response bytes it received
+
+|`UnexpectedResponseException`
+|A response code did not match what the command helper expected
+|===
+
+[[memcached-defaults, Defaults Reference]]
+== Defaults Reference
+
+=== Configuration Defaults
+
+[cols="2,2,4",options="header"]
+|===
+|Setting |Default |Notes
+
+|`codec`
+|`ObjectStreamCubbyCodec`
+|`OPTIMAL` replaces it with `LargeValueCompressingCodec(new ObjectStreamCubbyCodec())`
+
+|`keyLocator`
+|`DefaultKeyLocator`
+|`OPTIMAL` replaces it with `MaglevKeyLocator`
+
+|`keyTranslator`
+|`DefaultKeyTranslator`
+|`OPTIMAL` replaces it with `LargeKeyHashingTranslator(new DefaultKeyTranslator())`
+
+|`authentication`
+|`null`
+|No credentials sent
+
+|`defaultRequestTimeoutMilliseconds`
+|`0`
+|Wait indefinitely
+
+|`connectionTimeoutMilliseconds`
+|`3000`
+|Used during connect attempts
+
+|`readTimeoutMilliseconds`
+|`30000`
+|Used by reconnect probe sockets
+
+|`keepAliveSeconds`
+|`30`
+|Idle interval before noop
+
+|`resuscitationSeconds`
+|`10`
+|Delay between inactive-host probes
+
+|`connectionsPerHost`
+|`1`
+|One coordinator and one connection thread per host by default
+|===
+
+=== High-Level Operation Surface
+
+[cols="2,3,4",options="header"]
+|===
+|Method |Cubby |Notes
+
+|`getDefaultTimeout ()`
+|Configured request timeout
+|Defaults to `0`
+
+|`get (String)`
+|Supported
+|Returns `null` on miss
+
+|`get (Collection<String>)`
+|Supported
+|Sequential single-key gets
+
+|`casGet (String)`
+|Supported
+|Returns `CASValue<T>` or `null`
+
+|`set (...)`
+|Supported
+|Serializes through the configured codec
+
+|`casSet (...)`
+|Supported
+|Conditional set with CAS token
+
+|`delete (...)`
+|Supported
+|Missing keys still report success
+
+|`casDelete (...)`
+|Supported
+|Conditional delete with CAS token
+
+|`touch (...)`
+|Supported
+|TTL refresh without value fetch
+
+|`getAndTouch (...)`
+|Supported
+|Fetches and refreshes TTL
+
+|`clear ()`
+|Not supported
+|Throws `UnsupportedOperationException`
+|===
+
+[[memcached-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,4",options="header"]
+|===
+|Behavior |What To Know
+
+|Shared presets
+|`CubbyConfiguration.DEFAULT` and `CubbyConfiguration.OPTIMAL` are shared mutable instances. Do not treat them as builders.
+
+|Translated keys
+|The default translator base64-encodes every key. Very long keys may be hashed as well. Raw memcached inspection will not show your original application keys.
+
+|Multi-key get semantics differ by implementation
+|Cubby includes requested misses as `null` values. `InMemoryMemcachedClient` omits them.
+
+|`clear ()` is not portable
+|`ProxyMemcachedClient` declares it, but only the in-memory implementation actually clears entries.
+
+|`casSet (...)` is not semantically identical in memory
+|The in-memory client currently allows missing-key inserts even with a non-zero CAS token.
+
+|`send (Command, Long)` timeout unit
+|The supplied value is applied as milliseconds in the current implementation.
+
+|`readTimeoutMilliseconds` does not cap normal requests
+|Use `defaultRequestTimeoutMilliseconds` or the low-level `send (...)` timeout for request waiting behavior.
+|===
+
+[[memcached-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,4",options="header"]
+|===
+|Problem |Likely cause |What to check
+
+|`NoClassDefFoundError` or similar around SipHash classes
+|`MaglevKeyLocator` or `OPTIMAL` is in use but `io.whitfin:siphash` is missing
+|Add the explicit `io.whitfin:siphash` dependency
+
+|Requests appear to wait forever
+|`defaultRequestTimeoutMilliseconds` is still `0`
+|Set a non-zero default timeout or pass a timeout to `send (...)`
+
+|`UnsupportedOperationException` from `clear ()`
+|You are calling `clear ()` on Cubby
+|Remove that call from shared code or isolate it to the in-memory implementation
+
+|Stored keys are unreadable in memcached tooling
+|A key translator encoded them
+|This is expected with `DefaultKeyTranslator` and `LargeKeyHashingTranslator`
+
+|`ClassNotFoundException` during `get (...)` or `casGet (...)`
+|The object stream codec could not resolve the serialized class
+|Check deployment classpath compatibility or use a custom codec
+
+|Spring client bean is `null`
+|`enabled` is `false` or the server map is empty
+|Check `CubbyMemcachedClientFactoryBean` inputs
+
+|All operations fail with `NoAvailableHostException`
+|Every host is currently inactive or startup never completed
+|Check host addresses, server availability, routing names, and startup logs
+
+|Reconnects are slower than expected
+|`resuscitationSeconds` is too high for your environment
+|Lower it after considering extra probe traffic
+
+|You need a Spring override for `readTimeoutMilliseconds`
+|`CubbyConfigurationFactoryBean` does not expose it
+|Declare a `CubbyConfiguration` bean directly and set the property there
+|===
+
+[[memcached-verification, Verification Checklist]]
+== Verification Checklist
+
+1. Choose the real client shape explicitly: `DEFAULT`, `OPTIMAL`, or a fully custom `CubbyConfiguration`.
+2. If you use `MaglevKeyLocator` or `OPTIMAL`, add `io.whitfin:siphash` explicitly.
+3. Start `CubbyMemcachedClient` before first use and stop it on shutdown.
+4. Exercise at least one real-server round trip for your chosen codec, key translator, and timeout settings.
+5. If tests use `InMemoryMemcachedClient`, separately verify any code paths that depend on `clear ()`, `casSet (...)` miss behavior, or multi-key miss semantics.
+6. If you use Spring factory beans, verify the disabled and empty-server cases so downstream beans do not assume the client is always non-null.

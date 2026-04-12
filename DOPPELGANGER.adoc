@@ -2,307 +2,1284 @@
 = Doppelganger
 
 [partintro]
-Doppelganger is a set of annotations, and an APT (Annotation Processing Tool) conforming processor, that can generate multiple polymorphic-aware, fully-validated views of a class from a single description. These views are JAXB annotated and will translate themselves cleanly to and/or from JSON via Jackson (with the JaxbAnnotationModule registered). Doppelganger generated views can construct themselves from the instances from which they were generated, or act as a factory for such instances. They understand references to other Doppelganger annotated classes, including arrays and collections of such classes, and will automatically encode/decode such references into/from their appropriate views (or collections of those views). The multiple views inherent in Doppelganger annotations can be used to both limit and validate the generated classes for CRUD (create, read, update and delete) use cases, from a single annotated base entity. Doppelganger includes annotations that extend the generated views with fields which do not exist in the original class, allowing the construction of data from more client-friendly proxy attributes, made even easier with the fluent API generated for every view.
+Doppelganger generates compile-time transport views from ordinary Java classes.
+From one annotated source type it can produce explicit inbound and outbound contracts such as `OrderInView`, `OrderOutView`, `OrderCreateInView`, and `OrderReadOutView`.
 
-== Install
+The generated classes are ordinary Java source files in the same package as the source type.
+They come from compile-time annotation processing and work with ordinary constructors, serializers, validators, and service-layer code.
+You keep control of construction, serialization, validation, and service-layer behavior.
 
-The annotation processing system will pick up on Doppelganger annotated classes during compilation given the following included dependencies. Besides Doppelganger itself, you'll need the annotation subsystem, and our JSON scaffolding helper classes.
+Audience: library users who want explicit request and response models without hand-writing large DTO families.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
 
-.Doppelganger
+This guide:
+
+* starts with practical usage and examples
+* calls out the processor rules that matter for real builds
+* keeps the annotation catalog available as reference material rather than the main reading path
+
+== Quick Navigation
+
+* <<doppelganger-reading-paths,Reading Paths>>
+* <<doppelganger-at-a-glance,At A Glance>>
+* <<doppelganger-why-use,Why Use Doppelganger>>
+* <<doppelganger-install,Installation>>
+* <<doppelganger-quick-start,Quick Start>>
+* <<doppelganger-authoring-flow,A Practical Authoring Workflow>>
+* <<doppelganger-common-patterns,Common Patterns>>
+* <<doppelganger-polymorphism,Polymorphism And Hierarchy>>
+* <<doppelganger-authoring-rules,Authoring Rules>>
+* <<doppelganger-annotations,Annotation Reference>>
+* <<doppelganger-troubleshooting,Troubleshooting>>
+* <<doppelganger-verification,Verification Checklist>>
+* <<doppelganger-operational-notes,Operational Notes>>
+
+[[doppelganger-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to Doppelganger, read in this order:
+
+1. <<doppelganger-why-use,Why Use Doppelganger>>
+2. <<doppelganger-install,Installation>>
+3. <<doppelganger-quick-start,Quick Start>>
+4. <<doppelganger-authoring-flow,A Practical Authoring Workflow>>
+5. <<doppelganger-common-patterns,Common Patterns>>
+6. <<doppelganger-authoring-rules,Authoring Rules>>
+7. <<doppelganger-troubleshooting,Troubleshooting>>
+
+If you already know the model and need exact rules quickly, jump to:
+
+* <<doppelganger-generated-output,Generated Output>>
+* <<doppelganger-polymorphism,Polymorphism And Hierarchy>>
+* <<doppelganger-authoring-rules,Authoring Rules>>
+* <<doppelganger-annotations,Annotation Reference>>
+* <<doppelganger-troubleshooting,Troubleshooting>>
+* <<doppelganger-verification,Verification Checklist>>
+
+[[doppelganger-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,3",options="header"]
+|===
+|Need |Use
+
+|One source type, separate request and response contracts
+|Annotate the source type with `@Doppelganger` and expose real properties with `@View`
+
+|Several contract variants such as `create`, `update`, and `read`
+|Add `@Idiom(purposes = ..., visibility = ...)` to split generation by purpose and direction
+
+|A field that exists only on the generated view
+|Use `@Virtual`
+
+|A bean property you cannot conveniently annotate directly
+|Use `@Real`
+
+|Automatic nested translation
+|Keep nested types as direct properties, `List<T>`, or `T[]`, and make sure the nested type also has a matching generated view for the same purpose and direction
+
+|Subtype-aware view generation
+|Use `@Polymorphic` for discriminator-based payloads or `@Hierarchy` for inheritance without discriminator payloads
+|===
+
+[[doppelganger-why-use, Why Use Doppelganger]]
+== Why Use Doppelganger
+
+Use Doppelganger when you want explicit transport types at compile time and want API boundaries to stay visible in generated source.
+
+Use it when:
+
+* request and response payloads differ
+* one domain or configuration type needs several public contract shapes
+* validation metadata belongs on the generated contract, not on the source class itself
+* you want generated types that appear in IDEs, compiler errors, and dependency graphs
+* nested transport models should remain explicit and typed
+
+Doppelganger focuses on view-class generation and straightforward entity/view conversion methods.
+It works best in codebases that want compile-time transport models while keeping construction, serialization, validation, and service policy in application code.
+
+[[doppelganger-contracts, Behavioral Contracts]]
+== Behavioral Contracts
+
+What Doppelganger guarantees:
+
+* generation happens at compile time through annotation processing
+* generated views are written into the same package as the annotated source type
+* generated names are deterministic from source type, purpose, direction, and optional prefix
+* generated views are ordinary Java classes with constructors, getters, fluent setters, `instance(...)`, `factory(...)`, `equals()`, and `hashCode()`
+* built-in nested conversion is provided for direct annotated types, `List<T>`, and `T[]`
+* no runtime scanning or mapper registration is performed by Doppelganger itself
+
+What remains explicit for the caller:
+
+* container shapes beyond direct annotated types, `List<T>`, and `T[]`
+* validation enforcement beyond `required = true`
+* package structure for polymorphic generation
+* purpose naming semantics beyond grouping and naming
+
+[[doppelganger-install, Installation]]
+== Installation
+
+=== Dependency
+
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>web-json-doppelganger</artifactId>
-  <version>LATEST</version>
+  <version>${smallmind.version}</version>
 </dependency>
 ----
 
-== Raison D'etre
+=== Toolchain And API Compatibility
 
-Well designed REST APIs are often backed by a clear services layer, which, in turn, will depend upon database mapped entities (via orthogonal persistence frameworks, like JPA or Throng). Although it may be tempting to shortcut a lot of hassle by simply annotating database entities as the medium of exchange for the REST APIs, as either input parameters our output return values, doing so is usually a mistake. It binds the REST APIs too tightly to both the services business logic, and the particulars of database tables. As requirements change, and the backend evolves, the whole becomes a mess of leaking abstractions. The higher road involve creating a set of 'data transfer objects' to be used within the client facing APIs, which in turn provide evolutionary freedom to what are connected but loosely coupled layers. However, doing the right thing can mean a lot of boiler-plate code and documentation overhead. The Doppelganger annotations embodied in this project relieve much of the burden, auto-generating the views of your entities, while acting as documentation in code (the best kind), while providing the loose coupling necessary to accommodate the independent evolution of the application layers.
+* The annotation processor in this module declares `@SupportedSourceVersion(RELEASE_25)`.
+* Generated views use Jakarta APIs such as `jakarta.annotation`, `jakarta.validation`, and `jakarta.xml.bind`.
+* The JSON examples in this guide assume Jackson with JAXB annotation support enabled.
 
-== Exposition
+=== Annotation Processing
 
-The Doppelganger annotation framework creates JAXB annotated classes intended for JSON encoding/decoding via the Jackson JSON library. The specificity of this dependency comes from the use of Jackson's `tools.jackson.databind.JsonNode` in the polymorphic adapters. The annotations provided by this project are capable of creating multiple, finely differentiated views, from a single annotated class. Any field in the annotated class (or 'virtual' fields not present in the class at all) may appear, with different validation constraints, in any of several views. The views are differentiated by *visibility* (see <<doppelganger-visibility>> below) and, possibly, a freely definable *purpose* string. The visibility, purpose, and any validation constraints, are held by an <<doppelganger-idiom>>. Many fields may be present in the same idiom, and the set of all defined idioms will determine the set of views generated during annotation processing. The name of each view follows the pattern `[Annotated Class Name]<Purpose>[Visibility]View`, with each view being generated in the same package as its annotated class.
+The processor is registered through standard annotation-processing discovery.
+If your build or IDE disables annotation processing, no view classes are generated.
 
-[TIP]
-For example, given the annotated `com.mycompany.MyClass` with some fields with `Visibility.IN` and purposes 'create' and 'update', and some fields with `Visibility.OUT` and the single purpose 'read', the annotation processor will generate the views `com.mycompany.MyClassCreateInView`, `com.mycompany.MyClassUpdateInView` and `com.mycompany.MyClassReadOutView`.
+Typical generated-source locations are:
 
-There's no strict requirement that a view follow the meaning embodied in its name. In other words, a 'CreateIn' view need not be used for create operations, nor even as an input parameter. However, naming is important, and we think it best to try to name both consistently and with meaning.
+* Maven: `target/generated-sources/annotations`
+* Gradle: `build/generated/sources/annotationProcessor/java/main`
 
-[[doppelganger-visibility, Visibility]]
-=== Visibility
+Optional processor option:
 
-[small]#`org.smallmind.web.json.doppelganger.Visibility`#
-
-The Visibility enum has 3 values, *IN*, *OUT* and *BOTH* (equivalent to having both IN and OUT visibility). The intent, given this project's focus on JSON encoded data transfer objects (views), is that IN views will be usd as REST parameters, while OUT views will be used as REST return values.
-
-=== Purpose
-
-The use of purposes is optional, but helps to distinguish input parameters or return values by their particular operations or contexts. Some annotated fields may be required for a create operation, for example, but might be either optional or disallowed in an update operation. This can be accomplished by varying validation constraints between the two, or leaving a field completely out of the latter.
-
-== Annotations
-
-=== @Doppelganger
-
-Holds the base rules for generating the views of the annotated class. The following attributes control the specifics...
-
-* `String name () default ""` - The root name of the element, if empty it will default to the simple name of the annotated class.
-* `Polymorphic polymorphic () default @Polymorphic()` - The rules for handling polymorphic encoding / decoding (see below). The default presumes a non-polymorphic type.
-* `Import[] imports () default {}` - A list of additional imports to add to the generated classes, for convenience.
-* `Implementation[] implementations () default {}` - A list of additional interfaces to be adopted into the *implements* clause of the generated classes
-* `Idiom[] constrainingIdioms () default {}` - The list of class level validation constraints to apply to the generated view given the matching idioms (see below).
-* `Virtual[] virtual () default {}` - The list of virtual properties to be added to the view (see below).
-* `Real[] real () default {}` - The list of real properties to be added to the view (see below). These should be added via direct @View annotations, but sometimes that won't be possible and listing them via this property will make sense.
-* `Pledge[] pledges () default {}` - The list of conditions under which to guarantee a view is generated (only necessary when the view would otherwise not be generated, see below).
-* `String comment () default ""` - A notation passed into generated classes by annotating the generated types with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
-
-==== @Polymorphic
-
-The rules for generating the views of the polymorphic subclasses of the annotated class.
-
-* `Class[] subClasses () default {}` -The list of sub-classes which will be generated with polymorphic annotations.
-* `boolean useAttribute () default false` - If false, polymorphic subclasses will be generated with a wrapping object, otherwise the subclasses will be genetared with an extra object type attribute.
+* `-Aprefix=<Text>` prepends `<Text>` to every generated simple class name
 +
-[NOTE]
-====
-Given a polymorphic subtype named _MySubClass_ with a doppelganger name of "mySubClass", if `useAttribute()` is *false* the following JSON would be generated...
+Example: with `-Aprefix=Api`, `OrderReadOutView` becomes `ApiOrderReadOutView`.
 
-[source]
-----
-{"mySubClass":  {... other attributes ...}}
-----
+=== JSON Mapper Setup
 
-...otherwise, if `useAttribute()` is *true* the following JSON would be generated...
-[source]
-----
-{... other attributes ..., "java/object": "mySubClass"}
-----
-====
-
-[[doppelganger-import, Import]]
-==== @Import
-
-A description of a set of imports which should be added to the generated classes.
-
-* `Visibility visibility () default Visibility.BOTH` - The visibility for which these imports should be added, defaults to both _in_ and _out_ views.
-* `String[] purposes () default {}` - Any purposes for which these imports should be added. If empty then only the default (un-named) purpose will be enforced.
-* `String[] value()` - An array of imports as valid class names or wild card import specifications.
-
-[[doppelganger-implementation, Implementation]]
-==== @Implementation
-
-A description of a set of interfaces which should be adopted into the *implements* clause of the generated classes.
-
-* `Visibility visibility () default Visibility.BOTH` - The visibility for which these implementations should be adopted, defaults to both _in_ and _out_ views.
-* `String[] purposes () default {}` - Any purposes for which these implementations should be adopted. If empty then only the default (un-named) purpose will be enforced.
-* `Class[] value()` - An array of interfaces which should be adopted.
-
-[[doppelganger-constraint, Constraint]]
-==== @Constraint
-
-A representation of a `jakarta.validation.Constraint` annotation instance which should be added to the generated class or property.
-
-* `Class<?> value ()` - The class of the `jakarta.validation.Constraint` annotation to be applied.
-* `String arguments () default ""` - The arguments to the validation constraint, given as the text which would otherwise be placed within the *()* of the annotation, were it used in a more natural context.
-+
-[TIP]
-====
-For example, applying a numerical minimum validation of '3' could be accomplished with the following...
-
-[source]
-----
-@Constraint(value = Min.class, arguments = "3")
-----
-====
-
-==== @Virtual
-
-Creates a 'virtual' property, which exists only in the generated views (and not the annotated class).
-
-* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name (see below).
-* `Type type ()` - The type information for the generated property (see below).
-* `String field ()` - The field name of the generated property.
-* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
-* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
-* `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
-* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
-
-==== @Real
-
-Creates a reference to a 'real' property of the annotated class. The better way to handle real properties are through *@View* annotations (see below) directly on the appropriate fields or getters/setters. However, when surfacing fields from non-annotated super classes, or when annotating such a super class would be difficult due the inability to pre-define all of its polymorphic sub-classes, it can be better to treat these fields on a case-by-case basis via this annotation.
-
-* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name (see below).
-* `Type type ()` - The type information for the referenced property (see below).
-* `String field ()` - The field name of the referenced property.
-* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see below). If empty, this property will be included in the default idiom.
-* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
-* `boolean required () default false` - If the generated JSON element is required. If false, this may be overridden by the idioms (see above). Although an element may be marked as required, the enforcement of this is erratic at best. The use of a *NotNull* constraint is a far more persuasive argument.
-* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
-
-===== @Type
-
-Represents the type information of a virtual property.
-
-* `Class<?> value ()` - The class of the generated property.
-* `Class[] parameters () default {}` - The classes of any parameterizations (generics) of the generated property (useful for collections).
-
-[[doppelganger-idiom, Idiom]]
-===== @Idiom
-
-Idioms are the way to differentiate views. There's the basic differentiation of _in_ or _out_ views, and these can be further decomposed into arbitrary _purposes_. Each idiom may be marked as required, or not, and may have set of validation constraints applied.
-
-* `Visibility visibility () default Visibility.BOTH` - The visibility of the property within this idiom (_IN_, _OUT_ or default to _BOTH_).
-* `String[] purposes () default {}` - The name of this idiom (a short descriptive string such as 'create' or 'internal'). Useful for finely differentiating between create, update and delete operations, for example.
-* `Constraint[] constraints () default {}` - The constraint annotations to be applied to the property within this idiom (see <<doppelganger-constraint>> above).
-* `boolean required () default false` - Marks the generated JSON element as required in this idiom (with all of the issues previously noted).
-
-==== @Pledge
-
-It may be that, given the idioms annotated for the set of properties of the originating class, some of the resultant `purposes` (see <<doppelganger-idiom>> above) may end up with no properties at all, and those views would, therefore, never be generated. In those cases, you can use a pledge force generation of specific view classes.
-
-* `Visibility visibility () default Visibility.BOTH` - The visibility for which views should be generated, defaults to both _in_ and _out_ views.
-* `String[] purposes () default {}` - Any purposes for which the views should be generated. If empty then only the default (un-named) purpose will be enforced.
-
-[[doppelganger-view, View]]
-=== @View
-
-Creates a 'view' property, and determines how the annotated field is represented in those generated views.
-
-* `String name () default ""` - The name of the JSON attribute generated for the annotated property. If left empty the attribute name will be the same as the field name.
-* `Idiom[] idioms () default {}` - The list of alternate idioms in which this property should be included (see <<doppelganger-idiom>> above). If empty, this property will be included in the default idiom.
-* `Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class` - The XmlAdapter class, if any, to be used for encoding and decoding this property.
-* `Class<?> as () default Void.class` - A type hint for tools which may process Doppelganger generated views.
-* `boolean required () default false` - Marks the generated JSON element as required (with all the issues previously noted).
-* `String comment () default ""` - A notation passed into generated classes by annotating the generated field with a @Comment (see below) containing this text. If this value is left blank, then no @Comment will be generated.
-
-[[doppelganger-comment, Comment]]
-=== @Comment
-
-Simply holds a string which may be used by other tools creation automated descriptions of the annotated entities.
-
-* `String value () default ""` - The text of the comment.
-
-== In The Wild
-
-The following is a simplified, but still plausible, example of how the Doppelganger annotations might be used. We'll refrain from reproducing the generated sources here, but you can take the following code and generate them for yourself. It may be instructive to try the resulting constructors and factory methods.
+For Jackson usage, register JAXB support in the mapper.
 
 [source,java]
 ----
-public enum Biome {
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.module.jakarta.xmlbind.JaxbAnnotationModule;
 
-  ARCTIC, FOREST, JUNGLE, TUNDRA
-}
+ObjectMapper mapper = JsonMapper.builder()
+  .addModule(new JaxbAnnotationModule())
+  .build();
+----
 
-@Doppelganger(polymorphic = @Polymorphic(subClasses = {Lion.class, Tiger.class, Bear.class}), properties = @Virtual(field = "tame", type = @Type(value = Boolean.class), idioms = @Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class))))
-public abstract class Predator {
+[[doppelganger-quick-start, Quick Start]]
+== Quick Start
 
-  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "read", visibility = OUT)})
-  private String name;
-  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
-  private Biome biome;
+Start with the default model first.
+If a property has no idioms, Doppelganger treats it as belonging to the unnamed purpose with visibility `BOTH`, which produces one inbound and one outbound view.
 
-  public String getName () {
+[source,java]
+----
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.View;
 
-    return name;
+@Doppelganger
+public class Address {
+
+  @View
+  private String street;
+  @View
+  private String city;
+
+  public String getStreet () {
+
+    return street;
   }
 
-  public void setName (String name) {
+  public void setStreet (String street) {
 
-    this.name = name;
+    this.street = street;
   }
 
-  public Biome getBiome () {
+  public String getCity () {
 
-    return biome;
+    return city;
   }
 
-  public void setBiome (Biome biome) {
+  public void setCity (String city) {
 
-    this.biome = biome;
-  }
-}
-
-@Doppelganger(name = "lion")
-public class Lion extends Predator {
-
-  @View(idioms = {@Idiom(purposes = {"create", "update"}, visibility = IN, constraints = @Constraint(value = Min.class, arguments = "0")), @Idiom(purposes = "read", visibility = OUT)})
-  private int pride;
-
-  public int getPride () {
-
-    return pride;
-  }
-
-  public void setPride (int pride) {
-
-    this.pride = pride;
-  }
-}
-
-@Doppelganger(name = "tiger")
-public class Tiger extends Predator {
-
-  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotNull.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
-  private Boolean albino;
-
-  public Boolean getAlbino () {
-
-    return albino;
-  }
-
-  public void setAlbino (Boolean albino) {
-
-    this.albino = albino;
+    this.city = city;
   }
 }
 
 @Doppelganger
-public class Circus {
+public class Order {
 
-  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "read", visibility = OUT)})
-  private String location;
+  @View
+  private String id;
+  @View
+  private Address shippingAddress;
 
-  public String getLocation () {
+  public String getId () {
 
-    return location;
+    return id;
   }
 
-  public void setLocation (String location) {
+  public void setId (String id) {
 
-    this.location = location;
-  }
-}
-
-@Doppelganger(name = "bear")
-public class Bear extends Predator {
-
-  @View(idioms = {@Idiom(purposes = "create", visibility = IN, constraints = @Constraint(NotBlank.class)), @Idiom(purposes = "update", visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
-  private String color;
-  @View(idioms = {@Idiom(purposes = {"create", "update"}, visibility = IN), @Idiom(purposes = "read", visibility = OUT)})
-  private Circus circus;
-
-  public String getColor () {
-
-    return color;
+    this.id = id;
   }
 
-  public void setColor (String color) {
+  public Address getShippingAddress () {
 
-    this.color = color;
+    return shippingAddress;
   }
 
-  public Circus getCircus () {
+  public void setShippingAddress (Address shippingAddress) {
 
-    return circus;
-  }
-
-  public void setCircus (Circus circus) {
-
-    this.circus = circus;
+    this.shippingAddress = shippingAddress;
   }
 }
 ----
+
+After compilation, the important generated types are:
+
+* `AddressInView`
+* `AddressOutView`
+* `OrderInView`
+* `OrderOutView`
+
+Basic usage:
+
+[source,java]
+----
+OrderInView request = mapper.readValue(
+  """
+  {
+    "id": "A-100",
+    "shippingAddress": {
+      "street": "1 Main Street",
+      "city": "Portland"
+    }
+  }
+  """,
+  OrderInView.class
+);
+
+Order order = request.factory();
+
+OrderOutView response = OrderOutView.instance(order);
+String json = mapper.writeValueAsString(response);
+----
+
+What this demonstrates:
+
+* one source type can produce separate inbound and outbound transport types
+* the generated view constructor and `instance(...)` can build views from entities
+* `factory()` can build or overlay entities from views
+* nested annotated types are translated automatically when the nested type also has a matching generated view
+
+[[doppelganger-authoring-flow, A Practical Authoring Workflow]]
+== A Practical Authoring Workflow
+
+A reliable workflow is:
+
+1. Annotate a top-level class with `@Doppelganger`.
+2. Start with `@View` on ordinary bean properties.
+3. Use `@Idiom` only when a property needs different purpose or direction membership.
+4. Add `@Virtual` for generated-only state and `@Real` for properties you cannot annotate directly.
+5. Compile, inspect the generated source, and adjust before adding more layers.
+
+Practical rule: treat every real property as a normal bean property with both getter and setter.
+The processor validates only the accessor it immediately needs for a given direction, but generated constructors read from the entity and generated `factory(...)` methods write back to the entity.
+If a property is genuinely view-only, use `@Virtual` instead of a one-way real property.
+
+[[doppelganger-generated-source-discovery, Generated Source Discovery]]
+=== Generated Source Discovery
+
+When something is unclear, inspect the generated source before guessing.
+That is the fastest way to confirm:
+
+* which properties landed in a specific purpose and direction
+* the exact generated class names after purpose or prefix changes
+* whether a nested type was translated to another generated view or left as the original type
+* which validation and serialization annotations were emitted
+
+[[doppelganger-core-model, Core Model]]
+== Core Model
+
+[cols="1,3",options="header"]
+|===
+|Term |Meaning
+
+|Source type
+|The top-level class annotated with `@Doppelganger`
+
+|View
+|A generated class such as `OrderInView` or `OrderReadOutView`
+
+|Direction
+|Generated family: `In` or `Out`
+
+|Visibility
+|Authoring selector used by annotations: `IN`, `OUT`, or `BOTH`
+
+|Purpose
+|An optional string such as `create`, `update`, or `read`
+
+|Idiom
+|One purpose plus one visibility, optionally carrying constraints and `required`
+|===
+
+=== Default Behavior
+
+If a property declares no idioms, Doppelganger treats it as:
+
+* visibility `BOTH`
+* purpose `""` (the unnamed default purpose)
+* no constraints
+* `required = false`
+
+That default is what produces `TypeInView` and `TypeOutView`.
+
+=== Visibility Versus Direction
+
+`Visibility` lives in your source annotations.
+`Direction` lives in the generated class name.
+
+The mapping is direct:
+
+* `Visibility.IN` contributes to `*InView`
+* `Visibility.OUT` contributes to `*OutView`
+* `Visibility.BOTH` contributes to both
+
+=== Purposes And Naming
+
+Purposes are free-form strings.
+Doppelganger only uses them for grouping and generated naming.
+
+Examples:
+
+* `create`
+* `update`
+* `read`
+* `internal`
+
+Generated simple names follow this pattern:
+
+`[prefix][SourceType][Purpose][In|Out]View`
+
+Examples:
+
+* `OrderInView`
+* `OrderOutView`
+* `OrderCreateInView`
+* `OrderReadOutView`
+* `ApiOrderReadOutView`
+
+Purpose text is copied into the generated simple name with only the first character uppercased.
+Keep purpose strings short and stable because they become part of your public Java API.
+
+[[doppelganger-generated-output, Generated Output]]
+== Generated Output
+
+=== Package And Location
+
+Each generated view is written into the same Java package as the source type.
+The generated source file itself appears under your annotation-processing output directory.
+
+=== Typical API Surface
+
+For a simple concrete source type `Order`, a generated view looks like this:
+
+[source,java]
+----
+public class OrderReadOutView {
+
+  public static OrderReadOutView instance (Order order);
+
+  public OrderReadOutView ();
+  public OrderReadOutView (Order order);
+
+  public Order factory ();
+  public Order factory (Order order);
+
+  public String getId ();
+  public OrderReadOutView setId (String id);
+
+  @Override
+  public int hashCode ();
+
+  @Override
+  public boolean equals (Object obj);
+}
+----
+
+Behavioral notes:
+
+* `instance(entity)` builds a view from an entity instance
+* the entity constructor copies real properties from the source type into the view
+* `factory()` creates a new source object and fills it from the view
+* `factory(entity)` overlays view values onto an existing source object
+* setters are fluent and return the generated view type
+
+=== Generated Annotations
+
+Depending on the source metadata, generated views may carry:
+
+* `@Generated`
+* `@XmlRootElement` on non-abstract generated views
+* `@XmlAccessorType(XmlAccessType.PROPERTY)` on root generated views
+* `@XmlElement` on generated getters
+* `@XmlJavaTypeAdapter` when an adapter is configured
+* `@As`, `@Comment`, and `@NullifiedBy` when source metadata requests them
+* validation constraint annotations on generated fields and generated classes
+
+By default, the root element name is the source type name with the first character lowercased.
+The default namespace is `http://org.smallmind/web/json/doppelganger` unless `@Doppelganger(namespace = ...)` overrides it.
+
+=== Abstract Types And Inheritance
+
+If the source type is abstract, the generated view is also abstract.
+That base view is most useful as part of a generated subtype family.
+
+When a source type extends another `@Doppelganger` type:
+
+* the generated view extends the nearest generated superclass view
+* inherited properties continue to participate through the generated superclass
+* if hierarchy or polymorphism is configured, fluent setters use a self-type parameter so chained calls stay type-safe across subclasses
+
+=== Nested Type Translation
+
+Built-in view and entity conversion is provided only when the nested type has a matching generated view for the same purpose and direction.
+The supported shapes are:
+
+* direct annotated type reference
+* `List<T>`
+* `T[]`
+
+Example source properties:
+
+[source,java]
+----
+@View
+private Address shippingAddress;
+
+@View
+private List<LineItem> lineItems;
+
+@View
+private Attachment[] attachments;
+----
+
+Typical generated view types:
+
+* `AddressOutView`
+* `List<LineItemOutView>`
+* `AttachmentOutView[]`
+
+Important limits:
+
+* if the nested type does not expose a matching purpose and direction, Doppelganger leaves the property as the original type and does not generate nested conversion code
+* other container shapes such as `Set<T>` and `Map<K, V>` are not part of the built-in translation contract
+
+[[doppelganger-common-patterns, Common Patterns]]
+== Common Patterns
+
+In the examples below, standard bean accessors are omitted when they would only repeat the same getter and setter pattern.
+
+=== Split One Source Type Into `create`, `update`, And `read` Contracts
+
+[source,java]
+----
+import jakarta.validation.constraints.NotBlank;
+import org.smallmind.web.json.doppelganger.Constraint;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Visibility;
+
+@Doppelganger
+public class Order {
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String id;
+
+  @View(
+    idioms = {
+      @Idiom(purposes = "create", visibility = Visibility.IN, constraints = @Constraint(NotBlank.class)),
+      @Idiom(purposes = "read", visibility = Visibility.OUT)
+    }
+  )
+  private String customerCode;
+
+  @View(
+    idioms = {
+      @Idiom(purposes = "create", visibility = Visibility.IN),
+      @Idiom(purposes = "update", visibility = Visibility.IN),
+      @Idiom(purposes = "read", visibility = Visibility.OUT)
+    }
+  )
+  private String note;
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private long version;
+
+  // standard getters and setters
+}
+----
+
+This produces these main view types:
+
+* `OrderCreateInView`
+* `OrderUpdateInView`
+* `OrderReadOutView`
+
+Typical usage:
+
+[source,java]
+----
+OrderCreateInView createView = mapper.readValue(payload, OrderCreateInView.class);
+Order order = createView.factory();
+
+OrderReadOutView readView = OrderReadOutView.instance(order);
+String json = mapper.writeValueAsString(readView);
+----
+
+This is the normal way to keep write-side and read-side contracts explicit while still authoring from one source type.
+
+=== Add Generated-Only Fields With `@Virtual`
+
+Use `@Virtual` when the generated view needs a property that does not belong on the source type.
+
+[source,java]
+----
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Type;
+import org.smallmind.web.json.doppelganger.Virtual;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Visibility;
+
+@Doppelganger(
+  virtual = @Virtual(
+    field = "canCancel",
+    type = @Type(Boolean.class),
+    idioms = @Idiom(purposes = "read", visibility = Visibility.OUT)
+  )
+)
+public class Order {
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String id;
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String status;
+
+  // standard getters and setters
+}
+----
+
+Usage:
+
+[source,java]
+----
+OrderReadOutView view = OrderReadOutView.instance(order)
+  .setCanCancel(permissionService.canCancel(order));
+----
+
+Important behavior:
+
+* `canCancel` exists on the generated view
+* `canCancel` is not copied back into the entity by `factory(...)`
+* the same pattern works for request-only helper fields such as `confirmPassword`
+
+=== Expose Inherited Or Indirect Properties With `@Real`
+
+Use `@Real` when a real bean property exists, but direct `@View` placement is awkward or impossible.
+
+[source,java]
+----
+import java.time.Instant;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Real;
+import org.smallmind.web.json.doppelganger.Type;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Visibility;
+
+public class AuditedEntity {
+
+  private Instant createdAt;
+
+  public Instant getCreatedAt () {
+
+    return createdAt;
+  }
+
+  public void setCreatedAt (Instant createdAt) {
+
+    this.createdAt = createdAt;
+  }
+}
+
+@Doppelganger(
+  real = @Real(
+    field = "createdAt",
+    type = @Type(Instant.class),
+    idioms = @Idiom(purposes = "read", visibility = Visibility.OUT)
+  )
+)
+public class Invoice extends AuditedEntity {
+
+  @View
+  private String number;
+
+  // standard getters and setters
+}
+----
+
+`InvoiceReadOutView` now exposes `createdAt` even though the property was not annotated directly on the class.
+
+`@Real` is still a real-property path.
+It assumes that the normal bean getter and setter for the named property already exist.
+
+=== Customize Serialized Names, Adapters, And Constraints
+
+[source,java]
+----
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.smallmind.web.json.doppelganger.Constraint;
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Visibility;
+
+@Doppelganger(name = "order", namespace = "http://example.com/order")
+public class Order {
+
+  @View(
+    name = "orderTotal",
+    adapter = MoneyXmlAdapter.class,
+    comment = "Gross total in billing currency",
+    idioms = @Idiom(purposes = "read", visibility = Visibility.OUT)
+  )
+  private Money total;
+
+  @View(
+    idioms = @Idiom(
+      purposes = "create",
+      visibility = Visibility.IN,
+      constraints = {
+        @Constraint(NotBlank.class),
+        @Constraint(value = Size.class, arguments = "min = 8, max = 40")
+      }
+    )
+  )
+  private String customerReference;
+
+  // standard getters and setters
+}
+----
+
+This produces:
+
+* `@XmlRootElement(name = "order", namespace = "http://example.com/order")` on the generated root view
+* `@XmlElement(name = "orderTotal")` and `@XmlJavaTypeAdapter(MoneyXmlAdapter.class)` on the generated getter
+* `@Comment("Gross total in billing currency")` on the generated property
+* `@NotBlank` and `@Size(min = 8, max = 40)` on the generated input field
+
+[[doppelganger-advanced-features, Advanced Features]]
+== Advanced Features
+
+=== Validation And Required Semantics
+
+Validation belongs in idioms.
+That keeps contract rules attached to the generated view that actually uses them.
+
+[source,java]
+----
+@View(
+  idioms = @Idiom(
+    purposes = "create",
+    visibility = Visibility.IN,
+    constraints = @Constraint(NotBlank.class),
+    required = true
+  )
+)
+private String code;
+----
+
+Important details:
+
+* `@Constraint.arguments` is emitted verbatim into generated annotation source
+* `@Idiom(required = true)` marks the generated `@XmlElement(required = true)`
+* `@Constraint(NotNull.class)` also marks the idiom as required
+* `required = true` is serialization metadata, not a substitute for actual validation constraints
+
+Class-level constraints use `@Doppelganger(constrainingIdioms = ...)`.
+That is the right place for whole-object validation rules.
+
+[source,java]
+----
+@Doppelganger(
+  constrainingIdioms = @Idiom(
+    purposes = "create",
+    visibility = Visibility.IN,
+    constraints = @Constraint(ValidOrderRequest.class)
+  )
+)
+public class Order {
+
+  // properties
+}
+----
+
+=== Force Otherwise-Empty Views With `@Pledge`
+
+A pledge tells Doppelganger to generate a purpose and direction even when no property would normally create it.
+
+[source,java]
+----
+@Doppelganger(
+  pledges = @Pledge(purposes = "summary", visibility = Visibility.OUT)
+)
+public class HealthStatus {
+
+  @View(idioms = @Idiom(purposes = "detail", visibility = Visibility.OUT))
+  private String message;
+
+  // standard getters and setters
+}
+----
+
+This forces `HealthStatusSummaryOutView` even though no property belongs to the `summary` purpose.
+
+Current processor detail: if you need to force the unnamed default purpose, use `purposes = ""` explicitly.
+Leaving `purposes` empty does not create the unnamed purpose.
+
+If a pledge turns out to be unnecessary because ordinary properties already generate the same combination, the processor emits a warning.
+
+=== Additional Metadata On Generated Views
+
+Use type-level metadata when generated source needs more context.
+
+* `name` and `namespace` control the generated `@XmlRootElement`
+* `serializable = true` adds `Serializable`
+* `comment` adds generated `@Comment`
+* `implementations` adds interfaces to the generated `implements` clause
+* `imports` adds raw import statements to the generated source
+
+`@Import` is mainly useful when additional annotations or helper types need imports that the processor would not otherwise write.
+
+=== Comments, Type Hints, Adapters, And Nullifiers
+
+Property metadata can carry more than shape control.
+
+* `comment` emits `@org.smallmind.web.json.scaffold.util.Comment`
+* `as` emits `@org.smallmind.web.json.scaffold.util.As`
+* `adapter` emits `@XmlJavaTypeAdapter`
+* if a source field carries an annotation meta-annotated with `@OverlayNullifier`, the generated getter receives `@NullifiedBy(...)`
+
+[[doppelganger-polymorphism, Polymorphism And Hierarchy]]
+== Polymorphism And Hierarchy
+
+Simple generated inheritance already works whenever one `@Doppelganger` type extends another.
+Use `@Polymorphic` or `@Hierarchy` when the generated base view itself needs subtype awareness.
+
+=== `@Polymorphic`
+
+Use `@Polymorphic` on the base class when serialized payloads need a subtype discriminator.
+List the leaf subclasses that should participate.
+
+[source,java]
+----
+import org.smallmind.web.json.doppelganger.Doppelganger;
+import org.smallmind.web.json.doppelganger.Idiom;
+import org.smallmind.web.json.doppelganger.Polymorphic;
+import org.smallmind.web.json.doppelganger.View;
+import org.smallmind.web.json.doppelganger.Visibility;
+
+@Doppelganger(
+  polymorphic = @Polymorphic(subClasses = {CardPayment.class, WirePayment.class})
+)
+public abstract class Payment {
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String reference;
+
+  // standard getters and setters
+}
+
+@Doppelganger
+public class CardPayment extends Payment {
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String maskedPan;
+
+  // standard getters and setters
+}
+
+@Doppelganger
+public class WirePayment extends Payment {
+
+  @View(idioms = @Idiom(purposes = "read", visibility = Visibility.OUT))
+  private String iban;
+
+  // standard getters and setters
+}
+----
+
+What `@Polymorphic` adds:
+
+* generated polymorphic XML adapter classes
+* subtype-aware `instance(...)` dispatch on the base view
+* discriminator-based JSON and XML handling
+
+With `useAttribute = false`, the JSON shape is wrapper-based:
+
+[source,json]
+----
+{
+  "cardPayment": {
+    "reference": "P-100",
+    "maskedPan": "****1111"
+  }
+}
+----
+
+With `useAttribute = true`, the JSON shape is attribute-based:
+
+[source,json]
+----
+{
+  "reference": "P-100",
+  "maskedPan": "****1111",
+  "java/object": "cardPayment"
+}
+----
+
+Notes:
+
+* the subtype key comes from the generated `@XmlRootElement(name = ...)`
+* listed subclasses should be leaf classes
+* listed subclasses must be in the same package as the base type
+* if the base view is abstract and `instance(...)` cannot match the runtime subtype, the generated code throws `IllegalStateException`
+
+=== `@Hierarchy`
+
+Use `@Hierarchy` when you want subtype-aware generated inheritance, but you do not want discriminator-driven payload handling.
+
+Typical use:
+
+* base view dispatch through `instance(...)`
+* fluent setters that stay type-safe across subclasses
+* no wrapper-key or `java/object` payload requirement
+
+[[doppelganger-polymorphic-vs-hierarchy, Polymorphic vs Hierarchy]]
+[cols="1,2,2",options="header"]
+|===
+|Need |Choose |Why
+
+|Discriminator-based subtype payloads
+|`@Polymorphic`
+|Generates subtype adapters and payload discrimination metadata
+
+|Subtype-aware inheritance without discriminator payloads
+|`@Hierarchy`
+|Keeps generated inheritance and dispatch without polymorphic wrapper or attribute handling
+|===
+
+[[doppelganger-authoring-rules, Authoring Rules]]
+== Authoring Rules
+
+These rules come directly from the processor and the generated code shape.
+Most failures show up during compilation.
+
+=== Type-Level Rules
+
+* `@Doppelganger` is for top-level classes only
+* nested classes and interfaces are not valid roots
+* concrete classes must contribute at least one generated property unless generation is forced through `@Pledge`
+* abstract source classes generate abstract view bases and are most useful when paired with concrete generated subclasses
+
+=== Real Properties Should Behave Like Bean Properties
+
+For predictable generation, every real property should have a normal getter and setter.
+That applies whether the property came from `@View` or `@Real`.
+
+Why this matters:
+
+* generated view constructors read from the entity
+* generated `factory(...)` methods write back into the entity
+* asymmetric accessor definitions often fail later as generated-source compile errors instead of clean `DefinitionException` messages
+
+Use `@Virtual` when a property should exist only on the generated view side.
+
+=== Field-Based `@View`
+
+Annotating fields is the normal path.
+The processor validates bean accessors according to the annotated visibility.
+
+[cols="1,3",options="header"]
+|===
+|Field visibility |Processor validation
+
+|`IN`
+|requires a matching setter
+
+|`OUT`
+|requires a matching getter or boolean `isXxx` getter
+
+|`BOTH`
+|requires both getter and setter
+|===
+
+Practical rule: even for `IN`-only and `OUT`-only real properties, keep both accessors available so the generated constructors and `factory(...)` methods remain usable.
+
+=== Method-Based `@View`
+
+Method annotation works, but it is stricter and best reserved for normal bean accessors you already have.
+
+[cols="1,3",options="header"]
+|===
+|Method form |Allowed idioms
+
+|`getXxx()`
+|`OUT` or `BOTH`, never `IN` only
+
+|`isXxx()`
+|`OUT` or `BOTH`, never `IN` only
+
+|`setXxx(T)`
+|`IN` only
+|===
+
+Additional method rules:
+
+* only public methods participate in method-based accessor discovery
+* getter names must follow normal bean naming
+* boolean getters must be `isXxx()`
+* a getter annotated as `BOTH` must have a matching setter
+* any other annotated method shape is invalid
+* method-based real properties still work best when both bean accessors exist
+
+=== Member Restrictions
+
+`@View` may not be placed on:
+
+* static members
+* abstract methods
+* non-bean helper methods
+
+=== Choosing `@View`, `@Real`, And `@Virtual`
+
+[[doppelganger-property-choice, Choosing View Real Virtual]]
+[cols="1,2,2",options="header"]
+|===
+|Annotation |Use when |Avoid when
+
+|`@View`
+|The property already exists on the source type and you can annotate the field or accessor directly.
+|Avoid it only when the source type cannot be edited or the property is inherited from code you do not control.
+
+|`@Real`
+|A real bean property exists, but direct `@View` placement is impractical.
+|Do not use it as a shortcut when `@View` on the actual field or accessor is possible.
+
+|`@Virtual`
+|The generated view needs a property that does not belong on the source type.
+|Do not use it for data that should actually live on the source type.
+|===
+
+Operational difference:
+
+* `@Real` participates in constructor and `factory(...)` mapping like an ordinary real property
+* `@Virtual` exists only on the generated view side and is not copied into the entity by `factory(...)`
+
+[[doppelganger-annotations, Annotation Reference]]
+== Annotation Reference
+
+This section is reference material.
+Read the workflow and examples above first if you are adopting the module for the first time.
+
+=== `@Doppelganger`
+
+Type-level entry point for generation.
+
+[cols="1,3",options="header"]
+|===
+|Attribute |Meaning
+
+|`virtual`
+|Generated-only properties that do not exist on the source type
+
+|`real`
+|Existing bean properties described indirectly instead of with `@View`
+
+|`pledges`
+|Purpose and visibility combinations to force even when no property would normally create them
+
+|`polymorphic`
+|Subtype-aware discriminator handling
+
+|`hierarchy`
+|Subtype-aware inheritance without discriminator handling
+
+|`constrainingIdioms`
+|Class-level constraint idioms
+
+|`implementations`
+|Additional interfaces for generated views
+
+|`imports`
+|Additional imports to add to generated source
+
+|`name`
+|Override for generated root element name
+
+|`namespace`
+|Override for generated root element namespace
+
+|`serializable`
+|Adds `Serializable` to generated views
+
+|`comment`
+|Text copied to generated `@Comment`
+|===
+
+=== `@View`
+
+Marks a field or bean accessor as participating in generation.
+
+[cols="1,3",options="header"]
+|===
+|Attribute |Meaning
+
+|`idioms`
+|Purpose and visibility selection, plus optional constraints and `required`
+
+|`adapter`
+|`XmlJavaTypeAdapter` to apply on the generated getter
+
+|`as`
+|Type hint emitted as `@As`
+
+|`name`
+|Serialized element name override
+
+|`required`
+|Default required metadata when idioms do not override it
+
+|`comment`
+|Text copied to generated `@Comment`
+|===
+
+`@View` uses `RetentionPolicy.CLASS` so compiled upstream classes can still contribute metadata when referenced from downstream modules.
+
+=== `@Idiom`
+
+Defines one visibility-plus-purpose rule.
+
+[cols="1,3",options="header"]
+|===
+|Attribute |Meaning
+
+|`constraints`
+|Constraint annotations to emit for this idiom
+
+|`visibility`
+|`IN`, `OUT`, or `BOTH`
+
+|`purposes`
+|Purpose names this idiom applies to
+
+|`required`
+|Whether the generated XML element should be marked required for this idiom
+|===
+
+=== `@Constraint`
+
+Represents one validation annotation to emit.
+
+* `value` is the annotation type
+* `arguments` is raw source text appended inside the generated annotation
+
+Example:
+
+[source,java]
+----
+@Constraint(value = Size.class, arguments = "min = 3, max = 40")
+----
+
+=== `@Real`
+
+Type-level description of an existing bean property.
+Use it when a real property should participate in generation but direct `@View` placement is not practical.
+
+Key attributes:
+
+* `type`
+* `field`
+* `idioms`
+* `adapter`
+* `as`
+* `name`
+* `required`
+* `comment`
+
+=== `@Virtual`
+
+Type-level description of a generated-only property.
+It has the same metadata shape as `@Real`, but `factory(...)` does not copy it into the entity.
+
+=== `@Type`
+
+Type metadata used by `@Real` and `@Virtual`.
+
+* `value`: raw type
+* `parameters`: generic arguments in declaration order
+
+Rules:
+
+* generic parameters are positional
+* array types may not also declare `parameters`
+
+=== `@Pledge`
+
+Forces generation of otherwise-empty purpose and visibility combinations.
+
+* `visibility`
+* `purposes`
+
+Current processor detail: to force the unnamed default purpose, use `purposes = ""` explicitly.
+
+=== `@Polymorphic`
+
+Declares leaf subclasses for discriminator-based subtype handling.
+
+* `subClasses`
+* `useAttribute`
+
+=== `@Hierarchy`
+
+Declares leaf subclasses for subtype-aware inheritance without discriminator adapters.
+
+* `subClasses`
+
+=== `@Implementation`
+
+Adds interfaces to generated views selected by purpose and visibility.
+
+* `visibility`
+* `purposes`
+* `value`
+
+=== `@Import`
+
+Adds imports to generated views selected by purpose and visibility.
+
+* `visibility`
+* `purposes`
+* `value`
+
+[[doppelganger-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+Most problems appear as compile-time processor errors or generated-source compile errors.
+
+=== Common Failure Modes
+
+[cols="2,3",options="header"]
+|===
+|Observed message |Meaning
+
+|`The class(...) must be a root implementation of type 'class'`
+|`@Doppelganger` was placed on something other than a top-level class
+
+|`The class(...) was annotated as @Doppelganger but contained no properties`
+|No generated property survived into any purpose and direction pair for a concrete class
+
+|`The class(...) was annotated with the unnecessary @Pledge(...)`
+|A pledge duplicated combinations that ordinary properties already created
+
+|`The class(...) must be in package(...)`
+|A listed polymorphic subclass was not in the same package as the polymorphic base
+
+|`The property field(...) has no 'setter' method in class(...)`
+|A field or generated input property was marked `IN` or `BOTH`, but no matching setter was found during processor validation
+
+|`The property field(...) has no 'getter' method in class(...)`
+|A field or generated output property was marked `OUT` or `BOTH`, but no matching getter was found during processor validation
+
+|`The 'getter' method(...) found in class(...) must have a corresponding 'setter'`
+|A getter annotated as `BOTH` has no setter partner
+
+|`The 'get' method(...) found in class(...) can't be annotated as 'IN' only`
+|Getter annotations may not be `IN` only
+
+|`The 'is' method(...) found in class(...) can't be annotated as 'IN' only`
+|Boolean getter annotations may not be `IN` only
+
+|`The 'set' method(...) found in class(...) must be annotated as 'IN' only`
+|Setter annotations may not be `OUT` or `BOTH`
+
+|`The method(...) found in class(...) must be a 'getter' or 'setter'`
+|`@View` was placed on a method that is not a bean accessor
+
+|`The element(...) annotated as @View may not be 'static'`
+|Static members cannot participate in generation
+
+|`The element(...) annotated as @View may not be 'abstract'`
+|Abstract annotated methods are not valid inputs to generation
+
+|`Illegal type definition in field(...) of class(...)`
+|`@Type` was malformed for a `@Real` or `@Virtual` property
+
+|Generated-source compile error such as `cannot find symbol getXxx()` or `cannot find symbol setXxx(...)`
+|A real property passed processor validation for one direction, but the opposite accessor needed by the generated constructor or `factory(...)` is still missing
+|===
+
+=== Recommended Triage Order
+
+1. Inspect the generated source first.
+2. Confirm the intended purpose and direction pair actually exists.
+3. Confirm the source property has the getter and setter the generated class will call.
+4. Confirm nested properties use supported automatic translation shapes.
+5. Confirm polymorphic or hierarchy subclasses are leaf classes in the same package as the base.
+
+[[doppelganger-cross-module, Cross-Module Notes]]
+== Cross-Module Notes
+
+`@View` intentionally uses `RetentionPolicy.CLASS`.
+That lets downstream modules inspect compiled upstream metadata during annotation processing.
+
+Practical consequence:
+
+* a downstream module can generate a view that references a previously compiled upstream generated view, as long as the matching view class is available on the classpath for the same purpose and direction
+
+[[doppelganger-verification, Verification Checklist]]
+== Verification Checklist
+
+1. Compile the affected processor path:
++
+[source,text]
+----
+mvn -pl web/json/doppelganger -am test
+----
+
+2. Confirm generated source appears in the annotation-processing output directory.
+3. Confirm generated simple names match the expected purpose, direction, and optional prefix.
+4. Confirm generated constructors and `factory(...)` methods call the source accessors you expect.
+5. Confirm nested annotated types become generated view types only for supported shapes and matching purposes.
+6. Confirm validation annotations and `required` metadata appear on the generated fields, getters, or classes you intended.
+7. If `@Virtual` or `@Real` is involved, verify one representative round trip.
+8. If hierarchy or polymorphism is enabled, verify subtype dispatch and payload shape against your configured mode.
+
+[[doppelganger-operational-notes, Operational Notes]]
+== Operational Notes
+
+* Prefer `@View` on real fields for ordinary properties.
+* Keep real properties readable and writable with normal bean accessors.
+* Use `@Virtual` for contract-only state and `@Real` only when direct annotation is impractical.
+* Keep purpose strings short and stable because they become part of generated public class names.
+* If a nested type needs built-in automatic translation, keep it as a direct property, `List<T>`, or `T[]` and give the nested type a matching purpose and direction.
+* Use validation constraints for actual enforcement and treat `required = true` as serialization metadata.
+* For the unnamed default purpose under `@Pledge`, use `purposes = ""` explicitly.

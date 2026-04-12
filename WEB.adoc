@@ -1,0 +1,1519 @@
+[[web, Web]]
+= Web
+
+[partintro]
+Smallmind Web is a collection of narrow artifacts for JSON transport contracts, dynamic query payloads, Jersey integration, Spring-managed Grizzly and Jetty bootstrapping, JWT encoding and verification, a thin Apache async HTTP wrapper, and a build-time XML schema validation plugin.
+
+The modules are designed to be adopted selectively.
+`org.smallmind:smallmind-web` and `org.smallmind:web-json` organize the family, but they are aggregator POMs rather than runtime libraries.
+
+`web-json-doppelganger` belongs to this area, but it already has its own root-level guide in `DOPPELGANGER.adoc` and in the assembled book as <<doppelganger,Doppelganger>>.
+This chapter points to that guide where needed instead of repeating its generator rules and annotation catalog.
+
+Audience: developers wiring JSON transport types, Jersey resources, embedded servlet containers, web clients, JWTs, or schema validation into applications or reusable libraries.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+This guide:
+
+* starts with artifact selection rather than assuming a full stack
+* separates runtime transport helpers, Jersey integration, container bootstrapping, JWT support, and build-time validation
+* calls out defaults, lifecycle ownership, SSL posture, and AspectJ requirements that materially affect production integration
+
+== Quick Navigation
+
+* <<web-reading-paths,Reading Paths>>
+* <<web-at-a-glance,At A Glance>>
+* <<web-choose-artifact,Choose An Artifact>>
+* <<web-why-use,Why Use Smallmind Web>>
+* <<web-install,Installation>>
+* <<web-use-cases,API By Use Case>>
+* <<web-quick-start,Quick Start>>
+* <<web-http-module,`web-http`>>
+* <<web-json-scaffold-module,`web-json-scaffold`>>
+* <<web-json-query-module,`web-json-query`>>
+* <<web-jersey-module,`web-jersey`>>
+* <<web-container-comparison,Grizzly And Jetty Compared>>
+* <<web-grizzly-module,`web-grizzly`>>
+* <<web-jetty-module,`web-jetty`>>
+* <<web-jwt-module,`web-jwt`>>
+* <<web-schema-module,`schema-validation-maven-plugin`>>
+* <<web-api-index,API Index>>
+* <<web-defaults,Defaults Reference>>
+* <<web-lifecycle-ownership,Lifecycle And Resource Ownership>>
+* <<web-edge-cases,Behavioral Edge Cases>>
+* <<web-troubleshooting,Troubleshooting>>
+* <<web-minimal-checklist,Minimal Checklist>>
+* <<web-verification,Verification Checklist>>
+
+[[web-reading-paths, Reading Paths]]
+== Reading Paths
+
+First-time integration path:
+
+1. <<web-choose-artifact,Choose An Artifact>>
+2. <<web-install,Installation>>
+3. <<web-use-cases,API By Use Case>>
+4. <<web-quick-start,Quick Start>>
+5. The artifact section you are actually adopting
+6. <<web-lifecycle-ownership,Lifecycle And Resource Ownership>>
+7. <<web-troubleshooting,Troubleshooting>>
+
+If you only need one slice of the stack:
+
+* JSON transport, pagination, polymorphism, or fault payloads: <<web-json-scaffold-module,`web-json-scaffold`>>
+* transport-neutral query DTOs and backend translation: <<web-json-query-module,`web-json-query`>>
+* Jersey server wiring, fault mapping, or thin clients: <<web-jersey-module,`web-jersey`>>
+* Spring-managed embedded server startup: <<web-container-comparison,Grizzly And Jetty Compared>>, then <<web-grizzly-module,`web-grizzly`>> or <<web-jetty-module,`web-jetty`>>
+* JWT handling: <<web-jwt-module,`web-jwt`>>
+* compile-time view generation: the root-level `DOPPELGANGER.adoc` guide and <<doppelganger,Doppelganger>>
+* build-time XSD validation: <<web-schema-module,`schema-validation-maven-plugin`>>
+
+Reference and operations path:
+
+* <<web-api-index,API Index>>
+* <<web-defaults,Defaults Reference>>
+* <<web-lifecycle-ownership,Lifecycle And Resource Ownership>>
+* <<web-edge-cases,Behavioral Edge Cases>>
+* <<web-troubleshooting,Troubleshooting>>
+
+[[web-at-a-glance, At A Glance]]
+== At A Glance
+
+=== Integration Model In 60 Seconds
+
+1. `smallmind-web` and `web-json` are aggregator POMs; the runtime code lives in the child artifacts.
+2. `web-json-scaffold` is the transport core for JSON serialization, pagination wrappers, faults, polymorphism, and lightweight versioning.
+3. `web-json-query` gives you JSON/XML filter and sort DTOs plus validation and backend translators; it does not become a repository framework.
+4. `web-jersey` adds a custom JSON provider, fault mapping, envelope-style resource handling, pagination headers, multipart helpers, CORS, and thin client helpers on top of Jersey.
+5. `web-grizzly` and `web-jetty` are Spring lifecycle beans that start servers on context refresh and stop them on bean destruction.
+6. `web-http` is a static process-wide Apache async client wrapper with forced HTTP/1 and permissive TLS.
+7. `web-jwt` signs and verifies claims using jose4j and `JsonCodec`.
+8. `schema-validation-maven-plugin` validates XSDs and optional sample XML files from your Maven resource directories during the `validate` phase.
+9. `web-json-doppelganger` remains its own topic; use `DOPPELGANGER.adoc` and <<doppelganger,Doppelganger>> for generation rules.
+
+[cols="1,2,4",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Web parent
+|`org.smallmind:smallmind-web`
+|Aggregator POM for the web-related modules
+
+|JSON parent
+|`org.smallmind:web-json`
+|Aggregator POM for the JSON-oriented web modules
+
+|HTTP
+|`org.smallmind:web-http`
+|Thin wrapper over Apache async HTTP client
+
+|JSON scaffold
+|`org.smallmind:web-json-scaffold`
+|`JsonCodec`, `Page`, `Fault`, polymorphic transport support, and transport version helpers
+
+|JSON query
+|`org.smallmind:web-json-query`
+|Transport-neutral `Where` and `Sort` models, permit validation, and backend translation helpers
+
+|Doppelganger
+|`org.smallmind:web-json-doppelganger`
+|Compile-time transport view generation; documented separately in `DOPPELGANGER.adoc`
+
+|Jersey
+|`org.smallmind:web-jersey`
+|Jersey JSON integration, fault mapping, envelope helpers, multipart, CORS, and thin JSON clients
+
+|Grizzly
+|`org.smallmind:web-grizzly`
+|Spring-managed Grizzly server bootstrap with REST, SOAP, static resource, and WebSocket wiring
+
+|Jetty
+|`org.smallmind:web-jetty`
+|Spring-managed Jetty server bootstrap with REST, SOAP, static resource, and WebSocket wiring
+
+|JWT
+|`org.smallmind:web-jwt`
+|JWT encoding, verification, nested JOSE processing, and key master helpers
+
+|Schema validation plugin
+|`org.smallmind:schema-validation-maven-plugin`
+|Maven goal for validating XSDs and XML implementations from project resources
+|===
+
+[[web-choose-artifact, Choose An Artifact]]
+== Choose An Artifact
+
+[cols="2,2,4",options="header"]
+|===
+|If you need... |Use... |Notes
+
+|JSON read/write helpers, page wrappers, fault payloads, or transport polymorphism
+|`web-json-scaffold`
+|This is the smallest useful runtime entry point for transport payload work
+
+|Compile-time DTO or view generation from source classes
+|`web-json-doppelganger`
+|Read `DOPPELGANGER.adoc` and <<doppelganger,Doppelganger>>; this chapter only covers how the generated types fit into the rest of the stack
+
+|Dynamic filter and sort payloads that must stay transport-neutral
+|`web-json-query`
+|Add optional QueryDSL or Throng dependencies only if you use those translators
+
+|Jersey JSON providers, fault responses, envelope-style method binding, or lightweight remote proxies
+|`web-jersey`
+|`@ResourceMethod(validate = true)` and `@Validated` require AspectJ weaving in your application code
+
+|Spring-managed Grizzly startup for REST, SOAP, static content, or WebSockets
+|`web-grizzly`
+|Usually paired with `web-jersey` for REST resources
+
+|Spring-managed Jetty startup for REST, SOAP, static content, or WebSockets
+|`web-jetty`
+|Usually paired with `web-jersey` for REST resources
+
+|A thin Apache async HTTP helper without adopting Jersey client APIs
+|`web-http`
+|Be explicit about its static lifecycle, forced HTTP/1 behavior, and trust-all TLS posture
+
+|JWT encoding and verification using Smallmind transport helpers
+|`web-jwt`
+|Use symmetric or asymmetric key masters depending on your signing model
+
+|Build-time validation of schemas and example XML files
+|`schema-validation-maven-plugin`
+|This is a Maven plugin, not a runtime library
+|===
+
+[[web-why-use, Why Use Smallmind Web]]
+== Why Use Smallmind Web
+
+Use Smallmind Web when you want explicit web glue code without turning a library or application into a framework-specific stack.
+
+It fits best when you want:
+
+* transport helpers that remain thin over Jersey, Grizzly, Jetty, Apache HttpClient, jose4j, and JAXB or Jackson conventions
+* caller-owned lifecycle and runtime policy instead of auto-configuration or container magic
+* optional adoption of only the artifact that solves the problem in front of you
+* operational contracts that spell out defaults, TLS posture, ownership, error translation, and shutdown behavior
+* compile-time or build-time helpers that stay explicit instead of scanning your classpath or generating hidden runtime behavior
+
+It is a poor fit if you want:
+
+* a batteries-included application framework
+* an opinionated, resilient HTTP client stack with retries, pool ownership, circuit breaking, and strict TLS policy already applied
+* implicit registration or runtime discovery of resource classes, mappers, endpoints, or transport views
+
+[[web-install, Installation]]
+== Installation
+
+Declare only the artifacts you actually use.
+Most of the web modules do not pull in the others automatically; composition is explicit and visible in your POM.
+
+[cols="2,2,4",options="header"]
+|===
+|Artifact |Declare it when... |Companion dependencies and boundaries
+
+|`org.smallmind:web-http`
+|you want the thin Apache async wrapper directly or indirectly through `JsonTarget`
+|Static client lifecycle starts on first use; there is no public shutdown API
+
+|`org.smallmind:web-json-scaffold`
+|you want JSON transport helpers, `Page`, `Fault`, or polymorphic transport support
+|This is the transport core used by the other web runtime artifacts
+
+|`org.smallmind:web-json-query`
+|you accept query payloads from JSON or XML and translate them into backend queries
+|`com.querydsl:querydsl-core` and `org.smallmind:mongodb-throng` are optional and only needed for those translators
+
+|`org.smallmind:web-jersey`
+|you need Jersey server helpers, Jersey client fault translation, or Smallmind JSON proxies
+|`org.glassfish.jersey.ext:jersey-spring6` is an optional runtime companion when you use the Spring bridge
+
+|`org.smallmind:web-grizzly`
+|you want Spring-managed Grizzly startup
+|Typically paired with `web-jersey` and a `ResourceConfig`
+
+|`org.smallmind:web-jetty`
+|you want Spring-managed Jetty startup
+|Typically paired with `web-jersey` and a `ResourceConfig`
+
+|`org.smallmind:web-jwt`
+|you want JWT helpers backed by jose4j
+|Payloads are serialized with `JsonCodec`
+
+|`org.smallmind:schema-validation-maven-plugin`
+|you want XML schema checks during the Maven build
+|Declare it under `<build><plugins>` rather than `<dependencies>`
+|===
+
+Minimal transport dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-scaffold</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Jersey runtime dependency with optional Spring bridge:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-jersey</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+
+<dependency>
+  <groupId>org.glassfish.jersey.ext</groupId>
+  <artifactId>jersey-spring6</artifactId>
+  <scope>runtime</scope>
+</dependency>
+----
+
+Query DTO dependency for backend translation:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>web-json-query</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+If you are building a Jersey-based server with Grizzly or Jetty, the usual shape is:
+
+* `web-jersey` for `ResourceConfig`, JSON, faults, and endpoint helpers
+* one of `web-grizzly` or `web-jetty` for container bootstrapping
+* `jersey-spring6` only if you want the Spring bridge that `web-jersey` already supports as an optional runtime path
+
+[[web-use-cases, API By Use Case]]
+== API By Use Case
+
+[cols="2,2,4",options="header"]
+|===
+|If you want to... |Start with... |Then add or know...
+
+|serialize or deserialize transport payloads with JAXB-aware Jackson configuration
+|`JsonCodec`
+|See <<web-json-scaffold-module,`web-json-scaffold`>> for fault, page, polymorphism, and version helpers
+
+|return paged results with explicit range metadata
+|`Page<T>`
+|Add <<web-jersey-module,`web-jersey`>> and `@PageRange` if you also want HTTP `Content-Range` headers
+
+|move structured faults across service boundaries
+|`Fault`, `FaultWrappingException`, `ResourceInvocationException`
+|Server-side translation lives in `web-jersey`; transport types live in `web-json-scaffold`
+
+|accept user-supplied filter and sort payloads safely
+|`Where`, `Sort`, and `WherePermit`
+|Validate first, then translate with JPA, QueryDSL, or Throng helpers
+
+|publish Jersey resources from Spring without hand-registering every `@Path` bean
+|`JerseyPostProcessor`
+|Add `ResourceConfigExtension` beans such as `JsonProviderExtension` and `ThrowableExceptionExtension`
+
+|accept envelope-style resource calls with named parameters
+|`@ResourceMethod`, `@EntityParam`, and `EntityParamExtension`
+|If you enable validation, also add AspectJ runtime and weaving for your application code
+
+|serve REST, SOAP, static content, and WebSockets from a Spring context
+|`GrizzlyInitializingBean` or `JettyInitializingBean`
+|Choose the container-specific option classes and keep context paths unique
+
+|call a remote JSON endpoint without full Jersey client setup
+|`JsonTargetFactory` and `JsonTarget`
+|Know that `JsonTarget` is thin, mutable, and does not translate `Fault` payloads for you
+
+|call another service that follows the Smallmind envelope contract
+|`JsonEntityResourceProxyFactory`
+|Every proxy method parameter must have `@EntityParam`, and proxy invocations always use HTTP `POST`
+
+|encode or verify JWTs with JSON payloads
+|`JWTCodec` plus a `JWTKeyMaster`
+|Use `JWTConsumer` only when you need custom verification requirements or nested JOSE handling
+
+|validate XSDs and sample XML as part of the Maven build
+|`schema-validation-maven-plugin`
+|Files are resolved from Maven `project.resources`, not arbitrary filesystem paths
+|===
+
+[[web-quick-start, Quick Start]]
+== Quick Start
+
+The examples below use placeholder DTO types such as `OrderView`, `HealthResponse`, and `Claims`.
+Replace them with your own transport classes.
+
+=== JSON Transport And Faults
+
+[source,java]
+----
+OrderView orderView = JsonCodec.read(orderBytes, OrderView.class);
+byte[] responseBytes = JsonCodec.writeAsBytes(orderView);
+
+Page<OrderView> emptyPage = Page.empty(OrderView.class);
+Fault fault = new Fault(new IllegalStateException("Missing order"));
+----
+
+Use this when you want only transport helpers, not a full server stack.
+
+=== Query DTO Validation
+
+[source,java]
+----
+Where where = Where.instance(
+  AndWhereConjunction.instance(
+    WhereField.instance("status", WhereOperator.EQ, StringWhereOperand.instance("OPEN")),
+    WhereField.instance("priority", WhereOperator.GE, IntegerWhereOperand.instance(10))
+  )
+);
+
+Sort sort = Sort.instance(
+  SortField.instance("createdAt", SortDirection.DESC)
+);
+
+where.validate(
+  WherePermit.allowed(null, "status"),
+  WherePermit.allowed(null, "priority"),
+  WherePermit.required(null, "status")
+);
+----
+
+Validate before you translate the query into JPA, QueryDSL, or MongoDB rules.
+
+=== Jersey Registration In Spring
+
+[source,xml]
+----
+<bean id="jerseyPostProcessor" class="org.smallmind.web.jersey.spring.JerseyPostProcessor"/>
+
+<bean class="org.smallmind.web.jersey.json.JsonProviderExtension"/>
+<bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
+<bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
+<bean class="org.smallmind.web.jersey.json.ThrowableExceptionExtension"/>
+----
+
+`JerseyPostProcessor` auto-registers Spring beans annotated with `@Path` and applies every `ResourceConfigExtension` bean.
+
+=== Thin JSON Client
+
+[source,java]
+----
+JsonTarget target = JsonTargetFactory.manufacture(HttpProtocol.HTTPS, "api.example.org", 8443);
+HealthResponse health = target.path("/v1/health").get(HealthResponse.class);
+----
+
+If you use `JsonTarget` directly, call `path(...)` before `header(...)`, `query(...)`, or `debug(...)` on the request-specific target.
+`path(...)` creates a new `JsonTarget` instance.
+
+=== JWT Encode And Verify
+
+[source,java]
+----
+SymmetricJWTKeyMaster keyMaster = new SymmetricJWTKeyMaster("shared-secret");
+String jwt = JWTCodec.encode(claims, keyMaster);
+Claims verifiedClaims = JWTCodec.decode(jwt, keyMaster, Claims.class);
+----
+
+If you want explicit `sub` and `exp` accessors, make your claim type implement `JWTToken`.
+
+=== Maven XML Schema Validation
+
+Use ordinary Maven nested bean mapping under `<schemas>`: one child bean per schema entry, each with a `path` and optional `impls` list.
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>schema-validation-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>validate-xml</goal>
+      </goals>
+      <configuration>
+        <w3c>schema/XMLSchema.xsd</w3c>
+        <schemas>
+          <xsd>
+            <path>schema/order.xsd</path>
+            <impls>
+              <impl>schema/examples/order-example.xml</impl>
+            </impls>
+          </xsd>
+        </schemas>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+
+Place the XSD and example XML files under a configured Maven resource directory because the plugin resolves them from `project.resources`.
+
+[[web-http-module, `web-http`]]
+== `web-http`
+
+`web-http` is intentionally small.
+It exposes one static helper around Apache `CloseableHttpAsyncClient` and leaves request construction to the caller.
+
+=== Primary Surface
+
+[cols="2,4",options="header"]
+|===
+|Type |Role
+
+|`HttpClient`
+|Static `execute(...)` helper around a shared Apache async client
+
+|`HttpCallback<T>`
+|Completion callback abstraction used by the helper
+
+|`SimpleCallback`
+|Captures the response or exception for later retrieval
+
+|`HttpRequestCancelledException`
+|Raised by `SimpleCallback` when the async request is cancelled
+|===
+
+=== Operational Contract
+
+`HttpClient` creates and starts a shared Apache async client in a static initializer.
+That means:
+
+* the client lifecycle is process-wide, not caller-owned
+* there is no public `close()` or shutdown hook in this module
+* the first use of the class fixes the client configuration for the JVM process
+
+Current defaults from the code are:
+
+* concurrency limit `300` for both total connections and max per route
+* low-level socket timeout `5` seconds
+* HTTP version policy forced to HTTP/1
+* trust-all TLS material through a permissive SSL context
+
+`HttpClient.execute(...)` then adds a second layer of timing: it waits for the Apache future to complete and also waits for the callback to finish handling the result inside the supplied timeout window.
+
+=== Failure And Ownership Notes
+
+`SimpleCallback.getResponse()` rethrows the captured exception instead of hiding it.
+Cancellation becomes `HttpRequestCancelledException`.
+Because TLS is permissive and client lifecycle is static, `web-http` works best as an explicit glue layer inside a bounded environment rather than as a hardened shared platform HTTP client.
+
+[[web-json-scaffold-module, `web-json-scaffold`]]
+== `web-json-scaffold`
+
+`web-json-scaffold` is the transport core for the web modules.
+It is useful on its own even if you never adopt Jersey, Grizzly, Jetty, or JWT helpers.
+
+=== What Lives Here
+
+[cols="2,4",options="header"]
+|===
+|Type |Purpose
+
+|`JsonCodec`
+|Centralized Jackson configuration plus read, write, convert, pretty-print, and tree helpers
+
+|`Page<T>`
+|Explicit pagination wrapper carrying values plus `firstResult`, `maxResults`, `totalResults`, and `resultSize`
+
+|`Fault`
+|Structured fault payload with type, message, stack, nested cause, optional information, and optional native Java encoding
+
+|`FaultInformation`
+|Structured code, template, and arguments payload used by informed faults
+
+|`FaultWrappingException`
+|`IOException` wrapper around a transported `Fault`
+
+|`ResourceInvocationException`
+|`IOException` wrapper around a native Java exception deserialized from a remote fault
+
+|`AttributedPolymorphicXmlAdapter` and `PolymorphicAttributeNameInitializingBean`
+|Polymorphic transport support using an explicit attribute in the payload
+
+|`Version<V>` and `Versioned<V>`
+|Lightweight helper interfaces for transport version serialization
+|===
+
+=== `JsonCodec` Configuration
+
+`JsonCodec` uses one shared Jackson mapper configured in code.
+The important behavior is part of the module contract:
+
+* Jakarta XML Bind annotations are honored through a custom module
+* non-nillable properties are serialized with `NON_NULL` inclusion
+* the polymorphic module is registered
+* `MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME` is enabled
+* pretty printing sorts object field names alphanumerically before rendering
+* Afterburner is intentionally disabled in the current code path because of the documented Jackson 3 incompatibility comment in the source
+
+That means `JsonCodec` is not a raw default Jackson mapper.
+It is a transport mapper with Smallmind-specific JAXB and polymorphism expectations already applied.
+
+=== Pagination Contract
+
+`Page<T>` is explicit about the range metadata carried with the values.
+Use it when your service boundary needs more than a bare list.
+
+Important behavior:
+
+* `Page.empty(SomeType.class)` returns an empty page with zeroed range fields
+* `jsonConvert(...)` lets you convert the stored values through `JsonCodec`
+* the type is iterable and still keeps the range information visible in the API
+
+=== Fault Contract
+
+Use `Fault` when you need a transportable error payload rather than a local exception only.
+
+Important behavior from the implementation:
+
+* `new Fault(Throwable)` captures the throwable type, message, stack trace, and recursive cause chain
+* native Java exception serialization is enabled by default in the throwable-based constructors
+* if native serialization fails, the fault is still produced and the serialization problem is logged
+* `FaultInformation` stores a numeric code, a template, and JSON arguments
+* `FaultInformation.getArgumentsAs(...)` requires the class array length to match the stored argument count
+* `FaultWrappingException` preserves the transported fault and prints fault-oriented stack output
+* `ResourceInvocationException` is used when a remote fault carried a serialized Java exception that could be reconstructed locally
+
+Use native fault encoding only when both ends of the boundary intentionally share Java serialization expectations.
+If that assumption is not safe, treat the structured `Fault` fields as the stable contract and ignore the native object payload.
+
+=== Polymorphism And Versioning
+
+The default polymorphic attribute name is `java/object`.
+It is stored through `PerApplicationContext`, not as a per-call override.
+If you need a different attribute name for an application, set it explicitly through `PolymorphicAttributeNameInitializingBean` during startup.
+
+`AttributedPolymorphicXmlAdapter` expects the payload to contain the polymorphic attribute and maps it to a known subclass using the JAXB root element name.
+It will not serialize the polymorphic base class itself, because that would be recursively ambiguous.
+
+`Version<V>` and `Versioned<V>` are intentionally light.
+They just pin a version enum to a serializable payload type and delegate JSON conversion back to `JsonCodec`.
+
+=== Doppelganger Relationship
+
+Doppelganger-generated view classes serialize naturally through `JsonCodec` and fit well with the Jersey helpers in this chapter, but the generation model itself is intentionally documented elsewhere.
+Use the root-level `DOPPELGANGER.adoc` guide and <<doppelganger,Doppelganger>> for authoring rules, naming, and annotation behavior.
+
+[[web-json-query-module, `web-json-query`]]
+== `web-json-query`
+
+`web-json-query` packages filter and sort payloads as explicit transport DTOs.
+It does not hide your persistence layer; it just gives you a stable way to accept, validate, and translate query intent.
+
+=== Query Model
+
+The model is small and transport-neutral:
+
+* `Where` wraps one root conjunction
+* `AndWhereConjunction` and `OrWhereConjunction` group criteria
+* `WhereField` expresses one field, operator, and operand
+* `Sort` carries ordered `SortField` entries
+* `WhereOperand` implementations hold typed scalar, array, date, enum, boolean, number, string, or null values
+
+That model is serializable to both JSON and XML.
+You can construct it programmatically, deserialize it from a request body, validate it, and then translate it to the backend API you actually own.
+
+=== Validation
+
+Both `Where` and `Sort` implement `WherePermissible`.
+That gives you two validation paths:
+
+* call `validate(WherePermit...)` directly
+* apply `@WhereConstraint` and let Bean Validation invoke `WhereValidator`
+
+The permit vocabulary is explicit:
+
+* `allowed`
+* `required`
+* `excluded`
+* `dependent`
+
+Validation failures raise `WhereValidationException` and preserve an operational message rather than a generic validation failure.
+Use this before query translation so invalid field combinations do not leak into your persistence layer.
+
+=== Translation Helpers
+
+`web-json-query` ships thin translators rather than one universal repository abstraction.
+
+[cols="2,4",options="header"]
+|===
+|Translator |What it does
+
+|`JPAQueryUtility`
+|Converts `Where` into JPA `Predicate` objects and `Sort` into JPA `Order[]`, using an optional field transformer for joins or alternate paths
+
+|`QueryDslQueryUtility`
+|Converts `Where` and `Sort` into QueryDSL predicates and orders when `querydsl-core` is present
+
+|`ThrongQueryUtility`
+|Converts `Where` and `Sort` into `mongodb-throng` filters and sorts when that optional dependency is present
+|===
+
+These translators stay thin on purpose.
+They assume you already own the persistence objects such as `CriteriaBuilder`, QueryDSL paths, or Throng filters.
+
+=== Wildcards, Nulls, And Type Rules
+
+Important behavior to know before you expose the model to users:
+
+* `WildcardUtility` transforms `*` into SQL `%` for SQL-style translators
+* JPA and QueryDSL translators let you choose whether non-terminal wildcards are allowed; disabling them causes `NonTerminalWildcardException`
+* Throng translation is stricter and only allows string wildcards at the beginning or end of the operand for `LIKE` and `UNLIKE`
+* `WhereOperator` performs operand-type checks and raises `QueryProcessingException` for invalid combinations instead of silently coercing values
+* in Throng translation, `EQ null` becomes `exists(false)` and `NE null` becomes `exists(true)`
+* in QueryDSL translation, an `IN` operator with an empty array yields a `null` predicate rather than inventing a clause
+
+=== Important Caveats
+
+`SortField.equals(...)` and `hashCode()` are based on the field name only.
+The entity alias is ignored.
+If you rely on set membership or map keys for sort fields, treat alias collisions as your responsibility.
+
+`JPAQueryUtility` and the sort translators return empty or neutral products when the incoming `Where` or `Sort` is absent or empty.
+That keeps the library thin, but it means the caller still decides what an "unfiltered" query should do.
+
+[[web-jersey-module, `web-jersey`]]
+== `web-jersey`
+
+`web-jersey` is the main server-side and client-side integration layer in the web stack.
+It wires `JsonCodec` into Jersey, translates faults, exposes envelope-style resource helpers, and offers two separate client paths: Jersey client filters and the thinner Apache-backed `JsonTarget` path.
+
+=== ResourceConfig Extension Catalog
+
+`JerseyPostProcessor` is the assembly hub in Spring.
+It auto-registers beans annotated with `@Path` and applies every `ResourceConfigExtension` bean.
+
+[cols="2,4",options="header"]
+|===
+|Extension |What it registers or changes
+
+|`JsonProviderExtension`
+|Registers `JsonProvider` so Jersey reads and writes JSON with `JsonCodec`
+
+|`ThrowableExceptionExtension`
+|Registers `ThrowableExceptionMapper` and sets `jersey.config.server.response.setStatusOverSendError = true`
+
+|`EntityParamExtension`
+|Registers the filter, context resolver, and feature needed for `@ResourceMethod` and `@EntityParam`
+
+|`XmlAdapterParamExtension`
+|Registers parameter conversion support for `@XmlJavaTypeAdapter`
+
+|`PageRangeResponseExtension`
+|Registers `PageRangeResponseFilter` for `@PageRange` methods that return `Page<?>`
+
+|`MultiPartFeatureExtension`
+|Registers Jersey multipart support
+
+|`CorsExtension`
+|Registers a configured `CorsFilter` using allowed and exposed header lists
+
+|`ResourceConfigProperty`
+|Applies a single Jersey configuration property through a bean
+|===
+
+If registration order matters, use `PrioritizedResourceConfigExtension` and set an explicit numeric priority.
+
+=== Server-Side JSON And Fault Mapping
+
+`JsonProvider` is deliberately broad:
+
+* it reads any type from `application/json` or `text/json`
+* it writes any type using `JsonCodec`
+* it uses a thread-local write buffer between `getSize(...)` and `writeTo(...)`
+
+`ThrowableExceptionMapper` gives you the default error policy:
+
+* it tries any supplied `ExceptionMapper` overrides first
+* it preserves existing `WebApplicationException` responses
+* it logs unclassified errors only when configured to do so
+* it otherwise returns HTTP `500` with a JSON `Fault` payload
+
+`FormattedWebApplicationException` is the convenience type when you want to return a chosen status plus a JSON `Fault` payload without writing the `Response` assembly yourself.
+
+=== Envelope-Style Resource Methods
+
+The envelope model is opt-in and explicit.
+Use it only if both sides of the boundary agree on the contract.
+
+Important pieces:
+
+* `@ResourceMethod` marks the resource method and names the concrete `JsonEntity` subtype used for the request envelope
+* `@EntityParam("name")` maps one method parameter to one named entry inside that entity
+* `EntityParamExtension` registers the pieces that make the envelope available during request processing
+* `Envelope` is the wire format used by the proxy layer: a map of named `Argument` values encoded as JSON
+* the `AbstractMappedJsonEntity` family converts stored values through `JsonCodec` and honors `@XmlJavaTypeAdapter`
+
+This is not a replacement for normal Jersey request bodies.
+It is a specific transport style for APIs that want named parameter envelopes and explicit method signatures.
+
+=== Validation And AspectJ Requirement
+
+`web-jersey` includes two aspect-based validation hooks:
+
+* `@ResourceMethod(validate = true)`
+* `@Validated`
+
+The module ships the annotations and the aspects, but it does not enable weaving for your application code.
+If you annotate your own resource or service classes and want validation to run, you must supply:
+
+* `aspectjrt` at runtime
+* a weaving strategy such as compile-time or post-compile weaving for the annotated application classes
+
+This repository builds `web-jersey` itself with `aspectj-maven-plugin`, but that does not automatically weave your application.
+Without weaving, the annotations remain metadata only and no validation advice runs.
+
+When weaving is active, validation goes through `EntityValidator` and Hibernate Validator executable validation.
+Parameter names in the validation messages come from `@EntityParam` when available, and otherwise fall back to `argument[index]`.
+
+=== Pagination, Multipart, And CORS
+
+`PageRangeResponseFilter` activates only when both conditions are true:
+
+* the resource method is annotated with `@PageRange`
+* the response entity is a `Page<?>`
+
+It then sets a `Content-Range` header using the `records` unit and chooses the response status:
+
+* `200` when the page is complete
+* `206` when the page is partial or the total is unknown
+* `416` when the requested range is out of bounds
+
+`MultiPartFeatureExtension` enables Jersey multipart support.
+`MultiPartFileIterator` expects the multipart field name to be exactly `file`.
+When the incoming part does not declare a media type, the current code only knows a built-in mapping for `png`; everything else falls back to `application/octet-stream`.
+`MultiPartFile.readAllBytes()` loads the full stream into memory and wraps I/O failures in `MultiPartFileException`.
+
+`CorsExtension` and `CorsFilter` are intentionally simple:
+
+* preflight `OPTIONS` requests are handled directly by the filter
+* allowed methods are fixed to `CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT`
+* `Access-Control-Allow-Credentials` is always `true`
+* the response echoes the incoming `Origin` when present, otherwise it uses `*`
+
+=== Spring Integration
+
+`JerseyPostProcessor` extends `ResourceConfig` and implements `BeanPostProcessor`.
+That means the object you hand to Grizzly or Jetty as the Jersey `ResourceConfig` can also be the Spring bean that discovers your Jersey pieces.
+
+Useful supporting types:
+
+* `ResourceConfigExtension` for arbitrary `ResourceConfig` customizations
+* `PrioritizedResourceConfigExtension` when registration order matters
+* `ResourceConfigProperty` for one-off Jersey property beans
+* `ExposedApplicationContext` and `ExposedWebContextLoaderListener` when you need the Spring application context visible from the Jersey side
+
+The `jersey-spring6` dependency in `web-jersey` is intentionally optional at runtime.
+If you wire Jersey without the Spring bridge, the rest of the module still remains usable.
+
+=== Jersey Client Fault Translation
+
+If you use Jersey's own client API, `FaultTranslatingClientResponseFilter` is the bridge from HTTP error responses back into Smallmind fault exceptions.
+
+Current behavior:
+
+* default status range is `[400, 600)`
+* the filter only activates when the media type is exactly `application/json`
+* if the transported `Fault` contains a native Java exception payload, the filter deserializes it and throws `ResourceInvocationException`
+* otherwise it throws `FaultWrappingException`
+
+This filter is useful only on the Jersey client path.
+It is not automatically involved in the Apache-backed `JsonTarget` path.
+
+=== `JsonTarget`, `JsonTargetFactory`, And Dynamic Proxies
+
+The `JsonTarget` path is intentionally thinner than Jersey client usage.
+It is built on `web-http` and is appropriate when you want a small explicit client rather than the Jersey client runtime.
+
+Key rules from the code:
+
+* `JsonTargetFactory` manufactures a target from protocol, host, and optional port information
+* `JsonTarget.path(...)` returns a new target instance for the request path
+* `header(...)`, `query(...)`, and `debug(...)` mutate the target instance they are called on
+* `get`, `put`, `post`, `patch`, and `delete` all call `HttpClient.execute(...)` with a fixed timeout of `10` seconds
+* empty `2xx` responses become `null`
+* empty non-`2xx` responses become `WebApplicationException` with the HTTP status
+* response bodies are converted through `JsonCodec`, but no automatic `Fault` translation is applied
+
+Operational consequences:
+
+* call `path(...)` first, then add request-specific headers, query parameters, and debug level on the returned instance
+* do not treat a shared mutable `JsonTarget` as thread-safe request state
+* query parameters are appended into the path string at request creation time, so reusing the same target after calling `query(...)` can accumulate query text unexpectedly
+
+`JsonEntityResourceProxyFactory` adds one more layer: a dynamic proxy for services that follow the Smallmind envelope contract.
+
+Important proxy behavior:
+
+* base path format is `/<versionPrefix><serviceVersion>/<serviceName>`
+* the method path is either the Jersey `@Path` value on the interface method or `/<methodName>` when `@Path` is absent
+* every proxy method parameter must have `@EntityParam`
+* `@XmlJavaTypeAdapter` on a parameter is applied before transport
+* the wire body is an `Envelope` of named arguments
+* optional `JsonHeaderInjector` instances can add headers per invocation
+* proxy invocations always use HTTP `POST`
+
+Use the proxy path only when the remote service actually follows that envelope style.
+It is not a generic REST interface mapper.
+
+=== TLS Helper Caveat
+
+`ClientUtility.clientBuilder()` is intentionally permissive.
+It trusts every certificate, trusts every hostname, and also installs its SSL socket factory as the JVM default via `HttpsURLConnection.setDefaultSSLSocketFactory(...)`.
+Treat it as a bounded-environment helper, not as a neutral production default.
+
+[[web-container-comparison, Grizzly And Jetty Compared]]
+== Grizzly And Jetty Compared
+
+Both container modules follow the same high-level model: Spring owns the server bean lifecycle, `JerseyPostProcessor` supplies the Jersey `ResourceConfig`, and explicit option objects describe the web applications to expose.
+The differences matter in practice.
+
+[cols="2,3,3",options="header"]
+|===
+|Concern |Grizzly |Jetty
+
+|Lifecycle bean
+|`GrizzlyInitializingBean`
+|`JettyInitializingBean`
+
+|SOAP service annotation
+|`@ServicePath(contextPath = ..., value = ...)`
+|`@ServicePath(context = ..., value = ...)`
+
+|Default HTTP listener
+|port `80` when `allowInsecure = true`
+|port `80` when `allowInsecure = true`
+
+|Default secure listener
+|`SSLInfo.port = 443`
+|`SSLInfo.port = 443`
+
+|REST mount default
+|`JaxRSOption.restPath = /rest`
+|`JaxRSOption.restPath = /rest`
+
+|WebSocket option shape
+|`includeWsadlSupport`
+|`maxSessionIdleTimeout`
+
+|Classloader static resource option
+|supports explicit `staticClassLoader`
+|only exposes the static path, not a classloader override
+
+|Client-auth and proxy SSL flags
+|`requireClientAuth` and `proxyMode` are both used in the secure listener path
+|the flags exist on `SSLInfo`, but the current `JettyInitializingBean` does not consume them
+
+|Extra WebSocket extension hook
+|`WebSocketExtensionInstaller` exists
+|no equivalent installer in this module
+
+|HTTP protocol notes
+|listeners receive an `Http2AddOn` in the current code
+|current connector setup is explicit HTTP/1.1
+|===
+
+Choose by surrounding container policy, not by assuming the modules are interchangeable.
+They share intent and naming, but not identical option shapes.
+
+[[web-grizzly-module, `web-grizzly`]]
+== `web-grizzly`
+
+`web-grizzly` bootstraps a Grizzly server from Spring-managed option objects and installer beans.
+It is an assembly layer, not a replacement framework.
+
+=== Lifecycle And Assembly Model
+
+`GrizzlyInitializingBean` implements Spring lifecycle interfaces and starts the server on `ContextRefreshedEvent`.
+It validates configuration in `afterPropertiesSet()` and stops the server in `destroy()`.
+
+`GrizzlyPostProcessor` is the collection point for installable parts.
+It recognizes explicit installer beans and SOAP services annotated with `@ServicePath`.
+
+The current assembly model supports:
+
+* JAX-RS through a supplied Jersey `ResourceConfig`
+* SOAP services via `@ServicePath` or `WebServiceInstaller`
+* static classloader resources
+* static filesystem document roots
+* servlet, filter, and listener installers
+* optional Spring request context support
+* optional WebSocket container setup
+
+=== Option Objects And Defaults
+
+[cols="2,4",options="header"]
+|===
+|Type |Current defaults and role
+
+|`GrizzlyInitializingBean`
+|`port = 80`, `allowInsecure = true`, `debug = false`; optional host, header size, worker sizing, IO strategy, add-ons, SSL, and `ResourceConfig`
+
+|`WebApplicationOption`
+|`contextPath = /context`, `soapPath = /soap`; holds JAX-RS, Spring, WebSocket, static resource, and document-root options
+
+|`JaxRSOption`
+|`restPath = /rest`
+
+|`ClassLoaderResourceOption`
+|`staticPath = /static` plus an optional explicit classloader
+
+|`DocumentRootOption`
+|`documentPath = /document` plus a map of URL fragments to filesystem roots
+
+|`WebSocketOption`
+|`includeWsadlSupport = false`
+
+|`SSLInfo`
+|`port = 443`, `requireClientAuth = false`, `proxyMode = false`
+|===
+
+Context paths must be unique.
+If two `WebApplicationOption` entries use the same `contextPath`, initialization fails before the server starts.
+
+=== Runtime Behavior
+
+When `JaxRSOption` is present, Grizzly mounts the Jersey servlet at `restPath + "/*"` and adds `PerApplicationContextFilter`.
+When `SpringSupportOption` is present, it also adds `GrizzlyRequestContextListener`.
+When `WebSocketOption` is present, it creates a Tyrus `ServerContainer` for that context.
+
+Static content behavior is explicit:
+
+* classloader resources are mounted only when `ClassLoaderResourceOption` is present
+* document roots are mounted only when `DocumentRootOption` is present
+* SOAP services are installed only when you declare them explicitly
+
+If `allowInsecure` stays `true` and you also provide `SSLInfo`, Grizzly exposes both HTTP and HTTPS listeners.
+If you want HTTPS only, set `allowInsecure = false` and provide `SSLInfo`.
+If you set `allowInsecure = false` without SSL info, initialization fails with an explicit exception.
+
+=== TLS, Client Authentication, And Proxy Mode
+
+Grizzly's SSL path actually uses the security options exposed by `SSLInfo`.
+
+Important behavior from the code:
+
+* `requireClientAuth` is passed into the SSL engine configuration
+* `proxyMode` controls `ClientAuthProxyFilter`
+* when `proxyMode = false`, the filter strips `SSL_CLIENT_S_DN`, `SSL_CLIENT_I_DN`, `SSL_CLIENT_VERIFY`, and `X-Forwarded-For` from the request and reconstructs values from the real connection
+* when `proxyMode = true`, the filter trusts those incoming headers from the upstream proxy path
+
+This makes the secure Grizzly path operationally stricter than the corresponding Jetty path in the current codebase.
+
+=== WebSocket Notes
+
+Grizzly uses a Tyrus-backed server container.
+In the current implementation:
+
+* the container idle timeout is set to indefinite
+* `WebSocketAddOn` is installed
+* WSADL exposure is optional through `WebSocketOption.includeWsadlSupport`
+* `WebSocketExtensionInstaller` can merge endpoint extensions when endpoint class and path match
+
+Endpoint ownership still remains explicit.
+The module gives you the container and installer seams; it does not scan for arbitrary WebSocket endpoints on its own.
+
+=== Shipped XML Example
+
+The module ships a Spring XML assembly example at `web/grizzly/src/main/resources/spring/org/smallmind/web/grizzly/grizzly.xml`.
+It wires:
+
+* `JerseyPostProcessor`
+* `JsonProviderExtension`
+* `EntityParamExtension`
+* `XmlAdapterParamExtension`
+* `ThrowableExceptionExtension`
+* `GrizzlyPostProcessor`
+* one `GrizzlyInitializingBean`
+
+Treat that file as a working example of the intended assembly style, not as a required runtime path.
+
+[[web-jetty-module, `web-jetty`]]
+== `web-jetty`
+
+`web-jetty` mirrors the Grizzly module at the lifecycle level but maps the same intent onto Jetty-specific APIs and option objects.
+
+=== Lifecycle And Assembly Model
+
+`JettyInitializingBean` starts on `ContextRefreshedEvent`, stops on `destroy()`, and validates unique context paths in `afterPropertiesSet()`.
+`JettyPostProcessor` collects installers and SOAP services annotated with Jetty's `@ServicePath`.
+
+The module supports:
+
+* Jersey servlet deployment through a supplied `ResourceConfig`
+* SOAP service publication
+* static classpath resources and filesystem document roots
+* servlet, filter, and listener installers
+* optional Spring request context support
+* optional Jakarta WebSocket container setup
+
+=== Option Objects And Defaults
+
+[cols="2,4",options="header"]
+|===
+|Type |Current defaults and role
+
+|`JettyInitializingBean`
+|`port = 80`, `allowInsecure = true`, `debug = false`; optional host, worker sizing, header size, SSL, and `ResourceConfig`
+
+|`WebApplicationOption`
+|`contextPath = /context`, `soapPath = /soap`
+
+|`JaxRSOption`
+|`restPath = /rest`
+
+|`ClassLoaderResourceOption`
+|`staticPath = /static`
+
+|`DocumentRootOption`
+|`documentPath = /document`
+
+|`WebSocketOption`
+|`maxSessionIdleTimeout = 5 * 60 * 1000` milliseconds
+
+|`SSLInfo`
+|`port = 443`, `requireClientAuth = false`, `proxyMode = false`
+|===
+
+As with Grizzly, unique context paths are mandatory and HTTPS-only startup requires both `allowInsecure = false` and a non-null `SSLInfo`.
+
+=== Runtime Behavior
+
+When `JaxRSOption` is present, Jetty mounts Jersey's `ServletContainer` under `restPath + "/*"` and adds `PerApplicationContextFilter`.
+When `SpringSupportOption` is present, it adds `JettyRequestContextListener`.
+When `WebSocketOption` is present, it initializes the Jakarta WebSocket container and applies the configured session idle timeout.
+
+Static resources, document roots, SOAP services, and installer beans are all opt-in through explicit configuration.
+Nothing in this module scans the classpath looking for resources to publish.
+
+=== Important SSL Caveats
+
+The current Jetty implementation exposes `requireClientAuth` and `proxyMode` on `SSLInfo`, but `JettyInitializingBean` does not currently consume either flag.
+Do not assume those properties change runtime behavior unless you add the corresponding integration yourself.
+
+There is a second, more immediate caveat: when SSL is enabled, the code unconditionally reads `trustSSLStore` as well as `keySSLStore`.
+In practice that means you should treat the trust store as required for the current Jetty secure path.
+A missing trust store does not result in a friendly optional-path fallback.
+
+=== WebSocket Notes
+
+Jetty's WebSocket option is narrower than Grizzly's.
+It gives you container initialization and idle-timeout control, but there is no `WebSocketExtensionInstaller` equivalent in this module.
+Endpoint registration remains your responsibility.
+
+=== Jetty-Specific Differences To Remember
+
+* the SOAP service annotation uses `context`, not `contextPath`
+* `ClassLoaderResourceOption` does not let you supply a classloader override
+* the secure connector setup is currently explicit HTTP/1.1
+
+[[web-jwt-module, `web-jwt`]]
+== `web-jwt`
+
+`web-jwt` is a thin JWT helper layer over jose4j.
+It keeps payload serialization explicit through `JsonCodec` and keeps key selection explicit through `JWTKeyMaster` implementations.
+
+=== Primary Surface
+
+[cols="2,4",options="header"]
+|===
+|Type |Role
+
+|`JWTCodec`
+|High-level encode, decode, and non-verifying decipher helpers
+
+|`JWTToken`
+|Optional interface standardizing `sub` and `exp` claim accessors
+
+|`SymmetricJWTKeyMaster`
+|Builds an HMAC SHA-256 signing key from a shared secret string
+
+|`AsymmetricJWTKeyMaster`
+|Chooses an algorithm from the provided key type and exposes the key for signing or verification
+
+|`JWTConsumer`
+|Lower-level jose4j-backed processor with configurable signature, encryption, and integrity requirements
+|===
+
+=== Encoding And Verification Rules
+
+`JWTCodec.encode(...)` serializes the claim object with `JsonCodec`, builds a compact JWS, and optionally writes a key id into the header.
+
+`JWTCodec.decode(...)` verifies the token with `JWTConsumer` and then deserializes the payload to the requested claim type.
+
+`JWTCodec.decipher(...)` is intentionally different: it disables signature verification and only parses the payload.
+Use it for inspection or debugging, not for trust decisions.
+
+=== Key Master Behavior
+
+`SymmetricJWTKeyMaster` is fixed to `HS256` and derives the key from the UTF-8 bytes of the provided secret string.
+
+`AsymmetricJWTKeyMaster` currently supports only:
+
+* `RSA`, mapped to `RS256`
+* `Ed25519`, mapped to `EdDSA`
+
+If you pass a key whose `getAlgorithm()` value does not match one of those names, construction fails immediately with `UnknownAlgorithmException`.
+
+=== `JWTConsumer` Requirements
+
+`JWTConsumer` is useful when you need more than the default `decode(...)` path.
+It can process nested JOSE structures and exposes these requirement flags:
+
+* `requireSignature`, default `true`
+* `requireEncryption`, default `false`
+* `requireIntegrity`, default `false`
+* `skipSignatureVerification`, default `false`
+* `skipVerificationKeyResolutionOnNone`, default `false`
+
+Integrity is defined in the code as either a signature or MAC, or symmetric AEAD encryption.
+Verification failures raise `InvalidJWTException` or `InvalidJWTSignatureException`.
+
+[[web-schema-module, `schema-validation-maven-plugin`]]
+== `schema-validation-maven-plugin`
+
+The schema plugin is the build-time piece in the web family.
+It validates your XSD files against a W3C schema and can then validate example XML documents against those XSDs.
+
+=== Goal And Inputs
+
+The plugin exposes one goal:
+
+* `validate-xml`
+
+Current behavior from the code and generated plugin descriptor:
+
+* default phase is `validate`
+* the goal is thread-safe
+* `w3c` is required
+* `schemas` is optional
+* schema and XML paths are resolved from Maven `project.resources`
+
+Each `schemas` entry corresponds to one `org.smallmind.web.schema.XSD` object with:
+
+* `path`: the classpath-relative path to the XSD file
+* `impls`: an optional list of classpath-relative XML files that should validate against that schema
+
+=== Validation Contract
+
+The plugin validates in two stages:
+
+1. it locates the configured `w3c` schema inside `project.resources`
+2. for each configured schema, it validates the XSD against the W3C schema and then validates each listed XML implementation against that XSD
+
+Important failure behavior:
+
+* if the `w3c` schema cannot be found, the build fails with `MojoExecutionException`
+* if an XSD or XML implementation path cannot be found in the resource directories, the build fails with `MojoExecutionException`
+* warnings, errors, and fatal errors all stop validation because the handler rethrows each condition
+
+The plugin also prints progress lines such as `validating [xsd] (...)` and `validating [xml] (...)` as it works through the configured resources.
+
+[[web-api-index, API Index]]
+== API Index
+
+[cols="2,4",options="header"]
+|===
+|Artifact |Primary entry points
+
+|`web-http`
+|`HttpClient`, `HttpCallback`, `SimpleCallback`
+
+|`web-json-scaffold`
+|`JsonCodec`, `Page`, `Fault`, `FaultInformation`, `FaultWrappingException`, `ResourceInvocationException`, `AttributedPolymorphicXmlAdapter`, `PolymorphicAttributeNameInitializingBean`, `Version`, `Versioned`
+
+|`web-json-query`
+|`Where`, `WhereField`, `AndWhereConjunction`, `OrWhereConjunction`, `Sort`, `SortField`, `WherePermit`, `WhereConstraint`, `JPAQueryUtility`, `QueryDslQueryUtility`, `ThrongQueryUtility`
+
+|`web-jersey`
+|`JerseyPostProcessor`, `ResourceConfigExtension`, `JsonProviderExtension`, `ThrowableExceptionExtension`, `EntityParamExtension`, `XmlAdapterParamExtension`, `PageRangeResponseExtension`, `MultiPartFeatureExtension`, `CorsExtension`, `ResourceMethod`, `EntityParam`, `Validated`, `JsonTarget`, `JsonTargetFactory`, `JsonEntityResourceProxyFactory`, `FaultTranslatingClientResponseFilter`, `ClientUtility`
+
+|`web-grizzly`
+|`GrizzlyInitializingBean`, `GrizzlyPostProcessor`, `WebApplicationOption`, `JaxRSOption`, `SSLInfo`, `ServicePath`, installer types
+
+|`web-jetty`
+|`JettyInitializingBean`, `JettyPostProcessor`, `WebApplicationOption`, `JaxRSOption`, `SSLInfo`, `ServicePath`, installer types
+
+|`web-jwt`
+|`JWTCodec`, `JWTToken`, `JWTConsumer`, `SymmetricJWTKeyMaster`, `AsymmetricJWTKeyMaster`
+
+|`schema-validation-maven-plugin`
+|`XMLValidationMojo`, `XSD`
+|===
+
+If you also use compile-time view generation, pair this index with the root-level `DOPPELGANGER.adoc` guide and <<doppelganger,Doppelganger>>.
+
+[[web-defaults, Defaults Reference]]
+== Defaults Reference
+
+[cols="2,4",options="header"]
+|===
+|Default |Meaning
+
+|`web-http` concurrency `300`
+|Applied as both total max connections and max connections per route
+
+|`web-http` socket timeout `5` seconds
+|Low-level IO timeout inside the shared Apache async client
+
+|`web-http` HTTP version policy `FORCE_HTTP_1`
+|The client is intentionally fixed to HTTP/1 in the current code
+
+|`web-http` trust-all TLS
+|Certificates are accepted without ordinary trust validation
+
+|polymorphic attribute name `java/object`
+|Used by `web-json-scaffold` polymorphic transport support unless you override it during startup
+
+|Grizzly HTTP port `80`
+|Used when `allowInsecure = true`
+
+|Grizzly HTTPS port `443`
+|Used by `SSLInfo`
+
+|Grizzly `allowInsecure = true`
+|HTTP stays enabled unless you disable it explicitly
+
+|Grizzly `WebApplicationOption.contextPath = /context`
+|Default application context path
+
+|Grizzly `WebApplicationOption.soapPath = /soap`
+|Default SOAP base path
+
+|Grizzly `JaxRSOption.restPath = /rest`
+|Default Jersey mount path
+
+|Grizzly `ClassLoaderResourceOption.staticPath = /static`
+|Default classpath static-content path
+
+|Grizzly `DocumentRootOption.documentPath = /document`
+|Default filesystem document path
+
+|Grizzly `WebSocketOption.includeWsadlSupport = false`
+|WSADL exposure is opt-in
+
+|Jetty HTTP port `80`
+|Used when `allowInsecure = true`
+
+|Jetty HTTPS port `443`
+|Used by `SSLInfo`
+
+|Jetty `allowInsecure = true`
+|HTTP stays enabled unless you disable it explicitly
+
+|Jetty `WebApplicationOption.contextPath = /context`
+|Default application context path
+
+|Jetty `WebApplicationOption.soapPath = /soap`
+|Default SOAP base path
+
+|Jetty `JaxRSOption.restPath = /rest`
+|Default Jersey mount path
+
+|Jetty `ClassLoaderResourceOption.staticPath = /static`
+|Default classpath static-content path
+
+|Jetty `DocumentRootOption.documentPath = /document`
+|Default filesystem document path
+
+|Jetty WebSocket idle timeout `5 * 60 * 1000`
+|Five-minute default session idle timeout
+
+|`PageRangeResponseFilter` statuses `200`, `206`, `416`
+|Complete, incomplete, and out-of-range page responses
+
+|`FaultTranslatingClientResponseFilter` bounds `[400, 600)`
+|Default HTTP status range handled by the Jersey client response filter
+
+|CORS allowed methods `CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT`
+|Current fixed method list in `CorsFilter`
+
+|CORS credentials `true`
+|`Access-Control-Allow-Credentials` is always set to `true`
+
+|`JWTConsumer.requireSignature = true`
+|Unsigned tokens are rejected unless you disable the requirement
+
+|`JWTConsumer.requireEncryption = false`
+|Encryption is optional by default
+
+|`JWTConsumer.requireIntegrity = false`
+|Additional integrity requirement beyond the signature default is disabled by default
+|===
+
+[[web-lifecycle-ownership, Lifecycle And Resource Ownership]]
+== Lifecycle And Resource Ownership
+
+Ownership is intentionally explicit across the web stack.
+
+[cols="2,4",options="header"]
+|===
+|Artifact |Ownership rule
+
+|`web-http`
+|The module owns one static Apache async client for the JVM process; callers do not get a close hook
+
+|`web-json-scaffold`
+|`JsonCodec` and related helpers are static and process-wide; there is no runtime lifecycle to manage
+
+|`web-json-query`
+|The module owns no backend resources; callers own `CriteriaBuilder`, QueryDSL paths, Throng filters, and repository policy
+
+|`web-jersey`
+|Callers own resources, clients, `ResourceConfig`, and weaving strategy; `JerseyPostProcessor` only assembles what you declare
+
+|`web-grizzly`
+|Spring owns server start and stop through `GrizzlyInitializingBean`; callers own option beans, endpoints, installers, and SSL material
+
+|`web-jetty`
+|Spring owns server start and stop through `JettyInitializingBean`; callers own option beans, endpoints, installers, and SSL material
+
+|`web-jwt`
+|No background resources are owned by the module; callers own key material and token policy
+
+|`schema-validation-maven-plugin`
+|Maven owns the goal lifecycle; the plugin reads resources and fails the build when validation fails
+|===
+
+A recurring pattern in these modules is that Spring is used as an assembly convenience, not as a replacement for explicit ownership.
+When you pass in a `ResourceConfig`, SSL store, option bean, or installer, you still own the surrounding runtime policy.
+
+[[web-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,4",options="header"]
+|===
+|Behavior |Why it matters
+
+|`@ResourceMethod(validate = true)` and `@Validated` do nothing without AspectJ weaving
+|The annotations are only metadata until the aspects are woven into your application classes
+
+|`FaultTranslatingClientResponseFilter` only reacts to exact `application/json`
+|A response advertised as a different media type or as a parameterized variant may bypass fault translation
+
+|`JsonTarget.path(...)` returns a new target and does not preserve previously mutated request state
+|Add path first, then mutate headers, query parameters, and debug level on the returned instance
+
+|`JsonTarget.query(...)` appends into the path string during request creation
+|Reusing the same target after calling `query(...)` can accumulate query text unexpectedly
+
+|`JsonTarget` does not translate transported `Fault` payloads
+|A non-`2xx` response body is not automatically rethrown as `FaultWrappingException` on this client path
+
+|`JsonEntityResourceProxyFactory` proxies always use HTTP `POST`
+|The proxy layer is for the Smallmind envelope protocol, not generic REST method mapping
+
+|`SortField.equals(...)` ignores the entity alias
+|Set membership and map keys can collide on field name alone
+
+|`MultiPartFileIterator` requires the multipart field name `file`
+|A different field name is treated as a usage error, not as a silent no-op
+
+|`ClientUtility.clientBuilder()` changes the JVM default HTTPS socket factory and trusts every certificate and hostname
+|This helper has process-wide TLS implications beyond one client builder instance
+
+|`Fault` native payloads rely on Java serialization compatibility
+|Deserializing the remote throwable requires compatible classes on the receiving side
+
+|Jetty SSL currently expects both key and trust stores when SSL is enabled
+|A missing trust store is not treated as an optional path in the current implementation
+
+|Jetty's `SSLInfo.requireClientAuth` and `proxyMode` are currently unused by `JettyInitializingBean`
+|Do not assume those setters change runtime behavior today
+
+|Grizzly and Jetty use different `@ServicePath` attribute names
+|`contextPath` and `context` are not interchangeable
+
+|schema plugin warnings fail the build
+|The validation error handler rethrows warnings as well as errors and fatals
+|===
+
+[[web-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,4",options="header"]
+|===
+|Symptom |What to check
+
+|`@ResourceMethod(validate = true)` or `@Validated` never triggers validation
+|Add `aspectjrt` and verify your build weaves the application classes carrying those annotations
+
+|Jersey returns generic `500` faults instead of your custom mapper output
+|Check that your custom `ExceptionMapper` is registered and matches the thrown exception type before `ThrowableExceptionMapper` falls back to `Fault`
+
+|Jersey client calls do not throw `FaultWrappingException`
+|Register `FaultTranslatingClientResponseFilter` and confirm the server returns exact `application/json`
+
+|Proxy invocation fails with `ResourceDefinitionException`
+|Every proxy interface parameter must carry `@EntityParam`
+
+|`JsonTarget` request lacks headers or query parameters you set earlier
+|Remember that `path(...)` returns a new target and does not copy prior mutable request state
+
+|Grizzly or Jetty fails during startup with duplicate context path errors
+|Make every `WebApplicationOption.contextPath` unique inside the same initializer bean
+
+|HTTPS-only server startup fails immediately
+|If `allowInsecure = false`, you must also provide `SSLInfo`
+
+|Jetty HTTPS startup fails while reading SSL stores
+|Supply both `keySSLStore` and `trustSSLStore` in the current implementation
+
+|Multipart upload handling throws an error before reading files
+|Use the multipart field name `file`
+
+|Query validation rejects a request unexpectedly
+|Review your `allowed`, `required`, `excluded`, and `dependent` rules and remember they are exact field-name matches
+
+|Query translation fails on `LIKE`
+|Check operand types and wildcard placement; Throng only allows edge wildcards and SQL translators can forbid non-terminal wildcards
+
+|`schema-validation:validate-xml` cannot find your XSD or XML file
+|Ensure the file lives under a Maven resource directory and that the configured path is resource-relative rather than filesystem-absolute
+
+|JWT decoding fails even though the token structure looks correct
+|Check the key type, algorithm compatibility, and any `JWTConsumer` requirements such as signature or encryption
+
+|Binding to port `80` fails in local or CI environments
+|Set an explicit non-privileged port on the initializer bean instead of relying on the default
+|===
+
+[[web-minimal-checklist, Minimal Checklist]]
+== Minimal Checklist
+
+1. Choose the smallest artifact or artifact set that solves the actual problem.
+2. Keep all selected Smallmind artifacts on the same version unless you have a specific compatibility reason not to.
+3. Treat `smallmind-web` and `web-json` as aggregators, not runtime dependencies.
+4. If you use `web-http` or `ClientUtility`, decide explicitly whether permissive TLS is acceptable in that environment.
+5. If you use `@ResourceMethod(validate = true)` or `@Validated`, add `aspectjrt` and verify your weaving strategy against your own classes.
+6. When enabling JAX-RS on Grizzly or Jetty, provide a real Jersey `ResourceConfig`, typically through `JerseyPostProcessor`.
+7. When enabling HTTPS-only startup on Grizzly or Jetty, set `allowInsecure = false` and provide complete SSL configuration.
+8. When enabling Jetty SSL, provide both key and trust stores in the current implementation.
+9. Validate query DTOs before translating them into backend-specific predicates or filters.
+10. Use `JWTCodec.decipher(...)` only for inspection, not for authorization or trust decisions.
+
+[[web-verification, Verification Checklist]]
+== Verification Checklist
+
+Run focused verification against the slice you adopted.
+In this repository revision, the `web` modules do not carry dedicated `src/test/java` trees, so focused integration checks are more valuable than assuming a prebuilt test suite covers your exact assembly.
+
+Recommended checks:
+
+* verify dependency selection so only the intended web artifacts and optional companions are present
+* round-trip representative DTOs through `JsonCodec`
+* exercise one real `Fault` path end to end if you use Jersey fault translation
+* validate at least one accepted and one rejected query payload if you expose `web-json-query`
+* confirm AspectJ weaving by forcing a known validation failure on a `@ResourceMethod(validate = true)` or `@Validated` method
+* start and stop the chosen Grizzly or Jetty initializer inside a Spring context
+* verify the HTTP and HTTPS listener combination you actually intend, especially if `allowInsecure` remains `true`
+* verify multipart uploads with the exact field name `file` if you use that feature
+* verify JWT encode and decode with the real key type and requirement policy you plan to run
+* run the schema plugin against at least one valid and one invalid XML document if you adopt the build-time validation goal

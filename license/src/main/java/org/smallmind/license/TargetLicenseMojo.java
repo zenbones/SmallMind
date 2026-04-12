@@ -18,14 +18,31 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "install-license-files", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, threadSafe = true)
 public class TargetLicenseMojo extends AbstractMojo {
 
+  /**
+   * The current Maven project, supplied by Maven at execution time.
+   */
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+  /**
+   * Optional root project identifier used to resolve relative license file paths from a specific parent module instead
+   * of the top-most Maven parent.
+   */
   @Parameter
   private Root root;
+  /**
+   * Shared plugin configuration accepted so the goal can coexist with {@code generate-notice-headers} under one plugin
+   * declaration. This goal does not currently use rule definitions.
+   */
   @Parameter
   private Rule[] rules;
-  @Parameter
+  /**
+   * License files to copy into the project's output directory.
+   */
+  @Parameter(required = true)
   private String[] licenses;
+  /**
+   * Enables informational logging for each copied license file.
+   */
   @Parameter(defaultValue = "false")
   private boolean verbose;
 

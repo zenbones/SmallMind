@@ -1,35 +1,207 @@
 = Smallmind
 :doctype: book
 :toc: auto
+:toclevels: 3
 :icons: font
-A journey through glue code
+:sectanchors:
+Explicit Java glue code
 
 [preface]
-The SmallMind project is about all the pieces of functionality you need to take care of after you've written your business logic. It's about logging, pooling, monitoring, caching and remoting. It's about doing all this without assumptions or privilege, so that every piece can be dropped, adapted, or extended. This project is opinionated, but we hope those opinions come out of a thoughtful and positive place.
+Smallmind is a multi-module Java library collection for the integration code that surrounds business logic: transport adapters, logging, scheduling, packaging, persistence helpers, caching, monitoring, and other operational seams. The project is deliberately library-safe. It favors narrow module surfaces, explicit APIs, optional integrations, and caller-owned runtime policy.
 
-== About
+Direct programmatic wiring stays first-class. Some modules also provide Spring beans or XML helpers as assembly conveniences, and the same APIs remain usable from manual wiring or other IOC containers.
 
-This is a work in progress, which is to say it's mostly code. We're open to opinions, modifications, questions, and, above all, help, because if there's any point to this project, it's to be helpful.
+== What This Book Covers
 
-=== Download
+This book assembles the Smallmind module guides that currently live in the repository root. It focuses on the modules that currently have standalone root-level chapters, while the Maven build also contains additional supporting modules and internal layers. Use it when you are:
 
-All Smallmind modules are pushed to Maven Central under the *org.smallmind* group id. All artifacts which are intended to work together have the same sem version. Explicit module listings can be found in the various sections of this document covering those modules. Wherever possible, dependencies of this project are marked as `<optional>true</optional>`. This does require projects using these libraries to include such dependencies along with the relevant Smallmind modules, but keeps this project from making unwanted decisions. If we've missed any such opportunities, please let us know.
+* choosing a module for a new integration
+* wiring a Smallmind library into an application or another library
+* checking exact behavior, defaults, or operational constraints after initial adoption
 
-=== Configuration
+== Design Priorities
 
-There is none. IOC projects provide both the base container and configuration. Smallmind provides some occasionally helpful Spring beans, but there's no magic in them. Whatever flavor of dependency injection you prefer should work just as well.
+Smallmind is built around a few stable rules:
 
-=== Modules
+* modules stay narrow enough to adopt selectively
+* configuration, lifecycle, and runtime policy stay application-owned
+* direct programmatic APIs remain first-class even when Spring or XML helpers exist
+* dependencies are kept optional where practical
+* defaults, lifecycle, and failure behavior are treated as part of the module contract
+* wrappers stay thin over third-party APIs instead of hiding them behind framework conventions
 
-* <<claxon>> - A unified monitoring framework with extensible meters and pluggable metric warehousing integrations (comes with Datadog, JMX, Logging and Prometheus).
-* <<doppelganger>> - An annotation-based data transfer object generating facility that can create multiple polymorphic-aware, fully-validated, JSON serializable views, from a single description.
-* <<scribe>> - A fast, light, easily extended, endpoint neutral, library safe, unified logging framework with decidedly lazy message interpolation.
-* <<spark>> - Maven packaging formats for the construction of self-contained executable build artifacts.
+== Versioning And Dependencies
+
+All published artifacts use the `org.smallmind` group id. Dependency snippets in this guide use `${smallmind.version}` as a placeholder.
+When you combine multiple Smallmind modules, keep them on the same version unless you have a specific reason to split them.
+Optional dependencies are used deliberately so applications keep control of the surrounding runtime stack. If a Smallmind module bridges to another library, expect to declare that integration dependency explicitly when you adopt it.
+
+== Configuration Model
+
+Each module keeps configuration close to its integration surface.
+Direct programmatic wiring is always part of the intended model.
+Some modules provide Spring beans or XML helpers as assembly conveniences, and the same APIs remain usable from manual wiring or other IOC containers.
+Choose the smallest surface that fits your application and supply the dependencies the selected module expects.
+
+== Reading This Guide
+
+Each module guide opens with `Quick Navigation`, `Reading Paths`, and `At A Glance`.
+If you are new to a module, start with `At A Glance`, then follow `Reading Paths` into installation and quick start.
+If you already know the problem space, jump directly to the API index, defaults, troubleshooting, lifecycle, and operational notes sections.
+
+== Module Index
+
+This index covers the root-level chapters included in this book.
+
+[cols="1,3,3",options="header"]
+|===
+|Module |What It Covers |Suggested Entry Points
+
+|<<ansible>>
+|Ansible Vault compatible encryption/decryption, vault id parsing, and typed format and password errors
+|<<ansible-at-a-glance>>, <<ansible-quick-start>>, <<ansible-troubleshooting>>
+
+|<<artifact>>
+|Maven settings-aware artifact resolution, dependency loading, and change polling
+|<<artifact-at-a-glance>>, <<artifact-quick-start>>, <<artifact-troubleshooting>>
+
+|<<batch>>
+|Batch parameter wrappers plus Spring Batch launch, restart, monitoring, and schema helpers
+|<<batch-at-a-glance>>, <<batch-quick-start>>, <<batch-troubleshooting>>
+
+|<<bayeux>>
+|Bayeux server APIs, SPI contracts, protocol wiring, runtime composition, and clustering backbones
+|<<bayeux-at-a-glance>>, <<bayeux-bootstrapping>>, <<bayeux-troubleshooting>>
+
+|<<claxon>>
+|Instrumentation, meters, tags, and pluggable metric emitters
+|<<claxon-at-a-glance>>, <<claxon-quick-start>>, <<claxon-troubleshooting>>
+
+|<<file>>
+|In-memory and jailed `java.nio.file` providers with explicit roots, translation, and caller-owned policy
+|<<file-at-a-glance>>, <<file-quick-start>>, <<file-troubleshooting>>
+
+|<<forge>>
+|Maven dependency rewrite helpers plus Nexus-backed replacement deployment utilities
+|<<forge-at-a-glance>>, <<forge-quick-start>>, <<forge-troubleshooting>>
+
+|<<foundation>>
+|Example Spring XML and property-layering resources that can serve as a template, not a supported library surface
+|<<foundation-at-a-glance>>, <<foundation-quick-start>>, <<foundation-compatibility>>
+
+|<<doppelganger>>
+|Compile-time transport view generation for explicit request and response contracts
+|<<doppelganger-at-a-glance>>, <<doppelganger-quick-start>>, <<doppelganger-troubleshooting>>
+
+|<<javafx>>
+|Focused JavaFX controls, dialogs, layout helpers, throttled listeners, and sliding or JMX-backed charts
+|<<javafx-at-a-glance>>, <<javafx-quick-start>>, <<javafx-troubleshooting>>
+
+|<<kafka>>
+|Explicit Kafka client construction, broker descriptors, startup checks, and Spring helpers
+|<<kafka-at-a-glance>>, <<kafka-quick-start>>, <<kafka-troubleshooting>>
+
+|<<license>>
+|Maven goals for source notice headers and packaged license files
+|<<license-at-a-glance>>, <<license-quick-start>>, <<license-troubleshooting>>
+
+|<<liquibase>>
+|Controlled Liquibase execution, changelog sourcing, and Spring startup integration
+|<<liquibase-at-a-glance>>, <<liquibase-quick-start>>, <<liquibase-troubleshooting>>
+
+|<<memcached>>
+|Non-blocking memcached access, routing, key translation, codecs, and in-memory support
+|<<memcached-at-a-glance>>, <<memcached-quick-start>>, <<memcached-troubleshooting>>
+
+|<<mongodb>>
+|Entity mapping, query and update helpers, and optional MongoDB driver and Spring utilities
+|<<mongodb-at-a-glance>>, <<mongodb-quick-start>>, <<mongodb-troubleshooting>>
+
+|<<nutsnbolts>>
+|Shared utilities for IO, reflection, security, time, validation, XML, and related glue code
+|<<nutsnbolts-at-a-glance>>, <<nutsnbolts-package-quick-starts>>, <<nutsnbolts-troubleshooting>>
+
+|<<persistence>>
+|Durable identities, DAO contracts, vector caches, JPA and Querydsl adapters, Throng bridge, sequence helpers, and SQL pooling utilities
+|<<persistence-at-a-glance>>, <<persistence-quick-start>>, <<persistence-troubleshooting>>
+
+|<<phalanx>>
+|Transport-neutral remote invocation plus worker queues and lifecycle primitives
+|<<phalanx-at-a-glance>>, <<phalanx-quick-start>>, <<phalanx-troubleshooting>>
+
+|<<quorum>>
+|Rate limiting, resource failover, pooling, and `java:` namespace abstractions
+|<<quorum-at-a-glance>>, <<quorum-quick-start>>, <<quorum-troubleshooting>>
+
+|<<schedule>>
+|Scheduler-neutral job lifecycle plus Quartz integration, JMX, and schema support
+|<<schedule-at-a-glance>>, <<schedule-quick-start>>, <<schedule-troubleshooting>>
+
+|<<scribe>>
+|Library-safe logging API, appenders, templates, bridges, and endpoint integrations
+|<<scribe-at-a-glance>>, <<scribe-quick-start>>, <<scribe-troubleshooting>>
+
+|<<sleuth>>
+|Dependency-aware test scheduling with direct runner and Surefire provider integration
+|<<sleuth-at-a-glance>>, <<sleuth-quick-start>>, <<sleuth-troubleshooting>>
+
+|<<spark>>
+|Build-time packaging for `singularity` executable jars and `tanukisoft` wrapper distributions
+|<<spark-at-a-glance>>, <<spark-choose-packaging>>, <<spark-known-constraints>>
+
+|<<web>>
+|JSON transport helpers, query DTOs, Jersey integration, Grizzly and Jetty bootstrapping, JWT helpers, and schema validation tooling
+|<<web-at-a-glance>>, <<web-choose-artifact>>, <<web-troubleshooting>>
+|===
+
+== Included Guides
+
+The chapters below are included from the root-level `.adoc` files so the repository can be read either as one book or as individual module guides.
+
+include::ANSIBLE.adoc[]
+
+include::ARTIFACT.adoc[]
+
+include::BATCH.adoc[]
+
+include::BAYEUX.adoc[]
 
 include::CLAXON.adoc[]
 
+include::FILE.adoc[]
+
+include::FORGE.adoc[]
+
+include::FOUNDATION.adoc[]
+
 include::DOPPELGANGER.adoc[]
+
+include::JAVAFX.adoc[]
+
+include::KAFKA.adoc[]
+
+include::LICENSE.adoc[]
+
+include::LIQUIBASE.adoc[]
+
+include::MEMCACHED.adoc[]
+
+include::MONGODB.adoc[]
+
+include::NUTSNBOLTS.adoc[]
+
+include::PERSISTENCE.adoc[]
+
+include::PHALANX.adoc[]
+
+include::QUORUM.adoc[]
+
+include::SCHEDULE.adoc[]
 
 include::SCRIBE.adoc[]
 
+include::SLEUTH.adoc[]
+
 include::SPARK.adoc[]
+
+include::WEB.adoc[]

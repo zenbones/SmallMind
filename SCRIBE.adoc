@@ -2,668 +2,1905 @@
 = Scribe
 
 [partintro]
-Scribe is a logging framework with no specific dependency on a logger endpoint. It can be safely used in libraries without forcing any particular notion of the endpoint logging system on the library adopter. It is programmatically configurable and has no proprietary configuration format. Scribe can consume and integrate both Apache Commons Logging and SLF4J logging. Scribe's adapters for endpoint logging systems are written as services, so, when choosing a logging endpoint in top-level projects, it's enough to include the desired module as a project dependency. Scribe has a notion of thread local context which flows through to the context implementations of endpoint logger adapters. Scribe is fast, efficient, and easy to extend. The implementation requirements for adapters, appenders, filters and formatters are clear and minimal.
+Scribe is Smallmind's logging library. It gives libraries a neutral logging API and lets applications choose the runtime endpoint explicitly. The core module is `scribe-pen`; concrete endpoint integrations live in `scribe-ink-*`; optional bridge modules route SLF4J and Apache Commons Logging into the same Scribe configuration.
 
-== Install
+Scribe is built around a few stable rules:
 
-To use Scribe you'll need the `scribe-pen` dependency, and, if using an endpoint logger, you'll need to add the appropriate `scribe-ink-*` module (these modules describe services, so use only the single dependency that matches your endpoint logging framework). Integration with Apache Commons Logging is achieved through adding the `scribe-apache` module, and with SLF4J by adding the `scribe-slf4j` module.
+* reusable libraries depend on the API while applications choose the backend
+* applications place exactly one endpoint implementation on the runtime classpath
+* logging behavior is configured with templates, appenders, filters, enhancers, and formatters assembled in code or Spring beans
+* loggers are selected by name and matched against explicit templates rather than an implicit logger hierarchy
+* request metadata is attached explicitly through parameters and can be emitted by formatters, bridges, and structured sinks
 
-.Scribe Pen
+Audience: developers wiring logging into reusable libraries or applications without surrendering backend, container, or configuration ownership.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you have a specific reason to split them.
+
+== Quick Navigation
+
+* <<scribe-at-a-glance,At A Glance>>
+* <<scribe-reading-paths,Reading Paths>>
+* <<scribe-layout,Project Layout>>
+* <<scribe-why-use,Why Use Scribe>>
+* <<scribe-installation,Installation>>
+* <<scribe-quick-start,Quick Start>>
+* <<scribe-use-cases,API By Use Case>>
+* <<scribe-api-index,API Index>>
+* <<scribe-core-concepts,Core Model>>
+* <<scribe-template-model,Template Model>>
+* <<scribe-appenders,Appenders>>
+* <<scribe-formatters,Formatters>>
+* <<scribe-filters,Filters And Enhancers>>
+* <<scribe-parameters,Parameters And Logger Context>>
+* <<scribe-rollover-cleanup,File Rollover And Cleanup>>
+* <<scribe-error-handling,Error Handling>>
+* <<scribe-integrations,Built-In Endpoint Integrations>>
+* <<scribe-bridges,Logging API Bridges>>
+* <<scribe-spring-support,Spring Support>>
+* <<scribe-endpoint-spi,Endpoint SPI>>
+* <<scribe-migration,Migrating From SLF4J And Logback>>
+* <<scribe-usage-guidance,Usage Guidance>>
+* <<scribe-threading,Threading And Lifecycle>>
+* <<scribe-troubleshooting,Troubleshooting>>
+* <<scribe-operational-notes,Operational Notes>>
+* <<scribe-edge-cases,Behavioral Edge Cases>>
+* <<scribe-minimal-checklist,Minimal Checklist>>
+* <<scribe-defaults-reference,Defaults Reference>>
+
+[[scribe-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="2,4",options="header"]
+|===
+|If You Need To... |Start Here
+
+|log from a reusable library
+|depend on `scribe-pen`, get loggers through `LoggerManager`, and leave endpoint selection to the application
+
+|log from an application
+|add `scribe-pen` plus exactly one `scribe-ink-*` module, then register at least one template
+
+|set a baseline logging policy
+|register a `DefaultTemplate`
+
+|override logging for one package or subsystem
+|register a `ClassNameTemplate`
+
+|override logging for one exact logger name
+|register a `PersonalizedTemplate`
+
+|emit text logs
+|use `PatternFormatter` with `ConsoleAppender` or `FileAppender`
+
+|emit structured XML
+|use `XMLFormatter`
+
+|attach request or correlation metadata
+|use `Logger.putParameter(...)` and clear parameters at request boundaries
+
+|route existing SLF4J calls into Scribe
+|add `scribe-slf4j`, keep one `scribe-ink-*` endpoint, and continue using SLF4J call sites
+
+|route existing Apache Commons Logging calls into Scribe
+|add `scribe-apache`, keep one `scribe-ink-*` endpoint, and continue using Commons Logging call sites
+
+|ship to rolling files
+|use `FileAppender` with `Rollover` and `Cleanup`
+
+|shield callers from slow sinks
+|wrap the sink in `AsynchronousAppender`
+|===
+
+[[scribe-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are adopting Scribe for the first time, read in this order:
+
+1. <<scribe-installation,Installation>>
+2. <<scribe-quick-start,Quick Start>>
+3. <<scribe-template-model,Template Model>>
+4. <<scribe-appenders,Appenders>>
+5. <<scribe-parameters,Parameters And Logger Context>>
+6. <<scribe-threading,Threading And Lifecycle>>
+
+If you are integrating Scribe into a reusable library, focus on:
+
+1. <<scribe-why-use,Why Use Scribe>>
+2. <<scribe-installation,Installation>>
+3. <<scribe-core-concepts,Core Model>>
+4. <<scribe-usage-guidance,Usage Guidance>>
+
+If you are wiring a production application, focus on:
+
+1. <<scribe-installation,Installation>>
+2. <<scribe-quick-start,Quick Start>>
+3. <<scribe-rollover-cleanup,File Rollover And Cleanup>>
+4. <<scribe-error-handling,Error Handling>>
+5. <<scribe-threading,Threading And Lifecycle>>
+6. <<scribe-troubleshooting,Troubleshooting>>
+
+If you already use Scribe and need exact behavior quickly, jump to:
+
+* <<scribe-api-index,API Index>>
+* <<scribe-operational-notes,Operational Notes>>
+* <<scribe-edge-cases,Behavioral Edge Cases>>
+* <<scribe-defaults-reference,Defaults Reference>>
+
+[[scribe-layout, Project Layout]]
+== Project Layout
+
+The `scribe` subproject is a multi-module build.
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Core API
+|`org.smallmind:scribe-pen`
+|Logger API, templates, appenders, formatters, filters, parameter support, Spring helpers, and endpoint SPI
+
+|Endpoint parent
+|`org.smallmind:scribe-ink`
+|Aggregator for endpoint integrations
+
+|Native endpoint
+|`org.smallmind:scribe-ink-indigenous`
+|Scribe-native logging endpoint with indigenous records and adapters
+
+|JDK endpoint
+|`org.smallmind:scribe-ink-jdk`
+|Integration with `java.util.logging`
+
+|Log4J2 endpoint
+|`org.smallmind:scribe-ink-log4j`
+|Integration with Log4J2 core
+
+|SLF4J bridge
+|`org.smallmind:scribe-slf4j`
+|Routes SLF4J API calls into Scribe and maps SLF4J MDC onto Scribe parameters
+
+|Apache Commons bridge
+|`org.smallmind:scribe-apache`
+|Routes Apache Commons Logging calls into Scribe
+|===
+
+[[scribe-why-use, Why Use Scribe]]
+== Why Use Scribe
+
+Use Scribe when you want logging in shared libraries or applications with explicit endpoint selection and template-based configuration.
+
+Scribe is most useful when these constraints matter:
+
+* a reusable library can log while leaving endpoint selection to the application
+* logging policy should be assembled explicitly in code or beans rather than hidden in a framework-specific runtime
+* different APIs in the same process need to converge on one logging policy
+* request metadata should be carried explicitly and emitted by text or structured outputs
+* logger matching should be deliberate and reviewable rather than inherited through an implicit tree
+
+Compared with using only SLF4J as a facade:
+
+* Scribe is configured directly in code or Spring beans
+* Scribe assembles logger behavior from explicit templates, appenders, filters, enhancers, and formatters
+* Scribe can direct the output of many loggers to one template, or a choice of templates, based on logging parameters such as the logger name, so logger selection stays explicit
+* Scribe uses `String.format` conventions for message formatting
+
+[[scribe-installation, Installation]]
+== Installation
+
+=== Libraries
+
+Reusable libraries should normally depend only on `scribe-pen`.
+
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>scribe-pen</artifactId>
-  <version>LATEST</version>
+  <version>${smallmind.version}</version>
 </dependency>
 ----
 
-.Scribe Ink
+Reusable libraries usually stop at `scribe-pen` so applications keep endpoint selection.
+
+=== Applications
+
+Applications normally include:
+
+* `scribe-pen`
+* exactly one `scribe-ink-*` endpoint integration
+* optionally `scribe-slf4j` and/or `scribe-apache` if those APIs must route through Scribe
+
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
+  <artifactId>scribe-pen</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+
+<dependency>
+  <groupId>org.smallmind</groupId>
   <artifactId>scribe-ink-indigenous</artifactId>
-  <version>LATEST</version>
-</dependency>
-<dependency>
-  <groupId>org.smallmind</groupId>
-  <artifactId>scribe-ink-jdk</artifactId>
-  <version>LATEST</version>
-</dependency>
-<dependency>
-  <groupId>org.smallmind</groupId>
-  <artifactId>scribe-ink-log4j</artifactId>
-  <version>LATEST</version>
+  <version>${smallmind.version}</version>
 </dependency>
 ----
 
-.Scribe Integrations
+If SLF4J traffic should land in Scribe:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>scribe-slf4j</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+If Apache Commons Logging traffic should land in Scribe:
+
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>scribe-apache</artifactId>
-  <version>LATEST</version>
-</dependency>
-<dependency>
-  <groupId>org.smallmind</groupId>
-  <artifactId>scribe-slf4j</artifactId>
-  <version>LATEST</version>
+  <version>${smallmind.version}</version>
 </dependency>
 ----
 
-== Acknowledgments
+[IMPORTANT]
+====
+There must be exactly one `LoggingBlueprint` implementation on the runtime classpath. In practice that means exactly one `scribe-ink-*` endpoint integration.
 
-Thanks to SLF4J.
+If no endpoint is present, `LoggingBlueprintFactory` fails during static initialization. If more than one endpoint is present, it fails and lists the conflicting implementations.
+====
 
-== Design Choices
+=== Optional Dependencies In `scribe-pen`
 
-There are a few simple reasons for designing yet another logging framework almost no one will ever use...
+`scribe-pen` declares several optional dependencies. Only add the ones needed by the features you actually use.
 
-* Programmatic configuration at its heart. Nothing but dependency injection.
-* Simple implementation of extensions with no priveleged internals and minimal biases.
-* No logging level checks necessary because expensive operations are delayed until the output stage.
-* Where an expensive operation is necessary, it can be defined in a way which allows its execution to be delayed until the output stage.
-* Native message formatting using the _printf_ style from `String.format()`.
-* The last argument in *all* logging methods is the _var args_ for message formatting, and this includes those methods which take an Exception (so you can add an exception without losing formatted messages).
+[cols="2,4",options="header"]
+|===
+|Feature |Optional Dependencies
 
-And that last reason is honestly the one which started this project. Hopefully it's not the only one for using it, but, for us, it's enough.
+|Spring helper beans
+|`org.springframework:spring-beans`
 
-[[scribe-logger, Logger]]
-== Logger
+|`SyslogAppender`
+|`org.syslog4j:syslog4j`
 
-[small]#`org.smallmind.scribe.pen.Logger`#
+|`FluentBitAppender`
+|`org.msgpack:jackson-dataformat-msgpack`, `tools.jackson.core:jackson-core`, `tools.jackson.core:jackson-databind`
 
-The mechanism of logging in Scribe is a Logger. A logger has a <<scribe-logger-name>> and a <<scribe-level>> at which it will log, may have a <<scribe-logger-context>>, holds <<scribe-appenders>>, <<scribe-filters>> and <<scribe-enhancers>>, and can decorate logs with <<scribe-parameters>>. The basic function of a Logger is expressed through its `log()` methods....
+|`AWSAppender`
+|`software.amazon.awssdk:auth`, `software.amazon.awssdk:aws-core`, `software.amazon.awssdk:cloudwatchlogs`, `software.amazon.awssdk:regions`
 
-* `void log (Level level, String message, Object... args)`
-* `void log (Level level, Throwable throwable)`
-* `void log (Level level, Throwable throwable, String message, Object... args)`
-* `void log (Level level, Object object)`
-* `void log (Level level, Throwable throwable, Object object)`
-* `void log (Level level, Supplier<String> supplier)`
-* `void log (Level level, Throwable throwable, Supplier<String> supplier)`
+|supporting activation/XML helper paths
+|`jakarta.activation:jakarta.activation-api`, `jakarta.xml.bind:jakarta.xml.bind-api`
+|===
 
-Each log statement has a _<<scribe-level>>_ at which it will be logged, can take a _Throwable_ to provide the stack trace output of an error, and takes one of three forms of message body...
+=== Common Classpath Mistakes
 
-* *Formatted* - Formatted messages take a base _String_ message and an optional set of arguments. If any arguments are passed, the message will be interpreted as a formatting template via the `String.format()` method, with the arguments passed as the formatting arguments.
-* *Object* - If a single _Object_ is provided as the log message, the output will be the result of the object's `toString()` method. As message interpolation is delayed until after all filtering, this is one way of guaranteeing that complex or expensive operations to generate a log message will not be performed unless they are needed.
-* *Supplier* - If a single _Supplier<String>_ is provided as the log message, the ouput will be the result of the supplier's `get()` method. As with using a simple _Object_ above, this can be used to delay complex or expensive operations until they are required.
+The most common installation errors are:
 
-For the sake of clarity and convenience, the above methods are replicated, once for each available log <<scribe-level>> (sans the _Level_ parameter, obviously), as in...
+* adding `scribe-pen` and bridge modules but no endpoint module
+* adding more than one `scribe-ink-*` module
+* assuming `scribe-slf4j` or `scribe-apache` replaces the need for an endpoint module
+* registering no templates, then expecting custom levels, appenders, or context behavior
 
-.An Info level log with a formatted messge
+[[scribe-quick-start, Quick Start]]
+== Quick Start
+
+The smallest useful setup is:
+
+1. add `scribe-pen`
+2. add one endpoint module such as `scribe-ink-indigenous`
+3. register one or more templates
+4. obtain loggers through `LoggerManager`
+
 [source,java]
 ----
-void info (String message, Object... args)
+import java.time.format.DateTimeFormatter;
+
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DateFormatTimestamp;
+import org.smallmind.scribe.pen.DefaultTemplate;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.Logger;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.scribe.pen.PatternFormatter;
+
+DateFormatTimestamp timestamp = new DateFormatTimestamp(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+PatternFormatter formatter = new PatternFormatter(
+    timestamp,
+    "%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s");
+ConsoleAppender consoleAppender = new ConsoleAppender(formatter);
+
+new DefaultTemplate(Level.INFO, true, consoleAppender).register();
+
+Logger logger = LoggerManager.getLogger(MyService.class);
+
+logger.putParameter("requestId", "ab12");
+try {
+  logger.info("Started %s on port %d", "MyService", 8080);
+  logger.warn(new IllegalStateException("example"), "Something happened");
+} finally {
+  logger.clearParameters();
+}
 ----
 
-...or...
+What this does:
 
-.A Warn level log with a _Throwable_ and _Supplier_
+* installs one baseline template for all loggers
+* enables automatic caller-context capture for that template
+* writes text output to the console
+* emits request-scoped metadata through parameters
+
+For tests, `TestLoggerConfiguration.setup()` installs a DEBUG console template using the same verbose pattern used throughout the module:
+
 [source,java]
 ----
-void warn (Throwable throwable, Supplier<String> supplier)
+import org.smallmind.scribe.pen.TestLoggerConfiguration;
+
+TestLoggerConfiguration.setup();
 ----
 
-[[scribe-logger-name, Name]]
-=== Name
+[[scribe-use-cases, API By Use Case]]
+== API By Use Case
 
-Every logger instance has a name by which it's retrieved (see <<scribe-logger-manager>> below), by which its configuration may be fine-tuned (see <<scribe-templates>> below), and by which it may be known in log output. Although the choice of name is yours, it's suggested that you stick with the name of the class doing the logging.
+[cols="2,3,4",options="header"]
+|===
+|Need |Use |Notes
 
-[[scribe-level, Level]]
-=== Level
+|Get a template-managed logger
+|`LoggerManager.getLogger(...)`
+|Recommended for almost all application and library code
 
-[small]#`org.smallmind.scribe.pen.Level`#
+|Set the baseline policy for all loggers
+|`DefaultTemplate`
+|Register one baseline template, then add more specific overrides
 
-The available log levels, which provide for basic categorization and filtering of log entries, are represented by the *Level* enum, which contains the following ordinal values...
+|Apply behavior to a package tree or class-name pattern
+|`ClassNameTemplate`
+|Uses Smallmind dot-notation matching
 
-* *TRACE* - Intended for very fine gained more-than-debug logging.
-* *DEBUG* - For traditional debug logs.
-* *INFO* - Informational messages, for example service startups and shutdowns, initial conditions, etc.
-* *WARN* - Intended for possible problems or misconfigurations which do not rise to the level of overt errors.
-* *ERROR* - A notice that something has gone wrong, often including an exception.
-* *FATAL* - Intended for world-stopping events which cause shutdown or other unrecoverable states.
-* *OFF* - Do not log. For use on <<scribe-logger>> instances or <<scribe-appenders>>, in order to shut them off. This should *never* be used as the level of a `log()` event.
+|Apply behavior to one exact logger name
+|`PersonalizedTemplate`
+|Best for one-off overrides
 
-[[scribe-logger-context, LoggerContext]]
-=== LoggerContext
+|Apply behavior with a regular expression
+|`RegExTemplate`
+|Useful when logger names are not dot-notated
 
-[small]#`LoggerContext`#
+|Write human-readable text logs
+|`PatternFormatter`
+|General-purpose text layout
 
-Some loggers are capable of adding information about the point in the code at which logging was initiated. This 'logger context' may include...
+|Write structured XML logs
+|`XMLFormatter`
+|Select the `RecordElement` values you want to emit
 
-* `String getClassName()` - The class which in which the logger was called.
-* `String getMethodName()` - The method from which the logger was called.
-* `String getFileName()` - The name of the file containing the code which initiated the logging call.
-* `int getLineNumber()` - The line number of the initiating call in the file containing the calling code.
-* `boolean isNativeMethod()` - Whether the valling code represents a native method (via C interface).
+|Write to console
+|`ConsoleAppender`
+|Writes to `System.out`
 
-There is some overhead to gathering this information, so the capability to automatically include it can but turned on/off via the `setAutoFillLoggerContext()` method on the logger.
+|Write to a file with rotation and retention
+|`FileAppender` + `Rollover` + `Cleanup`
+|See <<scribe-rollover-cleanup,File Rollover And Cleanup>>
+
+|Protect callers from a slow sink
+|`AsynchronousAppender`
+|Bounded queue; rejected records go through appender error handling
+
+|Attach request metadata
+|`Logger.putParameter(...)`
+|Clear or reset at request boundaries
+
+|Drop specific exception types
+|`ExceptionSuppressingLogFilter`
+|Matches exact throwable classes, not subclasses
+
+|Integrate JUL or Log4J2 directly
+|one `scribe-ink-*` endpoint
+|Choose exactly one endpoint module
+
+|Keep existing SLF4J call sites
+|`scribe-slf4j`
+|Still requires exactly one endpoint module
+
+|Keep existing Apache Commons Logging call sites
+|`scribe-apache`
+|Still requires exactly one endpoint module
+|===
+
+[[scribe-api-index, API Index]]
+== API Index
+
+[cols="2,3,3",options="header"]
+|===
+|Type |Role |See
+
+|`org.smallmind.scribe.pen.Logger`
+|Primary logging facade
+|<<scribe-core-concepts,Core Model>>
+
+|`org.smallmind.scribe.pen.LoggerManager`
+|Logger cache and template coordination
+|<<scribe-core-concepts,Core Model>>
+
+|`org.smallmind.scribe.pen.Template`
+|Logger behavior template contract
+|<<scribe-template-model,Template Model>>
+
+|`org.smallmind.scribe.pen.Appender`
+|Record destination contract
+|<<scribe-appenders,Appenders>>
+
+|`org.smallmind.scribe.pen.Formatter`
+|Record-to-text contract
+|<<scribe-formatters,Formatters>>
+
+|`org.smallmind.scribe.pen.Filter`
+|Record acceptance contract
+|<<scribe-filters,Filters And Enhancers>>
+
+|`org.smallmind.scribe.pen.Enhancer`
+|Record mutation hook
+|<<scribe-filters,Filters And Enhancers>>
+
+|`org.smallmind.scribe.pen.adapter.Parameters`
+|Context parameter storage
+|<<scribe-parameters,Parameters And Logger Context>>
+
+|`org.smallmind.scribe.pen.adapter.LoggingBlueprint`
+|Endpoint discovery SPI
+|<<scribe-endpoint-spi,Endpoint SPI>>
+
+|`org.smallmind.scribe.pen.Record`
+|Single log-event contract
+|<<scribe-endpoint-spi,Endpoint SPI>>
+|===
+
+[[scribe-core-concepts, Core Model]]
+== Core Model
+
+=== How A Log Event Flows
+
+At runtime the normal flow is:
+
+1. `LoggerManager.getLogger(...)` returns a cached logger by name.
+2. The logger is associated with the single strongest matching template.
+3. A logging call delegates to the active endpoint's `LoggerAdapter`.
+4. Logger-level filters may veto the event.
+5. Enhancers can mutate the record before publication.
+6. Appenders publish the record, optionally applying their own filters and error handlers.
+
+That model matters because template choice is explicit and singular. Scribe does not merge logger behavior through an inherited tree.
+
+=== LoggerManager
+
+`LoggerManager` is the normal entry point for application and library code.
+
+Use one of these:
+
+[source,java]
+----
+Logger applicationLogger = LoggerManager.getLogger(MyService.class);
+Logger namedLogger = LoggerManager.getLogger("com.acme.billing.SqlTracer");
+----
+
+`LoggerManager` does three things that direct construction does not:
+
+* caches loggers by name so callers share the same logger instance
+* associates loggers with the best matching template
+* re-associates already-created loggers when templates are registered or removed later
+
+=== Logger
+
+`Logger` is the public facade used at call sites.
+
+Each level exposes overloads for:
+
+* formatted string plus arguments
+* `Throwable`
+* `Throwable` plus formatted string plus arguments
+* arbitrary `Object`
+* `Supplier<String>`
+* the generic `log(Level, ...)` variants
+
+Example:
+
+[source,java]
+----
+Logger logger = LoggerManager.getLogger(OrderService.class);
+
+logger.debug("Loaded %d order rows", rowCount);
+logger.info(orderSummary);
+logger.warn(new IllegalStateException("unexpected"), "Order %s needs attention", orderId);
+logger.error(() -> expensiveDiagnosticMessage());
+----
+
+[IMPORTANT]
+====
+Direct construction with `new Logger(...)` exists, but it does not place that logger in `LoggerManager`'s cache and does not automatically associate it with registered templates.
+
+Use `LoggerManager.getLogger(...)` unless you intentionally want a manually managed logger.
+====
+
+=== Message Formatting Semantics
+
+Direct Scribe logging uses `String.format`-style placeholders:
+
+[source,java]
+----
+logger.info("Started %s on port %d", serviceName, port);
+----
+
+That means:
+
+* `%s`, `%d`, and the rest of `String.format` apply to direct Scribe calls
+* invalid format strings raise `MessageFormattingException`
+* `logger.info(object)` uses `object.toString()`
+* `logger.log(null, ...)` falls back to the logger's current level
+
+The SLF4J bridge is different. Bridged SLF4J calls accept `{}` placeholders because `scribe-slf4j` translates them before calling Scribe.
+
+[source,java]
+----
+logger.info("Started %s", serviceName);         // direct Scribe API
+slf4jLogger.info("Started {}", serviceName);    // bridged SLF4J API
+----
+
+`Supplier<String>` is useful when building the message itself is expensive. The supplier is evaluated only after the call passes the logger's level threshold. Do not rely on suppliers as a guarantee that every downstream filter or backend path will skip evaluation; exact timing depends on the active endpoint.
+
+=== Levels
+
+Scribe levels are ordered:
+
+[source,text]
+----
+TRACE < DEBUG < INFO < WARN < ERROR < FATAL < OFF
+----
+
+The logger's level acts as a threshold. For example, a logger at `INFO` admits `INFO`, `WARN`, `ERROR`, and `FATAL`, but not `DEBUG` or `TRACE`. `OFF` disables output.
+
+[[scribe-template-model, Template Model]]
+== Template Model
+
+Templates are Scribe's configuration unit. A template carries:
+
+* a level
+* the `autoFillLoggerContext` setting
+* zero or more filters
+* zero or more appenders
+* zero or more enhancers
+
+When a logger matches a template, that template's settings are pushed into the logger. Only one template wins for a given logger.
+
+=== Matching Rules
+
+The built-in template types are:
+
+[cols="2,4,2",options="header"]
+|===
+|Template |Matches |Priority Notes
+
+|`DefaultTemplate`
+|all logger names
+|baseline catch-all
+
+|`ClassNameTemplate`
+|dot-notated logger names using Smallmind dot notation
+|specific patterns score higher than broader ones
+
+|`PersonalizedTemplate`
+|one exact logger name
+|highest priority
+
+|`RegExTemplate`
+|logger names matching a regular expression
+|highest priority
+|===
+
+Matching rules that matter in practice:
+
+* the highest match score wins
+* only one template applies to a logger at a time
+* template changes made after `register()` propagate to already-associated loggers
+* equal strongest scores are a bad idea; tied winners depend on internal set iteration order
+
+=== Dot-Notation Patterns
+
+`ClassNameTemplate` uses Smallmind dot notation, which is designed for Java-style logger names. The common patterns are:
+
+* `com.acme.billing.InvoiceService` for one exact class name
+* `com.acme.billing.?` for one segment at that position
+* `com.acme.billing.*` for a broad package-tree style match
+
+If the pattern is malformed, `ClassNameTemplate` throws `LoggerException`.
+
+=== Typical Template Layout
+
+Most applications end up with:
+
+* one `DefaultTemplate`
+* a small number of targeted `ClassNameTemplate` overrides
+* an occasional `PersonalizedTemplate` for one noisy or critical logger
+
+[source,java]
+----
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.ClassNameTemplate;
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DefaultTemplate;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.PatternFormatter;
+import org.smallmind.scribe.pen.PersonalizedTemplate;
+
+Appender consoleAppender = new ConsoleAppender(new PatternFormatter());
+
+new DefaultTemplate(Level.INFO, false, consoleAppender).register();
+new ClassNameTemplate(Level.DEBUG, true, "com.acme.checkout.*", consoleAppender).register();
+
+PersonalizedTemplate tracerTemplate = new PersonalizedTemplate(Level.TRACE, true, "com.acme.checkout.SqlTracer");
+tracerTemplate.setAppender(consoleAppender);
+tracerTemplate.register();
+----
+
+That layout means:
+
+* everything logs at `INFO` by default
+* `com.acme.checkout.*` logs at `DEBUG` and captures caller context
+* `com.acme.checkout.SqlTracer` gets an exact `TRACE` override
+
+[IMPORTANT]
+====
+Templates replace logger configuration; they do not merge with weaker templates. If a more specific template wins, its filters, appenders, enhancers, level, and context setting become the logger's active configuration.
+====
+
+=== Live Template Updates
+
+Once a template is registered, later mutations propagate to currently associated loggers.
+
+[source,java]
+----
+DefaultTemplate defaultTemplate = new DefaultTemplate(Level.INFO, false, consoleAppender);
+defaultTemplate.register();
+
+defaultTemplate.setLevel(Level.WARN);
+----
+
+That updates all loggers currently associated with that template.
 
 [[scribe-appenders, Appenders]]
-=== Appenders
+== Appenders
 
-[small]#`org.smallmind.scribe.pen.Appender`#
+An `Appender` publishes records to a destination. Appenders can also carry their own filters, an error handler, and an active/inactive flag.
 
-Appenders are the vehicle for publishing log records. What 'publishing' means is up to the appender implementation. Appenders can take <<scribe-filters>>, and implementations should honor them. An appender can be set inactive, via the `setActive()` method, and inactive appenders should not output log records. An appender can also have an instance of <<scribe-error-handler>> set on it, which will be called upon to handle uncaught errors in the appender's `publish()` method.
+[cols="2,3,4",options="header"]
+|===
+|Appender |Use It For |Notes
 
-[[scribe-formatted-appender, FormattedAppender]]
-==== Formatted Appender
+|`ConsoleAppender`
+|simple console output
+|writes to `System.out`
 
-[small]#`org.smallmind.scribe.pen.FormattedAppender`#
+|`FileAppender`
+|local file output
+|UTF-8 output, parent directories created automatically, optional rollover and cleanup
 
-A FormattedAppender takes an implementation of <<scribe-formatter>> which will determine the structure of its output (as defined by the appender).
+|`AsynchronousAppender`
+|protecting callers from slow sinks
+|wraps another appender with a bounded queue and worker threads
 
-[[scribe-formatter, Formatter]]
-===== Formatter
+|`EmailAppender`
+|SMTP alarm or escalation output
+|sends each formatted record as an email body
 
-[small]#`org.smallmind.scribe.pen.Formatter`#
+|`SyslogAppender`
+|structured syslog output
+|requires `syslog4j`; call `afterPropertiesSet()` outside Spring
 
-A formatter takes a log <<scribe-record>> and returns a string to be output by an appender by fulfilling...
+|`AWSAppender`
+|CloudWatch Logs output
+|requires AWS SDK modules; keep one instance per JVM per stream
 
-[source,java]
-----
-String format (Record record)
-  throws Exception;
-----
+|`FluentBitAppender`
+|Fluent Bit forward-protocol output
+|requires MessagePack/Jackson; call `afterPropertiesSet()` outside Spring
+|===
 
-There are a couple of useful formatters included with this project.
+=== Formatted Appenders Need A Formatter
 
-[[scribe-xml-formatter, XMLFormatter]]
-====== XMLFormatter
+`ConsoleAppender`, `FileAppender`, and `EmailAppender` extend `AbstractFormattedAppender`. They need a `Formatter` before they can publish anything.
 
-[small]#`org.smallmind.scribe.pen.XMLFormatter`#
-
-The XMLFormatter provides, unsurprisingly, an xml formatted output. There are a few attributes you can set on the formatter to configure its behavior...
-
-* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
-* *newLine* (_String_) - The line separator used when pretty printing the output. Defaults to `System.getProperty("line.separator")`.
-* *cdata* (_boolean_) - If true then the output of any stack trace will be wrapped in `<![CDATA[ ... ]]>` markers. Defaults to false.
-* *indent* (_int_) - The number of spaces used when pretty printing the output. Defaults to a 3 space indent.
-* *recordElements* (_org.smallmind.scribe.pen.RecordElement[]_) - An array of enum values representing the elements which will be included in the output. Defaults to all of the below...
-** *DATE* - The date this log record was emitted.
-** *LEVEL* - The <<scribe-level>> at which this log record was emitted.
-** *LOGGER_NAME* - The name of the logger emitting this record.
-** *LOGGER_CONTEXT* - The <<scribe-logger-context>> of this log record (if available).
-** *MESSAGE* - The log message attached to this record.
-** *MILLISECONDS* - The epoch milliseconds at which this record was emitted.
-** *PARAMETERS* - The <<scribe-parameters>> available to this record.
-** *STACK_TRACE* - The stack trace of any _Throwable_ set on this record.
-** *THREAD* - Information about the thread which carried this logging call.
-
-====== PatternFormatter
-
-[small]#`org.smallmind.scribe.pen.PatternFormatter`#
-
-The pattern formatter is a flexible log record formatter with a traditional output style. This formatter takes only two configuration parameters...
-
-* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
-* *format* (_String_) - The operation of the format string is similar to that of _String_ formatting flags...
-+
-====
-Portrayed as a regular expression, each flag has the general form of...
-
-[source,regexp]
-----
-({[^%]+)?%((+|-)?(\d+))?(.\d*)?(!(+|-)[^!]*!)?([dtnlmTCMNLFsp])([^}]+})?
-----
-
-Let's take this apart piece by piece...
-
-. *{_header_* - An optional header starts with `{` followed by any text which does not contain a `%`.
-. *%* - The `%` declares a formatting field which will be substituted according to the possible conversions (see below).
-. *``+|-``_width_* - Sets the maximum field length, where the optional ``+`` or ``-`` is used to denote a right or left padded field, if the field length is less than the width specifier. If this segment is absent, then no padding will be used.
-. *._precision_* - An optional precision starts with a `.` and is used in the dot notated fields (logger name `n` and context class `C`) to specify a maximum number of segments to display, starting from the right. The precision specifier is also used in the multi-line conversion fields (currently just parameters `p`), to specify the maximum number of lines displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
-+
-[NOTE]
-For example, given a logger name of `com.mydomain.myproject.MyClass` and a format flag of `%.2n`, the conversion would print `myproject.MyClass`.
-. *!``+|-``_prefix_!* - The `!...!` markers specify a line separator for, and optional prefix text to insert before, each line of a multi-line field (parameters `p`). The `+` or `-` is required, and sets whether the *first* line should also be prefixed with the text (`+` for true and `-` for false).
-+
-[NOTE]
-For example, the marker `!-,\n!` would tell the formatter to insert a comma followed by a line-break before each line of a multi-line field, _excluding_ the first, which would present a comma separated list. The default used is equivalent to `!+\n\t!`, or a new-line followed by a tab starting each output line, _including_ the first.
-. *conversion* - The available conversion flags are...
-* *d* - The date stamp of the log entry (defaults to yyyy-MM-dd'T'HH:mm:ss.SSSZ).
-* *t* - The time stamp of the entry in milliseconds.
-* *n* - The logger name.
-* *l* - The logger <<scribe-level>>.
-* *m* - The log message.
-* *T* - The name of the thread in which the logging occurred (if available).
-* *C* - The class from which the log event was issued (if available).
-* *M* - The method in which the log event was issued (if available).
-* *N* - Whether the method which issued the log event was native code or not [true or false] (if available).
-* *L* - The line number in the class file from which the log event was issued (if available).
-* *F* - The file name of the class file from which the log event was issued (if available).
-* *s* - The stack trace associated with the log event (if present). Although this is a multi-line field, it's formatting is the same as that used by the `printStackTrace()` method.
-* *p* - The parameters associated with the log event (if present). This is a multi-line field.
-. *_footer_}* - Optional footer text which is any string which does not contain, but does end with a `}`.
-
-[TIP]
-_The sequence `%%` outputs a single `%`, the sequence `\n` will be replaced by the platform specific line separator, and the sequence `\t` will be replaced by a tab._
-====
-
-[NOTE]
-====
-For example, the following format string...
-
-`%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s`
-
-...will produce the date, a space, the logger name, a space, the logging level (if the level is less than 5 characters it will br right padded to that length), a space, a left parenthesis, the right-most segment of the name of the calling class, a period, the method name from which the log statement was issued, a colon, the line number at which the log was issued, a right parenthesis, a space, a left bracket, the name of the context thread, a right bracket, a space, a dash, a space, the log message, any parameters available (each one preceded by a new line followed by a tab), and, finally, any stack trace preceded by a new line and tab (if there is a stack trace).
-====
-
-==== Out Of The Box
-
-This project includes a few appenders you may find useful.
-
-[[scribe-abstract-appender, AbstractAppender]]
-===== AbstractAppender
-
-[small]#`org.smallmind.scribe.pen.AbstractAppender`#
-
-Not an appender in its own right, but a useful base class for complete implementations. This abstract class insures a minimum of correct fields and takes proper care of a few housekeeping chores, like calling an <<scribe-error-handler>> when the `publish()` method fails. In order stsndardize this behavior, _AbstractAppender_ fulfills the `publish()` method, while sub-classes should should implement...
+This works:
 
 [source,java]
 ----
-public abstract void handleOutput (Record record)
-  throws Exception;
+ConsoleAppender consoleAppender = new ConsoleAppender(new PatternFormatter());
 ----
 
-[[scribe-error-handler, ErrorHandler]]
-====== ErrorHandler
-
-[small]#`org.smallmind.scribe.pen.ErrorHandler`#
-
-An error handler provides an opportunity for sub-classes of AbstractAppender to find a way to notify client code when the normal log publishing operation fails unexpectedly. When designing an error handler, it's important to keep in mind that notification options may be limited, as the usual venue for logging has just failed. One way to make use of this capability would be to use `org.smallmind.scribe.pen.DefaultErrorHandler`, which takes another appender upon construction and attempts to log the resulting error using this alternate route. Using a <<scribe-console-appender>> as the alternate logger can be a safe bet, although the efficacy of this solution will depend upon how the client code is handling standard out. Creating an error handler is just a matter of implementing...
-
-====
-[source,java]
-----
-void process (Record record, Exception exception, String errorMessage, Object... args);
-----
-
-...where _record_ is the original log record, _exception_ is the exception thrown from the failed `publish()` method, and the _errorMessage_ and _args_ represent a suggestion for an additional message about the error.
-====
-
-===== AbstractFormattedAppender
-
-[small]#`org.smallmind.scribe.pen.AbstractFormattedAppender`#
-
-Simply the formatted version of an <<scribe-abstract-appender>>, for completeness and convenience.
-
-===== AsynchronousAppender
-
-[small]#`org.smallmind.scribe.pen.AsynchronousAppender`#
-
-The AsynchronousAppender is not a complete appender, but rather an appender wrapper which takes `publish()` requests, puts them on a queue, and returns immediately. It holds a background thread which completes the publishing operation asynchronously. To use the AsynchronousAppender you pass its constructor another appender implementation and a buffer size for the queue. If the queue is full at the time the asynchronous appender's `publish()` method is called, an exception will be thrown to that effect.
-
-[[scribe-console-appender, ConsoleAppender]]
-===== ConsoleAppender
-
-[small]#`org.smallmind.scribe.pen.ConsoleAppender`#
-
-The ConsoleAppender is a <<scribe-formatted-appender>> that outputs log records to standard out, i.e. _System.out_.
-
-===== EmailAppender
-
-[small]#`org.smallmind.scribe.pen.EmailAppender`#
-
-A <<scribe-formatted-appender>> appender which sends each log record as the body of an email. You should use this judiciously, unless you like a *lot* of email. This appender requires...
-
-* *smtpServer* (_String_) - The smtp server host.
-* *smtpPort* (_int_) - The smtp server port.
-* *authentication* (_org.smallmind.nutsnbolts.email.Authentication_) - An authentication structure if required by the server.
-* *secure* (_boolean_) - An optional flag noting that the smtp server is using a secure transport.
-* *from* (_String_) - The email address of the sender.
-* *to* (_String_) - The email address of the recipient.
-* *subject* (_String_) - The subject of the emails.
-
-===== FileAppender
-
-[small]#`org.smallmind.scribe.pen.FileAppender`#
-
-A <<scribe-formatted-appender>> appender which publishes its log records to a file. There are multiple constructors for this class, but in the end the important parameters are...
-
-* *logPath* (_java.nio.file.Path_) - The path of the file to which log records are appended, which will be created as necessary.
-* *rollover* (_<<scribe-rollover>>_) - An object describing the rules for archiving log files whenever they get too large, or too old.
-* *cleanup* (_<<scribe-cleanup>>_) - An object describing the rules for cleaning up archived log files when they have gotten too old, or too numerous.
-
-[[scribe-rollover, Rollover]]
-====== Rollover
-
-A rollover describes the rules for archiving log files which meet the requirements of its rule set. The files will be archived by copying them into the parent of the log path (as siblings of the current log file), with a file name which templates the original file name by adding a timestamp and an ordinal integer, separated by a singe character (which defaults to `-`).
-
-[NOTE]
-For example, if the original log name is `project.log`, then the archived file might be `project-1996-07-04-0.log`.
-
-The rollover is configured by the following parameters...
-
-* *separator* (_char_) - The separator used between the file name, the date and the ordinal index. Defauts to the `-` character.
-* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
-* *rules* (_org.smallmind.scribe.pen.RolloverRule[]_) - An array of rollover rules. The file will be archived and rolled over if any of the rules is true. This project comes with the following implementations...
-+
-====
-*FileSizeRolloverRule*
-
-[small]#`org.smallmind.scribe.pen.FileSizeRolloverRule`#
-
-Sets the maximum size log files are allowed to reach before being archived and rolled over.
-====
-+
-====
-*TimestampRolloverRule*
-
-[small]#`org.smallmind.scribe.pen.TimestampRolloverRule`#
-
-Sets the time at which the current log file will be archived and rolled over.
-====
-
-[[scribe-cleanup, Cleanup]]
-====== Cleanup
-
-A cleanup instance describes the rules by which archived logs are deleted. The cleanup is configured with the following parameters...
-
-* *separator* (_char_) - The separator used in the rollover for this FileAppender (required so the cleanup can properly parse the file names).
-* *rules* (_org.smallmind.scribe.pen.CleanupRule[]_) - An array of cleanup rules. Any archived log files that match any of the given rules will be deleted. This project comes with the following implementations...
-+
-====
-*FileCountCleanupRule*
-
-[small]#`org.smallmind.scribe.pen.FileCountCleanupRule`#
-
-Sets the maximum number of archived log files that will kept around. If the number of archived files exceeds the maximum in the rule, then the oldest files will be deleted first, until the total count of files is within bounds.
-====
-+
-====
-*LastModifiedCleanupRule*
-
-[small]#`org.smallmind.scribe.pen.LastModifiedCleanupRule`#
-
-Provides the maximum age an archived file is allowed to reach before being deleted.
-====
-
-===== FluentAppender
-
-[small]#`FluentBitAppender`#
-
-Thi appender's output format is the *_forward_* protocol (see https://docs.fluentd.org/input/forward) from FluentD/FluentBit. You'll obviously need a FluentD or FluentBit daemon running somewhere to make this useful. The following parameters are used to configure this appender...
-
-* *host* (_String_) - The host on which the FluentD or FluentBit process is running.
-* *port* (_int_) - The port for the fluent process.
-* *timestamp* (_org.smallmind.scribe.pen.Timestamp_) - Controls how dates are formatted. Defaults to "yyyy-MM-dd'T'HH:mm:ss.SSSZ".
-* *newLine* (_String_) - The line separator used to format the multi-line portions of the output. Defaults to `System.getProperty("line.separator")`.
-* *retryAttempts* (_int_) - The number of times the appender will attempt to send a batch of log records before giving up.
-* *batch* (_int) - The number of log records the appender will wait for and batch up into a single send.
-* *recordElements* (_org.smallmind.scribe.pen.RecordElement[]_) - An array of enum values representing the elements which will be included in the output (same as for the <<scribe-xml-formatter>> above).
-* *additionalEventData* (_Map<String, String>_) - A map of additional event parameters that will be included in each log record.
-
-[[scribe-filters, Filters]]
-=== Filters
-
-[small]#`org.smallmind.scribe.pen.Filter`#
-
-Both <<scribe-logger>> implementations and <<scribe-appenders>> can take filters. To implement a filter you need to fulfill the `willLog()` method...
+This compiles but is not usable until a formatter is supplied:
 
 [source,java]
 ----
-boolean willLog (Record record);
+ConsoleAppender consoleAppender = new ConsoleAppender();
+consoleAppender.setFormatter(new PatternFormatter());
 ----
 
-If any filter in a set returns false for the method above, then the record will not be logged. This project comes with the following filters...
+If a formatted appender publishes without a formatter, it fails with `LoggerException`.
 
-==== DotNotatedLoggerNameFilter
+=== ConsoleAppender
 
-[small]#`org.smallmind.scribe.pen.DotNotatedLoggerNameFilter`#
-
-A filter which allows log records through based on either meeting a particular _<<scribe-level>>_ and/or matching the logger's name with one of the dot notation patterns provided (see `org.smallmind.nutsnbolts.util.DotNotation`). By adding the same instance of this filter to every logger, a client of this project could dynamically control whether log records are output based on the logger name and level associated with each record. This might allow, for example, turning on debug logging across the system, or turning *all* logging on for a particular set of classes or modules.
-
-==== LevelFilter
-
-[small]#`org.smallmind.scribe.pen.LevelFilter`#
-
-A basic level fiter. Log records are passed through that meet or exceed the <<scribe-level>> set on this filter.
-
-[[scribe-enhancers, Enhancers]]
-=== Enhancers
-
-[small]#`org.smallmind.scribe.pen.Enhancer`#
-
-An enhancer is essentially a log record decorator. A kind of log record 'get of jail free card', an enhancer can do whatever it wants with a log record by implementing the `enhance()` method...
+`ConsoleAppender` is the simplest destination:
 
 [source,java]
 ----
-void enhance (Record record);
+ConsoleAppender consoleAppender = new ConsoleAppender(new PatternFormatter());
 ----
 
-[[scribe-parameters, Parameters]]
+It writes to `System.out`, not `System.err`.
+
+=== FileAppender
+
+`FileAppender` writes UTF-8 text to a file and creates parent directories automatically.
+
+The simple case:
+
+[source,java]
+----
+FileAppender fileAppender = new FileAppender("var/log/service.log", new PatternFormatter());
+----
+
+The production case is usually a `FileAppender` plus `Rollover` and `Cleanup`; see <<scribe-rollover-cleanup,File Rollover And Cleanup>>.
+
+`FileAppender` holds an open stream. Close it at shutdown.
+
+=== AsynchronousAppender
+
+`AsynchronousAppender` wraps another appender and publishes through a bounded queue.
+
+[source,java]
+----
+Appender asyncAppender = new AsynchronousAppender(fileAppender, 400, 2);
+----
+
+Defaults:
+
+* constructor with one argument uses buffer size `1` and concurrency `1`
+* if the queue is full, publication is rejected and the appender's error handling path is used
+* `close()` stops workers and then closes the wrapped appender
+
+Use it when the destination is slower than the calling thread should tolerate.
+
+=== EmailAppender
+
+`EmailAppender` sends the formatted output of each record as an email body.
+
+[source,java]
+----
+EmailAppender emailAppender = new EmailAppender("smtp.acme.internal", 25);
+emailAppender.setFrom("alerts@acme.internal");
+emailAppender.setTo("ops@acme.internal");
+emailAppender.setSubject("Billing Alert");
+emailAppender.setFormatter(new PatternFormatter());
+----
+
+This is best reserved for low-volume alerting paths, not general application logging.
+
+=== SyslogAppender
+
+`SyslogAppender` emits structured syslog data through `syslog4j`.
+
+[source,java]
+----
+SyslogAppender syslogAppender = new SyslogAppender();
+syslogAppender.setSyslogHost("syslog.acme.internal");
+syslogAppender.setSyslogPort(514);
+syslogAppender.setFacility("LOCAL7");
+syslogAppender.afterPropertiesSet();
+----
+
+It includes logger name, timestamp, thread data, context, parameters, and stack trace information in structured fields when present. `TRACE` maps to syslog debug.
+
+If you set `base64EncodeStackTraces` to `true`, stack traces are encoded before publication.
+
+=== AWSAppender
+
+`AWSAppender` publishes formatted text to CloudWatch Logs.
+
+Use it only when you have clear ownership of the CloudWatch stream and sequence-token lifecycle.
+
+[IMPORTANT]
+====
+Treat `AWSAppender` as a singleton per JVM per CloudWatch log stream. Sequence tokens are serialized inside the appender.
+
+Pass an explicit `streamName`. That is the least surprising way to use the current API.
+====
+
+`AWSAppender` does not close the `CloudWatchLogsClient` you pass in. If your application owns that client, close it separately.
+
+=== FluentBitAppender
+
+`FluentBitAppender` batches records and ships them to Fluent Bit over TCP using MessagePack.
+
+[source,java]
+----
+import java.util.HashMap;
+
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DefaultErrorHandler;
+import org.smallmind.scribe.pen.PatternFormatter;
+import org.smallmind.scribe.pen.fluentbit.FluentBitAppender;
+
+HashMap<String, String> additionalEventData = new HashMap<>();
+additionalEventData.put("stream", "service_log");
+additionalEventData.put("service", "billing");
+
+FluentBitAppender fluentBitAppender = new FluentBitAppender(
+    "billing-service",
+    new DefaultErrorHandler(new ConsoleAppender(new PatternFormatter())));
+fluentBitAppender.setHost("127.0.0.1");
+fluentBitAppender.setPort(24224);
+fluentBitAppender.setBatchSize(25);
+fluentBitAppender.setConcurrencyLimit(2);
+fluentBitAppender.setAdditionalEventData(additionalEventData);
+fluentBitAppender.afterPropertiesSet();
+----
+
+Defaults and behaviors:
+
+* `retryAttempts` defaults to `3`
+* `concurrencyLimit` defaults to `1`
+* `batchSize` defaults to `1`
+* `batchGracePeriodMilliseconds` defaults to `3000`
+* `close()` waits for worker completion
+
+Outside Spring, call `afterPropertiesSet()` before publishing.
+
+[[scribe-formatters, Formatters]]
+== Formatters
+
+Formatters turn a `Record` into output text. They matter most for `AbstractFormattedAppender` subclasses such as `ConsoleAppender`, `FileAppender`, and `EmailAppender`.
+
+=== PatternFormatter
+
+`PatternFormatter` is the general-purpose text formatter. Every formatted record ends with the platform line separator.
+
+Constructor defaults:
+
+* `new PatternFormatter()` uses `DateFormatTimestamp.getDefaultInstance()`
+* `new PatternFormatter()` uses format `%d %n %+5l [%T] - %m`
+
+General field shape:
+
+[source,text]
+----
+[{header]%[+|-width][.precision][!(+|-)prefix!]conversion[footer}]
+----
+
+Supported conversions:
+
+[cols="1,4",options="header"]
+|===
+|Code |Meaning
+
+|`d`
+|formatted date using the configured `Timestamp`
+
+|`t`
+|epoch milliseconds
+
+|`n`
+|logger name
+
+|`l`
+|level
+
+|`m`
+|message
+
+|`T`
+|thread name
+
+|`C`
+|calling class
+
+|`M`
+|calling method
+
+|`N`
+|native-method flag
+
+|`L`
+|line number
+
+|`F`
+|file name
+
+|`s`
+|stack trace
+
+|`p`
+|parameters
+|===
+
+Important formatting notes:
+
+* precision on `n` and `C` keeps the right-most dot-notated segments
+* precision on `p` limits the number of parameter lines
+* `%%` emits a literal percent sign
+* `\n` and `\t` are recognized in literal and prefix text
+* headers and footers are emitted only when the field has a value
+* `s` and `p` are multi-line fields and ignore width/padding
+
+The verbose pattern used throughout this module is:
+
+[source,text]
+----
+%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s
+----
+
+That pattern gives you:
+
+* a timestamp
+* the full logger name
+* a padded level
+* short caller context
+* thread name
+* message text
+* parameters and stack trace on separate indented lines when present
+
+=== XMLFormatter
+
+`XMLFormatter` emits structured XML and lets you choose which `RecordElement` values to include.
+
+Defaults:
+
+* `timestamp` is `DateFormatTimestamp.getDefaultInstance()`
+* `newLine` is `System.getProperty("line.separator")`
+* `cdata` is `false`
+* `indent` is `3`
+* `recordElements` defaults to all `RecordElement` values
+
+Example:
+
+[source,java]
+----
+import java.time.format.DateTimeFormatter;
+
+import org.smallmind.scribe.pen.DateFormatTimestamp;
+import org.smallmind.scribe.pen.RecordElement;
+import org.smallmind.scribe.pen.XMLFormatter;
+
+XMLFormatter xmlFormatter = new XMLFormatter();
+xmlFormatter.setTimestamp(new DateFormatTimestamp(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")));
+xmlFormatter.setCdata(true);
+xmlFormatter.setRecordElements(new RecordElement[] {
+    RecordElement.DATE,
+    RecordElement.LEVEL,
+    RecordElement.MESSAGE,
+    RecordElement.PARAMETERS,
+    RecordElement.STACK_TRACE
+});
+----
+
+`RecordElement` values are:
+
+* `DATE`
+* `MILLISECONDS`
+* `LOGGER_NAME`
+* `LEVEL`
+* `MESSAGE`
+* `THREAD`
+* `LOGGER_CONTEXT`
+* `PARAMETERS`
+* `STACK_TRACE`
+
+=== Timestamp Implementations
+
+[cols="2,4",options="header"]
+|===
+|Type |Use
+
+|`DateFormatTimestamp`
+|default choice; formats with `DateTimeFormatter`, default pattern `yyyy-MM-dd'T'HH:mm:ss.SSSZ`
+
+|`FormatStringTimestamp`
+|uses `String.format(...)` conventions for date rendering
+
+|`NullTimestamp`
+|returns an empty string; useful when the sink adds its own timestamp
+|===
+
+[[scribe-filters, Filters And Enhancers]]
+== Filters And Enhancers
+
+Filters decide whether a record should be logged. Enhancers mutate a record before publication.
+
+Filters can appear in two places:
+
+* on a logger, usually through a template
+* on an appender
+
+Both are honored. A record must survive every configured filter path to reach the destination.
+
+=== LevelFilter
+
+`LevelFilter` admits records at or above a threshold:
+
+[source,java]
+----
+LevelFilter warnAndAbove = new LevelFilter(Level.WARN);
+----
+
+This is usually more useful on an appender than on a logger when you want one sink to be stricter than another.
+
+=== DotNotatedLoggerNameFilter
+
+`DotNotatedLoggerNameFilter` is useful when you want dynamic debug-category style control across a logger-name tree.
+
+Its model is:
+
+* records at or above `passThroughLevel` always pass
+* lower-level records pass only when the logger name matches one of the configured dot-notation patterns
+
+[source,java]
+----
+import java.util.Arrays;
+
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DotNotatedLoggerNameFilter;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.PatternFormatter;
+
+DotNotatedLoggerNameFilter filter = new DotNotatedLoggerNameFilter(
+    Level.INFO,
+    Arrays.asList("com.acme.checkout.*", "com.acme.risk.*"));
+
+ConsoleAppender consoleAppender = new ConsoleAppender(new PatternFormatter());
+consoleAppender.addFilter(filter);
+----
+
+At runtime you can add or remove patterns with `setDebugCategory(...)`.
+
+=== ExceptionSuppressingLogFilter
+
+`ExceptionSuppressingLogFilter` drops records carrying specific throwable classes.
+
+[source,java]
+----
+import java.net.SocketTimeoutException;
+import java.util.Arrays;
+
+import org.smallmind.scribe.pen.ExceptionSuppressingLogFilter;
+
+ExceptionSuppressingLogFilter.addSuppressedThrowableClasses(
+    Arrays.asList(SocketTimeoutException.class));
+----
+
+[IMPORTANT]
+====
+`ExceptionSuppressingLogFilter` matches exact throwable classes, not subclasses.
+====
+
+=== Enhancer
+
+Enhancers are a lower-level hook than parameters. Use them when you need to mutate the record before it reaches the appender.
+
+For ordinary request metadata, `Logger.putParameter(...)` is simpler. Use an enhancer when you genuinely need record mutation logic.
+
+Example:
+
+[source,java]
+----
+import java.util.Arrays;
+
+import org.smallmind.scribe.pen.Enhancer;
+import org.smallmind.scribe.pen.Parameter;
+import org.smallmind.scribe.pen.ParameterAwareRecord;
+import org.smallmind.scribe.pen.Record;
+
+Enhancer serviceEnhancer = new Enhancer() {
+  @Override
+  public void enhance (Record<?> record) {
+
+    if (record instanceof ParameterAwareRecord<?>) {
+
+      ParameterAwareRecord<?> parameterAwareRecord = (ParameterAwareRecord<?>)record;
+      Parameter[] currentParameters = parameterAwareRecord.getParameters();
+      Parameter[] enhancedParameters = Arrays.copyOf(currentParameters, currentParameters.length + 1);
+
+      enhancedParameters[currentParameters.length] = new Parameter("service", "billing");
+      parameterAwareRecord.setParameters(enhancedParameters);
+    }
+  }
+};
+----
+
+[[scribe-parameters, Parameters And Logger Context]]
+== Parameters And Logger Context
+
 === Parameters
 
-[small]#`org.smallmind.scribe.pen.adapter.Parameters`#
+Parameters are explicit key/value metadata attached to log records.
 
-A parameter is a key/value pair, properly held in thread local context, so they are capable of carrying cross-cutting concerns (or at least bits of data about such concerns). Although <<scribe-logger>> implementations may provide alternate integrations to the capabilities of endpoint logging systems, all of those provided by this project use the Parameters class, which is both a factory, and an implementation, of `org.smallmind.scribe.pen.adapter.ParameterAdapter`. To accommodate this behavior, you get the current instance via `Parameters.getInstance()`, upon which you may now call...
+Use them for:
 
-* `void put (String key, Serializable value)` - Puts a value into the backing thread local map.
-* `void remove (String key)` - Removes a value from the backing thread local map.
-* `void clear ()` - Clears the backing thread local map.
-* `Serializable get (String key)` - Gets a value from the baking thread local map.
-* `Parameter[] getParameters ()` - Get all parameters currently in the backing thread local map.
+* request ids
+* tenant ids
+* partner ids
+* workflow or batch ids
+* temporary operational metadata you do not want duplicated in every message string
 
-See the various implementations of <<scribe-formatter>> for the output of parameters to a log record.
+Example request lifecycle:
 
-[[scribe-logger-manager, LoggerManager]]
-== LoggerManager
+[source,java]
+----
+Logger logger = LoggerManager.getLogger(OrderResource.class);
 
-[small]#`org.smallmind.scribe.pen.LoggerManager`#
+logger.putParameter("requestId", requestId);
+logger.putParameter("tenant", tenantId);
+try {
+  logger.info("Accepted order %s", orderId);
+} finally {
+  logger.clearParameters();
+}
+----
 
-The LoggerManager class is the factory for <<scribe-logger>> instances. It's the static `getLogger()` method which returns an instance of a logger for use, and which takes either a `_String_` or `_Class<?>_` as parameter. The preferred method is to pass it the `_Class_` from which the resulting logger will be called, which makes organizing both loggers and their output relatively natural and tidy. This does mean you end up with, generally, a lot of loggers, which you'll need to configure with the appropriate objects and fields (such as <<scribe-level>>, <<scribe-appenders>>, <<scribe-filters>> and such). Rather than a complex system of hierarchical configurations and inheritances, this project uses <<scribe-templates>>.
+Convenience methods on `Logger`:
 
-[[scribe-templates, Templates]]
-=== Templates
+* `putParameter(String, Serializable)`
+* `removeParameter(String)`
+* `clearParameters()`
+* `getParameters()`
 
-[small]#`org.smallmind.scribe.pen.Template`#
+Technical details:
 
-Templates can either be statically added to the <<scribe-logger-manager>>, or they will add themselves when their `register()` method is called, usually from the configuring dependency injection framework. Every template vies for the right to configure each logger with the set of objects it contains, with the strongest template winning. A template has methods for conveniently setting, and is a subsequent container for, the following information...
+* parameter storage is provided by `org.smallmind.scribe.pen.adapter.Parameters`
+* the storage implementation uses `InheritableThreadLocal`
+* SLF4J MDC is backed by the same storage when you use `scribe-slf4j`
 
-* *Appenders* (_<<scribe-appenders>>_) - A list of appenders which will be set on any matching logger.
-* *AutoFillLoggerContext* (_boolean_) - Whether the matching logger will auto-fill its <<scribe-logger-context>>. Defaults to false.
-* *Enhancers* (_<<scribe-enhancers>>_) - A list of enhancers which will be set on any matching logger.
-* *Filters* (_<<scribe-filters>>_) - A list of filters which will be set on any matching logger.
-* *Level* (_<<scribe-level>>_) - The default level for any matching logger. Defaults to _Level.INFO_.
+[WARNING]
+====
+Treat thread boundaries as explicit context boundaries. Parameter storage uses Java's default `InheritableThreadLocal` behavior, so worker threads and asynchronous callbacks should clear or re-establish context deliberately instead of assuming a fresh empty parameter map.
+====
 
-We recommend generating a default template, which acts as a fallback default configuration, and then a set of templates which will bind themselves to the appropriate hierarchically named loggers as they are requested. Such a setup is not hard given the available template implementations.
+=== Logger Context
 
-[[scribe-class-name-template, ClassNameTemplate]]
-==== ClassNameTemplate
+Logger context is the captured caller location: class, method, file, line number, and native-method flag.
 
-[small]#`org.smallmind.scribe.pen.ClassNameTemplate`#
+It is disabled by default. Enable it by setting `autoFillLoggerContext` on a template or logger:
 
-This template takes a dot-notated pattern upon construction (see `org.smallmind.nutsnbolts.util.DotNotation`), and binds to loggers based on the strength of the match with their names (which should, obviously, be dot notated). The binding strength is proportional to the number of matching segments in the pattern, with wild card segments valued as slightly weaker.
+[source,java]
+----
+DefaultTemplate defaultTemplate = new DefaultTemplate(Level.INFO, true, consoleAppender);
+defaultTemplate.register();
+----
 
-==== DefaultTemplate
+When enabled, Scribe uses `DefaultLoggerContext` to inspect the current stack and fill:
 
-[small]#`org.smallmind.scribe.pen.DefaultTemplate`#
+* class name
+* method name
+* file name
+* line number
+* native-method flag
 
-This template will match any logger at the weakest possible binding value.
+Pattern conversions that use logger context are `C`, `M`, `N`, `L`, and `F`.
 
-==== PeronalizedTemplate
+Because stack inspection has cost, keep caller-context autofill targeted when you care about hot-path performance.
 
-[small]#`org.smallmind.scribe.pen.PersonalizedTemplate`#
+[[scribe-rollover-cleanup, File Rollover And Cleanup]]
+== File Rollover And Cleanup
 
-This template takes a name upon construction and is all or nothing, matching any logger with exactly the same name, at the strongest possible binding value.
+`FileAppender` can rotate files through `Rollover` and prune old archives through `Cleanup`.
 
-==== RegExTemplate
+The normal production shape is:
 
-[small]#`org.smallmind.scribe.pen.RegexTemplate`#
+[source,java]
+----
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
-Although the <<scribe-class-name-template>> is more flexible, and in general a better choice, this template can be used when logger names do not follow dot-notated conventions. This template take a regular expression upon construction, and binds to loggers whose names match the regular expression. The binding value is all or nothing, and will bind at the maximum strength if there's a match.
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.AsynchronousAppender;
+import org.smallmind.scribe.pen.Cleanup;
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DateFormatTimestamp;
+import org.smallmind.scribe.pen.DefaultErrorHandler;
+import org.smallmind.scribe.pen.DefaultTemplate;
+import org.smallmind.scribe.pen.FileAppender;
+import org.smallmind.scribe.pen.FileSizeQuantifier;
+import org.smallmind.scribe.pen.FileSizeRolloverRule;
+import org.smallmind.scribe.pen.LastModifiedCleanupRule;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.PatternFormatter;
+import org.smallmind.scribe.pen.Rollover;
+import org.smallmind.scribe.pen.TimestampQuantifier;
+import org.smallmind.scribe.pen.TimestampRolloverRule;
 
-== Configuration
+Path logPath = Paths.get("var", "log", "billing.log");
 
-The following is one possible configuration that's demonstrative of a simple but realistic scenario. It's in Spring XML format, but should be indicative of what's necessary in any injection framework...
+DateFormatTimestamp archiveTimestamp = new DateFormatTimestamp(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+DateFormatTimestamp lineTimestamp = new DateFormatTimestamp(
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+PatternFormatter formatter = new PatternFormatter(
+    lineTimestamp,
+    "%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s");
 
-.Spring XML
+Rollover rollover = new Rollover(
+    archiveTimestamp,
+    '.',
+    new TimestampRolloverRule(TimestampQuantifier.TOP_OF_DAY),
+    new FileSizeRolloverRule(250, FileSizeQuantifier.MEGABYTES));
+Cleanup cleanup = new Cleanup(
+    '.',
+    new LastModifiedCleanupRule(new Stint(14, TimeUnit.DAYS)));
+
+FileAppender fileAppender = new FileAppender(
+    logPath,
+    rollover,
+    cleanup,
+    formatter,
+    new DefaultErrorHandler(new ConsoleAppender(formatter)));
+Appender asyncAppender = new AsynchronousAppender(fileAppender, 400, 2);
+
+new DefaultTemplate(Level.INFO, true, asyncAppender).register();
+----
+
+With that setup a file such as `billing.log` can roll to names like `billing.2026-04-11.0.log`.
+
+=== Rollover
+
+`Rollover` combines:
+
+* a `Timestamp` used to build archive suffixes
+* a separator character
+* one or more `RolloverRule` instances
+
+If any configured rule says rollover should happen, the file rotates before the current write.
+
+=== Rollover Rules
+
+[cols="2,4",options="header"]
+|===
+|Rule |Behavior
+
+|`FileSizeRolloverRule`
+|rolls when the current file size plus pending bytes exceeds the configured size threshold
+
+|`TimestampRolloverRule`
+|rolls when the current time crosses a configured boundary such as top-of-day or top-of-hour
+|===
+
+`FileSizeRolloverRule` defaults to `10` megabytes when constructed with no arguments.
+
+`TimestampRolloverRule` defaults to `TOP_OF_DAY`.
+
+`TimestampQuantifier` values are:
+
+* `TOP_OF_MINUTE`
+* `TOP_OF_HOUR`
+* `HALF_DAY`
+* `TOP_OF_DAY`
+* `TOP_OF_WEEK`
+* `TOP_OF_MONTH`
+
+=== Cleanup
+
+`Cleanup` examines adjacent rollover files after a rollover happens and deletes the ones matching its rules.
+
+Cleanup is not a background sweeper. It runs only when rollover occurs.
+
+=== Cleanup Rules
+
+[cols="2,4",options="header"]
+|===
+|Rule |Behavior
+
+|`FileCountCleanupRule`
+|retains up to a configured maximum number of archive files
+
+|`LastModifiedCleanupRule`
+|deletes archive files older than the configured `Stint`
+|===
+
+[IMPORTANT]
+====
+Use the same separator for `Cleanup` that you use for `Rollover`. Both components identify archive files by the same naming convention.
+
+If the separators do not match, cleanup will not see the archive files you expect it to prune.
+====
+
+[[scribe-error-handling, Error Handling]]
+== Error Handling
+
+Appenders can have an `ErrorHandler`. If an appender has no error handler, the default behavior is to print the throwable stack trace.
+
+=== DefaultErrorHandler
+
+`DefaultErrorHandler` republishes failures through a backup appender.
+
+Defaults:
+
+* `new DefaultErrorHandler()` uses `new ConsoleAppender(new XMLFormatter())`
+* when handling a failure tied to an existing record, it publishes an error record and then republishes the original record through the backup appender
+
+Common pattern:
+
+[source,java]
+----
+PatternFormatter formatter = new PatternFormatter();
+ConsoleAppender consoleFallback = new ConsoleAppender(formatter);
+DefaultErrorHandler errorHandler = new DefaultErrorHandler(consoleFallback);
+----
+
+This is a good fit for file or network appenders where the failure path should still be visible somewhere obvious.
+
+=== Custom ErrorHandler
+
+Implement `ErrorHandler` when you need an application-specific failure policy:
+
+* emit alerts
+* count logging failures
+* reroute to a platform-specific fallback
+* suppress or aggregate repeated appender failures
+
+[[scribe-integrations, Built-In Endpoint Integrations]]
+== Built-In Endpoint Integrations
+
+Choose exactly one endpoint module.
+
+[cols="2,3,4",options="header"]
+|===
+|Artifact |Use It When |Notes
+
+|`scribe-ink-indigenous`
+|you want Scribe to own logging behavior end-to-end
+|least surprising choice when your appenders and formatters are mostly Scribe-native
+
+|`scribe-ink-jdk`
+|you intentionally want Scribe to participate in `java.util.logging`
+|template changes push levels, handlers, and filters into JUL loggers
+
+|`scribe-ink-log4j`
+|you intentionally want Scribe to participate in Log4J2
+|template changes push levels and appenders into Log4J2 loggers; the adapter sets `additive` to `false`
+|===
+
+=== Indigenous Endpoint
+
+`scribe-ink-indigenous` is the simplest endpoint when Scribe is your primary logging model.
+
+Characteristics:
+
+* records are Scribe-native
+* parameters come from `Parameters`
+* templates directly control the logger's level, appenders, filters, and enhancers
+
+If you want Scribe's appenders, formatters, and template model without backend interop concerns, this is usually the easiest endpoint to reason about.
+
+=== JDK Endpoint
+
+`scribe-ink-jdk` adapts Scribe to `java.util.logging`.
+
+Important consequences:
+
+* template-applied levels are pushed into JUL loggers
+* template-applied appenders are wrapped as JUL `Handler` instances
+* template-applied filters are checked in the JUL path as well as Scribe's path
+* JUL native `Formatter`, `Filter`, and `ErrorManager` types can be adapted through the provided wrapper/adaptor classes
+
+Use this endpoint when JUL interop is the goal, not when you want Scribe isolated from JUL behavior.
+
+=== Log4J2 Endpoint
+
+`scribe-ink-log4j` adapts Scribe to Log4J2 core.
+
+Important consequences:
+
+* template-applied levels are pushed into Log4J2 loggers
+* template-applied appenders are wrapped as Log4J2 appenders
+* the adapter sets the underlying logger to non-additive mode
+* Log4J2 `Layout`, `Filter`, and `ErrorHandler` types can be adapted through the provided wrapper/adaptor classes
+
+This endpoint is appropriate when Scribe calls must join an existing Log4J2-centered system deliberately.
+
+[[scribe-bridges, Logging API Bridges]]
+== Logging API Bridges
+
+Bridge modules route other logging APIs into Scribe. They do not replace the need for one actual endpoint module.
+
+=== Apache Commons Logging
+
+Artifact: `org.smallmind:scribe-apache`
+
+The bridge ships `commons-logging.properties` so Commons Logging resolves `org.smallmind.scribe.apache.CommonsLogWrapper`.
+
+Effects:
+
+* Commons Logging logger names are resolved through `LoggerManager`
+* Commons Logging levels map directly to Scribe levels
+* object and throwable overloads delegate to the corresponding Scribe methods
+
+=== SLF4J
+
+Artifact: `org.smallmind:scribe-slf4j`
+
+This module supplies:
+
+* `org.smallmind.scribe.slf4j.ScribeLoggerFactory`
+* `org.smallmind.scribe.slf4j.ScribeLoggerAdapter`
+* `org.smallmind.scribe.slf4j.ScribeMDCAdapter`
+* `org.slf4j.impl.StaticLoggerBinder`
+* `org.slf4j.impl.StaticMDCBinder`
+
+Effects:
+
+* SLF4J logger names map to Scribe logger names of the same value
+* `{}` placeholders are translated to `%s` before delegating into Scribe
+* SLF4J MDC is backed by `Parameters`
+* deque-based MDC operations are supported
+
+Example:
+
+[source,java]
+----
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+Logger logger = LoggerFactory.getLogger(OrderService.class);
+
+MDC.put("requestId", requestId);
+try {
+  logger.info("Accepted order {}", orderId);
+} finally {
+  MDC.clear();
+}
+----
+
+If your Scribe formatter includes `%p`, or if your structured sink includes parameters, the `requestId` value appears there.
+
+[[scribe-spring-support, Spring Support]]
+== Spring Support
+
+Spring support lives in `scribe-pen` and is optional. Add `spring-beans` only if you use these helpers.
+
+[cols="2,4",options="header"]
+|===
+|Type |Purpose
+
+|`DateTimeFormatterFactoryBean`
+|builds `DateTimeFormatter` instances from pattern strings in Spring XML
+
+|`TemplateInitializingBean`
+|registers a supplied list of templates at initialization time
+
+|`DynamicClassNameTemplateInitializingBean`
+|scans Spring properties for `log.pattern.<key>` and `log.level.<key>` pairs and registers `ClassNameTemplate` instances
+
+|`ExceptionSuppressingLogInitializingBean`
+|registers suppressed throwable classes for `ExceptionSuppressingLogFilter`
+
+|`ConsoleLoggingPlan`
+|creates a console appender plus templates with an asynchronous wrapper
+
+|`FileLoggingPlan`
+|creates a rolling file appender plus templates with an asynchronous wrapper
+
+|`FluentBitLoggingPlan`
+|creates a configured `FluentBitAppender` plus templates with an asynchronous wrapper
+|===
+
+`LoggingPlan` defaults:
+
+* `defaultLogLevel = INFO`
+* `logRecordBufferSize = 400`
+* `concurrencyLimit = 1`
+* all plan-created templates set `autoFillLoggerContext = true`
+
+[IMPORTANT]
+====
+Set `logPath` explicitly on `FileLoggingPlan`. Its field default is `/var/log`, which is usually a directory and therefore not a valid `FileAppender` target path.
+====
+
+=== Example Spring XML
+
+Using `FileLoggingPlan`:
+
 [source,xml]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-  <!-- Templates -->
-  <bean id="defaultTemplate" class="org.smallmind.scribe.pen.DefaultTemplate" init-method="register">
-    <property name="autoFillLoggerContext" value="true"/>
-    <property name="appenders">
-      <list>
-        <ref bean="logAppender"/>
-      </list>
-    </property>
-    <property name="level" value="INFO"/>
-  </bean>
-
-  <bean id="classNameTemplate" class="org.smallmind.scribe.pen.ClassNameTemplate" init-method="register">
-    <property name="autoFillLoggerContext" value="true"/>
-    <property name="pattern" value="com.mycompany.*"/>
-    <property name="appenders">
-      <list>
-        <ref bean="logAppender"/>
-      </list>
-    </property>
-    <property name="level" value="DEBUG"/>
-  </bean>
-
-  <!-- Logger -->
-  <bean id="shortTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
-    <property name="dateTimeFormatter">
-      <bean class="org.smallmind.scribe.pen.spring.DateTimeFormatterFactoryBean">
-        <property name="pattern" value="yyyy-MM-dd"/>
+<bean class="org.smallmind.scribe.pen.spring.plan.FileLoggingPlan">
+  <property name="logPath" value="/var/log/billing/service.log"/>
+  <property name="defaultLogLevel" value="INFO"/>
+  <property name="rolloverMegabyteLimit" value="250"/>
+  <property name="retentionDays" value="14"/>
+  <property name="logs">
+    <array>
+      <bean class="org.smallmind.scribe.pen.spring.plan.Log">
+        <property name="pattern" value="com.acme.billing.sql.*"/>
+        <property name="level" value="DEBUG"/>
       </bean>
-    </property>
-  </bean>
-
-  <bean id="fullTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
-    <property name="dateTimeFormatter">
-      <bean class="org.smallmind.scribe.pen.spring.DateTimeFormatterFactoryBean">
-        <property name="pattern" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
-      </bean>
-    </property>
-  </bean>
-
-  <bean id="patternFormatter" class="org.smallmind.scribe.pen.PatternFormatter">
-    <property name="timestamp" ref="fullTimestamp"/>
-    <property name="format" value="%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s"/>
-  </bean>
-
-  <bean id="rollover" class="org.smallmind.scribe.pen.Rollover">
-    <property name="timestamp" ref="shortTimestamp"/>
-    <property name="separator" value="."/>
-    <property name="rules">
-      <list>
-        <bean class="org.smallmind.scribe.pen.TimestampRolloverRule">
-          <property name="timestampQuantifier" value="TOP_OF_DAY"/>
-        </bean>
-        <bean class="org.smallmind.scribe.pen.FileSizeRolloverRule">
-          <property name="fileSizeQuantifier" value="MEGABYTES"/>
-          <property name="maxSize" value="100"/>
-        </bean>
-      </list>
-    </property>
-  </bean>
-
-  <bean id="cleanup" class="org.smallmind.scribe.pen.Cleanup">
-    <property name="separator" value="."/>
-    <property name="rules">
-      <list>
-        <bean class="org.smallmind.scribe.pen.LastModifiedCleanupRule">
-          <property name="stint">
-            <bean class="org.smallmind.nutsnbolts.time.Stint">
-              <constructor-arg index="0" name="time" value="30"/>
-              <constructor-arg index="1" name="timeUnit" value="DAYS"/>
-            </bean>
-          </property>
-        </bean>
-      </list>
-    </property>
-  </bean>
-
-  <bean id="consoleAppender" class="org.smallmind.scribe.pen.ConsoleAppender">
-    <property name="formatter" ref="patternFormatter"/>
-  </bean>
-
-  <bean id="consoleErrorHandler" class="org.smallmind.scribe.pen.DefaultErrorHandler">
-    <property name="backupAppender" ref="consoleAppender"/>
-  </bean>
-
-  <bean id="logAppender" class="org.smallmind.scribe.pen.AsynchronousAppender">
-    <constructor-arg index="0" name="internalAppender">
-      <bean class="org.smallmind.scribe.pen.FileAppender">
-        <property name="logPath" value="/var/log/mycompany/myproject.log"/>
-        <property name="rollover" ref="rollover"/>
-        <property name="cleanup" ref="cleanup"/>
-        <property name="formatter" ref="patternFormatter"/>
-        <property name="errorHandler" ref="consoleErrorHandler"/>
-      </bean>
-    </constructor-arg>
-    <constructor-arg index="1" name="bufferSize" value="300"/>
-  </bean>
-</beans>
+    </array>
+  </property>
+</bean>
 ----
 
-== Adaptation
+Property-driven `ClassNameTemplate` registration:
 
-In order to adapt an endpoint logging framework for use by Scribe, you'll need to fulfill a set of contracts defined by the following classes...
+[source,properties]
+----
+log.pattern.billing=com.acme.billing.*
+log.level.billing=DEBUG
+log.pattern.partner=com.acme.partner.*
+log.level.partner=INFO
+----
 
-=== LoggingBlueprint
+[source,xml]
+----
+<bean class="org.smallmind.scribe.pen.spring.DynamicClassNameTemplateInitializingBean">
+  <property name="appenders">
+    <array>
+      <ref bean="consoleAppender"/>
+    </array>
+  </property>
+  <property name="autoFillLoggerContext" value="true"/>
+</bean>
+----
 
-[small]#`org.smallmind.scribe.pen.adapter.LoggingBlueprint`#
+`DynamicClassNameTemplateInitializingBean` depends on the active `SpringPropertyAccessor`. Every `log.pattern.<key>` must have a matching `log.level.<key>` or initialization fails with `LoggerException`.
 
-A LoggngBlueprint implementation is required to define a Java Service Provider for the `org.smallmind.scribe.pen.adapter.LoggingBlueprint` service interface. The overhead for this is pretty minimal, as all you really need is a file at */META-INF/services* named, literally, 'org.smallmind.scribe.pen.adapter.LoggingBlueprint', which contains a single line of text, and that text is the name of your implementation class. Your implementation will also need to complete the methods...
+[[scribe-endpoint-spi, Endpoint SPI]]
+== Endpoint SPI
 
-* `public <<scribe-logger-adapter>> getLoggingAdapter (String name)` - Given the logger name, retuns an adapter to a logger in the underlying framework.
-* `public <<scribe-record>> errorRecord (<<scribe-record>> record, Throwable throwable, String message, Object... args)` - Should an error occur within an appender, such that the publishing contract cannot be fulfilled, the `org.smallmind.scribe.pen.DefaultErrorHandler` (if it's in use) will use this method to request a <<scribe-record>> compatible with the underlying framework, in order to try and call an alternate appender. The implementation should get any information it needs to construct the new record from the given parameters.
+This section is for authors implementing a new Scribe endpoint.
 
-Because implementations of LoggingBlueprint are service providers, a client need only include the dependency containing the implementation in their build, and it will be loaded by the Scribe framework. The one twist is that a client can have no more than a _single_ endpoint integration defined within their transitive dependencies. It's therefore *important*, that any code intended as a library for use by others make no attempt to include any endpoint integration within its own runtime dependency set.
+The SPI centers on `LoggingBlueprint`:
 
-[[scribe-logger-adapter, LoggerAdapter]]
-=== LoggerAdapter
+[source,java]
+----
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
-[small]#`org.smallmind.scribe.pen.adapter.LoggingAdapter`#
+public class MyLoggingBlueprint extends LoggingBlueprint<MyNativeRecord> {
 
-A LoggerAdapter is a shim into the underlying logging framework being integrated into Scribe. The methods are self-explanatory so we'll avoid a method by method breakdown here. If you have questions, the implementations provided by this project should provide for ample examples.
+  @Override
+  public LoggerAdapter getLoggingAdapter (String name) {
 
-[[scribe-record, Record]]
-=== Record
+    return new MyLoggerAdapter(name);
+  }
 
-A Record is a Scribe container for all the elements which might be available for output in a single logged event. As an implementation detail, the integrations in this project tend to extend the underlying notion of a such an event with the Record interface, guaranteeing that both are available within a single representative object.
+  @Override
+  public Record<MyNativeRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {
 
-=== Parameter Adapter
+    return new MyErrorRecord(loggerName, throwable, message, args);
+  }
+}
+----
 
-A ParameterAdapter provides access to a map of key/value pairs which should ideally be held in a thread local state. This function can be conveniently fulfilled by simply wrapping the <<scribe-parameters>> helper class.
+You also need a service-registration file:
 
-== Endpoint Loggers
+[source,text]
+----
+META-INF/services/org.smallmind.scribe.pen.adapter.LoggingBlueprint
+----
 
-This project provides adaptations for a few of the more popular endpoint logging systems, as well as a purely native alternative. Integration is achived simply by including *_one_* of the appropriate dependencies .
+with the implementation class name as its content:
 
-[[scribe-indigenous, Indigenous]]
-=== Indigenous
+[source,text]
+----
+com.acme.logging.MyLoggingBlueprint
+----
 
-A completely native implementation of an endpoint logger.
+`LoggingBlueprintFactory` loads that SPI through `ServiceLoader` using the current thread context class loader.
 
-=== JDK Logging
+Responsibilities of an endpoint implementation:
 
-Integration for JDK Logging. It's possible to completely configure the system via Scribe's programmatic configuration.
+* implement `LoggingBlueprint`
+* implement `LoggerAdapter`
+* provide a `Record` view over the native record type
+* build a sensible `errorRecord(...)` for appender failure reporting
+* register any additional logging-infrastructure package prefixes through `LoggerManager.addLoggingPackagePrefix(...)` if your endpoint introduces new wrapper layers that caller-context capture should skip
 
-=== Log4J
+The built-in endpoints in `scribe/ink/*` are the best reference implementations.
 
-Integration for the Log4J2 project. It's possible to completely configure the system via Scribe's programmatic configuration.
+[[scribe-migration, Migrating From SLF4J And Logback]]
+== Migrating From SLF4J And Logback
 
-== Other Integrations
+Scribe is not only a facade replacement. The main shift is from implicit backend wiring to explicit logger templates and one explicit endpoint choice.
 
-As Scribe is certainly not the only neutral logging framework available, nor the first, this project provides integration with some of these more popular alternatives as convenience to the adopter.
+[cols="2,4",options="header"]
+|===
+|Common Habit |Scribe Equivalent
 
-=== Apache Commons Logging Integration
+|`LoggerFactory.getLogger(...)`
+|`LoggerManager.getLogger(...)`
 
-Simply including the Apache Commons Logging integration module as a dependency will route the output from code using Apache Commons Logging through your configured Scribe loggers.
+|root logger plus child logger hierarchy
+|one `DefaultTemplate` plus targeted overrides
 
-=== SLF4J Integration
+|logger-specific config in backend XML
+|template registration in code or Spring beans
 
-Simply including the SLF4J integration module as a dependency will route the output from code using SLF4J through your configured Scribe loggers.
+|MDC
+|`Logger.putParameter(...)` or bridge-backed MDC mapped to `Parameters`
+
+|backend binding chosen by whatever is on the classpath
+|exactly one `scribe-ink-*` module selected intentionally
+
+|Logback async appender
+|`AsynchronousAppender`
+|===
+
+Practical migration sequence:
+
+1. If you already have SLF4J call sites, add `scribe-slf4j` first and keep those call sites intact.
+2. Add exactly one `scribe-ink-*` endpoint and remove conflicting backend bindings.
+3. Recreate the baseline logging policy with `DefaultTemplate`.
+4. Add targeted `ClassNameTemplate` or `PersonalizedTemplate` overrides.
+5. Move MDC lifecycle assumptions to explicit parameter or MDC boundaries.
+6. Once the runtime policy is stable, migrate direct call sites to Scribe only if that buys you something.
+
+[[scribe-usage-guidance, Usage Guidance]]
+== Usage Guidance
+
+=== For Library Authors
+
+Library code should usually:
+
+* depend only on `scribe-pen`
+* obtain loggers through `LoggerManager.getLogger(MyType.class)`
+* avoid registering templates or selecting endpoints on behalf of the application
+* avoid leaking request parameters across library boundaries
+
+If a library needs logging, it should expose logging as usage, not as ownership of the caller's runtime.
+
+=== For Application Authors
+
+Applications should:
+
+* choose exactly one endpoint
+* register templates during startup
+* decide where parameters begin and end
+* close appenders that hold files, queues, sockets, or worker threads
+* keep one owner for backend configuration when using the JUL or Log4J2 endpoints
+
+=== For High-Volume Paths
+
+For noisy or latency-sensitive paths:
+
+* keep `autoFillLoggerContext` off unless you really need caller location
+* use shorter `PatternFormatter` patterns
+* avoid heavy multi-line output (`%p`, `%s`) on the hottest paths
+* wrap slow sinks in `AsynchronousAppender`
+* use `Supplier<String>` for expensive message construction, but do not rely on it as a substitute for every downstream filter/backend optimization
+
+[[scribe-threading, Threading And Lifecycle]]
+== Threading And Lifecycle
+
+Scribe is a library. Lifecycle ownership stays with the caller.
+
+[cols="2,3,3",options="header"]
+|===
+|Type |Startup Responsibility |Shutdown Responsibility
+
+|`ConsoleAppender`
+|none
+|none
+
+|`FileAppender`
+|none
+|call `close()`
+
+|`AsynchronousAppender`
+|none; worker threads start in the constructor
+|call `close()` so workers drain and the wrapped appender closes
+
+|`SyslogAppender`
+|call `afterPropertiesSet()` if Spring is not managing it
+|none in normal use
+
+|`FluentBitAppender`
+|call `afterPropertiesSet()` if Spring is not managing it
+|call `close()` so worker threads finish
+
+|`AWSAppender`
+|construct with the client, formatter, group, and stream
+|close the CloudWatch client separately if your application owns it
+|===
+
+Lifecycle checklist:
+
+1. build appenders and formatters
+2. call `afterPropertiesSet()` for Spring-style appenders when wiring manually
+3. register templates
+4. run the application
+5. close appenders and owned clients at shutdown
+
+If you create backup appenders for `DefaultErrorHandler`, remember that those appenders may have their own lifecycle too.
+
+[[scribe-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,4",options="header"]
+|===
+|Symptom |Likely Cause |What To Check
+
+|`StaticInitializationError` says no provider found for `LoggingBlueprint`
+|no endpoint module is present
+|add exactly one `scribe-ink-*` dependency
+
+|`StaticInitializationError` lists conflicting implementations
+|more than one endpoint module is present
+|remove extras until only one `scribe-ink-*` module remains
+
+|logger output ignores your template
+|the logger name does not match, or you built the logger directly with `new Logger(...)`
+|verify the logger name and obtain the logger through `LoggerManager`
+
+|`{}` appears literally in direct Scribe output
+|direct Scribe logging uses `String.format`, not SLF4J placeholders
+|use `%s` in direct Scribe calls or route through `scribe-slf4j`
+
+|parameters are not visible in output
+|the formatter or sink does not render them
+|include `%p`, `RecordElement.PARAMETERS`, or a structured sink that emits parameters
+
+|file retention never runs
+|cleanup only runs after rollover, or separators do not match
+|verify rollover actually happens and `Cleanup` uses the same separator as `Rollover`
+
+|manual `SyslogAppender` or `FluentBitAppender` seems inert
+|initialization hook was not called
+|call `afterPropertiesSet()` outside Spring
+
+|`FileLoggingPlan` fails on startup with a file-path error
+|`logPath` points at a directory
+|set `logPath` to a real file, not `/var/log`
+|===
+
+[[scribe-operational-notes, Operational Notes]]
+== Operational Notes
+
+* `PatternFormatter` always appends a trailing platform line separator.
+* `ConsoleAppender` writes to `System.out`.
+* `FileAppender` writes UTF-8 and creates parent directories automatically.
+* `FileAppender` cleanup runs only when rollover occurs.
+* `DefaultErrorHandler` defaults to `ConsoleAppender(new XMLFormatter())`.
+* `ExceptionSuppressingLogFilter` uses exact throwable-class matches.
+* `JDK` and `Log4J2` endpoints push template-applied appender and level choices into the underlying backend loggers.
+* `LoggerManager.addLoggingPackagePrefix(...)` exists so bridges and custom endpoints can keep caller-context capture focused on application code.
+
+[[scribe-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,3",options="header"]
+|===
+|Behavior |Current Semantics
+
+|runtime classpath has no `LoggingBlueprint` provider
+|`LoggingBlueprintFactory` throws `StaticInitializationError` during static initialization
+
+|runtime classpath has multiple `LoggingBlueprint` providers
+|`LoggingBlueprintFactory` throws `StaticInitializationError` listing conflicting implementations
+
+|a logger is constructed with `new Logger(...)`
+|the logger works, but it is not automatically managed by `LoggerManager` template association
+
+|two templates return the same strongest match score
+|selection depends on internal template-set iteration order; avoid deliberate ties
+
+|`RegExTemplate` is used before its expression is initialized
+|`matchLogger(...)` throws `LoggerRuntimeException`
+
+|`RegExTemplate.setExpression(...)` is called after the expression is already set
+|`LoggerRuntimeException` is thrown
+
+|`PersonalizedTemplate.setLoggerName(...)` is called after the logger name is already set
+|`LoggerRuntimeException` is thrown
+
+|`AsynchronousAppender.publish(...)` is called when the queue is full
+|the record is rejected and routed through appender error handling
+
+|`AsynchronousAppender.publish(...)` is called after close
+|publication fails and is routed through error handling
+
+|parameters cross a thread boundary unexpectedly
+|storage uses Java's default `InheritableThreadLocal` behavior; reset context explicitly in worker paths
+|===
+
+[[scribe-minimal-checklist, Minimal Checklist]]
+== Minimal Checklist
+
+To stand up Scribe correctly:
+
+1. depend on `scribe-pen`
+2. add exactly one `scribe-ink-*` endpoint
+3. register at least one template
+4. obtain loggers through `LoggerManager`
+5. choose a formatter for any formatted appender
+6. clear parameters at request or task boundaries
+7. close appenders that hold resources or worker threads
+
+[appendix]
+[[scribe-defaults-reference, Defaults Reference]]
+== Defaults Reference
+
+This appendix centralizes the constructor and field defaults most likely to matter during integration.
+
+=== Template
+
+* level defaults to `INFO`
+* `autoFillLoggerContext` defaults to `false`
+* filters default to none
+* appenders default to none
+* enhancers default to none
+
+=== PatternFormatter
+
+* `timestamp` defaults to `DateFormatTimestamp.getDefaultInstance()` with pattern `yyyy-MM-dd'T'HH:mm:ss.SSSZ`
+* default format is `%d %n %+5l [%T] - %m`
+* formatted output always ends with the platform line separator
+
+=== XMLFormatter
+
+* `timestamp` defaults to `DateFormatTimestamp.getDefaultInstance()`
+* `newLine` defaults to `System.getProperty("line.separator")`
+* `cdata` defaults to `false`
+* `indent` defaults to `3`
+* `recordElements` defaults to all `RecordElement` values
+
+=== FileAppender
+
+* output encoding is UTF-8
+* parent directories are created automatically
+* no rollover or cleanup policy is present unless you configure one
+
+=== Rollover And Cleanup
+
+* `Rollover.separator` defaults to `'-'`
+* `Cleanup.separator` defaults to `'-'`
+* `FileSizeRolloverRule()` defaults to `10` megabytes
+* `TimestampRolloverRule()` defaults to `TOP_OF_DAY`
+
+=== AsynchronousAppender
+
+* `new AsynchronousAppender(appender)` defaults to buffer size `1`
+* `new AsynchronousAppender(appender)` defaults to concurrency `1`
+
+=== FluentBitAppender
+
+* `timestamp` defaults to `DateFormatTimestamp.getDefaultInstance()`
+* `recordElements` defaults to all `RecordElement` values
+* `newLine` defaults to `System.lineSeparator()`
+* `retryAttempts` defaults to `3`
+* `concurrencyLimit` defaults to `1`
+* `batchSize` defaults to `1`
+* `batchGracePeriodMilliseconds` defaults to `3000`
+
+=== SyslogAppender
+
+* `syslogHost = localhost`
+* `syslogPort = 514`
+* `facility = LOCAL7`
+* `base64EncodeStackTraces = false`
+
+=== LoggingPlan
+
+* `defaultLogLevel = INFO`
+* `logRecordBufferSize = 400`
+* `concurrencyLimit = 1`
+
+=== FileLoggingPlan
+
+* `rolloverPeriod = TOP_OF_DAY`
+* `retentionDays = 31`
+* `rolloverMegabyteLimit = 100`
+* set `logPath` explicitly to a file path before use

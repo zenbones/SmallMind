@@ -1,0 +1,1179 @@
+[[license, License]]
+= License
+
+[partintro]
+License is Smallmind's Maven plugin for two build-time jobs that show up repeatedly in library builds:
+
+* add, replace, or remove top-of-file notice headers in text files
+* copy named license files into a module's build output so they are packaged with the artifact
+
+It keeps policy explicit in plugin configuration and works directly with the files, notice text, and distributable license files you choose.
+
+Audience: build engineers, library maintainers, and module owners who need repeatable source notice management and predictable artifact packaging in Maven builds.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+Minimum tool versions: Maven `3.9.12`, Java `25`.
+
+== Quick Navigation
+
+* <<license-reading-paths,Reading Paths>>
+* <<license-at-a-glance,At A Glance>>
+* <<license-why-use,Why Use License>>
+* <<license-installation,Installation>>
+* <<license-first-run,First Run In 5 Minutes>>
+* <<license-quick-start,Quick Start>>
+* <<license-config-model,Configuration Model>>
+* <<license-examples,Example Catalog>>
+* <<license-goals,Goal Reference>>
+* <<license-stencils,Stencil Reference>>
+* <<license-path-resolution,Path Resolution And Matching>>
+* <<license-architecture,Implementation Map>>
+* <<license-technical-notes,Defaults And Behavioral Notes>>
+* <<license-troubleshooting,Troubleshooting>>
+* <<license-verification,Verification Checklist>>
+
+[[license-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are adopting the plugin for the first time, read in this order:
+
+1. <<license-why-use,Why Use License>>
+2. <<license-installation,Installation>>
+3. <<license-first-run,First Run In 5 Minutes>>
+4. <<license-quick-start,Quick Start>>
+5. <<license-examples,Example Catalog>>
+6. <<license-goals,Goal Reference>>
+7. <<license-technical-notes,Defaults And Behavioral Notes>>
+
+If you already use the plugin and need exact behavior quickly, jump to:
+
+* <<license-at-a-glance,At A Glance>>
+* <<license-config-model,Configuration Model>>
+* <<license-stencils,Stencil Reference>>
+* <<license-path-resolution,Path Resolution And Matching>>
+* <<license-troubleshooting,Troubleshooting>>
+
+[[license-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,4",options="header"]
+|===
+|Artifact |Packaging |Purpose
+
+|`org.smallmind:smallmind-license-maven-plugin`
+|`maven-plugin`
+|Explicit source notice management plus packaged license-file copying for Maven builds
+|===
+
+[cols="2,2,4,4",options="header"]
+|===
+|Goal |Default Phase |Use It For |Primary Inputs
+
+|`generate-notice-headers`
+|`process-sources`
+|Insert, replace, or remove top-of-file notices in matching text files
+|`rules`, optional `stencils`, `lineEndings`, `includeResources`, `includeTests`
+
+|`install-license-files`
+|`prepare-package`
+|Copy named license files into `${project.build.outputDirectory}` so the module artifact can package them
+|`licenses`, optional `root`
+|===
+
+Operational characteristics:
+
+* build-time only; the plugin has no runtime role in your application
+* explicitly configured; nothing is inferred from Maven `<licenses>` metadata
+* root-aware; relative paths can resolve against a chosen ancestor project in a multi-module build
+* text-oriented; `generate-notice-headers` is for text files only
+* module-local in effect; source rewriting happens inside the current module's configured directories
+
+[IMPORTANT]
+====
+The goals have default lifecycle phases, but Maven does not bind them into your build merely because the plugin is present.
+
+You must do one of these:
+
+* declare the goals under `<executions>`
+* inherit those executions from a parent `pluginManagement` section
+* invoke the goals directly from the command line
+====
+
+[[license-why-use, Why Use License]]
+== Why Use License
+
+Use License when you need repeatable notice management and packaged license files without adopting a larger build convention layer.
+
+What it does well:
+
+* keeps notice policy explicit in Maven configuration
+* separates notice text from comment formatting through reusable stencils
+* supports shared root-level legal files in multi-module builds
+* lets child modules opt in explicitly while a parent centralizes policy
+* packages `LICENSE`, `NOTICE`, or similarly named files into build output with the same plugin that manages headers
+
+This plugin is a good fit when:
+
+* you publish libraries and want predictable source headers
+* multiple modules share one repository-level `COPYRIGHT` or `NOTICE` file
+* you want license files copied into jars or other classpath artifacts without extra scripting
+* you prefer thin, file-system based build behavior over metadata-driven inference
+
+This plugin works especially well for module-local notice management, multi-module repositories with shared legal files, and builds that prefer explicit file selection over metadata-driven inference.
+
+[[license-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`license/`
+|`org.smallmind:smallmind-license-maven-plugin`
+|Published Maven plugin module
+|===
+
+[[license-installation, Installation]]
+== Installation
+
+Add the plugin to the module or parent POM that owns notice and packaging policy.
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-license-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+</plugin>
+----
+
+If you want the goals to run during the normal lifecycle, bind them explicitly:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-license-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+  <executions>
+    <execution>
+      <id>generate</id>
+      <goals>
+        <goal>generate-notice-headers</goal>
+      </goals>
+    </execution>
+    <execution>
+      <id>install</id>
+      <goals>
+        <goal>install-license-files</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+----
+
+Direct one-off invocation is also supported:
+
+[source,bash]
+----
+mvn org.smallmind:smallmind-license-maven-plugin:${smallmind.version}:generate-notice-headers
+mvn org.smallmind:smallmind-license-maven-plugin:${smallmind.version}:install-license-files
+----
+
+[[license-first-run, First Run In 5 Minutes]]
+== First Run In 5 Minutes
+
+The shortest safe adoption path is:
+
+1. Put reusable legal text in plain text files at the repository root, such as `COPYRIGHT` and `LICENSE.txt`.
+2. Bind `generate-notice-headers` and, if you package license files, `install-license-files`.
+3. Add one rule for `*.java` using the built-in `org.smallmind.license.stencil.JavaDocStencil`.
+4. Run `mvn process-sources` and inspect the diff before committing.
+5. Run `mvn prepare-package` or `mvn package` and inspect `target/classes/`.
+
+That gives you most of the plugin's value without adding broader policy machinery.
+
+[[license-quick-start, Quick Start]]
+== Quick Start
+
+=== 1. Create Reusable Legal Text Files
+
+Store the notice text as plain text.
+Do not include comment delimiters in the notice file itself.
+
+Example `COPYRIGHT` file:
+
+[source,text]
+----
+Copyright (C) 2026 Example, Inc.
+
+This file is part of Example Project.
+----
+
+Example `LICENSE.txt` file:
+
+[source,text]
+----
+Example Project is distributed under the terms described in the accompanying license.
+----
+
+=== 2. Bind Both Goals In Your Module
+
+Minimal single-module configuration:
+
+[source,xml]
+----
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-license-maven-plugin</artifactId>
+      <version>${smallmind.version}</version>
+      <executions>
+        <execution>
+          <id>generate</id>
+          <goals>
+            <goal>generate-notice-headers</goal>
+          </goals>
+        </execution>
+        <execution>
+          <id>install</id>
+          <goals>
+            <goal>install-license-files</goal>
+          </goals>
+        </execution>
+      </executions>
+      <configuration>
+        <licenses>
+          <license>LICENSE.txt</license>
+        </licenses>
+        <rules>
+          <rule>
+            <id>java</id>
+            <notice>COPYRIGHT</notice>
+            <fileTypes>
+              <fileType>*.java</fileType>
+            </fileTypes>
+            <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+          </rule>
+        </rules>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+----
+
+=== 3. Run The Lifecycle Phase You Need
+
+Common commands:
+
+* `mvn process-sources` updates matching source files in place
+* `mvn prepare-package` copies configured license files into `target/classes/`
+* `mvn package` or `mvn install` performs both when both executions are bound
+
+=== 4. Inspect The Results
+
+You should now see:
+
+* matching Java source files rewritten with a block-comment notice at the top
+* `target/classes/LICENSE.txt` in the module build output
+* the copied license file at the root of the jar in a normal jar packaging flow
+
+[[license-config-model, Configuration Model]]
+== Configuration Model
+
+License works with a deliberately small configuration vocabulary.
+
+[cols="1,4",options="header"]
+|===
+|Term |Meaning
+
+|`notice`
+|A plain-text file containing only the legal text to insert into source files
+
+|`stencil`
+|Formatting and notice-detection rules that wrap the notice text with comment syntax appropriate for a file type
+
+|`rule`
+|A policy unit describing which file names to process, which notice text to use, and which stencil should format it
+
+|`root`
+|An optional Maven project identity that tells the plugin where relative `notice` and `license` paths should resolve
+
+|`licenses`
+|Files to copy into `${project.build.outputDirectory}` for artifact packaging
+|===
+
+Practical model:
+
+1. `generate-notice-headers` chooses a root project for relative lookups.
+2. It loads one notice file per rule, chooses the configured stencil, and walks the current module's directories.
+3. For each matching text file, it removes a compatible top-of-file notice if present, then inserts the configured one or leaves it removed.
+4. `install-license-files` resolves the named files and copies them into the module output directory.
+
+=== `Root`
+
+`Root` identifies the Maven project whose base directory should be used to resolve relative `notice` and `license` paths.
+
+[cols="2,1,4",options="header"]
+|===
+|Field |Required |Meaning
+
+|`groupId`
+|Yes, if `root` is used
+|Group id of the project that should act as the root for relative path resolution
+
+|`artifactId`
+|Yes, if `root` is used
+|Artifact id of the project that should act as the root for relative path resolution
+|===
+
+If `root` is omitted, the plugin walks parent pointers until it reaches the top-most Maven parent.
+
+=== `Rule`
+
+`Rule` describes one notice policy.
+
+[cols="2,1,4",options="header"]
+|===
+|Field |Required |Meaning
+
+|`id`
+|No, but recommended
+|Human-readable identifier used in logging and diagnostics
+
+|`notice`
+|Yes for insertion or replacement; omit for removal mode
+|Path to the notice text file, absolute or relative to the selected root project
+
+|`fileTypes`
+|Yes
+|File-name patterns to match, such as `*.java` or `*.properties`
+
+|`stencilId`
+|Yes
+|Identifier of the stencil used to format and detect the notice block
+
+|`excludes`
+|No
+|Present on the configuration type, but not honored by the current implementation
+|===
+
+Minimal rule:
+
+[source,xml]
+----
+<rule>
+  <id>java</id>
+  <notice>COPYRIGHT</notice>
+  <fileTypes>
+    <fileType>*.java</fileType>
+  </fileTypes>
+  <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+</rule>
+----
+
+=== Notice File Format
+
+Notice files are read line by line as plain text.
+
+Keep them this way:
+
+* no comment delimiters such as `/*`, `*/`, `#`, or `--`
+* blank lines are allowed
+* content reusable across multiple stencils
+* stored once at the repository root if several modules share the same notice
+
+The stencil is responsible for adding comment markers and spacing.
+
+=== `Stencil`
+
+`Stencil` defines how notice text is written and how an existing notice is recognized at the top of a file.
+
+[cols="2,1,4",options="header"]
+|===
+|Field |Required |Meaning
+
+|`id`
+|Yes for configured custom stencils
+|Identifier referenced by `rule.stencilId`
+
+|`skipLinePattern`
+|No
+|Regular expression for leading lines that must remain above the notice, such as shebangs
+
+|`firstLine`
+|No
+|Opening delimiter written before the notice body
+
+|`lastLine`
+|No
+|Closing delimiter written after the notice body
+
+|`linePrefix`
+|No
+|Prefix added to each non-blank notice line
+
+|`blankLinePrefix`
+|No
+|Prefix added to blank notice lines
+
+|`blankLinesBefore`
+|No
+|Number of empty lines inserted before the notice block
+
+|`blankLinesAfter`
+|No
+|Number of empty lines inserted after the notice block
+|===
+
+Prefix-only stencils are valid.
+Delimited block stencils are also valid.
+The same stencil definition controls both output formatting and top-of-file notice detection.
+
+[[license-examples, Example Catalog]]
+== Example Catalog
+
+=== Java Sources Only
+
+This is the smallest useful configuration when you only want Java files updated.
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-license-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+  <executions>
+    <execution>
+      <id>generate</id>
+      <goals>
+        <goal>generate-notice-headers</goal>
+      </goals>
+    </execution>
+  </executions>
+  <configuration>
+    <rules>
+      <rule>
+        <id>java</id>
+        <notice>COPYRIGHT</notice>
+        <fileTypes>
+          <fileType>*.java</fileType>
+        </fileTypes>
+        <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+      </rule>
+    </rules>
+  </configuration>
+</plugin>
+----
+
+Use this when you want a conservative first rollout.
+
+=== Parent Policy With Child Opt-In
+
+This is the pattern used by the Smallmind build itself: put the policy in the parent and let each child module opt in explicitly.
+
+Parent POM:
+
+[source,xml]
+----
+<build>
+  <pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-license-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>generate</id>
+            <goals>
+              <goal>generate-notice-headers</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>install</id>
+            <goals>
+              <goal>install-license-files</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <root>
+            <groupId>org.smallmind</groupId>
+            <artifactId>smallmind</artifactId>
+          </root>
+          <licenses>
+            <license>AGPL</license>
+            <license>AGPL.LESSER</license>
+            <license>APACHE</license>
+          </licenses>
+          <includeTests>true</includeTests>
+          <rules>
+            <rule>
+              <id>java</id>
+              <notice>COPYRIGHT</notice>
+              <fileTypes>
+                <fileType>*.java</fileType>
+              </fileTypes>
+              <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+            </rule>
+          </rules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </pluginManagement>
+</build>
+----
+
+Child module POM:
+
+[source,xml]
+----
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-license-maven-plugin</artifactId>
+    </plugin>
+  </plugins>
+</build>
+----
+
+That keeps policy centralized while preserving explicit module participation.
+
+=== Java Plus `properties` Files, Including Tests
+
+Use multiple rules when different file types need different comment syntax.
+
+[source,xml]
+----
+<configuration>
+  <includeResources>true</includeResources>
+  <includeTests>true</includeTests>
+  <stencils>
+    <stencil>
+      <id>hash-comment</id>
+      <linePrefix># </linePrefix>
+      <blankLinePrefix>#</blankLinePrefix>
+      <blankLinesAfter>1</blankLinesAfter>
+    </stencil>
+  </stencils>
+  <rules>
+    <rule>
+      <id>java</id>
+      <notice>COPYRIGHT</notice>
+      <fileTypes>
+        <fileType>*.java</fileType>
+      </fileTypes>
+      <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+    </rule>
+    <rule>
+      <id>properties</id>
+      <notice>COPYRIGHT</notice>
+      <fileTypes>
+        <fileType>*.properties</fileType>
+      </fileTypes>
+      <stencilId>hash-comment</stencilId>
+    </rule>
+  </rules>
+</configuration>
+----
+
+With this configuration the plugin will process:
+
+* main source files
+* script source files
+* main resources
+* test sources
+* test resources
+
+as long as the file name matches one of the configured `fileTypes`.
+
+=== Preserve A Shebang In Shell Scripts
+
+`skipLinePattern` is the mechanism for preserving lines that must stay above the notice.
+
+[source,xml]
+----
+<configuration>
+  <stencils>
+    <stencil>
+      <id>shell-comment</id>
+      <skipLinePattern>^#!.*$</skipLinePattern>
+      <linePrefix># </linePrefix>
+      <blankLinePrefix>#</blankLinePrefix>
+      <blankLinesAfter>1</blankLinesAfter>
+    </stencil>
+  </stencils>
+  <rules>
+    <rule>
+      <id>shell</id>
+      <notice>COPYRIGHT</notice>
+      <fileTypes>
+        <fileType>*.sh</fileType>
+      </fileTypes>
+      <stencilId>shell-comment</stencilId>
+    </rule>
+  </rules>
+</configuration>
+----
+
+Input:
+
+[source,bash]
+----
+#!/usr/bin/env bash
+echo "hello"
+----
+
+Output:
+
+[source,bash]
+----
+#!/usr/bin/env bash
+# Copyright (C) 2026 Example, Inc.
+#
+# This file is part of Example Project.
+
+echo "hello"
+----
+
+=== Remove Existing Notices
+
+To remove a top-of-file notice that matches a stencil, omit `notice` and enable removal explicitly:
+
+[source,xml]
+----
+<configuration>
+  <allowNoticeRemoval>true</allowNoticeRemoval>
+  <rules>
+    <rule>
+      <id>remove-java</id>
+      <fileTypes>
+        <fileType>*.java</fileType>
+      </fileTypes>
+      <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
+    </rule>
+  </rules>
+</configuration>
+----
+
+[IMPORTANT]
+====
+Removal mode is triggered by omitting `notice`.
+
+Do not supply an empty notice file unless you intentionally want an empty notice block written back into the file.
+====
+
+=== Copy Multiple License Files Into The Artifact
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-license-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+  <executions>
+    <execution>
+      <id>install</id>
+      <goals>
+        <goal>install-license-files</goal>
+      </goals>
+    </execution>
+  </executions>
+  <configuration>
+    <licenses>
+      <license>LICENSE.txt</license>
+      <license>NOTICE.txt</license>
+      <license>THIRD-PARTY.txt</license>
+    </licenses>
+  </configuration>
+</plugin>
+----
+
+Result in a normal jar build:
+
+* `target/classes/LICENSE.txt`
+* `target/classes/NOTICE.txt`
+* `target/classes/THIRD-PARTY.txt`
+
+Those files are typically packaged into the final jar at the jar root.
+
+=== Direct Goal Invocation During Gradual Adoption
+
+You can adopt the plugin before you commit to lifecycle bindings.
+
+[source,bash]
+----
+mvn org.smallmind:smallmind-license-maven-plugin:${smallmind.version}:generate-notice-headers
+mvn org.smallmind:smallmind-license-maven-plugin:${smallmind.version}:install-license-files
+----
+
+This is useful when you want to test rule behavior on a branch first and only later bind the goals in the POM.
+
+[[license-goals, Goal Reference]]
+== Goal Reference
+
+[[license-generate-goal, generate-notice-headers]]
+=== `generate-notice-headers`
+
+Default phase: `process-sources`
+
+Purpose:
+
+* walk configured source, script, resource, and optionally test directories
+* match files by configured file-name patterns
+* detect an existing top-of-file notice that matches the target stencil
+* replace that notice, insert a new one, or remove it when removal mode is enabled
+
+Directories considered:
+
+* main source directory
+* script source directory
+* main resources, when `includeResources=true`
+* test source directory, when `includeTests=true`
+* test resources, when `includeTests=true` and `includeResources=true`
+
+[IMPORTANT]
+====
+This goal edits files in place.
+Apply it only to text file types whose comment syntax you control through a matching stencil.
+====
+
+[cols="2,1,1,5",options="header"]
+|===
+|Parameter |Required In Practice |Default |Use It For
+
+|`rules`
+|Yes
+|None
+|Defines which files to process, which notice text to use, and which stencil formats the notice
+
+|`root`
+|No
+|Top-most Maven parent
+|Pins relative notice paths to a specific ancestor project in a multi-module build
+
+|`stencils`
+|No
+|Built-in JavaDoc stencil only
+|Adds custom formatting and notice-detection schemes for non-Java file types
+
+|`lineEndings`
+|No
+|`UNIX`
+|Controls line separators written inside generated notice content; supported values are `UNIX` and `SYSTEM`
+
+|`allowNoticeRemoval`
+|No
+|`false`
+|Allows rules with no `notice` file to remove existing top-of-file notices
+
+|`includeResources`
+|No
+|`true`
+|Includes configured main resources and, when tests are enabled, test resources
+
+|`includeTests`
+|No
+|`false`
+|Includes test sources and, if resources are also enabled, test resources
+
+|`verbose`
+|No
+|`false`
+|Logs rule processing and per-file updates
+|===
+
+Processing model:
+
+1. Resolve the effective root project.
+2. Build the stencil registry by combining the built-in JavaDoc stencil with any configured custom stencils.
+3. For each rule, load the notice text unless the rule is in removal mode.
+4. Convert each `fileType` into a filename matcher.
+5. Walk each eligible directory recursively.
+6. For each matching file, preserve configured skipped lines, seek an existing top-of-file notice, and rewrite the file through a temporary sibling file.
+
+Fatal failures:
+
+* `notice` omitted while `allowNoticeRemoval=false`
+* `fileTypes` missing or empty
+* `stencilId` not found
+* unrecoverable I/O failure while rewriting a target file
+
+Warnings with continued execution:
+
+* notice file cannot be read: the rule is skipped
+* configured directory does not exist: it is silently ignored
+
+[[license-install-goal, install-license-files]]
+=== `install-license-files`
+
+Default phase: `prepare-package`
+
+Purpose:
+
+* resolve named license files
+* copy them into `${project.build.outputDirectory}`
+* overwrite any existing file in that output directory with the same final name
+
+[cols="2,1,1,5",options="header"]
+|===
+|Parameter |Required In Practice |Default |Use It For
+
+|`licenses`
+|Yes
+|None
+|Names the files to copy into the module build output directory
+
+|`root`
+|No
+|Top-most Maven parent
+|Pins relative license-file paths to a specific ancestor project
+
+|`verbose`
+|No
+|`false`
+|Logs each copied license file
+
+|`rules`
+|No
+|None
+|Accepted so both goals can share one plugin configuration block, but not used by the current implementation
+|===
+
+Processing model:
+
+1. Check whether `${project.build.outputDirectory}` exists and is a directory.
+2. Resolve each configured `license` path against the selected root project when the path is relative.
+3. Warn and continue if a source file does not exist.
+4. Copy each existing file into the output directory using the source file name only.
+
+[NOTE]
+====
+This goal does nothing if the output directory does not exist at execution time.
+
+The default `prepare-package` binding is the intended path because the output directory normally exists by then.
+====
+
+[[license-stencils, Stencil Reference]]
+== Stencil Reference
+
+=== Built-In Stencil: `org.smallmind.license.stencil.JavaDocStencil`
+
+The plugin always provides one built-in stencil.
+
+[cols="2,4",options="header"]
+|===
+|Property |Value
+
+|`id`
+|`org.smallmind.license.stencil.JavaDocStencil`
+
+|`firstLine`
+|`/*`
+
+|`linePrefix`
+|` * `
+
+|`blankLinePrefix`
+|` *`
+
+|`lastLine`
+|` */`
+
+|`blankLinesBefore`
+|`0`
+
+|`blankLinesAfter`
+|`0`
+
+|`skipLinePattern`
+|None
+|===
+
+[NOTE]
+====
+Despite the class name, `JavaDocStencil` writes a plain block comment beginning with `/*`, not `/**`.
+====
+
+Generated shape:
+
+[source,java]
+----
+/*
+ * Copyright (C) 2026 Example, Inc.
+ *
+ * This file is part of Example Project.
+ */
+package com.example;
+----
+
+=== When To Use A Delimited Block Stencil
+
+Use `firstLine` and `lastLine` when the file type expects a block comment:
+
+* Java
+* C
+* CSS
+* many templating and markup-adjacent formats
+
+=== When To Use A Prefix-Only Stencil
+
+Use `linePrefix` and optionally `blankLinePrefix` without block delimiters when the file type expects one line comment marker per line:
+
+* shell scripts with `#`
+* `.properties` comments with `#`
+* SQL comments with `--`
+
+If blank lines must remain part of the detected notice, set `blankLinePrefix` as well.
+
+[[license-path-resolution, Path Resolution And Matching]]
+== Path Resolution And Matching
+
+=== Relative Path Resolution
+
+Relative paths resolve this way:
+
+* `Rule.notice` is resolved against the selected root project's base directory
+* `licenses` entries are resolved against the selected root project's base directory
+* source, script, resource, and test directories always come from the current module's Maven build configuration
+
+This split is deliberate.
+Shared legal text can live once at the repository root while file rewriting remains module-local.
+
+[IMPORTANT]
+====
+If you configure `root`, it must identify a project that is actually present in the current Maven parent chain.
+The current implementation expects that lookup to succeed.
+====
+
+=== Filename Matching
+
+`fileTypes` patterns are applied to `path.getFileName().toString()`, not to the full path.
+
+Consequences:
+
+* `*.java` works
+* `*.xml` works
+* `src/main/java/*.java` does not mean what a shell glob would mean
+* directory-specific filtering is not available
+
+Pattern behavior in the current implementation:
+
+* `*` translates to regex `.*`
+* `?` translates to regex `.?`
+* `.` and `$` are escaped
+* other regular-expression metacharacters are not fully escaped
+
+[NOTE]
+====
+`fileTypes` is a limited glob-like matcher, not a full glob engine.
+
+In particular:
+
+* `?` behaves as zero or one character because it is translated to `.?`
+* characters such as `+`, `(`, `)`, `[`, and `]` should be avoided unless you intentionally want their regex meaning
+====
+
+=== Notice Detection Scope
+
+The plugin only looks for an existing notice at the top of the file, after any leading lines matched by `skipLinePattern`.
+
+It does not search deeper into the file.
+
+Practical consequences:
+
+* a matching top-of-file notice is replaced or removed cleanly
+* a notice in the middle of the file is ignored
+* if the top-of-file content does not match the target stencil, a new notice is inserted ahead of the file body
+
+[[license-architecture, Implementation Map]]
+== Implementation Map
+
+[cols="2,4",options="header"]
+|===
+|Type |Role
+
+|`org.smallmind.license.SourceNoticeMojo`
+|Implements `generate-notice-headers`; resolves root, loads notices, merges stencils, walks directories, and rewrites files
+
+|`org.smallmind.license.TargetLicenseMojo`
+|Implements `install-license-files`; copies configured license files into the output directory
+
+|`org.smallmind.license.Rule`
+|Configuration object describing one notice policy
+
+|`org.smallmind.license.Root`
+|Configuration object identifying the root Maven project for relative path resolution
+
+|`org.smallmind.license.LineEndings`
+|Enum describing generated notice line separators: `UNIX` or `SYSTEM`
+
+|`org.smallmind.license.LineTerminator`
+|Resolves the actual line separator string used during notice writing
+
+|`org.smallmind.license.PathTypeFilenameFilter`
+|Filename matcher built from configured `fileTypes`
+
+|`org.smallmind.license.FileTypeRegExTranslator`
+|Translates limited wildcard patterns into Java regular expressions
+
+|`org.smallmind.license.stencil.Stencil`
+|Configuration object describing notice formatting and detection
+
+|`org.smallmind.license.stencil.JavaDocStencil`
+|Built-in block-comment stencil available in every execution
+
+|`org.smallmind.license.WrappedException`
+|Internal wrapper used to move checked failures through stream traversal code
+|===
+
+Execution flow for `generate-notice-headers`:
+
+1. Resolve the effective root project.
+2. Build the stencil registry with the built-in JavaDoc stencil plus any custom stencils.
+3. For each rule, load the notice file, create filename filters, and walk each eligible directory.
+4. Rewrite each matching file through a sibling `license.temp` file and replace the original on success.
+
+Execution flow for `install-license-files`:
+
+1. Verify the output directory exists.
+2. Resolve each configured license path.
+3. Copy each existing file into the output directory with `REPLACE_EXISTING`.
+
+[[license-technical-notes, Defaults And Behavioral Notes]]
+== Defaults And Behavioral Notes
+
+=== Charset Behavior
+
+The plugin does not expose an encoding parameter.
+It relies on Java's default charset for `Files.newBufferedReader(...)` and `Files.newBufferedWriter(...)`.
+
+On the Smallmind Java `25` baseline this means UTF-8 in normal operation.
+
+=== Line Ending Behavior
+
+`lineEndings` affects the generated notice content only:
+
+* `UNIX` writes `\n`
+* `SYSTEM` writes `System.getProperty("line.separator")`
+
+The implementation does not fully normalize the rest of the file body.
+In practice, the notice area uses the configured line ending while untouched content later in the file can retain its previous separators.
+
+For deterministic repository output across platforms, prefer `UNIX`.
+
+=== Leading Blank Lines
+
+Leading blank lines at the top of a processed file are not preserved as-is.
+They are effectively normalized away by the notice-seeking logic, and any spacing that remains comes from the stencil's `blankLinesBefore` and `blankLinesAfter` settings.
+
+=== Skip-Line Semantics
+
+`skipLinePattern` applies only while scanning the top of the file.
+Each matching line is copied through untouched before notice insertion or replacement.
+
+Typical use cases:
+
+* shell shebangs
+* XML declarations
+* language pragmas that must remain on the first line
+
+=== Temporary Rewrite File
+
+`generate-notice-headers` writes each changed file through a sibling file named `license.temp`, then replaces the original.
+There is no backup-file feature beyond that temporary rewrite step.
+
+=== Built-In Stencil Precedence
+
+The built-in JavaDoc stencil is added before configured custom stencils.
+Because stencil lookup stops on the first matching `id`, a custom stencil cannot override the built-in JavaDoc stencil by reusing the same identifier.
+
+=== Current Implementation Limits
+
+The following are visible in the current code and matter in day-to-day use:
+
+* `Rule.excludes` exists but is not implemented
+* `TargetLicenseMojo.rules` exists but is not used
+* `fileTypes` match only file names, not paths
+* wildcard translation is limited and not full glob syntax
+* only top-of-file notices are recognized
+* the plugin does not infer anything from Maven `<licenses>` metadata
+* the plugin does not generate legal text, NOTICE files, or dependency reports
+
+=== Warning And Failure Behavior
+
+`generate-notice-headers`:
+
+* missing notice file for a rule: warn and skip that rule
+* bad rule configuration: fail the build
+* write failure: fail the build
+
+`install-license-files`:
+
+* missing source license file: warn and continue
+* output directory missing: do nothing
+* copy failure: fail the build
+
+[[license-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+`No notice was provided for rule(...), but notice removal has not been enabled`:
+
+* add `notice`, or
+* set `allowNoticeRemoval=true` and intentionally omit `notice`
+
+`No file types were specified for rule(...)`:
+
+* add at least one `<fileType>` entry under the rule
+
+`No stencil found with id(...)`:
+
+* use `org.smallmind.license.stencil.JavaDocStencil`, or
+* add a matching custom stencil under `<stencils>`
+
+Build fails after setting `root`:
+
+* confirm `root.groupId` and `root.artifactId` match an actual parent project in the current Maven hierarchy
+* if you do not need pinned root resolution, remove `root` and let the plugin use the top-most parent
+
+Headers are inserted above a shebang or other required first line:
+
+* define a custom stencil with `skipLinePattern`
+
+The wrong files are being changed:
+
+* remember `fileTypes` matches file names only
+* avoid directory-like patterns
+* keep patterns simple and glob-like
+* never target binary file extensions
+
+A module packages no license files:
+
+* confirm `install-license-files` is bound under `<executions>` or invoked directly
+* confirm `licenses` is configured
+* confirm the named files exist relative to the effective root
+* confirm the module actually has an output directory by `prepare-package`
+
+Line endings look mixed after processing:
+
+* prefer `lineEndings=UNIX`
+* if full-file normalization is required, run a separate formatter or normalization step
+
+Custom path exclusions do not work:
+
+* the current implementation does not honor `Rule.excludes`
+
+[[license-verification, Verification Checklist]]
+== Verification Checklist
+
+After configuring or changing the plugin:
+
+1. Run `mvn process-sources` and inspect representative files from each configured rule.
+2. Verify that only intended file types changed.
+3. If using `skipLinePattern`, verify the preserved first-line construct still remains first.
+4. Run `mvn prepare-package` or `mvn package`.
+5. Inspect `target/classes/` for copied license files.
+6. Inspect the final jar contents if artifact packaging matters to your compliance workflow.
+7. Review `git diff` to confirm notice formatting and line endings are acceptable.

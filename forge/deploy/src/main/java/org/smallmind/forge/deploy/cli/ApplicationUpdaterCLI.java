@@ -73,7 +73,7 @@ public class ApplicationUpdaterCLI {
       String[] envVars = optionSet.getArguments("env", 'x');
       String appUser = optionSet.getArgument("app-user", 'u');
       String nexusHost = optionSet.getArgument("nexus-host", 'h');
-      String nexusUser = optionSet.getArgument("nexus-user", 'u');
+      String nexusUser = optionSet.getArgument("nexus-user", 'n');
       String nexusPassword = optionSet.getArgument("nexus-password", 'p');
       String groupId = optionSet.getArgument("group-id", 'g');
       String artifactId = optionSet.getArgument("artifact-id", 'a');

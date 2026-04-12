@@ -1,0 +1,1017 @@
+[[file, File]]
+= File
+
+[partintro]
+Smallmind File provides two focused `java.nio.file` integration modules:
+
+* `file-ephemeral`: an in-memory file-system provider with slash-rooted path ownership and optional delegation to a native provider outside the owned roots
+* `file-jailed`: a rooted view over a native file system that translates paths through a fixed root or a thread-associated root context
+
+The design stays explicit. The caller chooses how providers are constructed, keeps lifecycle and authorization policy in application code, and can work through ordinary `Path`, `Files`, `FileSystem`, and `FileSystemProvider` APIs instead of a larger framework layer.
+
+Audience: developers embedding in-memory or rooted file-system views in libraries, applications, tests, and infrastructure code.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<file-reading-paths,Reading Paths>>
+* <<file-at-a-glance,At A Glance>>
+* <<file-choose-module,Choose A Module>>
+* <<file-why-use,Why Use Smallmind File>>
+* <<file-layout,Project Layout>>
+* <<file-installation,Installation>>
+* <<file-quick-start,Quick Start>>
+* <<file-capability-matrix,Capability Matrix>>
+* <<file-api-index,API Index>>
+* <<file-ephemeral-model,Ephemeral File System>>
+* <<file-jailed-model,Jailed File System>>
+* <<file-edge-cases,Behavioral Edge Cases>>
+* <<file-troubleshooting,Troubleshooting>>
+* <<file-verification,Verification Checklist>>
+
+[[file-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to the file modules, read in this order:
+
+1. <<file-at-a-glance,At A Glance>>
+2. <<file-choose-module,Choose A Module>>
+3. <<file-installation,Installation>>
+4. <<file-quick-start,Quick Start>>
+5. <<file-capability-matrix,Capability Matrix>>
+6. <<file-ephemeral-model,Ephemeral File System>> or <<file-jailed-model,Jailed File System>>, depending on the artifact you need
+7. <<file-edge-cases,Behavioral Edge Cases>>
+8. <<file-troubleshooting,Troubleshooting>>
+
+If you already know the problem space and need exact behavior quickly, jump to:
+
+* <<file-api-index,API Index>>
+* <<file-ephemeral-model,Ephemeral File System>>
+* <<file-jailed-model,Jailed File System>>
+* <<file-edge-cases,Behavioral Edge Cases>>
+* <<file-troubleshooting,Troubleshooting>>
+
+[[file-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,4",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|File parent
+|`org.smallmind:smallmind-file`
+|Aggregator POM for the file submodules
+
+|Ephemeral
+|`org.smallmind:file-ephemeral`
+|In-memory `FileSystemProvider`, `FileSystem`, `Path`, file-store, attribute, and watch-service types for slash-rooted paths
+
+|Jailed
+|`org.smallmind:file-jailed`
+|Native-file-system wrapper that exposes a bounded view through `JailedPathTranslator`
+|===
+
+Integration model in 60 seconds:
+
+1. Use `file-ephemeral` when you want `Files` and `Path` calls to land on an in-memory store.
+2. Use `file-jailed` when you want callers to see a rooted virtual path while operations still hit a native file system.
+3. Keep provider construction explicit. Neither artifact adds Spring wiring or auto-configuration.
+4. Treat roots, translators, and thread context as caller-owned policy.
+5. Stay on standard NIO APIs unless you need a module-specific type such as `EphemeralFileSystem.clear()` or `RootedPathTranslator`.
+
+[[file-choose-module, Choose A Module]]
+== Choose A Module
+
+[cols="2,4",options="header"]
+|===
+|If you need... |Use...
+
+|A pure in-memory file system that behaves like a `java.nio.file` provider for selected paths
+|`file-ephemeral`
+
+|An in-memory overlay for slash-rooted paths while leaving other paths on the native file system
+|`file-ephemeral`, installed as the default provider or constructed around another `FileSystemProvider`
+
+|A fixed jail root such as `/srv/app-data`
+|`file-jailed` with `RootedPathTranslator`
+
+|A jail root chosen per request or per thread
+|`file-jailed` with `ContextSensitiveRootedPathTranslator` and `RootedFileSystemContext`
+
+|A service-loader-visible provider reachable via the `jailed` URI scheme
+|`file-jailed`
+
+|A service-loader-visible provider reachable via the `ephemeral` URI scheme
+|Not provided by the current code; instantiate `EphemeralFileSystemProvider` directly or install it as the default provider
+
+|A hardened sandbox boundary for untrusted `..` path text
+|Neither module as-is; `file-jailed` is a translator layer, not a full canonical-path security boundary
+|===
+
+[[file-why-use, Why Use Smallmind File]]
+== Why Use Smallmind File
+
+Use Smallmind File when you want explicit `java.nio.file` integration without handing ownership of the surrounding runtime to a framework.
+
+What these modules do well:
+
+* stay on standard NIO abstractions such as `Path`, `Files`, `DirectoryStream`, and `FileSystem`
+* keep provider construction, root selection, and lifecycle in caller code
+* let you choose a very small surface: either in-memory storage or rooted native translation
+* expose the operational rules directly instead of hiding them behind container policy
+
+These modules are a good fit when:
+
+* tests or transient workflows need an in-memory path tree
+* an application wants a rooted or request-scoped view over a native directory
+* higher-level code already expects NIO paths and channels
+* you want direct control over startup flags, provider choice, context propagation, and cleanup
+
+There are intentionally no Spring factory beans, no component scanning, and no auto-registration beyond the standard Java service entry in `file-jailed`.
+
+[[file-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`file/`
+|`org.smallmind:smallmind-file`
+|Aggregator POM
+
+|`file/ephemeral/`
+|`org.smallmind:file-ephemeral`
+|In-memory provider, file-system, path, file-store, attribute, and watch-service implementation
+
+|`file/jailed/`
+|`org.smallmind:file-jailed`
+|Jailed provider, path translation SPI, rooted translators, and context carrier
+|===
+
+[[file-installation, Installation]]
+== Installation
+
+Choose the runtime artifact directly.
+The parent `smallmind-file` module is a packaging POM, not a runtime surface.
+
+=== In-Memory File System
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>file-ephemeral</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependency declared by `file/ephemeral/pom.xml`:
+
+* `org.smallmind:smallmind-nutsnbolts`
+
+`file-ephemeral` does not ship a `META-INF/services/java.nio.file.spi.FileSystemProvider` entry.
+Use it in one of these ways:
+
+* instantiate `EphemeralFileSystemProvider` directly in code
+* install it through `-Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider`
+
+=== Jailed Native View
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>file-jailed</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependencies declared by `file/jailed/pom.xml`:
+
+* `org.smallmind:smallmind-nutsnbolts`
+* `jakarta.xml.bind:jakarta.xml.bind-api` as an optional dependency
+
+`file-jailed` does include a Java service entry for `java.nio.file.spi.FileSystemProvider`.
+With the jar on the classpath, the `jailed` scheme can be resolved through standard provider lookup.
+
+[source,java]
+----
+FileSystem jailedFileSystem = FileSystems.getFileSystem(URI.create("jailed:///"));
+----
+
+[NOTE]
+====
+The optional JAXB API matters only when you want to use the JAXB annotations on `RootedFileSystemContext`, for example when marshalling or unmarshalling that type.
+
+If you use that path on Java `25`, declare both the JAXB API and a compatible runtime implementation explicitly in the application.
+====
+
+=== No Spring Or Container Layer
+
+These modules do not provide Spring beans, XML namespaces, or lifecycle adapters.
+Construction is programmatic and intentionally small.
+[[file-quick-start, Quick Start]]
+== Quick Start
+
+=== 1. Use `file-ephemeral` As A Pure In-Memory File System
+
+[source,java]
+----
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.file.ephemeral.EphemeralFileSystem;
+import org.smallmind.file.ephemeral.EphemeralFileSystemProvider;
+
+EphemeralFileSystemProvider provider = new EphemeralFileSystemProvider();
+EphemeralFileSystem fileSystem =
+    (EphemeralFileSystem)provider.getFileSystem(URI.create("ephemeral:///"));
+
+Path work = fileSystem.getPath("/work");
+Files.createDirectories(work);
+Files.writeString(work.resolve("hello.txt"), "hello\n", StandardCharsets.UTF_8);
+
+String text = Files.readString(work.resolve("hello.txt"), StandardCharsets.UTF_8);
+
+fileSystem.clear();
+fileSystem.close();
+----
+
+This is the simplest model:
+
+* the provider scheme is `ephemeral`
+* slash-rooted paths such as `/work/hello.txt` are stored in memory
+* the caller owns cleanup through `clear()` or object disposal
+
+=== 2. Overlay Slash-Rooted Paths On Top Of The Default Provider
+
+`EphemeralFileSystemProvider` can replace the default provider and keep selected slash-rooted paths in memory while delegating everything else to the native file system.
+
+[source,text]
+----
+-Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
+-Dorg.smallmind.file.ephemeral.configuration.roots=/overlay,/scratch
+-Dorg.smallmind.file.ephemeral.configuration.capacity=104857600
+-Dorg.smallmind.file.ephemeral.configuration.blockSize=4096
+----
+
+With that setup:
+
+* paths under `/overlay` and `/scratch` are owned by the in-memory store
+* other paths are delegated to the wrapped native provider
+* `capacity` and `blockSize` are read from system properties at provider construction time
+
+[IMPORTANT]
+====
+Owned roots are slash-rooted strings, not platform-native drive roots.
+
+On Windows, a path such as `C:\data\file.txt` remains native in the current implementation.
+A path such as `/overlay/data/file.txt` can be owned by the ephemeral store.
+====
+
+=== 3. Build A Fixed-Root Jail Programmatically
+
+[source,java]
+----
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.file.jailed.JailedFileSystemProvider;
+import org.smallmind.file.jailed.RootedPathTranslator;
+
+Path nativeRoot = Path.of("/srv/app-data");
+
+JailedFileSystemProvider provider = new JailedFileSystemProvider(
+    "jailed",
+    new RootedPathTranslator(nativeRoot)
+);
+
+FileSystem jailedFileSystem = provider.getFileSystem(URI.create("jailed:///"));
+Path reports = jailedFileSystem.getPath("/reports");
+
+Files.createDirectories(reports);
+Files.writeString(reports.resolve("daily.txt"), "ready\n", StandardCharsets.UTF_8);
+----
+
+The caller-visible path stays rooted at `/`, while the underlying native path resolves beneath `/srv/app-data`.
+
+=== 4. Use The Context-Sensitive Jail
+
+`ContextSensitiveRootedPathTranslator` derives the root from `RootedFileSystemContext` stored in `ContextFactory`.
+
+[source,java]
+----
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.file.jailed.RootedFileSystemContext;
+import org.smallmind.nutsnbolts.context.ContextFactory;
+
+RootedFileSystemContext context = new RootedFileSystemContext();
+context.setRoot("/srv/tenant-a");
+
+ContextFactory.pushContext(context);
+try {
+  FileSystem jailedFileSystem = FileSystems.getFileSystem(URI.create("jailed:///"));
+  Path invoices = jailedFileSystem.getPath("/invoices");
+
+  Files.createDirectories(invoices);
+  Files.writeString(invoices.resolve("2026-04.txt"), "paid\n", StandardCharsets.UTF_8);
+} finally {
+  ContextFactory.popContext(RootedFileSystemContext.class);
+}
+----
+
+Use this model when the root changes with the current request, tenant, or thread.
+
+[IMPORTANT]
+====
+If no `RootedFileSystemContext` is present, or if its `root` property is `null`, the context-sensitive translator throws `SecurityException` with the message `No authorization for path`.
+====
+
+[[file-capability-matrix, Capability Matrix]]
+== Capability Matrix
+
+[cols="2,3,3",options="header"]
+|===
+|Capability |`file-ephemeral` |`file-jailed`
+
+|Backed by memory
+|Yes
+|No
+
+|Backed by a native file system
+|Only for delegated `NativePath` instances
+|Always
+
+|Programmatic provider construction
+|Yes
+|Yes
+
+|Java service loader registration
+|No
+|Yes
+
+|Default-provider replacement
+|Yes
+|No
+
+|Fixed root selection
+|Yes, through owned root strings and optional native delegation
+|Yes, through `RootedPathTranslator`
+
+|Per-thread root selection
+|No
+|Yes, through `ContextSensitiveRootedPathTranslator`
+
+|`Files.newByteChannel`
+|Yes
+|Yes
+
+|`FileChannel.open(path, ...)`
+|Only for delegated native paths
+|Yes, through native delegation
+
+|`AsynchronousFileChannel.open(path, ...)`
+|Only for delegated native paths
+|Yes, through native delegation
+
+|`basic` file attributes
+|Yes
+|Delegated to native provider
+
+|Custom attribute views
+|No
+|Whatever the native provider supports
+
+|Watch service object
+|Yes, custom implementation
+|Delegated native watch service
+
+|Jailed path registration with watch service
+|Not applicable
+|No, `JailedPath.register(...)` throws `UnsupportedOperationException`
+
+|Caller cleanup hook
+|`EphemeralFileSystem.clear()` and `close()`
+|No file-system-owned cleanup beyond the native provider's behavior
+|===
+
+[[file-api-index, API Index]]
+== API Index
+
+[cols="2,2,4",options="header"]
+|===
+|Type |Artifact |Role
+
+|`org.smallmind.file.ephemeral.EphemeralFileSystemProvider`
+|`file-ephemeral`
+|Provider entry point for the in-memory file system and optional overlay mode
+
+|`org.smallmind.file.ephemeral.EphemeralFileSystem`
+|`file-ephemeral`
+|In-memory `FileSystem` implementation with `clear()`
+
+|`org.smallmind.file.ephemeral.EphemeralFileSystemConfiguration`
+|`file-ephemeral`
+|Configuration holder for capacity, block size, and owned roots
+
+|`org.smallmind.file.ephemeral.EphemeralPath`
+|`file-ephemeral`
+|Owned in-memory path implementation
+
+|`org.smallmind.file.ephemeral.NativePath`
+|`file-ephemeral`
+|Adapter that keeps the ephemeral file-system surface while delegating to a native path
+
+|`org.smallmind.file.ephemeral.EphemeralFileStore`
+|`file-ephemeral`
+|In-memory file-store implementation
+
+|`org.smallmind.file.ephemeral.watch.EphemeralWatchService`
+|`file-ephemeral`
+|Heap-backed watch-service implementation
+
+|`org.smallmind.file.jailed.JailedFileSystemProvider`
+|`file-jailed`
+|Provider entry point for rooted native translation
+
+|`org.smallmind.file.jailed.JailedFileSystem`
+|`file-jailed`
+|Jailed `FileSystem` wrapper over a native file system
+
+|`org.smallmind.file.jailed.JailedPath`
+|`file-jailed`
+|Caller-visible jailed path representation
+
+|`org.smallmind.file.jailed.JailedPathTranslator`
+|`file-jailed`
+|SPI for translating between jailed and native paths
+
+|`org.smallmind.file.jailed.RootedPathTranslator`
+|`file-jailed`
+|Fixed-root translator for one native subtree
+
+|`org.smallmind.file.jailed.ContextSensitiveRootedPathTranslator`
+|`file-jailed`
+|Thread-context-driven translator based on `RootedFileSystemContext`
+
+|`org.smallmind.file.jailed.RootedFileSystemContext`
+|`file-jailed`
+|Context carrier holding the current root string
+|===
+[[file-ephemeral-model, Ephemeral File System]]
+== Ephemeral File System
+
+=== Construction And Activation
+
+`EphemeralFileSystemProvider` has three construction paths:
+
+[cols="2,4",options="header"]
+|===
+|Constructor |Meaning
+
+|`new EphemeralFileSystemProvider()`
+|Creates an `ephemeral`-scheme provider backed only by the in-memory store
+
+|`new EphemeralFileSystemProvider(fileSystemProvider)`
+|Mirrors the wrapped provider's scheme and records its native `FileSystem` for delegated access
+
+|`new EphemeralFileSystemProvider("scheme")`
+|Creates an in-memory provider with a caller-supplied scheme and no native delegation
+|===
+
+Provider lifecycle model:
+
+* the provider owns exactly one `EphemeralFileSystem` instance
+* `newFileSystem(...)` always throws `FileSystemAlreadyExistsException`
+* `getFileSystem(URI)` returns the singleton
+* `waitForInitialization(...)` exists for startup coordination when the provider is being installed as the default provider
+
+=== Configuration Model
+
+`EphemeralFileSystemConfiguration` accepts explicit constructor values or derives them from system properties.
+
+[cols="2,2,4",options="header"]
+|===
+|Property |Default |Meaning
+
+|`org.smallmind.file.ephemeral.configuration.capacity`
+|`Long.MAX_VALUE`
+|Configured total capacity reported by the file store
+
+|`org.smallmind.file.ephemeral.configuration.blockSize`
+|`1024`
+|Initial allocation size for newly created files
+
+|`org.smallmind.file.ephemeral.configuration.roots`
+|`/`
+|Comma-separated or bracketed list of slash-rooted owned prefixes
+|===
+
+`roots` parsing rules:
+
+* `a,b` and `[a,b]` are both accepted
+* each root is trimmed
+* a missing leading slash is added automatically
+* at least one root is required
+* explicit constructor roots must start with `/`
+
+Example explicit configuration:
+
+[source,java]
+----
+import org.smallmind.file.ephemeral.EphemeralFileSystemConfiguration;
+
+EphemeralFileSystemConfiguration configuration =
+    new EphemeralFileSystemConfiguration(104857600L, 4096, "/overlay", "/scratch");
+----
+
+=== Path Ownership And Delegation
+
+`EphemeralFileSystem.getPath(first, more...)` uses `EphemeralFileSystemConfiguration.isOurs(...)` to decide whether a path belongs to the in-memory store.
+
+Owned paths:
+
+* use `/` as the separator
+* are matched by configured root prefixes
+* become `EphemeralPath` instances
+
+Non-owned paths:
+
+* become `NativePath` instances
+* delegate operations to the native provider recorded by `EphemeralFileSystemProvider`
+
+[IMPORTANT]
+====
+Delegation outside owned roots only works when the provider actually has a native file system to delegate to.
+
+That is true when the provider was constructed around another `FileSystemProvider`, including the JVM's default-provider replacement path.
+A bare `new EphemeralFileSystemProvider()` is best treated as a fully in-memory file system.
+====
+
+Practical consequences:
+
+* `fileSystem.getPath("/overlay/report.txt")` can be in-memory
+* `fileSystem.getPath("relative.txt")` is not owned by the current implementation
+* on Windows, drive-letter paths such as `C:\logs\app.log` are native, not ephemeral
+
+=== Supported NIO Surface
+
+`file-ephemeral` is centered on `SeekableByteChannel` and standard `Files` helpers that use it.
+
+[cols="2,4",options="header"]
+|===
+|Surface |Behavior
+
+|`Files.newByteChannel(...)`
+|Supported for owned paths and delegated native paths
+
+|`Files.newDirectoryStream(...)`
+|Supported; owned directories return `EphemeralDirectoryStream`, which also implements `SecureDirectoryStream<Path>`
+
+|`Files.createDirectory(...)` and `Files.createDirectories(...)`
+|Supported for owned directories; parent directories must already exist for each single create call
+
+|`Files.readAttributes(...)`
+|Supports the `basic` view for owned paths
+
+|`FileChannel.open(...)`
+|Unsupported for owned in-memory paths; supported only for delegated native paths
+
+|`AsynchronousFileChannel.open(...)`
+|Unsupported for owned in-memory paths; supported only for delegated native paths
+
+|`PathMatcher`
+|Supports `glob:` and `regex:` syntaxes
+|===
+
+=== Channel And Open-Option Behavior
+
+`EphemeralFileStore.newByteChannel(...)` accepts only `StandardOpenOption` values.
+
+Behavioral rules:
+
+* no explicit read or write option means read mode
+* `READ` cannot be combined with `WRITE` or `APPEND`
+* `APPEND` cannot be combined with `TRUNCATE_EXISTING`
+* `CREATE_NEW` fails when the file already exists
+* `CREATE` or `CREATE_NEW` are required to create a new file in write mode
+* `DELETE_ON_CLOSE` is supported
+* opening a directory for read or write throws `IOException`
+
+Example append flow:
+
+[source,java]
+----
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Set;
+
+Path logFile = fileSystem.getPath("/logs/app.log");
+
+try (SeekableByteChannel channel = Files.newByteChannel(
+    logFile,
+    Set.of(
+        StandardOpenOption.CREATE,
+        StandardOpenOption.WRITE,
+        StandardOpenOption.APPEND
+    )
+)) {
+  channel.write(ByteBuffer.wrap("next line\n".getBytes(StandardCharsets.UTF_8)));
+}
+----
+
+=== Attribute, Principal, And Store Behavior
+
+Owned in-memory paths support one attribute view: `basic`.
+
+What is tracked:
+
+* `creationTime`
+* `lastModifiedTime`
+* `lastAccessTime`
+* `isDirectory`
+* `isRegularFile`
+* `isSymbolicLink` always `false`
+* `isOther` always `false`
+* `size`
+* `fileKey`, generated as a unique snowflake-style id string
+
+What is not provided:
+
+* symbolic links
+* a stored POSIX or owner view
+* hidden-file detection beyond always returning `false`
+
+`EphemeralUserPrincipalLookupService` simply returns synthetic principals by name.
+It does not validate against the operating system.
+
+[NOTE]
+====
+`createDirectory(...)` and `newByteChannel(...)` accept a `FileAttribute` named `posix:permissions`, but the current implementation does not persist or enforce those permissions.
+====
+
+File-store reporting:
+
+* `getTotalSpace()` returns the configured capacity
+* `getUsableSpace()` also returns the configured capacity
+* `getUnallocatedSpace()` returns `capacity - currentTreeSize`
+
+If you want remaining space, use `getUnallocatedSpace()`.
+
+=== Lifecycle And Ownership
+
+`EphemeralFileSystem` keeps all state in the `EphemeralFileStore` attached to the provider.
+
+Key lifecycle rules:
+
+* `clear()` removes every child from the root directory
+* `close()` marks the file system closed only when the provider is not masquerading as the default `file` scheme
+* when used as the default provider, `close()` intentionally does nothing
+* the current `close()` implementation does not actively close existing channels, watch services, or directory streams
+
+Operationally, the caller owns:
+
+* when the provider instance is constructed
+* when `clear()` is called
+* when any opened channel or directory stream is closed
+* any JVM flags needed for default-provider installation
+
+=== Watch Service
+
+`EphemeralFileSystem.newWatchService()` returns `EphemeralWatchService`.
+`EphemeralPath.register(...)` accepts an `EphemeralWatchService`, and the service maintains watch keys per directory path.
+
+Current implementation status:
+
+* registration is implemented
+* polling, timed polling, and blocking `take()` are implemented
+* the codebase defines `HeapEvent`, `HeapEventType`, and listener plumbing
+* the current `file-ephemeral` source does not create `HeapEvent` instances during file mutations
+
+[IMPORTANT]
+====
+Because no heap events are emitted by the current file-store operations, registered watch keys do not currently receive create, modify, or delete notifications.
+
+Treat the watch-service surface as present but inactive until the event-emission path is completed.
+====
+[[file-jailed-model, Jailed File System]]
+== Jailed File System
+
+=== Provider And Translator Model
+
+`JailedFileSystemProvider` is thin by design.
+It translates a caller-visible `JailedPath` to a native path, then delegates the actual work to the native provider.
+
+The main seam is `JailedPathTranslator`:
+
+[cols="2,4",options="header"]
+|===
+|Translator |Use It For
+
+|`RootedPathTranslator`
+|A fixed native root known at construction time
+
+|`ContextSensitiveRootedPathTranslator`
+|A root taken from `RootedFileSystemContext` in the current thread context
+
+|Custom `JailedPathTranslator`
+|Specialized wrapping logic when neither built-in rooted model fits
+|===
+
+Provider lifecycle model:
+
+* the provider owns exactly one `JailedFileSystem`
+* `newFileSystem(...)` always throws `FileSystemAlreadyExistsException`
+* `getFileSystem(URI)` returns the singleton
+* the default no-arg provider uses the `jailed` scheme with `ContextSensitiveRootedPathTranslator`
+
+=== URI And Service-Loader Behavior
+
+`file-jailed` registers `org.smallmind.file.jailed.JailedFileSystemProvider` under `META-INF/services/java.nio.file.spi.FileSystemProvider`.
+
+That means you can use normal provider lookup for the default `jailed` scheme when the jar is on the classpath.
+
+[source,java]
+----
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+FileSystem jailedFileSystem = FileSystems.getFileSystem(URI.create("jailed:///"));
+Path report = Paths.get(URI.create("jailed:///reports/daily.txt"));
+----
+
+URI rules:
+
+* `getFileSystem(URI)` expects a root URI such as `jailed:///`
+* `getPath(URI)` and `Paths.get(URI)` accept a hierarchical `jailed:` URI with a path component
+* authorities, queries, and fragments are rejected
+
+=== Fixed-Root Translation
+
+`RootedPathTranslator` is the straightforward model when one native subtree should back the jail.
+
+Behavior:
+
+* wrapping a native absolute path strips the configured root prefix and exposes the remainder as a jailed path
+* unwrapping a jailed path resolves its name elements beneath the configured root
+* file-store, attribute-view, and path-matcher behavior all come from the native file system
+
+This is usually the right choice for library code because the root is explicit in the object graph.
+
+=== Context-Sensitive Translation
+
+`ContextSensitiveRootedPathTranslator` reads the current `RootedFileSystemContext` from `ContextFactory`.
+
+[source,java]
+----
+import org.smallmind.file.jailed.RootedFileSystemContext;
+import org.smallmind.nutsnbolts.context.ContextFactory;
+
+RootedFileSystemContext context = new RootedFileSystemContext();
+context.setRoot("/srv/customer-a");
+
+ContextFactory.pushContext(context);
+try {
+  // jailed paths now resolve beneath /srv/customer-a in this thread
+} finally {
+  ContextFactory.popContext(RootedFileSystemContext.class);
+}
+----
+
+Operational details:
+
+* `ContextFactory` uses `InheritableThreadLocal`, so child threads inherit the current context stack
+* the translator throws `SecurityException` when no context is present or when `root` is `null`
+* the translator resolves the `root` string with `FileSystems.getDefault().getPath(root)`
+
+[NOTE]
+====
+Because the context-sensitive translator resolves roots with `FileSystems.getDefault()`, it is aimed at the platform default file system even though the translator also stores a native file-system reference.
+Use `RootedPathTranslator` when you need deterministic behavior against a specific non-default file system.
+====
+
+=== `RootedFileSystemContext`
+
+`RootedFileSystemContext` is a simple `Context` implementation with one property: `root`.
+
+It also carries JAXB annotations:
+
+* `@XmlRootElement(name = "test", namespace = "http://org.smallmind/file/jailed")`
+* `@XmlAccessorType(XmlAccessType.PROPERTY)`
+* `@XmlElement(name = "root")`
+
+If you serialize it through JAXB, the root element name is `test`, not `rootedFileSystemContext`.
+
+=== Delegated NIO Surface
+
+The jailed provider delegates almost all work directly to the native provider after translation.
+
+[cols="2,4",options="header"]
+|===
+|Surface |Behavior
+
+|`newByteChannel(...)`
+|Delegated to the native provider on the unwrapped path
+
+|`newDirectoryStream(...)`
+|Delegated, then wrapped so iteration and filters see jailed paths
+
+|`createDirectory`, `delete`, `copy`, `move`
+|Delegated after unwrapping
+
+|`getFileStore`, `readAttributes`, `setAttribute`, `getFileAttributeView`
+|Delegated to the native provider
+
+|`getPathMatcher`, `getUserPrincipalLookupService`, `supportedFileAttributeViews`
+|Delegated from the native file system
+
+|`close()`
+|No-op on `JailedFileSystem`
+|===
+
+The jail layer is deliberately thin.
+It does not add its own caching, polling, attribute storage, or background work.
+
+=== Path And Lifecycle Semantics
+
+`JailedPath` uses `/` as its visible separator and implements the usual NIO path operations such as:
+
+* `startsWith`
+* `endsWith`
+* `resolve`
+* `relativize`
+* `normalize`
+* `toUri`
+* `toAbsolutePath`
+* `toRealPath`
+
+`JailedFileSystem` stays open as long as the underlying native file system stays open.
+Calling `close()` on the jail itself does not close the underlying file system.
+
+=== Watch-Service And Identity Limits
+
+`JailedFileSystem.newWatchService()` delegates to the native file system.
+However, `JailedPath.register(...)` currently throws `UnsupportedOperationException`.
+
+That means:
+
+* you can obtain a watch-service object from the jail
+* you cannot register jailed paths directly with it
+* if you need watch registration today, use native paths outside the jail layer
+
+The provider also has one important identity limitation:
+
+* `JailedFileSystemProvider.isSameFile(path, path2)` currently unwraps `path` twice, so it is not a reliable distinct-path comparison
+
+Treat the jail as a translation layer for mainstream file operations, not as a complete alternate implementation of every NIO edge API.
+[[file-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,4",options="header"]
+|===
+|Behavior |What To Know
+
+|No service registration for `file-ephemeral`
+|You cannot rely on `Paths.get(URI.create("ephemeral:///..."))` through provider lookup unless you install the provider yourself. Use explicit construction or default-provider replacement.
+
+|Slash-rooted ownership in `file-ephemeral`
+|Owned roots are compared as slash-rooted strings. Relative paths are not owned, and Windows drive-letter paths are not matched by the default `/` root.
+
+|Delegation requires a native provider
+|A bare `EphemeralFileSystemProvider()` has no native file system to delegate to. Use the wrapped-provider constructor or the default-provider replacement path when you want mixed native and in-memory behavior.
+
+|Cross-boundary copy and move in `file-ephemeral`
+|The current provider assumes both paths are either owned `EphemeralPath` values or both delegated `NativePath` values. Copying or moving between an in-memory path and a delegated native path is not a supported overlay workflow.
+
+|Directory copy and move in `file-ephemeral`
+|The current in-memory directory `copy(...)` and `move(...)` logic creates only the directory node shape. It does not recursively preserve existing children. Restrict those operations to files and empty directories, or implement recursive copy or move in caller code.
+
+|Capacity is descriptive, not enforced
+|`EphemeralFileStore` reports configured capacity and unallocated space, but write operations do not refuse data when the configured capacity would be exceeded.
+
+|Accepted POSIX permission attributes are not stored
+|`createDirectory(...)` and `newByteChannel(...)` accept `posix:permissions` attributes, but the in-memory store does not keep or enforce them.
+
+|Directory iteration order in `file-ephemeral`
+|Directory children are held in `HashMap`, so iteration order is unspecified.
+
+|Watch keys in `file-ephemeral`
+|Registration works, but no change events are currently emitted by file mutations.
+
+|`FileChannel` and `AsynchronousFileChannel` in `file-ephemeral`
+|These are available only for delegated native paths, not for owned in-memory files.
+
+|`file-jailed` is not a hardened sandbox boundary
+|The current translators resolve path elements beneath a root but do not reject or canonicalize `..` segments before delegation. Do not expose untrusted jailed path text as a security boundary without additional caller-side validation.
+
+|Context-sensitive jail roots are thread policy
+|The current root comes from `ContextFactory`. Push and pop the right context around work units, and remember that child threads inherit the current stack.
+
+|Jailed watch registration
+|`JailedFileSystem.newWatchService()` delegates, but `JailedPath.register(...)` is unsupported.
+
+|`JailedFileSystem.close()`
+|Closing the jail does not close the underlying native file system.
+|===
+
+[[file-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,4",options="header"]
+|===
+|Problem |Likely cause |What to check
+
+|`ProviderNotFoundException` or similar for `ephemeral:` URIs
+|`file-ephemeral` is not service-loader registered
+|Instantiate `EphemeralFileSystemProvider` directly or install it through `java.nio.file.spi.DefaultFileSystemProvider`
+
+|A path you expected to be in memory is delegated natively
+|The path is not under a configured owned root
+|Check the configured `roots`, use slash-rooted paths, and remember that relative paths are not owned
+
+|`NullPointerException` or other failures when using non-owned paths with `EphemeralFileSystemProvider()`
+|The provider was constructed without a native provider but the path fell outside owned roots
+|Use a wrapped provider or keep the provider fully in-memory by restricting usage to owned slash-rooted paths
+
+|`No authorization for path`
+|The context-sensitive jailed translator has no `RootedFileSystemContext` or the `root` property is `null`
+|Push a `RootedFileSystemContext` before file access, or switch to `RootedPathTranslator`
+
+|`UnsupportedOperationException` from `FileChannel.open(...)` on an in-memory path
+|Owned ephemeral paths do not support file channels
+|Use `Files.newByteChannel(...)` or `SeekableByteChannel`
+
+|`ClassCastException`, `ProviderMismatchException`, or surprising failures when copying between in-memory and native overlay paths
+|The current overlay copy or move path is crossing from `EphemeralPath` to `NativePath` or vice versa
+|Copy bytes explicitly through caller code instead of using provider-level copy or move across the boundary
+
+|Copied or moved directories lose contents in `file-ephemeral`
+|Recursive directory copy or move is not implemented
+|Perform a caller-owned recursive walk and copy or move each file yourself
+
+|Watch service never receives events in `file-ephemeral`
+|The current code defines watch types and registration but does not emit heap events on mutations
+|Treat the watch surface as inactive for now
+
+|`UnsupportedOperationException` when registering a jailed path with a watch service
+|`JailedPath.register(...)` is not implemented
+|Use native paths directly if you need watch registration
+
+|`IllegalArgumentException` saying the URI path should be `/`
+|A file-system lookup URI was used where a file path URI was intended
+|Use `FileSystems.getFileSystem(URI.create("jailed:///"))` for the file system itself and `Paths.get(URI)` or `provider.getPath(URI)` for actual paths
+
+|`ClosedFileSystemException` from `file-ephemeral`
+|The programmatic file system was closed
+|Keep the file system open for the required lifetime or construct a new provider and file system
+|===
+
+[[file-verification, Verification Checklist]]
+== Verification Checklist
+
+Use this checklist when adopting one of the file modules or validating an upgrade:
+
+1. Confirm you chose the right artifact: `file-ephemeral` for in-memory state, `file-jailed` for rooted native translation.
+2. For `file-ephemeral`, verify owned roots by checking both an owned slash-rooted path and a non-owned path.
+3. For `file-ephemeral`, exercise `Files.createDirectory`, `Files.newByteChannel`, `Files.readAttributes`, and `clear()` on an owned path.
+4. For `file-ephemeral`, verify any overlay scenario with a real native path outside the owned roots.
+5. For `file-ephemeral`, avoid relying on provider-level copy or move for populated directories until you have caller-side recursive logic in place.
+6. For `file-jailed`, verify the fixed-root or context-root translation by comparing a jailed path to its expected native target.
+7. If you use `ContextSensitiveRootedPathTranslator`, verify context push, inherited child-thread behavior, and context pop for your execution model.
+8. If you use `RootedFileSystemContext` with JAXB, verify that the optional JAXB dependencies are present and that the expected XML root element is `test`.
+9. If watch behavior matters, verify it directly in your code path instead of assuming parity with the JDK providers.
+10. Review any untrusted path handling and add caller-side canonicalization or rejection rules before treating `file-jailed` as a security boundary.
+
+Current test coverage in the repository is narrow:
+
+* `file-ephemeral` contains one module-local TestNG class, `EphemeralFileSystemTest`
+* `file-jailed` currently has no module-local tests
+
+For production adoption, add your own focused tests around the exact roots, translators, and `Files` operations you intend to use.
+
+== See Also
+
+* `file/pom.xml`
+* `file/ephemeral/pom.xml`
+* `file/ephemeral/src/main/java/org/smallmind/file/ephemeral/EphemeralFileSystemProvider.java`
+* `file/ephemeral/src/main/java/org/smallmind/file/ephemeral/EphemeralFileStore.java`
+* `file/jailed/pom.xml`
+* `file/jailed/src/main/java/org/smallmind/file/jailed/JailedFileSystemProvider.java`
+* `file/jailed/src/main/java/org/smallmind/file/jailed/RootedPathTranslator.java`
+* `file/jailed/src/main/java/org/smallmind/file/jailed/ContextSensitiveRootedPathTranslator.java`

@@ -35,7 +35,6 @@ package org.smallmind.forge.style;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -47,7 +46,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -58,7 +56,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import com.sun.jdi.connect.TransportTimeoutException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -82,7 +79,7 @@ public class DependencyReducer {
    * @param args command line arguments; the first argument must be the project root path
    * @throws IOException if file traversal or process execution fails
    */
-  public static void main (String... args)
+  static void main (String... args)
     throws IOException {
 
     walkProject(Paths.get(args[0]));
@@ -99,7 +96,7 @@ public class DependencyReducer {
 
     String mvnPath;
 
-    if ((mvnPath = findMvn(projectPath)) == null) {
+    if ((mvnPath = findMavenCommand(projectPath)) == null) {
       throw new RuntimeException("Unable to locate 'mvn.cmd'");
     } else {
 
@@ -114,7 +111,7 @@ public class DependencyReducer {
             LinkedList<DependencyReference> usedUndeclaredList = new LinkedList<>();
             LinkedList<DependencyReference> unusedDeclaredList = new LinkedList<>();
             LinkedList<DependencyReference> nonTestScopedTestOnlyList = new LinkedList<>();
-            ByteArrayOutputStream buffer = bufferProcessOutput(dir, mvnPath, "dependency:analyze", "-N");
+            ByteArrayOutputStream buffer = ProcessOutputUtility.buffer(dir, mvnPath, "dependency:analyze", "-N");
 
             System.out.println(dir);
             try (BufferedReader lineReader = new BufferedReader(new StringReader(buffer.toString(StandardCharsets.UTF_8)))) {
@@ -157,24 +154,21 @@ public class DependencyReducer {
   }
 
   /**
-   * Locate {@code mvn.cmd} starting from the supplied directory.
+   * Locate the Maven executable appropriate for the current operating system.
    *
-   * @param commandDir the working directory used to run the {@code where} command
-   * @return the path to {@code mvn.cmd}, or {@code null} if it cannot be found
+   * @param commandDir the working directory used while probing for Maven
+   * @return the resolved Maven command path, or {@code null} if none can be found
    * @throws IOException if the lookup command cannot be executed
    */
-  private static String findMvn (Path commandDir)
+  private static String findMavenCommand (Path commandDir)
     throws IOException {
 
-    ByteArrayOutputStream buffer = bufferProcessOutput(commandDir, "where.exe", "mvn.cmd");
-    String result;
+    if (System.getProperty("os.name").startsWith("Windows")) {
 
-    if (((result = buffer.toString()) == null) || result.isBlank() || result.startsWith("INFO: ")) {
-
-      return null;
+      return MavenCommandLocator.inWindows(commandDir);
     } else {
 
-      return result.strip();
+      return MavenCommandLocator.inLinux(commandDir);
     }
   }
 
@@ -194,42 +188,6 @@ public class DependencyReducer {
     }
 
     return false;
-  }
-
-  /**
-   * Execute a command and buffer its standard output.
-   *
-   * @param commandDir the working directory for the process
-   * @param commands   the command and arguments to run
-   * @return the buffered output
-   * @throws IOException if the process cannot be started, its output cannot be read, or it fails to exit within the timeout
-   */
-  private static ByteArrayOutputStream bufferProcessOutput (Path commandDir, String... commands)
-    throws IOException {
-
-    Process process;
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-    try (InputStream processStream = (process = new ProcessBuilder(commands).directory(commandDir.toFile()).start()).getInputStream()) {
-
-      int singleChar;
-
-      while ((singleChar = processStream.read()) >= 0) {
-        buffer.write(singleChar);
-      }
-    }
-
-    try {
-      if (!process.waitFor(3, TimeUnit.SECONDS)) {
-        throw new TransportTimeoutException();
-      }
-    } catch (InterruptedException interruptedException) {
-      throw new RuntimeException(interruptedException);
-    }
-
-    buffer.close();
-
-    return buffer;
   }
 
   /**

@@ -1,0 +1,1074 @@
+[[sleuth, Sleuth]]
+= Sleuth
+
+[partintro]
+Sleuth is Smallmind's dependency-aware test scheduler. It runs suite classes and test methods from explicit metadata so suite dependencies, group filters, and execution tiers stay visible in code while assertion style and fixtures remain yours.
+
+It provides:
+
+* `sleuth-runner` for direct execution of annotated suites and tests
+* `surefire-sleuth-provider` so Maven Surefire can delegate discovery and reporting to Sleuth
+* built-in translation of selected TestNG annotations for incremental adoption
+
+Audience: developers and build engineers who need explicit ordering, dependency propagation, or group-filtered execution without adopting a larger test framework.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<sleuth-at-a-glance,At A Glance>>
+* <<sleuth-reading-paths,Reading Paths>>
+* <<sleuth-why-use,Why Use Sleuth>>
+* <<sleuth-entry-points,Choosing Direct Runner Or Surefire>>
+* <<sleuth-layout,Project Layout>>
+* <<sleuth-installation,Installation>>
+* <<sleuth-quick-start,Quick Start>>
+* <<runner-api,Runner API>>
+* <<sleuth-native-annotations,Native Annotation Model>>
+* <<sleuth-ordering,Dependency And Ordering Semantics>>
+* <<sleuth-execution-model,Execution Model>>
+* <<sleuth-failure-model,Failure, Error, And Cancellation Behavior>>
+* <<sleuth-events,Events And Listeners>>
+* <<sleuth-thread-context,Thread-Local Test Context>>
+* <<testng-annotation-compatibility,TestNG Annotation Compatibility>>
+* <<sleuth-surefire-provider,Surefire Provider>>
+* <<sleuth-operational-notes,Operational Notes>>
+* <<sleuth-troubleshooting,Troubleshooting>>
+* <<sleuth-minimal-checklist,Minimal Checklist>>
+* <<sleuth-api-index,API Index>>
+
+[[sleuth-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to Sleuth, read in this order:
+
+1. <<sleuth-why-use,Why Use Sleuth>>
+2. <<sleuth-entry-points,Choosing Direct Runner Or Surefire>>
+3. <<sleuth-installation,Installation>>
+4. <<sleuth-quick-start,Quick Start>>
+5. <<sleuth-ordering,Dependency And Ordering Semantics>>
+6. <<sleuth-failure-model,Failure, Error, And Cancellation Behavior>>
+7. <<sleuth-surefire-provider,Surefire Provider>>
+8. <<sleuth-troubleshooting,Troubleshooting>>
+
+If you are wiring Sleuth into a Maven build, focus on:
+
+1. <<sleuth-installation,Installation>>
+2. <<sleuth-surefire-provider,Surefire Provider>>
+3. <<sleuth-provider-properties,Provider Properties>>
+4. <<sleuth-troubleshooting,Troubleshooting>>
+
+If you already use Sleuth and need exact behavior quickly, jump to:
+
+* <<runner-api,Runner API>>
+* <<sleuth-ordering,Dependency And Ordering Semantics>>
+* <<sleuth-execution-model,Execution Model>>
+* <<sleuth-failure-model,Failure, Error, And Cancellation Behavior>>
+* <<sleuth-operational-notes,Operational Notes>>
+* <<sleuth-troubleshooting,Troubleshooting>>
+
+[[sleuth-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="2,3,4",options="header"]
+|===
+|If You Need To... |Use |Notes
+
+|run annotated test classes directly from Java
+|`org.smallmind:sleuth-runner`
+|Pass classes explicitly to `SleuthRunner`; there is no direct-runner classpath scan
+
+|keep Maven Surefire as the entry point
+|`org.smallmind:surefire-sleuth-provider`
+|Surefire discovers candidate classes, Sleuth executes them, and results flow back through Surefire reporting
+
+|stage setup suites before workflow suites
+|suite-level `priority`, `executeAfter`, and `dependsOn`
+|Suite dependency names use fully qualified class names
+
+|gate one test method on another method's success
+|method-level `dependsOn`
+|Test dependency names use Java method names
+
+|observe results programmatically
+|`SleuthEventListener`
+|Listeners receive lifecycle and test events inline on execution threads
+
+|carry per-test state into child threads you create during a test
+|`TestContext`
+|Uses `InheritableThreadLocal` semantics; new child threads inherit values, pre-existing pooled threads do not
+
+|adopt incrementally from TestNG annotations
+|built-in `TestNGAnnotationTranslator`
+|Only a selected subset of TestNG annotations and attributes is translated
+|===
+
+[[sleuth-why-use, Why Use Sleuth]]
+== Why Use Sleuth
+
+Use Sleuth when test order is part of the contract and you want that order expressed in code rather than implied by the surrounding runner.
+
+Sleuth is most useful when these constraints matter:
+
+* a setup suite must complete before a workflow suite begins
+* some test methods should wait for other methods to complete, but only some dependencies should propagate failure
+* you want the same dependency and event model in direct Java execution and Maven Surefire execution
+* you need group-based selection without surrendering test execution to a framework-specific ordering model
+* you want to reuse existing assertion style and helper code instead of adopting a new test DSL
+* you want full and correct control over the number of threads of execution at the test, package, class, and method level
+
+Compared with a framework-default execution order, Sleuth makes these choices explicit:
+
+* `priority` creates broad ordering tiers
+* `executeAfter` waits for completion without propagating failure
+* `dependsOn` waits for completion and propagates culprit state at the dependency node where Sleuth records it
+* stop flags let you choose between fail-fast and continue-reporting behavior
+
+[[sleuth-entry-points, Choosing Direct Runner Or Surefire]]
+== Choosing Direct Runner Or Surefire
+
+[cols="2,3,3",options="header"]
+|===
+|Topic |Direct `SleuthRunner` |Surefire `SleuthProvider`
+
+|Who supplies candidate classes
+|your code passes classes directly to `execute(...)`
+|Surefire scan results provide candidate classes
+
+|Best fit
+|custom harnesses, embedded execution, or non-Maven tooling
+|ordinary Maven test phases with standard Surefire reports
+
+|Group filter source
+|`execute(groups, ...)`
+|JVM system property `groups` first, then provider property `groups`
+
+|Thread count behavior
+|caller-supplied value is used as-is; pass a positive value
+|provider normalizes missing or non-positive values to `Integer.MAX_VALUE`
+
+|Stop flags
+|explicit `stopOnError` and `stopOnFailure`
+|derived from provider property `testFailureIgnore`
+
+|Reporting and output
+|register `SleuthEventListener`s yourself
+|events are translated to Surefire callbacks and stdout/stderr are forwarded into Surefire output
+|===
+
+[[sleuth-layout, Project Layout]]
+== Project Layout
+
+The `sleuth` subproject is a multi-module build.
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Parent
+|`org.smallmind:smallmind-sleuth`
+|Aggregator for Sleuth modules
+
+|Runner
+|`org.smallmind:sleuth-runner`
+|Annotations, translators, dependency analysis, scheduling, execution, events, and `TestContext`
+
+|Maven parent
+|`org.smallmind:sleuth-maven`
+|Aggregator for Maven integration modules
+
+|Surefire provider
+|`org.smallmind:surefire-sleuth-provider`
+|Surefire provider that runs Sleuth and adapts results into Maven test reporting
+|===
+
+[[sleuth-installation, Installation]]
+== Installation
+
+=== Project Test Classpath
+
+Add `sleuth-runner` to the project that contains your test classes when:
+
+* test sources import Sleuth annotations
+* test sources call `SleuthRunner` directly
+* test sources use translated TestNG annotations and you want one dependency that already includes the translator and TestNG API
+
+In a normal Maven build, this is usually a test-scoped dependency.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>sleuth-runner</artifactId>
+  <version>${smallmind.version}</version>
+  <scope>test</scope>
+</dependency>
+----
+
+=== Maven Surefire Integration
+
+Add Sleuth's Surefire provider as a dependency of `maven-surefire-plugin`.
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>${maven.surefire.version}</version>
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>surefire-sleuth-provider</artifactId>
+      <version>${smallmind.version}</version>
+    </dependency>
+  </dependencies>
+</plugin>
+----
+
+[IMPORTANT]
+====
+The Surefire provider dependency does not replace the project test dependency shown above.
+
+Plugin dependencies live in the Surefire plugin realm. They do not put Sleuth or TestNG annotations on your project's test compile classpath.
+====
+
+`surefire-sleuth-provider` publishes `org.smallmind.sleuth.maven.surefire.SleuthProvider` through Surefire's provider SPI service file, so adding the plugin dependency is enough. You do not configure the provider class name manually.
+
+[[sleuth-quick-start]]
+== Quick Start
+
+The smallest useful setup is:
+
+1. add `sleuth-runner` to the test classpath
+2. annotate one or more suites and tests
+3. use fully qualified class names for suite dependencies and method names for test dependencies
+4. execute with `SleuthRunner` directly, or add the Surefire provider and run `mvn test`
+
+Example:
+
+[source,java]
+----
+package com.acme.billing.test;
+
+import org.smallmind.sleuth.runner.annotation.BeforeSuite;
+import org.smallmind.sleuth.runner.annotation.Suite;
+import org.smallmind.sleuth.runner.annotation.Test;
+
+@Suite(groups = {"smoke"}, priority = 10)
+public class DatabaseBootstrapSuite {
+
+  @BeforeSuite
+  public void startDatabase () {
+    // start an embedded database or verify a shared test resource
+  }
+}
+
+@Suite(
+    groups = {"smoke"},
+    priority = 20,
+    dependsOn = {"com.acme.billing.test.DatabaseBootstrapSuite"})
+public class InvoiceSuite {
+
+  @Test(priority = 10)
+  public void createInvoice () {
+  }
+
+  @Test(priority = 20, dependsOn = {"createInvoice"})
+  public void loadInvoice () {
+  }
+}
+----
+
+Run directly:
+
+[source,java]
+----
+import org.smallmind.sleuth.runner.SleuthRunner;
+
+SleuthRunner runner = new SleuthRunner();
+runner.execute(new String[] {"smoke"}, 4, true, true, DatabaseBootstrapSuite.class, InvoiceSuite.class);
+----
+
+What this does:
+
+* `DatabaseBootstrapSuite` runs before `InvoiceSuite` because suite dependencies use the fully qualified class name
+* `loadInvoice()` waits for `createInvoice()` and is skipped if `createInvoice()` fails because method-level `dependsOn` propagates culprit state
+* only suites in the `smoke` group are eligible
+* `threadCount` is `4`, so up to four suite controllers and four test controllers may run concurrently
+* both stop flags are `true`, so the runner cancels new work after the first failure or error
+
+[[runner-api]]
+== Runner API
+
+The normal entry point is `SleuthRunner`.
+
+[cols="2,3,4",options="header"]
+|===
+|Need |API |Notes
+
+|run a fixed set of classes
+|`execute(String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Class<?>... classes)`
+|Varargs overload for the common direct-runner case
+
+|run a dynamic collection of classes
+|`execute(String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Iterable<Class<?>> classes)`
+|Useful when your harness builds the suite list programmatically
+
+|observe execution
+|`addListener(SleuthEventListener)` and `removeListener(SleuthEventListener)`
+|Listeners are invoked inline on the emitting execution thread
+
+|request cancellation
+|`cancel()`
+|Cancellation is cooperative; already running test methods are not interrupted
+
+|check whether new work should still start
+|`isRunning()`
+|Returns `false` after `cancel()` or stop-flag-triggered cancellation
+
+|share data with child threads created during a test
+|`TestContext.put(...)`, `get(...)`, `putIfAbsent(...)`
+|Uses `InheritableThreadLocal`
+|===
+
+[IMPORTANT]
+====
+Pass a positive `threadCount` when using `SleuthRunner` directly.
+
+The direct runner does not normalize `0` or negative values. `0` means no permits are available, and unresolved acquisition can stall execution.
+====
+
+=== Example: Registering A Listener
+
+[source,java]
+----
+import org.smallmind.sleuth.runner.SleuthRunner;
+import org.smallmind.sleuth.runner.event.SleuthEvent;
+import org.smallmind.sleuth.runner.event.SleuthEventListener;
+import org.smallmind.sleuth.runner.event.SleuthEventType;
+
+public class LoggingListener implements SleuthEventListener {
+
+  @Override
+  public void handle (SleuthEvent event) {
+    if ((event.getType() == SleuthEventType.FAILURE) || (event.getType() == SleuthEventType.ERROR) || (event.getType() == SleuthEventType.FATAL)) {
+      System.err.println(event);
+    }
+  }
+}
+
+SleuthRunner runner = new SleuthRunner();
+runner.addListener(new LoggingListener());
+----
+
+[[sleuth-native-annotations, Native Annotation Model]]
+== Native Annotation Model
+
+Sleuth's native annotations are small and explicit.
+
+[cols="2,2,4",options="header"]
+|===
+|Annotation |Target |Purpose
+
+|`@Suite`
+|class
+|Optional suite metadata: groups, priority, dependencies, enabled flag
+
+|`@Test`
+|method
+|Executable test method metadata: priority, dependencies, enabled flag
+
+|`@BeforeSuite`
+|method
+|Runs once before any test methods in the suite instance
+
+|`@AfterSuite`
+|method
+|Runs once after suite execution completes
+
+|`@BeforeTest`
+|method
+|Runs before each enabled test method in the suite
+
+|`@AfterTest`
+|method
+|Runs after each enabled test method in the suite
+|===
+
+=== Suite Metadata
+
+`@Suite` parameters:
+
+* `groups` has no default; supply the groups you want when you use `@Suite`
+* `priority` defaults to `0`
+* `executeAfter` defaults to an empty array
+* `dependsOn` defaults to an empty array
+* `enabled` defaults to `true`
+
+[NOTE]
+====
+`@Suite` is optional.
+
+A class still becomes a Sleuth suite when Sleuth finds supported test or lifecycle annotations on the class or methods. In that case the suite uses default metadata: enabled, priority `0`, no groups, and no dependencies.
+====
+
+Suite dependency names use `Class.getName()`, not the simple class name. This is why examples use values such as `com.acme.billing.test.DatabaseBootstrapSuite`.
+
+=== Test Metadata
+
+`@Test` parameters:
+
+* `priority` defaults to `0`
+* `executeAfter` defaults to an empty array
+* `dependsOn` defaults to an empty array
+* `enabled` defaults to `true`
+
+Test dependency names use the Java method name returned by `Method.getName()`.
+
+=== Lifecycle Methods
+
+Lifecycle methods are invoked reflectively with no arguments.
+
+That means:
+
+* suite classes must expose a public no-arg constructor
+* lifecycle and test methods must be no-arg and reflectively accessible
+* a suite may exist only for setup or teardown work if that is useful in your build
+
+[[sleuth-ordering, Dependency And Ordering Semantics]]
+== Dependency And Ordering Semantics
+
+Sleuth combines three ordering mechanisms.
+
+[cols="2,2,2,3",options="header"]
+|===
+|Mechanism |Applies To |Waits For |Failure Propagation
+
+|`priority`
+|suites and tests
+|all lower-priority nodes in the same tier
+|none
+
+|`executeAfter`
+|suites and tests
+|the named nodes to complete
+|none
+
+|`dependsOn`
+|suites and tests
+|the named nodes to complete
+|culprit is copied from the prerequisite dependency node
+|===
+
+Rules that matter in practice:
+
+* lower priority runs before higher priority
+* unrelated nodes with the same priority have no promised stable order
+* `executeAfter` is a soft ordering edge only
+* `dependsOn` is a hard dependency edge
+* suite dependencies use fully qualified class names; test dependencies use method names
+
+[IMPORTANT]
+====
+Only `dependsOn` relationships are validated during dependency analysis.
+
+A missing or cyclic `dependsOn` target raises `TestDependencyException`. A missing or contradictory `executeAfter` target is not prevalidated and can leave the queue waiting indefinitely.
+====
+
+=== `executeAfter` Versus `dependsOn`
+
+[source,java]
+----
+import org.smallmind.sleuth.runner.annotation.Test;
+
+public class ReportingSuite {
+
+  @Test(priority = 10)
+  public void seedData () {
+    throw new AssertionError("boom");
+  }
+
+  @Test(priority = 20, executeAfter = {"seedData"})
+  public void reportAfterCompletion () {
+    // this can still run after seedData completes
+  }
+
+  @Test(priority = 30, dependsOn = {"seedData"})
+  public void requireSuccessfulSeed () {
+    // this is skipped because dependsOn propagates the culprit from seedData
+  }
+}
+----
+
+=== Suite Dependency Caveat
+
+Method-level `dependsOn` is the strongest part of Sleuth's failure propagation model.
+
+Suite-level `dependsOn` is best suited to bootstrap or teardown suites because the suite dependency node records suite-level culprit state. In the current runner, failing test methods inside a prerequisite suite do not automatically roll up into that suite's culprit. If a failing test should stop later suites, use `stopOnFailure`, `stopOnError`, or keep the dependent work inside one suite and use method-level `dependsOn`.
+
+=== Group Filtering
+
+Direct runner group input:
+
+* `null` or an empty array means no explicit filter
+* a non-empty array means a suite runs only when its groups intersect the requested groups
+
+Surefire group input:
+
+* system property `groups` is checked first
+* provider property `groups` is used when no system property is present
+* the literal value `all` means no explicit filter
+
+Additional rules:
+
+* filtering happens at suite level only
+* suites with no groups do not match an explicit filter
+* a class that omits `@Suite` also has no groups unless translated class-level metadata supplies them
+
+Examples:
+
+[source,java]
+----
+runner.execute(new String[] {"smoke", "api"}, 4, true, true, suiteClasses);
+----
+
+[source,text]
+----
+mvn test -Dgroups=smoke
+----
+
+[[sleuth-execution-model, Execution Model]]
+== Execution Model
+
+=== Discovery And Translation
+
+Direct `SleuthRunner` execution only considers the classes you pass to `execute(...)`.
+
+For each class, Sleuth runs translators in this order:
+
+1. `NativeAnnotationTranslator`
+2. `TestNGAnnotationTranslator`
+
+The first translator that reports implemented metadata wins. That is why mixing Sleuth-native and TestNG annotation dialects in the same class is a bad fit.
+
+=== Scheduling Tiers
+
+Sleuth schedules work in two tiers:
+
+* `SUITE` tier for suite classes
+* `TEST` tier for test methods inside a suite
+
+Each tier gets its own semaphore, and both semaphores are initialized with the same permit count. `threadCount = 4` therefore means:
+
+* up to four suite controllers may run concurrently
+* up to four test controllers may run concurrently
+
+Sleuth uses those semaphores as concurrency gates, but it does not reuse executor threads. Each suite or test controller runs on a new `Thread`.
+
+=== Execution Flow
+
+For each eligible class, the runner:
+
+1. translates supported annotations into an `AnnotationDictionary`
+2. builds the suite dependency queue
+3. instantiates the suite class with a public no-arg constructor
+4. runs `@BeforeSuite` methods
+5. builds and schedules the suite's enabled `@Test` methods
+6. wraps each test method with `@BeforeTest` and `@AfterTest`
+7. runs `@AfterSuite` methods
+8. fires events throughout the process
+
+=== Inheritance And Method Discovery
+
+Method discovery walks the class hierarchy from base class to subclass.
+
+When Sleuth sees the same method signature more than once while building a methodology, the first declaration wins. In practice that means an annotated method discovered on a superclass is kept, and a same-signature override later in the hierarchy is not added as a second lifecycle or test entry.
+
+[[sleuth-defaults-reference, Defaults And Constraints]]
+== Defaults And Constraints
+
+[cols="2,4",options="header"]
+|===
+|Item |Current Behavior
+
+|suite default metadata when `@Suite` is absent
+|enabled, priority `0`, no groups, no dependencies
+
+|`@Suite.priority`
+|defaults to `0`
+
+|`@Suite.executeAfter` and `@Suite.dependsOn`
+|default to empty arrays
+
+|`@Suite.enabled`
+|defaults to `true`
+
+|`@Test.priority`
+|defaults to `0`
+
+|`@Test.executeAfter` and `@Test.dependsOn`
+|default to empty arrays
+
+|`@Test.enabled`
+|defaults to `true`
+
+|direct-runner `threadCount`
+|must be supplied explicitly and should be positive
+
+|Surefire provider `threadCount`
+|missing or `<= 0` becomes `Integer.MAX_VALUE`
+
+|Surefire provider `groups`
+|system property wins over provider property; literal `all` means all suites
+
+|`TestContext`
+|starts as an empty inheritable map per thread
+|===
+
+[[sleuth-failure-model, Failure, Error, And Cancellation Behavior]]
+== Failure, Error, And Cancellation Behavior
+
+Sleuth distinguishes method outcomes this way:
+
+[cols="2,4",options="header"]
+|===
+|Outcome |When It Happens
+
+|`SUCCESS`
+|the invoked lifecycle or test method returns normally
+
+|`FAILURE`
+|a test method throws `AssertionError`
+
+|`ERROR`
+|a test method throws any other exception, or a lifecycle method throws any exception
+
+|`SKIPPED`
+|a dependency or prior culprit prevents invocation
+
+|`FATAL`
+|runner or suite orchestration hits a non-recoverable problem such as dependency-analysis or instantiation failure
+
+|`CANCELLED`
+|the run is cancelled before more work is started
+|===
+
+Important details:
+
+* lifecycle failures are always reported as `ERROR`, even when the underlying throwable is an `AssertionError`
+* method-level `dependsOn` copies culprit state and causes dependent methods to skip
+* `stopOnFailure = true` cancels new work after a test method throws `AssertionError`
+* `stopOnError = true` cancels new work after non-assertion errors or fatal suite-processing errors
+* `cancel()` is cooperative; running methods are not interrupted
+
+Example: continue reporting instead of failing fast.
+
+[source,java]
+----
+SleuthRunner runner = new SleuthRunner();
+runner.execute(null, 8, false, false, regressionSuites);
+----
+
+That configuration keeps scheduling new work after failures and errors so you can collect a broader report in one run.
+
+[[sleuth-events, Events And Listeners]]
+== Events And Listeners
+
+The public event contract is `SleuthEvent` plus `SleuthEventType`.
+
+[cols="2,4,2",options="header"]
+|===
+|Event Type |Meaning |Current Core Runner
+
+|`SETUP`
+|setup notification reserved in the public contract
+|not emitted by the current core runner
+
+|`START`
+|a lifecycle or test method is about to run, or is about to be skipped
+|emitted
+
+|`SUCCESS`
+|a lifecycle or test method completed normally
+|emitted
+
+|`FAILURE`
+|a test method threw `AssertionError`
+|emitted
+
+|`ERROR`
+|a lifecycle method or test method threw a non-success throwable classified as error
+|emitted
+
+|`SKIPPED`
+|a lifecycle or test method was skipped because a culprit already exists
+|emitted
+
+|`MOOT`
+|assumption-style event reserved in the public contract
+|not emitted by the current core runner
+
+|`FATAL`
+|non-recoverable runner or suite-processing error
+|emitted
+
+|`CANCELLED`
+|the run was cancelled before more work began
+|emitted
+|===
+
+A listener receives `SleuthEvent` objects through `handle(SleuthEvent event)`.
+
+[source,java]
+----
+import org.smallmind.sleuth.runner.event.SleuthEvent;
+import org.smallmind.sleuth.runner.event.SleuthEventListener;
+
+public class PrintingListener implements SleuthEventListener {
+
+  @Override
+  public void handle (SleuthEvent event) {
+    System.out.println(event.getType() + " " + event.getClassName() + "#" + event.getMethodName());
+  }
+}
+----
+
+[NOTE]
+====
+Listeners run inline on the execution thread that emits the event. Keep them cheap, or queue work yourself if you need heavier reporting.
+====
+
+[[sleuth-thread-context, Thread-Local Test Context]]
+== Thread-Local Test Context
+
+`TestContext` is an inheritable thread-local key/value map.
+
+Available operations:
+
+* `put(String, Object)`
+* `putIfAbsent(String, Object)`
+* `get(String)`
+* `get(String, Class<T>)`
+
+Example:
+
+[source,java]
+----
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.smallmind.sleuth.runner.TestContext;
+import org.smallmind.sleuth.runner.annotation.BeforeTest;
+import org.smallmind.sleuth.runner.annotation.Test;
+
+public class ContextSuite {
+
+  @BeforeTest
+  public void seedContext () {
+    TestContext.put("tenantId", "northwind");
+  }
+
+  @Test
+  public void childThreadSeesTenant () throws Exception {
+
+    AtomicReference<String> tenantReference = new AtomicReference<>();
+    Thread worker = new Thread(() -> {
+      tenantReference.set(TestContext.get("tenantId", String.class));
+    });
+
+    worker.start();
+    worker.join();
+
+    if (!"northwind".equals(tenantReference.get())) {
+      throw new AssertionError("missing tenant");
+    }
+  }
+}
+----
+
+Use `TestContext` when helper code starts child threads during a test and those child threads need the same small amount of contextual data. It follows ordinary `InheritableThreadLocal` rules, so values are copied to newly created child threads, not pushed into threads that already exist in a pool.
+
+[[testng-annotation-compatibility]]
+== TestNG Annotation Compatibility
+
+Sleuth includes `TestNGAnnotationTranslator` in `sleuth-runner`.
+
+Supported translations:
+
+[cols="2,3,4",options="header"]
+|===
+|TestNG Annotation |Sleuth Equivalent |Notes
+
+|class-level `org.testng.annotations.Test`
+|suite metadata
+|copies `groups`, `priority`, `dependsOnMethods`, and `enabled`
+
+|method-level `org.testng.annotations.Test`
+|test metadata
+|copies `priority`, `dependsOnMethods`, and `enabled`
+
+|`@BeforeClass`
+|`@BeforeSuite`
+|runs once per suite instance
+
+|`@AfterClass`
+|`@AfterSuite`
+|runs once per suite instance
+
+|`@BeforeMethod`
+|`@BeforeTest`
+|runs before each test method
+
+|`@AfterMethod`
+|`@AfterTest`
+|runs after each test method
+|===
+
+Everything not listed in the table is ignored by translation. That includes TestNG features such as data providers, parameter injection, factories, retry policies, and `dependsOnGroups`.
+
+Example:
+
+[source,java]
+----
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+@Test(groups = {"smoke"}, priority = 10)
+public class BillingSuite {
+
+  @BeforeClass
+  public void beforeClass () {
+  }
+
+  @BeforeMethod
+  public void beforeMethod () {
+  }
+
+  @Test(priority = 10)
+  public void invoice () {
+  }
+
+  @Test(priority = 20, dependsOnMethods = {"invoice"})
+  public void receipt () {
+  }
+}
+----
+
+[IMPORTANT]
+====
+Do not mix Sleuth-native and TestNG annotation dialects in the same class.
+
+`AnnotationProcessor` tries the native translator first and the TestNG translator second. The first translator that reports implemented metadata wins for the whole class.
+====
+
+[NOTE]
+====
+Class-level TestNG `dependsOnMethods` is copied literally into suite `dependsOn`. Because Sleuth suite dependencies are keyed by fully qualified class name, suite-to-suite ordering works best with Sleuth-native `@Suite` on the whole class.
+====
+
+[[sleuth-surefire-provider, Surefire Provider]]
+== Surefire Provider
+
+`SleuthProvider` integrates Sleuth with Maven Surefire.
+
+At runtime it:
+
+* asks Surefire for the scanned test classes
+* creates a `SleuthRunner`
+* resolves groups from the JVM system property `groups` first, then provider properties
+* resolves `threadCount` or `threadcount` from provider properties
+* derives both stop flags from `testFailureIgnore`
+* forwards `System.out` and `System.err` through Surefire's output receiver
+* translates Sleuth events into Surefire callbacks with `SurefireSleuthEventListener`
+
+This keeps ordinary Maven reporting in place while using Sleuth's scheduling model underneath.
+
+[[sleuth-provider-properties]]
+=== Provider Properties
+
+[cols="2,3,4",options="header"]
+|===
+|Property |Meaning |Notes
+
+|`groups`
+|comma-separated suite groups
+|JVM system property `groups` is checked first; provider property is the fallback; literal `all` means all suites
+
+|`threadCount` or `threadcount`
+|concurrency permit count per tier
+|provider property only; missing or `<= 0` becomes `Integer.MAX_VALUE`
+
+|`testFailureIgnore`
+|continue after failure or error when `true`
+|provider property only; internally sets both `stopOnFailure` and `stopOnError` to `false`
+|===
+
+=== Example Surefire Configuration
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>sleuth-runner</artifactId>
+  <version>${smallmind.version}</version>
+  <scope>test</scope>
+</dependency>
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>${maven.surefire.version}</version>
+  <configuration>
+    <systemPropertyVariables>
+      <groups>smoke,api</groups>
+    </systemPropertyVariables>
+    <properties>
+      <property>
+        <name>threadCount</name>
+        <value>8</value>
+      </property>
+      <property>
+        <name>testFailureIgnore</name>
+        <value>false</value>
+      </property>
+    </properties>
+  </configuration>
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>surefire-sleuth-provider</artifactId>
+      <version>${smallmind.version}</version>
+    </dependency>
+  </dependencies>
+</plugin>
+----
+
+A minimal command-line override is usually just the group filter:
+
+[source,text]
+----
+mvn test -Dgroups=smoke
+----
+
+`SleuthProvider` reads `threadCount` and `testFailureIgnore` from provider properties, not from JVM system properties.
+
+[[sleuth-operational-notes, Operational Notes]]
+== Operational Notes
+
+* direct runner execution only sees the classes you pass to `execute(...)`
+* suite dependency names are fully qualified class names; test dependency names are method names
+* only `dependsOn` is prevalidated; unresolved `executeAfter` edges can stall a run
+* `enabled = false` removes a suite or test from the dependency graph rather than producing a runtime skip event
+* a `dependsOn` reference to a disabled node fails fast; an `executeAfter` reference to a disabled node can stall because the dependency never completes
+* unrelated nodes with the same priority have no promised stable order
+* `threadCount` gates suite and test tiers separately, so total live controllers can exceed the numeric permit count you supplied
+* cancellation is cooperative; it stops new work from starting but does not interrupt already running methods
+* `TestContext` and `TestIdentifier` use inheritable thread-local storage, which works naturally for new child threads and not for pre-existing pooled threads
+
+[[sleuth-troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,4",options="header"]
+|===
+|Symptom |Likely Cause |What To Check
+
+|`Missing dependency(Suite)` or `Missing dependency(Test)`
+|a `dependsOn` target is misspelled, uses the wrong naming convention, or was disabled
+|suite targets must use fully qualified class names; test targets must use method names; disabled dependencies are removed from the graph
+
+|the run appears stuck waiting with no new events
+|`executeAfter` points at a missing, disabled, or contradictory dependency, or direct-runner `threadCount` is not positive
+|verify every `executeAfter` target exists and can execute, and pass a positive direct-runner `threadCount`
+
+|a suite does not run under an explicit group filter
+|the suite has no matching groups
+|verify suite groups intersect the requested groups; suites with no groups never match an explicit filter
+
+|a later suite still runs even though a test failed in an earlier suite
+|suite-level `dependsOn` does not automatically roll method-level failures into the suite culprit
+|use `stopOnFailure` or keep dependent work inside one suite and use method-level `dependsOn`
+
+|`Test class(...) must expose a no arg constructor`
+|the suite class cannot be instantiated reflectively
+|add a public no-arg constructor
+
+|lifecycle or test invocation fails with reflective-access errors
+|methods are not no-arg or not reflectively accessible
+|ensure `@BeforeSuite`, `@AfterSuite`, `@BeforeTest`, `@AfterTest`, and `@Test` methods are no-arg and visible to reflection in your runtime
+
+|the run stops after the first failure or error
+|fail-fast flags are active
+|check direct-runner `stopOnFailure` and `stopOnError`, or Surefire provider property `testFailureIgnore`
+
+|Surefire runs, but Sleuth behavior is absent
+|the provider was not added to `maven-surefire-plugin` dependencies
+|verify `surefire-sleuth-provider` is configured as a plugin dependency and that test classes still compile against `sleuth-runner`
+
+|TestNG annotations seem to be ignored or mixed behavior appears
+|native and TestNG dialects are mixed in the same class, or unsupported TestNG features are expected
+|keep one dialect per class and stay within the translated TestNG subset
+|===
+
+[[sleuth-minimal-checklist, Minimal Checklist]]
+== Minimal Checklist
+
+To stand up Sleuth cleanly:
+
+1. add `sleuth-runner` to the test classpath
+2. if you want Maven integration, add `surefire-sleuth-provider` to `maven-surefire-plugin`
+3. use fully qualified class names for suite dependencies and method names for test dependencies
+4. pass a positive direct-runner `threadCount`, or configure provider `threadCount`
+5. choose fail-fast versus continue-reporting behavior deliberately
+6. avoid unresolved `executeAfter` targets and mixed native/TestNG dialects in the same class
+7. align group filters with suite group metadata
+
+[[sleuth-api-index, API Index]]
+== API Index
+
+[cols="2,3,3",options="header"]
+|===
+|Type |Role |See
+
+|`org.smallmind.sleuth.runner.SleuthRunner`
+|direct execution entry point
+|<<runner-api,Runner API>>
+
+|`org.smallmind.sleuth.runner.TestContext`
+|thread-local test context for child threads
+|<<sleuth-thread-context,Thread-Local Test Context>>
+
+|`org.smallmind.sleuth.runner.annotation.Suite`
+|suite metadata annotation
+|<<sleuth-native-annotations,Native Annotation Model>>
+
+|`org.smallmind.sleuth.runner.annotation.Test`
+|test method metadata annotation
+|<<sleuth-native-annotations,Native Annotation Model>>
+
+|`org.smallmind.sleuth.runner.annotation.BeforeSuite`, `@AfterSuite`, `@BeforeTest`, `@AfterTest`
+|suite and per-test lifecycle annotations
+|<<sleuth-native-annotations,Native Annotation Model>>
+
+|`org.smallmind.sleuth.runner.event.SleuthEvent`
+|base event contract
+|<<sleuth-events,Events And Listeners>>
+
+|`org.smallmind.sleuth.runner.event.SleuthEventType`
+|event-type enumeration
+|<<sleuth-events,Events And Listeners>>
+
+|`org.smallmind.sleuth.runner.event.SleuthEventListener`
+|listener SPI
+|<<sleuth-events,Events And Listeners>>
+
+|`org.smallmind.sleuth.maven.surefire.SleuthProvider`
+|Surefire provider integration
+|<<sleuth-surefire-provider,Surefire Provider>>
+
+|`org.smallmind.sleuth.maven.surefire.SurefireSleuthEventListener`
+|adapter from Sleuth events to Surefire callbacks
+|<<sleuth-surefire-provider,Surefire Provider>>
+
+|`org.smallmind.sleuth.maven.surefire.SleuthOutputReceiver`
+|stdout/stderr forwarding bridge for Surefire
+|<<sleuth-surefire-provider,Surefire Provider>>
+|===

@@ -1,0 +1,716 @@
+[[ansible, Ansible]]
+= Ansible
+
+[partintro]
+Ansible is Smallmind's Ansible Vault codec module.
+It provides explicit Java APIs for producing and consuming Ansible Vault compatible text and for parsing vault-id command-line specifications.
+It keeps password sourcing, file handling, and runtime policy in caller code.
+
+Design priorities:
+
+* small public surface
+* caller-owned streams, passwords, and runtime policy
+* thin compatibility with Ansible Vault text and vault-id conventions
+
+Audience: developers embedding vault operations in Java libraries, applications, build tools, and deployment utilities.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<ansible-reading-paths,Reading Paths>>
+* <<ansible-at-a-glance,At A Glance>>
+* <<ansible-why-use,Why Use Ansible>>
+* <<ansible-install,Installation>>
+* <<ansible-quick-start,Quick Start>>
+* <<ansible-integration-patterns,Integration Patterns>>
+* <<ansible-api-usage,API By Use Case>>
+* <<ansible-vault-format,Vault Text Format And Compatibility>>
+* <<ansible-vault-id,Vault Id Parsing>>
+* <<ansible-api-index,API Index>>
+* <<ansible-exceptions,Failure Model>>
+* <<ansible-operational,Operational Notes>>
+* <<ansible-troubleshooting,Troubleshooting>>
+* <<ansible-verification,Verification Checklist>>
+
+[[ansible-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to this module, read in this order:
+
+1. <<ansible-at-a-glance,At A Glance>>
+2. <<ansible-install,Installation>>
+3. <<ansible-quick-start,Quick Start>>
+4. <<ansible-integration-patterns,Integration Patterns>>
+5. <<ansible-vault-format,Vault Text Format And Compatibility>>
+6. <<ansible-exceptions,Failure Model>>
+
+If you already know Ansible Vault and need exact behavior quickly, jump to:
+
+* <<ansible-api-index,API Index>>
+* <<ansible-vault-format,Vault Text Format And Compatibility>>
+* <<ansible-troubleshooting,Troubleshooting>>
+* <<ansible-operational,Operational Notes>>
+
+[[ansible-terms]]
+[[ansible-guarantees]]
+[[ansible-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Ansible
+|`org.smallmind:smallmind-ansible`
+|Ansible Vault compatible encryption/decryption plus vault-id parsing
+|===
+
+Primary types:
+
+* `VaultCodec`: high-level vault text encode/decode facade
+* `VaultId`: parser for `id@file-or-prompt` command-line specs
+* `VaultCodecException`: format, cipher, and crypto failure surface
+* `VaultPasswordException`: specialized wrong-password or failed-authentication signal
+
+Use this module when you need to:
+
+* encrypt plaintext into Ansible Vault text from Java
+* decrypt vault text back into bytes without spawning the CLI
+* parse `--vault-id` style values while keeping password sourcing explicit
+
+[[ansible-why-use, Why Use Ansible]]
+== Why Use Ansible
+
+Use this module when you need Ansible Vault compatibility inside Java code with direct APIs and caller-owned password handling.
+
+Compared with shelling out to `ansible-vault`, this module gives you:
+
+* a direct Java API for encrypt/decrypt operations
+* library-safe behavior with no runtime or container ownership
+* an exception model that separates password validation failures from format and provider failures
+* explicit caller control over streams, passwords, retries, and file handling
+
+Compared with using generic crypto helpers directly, this module gives you:
+
+* the exact vault text envelope expected by supported Ansible Vault formats
+* a parser for standard `id@fileOrPrompt` vault-id syntax
+* compatibility-focused behavior without forcing the caller to implement header, double-hex, and HMAC handling
+
+[[ansible-install, Installation]]
+== Installation
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-ansible</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct module dependency:
+
+* `org.smallmind:smallmind-nutsnbolts`
+
+Runtime expectations:
+
+* a JCE provider that supports `PBKDF2WithHmacSHA256`
+* a cipher provider that supports `AES/CTR/PKCS7Padding`
+* enough memory to buffer the entire plaintext or vault payload in one call
+
+[IMPORTANT]
+====
+`VaultCodec` is not a streaming transform.
+`encrypt(...)` reads the whole plaintext stream into memory before encrypting, and `decrypt(...)` reads and decodes the full vault payload before returning plaintext bytes.
+====
+
+[[ansible-quick-start, Quick Start]]
+== Quick Start
+
+[NOTE]
+====
+`VaultCodec` methods fully consume the supplied `InputStream` but do not close it.
+The caller owns stream lifecycle, retries, and any charset conversion.
+====
+
+=== Encrypt Text Into Vault Text
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+
+String clearText = "db.password=swordfish";
+String password = "correct horse battery staple";
+
+String vaultText = VaultCodec.encrypt(
+    new ByteArrayInputStream(clearText.getBytes(StandardCharsets.UTF_8)),
+    password
+);
+----
+
+Use the two-argument overload when you want a `1.1` header with no vault id.
+
+=== Encrypt With A Vault Id Header
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+
+String clearText = "db.password=swordfish";
+String password = "correct horse battery staple";
+
+String vaultText = VaultCodec.encrypt(
+    new ByteArrayInputStream(clearText.getBytes(StandardCharsets.UTF_8)),
+    password,
+    "prod"
+);
+----
+
+Header behavior is explicit:
+
+* `id == null` produces `$ANSIBLE_VAULT;1.1;AES256`
+* `id != null` produces `$ANSIBLE_VAULT;1.2;AES256;<id>`
+* the `id` value is inserted as provided; no escaping or normalization is applied
+
+=== Decrypt Vault Text Back To Bytes
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+
+byte[] clearBytes = VaultCodec.decrypt(
+    new ByteArrayInputStream(vaultText.getBytes(StandardCharsets.UTF_8)),
+    password
+);
+
+String clearText = new String(clearBytes, StandardCharsets.UTF_8);
+----
+
+Decryption always returns `byte[]`.
+If the original secret is binary, keep it binary and do not force a charset conversion.
+
+=== Distinguish Wrong Password From Other Failures
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+import org.smallmind.ansible.VaultCodecException;
+import org.smallmind.ansible.VaultPasswordException;
+
+ByteArrayInputStream vaultInputStream =
+    new ByteArrayInputStream(vaultText.getBytes(StandardCharsets.UTF_8));
+
+try {
+  byte[] clearBytes = VaultCodec.decrypt(vaultInputStream, password);
+} catch (VaultPasswordException wrongPassword) {
+  // Password mismatch or failed HMAC validation.
+} catch (VaultCodecException codecFailure) {
+  // Unsupported header/cipher, provider issue, or other codec failure.
+}
+----
+
+=== Normalize Windows Line Endings Before Decrypt
+
+`decrypt(...)` reads the header as a single line and expects `\n` line termination.
+If vault text may arrive with `\r\n`, normalize it first.
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+
+String normalized = vaultText.replace("\r\n", "\n");
+
+byte[] clearBytes = VaultCodec.decrypt(
+    new ByteArrayInputStream(normalized.getBytes(StandardCharsets.UTF_8)),
+    password
+);
+----
+
+[[ansible-usage-patterns]]
+[[ansible-io-contracts]]
+[[ansible-retry-patterns]]
+[[ansible-data-flow]]
+[[ansible-integration-patterns, Integration Patterns]]
+== Integration Patterns
+
+=== Encrypt File Content
+
+[source,java]
+----
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.ansible.VaultCodec;
+
+Path clearFile = Path.of("secrets", "application.properties");
+Path passwordFile = Path.of("secrets", "vault.pass");
+Path vaultFile = Path.of("secrets", "application.properties.vault");
+
+String password = Files.readString(passwordFile, StandardCharsets.UTF_8).trim();
+
+try (InputStream inputStream = Files.newInputStream(clearFile)) {
+  String vaultText = VaultCodec.encrypt(inputStream, password, "prod");
+
+  Files.writeString(vaultFile, vaultText, StandardCharsets.UTF_8);
+}
+----
+
+This keeps file access outside the codec.
+The library only sees bytes and passwords.
+
+=== Decrypt A Vault File And Preserve Binary Data
+
+[source,java]
+----
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.ansible.VaultCodec;
+
+Path vaultFile = Path.of("secrets", "client-cert.p12.vault");
+Path passwordFile = Path.of("secrets", "vault.pass");
+Path outputFile = Path.of("build", "client-cert.p12");
+
+String password = Files.readString(passwordFile, StandardCharsets.UTF_8).trim();
+
+try (InputStream inputStream = Files.newInputStream(vaultFile)) {
+  byte[] clearBytes = VaultCodec.decrypt(inputStream, password);
+
+  Files.write(outputFile, clearBytes);
+}
+----
+
+`decrypt(...)` does not assume the payload is text.
+That makes it safe for certificates, keystores, images, or any other binary secret material.
+
+=== Write A Minimal Round-Trip Test
+
+[source,java]
+----
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+
+byte[] original = "apiKey=12345".getBytes(StandardCharsets.UTF_8);
+String password = "correct horse battery staple";
+
+String vaultText = VaultCodec.encrypt(new ByteArrayInputStream(original), password);
+byte[] clearBytes = VaultCodec.decrypt(
+    new ByteArrayInputStream(vaultText.getBytes(StandardCharsets.UTF_8)),
+    password
+);
+
+assertArrayEquals(original, clearBytes);
+----
+
+For regression tests, compare decrypted bytes and exception types rather than exact ciphertext text.
+The ciphertext changes across encrypt calls because each call uses a fresh random salt.
+
+=== Retry By Recreating The InputStream
+
+Both `encrypt(...)` and `decrypt(...)` consume the input stream.
+If your code retries, recreate or reopen the stream for each attempt.
+
+[source,java]
+----
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCodec;
+import org.smallmind.ansible.VaultCodecException;
+
+byte[] vaultBytes = vaultText.replace("\r\n", "\n").getBytes(StandardCharsets.UTF_8);
+
+for (int attempt = 1; attempt <= 3; attempt++) {
+  try {
+    byte[] clearBytes = VaultCodec.decrypt(new ByteArrayInputStream(vaultBytes), password);
+    break;
+  } catch (VaultCodecException exception) {
+    if (attempt == 3) {
+      throw exception;
+    }
+  }
+}
+----
+
+Do not call `decrypt(...)` again on the same already-consumed stream.
+
+=== Use `VaultTumbler` When You Need Separate Components
+
+Most callers should stay at `VaultCodec`.
+If you need the salt, HMAC, and encrypted bytes as separate values, the lower-level API is available.
+
+[source,java]
+----
+import java.nio.charset.StandardCharsets;
+import org.smallmind.ansible.VaultCake;
+import org.smallmind.ansible.VaultTumbler;
+
+byte[] clearBytes = "token=abc123".getBytes(StandardCharsets.UTF_8);
+
+VaultTumbler tumbler = new VaultTumbler(password);
+VaultCake vaultCake = tumbler.encrypt(clearBytes);
+
+byte[] salt = vaultCake.getSalt();
+byte[] hmac = vaultCake.getHmac();
+byte[] encrypted = vaultCake.getEncrypted();
+
+byte[] roundTrip = new VaultTumbler(password, salt).decrypt(hmac, encrypted);
+----
+
+This is the low-level API behind `VaultCodec`.
+Use it only when a caller-owned storage format needs the raw components instead of canonical vault text.
+
+[[ansible-method-selection]]
+[[ansible-method-matrix]]
+[[ansible-api-usage, API By Use Case]]
+== API By Use Case
+
+[cols="2,3,3",options="header"]
+|===
+|API |Use It When |Notes
+
+|`VaultCodec.encrypt(inputStream, password)`
+|You want canonical vault text with no id segment
+|Emits a `1.1` header and reads the entire stream
+
+|`VaultCodec.encrypt(inputStream, password, id)`
+|You want canonical vault text with a vault id
+|Emits a `1.2` header and inserts `id` exactly as supplied
+
+|`VaultCodec.decrypt(inputStream, password)`
+|You have vault text and need the clear bytes
+|Accepts supported `1.1` and `1.2` headers and verifies the HMAC before decrypting
+
+|`new VaultId(spec)`
+|You need to parse `id@fileOrPrompt` syntax from CLI or config input
+|Validates only the split format; it does not read the file or prompt the user
+
+|`new VaultTumbler(password)`
+|You want raw vault components instead of vault text
+|Generates a new random salt for each instance
+
+|`new VaultTumbler(password, salt)`
+|You need to decrypt or rehydrate raw components with a known salt
+|Most callers should prefer `VaultCodec`
+
+|`VaultCake`
+|You need to carry `salt`, `hmac`, and `encrypted` bytes together
+|Returned by `VaultTumbler.encrypt(...)`
+|===
+
+[[ansible-format]]
+[[ansible-parser-tolerance]]
+[[ansible-input-summary]]
+[[ansible-behavior]]
+[[ansible-crypto]]
+[[ansible-security-properties]]
+[[ansible-id-constraints]]
+[[ansible-edge-cases]]
+[[ansible-vault-format, Vault Text Format And Compatibility]]
+== Vault Text Format And Compatibility
+
+Supported header forms:
+
+* `$ANSIBLE_VAULT;1.1;AES256`
+* `$ANSIBLE_VAULT;1.2;AES256;<id>`
+
+What the module enforces:
+
+* the header must begin with `$ANSIBLE_VAULT`
+* the supported versions are `1.1` and `1.2`
+* the cipher marker must be exactly `AES256`
+* `1.1` must have three header segments
+* `1.2` must have four header segments
+* the payload must contain the expected double-hex encoded salt, HMAC, and encrypted body
+
+What the module does not enforce:
+
+* semantic validation of the `1.2` id value
+* ownership of password prompting or password-file reading
+* alternative ciphers or alternative vault header formats
+
+=== Emitted Payload Structure
+
+`VaultCodec.encrypt(...)` produces:
+
+1. a header line
+2. a double-hex encoded salt block
+3. an encoded `0a` separator
+4. a double-hex encoded HMAC block
+5. an encoded `0a` separator
+6. a double-hex encoded encrypted payload block
+
+The emitted payload is wrapped onto 80-character lines.
+A simplified shape looks like this:
+
+[source,text]
+----
+$ANSIBLE_VAULT;1.2;AES256;prod
+663336363462333738663862...
+376130613633313632356561...
+623231303937343861316133...
+----
+
+=== Cryptographic Semantics
+
+The module derives keys with `PBKDF2WithHmacSHA256`, splits the derived material into an AES key, an HMAC key, and an IV, and encrypts with `AES/CTR/PKCS7Padding`.
+
+Callers usually need only the operational consequences:
+
+* the same plaintext and password produce different ciphertext across runs because a new random salt is generated
+* decryption validates the HMAC before returning plaintext
+* a wrong password and a tampered payload both surface as `VaultPasswordException`
+* the vault id is header metadata only; it is not part of key derivation or HMAC calculation
+
+=== Header And Line Ending Guidance
+
+Because the header is line-oriented, use header-safe id values and normalize line endings when vault text crosses platforms or transports.
+
+Recommended caller-side rules:
+
+* constrain ids to characters such as `A-Za-z0-9._-`
+* do not include `;`, `\n`, or `\r` in ids
+* normalize `\r\n` to `\n` before calling `decrypt(...)`
+* preserve the header line exactly when storing or transmitting vault text
+
+Caller-side id validation example:
+
+[source,java]
+----
+import java.util.regex.Pattern;
+
+Pattern safeIdPattern = Pattern.compile("[A-Za-z0-9._-]+");
+
+if ((id != null) && (!safeIdPattern.matcher(id).matches())) {
+  throw new IllegalArgumentException("Vault id must match [A-Za-z0-9._-]+");
+}
+----
+
+[[ansible-vault-id, Vault Id Parsing]]
+== Vault Id Parsing
+
+`VaultId` parses the same `id@fileOrPrompt` shape commonly used in Ansible-style CLI arguments.
+
+Accepted shapes:
+
+* `prod@prompt`
+* `dev@/etc/ansible/dev.vault-pass`
+* `stage@C:/secrets/stage.pass`
+
+Parsing example:
+
+[source,java]
+----
+import org.smallmind.ansible.VaultId;
+
+VaultId vaultId = new VaultId("prod@prompt");
+
+String id = vaultId.getId();
+String source = vaultId.getFileOrPrompt();
+----
+
+Integration example:
+
+[source,java]
+----
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.ansible.VaultId;
+
+VaultId vaultId = new VaultId(spec);
+
+if ("prompt".equals(vaultId.getFileOrPrompt())) {
+  // Ask the user for a password using your own prompt flow.
+} else {
+  String password = Files.readString(
+      Path.of(vaultId.getFileOrPrompt()),
+      StandardCharsets.UTF_8
+  ).trim();
+}
+----
+
+`VaultId` is only a parser.
+It does not open files, prompt on the console, or resolve environment-specific defaults.
+
+[[ansible-api-index, API Index]]
+== API Index
+
+[cols="2,3,3",options="header"]
+|===
+|Type |Role |When Most Users Need It
+
+|`org.smallmind.ansible.VaultCodec`
+|High-level facade for vault text encode/decode
+|For almost all encryption and decryption work
+
+|`org.smallmind.ansible.VaultId`
+|Parser for `id@fileOrPrompt`
+|When consuming CLI-style vault id arguments
+
+|`org.smallmind.ansible.VaultCodecException`
+|Base codec/format/provider failure
+|When handling non-password failures
+
+|`org.smallmind.ansible.VaultPasswordException`
+|Wrong-password or failed-authentication signal
+|When you want a separate operator or retry path for password failures
+
+|`org.smallmind.ansible.VaultTumbler`
+|Low-level crypto helper for raw component workflows
+|Only when vault text is not the storage or transport format
+
+|`org.smallmind.ansible.VaultCake`
+|Carrier for salt, HMAC, and encrypted bytes
+|Only with `VaultTumbler`
+|===
+
+[[ansible-exceptions, Failure Model]]
+== Failure Model
+
+Preconditions:
+
+* `inputStream` and `password` are expected to be non-null
+* `VaultId` expects a non-null spec containing one `@` separator with non-empty text on both sides
+
+Primary failure surfaces:
+
+[cols="2,2,3",options="header"]
+|===
+|Failure |Exception |Notes
+
+|Input stream read failure
+|`IOException`
+|Surfaced directly from the caller-owned stream
+
+|Malformed or non-hex payload content
+|`IOException`
+|Hex decoding uses `UnsupportedEncodingException`, which is an `IOException`
+
+|Unsupported header, wrong segment count, or unsupported cipher marker
+|`VaultCodecException`
+|Occurs before plaintext is returned
+
+|Missing fixed-length salt or HMAC blocks
+|`VaultCodecException`
+|The module expects 32 decoded bytes for each fixed block
+
+|Missing encoded `0a` separator between fixed blocks
+|`VaultCodecException`
+|Separator validation is strict
+
+|Password mismatch or HMAC validation failure
+|`VaultPasswordException`
+|Tampering and wrong password look the same at this layer
+
+|Crypto provider or algorithm unavailable
+|`VaultCodecException`
+|Usually wraps `NoSuchAlgorithmException`, `NoSuchPaddingException`, or key-spec errors
+
+|Malformed `id@fileOrPrompt` spec
+|`CommandLineException`
+|Thrown by `VaultId`
+|===
+
+A practical handling split is:
+
+* catch `VaultPasswordException` when the operator should retry or choose a different password source
+* catch `VaultCodecException` when the vault text or runtime is not compatible
+* catch `IOException` when the transport, file, or raw encoded payload is damaged
+
+[[ansible-operational, Operational Notes]]
+== Operational Notes
+
+* `VaultCodec` is stateless at the API level; each call allocates its own per-call working data
+* treat `VaultTumbler` as a per-operation helper rather than a shared singleton
+* encrypt and decrypt operations are full-buffer, not streaming transforms
+* the module does not close caller-provided streams
+* the module does not interpret plaintext charset; callers decide whether bytes are UTF-8, binary, or something else
+* decryption accepts `1.2` headers but does not use the id for key derivation
+* output text is canonicalized around LF line endings and 80-character payload wrapping
+
+Security handling guidance:
+
+* do not log vault passwords, clear bytes, or full vault text in normal application logs
+* zero or replace caller-managed sensitive buffers if your threat model requires it
+* treat `VaultPasswordException` as an authentication failure, not as a parsing error
+
+[[ansible-failure-triage]]
+[[ansible-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,2,3",options="header"]
+|===
+|Observed Symptom |Likely Cause |Action
+
+|`VaultCodecException: Unknown header format(...)`
+|The header is not one of the supported `1.1` or `1.2` forms
+|Check the exact first line and normalize line endings before decrypting
+
+|`VaultCodecException: Unknown cypher(...)`
+|The header cipher segment is not exactly `AES256`
+|Supply Ansible Vault content using the supported cipher marker
+
+|`VaultPasswordException: Wrong password`
+|The password is wrong or the payload was modified
+|Verify the password source and treat the vault text as untrusted until confirmed
+
+|`IOException` while decrypting
+|The payload is truncated, not hex, or damaged in transport/storage
+|Re-read the source bytes and verify no extra formatting characters were added
+
+|Decrypt works on one platform but not another
+|The source text was stored with `\r\n` line endings
+|Normalize to `\n` before passing the text to `VaultCodec.decrypt(...)`
+
+|A generated `1.2` vault cannot be consumed by downstream tooling
+|The supplied id contains delimiters or control characters
+|Restrict ids to simple header-safe tokens and re-encrypt
+
+|Repeated retries fail immediately
+|The same consumed `InputStream` is being reused
+|Recreate the stream or reopen the file for each attempt
+
+|`VaultCodecException` wrapping algorithm or padding errors
+|The required crypto provider is not available in the runtime
+|Install or enable a provider that supports `PBKDF2WithHmacSHA256` and `AES/CTR/PKCS7Padding`
+|===
+
+[[ansible-verification, Verification Checklist]]
+== Verification Checklist
+
+Use this checklist when adopting the module or validating an upgrade:
+
+1. Encrypt known plaintext with a known password and decrypt it back to the same bytes.
+2. Encrypt the same plaintext twice and confirm the vault text changes while the decrypted bytes stay the same.
+3. Produce both a `1.1` header and a `1.2` header and verify the target Ansible tooling accepts both forms you need.
+4. Confirm a wrong password path throws `VaultPasswordException`.
+5. Confirm malformed header input throws `VaultCodecException`.
+6. Confirm malformed hex payload input throws `IOException`.
+7. Confirm retry logic recreates the source stream for each attempt.
+8. Confirm binary payloads survive round-trip without charset conversion.
+9. Confirm `\r\n` input is normalized before decrypt in any cross-platform storage path.
+10. Confirm your runtime provider supports `PBKDF2WithHmacSHA256` and `AES/CTR/PKCS7Padding`.
+
+If you add automated checks around this module, prefer asserting decrypted bytes and exception types rather than exact ciphertext text, because each encrypt call uses a fresh random salt.
+
+== See Also
+
+* `ansible/pom.xml`
+* `ansible/src/main/java/org/smallmind/ansible/VaultCodec.java`
+* `ansible/src/main/java/org/smallmind/ansible/VaultId.java`
+* `ansible/src/main/java/org/smallmind/ansible/VaultTumbler.java`

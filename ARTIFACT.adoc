@@ -1,0 +1,1126 @@
+[[artifact, Artifact]]
+= Artifact
+
+[partintro]
+Artifact is Smallmind's runtime Maven resolution module for code that needs to download artifacts, compute compile classpaths, or watch coordinates for change while keeping repository policy and application lifecycle explicit.
+
+The current published jar is `artifact-maven`. Its public surface is intentionally small:
+
+* `MavenCoordinate` models a coordinate explicitly
+* `MavenRepository` resolves artifacts through Maven Resolver using `settings.xml`
+* `MavenScanner` polls coordinates on a caller-owned schedule
+* `MavenScannerEvent` and `MavenScannerListener` carry update notifications and a matching class loader
+
+Design priorities:
+
+* honor standard Maven `settings.xml` repositories, mirrors, proxies, and credentials
+* keep lifecycle explicit and caller-owned
+* do no background work unless `MavenScanner.start()` is called
+* stay thin over Maven Resolver and standard Maven repository semantics
+
+Audience: developers building extension hosts, plugin loaders, embedded installers, updaters, and other library or application code that must resolve Maven artifacts explicitly.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<artifact-reading-paths,Reading Paths>>
+* <<artifact-at-a-glance,At A Glance>>
+* <<artifact-why-use,Why Use Artifact>>
+* <<artifact-layout,Project Layout>>
+* <<artifact-installation,Installation>>
+* <<artifact-quick-start,Quick Start>>
+* <<artifact-integration-contracts,Ownership Model>>
+* <<artifact-api-index,API By Use Case>>
+* <<artifact-flow,Common Integration Patterns>>
+* <<artifact-coordinate,MavenCoordinate>>
+* <<artifact-repository,MavenRepository>>
+* <<artifact-settings,Settings And Repository Semantics>>
+* <<artifact-scanner,MavenScanner>>
+* <<artifact-event-model,Event Model>>
+* <<artifact-classloading,Class Loading And Reload Policy>>
+* <<artifact-threading,Threading And Lifecycle>>
+* <<artifact-error-handling,Error Handling>>
+* <<artifact-operational-notes,Operational Notes>>
+* <<artifact-edge-cases,Behavioral Edge Cases>>
+* <<artifact-troubleshooting,Troubleshooting>>
+* <<artifact-minimal-checklist,Minimal Checklist>>
+* <<artifact-verification,Verification Checklist>>
+* <<artifact-defaults,Defaults Reference>>
+
+[[artifact-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are adopting the module for the first time, read in this order:
+
+1. <<artifact-why-use,Why Use Artifact>>
+2. <<artifact-installation,Installation>>
+3. <<artifact-quick-start,Quick Start>>
+4. <<artifact-api-index,API By Use Case>>
+5. <<artifact-repository,MavenRepository>>
+6. <<artifact-scanner,MavenScanner>> if you need polling
+
+If you already use the module and need exact behavior quickly, jump to:
+
+* <<artifact-settings,Settings And Repository Semantics>>
+* <<artifact-event-model,Event Model>>
+* <<artifact-threading,Threading And Lifecycle>>
+* <<artifact-edge-cases,Behavioral Edge Cases>>
+* <<artifact-troubleshooting,Troubleshooting>>
+
+[[artifact-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Artifact parent
+|`org.smallmind:smallmind-artifact`
+|Aggregator module for artifact tooling
+
+|Maven integration
+|`org.smallmind:artifact-maven`
+|Runtime Maven resolution, dependency collection, coordinate polling, and update events
+|===
+
+[[artifact-why-use, Why Use Artifact]]
+== Why Use Artifact
+
+Use this module when your code needs to resolve Maven coordinates at runtime while keeping repository choice, settings location, and lifecycle under the caller's control.
+
+Typical fits:
+
+* plugin or extension hosts that load jars on demand
+* embedded installers or updaters that fetch known coordinates
+* systems that want Maven `settings.xml` semantics instead of a second repository configuration model
+* integration libraries that need explicit runtime resolution without taking over application startup
+
+Advantages over rolling your own resolver integration:
+
+* reuses standard Maven settings behavior for mirrors, proxies, credentials, and profile-defined repositories
+* exposes only a few explicit types instead of a framework lifecycle
+* gives polling users a ready-made `MavenScanner` and change event model
+* keeps class loading policy visible by delivering a class loader per change event rather than hiding reload behavior
+
+[[artifact-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`artifact/`
+|`org.smallmind:smallmind-artifact`
+|Aggregator POM
+
+|`artifact/maven/`
+|`org.smallmind:artifact-maven`
+|Published jar containing all public artifact APIs
+|===
+
+`artifact-maven` currently exposes one package: `org.smallmind.artifact.maven`.
+
+[[artifact-installation, Installation]]
+== Installation
+
+Add `artifact-maven` anywhere you intend to construct `MavenRepository` or `MavenScanner`.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>artifact-maven</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+=== Runtime Requirements
+
+`artifact-maven` is intentionally thin over Maven Resolver and Maven settings infrastructure.
+
+Important dependency detail:
+
+* `artifact-maven` brings Maven Resolver core and transport modules transitively
+* Maven settings/model/provider components are declared `provided` by this module
+* if your runtime does not already include those Maven components, add them explicitly
+
+The required Maven-side runtime pieces are:
+
+* `org.apache.maven:maven-model-builder`
+* `org.apache.maven:maven-resolver-provider`
+* `org.apache.maven:maven-settings`
+* `org.apache.maven:maven-settings-builder`
+
+Example for a standalone host that wants to supply the full runtime explicitly:
+
+[source,xml]
+----
+<properties>
+  <smallmind.version>...</smallmind.version>
+  <maven.version>3.9.12</maven.version>
+</properties>
+
+<dependencies>
+  <dependency>
+    <groupId>org.smallmind</groupId>
+    <artifactId>artifact-maven</artifactId>
+    <version>${smallmind.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.maven</groupId>
+    <artifactId>maven-model-builder</artifactId>
+    <version>${maven.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.maven</groupId>
+    <artifactId>maven-resolver-provider</artifactId>
+    <version>${maven.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.maven</groupId>
+    <artifactId>maven-settings</artifactId>
+    <version>${maven.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.maven</groupId>
+    <artifactId>maven-settings-builder</artifactId>
+    <version>${maven.version}</version>
+  </dependency>
+</dependencies>
+----
+
+The module expects:
+
+* a readable `settings.xml` at `~/.m2/settings.xml` or in the selected settings directory
+* a usable local repository directory
+* repository endpoints reachable when `offline=false`
+* credentials, mirrors, and proxies expressed in standard Maven settings structures
+
+[IMPORTANT]
+====
+Background scan failures are logged through Scribe (`LoggerManager`).
+
+If you use `MavenScanner` and want worker-thread failures to appear in logs, include exactly one runtime `scribe-ink-*` endpoint module.
+====
+
+=== Libraries Versus Applications
+
+For reusable libraries:
+
+* depend on this module only if runtime artifact resolution is part of your contract
+* do not hide scanner startup inside static initialization or container magic
+* expose settings selection, offline mode, and lifecycle to callers
+
+For applications or plugin hosts:
+
+* own the `settings.xml` location explicitly when deployments are controlled
+* decide whether resolution may contact remote repositories or must stay offline
+* own class-loader swap policy and shutdown sequencing
+
+[[artifact-quick-start, Quick Start]]
+== Quick Start
+
+These examples show the common entry points library users actually need: one-shot resolution, dependency collection, custom settings selection, and polling.
+
+=== Resolve One Artifact
+
+[source,java]
+----
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.smallmind.artifact.maven.MavenCoordinate;
+import org.smallmind.artifact.maven.MavenRepository;
+
+MavenRepository repository = new MavenRepository("plugin-loader", false);
+DefaultRepositorySystemSession session = repository.generateSession();
+
+Artifact artifact = repository.acquireArtifact(
+    session,
+    new MavenCoordinate("org.example.plugins", "report-plugin", "1.4.2"));
+
+System.out.println(artifact.getFile().getAbsolutePath());
+----
+
+Use this pattern when you need one known jar file and do not need its dependency graph yet.
+
+=== Resolve A Compile Classpath
+
+[source,java]
+----
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.smallmind.artifact.maven.MavenCoordinate;
+import org.smallmind.artifact.maven.MavenRepository;
+
+MavenRepository repository = new MavenRepository("plugin-loader", false);
+DefaultRepositorySystemSession session = repository.generateSession();
+
+Artifact rootArtifact = repository.acquireArtifact(
+    session,
+    new MavenCoordinate("org.example.plugins", "report-plugin", "1.4.2"));
+
+Artifact[] classpath = repository.resolve(session, rootArtifact);
+
+for (Artifact dependencyArtifact : classpath) {
+  System.out.println(dependencyArtifact.getFile().getAbsolutePath());
+}
+----
+
+`resolve(...)` returns the root artifact plus its non-optional transitive dependencies in compile scope. Order is not guaranteed.
+
+=== Use A Private Settings Directory
+
+[source,java]
+----
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.smallmind.artifact.maven.MavenCoordinate;
+import org.smallmind.artifact.maven.MavenRepository;
+
+MavenRepository repository = new MavenRepository(
+    "/opt/plugin-host/maven",
+    "plugin-loader",
+    false);
+
+DefaultRepositorySystemSession session = repository.generateSession();
+
+Artifact artifact = repository.acquireArtifact(
+    session,
+    new MavenCoordinate("org.example.plugins", "report-plugin", "1.4.2"));
+----
+
+The selected directory must contain `settings.xml`. This is useful when an embedded host should not depend on the operator's default `~/.m2` configuration.
+
+=== Resolve From Local Cache Only
+
+[source,java]
+----
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.smallmind.artifact.maven.MavenCoordinate;
+import org.smallmind.artifact.maven.MavenRepository;
+
+MavenRepository repository = new MavenRepository("plugin-loader", true);
+DefaultRepositorySystemSession session = repository.generateSession();
+
+Artifact artifact = repository.acquireArtifact(
+    session,
+    new MavenCoordinate("org.example.plugins", "report-plugin", "1.4.2"));
+----
+
+With `offline=true`, the session is configured to avoid remote access. The artifact must already be present in the configured local repository.
+
+=== Poll For Updates
+
+[source,java]
+----
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.eclipse.aether.artifact.Artifact;
+import org.smallmind.artifact.maven.MavenCoordinate;
+import org.smallmind.artifact.maven.MavenScanner;
+import org.smallmind.artifact.maven.MavenScannerEvent;
+import org.smallmind.artifact.maven.MavenScannerListener;
+import org.smallmind.nutsnbolts.time.Stint;
+
+ExecutorService reloadExecutor = Executors.newSingleThreadExecutor();
+
+MavenScanner scanner = new MavenScanner(
+    "plugin-scanner",
+    false,
+    new Stint(30, TimeUnit.SECONDS),
+    new MavenCoordinate("org.example.plugins", "report-plugin", "1.4.2-SNAPSHOT"));
+
+scanner.addMavenScannerListener(new MavenScannerListener() {
+  @Override
+  public void artifactChange (final MavenScannerEvent event) {
+    reloadExecutor.submit(new Runnable() {
+      @Override
+      public void run () {
+        for (Map.Entry<Artifact, Artifact> entry : event.getArtifactDeltaMap().entrySet()) {
+          Artifact currentArtifact = entry.getKey();
+          Artifact previousArtifact = entry.getValue();
+
+          if (previousArtifact == null) {
+            System.out.println("Initial load: " + currentArtifact);
+          } else {
+            System.out.println("Updated: " + previousArtifact + " -> " + currentArtifact);
+          }
+        }
+
+        ClassLoader pluginClassLoader = event.getClassLoader();
+        // instantiate or reload plugin types through pluginClassLoader
+      }
+    });
+  }
+});
+
+scanner.start();
+
+// later, from ordinary shutdown control flow
+scanner.stop();
+reloadExecutor.shutdown();
+----
+
+The listener hands work off to another executor because callbacks run on the scanner thread. Keep callback bodies short.
+
+[[artifact-integration-contracts, Ownership Model]]
+== Ownership Model
+
+This module is library-safe because it keeps ownership boundaries explicit.
+
+Caller-owned responsibilities:
+
+* choosing the settings directory and repository identity string
+* deciding whether remote resolution is allowed
+* deciding when sessions are created and discarded
+* starting and stopping scanners
+* deciding how updated class loaders replace existing runtime state
+* keeping listener work fast or handing it off elsewhere
+
+Module-owned behavior:
+
+* translating Maven settings into resolver configuration
+* resolving one artifact or one compile classpath
+* polling coordinates when `MavenScanner.start()` is called
+* emitting one event per scan cycle when at least one monitored coordinate changes
+
+The module does not become your plugin runtime. It only helps you acquire jars and detect change.
+
+[[artifact-api-index, API By Use Case]]
+== API By Use Case
+
+Use this table when you know the job you need to do and want the shortest route to the right type.
+
+[cols="2,2,4",options="header"]
+|===
+|Need |Use |Notes
+
+|Describe one artifact explicitly
+|`MavenCoordinate`
+|Mutable coordinate with explicit group, artifact, classifier, extension, and version fields
+
+|Resolve one artifact file
+|`MavenRepository.acquireArtifact(...)`
+|Accepts either `MavenCoordinate` or Aether `Artifact`
+
+|Resolve a compile classpath
+|`MavenRepository.resolve(...)`
+|Returns the root artifact plus non-optional transitive dependencies
+
+|Reuse repository settings across multiple resolutions
+|`MavenRepository.generateSession()`
+|Create one session, then perform multiple operations against it
+
+|Poll coordinates for change
+|`MavenScanner`
+|Caller owns `start()` and `stop()`
+
+|Observe change details
+|`MavenScannerEvent`
+|Carries changed-artifact map, current artifacts, and an event-scoped class loader
+
+|Receive update callbacks
+|`MavenScannerListener`
+|Single callback method: `artifactChange(MavenScannerEvent event)`
+
+|Inspect the change-token model directly
+|`ArtifactTag`
+|Wraps a resolved artifact plus last-modified time; usually scanner-internal
+|===
+
+[[artifact-flow, Common Integration Patterns]]
+== Common Integration Patterns
+
+=== One-Time Resolution At Startup
+
+Use `MavenRepository` directly when you want startup to fail fast if a required artifact cannot be acquired.
+
+Typical sequence:
+
+1. Construct `MavenRepository` with explicit `repositoryId` and desired offline mode.
+2. Generate one session.
+3. Call `acquireArtifact(...)` for required coordinates.
+4. Call `resolve(...)` only for coordinates that need a full compile classpath.
+5. Build your own class loader or installation flow from the resolved files.
+
+=== Embedded Host With Private Maven Settings
+
+Use the constructor that accepts `settingsDirectory` when the host should carry its own repository policy.
+
+Typical reasons:
+
+* the application ships a pinned `settings.xml`
+* the application must use a private local repository
+* operator home-directory Maven settings should not affect runtime resolution
+
+=== Polling Snapshot Or Moving Coordinates
+
+Use `MavenScanner` when runtime change detection is part of the host design.
+
+Recommended pattern:
+
+1. Create one scanner per coherent reload boundary.
+2. Keep the monitored coordinate set narrow.
+3. Treat constructor coordinates as immutable after scanner creation.
+4. In `artifactChange(...)`, hand off real reload work to another thread or executor.
+5. Swap runtime objects or services atomically once the new loader is ready.
+6. Stop the scanner from normal shutdown control flow, not from inside the callback.
+
+=== Reconfigure By Replacement, Not Mutation
+
+`MavenScanner` keeps the original coordinate array and coordinate objects by reference.
+
+If the watched set needs to change:
+
+* build new `MavenCoordinate` values
+* construct a new `MavenScanner`
+* register listeners
+* start the new scanner
+* stop the old scanner
+
+That is safer than mutating the original coordinate array or coordinate objects in place.
+
+[[artifact-coordinate, MavenCoordinate]]
+== MavenCoordinate
+
+`MavenCoordinate` is the Smallmind-side coordinate model.
+
+Constructors:
+
+* `MavenCoordinate()`
+* `MavenCoordinate(String groupId, String artifactId, String version)`
+* `MavenCoordinate(String groupId, String artifactId, String classifier, String version)`
+* `MavenCoordinate(String groupId, String artifactId, String classifier, String extension, String version)`
+
+Behavior:
+
+* `extension` defaults to `jar`
+* the type is mutable
+* there is no constructor or setter validation
+* `groupId`, `artifactId`, and `version` are the practical required fields
+
+Common examples:
+
+[source,java]
+----
+MavenCoordinate plugin = new MavenCoordinate(
+    "org.example.plugins",
+    "report-plugin",
+    "1.4.2");
+
+MavenCoordinate sources = new MavenCoordinate(
+    "org.example.plugins",
+    "report-plugin",
+    "sources",
+    "jar",
+    "1.4.2");
+
+MavenCoordinate metadata = new MavenCoordinate();
+metadata.setGroupId("org.example.plugins");
+metadata.setArtifactId("report-plugin");
+metadata.setExtension("pom");
+metadata.setVersion("1.4.2");
+----
+
+[IMPORTANT]
+====
+`MavenCoordinate.equals(...)` and `hashCode()` assume required fields are non-null.
+
+Fully populate the coordinate before using it in equality-sensitive code, keyed collections, or scanners.
+====
+
+[[artifact-repository, MavenRepository]]
+== MavenRepository
+
+`MavenRepository` is the core resolver adapter. It turns Maven settings into an Aether `RepositorySystemSession` and exposes two direct operations: resolve one artifact and resolve one compile dependency set.
+
+=== Constructors
+
+* `MavenRepository(String repositoryId, boolean offline)`
+* `MavenRepository(String settingsDirectory, String repositoryId, boolean offline)`
+
+Parameters:
+
+* `repositoryId` becomes part of the outbound User-Agent header
+* `offline` controls whether sessions may contact remote repositories
+* `settingsDirectory`, when supplied, must contain `settings.xml`
+
+Example:
+
+[source,java]
+----
+MavenRepository repository = new MavenRepository("plugin-loader", false);
+
+MavenRepository privateRepository = new MavenRepository(
+    "/opt/plugin-host/maven",
+    "plugin-loader",
+    false);
+----
+
+=== Session Generation
+
+Call `generateSession()` before resolution work.
+
+[source,java]
+----
+DefaultRepositorySystemSession session = repository.generateSession();
+----
+
+A session is configured with:
+
+* the repository's `offline` flag
+* a default repository cache
+* proxy, mirror, and authentication selectors derived from Maven settings
+* a local repository manager rooted at settings `localRepository` or `~/.m2/repository`
+
+The module does not hide session creation inside each public API call. This makes settings and repository behavior explicit at the call site.
+
+=== Acquire One Artifact
+
+Overloads:
+
+* `Artifact acquireArtifact(DefaultRepositorySystemSession session, MavenCoordinate mavenCoordinate)`
+* `Artifact acquireArtifact(DefaultRepositorySystemSession session, Artifact artifact)`
+
+Use the `MavenCoordinate` overload when Smallmind's coordinate model is sufficient. Use the Aether overload when you already have or prefer an explicit `Artifact` descriptor.
+
+Example with an Aether artifact:
+
+[source,java]
+----
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+
+Artifact artifact = repository.acquireArtifact(
+    session,
+    new DefaultArtifact("org.example.plugins", "report-plugin", null, "jar", "1.4.2"));
+----
+
+=== Resolve A Dependency Set
+
+Method:
+
+* `Artifact[] resolve(DefaultRepositorySystemSession session, Artifact artifact)`
+
+Behavior:
+
+* dependency collection uses compile scope
+* optional dependencies are excluded
+* the returned array includes the root artifact
+* the returned array is deduplicated
+* ordering is not guaranteed
+
+Example turning the result into a path list:
+
+[source,java]
+----
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import org.eclipse.aether.artifact.Artifact;
+
+Artifact[] artifacts = repository.resolve(session, rootArtifact);
+
+List<Path> paths = new ArrayList<>();
+for (Artifact artifact : artifacts) {
+  paths.add(artifact.getFile().toPath());
+}
+----
+
+Use `resolve(...)` when your host needs a classpath, not only a single file.
+
+[[artifact-settings, Settings And Repository Semantics]]
+== Settings And Repository Semantics
+
+This section matters because `artifact-maven` deliberately follows Maven settings behavior rather than inventing another repository model.
+
+=== Settings File Selection
+
+* `new MavenRepository(String repositoryId, boolean offline)` reads `~/.m2/settings.xml`
+* `new MavenRepository(String settingsDirectory, String repositoryId, boolean offline)` reads `<settingsDirectory>/settings.xml`
+* when `settingsDirectory` is `null` or empty, the code falls back to `~/.m2`
+
+=== Repository Sources
+
+Remote repositories are built from active settings profiles.
+
+Current semantics:
+
+* `repositories` and `pluginRepositories` from active profiles are both used
+* a profile counts as active when its id appears in `settings.activeProfiles`
+* a profile also counts as active when `activation.activeByDefault=true`
+* JDK, OS, property, and file activation criteria are not evaluated by this module
+* no fallback remote repository is injected
+
+Practical implication:
+
+* if no active profile contributes any repository entries, remote resolution has nowhere to go
+* locally cached artifacts can still resolve when they already exist in the local repository
+
+=== Mirrors, Proxies, And Credentials
+
+The module applies:
+
+* settings `mirrors`
+* settings `proxies`
+* settings `servers`
+
+Those settings are translated into resolver selectors, so hosts do not need a second configuration layer for them.
+
+=== Local Repository Selection
+
+The local repository path comes from:
+
+1. settings `localRepository`, when present
+2. otherwise `~/.m2/repository`
+
+=== Repository Policies
+
+Each discovered remote repository is configured with:
+
+* release update policy `always`
+* snapshot update policy `always`
+* checksum policy `warn`
+
+This makes scanner-style polling meaningful, especially for snapshots, but it also means metadata freshness policy stays aggressive.
+
+[IMPORTANT]
+====
+This module does not inject Maven Central automatically.
+
+If your `settings.xml` does not contribute a usable repository for the requested coordinates, remote resolution will fail even though the coordinates are valid in ordinary Maven CLI usage elsewhere.
+====
+
+[[artifact-scanner, MavenScanner]]
+== MavenScanner
+
+`MavenScanner` polls one or more coordinates on a fixed cycle and emits an event only when at least one monitored coordinate changes.
+
+=== Constructors
+
+* `MavenScanner(String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)`
+* `MavenScanner(String settingsDirectory, String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)`
+
+Validation:
+
+* `cycleStint` must be non-null
+* the coordinate array must be non-null
+* the array may be empty
+* individual coordinate elements are not validated at construction time
+
+=== Listener Registration
+
+Methods:
+
+* `addMavenScannerListener(MavenScannerListener listener)`
+* `removeMavenScannerListener(MavenScannerListener listener)`
+
+Registration order is preserved in the underlying list and affects callback order.
+
+Example:
+
+[source,java]
+----
+scanner.addMavenScannerListener(new MavenScannerListener() {
+  @Override
+  public void artifactChange (MavenScannerEvent event) {
+    // keep this callback brief
+  }
+});
+----
+
+=== Lifecycle
+
+`start()`:
+
+* performs an immediate scan before the worker thread is started
+* throws checked resolution exceptions if that initial scan fails
+* is a no-op when the scanner is already started
+
+`stop()`:
+
+* signals the worker thread to exit
+* waits for the worker to finish
+* throws `InterruptedException` if the caller is interrupted while waiting
+* is a no-op when the scanner is already stopped
+
+[IMPORTANT]
+====
+Start and stop the scanner from ordinary component lifecycle code.
+
+Do not call `stop()` from the scanner's own callback thread. Hand shutdown off to another control path instead.
+====
+
+=== Change Detection
+
+Per scan cycle, the scanner:
+
+1. creates one repository session
+2. resolves each monitored coordinate
+3. compares the newly resolved artifact to the previously seen tag
+4. resolves compile-scope dependencies for changed coordinates
+5. builds one new `GatingClassLoader`
+6. emits a `MavenScannerEvent` if any coordinate changed
+
+Current change rules:
+
+* the first successful scan of a coordinate counts as a change
+* snapshot change detection includes the resolved file timestamp
+* non-snapshot change detection uses artifact identity only
+
+=== Input Reference Semantics
+
+`MavenScanner` keeps constructor inputs by reference.
+
+That means:
+
+* the original coordinate array is not defensively copied
+* the original `MavenCoordinate` objects are reused across cycles
+* mutating either after construction changes future scanner behavior
+
+Prefer replacement-by-new-scanner over in-place mutation.
+
+[[artifact-event-model, Event Model]]
+== Event Model
+
+`MavenScannerEvent` carries three things that matter to library users:
+
+* `Map<Artifact, Artifact> getArtifactDeltaMap()`
+* `Artifact[] getArtifacts()`
+* `ClassLoader getClassLoader()`
+
+=== Delta Map
+
+`artifactDeltaMap` contains only coordinates that changed in the current cycle.
+
+Map semantics:
+
+* key: current artifact
+* value: previous artifact for the same slot
+* `null` value: first successful discovery of that coordinate
+
+Example:
+
+[source,java]
+----
+for (Map.Entry<Artifact, Artifact> entry : event.getArtifactDeltaMap().entrySet()) {
+  Artifact currentArtifact = entry.getKey();
+  Artifact previousArtifact = entry.getValue();
+
+  if (previousArtifact == null) {
+    System.out.println("First discovery: " + currentArtifact);
+  } else {
+    System.out.println("Replaced " + previousArtifact + " with " + currentArtifact);
+  }
+}
+----
+
+[NOTE]
+====
+For snapshot republishes, change detection may be triggered by the underlying file timestamp even when the current and previous `Artifact` values describe the same coordinates.
+
+Treat membership in `artifactDeltaMap` as the change signal. Do not rely on `currentArtifact.equals(previousArtifact)` becoming `false`.
+====
+
+=== Current Artifact Array
+
+`getArtifacts()` returns the scanner's current artifact view in the same slot order as the configured coordinate array.
+
+Use it when you care about the whole monitored set, not only the changed subset.
+
+Example:
+
+[source,java]
+----
+Artifact[] currentArtifacts = event.getArtifacts();
+
+for (int index = 0; index < currentArtifacts.length; index++) {
+  Artifact artifact = currentArtifacts[index];
+
+  if (artifact != null) {
+    System.out.println("Slot " + index + ": " + artifact);
+  }
+}
+----
+
+=== Class Loader
+
+`getClassLoader()` returns a new loader for this event.
+
+Use it to load updated types and resources. Do not keep instantiating from older loaders once you have switched runtime state to the new one.
+
+Treat the returned map and array as read-only event data. The API does not defensive-copy on accessor calls.
+
+[[artifact-classloading, Class Loading And Reload Policy]]
+== Class Loading And Reload Policy
+
+Each emitted event includes a new `GatingClassLoader`.
+
+Current behavior:
+
+* the loader includes the changed coordinates and their non-optional compile dependencies
+* dependencies are deduplicated across changed coordinates
+* unchanged coordinates do not contribute new classpath entries in that event
+* the parent loader is the scanner thread's current context class loader
+
+A minimal load pattern looks like this:
+
+[source,java]
+----
+Class<?> pluginClass = event.getClassLoader().loadClass("org.example.plugins.ReportPlugin");
+Object plugin = pluginClass.getDeclaredConstructor().newInstance();
+----
+
+Practical guidance:
+
+* treat the event loader as the boundary for new code instantiation
+* keep old-loader objects and new-loader objects from mixing casually
+* own service handoff explicitly, for example by swapping an `AtomicReference` or re-registering plugin services
+* if you need a full all-coordinates classpath every time, build that policy on top of `event.getArtifacts()` or your own repository calls
+
+The module does not unload classes, close loaders, or migrate object graphs for you.
+
+[[artifact-threading, Threading And Lifecycle]]
+== Threading And Lifecycle
+
+Understanding the thread model matters if `MavenScanner` is part of a larger host.
+
+Concurrency model:
+
+* one daemon worker thread per started scanner
+* listener callbacks run on the scanner thread
+* `start()`, `stop()`, listener mutation, and scan execution are synchronized on the scanner instance
+
+Consequences:
+
+* long-running listeners delay later scans
+* listener registration changes from other threads block while a scan or callback is in progress
+* listener exceptions during the initial `start()` scan propagate to the caller
+* listener or resolution exceptions during later worker cycles are caught, logged, and the worker continues
+
+Recommended pattern:
+
+[source,java]
+----
+scanner.addMavenScannerListener(new MavenScannerListener() {
+  @Override
+  public void artifactChange (final MavenScannerEvent event) {
+    reloadExecutor.submit(new Runnable() {
+      @Override
+      public void run () {
+        // perform expensive reload work here
+      }
+    });
+  }
+});
+----
+
+That keeps scanner cadence and reload work decoupled.
+
+[[artifact-error-handling, Error Handling]]
+== Error Handling
+
+Constructor and repository errors:
+
+* `MavenRepository` and `MavenScanner` constructors throw `SettingsBuildingException` when `settings.xml` cannot be built
+* `acquireArtifact(...)` throws `ArtifactResolutionException` when the coordinate cannot be resolved
+* `resolve(...)` throws `DependencyCollectionException` or `DependencyResolutionException` for dependency-graph failures
+
+Scanner lifecycle errors:
+
+* `start()` propagates initial resolution failures to the caller
+* runtime exceptions from listeners during the initial scan also propagate from `start()`
+* later worker-cycle exceptions are caught and logged through Scribe, then the worker continues
+
+Implementation note that affects callers:
+
+* while traversing dependencies, a nested artifact file-resolution failure can surface as an unchecked `RuntimeException` wrapping `ArtifactResolutionException`
+
+If you need fail-fast startup behavior, `start()` provides it naturally. If you need resilient long-running polling, the worker loop already retries on the next cycle after logging.
+
+[[artifact-operational-notes, Operational Notes]]
+== Operational Notes
+
+* `offline=true` still parses settings and configures the local repository; it only changes remote access behavior for the session.
+* `resolve(...)` returns a deduplicated set backed by hash-based collection behavior; do not rely on order.
+* scanner events are emitted only when at least one monitored coordinate changes.
+* the first successful scan of a coordinate produces an event entry with `null` as the previous artifact.
+* snapshot detection relies on artifact identity plus resolved file last-modified time.
+* non-snapshot republish at the same coordinates is not detected unless the resolved artifact identity changes.
+* after `start()` completes, the worker begins scanning immediately before its first wait interval.
+* `addMavenScannerListener(null)` is not rejected at registration time; it can fail later during dispatch.
+
+[[artifact-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,3",options="header"]
+|===
+|Behavior |Current Semantics
+
+|`MavenScanner.start()` called while already started
+|No-op.
+
+|`MavenScanner.stop()` called while stopped
+|No-op.
+
+|Coordinate array is empty
+|Scanner can start, but no coordinates are checked and no events are emitted.
+
+|Coordinate array contains `null`
+|Construction succeeds; a later scan can fail with `NullPointerException`.
+
+|Coordinate object mutated after scanner creation
+|Scanner observes the mutated values on later cycles.
+
+|Original coordinate array mutated after scanner creation
+|Scanner observes the new array contents because the array is retained by reference.
+
+|No active profile contributes repositories
+|Remote repository list is empty.
+
+|Requested artifact is not in local repository and no remote repositories are active
+|Resolution fails.
+
+|Profile is activated only by JDK, OS, property, or file criteria
+|This module does not activate it unless it is explicitly active by id or `activeByDefault`.
+
+|Same listener registered more than once
+|One callback per registration entry.
+
+|Listener list modified during callback dispatch
+|Can fail with `ConcurrentModificationException` because the live list is iterated directly.
+
+|`null` listener registered
+|Dispatch can fail with `NullPointerException`.
+
+|`stop()` called from `artifactChange(...)` on the worker thread
+|Shutdown flow can block because the worker is waiting for its own exit path.
+
+|Scanner worker hits repeated failures
+|Exceptions are logged and the worker continues on later cycles.
+|===
+
+[[artifact-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,2,3",options="header"]
+|===
+|Observed Symptom |Likely Cause |Action
+
+|`SettingsBuildingException` during construction
+|Selected `settings.xml` is missing, unreadable, or invalid
+|Verify the directory and ensure `<settingsDirectory>/settings.xml` contains valid Maven settings.
+
+|Valid coordinates resolve on the Maven CLI but not through this module
+|The relevant repository is not active under this module's profile rules
+|Activate the repository profile explicitly by id or mark it `activeByDefault`.
+
+|Artifacts resolve only when they are already cached locally
+|No active remote repositories are available, or `offline=true` was selected
+|Enable a profile that contributes repositories and verify `offline=false` when remote access is required.
+
+|Resolution fails in a controlled deployment that ships its own `settings.xml`
+|The application is pointing at the wrong settings directory or local repository
+|Verify the directory passed to `MavenRepository(...)` and the `localRepository` value inside that `settings.xml`.
+
+|`NullPointerException` during resolution or scanner startup
+|A required coordinate field was left unset, or the scanner coordinate array contains `null`
+|Populate `groupId`, `artifactId`, and `version`, and validate coordinate arrays before scanner construction.
+
+|Background scan failures never appear in normal application logs
+|No Scribe endpoint is on the runtime classpath
+|Add exactly one `scribe-ink-*` module if you rely on worker-thread scan logging.
+
+|Artifacts update in the repository, but the running host keeps using old classes
+|The host ignores `event.getClassLoader()` and continues loading through an old loader
+|Instantiate updated code and resources through the event loader, then swap runtime references explicitly.
+
+|Scanner seems to stall after an update callback starts
+|Listener work is slow or blocking on the scanner thread
+|Keep callbacks brief and hand off real work to another executor.
+
+|Stopping the scanner from inside the callback hangs or behaves badly
+|`stop()` is being called on the worker thread
+|Signal shutdown elsewhere and call `stop()` from a normal control thread.
+
+|Unexpected duplicate update handling
+|The same listener was registered multiple times
+|Make registration idempotent at the call site.
+
+|`ConcurrentModificationException` during update handling
+|Listener registration changed while the live listener list was being iterated
+|Do not add or remove listeners from inside `artifactChange(...)`.
+|===
+
+[[artifact-minimal-checklist, Minimal Checklist]]
+== Minimal Checklist
+
+For a safe integration:
+
+1. Add `artifact-maven`.
+2. Ensure the required Maven settings/model/provider components are present at runtime.
+3. Decide explicitly which `settings.xml` should control resolution.
+4. Choose whether resolution may contact remote repositories.
+5. Use `MavenRepository` for one-shot resolution.
+6. Use `MavenScanner` only when you truly need polling.
+7. Load updated code through `event.getClassLoader()`.
+8. Keep listener callbacks short and own scanner shutdown explicitly.
+
+[[artifact-verification, Verification Checklist]]
+== Verification Checklist
+
+Use a focused validation pass when adopting or changing this module in a host application:
+
+1. Confirm the runtime classpath contains `artifact-maven` plus the required Maven settings/model/provider components.
+2. Resolve one known coordinate through `MavenRepository.acquireArtifact(...)` and verify the artifact file exists.
+3. Resolve the same coordinate through `resolve(...)` and verify the root artifact plus at least one dependency are returned when the artifact has dependencies.
+4. Repeat the resolution with a private settings directory if your deployment depends on one.
+5. Start a `MavenScanner` with a short `Stint` and confirm the initial scan succeeds.
+6. Publish or swap a monitored snapshot and confirm `artifactDeltaMap` contains the expected current and previous artifacts.
+7. Load one known class or resource through `event.getClassLoader()`.
+8. Stop the scanner from normal shutdown code and verify the worker exits cleanly.
+
+[[artifact-defaults, Defaults Reference]]
+== Defaults Reference
+
+[cols="2,3",options="header"]
+|===
+|Setting |Default / Initial Value
+
+|`MavenRepository` settings directory
+|`~/.m2` when `settingsDirectory` is `null` or empty
+
+|Maven settings file path
+|`<settingsDirectory>/settings.xml`
+
+|Local repository fallback
+|`~/.m2/repository` when settings `localRepository` is unset
+
+|`MavenCoordinate.extension`
+|`jar`
+
+|`MavenScanner` initial status
+|`STOPPED`
+
+|`MavenScanner` listener list
+|Empty at construction
+
+|Scanner worker thread mode
+|Daemon
+
+|Repository update policy
+|`always` for releases and snapshots
+
+|Repository checksum policy
+|`warn`
+|===
+
+== See Also
+
+* `README.adoc`
+* `artifact/pom.xml`
+* `artifact/maven/pom.xml`
+* `artifact/maven/src/main/java/org/smallmind/artifact/maven/`

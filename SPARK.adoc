@@ -2,45 +2,277 @@
 = Spark
 
 [partintro]
-The Spark project consists of Maven packaging formats for the construction of self-contained executable build artifacts.
+Spark is Smallmind's build-time packaging module for Java services. It gives you two focused delivery models:
+
+* `singularity`, a single executable jar that keeps runtime dependencies nested as jars
+* `tanukisoft`, a Tanuki Java Service Wrapper distribution with launch scripts, native wrapper binaries, configuration, and an optional publishable application archive
+
+Spark stays library-safe. It keeps IOC choice, runtime configuration, and process model aligned with the package format you select.
+
+Audience: developers and build engineers who package Java services and want explicit control over artifact shape, startup wiring, and publication.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<spark-at-a-glance,At A Glance>>
+* <<spark-reading-paths,Reading Paths>>
+* <<spark-why-use,Why Use Spark>>
+* <<spark-choose-packaging,Choosing Singularity Or Tanukisoft>>
+* <<spark-layout,Project Layout>>
+* <<spark-packaging-model,Maven Packaging Model>>
+* <<spark-singularity,Singularity>>
+* <<spark-singularity-install,Singularity Installation>>
+* <<spark-singularity-quick-start,Singularity Quick Start>>
+* <<spark-singularity-runtime,Singularity Runtime Model>>
+* <<spark-singularity-goals,Singularity Goals>>
+* <<spark-singularity-params,Singularity Parameter Reference>>
+* <<spark-tanukisoft,Tanukisoft>>
+* <<spark-tanukisoft-install,Tanukisoft Installation>>
+* <<spark-tanukisoft-quick-start,Tanukisoft Quick Start>>
+* <<spark-tanukisoft-lifecycle,Tanukisoft Startup And Lifecycle Model>>
+* <<spark-tanukisoft-goals,Tanukisoft Goals>>
+* <<spark-tanukisoft-params,Tanukisoft Parameter Reference>>
+* <<spark-known-constraints,Known Constraints>>
+* <<spark-failure-signatures,Failure Signatures>>
+* <<spark-verification-checklist,Verification Checklist>>
+* <<spark-api-index,API Index>>
+
+[[spark-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to Spark, read in this order:
+
+1. <<spark-why-use,Why Use Spark>>
+2. <<spark-choose-packaging,Choosing Singularity Or Tanukisoft>>
+3. <<spark-packaging-model,Maven Packaging Model>>
+4. <<spark-singularity-quick-start,Singularity Quick Start>> or <<spark-tanukisoft-quick-start,Tanukisoft Quick Start>>
+5. <<spark-singularity-runtime,Singularity Runtime Model>> or <<spark-tanukisoft-lifecycle,Tanukisoft Startup And Lifecycle Model>>
+6. <<spark-known-constraints,Known Constraints>>
+7. <<spark-failure-signatures,Failure Signatures>>
+
+If you only need one runnable jar, focus on:
+
+1. <<spark-singularity-install,Singularity Installation>>
+2. <<spark-singularity-quick-start,Singularity Quick Start>>
+3. <<spark-singularity-runtime,Singularity Runtime Model>>
+4. <<spark-singularity-params,Singularity Parameter Reference>>
+5. <<spark-failure-signatures,Failure Signatures>>
+
+If you need OS service integration, focus on:
+
+1. <<spark-tanukisoft-install,Tanukisoft Installation>>
+2. <<spark-tanukisoft-quick-start,Tanukisoft Quick Start>>
+3. <<spark-tanukisoft-lifecycle,Tanukisoft Startup And Lifecycle Model>>
+4. <<spark-tanukisoft-params,Tanukisoft Parameter Reference>>
+5. <<spark-known-constraints,Known Constraints>>
+
+If you already use Spark and just need exact behavior quickly, jump to:
+
+* <<spark-packaging-model,Maven Packaging Model>>
+* <<spark-singularity-goals,Singularity Goals>>
+* <<spark-singularity-params,Singularity Parameter Reference>>
+* <<spark-tanukisoft-goals,Tanukisoft Goals>>
+* <<spark-tanukisoft-params,Tanukisoft Parameter Reference>>
+* <<spark-failure-signatures,Failure Signatures>>
+
+[[spark-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="2,3,4",options="header"]
+|===
+|If You Need To... |Use |Notes
+
+|ship one file runnable with `java -jar`
+|`singularity`
+|Builds a single jar and keeps runtime dependencies nested under `META-INF/singularity/lib/`
+
+|preserve dependency jars instead of shading them
+|`singularity`
+|Dependencies stay intact as jars; package conflicts are not hidden by relocation
+
+|install, start, stop, and publish a Tanuki wrapper distribution
+|`tanukisoft`
+|Builds `bin/`, `conf/`, and `lib/`, plus an optional `-app` archive for Maven install/deploy
+
+|wire a wrapped Spring XML application quickly
+|`spark-tanukisoft-integration` with `ClassPathXmlSpringContextWrapperListener`
+|You provide Spring XML locations as `appParameters`
+
+|bundle extra config files into the service distribution
+|`tanukisoft` `configurations` and `licenseFile`
+|Files are copied into `conf/` using their existing basenames
+
+|exclude a specific runtime dependency from a nested executable jar
+|`singularity` `exclusions`
+|Exact `groupId` and `artifactId` match only
+
+|add a provided dependency back into the wrapped `lib/` directory
+|`tanukisoft` `dependencies`
+|Selects already-declared project artifacts; it is not a dependency resolver
+|===
+
+[[spark-why-use, Why Use Spark]]
+== Why Use Spark
+
+Use Spark when you want explicit Maven packaging for service artifacts without handing your runtime model over to a framework packager.
+
+Spark is most useful when these constraints matter:
+
+* you want build-time packaging with explicit runtime bootstrapping
+* you need either a single executable jar or a wrapper-managed service distribution
+* you want artifact layout and startup wiring to stay visible in Maven configuration
+* you want to preserve dependency boundaries instead of shading everything into one flat namespace
+* you need installable or publishable artifacts without inventing a parallel release process
+
+Compared with framework-owned packaging, Spark keeps these advantages visible:
+
+* packaging lives in normal Maven `package`, `install`, and `deploy` phases
+* main-class, listener, and application wiring stay explicit in plugin configuration
+* packaging format can change without reshaping the rest of the application architecture
+* runtime ownership stays with the application and the selected package format
+
+[[spark-choose-packaging, Choosing Singularity Or Tanukisoft]]
+== Choosing Singularity Or Tanukisoft
+
+[cols="2,3,3",options="header"]
+|===
+|Topic |`singularity` |`tanukisoft`
+
+|Primary output
+|single executable jar
+|application directory plus optional `-app` archive
+
+|How you start it
+|`java -jar ...`
+|wrapper launcher script or executable in `bin/`
+
+|Dependency layout
+|nested jars inside one jar
+|plain jars in `lib/`
+
+|Best fit
+|plain JVM process deployment, artifact repositories, simple launch surfaces
+|OS service style lifecycle, wrapper-native monitoring, service install and removal commands
+
+|Publication unit
+|the generated jar
+|the generated `-app` archive
+
+|Operational tradeoff
+|simpler artifact, custom class loader requirements
+|larger distribution, simpler flat `lib/` layout plus wrapper scripts and native binaries
+|===
+
+As a practical rule:
+
+* choose `singularity` when you want one file and your operations model is already comfortable with `java -jar`
+* choose `tanukisoft` when you need the wrapper's service lifecycle, native integration, or script-driven installation
+
+[[spark-layout, Project Layout]]
+== Project Layout
+
+The `spark` subproject is a multi-module build.
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Spark parent
+|`org.smallmind:smallmind-spark`
+|Aggregator for Spark modules
+
+|Singularity parent
+|`org.smallmind:spark-singularity`
+|Aggregator for Singularity boot and Maven plugin modules
+
+|Singularity boot
+|`org.smallmind:spark-singularity-boot`
+|Runtime boot classes and nested-jar class loading support
+
+|Singularity Maven plugin
+|`org.smallmind:spark-singularity-maven-plugin`
+|Custom `singularity` packaging plus generation, install, and deploy goals
+
+|Tanukisoft parent
+|`org.smallmind:spark-tanukisoft`
+|Aggregator for Tanuki wrapper integration and Maven plugin modules
+
+|Tanukisoft integration
+|`org.smallmind:spark-tanukisoft-integration`
+|`WrapperListener` helpers, including Spring-oriented listeners
+
+|Tanukisoft Maven plugin
+|`org.smallmind:spark-tanukisoft-maven-plugin`
+|Custom `tanukisoft` packaging plus generation, install, and deploy goals
+|===
+
+[[spark-packaging-model, Maven Packaging Model]]
+== Maven Packaging Model
+
+Both Spark formats are Maven packaging extensions. The packaging type changes the lifecycle bindings for `package`, `install`, and `deploy`.
+
+[cols="2,4",options="header"]
+|===
+|Packaging |Lifecycle Mapping
+
+|`singularity`
+|`package` runs `generate-singularity`; `install` runs `install-singularity`; `deploy` runs `deploy-singularity`
+
+|`tanukisoft`
+|`package` runs `maven-jar-plugin:jar` and then `generate-wrapper`; `install` runs `install-wrapper`; `deploy` runs `deploy-wrapper`
+|===
+
+Shared behavior:
+
+* normal Maven resource processing, compilation, and test phases still run before packaging
+* you must declare the Spark plugin with `<extensions>true</extensions>` so Maven recognizes the custom packaging type
+* install and deploy goals publish files that the package phase already created; they do not rebuild them independently
+
+[IMPORTANT]
+====
+The intended model is `packaging=singularity` or `packaging=tanukisoft` with plugin extensions enabled. The individual goals can still be invoked explicitly, but that is not the primary usage pattern.
+====
 
 [[spark-singularity, Singularity]]
 == Singularity
 
-Singularity is a Maven packaging format for self-contained executable jars *with* all their dependencies. Notably, a Singularity package does *not* unpack and repack its dependencies. The original jar files are maintained, and their namespaces are preserved. The Singularity package will contain a boot class loader that understands the _jar within jar_ format. In order to speed class resolution and loading, offset indexes of entries within the jar library dependencies are built during package construction. There should be nothing special you need to do with your code to create a Singularity from it, other than defining the packaging and nominating a `public static void main (String... args)` entry point.
+Singularity builds one executable jar for your service. Your compiled classes and resources are copied into the jar root, runtime dependencies are copied as nested jars, and a Smallmind boot layer launches your actual main class through a custom class loader.
 
-[TIP]
-====
-Code looking to obtain a class loader should use...
+That model is a good fit when:
 
-[source,java]
-----
-Thread.currentThread().getContextClassLoader();
-----
+* you want one distributable file
+* you want to preserve dependency jars as jars instead of flattening them
+* you can run the service as a plain JVM process
+* you are willing to let the packaged application load nested content through Spark's class loader rather than the system class loader
 
-...as the system class loader will not understand the _jar within jar_ packaging format.
-====
+[[spark-singularity-install, Singularity Installation]]
+=== Installation
 
-=== Install
+A minimal Singularity build needs three things:
 
-In order to have Maven create a self-contained jar you should declare the packaging as `singularity` and include the `spark-singularity-maven-plugin` as outlined below..
+* `<packaging>singularity</packaging>`
+* the `spark-singularity-maven-plugin` declared as an extension
+* `mainClass`, the application entry point Spark should invoke at runtime
 
-.Singularity Plugin
 [source,xml]
 ----
 <project>
-  ...
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.mycompany</groupId>
+  <artifactId>orders-service</artifactId>
+  <version>1.0.0</version>
   <packaging>singularity</packaging>
-  ...
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>spark-singularity-maven-plugin</artifactId>
-        <version>LATEST</version>
+        <version>${smallmind.version}</version>
         <extensions>true</extensions>
         <configuration>
-          <mainClass><!-- entry point class containing a main() method --></mainClass>
+          <mainClass>com.mycompany.orders.Main</mainClass>
         </configuration>
       </plugin>
     </plugins>
@@ -48,22 +280,1054 @@ In order to have Maven create a self-contained jar you should declare the packag
 </project>
 ----
 
-=== Configuration
+That is enough for a basic executable jar.
 
-The following configuration attributes are supported by the plugin...
+[[spark-singularity-quick-start, Singularity Quick Start]]
+=== Quick Start
 
-* *mainClass* (required) - An entry point class containing a standard `public static void main (String... args)` method.
-+
-.Example
+1. Declare `packaging` as `singularity` and configure `mainClass`.
+2. Build the project.
+3. Run the generated jar exactly as you would any ordinary executable jar.
+
+[source,text]
+----
+mvn clean package
+java -jar target/orders-service-1.0.0.jar
+----
+
+The generated jar contains all of these pieces:
+
+[cols="2,4",options="header"]
+|===
+|Path or Manifest Entry |Meaning
+
+|`Main-Class=org.smallmind.spark.singularity.boot.SingularityEntryPoint`
+|The actual JVM entry point that installs the Spark class loader and delegates to your application
+
+|`Singularity-Class=com.mycompany.orders.Main`
+|The application main class you configured in Maven
+
+|`META-INF/singularity/lib/*.jar`
+|Runtime dependencies copied intact as nested jars
+
+|`META-INF/singularity/index/singularity.idx`
+|Serialized lookup index used by `SingularityClassLoader`
+|===
+
+[[spark-singularity-examples, Singularity Examples]]
+=== Practical Examples
+
+==== Excluding A Container-Provided Dependency
+
+Use `exclusions` when one runtime dependency should not be nested into the final jar.
+
 [source,xml]
 ----
-<mainClass>my.Main</mainClass>
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>spark-singularity-maven-plugin</artifactId>
+  <version>${smallmind.version}</version>
+  <extensions>true</extensions>
+  <configuration>
+    <mainClass>com.mycompany.orders.Main</mainClass>
+    <exclusions>
+      <exclusion>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+      </exclusion>
+    </exclusions>
+  </configuration>
+</plugin>
 ----
 
-* *skip* (optional, defaults to _false_) - If this attribute exists and is set `true`, then the plugin will skip its operations and no artifact will be produced.
-+
-.Example
+Matches are exact `groupId` and `artifactId` pairs. There is no wildcard, scope rule, or pattern language.
+
+==== Loading Resources Correctly From A Singularity Bundle
+
+Nested dependency jars are visible through Spark's class loader, not through APIs that assume a flat file-based classpath. Use the thread context class loader for runtime discovery.
+
+[source,java]
+----
+ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+try (InputStream inputStream = classLoader.getResourceAsStream("banner.txt")) {
+  if (inputStream == null) {
+    throw new IllegalStateException("Missing banner.txt");
+  }
+}
+
+ServiceLoader<MyPlugin> plugins = ServiceLoader.load(MyPlugin.class, classLoader);
+----
+
+Do not assume `ClassLoader.getSystemClassLoader()` or `ClassLoader.getSystemResourceAsStream(...)` can resolve nested Singularity content.
+
+==== Changing The Temporary Assembly Directory
+
+If you need a different staging directory under `target/`, set `singularityBuildDir`.
+
 [source,xml]
 ----
-<skip>true</skip>
+<configuration>
+  <mainClass>com.mycompany.orders.Main</mainClass>
+  <singularityBuildDir>packaging/singularity</singularityBuildDir>
+</configuration>
 ----
+
+Spark still writes the final jar to `${project.build.directory}`.
+
+[[spark-singularity-runtime, Singularity Runtime Model]]
+=== Runtime Model
+
+At package time, `generate-singularity` does the following:
+
+1. creates a temporary assembly directory under `${project.build.directory}/${singularityBuildDir}`
+2. copies Spark boot classes from `spark-singularity-boot` into the jar root
+3. copies every non-excluded runtime artifact into `META-INF/singularity/lib/`
+4. copies your compiled classes and resources from `${project.build.directory}/classes` into the jar root
+5. builds a `SingularityIndex` that maps direct files and nested jar entries
+6. writes the final jar manifest and compresses the assembled directory into `target/<artifactId>-<version>[-<classifier>].jar`
+
+At runtime, `SingularityEntryPoint` does the following:
+
+1. opens the enclosing jar and reads the manifest
+2. creates a `SingularityClassLoader`
+3. installs that loader as the thread context class loader
+4. reads `Singularity-Class` from the manifest
+5. reflectively invokes your `main(String[])`
+
+`SingularityClassLoader` resolves two categories of content:
+
+* application classes and resources copied into the jar root, exposed as ordinary `jar:` URLs
+* nested dependency entries indexed from `META-INF/singularity/lib/*.jar`, exposed through Spark's `singularity:` URL scheme
+
+[IMPORTANT]
+====
+If your code does runtime discovery of classes or resources, use `Thread.currentThread().getContextClassLoader()`. That is the loader Spark prepares for nested-jar access.
+====
+
+[NOTE]
+====
+`SingularityClassLoader` deliberately refuses to define classes in `jakarta.xml.*`, `org.xml.*`, and `org.w3c.*`, except `jakarta.xml.bind.*`. Those namespaces fall back to parent or system loading.
+====
+
+[[spark-singularity-output, Singularity Output Layout]]
+=== Output Layout
+
+A typical Singularity jar looks like this:
+
+[source,text]
+----
+target/orders-service-1.0.0.jar
+  org/smallmind/spark/singularity/boot/...
+  com/mycompany/orders/...
+  META-INF/MANIFEST.MF
+  META-INF/singularity/index/singularity.idx
+  META-INF/singularity/lib/<runtime-dependency>.jar
+----
+
+The nested dependency jars remain jars. Spark does not unpack them into one flattened namespace.
+
+[[spark-singularity-goals, Singularity Goals]]
+=== Goals
+
+==== `generate-singularity` (default phase: `package`)
+
+Builds the executable Singularity jar.
+
+Behavior:
+
+* requires runtime dependency resolution
+* copies boot classes, runtime jars, and compiled output into the staging directory
+* writes the serialized Singularity index
+* writes the manifest with `Main-Class` and `Singularity-Class`
+* produces `target/<artifactId>-<version>[-<classifier>].jar`
+
+==== `install-singularity` (default phase: `install`)
+
+Installs the generated jar into the local Maven repository.
+
+Behavior:
+
+* looks for the jar in `target/<artifactId>-<version>[-<classifier>].jar`
+* preserves an existing classifier on the installed artifact
+* if `target/<jar>.asc` exists beside the jar, attaches it as artifact metadata and installs it too
+
+==== `deploy-singularity` (lifecycle-bound to `deploy`)
+
+Deploys the generated jar to the configured distribution repository.
+
+Behavior:
+
+* uses the same file naming and classifier rules as `install-singularity`
+* deploys optional `.asc` metadata if present beside the jar
+* defaults `deploymentRepository` from Maven distribution management
+
+[[spark-singularity-params, Singularity Parameter Reference]]
+=== Parameter Reference
+
+[cols="2,2,1,1,4",options="header"]
+|===
+|Goal |Parameter |Required |Default |Notes
+
+|`generate-singularity`
+|`mainClass`
+|Yes
+|None
+|Application class whose `main(String[])` Spark will invoke through `SingularityEntryPoint`
+
+|`generate-singularity`
+|`exclusions`
+|No
+|None
+|Exact `groupId` and `artifactId` matches to omit from nested runtime jars
+
+|`generate-singularity`
+|`singularityBuildDir`
+|No
+|`singularity`
+|Temporary staging directory under `${project.build.directory}`
+
+|`generate-singularity`
+|`verbose`
+|No
+|`false`
+|Emits copy and assembly progress to the Maven log
+
+|`generate-singularity`
+|`skip`
+|No
+|`false`
+|Skips generation entirely
+
+|`install-singularity`
+|`skip`
+|No
+|`false`
+|Skips local install
+
+|`deploy-singularity`
+|`deploymentRepository`
+|No
+|`${project.distributionManagementArtifactRepository}`
+|Target repository for deploy
+
+|`deploy-singularity`
+|`skip`
+|No
+|`false`
+|Skips deploy
+|===
+
+=== Operational Notes
+
+* `exclusions` removes the entire artifact from the nested dependency set. Spark does not partially filter entries from a jar.
+* `install-singularity` and `deploy-singularity` assume the package phase already produced the jar in the standard `target/` location.
+* If the project artifact has a classifier, Spark carries that classifier into the jar name and published coordinates.
+* Spark installs and deploys the final jar file, not the temporary assembly directory.
+
+=== Troubleshooting
+
+* `Unable to locate the boot class dependencies`
+Ensure `spark-singularity-maven-plugin` is declared with `<extensions>true</extensions>` so Maven loads the custom packaging extension and plugin artifacts.
+
+* `Missing singularity index`
+The packaged jar is incomplete or corrupted. Rebuild from a clean `target/` directory.
+
+* The application starts but cannot load a resource or SPI implementation
+Use the thread context class loader and confirm you did not exclude the dependency that contains the missing resource.
+
+* Install or deploy cannot find the jar you expected
+Run the `package` phase first and confirm the output file name still matches `${artifactId}-${version}[-${classifier}].jar`.
+
+[[spark-tanukisoft, Tanukisoft]]
+== Tanukisoft
+
+Tanukisoft packaging builds a wrapper-managed application distribution. Instead of one nested executable jar, you get an application directory with scripts, native wrapper binaries, configuration, and jars in `lib/`.
+
+That model is a good fit when:
+
+* you need wrapper-managed start, stop, restart, install, and remove commands
+* you want a conventional `bin/`, `conf/`, `lib/` directory layout
+* you need Tanuki Java Service Wrapper behavior around the JVM process
+* your operational environment prefers a service distribution to a single jar
+
+[[spark-tanukisoft-install, Tanukisoft Installation]]
+=== Installation
+
+A minimal Tanukisoft build needs these pieces:
+
+* `<packaging>tanukisoft</packaging>`
+* the `spark-tanukisoft-maven-plugin` declared as an extension
+* `operatingSystem`, one of Spark's supported `OSType` values
+* `wrapperListener`, the class Tanuki should start as `wrapper.java.mainclass`
+
+If you use Spark's built-in listener base classes or Spring helpers, add `spark-tanukisoft-integration` as an ordinary dependency.
+
+[source,xml]
+----
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.mycompany</groupId>
+  <artifactId>orders-service</artifactId>
+  <version>1.0.0</version>
+  <packaging>tanukisoft</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>spark-tanukisoft-integration</artifactId>
+      <version>${smallmind.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>spark-tanukisoft-maven-plugin</artifactId>
+        <version>${smallmind.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <operatingSystem>LINUX_X86_64</operatingSystem>
+          <wrapperListener>org.smallmind.spark.tanukisoft.integration.spring.ClassPathXmlSpringContextWrapperListener</wrapperListener>
+          <appParameters>
+            <appParameter>classpath:orders-context.xml</appParameter>
+          </appParameters>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+----
+
+[[spark-tanukisoft-quick-start, Tanukisoft Quick Start]]
+=== Quick Start
+
+1. Choose an `operatingSystem` value and configure a `wrapperListener`.
+2. Build the project.
+3. Run the generated launcher script or executable from `target/application/.../bin`.
+
+[source,text]
+----
+mvn clean package
+
+# On Unix-like targets
+./target/application/orders-service-1.0.0/bin/orders-service.sh console
+
+# On Windows targets
+target\application\orders-service-1.0.0\bin\orders-service.bat
+----
+
+The package phase produces two related outputs:
+
+* an unpacked application directory under `target/application/`
+* when `createArtifact=true`, a publishable `target/<applicationName>-<version>[-<classifier>]-app.<ext>` archive
+
+[[spark-tanukisoft-examples, Tanukisoft Examples]]
+=== Practical Examples
+
+==== Wrapping A Spring XML Application
+
+`ClassPathXmlSpringContextWrapperListener` is the shortest path if your service starts from Spring XML resources.
+
+[source,xml]
+----
+<dependencies>
+  <dependency>
+    <groupId>org.smallmind</groupId>
+    <artifactId>spark-tanukisoft-integration</artifactId>
+    <version>${smallmind.version}</version>
+  </dependency>
+</dependencies>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>spark-tanukisoft-maven-plugin</artifactId>
+      <version>${smallmind.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+        <operatingSystem>LINUX_X86_64</operatingSystem>
+        <wrapperListener>org.smallmind.spark.tanukisoft.integration.spring.ClassPathXmlSpringContextWrapperListener</wrapperListener>
+        <appParameters>
+          <appParameter>classpath:orders-context.xml</appParameter>
+          <appParameter>classpath:infrastructure-context.xml</appParameter>
+        </appParameters>
+        <jvmMaxMemoryMB>1024</jvmMaxMemoryMB>
+        <jvmArgs>
+          <jvmArg>-Dspring.profiles.active=prod</jvmArg>
+        </jvmArgs>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+----
+
+The values under `appParameters` are the Spring XML locations that `ClassPathXmlSpringContextWrapperListener` passes to `ClassPathXmlApplicationContext`.
+
+==== Writing A Custom Wrapper Listener
+
+Use `AbstractWrapperListener` when you want explicit startup and shutdown logic without Spring-specific assumptions.
+
+[source,java]
+----
+package com.mycompany.orders;
+
+import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
+
+public class OrdersWrapperListener extends AbstractWrapperListener {
+
+  private OrdersService ordersService;
+
+  public void startup (String[] args)
+    throws Exception {
+
+    String configurationLocation = args[0];
+
+    ordersService = new OrdersService(configurationLocation);
+    ordersService.start();
+  }
+
+  public void shutdown ()
+    throws Exception {
+
+    if (ordersService != null) {
+      ordersService.stop();
+    }
+  }
+}
+----
+
+[source,xml]
+----
+<configuration>
+  <operatingSystem>LINUX_X86_64</operatingSystem>
+  <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+  <appParameters>
+    <appParameter>../conf/orders.properties</appParameter>
+  </appParameters>
+</configuration>
+----
+
+Inside `startup(String[] args)`, `args` is exactly the `appParameters` array. Spark consumes the listener class name before your startup method runs.
+
+==== Copying Configuration And License Files
+
+Use `configurations` and `licenseFile` to place external files into `conf/`.
+
+[source,xml]
+----
+<configuration>
+  <operatingSystem>LINUX_X86_64</operatingSystem>
+  <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+  <licenseFile>${project.basedir}/src/packaging/wrapper-license.conf</licenseFile>
+  <configurations>
+    <configuration>${project.basedir}/src/packaging/log4j2.xml</configuration>
+    <configuration>${project.basedir}/src/packaging/orders.properties</configuration>
+  </configurations>
+</configuration>
+----
+
+Spark copies each file using its existing basename. To let the default `wrapper.conf` include directives find the Tanuki license automatically, package it as `wrapper-license.conf` or `wrapper-license-%WRAPPER_HOST_NAME%.conf`.
+
+==== Adding Environment Variables And Unix Source Files
+
+`envArgs` writes `set.NAME=VALUE` entries into `conf/wrapper.conf`. `toSourceFiles` tells the generated Unix launcher to source shell files before executing commands.
+
+[source,xml]
+----
+<configuration>
+  <operatingSystem>LINUX_X86_64</operatingSystem>
+  <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+  <envArgs>
+    <envArg>
+      <name>APP_ENV</name>
+      <value>production</value>
+    </envArg>
+    <envArg>
+      <name>JAVA_TOOL_OPTIONS</name>
+      <value>-Dfile.encoding=UTF-8</value>
+    </envArg>
+  </envArgs>
+  <toSourceFiles>
+    <toSourceFile>../conf/orders-env.sh</toSourceFile>
+  </toSourceFiles>
+</configuration>
+----
+
+Relative `toSourceFiles` paths are resolved from the generated `bin/` directory, so `../conf/orders-env.sh` is the usual form for a file you also package into `conf/`.
+
+==== Pulling A Provided Dependency Into `lib/`
+
+The `dependencies` parameter does not resolve new coordinates. It selects already-declared project artifacts, including `provided` or `system` scope entries, and copies them into `lib/`.
+
+[source,xml]
+----
+<dependencies>
+  <dependency>
+    <groupId>com.oracle.database.jdbc</groupId>
+    <artifactId>ojdbc11</artifactId>
+    <version>23.5.0.24.07</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>spark-tanukisoft-maven-plugin</artifactId>
+      <version>${smallmind.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+        <operatingSystem>LINUX_X86_64</operatingSystem>
+        <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+        <compactClasspath>false</compactClasspath>
+        <dependencies>
+          <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+          </dependency>
+        </dependencies>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+----
+
+With `compactClasspath=false`, Spark lists every jar explicitly in `wrapper.conf` instead of emitting a wildcard `../lib/*` entry.
+
+==== Using A Property-Driven Operating System Selection
+
+The template POM in the Spark source uses Maven profiles to choose `operatingSystem`. The same pattern works well in application builds.
+
+[source,xml]
+----
+<properties>
+  <tanukisoft.wrapper.os>LINUX_X86_64</tanukisoft.wrapper.os>
+</properties>
+
+<profiles>
+  <profile>
+    <id>linux-amd64</id>
+    <activation>
+      <os>
+        <name>linux</name>
+        <arch>amd64</arch>
+      </os>
+    </activation>
+    <properties>
+      <tanukisoft.wrapper.os>LINUX_X86_64</tanukisoft.wrapper.os>
+    </properties>
+  </profile>
+
+  <profile>
+    <id>windows-amd64</id>
+    <activation>
+      <os>
+        <family>windows</family>
+        <arch>amd64</arch>
+      </os>
+    </activation>
+    <properties>
+      <tanukisoft.wrapper.os>WINDOWS_X86_64</tanukisoft.wrapper.os>
+    </properties>
+  </profile>
+</profiles>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.smallmind</groupId>
+      <artifactId>spark-tanukisoft-maven-plugin</artifactId>
+      <version>${smallmind.version}</version>
+      <extensions>true</extensions>
+      <configuration>
+        <operatingSystem>${tanukisoft.wrapper.os}</operatingSystem>
+        <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+----
+
+==== Controlling Distribution Naming
+
+`applicationName`, `classifier`, `compression`, and `includeVersion` control the unpacked directory name and published archive naming.
+
+[source,xml]
+----
+<configuration>
+  <operatingSystem>LINUX_X86_64</operatingSystem>
+  <wrapperListener>com.mycompany.orders.OrdersWrapperListener</wrapperListener>
+  <applicationName>orders</applicationName>
+  <classifier>linux-x86-64</classifier>
+  <compression>zip</compression>
+  <includeVersion>false</includeVersion>
+</configuration>
+----
+
+With that configuration, Spark produces:
+
+[source,text]
+----
+target/application/orders-linux-x86-64/
+target/orders-1.0.0-linux-x86-64-app.zip
+----
+
+`includeVersion` changes the unpacked directory name only. The `-app` archive name always includes `${project.version}`.
+
+[[spark-tanukisoft-lifecycle, Tanukisoft Startup And Lifecycle Model]]
+=== Startup And Lifecycle Model
+
+Tanukisoft packaging assembles the distribution and wires the wrapper startup path.
+
+At package time, `generate-wrapper` does the following:
+
+1. creates `bin/`, `conf/`, and `lib/` under `${project.build.directory}/${applicationDir}/<applicationName>[-<version>][-<classifier>]`
+2. copies configuration and license files into `conf/`
+3. copies runtime dependencies into `lib/`
+4. copies selected extra `provided` or `system` artifacts from `dependencies` into `lib/`
+5. copies the application jar into `lib/`; if the project artifact type is not `jar`, Spark first creates a jar from `${project.build.outputDirectory}`
+6. copies the wrapper executable into `bin/`
+7. copies the platform-specific native library and a generic alias (`libwrapper.so` or `wrapper.dll`) into `lib/`
+8. renders `conf/wrapper.conf` from a Freemarker template
+9. renders the Unix launcher script or copies Windows batch files
+10. optionally compresses the whole application directory into `target/<applicationName>-<version>[-<classifier>]-app.<ext>`
+
+At runtime, the built-in integration classes behave like this:
+
+1. Tanuki starts the configured `wrapperListener` as `wrapper.java.mainclass`
+2. Spark prepends the same listener class to `wrapper.app.parameter.1` so `AbstractWrapperListener.main(...)` can instantiate it reflectively
+3. `AbstractWrapperListener.main(...)` validates `wrapper.startup.timeout` if present, defaults it to 30 seconds if absent, expands properties in arguments, and calls `WrapperManager.start(...)`
+4. `start(String[] args)` launches a signaling worker that repeatedly calls `WrapperManager.signalStarting(...)` until startup completes
+5. your `startup(String[] args)` method runs with only the configured application arguments
+6. on shutdown, `stop(int exitCode)` delegates to your `shutdown()` implementation
+
+[IMPORTANT]
+====
+`waitAfterStartup` is not the same thing as Tanuki's `wrapper.startup.timeout`. `waitAfterStartup` only delays how long the Unix launcher waits before returning from `start`. Startup timeout validation happens in `AbstractWrapperListener` and applies to `wrapper.startup.timeout`, which must be at least 10 seconds if you set it.
+====
+
+Built-in listener helpers:
+
+[cols="2,4",options="header"]
+|===
+|Type |Role
+
+|`AbstractWrapperListener`
+|Base class for explicit startup and shutdown logic using Tanuki's `WrapperListener` contract
+
+|`SpringContextWrapperListener`
+|Abstract helper that loads a `ConfigurableApplicationContext`, refreshes it on startup, and closes it on shutdown
+
+|`ClassPathXmlSpringContextWrapperListener`
+|Concrete Spring helper that builds a `ClassPathXmlApplicationContext` from `appParameters`
+|===
+
+[[spark-tanukisoft-layout, Tanukisoft Output Layout]]
+=== Output Layout
+
+A typical Unix-oriented output tree looks like this:
+
+[source,text]
+----
+target/application/orders-service-1.0.0/
+  bin/
+    orders-service.sh
+    wrapper-linux-x86-64
+  conf/
+    wrapper.conf
+    orders.properties
+    wrapper-license.conf
+  lib/
+    orders-service-1.0.0.jar
+    dependency-a.jar
+    dependency-b.jar
+    libwrapper-linux-x86-64.so
+    libwrapper.so
+----
+
+Typical Windows output is similar, but with batch files, `wrapper-windows-...exe`, and `wrapper.dll`.
+
+[[spark-tanukisoft-goals, Tanukisoft Goals]]
+=== Goals
+
+==== `generate-wrapper` (default phase: `package`)
+
+Builds the wrapper distribution and, by default, creates a publishable aggregate archive.
+
+Behavior:
+
+* requires runtime dependency resolution
+* copies classpath dependencies whose artifact handlers are marked `addedToClasspath=true` and whose scope is `compile` or `runtime`
+* can additionally copy matching `compile`, `provided`, or `system` artifacts from the `dependencies` selector list
+* writes `wrapper.conf` and launcher scripts from templates
+* creates an aggregate archive when `createArtifact=true`
+
+==== `install-wrapper` (default phase: `install`)
+
+Installs the aggregate `-app` archive into the local Maven repository.
+
+Behavior:
+
+* resolves compression from `compression`
+* publishes the archive with classifier `app` by default, or `${classifier}-app` when `classifier` is set
+* looks for the archive in `target/<applicationName>-<version>[-<classifier>]-app.<ext>`
+
+==== `deploy-wrapper` (default phase: `deploy`)
+
+Deploys the aggregate `-app` archive to the configured distribution repository.
+
+Behavior:
+
+* uses the same source file naming rules as `install-wrapper`
+* defaults `deploymentRepository` from Maven distribution management
+* publishes classifier `app` or `${classifier}-app` exactly like `install-wrapper`
+
+[[spark-tanukisoft-params, Tanukisoft Parameter Reference]]
+=== Parameter Reference
+
+==== `generate-wrapper`
+
+[cols="2,1,1,4",options="header"]
+|===
+|Parameter |Required |Default |Notes
+
+|`operatingSystem`
+|Yes
+|None
+|Must match a supported `OSType` value exactly
+
+|`wrapperListener`
+|Yes
+|None
+|Class used as `wrapper.java.mainclass`
+
+|`licenseFile`
+|No
+|None
+|Filesystem path copied into `conf/` using its basename
+
+|`dependencies`
+|No
+|None
+|Selector list for already-declared project artifacts to also copy into `lib/`
+
+|`applicationDir`
+|No
+|`application`
+|Base directory under `target/` where the unpacked distribution is created
+
+|`applicationName`
+|No
+|`${project.artifactId}`
+|Controls script names, service names, directory names, and archive names
+
+|`applicationLongName`
+|No
+|`${project.name}`
+|Friendly name used in scripts and wrapper metadata
+
+|`classifier`
+|No
+|None
+|Appended to the unpacked directory name and archive name; also affects published classifier
+
+|`applicationDescription`
+|No
+|`${project.description}` or a generated fallback
+|Used in wrapper metadata and generated service descriptions
+
+|`jvmArgs`
+|No
+|None
+|Written as `wrapper.java.additional.N`
+
+|`jvmInitMemoryMB`
+|No
+|None
+|Initial heap setting in megabytes
+
+|`jvmMaxMemoryMB`
+|No
+|None
+|Maximum heap setting in megabytes
+
+|`umask`
+|No
+|`0022`
+|Written into `wrapper.conf`
+
+|`runAs`
+|No
+|None
+|Used by the Unix launcher and Windows service permission metadata
+
+|`waitAfterStartup`
+|No
+|`0`
+|Delay in seconds after launcher `start`; not the Tanuki startup timeout property
+
+|`javaCommand`
+|No
+|`java`
+|Java executable command written to `wrapper.conf`
+
+|`appParameters`
+|No
+|None
+|Application arguments passed to your listener's `startup(String[])`
+
+|`envArgs`
+|No
+|None
+|Written as `set.NAME=VALUE` entries in `wrapper.conf`
+
+|`serviceDependencies`
+|No
+|None
+|Windows service dependencies written as `wrapper.ntservice.dependency.N`
+
+|`configurations`
+|No
+|None
+|Filesystem paths copied into `conf/` using existing basenames
+
+|`toSourceFiles`
+|No
+|None
+|Semicolon-separated source list for the generated Unix launcher
+
+|`useUpstart`
+|No
+|`false`
+|Exposed parameter, but the shipped launcher template currently auto-detects service management and does not read this flag
+
+|`useSystemD`
+|No
+|`false`
+|Exposed parameter, but the shipped launcher template currently auto-detects service management and does not read this flag
+
+|`compression`
+|No
+|`zip`
+|Archive type for the aggregate `-app` output; valid values are `zip` and `jar`
+
+|`createArtifact`
+|No
+|`true`
+|Controls whether Spark creates the aggregate archive at package time
+
+|`includeVersion`
+|No
+|`true`
+|Controls whether the unpacked application directory includes `${project.version}`
+
+|`compactClasspath`
+|No
+|`true`
+|When `true`, writes `../lib/*`; when `false`, lists each jar explicitly in `wrapper.conf`
+
+|`verbose`
+|No
+|`false`
+|Emits copy and assembly progress to the Maven log
+
+|`skip`
+|No
+|`false`
+|Skips wrapper generation entirely
+|===
+
+==== `install-wrapper` and `deploy-wrapper`
+
+[cols="2,2,1,1,4",options="header"]
+|===
+|Goal |Parameter |Required |Default |Notes
+
+|`install-wrapper`, `deploy-wrapper`
+|`applicationName`
+|No
+|`${project.artifactId}`
+|Used to locate the generated archive file in `target/`
+
+|`install-wrapper`, `deploy-wrapper`
+|`classifier`
+|No
+|None
+|Controls both source archive name and published classifier suffix
+
+|`install-wrapper`, `deploy-wrapper`
+|`compression`
+|No
+|`zip`
+|Must match the archive type created during package; valid values are `zip` and `jar`
+
+|`deploy-wrapper`
+|`deploymentRepository`
+|No
+|`${project.distributionManagementArtifactRepository}`
+|Deploy target repository
+
+|`install-wrapper`, `deploy-wrapper`
+|`skip`
+|No
+|`false`
+|Skips the goal
+|===
+=== Supported `operatingSystem` Values
+
+Spark currently accepts these `OSType` names:
+
+* `AIX_PPC_32`
+* `AIX_PPC_64`
+* `HPUX_IA_32`
+* `HPUX_IA_64`
+* `HPUX_PARISC_32`
+* `HPUX_PARISC_64`
+* `LINUX_IA_64`
+* `LINUX_PPC_32`
+* `LINUX_PPC_64`
+* `LINUX_X86_32`
+* `LINUX_X86_64`
+* `MACOSX_UNIVERSAL_32`
+* `MACOSX_UNIVERSAL_64`
+* `SOLARIS_SPARC_32`
+* `SOLARIS_SPARC_64`
+* `SOLARIS_X86_32`
+* `SOLARIS_X86_64`
+* `WINDOWS_X86_32`
+* `WINDOWS_X86_64`
+
+[NOTE]
+====
+The plugin validates `operatingSystem` against the `OSType` enum. Even if the plugin resources contain additional wrapper binaries, values outside the list above are rejected by configuration parsing.
+====
+
+=== Operational Notes
+
+* `createArtifact=false` suppresses the `-app` archive. `install-wrapper` and `deploy-wrapper` then have nothing to publish unless you create a matching archive some other way.
+* `serviceDependencies` only affects Windows service metadata in `wrapper.conf`.
+* relative `toSourceFiles` entries are interpreted from the generated `bin/` directory.
+* the generated Unix launcher auto-detects `systemd`, `upstart`, `init.d`, and on AIX `src` at install and start time.
+* if `bin/<applicationName>.service` exists beside the Unix launcher, `install` copies it into `/etc/systemd/system/<applicationName>.service` instead of generating a default one
+* if `bin/<applicationName>.install` exists beside the Unix launcher, `install` copies it into `/etc/init/<applicationName>.conf` instead of generating a default upstart file
+* on AIX, the generated Tanuki script validates that `applicationName` is shorter than 14 characters when installing through SRC tooling
+* if `runAs` is set on Unix, the generated launcher expects enough privilege to switch users and will require root for the relevant operations
+
+=== Troubleshooting
+
+* `Unknown operating system type(...)`
+Use one of the exact `OSType` names listed above.
+
+* `Unknown compression type(...)`
+Use `zip` or `jar`.
+
+* The wrapper starts, but your application logic never runs
+Confirm `wrapperListener` names a real class in the packaged `lib/` set and that `appParameters` contain the arguments your `startup(String[])` implementation expects.
+
+* Install or deploy cannot find the `-app` archive
+Run the package phase first, keep `applicationName`, `classifier`, and `compression` consistent across goals, and remember that `createArtifact=false` suppresses archive creation.
+
+* The packaged service is missing a provided dependency
+Declare the dependency in the project, then add a matching selector under the plugin's `dependencies` parameter.
+
+* The Unix launcher returns before the service is really ready
+Increase Tanuki `wrapper.startup.timeout` if startup is genuinely long. Do not expect `waitAfterStartup` to change wrapper startup timeout handling.
+
+[[spark-known-constraints, Known Constraints]]
+== Known Constraints
+
+* Spark packaging is Maven-oriented. The guide assumes custom Maven packaging types and plugin extensions.
+* Singularity relies on Spark's thread context class loader for nested-jar access. Code that hard-codes the system class loader can fail at runtime.
+* Singularity does not shade or relocate dependencies. Package conflicts remain visible.
+* Tanukisoft validates `operatingSystem` against a fixed enum even though the plugin resources contain additional wrapper binaries.
+* Tanukisoft packaging has a few sharp edges: `dependencies` only selects already-resolved project artifacts, `includeVersion` only affects the unpacked directory name, and `useUpstart` and `useSystemD` are exposed parameters that the shipped Unix launcher does not read.
+* Spark install and deploy goals publish package-phase outputs. If the corresponding jar or archive is missing, install and deploy fail rather than rebuilding it.
+
+[[spark-failure-signatures, Failure Signatures]]
+== Failure Signatures
+
+[cols="2,2,3",options="header"]
+|===
+|Observed Message Or Symptom |Likely Cause |Action
+
+|`Unable to locate the boot class dependencies`
+|The Singularity plugin was not loaded as an extension, so the boot artifact was not available in plugin artifacts
+|Declare `spark-singularity-maven-plugin` with `<extensions>true</extensions>`
+
+|`Missing singularity index`
+|The Singularity jar is incomplete or corrupted
+|Rebuild from a clean `target/` directory and verify `generate-singularity` completed
+
+|Application starts but classes or resources are missing from a Singularity bundle
+|Code is using the wrong class loader or an excluded dependency removed the required content
+|Use the thread context class loader and review `exclusions`
+
+|`Unknown operating system type(...)`
+|`operatingSystem` does not match Spark's `OSType` enum
+|Use one of the documented exact enum names
+
+|`Unknown compression type(...)`
+|`compression` is not a valid `CompressionType`
+|Use `zip` or `jar`
+
+|`First application parameter must be the class of the WrapperListener in use`
+|The wrapper app parameter sequence was changed manually and no longer begins with the listener class
+|Restore the generated parameter order or regenerate the distribution from Maven
+
+|`The property(wrapper.startup.timeout) should be ... >= 10`
+|Tanuki startup timeout was set below Spark's minimum validation threshold
+|Set `wrapper.startup.timeout` to at least `10`
+
+|Install or deploy wrapper archive not found
+|The package phase did not create the archive, or naming parameters no longer match
+|Run `package`, keep `applicationName`, `classifier`, and `compression` aligned, and confirm `createArtifact=true`
+|===
+
+[[spark-verification-checklist, Verification Checklist]]
+== Verification Checklist
+
+For `singularity`:
+
+1. Run `mvn clean package`.
+2. Confirm `target/<artifactId>-<version>[-<classifier>].jar` exists.
+3. Inspect the jar and confirm `META-INF/singularity/index/singularity.idx` exists.
+4. Run `java -jar target/<artifactId>-<version>[-<classifier>].jar`.
+5. If runtime discovery fails, test the same code path with `Thread.currentThread().getContextClassLoader()`.
+
+For `tanukisoft`:
+
+1. Run `mvn clean package`.
+2. Confirm `target/application/<applicationName>.../bin`, `conf`, and `lib` exist.
+3. Confirm `conf/wrapper.conf` contains the JVM args, app parameters, and classpath shape you expect.
+4. Start the application through the generated launcher, not by invoking the jar in `lib/` directly.
+5. If `createArtifact=true`, confirm `target/<applicationName>-<version>[-<classifier>]-app.<ext>` exists before running `install` or `deploy`.
+
+[[spark-api-index, API Index]]
+== API Index
+
+[cols="2,3,4",options="header"]
+|===
+|Artifact |Primary Entry Points |Use When
+
+|`org.smallmind:spark-singularity-maven-plugin`
+|`generate-singularity`, `install-singularity`, `deploy-singularity`
+|you want one executable jar with nested runtime dependencies
+
+|`org.smallmind:spark-singularity-boot`
+|`SingularityEntryPoint`, `SingularityClassLoader`, `SingularityIndex`
+|you need to understand or troubleshoot Singularity runtime boot and class loading
+
+|`org.smallmind:spark-tanukisoft-maven-plugin`
+|`generate-wrapper`, `install-wrapper`, `deploy-wrapper`
+|you want a Tanuki wrapper distribution and optional publishable `-app` archive
+
+|`org.smallmind:spark-tanukisoft-integration`
+|`AbstractWrapperListener`, `SpringContextWrapperListener`, `ClassPathXmlSpringContextWrapperListener`
+|you want explicit wrapper lifecycle code or Spring-based wrapper startup helpers
+|===
+

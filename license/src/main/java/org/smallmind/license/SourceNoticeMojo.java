@@ -38,22 +38,50 @@ public class SourceNoticeMojo extends AbstractMojo {
   }
 
   private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
+  /**
+   * The current Maven project, supplied by Maven at execution time.
+   */
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+  /**
+   * Optional root project identifier used to resolve relative notice paths from a specific parent module instead of
+   * the top-most Maven parent.
+   */
   @Parameter
   private Root root;
+  /**
+   * Additional stencils available to rules in addition to the built-in {@link JavaDocStencil}.
+   */
   @Parameter
   private Stencil[] stencils;
-  @Parameter
+  /**
+   * Rules describing which file types should receive which notice text and formatting.
+   */
+  @Parameter(required = true)
   private Rule[] rules;
+  /**
+   * Line ending style to use when writing generated notice content.
+   */
   @Parameter(defaultValue = "UNIX")
   private LineEndings lineEndings;
+  /**
+   * Allows a rule with no notice file to remove an existing top-of-file notice instead of failing the build.
+   */
   @Parameter(defaultValue = "false")
   private boolean allowNoticeRemoval;
+  /**
+   * Includes the module's configured main resources when applying rules.
+   */
   @Parameter(defaultValue = "true")
   private boolean includeResources;
+  /**
+   * Includes test sources and, when resources are enabled, test resources when applying rules.
+   */
   @Parameter(defaultValue = "false")
   private boolean includeTests;
+  /**
+   * Enables informational logging for rule processing and per-file updates.
+   */
   @Parameter(defaultValue = "false")
   private boolean verbose;
 

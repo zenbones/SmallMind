@@ -1,0 +1,1001 @@
+[[forge, Forge]]
+= Forge
+
+[partintro]
+Forge is Smallmind's small collection of build-facing and deployment-facing utility libraries.
+It currently exposes two focused runtime artifacts:
+
+* `forge-style`, which rewrites Maven `pom.xml` files to normalize dependency ordering and to apply the output of `mvn dependency:analyze`
+* `forge-deploy`, which downloads a ZIP-compatible application archive from Nexus, replaces an installation tree, and runs optional decoration steps around the extracted files
+
+Forge stays explicit.
+It does not bind itself into Maven lifecycles as a plugin, it does not auto-detect deployment policy, and it does not take ownership of staging, rollback, locking, or service orchestration.
+You call the classes directly, or you package the included CLI entry point into your own runnable surface.
+
+Audience: build engineers, release engineers, and application operators who need explicit Maven cleanup or archive deployment helpers without adopting a larger build or deployment framework.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+Runtime baseline: the repository builds Forge for Java `25`; `forge-style` also expects a reachable external Maven command when you use dependency reduction.
+
+== Quick Navigation
+
+* <<forge-reading-paths,Reading Paths>>
+* <<forge-at-a-glance,At A Glance>>
+* <<forge-why-use,Why Use Forge>>
+* <<forge-choose-artifact,Choose A Forge Artifact>>
+* <<forge-layout,Project Layout>>
+* <<forge-installation,Installation>>
+* <<forge-quick-start,Quick Start>>
+* <<forge-style-surface,Forge Style>>
+* <<forge-style-api,Style API Index>>
+* <<forge-deploy-surface,Forge Deploy>>
+* <<forge-deploy-api,Deploy API Index>>
+* <<forge-known-constraints,Known Constraints>>
+* <<forge-troubleshooting,Troubleshooting>>
+* <<forge-verification,Verification Checklist>>
+
+[[forge-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are new to Forge, read in this order:
+
+1. <<forge-at-a-glance,At A Glance>>
+2. <<forge-choose-artifact,Choose A Forge Artifact>>
+3. <<forge-installation,Installation>>
+4. <<forge-quick-start,Quick Start>>
+5. <<forge-style-surface,Forge Style>> or <<forge-deploy-surface,Forge Deploy>>, depending on the surface you need
+6. <<forge-known-constraints,Known Constraints>>
+7. <<forge-troubleshooting,Troubleshooting>>
+
+If you only need Maven `pom.xml` cleanup, focus on:
+
+1. <<forge-installation,Installation>>
+2. <<forge-quick-start,Quick Start>>
+3. <<forge-style-surface,Forge Style>>
+4. <<forge-style-api,Style API Index>>
+5. <<forge-style-notes,Style Defaults And Behavioral Notes>>
+
+If you only need artifact download and replacement deployment, focus on:
+
+1. <<forge-installation,Installation>>
+2. <<forge-quick-start,Quick Start>>
+3. <<forge-deploy-surface,Forge Deploy>>
+4. <<forge-deploy-cli,CLI Reference>>
+5. <<forge-deploy-lifecycle,Update Lifecycle And Ownership>>
+6. <<forge-deploy-notes,Deploy Defaults And Behavioral Notes>>
+
+If you already know the problem space and need exact behavior quickly, jump to:
+
+* <<forge-style-api,Style API Index>>
+* <<forge-style-process,External Process Model>>
+* <<forge-deploy-api,Deploy API Index>>
+* <<forge-deploy-archive-layout,Archive Layout Contract>>
+* <<forge-deploy-cli,CLI Reference>>
+* <<forge-known-constraints,Known Constraints>>
+* <<forge-troubleshooting,Troubleshooting>>
+
+[[forge-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,4",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Forge parent
+|`org.smallmind:smallmind-forge`
+|Aggregator POM for the Forge submodules
+
+|Style
+|`org.smallmind:forge-style`
+|Programmatic utilities for sorting Maven dependency declarations and rewriting top-level dependencies from `mvn dependency:analyze` output
+
+|Deploy
+|`org.smallmind:forge-deploy`
+|Programmatic deployment helpers plus a library-packaged CLI for downloading, extracting, decorating, permissioning, and reinstalling application archives
+|===
+
+[cols="2,3,4",options="header"]
+|===
+|If You Need To... |Use |Notes
+
+|normalize dependency ordering in `pom.xml` files
+|`forge-style` `DependencyOrganizer`
+|Walks a project tree and rewrites each `pom.xml`
+
+|remove unused dependencies or add used-but-undeclared ones from Maven analysis
+|`forge-style` `DependencyReducer`
+|Requires an external Maven command and assumes dependency versions are managed elsewhere when new dependencies are added
+
+|download an artifact from Nexus and replace an application installation tree
+|`forge-deploy` `ApplicationUpdater`
+|Caller still owns staging, rollback, deployment scheduling, and any orchestration around downtime
+
+|generate an additional Linux service file during deployment
+|`forge-deploy` `UpstartDecorator`
+|Runs only when the selected operating system is `linux`
+
+|use a built-in CLI entry point for deployment
+|`forge-deploy` `ApplicationUpdaterCLI`
+|You must still package or assemble the runtime classpath yourself
+|===
+
+Stable traits across the current code:
+
+* small surfaces rather than a deployment platform
+* no Spring layer, auto-configuration, or hidden registration
+* caller-owned lifecycle, process invocation, and error handling policy
+* thin wrappers over JAXP, Apache HttpClient, Freemarker, and Smallmind utility code
+* operationally significant defaults, file names, and failure modes that are visible in the code
+
+[[forge-why-use, Why Use Forge]]
+== Why Use Forge
+
+Use Forge when you want explicit helper code for two narrow operational jobs:
+
+* cleaning up Maven dependency declarations without adopting a full build convention layer
+* replacing a packaged application installation from Nexus without adopting a deployment framework
+
+Forge is a good fit when:
+
+* you want direct class calls instead of Maven-plugin binding or container-owned deployment
+* you want build and deployment behavior to stay inspectable in ordinary Java code
+* you are comfortable owning the surrounding workflow, including retries, logging, and rollback
+* you need only a small adapter layer over Maven analysis output or Nexus downloads
+
+Forge is intentionally not:
+
+* a Maven plugin
+* a CI/CD orchestrator
+* a service manager
+* a staging or rollback system
+* a generalized package builder
+
+Those boundaries matter because the current code really does destructive replacement and process execution, and the caller has to decide when those operations are safe.
+
+[[forge-choose-artifact, Choose A Forge Artifact]]
+== Choose A Forge Artifact
+
+[cols="2,4",options="header"]
+|===
+|If you need... |Use...
+
+|a library call or internal tool that rewrites dependency order in one or more `pom.xml` files
+|`forge-style`
+
+|a library call that shells out to `mvn dependency:analyze` and applies the findings to module POMs
+|`forge-style`
+
+|a library call that downloads a ZIP-compatible application archive, extracts it into an installation root, and reinstalls a service wrapper
+|`forge-deploy`
+
+|a built-in command-line entry point for deployment logic
+|`forge-deploy`, but you must provide a runtime classpath or package your own launcher
+
+|a parent dependency that applications or libraries can use directly at runtime
+|Neither; `smallmind-forge` is only the aggregator POM
+|===
+
+As a practical rule:
+
+* choose `forge-style` when the problem is repository hygiene
+* choose `forge-deploy` when the problem is archive retrieval and replacement deployment
+* keep them separate unless you actually need both
+
+[[forge-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`forge/`
+|`org.smallmind:smallmind-forge`
+|Aggregator POM
+
+|`forge/style/`
+|`org.smallmind:forge-style`
+|Dependency ordering, dependency reduction, Maven command discovery, and external-process output capture
+
+|`forge/deploy/`
+|`org.smallmind:forge-deploy`
+|Nexus artifact download, archive replacement deployment, CLI metadata, progress display, and a bundled Linux Upstart decorator
+|===
+
+[[forge-installation, Installation]]
+== Installation
+
+Choose the concrete artifact directly.
+The parent `smallmind-forge` module is packaging-only and does not provide runtime classes.
+
+=== `forge-style`
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>forge-style</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependency declared by `forge/style/pom.xml`:
+
+* `org.smallmind:smallmind-nutsnbolts`
+
+Adoption guidance:
+
+* reusable internal tooling can depend on `forge-style` directly
+* applications or build utilities still own the surrounding launcher, CLI, or Maven invocation
+* there is no Maven-plugin surface in this artifact
+
+=== `forge-deploy`
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>forge-deploy</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependencies declared by `forge/deploy/pom.xml`:
+
+* `org.apache.httpcomponents.client5:httpclient5`
+* `org.apache.httpcomponents.core5:httpcore5`
+* `org.freemarker:freemarker`
+* `org.smallmind:smallmind-nutsnbolts`
+
+Adoption guidance:
+
+* library or operations code can call `ApplicationUpdater` directly
+* the included CLI class is library-packaged, not a standalone executable distribution
+* applications remain responsible for logging, scheduling, credentials sourcing, and any rollback or staging policy
+
+=== No Spring Or Container Layer
+
+Forge does not add Spring beans, XML namespaces, or container integration helpers.
+Construction and invocation are programmatic.
+
+[[forge-quick-start, Quick Start]]
+== Quick Start
+
+=== 1. Sort Dependency Declarations Across A Maven Tree
+
+Use `DependencyOrganizer` when the only goal is deterministic ordering of dependencies inside `pom.xml` files.
+
+[source,java]
+----
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.smallmind.forge.style.DependencyOrganizer;
+
+Path repositoryRoot = Paths.get("C:/work/example-parent");
+
+DependencyOrganizer.walkProject(repositoryRoot);
+----
+
+What the current implementation does:
+
+* walks the tree rooted at the supplied path
+* rewrites every file named `pom.xml`
+* sorts `dependencyManagement/dependencies` when present
+* sorts the top-level project `dependencies` block when present
+* leaves all non-`pom.xml` files alone
+
+[NOTE]
+====
+`DependencyOrganizer` also has a public `main(String... args)` entry point that expects the project root in `args[0]`.
+Forge does not package a dedicated launcher around it, so you still need to provide the runtime classpath yourself if you invoke it that way.
+====
+
+=== 2. Apply `mvn dependency:analyze` Results To Module POMs
+
+Use `DependencyReducer` when you want the code to run Maven dependency analysis for each module and then rewrite the direct dependency list.
+
+[source,java]
+----
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.smallmind.forge.style.DependencyReducer;
+
+Path repositoryRoot = Paths.get("C:/work/example-parent");
+
+DependencyReducer.walkProject(repositoryRoot);
+----
+
+Safe usage rules for the current code:
+
+* make sure a Maven command can be resolved on the machine where the code runs
+* expect only non-root, non-hidden module directories to be processed
+* use it when added dependencies can inherit versions from dependency management, a parent POM, or another surrounding resolution rule
+* inspect the rewritten POMs before committing, because the code rewrites files in place
+
+[IMPORTANT]
+====
+When `DependencyReducer` adds a dependency, it writes `groupId`, `artifactId`, and `scope`, but not `version` or `classifier`.
+That is only safe when those values are resolved somewhere else in the build.
+====
+
+=== 3. Replace A Packaged Installation From Nexus
+
+Use `ApplicationUpdater` when you already have a ZIP-compatible application archive in Nexus and that archive expands into the directory layout the updater expects.
+
+[source,java]
+----
+import java.nio.file.Paths;
+import org.smallmind.forge.deploy.ApplicationUpdater;
+import org.smallmind.forge.deploy.OperatingSystem;
+import org.smallmind.forge.deploy.Repository;
+import org.smallmind.forge.deploy.UpstartDecorator;
+
+ApplicationUpdater.update(
+    OperatingSystem.LINUX,
+    "inventory",
+    Paths.get("/opt/services"),
+    true,
+    "nexus.example.com",
+    "deployer",
+    "secret",
+    Repository.RELEASES,
+    "com.example",
+    "inventory-service",
+    "2.4.1",
+    null,
+    "zip",
+    new String[]{"JAVA_HOME=/usr/lib/jvm/jdk-25", "JAVA_OPTS=-Xms512m -Xmx512m"},
+    new UpstartDecorator());
+----
+
+The archive must expand so that this path exists after extraction:
+
+[source,text]
+----
+/opt/services/inventory-service/bin/inventory-service.sh
+----
+
+On Windows the control script name changes to `inventory-service.bat`.
+
+[IMPORTANT]
+====
+`ApplicationUpdater` is destructive with respect to the existing installation.
+If `<install-dir>/<artifactId>` already exists, the code can run the current control script with `remove` and then delete the whole tree before extracting the new archive.
+There is no staging or rollback layer in the current implementation.
+====
+
+=== 4. Use The Built-In Deployment CLI
+
+`forge-deploy` also ships `org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI`.
+The class is usable, but the artifact is still just a library jar, so you must supply the runtime classpath or package your own launcher.
+
+Conceptual invocation shape:
+
+[source,text]
+----
+java -cp "<forge-deploy and dependencies>" org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI \
+  -u inventory \
+  -i /opt/services \
+  -h nexus.example.com \
+  -n deployer \
+  -p secret \
+  -r releases \
+  -g com.example \
+  -a inventory-service \
+  -v 2.4.1 \
+  -e zip \
+  -x JAVA_HOME=/usr/lib/jvm/jdk-25 \
+  -d org.smallmind.forge.deploy.UpstartDecorator
+----
+
+The exact options are documented in <<forge-deploy-cli,CLI Reference>>.
+
+[[forge-style-surface, Forge Style]]
+== Forge Style
+
+`forge-style` is a small library for rewriting Maven dependency declarations.
+It does not parse the full Maven model through Maven internals.
+Instead, it:
+
+* reads `pom.xml` files as DOM documents
+* rewrites dependency nodes directly
+* optionally shells out to the local Maven command to collect `dependency:analyze` warnings
+
+That makes the behavior easy to inspect, but also means the code inherits the exact limits of the DOM rewrite logic and the external-process wrapper.
+
+[[forge-style-api, Style API Index]]
+=== Style API Index
+
+[cols="2,3,4",options="header"]
+|===
+|Type |Primary Entry Points |Role
+
+|`DependencyOrganizer`
+|`main(String... args)`, `walkProject(Path)`
+|Walk a tree and sort Maven dependency declarations inside every encountered `pom.xml`
+
+|`DependencyReducer`
+|`walkProject(Path)`
+|Run `mvn dependency:analyze -N` per module and rewrite direct dependencies to reflect the warning output
+
+|`DependencyReference`
+|constructor plus getters
+|Parse a colon-delimited Maven dependency reference into `groupId`, `artifactId`, `classifier`, `version`, and `scope`
+
+|`DependencyWrapper`
+|constructor, getters, `compareTo(...)`
+|Wrap a dependency DOM node and provide the sort order used by both organizer and reducer
+
+|`MavenCommandLocator`
+|`inWindows(Path)`, `inLinux(Path)`
+|Resolve the Maven command path through an external lookup command
+
+|`ProcessOutputUtility`
+|`buffer(Path, String...)`
+|Run an external process, buffer standard output, and enforce a fixed timeout
+|===
+
+[[forge-style-organizer, Dependency Organizer]]
+=== Dependency Organizer
+
+`DependencyOrganizer` is the simpler of the two style utilities.
+It makes no external Maven calls.
+
+Behavioral contract:
+
+1. Walk the supplied tree recursively.
+2. Process every file whose name is exactly `pom.xml`.
+3. Parse the POM as XML.
+4. If the POM has `dependencyManagement/dependencies`, sort those dependency elements.
+5. If the POM has a top-level project `dependencies` block, sort those dependency elements.
+6. Rewrite the POM to disk through the packaged `pretty-print.xslt`.
+
+The sort order comes from `DependencyWrapper`:
+
+* `groupId` is compared segment-by-segment after splitting on `.`
+* `artifactId` is compared segment-by-segment after splitting on `-`
+* segment comparison uses `AlphaNumericComparator`, so names with numeric suffixes compare more naturally than plain lexical sorting
+
+What it does not touch:
+
+* plugin dependency blocks
+* profile-specific dependency blocks
+* arbitrary XML ordering outside the two dependency areas above
+
+Because the POM is re-emitted from a DOM, expect whitespace-only formatting to be normalized.
+
+[[forge-style-reducer, Dependency Reducer]]
+=== Dependency Reducer
+
+`DependencyReducer` layers external Maven analysis on top of the same DOM rewrite model.
+
+Behavioral contract:
+
+1. Resolve a Maven command through `MavenCommandLocator`.
+2. Walk the supplied tree in post-order.
+3. Skip the root directory itself.
+4. Skip any directory whose path contains a segment beginning with `.`.
+5. For each remaining directory that contains `pom.xml`, run `mvn dependency:analyze -N`.
+6. Parse three warning sections from Maven output:
++
+* `Used undeclared dependencies found:`
+* `Unused declared dependencies found:`
+* `Non-test scoped test only dependencies found:`
+7. Rewrite the top-level project `dependencies` block when changes are needed.
+
+Rewrite rules:
+
+* unused declared dependencies are removed when `groupId` and `artifactId` match
+* used but undeclared dependencies are added as new `<dependency>` elements
+* non-test-scoped test-only dependencies are rewritten to `<scope>test</scope>`
+* the rewritten dependency list is sorted with the same comparator used by `DependencyOrganizer`
+
+[IMPORTANT]
+====
+`DependencyReducer` only rewrites the top-level project `dependencies` block.
+It does not modify `dependencyManagement`, plugin dependencies, or profile-specific dependency lists.
+====
+
+[NOTE]
+====
+The class does define a `main(String... args)` method, but it is not `public`.
+Treat `walkProject(Path)` as the supported entry point unless you intentionally wrap it from code in the same package or another launcher layer.
+====
+
+[[forge-style-process, External Process Model]]
+=== External Process Model
+
+The Maven-analysis path depends on two small helpers: `MavenCommandLocator` and `ProcessOutputUtility`.
+
+Current process behavior:
+
+* Windows lookup runs `where.exe mvn.cmd`
+* Linux lookup runs `where mvn`
+* process output capture reads standard output only
+* standard error is not captured or merged
+* the process wait timeout is fixed at three seconds
+* process exit status is not checked explicitly
+
+Operational consequences:
+
+* a slow `mvn dependency:analyze -N` run can fail even when Maven would eventually succeed
+* Maven errors written only to stderr are not part of the parsed buffer
+* the code assumes the local platform provides the lookup command it asks for
+
+[[forge-style-notes, Style Defaults And Behavioral Notes]]
+=== Style Defaults And Behavioral Notes
+
+[cols="2,4",options="header"]
+|===
+|Behavior |Current Rule
+
+|Organizer tree scope
+|Every `pom.xml` under the supplied root path, including the root project POM if present
+
+|Reducer tree scope
+|Every non-root directory with `pom.xml`, excluding any path that contains a dot-prefixed segment
+
+|Reducer analysis command
+|`mvn dependency:analyze -N`
+
+|Process lookup on Windows
+|`where.exe mvn.cmd`
+
+|Process lookup on Linux
+|`where mvn`
+
+|Process timeout
+|Three seconds
+
+|Added dependency fields
+|`groupId`, `artifactId`, and `scope` only
+
+|Dependency comparison key
+|`groupId` by dot-delimited segments, then `artifactId` by dash-delimited segments
+
+|POM output
+|DOM rewrite emitted through `pretty-print.xslt` with indentation enabled
+|===
+
+Technical edge cases worth knowing:
+
+* `DependencyReference` expects exactly five colon-delimited parts in the Maven warning text
+* reducer matching ignores `version` and `classifier` when removing or scope-adjusting existing dependencies
+* missing command-line arguments to organizer or reducer wrappers are not normalized by the current code; callers should validate inputs before invoking them
+
+[[forge-deploy-surface, Forge Deploy]]
+== Forge Deploy
+
+`forge-deploy` is an application-replacement utility, not a package builder.
+It assumes a deployment archive already exists in Nexus and that the archive expands into a service layout the code knows how to manipulate.
+
+The deployment surface has four main layers:
+
+* `NexusDownloader`, which fetches the archive
+* `ApplicationUpdater`, which performs replacement deployment
+* `Decorator`, which lets callers add post-extraction behavior
+* `ApplicationUpdaterCLI`, which parses options and calls the updater
+
+[[forge-deploy-api, Deploy API Index]]
+=== Deploy API Index
+
+[cols="2,3,4",options="header"]
+|===
+|Type |Primary Entry Points |Role
+
+|`ApplicationUpdater`
+|`update(...)`
+|Run the full replacement workflow: download, remove existing service, delete tree, extract, decorate, set ownership, set executable bits, and reinstall
+
+|`ApplicationUpdaterCLI`
+|`main(String... args)`
+|Parse CLI options from metadata and invoke `ApplicationUpdater`
+
+|`NexusDownloader`
+|`download(...)`
+|Download one artifact from Nexus over HTTPS using basic authentication
+
+|`Decorator`
+|`decorate(...)`
+|SPI for caller-supplied deployment-time side effects after extraction
+
+|`UpstartDecorator`
+|`decorate(...)`
+|Bundled Linux-only decorator that renders an Upstart job-style file into the extracted `bin/` directory
+
+|`OperatingSystem`
+|`fromCode(String)`, `makeExecutable(Path)`, getters
+|Map `linux` and `windows` codes to script extensions and executable-bit behavior
+
+|`Repository`
+|`fromCode(String)`, `getCode()`
+|Map `releases` and `snapshots` to the Nexus repository code used in the request
+
+|`TextProgressBar`
+|constructor, `update(long)`, `close()`
+|Render textual progress updates while bytes are written
+|===
+
+[[forge-deploy-archive-layout, Archive Layout Contract]]
+=== Archive Layout Contract
+
+`ApplicationUpdater` has a concrete archive-layout expectation.
+After extraction into the install root, these paths must exist or be creatable:
+
+[source,text]
+----
+<install-dir>/
+  <artifactId>/
+    bin/
+      <artifactId>.sh    # for linux
+      <artifactId>.bat   # for windows
+    ...
+----
+
+The updater also creates:
+
+[source,text]
+----
+<install-dir>/<artifactId>/log
+----
+
+Local download staging behavior:
+
+* the file is always downloaded to `<install-dir>/<artifactId>.zip`
+* that temporary file name does not change when you request a different remote extension
+* the updater deletes the staged file after successful extraction
+* on failure before cleanup, the caller may have to remove the staged file manually
+
+[IMPORTANT]
+====
+The `extension` argument controls the Nexus request, but `ApplicationUpdater` always explodes the downloaded payload as a ZIP archive.
+Use an artifact whose actual file format is ZIP-compatible, such as a `.zip` archive or a `.jar` that really contains the expected exploded directory structure.
+====
+
+The control script contract is also fixed:
+
+* before deleting an existing installation, the updater tries to run `<artifactId>.sh remove` or `<artifactId>.bat remove`
+* after extracting the new installation, it runs `<artifactId>.sh install` or `<artifactId>.bat install`
+
+If your archive does not provide a control script with those commands, the updater is not the right fit without an adapter layer.
+
+[[forge-deploy-cli, CLI Reference]]
+=== CLI Reference
+
+The CLI metadata lives in `ApplicationUpdaterCLI.arguments.xml`.
+The current option surface is:
+
+[cols="1,1,1,3,4",options="header"]
+|===
+|Flag |Required |Default |Meaning |Notes
+
+|`-o`
+|no
+|`linux`
+|Operating system selector
+|Recognized codes are `linux` and `windows`; unknown values resolve to `null` and fail later
+
+|`-u`
+|yes
+|none
+|Application user
+|Resolved through `UserPrincipalLookupService`
+
+|`-i`
+|yes
+|none
+|Installation directory
+|This is the parent directory that receives the extracted `<artifactId>/` tree
+
+|`-b`
+|no
+|`true` when omitted
+|Progress-bar mode
+|`true` renders an in-place ASCII bar; `false` still prints percentage updates line by line
+
+|`-h`
+|yes
+|none
+|Nexus host
+|The code supplies scheme `https` and port `443`; do not include them in this value
+
+|`-n`
+|yes
+|none
+|Nexus user
+|Used for basic authentication
+
+|`-p`
+|yes
+|none
+|Nexus password
+|Used for basic authentication
+
+|`-r`
+|no
+|`releases`
+|Repository selector
+|Recognized codes are `releases` and `snapshots`
+
+|`-g`
+|yes
+|none
+|Maven group id
+|Passed to the Nexus redirect request as `g`
+
+|`-a`
+|yes
+|none
+|Maven artifact id
+|Also determines the expected extracted directory and control-script base name
+
+|`-v`
+|yes
+|none
+|Version
+|For `snapshots`, non-`LATEST` and non-`RELEASE` values get `-SNAPSHOT` appended automatically
+
+|`-c`
+|no
+|none
+|Classifier
+|Passed only when present
+
+|`-e`
+|no
+|`jar`
+|Artifact extension
+|Remote extension only; the downloaded payload is still exploded as ZIP locally
+
+|`-x`
+|no
+|none
+|Decorator environment variables
+|Passed verbatim to decorators; the bundled Upstart template emits each value as `env <value>`
+
+|`-d`
+|no in metadata
+|none
+|Decorator class names
+|The current CLI passes `null` when omitted, so in practice you should supply at least one decorator or call `ApplicationUpdater` directly
+|===
+
+[NOTE]
+====
+If command-line parsing fails, `ApplicationUpdaterCLI` prints the parser message and the generated template text.
+The current code does not call `System.exit(...)` with a dedicated error code for parse failures.
+====
+
+[[forge-deploy-lifecycle, Update Lifecycle And Ownership]]
+=== Update Lifecycle And Ownership
+
+`ApplicationUpdater.update(...)` performs the following steps in order:
+
+1. Resolve the target system user.
+2. Download the requested artifact to `<install-dir>/<artifactId>.zip`.
+3. Calculate the existing application root and control-script path.
+4. If the current installation has `bin/` and the control script exists, run `remove`.
+5. Delete the existing `<install-dir>/<artifactId>` tree when present.
+6. Extract the new archive into `<install-dir>`.
+7. Create `<install-dir>/<artifactId>/log`.
+8. Run decorators in the order supplied by the caller.
+9. Recursively set file and directory ownership to the target user.
+10. Iterate the direct entries under `bin/` and apply `OperatingSystem.makeExecutable(...)`.
+11. Run `install` on the new control script.
+
+What the caller still owns:
+
+* deciding when downtime is acceptable
+* preventing concurrent updates
+* backing up the old installation if rollback matters
+* retry policy around network or process failures
+* cleanup after partially completed runs
+
+[IMPORTANT]
+====
+If a failure happens after the old installation is removed, Forge does not reconstruct it.
+The caller must treat this utility as a direct replacement step, not as a transactional deployment system.
+====
+
+[[forge-deploy-decorators, Decorator Model]]
+=== Decorator Model
+
+`Decorator` is Forge Deploy's only explicit extension seam.
+
+Contract details:
+
+* decorators run after extraction and before ownership and permission adjustments
+* decorators receive the install-root path, not the application-root path
+* decorators also receive the Nexus coordinates, resolved repository enum, and environment-variable array
+* any exception from a decorator aborts the remaining deployment flow
+
+That timing is deliberate:
+
+* decorators can write additional files into the extracted tree
+* the later ownership pass will include those files
+* the later executable-bit pass can apply to files created in `bin/`
+
+==== Bundled `UpstartDecorator`
+
+`UpstartDecorator` renders a Freemarker template only when the selected operating system is `linux`.
+
+Generated file:
+
+[source,text]
+----
+<install-dir>/<artifactId>/bin/<artifactId>.install
+----
+
+Template inputs supplied by the code:
+
+* `artifactId`
+* `applicationName`, which is `artifactId.toUpperCase()`
+* `installDir`, the absolute install-root path
+* `batchExtension`, from `OperatingSystem`
+* `envVars`, passed through from the caller
+
+The decorator does not install the generated file into `/etc/init` or any other system location itself.
+It only writes the file into the extracted application tree.
+
+[[forge-deploy-nexus, Nexus Download Contract]]
+=== Nexus Download Contract
+
+`NexusDownloader` is intentionally narrow.
+It is hard-wired to one request model:
+
+* HTTPS only
+* port `443`
+* basic authentication
+* the Nexus redirect endpoint `/repository/service/local/artifact/maven/redirect`
+* query parameters `r`, `g`, `a`, `v`, `e`, and optional `c`
+
+Version handling rules:
+
+* `LATEST` and `RELEASE` are passed through unchanged
+* for `Repository.RELEASES`, other values are passed through unchanged
+* for `Repository.SNAPSHOTS`, other values are rewritten to `<version>-SNAPSHOT`
+
+Download and progress behavior:
+
+* the response must be HTTP `200` or the code throws `IOException("Could not locate requested artifact")`
+* the response body is streamed to disk in `2048` byte chunks
+* progress updates are emitted every two percent
+* graphical mode and line-based mode are both text output; there is no quiet mode in the current code
+
+Operational implications:
+
+* custom Nexus ports are not supported without wrapping or modifying the code
+* plain HTTP is not supported
+* the fixed endpoint is aligned with Nexus redirect behavior, so verify compatibility with your repository deployment
+
+[[forge-deploy-notes, Deploy Defaults And Behavioral Notes]]
+=== Deploy Defaults And Behavioral Notes
+
+[cols="2,4",options="header"]
+|===
+|Behavior |Current Rule
+
+|Default operating system
+|`linux`
+
+|Default repository
+|`releases`
+
+|Default extension
+|`jar`
+
+|Snapshot version handling
+|Append `-SNAPSHOT` unless the requested version is `LATEST` or `RELEASE`
+
+|Temporary download path
+|`<install-dir>/<artifactId>.zip`
+
+|Created directory
+|`<install-dir>/<artifactId>/log`
+
+|Linux executable mode
+|Apply POSIX `755` permissions to each direct entry in `bin/`
+
+|Windows executable mode
+|No-op
+
+|Decorator order
+|Exactly the order supplied by the caller
+
+|Progress granularity
+|Two-percent segments
+|===
+
+Additional technical notes:
+
+* the updater resolves the application owner before doing any filesystem work
+* the ownership walk visits files and directories recursively after decorators finish
+* `ApplicationUpdaterCLI` defaults are applied in code, not in the metadata file
+* invalid repository or operating-system codes currently become `null` enums and fail downstream
+
+[[forge-known-constraints, Known Constraints]]
+== Known Constraints
+
+These constraints are present in the current code and should shape how you adopt Forge:
+
+* `forge-style` and `forge-deploy` are libraries, not self-installing tools
+* `DependencyReducer` depends on an external Maven process and a three-second timeout
+* `DependencyReducer` does not add dependency versions or classifiers
+* `DependencyReducer` does not expose a public CLI entry point
+* Linux Maven lookup uses `where`, not `which` or `command -v`
+* `forge-deploy` assumes ZIP-compatible archives and a fixed extracted directory layout
+* `forge-deploy` assumes a control script named from the artifact id and operating system
+* `ApplicationUpdaterCLI` does not normalize a missing decorator list to an empty array
+* Forge Deploy does not provide staging, rollback, locking, or backup semantics
+
+[[forge-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,4",options="header"]
+|===
+|Symptom |Likely Cause |What To Check
+
+|`Unable to locate 'mvn.cmd'`
+|Maven was not found, or Linux did not provide the `where` command the code tries to run
+|Check `PATH`, verify `where.exe mvn.cmd` on Windows or `where mvn` on Linux, and remember the error text is Windows-flavored even when the failure happens on Linux
+
+|`TransportTimeoutException` while reducing dependencies
+|The external Maven process did not finish within three seconds
+|Run `mvn dependency:analyze -N` manually in the affected module and measure its runtime
+
+|A rewritten POM no longer builds after dependency reduction
+|The reducer added a dependency without `version` or `classifier`
+|Verify that dependency management or a parent POM supplies the missing values
+
+|`Could not locate requested artifact`
+|Any non-`200` Nexus response triggers the same error
+|Check Nexus host, credentials, repository code, artifact coordinates, classifier, extension, and endpoint compatibility
+
+|`NullPointerException` early in CLI-based deployment
+|Unsupported `-o` or `-r` value, or no `-d` decorators were supplied
+|Use only `linux` or `windows`, use only `releases` or `snapshots`, and pass at least one decorator when invoking the CLI
+
+|Decorator failure during Linux deployment
+|The bundled `UpstartDecorator` received unusable template inputs or could not write the generated file
+|Check that the archive extracted correctly, the `bin/` directory exists, and `envVars` were supplied in the way your wrapper expects
+
+|Existing service removed, but new service not installed
+|A failure happened after deletion and before the final `install` command
+|Inspect the extracted tree, generated files, and file ownership, then rerun or recover using your own rollback procedure
+
+|`NoSuchFileException` or process-start failure for the control script
+|The extracted archive does not provide `<artifactId>.sh` or `<artifactId>.bat` under `bin/`
+|Verify the archive layout and the artifact id passed to the updater
+
+|Ownership or permission changes fail
+|The current process lacks rights to change owners or POSIX permissions
+|Run with an account that can resolve the target user and modify the extracted files on the target filesystem
+|===
+
+[[forge-verification, Verification Checklist]]
+== Verification Checklist
+
+Use this checklist before treating a Forge integration as complete.
+
+For `forge-style`:
+
+1. Run on a disposable branch or workspace copy first.
+2. Confirm the repository root you pass is the one you intend to rewrite.
+3. If using `DependencyReducer`, verify that `mvn dependency:analyze -N` succeeds and finishes comfortably within three seconds.
+4. Confirm that added dependencies can inherit versions and classifiers from existing build metadata.
+5. Inspect the POM diff after rewrite instead of assuming the tool touched only what you expected.
+
+For `forge-deploy`:
+
+1. Verify the Nexus host is reachable on HTTPS port `443`.
+2. Verify the target repository code is `releases` or `snapshots`.
+3. For snapshots, pass the base version unless you intentionally want to append your own suffix logic outside Forge.
+4. Inspect one downloaded archive manually and confirm it expands to `<install-dir>/<artifactId>/bin/<artifactId>.sh` or `.bat`.
+5. Verify the target application user exists on the deployment host.
+6. Test the current control script's `remove` and `install` commands outside Forge before trusting unattended runs.
+7. If you use decorators, inspect the generated files after deployment.
+8. Treat the first live run as a staged exercise, because the updater does not provide rollback.
+
+[[forge-see-also, See Also]]
+== See Also
+
+* <<spark,Spark>> if you also need a Smallmind module that produces distributable service artifacts
+* <<license,License>> if your build workflow also needs explicit source-header or packaged-license management

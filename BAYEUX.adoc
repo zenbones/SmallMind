@@ -1,0 +1,1659 @@
+[[bayeux, Bayeux]]
+= Bayeux
+
+[partintro]
+Bayeux is Smallmind's explicit Bayeux/CometD server stack. The implementation family in this repository is `oumuamua`, split into API, SPI, and reference-runtime modules so you can depend on only the layer you need.
+
+The stack is integration-first. You choose the servlet mapping, websocket registration, security policy, route handlers, JSON codec, listener set, and optional cluster backbone. The reference runtime fits into explicit servlet wiring and the IOC model already present in your application.
+
+Audience: developers integrating Bayeux endpoints into applications and shared libraries.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Bayeux modules on the same version unless you intentionally need to split them.
+
+This guide focuses on:
+
+* choosing the correct Bayeux layer for a library or application
+* bootstrapping the reference server in a servlet container
+* wiring security, services, channel policy, listeners, codecs, and clustering explicitly
+* documenting the exact runtime behavior that callers need to plan around
+
+== Quick Navigation
+
+* <<bayeux-reading-paths,Reading Paths>>
+* <<bayeux-at-a-glance,At A Glance>>
+* <<bayeux-why-use,Why Use Bayeux>>
+* <<bayeux-layout,Project Layout>>
+* <<bayeux-installation,Installation>>
+* <<bayeux-bootstrapping,Bootstrapping The Server>>
+* <<bayeux-api-index,API By Use Case>>
+* <<bayeux-exchange-walkthrough,Client Flow And Server Semantics>>
+* <<bayeux-config-reference,Configuration Reference>>
+* <<bayeux-security-model,Security, Services, Listeners, And Initializers>>
+* <<bayeux-transports,Protocols And Transports>>
+* <<bayeux-codec,JSON Value Model And Codec>>
+* <<bayeux-backbone,Cluster Backbone>>
+* <<bayeux-builtin-extensions,Built-In Extensions And Listeners>>
+* <<bayeux-threading,Threading And Lifecycle>>
+* <<bayeux-troubleshooting,Troubleshooting>>
+* <<bayeux-verification,Verification Checklist>>
+* <<bayeux-defaults,Defaults Reference>>
+
+[[bayeux-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are integrating Bayeux for the first time, read in this order:
+
+1. <<bayeux-why-use,Why Use Bayeux>>
+2. <<bayeux-installation,Installation>>
+3. <<bayeux-bootstrapping,Bootstrapping The Server>>
+4. <<bayeux-api-index,API By Use Case>>
+5. <<bayeux-exchange-walkthrough,Client Flow And Server Semantics>>
+6. <<bayeux-security-model,Security, Services, Listeners, And Initializers>>
+7. <<bayeux-troubleshooting,Troubleshooting>>
+
+If you already run Bayeux and need exact behavior quickly, jump to:
+
+* <<bayeux-config-reference,Configuration Reference>>
+* <<bayeux-security-invocation,Security Policy Invocation Matrix>>
+* <<bayeux-transports,Protocols And Transports>>
+* <<bayeux-threading,Threading And Lifecycle>>
+* <<bayeux-defaults,Defaults Reference>>
+* <<bayeux-troubleshooting,Troubleshooting>>
+
+[[bayeux-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,3",options="header"]
+|===
+|Layer |Artifact |Use It For
+
+|API
+|`org.smallmind:oumuamua-server-api`
+|Public contracts such as `Server`, `Session`, `Channel`, `Route`, `Protocol`, `Transport`, `BayeuxService`, `SecurityPolicy`, `Packet`, `Message`, and the JSON value model
+
+|SPI
+|`org.smallmind:oumuamua-server-spi`
+|Built-in helpers such as `DefaultRoute`, `OpenSecurityPolicy`, `AckExtension`, `TimesyncExtension`, `InstrumentedLatencyListener`, `OrthodoxCodec`, `JaxbDeserializer`, `WebsocketProtocol`, and `KafkaBackbone`
+
+|Reference runtime
+|`org.smallmind:oumuamua-server-impl`
+|`OumuamuaServer`, `OumuamuaConfiguration`, long-poll servlets, websocket endpoint, channel/session implementations, and maintenance threads
+|===
+
+[cols="1,2,3",options="header"]
+|===
+|Concern |Primary Types |What To Expect
+
+|Bootstrap
+|`OumuamuaConfiguration`, `OumuamuaServer`, `OumuamuaServlet`, `AsyncOumuamuaServlet`
+|Explicit servlet-context installation under `Server.ATTRIBUTE`; no endpoint auto-registration
+
+|Routing and delivery
+|`Route`, `DefaultRoute`, `Channel`, `Packet`, `PacketType`
+|Exact service routing, wildcard subscription channels, per-channel reflection and streaming flags, message fan-out, optional backbone replication
+
+|Security
+|`SecurityPolicy`, `OpenSecurityPolicy`, `SecurityRejection`
+|No policy if you omit one; explicit allow or reject decisions if you supply one
+
+|Extensions and hooks
+|Server, session, channel, and protocol listeners; `ChannelInitializer`; `BayeuxService`
+|Composable interception surfaces with caller-controlled ordering
+
+|Serialization
+|`Codec`, `Message`, `Value`, `OrthodoxCodec`, `JaxbDeserializer`
+|Pluggable JSON model; most users can stay on the built-in orthodox value family
+|===
+
+[[bayeux-why-use, Why Use Bayeux]]
+== Why Use Bayeux
+
+Use Bayeux when you need a server-side Bayeux runtime with explicit ownership boundaries.
+
+Reasons to choose it:
+
+* API, SPI, and runtime are separate, so libraries can stop at contracts while applications opt into the implementation.
+* Security, services, transports, codec, listeners, and clustering are all explicit composition choices.
+* The runtime is narrow enough to reason about from code and logs instead of hidden registration.
+* Long-polling and websocket support stay transport-specific; clustering is an optional backbone, not transport magic.
+* CometD clients can interoperate over standard Bayeux message flow. The tests in this repository exercise CometD Java clients against the reference runtime.
+
+[[bayeux-contracts, Behavioral Contracts]]
+== Behavioral Contracts
+
+These are the stable integration expectations that matter most to callers:
+
+* No classpath scanning, annotation discovery, or container-owned service registration.
+* The servlet context must expose the server instance under `Server.ATTRIBUTE` before the long-poll servlet initializes.
+* `BayeuxService` route lookup is exact-path lookup, not wildcard matching.
+* No clustering occurs unless you configure a `Backbone`.
+* Incoming request batches are processed message-by-message and merged back into one response array when needed.
+* Listener order is registration order.
+* Packet listeners can stop a phase by returning `null`.
+* If you supply a custom `ExecutorService`, `OumuamuaServer.stop()` still shuts it down.
+
+[[bayeux-layout, Project Layout]]
+== Project Layout
+
+The `bayeux` subproject is a multi-module build.
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Purpose
+
+|`bayeux/`
+|`org.smallmind:smallmind-bayeux`
+|Aggregator POM for Bayeux modules
+
+|`bayeux/oumuamua/`
+|`org.smallmind:bayeux-oumuamua`
+|Aggregator for the Oumuamua implementation family
+
+|`bayeux/oumuamua/server/api/`
+|`org.smallmind:oumuamua-server-api`
+|Public Bayeux contracts and JSON value interfaces
+
+|`bayeux/oumuamua/server/spi/`
+|`org.smallmind:oumuamua-server-spi`
+|Default routes, built-in policies and extensions, codec implementations, websocket helpers, and backbone integrations
+
+|`bayeux/oumuamua/server/impl/`
+|`org.smallmind:oumuamua-server-impl`
+|Reference server runtime, servlets, websocket endpoint, channel tree, and session/channel implementations
+|===
+
+[[bayeux-installation, Installation]]
+== Installation
+
+=== Choose The Smallest Layer
+
+Reusable libraries should usually depend on API or SPI only.
+Applications that actually host Bayeux traffic should depend on the implementation module.
+
+[cols="1,3",options="header"]
+|===
+|Artifact |Choose It When
+
+|`oumuamua-server-api`
+|You need only the public contracts and want no dependency on the reference runtime
+
+|`oumuamua-server-spi`
+|You want built-in routes, policies, codecs, extensions, websocket helpers, or backbone integrations
+
+|`oumuamua-server-impl`
+|You want to host the reference Bayeux server implementation
+|===
+
+=== API Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>oumuamua-server-api</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+=== SPI Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>oumuamua-server-spi</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+=== Reference Runtime Dependency
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>oumuamua-server-impl</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+=== Optional Integration Dependencies
+
+`oumuamua-server-spi` keeps several integrations optional. Add only what your runtime actually uses.
+
+* `jakarta.websocket:jakarta.websocket-api` and container-specific websocket support for `WebsocketProtocol`
+* `org.apache.kafka:kafka-clients` and `org.smallmind:kafka-utility` for `KafkaBackbone`
+* `org.smallmind:claxon-registry` for `InstrumentedLatencyListener`
+* `org.smallmind:web-json-scaffold`, `tools.jackson.core:jackson-core`, and `tools.jackson.core:jackson-databind` for `JaxbDeserializer`
+* `org.springframework:spring-beans` if you use Spring bean wiring around SPI helpers
+
+[IMPORTANT]
+====
+The SPI and implementation modules log through Scribe.
+If your application executes the reference runtime, include exactly one `scribe-ink-*` endpoint module or otherwise satisfy Scribe's runtime logging bootstrap.
+====
+
+=== Runtime Profiles
+
+[cols="1,2,3",options="header"]
+|===
+|Profile |Required Pieces |Notes
+
+|Long-poll only
+|`OrthodoxCodec` or another `Codec`, `ServletProtocol`, and `OumuamuaServlet` or `AsyncOumuamuaServlet`
+|No websocket dependencies required
+
+|Long-poll plus websocket
+|Add `WebsocketProtocol` and `WebSocketEndpoint`
+|Container must expose `ServerContainer`; websocket endpoint registration is explicit
+
+|Clustered deployment
+|Add a `Backbone` such as `KafkaBackbone`
+|Use a unique `nodeName` per server instance and the same topic name across the cluster
+|===
+[[bayeux-bootstrapping, Bootstrapping The Server]]
+== Bootstrapping The Server
+
+=== Required Pieces
+
+[cols="1,1,3",options="header"]
+|===
+|Piece |Required |Notes
+
+|`Codec`
+|Yes
+|Used to parse incoming payloads and create response messages
+
+|At least one `Protocol`
+|Yes
+|`OumuamuaServer` rejects a configuration with no protocols
+
+|Servlet-context attribute under `Server.ATTRIBUTE`
+|Yes for long-poll servlets
+|Must be installed before `OumuamuaServlet` or `AsyncOumuamuaServlet` initializes
+
+|Long-poll servlet mapping
+|Yes for HTTP ingress
+|Map exactly one of `OumuamuaServlet` or `AsyncOumuamuaServlet` to the Bayeux endpoint path
+
+|`SecurityPolicy`
+|No
+|If omitted entirely, the runtime is open
+
+|`BayeuxService[]`
+|No
+|Exact `/service/*` route handlers
+
+|Server listeners
+|No
+|Packet, channel, subscription, and session listeners
+
+|`Backbone`
+|No
+|Needed only for cross-node delivery
+
+|Custom `ExecutorService`
+|No
+|If omitted, the server creates a cached-thread-pool style executor
+|===
+
+=== Minimal Long-Poll Bootstrap
+
+The smallest practical server uses the built-in orthodox value model and servlet long-polling.
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
+import org.smallmind.bayeux.oumuamua.server.spi.OpenSecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+OumuamuaConfiguration<OrthodoxValue> configuration = new OumuamuaConfiguration<>();
+configuration.setCodec(new OrthodoxCodec(new JaxbDeserializer<>()));
+configuration.setProtocols(new Protocol[] { new ServletProtocol<OrthodoxValue>(30_000L) });
+configuration.setSecurityPolicy(new OpenSecurityPolicy<>());
+
+OumuamuaServer<OrthodoxValue> server = new OumuamuaServer<>(configuration);
+
+// Install this before the servlet initializes.
+servletContext.setAttribute(Server.ATTRIBUTE, server);
+----
+
+`OumuamuaServlet` and `AsyncOumuamuaServlet` call `server.start(servletConfig)` from `init(...)` and `server.stop()` from `destroy()`.
+If you host Bayeux through custom transport code instead of the provided servlets, you are responsible for calling `start(...)` and `stop()` yourself.
+
+=== Servlet Registration Sketch
+
+[source,xml]
+----
+<listener>
+  <listener-class>com.example.BayeuxContextListener</listener-class>
+</listener>
+
+<servlet>
+  <servlet-name>cometd</servlet-name>
+  <servlet-class>org.smallmind.bayeux.oumuamua.server.impl.AsyncOumuamuaServlet</servlet-class>
+  <async-supported>true</async-supported>
+  <load-on-startup>1</load-on-startup>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>cometd</servlet-name>
+  <url-pattern>/cometd/*</url-pattern>
+</servlet-mapping>
+----
+
+[IMPORTANT]
+====
+The reference servlets only implement `POST`.
+They reject requests that do not provide a valid positive `Content-Length`, and they expect async support to be enabled on the servlet mapping.
+====
+
+=== Add Websocket Support
+
+Add `WebsocketProtocol` alongside `ServletProtocol`. Most deployments keep both so clients can handshake on either transport.
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint;
+import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketConfiguration;
+import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol;
+
+WebsocketConfiguration websocketConfiguration =
+    new WebsocketConfiguration(WebSocketEndpoint.class, "/cometd/*");
+websocketConfiguration.setAsyncSendTimeoutMilliseconds(5_000L);
+
+configuration.setProtocols(new Protocol[] {
+    new ServletProtocol<OrthodoxValue>(30_000L),
+    new WebsocketProtocol<OrthodoxValue>(30_000L, websocketConfiguration)
+});
+----
+
+Notes:
+
+* `WebSocketTransport` normalizes the URL by stripping a trailing `/*`, so `/cometd/*` becomes `/cometd` for endpoint registration.
+* The websocket container must expose `jakarta.websocket.server.ServerContainer` in the servlet context.
+* `WebSocketEndpoint` is the reference endpoint class shipped by `oumuamua-server-impl`.
+
+=== Spring XML Example
+
+This is a trimmed working pattern from the repository tests.
+
+[source,xml]
+----
+<bean id="oumuamuaServer" class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer">
+  <constructor-arg name="configuration">
+    <bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration">
+      <property name="codec">
+        <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec">
+          <constructor-arg name="deserializer">
+            <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer"/>
+          </constructor-arg>
+        </bean>
+      </property>
+
+      <property name="protocols">
+        <list>
+          <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol">
+            <constructor-arg name="longPollTimeoutMilliseconds" value="30000"/>
+            <constructor-arg name="websocketConfiguration">
+              <bean class="org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketConfiguration">
+                <constructor-arg name="endpointClass"
+                                 value="org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint"/>
+                <constructor-arg name="oumuamuaUrl" value="/cometd/*"/>
+              </bean>
+            </constructor-arg>
+          </bean>
+
+          <bean class="org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol">
+            <constructor-arg name="longPollTimeoutMilliseconds" value="30000"/>
+          </bean>
+        </list>
+      </property>
+
+      <property name="listeners">
+        <list>
+          <bean class="org.smallmind.bayeux.oumuamua.server.spi.extension.AckExtension">
+            <constructor-arg name="maxAckQueueSize" value="100"/>
+          </bean>
+        </list>
+      </property>
+    </bean>
+  </constructor-arg>
+</bean>
+
+<bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServletContextListener">
+  <property name="oumuamuaServer" ref="oumuamuaServer"/>
+</bean>
+----
+
+=== Startup Failure Conditions
+
+Expect startup to fail early in these cases:
+
+* `OumuamuaConfiguration` is missing
+* `codec` is not set
+* `protocols` is not set
+* the servlet initializes before the server is installed under `Server.ATTRIBUTE`
+* `OumuamuaServlet` or `AsyncOumuamuaServlet` starts without `ServletProtocol`
+* `WebsocketProtocol` starts in a container that cannot provide `ServerContainer`
+[[bayeux-api-index]]
+[[bayeux-extension-model]]
+== API By Use Case
+
+Use this map when you know the outcome you want and need the fastest route to the right type.
+
+[cols="2,3,4",options="header"]
+|===
+|Need |Use |Notes
+
+|Define a Bayeux endpoint contract in a reusable library
+|`Server`, `Session`, `Channel`, `Route`, `Protocol`, `Transport`, `BayeuxService`
+|Stay on `oumuamua-server-api` if you do not need built-in helpers
+
+|Parse and create routes
+|`DefaultRoute`
+|Lives in SPI; validates paths and exposes built-in meta routes
+
+|Register an exact `/service/*` handler
+|`BayeuxService`, `Server.addService(...)`
+|Route lookup is exact, not wildcard matching
+
+|Authorize handshake, channel creation, subscribe, or publish
+|`SecurityPolicy`, `OpenSecurityPolicy`, `SecurityRejection`
+|Return `null` to allow; extend `OpenSecurityPolicy` for allow-by-default customization
+
+|Preconfigure channels when they are first created
+|`ChannelInitializer`, `Server.addInitializer(...)`
+|Initializers run only on newly created channels
+
+|Observe or transform packets globally
+|`Server.PacketListener`
+|Can modify or reject request, response, and delivery packets
+
+|Observe or transform per-channel delivery
+|`Channel.PacketListener`, `Channel.SessionListener`
+|Useful for channel-local policy and delivery decoration
+
+|Observe or transform one session's responses and deliveries
+|`Session.PacketListener`
+|Changes are session-local
+
+|Stamp, measure, or decorate transport-level messages
+|`Protocol.ProtocolListener`
+|Configured on the protocol instance rather than in `OumuamuaConfiguration.listeners`
+
+|Publish from server-side code
+|`Channel.publish(ObjectValue<V>)`
+|Bypasses client-side handshake flow and fans out directly to subscribers and backbone
+
+|Build messages and JSON values
+|`Codec`, `Message`, `ObjectValue`, `ArrayValue`, `ValueFactory`
+|`Message` adds Bayeux field helpers such as `getAdvice(true)` and `getData(true)`
+
+|Enable cluster fan-out
+|`Backbone`, `KafkaBackbone`
+|Only delivery packets are replicated across nodes
+|===
+
+[[bayeux-exchange-walkthrough]]
+== Client Flow And Server Semantics
+
+[[bayeux-wire-messages]]
+[[bayeux-message-shape]]
+[[bayeux-meta-semantics]]
+=== Canonical Client Flow
+
+A normal client session follows this order:
+
+1. `POST /meta/handshake`
+2. `POST /meta/connect`
+3. `POST /meta/subscribe`
+4. publish to application channels and/or call exact `/service/*` routes
+5. repeat `connect`
+6. `POST /meta/disconnect`
+
+If `allowsImplicitConnection` is `true`, the server also permits `subscribe` before an explicit `connect` and promotes the session to connected state on the first subscribe. This exists for client compatibility, not because it is the cleanest Bayeux shape.
+
+=== Wire Examples
+
+==== Handshake
+
+[source,json]
+----
+[
+  {
+    "channel": "/meta/handshake",
+    "version": "1.0",
+    "supportedConnectionTypes": ["long-polling", "websocket"],
+    "id": "1"
+  }
+]
+----
+
+A successful response includes the negotiated session id and the transport names supported by the server for that handshake path.
+
+[source,json]
+----
+[
+  {
+    "channel": "/meta/handshake",
+    "id": "1",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "version": "1.0",
+    "minimumVersion": "1.0",
+    "supportedConnectionTypes": ["long-polling", "websocket"],
+    "successful": true
+  }
+]
+----
+
+==== Connect
+
+[source,json]
+----
+[
+  {
+    "channel": "/meta/connect",
+    "id": "2",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "connectionType": "long-polling",
+    "advice": {
+      "timeout": 0
+    }
+  }
+]
+----
+
+For long-polling, the response may contain only the connect reply, or the connect reply followed by queued delivery messages.
+
+[source,json]
+----
+[
+  {
+    "channel": "/meta/connect",
+    "id": "2",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "successful": true,
+    "advice": {
+      "interval": 30000
+    }
+  },
+  {
+    "channel": "/prices/MSFT",
+    "id": "4",
+    "data": {
+      "price": 413.25
+    }
+  }
+]
+----
+
+For websocket, the connect response normally contains only the connect message, and later deliveries are pushed separately. If `AckExtension` has forced the session into queued delivery mode, websocket connect responses can also carry queued messages.
+
+==== Subscribe
+
+[source,json]
+----
+[
+  {
+    "channel": "/meta/subscribe",
+    "id": "3",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "subscription": "/prices/*"
+  }
+]
+----
+
+`/prices/*` receives one additional segment such as `/prices/MSFT`.
+`/prices/**` receives any deeper suffix such as `/prices/us/equities/MSFT`.
+
+==== Publish
+
+[source,json]
+----
+[
+  {
+    "channel": "/prices/MSFT",
+    "id": "4",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "data": {
+      "price": 413.25
+    },
+    "ext": {
+      "oumuamua": {
+        "echo": false
+      }
+    }
+  }
+]
+----
+
+`ext.oumuamua.echo=false` suppresses the extra echoed request message in the publish response.
+If the flag is omitted, the server behaves like CometD clients expect and echoes by default.
+
+==== Service Request
+
+[source,json]
+----
+[
+  {
+    "channel": "/service/health",
+    "id": "5",
+    "clientId": "0000018abf6fef2aca57d86a288a15548002",
+    "data": {
+      "verbose": true
+    }
+  }
+]
+----
+
+A `/service/*` message is routed to `BayeuxService.process(...)` and is not delivered through normal channel subscription fan-out.
+
+=== Batch Behavior
+
+A single HTTP or websocket frame may carry either one JSON object or one JSON array of objects.
+The codec accepts both shapes.
+
+Batch rules:
+
+* each incoming message is processed independently and in order
+* long-poll servlet responses merge all generated messages into one JSON array
+* a `Server.PacketListener` sees one `Packet` per processed message, not one aggregate for the whole incoming batch
+* publish deliveries generated by an earlier message in the batch may appear before later meta responses because each message is handled to completion in sequence
+
+=== Meta Response And Reconnect Advice
+
+[[bayeux-meta-error-advice]]
+[[bayeux-error-response]]
+The runtime uses Bayeux advice values in the standard fields under `advice.reconnect`.
+
+[cols="1,3",options="header"]
+|===
+|Reconnect Value |Meaning
+
+|`retry`
+|Client should keep the session and try again
+
+|`handshake`
+|Client must discard the current session and re-handshake
+
+|`none`
+|Client should stop reconnecting for that operation
+|===
+
+Common cases:
+
+* handshake required before connect, publish, subscribe, or unsubscribe: reconnect advice is usually `handshake`
+* security rejection: reconnect advice is usually `none`
+* successful disconnect: reconnect advice is `none`
+
+=== Session State Model
+
+[[bayeux-session-state]]
+`SessionState` moves through four values.
+
+[cols="1,3",options="header"]
+|===
+|State |Meaning
+
+|`INITIALIZED`
+|Session object exists but handshake has not completed
+
+|`HANDSHOOK`
+|Handshake completed successfully
+
+|`CONNECTED`
+|At least one successful connect has completed, or subscribe implicitly connected the session when that compatibility option is enabled
+
+|`DISCONNECTED`
+|Disconnect completed or idle cleanup removed the session
+|===
+
+[[bayeux-channel-routing]]
+[[bayeux-channel-flags]]
+=== Route Rules And Channel Flags
+
+`DefaultRoute` is the built-in route implementation used throughout the SPI and reference runtime.
+
+Caller-visible rules:
+
+* every path must start with `/`
+* every path must contain at least one non-empty segment
+* empty segments such as `/prices//MSFT` are rejected
+* normal segments allow letters, digits, spaces, and `!#$()+-.@_{}~`
+* wildcard segments must be exactly `*` or `**`
+* wildcard segments can appear only as the final segment
+* `/meta/*` is reserved for Bayeux meta operations
+* `/service/*` is reserved for exact `BayeuxService` routing
+* `Route.isDeliverable()` is `false` for meta, service, wild, and deep-wild routes
+
+Channel flags matter after a route has been materialized as a `Channel`:
+
+* `persistent` prevents idle cleanup and blocks `server.removeChannel(...)`
+* `reflecting` includes the sender in subscribed delivery fan-out
+* `streaming` bypasses queued delivery on non-long-poll transports
+
+=== Echo, Reflection, And Streaming Are Different
+
+This runtime has three separate delivery knobs that are easy to confuse:
+
+[cols="1,3",options="header"]
+|===
+|Feature |What It Does
+
+|`ext.oumuamua.echo`
+|Controls whether the original publish request is echoed back inside the publish response packet
+
+|Channel `reflecting`
+|Controls whether the publisher also receives the delivery packet as a subscribed session
+
+|Channel `streaming`
+|On non-long-poll protocols, bypasses queued delivery and sends immediately even if the session was forced into long-poll mode by an extension
+|===
+
+A sender can therefore see:
+
+* no echo and no reflected delivery
+* an echoed publish response only
+* a reflected delivery only
+* both an echoed publish response and a reflected delivery
+
+[[bayeux-config-reference, Configuration Reference]]
+== Configuration Reference
+
+=== `OumuamuaConfiguration`
+
+`OumuamuaConfiguration` is the main composition object used by `OumuamuaServer`.
+
+[cols="2,2,4",options="header"]
+|===
+|Property |Required |Meaning
+
+|`codec`
+|Yes
+|Message parser and message/value factory
+
+|`protocols`
+|Yes
+|Configured Bayeux ingress protocols
+
+|`securityPolicy`
+|No
+|Authorization hooks for handshake, create, subscribe, and publish
+
+|`services`
+|No
+|Exact service route handlers
+
+|`listeners`
+|No
+|Server-level listeners such as packet, session, channel, or subscription listeners
+
+|`backbone`
+|No
+|Cluster fan-out implementation
+
+|`executorService`
+|No
+|Executor used for async processing and websocket work
+
+|`reflectingPaths`
+|No
+|Route patterns that initialize new channels with `reflecting=true`
+
+|`streamingPaths`
+|No
+|Route patterns that initialize new channels with `streaming=true`
+|===
+
+Protocol listeners are not configured through `OumuamuaConfiguration.listeners`.
+Pass them into `ServletProtocol` or `WebsocketProtocol` constructors.
+
+Channel initializers are also separate from the configuration object.
+Register them on the server with `server.addInitializer(...)` after constructing the server and before it accepts traffic.
+
+=== Path Matching Semantics For `reflectingPaths` And `streamingPaths`
+
+`OumuamuaConfiguration.setReflectingPaths(...)` and `setStreamingPaths(...)` decompose each configured path into route segments and match them against newly created channels.
+The matching behavior is prefix-based.
+
+[IMPORTANT]
+====
+A configured path does not need to consume the whole route to match.
+For example, `/prices` matches both `/prices` and `/prices/MSFT`.
+If you want only one additional segment, use `/prices/*`.
+If you want an arbitrary suffix, use `/prices/**`.
+====
+
+[cols="2,2,2",options="header"]
+|===
+|Configured Path |Matches |Does Not Match
+
+|`/prices`
+|`/prices`, `/prices/MSFT`
+|`/price`, `/pricing/MSFT`
+
+|`/prices/*`
+|`/prices/MSFT`
+|`/prices/us/MSFT`
+
+|`/prices/**`
+|`/prices/us/MSFT`
+|`/price/us/MSFT`
+|===
+
+=== Tunables
+
+The configuration object exposes the following operational tunables.
+Defaults are listed again in <<bayeux-defaults,Defaults Reference>>.
+
+[cols="2,2,4",options="header"]
+|===
+|Property |Default |Meaning
+
+|`allowsImplicitConnection`
+|`false`
+|Allows subscribe-before-connect compatibility behavior
+
+|`channelTimeToLiveMinutes`
+|`30`
+|Idle lifetime for non-persistent channels
+
+|`sessionConnectIntervalSeconds`
+|`30`
+|`advice.interval` value returned on connect responses
+
+|`sessionMaxIdleTimeoutSeconds`
+|`90`
+|Idle timeout before the maintenance thread disconnects a session
+
+|`idleChannelCycleMinutes`
+|`5`
+|How often idle channels are swept
+
+|`idleSessionCycleMinutes`
+|`1`
+|How often idle sessions are inspected
+
+|`maxLongPollQueueSize`
+|`1000`
+|Maximum queued packets per session before the oldest queued packet is dropped
+
+|`messageLogLevel`
+|`TRACE`
+|Inbound and outbound raw message logging level
+
+|`idleCleanupLogLevel`
+|`DEBUG`
+|Idle session and channel cleanup logging level
+
+|`overflowLogLevel`
+|`DEBUG`
+|Long-poll queue overflow logging level
+|===
+[[bayeux-security-model]]
+== Security, Services, Listeners, And Initializers
+
+=== Exact `/service/*` Routing With `BayeuxService`
+
+`BayeuxService` is the explicit service surface for `/service/*` messages.
+The server stores services in a route-keyed map, so matching is exact.
+If one service instance needs to handle multiple service paths, return all exact routes from `getBoundRoutes()`.
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
+import org.smallmind.bayeux.oumuamua.server.api.Packet;
+import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
+import org.smallmind.bayeux.oumuamua.server.api.Route;
+import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+public class HealthService implements BayeuxService<OrthodoxValue> {
+
+  private final Route[] routes;
+
+  public HealthService ()
+    throws Exception {
+
+    routes = new Route[] { new DefaultRoute("/service/health") };
+  }
+
+  @Override
+  public Route[] getBoundRoutes () {
+
+    return routes;
+  }
+
+  @Override
+  public Packet<OrthodoxValue> process (Protocol<OrthodoxValue> protocol, Route route, Server<OrthodoxValue> server, Session<OrthodoxValue> session, Message<OrthodoxValue> request) {
+
+    Message<OrthodoxValue> response = createResponse(route, server, session, request);
+
+    response.put(Message.SUCCESSFUL, true);
+    response.getData(true).put("status", "ok");
+    response.getData(true).put("protocol", protocol.getName());
+
+    return new Packet<>(PacketType.RESPONSE, session.getId(), route, response);
+  }
+}
+----
+
+[NOTE]
+====
+`BayeuxService.process(...)` should always return a non-`null` `Packet`.
+Returning `null` from a service handler is not treated as a no-op; it leaves response processing without a packet to work with.
+====
+
+=== Security Policy
+
+[[bayeux-security-rejection]]
+The security contract is simple but important:
+
+* no configured `SecurityPolicy`: allow everything
+* configured `SecurityPolicy` returns `null`: allow the operation
+* configured `SecurityPolicy` returns `SecurityRejection`: reject the operation
+
+[IMPORTANT]
+====
+If you implement `SecurityPolicy` directly and override only one method, the other methods inherit the interface defaults, which reject operations.
+If you want allow-by-default behavior with selective overrides, extend `OpenSecurityPolicy` instead of implementing `SecurityPolicy` from scratch.
+====
+
+A targeted policy often looks like this:
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.SecurityRejection;
+import org.smallmind.bayeux.oumuamua.server.api.Session;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
+import org.smallmind.bayeux.oumuamua.server.spi.OpenSecurityPolicy;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+public class DeskSecurityPolicy extends OpenSecurityPolicy<OrthodoxValue> {
+
+  @Override
+  public SecurityRejection canHandshake (Session<OrthodoxValue> session, Message<OrthodoxValue> message) {
+
+    ObjectValue<OrthodoxValue> ext = message.getExt();
+    Value<OrthodoxValue> tokenValue = (ext == null) ? null : ext.get("token");
+
+    if ((tokenValue != null)
+          && ValueType.STRING.equals(tokenValue.getType())
+          && "desk-token".equals(((StringValue<OrthodoxValue>)tokenValue).asText())) {
+      return null;
+    }
+
+    return SecurityRejection.reason("missing or invalid token");
+  }
+
+  @Override
+  public SecurityRejection canPublish (Session<OrthodoxValue> session, Channel<OrthodoxValue> channel, Message<OrthodoxValue> message) {
+
+    return (channel.getRoute().size() == 2) && channel.getRoute().matches("prices", "*")
+             ? null
+             : SecurityRejection.reason("publish is restricted to /prices/*");
+  }
+}
+----
+
+=== Security Policy Invocation Matrix
+
+[[bayeux-security-invocation, Security Policy Invocation Matrix]]
+[cols="2,4",options="header"]
+|===
+|Hook |When It Runs
+
+|`canHandshake(...)`
+|Before a `/meta/handshake` completes
+
+|`canCreate(...)`
+|When subscribe or publish references a channel that does not already exist
+
+|`canSubscribe(...)`
+|After the target channel has been resolved or created for `/meta/subscribe`
+
+|`canPublish(...)`
+|Before a normal publish is converted into a delivery packet
+|===
+
+Notably absent:
+
+* connect does not invoke the security policy
+* unsubscribe does not invoke the security policy
+* disconnect does not invoke the security policy
+* `/service/*` dispatch does not invoke the security policy unless your `BayeuxService` does its own checks
+
+=== Channel Initializers
+
+Use `ChannelInitializer` to stamp new channels with policy once, at creation time.
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+ChannelInitializer<OrthodoxValue> pricesInitializer = channel -> {
+  if ((channel.getRoute().size() == 2) && channel.getRoute().matches("prices", "*")) {
+    channel.setPersistent(true);
+    channel.setReflecting(false);
+    channel.setStreaming(true);
+  }
+};
+
+server.addInitializer(pricesInitializer);
+----
+
+Initializer rules:
+
+* global initializers added with `server.addInitializer(...)` apply to future channel creation
+* extra initializers passed to `server.requireChannel(path, initializers...)` run only if that call creates the channel
+* initializers do not rerun when an existing channel is returned
+
+`Route.matches(...)` is prefix-based, so check `route.size()` as well when you need exact depth matching.
+
+=== Server-Side Publish Example
+
+Applications can publish directly without going through a client session.
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+Channel<OrthodoxValue> channel = server.requireChannel("/prices/MSFT");
+Message<OrthodoxValue> message = server.getCodec().create();
+ObjectValue<OrthodoxValue> data = message.getFactory().objectValue();
+
+data.put("symbol", "MSFT");
+data.put("price", 413.25);
+
+channel.publish(data);
+----
+
+`Channel.publish(...)` produces a delivery packet immediately.
+It does not produce a meta response because no client request triggered it.
+
+=== Listener Scopes And Mutation Visibility
+
+[[bayeux-concurrency-contract, Concurrency Contract]]
+Packet and message objects are copied as delivery moves deeper into the pipeline.
+That matters if your listeners mutate messages.
+
+[cols="2,3,4",options="header"]
+|===
+|Hook |Sees |Mutation Visibility
+
+|`Server.PacketListener`
+|Request, response, and delivery packets before channel/session fan-out
+|Changes affect all downstream processing for that packet; returning `null` stops the phase
+
+|`Channel.PacketListener`
+|Delivery packets on one channel branch
+|Changes affect sessions reached through that delivery branch; returning `null` stops delivery on that branch
+
+|`Session.PacketListener`
+|Responses and deliveries for one session
+|Changes are local to that session only; returning `null` suppresses that session's packet
+
+|`Protocol.ProtocolListener`
+|Inbound messages, publish transformation, and outgoing packets for one protocol
+|No cancellation return value, but listeners can still mutate the passed message or packet objects
+|===
+
+Channel listener persistence also affects cleanup.
+A channel with persistent listeners is kept alive even if it has no subscribers, unless you remove those listeners.
+[[bayeux-transports, Protocols And Transports]]
+== Protocols And Transports
+
+=== Built-In Names
+
+[cols="2,2,2,2",options="header"]
+|===
+|Type |Class |Protocol Name |Transport Name(s)
+
+|HTTP long-polling
+|`ServletProtocol`
+|`servlet`
+|`long-polling`
+
+|Websocket
+|`WebsocketProtocol`
+|`websocket`
+|`websocket`
+|===
+
+Handshake negotiation uses transport names such as `long-polling` and `websocket`, not protocol names such as `servlet`.
+
+=== Servlet Protocol
+
+`ServletProtocol` owns one transport: `long-polling`.
+Use it with either `OumuamuaServlet` or `AsyncOumuamuaServlet`.
+
+[cols="2,3",options="header"]
+|===
+|Servlet Class |Behavior
+
+|`OumuamuaServlet`
+|Reads the request body synchronously, then hands processing to the server executor
+
+|`AsyncOumuamuaServlet`
+|Reads the request body through a `ReadListener` and uses a dedicated executor for request-body processing before handing the messages to the server
+|===
+
+Common servlet rules:
+
+* use exactly one of the two servlet classes for a given endpoint path
+* enable `asyncSupported=true`
+* send Bayeux envelopes in `POST` requests only
+* include a valid positive `Content-Length`
+
+=== Websocket Protocol
+
+`WebsocketProtocol` owns one transport: `websocket`.
+The reference endpoint class is `org.smallmind.bayeux.oumuamua.server.impl.websocket.WebSocketEndpoint`.
+
+`WebsocketConfiguration` controls:
+
+* endpoint class
+* endpoint URL
+* optional websocket extensions
+* optional subprotocol
+* optional websocket session idle timeout
+* optional async send timeout
+* optional maximum text buffer size
+
+If `asyncSendTimeoutMilliseconds` is greater than zero, the endpoint uses async websocket sends and waits for completion up to that timeout.
+Otherwise it uses the websocket basic remote endpoint.
+
+=== Transport Compatibility Rules
+
+[[bayeux-transport-compatibility, Transport Compatibility Rules]]
+A session can be hijacked only by a connection using the same protocol name and transport name.
+That means:
+
+* long-poll sessions stay on long-poll
+* websocket sessions stay on websocket
+* a client that reconnects with a different transport sees `Invalid session type`
+
+This is the runtime rule that matters when clients switch transports mid-session.
+
+[[bayeux-codec, JSON Value Model And Codec]]
+== JSON Value Model And Codec
+
+The Bayeux stack does not force Jackson nodes or a general-purpose JSON tree into its public API.
+Instead it exposes a typed value model through `Value<V>` and friends.
+
+=== Most Users Should Start Here
+
+The built-in default combination is:
+
+* `OrthodoxCodec`
+* `JaxbDeserializer`
+* `OrthodoxValue` and the orthodox `ValueFactory`
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
+import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+OrthodoxCodec codec = new OrthodoxCodec(new JaxbDeserializer<>());
+ObjectValue<OrthodoxValue> objectValue = codec.create().getFactory().objectValue();
+
+objectValue.put("symbol", "MSFT");
+objectValue.put("price", 413.25);
+
+Value<OrthodoxValue> converted = codec.convert(objectValue);
+----
+
+=== `Message` Convenience Helpers
+
+`Message<V>` adds Bayeux-specific field helpers on top of `ObjectValue<V>`.
+The most commonly used helpers are:
+
+* `getId()`
+* `getSessionId()`
+* `getChannel()`
+* `getAdvice(true)`
+* `getExt(true)`
+* `getData(true)`
+* `isSuccessful()`
+
+Example:
+
+[source,java]
+----
+Message<OrthodoxValue> response = server.getCodec().create();
+
+response.put(Message.CHANNEL, "/service/health");
+response.put(Message.ID, "7");
+response.put(Message.SESSION_ID, "client-1");
+response.put(Message.SUCCESSFUL, true);
+response.getData(true).put("status", "ok");
+response.getExt(true).put("source", "server");
+----
+
+Custom codecs are possible if you need a different value model.
+If you build one, the rest of the server API still expects the same `Codec<V>`, `Message<V>`, and `ValueFactory<V>` semantics.
+[[bayeux-backbone, Cluster Backbone]]
+== Cluster Backbone
+
+No cross-node delivery happens unless you configure a `Backbone`.
+The built-in clustered option is `KafkaBackbone`.
+
+=== What The Backbone Replicates
+
+Only delivery packets are published across the backbone.
+Handshake, connect, subscribe, unsubscribe, disconnect, and service responses remain local to the node that processed the request.
+
+=== `KafkaBackbone`
+
+`KafkaBackbone` needs:
+
+* a unique `nodeName` for this server instance
+* `concurrencyLimit` consumer workers
+* a startup grace period in seconds for Kafka readiness checks
+* a logical topic name
+* one or more `KafkaServer` entries
+
+[source,java]
+----
+import org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaBackbone;
+import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+
+configuration.setBackbone(new KafkaBackbone<OrthodoxValue>(
+    "prices-node-1",
+    2,
+    30,
+    "prices",
+    new KafkaServer("kafka-1.example.net", 9092),
+    new KafkaServer("kafka-2.example.net", 9092)
+));
+----
+
+Behavior to plan around:
+
+* the runtime prefixes the Kafka topic as `oumuamua-<topicName>`
+* each backbone instance uses its own generated Kafka consumer group id
+* packets coming from Kafka are marked with `ext.backbone.remote=true` and `ext.backbone.type="kafka"`
+* packets received from the backbone are delivered locally but are not republished back into the backbone
+
+[[bayeux-builtin-extensions, Built-In Extensions And Listeners]]
+== Built-In Extensions And Listeners
+
+=== `AckExtension`
+
+`AckExtension` implements the CometD ack extension pattern.
+It negotiates ack support during handshake, tracks unacknowledged packets by ack id, and resends missed packets on later connects.
+
+What it changes:
+
+* successful handshake responses get `ext.ack=true`
+* the session is forced into queued delivery mode
+* connect responses may contain resent packets as well as newly queued packets
+* if the ack queue grows beyond `maxAckQueueSize`, tracked packets are trimmed and overflow is logged
+
+Use it when the client already speaks the ack extension and you want more reliable queued delivery semantics.
+
+=== `TimesyncExtension`
+
+`TimesyncExtension` reads `ext.timesync` metadata on handshake and connect requests and writes response timing information back into `ext.timesync`.
+
+Use it when clients already implement the Bayeux timesync extension and want the server to participate in round-trip and offset calculations.
+
+=== `InstrumentedLatencyListener`
+
+`InstrumentedLatencyListener` is a `Protocol.ProtocolListener` that:
+
+* stamps incoming messages with a receipt timestamp
+* carries that timestamp through publish transformation
+* records delivery latency through Claxon histograms when packets go out
+
+It is protocol-scoped, not server-listener-scoped.
+If you want it on both long-polling and websocket traffic, attach it to both protocol instances.
+
+[[bayeux-threading, Threading And Lifecycle]]
+[[bayeux-capacity-guidance, Capacity And Queue Guidance]]
+== Threading And Lifecycle
+
+=== Startup And Shutdown Ownership
+
+`OumuamuaServer.start(...)` performs these steps:
+
+1. logs startup and the effective configuration
+2. starts the configured backbone, if any
+3. initializes each configured protocol and transport
+4. starts the idle channel sifter thread
+5. starts the idle session inspector thread
+
+`OumuamuaServer.stop()` performs these steps:
+
+1. shuts down the backbone, if any
+2. stops the idle session inspector thread
+3. stops the idle channel sifter thread
+4. shuts down the executor service
+
+[IMPORTANT]
+====
+If you inject your own `ExecutorService`, `OumuamuaServer.stop()` still calls `shutdown()` on it.
+Do not share one executor between Bayeux and unrelated application components unless you want Bayeux shutdown to own that executor.
+====
+
+=== Default Executor Behavior
+
+If you do not provide `executorService`, the server creates a `ThreadPoolExecutor` with:
+
+* core pool size `0`
+* effectively unbounded maximum threads
+* `60` second keepalive
+* `SynchronousQueue`
+* caller-runs rejection policy
+
+That is convenient for low-friction integration, but it also means burst capacity planning is your responsibility.
+
+=== Idle Cleanup
+
+The runtime maintains two background loops:
+
+* idle sessions are disconnected and removed after `sessionMaxIdleTimeoutSeconds`
+* idle channels are removed after `channelTimeToLiveMinutes` if they are not persistent and have no remaining subscribers or persistent listeners
+
+A persistent channel created with `channel.setPersistent(true)` is never removed by idle cleanup and cannot be removed through `server.removeChannel(...)` without first clearing the persistent flag.
+
+=== Queueing And Streaming Behavior
+
+Long-poll and ack-driven delivery use session queues.
+
+Queue rules:
+
+* each session queue is capped by `maxLongPollQueueSize`
+* overflow drops the oldest queued packet and logs at `overflowLogLevel`
+* `AckExtension` maintains its own separate ack-tracking queue with its own cap
+* on non-long-poll protocols, `channel.setStreaming(true)` bypasses queued delivery even if the session was forced into long-poll mode by `AckExtension`
+[[bayeux-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[[bayeux-failure-signatures, Failure Signatures]]
+=== Common Failure Signatures
+
+[cols="2,4",options="header"]
+|===
+|Symptom |Likely Cause
+
+|`Missing configuration`
+|`OumuamuaServer` was constructed with a `null` configuration
+
+|`Missing codec`
+|`OumuamuaConfiguration.codec` was not set
+
+|`No protocols have been defined`
+|`OumuamuaConfiguration.protocols` was not set
+
+|`Missing OumuamuaServer in the servlet context`
+|The server was not installed under `Server.ATTRIBUTE` before servlet initialization
+
+|`No http protocol support has been configured`
+|`OumuamuaServlet` or `AsyncOumuamuaServlet` started without `ServletProtocol`
+
+|`No long polling transport support has been configured`
+|The `ServletProtocol` does not expose the long-poll transport the servlet expects
+
+|HTTP `400 Missing content length`
+|The client or proxy omitted the `Content-Length` header
+
+|HTTP `400 Invalid content length`
+|The `Content-Length` header was not numeric
+
+|HTTP `400 Unable to read the full content`
+|The request body length did not match the declared `Content-Length`
+
+|Bayeux error `Missing client id`
+|The message was not a handshake and did not carry `clientId`
+
+|Bayeux error `Invalid client id`
+|The session id is unknown on this server
+
+|Bayeux error `Invalid session type`
+|The client tried to continue a session on a different protocol or transport
+
+|Bayeux error `Handshake required`
+|Connect, publish, subscribe, or unsubscribe arrived before a valid handshake
+
+|Bayeux error `Connection required`
+|Publish or unsubscribe arrived before connect, or subscribe arrived before connect while implicit connection is disabled
+
+|Bayeux error `Unauthorized...`
+|The security policy returned a `SecurityRejection`
+
+|Bayeux error `Unknown service`
+|No `BayeuxService` is registered for that exact `/service/*` route
+|===
+
+=== Triage By Area
+
+==== Handshake And Connect
+
+Check these first:
+
+* the client uses transport names such as `long-polling` or `websocket`, not protocol names such as `servlet`
+* the client reuses the correct `clientId`
+* the client stays on the same transport for the life of the session
+* websocket deployments actually registered the endpoint path the client is using
+
+==== Security Problems
+
+The most common policy mistake is returning `SecurityRejection.noReason()` to allow an operation.
+That rejects the operation.
+Return `null` to allow, or extend `OpenSecurityPolicy` for selective overrides.
+
+==== Service Routing Problems
+
+If a `/service/*` request is returning `Unknown service`:
+
+* make sure `getBoundRoutes()` returns the exact route the client is calling
+* do not assume wildcard service routing
+* verify that the service was registered before traffic arrived
+
+==== Queue Pressure And Delivery Lag
+
+Check:
+
+* `maxLongPollQueueSize`
+* `AckExtension` queue size versus actual client behavior
+* whether `streamingPaths` should be enabled on hot websocket channels
+* whether the server executor is saturating under burst load
+
+==== Websocket Registration Problems
+
+Check:
+
+* `WebsocketProtocol` is present in the configuration
+* the container exposes `ServerContainer`
+* `WebsocketConfiguration.oumuamuaUrl` matches the deployed endpoint path
+* the runtime classpath includes the websocket APIs required by your container
+
+==== Cluster Delivery Problems
+
+Check:
+
+* every node uses the same Bayeux topic name
+* every node uses a unique `nodeName`
+* Kafka connectivity succeeds during the backbone startup grace window
+* clients are subscribing on the receiving node before expecting remote deliveries
+
+[[bayeux-observability, Observability And Logging]]
+=== Observability And Logging
+
+At `messageLogLevel`, the runtime logs raw inbound messages with a `<=` prefix and raw outbound packets with a `=>` prefix.
+That is useful during bring-up, but it may be too chatty for production if message payloads are large or sensitive.
+
+Operational logging also covers:
+
+* server startup and shutdown
+* idle session cleanup
+* idle channel cleanup
+* long-poll queue overflow
+* ack queue overflow
+
+[[bayeux-verification, Verification Checklist]]
+== Verification Checklist
+
+=== Minimal Checklist
+
+Verify these before calling the integration done:
+
+1. handshake succeeds on every transport you enabled
+2. connect succeeds and returns the expected `advice.interval`
+3. exact subscriptions and wildcard subscriptions both behave as intended
+4. publish responses and subscribed deliveries match your echo and reflection expectations
+5. `/service/*` routes hit the correct `BayeuxService`
+6. the security policy allows and rejects exactly what you expect
+7. idle session cleanup does not evict healthy clients too aggressively
+8. clustered nodes receive remote deliveries if a backbone is configured
+
+[[bayeux-feature-validation, Feature Validation Matrix]]
+=== Feature Validation Matrix
+
+[cols="2,1,1,1,3",options="header"]
+|===
+|Feature |Long-Poll |Websocket |Clustered |What To Check
+
+|Handshake and connect
+|Yes
+|Yes
+|N/A
+|Client negotiates the expected transport and keeps the session stable
+
+|Exact subscribe
+|Yes
+|Yes
+|Yes
+|Subscriber receives matching channel deliveries
+
+|Wildcard subscribe
+|Yes
+|Yes
+|Yes
+|`*` and `**` behave as expected for your route depth
+
+|Publish echo disabled
+|Yes
+|Yes
+|Yes
+|`ext.oumuamua.echo=false` suppresses the echoed request in publish responses
+
+|Channel reflection
+|Yes
+|Yes
+|Yes
+|Publisher receives or does not receive the delivery packet according to channel policy
+
+|Streaming channel
+|N/A
+|Yes
+|Yes
+|Websocket deliveries bypass queued connect-style delivery on streaming channels
+
+|Exact service route
+|Yes
+|Yes
+|No
+|Service route resolves only on the hosting node unless your service itself fans work out
+
+|Kafka backbone
+|N/A
+|N/A
+|Yes
+|Remote nodes receive `DELIVERY` packets and do not loop them back into Kafka
+|===
+
+[[bayeux-operational-notes, Operational Notes]]
+== Operational Notes
+
+[[bayeux-preflight, Deployment Preflight Checklist]]
+=== Deployment Preflight Checklist
+
+Use this quick preflight before production deployment:
+
+* exactly one Scribe endpoint integration is on the runtime classpath
+* the servlet mapping is async-enabled and reachable through proxies or ingress
+* websocket deployments have a working `ServerContainer` and the expected endpoint URL
+* queue sizes and cleanup intervals reflect your client reconnect behavior
+* clustered nodes have unique `nodeName` values and share the same topic name
+* any custom executor handed to Bayeux is safe for Bayeux to shut down
+
+[[bayeux-defaults, Defaults Reference]]
+== Defaults Reference
+
+[cols="2,2",options="header"]
+|===
+|Setting |Default
+
+|Bayeux version
+|`1.0`
+
+|Minimum Bayeux version
+|`1.0`
+
+|`allowsImplicitConnection`
+|`false`
+
+|`channelTimeToLiveMinutes`
+|`30`
+
+|`sessionConnectIntervalSeconds`
+|`30`
+
+|`sessionMaxIdleTimeoutSeconds`
+|`90`
+
+|`idleChannelCycleMinutes`
+|`5`
+
+|`idleSessionCycleMinutes`
+|`1`
+
+|`maxLongPollQueueSize`
+|`1000`
+
+|`messageLogLevel`
+|`TRACE`
+
+|`idleCleanupLogLevel`
+|`DEBUG`
+
+|`overflowLogLevel`
+|`DEBUG`
+
+|Default executor if not supplied
+|Cached-thread-pool style `ThreadPoolExecutor` with caller-runs rejection policy
+
+|Default websocket idle timeout
+|Container default (`-1` in `WebsocketConfiguration`)
+
+|Default websocket async send timeout
+|`0` meaning no timeout override
+
+|Default websocket text buffer size
+|Container default (`-1` in `WebsocketConfiguration`)
+|===

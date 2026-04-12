@@ -34,6 +34,8 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
  * Describes a decision to reject an operation for security reasons.
+ * A {@code null} reference from {@link SecurityPolicy} allows the operation; a non-{@code null}
+ * {@code SecurityRejection} rejects it.
  */
 public class SecurityRejection {
 
@@ -43,7 +45,7 @@ public class SecurityRejection {
   /**
    * Creates a rejection with a textual reason.
    *
-   * @param reason explanation for the rejection; may be {@code null} to indicate no rejection
+   * @param reason explanation for the rejection; may be {@code null} to reject without reason text
    */
   private SecurityRejection (String reason) {
 
@@ -51,7 +53,7 @@ public class SecurityRejection {
   }
 
   /**
-   * Produces a value indicating the action is permitted.
+   * Produces a rejection without a textual reason.
    *
    * @return an instance without a rejection reason
    */

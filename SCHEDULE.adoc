@@ -1,0 +1,994 @@
+[[schedule, Schedule]]
+= Schedule
+
+[partintro]
+Schedule is Smallmind's scheduling integration layer for code that wants scheduling to stay explicit.
+It provides two main pieces:
+
+* `schedule-base`, which defines the scheduler-neutral `ProxyJob` lifecycle and bookkeeping contract
+* `schedule-quartz`, which adapts that contract to Quartz and adds optional Spring wiring helpers, a small JMX monitor, and packaged Quartz schema resources
+
+The module gives you a thin layer around Quartz while keeping job behavior, scheduler lifecycle, and integration policy visible in your code.
+
+Audience: developers wiring Quartz-based scheduling into applications or reusable libraries and who want lifecycle, dependency injection, schema bootstrap, and operational policy to remain application-owned.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<schedule-reading-paths,Reading Paths>>
+* <<schedule-at-a-glance,At A Glance>>
+* <<schedule-why-use,Why Use Schedule Module>>
+* <<schedule-fit,Where This Module Fits>>
+* <<schedule-layout,Project Layout>>
+* <<schedule-installation,Installation>>
+* <<schedule-first-run,First Run In 5 Minutes>>
+* <<schedule-quick-start,Quick Start>>
+* <<schedule-example-catalog,Example Catalog>>
+* <<schedule-core-types,Core Types>>
+* <<schedule-spring,Spring Integration>>
+* <<schedule-jmx,JMX Monitoring>>
+* <<schedule-schema,Schema And Packaged Resources>>
+* <<schedule-lifecycle,Lifecycle And Ownership>>
+* <<schedule-defaults,Defaults Reference>>
+* <<schedule-edge-cases,Behavioral Edge Cases>>
+* <<schedule-troubleshooting,Troubleshooting>>
+* <<schedule-verification,Verification Checklist>>
+
+[[schedule-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are integrating this module for the first time, read in this order:
+
+1. <<schedule-why-use,Why Use Schedule Module>>
+2. <<schedule-fit,Where This Module Fits>>
+3. <<schedule-installation,Installation>>
+4. <<schedule-first-run,First Run In 5 Minutes>>
+5. <<schedule-quick-start,Quick Start>>
+6. <<schedule-example-catalog,Example Catalog>>
+7. <<schedule-core-types,Core Types>>
+8. <<schedule-spring,Spring Integration>>
+9. <<schedule-edge-cases,Behavioral Edge Cases>>
+
+If you already use the module and need exact behavior quickly, jump to:
+
+* <<schedule-core-types,Core Types>>
+* <<schedule-spring,Spring Integration>>
+* <<schedule-defaults,Defaults Reference>>
+* <<schedule-edge-cases,Behavioral Edge Cases>>
+* <<schedule-troubleshooting,Troubleshooting>>
+
+[[schedule-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,3",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Schedule parent
+|`org.smallmind:smallmind-schedule`
+|Aggregator POM for the scheduling modules
+
+|Base
+|`org.smallmind:schedule-base`
+|Scheduler-neutral `ProxyJob` contract for job lifecycle, status, counters, and throwable collection
+
+|Quartz
+|`org.smallmind:schedule-quartz`
+|Quartz adapter layer with `QuartzProxyJob`, Spring wiring helpers, JMX monitor, and packaged schema/example resources
+|===
+
+[[schedule-why-use, Why Use Schedule Module]]
+== Why Use Schedule Module
+
+Use this module when you want scheduling code to stay explicit and library-safe.
+
+What it does well:
+
+* gives reusable code a small scheduler-facing contract in `ProxyJob`
+* wraps Quartz with a thin base class instead of a larger scheduling framework
+* keeps Spring support optional at the API level and limited to job resolution and startup wiring
+* exposes exact operational seams: job creation, scheduler startup mode, schema bootstrap, and JMX control
+* preserves native Quartz concepts such as `Scheduler`, `JobDetail`, `CronTrigger`, and `JobFactory`
+
+This module is especially useful when:
+
+* you want one shared job lifecycle model across a few scheduled components
+* your application already intends to use Quartz directly
+* you want Spring to construct Quartz jobs without hiding Quartz itself
+* you want schema bootstrap resources and scheduler monitoring without adopting a broader platform
+
+It works especially well in codebases that want one shared job lifecycle model and still prefer native Quartz concepts at runtime.
+
+[[schedule-fit, Where This Module Fits]]
+== Where This Module Fits
+
+[cols="2,3,3",options="header"]
+|===
+|Situation |Fit |Why
+
+|Reusable library wants a small job lifecycle contract without forcing Quartz on downstream users
+|Strong fit for `schedule-base`
+|`ProxyJob` is scheduler-neutral and keeps the runtime choice with the application
+
+|Application already uses Quartz and wants a Smallmind-style base job class plus a few focused helpers
+|Strong fit for `schedule-quartz`
+|`QuartzProxyJob`, Spring helpers, JMX monitor, and packaged resources stay close to Quartz itself
+
+|Application wants Spring to create a fresh job bean for each fire while still using native Quartz types
+|Strong fit for `schedule-quartz`
+|`SpringJobFactory` and `SpringSchedulerFactory` keep job creation explicit and Quartz-visible
+
+|Application wants a scheduler-neutral contract and plans to supply its own runtime adapter
+|Strong fit for `schedule-base`
+|The base module isolates job lifecycle and bookkeeping so applications can pair it with the scheduler they choose
+|===
+
+[NOTE]
+====
+`schedule-base` is the contract module in the pair.
+It defines the proxied job shape so applications can pair it with `schedule-quartz` or another runtime adapter chosen for the surrounding scheduler.
+====
+
+[[schedule-layout, Project Layout]]
+== Project Layout
+
+[cols="1,2,3",options="header"]
+|===
+|Path |Artifact |Notes
+
+|`schedule/`
+|`org.smallmind:smallmind-schedule`
+|Aggregator POM
+
+|`schedule/base/`
+|`org.smallmind:schedule-base`
+|Published jar containing `org.smallmind.schedule.base`
+
+|`schedule/quartz/`
+|`org.smallmind:schedule-quartz`
+|Published jar containing Quartz, Spring, JMX, and packaged resource integration
+|===
+
+[[schedule-installation, Installation]]
+== Installation
+
+Choose the smallest artifact that matches the integration you actually need.
+
+=== Library Contract Only
+
+If your code should expose scheduling hooks without forcing Quartz or Spring transitively, depend on `schedule-base` only.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>schedule-base</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Direct dependency from `schedule/base/pom.xml`:
+
+* `org.smallmind:smallmind-nutsnbolts`
+
+=== Quartz Integration
+
+If your application runs Quartz or wants the Spring helpers, depend on `schedule-quartz`.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>schedule-quartz</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+Current direct dependencies from `schedule/quartz/pom.xml`:
+
+* `org.quartz-scheduler:quartz`
+* `org.smallmind:schedule-base`
+* `org.smallmind:scribe-pen`
+* `org.smallmind:smallmind-nutsnbolts`
+* `org.springframework:spring-beans`
+* `org.springframework:spring-context`
+
+[IMPORTANT]
+====
+The Spring APIs are optional in terms of how you use the module, but they are not optional in the current published dependency graph.
+`schedule-quartz` declares `spring-beans` and `spring-context` directly, so they arrive transitively even if you only use `QuartzProxyJob`.
+====
+
+[NOTE]
+====
+`schedule-quartz` logs through Scribe's `LoggerManager`.
+If you expect log output from `QuartzProxyJob` or the Spring initializers, include the Scribe runtime pieces your application normally uses, including exactly one `scribe-ink-*` endpoint.
+====
+
+[[schedule-first-run, First Run In 5 Minutes]]
+== First Run In 5 Minutes
+
+If you want the shortest safe adoption path:
+
+1. Add `schedule-quartz`, Quartz itself, and a Scribe endpoint module.
+2. Extend `QuartzProxyJob` and put the real unit of work in `proceed()`.
+3. Call `incCount()` or `addToCount(...)` when work is actually completed.
+4. Make long-running work interruption-aware.
+5. Register the job and cron trigger through Quartz directly.
+6. If using Spring job construction, switch to `SpringSchedulerFactory` and prototype-scoped job beans.
+7. If using Quartz JDBC storage, run the Quartz schema changelog before scheduler startup.
+
+That path keeps the module's role narrow and predictable.
+You get logging, counters, status tracking, and a few focused helpers without giving the module ownership of your runtime.
+
+[[schedule-quick-start, Quick Start]]
+== Quick Start
+
+=== Direct Quartz Wiring
+
+This is the smallest complete integration path when you already own scheduler lifecycle.
+It works best when the job can construct or reach its collaborators without Spring, or when you provide your own Quartz `JobFactory`.
+
+[source,java]
+----
+import java.util.Properties;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.impl.StdSchedulerFactory;
+import org.smallmind.schedule.quartz.QuartzProxyJob;
+
+import static org.quartz.CronScheduleBuilder.cronSchedule;
+
+public class CacheWarmupJob extends QuartzProxyJob {
+
+  @Override
+  public boolean logOnZeroCount () {
+
+    return true;
+  }
+
+  @Override
+  public void proceed ()
+    throws Exception {
+
+    warmCacheSegment("accounts");
+    incCount();
+
+    if (Thread.currentThread().isInterrupted()) {
+      throw new InterruptedException("Interrupted during cache warmup");
+    }
+
+    warmCacheSegment("pricing");
+    incCount();
+  }
+
+  @Override
+  public void cleanup () {
+
+  }
+
+  private void warmCacheSegment (String cacheName) {
+
+    // application work here
+  }
+}
+
+Properties properties = new Properties();
+properties.setProperty("org.quartz.scheduler.instanceName", "CacheScheduler");
+properties.setProperty("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
+properties.setProperty("org.quartz.threadPool.threadCount", "2");
+
+Scheduler scheduler = new StdSchedulerFactory(properties).getScheduler();
+
+JobDetail detail = JobBuilder.newJob(CacheWarmupJob.class)
+    .withIdentity("cacheWarmup", "maintenance")
+    .storeDurably(true)
+    .build();
+
+Trigger trigger = TriggerBuilder.newTrigger()
+    .withIdentity("cacheWarmupTrigger", "maintenance")
+    .forJob(detail)
+    .withSchedule(cronSchedule("0 0/15 * * * ?"))
+    .build();
+
+scheduler.addJob(detail, false);
+scheduler.scheduleJob(trigger);
+scheduler.start();
+----
+
+=== Spring XML Wiring
+
+Use the Spring helpers when you want Spring to create job instances but still want Quartz objects and startup order to remain explicit.
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="schedulerFactory" class="org.smallmind.schedule.quartz.spring.SpringSchedulerFactory">
+    <constructor-arg index="0">
+      <props>
+        <prop key="org.quartz.scheduler.instanceName">BillingScheduler</prop>
+        <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
+        <prop key="org.quartz.threadPool.threadCount">4</prop>
+      </props>
+    </constructor-arg>
+    <property name="activeMode" value="ON"/>
+  </bean>
+
+  <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler"/>
+
+  <bean id="billing.invoiceSweepDetail" class="org.quartz.impl.JobDetailImpl">
+    <property name="group" value="billing"/>
+    <property name="name" value="invoiceSweep"/>
+    <property name="jobClass" value="com.mycompany.schedule.InvoiceSweepJob"/>
+    <property name="durability" value="true"/>
+  </bean>
+
+  <bean id="billing.invoiceSweepTrigger" class="org.quartz.impl.triggers.CronTriggerImpl">
+    <property name="group" value="billing"/>
+    <property name="name" value="invoiceSweepTrigger"/>
+    <property name="jobGroup" value="billing"/>
+    <property name="jobName" value="invoiceSweep"/>
+    <property name="cronExpression" value="0 0/10 * * * ?"/>
+  </bean>
+
+  <bean id="billing.invoiceSweep" class="com.mycompany.schedule.InvoiceSweepJob" scope="prototype"/>
+
+  <bean class="org.smallmind.schedule.quartz.spring.CronJobInitializingBean">
+    <property name="scheduler" ref="scheduler"/>
+    <property name="jobMap">
+      <map>
+        <entry key-ref="billing.invoiceSweepDetail">
+          <list>
+            <ref bean="billing.invoiceSweepTrigger"/>
+          </list>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+</beans>
+----
+
+[IMPORTANT]
+====
+When `SpringJobFactory` is in play, Quartz job beans must be `prototype` scoped.
+A singleton job bean causes `FormattedSchedulerException` at fire time.
+====
+
+[[schedule-example-catalog, Example Catalog]]
+== Example Catalog
+
+=== Interrupt-Aware Job With Explicit Counting
+
+`QuartzProxyJob` is most useful when your job has a real unit of work and you want the summary log to reflect it.
+
+[source,java]
+----
+import java.util.Collections;
+import java.util.List;
+import org.smallmind.schedule.quartz.QuartzProxyJob;
+
+public class InvoiceSweepJob extends QuartzProxyJob {
+
+  @Override
+  public boolean logOnZeroCount () {
+
+    return false;
+  }
+
+  @Override
+  public void proceed ()
+    throws Exception {
+
+    List<Invoice> invoices = loadInvoicesReadyForSweep();
+
+    for (Invoice invoice : invoices) {
+      if (Thread.currentThread().isInterrupted()) {
+        throw new InterruptedException("Interrupted while sweeping invoices");
+      }
+
+      sweep(invoice);
+      incCount();
+    }
+  }
+
+  @Override
+  public void cleanup () {
+
+    clearThreadLocals();
+  }
+
+  private List<Invoice> loadInvoicesReadyForSweep () {
+
+    return Collections.emptyList();
+  }
+
+  private void sweep (Invoice invoice) {
+
+  }
+
+  private void clearThreadLocals () {
+
+  }
+}
+----
+
+This pattern keeps success criteria obvious:
+
+* `incCount()` means one invoice was actually swept
+* `InterruptedException` maps to `SuccessOrFailure.INTERRUPTED`
+* `cleanup()` always runs for enabled executions, even after failure
+
+=== Multiple Spring Job Beans Of The Same Class
+
+When more than one Spring bean matches the Quartz job class, one bean id must exactly match `group.name`.
+That is how `SpringJobFactory` resolves ambiguity.
+
+[source,xml]
+----
+<bean id="billing.invoiceSweep" class="com.mycompany.schedule.InvoiceSweepJob" scope="prototype"/>
+<bean id="billing.invoiceSweepBackfill" class="com.mycompany.schedule.InvoiceSweepJob" scope="prototype"/>
+----
+
+With a Quartz `JobKey` of `billing.invoiceSweep`, the first bean is selected.
+If neither bean id matches `billing.invoiceSweep`, `SpringJobFactory` throws `FormattedSchedulerException`.
+
+=== Selective Job Activation With `CronJobMapFactoryBean`
+
+Use `CronJobMapFactoryBean` when you want a larger pool of `CronJob` beans but only a selected set to be registered in one runtime.
+
+[source,xml]
+----
+<bean id="allowedJobMap" class="org.smallmind.schedule.quartz.spring.CronJobMapFactoryBean">
+  <property name="allowedJobIds">
+    <list>
+      <value>billing.invoiceSweep</value>
+      <value>reporting.dailyClose</value>
+    </list>
+  </property>
+</bean>
+
+<bean id="billing.invoiceSweepCronJob" class="org.smallmind.schedule.quartz.spring.CronJob">
+  <property name="jobDetail" ref="billing.invoiceSweepDetail"/>
+  <property name="cronTrigger" ref="billing.invoiceSweepTrigger"/>
+</bean>
+
+<bean class="org.smallmind.schedule.quartz.spring.CronJobInitializingBean">
+  <property name="scheduler" ref="scheduler"/>
+  <property name="jobMap" ref="allowedJobMap"/>
+</bean>
+----
+
+[IMPORTANT]
+====
+`allowedJobIds` is required.
+If it is left unset, `CronJobMapFactoryBean` fails during bean post-processing.
+====
+
+=== Multiple Triggers For One Job
+
+If one `JobDetail` needs more than one cron trigger, supply the map directly.
+That is the reliable path.
+
+[source,xml]
+----
+<bean class="org.smallmind.schedule.quartz.spring.CronJobInitializingBean">
+  <property name="scheduler" ref="scheduler"/>
+  <property name="jobMap">
+    <map>
+      <entry key-ref="billing.invoiceSweepDetail">
+        <list>
+          <ref bean="billing.invoiceSweepHourlyTrigger"/>
+          <ref bean="billing.invoiceSweepDailyTrigger"/>
+        </list>
+      </entry>
+    </map>
+  </property>
+</bean>
+----
+
+Do not rely on `CronJobMapFactoryBean` to aggregate multiple triggers for one `JobDetail`.
+Its current implementation stores one trigger list per matching `CronJob` bean and later entries replace earlier ones for the same map key.
+
+=== Delete Retired Jobs On Startup
+
+`JobDeletionInitializingBean` is useful when the scheduler store may still contain obsolete jobs from older deployments.
+
+[source,xml]
+----
+<bean id="legacyInvoiceSweep" class="org.smallmind.schedule.quartz.spring.JobIdentifier">
+  <property name="group" value="legacy"/>
+  <property name="name" value="invoiceSweep"/>
+</bean>
+
+<bean class="org.smallmind.schedule.quartz.spring.JobDeletionInitializingBean">
+  <property name="scheduler" ref="scheduler"/>
+  <property name="jobIdentifierList">
+    <list>
+      <ref bean="legacyInvoiceSweep"/>
+    </list>
+  </property>
+</bean>
+----
+
+=== Register The JMX Monitor Programmatically
+
+[source,java]
+----
+import java.lang.management.ManagementFactory;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import org.smallmind.schedule.quartz.jmx.SchedulerMonitor;
+
+MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+ObjectName objectName = new ObjectName("com.mycompany.schedule:type=Scheduler,name=Billing");
+
+mBeanServer.registerMBean(new SchedulerMonitor(scheduler), objectName);
+----
+
+The registered MBean exposes `start()`, `standby()`, and `status()`.
+
+[[schedule-core-types, Core Types]]
+== Core Types
+
+=== `ProxyJob`
+
+`ProxyJob` lives in `schedule-base` and defines the minimal job contract this module cares about.
+
+Primary responsibilities:
+
+* `isEnabled()` gates execution
+* `proceed()` performs the real unit of work
+* `cleanup()` performs post-run cleanup
+* `logOnZeroCount()` decides whether a successful zero-count run should be logged
+* `getJobStatus()` reports `SuccessOrFailure`
+* `getCount()` and `incCount()` track processed work
+* `getStartTime()` and `getStopTime()` expose timing
+* `getThrowables()` and `setThrowable(Throwable)` expose recorded errors
+
+[NOTE]
+====
+`ProxyJob` does not define a reset hook, a scheduler callback, or a trigger model.
+If you implement it directly, you are responsible for the surrounding execution wrapper.
+====
+
+=== `QuartzProxyJob`
+
+`QuartzProxyJob` is the main runtime type in `schedule-quartz`.
+It implements both `ProxyJob` and Quartz `InterruptableJob`.
+
+Execution flow for enabled runs:
+
+1. store `startTime`
+2. remember the executing thread for later interruption
+3. call `proceed()`
+4. turn `InterruptedException` into `SuccessOrFailure.INTERRUPTED`
+5. turn any other `Exception` into `SuccessOrFailure.FAILURE` via `setThrowable(...)`
+6. clear the thread reference and store `stopTime`
+7. emit a lifecycle log when the result merits one
+8. call `cleanup()` in a guarded block
+
+Key behavior to know:
+
+* `isEnabled()` defaults to `true`
+* initial status is `SuccessOrFailure.SUCCESS`
+* `incCount()`, `addToCount(...)`, `getCount()`, `getThrowables()`, and `setThrowable(...)` are synchronized
+* `setThrowable(Throwable)` records the throwable and logs it immediately through Scribe
+* `interrupt()` only calls `Thread.interrupt()` on the active job thread
+* `cleanup()` failures are logged but do not overwrite the earlier job status
+
+[IMPORTANT]
+====
+If `isEnabled()` returns `false`, `QuartzProxyJob.execute(...)` does nothing else.
+There is no `proceed()`, no timing update, no lifecycle summary log, and no `cleanup()` call for that fire.
+====
+
+=== `SchedulerMonitor` and `SchedulerStatus`
+
+These JMX types provide a deliberately small management surface.
+
+* `SchedulerMonitor.start()` starts the scheduler
+* `SchedulerMonitor.standby()` places it in standby mode
+* `SchedulerMonitor.status()` returns `STARTED`, `STANDBY`, `SHUTDOWN`, or `UNKNOWN`
+
+=== API Index
+
+[cols="1,2,3",options="header"]
+|===
+|Type |Key members |Purpose
+
+|`org.smallmind.schedule.base.ProxyJob`
+|`isEnabled()`, `proceed()`, `cleanup()`, `getJobStatus()`
+|Scheduler-neutral lifecycle and bookkeeping contract
+
+|`org.smallmind.schedule.quartz.QuartzProxyJob`
+|`execute(...)`, `interrupt()`, `incCount()`, `addToCount(...)`, `setThrowable(...)`
+|Quartz adapter that implements `ProxyJob`
+
+|`org.smallmind.schedule.quartz.jmx.SchedulerMonitor`
+|`start()`, `standby()`, `status()`
+|JMX-facing lifecycle control for a Quartz `Scheduler`
+
+|`org.smallmind.schedule.quartz.spring.SpringSchedulerFactory`
+|constructor with `Properties`, `setActiveMode(...)`, `getScheduler()`
+|Spring-aware `StdSchedulerFactory`
+
+|`org.smallmind.schedule.quartz.spring.SpringJobFactory`
+|constructor with `ApplicationContext`, `newJob(...)`, `close()`
+|Quartz `JobFactory` that resolves jobs from Spring
+
+|`org.smallmind.schedule.quartz.spring.CronJob`
+|`setJobDetail(...)`, `setCronTrigger(...)`
+|Simple Spring bean combining one job and one cron trigger
+
+|`org.smallmind.schedule.quartz.spring.CronJobInitializingBean`
+|`setScheduler(...)`, `setJobMap(...)`, `afterPropertiesSet()`
+|Registers or updates jobs and triggers during Spring initialization
+
+|`org.smallmind.schedule.quartz.spring.CronJobMapFactoryBean`
+|`setAllowedJobIds(...)`, `getObject()`
+|Collects allowed `CronJob` beans into a scheduler input map
+
+|`org.smallmind.schedule.quartz.spring.JobDeletionInitializingBean`
+|`setScheduler(...)`, `setJobIdentifierList(...)`, `afterPropertiesSet()`
+|Deletes configured jobs from the scheduler during startup
+
+|`org.smallmind.schedule.quartz.spring.JobIdentifier`
+|`setName(...)`, `setGroup(...)`
+|Simple `name` plus `group` value object for deletions
+
+|`org.smallmind.schedule.quartz.spring.FormattedSchedulerException`
+|formatted constructors
+|Quartz `SchedulerException` with `String.format(...)` support
+|===
+
+[[schedule-spring, Spring Integration]]
+== Spring Integration
+
+The Spring support in `schedule-quartz` is small and explicit.
+It does not create a container-owned scheduling framework.
+It just helps with two specific concerns:
+
+* constructing jobs from a Spring `ApplicationContext`
+* registering or deleting jobs during startup
+
+=== `SpringJobFactory`
+
+`SpringJobFactory` resolves Quartz jobs by type from the `ApplicationContext`.
+Its matching rules are strict by design.
+
+Resolution behavior:
+
+* zero matching beans for the Quartz job class: throw `FormattedSchedulerException`
+* exactly one matching bean: return it only if it is `prototype` scoped
+* more than one matching bean: one bean id must exactly match `JobKey.toString()` or resolution fails
+
+[[schedule-common-naming-rule, Common Naming Rule]]
+[IMPORTANT]
+====
+When multiple Spring job beans share the same class, one bean id must exactly match the Quartz job id in `group.name` form.
+For a `JobKey` of `billing.invoiceSweep`, the bean id must be `billing.invoiceSweep`.
+====
+
+[WARNING]
+====
+`SpringJobFactory.close()` closes the underlying `ApplicationContext` when the context type implements `java.io.Closeable`.
+That behavior is reasonable when the factory owns the context, but it matters in shared or parent-child context arrangements.
+====
+
+=== `SpringSchedulerFactory`
+
+`SpringSchedulerFactory` extends `StdSchedulerFactory` and adds Spring lifecycle integration.
+
+Behavior to know:
+
+* `setApplicationContext(...)` creates the internal `SpringJobFactory`
+* `getScheduler()` always installs that `SpringJobFactory` onto the Quartz `Scheduler`
+* `activeMode` defaults to `ON`
+* `activeMode=ON` calls `scheduler.start()`
+* `activeMode=OFF` calls `scheduler.standby()`
+* `onApplicationEvent(ContextClosedEvent)` calls `scheduler.shutdown(true)` and then closes the job factory
+
+[IMPORTANT]
+====
+`SpringSchedulerFactory` expects normal Spring lifecycle wiring.
+If `getScheduler()` is called before `setApplicationContext(...)`, the internal job factory has not been initialized.
+In that case, prefer direct Quartz wiring or construct the scheduler inside a real Spring context.
+====
+
+=== `CronJobInitializingBean`
+
+`CronJobInitializingBean` installs a `Map<JobDetail, List<CronTrigger>>` into an existing Quartz `Scheduler`.
+
+Current behavior:
+
+* if the job key is missing, add the `JobDetail`
+* if the job key exists and selected fields differ, replace the existing `JobDetail`
+* if the trigger key is missing, schedule the trigger
+* if the trigger exists and the cron expression differs, reschedule it
+* if one entry fails, log the exception and continue with later entries
+
+The comparison is intentionally narrow.
+It checks:
+
+* job durability
+* recovery flag
+* concurrent-execution-disallowed flag
+* persist-job-data-after-execution flag
+* job-data-map keys and values
+
+It does not compare every possible `JobDetail` or `CronTrigger` property.
+That matters when you expect metadata-only changes to be pushed automatically.
+
+=== `CronJobMapFactoryBean`
+
+`CronJobMapFactoryBean` is both a `FactoryBean` and a `BeanPostProcessor`.
+It watches the Spring context for `CronJob` beans and collects only the ones whose id is allowed.
+
+Current behavior:
+
+* each `CronJob` contributes one `JobDetail` plus one `CronTrigger`
+* a `CronJob` is included only when `group.name` is present in `allowedJobIds`
+* the produced map is a singleton
+* the helper does not merge multiple triggers for the same `JobDetail`
+
+=== `JobDeletionInitializingBean`
+
+`JobDeletionInitializingBean` deletes `JobKey`s built from `JobIdentifier` values during startup.
+Unlike `CronJobInitializingBean`, it does not swallow `SchedulerException`; the exception propagates from `afterPropertiesSet()`.
+
+[[schedule-jmx, JMX Monitoring]]
+== JMX Monitoring
+
+`SchedulerMonitor` is the only JMX type in the module.
+It is deliberately small and focused on coarse scheduler operations.
+
+Typical Spring bean wiring:
+
+[source,xml]
+----
+<bean id="schedulerMonitor" class="org.smallmind.schedule.quartz.jmx.SchedulerMonitor">
+  <constructor-arg index="0" ref="scheduler"/>
+</bean>
+----
+
+Typical operational use:
+
+* start a scheduler left in standby mode
+* place a running scheduler back into standby during maintenance
+* confirm the scheduler's coarse state through `status()`
+
+This is not a job-inspection or trigger-admin API.
+It is just a small runtime control seam.
+
+[[schedule-schema, Schema And Packaged Resources]]
+== Schema And Packaged Resources
+
+The published `schedule-quartz` jar packages these classpath resources:
+
+* `org/smallmind/schedule/quartz/job.xml`
+* `org/smallmind/schedule/quartz/quartz.xml`
+* `org/smallmind/schedule/quartz/quartz-liquibase.xml`
+* `org/smallmind/schedule/quartz/Quartz.changelog.xml`
+
+What they are for:
+
+* `job.xml`: example Spring job and trigger wiring
+* `quartz.xml`: example Spring scheduler wiring and Quartz properties
+* `quartz-liquibase.xml`: example Liquibase-driven schema bootstrap wiring
+* `Quartz.changelog.xml`: Quartz table changelog for JDBC job stores
+
+=== Using The Packaged Liquibase Changelog
+
+If you already use the Smallmind Liquibase module, the packaged changelog can be run directly.
+
+[source,xml]
+----
+<bean id="quartzLiquibase" class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="quartzDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="org/smallmind/schedule/quartz/Quartz.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
+----
+
+You do not need to use Smallmind Liquibase for this.
+Any Liquibase runner that can execute a classpath changelog can apply `Quartz.changelog.xml`.
+
+=== Startup Ordering For JDBC Stores
+
+A safe startup order is:
+
+1. run the Quartz schema migration
+2. build the scheduler factory
+3. register jobs and triggers
+4. start the scheduler or leave it in standby
+
+That same ordering is demonstrated in the packaged `quartz.xml`, which makes the scheduler factory depend on the Liquibase bean.
+
+[NOTE]
+====
+The repository source tree also contains vendor-specific SQL files under `schedule/quartz/src/main/resources/quartz/`.
+Those files are useful for manual review or copy-forward into deployment tooling, but they are not part of the resource directories configured for the published `schedule-quartz` jar.
+====
+
+[[schedule-lifecycle, Lifecycle And Ownership]]
+== Lifecycle And Ownership
+
+This module is most useful when its ownership boundaries are kept clear.
+
+What the module owns:
+
+* `QuartzProxyJob` execution bookkeeping
+* Spring-side job resolution rules in `SpringJobFactory`
+* startup registration helpers for jobs and deletions
+* a small JMX facade for scheduler start, standby, and status
+* packaged example and schema resources
+
+What your application still owns:
+
+* Quartz property selection
+* scheduler lifetime and shutdown policy
+* dependency injection policy outside the provided Spring helpers
+* job data design and retry behavior
+* interruption handling inside `proceed()`
+* schema rollout policy
+
+=== Resource Ownership
+
+Keep these ownership rules in mind:
+
+* `QuartzProxyJob` does not create or close a Quartz `Scheduler`
+* direct Quartz wiring means your code owns the scheduler lifecycle completely
+* `SpringSchedulerFactory` can start or standby the scheduler when `getScheduler()` is called
+* on Spring context shutdown, `SpringSchedulerFactory` calls `scheduler.shutdown(true)`
+* `SchedulerMonitor` does not register itself; you register it where your JMX policy says it belongs
+
+=== State Ownership Inside `QuartzProxyJob`
+
+`QuartzProxyJob` stores execution state in instance fields:
+
+* `startTime`
+* `stopTime`
+* count
+* current status
+* collected throwables
+
+That state is not reset automatically at the start of `execute(...)`.
+If your runtime can reuse job instances, either supply fresh job instances per fire or reset your own per-run state explicitly.
+
+[[schedule-defaults, Defaults Reference]]
+== Defaults Reference
+
+[cols="1,2",options="header"]
+|===
+|Property or behavior |Default
+
+|`QuartzProxyJob.isEnabled()`
+|`true`
+
+|`QuartzProxyJob` initial status
+|`SuccessOrFailure.SUCCESS`
+
+|`QuartzProxyJob` initial count
+|`0`
+
+|`QuartzProxyJob` initial throwable collection
+|empty list, returned as `null` until a throwable is recorded
+
+|`SpringSchedulerFactory.activeMode`
+|`OnOrOff.ON`
+
+|`CronJobMapFactoryBean.isSingleton()`
+|`true`
+
+|`SchedulerMonitor.status()` fallback
+|`UNKNOWN`
+|===
+
+[[schedule-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,3",options="header"]
+|===
+|Behavior |Current semantics
+
+|`QuartzProxyJob.isEnabled()` returns `false`
+|The fire is skipped completely. No work, no cleanup, no timing update, and no lifecycle summary log occur.
+
+|A `QuartzProxyJob` instance is reused
+|Count, status, timestamps, and recorded throwables remain on the instance until overwritten or replaced. They are not reset automatically per execution.
+
+|A job ignores thread interruption
+|`interrupt()` only signals the active thread. Your `proceed()` logic must cooperate or the job keeps running until it exits on its own.
+
+|`CronJobInitializingBean` updates an existing job definition
+|Only durability, recovery, concurrency, persist-job-data, and job-data-map content are compared for job replacement.
+
+|`CronJobInitializingBean` updates an existing trigger definition
+|Only the cron expression is compared for rescheduling. Other trigger metadata changes are not detected automatically.
+
+|Multiple `CronJob` beans target the same `JobDetail` through `CronJobMapFactoryBean`
+|Later entries replace earlier ones for the same map key. The helper does not aggregate multiple triggers for one job.
+
+|`allowedJobIds` is left unset in `CronJobMapFactoryBean`
+|Bean post-processing fails when the helper iterates the missing allow-list.
+
+|`SpringSchedulerFactory.getScheduler()` is called more than once
+|The current `activeMode` is applied again each time and the Spring job factory is reinstalled on the returned scheduler.
+
+|`SpringJobFactory.close()` is called with a closeable application context
+|The underlying Spring context is closed.
+|===
+
+[[schedule-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,3,3",options="header"]
+|===
+|Symptom |Likely cause |What to check
+
+|No lifecycle logs from scheduled jobs
+|No Scribe endpoint module is active at runtime
+|Add exactly one `scribe-ink-*` endpoint module alongside `scribe-pen`.
+
+|`FormattedSchedulerException` says no job is present in the application context
+|Quartz `jobClass` does not match any Spring bean type in the context used by `SpringJobFactory`
+|Check the `jobClass` on `JobDetail` and the actual Spring context attached to `SpringSchedulerFactory`.
+
+|`FormattedSchedulerException` says the matching job is not a prototype bean
+|The Spring job bean is singleton-scoped or default-scoped
+|Mark the job bean `scope="prototype"`.
+
+|`FormattedSchedulerException` says multiple jobs exist but none has the exact id
+|More than one bean matches the job class and no bean id matches `group.name`
+|Apply <<schedule-common-naming-rule,the common naming rule>>.
+
+|A Spring-managed job seems to keep state from previous executions
+|The same job instance is being reused or subclass state is not reset between runs
+|Confirm prototype scoping and review any mutable subclass fields you added.
+
+|A changed job class, description, or non-cron trigger property is not updated in Quartz on startup
+|`CronJobInitializingBean` compares only a narrow subset of fields
+|Delete and recreate the job or trigger explicitly, change the key, or manage the update through direct Quartz APIs.
+
+|Only one trigger survives when multiple `CronJob` beans point at the same job
+|`CronJobMapFactoryBean` overwrites earlier entries for the same `JobDetail`
+|Supply the `jobMap` directly to `CronJobInitializingBean` when one job needs multiple triggers.
+
+|Scheduler starts before Quartz tables exist
+|Schema bootstrap did not run before scheduler creation
+|Run `Quartz.changelog.xml` first or keep the scheduler factory dependent on the Liquibase bean.
+
+|Job does not stop quickly after an interrupt request
+|`proceed()` is not interruption-aware
+|Check `Thread.currentThread().isInterrupted()` or propagate `InterruptedException` from blocking work.
+|===
+
+[[schedule-verification, Verification Checklist]]
+== Verification Checklist
+
+Use a focused validation pass after changing scheduling wiring or after adopting this module in a new runtime:
+
+1. Confirm the selected artifact is correct: `schedule-base` for a contract only, `schedule-quartz` for Quartz integration.
+2. Verify Scribe runtime wiring so lifecycle and error logs have an endpoint.
+3. Trigger one known job and confirm the logged count and final status match the real work performed.
+4. If using Spring, verify every Quartz job bean resolved by `SpringJobFactory` is `prototype` scoped.
+5. If multiple Spring beans share a job class, verify one bean id exactly matches `group.name`.
+6. If using JDBC storage, run the Quartz schema migration before scheduler startup and confirm the expected tables exist.
+7. If using `CronJobMapFactoryBean`, verify `allowedJobIds` contains every intended `group.name` identifier.
+8. If using JMX, register `SchedulerMonitor` and exercise `start()`, `standby()`, and `status()`.

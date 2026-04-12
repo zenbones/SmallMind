@@ -1,0 +1,978 @@
+[[batch, Batch]]
+= Batch
+
+[partintro]
+Batch is Smallmind's Spring Batch integration layer. It keeps job definitions, scheduling policy, transaction policy, and runtime ownership in your application while adding a small typed parameter model, explicit launch/restart helpers, repository watchers, and optional Spring/Liquibase wiring resources.
+
+The module is split in two:
+
+* `batch-base` provides `BatchParameter<?>`, `BatchParameters`, `ParameterType`, and the small `JobFactory` contract.
+* `batch-spring` provides `BatchJobFactory`, `BatchJobRegistry`, `BatchJobMonitor`, `BatchJobWatcher`, `BatchJobInterrogator`, `TaskletUtility`, and packaged Spring/Liquibase resources.
+
+Batch follows Smallmind's library-safe model:
+
+* your application still owns the `Job` and `Step` graph
+* launch names stay explicit and map directly to Spring `Job` bean names
+* scheduling, retention, schema rollout, and executor sizing stay application-owned
+* the shipped Spring XML is optional; every helper can be wired directly
+
+Audience: developers integrating Spring Batch jobs into applications or libraries without hiding Spring Batch under a framework wrapper.
+Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+
+== Quick Navigation
+
+* <<batch-reading-paths,Reading Paths>>
+* <<batch-at-a-glance,At A Glance>>
+* <<batch-why-use,Why Use Batch>>
+* <<batch-module-selection,Module Selection>>
+* <<batch-integration-patterns,Integration Patterns>>
+* <<batch-decision-flow,Decision Flow>>
+* <<batch-install,Installation>>
+* <<batch-compatibility,Compatibility Notes>>
+* <<batch-quick-start,Quick Start>>
+* <<batch-parameters,Parameter Model>>
+* <<batch-jobfactory,Launch, Restart, And Job Naming>>
+* <<batch-monitoring,Monitoring, Waiting, And Quiescence>>
+* <<batch-spring,Spring Wiring Resources>>
+* <<batch-tasklet-utility,Tasklet Helper>>
+* <<batch-schema,Liquibase Schema>>
+* <<batch-api-index,API Index>>
+* <<batch-operational,Operational Notes>>
+* <<batch-edge-cases,Behavioral Edge Cases>>
+* <<batch-flow,Typical Flow>>
+* <<batch-troubleshooting,Troubleshooting>>
+* <<batch-verification,Verification Checklist>>
+* <<batch-hardening,Production Hardening Checklist>>
+
+[[batch-reading-paths, Reading Paths]]
+== Reading Paths
+
+If you are adopting this module for the first time, read in this order:
+
+1. <<batch-why-use,Why Use Batch>>
+2. <<batch-module-selection,Module Selection>>
+3. <<batch-install,Installation>>
+4. <<batch-compatibility,Compatibility Notes>>
+5. <<batch-quick-start,Quick Start>>
+6. <<batch-monitoring,Monitoring, Waiting, And Quiescence>>
+
+If you already use Smallmind Batch and need exact behavior quickly, jump to:
+
+* <<batch-api-index,API Index>>
+* <<batch-spring,Spring Wiring Resources>>
+* <<batch-operational,Operational Notes>>
+* <<batch-edge-cases,Behavioral Edge Cases>>
+* <<batch-troubleshooting,Troubleshooting>>
+
+[[batch-at-a-glance, At A Glance]]
+== At A Glance
+
+[cols="1,2,4",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Base
+|`org.smallmind:batch-base`
+|Typed batch parameter wrappers and the scheduler-neutral `JobFactory` contract
+
+|Spring
+|`org.smallmind:batch-spring`
+|Spring Batch-backed launch/restart helpers, job registry, monitors, tasklet helper, and packaged Spring/Liquibase resources
+|===
+
+[[batch-why-use, Why Use Batch]]
+== Why Use Batch
+
+Use this module when you want Spring Batch integration that stays explicit and close to Spring Batch itself.
+
+Advantages over wiring the same concerns ad hoc in each application:
+
+* shared libraries can depend on `batch-base` without taking a Spring Batch runtime dependency
+* launch and restart calls stay explicit through `JobFactory` and `BatchJobFactory`
+* parameter identity is expressed per parameter instead of being hidden in a string-based launcher convention
+* monitoring helpers cover both single-execution waiting and repository-wide quiescence checks
+* packaged XML and Liquibase resources are available when they help, but they are not the only supported integration path
+
+[[batch-module-selection, Module Selection]]
+== Module Selection
+
+Choose the smallest surface that fits your boundary:
+
+* reusable libraries should normally depend on `batch-base` only
+* applications that launch or restart Spring Batch jobs should use `batch-spring`
+* applications that want non-default repository, data source, or executor behavior should still use `batch-spring`, but wire its beans directly instead of importing the shipped XML unchanged
+
+The `batch` subproject is a multi-module build.
+
+[cols="1,2,4",options="header"]
+|===
+|Module |Artifact |Purpose
+
+|Batch parent
+|`org.smallmind:smallmind-batch`
+|Aggregator for the batch modules
+
+|Base
+|`org.smallmind:batch-base`
+|Defines the parameter model and `JobFactory`
+
+|Spring
+|`org.smallmind:batch-spring`
+|Adds Spring Batch integration helpers and packaged wiring resources
+|===
+
+[[batch-integration-patterns, Integration Patterns]]
+== Integration Patterns
+
+[cols="2,2,4",options="header"]
+|===
+|Need |Use |Notes
+
+|Shared library wants batch-friendly method signatures without Spring runtime coupling
+|`batch-base`
+|Expose `BatchParameters` and/or `JobFactory` to the host application, but let the application decide how jobs are launched.
+
+|Application launches jobs programmatically and wants a concrete implementation
+|`batch-spring`
+|Use `BatchJobFactory` for `create`, `start`, `restart`, and monitor helpers.
+
+|Application wants a ready-made Spring XML baseline
+|Import `org/smallmind/batch/spring/batch.xml`
+|This gives you a `jobFactory`, a `jobRegistry`, a `jobRepository`, and Liquibase wiring, but it comes with explicit defaults that you may need to override.
+
+|Application already owns `DataSource`, Liquibase, or executor policy
+|Wire the `batch-spring` beans directly
+|This is the better path when you need a non-MySQL repository, custom `TaskExecutor`, shared infrastructure beans, or different transaction policy.
+|===
+
+[[batch-decision-flow, Decision Flow]]
+== Decision Flow
+
+1. Are you building a reusable library rather than an application?
+2. If yes, depend on `batch-base` only and expose explicit batch integration hooks.
+3. If no, and you need to launch or restart Spring Batch jobs, add `batch-spring`.
+4. Do the shipped `batch.xml` defaults match your repository, data source, and executor needs?
+5. If yes, import the resource and provide the expected JDBC properties.
+6. If no, wire `BatchJobFactory`, `BatchJobRegistry`, and any optional helpers directly.
+7. Do you need repository-wide quiescence checks rather than waiting on one execution id?
+8. If yes, add `BatchJobWatcher` and/or `BatchJobInterrogator` intentionally and validate them against your metadata retention model.
+
+[[batch-install, Installation]]
+== Installation
+
+=== Dependency Surface
+
+[cols="2,3,2,5",options="header"]
+|===
+|Artifact |Dependency |Requirement |Notes
+
+|`batch-base`
+|No additional external dependencies in its POM
+|Required
+|The module is only the parameter model plus `JobFactory`.
+
+|`batch-spring`
+|`org.smallmind:batch-base`
+|Required by artifact
+|Provides the parameter types and interface implemented by `BatchJobFactory`.
+
+|`batch-spring`
+|`org.springframework.batch:spring-batch-core`
+|Required by artifact
+|Provides the Spring Batch repository, job, operator, and exit-status types used by the helpers.
+
+|`batch-spring`
+|`org.springframework:spring-beans`, `spring-context`, `spring-core`
+|Required by artifact
+|Needed for the Spring-based registry and the packaged bean resources.
+
+|`batch-spring`
+|`org.smallmind:scribe-pen`
+|Required by artifact
+|`BatchJobFactory.create(...)` logs launch intent through Scribe before starting the job.
+
+|`batch-spring`
+|`org.smallmind:smallmind-liquibase`
+|Required by artifact
+|Used by the packaged Liquibase helper resources.
+
+|`batch-spring`
+|`org.smallmind:smallmind-nutsnbolts`
+|Required by artifact
+|Used by the implementation support code.
+|===
+
+=== Libraries
+
+If your library should remain Spring Batch-neutral, depend on `batch-base` and expose integration points to the host application.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>batch-base</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+=== Applications Using Spring Batch
+
+Applications that run Spring Batch jobs should include `batch-spring`.
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>batch-spring</artifactId>
+  <version>${smallmind.version}</version>
+</dependency>
+----
+
+[IMPORTANT]
+====
+`BatchJobFactory.create(...)` emits a Scribe log entry before starting the job. If your application uses that method, provide exactly one `scribe-ink-*` endpoint integration at runtime.
+
+If you call `BatchJobFactory.start(...)` directly, this module does not add that launch log entry.
+====
+
+[[batch-compatibility, Compatibility Notes]]
+== Compatibility Notes
+
+The examples below assume aligned Smallmind versions.
+
+The shipped Spring XML is opinionated in a few specific ways:
+
+* `jobRepository` is configured with `databaseType=mysql`
+* the imported Liquibase/data-source resource expects `jdbc.driver.classname`, `jdbc.url.batch`, `jdbc.username.batch`, and `jdbc.password.batch`
+* the default executor path is conservative and single-worker oriented
+* job lookup is by Spring `Job` bean name in the same application context used by `BatchJobRegistry`
+
+If your application uses a different repository database, already owns its own Liquibase/data-source wiring, or needs custom executor sizing, wire the beans directly rather than inheriting the shipped XML unchanged.
+
+[[batch-quick-start, Quick Start]]
+== Quick Start
+
+Assumptions:
+
+* `batch-spring` is on the classpath
+* your application already defines one or more Spring Batch `Job` beans
+* the job bean name you want to launch is known up front
+
+=== Option A: Import The Shipped XML
+
+If the shipped defaults fit your runtime, import the XML resource and provide the expected JDBC properties.
+
+[source,xml]
+----
+<import resource="classpath:org/smallmind/batch/spring/batch.xml"/>
+----
+
+[source,properties]
+----
+jdbc.driver.classname=com.mysql.cj.jdbc.Driver
+jdbc.url.batch=jdbc:mysql://localhost:3306/batch
+jdbc.username.batch=batch_user
+jdbc.password.batch=changeit
+----
+
+The imported resource gives you a `BatchJobFactory` bean with id `jobFactory`.
+
+=== Option B: Wire The Helpers Directly
+
+Use direct wiring when you want the Smallmind helpers without the XML defaults.
+
+[source,java]
+----
+import org.smallmind.batch.spring.BatchJobFactory;
+import org.smallmind.batch.spring.BatchJobRegistry;
+import org.springframework.batch.core.configuration.JobRegistry;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class BatchSupportConfiguration {
+
+  @Bean
+  public BatchJobRegistry jobRegistry () {
+
+    return new BatchJobRegistry();
+  }
+
+  @Bean
+  public BatchJobFactory jobFactory (JobRepository jobRepository, JobRegistry jobRegistry, JobOperator jobOperator) {
+
+    BatchJobFactory jobFactory = new BatchJobFactory();
+    jobFactory.setJobRepository(jobRepository);
+    jobFactory.setJobRegistry(jobRegistry);
+    jobFactory.setJobOperator(jobOperator);
+
+    return jobFactory;
+  }
+}
+----
+
+=== Launch A Job With Typed Parameters
+
+If your Spring `Job` bean is named `orderImportJob`, that exact string is the `logicalName` you pass to `BatchJobFactory`.
+
+[source,java]
+----
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.batch.base.BatchParameters;
+import org.smallmind.batch.spring.BatchJobFactory;
+import org.springframework.batch.core.ExitStatus;
+
+public class OrderImportLauncher {
+
+  private final BatchJobFactory jobFactory;
+
+  public OrderImportLauncher (BatchJobFactory jobFactory) {
+
+    this.jobFactory = jobFactory;
+  }
+
+  public boolean runNow ()
+    throws Exception {
+
+    BatchParameters parameters = new BatchParameters();
+    parameters.putString("source", "orders", true);
+    parameters.putDate("requestedAt", LocalDateTime.now(), false);
+    parameters.putLong("maxItems", 5000L, false);
+
+    Long executionId = jobFactory.create("orderImportJob", parameters, "manual import from admin screen");
+
+    return jobFactory.monitor(executionId).await(10, TimeUnit.MINUTES, ExitStatus.COMPLETED);
+  }
+}
+----
+
+=== Restart An Existing Execution
+
+[source,java]
+----
+jobFactory.restart(executionId);
+----
+
+=== Wait On The Latest Execution For A Job Name
+
+[source,java]
+----
+boolean finished = jobFactory.monitorLatest("orderImportJob")
+    .await(5, TimeUnit.MINUTES, ExitStatus.COMPLETED, ExitStatus.FAILED);
+----
+
+[NOTE]
+====
+`monitorLatest(...)` only works after at least one execution exists for the supplied logical name.
+====
+
+[[batch-parameters, Parameter Model]]
+== Parameter Model
+
+`batch-base` provides a small typed wrapper model around Spring Batch job parameters.
+
+=== Core Types
+
+* `BatchParameter<T>`: abstract wrapper for a typed value plus its `identifying` flag
+* `ParameterType`: `DATE`, `DOUBLE`, `LONG`, `STRING`
+* `BatchParameters`: mutable `HashMap<String, BatchParameter<?>>` with helper methods for the supported types
+* `JobFactory`: small contract with `create(...)` and `restart(...)`
+
+=== Supported Helper Methods
+
+[cols="3,2,3,4",options="header"]
+|===
+|Method |Java Value |Spring Batch Mapping |Typical Use
+
+|`putDate(String, LocalDateTime, boolean)`
+|`LocalDateTime`
+|`JobParametersBuilder.addLocalDateTime(...)`
+|timestamps, window boundaries, import cutoffs
+
+|`putDouble(String, Double, boolean)`
+|`Double`
+|`JobParametersBuilder.addDouble(...)`
+|ratios, percentages, thresholds
+
+|`putLong(String, Long, boolean)`
+|`Long`
+|`JobParametersBuilder.addLong(...)`
+|counts, ids, limits
+
+|`putString(String, String, boolean)`
+|`String`
+|`JobParametersBuilder.addString(...)`
+|names, paths, sources, operator-supplied labels
+|===
+
+=== Choosing Identifying Parameters
+
+The `identifying` flag is forwarded to Spring Batch and participates in job instance identity.
+
+Use `identifying=true` only for values that should distinguish one job instance from another. Typical examples are stable business keys or replay windows. Leave audit-only values non-identifying unless you intentionally want them to create a new job instance.
+
+[source,java]
+----
+BatchParameters parameters = new BatchParameters();
+parameters.putString("customerId", customerId, true);
+parameters.putDate("businessDate", businessDate.atStartOfDay(), true);
+parameters.putString("requestedBy", currentUserName, false);
+parameters.putString("requestChannel", "admin-screen", false);
+----
+
+If you mark too few parameters as identifying, repeated launches may collide with an existing completed instance. If you mark volatile values as identifying, you may create more job instances than intended.
+
+[[batch-jobfactory, Launch, Restart, And Job Naming]]
+== Launch, Restart, And Job Naming
+
+`batch-base` defines the neutral `JobFactory` interface. `batch-spring` provides `BatchJobFactory`, which adds concrete Spring Batch behavior plus monitor helpers.
+
+=== Logical Name Semantics
+
+`logicalName` is the Spring `Job` bean name resolved through `BatchJobRegistry`.
+
+It is not:
+
+* a step name
+* a class name
+* a display label
+* a dynamically registered alias
+
+If the bean name is `orderImportJob`, launch it with `orderImportJob`.
+
+=== `BatchJobFactory.create(logicalName, parameterMap, reason)`
+
+Behavior:
+
+1. Logs launch intent through Scribe.
+2. Uses `unknown` as the logged reason when `reason` is `null`.
+3. Formats the supplied parameters into the log message.
+4. Delegates to `start(logicalName, parameterMap)`.
+5. Returns the created execution id.
+
+This is the path that most callers should use when they want a traceable launch reason.
+
+=== `BatchJobFactory.start(logicalName, parameterMap)`
+
+Behavior:
+
+1. Accepts `null` or populated parameter maps.
+2. Converts each `BatchParameter<?>` into Spring Batch `JobParameters` using the matching builder method.
+3. Resolves the `Job` from `JobRegistry` by logical name.
+4. Starts the job through `JobOperator`.
+5. Returns the created execution id.
+
+This method does not perform the Scribe launch log that `create(...)` performs.
+
+=== `BatchJobFactory.restart(executionId)`
+
+Behavior:
+
+1. Reads the `JobExecution` from `JobRepository`.
+2. Throws `FormattedJobRestartException` when the execution id cannot be found.
+3. Delegates restart to `JobOperator` when the execution exists.
+
+=== `BatchJobRegistry`
+
+`BatchJobRegistry` is a Spring-context-backed `JobRegistry`.
+
+It discovers `Job` bean names during bean-factory post-processing and later resolves jobs from the application context. `register(...)` and `unregister(...)` intentionally throw `UnsupportedOperationException`; this registry is for Spring-declared jobs, not dynamic runtime registration.
+
+=== Common Failure Modes
+
+[cols="2,3",options="header"]
+|===
+|Failure |Meaning
+
+|`NoSuchJobException`
+|The logical name could not be resolved to a Spring `Job` bean.
+
+|`InvalidJobParametersException`
+|Spring Batch rejected the supplied parameters.
+
+|`JobExecutionAlreadyRunningException`
+|A conflicting execution is already in progress.
+
+|`JobRestartException`
+|The job cannot be restarted with the requested execution or parameters.
+
+|`JobInstanceAlreadyCompleteException`
+|The identifying parameters map to an already completed job instance.
+|===
+
+[[batch-monitoring, Monitoring, Waiting, And Quiescence]]
+== Monitoring, Waiting, And Quiescence
+
+`batch-spring` exposes three different waiting models. Choose the narrowest one that matches your operational need.
+
+[cols="2,3,4,4",options="header"]
+|===
+|Type |Watches |Succeeds When |Best Fit
+
+|`BatchJobMonitor`
+|One execution id
+|The current `ExitStatus` equals one of the supplied statuses
+|Wait for the job you just launched
+
+|`BatchJobWatcher`
+|All executions visible through `JobRepository`
+|Every execution has `BatchStatus.COMPLETED` and the clear-window polling behavior allows success
+|Small repositories or controlled completion checks
+
+|`BatchJobInterrogator`
+|Rows in `<schemaName>.BATCH_JOB_EXECUTION`
+|The SQL count of `STATUS != 'COMPLETED'` reaches zero before timeout
+|Database-level quiescence checks outside the application thread graph
+|===
+
+=== `BatchJobMonitor`
+
+Use `BatchJobMonitor` when you already have an execution id.
+
+[source,java]
+----
+boolean completed = jobFactory.monitor(executionId)
+    .await(5, TimeUnit.MINUTES, ExitStatus.COMPLETED);
+----
+
+You can also accept multiple terminal states.
+
+[source,java]
+----
+boolean finished = jobFactory.monitor(executionId)
+    .await(5, TimeUnit.MINUTES, ExitStatus.COMPLETED, ExitStatus.FAILED);
+----
+
+=== `BatchJobWatcher`
+
+Use `watch()` only when you intentionally want a repository-wide check.
+
+[source,java]
+----
+boolean clear = jobFactory.watch().await(0, 30, TimeUnit.SECONDS);
+----
+
+This watcher inspects every job execution visible through `JobRepository`. Historical executions that are not `COMPLETED` keep it from succeeding.
+
+=== `BatchJobInterrogator`
+
+`BatchJobInterrogator` performs a database-level quiescence check against the Spring Batch metadata schema.
+
+[source,java]
+----
+import javax.sql.DataSource;
+import org.smallmind.batch.spring.BatchJobInterrogator;
+import org.springframework.context.annotation.Bean;
+
+@Bean
+public BatchJobInterrogator batchJobInterrogator (DataSource batchDataSource) {
+
+  BatchJobInterrogator interrogator = new BatchJobInterrogator();
+  interrogator.setDataSource(batchDataSource);
+  interrogator.setSchemaName("batch");
+
+  return interrogator;
+}
+----
+
+[source,java]
+----
+boolean quiescent = batchJobInterrogator.awaitQuiescence(30, TimeUnit.SECONDS);
+----
+
+Operational requirements:
+
+* the configured `DataSource` must be able to query the Spring Batch metadata tables
+* `schemaName` must match the metadata schema that actually contains `BATCH_JOB_EXECUTION`
+* unresolved historical rows with `STATUS != 'COMPLETED'` will keep the interrogator from succeeding
+
+=== Polling And Interruption Semantics
+
+`BatchJobMonitor.await(...)`, `BatchJobWatcher.await(...)`, and `BatchJobInterrogator.awaitQuiescence(...)` all use the same polling cadence rule:
+
+* pulse interval is `max(1000 ms, timeout / 10)`
+
+All three methods propagate `InterruptedException` to the caller. `BatchJobInterrogator.awaitQuiescence(...)` also propagates `SQLException`.
+
+[[batch-spring, Spring Wiring Resources]]
+== Spring Wiring Resources
+
+`batch-spring` ships two reusable XML resources:
+
+* `org/smallmind/batch/spring/batch.xml`
+* `org/smallmind/batch/spring/batch-liquibase.xml`
+
+Use them when the defaults help. Ignore them and wire the beans directly when they do not.
+
+=== `batch.xml`
+
+`batch.xml` defines the following bean graph.
+
+[cols="2,3",options="header"]
+|===
+|Bean Id |Role
+
+|`batchPlatformTransactionManager`
+|`DataSourceTransactionManager` bound to `batchDataSource`
+
+|`jobRepository`
+|`JobRepositoryFactoryBean` with explicit repository defaults
+
+|`jobRegistry`
+|`BatchJobRegistry`
+
+|`jobOperator`
+|`SimpleJobOperator` using the configured `jobRepository` and a task executor built through `BatchJobExecutorFactory`
+
+|`jobFactory`
+|`BatchJobFactory`
+|===
+
+The shipped `jobRepository` bean is configured with these defaults:
+
+[cols="2,3",options="header"]
+|===
+|Property |Value
+
+|`databaseType`
+|`mysql`
+
+|`maxVarCharLength`
+|`2500`
+
+|`validateTransactionState`
+|`false`
+
+|`isolationLevelForCreate`
+|`REPEATABLE_READ`
+|===
+
+[IMPORTANT]
+====
+If your Spring Batch metadata store is not MySQL-compatible, override or replace the shipped `jobRepository` definition.
+====
+
+=== `batch-liquibase.xml`
+
+`batch-liquibase.xml` defines:
+
+[cols="2,3",options="header"]
+|===
+|Bean Id |Role
+
+|`batchDataSource`
+|`org.smallmind.persistence.sql.DriverManagerDataSource` created from the `jdbc.*.batch` properties
+
+|`batchLiquibase`
+|`org.smallmind.liquibase.spring.SpringLiquibase` that runs `org/smallmind/batch/spring/Batch.changelog.xml`
+|===
+
+Expected property placeholders:
+
+* `jdbc.driver.classname`
+* `jdbc.url.batch`
+* `jdbc.username.batch`
+* `jdbc.password.batch`
+
+=== When To Wire Beans Yourself
+
+Direct bean wiring is the better fit when:
+
+* your repository database is not MySQL-compatible
+* your application already owns a shared `DataSource` and transaction manager
+* your application already owns Liquibase execution
+* you need executor behavior other than the shipped single-worker baseline
+
+=== Custom Executor Example
+
+If you want explicit control over the executor instead of the packaged default, wire the operator yourself.
+
+[source,java]
+----
+import java.util.concurrent.Executors;
+import org.springframework.batch.core.launch.support.SimpleJobOperator;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.support.TaskExecutorAdapter;
+
+@Bean
+public TaskExecutorAdapter batchTaskExecutor () {
+
+  return new TaskExecutorAdapter(Executors.newScheduledThreadPool(4));
+}
+
+@Bean
+public SimpleJobOperator jobOperator (JobRepository jobRepository, TaskExecutorAdapter batchTaskExecutor) {
+
+  SimpleJobOperator jobOperator = new SimpleJobOperator();
+  jobOperator.setJobRepository(jobRepository);
+  jobOperator.setTaskExecutor(batchTaskExecutor);
+
+  return jobOperator;
+}
+----
+
+[NOTE]
+====
+`BatchJobExecutorFactory` stores its `concurrencyLimit` as `Math.min(1, concurrencyLimit)`. In practice, positive values greater than `1` collapse back to `1`. If you need multi-worker behavior, provide your own executor rather than relying on that factory.
+====
+
+[[batch-tasklet-utility, Tasklet Helper]]
+== Tasklet Helper
+
+`TaskletUtility` is intentionally small. It currently exposes one helper: `asBoolean(ChunkContext, String, boolean)`.
+
+Use it when a tasklet needs a boolean-like job parameter with a default.
+
+[source,java]
+----
+import org.smallmind.batch.spring.TaskletUtility;
+import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
+
+public class OrderImportTasklet implements Tasklet {
+
+  @Override
+  public RepeatStatus execute (StepContribution contribution, ChunkContext chunkContext)
+    throws Exception {
+
+    boolean dryRun = TaskletUtility.asBoolean(chunkContext, "dryRun", false);
+
+    if (dryRun) {
+      // validate input and report what would happen without writing changes
+    }
+
+    return RepeatStatus.FINISHED;
+  }
+}
+----
+
+Behavior details:
+
+* if the parameter is absent, the supplied default is returned
+* if the parameter is present, the value is cast to `String` and parsed with `Boolean.parseBoolean(...)`
+* values other than case-insensitive `true` parse as `false`
+
+[[batch-schema, Liquibase Schema]]
+== Liquibase Schema
+
+`batch-spring` packages a Liquibase changelog at `org/smallmind/batch/spring/Batch.changelog.xml`.
+
+It creates the standard Spring Batch metadata structures, including:
+
+* `BATCH_JOB_INSTANCE`
+* `BATCH_JOB_EXECUTION`
+* `BATCH_STEP_EXECUTION`
+* execution-parameter and execution-context tables
+* sequence tables
+* indexes and foreign keys
+
+It also seeds the sequence tables with initial rows where `ID=0` and `UNIQUE_KEY=0`.
+
+Use the packaged changelog when it matches your schema rollout model. If your application already owns Liquibase orchestration, reuse the changelog path in your own wiring rather than importing the whole Smallmind XML resource set.
+
+[[batch-api-index, API Index]]
+== API Index
+
+[cols="3,5,2",options="header"]
+|===
+|Type |Role |Module
+
+|`org.smallmind.batch.base.BatchParameter<T>`
+|Base wrapper for a typed parameter value and its identity flag
+|`batch-base`
+
+|`org.smallmind.batch.base.BatchParameters`
+|Mutable parameter map with typed helper methods
+|`batch-base`
+
+|`org.smallmind.batch.base.ParameterType`
+|Enumeration of the supported parameter kinds
+|`batch-base`
+
+|`org.smallmind.batch.base.JobFactory`
+|Neutral launch/restart contract
+|`batch-base`
+
+|`org.smallmind.batch.spring.BatchJobFactory`
+|Spring Batch-backed `JobFactory` plus monitor helpers
+|`batch-spring`
+
+|`org.smallmind.batch.spring.BatchJobRegistry`
+|Spring application-context-backed `JobRegistry`
+|`batch-spring`
+
+|`org.smallmind.batch.spring.BatchJobMonitor`
+|Polling monitor for one execution id
+|`batch-spring`
+
+|`org.smallmind.batch.spring.BatchJobWatcher`
+|Repository-wide completion watcher
+|`batch-spring`
+
+|`org.smallmind.batch.spring.BatchJobInterrogator`
+|Database-level quiescence checker against batch metadata
+|`batch-spring`
+
+|`org.smallmind.batch.spring.BatchJobExecutorFactory`
+|Factory for the packaged task-executor adapter
+|`batch-spring`
+
+|`org.smallmind.batch.spring.TaskletUtility`
+|Boolean parameter helper for tasklets
+|`batch-spring`
+
+|`org.smallmind.batch.spring.FormattedNoSuchJobException`
+|Formatted `NoSuchJobException` specialization
+|`batch-spring`
+
+|`org.smallmind.batch.spring.FormattedJobRestartException`
+|Formatted missing-execution restart exception
+|`batch-spring`
+|===
+
+[[batch-operational, Operational Notes]]
+== Operational Notes
+
+* `BatchJobFactory.create(...)` logs through Scribe before launching.
+* `BatchJobFactory.start(...)` accepts `null` and uses empty `JobParameters` when no parameter map is supplied.
+* `BatchJobFactory.monitorLatest(...)` requires at least one existing job instance and execution for the supplied logical name.
+* `BatchJobMonitor.await(...)` returns `true` immediately if no acceptable `ExitStatus` values are supplied.
+* `BatchJobWatcher` and `BatchJobInterrogator` are global checks; they look at all visible job history, not just currently running work.
+* `BatchJobWatcher` uses `BatchStatus.COMPLETED`; `BatchJobMonitor` matches `ExitStatus`.
+* `BatchJobInterrogator` opens one database connection per poll, sets transaction isolation to `REPEATABLE_READ`, and sets auto-commit to `false` before querying.
+* `BatchJobInterrogator` concatenates `schemaName` directly into SQL text, so treat it as trusted configuration only.
+* `BatchJobRegistry.register(...)` and `unregister(...)` are intentionally unsupported.
+* `TaskletUtility.asBoolean(...)` expects a string-backed job parameter and uses `Boolean.parseBoolean(...)`.
+
+[[batch-edge-cases, Behavioral Edge Cases]]
+== Behavioral Edge Cases
+
+[cols="2,3",options="header"]
+|===
+|Behavior |Current Semantics
+
+|`BatchJobFactory.create(logicalName, parameterMap, null)`
+|Logs the reason as `unknown`.
+
+|`BatchJobFactory.start(logicalName, null)`
+|Launches with an empty `JobParameters` object.
+
+|`BatchJobMonitor.await(timeout, unit)` with no exit statuses
+|Returns `true` immediately.
+
+|`BatchJobFactory.monitorLatest(logicalName)` before any run exists
+|Throws `FormattedNoSuchJobException` because there is no last instance or execution to monitor.
+
+|`BatchJobWatcher.await(clear, timeout, unit)` with old failed or stopped executions in the repository
+|Never reports success until those non-`COMPLETED` executions are resolved or removed from the visible history.
+
+|`BatchJobWatcher.await(clear, timeout, unit)` with a clear window longer than its polling pulse
+|May never satisfy the clear requirement because the internal checkpoint is reset on unsuccessful polls.
+
+|`BatchJobExecutorFactory.setConcurrencyLimit(4)`
+|Stores `1`, not `4`.
+
+|`BatchJobExecutorFactory.setConcurrencyLimit(0)` or a negative value
+|Passes the non-positive value through to `Executors.newScheduledThreadPool(...)` during initialization.
+
+|`BatchJobInterrogator.awaitQuiescence(...)` with old rows where `STATUS != 'COMPLETED'`
+|Never reports quiescence until those rows are resolved or removed.
+
+|`BatchJobInterrogator.setSchemaName(...)`
+|The schema name is inserted directly into the SQL text; use trusted configuration only.
+
+|`BatchJobRegistry.register(...)` or `unregister(...)`
+|Throws `UnsupportedOperationException`.
+|===
+
+[[batch-flow, Typical Flow]]
+== Typical Flow
+
+1. Define your Spring Batch `Job` bean with a stable bean name.
+2. Wire `BatchJobFactory` either through the shipped XML or explicit bean definitions.
+3. Build a `BatchParameters` map and call `create(...)` or `start(...)`.
+4. Capture the returned execution id.
+5. Wait on that execution with `BatchJobMonitor`, or use `monitorLatest(...)` for the last execution of a known logical name.
+6. Restart by execution id when Spring Batch allows restart.
+7. Use `BatchJobWatcher` or `BatchJobInterrogator` only when you need repository-wide completion or quiescence semantics.
+
+[[batch-troubleshooting, Troubleshooting]]
+== Troubleshooting
+
+[cols="2,2,4",options="header"]
+|===
+|Observed Symptom |Likely Cause |Action
+
+|`NoSuchJobException` from `create(...)` or `start(...)`
+|The supplied `logicalName` does not match a Spring `Job` bean visible to `BatchJobRegistry`.
+|Confirm the bean name, keep the job in the same application context as the registry, and use `jobRegistry.getJobNames()` to inspect what was discovered.
+
+|First `create(...)` call fails during logging/bootstrap
+|No `scribe-ink-*` endpoint is present, or more than one is present.
+|Provide exactly one Scribe endpoint integration, or avoid the logging path by calling `start(...)` directly only if that tradeoff is intentional.
+
+|`JobInstanceAlreadyCompleteException` or surprising instance reuse
+|The identifying parameter set does not match the instance identity you intended.
+|Review each `identifying` flag and separate stable business keys from audit-only values.
+
+|`monitorLatest(...)` throws `FormattedNoSuchJobException`
+|No execution exists yet for that logical job name.
+|Launch the job at least once before using `monitorLatest(...)`.
+
+|`BatchJobMonitor.await(...)` times out even though the job finished
+|You are waiting for the wrong `ExitStatus`, or the job reached a different terminal status than expected.
+|Inspect the actual Spring Batch exit status and wait on the exact values your job emits.
+
+|`BatchJobWatcher.await(...)` or `BatchJobInterrogator.awaitQuiescence(...)` never succeeds
+|Historical executions or rows remain in a state other than `COMPLETED`.
+|Inspect the repository metadata, resolve or purge old failed/stopped work, and verify the interrogator schema name.
+
+|Imported `batch.xml` fails against PostgreSQL, Oracle, or another non-MySQL repository
+|The shipped `jobRepository` default uses `databaseType=mysql`.
+|Override or replace the `jobRepository` bean with the correct Spring Batch repository settings for your database.
+
+|Expected parallel launch capacity but execution stays single-worker
+|The packaged path is effectively single-threaded, and `BatchJobExecutorFactory` does not preserve values greater than `1`.
+|Provide your own `TaskExecutor` and wire `jobOperator` directly.
+
+|`FormattedJobRestartException` from `restart(executionId)`
+|The execution id no longer exists in `JobRepository`, or it never existed in that repository.
+|Validate the execution id source and the retention policy for batch metadata.
+|===
+
+[[batch-verification, Verification Checklist]]
+== Verification Checklist
+
+1. Confirm the Spring Batch metadata schema exists and matches the repository database you actually run.
+2. Confirm the target `Job` bean name appears in `BatchJobRegistry.getJobNames()`.
+3. Launch a known job with a mix of identifying and non-identifying parameters.
+4. Capture the execution id and wait on it with `BatchJobMonitor.await(...)`.
+5. Validate restart behavior with a known restartable execution.
+6. If you rely on `monitorLatest(...)`, test it both before and after the first launch so the missing-history behavior is understood.
+7. If you rely on `BatchJobWatcher` or `BatchJobInterrogator`, test them against realistic repository history rather than an empty metadata database.
+8. If you import `batch.xml`, validate the JDBC placeholders and any `jobRepository` override in the deployed environment.
+
+[[batch-hardening, Production Hardening Checklist]]
+== Production Hardening Checklist
+
+1. Decide which parameters truly define job instance identity and document that choice for operators.
+2. Provide exactly one Scribe endpoint if production launch paths use `BatchJobFactory.create(...)`.
+3. Replace the packaged XML with direct wiring when you need a non-MySQL repository, shared infrastructure beans, or custom executor sizing.
+4. Establish a retention or cleanup policy for historical executions if you depend on global watcher or interrogator checks.
+5. Size monitor and quiescence timeouts against real job durations and failure handling, not only happy-path tests.
+
+== See Also
+
+* `README.adoc`
+* `batch/pom.xml`
+* `batch/base/src/main/java/org/smallmind/batch/base`
+* `batch/spring/src/main/java/org/smallmind/batch/spring`
+* `batch/spring/src/main/resources/spring/org/smallmind/batch/spring/batch.xml`
+* `batch/spring/src/main/resources/spring/org/smallmind/batch/spring/batch-liquibase.xml`
+* `batch/spring/src/main/resources/liquibase/org/smallmind/batch/spring/Batch.changelog.xml`

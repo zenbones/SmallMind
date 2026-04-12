@@ -18,7 +18,6 @@
     <module>json</module>
     <module>jwt</module>
     <module>schema</module>
-    <module>websocket</module>
   </modules>
   <build>
     <plugins>
