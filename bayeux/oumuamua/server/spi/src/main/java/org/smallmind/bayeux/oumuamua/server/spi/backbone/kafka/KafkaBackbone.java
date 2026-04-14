@@ -42,7 +42,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -60,6 +59,8 @@ import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.util.ComponentModulator;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -72,7 +73,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
-  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
+  private final ComponentModulator componentModulator = new ComponentModulator();
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
   private final String nodeName;
@@ -124,44 +125,42 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    * Starts consumer workers and transitions the backbone to STARTED.
    *
    * @param server owning server instance
-   * @throws InterruptedException if interrupted while waiting on startup synchronization
+   * @throws ComponentStateException if the lifecycle settles without reaching {@code STARTED}
+   * @throws InterruptedException if interrupted while waiting on lifecycle synchronization
    */
   @Override
   public void startUp (Server<V> server)
-    throws InterruptedException {
+    throws ComponentStateException, InterruptedException {
 
-    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+    if (componentModulator.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
         new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
       }
-      statusRef.set(ComponentStatus.STARTED);
-    } else {
-      while (ComponentStatus.STARTING.equals(statusRef.get())) {
-        Thread.sleep(100);
-      }
+      componentModulator.set(ComponentStatus.STARTED);
+    } else if (ComponentStatus.STOPPED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
+      throw new ComponentStateException("Could not enter the started state");
     }
   }
 
   /**
-   * Signals consumer workers to stop and waits for shutdown.
+   * Signals consumer workers to stop and transitions the backbone to {@link ComponentStatus#STOPPED}.
    *
-   * @throws InterruptedException if interrupted during shutdown
+   * @throws ComponentStateException if the lifecycle settles without reaching {@code STOPPED}
+   * @throws InterruptedException if interrupted while waiting on lifecycle synchronization
    */
   @Override
   public void shutDown ()
-    throws InterruptedException {
+    throws ComponentStateException, InterruptedException {
 
-    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
+    if (componentModulator.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
       for (ConsumerWorker<V> worker : workers) {
         worker.stop();
       }
-      statusRef.set(ComponentStatus.STOPPED);
-    } else {
-      while (ComponentStatus.STOPPING.equals(statusRef.get())) {
-        Thread.sleep(100);
-      }
+      componentModulator.set(ComponentStatus.STOPPED);
+    } else if (ComponentStatus.STARTED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
+      throw new ComponentStateException("Could not enter the stopped state");
     }
   }
 

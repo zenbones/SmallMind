@@ -144,7 +144,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
    * Starts the server, initializing the backbone and maintenance tasks.
    *
    * @param servletConfig servlet configuration provided by the container
-   * @throws ServletException if startup fails
+   * @throws ServletException if backbone startup or protocol initialization fails
    */
   public void start (ServletConfig servletConfig)
     throws ServletException {
@@ -185,8 +185,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     if ((backbone = getBackbone()) != null) {
       try {
         backbone.shutDown();
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+      } catch (Exception exception) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(exception);
       }
     }
 

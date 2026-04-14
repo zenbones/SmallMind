@@ -30,40 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.api.backbone;
+package org.smallmind.nutsnbolts.util;
 
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
-import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Transport-independent backbone used to fan out packets across clustered nodes.
- *
- * @param <V> concrete {@link Value} implementation used for message payloads
+ * Signals an invalid or unexpected component lifecycle state.
  */
-public interface Backbone<V extends Value<V>> {
+public class ComponentStateException extends FormattedException {
 
   /**
-   * Starts the backbone and binds it to a server.
-   *
-   * @param server the hosting server
-   * @throws Exception if startup fails, is interrupted, or cannot reach a usable started state
+   * Creates an exception without a detail message.
    */
-  void startUp (Server<V> server)
-    throws Exception;
+  public ComponentStateException () {
+
+  }
 
   /**
-   * Shuts down the backbone, releasing resources.
+   * Creates an exception with a formatted detail message.
    *
-   * @throws Exception if shutdown fails, is interrupted, or cannot reach a usable stopped state
+   * @param message message pattern describing the state problem
+   * @param args    optional arguments to format into the message
    */
-  void shutDown ()
-    throws Exception;
+  public ComponentStateException (String message, Object... args) {
+
+    super(message, args);
+  }
 
   /**
-   * Publishes a packet to other nodes.
+   * Creates an exception with a cause and a formatted detail message.
    *
-   * @param packet packet to distribute
+   * @param throwable underlying cause
+   * @param message   message pattern describing the state problem
+   * @param args      optional arguments to format into the message
    */
-  void publish (Packet<V> packet);
+  public ComponentStateException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
+
+  /**
+   * Creates an exception with the supplied cause.
+   *
+   * @param throwable underlying cause
+   */
+  public ComponentStateException (Throwable throwable) {
+
+    super(throwable);
+  }
 }
