@@ -34,9 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletConfig;
@@ -63,7 +61,7 @@ import org.smallmind.scribe.pen.LoggerManager;
  */
 public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
-  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+  private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
   private OumuamuaServer<V> server;
   private LongPollingConnection<V> connection;
 

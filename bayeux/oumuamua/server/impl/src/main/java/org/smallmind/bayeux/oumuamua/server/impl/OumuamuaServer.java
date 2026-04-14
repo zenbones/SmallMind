@@ -40,6 +40,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -110,7 +111,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       this.configuration = configuration;
 
-      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : Executors.newVirtualThreadPerTaskExecutor();
 
       allowsImplicitConnection = configuration.isAllowsImplicitConnection();
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;

@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +73,7 @@ import org.smallmind.scribe.pen.LoggerManager;
  */
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
-  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+  private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
   private final ComponentModulator componentModulator = new ComponentModulator();
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
