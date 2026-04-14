@@ -522,6 +522,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     if (maximumWorkerPoolSize != null) {
       networkListener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(maximumWorkerPoolSize);
     }
+
+    // TODO: When grizzly 5.x BOM is no longer a snapshot
+    // VirtualThreadExecutorService.createInstance(configureThreadPoolConfig(networkListener, threadPool));
+    // transport.setWorkerThreadPool(workerExecutorService);
+
     if (threadPoolProbe != null) {
       networkListener.getTransport().getWorkerThreadPoolConfig().getInitialMonitoringConfig().addProbes(threadPoolProbe);
     }
