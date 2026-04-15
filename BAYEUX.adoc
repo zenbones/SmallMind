@@ -293,7 +293,7 @@ If your application executes the reference runtime, include exactly one `scribe-
 
 |Custom `ExecutorService`
 |No
-|If omitted, the server creates a cached-thread-pool style executor
+|If omitted, `OumuamuaServer` creates a virtual-thread-per-task executor
 |===
 
 === Minimal Long-Poll Bootstrap
@@ -800,7 +800,7 @@ A sender can therefore see:
 
 |`executorService`
 |No
-|Executor used for async processing and websocket work
+|Executor used by `OumuamuaServer` for `OumuamuaServlet` and websocket message work; `AsyncOumuamuaServlet` keeps its own dedicated virtual-thread executor for request-body processing
 
 |`reflectingPaths`
 |No
@@ -1154,7 +1154,7 @@ Use it with either `OumuamuaServlet` or `AsyncOumuamuaServlet`.
 |Reads the request body synchronously, then hands processing to the server executor
 
 |`AsyncOumuamuaServlet`
-|Reads the request body through a `ReadListener` and uses a dedicated executor for request-body processing before handing the messages to the server
+|Reads the request body through a `ReadListener` and uses a dedicated virtual-thread executor for request-body processing before handing the messages to the server
 |===
 
 Common servlet rules:
@@ -1361,15 +1361,15 @@ Do not share one executor between Bayeux and unrelated application components un
 
 === Default Executor Behavior
 
-If you do not provide `executorService`, the server creates a `ThreadPoolExecutor` with:
+If you do not provide `executorService`, `OumuamuaServer` calls `Executors.newVirtualThreadPerTaskExecutor()`.
 
-* core pool size `0`
-* effectively unbounded maximum threads
-* `60` second keepalive
-* `SynchronousQueue`
-* caller-runs rejection policy
+That means:
 
-That is convenient for low-friction integration, but it also means burst capacity planning is your responsibility.
+* server work runs on a virtual-thread-per-task executor instead of the older cached-thread-pool style default
+* burst planning still matters because listeners, services, codecs, websocket handlers, and downstream calls can still block on real resources
+
+`AsyncOumuamuaServlet` also creates its own dedicated `Executors.newVirtualThreadPerTaskExecutor()` for request-body processing and shuts it down from `destroy()`.
+Supplying `OumuamuaConfiguration.executorService` does not replace that servlet-local executor.
 
 === Idle Cleanup
 
@@ -1481,7 +1481,7 @@ Check:
 * `maxLongPollQueueSize`
 * `AckExtension` queue size versus actual client behavior
 * whether `streamingPaths` should be enabled on hot websocket channels
-* whether the server executor is saturating under burst load
+* whether request-processing work is blocking on downstream resources under burst load
 
 ==== Websocket Registration Problems
 
@@ -1646,7 +1646,7 @@ Use this quick preflight before production deployment:
 |`DEBUG`
 
 |Default executor if not supplied
-|Cached-thread-pool style `ThreadPoolExecutor` with caller-runs rejection policy
+|Virtual-thread-per-task `ExecutorService` created by `Executors.newVirtualThreadPerTaskExecutor()`
 
 |Default websocket idle timeout
 |Container default (`-1` in `WebsocketConfiguration`)
