@@ -94,7 +94,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(idioms = @Idiom(visibility = OUT))
   private int sessionConnectIntervalSeconds = 30;
   @View(idioms = @Idiom(visibility = OUT))
-  private int sessionMaxIdleTimeoutSeconds = 90;
+  private int sessionMaxIdleTimeoutSeconds = 300;
   @View(idioms = @Idiom(visibility = OUT))
   private int idleChannelCycleMinutes = 5;
   @View(idioms = @Idiom(visibility = OUT))
