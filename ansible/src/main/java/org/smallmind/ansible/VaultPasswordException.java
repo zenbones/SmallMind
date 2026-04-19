@@ -33,15 +33,21 @@
 package org.smallmind.ansible;
 
 /**
- * Exception thrown when vault password validation fails.
+ * Thrown when the vault password supplied for decryption does not match the stored HMAC.
+ *
+ * <p>Because Ansible derives the HMAC key from the password via PBKDF2, an incorrect password
+ * produces an HMAC that fails the constant-time comparison in {@link VaultTumbler#decrypt(byte[], byte[])},
+ * which raises this exception.  Callers that need to distinguish a bad password from other
+ * structural failures (unrecognized header, unsupported cipher, truncated data) should catch
+ * this subclass separately before catching the parent {@link VaultCodecException}.
  */
 public class VaultPasswordException extends VaultCodecException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception with a {@link String#format}-style message.
    *
-   * @param message message template describing the validation problem
-   * @param args    message arguments
+   * @param message format string describing the validation failure
+   * @param args    arguments referenced by the format specifiers in {@code message}
    */
   public VaultPasswordException (String message, Object... args) {
 

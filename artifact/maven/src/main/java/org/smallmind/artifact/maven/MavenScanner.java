@@ -50,8 +50,41 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Periodically polls configured Maven coordinates for updates and notifies listeners when new artifacts or versions are detected.
- * Each scan resolves dependencies, builds a class loader over updated artifacts, and emits a {@link MavenScannerEvent}.
+ * Polling component that monitors a set of Maven coordinates for artifact changes and notifies
+ * registered listeners when an update is detected.
+ *
+ * <h3>Lifecycle</h3>
+ * <ol>
+ *   <li>Construct a scanner and register at least one {@link MavenScannerListener} via
+ *       {@link #addMavenScannerListener}.</li>
+ *   <li>Call {@link #start()}, which performs an immediate first scan (throwing on resolution
+ *       failure) and then launches a daemon worker thread that repeats scans at the configured
+ *       {@link Stint} interval.</li>
+ *   <li>Call {@link #stop()} to signal the worker and block until it exits cleanly.</li>
+ * </ol>
+ *
+ * <h3>Change detection</h3>
+ * <p>Each scan cycle resolves every monitored coordinate against the configured Maven repositories.
+ * The resolved artifact is wrapped in an {@link ArtifactTag} that records the file's current
+ * last-modified time and compared to the tag stored from the previous cycle.  Release artifacts
+ * are compared by identity only; snapshot artifacts are also compared by file timestamp so that
+ * a re-deployed snapshot triggers a notification even when the version string is unchanged.
+ *
+ * <h3>Notification</h3>
+ * <p>When at least one coordinate has changed, the scanner resolves all transitive compile-scope
+ * dependencies of the changed artifacts, assembles a {@link GatingClassLoader} over the resulting
+ * file set, and delivers a {@link MavenScannerEvent} to every registered listener.  Scans that
+ * detect no changes produce no notification.
+ *
+ * <h3>Error handling</h3>
+ * <p>Resolution errors during periodic scans (after the initial one) are logged and swallowed so
+ * that a transient network failure does not terminate the scanner.  The stored tags are left
+ * unchanged, meaning a failed scan is treated as if nothing changed.
+ *
+ * <p>The public lifecycle methods ({@link #start()}, {@link #stop()},
+ * {@link #addMavenScannerListener}, {@link #removeMavenScannerListener}) are {@code synchronized}.
+ * The internal {@link #updateArtifact()} method is also {@code synchronized} to prevent a
+ * concurrent stop from racing with an ongoing scan.
  */
 public class MavenScanner {
 
@@ -64,13 +97,15 @@ public class MavenScanner {
   private ComponentStatus status = ComponentStatus.STOPPED;
 
   /**
-   * Creates a scanner using the default settings directory.
+   * Creates a scanner backed by the Maven settings found in {@code ~/.m2/settings.xml}.
    *
-   * @param repositoryId     identifier for outbound repository requests.
-   * @param offline          whether remote repositories should be contacted.
-   * @param cycleStint       interval between scans.
-   * @param mavenCoordinates coordinates to monitor for updates.
-   * @throws SettingsBuildingException if settings cannot be loaded.
+   * @param repositoryId     short identifier embedded in outbound {@code User-Agent} headers
+   * @param offline          {@code true} to restrict resolution to locally cached artifacts
+   * @param cycleStint       time to wait between successive scan cycles; must not be {@code null}
+   * @param mavenCoordinates one or more coordinates to monitor; must not be {@code null}
+   * @throws SettingsBuildingException if {@code ~/.m2/settings.xml} cannot be loaded
+   * @throws IllegalArgumentException  if {@code cycleStint} or {@code mavenCoordinates} is
+   *                                   {@code null}
    */
   public MavenScanner (String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
@@ -79,14 +114,17 @@ public class MavenScanner {
   }
 
   /**
-   * Creates a scanner with an explicit settings directory.
+   * Creates a scanner backed by the Maven settings found in the given directory.
    *
-   * @param settingsDirectory directory containing {@code settings.xml}; defaults to {@code ~/.m2} when null or empty.
-   * @param repositoryId      identifier for outbound repository requests.
-   * @param offline           whether remote repositories should be contacted.
-   * @param cycleStint        interval between scans.
-   * @param mavenCoordinates  coordinates to monitor for updates.
-   * @throws SettingsBuildingException if settings cannot be loaded.
+   * @param settingsDirectory directory containing {@code settings.xml}; {@code null} or empty
+   *                          falls back to {@code ~/.m2}
+   * @param repositoryId      short identifier embedded in outbound {@code User-Agent} headers
+   * @param offline           {@code true} to restrict resolution to locally cached artifacts
+   * @param cycleStint        time to wait between successive scan cycles; must not be {@code null}
+   * @param mavenCoordinates  one or more coordinates to monitor; must not be {@code null}
+   * @throws SettingsBuildingException if the settings file cannot be loaded
+   * @throws IllegalArgumentException  if {@code cycleStint} or {@code mavenCoordinates} is
+   *                                   {@code null}
    */
   public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
@@ -95,12 +133,13 @@ public class MavenScanner {
   }
 
   /**
-   * Internal constructor used by public variants.
+   * Shared internal constructor that validates arguments and initialises the tag array.
    *
-   * @param mavenRepository  backing repository used for resolution.
-   * @param cycleStint       interval between scans.
-   * @param mavenCoordinates coordinates to monitor for updates.
-   * @throws IllegalArgumentException if stint or coordinates are missing.
+   * @param mavenRepository  backing repository to use for all resolution operations
+   * @param cycleStint       polling interval; must not be {@code null}
+   * @param mavenCoordinates coordinates to monitor; must not be {@code null}
+   * @throws IllegalArgumentException if {@code cycleStint} or {@code mavenCoordinates} is
+   *                                  {@code null}
    */
   private MavenScanner (MavenRepository mavenRepository, Stint cycleStint, MavenCoordinate... mavenCoordinates) {
 
@@ -119,9 +158,12 @@ public class MavenScanner {
   }
 
   /**
-   * Registers a listener that will be invoked when artifacts change.
+   * Registers a listener to receive artifact-change notifications.
    *
-   * @param listener listener to register.
+   * <p>Listeners are invoked in registration order on the internal worker thread.  Adding the
+   * same listener instance more than once will result in duplicate notifications.
+   *
+   * @param listener listener to register; must not be {@code null}
    */
   public synchronized void addMavenScannerListener (MavenScannerListener listener) {
 
@@ -129,9 +171,12 @@ public class MavenScanner {
   }
 
   /**
-   * Unregisters a previously added listener.
+   * Removes the first occurrence of the given listener from the notification list.
    *
-   * @param listener listener to remove.
+   * <p>If the listener was registered multiple times, only one registration is removed per call.
+   * Has no effect if the listener is not currently registered.
+   *
+   * @param listener listener to remove
    */
   public synchronized void removeMavenScannerListener (MavenScannerListener listener) {
 
@@ -139,11 +184,20 @@ public class MavenScanner {
   }
 
   /**
-   * Starts periodic scanning if the component is stopped. Immediately performs an initial scan before scheduling repeats.
+   * Starts the scanner if it is currently stopped.
    *
-   * @throws DependencyCollectionException if dependency metadata cannot be collected.
-   * @throws DependencyResolutionException if any dependency fails to resolve during the initial scan.
-   * @throws ArtifactResolutionException   if any monitored artifact cannot be resolved during the initial scan.
+   * <p>An initial scan is performed synchronously before the background worker is launched.
+   * If the initial scan detects any changes (which it will on first start, since all tags are
+   * initially {@code null}) listeners are notified immediately on the calling thread.  Subsequent
+   * scans run on a daemon thread at the configured {@link Stint} interval.
+   *
+   * <p>If the scanner is already started this method is a no-op.
+   *
+   * @throws DependencyCollectionException if dependency metadata cannot be collected during
+   *                                       the initial scan
+   * @throws DependencyResolutionException if a dependency fails to resolve during the initial scan
+   * @throws ArtifactResolutionException   if a monitored artifact cannot be resolved during the
+   *                                       initial scan
    */
   public synchronized void start ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
@@ -163,9 +217,13 @@ public class MavenScanner {
   }
 
   /**
-   * Stops periodic scanning and waits for the worker to exit if currently running.
+   * Stops the scanner and blocks until the background worker thread has exited.
    *
-   * @throws InterruptedException if interrupted while waiting for the worker to stop.
+   * <p>If the scanner is already stopped this method is a no-op.  In-progress scan cycles are
+   * allowed to complete before the worker exits.
+   *
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the
+   *                              worker to exit
    */
   public synchronized void stop ()
     throws InterruptedException {
@@ -180,11 +238,23 @@ public class MavenScanner {
   }
 
   /**
-   * Performs a single scan cycle: resolves each coordinate, detects changes, builds a new class loader, and notifies listeners.
+   * Executes one scan cycle: resolves each monitored coordinate, compares the result against the
+   * stored tag, and if any coordinate has changed, resolves dependencies, builds a class loader,
+   * and notifies all registered listeners.
    *
-   * @throws DependencyCollectionException if dependency metadata cannot be collected.
-   * @throws DependencyResolutionException if any dependency fails to resolve.
-   * @throws ArtifactResolutionException   if a monitored artifact fails to resolve.
+   * <p>A new repository session is created at the start of each call.  Coordinates whose
+   * {@link ArtifactTag} is unchanged are skipped during dependency resolution.  All changed
+   * artifacts share a single {@link GatingClassLoader} whose classpath is the union of their
+   * transitive dependency sets (deduplication applied).
+   *
+   * <p>This method is {@code synchronized} to serialise concurrent calls from {@link #start()}
+   * and the worker thread.
+   *
+   * @throws DependencyCollectionException if dependency metadata cannot be collected for a
+   *                                       changed artifact
+   * @throws DependencyResolutionException if a transitive dependency of a changed artifact cannot
+   *                                       be resolved
+   * @throws ArtifactResolutionException   if a monitored coordinate itself cannot be resolved
    */
   private synchronized void updateArtifact ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
@@ -232,7 +302,18 @@ public class MavenScanner {
   }
 
   /**
-   * Worker that performs repeated scans at the configured interval until signaled to stop.
+   * Background worker that drives periodic scan cycles at the configured interval.
+   *
+   * <p>Uses two {@link CountDownLatch latches}:
+   * <ul>
+   *   <li>{@code finishLatch} — counted down by {@link #stop()} to signal the worker to exit
+   *       after the current cycle completes.</li>
+   *   <li>{@code exitLatch} — counted down by the worker immediately before its thread exits,
+   *       allowing {@link #stop()} to block until termination is confirmed.</li>
+   * </ul>
+   *
+   * <p>Exceptions thrown by individual scan cycles are logged at ERROR level and swallowed;
+   * the worker continues until explicitly stopped or the thread is interrupted.
    */
   private class ScannerWorker implements Runnable {
 
@@ -240,9 +321,11 @@ public class MavenScanner {
     private final CountDownLatch exitLatch = new CountDownLatch(1);
 
     /**
-     * Signals the worker to finish and waits for confirmation of exit.
+     * Signals this worker to stop after the current scan cycle and blocks until the worker
+     * thread confirms exit.
      *
-     * @throws InterruptedException if interrupted while awaiting termination.
+     * @throws InterruptedException if the calling thread is interrupted while waiting for the
+     *                              worker to exit
      */
     public void stop ()
       throws InterruptedException {
@@ -252,7 +335,14 @@ public class MavenScanner {
     }
 
     /**
-     * Executes scan cycles until stopped or interrupted, logging and continuing past individual scan errors.
+     * Main scan loop: invokes {@link MavenScanner#updateArtifact()} repeatedly, waiting
+     * {@link MavenScanner#cycleStint} between iterations.
+     *
+     * <p>Exceptions from a scan cycle are logged and the loop continues.  An
+     * {@link InterruptedException} from the inter-cycle wait exits the loop and ensures
+     * {@code finishLatch} is counted down so that a concurrent {@link #stop()} call does not
+     * block indefinitely.  The {@code exitLatch} is always counted down in the {@code finally}
+     * block regardless of how the loop terminates.
      */
     @Override
     public void run () {

@@ -54,7 +54,7 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
    */
   public void setConcurrencyLimit (int concurrencyLimit) {
 
-    this.concurrencyLimit = Math.min(1, concurrencyLimit);
+    this.concurrencyLimit = Math.max(1, concurrencyLimit);
   }
 
   /**

@@ -80,8 +80,22 @@ import org.eclipse.aether.util.repository.DefaultMirrorSelector;
 import org.eclipse.aether.util.repository.DefaultProxySelector;
 
 /**
- * Encapsulates Maven/Aether repository setup driven by user settings.xml, providing helper utilities for
- * establishing repository sessions, resolving artifacts, and handling mirrors, proxies, and authentication.
+ * Facade over the Eclipse Aether repository system that initialises itself from a Maven
+ * {@code settings.xml} file and exposes artifact resolution operations.
+ *
+ * <p>Construction reads and processes the settings file once, deriving proxy, mirror, and
+ * authentication selectors and the list of remote repositories from active profiles.  The
+ * resolved selectors are shared across all sessions produced by {@link #generateSession()},
+ * so a single {@code MavenRepository} instance can be reused for multiple resolution cycles
+ * without re-parsing settings.
+ *
+ * <p>Repository and snapshot policies are set to {@code UPDATE_POLICY_ALWAYS} and
+ * {@code CHECKSUM_POLICY_WARN} for all remote repositories, ensuring that snapshot
+ * re-deployments are picked up on every resolution request.
+ *
+ * <p>Instances of this class are thread-safe once constructed; {@link #generateSession()}
+ * returns a fresh session per call and is not synchronized.  The {@link #resolve} method
+ * is likewise independent across calls because it creates its own local state.
  */
 public class MavenRepository {
 
@@ -96,11 +110,14 @@ public class MavenRepository {
   private final boolean offline;
 
   /**
-   * Builds a repository instance using the default {@code ~/.m2/settings.xml}.
+   * Builds a repository using the Maven settings file found at {@code ~/.m2/settings.xml}.
    *
-   * @param repositoryId identifier used in the generated User-Agent header.
-   * @param offline      whether resolution should avoid remote access.
-   * @throws SettingsBuildingException if the settings file cannot be read or is invalid.
+   * @param repositoryId short identifier embedded in the {@code User-Agent} header sent with
+   *                     remote repository requests (e.g. the application name)
+   * @param offline      {@code true} to disable all remote repository access and restrict
+   *                     resolution to locally cached artifacts
+   * @throws SettingsBuildingException if {@code ~/.m2/settings.xml} cannot be read, parsed,
+   *                                   or merged with any global settings
    */
   public MavenRepository (String repositoryId, boolean offline)
     throws SettingsBuildingException {
@@ -109,12 +126,17 @@ public class MavenRepository {
   }
 
   /**
-   * Builds a repository instance using the supplied settings directory.
+   * Builds a repository using the Maven settings file found in the given directory.
    *
-   * @param settingsDirectory directory that contains {@code settings.xml}; defaults to {@code ~/.m2} when {@code null} or empty.
-   * @param repositoryId      identifier used in the generated User-Agent header.
-   * @param offline           whether resolution should avoid remote access.
-   * @throws SettingsBuildingException if the settings file cannot be read or is invalid.
+   * <p>If {@code settingsDirectory} is {@code null} or empty the constructor falls back to
+   * {@code ~/.m2}.
+   *
+   * @param settingsDirectory directory that contains {@code settings.xml}; {@code null} or
+   *                          empty string both fall back to {@code ~/.m2}
+   * @param repositoryId      short identifier embedded in the {@code User-Agent} header
+   * @param offline           {@code true} to restrict resolution to locally cached artifacts
+   * @throws SettingsBuildingException if {@code settings.xml} cannot be read or is syntactically
+   *                                   invalid
    */
   public MavenRepository (String settingsDirectory, String repositoryId, boolean offline)
     throws SettingsBuildingException {
@@ -140,9 +162,19 @@ public class MavenRepository {
   }
 
   /**
-   * Creates a new repository session configured with caching, proxy/mirror/authentication selectors, and local repository management.
+   * Creates a new Aether {@link DefaultRepositorySystemSession} ready for artifact resolution.
    *
-   * @return configured session ready for artifact resolution.
+   * <p>Each call returns an independent session with:
+   * <ul>
+   *   <li>offline flag set from the constructor argument</li>
+   *   <li>a fresh {@link DefaultRepositoryCache} scoped to this session</li>
+   *   <li>user properties merged from all active profile {@code properties} blocks</li>
+   *   <li>proxy, mirror, and authentication selectors derived from settings</li>
+   *   <li>a local repository manager anchored at the directory declared in settings
+   *       (or {@code ~/.m2/repository} as fallback)</li>
+   * </ul>
+   *
+   * @return a fully configured session; callers must not share a session across concurrent threads
    */
   public DefaultRepositorySystemSession generateSession () {
 
@@ -169,12 +201,20 @@ public class MavenRepository {
   }
 
   /**
-   * Resolves the artifact described by the provided coordinates.
+   * Resolves the artifact described by a {@link MavenCoordinate} against all configured remote
+   * repositories, downloading it to the local repository cache if necessary.
    *
-   * @param session         a repository session created by {@link #generateSession()}.
-   * @param mavenCoordinate coordinates describing the target artifact.
-   * @return the resolved artifact with file reference.
-   * @throws ArtifactResolutionException if the artifact cannot be resolved from configured repositories.
+   * <p>Delegates to {@link #acquireArtifact(DefaultRepositorySystemSession, Artifact)} after
+   * constructing a {@link DefaultArtifact} from the coordinate fields.
+   *
+   * @param session         session produced by {@link #generateSession()}; must not be shared
+   *                        concurrently
+   * @param mavenCoordinate coordinate describing the artifact to fetch; all fields must be
+   *                        non-{@code null} except classifier
+   * @return the resolved artifact with its local file reference populated
+   * @throws ArtifactResolutionException if the artifact cannot be found in any configured
+   *                                     repository, or if a network or authentication error
+   *                                     occurs during download
    */
   public Artifact acquireArtifact (DefaultRepositorySystemSession session, MavenCoordinate mavenCoordinate)
     throws ArtifactResolutionException {
@@ -183,12 +223,15 @@ public class MavenRepository {
   }
 
   /**
-   * Resolves the supplied artifact descriptor against configured repositories.
+   * Resolves a pre-built {@link Artifact} descriptor against all configured remote repositories,
+   * downloading it to the local repository cache if necessary.
    *
-   * @param session  a repository session created by {@link #generateSession()}.
-   * @param artifact the artifact to resolve.
-   * @return the resolved artifact including its downloaded file.
-   * @throws ArtifactResolutionException if resolution fails or no repository provides the artifact.
+   * @param session  session produced by {@link #generateSession()}; must not be shared
+   *                 concurrently
+   * @param artifact artifact descriptor to resolve; need not have a local file reference
+   * @return the resolved artifact with its local file reference populated
+   * @throws ArtifactResolutionException if no configured repository provides the artifact, or if
+   *                                     a network, checksum, or authentication error occurs
    */
   public Artifact acquireArtifact (DefaultRepositorySystemSession session, Artifact artifact)
     throws ArtifactResolutionException {
@@ -202,13 +245,28 @@ public class MavenRepository {
   }
 
   /**
-   * Resolves an artifact and its transitive compile-time dependencies.
+   * Resolves an artifact and all of its non-optional transitive compile-scope dependencies.
    *
-   * @param session  a repository session created by {@link #generateSession()}.
-   * @param artifact the root artifact to resolve (must include coordinates and optionally a file).
-   * @return array of resolved artifacts including the root and dependencies.
-   * @throws DependencyCollectionException if dependency metadata cannot be collected.
-   * @throws DependencyResolutionException if any dependency fails to resolve.
+   * <p>The dependency graph is walked depth-first using a {@link DependencyVisitor}.  Any node
+   * whose dependency is marked optional is silently skipped.  Nodes already visited (by reference)
+   * are also skipped to avoid processing duplicates in diamond dependency graphs.  For each
+   * non-optional dependency that lacks a local file, {@link #acquireArtifact} is called to
+   * download it.
+   *
+   * <p>The resulting array may contain the root artifact itself when it appears as a dependency
+   * of another node, but duplicate artifacts across different branches of the graph are deduplicated
+   * via an intermediate {@link HashSet}.
+   *
+   * @param session  session produced by {@link #generateSession()}
+   * @param artifact root artifact for which to collect and resolve the full dependency closure;
+   *                 must have its groupId, artifactId, version, and extension populated
+   * @return array of resolved artifacts constituting the full compile-scope dependency closure;
+   *         order is not guaranteed
+   * @throws DependencyCollectionException if the dependency metadata (POMs) for any reachable
+   *                                       node cannot be retrieved or parsed
+   * @throws DependencyResolutionException if Aether's final resolution pass fails for any node
+   * @throws RuntimeException              wrapping an {@link ArtifactResolutionException} if an
+   *                                       individual artifact download fails during graph traversal
    */
   public Artifact[] resolve (final DefaultRepositorySystemSession session, Artifact artifact)
     throws DependencyCollectionException, DependencyResolutionException {
@@ -266,10 +324,13 @@ public class MavenRepository {
   }
 
   /**
-   * Composes a user agent string for outgoing repository requests.
+   * Composes the HTTP {@code User-Agent} header value sent with remote repository requests.
    *
-   * @param repositoryId identifier to include in the header.
-   * @return formatted user agent string.
+   * <p>The header includes the repository identifier, JVM version, and OS name and version,
+   * matching the format used by standard Maven tooling.
+   *
+   * @param repositoryId identifier to embed as the agent name
+   * @return formatted User-Agent string
    */
   private String getUserAgent (String repositoryId) {
 
@@ -285,12 +346,19 @@ public class MavenRepository {
   }
 
   /**
-   * Builds the remote repository list from active profiles and applies mirrors/authentication.
+   * Enumerates the remote repositories declared across all active profiles in the given settings,
+   * applying mirror redirection and authentication before adding each repository to the list.
    *
-   * @param authenticationSelector selector that supplies credentials per repository.
-   * @param mirrorSelector         selector used to coerce repositories to configured mirrors.
-   * @param settings               effective Maven settings.
-   * @return list of remote repositories used for resolution.
+   * <p>Both {@code repositories} and {@code pluginRepositories} sections of each active profile
+   * are included.
+   *
+   * @param authenticationSelector selector that supplies {@link org.eclipse.aether.repository.Authentication}
+   *                                for a given repository id
+   * @param mirrorSelector         selector that maps a repository to its configured mirror,
+   *                               or returns {@code null} when no mirror applies
+   * @param settings               effective Maven settings from which profile and mirror
+   *                               declarations are read
+   * @return list of remote repositories ready for use in artifact requests
    */
   private List<RemoteRepository> initRepositories (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, Settings settings) {
 
@@ -311,11 +379,14 @@ public class MavenRepository {
   }
 
   /**
-   * Determines if a settings profile is active based on explicit activation or defaults.
+   * Determines whether a profile should contribute repositories to the active set.
    *
-   * @param settings effective Maven settings.
-   * @param profile  profile under consideration.
-   * @return {@code true} when the profile is active.
+   * <p>A profile is considered active if its id appears in {@link Settings#getActiveProfiles()},
+   * or if its activation block exists and has {@code activeByDefault} set to {@code true}.
+   *
+   * @param settings effective Maven settings supplying the active-profile list
+   * @param profile  profile to evaluate
+   * @return {@code true} if the profile is active by explicit selection or by default activation
    */
   private boolean isProfileActive (Settings settings, Profile profile) {
 
@@ -324,12 +395,19 @@ public class MavenRepository {
   }
 
   /**
-   * Creates a remote repository instance (or its mirror) and adds it to the supplied list with authentication applied.
+   * Translates a settings {@link Repository} into an Aether {@link RemoteRepository}, applies
+   * mirror redirection if a matching mirror is configured, attaches authentication, and appends
+   * the result to the supplied list.
    *
-   * @param authenticationSelector selector that supplies credentials per repository.
-   * @param mirrorSelector         selector used to coerce repositories to configured mirrors.
-   * @param remoteRepositoryList   collection being populated.
-   * @param repository             repository settings entry to translate.
+   * <p>Both release and snapshot policies are set to {@code UPDATE_POLICY_ALWAYS} /
+   * {@code CHECKSUM_POLICY_WARN} so that re-deployed snapshots are always refetched.
+   *
+   * @param authenticationSelector selector that returns authentication for the effective
+   *                                repository id (which may be the mirror's id after redirection)
+   * @param mirrorSelector         selector that returns a mirror for the original repository,
+   *                               or {@code null} when no mirror applies
+   * @param remoteRepositoryList   mutable list to which the constructed repository is appended
+   * @param repository             settings repository entry to translate
    */
   private void constructRemoteRepository (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, List<RemoteRepository> remoteRepositoryList, Repository repository) {
 
@@ -344,10 +422,12 @@ public class MavenRepository {
   }
 
   /**
-   * Builds an Aether proxy selector from Maven settings.
+   * Builds an Aether {@link ProxySelector} populated from the {@code proxies} block of Maven
+   * settings.  Each proxy entry contributes optional username/password authentication and a
+   * non-proxy-hosts exclusion pattern.
    *
-   * @param settings effective Maven settings.
-   * @return proxy selector containing configured proxies.
+   * @param settings effective Maven settings from which proxy declarations are read
+   * @return selector that returns the appropriate proxy (or {@code null}) for a given repository URL
    */
   private ProxySelector getProxySelector (Settings settings) {
 
@@ -363,10 +443,12 @@ public class MavenRepository {
   }
 
   /**
-   * Builds a mirror selector from Maven settings.
+   * Builds an Aether {@link MirrorSelector} populated from the {@code mirrors} block of Maven
+   * settings.
    *
-   * @param settings effective Maven settings.
-   * @return selector able to resolve mirrors for remote repositories.
+   * @param settings effective Maven settings from which mirror declarations are read
+   * @return selector that maps an original repository to its configured mirror, or returns
+   *         {@code null} when no mirror matches
    */
   private MirrorSelector getMirrorSelector (Settings settings) {
 
@@ -380,10 +462,15 @@ public class MavenRepository {
   }
 
   /**
-   * Builds an authentication selector from Maven server credentials, wrapped with conservative fallbacks.
+   * Builds an Aether {@link AuthenticationSelector} from the {@code servers} block of Maven
+   * settings, wrapping the result in a {@link ConservativeAuthenticationSelector} to avoid
+   * forwarding credentials to repositories that do not require them.
    *
-   * @param settings effective Maven settings.
-   * @return selector that supplies authentication per server id.
+   * <p>Each server entry may supply a username/password pair, an SSH private key path and
+   * passphrase, or both.
+   *
+   * @param settings effective Maven settings from which server credential declarations are read
+   * @return selector that returns appropriate authentication for a given repository id
    */
   private AuthenticationSelector getAuthenticationSelector (Settings settings) {
 
@@ -400,12 +487,13 @@ public class MavenRepository {
   }
 
   /**
-   * Creates a local repository manager anchored at the configured local repository directory.
+   * Creates a {@link LocalRepositoryManager} anchored at the local repository directory
+   * declared in settings, falling back to {@code ~/.m2/repository} when the setting is absent.
    *
-   * @param settings                effective Maven settings.
-   * @param repositorySystem        repository system used to create the manager.
-   * @param repositorySystemSession the session associated with the manager.
-   * @return local repository manager for caching artifacts.
+   * @param settings                effective Maven settings queried for {@code localRepository}
+   * @param repositorySystem        system used to instantiate the manager
+   * @param repositorySystemSession session to which the manager will be bound
+   * @return manager responsible for reading from and writing to the local artifact cache
    */
   private LocalRepositoryManager getLocalRepoMan (Settings settings, RepositorySystem repositorySystem, RepositorySystemSession repositorySystemSession) {
 
@@ -416,10 +504,13 @@ public class MavenRepository {
   }
 
   /**
-   * Resolves the default local repository directory from settings, falling back to {@code ~/.m2/repository}.
+   * Resolves the path to the local Maven repository directory.
    *
-   * @param settings effective Maven settings.
-   * @return path to the local repository.
+   * <p>Uses the {@code localRepository} setting when present; otherwise falls back to
+   * {@code ~/.m2/repository}.
+   *
+   * @param settings effective Maven settings to inspect
+   * @return absolute path to the local repository directory
    */
   private Path getDefaultLocalRepoDir (Settings settings) {
 

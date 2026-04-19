@@ -39,19 +39,35 @@ import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
 /**
- * Codec for encoding and decoding content compatible with Ansible vault files.
- * Supports vault formats 1.1 and 1.2 (the latter carrying an optional id) using AES256 encryption.
+ * Static codec for reading and writing the Ansible vault text format.
+ *
+ * <p>An Ansible vault file is a text document with the following structure:
+ * <pre>
+ * $ANSIBLE_VAULT;1.1;AES256\n          (format 1.1, no vault id)
+ * $ANSIBLE_VAULT;1.2;AES256;myid\n     (format 1.2, with vault id)
+ * &lt;body&gt;
+ * </pre>
+ * The body encodes three binary fields — salt, HMAC, and ciphertext — each double-hex-encoded
+ * (hex of the hex of the raw bytes) and separated by the two-character token {@code 0a}.  Long
+ * lines in the body are broken at 80 characters with {@code \n} to match Ansible's own output.
+ *
+ * <p>All methods are static; this class is not intended to be instantiated.
+ *
+ * @see VaultTumbler
+ * @see VaultCake
  */
 public class VaultCodec {
 
   /**
-   * Encrypts the supplied stream into an Ansible vault string using the supplied password.
+   * Encrypts the content of {@code inputStream} into Ansible vault format 1.1 (no vault id).
    *
-   * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
-   * @param password    vault password used for PBKDF2 key derivation
-   * @return vault-formatted text containing headers and hex-encoded content
-   * @throws IOException         if reading from the input stream fails
-   * @throws VaultCodecException if encryption fails
+   * <p>Delegates to {@link #encrypt(InputStream, String, String)} with a {@code null} id.
+   *
+   * @param inputStream plaintext source; read to EOF but not closed by this method
+   * @param password    vault password used for PBKDF2 key derivation in {@link VaultTumbler}
+   * @return the complete vault text including the {@code $ANSIBLE_VAULT} header and body
+   * @throws IOException         if reading from {@code inputStream} fails
+   * @throws VaultCodecException if the JCA provider rejects the cryptographic operations
    */
   public static String encrypt (InputStream inputStream, String password)
     throws IOException, VaultCodecException {
@@ -60,14 +76,23 @@ public class VaultCodec {
   }
 
   /**
-   * Encrypts the supplied stream into an Ansible vault string using the supplied password and optional id.
+   * Encrypts the content of {@code inputStream} into Ansible vault format 1.1 or 1.2.
    *
-   * @param inputStream stream containing the plaintext to encrypt; the stream is fully read but not closed
+   * <p>When {@code id} is non-{@code null} the header is written in format 1.2
+   * ({@code $ANSIBLE_VAULT;1.2;AES256;<id>}), which allows {@code ansible-vault} to match
+   * vault secrets by label.  When {@code id} is {@code null} format 1.1 is used.
+   *
+   * <p>The body is constructed by double-hex-encoding each binary field (salt, HMAC, ciphertext),
+   * joining them with the literal token {@code 0a} (the hex representation of a newline), and
+   * wrapping the resulting string at 80-character intervals.
+   *
+   * @param inputStream plaintext source; read to EOF but not closed by this method
    * @param password    vault password used for PBKDF2 key derivation
-   * @param id          optional vault id inserted into the header when using format 1.2
-   * @return vault-formatted text containing headers and hex-encoded content
-   * @throws IOException         if reading from the input stream fails
-   * @throws VaultCodecException if encryption fails
+   * @param id          vault label embedded in a format-1.2 header; pass {@code null} to use
+   *                    format 1.1 without a label
+   * @return the complete vault text including the {@code $ANSIBLE_VAULT} header and body
+   * @throws IOException         if reading from {@code inputStream} fails
+   * @throws VaultCodecException if the JCA provider rejects the cryptographic operations
    */
   public static String encrypt (InputStream inputStream, String password, String id)
     throws IOException, VaultCodecException {
@@ -107,13 +132,20 @@ public class VaultCodec {
   }
 
   /**
-   * Decrypts an Ansible vault stream using the supplied password.
+   * Decrypts an Ansible vault stream and returns the original plaintext bytes.
    *
-   * @param inputStream stream containing the vault text; the stream is fully read but not closed
-   * @param password    vault password used for PBKDF2 key derivation
+   * <p>The first line of the stream is parsed as the vault header.  Supported formats are
+   * {@code $ANSIBLE_VAULT;1.1;AES256} and {@code $ANSIBLE_VAULT;1.2;AES256;<id>}.  The body
+   * is then read in three fixed-size passes (salt, HMAC) followed by one open-ended pass
+   * (ciphertext), each reversing the double-hex encoding applied during encryption.
+   *
+   * @param inputStream vault text source; read to EOF but not closed by this method
+   * @param password    vault password used to re-derive the AES and HMAC keys via PBKDF2
    * @return decrypted plaintext bytes
-   * @throws IOException         if reading from the input stream fails
-   * @throws VaultCodecException if the header is unrecognized, the cipher is unsupported, or password validation fails
+   * @throws IOException            if reading from {@code inputStream} fails
+   * @throws VaultPasswordException if the password is incorrect (HMAC mismatch)
+   * @throws VaultCodecException    if the header format is unrecognized, the declared cipher is
+   *                                not {@code AES256}, the body is truncated, or a JCA error occurs
    */
   public static byte[] decrypt (InputStream inputStream, String password)
     throws IOException, VaultCodecException {
@@ -134,11 +166,12 @@ public class VaultCodec {
   }
 
   /**
-   * Consumes the expected line separator marker ("0a") from the encoded stream.
+   * Asserts that the next two bytes in the stream are the literal characters {@code 0} and {@code a},
+   * which represent the double-hex-encoded newline separator between body fields.
    *
-   * @param inputStream encoded stream positioned at the start of a line separator token
-   * @throws IOException         if reading fails
-   * @throws VaultCodecException if the expected token is not present
+   * @param inputStream stream positioned immediately after a body field
+   * @throws IOException         if reading from the stream fails
+   * @throws VaultCodecException if the two bytes do not form the expected {@code 0a} token
    */
   private static void skip0A (InputStream inputStream)
     throws IOException, VaultCodecException {
@@ -149,13 +182,18 @@ public class VaultCodec {
   }
 
   /**
-   * Reads a fixed number of bytes from the encoded stream, consuming the trailing line separator.
+   * Reads exactly {@code length} decoded bytes from the stream and advances past the field separator.
    *
-   * @param inputStream encoded stream positioned at the start of a block
-   * @param length      number of decoded bytes expected
-   * @return decoded bytes after reversing the double-hex encoding
-   * @throws IOException         if reading fails
-   * @throws VaultCodecException if insufficient bytes are available or the separator is missing
+   * <p>Because each raw byte is double-hex-encoded it occupies four characters in the stream.
+   * Embedded newlines (line-wrap characters) are silently skipped while reading.  After the
+   * expected characters are consumed, {@link #skip0A} is called to consume the {@code 0a} separator.
+   *
+   * @param inputStream stream positioned at the start of a fixed-size body field
+   * @param length      number of decoded bytes expected (e.g. 32 for the 32-byte salt or HMAC)
+   * @return decoded byte array of exactly {@code length} bytes
+   * @throws IOException         if reading from the stream fails
+   * @throws VaultCodecException if fewer than {@code length * 4} non-newline characters are
+   *                             available before EOF, or if the {@code 0a} separator is missing
    */
   private static byte[] readBytes (InputStream inputStream, int length)
     throws IOException, VaultCodecException {
@@ -185,11 +223,14 @@ public class VaultCodec {
   }
 
   /**
-   * Reads the remaining encoded bytes on the stream (excluding newlines) and decodes them.
+   * Reads all remaining bytes from the stream (skipping embedded newlines) and decodes them.
    *
-   * @param inputStream encoded stream positioned at the start of the final block
-   * @return decoded bytes after reversing the double-hex encoding
-   * @throws IOException if reading fails
+   * <p>Used to read the variable-length ciphertext field, which is the last field in the vault
+   * body and is therefore not terminated by a {@code 0a} separator.
+   *
+   * @param inputStream stream positioned at the start of the ciphertext field
+   * @return decoded ciphertext bytes
+   * @throws IOException if reading from the stream fails
    */
   private static byte[] readBytes (InputStream inputStream)
     throws IOException {
@@ -209,11 +250,14 @@ public class VaultCodec {
   }
 
   /**
-   * Reads a single line from the stream (excluding the trailing newline).
+   * Reads one line from the stream, returning the content without the terminating {@code \n}.
+   *
+   * <p>If the stream ends before a newline is encountered the accumulated bytes are returned
+   * as-is, making this method suitable for single-line streams as well as multi-line ones.
    *
    * @param inputStream stream positioned at the start of a line
-   * @return the line text without the newline terminator
-   * @throws IOException if reading fails
+   * @return line content, excluding the newline character; may be empty if the line is blank
+   * @throws IOException if reading from the stream fails
    */
   private static String readLine (InputStream inputStream)
     throws IOException {

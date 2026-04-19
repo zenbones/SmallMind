@@ -33,8 +33,16 @@
 package org.smallmind.artifact.maven;
 
 /**
- * Mutable representation of a Maven coordinate (groupId, artifactId, classifier, extension, version).
- * Coordinates are used when requesting artifacts from a {@link MavenRepository}.
+ * Mutable data-transfer object representing a fully qualified Maven artifact coordinate
+ * (groupId, artifactId, version, optional classifier, and extension).
+ *
+ * <p>Coordinates are the primary input to {@link MavenRepository} artifact-resolution methods
+ * and to {@link MavenScanner} for specifying which artifacts to monitor.  The {@code extension}
+ * field defaults to {@code "jar"} and is overridden when targeting non-jar packaging such as
+ * {@code pom} or {@code war}.
+ *
+ * <p>Instances produced by the no-argument constructor are expected to be fully populated via
+ * setters before use; partial coordinates will cause resolution failures.
  */
 public class MavenCoordinate {
 
@@ -45,18 +53,20 @@ public class MavenCoordinate {
   private String version;
 
   /**
-   * Creates an empty coordinate that can be populated via setters.
+   * Creates an empty coordinate whose fields must be supplied via setters before use.
    */
   public MavenCoordinate () {
 
   }
 
   /**
-   * Constructs coordinates for a standard jar artifact.
+   * Creates a coordinate for the standard jar packaging of an artifact.
    *
-   * @param groupId    the group identifier.
-   * @param artifactId the artifact identifier.
-   * @param version    the version string.
+   * <p>The extension is implicitly {@code "jar"} and the classifier is left {@code null}.
+   *
+   * @param groupId    Maven groupId (e.g. {@code "org.example"})
+   * @param artifactId Maven artifactId (e.g. {@code "my-library"})
+   * @param version    version string, including snapshot qualifiers (e.g. {@code "1.0.0-SNAPSHOT"})
    */
   public MavenCoordinate (String groupId, String artifactId, String version) {
 
@@ -66,12 +76,15 @@ public class MavenCoordinate {
   }
 
   /**
-   * Constructs coordinates including a classifier.
+   * Creates a coordinate that includes a classifier, useful for selecting alternate artifacts
+   * such as {@code "sources"} or {@code "tests"} jars.
    *
-   * @param groupId    the group identifier.
-   * @param artifactId the artifact identifier.
-   * @param classifier optional classifier for the artifact.
-   * @param version    the version string.
+   * <p>The extension defaults to {@code "jar"}.
+   *
+   * @param groupId    Maven groupId
+   * @param artifactId Maven artifactId
+   * @param classifier artifact classifier; {@code null} is treated as absent
+   * @param version    version string
    */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String version) {
 
@@ -81,13 +94,13 @@ public class MavenCoordinate {
   }
 
   /**
-   * Constructs fully specified coordinates including classifier and extension.
+   * Creates a fully specified coordinate including classifier and packaging extension.
    *
-   * @param groupId    the group identifier.
-   * @param artifactId the artifact identifier.
-   * @param classifier optional classifier for the artifact.
-   * @param extension  artifact packaging/extension (defaults to {@code jar}).
-   * @param version    the version string.
+   * @param groupId    Maven groupId
+   * @param artifactId Maven artifactId
+   * @param classifier artifact classifier; {@code null} is treated as absent
+   * @param extension  packaging extension (e.g. {@code "jar"}, {@code "pom"}, {@code "war"})
+   * @param version    version string
    */
   public MavenCoordinate (String groupId, String artifactId, String classifier, String extension, String version) {
 
@@ -97,7 +110,10 @@ public class MavenCoordinate {
   }
 
   /**
-   * @return the group identifier.
+   * Returns the Maven groupId.
+   *
+   * @return groupId, or {@code null} if this coordinate was created with the no-argument constructor
+   *         and {@link #setGroupId} has not yet been called
    */
   public String getGroupId () {
 
@@ -105,7 +121,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @param groupId the group identifier.
+   * Sets the Maven groupId.
+   *
+   * @param groupId groupId to assign
    */
   public void setGroupId (String groupId) {
 
@@ -113,7 +131,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @return the artifact identifier.
+   * Returns the Maven artifactId.
+   *
+   * @return artifactId, or {@code null} if not yet set
    */
   public String getArtifactId () {
 
@@ -121,7 +141,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @param artifactId the artifact identifier.
+   * Sets the Maven artifactId.
+   *
+   * @param artifactId artifactId to assign
    */
   public void setArtifactId (String artifactId) {
 
@@ -129,7 +151,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @return classifier or {@code null} when not applicable.
+   * Returns the artifact classifier.
+   *
+   * @return classifier, or {@code null} when the coordinate has no classifier
    */
   public String getClassifier () {
 
@@ -137,7 +161,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @param classifier optional classifier for the artifact.
+   * Sets the artifact classifier.
+   *
+   * @param classifier classifier to assign; pass {@code null} to indicate no classifier
    */
   public void setClassifier (String classifier) {
 
@@ -145,7 +171,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @return artifact packaging/extension (defaults to {@code jar}).
+   * Returns the packaging extension.
+   *
+   * @return extension; defaults to {@code "jar"} unless explicitly overridden
    */
   public String getExtension () {
 
@@ -153,7 +181,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @param extension artifact packaging/extension.
+   * Sets the packaging extension.
+   *
+   * @param extension extension to assign (e.g. {@code "jar"}, {@code "pom"}, {@code "war"})
    */
   public void setExtension (String extension) {
 
@@ -161,7 +191,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @return version string.
+   * Returns the artifact version.
+   *
+   * @return version string, or {@code null} if not yet set
    */
   public String getVersion () {
 
@@ -169,7 +201,9 @@ public class MavenCoordinate {
   }
 
   /**
-   * @param version version string.
+   * Sets the artifact version.
+   *
+   * @param version version string to assign
    */
   public void setVersion (String version) {
 
@@ -177,9 +211,12 @@ public class MavenCoordinate {
   }
 
   /**
-   * Calculates a hash code using all coordinate parts.
+   * Returns a hash code computed from all five coordinate fields.
    *
-   * @return hash suitable for map/set use.
+   * <p>A {@code null} classifier or extension each contributes {@code 0} to the computation,
+   * consistent with the equality check in {@link #equals(Object)}.
+   *
+   * @return hash code suitable for use in hash-based collections
    */
   @Override
   public int hashCode () {
@@ -195,10 +232,14 @@ public class MavenCoordinate {
   }
 
   /**
-   * Coordinates are equal when all parts (including optional classifier and extension) match.
+   * Compares this coordinate to another for full equality across all five fields.
    *
-   * @param obj object to compare.
-   * @return {@code true} when the coordinates describe the same artifact.
+   * <p>Both {@code null} classifiers and {@code null} extensions compare equal to each other,
+   * and a {@code null} value is not equal to any non-{@code null} value for the same field.
+   *
+   * @param obj the object to compare against
+   * @return {@code true} if {@code obj} is a {@code MavenCoordinate} whose groupId, artifactId,
+   *         classifier, extension, and version all equal the corresponding fields of this instance
    */
   @Override
   public boolean equals (Object obj) {

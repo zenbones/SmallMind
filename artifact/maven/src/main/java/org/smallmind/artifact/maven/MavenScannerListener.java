@@ -35,14 +35,27 @@ package org.smallmind.artifact.maven;
 import java.util.EventListener;
 
 /**
- * Listener notified when the {@link MavenScanner} detects artifact changes.
+ * Observer interface for receiving artifact-change notifications from a {@link MavenScanner}.
+ *
+ * <p>Implementations are registered via {@link MavenScanner#addMavenScannerListener} and
+ * removed via {@link MavenScanner#removeMavenScannerListener}.  The callback is invoked
+ * on the scanner's internal worker thread, so implementations must be thread-safe or must
+ * marshal work to an appropriate execution context.
+ *
+ * <p>The callback is only invoked when at least one monitored coordinate has changed since
+ * the previous scan cycle; scans that detect no changes produce no notification.
  */
 public interface MavenScannerListener extends EventListener {
 
   /**
-   * Invoked when one or more monitored artifacts have changed.
+   * Called when one or more monitored artifacts have changed since the last scan.
    *
-   * @param event event describing the changes and providing access to the updated class loader.
+   * <p>The supplied event contains the full delta map (new artifact → prior artifact),
+   * the current artifact array in coordinate order, and a {@link ClassLoader} that can
+   * load all newly resolved artifacts and their transitive compile dependencies.
+   *
+   * @param event event describing which artifacts changed and providing the updated class loader;
+   *              never {@code null}
    */
   void artifactChange (MavenScannerEvent event);
 }

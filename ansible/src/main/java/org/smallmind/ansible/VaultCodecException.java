@@ -35,15 +35,22 @@ package org.smallmind.ansible;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception signaling errors encountered while encoding or decoding Ansible vault content.
+ * Checked exception that signals a failure during Ansible vault encoding or decoding.
+ *
+ * <p>Covers structural problems such as an unrecognized header format, an unsupported cipher,
+ * truncated or malformed encoded content, and low-level JCA failures.  Password-specific
+ * failures are represented by the more specific subclass {@link VaultPasswordException}.
+ *
+ * <p>Extends {@link FormattedException} so callers can supply a {@link String#format}-style
+ * message template and arguments without constructing the formatted string themselves.
  */
 public class VaultCodecException extends FormattedException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception with a {@link String#format}-style message.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message format string for the error message
+   * @param args    arguments referenced by the format specifiers in {@code message}
    */
   public VaultCodecException (String message, Object... args) {
 
@@ -51,9 +58,9 @@ public class VaultCodecException extends FormattedException {
   }
 
   /**
-   * Wraps a lower-level cause.
+   * Wraps an underlying JCA or I/O failure.
    *
-   * @param throwable root cause
+   * @param throwable the root cause; its message is used as this exception's detail message
    */
   public VaultCodecException (Throwable throwable) {
 

@@ -33,8 +33,11 @@
 package org.smallmind.ansible;
 
 /**
- * Simple value object that holds the components of an Ansible vault payload:
- * the salt used to derive keys, the HMAC used to validate integrity, and the encrypted bytes.
+ * Immutable value object holding the three binary components that make up a serialized Ansible vault
+ * payload: the PBKDF2 salt, the HMAC-SHA256 authentication tag, and the AES-CTR ciphertext.
+ *
+ * <p>Instances are produced by {@link VaultTumbler#encrypt(byte[])} and consumed by
+ * {@link VaultCodec} during serialization to the {@code $ANSIBLE_VAULT} text format.
  */
 public class VaultCake {
 
@@ -43,11 +46,12 @@ public class VaultCake {
   private final byte[] encrypted;
 
   /**
-   * Creates a new vault payload container.
+   * Assembles a vault payload from its constituent parts.
    *
-   * @param salt      the random salt used to derive encryption and HMAC keys
-   * @param hmac      the calculated HMAC for the encrypted content
-   * @param encrypted the encrypted payload bytes
+   * @param salt      the 32-byte random salt passed to PBKDF2WithHmacSHA256 during key derivation
+   * @param hmac      the 32-byte HMAC-SHA256 tag computed over {@code encrypted}; used during
+   *                  decryption to verify both integrity and password correctness
+   * @param encrypted the AES-CTR ciphertext bytes produced from the plaintext
    */
   public VaultCake (byte[] salt, byte[] hmac, byte[] encrypted) {
 
@@ -57,7 +61,9 @@ public class VaultCake {
   }
 
   /**
-   * @return the salt used during PBKDF2 key derivation
+   * Returns the salt used during PBKDF2 key derivation.
+   *
+   * @return 32-byte salt; never {@code null}
    */
   public byte[] getSalt () {
 
@@ -65,7 +71,12 @@ public class VaultCake {
   }
 
   /**
-   * @return the HMAC for the encrypted content
+   * Returns the HMAC-SHA256 authentication tag computed over the ciphertext.
+   *
+   * <p>During decryption this value is compared against a freshly computed HMAC to confirm
+   * that the supplied password is correct and that the ciphertext has not been tampered with.
+   *
+   * @return 32-byte HMAC; never {@code null}
    */
   public byte[] getHmac () {
 
@@ -73,7 +84,9 @@ public class VaultCake {
   }
 
   /**
-   * @return the encrypted payload bytes
+   * Returns the AES-CTR encrypted payload.
+   *
+   * @return ciphertext bytes; never {@code null}
    */
   public byte[] getEncrypted () {
 

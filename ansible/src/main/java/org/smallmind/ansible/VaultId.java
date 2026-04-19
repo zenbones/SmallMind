@@ -35,7 +35,15 @@ package org.smallmind.ansible;
 import org.smallmind.nutsnbolts.command.CommandLineException;
 
 /**
- * Represents a vault id specification of the form {@code <id>@<file|prompt>} supplied on the command line.
+ * Parsed representation of an Ansible {@code --vault-id} command-line argument.
+ *
+ * <p>Ansible accepts vault ids in the form {@code <label>@<source>}, where {@code <label>} is a
+ * short identifier embedded in the vault 1.2 header and {@code <source>} is either a path to a
+ * file that contains the password or the literal string {@code prompt}, which instructs tooling to
+ * ask the user interactively.  This class parses that specification and exposes the two parts as
+ * typed accessors.
+ *
+ * <p>Example valid specs: {@code production@~/.vault_pass}, {@code dev@prompt}.
  */
 public class VaultId {
 
@@ -43,10 +51,12 @@ public class VaultId {
   private final String fileOrPrompt;
 
   /**
-   * Parses a vault id specification.
+   * Parses a vault id specification into its label and password-source components.
    *
-   * @param spec text in the format {@code id@file} or {@code id@prompt}
-   * @throws CommandLineException if the spec is missing the separator, the id is empty, or the file/prompt segment is empty
+   * @param spec the raw argument in the form {@code label@source}; must contain exactly one
+   *             {@code @} separator with a non-empty label before it and a non-empty source after it
+   * @throws CommandLineException if {@code spec} contains no {@code @} character, if the label
+   *                              segment is empty, or if the source segment is empty
    */
   public VaultId (String spec)
     throws CommandLineException {
@@ -66,7 +76,12 @@ public class VaultId {
   }
 
   /**
-   * @return the vault identifier portion
+   * Returns the vault label (the segment before the {@code @}).
+   *
+   * <p>This value is written into the vault 1.2 header so that {@code ansible-vault} can select
+   * the correct password when a playbook references multiple vault ids.
+   *
+   * @return non-empty vault label; never {@code null}
    */
   public String getId () {
 
@@ -74,7 +89,12 @@ public class VaultId {
   }
 
   /**
-   * @return the vault password source, either a file path or the literal {@code prompt}
+   * Returns the password source (the segment after the {@code @}).
+   *
+   * <p>The value is either a file-system path whose contents supply the vault password, or the
+   * literal string {@code prompt}, which signals that the password must be obtained interactively.
+   *
+   * @return non-empty file path or {@code "prompt"}; never {@code null}
    */
   public String getFileOrPrompt () {
 

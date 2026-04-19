@@ -50,8 +50,23 @@ import javax.crypto.spec.SecretKeySpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 /**
- * Performs encryption/decryption and integrity validation for Ansible vault payloads.
- * Uses PBKDF2WithHmacSHA256 to derive AES-CTR and HMAC keys, mirroring Ansible's vault 1.1/1.2 format.
+ * Low-level cryptographic engine for Ansible vault AES256 payloads.
+ *
+ * <p>Key derivation follows Ansible's vault 1.1/1.2 specification exactly:
+ * PBKDF2WithHmacSHA256 is run for 10&thinsp;000 iterations against a 32-byte salt to produce
+ * 640 bits of key material.  The material is partitioned as follows:
+ * <ul>
+ *   <li>bytes 0–31: 256-bit AES key used for AES/CTR/PKCS7Padding encryption</li>
+ *   <li>bytes 32–63: 256-bit HMAC-SHA256 key used to authenticate the ciphertext</li>
+ *   <li>bytes 64–79: 128-bit AES-CTR initialization vector</li>
+ * </ul>
+ *
+ * <p>The HMAC is computed over the raw ciphertext (encrypt-then-MAC).  On decryption the
+ * computed HMAC is compared against the stored value; a mismatch raises
+ * {@link VaultPasswordException}, indicating a wrong password rather than data corruption.
+ *
+ * <p>Instances are not thread-safe because {@link Mac} is stateful.  Create one
+ * {@code VaultTumbler} per encryption or decryption operation.
  */
 public class VaultTumbler {
 
@@ -63,10 +78,13 @@ public class VaultTumbler {
   private final byte[] salt;
 
   /**
-   * Constructs a tumbler with a newly generated salt.
+   * Constructs a tumbler for encryption, generating a fresh random salt.
    *
-   * @param password vault password
-   * @throws VaultCodecException if key derivation fails
+   * <p>The salt is produced by {@link ThreadLocalRandom} and is 32 bytes long.
+   *
+   * @param password vault password; converted to a {@code char[]} for {@link PBEKeySpec}
+   * @throws VaultCodecException if the JCA provider does not support PBKDF2WithHmacSHA256
+   *                             or HmacSHA256, or if key derivation fails for any other reason
    */
   public VaultTumbler (String password)
     throws VaultCodecException {
@@ -75,11 +93,15 @@ public class VaultTumbler {
   }
 
   /**
-   * Constructs a tumbler using the provided salt.
+   * Constructs a tumbler using a caller-supplied salt.
    *
-   * @param password vault password
-   * @param salt     32-byte salt used for PBKDF2 key derivation
-   * @throws VaultCodecException if key derivation fails
+   * <p>Use this constructor for decryption, passing the salt read from the vault file so that
+   * key derivation reproduces the same AES key, HMAC key, and IV that were used during encryption.
+   *
+   * @param password vault password; converted to a {@code char[]} for {@link PBEKeySpec}
+   * @param salt     32-byte PBKDF2 salt; must be the same value that was used at encryption time
+   * @throws VaultCodecException if the JCA provider does not support the required algorithms
+   *                             or if key derivation fails
    */
   public VaultTumbler (String password, byte[] salt)
     throws VaultCodecException {
@@ -113,9 +135,9 @@ public class VaultTumbler {
   }
 
   /**
-   * Generates a random 32-byte salt using {@link ThreadLocalRandom}.
+   * Generates a 32-byte cryptographically random salt.
    *
-   * @return new random salt
+   * @return freshly generated 32-byte salt array
    */
   private static byte[] generateSalt () {
 
@@ -127,11 +149,13 @@ public class VaultTumbler {
   }
 
   /**
-   * Encrypts plaintext bytes, returning the vault payload components.
+   * Encrypts plaintext using AES-CTR and computes an authenticating HMAC over the ciphertext.
    *
-   * @param original plaintext bytes to encrypt
-   * @return container holding the salt, HMAC, and encrypted bytes
-   * @throws VaultCodecException if encryption or MAC calculation fails
+   * @param original plaintext bytes to encrypt; may be empty but must not be {@code null}
+   * @return a {@link VaultCake} containing the salt (for key re-derivation on decryption),
+   *         the HMAC-SHA256 tag (for authentication), and the AES-CTR ciphertext
+   * @throws VaultCodecException if the JCA provider rejects the key or algorithm parameters,
+   *                             or if the cipher operation itself fails
    */
   public VaultCake encrypt (byte[] original)
     throws VaultCodecException {
@@ -147,13 +171,19 @@ public class VaultTumbler {
   }
 
   /**
-   * Decrypts ciphertext after verifying the provided HMAC.
+   * Verifies the HMAC and, if valid, decrypts the ciphertext.
    *
-   * @param hmac      expected HMAC for the encrypted payload
-   * @param encrypted encrypted payload bytes
-   * @return decrypted plaintext bytes
-   * @throws VaultPasswordException if the supplied password does not validate against the HMAC
-   * @throws VaultCodecException    if decryption fails for other reasons
+   * <p>The HMAC computed from the derived HMAC key and {@code encrypted} is compared against
+   * {@code hmac} using {@link Arrays#equals}.  A mismatch indicates a wrong password (since the
+   * HMAC key is derived from the password) and raises {@link VaultPasswordException}.
+   *
+   * @param hmac      the 32-byte HMAC-SHA256 tag stored in the vault file
+   * @param encrypted the ciphertext bytes stored in the vault file
+   * @return the decrypted plaintext bytes
+   * @throws VaultPasswordException if the computed HMAC does not match {@code hmac}, indicating
+   *                                that the password used to construct this tumbler is incorrect
+   * @throws VaultCodecException    if the JCA provider rejects the key or algorithm parameters,
+   *                                or if the cipher operation fails for a non-password reason
    */
   public byte[] decrypt (byte[] hmac, byte[] encrypted)
     throws VaultCodecException {

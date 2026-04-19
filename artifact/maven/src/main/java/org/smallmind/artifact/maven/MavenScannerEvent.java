@@ -37,8 +37,21 @@ import java.util.Map;
 import org.eclipse.aether.artifact.Artifact;
 
 /**
- * Event delivered to {@link MavenScannerListener}s describing detected artifact updates and providing
- * a class loader capable of loading the newly resolved artifacts.
+ * Event published by {@link MavenScanner} when one or more monitored artifacts have changed.
+ *
+ * <p>The event conveys three complementary views of the current scan result:
+ * <ul>
+ *   <li><b>Delta map</b> — only the artifacts that changed, keyed by the newly resolved artifact
+ *       and mapped to the artifact it replaced.  The mapped value is {@code null} when the
+ *       artifact is observed for the first time (i.e. on the initial scan after
+ *       {@link MavenScanner#start()}).</li>
+ *   <li><b>Artifacts array</b> — one entry per monitored coordinate in the order they were
+ *       supplied to the scanner, reflecting the current artifact for each slot.  Entries are
+ *       {@code null} for coordinates that have not yet been successfully resolved.</li>
+ *   <li><b>Class loader</b> — a {@link ClassLoader} constructed over every artifact in the
+ *       changed set and their transitive compile dependencies, enabling callers to load and
+ *       instantiate classes from the updated artifacts without restarting the JVM.</li>
+ * </ul>
  */
 public class MavenScannerEvent extends EventObject {
 
@@ -47,12 +60,19 @@ public class MavenScannerEvent extends EventObject {
   private final Artifact[] artifacts;
 
   /**
-   * Constructs a new event with the changed artifacts and associated class loader.
+   * Constructs an event representing a completed scan that detected at least one change.
    *
-   * @param source           scanner that produced the event.
-   * @param artifactDeltaMap mapping of newly resolved artifacts to their previous versions (value is {@code null} on first discovery).
-   * @param artifactTags     current tags for each monitored coordinate.
-   * @param classLoader      class loader that can load the updated artifacts and their dependencies.
+   * @param source           the {@link MavenScanner} that fired this event; passed to
+   *                         {@link EventObject#EventObject(Object)}
+   * @param artifactDeltaMap map of each changed artifact (new version) to the artifact it
+   *                         replaced (old version), with {@code null} values for first-time
+   *                         observations; must not be {@code null}
+   * @param artifactTags     current {@link ArtifactTag} array in coordinate order, one entry
+   *                         per monitored coordinate; entries may be {@code null} for unresolved
+   *                         coordinates; the artifacts array exposed by this event is derived
+   *                         from these tags
+   * @param classLoader      class loader capable of loading the changed artifacts and their
+   *                         transitive compile dependencies; must not be {@code null}
    */
   public MavenScannerEvent (Object source, Map<Artifact, Artifact> artifactDeltaMap, ArtifactTag[] artifactTags, ClassLoader classLoader) {
 
@@ -68,9 +88,13 @@ public class MavenScannerEvent extends EventObject {
   }
 
   /**
-   * Provides a mapping of current artifacts to the prior artifacts they replace.
+   * Returns the delta map containing only the artifacts that changed in this scan cycle.
    *
-   * @return map of artifact deltas; values may be {@code null} for newly observed artifacts.
+   * <p>Each key is the newly resolved {@link Artifact}; the corresponding value is the
+   * prior artifact it replaced, or {@code null} if the artifact was not present in the
+   * previous scan (i.e. first observation).
+   *
+   * @return non-{@code null}, non-empty map of changed artifacts to their predecessors
    */
   public Map<Artifact, Artifact> getArtifactDeltaMap () {
 
@@ -78,9 +102,14 @@ public class MavenScannerEvent extends EventObject {
   }
 
   /**
-   * Returns the current artifacts tracked by the scanner in coordinate order.
+   * Returns the current state of all monitored coordinates in the order they were registered.
    *
-   * @return array containing the latest artifact for each coordinate (entries may be {@code null} before first resolution).
+   * <p>Unlike {@link #getArtifactDeltaMap()}, this array covers every monitored coordinate,
+   * not just those that changed.  An entry is {@code null} if the corresponding coordinate
+   * has never been successfully resolved.
+   *
+   * @return array of current artifacts, one per monitored coordinate in registration order;
+   *         individual entries may be {@code null}
    */
   public Artifact[] getArtifacts () {
 
@@ -88,9 +117,13 @@ public class MavenScannerEvent extends EventObject {
   }
 
   /**
-   * Returns a class loader that can load the updated artifacts and their dependencies.
+   * Returns a class loader that can load classes from the changed artifacts and their
+   * transitive compile-scope dependencies.
    *
-   * @return class loader tied to this event's resolved artifacts.
+   * <p>The loader delegates to the thread context class loader that was active when the
+   * scanner worker invoked the scan, making existing JVM classes available as a fallback.
+   *
+   * @return class loader over the updated artifact set; never {@code null}
    */
   public ClassLoader getClassLoader () {
 

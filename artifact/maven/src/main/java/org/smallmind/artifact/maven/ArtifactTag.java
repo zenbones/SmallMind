@@ -36,8 +36,19 @@ import java.io.File;
 import org.eclipse.aether.artifact.Artifact;
 
 /**
- * Lightweight wrapper around an {@link Artifact} that captures the artifact's last modification time on disk.
- * Instances are used as change tokens when polling a repository to detect when an artifact has been updated.
+ * Change-detection token that pairs a resolved {@link Artifact} with the last-modified timestamp
+ * of its backing file at the moment the tag was created.
+ *
+ * <p>{@link MavenScanner} maintains one tag per monitored coordinate and compares a freshly
+ * resolved tag against the stored one after each polling cycle.  The comparison semantics
+ * intentionally differ between release and snapshot artifacts:
+ * <ul>
+ *   <li><b>Releases</b> — identity alone determines equality; the file timestamp is ignored
+ *       because a release coordinate always maps to the same immutable artifact.</li>
+ *   <li><b>Snapshots</b> — both identity and file timestamp must match.  A newer timestamp
+ *       signals that the remote repository published a new snapshot build even though the
+ *       version string has not changed.</li>
+ * </ul>
  */
 public class ArtifactTag {
 
@@ -45,9 +56,12 @@ public class ArtifactTag {
   private final long lastModTime;
 
   /**
-   * Creates a tag for the supplied artifact and records the last modified timestamp of its backing file.
+   * Creates a tag for the given artifact, capturing its file's last-modified time immediately.
    *
-   * @param artifact the resolved artifact to track; its file may be {@code null} for unresolved snapshots.
+   * <p>If the artifact has not yet been resolved to a local file ({@link Artifact#getFile()}
+   * returns {@code null}), the recorded modification time is {@code 0}.
+   *
+   * @param artifact the resolved artifact to wrap; must not be {@code null}
    */
   public ArtifactTag (Artifact artifact) {
 
@@ -61,7 +75,7 @@ public class ArtifactTag {
   /**
    * Returns the wrapped artifact.
    *
-   * @return the artifact represented by this tag.
+   * @return the artifact passed to the constructor; never {@code null}
    */
   public Artifact getArtifact () {
 
@@ -69,9 +83,10 @@ public class ArtifactTag {
   }
 
   /**
-   * Returns the last modification time (in epoch milliseconds) of the artifact file at tag creation.
+   * Returns the last-modified time of the artifact file recorded when this tag was constructed.
    *
-   * @return last modified time, or {@code 0} if the artifact had no associated file.
+   * @return epoch-millisecond timestamp as returned by {@link File#lastModified()}, or {@code 0}
+   *         if the artifact had no associated local file at construction time
    */
   public long getLastModTime () {
 
@@ -79,9 +94,13 @@ public class ArtifactTag {
   }
 
   /**
-   * Computes a hash based on the artifact identity and recorded modification time.
+   * Returns a hash code derived from the artifact identity and the recorded file timestamp.
    *
-   * @return combined hash code used for collection membership and change detection.
+   * <p>The XOR combination ensures that two tags for the same snapshot coordinate but different
+   * file timestamps produce different hash codes, supporting correct behavior in hash-based
+   * collections used by {@link MavenScanner}.
+   *
+   * @return combined hash code of the artifact and the modification time
    */
   @Override
   public int hashCode () {
@@ -90,10 +109,15 @@ public class ArtifactTag {
   }
 
   /**
-   * Tags are equal when they wrap the same artifact and, for snapshots, the underlying file timestamp matches.
+   * Determines whether this tag represents the same artifact state as another.
    *
-   * @param obj comparison target.
-   * @return {@code true} when the artifact identities (and snapshot timestamps) match.
+   * <p>For release artifacts, only the artifact identity (groupId, artifactId, version, etc.)
+   * is compared.  For snapshot artifacts, the file modification timestamps must also be equal,
+   * so that a re-deployed snapshot with unchanged version metadata is still detected as changed.
+   *
+   * @param obj the object to compare against
+   * @return {@code true} if {@code obj} is an {@code ArtifactTag} wrapping an equal artifact and,
+   *         for snapshots, recording the same file modification time; {@code false} otherwise
    */
   @Override
   public boolean equals (Object obj) {
