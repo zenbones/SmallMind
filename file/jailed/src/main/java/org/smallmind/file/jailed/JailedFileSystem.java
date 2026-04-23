@@ -44,17 +44,46 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * {@link FileSystem} wrapper that constrains access through a {@link JailedPathTranslator}.
+ * A {@link FileSystem} implementation that presents a jailed, chroot-like view of an
+ * underlying native file system.
+ *
+ * <p>All paths created by this file system are {@link JailedPath} instances whose segments
+ * are strictly confined to the subtree defined by the {@link JailedPathTranslator} held by
+ * the owning {@link JailedFileSystemProvider}. The path separator is always {@code '/'}.
+ *
+ * <p>Lifecycle operations ({@link #isOpen()}, {@link #isReadOnly()}) and metadata queries
+ * ({@link #getFileStores()}, {@link #supportedFileAttributeViews()},
+ * {@link #getUserPrincipalLookupService()}, {@link #newWatchService()}) are delegated to
+ * the backing native file system obtained via the translator.
+ *
+ * @see JailedFileSystemProvider
+ * @see JailedPathTranslator
  */
 public class JailedFileSystem extends FileSystem {
 
+  /**
+   * The string representation of the jailed path separator character.
+   */
   private static final String SEPARATOR = Character.toString(JailedPath.SEPARATOR);
 
+  /**
+   * The provider that created and manages this file system instance.
+   */
   private final JailedFileSystemProvider jailedFileSystemProvider;
+
+  /**
+   * The root path of this jail, always {@code "/"}.
+   */
   private final JailedPath rootPath;
 
   /**
-   * @param jailedFileSystemProvider the provider this file system belongs to
+   * Constructs a new jailed file system owned by the given provider.
+   *
+   * <p>A root {@link JailedPath} ({@code "/"}) is created eagerly and returned by
+   * {@link #getRootDirectories()}.
+   *
+   * @param jailedFileSystemProvider the {@link JailedFileSystemProvider} that owns this
+   *                                 file system; must not be {@code null}
    */
   public JailedFileSystem (JailedFileSystemProvider jailedFileSystemProvider) {
 
@@ -63,13 +92,21 @@ public class JailedFileSystem extends FileSystem {
     rootPath = new JailedPath(this, getSeparator().toCharArray(), true);
   }
 
+  /**
+   * Returns the provider that created this file system.
+   *
+   * @return the {@link JailedFileSystemProvider} that owns this instance
+   */
   public FileSystemProvider provider () {
 
     return jailedFileSystemProvider;
   }
 
   /**
-   * {@inheritDoc}
+   * Closes this file system.
+   *
+   * <p>This implementation is a no-op because the jailed file system does not own the
+   * underlying native file system; its lifecycle is managed externally.
    */
   @Override
   public void close () {
@@ -77,7 +114,9 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the backing native file system to determine whether it is still open.
+   *
+   * @return {@code true} if the backing native file system is open
    */
   @Override
   public boolean isOpen () {
@@ -86,7 +125,9 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the backing native file system to determine read-only status.
+   *
+   * @return {@code true} if the backing native file system is read-only
    */
   @Override
   public boolean isReadOnly () {
@@ -94,6 +135,11 @@ public class JailedFileSystem extends FileSystem {
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isReadOnly();
   }
 
+  /**
+   * Returns the name separator for this file system, which is always {@code "/"}.
+   *
+   * @return the string {@code "/"}
+   */
   @Override
   public String getSeparator () {
 
@@ -101,7 +147,9 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an iterable containing only the single jail root path ({@code "/"}).
+   *
+   * @return an {@link Iterable} containing the root {@link JailedPath}
    */
   @Override
   public Iterable<Path> getRootDirectories () {
@@ -110,7 +158,9 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the file stores accessible through the backing native file system.
+   *
+   * @return the file stores of the backing native file system
    */
   @Override
   public Iterable<FileStore> getFileStores () {
@@ -119,7 +169,9 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the set of supported file attribute view names from the backing native file system.
+   *
+   * @return the set of supported file attribute view name strings
    */
   @Override
   public Set<String> supportedFileAttributeViews () {
@@ -128,7 +180,12 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Constructs a {@link JailedPath} by joining {@code first} and the optional {@code more}
+   * components with the jail separator.
+   *
+   * @param first the first path component
+   * @param more  optional additional path components to append
+   * @return a new {@link JailedPath} for the combined path string
    */
   @Override
   public Path getPath (String first, String... more) {
@@ -136,6 +193,16 @@ public class JailedFileSystem extends FileSystem {
     return new JailedPath(this, ((more == null) || (more.length == 0)) ? first : first + getSeparator() + String.join(getSeparator(), more));
   }
 
+  /**
+   * Returns a {@link PathMatcher} for the given syntax-and-pattern string.
+   *
+   * <p>Delegates to the backing native file system, which determines the supported
+   * syntaxes (typically {@code "glob"} and {@code "regex"}).
+   *
+   * @param syntaxAndPattern a string of the form {@code "<syntax>:<pattern>"}
+   * @return a {@link PathMatcher} that matches paths against the given pattern
+   * @throws IllegalArgumentException if the syntax is not recognized
+   */
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
@@ -143,7 +210,11 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the {@link UserPrincipalLookupService} of the backing native file system.
+   *
+   * @return the user/group lookup service
+   * @throws UnsupportedOperationException if the backing file system does not support
+   *                                       user/group lookups
    */
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
@@ -151,6 +222,14 @@ public class JailedFileSystem extends FileSystem {
     return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getUserPrincipalLookupService();
   }
 
+  /**
+   * Creates a new {@link WatchService} by delegating to the backing native file system.
+   *
+   * @return a new {@link WatchService}
+   * @throws IOException                   if an I/O error occurs creating the watch service
+   * @throws UnsupportedOperationException if the backing file system does not support
+   *                                       watching file-tree changes
+   */
   @Override
   public WatchService newWatchService ()
     throws IOException {

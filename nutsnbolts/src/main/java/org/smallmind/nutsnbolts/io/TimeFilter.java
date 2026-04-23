@@ -38,14 +38,16 @@ import java.nio.file.Path;
 import org.smallmind.nutsnbolts.time.TimeArithmetic;
 
 /**
- * Path filter that accepts files based on last-modified timestamps using a {@link TimeArithmetic} rule.
+ * A {@link PathFilter} that accepts paths whose last-modified time satisfies a {@link TimeArithmetic} predicate.
  */
 public class TimeFilter implements PathFilter {
 
   private final TimeArithmetic timeArithmetic;
 
   /**
-   * @param timeArithmetic rule used to evaluate modification times
+   * Constructs a filter backed by the given time-arithmetic rule.
+   *
+   * @param timeArithmetic the predicate applied to each path's last-modified {@link java.time.Instant}
    */
   public TimeFilter (TimeArithmetic timeArithmetic) {
 
@@ -53,7 +55,11 @@ public class TimeFilter implements PathFilter {
   }
 
   /**
-   * Accepts paths whose last-modified time satisfies the configured arithmetic predicate.
+   * Returns {@code true} when the last-modified time of {@code path} satisfies the configured predicate.
+   *
+   * @param path the path to evaluate
+   * @return {@code true} if the path's modification time is accepted; {@code false} otherwise
+   * @throws IOException if the last-modified time cannot be read
    */
   @Override
   public boolean accept (Path path)

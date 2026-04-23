@@ -33,18 +33,25 @@
 package org.smallmind.quorum.namespace.backingStore;
 
 /**
- * Supported backing store types for {@link org.smallmind.quorum.namespace.JavaContext} creation.
+ * Enumeration of supported backing store technologies for the {@code java:} namespace.
+ * <p>
+ * Each constant carries the short identifier string used in environment configuration entries
+ * when selecting the {@link ContextCreator} and {@link NameTranslator} implementations for a
+ * given {@link org.smallmind.quorum.namespace.JavaContext}.
  */
 public enum StorageType {
 
+  /**
+   * LDAP directory service, using {@code com.sun.jndi.ldap.LdapCtxFactory}.
+   */
   LDAP("ldap");
 
   private final String backingStore;
 
   /**
-   * Maps the enum to its configuration string.
+   * Associates the enum constant with its configuration identifier string.
    *
-   * @param backingStore identifier used in environment configuration
+   * @param backingStore the short identifier used to select this storage type in configuration
    */
   StorageType (String backingStore) {
 
@@ -52,9 +59,9 @@ public enum StorageType {
   }
 
   /**
-   * Returns the backing store identifier.
+   * Returns the short identifier string for this backing store type.
    *
-   * @return backing store name
+   * @return the configuration identifier; never {@code null}
    */
   public String getBackingStore () {
 

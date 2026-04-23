@@ -35,12 +35,19 @@ package org.smallmind.quorum.pool.complex;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
 /**
- * Thrown when a pooled component fails validation checks.
+ * Thrown when a pooled component fails a health-check validation.
+ * <p>
+ * Raised by {@link ComponentPinManager} when a component returns {@code false} from
+ * {@link ComponentInstance#validate()} either immediately after creation (if
+ * {@link ComplexPoolConfig#isTestOnCreate()} is enabled) or at acquisition time (if
+ * {@link ComplexPoolConfig#isTestOnAcquire()} is enabled). Extends
+ * {@link ComponentPoolException} so callers that catch the base class will also handle this
+ * subclass.
  */
 public class ComponentValidationException extends ComponentPoolException {
 
   /**
-   * Creates the exception without extra context.
+   * Creates the exception with no message or cause.
    */
   public ComponentValidationException () {
 
@@ -48,10 +55,10 @@ public class ComponentValidationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Creates the exception with a formatted message and no cause.
    *
-   * @param message message template
-   * @param args    template arguments
+   * @param message a {@link String#format}-style template
+   * @param args    arguments substituted into the template
    */
   public ComponentValidationException (String message, Object... args) {
 
@@ -59,11 +66,11 @@ public class ComponentValidationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Creates the exception with both a cause and a formatted message.
    *
-   * @param throwable underlying issue
-   * @param message   message template
-   * @param args      template arguments
+   * @param throwable the underlying cause
+   * @param message   a {@link String#format}-style template
+   * @param args      arguments substituted into the template
    */
   public ComponentValidationException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +78,9 @@ public class ComponentValidationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a cause.
+   * Creates the exception wrapping an existing cause with no additional message.
    *
-   * @param throwable underlying issue
+   * @param throwable the underlying cause
    */
   public ComponentValidationException (Throwable throwable) {
 

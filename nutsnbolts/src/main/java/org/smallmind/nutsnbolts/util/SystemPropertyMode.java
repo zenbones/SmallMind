@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Modes for resolving configuration properties from system/environment sources.
+ * Controls how configuration properties are resolved from JVM system properties and environment variables.
  */
 public enum SystemPropertyMode {
 

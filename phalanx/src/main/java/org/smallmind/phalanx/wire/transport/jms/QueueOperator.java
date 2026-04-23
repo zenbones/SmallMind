@@ -40,7 +40,10 @@ import jakarta.jms.Queue;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Session employer and message handler for sending messages to a JMS queue.
+ * {@link SessionEmployer} and {@link MessageHandler} implementation that sends messages
+ * to a point-to-point JMS {@link Queue}.
+ *
+ * <p>Instances are pooled by {@link JmsRequestTransport} for talk-mode transmissions.
  */
 public class QueueOperator implements SessionEmployer, MessageHandler {
 
@@ -48,10 +51,10 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
   private final Queue requestQueue;
 
   /**
-   * Creates an operator bound to the given queue using the shared connection manager.
+   * Constructs a {@code QueueOperator} bound to the specified queue.
    *
-   * @param connectionManager manager providing sessions and producers
-   * @param queue             queue destination for outbound messages
+   * @param connectionManager shared connection manager that provides the JMS session and producer
+   * @param queue             destination queue for all outbound messages sent through this operator
    */
   public QueueOperator (ConnectionManager connectionManager, Queue queue) {
 
@@ -60,7 +63,9 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the queue destination that this operator targets.
+   *
+   * @return the JMS {@link Queue} supplied at construction
    */
   @Override
   public Destination getDestination () {
@@ -69,7 +74,10 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because queue consumers created from this operator require no
+   * message selector.
+   *
+   * @return {@code null}
    */
   @Override
   public String getMessageSelector () {
@@ -78,7 +86,10 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a new empty {@link BytesMessage} using the session provided by the connection manager.
+   *
+   * @return a new, empty {@link BytesMessage}
+   * @throws JMSException if the session cannot create the message
    */
   @Override
   public BytesMessage createMessage ()
@@ -88,7 +99,11 @@ public class QueueOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Sends {@code message} to the queue via the producer provided by the connection manager and
+   * logs the outbound message id at debug level.
+   *
+   * @param message the populated message to send
+   * @throws JMSException if the producer cannot dispatch the message
    */
   @Override
   public void send (Message message)

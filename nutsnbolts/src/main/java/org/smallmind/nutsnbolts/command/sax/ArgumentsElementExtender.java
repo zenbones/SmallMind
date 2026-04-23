@@ -37,14 +37,16 @@ import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 /**
- * SAX element extender that captures a nested {@link Argument} contributed by child extenders.
+ * SAX element extender for the {@code <arguments>} element that collects the {@link Argument} assembled by its single child extender.
  */
 public class ArgumentsElementExtender extends AbstractElementExtender {
 
   private Argument argument;
 
   /**
-   * @return compiled argument supplied by a child element
+   * Returns the argument assembled by the completed child element.
+   *
+   * @return {@link Argument} contributed by the child extender, or {@code null} if no child has completed yet
    */
   public Argument getArgument () {
 
@@ -52,7 +54,9 @@ public class ArgumentsElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Records the argument produced by child {@link ArgumentCompiler} elements.
+   * Stores the argument produced by a child element that implements {@link ArgumentCompiler}.
+   *
+   * @param elementExtender completed child extender; only processed when it implements {@link ArgumentCompiler}
    */
   @Override
   public void completedChildElement (ElementExtender elementExtender) {

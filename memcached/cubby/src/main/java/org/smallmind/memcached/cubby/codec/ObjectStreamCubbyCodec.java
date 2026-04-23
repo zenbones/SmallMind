@@ -41,12 +41,21 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 
 /**
- * Codec implementation using standard Java object streams for serialization.
+ * {@link CubbyCodec} implementation that uses standard Java object serialization streams
+ * ({@link ObjectOutputStream} / {@link ObjectInputStream}) to encode and decode values.
+ * During deserialization the thread context class loader is tried as a fallback when the
+ * default stream resolver cannot locate the target class, making this codec suitable for
+ * use in environments with non-standard class-loading hierarchies (e.g., OSGi, web
+ * containers).
  */
 public class ObjectStreamCubbyCodec implements CubbyCodec {
 
   /**
-   * {@inheritDoc}
+   * Serializes the supplied object to a byte array using a Java {@link ObjectOutputStream}.
+   *
+   * @param obj the object to serialize; must not be {@code null}
+   * @return the serialized byte representation of {@code obj}
+   * @throws IOException if an I/O error occurs while writing to the object stream
    */
   @Override
   public byte[] serialize (Object obj)
@@ -67,7 +76,15 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
   }
 
   /**
-   * {@inheritDoc}
+   * Deserializes the supplied byte array into an object using a Java
+   * {@link ObjectInputStream} that falls back to the thread context class loader when
+   * class resolution fails via the default mechanism.
+   *
+   * @param bytes the byte array to deserialize
+   * @return the deserialized object
+   * @throws IOException            if an I/O error occurs while reading the object stream
+   * @throws ClassNotFoundException if the class of the serialized object cannot be found
+   *                                even after consulting the thread context class loader
    */
   @Override
   public Object deserialize (byte[] bytes)
@@ -79,13 +96,19 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
     }
   }
 
+  /**
+   * An {@link ObjectInputStream} subclass that supplements the default class-resolution
+   * strategy with a lookup against the current thread's context class loader. This allows
+   * deserialization of classes that are not visible to the system or bootstrap class loader
+   * but are accessible to the deploying application.
+   */
   private static final class ResolvingObjectInputStream extends ObjectInputStream {
 
     /**
-     * Creates a new resolving input stream that favors the context class loader.
+     * Constructs a resolving input stream that reads serialized data from the given stream.
      *
-     * @param in input stream providing serialized bytes
-     * @throws IOException if the stream cannot be created
+     * @param in the underlying input stream providing serialized bytes
+     * @throws IOException if the stream cannot be initialized
      */
     public ResolvingObjectInputStream (InputStream in)
       throws IOException {
@@ -93,6 +116,16 @@ public class ObjectStreamCubbyCodec implements CubbyCodec {
       super(in);
     }
 
+    /**
+     * Resolves the class described by {@code desc}, falling back to the thread context
+     * class loader when the default resolution throws {@link ClassNotFoundException}.
+     *
+     * @param desc the {@link ObjectStreamClass} descriptor for the class to resolve
+     * @return the resolved {@link Class} object
+     * @throws IOException            if an I/O error occurs during resolution
+     * @throws ClassNotFoundException if the class cannot be found by either the default
+     *                                resolver or the thread context class loader
+     */
     @Override
     protected Class<?> resolveClass (ObjectStreamClass desc)
       throws IOException, ClassNotFoundException {

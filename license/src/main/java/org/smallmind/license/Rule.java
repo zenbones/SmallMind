@@ -1,8 +1,13 @@
 package org.smallmind.license;
 
 /**
- * Configuration describing how and where to apply a notice, including the stencil to use and the file types that
- * should be processed.
+ * Maven plugin configuration bean that pairs a notice file with the file types that should receive
+ * it and the stencil that controls how the notice is formatted.
+ *
+ * <p>Each rule must have a unique {@code id}, at least one entry in {@code fileTypes}, and a
+ * {@code stencilId} that matches a registered {@link org.smallmind.license.stencil.Stencil}.
+ * When {@code notice} is {@code null} and {@code allowNoticeRemoval} is enabled in the mojo, an
+ * existing top-of-file notice is removed instead of replaced.
  */
 public class Rule {
 
@@ -13,9 +18,9 @@ public class Rule {
   private String notice;
 
   /**
-   * Retrieves the unique identifier for this rule.
+   * Returns the unique identifier for this rule, used in log messages and error reporting.
    *
-   * @return the rule id
+   * @return the rule id; may be {@code null} if not configured
    */
   public String getId () {
 
@@ -33,9 +38,13 @@ public class Rule {
   }
 
   /**
-   * Provides the path to the notice text file that should be applied.
+   * Returns the path to the notice text file that is applied to matching source files.
    *
-   * @return the notice file path, or {@code null} when removal is intended
+   * <p>A relative path is resolved against the root project's base directory. When {@code null},
+   * the mojo removes an existing notice (requires {@code allowNoticeRemoval = true} in the mojo
+   * configuration).
+   *
+   * @return the notice file path, or {@code null} to trigger notice removal
    */
   public String getNotice () {
 
@@ -43,9 +52,9 @@ public class Rule {
   }
 
   /**
-   * Defines the path to the notice text file that should be applied.
+   * Sets the path to the notice text file.
    *
-   * @param notice the notice file path, or {@code null} to remove an existing notice
+   * @param notice the notice file path, or {@code null} to remove existing notices
    */
   public void setNotice (String notice) {
 
@@ -53,9 +62,9 @@ public class Rule {
   }
 
   /**
-   * Returns the set of file type patterns eligible for processing under this rule.
+   * Returns the glob-style file name patterns that select which files this rule processes.
    *
-   * @return an array of file type patterns
+   * @return an array of file type patterns, or {@code null} if none have been configured
    */
   public String[] getFileTypes () {
 
@@ -63,9 +72,9 @@ public class Rule {
   }
 
   /**
-   * Specifies the file type patterns that should be processed by this rule.
+   * Sets the glob-style file name patterns that select which files this rule processes.
    *
-   * @param fileTypes an array of glob-like file name patterns
+   * @param fileTypes an array of glob-style patterns such as {@code "*.java"} or {@code "*.xml"}
    */
   public void setFileTypes (String[] fileTypes) {
 
@@ -73,9 +82,9 @@ public class Rule {
   }
 
   /**
-   * Identifies the stencil used to format the notice within matching files.
+   * Returns the identifier of the stencil used to format the notice in matching files.
    *
-   * @return the stencil identifier
+   * @return the stencil id; must match a registered {@link org.smallmind.license.stencil.Stencil}
    */
   public String getStencilId () {
 
@@ -83,9 +92,9 @@ public class Rule {
   }
 
   /**
-   * Sets the stencil identifier used to format the notice within matching files.
+   * Sets the identifier of the stencil used to format the notice.
    *
-   * @param stencilId the stencil id to use
+   * @param stencilId the stencil id to use for this rule
    */
   public void setStencilId (String stencilId) {
 
@@ -93,7 +102,7 @@ public class Rule {
   }
 
   /**
-   * Returns the file patterns that should be excluded from processing.
+   * Returns the glob-style file name patterns that exempt files from this rule.
    *
    * @return an array of exclusion patterns, or {@code null} if none are defined
    */
@@ -103,9 +112,9 @@ public class Rule {
   }
 
   /**
-   * Defines file patterns that should be excluded from this rule.
+   * Sets the glob-style file name patterns that exempt files from this rule.
    *
-   * @param excludes an array of exclusion patterns
+   * @param excludes an array of glob-style patterns identifying files to skip
    */
   public void setExcludes (String[] excludes) {
 

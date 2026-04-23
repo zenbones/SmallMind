@@ -62,10 +62,17 @@ import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Implements server-side handling for Bayeux meta channels and related operations.
+ * Enum-based dispatch table for all Bayeux meta-channel operations; each constant owns one
+ * meta-channel path and implements the full server-side state-machine logic for that operation,
+ * including security checks, session state transitions, and response construction.
  */
 public enum Meta {
 
+  /**
+   * Handles {@code /meta/handshake}: validates the session state and proposed connection type,
+   * delegates to the security policy, transitions the session to {@code HANDSHOOK} on success,
+   * and returns a response containing Bayeux version and supported transport lists.
+   */
   HANDSHAKE(DefaultRoute.HANDSHAKE_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
@@ -89,15 +96,16 @@ public enum Meta {
     }
 
     /**
-     * Builds a successful handshake response describing the server and supported transports.
+     * Builds a successful handshake response populated with the Bayeux version, minimum version,
+     * and the transport names supported by the responding protocol.
      *
-     * @param protocol protocol used for the handshake
-     * @param server owning server instance
-     * @param path meta handshake channel path
-     * @param id request message id
-     * @param sessionId client session identifier
-     * @param <V> value type
-     * @return populated handshake response message
+     * @param protocol  protocol that accepted the handshake, whose transport names are advertised
+     * @param server    server supplying version strings and codec
+     * @param path      {@code /meta/handshake} channel path written to the response
+     * @param id        request message id echoed in the response
+     * @param sessionId client session identifier written to the response
+     * @param <V>       value type
+     * @return fully populated success response message
      */
     private <V extends Value<V>> Message<V> constructHandshakeSuccessResponse (Protocol<V> protocol, Server<V> server, String path, String id, String sessionId) {
 
@@ -107,16 +115,17 @@ public enum Meta {
     }
 
     /**
-     * Builds an error response for a failed handshake, including server capabilities.
+     * Builds a failed handshake response that includes the server's Bayeux version, minimum version,
+     * and the full set of supported transports across all protocols, plus reconnect advice.
      *
-     * @param server owning server instance
-     * @param path meta handshake channel path
-     * @param id request message id
-     * @param sessionId client session identifier
-     * @param error explanation of the failure
-     * @param reconnect reconnect advice to emit, if any
-     * @param <V> value type
-     * @return error response message
+     * @param server    server supplying version strings and the full transport name list
+     * @param path      {@code /meta/handshake} channel path written to the response
+     * @param id        request message id echoed in the response
+     * @param sessionId client session identifier written to the response
+     * @param error     human-readable description of why the handshake was rejected
+     * @param reconnect reconnect advice the client should follow after this failure
+     * @param <V>       value type
+     * @return fully populated error response message
      */
     private <V extends Value<V>> Message<V> constructHandshakeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
@@ -126,12 +135,13 @@ public enum Meta {
     }
 
     /**
-     * Checks whether the client proposed a connection type supported by the protocol.
+     * Checks whether the {@code supportedConnectionTypes} array in the handshake request contains
+     * at least one transport name recognized by {@code protocol}.
      *
-     * @param protocol protocol handling the request
-     * @param request incoming handshake message
-     * @param <V> value type
-     * @return {@code true} when at least one supported transport is offered
+     * @param protocol protocol whose transport names are the accepted set
+     * @param request  incoming handshake message whose {@code supportedConnectionTypes} field is inspected
+     * @param <V>      value type
+     * @return {@code true} when the intersection of client-proposed and protocol-supported types is non-empty
      */
     private <V extends Value<V>> boolean supportsConnectionType (Protocol<V> protocol, Message<V> request) {
 
@@ -165,7 +175,14 @@ public enum Meta {
 
       return false;
     }
-  }, CONNECT(DefaultRoute.CONNECT_ROUTE) {
+  },
+
+  /**
+   * Handles {@code /meta/connect}: verifies handshake state and transport compatibility, transitions
+   * the session to {@code CONNECTED} on first connect, and performs a long-poll loop when the
+   * transport supports it — blocking until queued messages arrive or the timeout elapses.
+   */
+  CONNECT(DefaultRoute.CONNECT_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request)
       throws InterruptedException {
 
@@ -234,11 +251,12 @@ public enum Meta {
     }
 
     /**
-     * Extracts the timeout supplied in the connect advice, if any.
+     * Reads the {@code advice.timeout} value from the connect request, representing the client's
+     * preferred long-poll duration.
      *
-     * @param request connect message carrying optional advice
-     * @param <V> value type
-     * @return client requested timeout in milliseconds, or {@code -1} when unspecified
+     * @param request the connect message that may carry an {@code advice} object with a {@code timeout} field
+     * @param <V>     value type
+     * @return the client-specified long-poll timeout in milliseconds, or {@code -1} when absent or malformed
      */
     private <V extends Value<V>> long getLongPollTimeoutMilliseconds (Message<V> request) {
 
@@ -258,15 +276,16 @@ public enum Meta {
     }
 
     /**
-     * Builds a successful connect response including interval advice.
+     * Builds a successful connect response that includes an {@code advice.interval} directing the
+     * client when to send the next connect.
      *
-     * @param server owning server
-     * @param path connect channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param sessionConnectIntervalMilliseconds interval before the next connect
-     * @param <V> value type
-     * @return connect response message
+     * @param server                             server supplying the codec
+     * @param path                               {@code /meta/connect} channel path written to the response
+     * @param id                                 request message id echoed in the response
+     * @param sessionId                          client session identifier written to the response
+     * @param sessionConnectIntervalMilliseconds milliseconds the client should wait before the next connect
+     * @param <V>                                value type
+     * @return fully populated success response message with interval advice
      */
     private <V extends Value<V>> Message<V> constructConnectSuccessResponse (Server<V> server, String path, String id, String sessionId, long sessionConnectIntervalMilliseconds) {
 
@@ -276,16 +295,16 @@ public enum Meta {
     }
 
     /**
-     * Builds an error response for a failed connect request.
+     * Builds an error response for a rejected connect request, delegating to the shared error builder.
      *
-     * @param server owning server
-     * @param path connect channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param error error description
-     * @param reconnect reconnect advice to include
-     * @param <V> value type
-     * @return connect error response message
+     * @param server    server supplying the codec
+     * @param path      {@code /meta/connect} channel path written to the response
+     * @param id        request message id echoed in the response
+     * @param sessionId client session identifier written to the response
+     * @param error     human-readable description of why the connect was rejected
+     * @param reconnect reconnect advice the client should follow
+     * @param <V>       value type
+     * @return fully populated error response message
      */
     private <V extends Value<V>> Message<V> constructConnectErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
@@ -293,12 +312,13 @@ public enum Meta {
     }
 
     /**
-     * Validates that the requested connection type is recognized by the transport protocol.
+     * Verifies that the {@code connectionType} field in the connect request matches one of the
+     * transport names supported by {@code protocol}.
      *
-     * @param protocol protocol handling the request
-     * @param request connect message
-     * @param <V> value type
-     * @return {@code true} if the transport supports the requested type
+     * @param protocol protocol whose transport names form the accepted set
+     * @param request  the connect message whose {@code connectionType} field is checked
+     * @param <V>      value type
+     * @return {@code true} when the requested connection type is among the protocol's supported transports
      */
     private <V extends Value<V>> boolean supportsConnectionType (Protocol<V> protocol, Message<V> request) {
 
@@ -320,7 +340,13 @@ public enum Meta {
 
       return false;
     }
-  }, DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
+  },
+
+  /**
+   * Handles {@code /meta/disconnect}: immediately transitions the session to the disconnected state
+   * and returns a success response with {@link Reconnect#NONE} advice.
+   */
+  DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
       session.completeDisconnect();
@@ -329,20 +355,28 @@ public enum Meta {
     }
 
     /**
-     * Builds the standard successful disconnect response.
+     * Builds the disconnect success response with {@link Reconnect#NONE} advice, signaling the client
+     * that no further reconnection is expected.
      *
-     * @param server owning server
-     * @param path disconnect channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param <V> value type
-     * @return disconnect response message
+     * @param server    server supplying the codec
+     * @param path      {@code /meta/disconnect} channel path written to the response
+     * @param id        request message id echoed in the response
+     * @param sessionId client session identifier written to the response
+     * @param <V>       value type
+     * @return success response message with {@code reconnect: none} advice
      */
     private <V extends Value<V>> Message<V> constructDisconnectSuccessResponse (Server<V> server, String path, String id, String sessionId) {
 
       return constructSuccessResponse(server, path, id, sessionId, Reconnect.NONE);
     }
-  }, SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
+  },
+
+  /**
+   * Handles {@code /meta/subscribe}: validates session state, rejects subscriptions to meta channels,
+   * enforces security policy for channel creation and subscription, creates the channel on demand when
+   * permitted, and adds the session as a subscriber.  Supports implicit connection when the server allows it.
+   */
+  SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
       String subscription;
@@ -400,15 +434,15 @@ public enum Meta {
     }
 
     /**
-     * Builds a successful subscribe response including the requested channel.
+     * Builds a subscribe success response that echoes the {@code subscription} field back to the client.
      *
-     * @param server owning server
-     * @param path subscribe channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param subscription subscribed channel path
-     * @param <V> value type
-     * @return subscribe response message
+     * @param server       server supplying the codec
+     * @param path         {@code /meta/subscribe} channel path written to the response
+     * @param id           request message id echoed in the response
+     * @param sessionId    client session identifier written to the response
+     * @param subscription the channel path that was successfully subscribed
+     * @param <V>          value type
+     * @return success response message containing the confirmed subscription path
      */
     private <V extends Value<V>> Message<V> constructSubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
 
@@ -416,17 +450,18 @@ public enum Meta {
     }
 
     /**
-     * Builds an error response for a failed subscribe attempt.
+     * Builds a subscribe error response that includes both the error description and the
+     * target subscription path so the client can correlate failures to requests.
      *
-     * @param server owning server
-     * @param path subscribe channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param error human-readable error
-     * @param subscription requested subscription channel
-     * @param reconnect reconnect advice, if applicable
-     * @param <V> value type
-     * @return subscribe error response
+     * @param server       server supplying the codec
+     * @param path         {@code /meta/subscribe} channel path written to the response
+     * @param id           request message id echoed in the response
+     * @param sessionId    client session identifier written to the response
+     * @param error        human-readable description of why the subscription was rejected
+     * @param subscription the channel path the client attempted to subscribe to, may be {@code null}
+     * @param reconnect    reconnect advice to include, or {@code null} for none
+     * @param <V>          value type
+     * @return error response message containing the subscription path and optional reconnect advice
      */
     private <V extends Value<V>> Message<V> constructSubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
 
@@ -434,11 +469,11 @@ public enum Meta {
     }
 
     /**
-     * Retrieves the subscription channel from the incoming message.
+     * Extracts the subscription channel path from the subscribe request.
      *
-     * @param request incoming subscribe message
-     * @param <V> value type
-     * @return subscription path, or {@code null} if missing or of the wrong type
+     * @param request the incoming subscribe message from which the {@code subscription} field is read
+     * @param <V>     value type
+     * @return the subscription channel path string, or {@code null} if the field is absent or not a string
      */
     private <V extends Value<V>> String getSubscription (Message<V> request) {
 
@@ -446,7 +481,14 @@ public enum Meta {
 
       return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
     }
-  }, UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
+  },
+
+  /**
+   * Handles {@code /meta/unsubscribe}: validates session state, rejects unsubscription from meta
+   * channels, removes the session from the target channel's subscriber list if it exists,
+   * and always returns a success response (absent channels are silently ignored).
+   */
+  UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request)
       throws InvalidPathException {
 
@@ -477,15 +519,15 @@ public enum Meta {
     }
 
     /**
-     * Builds a successful unsubscribe response including the channel that was removed.
+     * Builds an unsubscribe success response that echoes the subscription channel back to the client.
      *
-     * @param server owning server
-     * @param path unsubscribe channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param subscription subscription that was removed
-     * @param <V> value type
-     * @return unsubscribe response message
+     * @param server       server supplying the codec
+     * @param path         {@code /meta/unsubscribe} channel path written to the response
+     * @param id           request message id echoed in the response
+     * @param sessionId    client session identifier written to the response
+     * @param subscription the channel path from which the session was unsubscribed
+     * @param <V>          value type
+     * @return success response message containing the confirmed subscription path
      */
     private <V extends Value<V>> Message<V> constructUnsubscribeSuccessResponse (Server<V> server, String path, String id, String sessionId, String subscription) {
 
@@ -493,17 +535,18 @@ public enum Meta {
     }
 
     /**
-     * Builds an error response for a failed unsubscribe request.
+     * Builds an unsubscribe error response that includes the subscription path so the client can
+     * correlate the failure to its original request.
      *
-     * @param server owning server
-     * @param path unsubscribe channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param error explanation of the failure
-     * @param subscription target subscription channel
-     * @param reconnect reconnect advice if applicable
-     * @param <V> value type
-     * @return unsubscribe error response
+     * @param server       server supplying the codec
+     * @param path         {@code /meta/unsubscribe} channel path written to the response
+     * @param id           request message id echoed in the response
+     * @param sessionId    client session identifier written to the response
+     * @param error        human-readable description of why the unsubscription was rejected
+     * @param subscription the channel path the client attempted to unsubscribe from, may be {@code null}
+     * @param reconnect    reconnect advice to include, or {@code null} for none
+     * @param <V>          value type
+     * @return error response message containing the subscription path and optional reconnect advice
      */
     private <V extends Value<V>> Message<V> constructUnsubscribeErrorResponse (Server<V> server, String path, String id, String sessionId, String error, String subscription, Reconnect reconnect) {
 
@@ -511,11 +554,11 @@ public enum Meta {
     }
 
     /**
-     * Extracts the subscription path from the unsubscribe message.
+     * Extracts the subscription channel path from the unsubscribe request.
      *
-     * @param request incoming unsubscribe message
-     * @param <V> value type
-     * @return subscription channel, or {@code null} if missing or malformed
+     * @param request the incoming unsubscribe message from which the {@code subscription} field is read
+     * @param <V>     value type
+     * @return the subscription channel path string, or {@code null} if the field is absent or not a string
      */
     private <V extends Value<V>> String getSubscription (Message<V> request) {
 
@@ -523,7 +566,15 @@ public enum Meta {
 
       return (((subscriptionValue = request.get(Message.SUBSCRIPTION)) != null) && ValueType.STRING.equals(subscriptionValue.getType())) ? ((StringValue<V>)subscriptionValue).asText() : null;
     }
-  }, PUBLISH(null) {
+  },
+
+  /**
+   * Handles publish requests to normal (non-meta, non-service) channels: validates session state,
+   * enforces security policy for channel creation and publishing, delivers the message to subscribers,
+   * and optionally echoes the original message back to the publisher based on the
+   * {@code ext.oumuamua.echo} flag.
+   */
+  PUBLISH(null) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
       if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
@@ -581,11 +632,13 @@ public enum Meta {
     }
 
     /**
-     * Indicates whether the client requested an echo of its published message.
+     * Determines whether the publisher wants its own message echoed back in the response.
+     * Reads {@code ext.oumuamua.echo}; defaults to {@code true} when the field is absent, matching
+     * the CometD convention of echoing by default.
      *
-     * @param request publish message that may contain an oumuamua echo flag
-     * @param <V> value type
-     * @return {@code true} when the client expects an echo or did not specify a preference
+     * @param request the publish message whose {@code ext.oumuamua.echo} field is inspected
+     * @param <V>     value type
+     * @return {@code true} when the publisher expects an echo or did not express a preference
      */
     private <V extends Value<V>> boolean getEchoFlag (Message<V> request) {
 
@@ -598,14 +651,15 @@ public enum Meta {
     }
 
     /**
-     * Constructs the delivery message sent to subscribers for a publish request.
+     * Constructs the delivery message that is broadcast to channel subscribers, containing only the
+     * channel path, request id, and the publisher's payload data.
      *
-     * @param server owning server
-     * @param path destination channel path
-     * @param id request id
-     * @param data payload supplied by the publisher
-     * @param <V> value type
-     * @return delivery message
+     * @param server server supplying the codec for message creation
+     * @param path   destination channel path written to the delivery message
+     * @param id     request message id echoed in the delivery message
+     * @param data   the publisher's payload value to broadcast
+     * @param <V>    value type
+     * @return delivery message ready for broadcasting to subscribers
      */
     private <V extends Value<V>> Message<V> constructDeliveryMessage (Server<V> server, String path, String id, Value<V> data) {
 
@@ -613,14 +667,14 @@ public enum Meta {
     }
 
     /**
-     * Builds a successful publish response message.
+     * Builds the publish acknowledgment response sent to the publisher on successful delivery.
      *
-     * @param server owning server
-     * @param path publish channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param <V> value type
-     * @return publish success response
+     * @param server    server supplying the codec
+     * @param path      channel path where the message was published
+     * @param id        request message id echoed in the response
+     * @param sessionId publisher's session identifier written to the response
+     * @param <V>       value type
+     * @return success response message confirming the publish
      */
     private <V extends Value<V>> Message<V> constructPublishSuccessResponse (Server<V> server, String path, String id, String sessionId) {
 
@@ -628,22 +682,26 @@ public enum Meta {
     }
 
     /**
-     * Builds an error response for a failed publish request.
+     * Builds an error response for a rejected or failed publish attempt.
      *
-     * @param server owning server
-     * @param path publish channel path
-     * @param id request id
-     * @param sessionId client session identifier
-     * @param error error detail
-     * @param reconnect reconnect advice to include, if any
-     * @param <V> value type
-     * @return publish error response
+     * @param server    server supplying the codec
+     * @param path      the channel path to which publication was attempted
+     * @param id        request message id echoed in the response
+     * @param sessionId publisher's session identifier written to the response
+     * @param error     human-readable explanation of why the publish failed
+     * @param reconnect reconnect advice to include, or {@code null} for none
+     * @param <V>       value type
+     * @return error response message with optional reconnect advice
      */
     private <V extends Value<V>> Message<V> constructPublishErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
       return constructErrorResponse(server, path, id, sessionId, error, reconnect);
     }
   },
+  /**
+   * Handles requests to {@code /service/**} channels by locating the registered {@link BayeuxService}
+   * for the route and delegating processing to it; returns an error if no service is registered.
+   */
   SERVICE(null) {
     @Override
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
@@ -663,9 +721,10 @@ public enum Meta {
   private final Route route;
 
   /**
-   * Creates a meta command bound to the given route.
+   * Binds the constant to the meta-channel {@link Route} it handles.
    *
-   * @param route meta route handled by this command, or {@code null} when not bound
+   * @param route the fixed route for this meta command, or {@code null} for {@code PUBLISH} and {@code SERVICE}
+   *              which operate on dynamic routes
    */
   Meta (Route route) {
 
@@ -673,15 +732,16 @@ public enum Meta {
   }
 
   /**
-   * Constructs a successful meta response with optional reconnect advice.
+   * Builds a base success response with {@code successful: true} and optional reconnect advice,
+   * shared by all meta-channel success paths.
    *
-   * @param server    owning server
-   * @param path      channel path
-   * @param id        message id
-   * @param sessionId session identifier
-   * @param reconnect reconnect advice (optional)
+   * @param server    server supplying the codec for message creation
+   * @param path      channel path written to the response
+   * @param id        request message id echoed in the response
+   * @param sessionId client session identifier written to the response
+   * @param reconnect reconnect advice to embed in an {@code advice} object, or {@code null} to omit
    * @param <V>       value type
-   * @return response message
+   * @return success response message with channel, id, session, and optional advice populated
    */
   private static <V extends Value<V>> Message<V> constructSuccessResponse (Server<V> server, String path, String id, String sessionId, Reconnect reconnect) {
 
@@ -697,16 +757,17 @@ public enum Meta {
   }
 
   /**
-   * Creates a meta error response including optional reconnect advice.
+   * Builds a base error response with {@code successful: false}, the given error string, and optional
+   * reconnect advice; accessible to external callers such as service implementations.
    *
-   * @param server    owning server
-   * @param path      channel path being processed
-   * @param id        message id from the request
-   * @param sessionId client session identifier
-   * @param error     description of the error condition
-   * @param reconnect reconnect advice, if any
+   * @param server    server supplying the codec for message creation
+   * @param path      channel path written to the response
+   * @param id        request message id echoed in the response
+   * @param sessionId client session identifier written to the response
+   * @param error     human-readable description of the error condition
+   * @param reconnect reconnect advice to embed in an {@code advice} object, or {@code null} to omit
    * @param <V>       value type
-   * @return populated error response
+   * @return error response message with channel, id, session, error, and optional advice populated
    */
   public static <V extends Value<V>> Message<V> constructErrorResponse (Server<V> server, String path, String id, String sessionId, String error, Reconnect reconnect) {
 
@@ -722,14 +783,15 @@ public enum Meta {
   }
 
   /**
-   * Constructs the base response skeleton shared by meta responses.
+   * Creates the minimal response skeleton pre-populated with the channel path, message id, and
+   * session id; all meta response builders call this method before adding type-specific fields.
    *
-   * @param server    owning server
-   * @param path      channel path
-   * @param id        request id
-   * @param sessionId client session identifier
+   * @param server    server supplying the codec used to allocate the new message
+   * @param path      channel path to write into the {@code channel} field
+   * @param id        request message id to echo into the {@code id} field
+   * @param sessionId client session identifier to write into the {@code clientId} field
    * @param <V>       value type
-   * @return response message seeded with channel, id, and session
+   * @return bare response message with channel, id, and clientId set
    */
   private static <V extends Value<V>> Message<V> constructResponse (Server<V> server, String path, String id, String sessionId) {
 
@@ -737,11 +799,13 @@ public enum Meta {
   }
 
   /**
-   * Determines the meta command for a channel path.
+   * Resolves the appropriate {@link Meta} constant for the given channel path.
+   * Returns one of the five fixed meta commands for standard meta paths, {@link #SERVICE} for
+   * {@code /service/**} paths, and {@link #PUBLISH} for all other channel paths.
    *
-   * @param path channel path from the request
-   * @return matching meta command or {@link #PUBLISH}/{@link #SERVICE}
-   * @throws MetaProcessingException if the path targets meta channels incorrectly
+   * @param path the Bayeux channel path from the incoming message's {@code channel} field
+   * @return the {@link Meta} constant responsible for handling this path
+   * @throws MetaProcessingException if {@code path} is {@code null} or targets an unrecognized meta channel
    */
   public static Meta from (String path)
     throws MetaProcessingException {
@@ -770,7 +834,9 @@ public enum Meta {
   }
 
   /**
-   * @return route handled by this meta command, or {@code null} if none
+   * Returns the fixed meta-channel route for this command.
+   *
+   * @return the {@link Route} bound at construction, or {@code null} for {@code PUBLISH} and {@code SERVICE}
    */
   public Route getRoute () {
 
@@ -778,17 +844,18 @@ public enum Meta {
   }
 
   /**
-   * Processes an incoming meta message.
+   * Executes the full server-side handling logic for one incoming Bayeux message and returns
+   * the response packet to send back to the client.
    *
-   * @param protocol protocol handling the request
-   * @param route    resolved route
-   * @param server   owning server
-   * @param session  session issuing the request
-   * @param request  incoming message
+   * @param protocol the protocol that received the message and provides transport context
+   * @param route    the resolved channel route for the message
+   * @param server   the server instance providing session registry, security policy, and codec
+   * @param session  the client session that sent {@code request}
+   * @param request  the incoming Bayeux message to process
    * @param <V>      value type
-   * @return response packet
-   * @throws InterruptedException if processing is interrupted
-   * @throws InvalidPathException if the request uses an invalid path
+   * @return response packet containing one or more response messages
+   * @throws InterruptedException if a long-poll wait inside {@link #CONNECT} is interrupted
+   * @throws InvalidPathException if the message targets a channel path that violates path constraints
    */
   public abstract <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws InterruptedException, InvalidPathException;

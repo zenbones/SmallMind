@@ -33,7 +33,13 @@
 package org.smallmind.memcached.cubby.connection;
 
 /**
- * Encapsulates a serialized command along with its write sequence index.
+ * An immutable value object that pairs a serialized memcached command (as a raw byte array)
+ * with a monotonically increasing sequence index.
+ *
+ * <p>The index records the order in which the command was enqueued so that the
+ * {@link RequestWriter} can preserve write ordering when draining the request queue.
+ * Instances are created by {@link NIOCubbyConnection} and passed through the request and
+ * response queues as part of a {@link MissingLink}.</p>
  */
 public class CommandBuffer {
 
@@ -41,10 +47,13 @@ public class CommandBuffer {
   private final long index;
 
   /**
-   * Creates a buffered command.
+   * Creates a new buffer holding the serialized form of a single command.
    *
-   * @param index   ordinal indicating write order
-   * @param request serialized command bytes
+   * @param index   monotonically increasing ordinal that establishes the write order for
+   *                this command relative to others queued on the same connection
+   * @param request fully serialized, wire-format bytes of the memcached command;
+   *                the array is stored by reference and must not be modified by the caller
+   *                after construction
    */
   public CommandBuffer (long index, byte[] request) {
 
@@ -53,7 +62,9 @@ public class CommandBuffer {
   }
 
   /**
-   * @return write-order index for this command
+   * Returns the sequence index assigned when this command was enqueued.
+   *
+   * @return the write-order index for this command
    */
   public long getIndex () {
 
@@ -61,7 +72,9 @@ public class CommandBuffer {
   }
 
   /**
-   * @return serialized request bytes
+   * Returns the raw, wire-format bytes of the serialized memcached command.
+   *
+   * @return the serialized request bytes; the array must not be modified by callers
    */
   public byte[] getRequest () {
 

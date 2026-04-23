@@ -40,9 +40,9 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring initializer that removes specified jobs from a Quartz
- * {@link Scheduler} during context startup. Useful for pruning obsolete
- * schedules before new ones are registered.
+ * Spring {@link InitializingBean} that removes a configured list of jobs from
+ * a Quartz {@link Scheduler} when the application context starts. Useful for
+ * retiring obsolete schedules before new ones are installed.
  */
 public class JobDeletionInitializingBean implements InitializingBean {
 
@@ -50,7 +50,7 @@ public class JobDeletionInitializingBean implements InitializingBean {
   private Scheduler scheduler;
 
   /**
-   * Construct with an empty list of job identifiers to delete.
+   * Creates an instance with an empty list of jobs to delete.
    */
   public JobDeletionInitializingBean () {
 
@@ -58,9 +58,9 @@ public class JobDeletionInitializingBean implements InitializingBean {
   }
 
   /**
-   * Inject the scheduler from which jobs should be deleted.
+   * Sets the scheduler from which jobs will be deleted.
    *
-   * @param scheduler target scheduler
+   * @param scheduler target Quartz scheduler
    */
   public void setScheduler (Scheduler scheduler) {
 
@@ -68,9 +68,9 @@ public class JobDeletionInitializingBean implements InitializingBean {
   }
 
   /**
-   * Configure the list of job identifiers to remove.
+   * Sets the list of job name/group pairs identifying jobs to remove.
    *
-   * @param jobIdentifierList identifiers of jobs to delete
+   * @param jobIdentifierList identifiers of jobs to delete from the scheduler
    */
   public void setJobIdentifierList (List<JobIdentifier> jobIdentifierList) {
 
@@ -78,9 +78,10 @@ public class JobDeletionInitializingBean implements InitializingBean {
   }
 
   /**
-   * Delete configured jobs after Spring sets all properties.
+   * Deletes each configured job from the scheduler. Called by Spring after
+   * all properties are set.
    *
-   * @throws SchedulerException if deletion fails for any job
+   * @throws SchedulerException if the scheduler reports an error deleting any job
    */
   public void afterPropertiesSet ()
     throws SchedulerException {

@@ -56,7 +56,7 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 
 /**
- * Utilities for generating self-signed X.509 certificates.
+ * Utility for generating self-signed X.509 certificates from a key pair and subject information.
  */
 public class CertificateUtility {
 
@@ -65,24 +65,24 @@ public class CertificateUtility {
   */
 
   /**
-   * Builds a PEM-encoded X.509 certificate using the supplied subject fields and key pair.
+   * Builds a PEM-encoded self-signed X.509 v3 certificate using the supplied distinguished-name fields, validity window, and key pair.
    *
-   * @param cn                         common name
-   * @param ou                         organizational unit
-   * @param o                          organization
-   * @param c                          country code
-   * @param st                         state or province
-   * @param l                          locality/city
-   * @param notBefore                  certificate validity start
-   * @param now                        serial number seed
-   * @param notAfter                   certificate validity end
-   * @param domainName                 subject alternative name (DNS)
-   * @param asymmetricSigningAlgorithm the signing algorithm to use
-   * @param keyPair                    key pair containing the public key to embed and private key to sign with
-   * @return PEM string containing the certificate
-   * @throws OperatorCreationException if the signer cannot be created
-   * @throws CertificateException      if certificate creation fails
-   * @throws IOException               if the certificate cannot be encoded
+   * @param cn                         the Common Name (CN) for the subject and issuer distinguished name
+   * @param ou                         the Organizational Unit (OU) field of the distinguished name
+   * @param o                          the Organization (O) field of the distinguished name
+   * @param c                          the two-letter Country (C) code for the distinguished name
+   * @param st                         the State or Province (ST) field of the distinguished name
+   * @param l                          the Locality (L) or city field of the distinguished name
+   * @param notBefore                  the date before which the certificate is not valid
+   * @param now                        a {@link Date} whose time value is used as the certificate serial number
+   * @param notAfter                   the date after which the certificate is no longer valid
+   * @param domainName                 the DNS name placed in the Subject Alternative Name extension
+   * @param asymmetricSigningAlgorithm the algorithm used to sign the certificate
+   * @param keyPair                    the key pair whose public key is embedded in the certificate and whose private key signs it
+   * @return a PEM-encoded string containing the generated certificate
+   * @throws OperatorCreationException if the content signer cannot be created from the private key
+   * @throws CertificateException      if conversion of the built certificate structure fails
+   * @throws IOException               if PEM encoding of the certificate fails
    */
   public static String constructCertificate (String cn, String ou, String o, String c, String st, String l, Date notBefore, Date now, Date notAfter, String domainName, AsymmetricSigningAlgorithm asymmetricSigningAlgorithm, KeyPair keyPair)
     throws OperatorCreationException, CertificateException, IOException {

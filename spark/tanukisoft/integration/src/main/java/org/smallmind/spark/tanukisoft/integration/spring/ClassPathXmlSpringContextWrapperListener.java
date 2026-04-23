@@ -36,15 +36,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * Concrete {@link SpringContextWrapperListener} that loads contexts from classpath XML configuration files.
+ * Concrete {@link SpringContextWrapperListener} whose application context is built from classpath XML resources.
+ * The wrapper passes each configured argument through as an XML location.
  */
 public class ClassPathXmlSpringContextWrapperListener extends SpringContextWrapperListener {
 
   /**
-   * Creates a {@link ClassPathXmlApplicationContext} from the supplied XML locations.
+   * Builds a {@link ClassPathXmlApplicationContext} that loads every supplied classpath XML location.
    *
-   * @param args classpath resource names containing Spring XML configuration
-   * @return the loaded application context
+   * @param args classpath-relative XML configuration resources for Spring to parse
+   * @return the newly constructed, refreshed application context
    */
   public ConfigurableApplicationContext loadApplicationContext (String[] args) {
 

@@ -35,17 +35,17 @@ package org.smallmind.web.json.doppelganger;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Visibility of a property or view: inbound only, outbound only, or both.
+ * Specifies whether a property or view applies to inbound deserialization, outbound serialization, or both.
  */
 public enum Visibility {
 
   IN, OUT, BOTH;
 
   /**
-   * Combines this visibility with another, producing {@link #BOTH} when they differ.
+   * Combines this visibility with another, returning {@link #BOTH} when they differ and neither is {@code null}.
    *
-   * @param that other visibility value
-   * @return composed visibility
+   * @param that the other visibility to compose with, or {@code null} to return this unchanged
+   * @return the composed visibility
    */
   public Visibility compose (Visibility that) {
 
@@ -53,10 +53,10 @@ public enum Visibility {
   }
 
   /**
-   * Determines whether this visibility applies to the given direction.
+   * Returns whether this visibility permits the given direction.
    *
-   * @param direction direction to test
-   * @return {@code true} if the visibility permits the direction
+   * @param direction the direction to test
+   * @return {@code true} if this visibility covers the given direction
    */
   public boolean matches (Direction direction) {
 

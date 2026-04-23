@@ -39,34 +39,52 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Base abstraction for a memcached protocol command.
+ * Abstract base class for all memcached protocol commands in the Cubby client.
+ *
+ * <p>Each concrete subclass represents a distinct memcached meta-protocol operation
+ * (get, set, delete, arithmetic, etc.) and is responsible for serializing itself
+ * into wire-protocol bytes and interpreting the server's response into a
+ * {@link Result}. The three-method contract ({@link #getKey}, {@link #construct},
+ * {@link #process}) is the integration point used by the connection layer to route,
+ * send, and complete every request.</p>
  */
 public abstract class Command {
 
   /**
-   * @return the key associated with this command
-   * @throws CubbyOperationException if the key cannot be determined
+   * Returns the cache key targeted by this command, used by the connection layer
+   * to route the command to the correct server node.
+   *
+   * @return the cache key associated with this command
+   * @throws CubbyOperationException if the key cannot be determined or is not
+   *                                 applicable for this command type
    */
   public abstract String getKey ()
     throws CubbyOperationException;
 
   /**
-   * Renders the command into the wire protocol.
+   * Serializes this command into its wire-protocol byte representation, ready
+   * to be written to the memcached server socket.
    *
-   * @param keyTranslator translator used to sanitize and encode keys
-   * @return serialized command bytes
-   * @throws IOException             if encoding fails
-   * @throws CubbyOperationException if construction cannot proceed
+   * @param keyTranslator translator used to sanitize and encode the cache key
+   *                      into a protocol-safe form
+   * @return the fully assembled command bytes, including any trailing CRLF and
+   * value payload where applicable
+   * @throws IOException             if an I/O error occurs during encoding
+   * @throws CubbyOperationException if the command cannot be constructed due to
+   *                                 invalid or missing configuration
    */
   public abstract byte[] construct (KeyTranslator keyTranslator)
     throws IOException, CubbyOperationException;
 
   /**
-   * Parses a response corresponding to this command.
+   * Interprets the server {@link Response} for this command and returns a
+   * normalized {@link Result} describing the outcome.
    *
-   * @param response decoded response
-   * @return result object describing success, value and CAS token
-   * @throws UnexpectedResponseException if the response type does not match expectations
+   * @param response the decoded server response corresponding to this command
+   * @return a {@link Result} encapsulating success status, returned value bytes,
+   * and the CAS token
+   * @throws UnexpectedResponseException if the response code is not one of the
+   *                                     codes valid for this command type
    */
   public abstract Result process (Response response)
     throws UnexpectedResponseException;

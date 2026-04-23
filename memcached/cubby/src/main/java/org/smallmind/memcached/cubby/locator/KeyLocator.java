@@ -38,34 +38,64 @@ import org.smallmind.memcached.cubby.MemcachedHost;
 import org.smallmind.memcached.cubby.ServerPool;
 
 /**
- * Strategy for mapping keys to memcached hosts.
+ * Strategy interface for determining which memcached host should service a given cache key.
+ *
+ * <p>Implementations are responsible for maintaining whatever internal routing structures
+ * (hash rings, lookup tables, etc.) are required to efficiently and consistently map keys to
+ * hosts. The lifecycle mirrors the lifecycle of the client: {@link #installRouting(ServerPool)}
+ * is called once when the client starts, and {@link #updateRouting(ServerPool)} is called
+ * whenever host availability changes (e.g. after a host disconnects or reconnects).
+ * Per-request routing is performed by {@link #find(ServerPool, String)}.</p>
+ *
+ * <p>Two built-in implementations are provided:
+ * <ul>
+ *   <li>{@link DefaultKeyLocator} — a simple modulo-hash strategy.</li>
+ *   <li>{@link MaglevKeyLocator} — a consistent Maglev hash that minimises key remapping
+ *       when the host set changes.</li>
+ * </ul>
+ * </p>
  */
 public interface KeyLocator {
 
   /**
-   * Initializes routing state for the provided server pool.
+   * Performs one-time initialisation of the routing data structures for the given server pool.
    *
-   * @param serverPool pool of available hosts
-   * @throws CubbyOperationException if routing cannot be installed
+   * <p>This method is called once by the client after all hosts have been registered in the
+   * pool. Implementations may pre-compute expensive structures (e.g. hash permutation tables)
+   * that need only be built once per pool configuration.</p>
+   *
+   * @param serverPool the fully populated pool of candidate hosts
+   * @throws CubbyOperationException if the routing structures cannot be built, for example
+   *                                 because a required cryptographic algorithm is unavailable
    */
   void installRouting (ServerPool serverPool)
     throws CubbyOperationException;
 
   /**
-   * Updates routing after host availability changes.
+   * Refreshes the routing structures to reflect the current availability of hosts in the pool.
    *
-   * @param serverPool pool of available hosts
+   * <p>This method is called whenever a host transitions between active and inactive states.
+   * Implementations should check whether the active host set has actually changed before
+   * rebuilding their routing tables to avoid unnecessary work.</p>
+   *
+   * @param serverPool the pool whose current host availability should be reflected in routing
    */
   void updateRouting (ServerPool serverPool);
 
   /**
-   * Finds the host responsible for the given key.
+   * Resolves the {@link MemcachedHost} that should handle the request for the given key.
    *
-   * @param serverPool pool of available hosts
-   * @param key        normalized cache key
-   * @return host assigned to the key
-   * @throws IOException             if routing requires I/O and fails
-   * @throws CubbyOperationException if routing cannot be determined
+   * <p>This method is called on every cache operation and must be efficient. Implementations
+   * should use a read lock or equivalent mechanism to allow concurrent lookups.</p>
+   *
+   * @param serverPool the pool used to look up host metadata by name after the routing
+   *                   decision has been made
+   * @param key        the normalized, translated cache key whose target host is to be found
+   * @return the {@link MemcachedHost} that is currently responsible for the given key
+   * @throws IOException             if no active host is available to service the key (e.g.
+   *                                 all hosts are offline)
+   * @throws CubbyOperationException if the routing lookup cannot be performed due to an
+   *                                 internal state error
    */
   MemcachedHost find (ServerPool serverPool, String key)
     throws IOException, CubbyOperationException;

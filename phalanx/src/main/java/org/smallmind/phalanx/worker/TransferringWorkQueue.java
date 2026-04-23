@@ -36,16 +36,27 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@link WorkQueue} backed by a {@link LinkedTransferQueue}, favoring direct hand-offs to consumers.
+ * {@link WorkQueue} implementation backed by a {@link LinkedTransferQueue} that prefers direct hand-offs to waiting consumers.
  *
- * @param <E> type of work items stored
+ * <p>{@code offer} uses {@link LinkedTransferQueue#tryTransfer} so that the element is delivered directly to a
+ * consumer thread when one is available, falling back to queuing only if the timeout elapses without a
+ * consumer.  {@code poll} performs an ordinary timed retrieval.</p>
+ *
+ * @param <E> type of work items stored in this queue
  */
 public class TransferringWorkQueue<E> implements WorkQueue<E> {
 
   private final LinkedTransferQueue<E> linkedTransferQueue = new LinkedTransferQueue<>();
 
   /**
-   * {@inheritDoc}
+   * Attempts to transfer the element directly to a waiting consumer, or enqueues it if one becomes available
+   * within the timeout window.
+   *
+   * @param e       the work item to transfer or enqueue
+   * @param timeout maximum time to wait for a consumer to accept the element
+   * @param unit    time unit of the {@code timeout} argument
+   * @return {@code true} if the element was accepted by a consumer; {@code false} if the timeout elapsed
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
   public boolean offer (E e, long timeout, TimeUnit unit)
@@ -55,7 +66,12 @@ public class TransferringWorkQueue<E> implements WorkQueue<E> {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves and removes the head of the queue, waiting up to the given timeout if the queue is empty.
+   *
+   * @param timeout maximum time to wait for an element to become available
+   * @param unit    time unit of the {@code timeout} argument
+   * @return the head element, or {@code null} if the timeout elapsed before an element was available
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
   public E poll (long timeout, TimeUnit unit)

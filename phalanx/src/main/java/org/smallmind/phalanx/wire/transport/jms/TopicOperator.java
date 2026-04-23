@@ -40,7 +40,11 @@ import jakarta.jms.Topic;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Session employer and message handler for publishing JMS messages to a topic.
+ * {@link SessionEmployer} and {@link MessageHandler} implementation that publishes messages
+ * to a JMS {@link Topic}.
+ *
+ * <p>Instances are pooled by {@link JmsRequestTransport} (whisper/shout modes) and by
+ * {@link JmsResponseTransport} (response channel).
  */
 public class TopicOperator implements SessionEmployer, MessageHandler {
 
@@ -48,10 +52,10 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
   private final Topic topic;
 
   /**
-   * Creates an operator bound to the provided topic using the shared connection manager.
+   * Constructs a {@code TopicOperator} bound to the specified topic.
    *
-   * @param connectionManager manager providing sessions and producers
-   * @param topic             topic destination for outbound messages
+   * @param connectionManager shared connection manager that provides the JMS session and producer
+   * @param topic             destination topic for all outbound messages sent through this operator
    */
   public TopicOperator (ConnectionManager connectionManager, Topic topic) {
 
@@ -60,7 +64,9 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the topic destination that this operator targets.
+   *
+   * @return the JMS {@link Topic} supplied at construction
    */
   @Override
   public Destination getDestination () {
@@ -69,7 +75,10 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because topic producers created from this operator require no
+   * message selector.
+   *
+   * @return {@code null}
    */
   @Override
   public String getMessageSelector () {
@@ -78,7 +87,10 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a new empty {@link BytesMessage} using the session provided by the connection manager.
+   *
+   * @return a new, empty {@link BytesMessage}
+   * @throws JMSException if the session cannot create the message
    */
   @Override
   public BytesMessage createMessage ()
@@ -88,7 +100,11 @@ public class TopicOperator implements SessionEmployer, MessageHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Publishes {@code message} to the topic via the producer provided by the connection manager
+   * and logs the outbound message id at debug level.
+   *
+   * @param message the populated message to publish
+   * @throws JMSException if the producer cannot dispatch the message
    */
   @Override
   public void send (Message message)

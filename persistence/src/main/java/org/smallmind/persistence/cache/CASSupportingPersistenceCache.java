@@ -33,35 +33,40 @@
 package org.smallmind.persistence.cache;
 
 /**
- * Persistence cache that supports compare-and-swap (CAS) semantics.
+ * Extension of {@link PersistenceCache} that adds compare-and-swap (CAS) read and write operations
+ * for optimistic concurrency control.
+ *
+ * @param <K> key type
+ * @param <V> value type
  */
 public interface CASSupportingPersistenceCache<K, V> extends PersistenceCache<K, V> {
 
   /**
-   * Indicates whether CAS operations require copies to be made to avoid shared-state issues.
+   * Indicates whether values must be copied before a distributed CAS write to avoid shared-state
+   * corruption.
    *
-   * @return true if caller should copy values before CAS
+   * @return {@code true} if the caller must copy the value before invoking {@link #putViaCas}
    */
   boolean requiresCopyOnDistributedCASOperation ();
 
   /**
-   * Retrieves a value along with its CAS version.
+   * Fetches a value together with its CAS version token.
    *
-   * @param key cache key
-   * @return CAS wrapper containing value and version
+   * @param key cache key to look up
+   * @return {@link CASValue} containing the current value and version; never {@code null}
    */
   CASValue<V> getViaCas (K key);
 
   /**
-   * Attempts to update the value if the supplied version matches.
+   * Conditionally stores a new value if the supplied version matches the current cache version.
    *
-   * @param key               cache key
-   * @param oldValue          previous value (may be used by implementations)
+   * @param key               cache key to update
+   * @param oldValue          previous value, available for implementations that need it
    * @param value             new value to store
-   * @param version           expected version
-   * @param timeToLiveSeconds TTL in seconds
-   * @return true if updated
-   * @throws CacheOperationException on cache error
+   * @param version           CAS version token obtained from a prior {@link #getViaCas} call
+   * @param timeToLiveSeconds TTL in seconds for the updated entry
+   * @return {@code true} if the swap succeeded; {@code false} if the version did not match
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   boolean putViaCas (K key, V oldValue, V value, long version, int timeToLiveSeconds)
     throws CacheOperationException;

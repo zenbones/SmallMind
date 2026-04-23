@@ -47,9 +47,8 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
 /**
- * Aspect that applies {@link CachedWith} directives to keep cache vectors coherent with persistence mutations.
- * The advice intercepts persist and delete operations to insert, remove, or invalidate cached vectors according
- * to finder and filter metadata declared on the managing DAO.
+ * AspectJ aspect that reacts to persist and delete operations on {@link CachedWith}-annotated DAOs
+ * by updating or invalidating the declared cache vectors.
  */
 @Aspect
 public class CachedWithAspect {
@@ -57,12 +56,12 @@ public class CachedWithAspect {
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
   /**
-   * Intercepts persistence operations to propagate cache updates for the managed durable type.
+   * Around advice applied to persist calls; updates or invalidates cache vectors after the durable is written.
    *
-   * @param thisJoinPoint the join point representing the persist call
-   * @param ormDao        the DAO performing the persistence
-   * @return the durable instance returned by the persist call
-   * @throws Throwable propagated from the intercepted method or cache automation errors
+   * @param thisJoinPoint the intercepted persist invocation
+   * @param ormDao        the DAO performing the persist operation
+   * @return the persisted durable returned by the underlying method
+   * @throws Throwable if the underlying method throws or a cache operation fails
    */
   @Around(value = "(execution(* persist (org.smallmind.persistence.Durable+)) || execution(@Persist * * (org.smallmind.persistence.Durable+))) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao)
@@ -126,12 +125,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Intercepts delete operations to remove or invalidate cached vectors associated with the durable instance.
+   * Around advice applied to delete calls; removes the deleted durable from any matching vectors after deletion.
    *
-   * @param thisJoinPoint the join point representing the delete call
-   * @param ormDao        the DAO performing the delete
-   * @param durable       the durable being deleted
-   * @throws Throwable propagated from the intercepted method or cache automation errors
+   * @param thisJoinPoint the intercepted delete invocation
+   * @param ormDao        the DAO performing the delete operation
+   * @param durable       the durable instance being deleted
+   * @throws Throwable if the underlying method throws or a cache operation fails
    */
   @Around(value = "(execution(void delete (..)) || execution(@Delete * * (..))) && @within(CachedWith) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
   public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao, Durable durable)
@@ -177,12 +176,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Executes an optional filter method declared on {@link CachedWith#updates()} or {@link CachedWith#invalidates()}.
+   * Invokes the named filter method on the DAO to determine whether a cache operation should proceed.
    *
-   * @param filterMethodName name of the filter method on the DAO
-   * @param ormDao           the DAO that owns the filter implementation
-   * @param durable          the durable being processed
-   * @return {@code true} if the cache operation should continue; {@code false} otherwise
+   * @param filterMethodName name of the boolean-returning filter method; empty string skips filtering
+   * @param ormDao           the DAO that declares the filter method
+   * @param durable          the durable supplied to the filter method
+   * @return {@code true} if the cache operation should proceed, {@code false} to skip it
    */
   private boolean executeFilter (String filterMethodName, ORMDao ormDao, Durable durable) {
 
@@ -210,12 +209,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Resolves the {@link OnPersist} strategy to apply for a cache update.
+   * Resolves the {@link OnPersist} action for a cache update, optionally delegating to a DAO method.
    *
-   * @param onPersistMethodName optional method name that supplies a custom strategy
-   * @param ormDao              the DAO that owns the strategy implementation
-   * @param durable             the durable being persisted
-   * @return the strategy to apply when writing to the cache
+   * @param onPersistMethodName name of a DAO method returning {@link OnPersist}; empty string defaults to {@link OnPersist#INSERT}
+   * @param ormDao              the DAO that declares the strategy method
+   * @param durable             the durable supplied to the strategy method
+   * @return the {@link OnPersist} action to apply
    */
   private OnPersist executeOnPersist (String onPersistMethodName, ORMDao ormDao, Durable durable) {
 
@@ -243,12 +242,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Optionally proxies the durable to another type before using it for cache key construction.
+   * Applies an optional proxy transformation to a durable before it is used for cache key construction.
    *
-   * @param proxy   the proxy configuration declared on an update or invalidation
-   * @param ormDao  the DAO hosting the proxy method
+   * @param proxy   proxy configuration that names the transformation method and expected return type
+   * @param ormDao  the DAO that declares the proxy method
    * @param durable the durable to transform
-   * @return an operand that encapsulates the managed class and transformed durable
+   * @return an {@link Operand} holding the (possibly transformed) durable and its managed class
    */
   private Operand executeProxy (Proxy proxy, ORMDao ormDao, Durable durable) {
 
@@ -276,12 +275,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Executes a finder method to produce the set of durables used for vector updates.
+   * Invokes the configured finder to produce the durables that will be added to or removed from cache vectors.
    *
-   * @param finder  the finder annotation configuration
-   * @param ormDao  the DAO hosting the finder method
-   * @param durable the durable supplied to the finder invocation
-   * @return an iterable of durables that will be inserted into or removed from vectors
+   * @param finder  finder configuration naming the DAO method and expected return type
+   * @param ormDao  the DAO that declares the finder method
+   * @param durable the durable supplied as the argument to the finder method
+   * @return an iterable of durables to use for cache key construction
    */
   private Iterable<Durable> executeFinder (Finder finder, ORMDao ormDao, Durable durable) {
 
@@ -322,12 +321,12 @@ public class CachedWithAspect {
   }
 
   /**
-   * Locates a single-parameter method on the DAO matching the supplied name and compatible parameter type.
+   * Looks up and caches a public, single-parameter method by name on the given DAO.
    *
-   * @param ormDao        the DAO to inspect
-   * @param methodName    the name of the method to locate
-   * @param parameterType the expected parameter type
-   * @return the resolved method, or {@code null} when no match is found
+   * @param ormDao        the DAO whose public methods are searched
+   * @param methodName    the method name to match
+   * @param parameterType the type the method's sole parameter must be assignable from
+   * @return the matching {@link Method}, or {@code null} if none is found
    */
   private Method locateMethod (ORMDao ormDao, String methodName, Class parameterType) {
 
@@ -348,7 +347,7 @@ public class CachedWithAspect {
   }
 
   /**
-   * Encapsulates a durable instance alongside its declared managed class when produced by a proxy operation.
+   * Pairs a durable instance with its managed class, as produced by a proxy transformation.
    */
   public class Operand {
 
@@ -356,10 +355,10 @@ public class CachedWithAspect {
     private final Durable durable;
 
     /**
-     * Constructs an operand wrapper.
+     * Constructs an operand from a managed class and the corresponding durable.
      *
-     * @param managedClass the class of the durable that will participate in vector operations
-     * @param durable      the durable instance to cache or remove
+     * @param managedClass the durable class that governs cache key construction
+     * @param durable      the durable instance to act on
      */
     private Operand (Class<? extends Durable> managedClass, Durable durable) {
 
@@ -368,7 +367,9 @@ public class CachedWithAspect {
     }
 
     /**
-     * @return the managed durable class associated with this operand
+     * Returns the managed durable class for this operand.
+     *
+     * @return managed class used for vector key construction
      */
     public Class<? extends Durable> getManagedClass () {
 
@@ -376,7 +377,9 @@ public class CachedWithAspect {
     }
 
     /**
-     * @return the durable instance that will be written to or removed from a vector
+     * Returns the durable instance to insert into or remove from a cache vector.
+     *
+     * @return durable entity for the cache operation
      */
     public Durable getDurable () {
 
@@ -385,7 +388,7 @@ public class CachedWithAspect {
   }
 
   /**
-   * Compound key used to cache resolved {@link Method} instances by owning class and name.
+   * Composite cache key that identifies a resolved {@link Method} by its declaring class and name.
    */
   public class MethodKey {
 
@@ -393,10 +396,10 @@ public class CachedWithAspect {
     private final String methodName;
 
     /**
-     * Creates a composite method identifier.
+     * Constructs a method key from a class and method name.
      *
      * @param methodClass the class that declares the method
-     * @param methodName  the method name
+     * @param methodName  the simple method name
      */
     private MethodKey (Class methodClass, String methodName) {
 
@@ -405,7 +408,9 @@ public class CachedWithAspect {
     }
 
     /**
-     * @return the class that owns the method
+     * Returns the class that declares the cached method.
+     *
+     * @return declaring class of the method
      */
     public Class getMethodClass () {
 
@@ -413,7 +418,9 @@ public class CachedWithAspect {
     }
 
     /**
-     * @return the name of the method
+     * Returns the simple name of the cached method.
+     *
+     * @return method name
      */
     public String getMethodName () {
 
@@ -421,9 +428,9 @@ public class CachedWithAspect {
     }
 
     /**
-     * Computes the hash for map caching of resolved methods.
+     * Combines the declaring class and method name into a stable hash code.
      *
-     * @return combined hash of declaring class and method name
+     * @return XOR of the class and method-name hash codes
      */
     @Override
     public int hashCode () {
@@ -432,10 +439,10 @@ public class CachedWithAspect {
     }
 
     /**
-     * Compares method keys by declaring class and name.
+     * Two keys are equal when they share the same declaring class and method name.
      *
-     * @param obj the object to compare
-     * @return {@code true} when the target represents the same method signature
+     * @param obj the object to compare against
+     * @return {@code true} if {@code obj} is a {@link MethodKey} with identical class and name
      */
     @Override
     public boolean equals (Object obj) {

@@ -37,7 +37,7 @@ import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
 /**
- * Utility for matching property keys against include/exclude dot-notation patterns to decide whether to emit debug logging.
+ * Evaluates property keys against a set of dot-notation include and exclude patterns to determine whether debug logging should apply.
  */
 public class KeyDebugger {
 
@@ -45,10 +45,11 @@ public class KeyDebugger {
   boolean debug = false;
 
   /**
-   * Builds a matcher set from the supplied patterns. Patterns beginning with '-' are exclusions; all others are inclusions.
+   * Compiles the supplied patterns into matchers; patterns prefixed with {@code -} are treated as exclusions
+   * and all others as inclusions.
    *
-   * @param patterns dot-notation patterns to include/exclude
-   * @throws DotNotationException if a pattern cannot be parsed
+   * @param patterns dot-notation patterns governing which keys to debug
+   * @throws DotNotationException if any pattern cannot be compiled
    */
   public KeyDebugger (String[] patterns)
     throws DotNotationException {
@@ -65,7 +66,9 @@ public class KeyDebugger {
   }
 
   /**
-   * @return {@code true} if any inclusion pattern was provided
+   * Returns whether any inclusion patterns were provided, indicating that debug logging is active.
+   *
+   * @return {@code true} if at least one inclusion pattern exists
    */
   public boolean willDebug () {
 
@@ -73,10 +76,10 @@ public class KeyDebugger {
   }
 
   /**
-   * Tests whether the given key should be debugged based on include/exclude patterns.
+   * Determines whether the given property key should be logged by testing it against all inclusion and exclusion patterns.
    *
-   * @param key the property key to test
-   * @return {@code true} if an inclusion matches and no exclusion overrides it
+   * @param key the property key to evaluate
+   * @return {@code true} if an inclusion pattern matches and no exclusion pattern overrides it
    */
   public boolean matches (String key) {
 
@@ -97,7 +100,7 @@ public class KeyDebugger {
   }
 
   /**
-   * Internal matcher that wraps a {@link DotNotation} pattern and tracks whether it represents an exclusion.
+   * Wraps a compiled {@link DotNotation} pattern and tracks whether it represents an exclusion rule.
    */
   private static class DebugMatcher {
 
@@ -105,8 +108,10 @@ public class KeyDebugger {
     private boolean exclusion = false;
 
     /**
-     * @param pattern the include/exclude pattern; prefixed with '-' to indicate exclusion
-     * @throws DotNotationException if the pattern is invalid
+     * Compiles the pattern, stripping a leading {@code -} prefix and marking the matcher as an exclusion when present.
+     *
+     * @param pattern a dot-notation pattern, optionally prefixed with {@code -} to indicate exclusion
+     * @throws DotNotationException if the pattern cannot be compiled
      */
     public DebugMatcher (String pattern)
       throws DotNotationException {
@@ -120,7 +125,9 @@ public class KeyDebugger {
     }
 
     /**
-     * @return {@code true} if this matcher represents an exclusion
+     * Returns whether this matcher represents an exclusion rule.
+     *
+     * @return {@code true} if this matcher excludes matching keys from debug logging
      */
     public boolean isExclusion () {
 
@@ -128,10 +135,10 @@ public class KeyDebugger {
     }
 
     /**
-     * Tests whether the matcher pattern applies to the supplied key.
+     * Tests whether the given key matches this pattern.
      *
-     * @param key the key to evaluate
-     * @return {@code true} if the key matches this pattern
+     * @param key the property key to test
+     * @return {@code true} if the key matches the compiled dot-notation pattern
      */
     public boolean matches (String key) {
 

@@ -37,20 +37,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Forces generation of views even when no properties would normally create them, for specific purposes and visibilities.
+ * Guarantees that views are generated for specific purpose and visibility combinations even when no properties
+ * would otherwise cause them to be created.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
 public @interface Pledge {
 
   /**
-   * @return visibility for which generation is guaranteed
+   * @return the visibility for which view generation is guaranteed
    */
   // the visibility for which view generation should be guaranteed
   Visibility visibility () default Visibility.BOTH;
 
   /**
-   * @return purposes to force generation for (empty applies to default purpose)
+   * @return the purpose identifiers for which view generation is guaranteed; empty applies to the default purpose
    */
   // the purposes for which view generation should be guaranteed
   String[] purposes () default {};

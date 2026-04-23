@@ -39,19 +39,21 @@ import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
 /**
- * Aspect that implements {@link LazyField} by invoking the annotated method once and storing the result.
+ * AspectJ aspect that intercepts calls to {@link LazyField}-annotated methods, computing the value once
+ * and caching it in the designated field for all future calls.
  */
 @Aspect
 public class LazyFieldAspect {
 
   /**
-   * Around advice that populates the named field if currently null, otherwise returns the cached value.
+   * Intercepts any {@link LazyField}-annotated method invocation, returning the cached field value if already set
+   * or delegating to the method and storing the result.
    *
-   * @param thisJoinPoint proceeding join point representing the method call
-   * @param lazyField     annotation describing the target field
-   * @param called        instance containing the field
-   * @return existing or newly computed field value
-   * @throws Throwable if the underlying method or reflection operations fail
+   * @param thisJoinPoint the proceeding join point for the intercepted method call
+   * @param lazyField     the {@link LazyField} annotation specifying the target field name
+   * @param called        the object instance on which the method was invoked
+   * @return the cached field value (populated on the first call)
+   * @throws Throwable if the annotated method throws, if the named field does not exist, or if reflection fails
    */
   @Around(value = "execution(@org.smallmind.nutsnbolts.inject.LazyField * * (..)) && @annotation(lazyField) && this(called)", argNames = "thisJoinPoint, lazyField, called")
   public Object aroundLazyMethod (ProceedingJoinPoint thisJoinPoint, LazyField lazyField, Object called)

@@ -35,15 +35,19 @@ package org.smallmind.claxon.registry;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Indicates that a requested emitter cannot be found or resolved by name.
+ * Checked exception thrown when a requested {@link Emitter} cannot be located within the
+ * registry by its registered name. Extends {@link FormattedException} to support
+ * {@link String#format}-style message templates with positional arguments.
  */
 public class UnknownEmitterException extends FormattedException {
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a {@link String#format}-style message template and
+   * corresponding arguments.
    *
-   * @param message message template
-   * @param args    template arguments
+   * @param message a format string that may contain {@code %s}, {@code %d}, or other
+   *                standard format specifiers
+   * @param args    arguments substituted into the format string
    */
   public UnknownEmitterException (String message, Object... args) {
 

@@ -33,7 +33,8 @@
 package org.smallmind.mongodb.throng;
 
 /**
- * Mutable configuration for Throng client behavior such as null storage and index creation.
+ * Configures the runtime behaviour of a {@link ThrongClient}, controlling null storage, automatic index creation,
+ * and whether collation settings are included when indexes are created.
  */
 public class ThrongOptions {
 
@@ -46,11 +47,11 @@ public class ThrongOptions {
   }
 
   /**
-   * Creates a new options instance.
+   * Constructs a fully initialised options instance.
    *
-   * @param storeNulls       whether null values are persisted
-   * @param createIndexes    whether indexes are created automatically
-   * @param includeCollation whether index creation includes collation details
+   * @param storeNulls       {@code true} to persist null property values as BSON null
+   * @param createIndexes    {@code true} to create MongoDB indexes automatically during client initialisation
+   * @param includeCollation {@code true} to apply collation settings when creating indexes
    */
   public ThrongOptions (boolean storeNulls, boolean createIndexes, boolean includeCollation) {
 
@@ -60,7 +61,9 @@ public class ThrongOptions {
   }
 
   /**
-   * @return {@code true} if null values should be persisted
+   * Returns whether null property values are persisted as BSON null.
+   *
+   * @return {@code true} if null values are stored
    */
   public boolean isStoreNulls () {
 
@@ -68,10 +71,10 @@ public class ThrongOptions {
   }
 
   /**
-   * Sets whether null values should be stored.
+   * Sets whether null property values should be persisted.
    *
-   * @param storeNulls flag indicating null storage
-   * @return this options instance for chaining
+   * @param storeNulls {@code true} to store nulls
+   * @return this instance for method chaining
    */
   public ThrongOptions setStoreNulls (boolean storeNulls) {
 
@@ -81,7 +84,9 @@ public class ThrongOptions {
   }
 
   /**
-   * @return {@code true} if indexes are created automatically for entities
+   * Returns whether MongoDB indexes are created automatically during {@link ThrongClient} initialisation.
+   *
+   * @return {@code true} if automatic index creation is enabled
    */
   public boolean isCreateIndexes () {
 
@@ -89,10 +94,10 @@ public class ThrongOptions {
   }
 
   /**
-   * Sets automatic index creation behavior.
+   * Sets whether indexes are created automatically during client initialisation.
    *
-   * @param createIndexes whether to create indexes
-   * @return this options instance for chaining
+   * @param createIndexes {@code true} to enable automatic index creation
+   * @return this instance for method chaining
    */
   public ThrongOptions setCreateIndexes (boolean createIndexes) {
 
@@ -102,7 +107,9 @@ public class ThrongOptions {
   }
 
   /**
-   * @return {@code true} if collation information should be included when creating indexes
+   * Returns whether collation settings are included when indexes are created.
+   *
+   * @return {@code true} if collation is applied to index creation
    */
   public boolean isIncludeCollation () {
 
@@ -110,10 +117,10 @@ public class ThrongOptions {
   }
 
   /**
-   * Sets whether collation is included in index creation.
+   * Sets whether collation settings are included when creating indexes.
    *
-   * @param includeCollation flag indicating inclusion of collation
-   * @return this options instance for chaining
+   * @param includeCollation {@code true} to include collation
+   * @return this instance for method chaining
    */
   public ThrongOptions setIncludeCollation (boolean includeCollation) {
 

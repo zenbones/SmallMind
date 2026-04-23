@@ -43,18 +43,21 @@ import org.quartz.spi.TriggerFiredBundle;
 import org.springframework.context.ApplicationContext;
 
 /**
- * Quartz {@link org.quartz.spi.JobFactory} that retrieves job instances from
- * a Spring {@link ApplicationContext}. Enforces prototype scope to ensure a
- * new job instance per trigger execution and supports graceful context close.
+ * Quartz {@link JobFactory} that sources job instances from a Spring
+ * {@link ApplicationContext}. All matched beans must be prototype-scoped to
+ * guarantee a fresh instance per firing. When multiple beans share the same
+ * type, resolution falls back to an exact key match. Also implements
+ * {@link Closeable} so that {@link SpringSchedulerFactory} can close the
+ * context on shutdown.
  */
 public class SpringJobFactory implements JobFactory {
 
   private final ApplicationContext applicationContext;
 
   /**
-   * Create a job factory backed by the given Spring context.
+   * Constructs the factory bound to the given Spring context.
    *
-   * @param applicationContext context used to resolve job beans
+   * @param applicationContext context from which job beans will be resolved
    */
   public SpringJobFactory (ApplicationContext applicationContext) {
 
@@ -62,10 +65,10 @@ public class SpringJobFactory implements JobFactory {
   }
 
   /**
-   * Close the underlying application context when it is {@link Closeable},
-   * allowing resource cleanup when the scheduler shuts down.
+   * Closes the application context if it implements {@link Closeable}. Called
+   * by {@link SpringSchedulerFactory} when the Spring context shuts down.
    *
-   * @throws IOException if the context fails to close
+   * @throws IOException if the context cannot be closed
    */
   public synchronized void close ()
     throws IOException {
@@ -76,15 +79,16 @@ public class SpringJobFactory implements JobFactory {
   }
 
   /**
-   * Resolve a job instance for the fired trigger. Ensures a matching Spring
-   * bean exists, enforces prototype scope, and disambiguates between multiple
-   * beans of the same type.
+   * Resolves and returns a job instance for the fired trigger. Looks up all
+   * beans matching the job class in the context. Exactly one bean must exist,
+   * or multiple beans must exist with one whose name matches the job key
+   * exactly. The resolved bean must be prototype-scoped.
    *
-   * @param bundle    trigger bundle containing job metadata
-   * @param scheduler invoking scheduler
-   * @return newly constructed job instance
-   * @throws SchedulerException if no matching bean exists, multiple beans are ambiguous,
-   *                            or the bean is not prototype-scoped
+   * @param bundle    Quartz bundle describing the triggered job
+   * @param scheduler the scheduler that fired the trigger
+   * @return a prototype-scoped job bean from the application context
+   * @throws SchedulerException if no matching bean exists, multiple ambiguous beans exist,
+   *                            or the resolved bean is not prototype-scoped
    */
   @Override
   public synchronized Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)

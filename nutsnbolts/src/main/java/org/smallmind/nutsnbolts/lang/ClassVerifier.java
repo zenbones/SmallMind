@@ -42,26 +42,25 @@ import java.security.cert.Certificate;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
 /**
- * Utilities for validating that loaded classes are signed with trusted certificates.
+ * Utility class for verifying that a loaded class is signed with a trusted certificate from a given keystore.
  */
 public class ClassVerifier {
 
   // false if not signed, true if signed and verified, otherwise an exception is thrown
 
   /**
-   * Verifies a class signature using the provided keystore material. Returns {@code true}
-   * when the class is signed and the signature verifies against the supplied certificate,
-   * {@code false} when the class is unsigned, and throws exceptions for invalid conditions.
+   * Checks whether the supplied class is signed and that its certificate verifies against the identified keystore entry.
+   * Returns {@code true} when the class is signed and the signature is valid, {@code false} when the class carries no certificates, and throws an exception when the certificate exists but cannot be verified.
    *
-   * @param clazz        the class to verify
-   * @param secureStore  the keystore bytes and password
-   * @param keyStoreType the keystore type to load, or {@code null} for default
-   * @param alias        the alias of the certificate used to verify the signature
-   * @return {@code true} if signed and verified, {@code false} if unsigned
-   * @throws GeneralSecurityException   if signature verification fails
-   * @throws IOException                if the keystore cannot be read
-   * @throws ResourceException          if keystore bytes cannot be retrieved
-   * @throws ClassVerificationException if the alias is missing in the keystore
+   * @param clazz        the class whose signature is to be verified
+   * @param secureStore  the keystore material (bytes and password) used to load the trusted certificate
+   * @param keyStoreType the keystore type (e.g. {@code "JKS"}), or {@code null} to use the platform default
+   * @param alias        the alias identifying the certificate entry in the keystore
+   * @return {@code true} if the class is signed and the signature verifies; {@code false} if the class is unsigned
+   * @throws GeneralSecurityException   if the certificate verification fails
+   * @throws IOException                if the keystore bytes cannot be read
+   * @throws ResourceException          if keystore bytes cannot be retrieved from the {@link SecureStore}
+   * @throws ClassVerificationException if the specified alias does not exist in the keystore
    */
   public static boolean verifySignature (Class<?> clazz, SecureStore secureStore, String keyStoreType, String alias)
     throws GeneralSecurityException, IOException, ResourceException, ClassVerificationException {

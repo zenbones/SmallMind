@@ -36,7 +36,7 @@ import java.util.Set;
 import org.smallmind.nutsnbolts.util.Option;
 
 /**
- * Provides typed access to resolved Spring property placeholders.
+ * Provides typed lookup of resolved Spring property placeholder values via a {@link PropertyPlaceholderStringValueResolver}.
  */
 public class SpringPropertyAccessor {
 
@@ -44,7 +44,9 @@ public class SpringPropertyAccessor {
   private final PropertyPlaceholderStringValueResolver stringValueResolver;
 
   /**
-   * @param stringValueResolver resolver used to expand property placeholders
+   * Creates an accessor wrapping the given resolver and caches its key set.
+   *
+   * @param stringValueResolver the resolver used to expand property placeholder values
    */
   public SpringPropertyAccessor (PropertyPlaceholderStringValueResolver stringValueResolver) {
 
@@ -54,7 +56,9 @@ public class SpringPropertyAccessor {
   }
 
   /**
-   * @return the set of available property keys
+   * Returns the set of property keys available through this accessor.
+   *
+   * @return the unmodifiable set of known property keys
    */
   public Set<String> getKeySet () {
 
@@ -62,10 +66,10 @@ public class SpringPropertyAccessor {
   }
 
   /**
-   * Resolves the property as a string.
+   * Returns the resolved string value for the given key, or {@code null} if the key is not present.
    *
-   * @param key the property key
-   * @return the resolved value or {@code null} if absent
+   * @param key the property key to look up
+   * @return the resolved string value, or {@code null} if absent
    */
   public String asString (String key) {
 
@@ -78,10 +82,10 @@ public class SpringPropertyAccessor {
   }
 
   /**
-   * Resolves the property as a boolean.
+   * Returns the resolved value for the given key parsed as a {@code boolean}.
    *
-   * @param key the property key
-   * @return an {@link Option} containing the value when present
+   * @param key the property key to look up
+   * @return an {@link Option} containing the boolean value, or {@link Option#none()} if the key is absent
    */
   public Option<Boolean> asBoolean (String key) {
 
@@ -96,11 +100,11 @@ public class SpringPropertyAccessor {
   }
 
   /**
-   * Resolves the property as a {@code long}.
+   * Returns the resolved value for the given key parsed as a {@code long}.
    *
-   * @param key the property key
-   * @return an {@link Option} containing the parsed value
-   * @throws RuntimeBeansException if the value cannot be parsed as a long
+   * @param key the property key to look up
+   * @return an {@link Option} containing the long value, or {@link Option#none()} if the key is absent
+   * @throws RuntimeBeansException if the resolved value cannot be parsed as a {@code long}
    */
   public Option<Long> asLong (String key) {
 
@@ -119,11 +123,11 @@ public class SpringPropertyAccessor {
   }
 
   /**
-   * Resolves the property as an {@code int}.
+   * Returns the resolved value for the given key parsed as an {@code int}.
    *
-   * @param key the property key
-   * @return an {@link Option} containing the parsed value
-   * @throws RuntimeBeansException if the value cannot be parsed as an int
+   * @param key the property key to look up
+   * @return an {@link Option} containing the int value, or {@link Option#none()} if the key is absent
+   * @throws RuntimeBeansException if the resolved value cannot be parsed as an {@code int}
    */
   public Option<Integer> asInt (String key) {
 

@@ -33,17 +33,18 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Represents a part that is laid out along a single axis.
+ * Marks a layout part that is resolved and placed during a single-axis layout pass,
+ * as opposed to a {@link PlanarPart} which requires both axes to be resolved before placement.
  */
 public interface LinearPart {
 
   /**
-   * Applies layout along the given axis with the provided position and measurement.
+   * Applies the layout position and size to this part along the specified axis.
    *
-   * @param bias        the axis being laid out
-   * @param position    the starting position along the axis
-   * @param measurement the allocated measurement along the axis
-   * @param tailor      the layout tailor coordinating multi-axis layout
+   * @param bias        the axis along which layout is being applied
+   * @param position    the starting offset of this part along the axis
+   * @param measurement the total space allocated to this part along the axis
+   * @param tailor      the {@link LayoutTailor} coordinating the full layout pass
    */
   void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor);
 }

@@ -36,7 +36,8 @@ import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Initializes a {@link Channel} instance before it is registered with the server.
+ * Callback applied to a newly created {@link Channel} before it is made available to the server,
+ * allowing callers to configure persistence, reflection, streaming, or attach listeners.
  *
  * @param <V> concrete {@link Value} implementation used for message payloads
  */

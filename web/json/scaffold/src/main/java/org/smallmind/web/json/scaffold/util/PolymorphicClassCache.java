@@ -37,8 +37,8 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 
 /**
- * Caches relationships between polymorphic base classes, their subclasses, and proxy classes used
- * during marshaling/unmarshalling to avoid repeated reflection work.
+ * Thread-safe cache that maps polymorphic base classes to their keyed subclasses and tracks the
+ * corresponding generated proxy classes to avoid repeated reflection work during marshaling.
  */
 public class PolymorphicClassCache {
 
@@ -47,12 +47,13 @@ public class PolymorphicClassCache {
   private static final ClassLoaderAwareCache<Class<?>, HashMap<String, Class<?>>> SUB_CLASS_MAP_CACHE = new ClassLoaderAwareCache<>(Class::getClassLoader);
 
   /**
-   * Resolves a polymorphic subclass for the given base class and key (typically the XML root name).
+   * Looks up the concrete subclass for a given base class and polymorphic key, building the subclass
+   * map on first access from the {@link XmlPolymorphicSubClasses} annotation.
    *
-   * @param baseClass      polymorphic base class
-   * @param polymorphicKey key identifying the subclass
-   * @return matching subclass or {@code null} if not found
-   * @throws JAXBProcessingException if required annotations are missing
+   * @param baseClass      polymorphic base class annotated with {@link XmlPolymorphicSubClasses}
+   * @param polymorphicKey key (typically the {@link XmlRootElement#name()}) identifying the subclass
+   * @return matching subclass, or {@code null} if no subclass is registered for the key
+   * @throws JAXBProcessingException if required annotations are missing from the base or sub classes
    */
   public static Class<?> getPolymorphicSubClass (Class<?> baseClass, String polymorphicKey) {
 
@@ -97,10 +98,10 @@ public class PolymorphicClassCache {
   }
 
   /**
-   * Records the mapping between a polymorphic subclass and its generated proxy subclass.
+   * Registers the bidirectional mapping between a polymorphic subclass and its generated proxy class.
    *
    * @param polymorphicSubClass real subclass
-   * @param proxySubClass       generated proxy subclass
+   * @param proxySubClass       dynamically generated proxy subclass
    */
   public static void addClassRelationship (Class<?> polymorphicSubClass, Class<?> proxySubClass) {
 
@@ -111,8 +112,8 @@ public class PolymorphicClassCache {
   /**
    * Retrieves the proxy class previously associated with a polymorphic subclass.
    *
-   * @param polymorphicSubClass real subclass
-   * @return proxy class or {@code null} if none cached
+   * @param polymorphicSubClass real subclass to look up
+   * @return associated proxy class, or {@code null} if not yet cached
    */
   public static Class<?> getProxyClassForPolymorphicClass (Class<?> polymorphicSubClass) {
 
@@ -120,10 +121,10 @@ public class PolymorphicClassCache {
   }
 
   /**
-   * Retrieves the polymorphic subclass associated with a proxy subclass.
+   * Retrieves the real polymorphic subclass associated with a proxy class.
    *
-   * @param proxySubClass proxy subclass
-   * @return real subclass or {@code null} if none cached
+   * @param proxySubClass proxy subclass to look up
+   * @return real subclass, or {@code null} if not yet cached
    */
   public static Class<?> getPolymorphicClassForProxyClass (Class<?> proxySubClass) {
 

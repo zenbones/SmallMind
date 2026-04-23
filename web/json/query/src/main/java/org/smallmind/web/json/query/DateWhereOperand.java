@@ -40,7 +40,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.LocalDateTimeXmlAdapter;
 
 /**
- * Date literal operand.
+ * A where operand that holds a single {@link LocalDateTime} literal value.
  */
 @XmlRootElement(name = "date", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -49,16 +49,16 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   private LocalDateTime value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public DateWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided date value.
+   * Constructs an operand wrapping the given date-time.
    *
-   * @param value date literal
+   * @param value date-time literal
    */
   public DateWhereOperand (LocalDateTime value) {
 
@@ -66,10 +66,10 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
-   * Convenience factory for a date operand.
+   * Factory method that wraps a date-time in a {@code DateWhereOperand}.
    *
-   * @param value date literal
-   * @return operand instance
+   * @param value date-time literal
+   * @return new operand instance
    */
   public static DateWhereOperand instance (LocalDateTime value) {
 
@@ -77,6 +77,8 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
+   * Returns the element type for date operands.
+   *
    * @return {@link ElementType#DATE}
    */
   @Override
@@ -87,6 +89,8 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#DATE}
    */
   @Override
@@ -97,9 +101,9 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
-   * Returns the date value.
+   * Returns the stored date-time value.
    *
-   * @return date literal or {@code null}
+   * @return date-time literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -109,9 +113,9 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
-   * Returns the serialized date value.
+   * Returns the date-time value used during serialization.
    *
-   * @return date literal or {@code null}
+   * @return date-time literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   @XmlJavaTypeAdapter(LocalDateTimeXmlAdapter.class)
@@ -121,9 +125,9 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   }
 
   /**
-   * Sets the date value.
+   * Sets the date-time value for this operand.
    *
-   * @param value date literal
+   * @param value date-time literal
    */
   public void setValue (LocalDateTime value) {
 

@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Empty query product indicating no value was produced.
+ * A singleton {@link Product} representing the absence of any translated query result.
  */
 public class NoneProduct<R, T> implements Product<R, T> {
 
@@ -47,7 +47,11 @@ public class NoneProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return singleton instance representing an empty product
+   * Returns the singleton instance typed to the caller's generic parameters.
+   *
+   * @param <R> root type
+   * @param <T> value type
+   * @return shared singleton none-product
    */
   public static <R, T> NoneProduct<R, T> none () {
 
@@ -55,7 +59,9 @@ public class NoneProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return {@code true} because this product is always empty
+   * Always returns {@code true} because this product carries no content.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isEmpty () {
@@ -64,7 +70,9 @@ public class NoneProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return empty set because no roots are involved
+   * Returns an empty set because no roots are associated with this product.
+   *
+   * @return empty set
    */
   public Set<R> getRootSet () {
 
@@ -72,7 +80,9 @@ public class NoneProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return {@code null} because no value is present
+   * Always returns {@code null} because this product carries no value.
+   *
+   * @return {@code null}
    */
   public T getValue () {
 

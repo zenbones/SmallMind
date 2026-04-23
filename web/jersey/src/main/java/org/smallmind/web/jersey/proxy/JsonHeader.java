@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.proxy;
 
 /**
- * Represents an HTTP header key/value pair to be added to proxied requests.
+ * Simple value object representing a single HTTP header name/value pair to be added to proxied requests.
  */
 public class JsonHeader {
 
@@ -41,14 +41,14 @@ public class JsonHeader {
   private String value;
 
   /**
-   * Creates an empty header.
+   * Creates a header with no name or value set.
    */
   public JsonHeader () {
 
   }
 
   /**
-   * Creates a header with the supplied key and value.
+   * Creates a header with the given name and value.
    *
    * @param key   header name
    * @param value header value
@@ -70,9 +70,9 @@ public class JsonHeader {
   }
 
   /**
-   * Updates the header name.
+   * Sets the header name.
    *
-   * @param key header key
+   * @param key header name
    */
   public void setKey (String key) {
 
@@ -90,7 +90,7 @@ public class JsonHeader {
   }
 
   /**
-   * Updates the header value.
+   * Sets the header value.
    *
    * @param value header value
    */

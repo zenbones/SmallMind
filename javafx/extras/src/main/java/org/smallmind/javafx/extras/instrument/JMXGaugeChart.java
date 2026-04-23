@@ -46,7 +46,10 @@ import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
 /**
- * {@link GaugeChart} that polls a JMX MBean for rate metrics and plots the values.
+ * A {@link GaugeChart} that automatically polls a JMX MBean every 15 seconds for rate metrics and
+ * plots the values. The MBean must expose the attributes {@code AverageRate}, {@code OneMinuteAvgRate},
+ * {@code FiveMinuteAvgRate}, {@code FifteenMinuteAvgRate}, and {@code RateTimeUnit}. On any polling
+ * error the chart pauses and a {@link JavaErrorDialog} is shown on the JavaFX thread.
  */
 public class JMXGaugeChart extends GaugeChart {
 
@@ -68,12 +71,13 @@ public class JMXGaugeChart extends GaugeChart {
   private final ScheduledFuture<?> future;
 
   /**
-   * Constructs the chart and begins polling the specified MBean for rate metrics.
+   * Creates the chart, reads the {@code RateTimeUnit} attribute to label the Y axis, and schedules
+   * recurring data collection beginning one second after construction.
    *
-   * @param spanInMilliseconds    the time span to display
-   * @param mBeanServerConnection the MBean server connection used for polling
-   * @param objectName            the object name of the MBean exposing rate attributes
-   * @throws IllegalStateException if the velocity time unit attribute cannot be retrieved
+   * @param spanInMilliseconds    width of the visible time window in milliseconds; must be positive
+   * @param mBeanServerConnection the JMX connection used to query the MBean; must not be {@code null}
+   * @param objectName            identifies the MBean that exposes the rate attributes; must not be {@code null}
+   * @throws IllegalStateException if the {@code RateTimeUnit} attribute cannot be retrieved from the MBean
    */
   public JMXGaugeChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
@@ -108,8 +112,9 @@ public class JMXGaugeChart extends GaugeChart {
   }
 
   /**
-   * Retrieves gauge measurements from the MBean and adds them to the chart. On error, polling is paused and a
-   * {@link JavaErrorDialog} is displayed on the JavaFX thread.
+   * Fetches the four rate attributes from the MBean and adds a {@link Measure} data point to the
+   * chart. If the chart is paused the call is a no-op. On any JMX error the chart is paused and a
+   * {@link JavaErrorDialog} is shown on the JavaFX thread.
    */
   private void collectData () {
 
@@ -135,7 +140,8 @@ public class JMXGaugeChart extends GaugeChart {
   }
 
   /**
-   * Cancels polling and stops the chart's time axis.
+   * Cancels the scheduled polling task and delegates to {@link GaugeChart#stop()} to release the
+   * time-axis executor. Should be called when the chart is no longer needed.
    */
   @Override
   public void stop () {

@@ -40,7 +40,10 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 
 /**
- * Line chart that plots velocity statistics across time windows using a {@link TimeAxis}.
+ * A {@link LineChart} that plots velocity statistics across four rolling windows — inception
+ * average, 15-minute, 5-minute, and 1-minute — over a sliding wall-clock time window managed by
+ * a {@link TimeAxis}. Data points outside the visible window are trimmed on each update to bound
+ * memory usage. All data updates are marshalled onto the JavaFX application thread automatically.
  */
 public class VelocityChart extends LineChart<Long, Number> {
 
@@ -50,9 +53,9 @@ public class VelocityChart extends LineChart<Long, Number> {
   private final AtomicBoolean hasData = new AtomicBoolean(false);
 
   /**
-   * Creates a chart displaying the supplied time span.
+   * Creates a chart whose time axis spans the given number of milliseconds into the past from now.
    *
-   * @param spanInMilliseconds the width of the time window to display
+   * @param spanInMilliseconds width of the visible time window in milliseconds; must be positive
    */
   public VelocityChart (long spanInMilliseconds) {
 
@@ -75,7 +78,9 @@ public class VelocityChart extends LineChart<Long, Number> {
   }
 
   /**
-   * @return property indicating whether updates are paused
+   * Returns the property controlling whether chart updates are paused.
+   *
+   * @return the paused property; never {@code null}
    */
   public BooleanProperty pausedProperty () {
 
@@ -83,7 +88,9 @@ public class VelocityChart extends LineChart<Long, Number> {
   }
 
   /**
-   * @return whether updates are paused
+   * Returns whether the chart is currently paused.
+   *
+   * @return {@code true} if the time axis has stopped advancing
    */
   public boolean isPaused () {
 
@@ -91,9 +98,9 @@ public class VelocityChart extends LineChart<Long, Number> {
   }
 
   /**
-   * Toggles whether the chart accepts new data.
+   * Pauses or resumes time-axis advancement and data acceptance.
    *
-   * @param paused {@code true} to halt updates
+   * @param paused {@code true} to halt the time axis; {@code false} to resume
    */
   public void setPaused (boolean paused) {
 
@@ -101,11 +108,13 @@ public class VelocityChart extends LineChart<Long, Number> {
   }
 
   /**
-   * Adds a new velocity data point across all series, removing stale points beyond the visible window. Execution
-   * is marshalled onto the JavaFX application thread.
+   * Appends a velocity measurement to all four series at the given timestamp and removes any data
+   * points that fall before the current lower bound of the time axis. The series are populated
+   * lazily on the first call. Execution is dispatched to the JavaFX application thread via
+   * {@link Platform#runLater}.
    *
-   * @param milliseconds the timestamp for the sample
-   * @param blur         the velocity data to plot
+   * @param milliseconds epoch time in milliseconds for the sample
+   * @param blur         the velocity data to plot; must not be {@code null}
    */
   public void addBlur (final long milliseconds, final Blur blur) {
 
@@ -137,7 +146,8 @@ public class VelocityChart extends LineChart<Long, Number> {
   }
 
   /**
-   * Stops the underlying time axis scheduler.
+   * Stops the underlying {@link TimeAxis} scheduled executor, preventing further axis updates.
+   * Should be called when the chart is no longer needed to release background threads.
    */
   public void stop () {
 

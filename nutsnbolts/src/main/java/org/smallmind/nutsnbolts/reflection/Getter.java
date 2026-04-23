@@ -37,7 +37,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * Represents a JavaBean-style getter method and exposes its attribute metadata.
+ * Wraps a JavaBean-style getter method, parsing its attribute name and validating its signature
+ * on construction so callers can safely invoke it and query its metadata.
  */
 public class Getter implements Serializable {
 
@@ -50,10 +51,12 @@ public class Getter implements Serializable {
   private Boolean bob;
 
   /**
-   * Validates and wraps a getter method.
+   * Wraps the supplied method as a getter, parsing the attribute name from the method name and
+   * verifying that it takes no parameters and returns a non-void type.
    *
-   * @param method the reflected getter
-   * @throws ReflectionContractException if the method name or signature does not conform to getter rules
+   * @param method the public getter method to wrap; must start with {@code get} or {@code is}
+   *               followed by a capitalised attribute name
+   * @throws ReflectionContractException if the method name or signature violates getter conventions
    */
   public Getter (Method method)
     throws ReflectionContractException {
@@ -82,7 +85,9 @@ public class Getter implements Serializable {
   }
 
   /**
-   * @return {@code true} if the getter uses the {@code isXxx} boolean convention
+   * Indicates whether this getter follows the {@code isXxx} boolean naming convention.
+   *
+   * @return {@code true} if the method name starts with {@code is}; {@code false} if it starts with {@code get}
    */
   public boolean isIs () {
 
@@ -90,7 +95,9 @@ public class Getter implements Serializable {
   }
 
   /**
-   * @return the bean property name derived from the method
+   * Returns the bean property name derived from the getter method name.
+   *
+   * @return the lower-camel-case attribute name, e.g. {@code firstName} for {@code getFirstName}
    */
   public String getAttributeName () {
 
@@ -98,7 +105,9 @@ public class Getter implements Serializable {
   }
 
   /**
-   * @return the return type declared by the getter
+   * Returns the return type of the wrapped getter method.
+   *
+   * @return the raw {@link Class} of the getter's return value
    */
   public Class getAttributeClass () {
 
@@ -106,13 +115,13 @@ public class Getter implements Serializable {
   }
 
   /**
-   * Invokes the getter on a target instance.
+   * Invokes the underlying getter on the supplied target object and returns the attribute value.
    *
-   * @param target the object to query
-   * @return the attribute value
-   * @throws IllegalAccessException    if the method is inaccessible
-   * @throws IllegalArgumentException  if the invocation arguments are invalid
-   * @throws InvocationTargetException if the getter throws an exception
+   * @param target the object on which the getter should be called
+   * @return the value returned by the getter
+   * @throws IllegalAccessException    if the underlying method is not accessible
+   * @throws IllegalArgumentException  if {@code target} is not compatible with the declaring class
+   * @throws InvocationTargetException if the getter throws a checked or unchecked exception
    */
   public Object invoke (Object target)
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {

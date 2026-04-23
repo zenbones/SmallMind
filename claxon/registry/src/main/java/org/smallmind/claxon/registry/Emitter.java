@@ -33,24 +33,36 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Emits collected meter readings to an external system.
+ * Receives collected meter readings and forwards them to an external monitoring system.
+ *
+ * <p>Each emitter bound to a {@link ClaxonRegistry} is invoked once per collection interval
+ * for every meter that produced non-empty readings. Implementations are responsible for
+ * serialising and transmitting the data in whatever format the target system requires.
+ *
+ * @see ClaxonRegistry#bind(String, Emitter)
+ * @see EmitterMethod
  */
 public interface Emitter {
 
   /**
-   * Indicates whether the emitter pulls measurements or is pushed to.
+   * Returns the data-flow direction supported by this emitter, indicating whether
+   * the registry pushes readings to it or whether it pulls readings on demand.
    *
-   * @return the emitter method
+   * @return the {@link EmitterMethod} describing this emitter's data-flow direction
    */
   EmitterMethod getEmitterMethod ();
 
   /**
-   * Records the supplied quantities for the named meter.
+   * Receives and transmits a set of {@link Quantity} readings for the named meter.
    *
-   * @param meterName  logical name of the meter being emitted
-   * @param tags       tags associated with the measurement, may be {@code null}
-   * @param quantities measured quantities to emit
-   * @throws Exception if the emitter fails to transmit the data
+   * <p>This method is called by the registry's collection thread. Implementations should
+   * handle transmission failures gracefully; unchecked exceptions will be caught and
+   * logged by the registry, but checked exceptions declared here are also permitted.
+   *
+   * @param meterName  logical name of the meter whose readings are being emitted
+   * @param tags       combined tag array for this emission, or {@code null} when no tags are configured
+   * @param quantities the non-empty array of {@link Quantity} values recorded by the meter
+   * @throws Exception if the emitter cannot transmit the data to the target system
    */
   void record (String meterName, Tag[] tags, Quantity[] quantities)
     throws Exception;

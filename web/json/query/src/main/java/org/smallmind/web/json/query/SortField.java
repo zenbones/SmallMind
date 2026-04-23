@@ -39,7 +39,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Describes a single sort field, including optional entity alias and direction.
+ * Describes a single field to sort on, including an optional entity alias and the sort direction.
  */
 @XmlRootElement(name = "field", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -57,7 +57,7 @@ public class SortField {
   }
 
   /**
-   * Creates a sort field in the default entity with the given name and direction.
+   * Creates a sort field in the default entity context with the given name and direction.
    *
    * @param name      field name
    * @param direction sort direction
@@ -69,7 +69,7 @@ public class SortField {
   }
 
   /**
-   * Creates a sort field scoped to an entity with the given name and direction.
+   * Creates a sort field scoped to a specific entity with the given name and direction.
    *
    * @param entity    entity alias
    * @param name      field name
@@ -83,7 +83,7 @@ public class SortField {
   }
 
   /**
-   * Convenience factory for a sort field in the default entity.
+   * Convenience factory for a sort field in the default entity context.
    *
    * @param name      field name
    * @param direction sort direction
@@ -95,7 +95,7 @@ public class SortField {
   }
 
   /**
-   * Convenience factory for a sort field scoped to an entity.
+   * Convenience factory for a sort field scoped to a specific entity.
    *
    * @param entity    entity alias
    * @param name      field name
@@ -108,7 +108,9 @@ public class SortField {
   }
 
   /**
-   * @return entity alias or {@code null} for default entity
+   * Returns the entity alias, if any.
+   *
+   * @return entity alias, or {@code null} for the default entity
    */
   @XmlElement(name = "entity")
   public String getEntity () {
@@ -127,6 +129,8 @@ public class SortField {
   }
 
   /**
+   * Returns the field name.
+   *
    * @return field name
    */
   @XmlElement(name = "name", required = true)
@@ -146,6 +150,8 @@ public class SortField {
   }
 
   /**
+   * Returns the sort direction.
+   *
    * @return sort direction
    */
   @XmlElement(name = "direction", required = true)
@@ -166,9 +172,9 @@ public class SortField {
   }
 
   /**
-   * Hashes by field name for use in sets/maps.
+   * Returns a hash code based solely on the field name.
    *
-   * @return hash code
+   * @return hash code derived from the field name
    */
   @Override
   public int hashCode () {
@@ -177,10 +183,10 @@ public class SortField {
   }
 
   /**
-   * Equality based on field name (entity-agnostic).
+   * Compares equality based solely on the field name, ignoring entity and direction.
    *
-   * @param obj other object
-   * @return {@code true} if the other sort field shares the same name
+   * @param obj object to compare
+   * @return {@code true} if {@code obj} is a {@link SortField} with the same field name
    */
   @Override
   public boolean equals (Object obj) {

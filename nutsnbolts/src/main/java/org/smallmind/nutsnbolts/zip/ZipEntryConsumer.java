@@ -36,16 +36,16 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 
 /**
- * Callback invoked for each {@link ZipEntry} during archive traversal or extraction.
+ * Functional callback interface invoked for each {@link ZipEntry} encountered during archive traversal or extraction.
  */
 @FunctionalInterface
 public interface ZipEntryConsumer {
 
   /**
-   * Handles a single archive entry.
+   * Processes a single archive entry.
    *
-   * @param entry entry being processed
-   * @throws IOException if the consumer cannot process the entry
+   * @param entry the archive entry being visited
+   * @throws IOException if processing the entry fails
    */
   void accept (ZipEntry entry)
     throws IOException;

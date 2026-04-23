@@ -35,21 +35,26 @@ package org.smallmind.quorum.pool.simple;
 import org.smallmind.quorum.pool.PoolConfig;
 
 /**
- * Concrete pool configuration used by the simple pooling implementation.
+ * Concrete {@link PoolConfig} subclass used to configure the simple {@link ComponentPool}.
+ * <p>
+ * No additional properties beyond those in {@link PoolConfig} are required for the simple pool.
+ * This class exists to close the generic type parameter and provide the correct
+ * {@link #getConfigurationClass()} implementation so that the base class's fluent setters return
+ * the right concrete type.
  */
 public class SimplePoolConfig extends PoolConfig<SimplePoolConfig> {
 
   /**
-   * Constructs a configuration with default limits.
+   * Creates a configuration with default values inherited from {@link PoolConfig}.
    */
   public SimplePoolConfig () {
 
   }
 
   /**
-   * Copy constructor.
+   * Copy constructor that reproduces the pool size and acquire wait time from {@code poolConfig}.
    *
-   * @param poolConfig source configuration
+   * @param poolConfig the source configuration to copy
    */
   public SimplePoolConfig (PoolConfig<?> poolConfig) {
 
@@ -57,7 +62,10 @@ public class SimplePoolConfig extends PoolConfig<SimplePoolConfig> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link SimplePoolConfig}{@code .class}, enabling the base class to cast fluent
+   * setter return values correctly.
+   *
+   * @return {@code SimplePoolConfig.class}
    */
   @Override
   public Class<SimplePoolConfig> getConfigurationClass () {

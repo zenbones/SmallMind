@@ -33,14 +33,14 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Simple mutable integer counter with increment/decrement helpers.
+ * A simple non-thread-safe mutable integer counter with arithmetic and increment/decrement convenience methods.
  */
 public class Counter {
 
   private int count;
 
   /**
-   * Initializes the counter to zero.
+   * Constructs a counter initialized to zero.
    */
   public Counter () {
 
@@ -48,9 +48,9 @@ public class Counter {
   }
 
   /**
-   * Initializes the counter to the provided value.
+   * Constructs a counter initialized to the given value.
    *
-   * @param count starting value
+   * @param count the starting value
    */
   public Counter (int count) {
 
@@ -58,10 +58,10 @@ public class Counter {
   }
 
   /**
-   * Adds the delta and returns the updated value.
+   * Adds the given delta to the counter and returns the updated value.
    *
-   * @param delta amount to add
-   * @return new counter value
+   * @param delta the amount to add
+   * @return the counter value after the addition
    */
   public int addAndGet (int delta) {
 
@@ -71,10 +71,10 @@ public class Counter {
   }
 
   /**
-   * Returns the current value, then adds the delta.
+   * Returns the current counter value and then adds the given delta.
    *
-   * @param delta amount to add
-   * @return value before increment
+   * @param delta the amount to add
+   * @return the counter value before the addition
    */
   public int getAndAdd (int delta) {
 
@@ -86,10 +86,10 @@ public class Counter {
   }
 
   /**
-   * Subtracts the delta and returns the updated value.
+   * Subtracts the given delta from the counter and returns the updated value.
    *
-   * @param delta amount to subtract
-   * @return new counter value
+   * @param delta the amount to subtract
+   * @return the counter value after the subtraction
    */
   public int subtractAndGet (int delta) {
 
@@ -99,10 +99,10 @@ public class Counter {
   }
 
   /**
-   * Returns the current value, then subtracts the delta.
+   * Returns the current counter value and then subtracts the given delta.
    *
-   * @param delta amount to subtract
-   * @return value before decrement
+   * @param delta the amount to subtract
+   * @return the counter value before the subtraction
    */
   public int getAndSubtract (int delta) {
 
@@ -114,9 +114,9 @@ public class Counter {
   }
 
   /**
-   * Increments and returns the updated value.
+   * Increments the counter by one and returns the updated value.
    *
-   * @return incremented value
+   * @return the counter value after incrementing
    */
   public int incAndGet () {
 
@@ -124,9 +124,9 @@ public class Counter {
   }
 
   /**
-   * Returns the current value, then increments.
+   * Returns the current counter value and then increments it by one.
    *
-   * @return value before increment
+   * @return the counter value before incrementing
    */
   public int getAndInc () {
 
@@ -134,9 +134,9 @@ public class Counter {
   }
 
   /**
-   * Decrements and returns the updated value.
+   * Decrements the counter by one and returns the updated value.
    *
-   * @return decremented value
+   * @return the counter value after decrementing
    */
   public int decAndGet () {
 
@@ -144,9 +144,9 @@ public class Counter {
   }
 
   /**
-   * Returns the current value, then decrements.
+   * Returns the current counter value and then decrements it by one.
    *
-   * @return value before decrement
+   * @return the counter value before decrementing
    */
   public int getAndDec () {
 
@@ -154,7 +154,9 @@ public class Counter {
   }
 
   /**
-   * @return current counter value
+   * Returns the current counter value without modifying it.
+   *
+   * @return the current counter value
    */
   public int get () {
 

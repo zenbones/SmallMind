@@ -39,40 +39,43 @@ import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 /**
- * Transport interface for sending invocation requests over a chosen medium.
+ * Contract for the client-side transport that serializes invocation requests and delivers
+ * them to a remote service, then returns the result to the caller.
  */
 public interface RequestTransport {
 
   /**
-   * Returns an identifier for the caller, used to correlate responses.
+   * Returns the unique identifier for this transport instance, embedded in outbound requests
+   * so that the remote side can address its response back to the correct caller.
    *
    * @return caller id string
    */
   String getCallerId ();
 
   /**
-   * Transmits an invocation with routing information, arguments, and contexts.
+   * Submits an invocation to the remote service described by {@code route} using the routing
+   * strategy encoded in {@code voice}, and returns the result for request/reply conversations.
    *
-   * @param voice     voice describing destination and conversation style
-   * @param route     route identifying the service and function
-   * @param arguments serialized argument map
-   * @param contexts  wire contexts to propagate
-   * @return result of the call, or {@code null} for in-only conversations
-   * @throws Throwable if transport submission fails or the remote call raises an error
+   * @param voice     voice that encodes the conversation style (in-only vs. request/reply) and routing hints
+   * @param route     route identifying the target service, version, and function
+   * @param arguments named argument map to include in the request payload
+   * @param contexts  wire contexts to propagate to the remote side
+   * @return the decoded return value for request/reply calls, or {@code null} for in-only calls
+   * @throws Throwable if submission fails, the call times out, or the remote side reports an error
    */
   Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
   /**
-   * Completes a previously issued asynchronous invocation by delivering a result.
+   * Delivers an inbound result signal to the pending callback identified by {@code correlationId}.
    *
-   * @param correlationId id correlating the result to the original request
-   * @param resultSignal  signal containing the outcome
+   * @param correlationId id that ties the result to the original outbound request
+   * @param resultSignal  signal carrying the remote result or error
    */
   void completeCallback (String correlationId, ResultSignal resultSignal);
 
   /**
-   * Releases any resources held by the transport.
+   * Shuts down this transport and releases all associated resources.
    *
    * @throws Exception if shutdown fails
    */

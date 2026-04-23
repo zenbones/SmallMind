@@ -33,7 +33,7 @@
 package org.smallmind.mongodb.utility;
 
 /**
- * Simple value object describing a MongoDB server host and port.
+ * Simple value object describing a MongoDB server by host and port.
  */
 public class MongoServer {
 
@@ -41,15 +41,17 @@ public class MongoServer {
   private int port = 27017;
 
   /**
-   * Creates an uninitialized server definition.
+   * Creates an uninitialized server definition; host and port must be configured via the corresponding setters.
    */
   public MongoServer () {
 
   }
 
   /**
-   * @param host hostname or IP address
-   * @param port port number, typically 27017
+   * Creates a server definition with the given host and port.
+   *
+   * @param host hostname or IP address of the MongoDB server
+   * @param port TCP port the server listens on, typically {@code 27017}
    */
   public MongoServer (String host, int port) {
 
@@ -58,7 +60,9 @@ public class MongoServer {
   }
 
   /**
-   * @return server host
+   * Returns the hostname or IP address of the server.
+   *
+   * @return the server host
    */
   public String getHost () {
 
@@ -66,7 +70,9 @@ public class MongoServer {
   }
 
   /**
-   * @param host server host
+   * Sets the hostname or IP address of the server.
+   *
+   * @param host the server host
    */
   public void setHost (String host) {
 
@@ -74,7 +80,9 @@ public class MongoServer {
   }
 
   /**
-   * @return server port
+   * Returns the TCP port number of the server.
+   *
+   * @return the server port
    */
   public int getPort () {
 
@@ -82,7 +90,9 @@ public class MongoServer {
   }
 
   /**
-   * @param port server port
+   * Sets the TCP port number of the server.
+   *
+   * @param port the server port
    */
   public void setPort (int port) {
 

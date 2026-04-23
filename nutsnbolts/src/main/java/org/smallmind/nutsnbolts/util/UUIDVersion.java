@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * UUID version numbers, including custom extensions.
+ * Enumeration of UUID version numbers, covering both standard RFC 4122 versions and custom extensions such as Snowflake-native and fully custom formats.
  */
 public enum UUIDVersion {
 
@@ -48,7 +48,9 @@ public enum UUIDVersion {
   private final int version;
 
   /**
-   * @param version numeric version code
+   * Assigns the numeric version code for this constant.
+   *
+   * @param version the integer value of the version field
    */
   UUIDVersion (int version) {
 
@@ -56,7 +58,9 @@ public enum UUIDVersion {
   }
 
   /**
-   * @return version field integer value
+   * Returns the integer value of this version's field as encoded in a UUID.
+   *
+   * @return the version field value
    */
   public int getVersion () {
 

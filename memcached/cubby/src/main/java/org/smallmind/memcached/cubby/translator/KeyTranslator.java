@@ -36,17 +36,28 @@ import java.io.IOException;
 import org.smallmind.memcached.cubby.CubbyOperationException;
 
 /**
- * Translates cache keys to forms accepted by memcached servers.
+ * Strategy interface for translating application-supplied cache keys into strings that comply
+ * with the memcached protocol's key restrictions.
+ *
+ * <p>Memcached keys must not contain whitespace or control characters and are limited to
+ * 250 bytes. Implementations are responsible for escaping, encoding, or hashing keys as needed
+ * to satisfy these constraints. The two provided implementations are:</p>
+ * <ul>
+ *   <li>{@link DefaultKeyTranslator} &ndash; Base64-encodes every key.</li>
+ *   <li>{@link LargeKeyHashingTranslator} &ndash; delegates to another translator and hashes
+ *       the result when it exceeds 250 characters.</li>
+ * </ul>
  */
 public interface KeyTranslator {
 
   /**
-   * Encodes the provided key, enforcing size and character restrictions.
+   * Translates the given application key into a memcached-safe key string.
    *
-   * @param key original cache key
-   * @return translated key
-   * @throws IOException             if translation requires I/O and fails
-   * @throws CubbyOperationException if the key cannot be translated
+   * @param key the original, application-level cache key
+   * @return the translated key that conforms to memcached key restrictions
+   * @throws IOException             if an I/O error occurs during translation (e.g., encoding)
+   * @throws CubbyOperationException if the key cannot be translated due to a protocol or
+   *                                 algorithm constraint
    */
   String encode (String key)
     throws IOException, CubbyOperationException;

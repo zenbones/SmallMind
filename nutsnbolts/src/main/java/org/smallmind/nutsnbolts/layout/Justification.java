@@ -33,7 +33,9 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Governs how space is distributed when laying out children along an axis.
+ * Controls the placement of elements within a {@link SerialBox} when the total preferred size
+ * is smaller than the available container space and no element can consume the remainder.
+ * {@code LEADING} and {@code TRAILING} respect the platform orientation's flow direction.
  */
 public enum Justification {
 

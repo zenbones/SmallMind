@@ -36,8 +36,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring {@link FactoryBean} that parses a resource identifier into a {@link Resource}.
- * Supports singleton semantics and lazy parsing during {@link #afterPropertiesSet()}.
+ * Spring {@link FactoryBean} that parses a resource identifier string into a singleton
+ * {@link Resource} instance during bean initialization.
  */
 public class ResourceFactory implements FactoryBean<Resource>, InitializingBean {
 
@@ -47,9 +47,9 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   private String name;
 
   /**
-   * Sets the resource identifier to be parsed (e.g. {@code file:/tmp/data.txt}).
+   * Sets the resource identifier to be parsed when the bean is initialized.
    *
-   * @param name resource identifier string
+   * @param name resource identifier string, for example {@code file:/tmp/data.txt} or {@code classpath:/config.xml}
    */
   public void setName (String name) {
 
@@ -57,9 +57,9 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   }
 
   /**
-   * A single instance is created and cached.
+   * Declares that this factory always returns the same instance.
    *
-   * @return {@code true}
+   * @return {@code true}, indicating singleton scope
    */
   @Override
   public boolean isSingleton () {
@@ -68,9 +68,9 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   }
 
   /**
-   * Declares the produced object type for Spring.
+   * Reports the type of object this factory produces to the Spring container.
    *
-   * @return {@link Resource}.class
+   * @return {@code Resource.class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -79,10 +79,10 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   }
 
   /**
-   * Returns the parsed resource instance.
+   * Returns the {@link Resource} instance resolved during {@link #afterPropertiesSet()}.
    *
-   * @return resolved {@link Resource}, or {@code null} if no name was provided
-   * @throws Exception if parsing failed during initialization
+   * @return the resolved {@link Resource}, or {@code null} if no identifier was configured
+   * @throws Exception if the resource could not be resolved during initialization
    */
   @Override
   public Resource getObject ()
@@ -92,9 +92,10 @@ public class ResourceFactory implements FactoryBean<Resource>, InitializingBean 
   }
 
   /**
-   * Parses the configured {@code name} into a {@link Resource} instance.
+   * Parses the configured identifier into a concrete {@link Resource} instance.
+   * If the identifier is null or empty, the resolved resource is set to {@code null}.
    *
-   * @throws Exception if parsing fails
+   * @throws Exception if parsing the identifier fails
    */
   @Override
   public void afterPropertiesSet ()

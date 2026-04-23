@@ -40,8 +40,10 @@ import org.smallmind.persistence.cache.aop.Vector;
 import org.smallmind.persistence.cache.aop.VectorCalculator;
 
 /**
- * Key used to cache vectors, derived from {@link Vector} metadata, the durable instance, and
- * optional classification.
+ * Serializable cache key for a durable vector, formed from the element class name, vector
+ * namespace, index values, and an optional classification suffix.
+ *
+ * @param <D> vector element durable type
  */
 public class VectorKey<D extends Durable<?>> implements Serializable {
 
@@ -49,12 +51,12 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   private final String key;
 
   /**
-   * Builds a key from the vector annotation, durable instance, and classification derived from
-   * {@link CachedWith}.
+   * Constructs a key from a {@link Vector} annotation and a durable instance, using classification
+   * derived from the associated {@link CachedWith} annotation.
    *
-   * @param vector       vector annotation
-   * @param durable      durable instance providing index values
-   * @param elementClass vector element class
+   * @param vector       vector annotation providing namespace and index field definitions
+   * @param durable      durable instance whose field values populate the index
+   * @param elementClass class of the vector elements
    */
   public VectorKey (Vector vector, D durable, Class<D> elementClass) {
 
@@ -62,10 +64,10 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * Builds a key from a precomputed {@link VectorArtifact}.
+   * Constructs a key from a precomputed {@link VectorArtifact} with no classification suffix.
    *
-   * @param vectorArtifact vector details
-   * @param elementClass   vector element class
+   * @param vectorArtifact pre-built artifact containing namespace and index values
+   * @param elementClass   class of the vector elements
    */
   public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass) {
 
@@ -73,11 +75,12 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * Builds a key from a vector artifact and optional classification suffix.
+   * Constructs a key from a precomputed {@link VectorArtifact} and an optional classification
+   * suffix.
    *
-   * @param vectorArtifact vector details
-   * @param elementClass   vector element class
-   * @param classification optional classification string
+   * @param vectorArtifact pre-built artifact containing namespace and index values
+   * @param elementClass   class of the vector elements
+   * @param classification optional string appended to the key to distinguish variants; may be {@code null}
    */
   public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass, String classification) {
 
@@ -87,7 +90,9 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * @return cacheable vector key string
+   * Returns the formatted cache key string for this vector.
+   *
+   * @return vector key string
    */
   public String getKey () {
 
@@ -95,6 +100,8 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
+   * Returns the class of the durable elements stored in this vector.
+   *
    * @return vector element class
    */
   public Class<D> getElementClass () {
@@ -103,10 +110,11 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * Builds the string form of the vector key using namespace, indices, and optional classification.
+   * Assembles the key string from the element class name, namespace, index entries, and optional
+   * classification.
    *
-   * @param vectorArtifact artifact describing vector indices and namespace
-   * @param classification optional classification suffix
+   * @param vectorArtifact artifact supplying the namespace and indices
+   * @param classification optional classification suffix; {@code null} means no suffix
    * @return composed key string
    */
   private String buildKey (VectorArtifact vectorArtifact, String classification) {
@@ -147,9 +155,9 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * Hashes based on the generated key string.
+   * Returns a hash code based on the generated key string.
    *
-   * @return hash code for this key
+   * @return hash code of the key string
    */
   public int hashCode () {
 
@@ -157,10 +165,10 @@ public class VectorKey<D extends Durable<?>> implements Serializable {
   }
 
   /**
-   * Keys are equal when their underlying key strings match.
+   * Returns {@code true} when {@code obj} is a {@link VectorKey} with an identical key string.
    *
-   * @param obj other object
-   * @return equality result
+   * @param obj object to compare against this key
+   * @return {@code true} if the keys are equal
    */
   public boolean equals (Object obj) {
 

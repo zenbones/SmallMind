@@ -33,15 +33,15 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Indicates that a class failed verification against required conditions.
+ * Signals that a class signature or certificate check performed by {@link ClassVerifier} has failed.
  */
 public class ClassVerificationException extends FormattedException {
 
   /**
-   * Constructs the exception with a formatted message.
+   * Creates an exception with a formatted detail message.
    *
-   * @param message the message format string
-   * @param args    arguments to substitute into the message
+   * @param message the format string describing the verification failure
+   * @param args    arguments substituted into the format string
    */
   public ClassVerificationException (String message, Object... args) {
 

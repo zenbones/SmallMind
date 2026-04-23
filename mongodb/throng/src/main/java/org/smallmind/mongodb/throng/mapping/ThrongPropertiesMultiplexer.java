@@ -86,7 +86,9 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   }
 
   /**
-   * @return base entity class for this multiplexer
+   * Returns the base entity class of this polymorphic hierarchy.
+   *
+   * @return the base entity class
    */
   public Class<T> getEntityClass () {
 
@@ -94,7 +96,9 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   }
 
   /**
-   * @return whether null values are stored during encoding
+   * Returns whether null property values are encoded as BSON null rather than omitted.
+   *
+   * @return {@code true} if null values are persisted
    */
   public boolean isStoreNulls () {
 
@@ -102,7 +106,9 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   }
 
   /**
-   * @return discriminator key name used to identify subtypes
+   * Returns the discriminator key name used to identify subtypes in BSON documents.
+   *
+   * @return the discriminator field name
    */
   public String getKey () {
 
@@ -129,7 +135,9 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
   }
 
   /**
-   * Combines index definitions from all registered subtype codecs.
+   * Combines index definitions from all registered subtype codecs into a single {@link ThrongIndexes} instance.
+   *
+   * @return the merged index definitions for all subtypes
    */
   @Override
   public ThrongIndexes provideIndexes () {

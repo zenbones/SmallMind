@@ -33,10 +33,11 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Associates a {@link ParaboxElement} with its original index for reordering operations.
+ * Pairs a {@link ParaboxElement} with its original position in the element list so that
+ * {@link SerialBox} can track and remove fully saturated elements during the grow-distribution loop.
  *
- * @param reorderedElement element after reordering
- * @param originalIndex    position the element occupied before reordering
+ * @param reorderedElement the element participating in the grow-space distribution
+ * @param originalIndex    the index at which the element resided before reordering
  */
 public record ReorderedElement(ParaboxElement<?> reorderedElement, int originalIndex) {
 

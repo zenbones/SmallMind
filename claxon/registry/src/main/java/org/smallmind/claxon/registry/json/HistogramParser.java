@@ -40,16 +40,20 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Parses histogram configuration from JSON into a {@link HistogramBuilder}.
+ * {@link InstrumentedParser} implementation for {@link Histogram} meters that deserializes
+ * a JSON configuration string into a fully configured {@link HistogramBuilder}. Only
+ * properties present in the JSON are applied to the builder; absent properties retain their
+ * builder defaults.
  */
 public class HistogramParser implements InstrumentedParser<Histogram> {
 
   /**
-   * Parses JSON and produces a configured histogram builder.
+   * Deserializes the supplied JSON into a {@link HistogramProperties} object and transfers
+   * each non-null property onto a new {@link HistogramBuilder}.
    *
-   * @param json JSON configuration
-   * @return configured histogram builder
-   * @throws IOException when parsing fails
+   * @param json JSON configuration string describing histogram properties
+   * @return a {@link HistogramBuilder} configured according to the supplied JSON
+   * @throws IOException if the JSON string cannot be parsed or is malformed
    */
   @Override
   public MeterBuilder<Histogram> parse (String json)

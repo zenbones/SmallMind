@@ -33,16 +33,16 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Convenience wrapper that delegates to numeric or alphabetic spread expansion depending on the first character.
+ * Facade that expands a comma-delimited spread expression into an ordered string array, delegating to {@link NumericSpread} or {@link AlphaSpread} based on the first character.
  */
 public class Spread {
 
   /**
-   * Expands a comma-delimited set of ranges into string values.
+   * Parses and expands the supplied spread expression, returning each resulting value as a string.
    *
-   * @param spreadable expression such as {@code 1..3,7} or {@code a..c,z}
-   * @return ordered array of values as strings
-   * @throws SpreadParserException if parsing fails
+   * @param spreadable a comma-separated expression of numbers or letters with optional {@code start..end} range notation; {@code null} or empty returns an empty array
+   * @return ordered array of string values described by the expression
+   * @throws SpreadParserException if the expression contains invalid or unparseable elements
    */
   public static String[] calculate (String spreadable)
     throws SpreadParserException {

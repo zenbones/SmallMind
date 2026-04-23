@@ -35,15 +35,28 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted for assertion failures within a test.
+ * Event fired when a test method throws an {@link AssertionError}.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.TestRunner} when an {@link AssertionError}
+ * is unwrapped from the {@link java.lang.reflect.InvocationTargetException} thrown by the
+ * reflective method call. This distinguishes an explicit assertion failure from an unexpected
+ * runtime exception, which is reported as an {@link ErrorSleuthEvent} instead.
+ * <p>
+ * If the runner's {@code stopOnFailure} flag is set, {@link org.smallmind.sleuth.runner.SleuthRunner#cancel()}
+ * is called before this event is fired.
+ *
+ * @see ErrorSleuthEvent
+ * @see org.smallmind.sleuth.runner.TestRunner
  */
 public class FailureSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param throwable  assertion failure
+   * Constructs a failure event for the given test and cause.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test method that failed; must not be {@code null}
+   * @param elapsed    wall-clock duration of the test method invocation in milliseconds; non-negative
+   * @param throwable  the {@link AssertionError} that caused the failure; must not be {@code null}
    */
   public FailureSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
@@ -51,6 +64,8 @@ public class FailureSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#FAILURE}.
+   *
    * @return {@link SleuthEventType#FAILURE}
    */
   @Override
@@ -60,7 +75,9 @@ public class FailureSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
-   * @return bright red to indicate failure
+   * Returns bright red, used to make assertion failures visually prominent on the console.
+   *
+   * @return {@link AnsiColor#BRIGHT_RED}
    */
   @Override
   public AnsiColor getColor () {

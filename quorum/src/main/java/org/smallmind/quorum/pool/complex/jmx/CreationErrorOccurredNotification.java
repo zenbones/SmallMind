@@ -36,19 +36,35 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
 
 /**
- * JMX notification indicating an error occurred while creating or managing a component.
+ * JMX notification emitted by {@link ComponentPoolMonitor} when a component pool error
+ * event is received.
+ * <p>
+ * Each instance carries the exception that caused the pool error and is assigned a globally
+ * unique, monotonically increasing sequence number. The notification type is {@link #TYPE}
+ * ({@value #TYPE}), which can be used in {@link javax.management.NotificationFilter}
+ * implementations to select only error notifications.
  */
 public class CreationErrorOccurredNotification extends Notification {
 
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
+
+  /**
+   * Notification type string identifying creation-error notifications.
+   */
   public static final String TYPE = "ERROR_OCCURRED";
+
   private final Exception exception;
 
   /**
-   * Creates the notification with the emitting source and cause.
+   * Creates the notification with the given source and cause.
+   * <p>
+   * The sequence number is auto-incremented from a class-level counter; the timestamp is
+   * set to the current wall-clock time.
    *
-   * @param source    MBean source
-   * @param exception underlying exception
+   * @param source    the MBean object that is the source of this notification (typically
+   *                  the {@link javax.management.ObjectName} of the
+   *                  {@link ComponentPoolMonitor})
+   * @param exception the exception that triggered the pool error event
    */
   public CreationErrorOccurredNotification (Object source, Exception exception) {
 
@@ -58,9 +74,9 @@ public class CreationErrorOccurredNotification extends Notification {
   }
 
   /**
-   * Returns the exception associated with the error event.
+   * Returns the exception that caused the pool error.
    *
-   * @return exception
+   * @return the exception
    */
   public Exception getException () {
 

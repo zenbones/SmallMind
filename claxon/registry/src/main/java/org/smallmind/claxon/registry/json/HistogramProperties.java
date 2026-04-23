@@ -41,24 +41,53 @@ import org.smallmind.web.json.doppelganger.View;
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
 /**
- * JSON-mapped properties for configuring a histogram meter.
+ * JSON-mapped configuration properties for a histogram meter. Instances of this class are
+ * populated by the JSON doppelganger framework and subsequently consumed by
+ * {@link HistogramParser} to build a configured histogram. All fields are optional; a
+ * {@code null} value indicates that the corresponding histogram builder default should be
+ * used.
  */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class HistogramProperties {
 
+  /**
+   * Resolution window controlling how frequently histogram data is rotated or snapshotted.
+   */
   @View(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private Stint resolutionStint;
+
+  /**
+   * Percentile definitions that should be emitted alongside raw histogram statistics.
+   */
   @View(idioms = @Idiom(visibility = IN))
   private Percentile[] percentiles;
+
+  /**
+   * The lowest value that can be discerned from a neighboring value by the histogram.
+   * Maps directly to the HdrHistogram {@code lowestDiscernibleValue} parameter.
+   */
   @View(idioms = @Idiom(visibility = IN))
   private Long lowestDiscernibleValue;
+
+  /**
+   * The highest value that the histogram is able to track without overflow.
+   * Maps directly to the HdrHistogram {@code highestTrackableValue} parameter.
+   */
   @View(idioms = @Idiom(visibility = IN))
   private Long highestTrackableValue;
+
+  /**
+   * The number of significant decimal digits to which the histogram will maintain value
+   * resolution and separation. Maps directly to the HdrHistogram
+   * {@code numberOfSignificantValueDigits} parameter.
+   */
   @View(idioms = @Idiom(visibility = IN))
   private Integer numberOfSignificantValueDigits;
 
   /**
-   * @return configured resolution stint
+   * Returns the resolution stint that governs the histogram's rotation interval.
+   *
+   * @return the configured {@link Stint}, or {@code null} if not set
    */
   public Stint getResolutionStint () {
 
@@ -66,9 +95,9 @@ public class HistogramProperties {
   }
 
   /**
-   * Sets the histogram resolution stint.
+   * Sets the resolution stint that governs the histogram's rotation interval.
    *
-   * @param resolutionStint resolution window
+   * @param resolutionStint the time window to apply, or {@code null} to use the builder default
    */
   public void setResolutionStint (Stint resolutionStint) {
 
@@ -76,7 +105,9 @@ public class HistogramProperties {
   }
 
   /**
-   * @return percentiles to emit
+   * Returns the percentile definitions that should be emitted by the histogram.
+   *
+   * @return array of {@link Percentile} objects, or {@code null} if not set
    */
   public Percentile[] getPercentiles () {
 
@@ -84,9 +115,9 @@ public class HistogramProperties {
   }
 
   /**
-   * Sets the percentiles to emit.
+   * Sets the percentile definitions that should be emitted by the histogram.
    *
-   * @param percentiles percentile definitions
+   * @param percentiles array of percentile definitions, or {@code null} to use builder defaults
    */
   public void setPercentiles (Percentile[] percentiles) {
 
@@ -94,7 +125,9 @@ public class HistogramProperties {
   }
 
   /**
-   * @return lowest discernible histogram value
+   * Returns the lowest value the histogram can distinguish from a neighboring value.
+   *
+   * @return the lowest discernible value, or {@code null} if not set
    */
   public Long getLowestDiscernibleValue () {
 
@@ -102,9 +135,9 @@ public class HistogramProperties {
   }
 
   /**
-   * Sets the lowest discernible histogram value.
+   * Sets the lowest value the histogram can distinguish from a neighboring value.
    *
-   * @param lowestDiscernibleValue minimum value
+   * @param lowestDiscernibleValue the minimum discernible value, or {@code null} to use the builder default
    */
   public void setLowestDiscernibleValue (Long lowestDiscernibleValue) {
 
@@ -112,7 +145,9 @@ public class HistogramProperties {
   }
 
   /**
-   * @return highest trackable histogram value
+   * Returns the highest value the histogram is able to track without overflow.
+   *
+   * @return the highest trackable value, or {@code null} if not set
    */
   public Long getHighestTrackableValue () {
 
@@ -120,9 +155,9 @@ public class HistogramProperties {
   }
 
   /**
-   * Sets the highest trackable histogram value.
+   * Sets the highest value the histogram is able to track without overflow.
    *
-   * @param highestTrackableValue maximum value
+   * @param highestTrackableValue the maximum trackable value, or {@code null} to use the builder default
    */
   public void setHighestTrackableValue (Long highestTrackableValue) {
 
@@ -130,7 +165,9 @@ public class HistogramProperties {
   }
 
   /**
-   * @return number of significant value digits
+   * Returns the number of significant decimal digits maintained by the histogram.
+   *
+   * @return the digit precision, or {@code null} if not set
    */
   public Integer getNumberOfSignificantValueDigits () {
 
@@ -138,9 +175,9 @@ public class HistogramProperties {
   }
 
   /**
-   * Sets histogram precision.
+   * Sets the number of significant decimal digits maintained by the histogram.
    *
-   * @param numberOfSignificantValueDigits precision digits
+   * @param numberOfSignificantValueDigits the digit precision, or {@code null} to use the builder default
    */
   public void setNumberOfSignificantValueDigits (Integer numberOfSignificantValueDigits) {
 

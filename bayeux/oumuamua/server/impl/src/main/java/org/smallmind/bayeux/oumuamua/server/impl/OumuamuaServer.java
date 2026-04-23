@@ -42,9 +42,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -71,9 +68,10 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Core server implementation that coordinates protocols, transports, sessions, channels, and services.
+ * Central Bayeux server that owns the channel tree, session registry, protocol map, and backbone,
+ * and routes messages between all of those components.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
@@ -93,10 +91,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private IdleSessionInspector<V> idleSessionInspector;
 
   /**
-   * Constructs a server using the supplied configuration, registering protocols, services, and listeners.
+   * Builds the server from the supplied configuration, wiring protocols, services, and listeners.
    *
-   * @param configuration server configuration
-   * @throws OumuamuaException if required components are missing
+   * @param configuration fully populated server configuration; must not be {@code null} and must
+   *                      contain at least one protocol and a non-{@code null} codec
+   * @throws OumuamuaException if {@code configuration} is {@code null}, its codec is missing, or
+   *                           no protocols have been defined
    */
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -142,10 +142,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Starts the server, initializing the backbone and maintenance tasks.
+   * Starts the server by bringing up the backbone, initializing each protocol, and launching the
+   * idle-channel and idle-session maintenance threads.
    *
-   * @param servletConfig servlet configuration provided by the container
-   * @throws ServletException if backbone startup or protocol initialization fails
+   * @param servletConfig servlet configuration forwarded to each protocol's {@code init} method
+   * @throws ServletException if the backbone fails to start or a protocol throws during initialization
    */
   public void start (ServletConfig servletConfig)
     throws ServletException {
@@ -175,7 +176,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Stops background processing and releases executor resources.
+   * Shuts down the backbone, stops both maintenance threads, and terminates the executor service.
    */
   public void stop () {
 
@@ -208,7 +209,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return executor used for server tasks
+   * Returns the executor service used to dispatch asynchronous server tasks.
+   *
+   * @return the configured executor, or the default virtual-thread-per-task executor
    */
   public ExecutorService getExecutorService () {
 
@@ -216,9 +219,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Listener invoked when a session completes its connection phase.
+   * Dispatches the session-connected event to all registered {@link SessionListener}s.
    *
-   * @param session connected session
+   * @param session the session that has just completed its connection handshake
    */
   private void onConnected (Session<V> session) {
 
@@ -230,9 +233,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Listener invoked when a session disconnects.
+   * Dispatches the session-disconnected event to all registered {@link SessionListener}s.
    *
-   * @param session disconnected session
+   * @param session the session that has just disconnected
    */
   private void onDisconnected (Session<V> session) {
 
@@ -244,10 +247,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Notifies listeners of a subscription event.
+   * Dispatches the subscribed event to all registered {@link SubscriptionListener}s.
    *
-   * @param channel subscribed channel
-   * @param session subscribing session
+   * @param channel the channel that was subscribed to
+   * @param session the session that performed the subscription
    */
   private void onSubscribed (Channel<V> channel, Session<V> session) {
 
@@ -259,10 +262,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Notifies listeners of an unsubscribe event.
+   * Dispatches the unsubscribed event to all registered {@link SubscriptionListener}s.
    *
-   * @param channel unsubscribed channel
-   * @param session unsubscribing session
+   * @param channel the channel that was unsubscribed from
+   * @param session the session that performed the unsubscription
    */
   private void onUnsubscribed (Channel<V> channel, Session<V> session) {
 
@@ -274,9 +277,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Notifies listeners when a channel is created.
+   * Dispatches the channel-created event to all registered {@link ChannelListener}s.
    *
-   * @param channel channel that was created
+   * @param channel the newly created channel
    */
   private void onCreated (Channel<V> channel) {
 
@@ -288,9 +291,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Notifies listeners when a channel is removed.
+   * Dispatches the channel-removed event to all registered {@link ChannelListener}s.
    *
-   * @param channel channel that was removed
+   * @param channel the channel that has been removed from the tree
    */
   private void onRemoved (Channel<V> channel) {
 
@@ -302,11 +305,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Applies server-level packet listeners to an inbound packet.
+   * Runs the packet through every registered {@link PacketListener}, giving each one the
+   * opportunity to transform or veto it.
    *
-   * @param sender originating session
-   * @param packet packet to process
-   * @return potentially modified packet, or {@code null} to halt processing
+   * @param sender the originating session, or {@code null} for backbone-sourced packets
+   * @param packet the packet to process; the appropriate listener method is chosen based on its
+   *               {@link PacketType}
+   * @return the (possibly transformed) packet, or {@code null} if a listener vetoed delivery
    */
   private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
@@ -332,9 +337,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Registers a Bayeux service.
+   * Registers a {@link BayeuxService} under every route it declares.
    *
-   * @param service service to add
+   * @param service the service to register; routes with no declared bound routes are silently ignored
    */
   @Override
   public void addService (BayeuxService<V> service) {
@@ -349,9 +354,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Removes the service bound to the given route.
+   * Deregisters the service bound to the given route.
    *
-   * @param route service route
+   * @param route the route whose service binding should be removed
    */
   @Override
   public void removeService (Route route) {
@@ -360,10 +365,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Resolves a service for the supplied route.
+   * Looks up the service bound to the given route.
    *
-   * @param route service route
-   * @return matching service or {@code null}
+   * @param route the route to resolve
+   * @return the bound {@link BayeuxService}, or {@code null} if no service is registered for the route
    */
   @Override
   public BayeuxService<V> getService (Route route) {
@@ -372,9 +377,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Adds a server listener.
+   * Appends a listener to the server's listener chain.
    *
-   * @param listener listener to register
+   * @param listener the {@link Listener} to register; may implement any combination of
+   *                 {@link SessionListener}, {@link SubscriptionListener}, {@link ChannelListener},
+   *                 or {@link PacketListener}
    */
   @Override
   public void addListener (Listener<V> listener) {
@@ -383,9 +390,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Removes a server listener.
+   * Removes a previously registered listener from the server's listener chain.
    *
-   * @param listener listener to remove
+   * @param listener the listener to remove; no-op if it was never registered
    */
   @Override
   public void removeListener (Listener<V> listener) {
@@ -394,7 +401,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return Bayeux protocol version exposed by the server
+   * Returns the Bayeux protocol version advertised during handshake.
+   *
+   * @return the version string {@code "1.0"}
    */
   @Override
   public String getBayeuxVersion () {
@@ -403,7 +412,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return minimum Bayeux version supported by the server
+   * Returns the minimum Bayeux protocol version accepted from clients.
+   *
+   * @return the minimum version string {@code "1.0"}
    */
   @Override
   public String getMinimumBayeuxVersion () {
@@ -412,7 +423,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return array of configured protocol names
+   * Returns the names of all protocols registered with the server.
+   *
+   * @return array of protocol name strings; order is not guaranteed
    */
   @Override
   public String[] getProtocolNames () {
@@ -421,10 +434,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Looks up a protocol by name.
+   * Retrieves a registered protocol by its canonical name.
    *
-   * @param name protocol name
-   * @return protocol or {@code null} if none registered
+   * @param name the protocol name as returned by {@link Protocol#getName()}
+   * @return the matching {@link Protocol}, or {@code null} if no protocol has that name
    */
   @Override
   public Protocol<V> getProtocol (String name) {
@@ -433,7 +446,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return configured backbone implementation
+   * Returns the backbone used for cluster-wide message distribution.
+   *
+   * @return the configured {@link Backbone}, or {@code null} if no backbone was configured
    */
   @Override
   public Backbone<V> getBackbone () {
@@ -442,7 +457,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return active security policy, or {@code null} if none
+   * Returns the security policy that governs handshake and subscription authorization.
+   *
+   * @return the configured {@link SecurityPolicy}, or {@code null} if no policy was set
    */
   @Override
   public SecurityPolicy<V> getSecurityPolicy () {
@@ -451,7 +468,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return codec used for message encoding/decoding
+   * Returns the codec used to serialize and deserialize Bayeux messages.
+   *
+   * @return the configured {@link Codec}; never {@code null}
    */
   @Override
   public Codec<V> getCodec () {
@@ -460,7 +479,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return whether implicit connection is permitted
+   * Indicates whether the server allows clients to publish without an explicit connect message.
+   *
+   * @return {@code true} if implicit connection is permitted
    */
   @Override
   public boolean allowsImplicitConnection () {
@@ -469,7 +490,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return session connect interval in milliseconds
+   * Returns the maximum permitted gap between client connect messages before a session is
+   * considered stale.
+   *
+   * @return the interval in milliseconds
    */
   @Override
   public long getSessionConnectionIntervalMilliseconds () {
@@ -478,10 +502,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Indicates whether the route should reflect messages back to the sender.
+   * Indicates whether published messages on the given route are echoed back to the publishing session.
    *
-   * @param route channel route
-   * @return {@code true} if reflection is enabled
+   * @param route the channel route to check
+   * @return {@code true} if the publisher should receive its own messages
    */
   @Override
   public boolean isReflecting (Route route) {
@@ -490,10 +514,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Indicates whether the route should stream data.
+   * Indicates whether messages on the given route bypass the long-poll queue and are pushed
+   * directly over the active connection.
    *
-   * @param route channel route
-   * @return {@code true} if streaming is enabled
+   * @param route the channel route to check
+   * @return {@code true} if streaming delivery is active for the route
    */
   @Override
   public boolean isStreaming (Route route) {
@@ -502,7 +527,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return log level used for message handling
+   * Returns the log level at which raw inbound and outbound messages are recorded.
+   *
+   * @return the configured message log level
    */
   public Level getMessageLogLevel () {
 
@@ -510,10 +537,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Creates a new session for the provided connection.
+   * Instantiates a new {@link OumuamuaSession} bound to the supplied connection without registering
+   * it in the session map; call {@link #addSession} to complete registration.
    *
-   * @param connection transport connection
-   * @return new session
+   * @param connection the transport connection that owns the new session
+   * @return a freshly created, unregistered session
    */
   public OumuamuaSession<V> createSession (Connection<V> connection) {
 
@@ -521,10 +549,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Retrieves a session by id.
+   * Looks up an active session by its unique identifier.
    *
-   * @param sessionId session identifier
-   * @return session or {@code null}
+   * @param sessionId the session id to find
+   * @return the matching session, or {@code null} if no session with that id is registered
    */
   public OumuamuaSession<V> getSession (String sessionId) {
 
@@ -532,9 +560,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Registers a session with the server.
+   * Adds the session to the active session registry, keyed by its id.
    *
-   * @param session session to register
+   * @param session the session to register; replaces any existing entry with the same id
    */
   public void addSession (OumuamuaSession<V> session) {
 
@@ -542,9 +570,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Removes a session from the server, departing its channels.
+   * Removes the session from the registry and unsubscribes it from all channels.
    *
-   * @param session session to remove
+   * @param session the session to deregister; no-op if it was not found in the registry
    */
   public void removeSession (OumuamuaSession<V> session) {
 
@@ -556,9 +584,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Unsubscribes the session from all channels.
+   * Walks the entire channel tree and unsubscribes the session from every channel it belongs to.
    *
-   * @param session session departing
+   * @param session the session being evicted from all channels
    */
   public void departChannels (OumuamuaSession<V> session) {
 
@@ -566,7 +594,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * @return iterator over active sessions
+   * Returns an iterator over the current snapshot of active sessions.
+   *
+   * @return live iterator from the session registry; supports {@code remove()}
    */
   public Iterator<OumuamuaSession<V>> iterateSessions () {
 
@@ -574,9 +604,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Adds a channel initializer run when channels are created.
+   * Registers a {@link ChannelInitializer} that is applied to every channel at creation time.
    *
-   * @param initializer initializer to add
+   * @param initializer the initializer to register
    */
   @Override
   public void addInitializer (ChannelInitializer<V> initializer) {
@@ -585,9 +615,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Removes a channel initializer.
+   * Removes a previously registered channel initializer.
    *
-   * @param initializer initializer to remove
+   * @param initializer the initializer to remove; no-op if it was never registered
    */
   @Override
   public void removeInitializer (ChannelInitializer<V> initializer) {
@@ -596,11 +626,11 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Finds an existing channel by path.
+   * Returns the channel at the given path if it already exists in the tree.
    *
-   * @param path channel path
-   * @return channel or {@code null}
-   * @throws InvalidPathException if the path is malformed
+   * @param path the Bayeux channel path (e.g. {@code "/foo/bar"})
+   * @return the existing channel, or {@code null} if no channel is registered at that path
+   * @throws InvalidPathException if {@code path} cannot be parsed as a valid route
    */
   @Override
   public Channel<V> findChannel (String path)
@@ -610,12 +640,14 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Retrieves a channel, creating it (and applying initializers) if absent.
+   * Returns the channel at the given path, creating it (and any missing intermediate branches)
+   * if it does not yet exist and running all registered initializers plus any supplied ones.
    *
-   * @param path         channel path
-   * @param initializers optional initializers to apply
-   * @return channel instance
-   * @throws InvalidPathException if the path is invalid
+   * @param path         the Bayeux channel path to create or retrieve
+   * @param initializers zero or more per-call initializers appended after the server-level ones;
+   *                     may be {@code null} or empty
+   * @return the existing or newly created channel; never {@code null}
+   * @throws InvalidPathException if {@code path} cannot be parsed as a valid route
    */
   @Override
   public Channel<V> requireChannel (String path, ChannelInitializer... initializers)
@@ -634,10 +666,10 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Removes a channel if present, honoring persistence rules.
+   * Terminates and removes the channel from the tree, firing the removed listener callback.
    *
-   * @param channel channel to remove
-   * @throws ChannelStateException if removal is not allowed
+   * @param channel the channel to remove
+   * @throws ChannelStateException if the channel is marked persistent and therefore cannot be removed
    */
   @Override
   public void removeChannel (Channel<V> channel)
@@ -647,11 +679,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Applies listeners to a request packet.
+   * Passes an inbound request packet through all server-level {@link PacketListener}s.
+   * Changes made here are visible to all subsequent processing, including the reply to the sender.
    *
-   * @param sender originating session
-   * @param packet request packet
-   * @return processed packet or {@code null} to stop processing
+   * @param sender the session that sent the request
+   * @param packet the request packet; modifications are shared with all downstream processing
+   * @return the (possibly transformed) packet, or {@code null} if processing should halt
    */
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
@@ -661,11 +694,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Applies listeners to a response packet.
+   * Passes an outbound response packet through all server-level {@link PacketListener}s.
+   * Changes made here are visible only to the reply sent back to the originating sender.
    *
-   * @param sender originating session
-   * @param packet response packet
-   * @return processed packet or {@code null} to stop processing
+   * @param sender the session that will receive the response
+   * @param packet the response packet; modifications are scoped to the sender
+   * @return the (possibly transformed) packet, or {@code null} if processing should halt
    */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
@@ -675,11 +709,13 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Delivers a packet to subscribers and optionally across the cluster.
+   * Delivers a packet to all matching channel subscribers and, when requested, publishes it to the
+   * backbone for cluster-wide distribution.
    *
-   * @param sender    originating session
-   * @param packet    packet to deliver
-   * @param clustered {@code true} to forward through the backbone
+   * @param sender    the session publishing the packet, or {@code null} for server-initiated delivery
+   * @param packet    the packet to deliver; must carry a non-{@code null} route
+   * @param clustered {@code true} to also publish through the backbone; pass {@code false} for
+   *                  packets already received from the backbone to avoid re-broadcast loops
    */
   @Override
   public void deliver (Session<V> sender, Packet<V> packet, boolean clustered) {
@@ -704,10 +740,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Forwards a packet via the backbone.
+   * Delivers a packet directly to the given channel's subscribers and publishes it to the backbone.
+   * Intended for server-initiated publishes that originate on a specific channel rather than
+   * flowing through the full tree traversal.
    *
-   * @param channel originating channel
-   * @param packet  packet to forward
+   * @param channel the channel whose subscribers should receive the packet
+   * @param packet  the packet to deliver; must carry a non-{@code null} route
    */
   @Override
   public void forward (Channel<V> channel, Packet<V> packet) {

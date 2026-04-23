@@ -37,7 +37,8 @@ import java.io.Writer;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 /**
- * Writer that buffers text and notifies listeners when flushed or closed.
+ * A {@link Writer} that accumulates written characters in an internal buffer and notifies registered
+ * {@link StenographEventListener}s with the buffered text each time it is flushed or closed.
  */
 public class StenographWriter extends Writer {
 
@@ -46,7 +47,12 @@ public class StenographWriter extends Writer {
   private final StringBuilder stenographBuilder = new StringBuilder();
 
   /**
-   * Appends characters to the internal buffer.
+   * Appends a slice of the given character array to the internal buffer.
+   *
+   * @param cbuf the source character array
+   * @param off  the index of the first character to append
+   * @param len  the number of characters to append
+   * @throws IOException if an I/O error occurs (not thrown by this implementation)
    */
   @Override
   public synchronized void write (char[] cbuf, int off, int len)
@@ -56,7 +62,9 @@ public class StenographWriter extends Writer {
   }
 
   /**
-   * Flushes buffered text and notifies listeners.
+   * Dispatches the accumulated buffer contents to all registered listeners and clears the buffer.
+   *
+   * @throws IOException if an I/O error occurs (not thrown by this implementation)
    */
   @Override
   public synchronized void flush ()
@@ -66,7 +74,10 @@ public class StenographWriter extends Writer {
   }
 
   /**
-   * Flushes buffered text and notifies listeners, leaving the writer closed.
+   * Dispatches the accumulated buffer contents to all registered listeners, clears the buffer, and
+   * leaves the writer in a closed state.
+   *
+   * @throws IOException if an I/O error occurs (not thrown by this implementation)
    */
   @Override
   public synchronized void close ()
@@ -76,7 +87,8 @@ public class StenographWriter extends Writer {
   }
 
   /**
-   * Dispatches a flush event to listeners and clears the buffer.
+   * Constructs a {@link StenographEvent} from the current buffer, delivers it to every registered
+   * listener, and then clears the buffer.
    */
   private void fireFlush () {
 
@@ -90,9 +102,9 @@ public class StenographWriter extends Writer {
   }
 
   /**
-   * Registers a listener for flush events.
+   * Registers a listener to be notified whenever this writer is flushed or closed.
    *
-   * @param stenographEventListener listener to add
+   * @param stenographEventListener the listener to register
    */
   public synchronized void addStenographListener (StenographEventListener stenographEventListener) {
 
@@ -100,9 +112,9 @@ public class StenographWriter extends Writer {
   }
 
   /**
-   * Removes a previously registered listener.
+   * Removes a previously registered flush listener.
    *
-   * @param stenographEventListener listener to remove
+   * @param stenographEventListener the listener to remove
    */
   public synchronized void removeStenographListener (StenographEventListener stenographEventListener) {
 

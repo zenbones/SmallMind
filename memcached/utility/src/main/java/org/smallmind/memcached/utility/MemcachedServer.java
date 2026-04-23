@@ -33,22 +33,31 @@
 package org.smallmind.memcached.utility;
 
 /**
- * Simple value object representing a memcached server address.
+ * Simple value object that describes a single memcached server endpoint.
+ *
+ * <p>Instances are produced by factory beans such as
+ * {@link org.smallmind.memcached.utility.spring.MemcachedServerFactoryBean} and
+ * {@link org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean}, and are consumed
+ * by client factory beans to open connections to the cluster.</p>
  */
 public class MemcachedServer {
 
   private String host;
   private int port;
 
+  /**
+   * Default no-arg constructor for use by Spring or other IoC containers that set properties
+   * via setters.
+   */
   public MemcachedServer () {
 
   }
 
   /**
-   * Constructs a server descriptor.
+   * Constructs a server descriptor with the given host and port.
    *
-   * @param host hostname or IP
-   * @param port memcached port
+   * @param host the hostname or IP address of the memcached server
+   * @param port the TCP port on which the server is listening
    */
   public MemcachedServer (String host, int port) {
 
@@ -57,7 +66,9 @@ public class MemcachedServer {
   }
 
   /**
-   * @return host name
+   * Returns the hostname or IP address of this server.
+   *
+   * @return the server host
    */
   public String getHost () {
 
@@ -65,9 +76,9 @@ public class MemcachedServer {
   }
 
   /**
-   * Sets the hostname or IP.
+   * Sets the hostname or IP address of this server.
    *
-   * @param host host name
+   * @param host the server host
    */
   public void setHost (String host) {
 
@@ -75,7 +86,9 @@ public class MemcachedServer {
   }
 
   /**
-   * @return port number
+   * Returns the TCP port of this server.
+   *
+   * @return the server port
    */
   public int getPort () {
 
@@ -83,9 +96,9 @@ public class MemcachedServer {
   }
 
   /**
-   * Sets the port number.
+   * Sets the TCP port of this server.
    *
-   * @param port memcached port
+   * @param port the server port
    */
   public void setPort (int port) {
 

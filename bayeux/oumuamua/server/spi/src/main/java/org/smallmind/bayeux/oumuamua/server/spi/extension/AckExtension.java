@@ -51,10 +51,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Bayeux server extension implementing the ack extension used by cometd clients.
- * Tracks unacknowledged messages per session and resends missed packets until acknowledged.
+ * Server-side implementation of the Bayeux {@code ack} extension that guarantees at-least-once
+ * delivery by tracking unacknowledged packets per session and re-queuing them until the client
+ * confirms receipt via an ack identifier on subsequent connect responses.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
  */
 public class AckExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
 
@@ -67,9 +68,11 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private final int maxAckQueueSize;
 
   /**
-   * Creates the extension with the given maximum queue size and a default debug overflow log level.
+   * Creates the extension with the given maximum unacknowledged-message queue capacity and
+   * {@link Level#DEBUG} as the overflow log level.
    *
-   * @param maxAckQueueSize maximum number of messages that may be awaiting acknowledgment
+   * @param maxAckQueueSize upper bound on the total number of messages that may be held in the
+   *                        unacknowledged map across all in-flight packets for a single session
    */
   public AckExtension (int maxAckQueueSize) {
 
@@ -77,10 +80,12 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   }
 
   /**
-   * Creates the extension with custom overflow logging.
+   * Creates the extension with a custom overflow log level.
    *
-   * @param maxAckQueueSize  maximum number of messages that may be awaiting acknowledgment
-   * @param overflowLogLevel log level used when the ack queue is trimmed; {@code null} disables logging
+   * @param maxAckQueueSize  upper bound on the total number of messages that may be held in the
+   *                         unacknowledged map for a single session
+   * @param overflowLogLevel level at which a log entry is emitted when the unacknowledged map is
+   *                         trimmed due to overflow; pass {@code null} to suppress overflow logging
    */
   public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {
 
@@ -89,11 +94,13 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   }
 
   /**
-   * Handles ack negotiation during handshake and incoming ack ids during connect requests.
+   * Initialises per-session ack state on handshake when the client advertises {@code ext.ack=true},
+   * and on connect advances the unacknowledged map by removing entries whose ack id has been
+   * confirmed and moving any entries with lower ids to the resend queue.
    *
-   * @param sender originating session
-   * @param packet inbound request packet
-   * @return the original packet
+   * @param sender the session submitting the request, or {@code null} for anonymous requests
+   * @param packet the inbound request packet to inspect and pass through
+   * @return {@code packet} unchanged
    */
   @Override
   public Packet<V> onRequest (final Session<V> sender, Packet<V> packet) {
@@ -170,11 +177,14 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   }
 
   /**
-   * Adds ack metadata to responses and manages the resend/unacknowledged queues.
+   * Annotates handshake responses with {@code ext.ack=true} to confirm extension support, and on
+   * connect prepends any pending resend-queue packets to the response, stamps a new ack id onto the
+   * connect message, records the merged packet in the unacknowledged map, and trims the map when its
+   * accumulated message count exceeds {@code maxAckQueueSize}.
    *
-   * @param sender originating session
-   * @param packet outbound response packet
-   * @return the possibly merged response packet
+   * @param sender the session the response is being sent to, or {@code null} for anonymous sessions
+   * @param packet the outbound response packet, which may be replaced by a merged packet
+   * @return the response packet, potentially merged with resent packets
    */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {

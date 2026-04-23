@@ -35,13 +35,14 @@ package org.smallmind.nutsnbolts.xml.sax;
 import org.xml.sax.SAXException;
 
 /**
- * No-op base implementation of {@link DocumentExtender} to simplify subclasses.
- * Subclasses can override only the callbacks they need.
+ * Abstract base implementation of {@link DocumentExtender} whose callback methods are no-ops, allowing subclasses to override only those they need.
  */
 public abstract class AbstractDocumentExtender implements DocumentExtender {
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to react to the start of the document.
+   *
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void startDocument ()
     throws SAXException {
@@ -49,7 +50,9 @@ public abstract class AbstractDocumentExtender implements DocumentExtender {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to react to the end of the document.
+   *
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void endDocument ()
     throws SAXException {
@@ -57,7 +60,10 @@ public abstract class AbstractDocumentExtender implements DocumentExtender {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to act on a completed child element.
+   *
+   * @param elementExtender the extender that has just finished processing its element
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {

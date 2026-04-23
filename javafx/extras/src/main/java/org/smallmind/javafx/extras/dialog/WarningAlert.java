@@ -39,16 +39,18 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 /**
- * Simple warning alert that applies a custom icon and provides a static helper to show it.
+ * A pre-styled warning {@link Alert} that applies a custom warning icon and exposes a single
+ * {@link ButtonType#CLOSE} button. Use {@link #showWarningAlert(String)} when only a simple
+ * blocking message is needed.
  */
 public class WarningAlert extends Alert {
 
   private static final Image WARNING_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_warning.png"));
 
   /**
-   * Constructs the alert with the provided warning text.
+   * Constructs the alert with the given warning message and the custom warning icon.
    *
-   * @param warningText the text to display inside the alert
+   * @param warningText the message to display; must not be {@code null}
    */
   public WarningAlert (String warningText) {
 
@@ -58,10 +60,12 @@ public class WarningAlert extends Alert {
   }
 
   /**
-   * Displays the warning alert in a blocking fashion.
+   * Convenience factory that creates a {@link WarningAlert} and shows it in a blocking fashion,
+   * waiting until the user clicks the Close button.
    *
-   * @param warningText the warning message to display
-   * @return an {@link Optional} containing the button pressed by the user
+   * @param warningText the warning message to display; must not be {@code null}
+   * @return an {@link Optional} containing the {@link ButtonType} the user clicked, or
+   * {@link Optional#empty()} if the dialog was closed without pressing a button
    */
   public static Optional<ButtonType> showWarningAlert (String warningText) {
 

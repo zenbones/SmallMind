@@ -41,7 +41,23 @@ import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Encapsulates get and touch-style operations including CAS retrieval.
+ * Command that implements the memcached meta-get ({@code mg}) operation,
+ * covering plain gets, get-and-touch (refresh TTL), CAS retrieval, and
+ * touch-only (update TTL without returning the value).
+ *
+ * <p>The behavior is controlled by three independent flags:</p>
+ * <ul>
+ *   <li>{@link #setValue(boolean)} — when {@code true} (the default) the value
+ *       body is returned; set to {@code false} for touch-only operations.</li>
+ *   <li>{@link #setCas(boolean)} — when {@code true} the CAS token is included
+ *       in the response flags and carried in the returned {@link Result}.</li>
+ *   <li>{@link #setExpiration(Integer)} — when set the server updates the item's
+ *       TTL as part of the read, enabling get-and-touch semantics.</li>
+ * </ul>
+ *
+ * <p>A cache miss ({@code EN}), a lost read-lease ({@code won}/{@code alsoWon}),
+ * are all surfaced as unsuccessful results. A hit with a value body returns
+ * {@code VA}; a touch-only hit returns {@code HD}.</p>
  */
 public class GetCommand extends Command {
 
@@ -63,8 +79,8 @@ public class GetCommand extends Command {
   /**
    * Sets the cache key to retrieve.
    *
-   * @param key cache key
-   * @return this command for chaining
+   * @param key the key whose value is to be fetched
+   * @return this command instance, for method chaining
    */
   public GetCommand setKey (String key) {
 
@@ -74,10 +90,11 @@ public class GetCommand extends Command {
   }
 
   /**
-   * Requests that the server return the CAS token with the value.
+   * Requests that the server include the CAS token in the response so it can
+   * be used in a subsequent conditional write.
    *
-   * @param cas {@code true} to include CAS token
-   * @return this command for chaining
+   * @param cas {@code true} to request the CAS token; {@code false} to omit it
+   * @return this command instance, for method chaining
    */
   public GetCommand setCas (boolean cas) {
 
@@ -87,10 +104,12 @@ public class GetCommand extends Command {
   }
 
   /**
-   * Sets an expiration to apply (used for get-and-touch).
+   * Sets a new TTL to apply to the item as part of the read, implementing
+   * get-and-touch semantics. When set, the server refreshes the item's
+   * expiration to the given value before returning it.
    *
-   * @param expiration expiration in seconds
-   * @return this command for chaining
+   * @param expiration the new time-to-live in seconds
+   * @return this command instance, for method chaining
    */
   public GetCommand setExpiration (Integer expiration) {
 
@@ -100,10 +119,11 @@ public class GetCommand extends Command {
   }
 
   /**
-   * Attaches an opaque token echoed by the server.
+   * Attaches an opaque correlation token that the server echoes back verbatim
+   * in its response, allowing callers to correlate pipelined replies.
    *
-   * @param opaqueToken token to include
-   * @return this command for chaining
+   * @param opaqueToken an arbitrary string token to include in the request
+   * @return this command instance, for method chaining
    */
   public GetCommand setOpaqueToken (String opaqueToken) {
 
@@ -113,10 +133,14 @@ public class GetCommand extends Command {
   }
 
   /**
-   * Controls whether to return the value body; disables fetch for touch-only operations.
+   * Controls whether the value body is returned with the response.
+   * Set to {@code false} for touch-only operations where only the TTL
+   * needs to be refreshed and the value is not required.
+   * Defaults to {@code true}.
    *
-   * @param value {@code true} to fetch the value
-   * @return this command for chaining
+   * @param value {@code true} to fetch the value bytes; {@code false} for a
+   *              touch-only request
+   * @return this command instance, for method chaining
    */
   public GetCommand setValue (boolean value) {
 
@@ -127,6 +151,11 @@ public class GetCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Builds the {@code mg} meta-get command line, appending the {@code v}
+   * flag when the value body is requested, the {@code c} flag when a CAS token
+   * is wanted, the {@code T} flag when a new expiration is supplied, and the
+   * {@code O} flag when an opaque token is present.</p>
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -152,6 +181,16 @@ public class GetCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>An {@code EN} (not found) response, or a response where the read lease
+   * was won or also-won, are treated as cache misses and return an unsuccessful
+   * result. A {@code VA} response carries the retrieved value bytes and is
+   * returned as a successful result. When the value body was suppressed
+   * ({@link #setValue(boolean) setValue(false)}), a {@code HD} response
+   * represents a successful touch.</p>
+   *
+   * @throws UnexpectedResponseException if the response code does not match
+   *                                     any expected code for this command configuration
    */
   @Override
   public Result process (Response response)

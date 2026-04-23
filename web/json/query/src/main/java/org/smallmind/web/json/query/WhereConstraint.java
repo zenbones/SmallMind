@@ -45,8 +45,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint that validates a {@link Where} clause against configured rules
- * such as allowed, required, excluded, and dependent fields.
+ * Bean Validation constraint that enforces allowed, required, excluded, and dependency rules on a {@link WherePermissible} value.
  */
 @Documented
 @Retention(RUNTIME)
@@ -55,7 +54,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface WhereConstraint {
 
   /**
-   * Allows multiple {@link WhereConstraint} annotations on the same element.
+   * Container annotation enabling repeatable {@link WhereConstraint} declarations on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
@@ -63,38 +62,38 @@ public @interface WhereConstraint {
   @interface List {
 
     /**
-     * @return array of {@link WhereConstraint} instances
+     * @return the repeated constraint annotations
      */
     WhereConstraint[] value ();
   }
 
   /**
-   * @return validation failure message
+   * @return constraint violation message template
    */
   String message () default "Validation failed";
 
   /**
-   * @return validation groups
+   * @return validation groups this constraint belongs to
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return payload for Bean Validation clients
+   * @return payload for Bean Validation clients to attach metadata
    */
   Class<? extends Payload>[] payload () default {};
 
   /**
-   * @return fields that are explicitly allowed
+   * @return fields that are explicitly permitted in the clause
    */
   Allowed[] allow () default {};
 
   /**
-   * @return fields that are required to be present
+   * @return fields that must be present in the clause
    */
   Required[] require () default {};
 
   /**
-   * @return fields that must be excluded
+   * @return fields that must not appear in the clause
    */
   Excluded[] exclude () default {};
 

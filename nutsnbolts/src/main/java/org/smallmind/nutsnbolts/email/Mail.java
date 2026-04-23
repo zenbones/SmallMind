@@ -37,8 +37,7 @@ import java.io.StringReader;
 import jakarta.activation.DataSource;
 
 /**
- * Simple value object representing an email message, including addressing, subject, body, and attachments.
- * Bodies can be provided as a {@link Reader} or {@link String}; attachments are optional.
+ * Mutable value object that describes an outgoing email message, including addressing (from, to, reply-to, cc, bcc), subject, body (as a {@link Reader} or inline {@link String}), content type, and optional attachments.
  */
 public class Mail {
 
@@ -53,11 +52,11 @@ public class Mail {
   private boolean html = false;
 
   /**
-   * Constructs a message with minimal addressing and optional attachments.
+   * Constructs a message with sender, recipients, and optional attachments but no subject or body.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, DataSource... attachments) {
 
@@ -65,12 +64,12 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with string body and optional attachments.
+   * Constructs a message with sender, recipients, an inline string body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param body        message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param body        body text of the message
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String body, DataSource... attachments) {
 
@@ -78,12 +77,12 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with a supplied {@link Reader} for the body.
+   * Constructs a message with sender, recipients, a streamed body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param bodyReader  reader for the message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param bodyReader  reader supplying the body content
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, Reader bodyReader, DataSource... attachments) {
 
@@ -91,13 +90,13 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with subject, string body, and attachments.
+   * Constructs a message with sender, recipients, subject, an inline string body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param subject     subject line
-   * @param body        message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param subject     subject line of the message
+   * @param body        body text of the message
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String subject, String body, DataSource... attachments) {
 
@@ -105,13 +104,13 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with subject, body reader, and attachments.
+   * Constructs a message with sender, recipients, subject, a streamed body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param subject     subject line
-   * @param bodyReader  reader for the message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param subject     subject line of the message
+   * @param bodyReader  reader supplying the body content
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String subject, Reader bodyReader, DataSource... attachments) {
 
@@ -119,15 +118,15 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with reply-to and cc recipients.
+   * Constructs a message with sender, recipients, reply-to, cc, subject, an inline string body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param replyTo     reply-to address
-   * @param cc          comma-separated carbon copy addresses
-   * @param subject     subject line
-   * @param body        message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param replyTo     reply-to address, or {@code null} for none
+   * @param cc          comma-separated list of CC addresses, or {@code null} for none
+   * @param subject     subject line of the message
+   * @param body        body text of the message
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String replyTo, String cc, String subject, String body, DataSource... attachments) {
 
@@ -135,16 +134,16 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with reply-to, cc, and bcc recipients.
+   * Constructs a message with sender, full recipient addressing (to, reply-to, cc, bcc), subject, an inline string body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param replyTo     reply-to address
-   * @param cc          comma-separated carbon copy addresses
-   * @param bcc         comma-separated blind carbon copy addresses
-   * @param subject     subject line
-   * @param body        message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param replyTo     reply-to address, or {@code null} for none
+   * @param cc          comma-separated list of CC addresses, or {@code null} for none
+   * @param bcc         comma-separated list of BCC addresses, or {@code null} for none
+   * @param subject     subject line of the message
+   * @param body        body text of the message
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String body, DataSource... attachments) {
 
@@ -152,15 +151,15 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with reply-to and cc recipients, using a body reader.
+   * Constructs a message with sender, recipients, reply-to, cc, subject, a streamed body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param replyTo     reply-to address
-   * @param cc          comma-separated carbon copy addresses
-   * @param subject     subject line
-   * @param bodyReader  reader for the message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param replyTo     reply-to address, or {@code null} for none
+   * @param cc          comma-separated list of CC addresses, or {@code null} for none
+   * @param subject     subject line of the message
+   * @param bodyReader  reader supplying the body content
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, DataSource... attachments) {
 
@@ -168,16 +167,16 @@ public class Mail {
   }
 
   /**
-   * Constructs a message with full addressing, subject, body reader, and attachments.
+   * Constructs a fully specified message with sender, full recipient addressing (to, reply-to, cc, bcc), subject, a streamed body, and optional attachments.
    *
    * @param from        sender address
-   * @param to          comma-separated recipient list
-   * @param replyTo     reply-to address
-   * @param cc          comma-separated carbon copy addresses
-   * @param bcc         comma-separated blind carbon copy addresses
-   * @param subject     subject line
-   * @param bodyReader  reader for the message body
-   * @param attachments optional attachments
+   * @param to          comma-separated list of primary recipient addresses
+   * @param replyTo     reply-to address, or {@code null} for none
+   * @param cc          comma-separated list of CC addresses, or {@code null} for none
+   * @param bcc         comma-separated list of BCC addresses, or {@code null} for none
+   * @param subject     subject line of the message
+   * @param bodyReader  reader supplying the body content
+   * @param attachments zero or more attachments to include
    */
   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, DataSource... attachments) {
 
@@ -192,9 +191,9 @@ public class Mail {
   }
 
   /**
-   * Replaces the message body using a string value.
+   * Replaces the current body by wrapping the supplied string in a {@link java.io.StringReader}.
    *
-   * @param body new body content
+   * @param body the new body text
    */
   public void setBody (String body) {
 
@@ -202,9 +201,9 @@ public class Mail {
   }
 
   /**
-   * Adds a new attachment, preserving existing attachments.
+   * Appends a single attachment to the message, growing the attachments array while preserving any previously set attachments.
    *
-   * @param attachment additional attachment to include
+   * @param attachment the additional {@link DataSource} to attach
    */
   public void addAttachment (DataSource attachment) {
 
@@ -221,7 +220,9 @@ public class Mail {
   }
 
   /**
-   * @return {@code true} if the body should be sent as HTML, {@code false} for plain text
+   * Returns whether the message body should be transmitted as HTML content.
+   *
+   * @return {@code true} if the body is HTML; {@code false} for plain text
    */
   public boolean isHtml () {
 
@@ -229,10 +230,10 @@ public class Mail {
   }
 
   /**
-   * Flags whether the body should be treated as HTML.
+   * Sets whether the body should be transmitted as HTML or plain text.
    *
-   * @param html {@code true} to send HTML content
-   * @return this for chaining
+   * @param html {@code true} to use the {@code text/html} content subtype
+   * @return this instance for method chaining
    */
   public Mail setHtml (boolean html) {
 
@@ -242,9 +243,9 @@ public class Mail {
   }
 
   /**
-   * Marks the body as HTML content.
+   * Convenience method that marks the body as HTML content.
    *
-   * @return this for chaining
+   * @return this instance for method chaining
    */
   public Mail setHtml () {
 
@@ -254,7 +255,9 @@ public class Mail {
   }
 
   /**
-   * @return sender address
+   * Returns the sender address.
+   *
+   * @return the from address
    */
   public String getFrom () {
 
@@ -264,7 +267,7 @@ public class Mail {
   /**
    * Sets the sender address.
    *
-   * @param from sender address
+   * @param from the from address
    */
   public void setFrom (String from) {
 
@@ -272,7 +275,9 @@ public class Mail {
   }
 
   /**
-   * @return comma-separated list of primary recipients
+   * Returns the comma-separated list of primary recipient addresses.
+   *
+   * @return to addresses, or {@code null}
    */
   public String getTo () {
 
@@ -280,7 +285,7 @@ public class Mail {
   }
 
   /**
-   * Sets the primary recipients.
+   * Sets the comma-separated list of primary recipient addresses.
    *
    * @param to comma-separated recipient addresses
    */
@@ -290,7 +295,9 @@ public class Mail {
   }
 
   /**
-   * @return reply-to address or {@code null}
+   * Returns the reply-to address.
+   *
+   * @return reply-to address, or {@code null} if not set
    */
   public String getReplyTo () {
 
@@ -300,7 +307,7 @@ public class Mail {
   /**
    * Sets the reply-to address.
    *
-   * @param replyTo reply-to address
+   * @param replyTo the reply-to address
    */
   public void setReplyTo (String replyTo) {
 
@@ -308,7 +315,9 @@ public class Mail {
   }
 
   /**
-   * @return comma-separated CC recipients or {@code null}
+   * Returns the comma-separated list of CC recipient addresses.
+   *
+   * @return CC addresses, or {@code null} if not set
    */
   public String getCc () {
 
@@ -316,7 +325,7 @@ public class Mail {
   }
 
   /**
-   * Sets CC recipients.
+   * Sets the comma-separated list of CC recipient addresses.
    *
    * @param cc comma-separated CC addresses
    */
@@ -326,7 +335,9 @@ public class Mail {
   }
 
   /**
-   * @return comma-separated BCC recipients or {@code null}
+   * Returns the comma-separated list of BCC recipient addresses.
+   *
+   * @return BCC addresses, or {@code null} if not set
    */
   public String getBcc () {
 
@@ -334,7 +345,7 @@ public class Mail {
   }
 
   /**
-   * Sets BCC recipients.
+   * Sets the comma-separated list of BCC recipient addresses.
    *
    * @param bcc comma-separated BCC addresses
    */
@@ -344,7 +355,9 @@ public class Mail {
   }
 
   /**
-   * @return subject line or {@code null}
+   * Returns the message subject line.
+   *
+   * @return subject, or {@code null} if not set
    */
   public String getSubject () {
 
@@ -352,9 +365,9 @@ public class Mail {
   }
 
   /**
-   * Sets the subject line.
+   * Sets the message subject line.
    *
-   * @param subject subject line
+   * @param subject the subject line text
    */
   public void setSubject (String subject) {
 
@@ -362,7 +375,9 @@ public class Mail {
   }
 
   /**
-   * @return reader providing the body content
+   * Returns the reader from which the message body is read.
+   *
+   * @return body reader, or {@code null} if no body has been set
    */
   public Reader getBodyReader () {
 
@@ -370,7 +385,7 @@ public class Mail {
   }
 
   /**
-   * Sets the body content as a reader.
+   * Sets the reader from which the message body will be read.
    *
    * @param bodyReader reader supplying body content
    */
@@ -380,7 +395,9 @@ public class Mail {
   }
 
   /**
-   * @return current attachments or {@code null}
+   * Returns the current array of attachments.
+   *
+   * @return attachments, or {@code null} if none have been set
    */
   public DataSource[] getAttachments () {
 
@@ -388,9 +405,9 @@ public class Mail {
   }
 
   /**
-   * Replaces all attachments.
+   * Replaces the entire attachments array with the supplied array.
    *
-   * @param attachments attachments to include
+   * @param attachments new attachment array to use
    */
   public void setAttachments (DataSource[] attachments) {
 

@@ -37,14 +37,27 @@ import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.aggregate.Tallied;
 
 /**
- * Meter that tracks a running count.
+ * A {@link Meter} that maintains a monotonically accumulating counter by summing
+ * every delta supplied via {@link #update(long)}.
+ *
+ * <p>The underlying {@link Tallied} aggregate accumulates values without resetting
+ * between {@link #record()} calls, making {@code Tally} appropriate for tracking
+ * running totals such as byte counts, error counts, or any other quantity where the
+ * absolute cumulative sum is meaningful to a monitoring back end.</p>
+ *
+ * <p>On each call to {@link #record()}, a single {@link Quantity} named {@code "count"}
+ * with type {@link QuantityType#COUNT} is returned.</p>
  */
 public class Tally implements Meter {
 
+  /**
+   * Aggregate that accumulates the running total of all submitted deltas.
+   */
   private final Tallied tallied;
 
   /**
-   * Creates a tally meter.
+   * Creates a new {@code Tally} meter with a freshly initialised {@link Tallied} aggregate
+   * starting at zero.
    */
   public Tally () {
 
@@ -52,9 +65,9 @@ public class Tally implements Meter {
   }
 
   /**
-   * Adds the supplied value to the tally.
+   * Adds {@code value} to the running total maintained by the {@link Tallied} aggregate.
    *
-   * @param value delta to add
+   * @param value the delta to add to the running count; may be negative to decrement the total
    */
   @Override
   public void update (long value) {
@@ -63,9 +76,13 @@ public class Tally implements Meter {
   }
 
   /**
-   * Returns the current count as a quantity.
+   * Returns the current accumulated count as a single {@link Quantity}.
    *
-   * @return single count quantity
+   * <p>The returned array always contains exactly one element: {@code "count"} with
+   * type {@link QuantityType#COUNT} reflecting the cumulative sum of all values
+   * passed to {@link #update(long)} since this meter was created.</p>
+   *
+   * @return an array containing exactly one {@link Quantity} named {@code "count"}
    */
   @Override
   public Quantity[] record () {

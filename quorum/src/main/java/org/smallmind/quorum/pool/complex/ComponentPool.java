@@ -45,9 +45,24 @@ import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 
 /**
- * Pool implementation that coordinates {@link ComponentInstance}s using pins and emits events/metrics.
+ * Full-featured component pool that adds validation, deconstruction timeouts, JMX monitoring,
+ * Claxon metrics, and event notification to the base pooling machinery.
+ * <p>
+ * The pool delegates all pin lifecycle work to an internal {@link ComponentPinManager} and
+ * exposes a simple three-operation API to callers:
+ * <ul>
+ *   <li>{@link #getComponent()} — acquires a component, blocking up to the configured wait
+ *       time if none is immediately available;</li>
+ *   <li>{@link #returnInstance(ComponentInstance)} — returns a healthy component so the pool
+ *       can lend it to the next caller;</li>
+ *   <li>{@link #terminateInstance(ComponentInstance)} — permanently discards a component,
+ *       triggering replacement if the pool is below its minimum size.</li>
+ * </ul>
+ * Event listeners registered via {@link #addComponentPoolEventListener} receive error and
+ * lease-time notifications. Acquisition wait time is instrumented with a Claxon speedometer
+ * tagged {@link ClaxonTag#WAITED}.
  *
- * @param <C> component type managed by the pool
+ * @param <C> the type of component dispensed by this pool
  */
 public class ComponentPool<C> extends Pool {
 
@@ -58,10 +73,11 @@ public class ComponentPool<C> extends Pool {
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
 
   /**
-   * Constructs a pool with the provided name and instance factory using default configuration.
+   * Creates a pool with the given name and factory, using default configuration.
    *
-   * @param name                     pool name for metrics and identification
-   * @param componentInstanceFactory factory used to create new component instances
+   * @param name                     a unique label for this pool used in metrics and JMX
+   *                                 object names
+   * @param componentInstanceFactory factory that creates and manages component instances
    */
   public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory) {
 
@@ -72,11 +88,12 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Constructs a pool with the provided name, instance factory, and configuration.
+   * Creates a pool with the given name, factory, and explicit configuration.
    *
-   * @param name                     pool name for metrics and identification
-   * @param componentInstanceFactory factory used to create new component instances
-   * @param complexPoolConfig        configuration to apply
+   * @param name                     a unique label for this pool
+   * @param componentInstanceFactory factory that creates and manages component instances
+   * @param complexPoolConfig        configuration controlling sizes, timeouts, and feature
+   *                                 flags
    */
   public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig) {
 
@@ -86,9 +103,9 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns the name of the pool.
+   * Returns the name of this pool as provided at construction time.
    *
-   * @return pool name
+   * @return the pool name
    */
   public String getPoolName () {
 
@@ -96,9 +113,9 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Accessor for the instance factory.
+   * Returns the {@link ComponentInstanceFactory} used to create component instances.
    *
-   * @return factory used to build component instances
+   * @return the factory
    */
   public ComponentInstanceFactory<C> getComponentInstanceFactory () {
 
@@ -108,7 +125,7 @@ public class ComponentPool<C> extends Pool {
   /**
    * Returns the current pool configuration.
    *
-   * @return configuration
+   * @return the active {@link ComplexPoolConfig}
    */
   public ComplexPoolConfig getComplexPoolConfig () {
 
@@ -116,10 +133,13 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Updates the pool configuration.
+   * Replaces the pool configuration at runtime.
+   * <p>
+   * Because all configuration fields are atomic, changes take effect for subsequent
+   * operations without requiring a restart.
    *
-   * @param complexPoolConfig new configuration
-   * @return this pool
+   * @param complexPoolConfig the new configuration; must not be {@code null}
+   * @return this pool, for fluent chaining
    */
   public ComponentPool<C> setComplexPoolConfig (ComplexPoolConfig complexPoolConfig) {
 
@@ -129,9 +149,11 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns stack traces for components currently checked out when existential tracking is enabled.
+   * Returns the acquisition stack traces of all components currently checked out by callers,
+   * when existential awareness is enabled in the configuration.
    *
-   * @return array of stack traces
+   * @return an array of {@link StackTrace} objects; empty when no checked-out components have
+   * a recorded trace
    */
   public StackTrace[] getExistentialStackTraces () {
 
@@ -139,9 +161,12 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Adds a listener for pool events.
+   * Registers a listener to receive pool events.
+   * <p>
+   * Listeners are stored in a {@link ConcurrentLinkedQueue} so this method is safe to call
+   * from any thread without external synchronization.
    *
-   * @param listener listener to register
+   * @param listener the listener to add; must not be {@code null}
    */
   public void addComponentPoolEventListener (ComponentPoolEventListener listener) {
 
@@ -149,9 +174,9 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Removes a previously registered pool event listener.
+   * Unregisters a previously registered listener.
    *
-   * @param listener listener to remove
+   * @param listener the listener to remove; no-op if not present
    */
   public void removeComponentPoolEventListener (ComponentPoolEventListener listener) {
 
@@ -159,9 +184,11 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Notifies listeners of an error that occurred within the pool.
+   * Broadcasts an error event to all registered listeners.
+   * <p>
+   * Called by {@link ComponentPinManager} when a component instance terminates unexpectedly.
    *
-   * @param exception exception that occurred
+   * @param exception the exception that caused the error
    */
   public void reportErrorOccurred (Exception exception) {
 
@@ -173,9 +200,12 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Notifies listeners of the lease time for a component.
+   * Broadcasts a lease-time event to all registered listeners.
+   * <p>
+   * Called by {@link ComponentPin#free()} when a component is returned and
+   * {@link ComplexPoolConfig#isReportLeaseTimeNanos()} is enabled.
    *
-   * @param leaseTimeNanos lease duration in nanoseconds
+   * @param leaseTimeNanos the duration, in nanoseconds, for which the component was leased
    */
   public void reportLeaseTimeNanos (long leaseTimeNanos) {
 
@@ -187,9 +217,12 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Starts the pool by initializing factories and pin manager.
+   * Starts the pool by invoking the factory lifecycle and pre-warming the component set.
+   * <p>
+   * Calls {@link ComponentInstanceFactory#initialize()}, then
+   * {@link ComponentPinManager#startup()}, then {@link ComponentInstanceFactory#startup()}.
    *
-   * @throws ComponentPoolException if initialization fails
+   * @throws ComponentPoolException if any step in the startup sequence fails
    */
   public void startup ()
     throws ComponentPoolException {
@@ -210,9 +243,13 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Shuts down the pool and deconstructs all resources.
+   * Shuts down the pool by reversing the startup sequence.
+   * <p>
+   * Calls {@link ComponentInstanceFactory#shutdown()}, then
+   * {@link ComponentPinManager#shutdown()} (which terminates all components), then
+   * {@link ComponentInstanceFactory#deconstruct()}.
    *
-   * @throws ComponentPoolException if shutdown fails
+   * @throws ComponentPoolException if any step in the shutdown sequence fails
    */
   public void shutdown ()
     throws ComponentPoolException {
@@ -233,10 +270,17 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Obtains a component from the pool, instrumenting wait times.
+   * Acquires a component from the pool, blocking up to the configured acquire wait time if no
+   * component is immediately available.
+   * <p>
+   * The acquisition is instrumented with a Claxon speedometer tagged {@link ClaxonTag#WAITED}.
    *
-   * @return component instance
-   * @throws ComponentPoolException if acquisition fails
+   * @return a component ready for use; the caller must eventually call
+   * {@link #returnInstance(ComponentInstance)} or
+   * {@link #terminateInstance(ComponentInstance)}
+   * @throws ComponentPoolException if the pool has not been started, if the wait is interrupted,
+   *                                if the maximum wait time is exceeded, or if component creation
+   *                                fails
    */
   public C getComponent ()
     throws ComponentPoolException {
@@ -252,9 +296,11 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns an instance to the pool, marking it for reuse.
+   * Returns a healthy component instance to the pool so it can be leased again.
+   * <p>
+   * Triggers lease-time metrics and resets the deconstruction coordinator for the pin.
    *
-   * @param componentInstance component instance to return
+   * @param componentInstance the instance to return; must have been obtained from this pool
    */
   public void returnInstance (ComponentInstance<C> componentInstance) {
 
@@ -262,9 +308,13 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Terminates an instance and optionally replaces it.
+   * Permanently removes a component instance from the pool and triggers replacement if
+   * the pool is below its minimum size.
+   * <p>
+   * Called by {@link org.smallmind.quorum.namespace.pool.JavaContextComponentInstance} when
+   * a communication failure makes the component unusable.
    *
-   * @param componentInstance instance to terminate
+   * @param componentInstance the instance to terminate; must have been obtained from this pool
    */
   public void terminateInstance (ComponentInstance<C> componentInstance) {
 
@@ -272,10 +322,14 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Removes the provided pin from service.
+   * Removes the given pin from the pool's backing structures.
+   * <p>
+   * Called by {@link ComponentPin#kaboom(boolean)} when a deconstruction fuse fires. The
+   * {@code withPrejudice} flag is forwarded from the fuse to control whether the removal is
+   * forced even when the pin is not on the free queue.
    *
-   * @param componentPin  pin to remove
-   * @param withPrejudice whether removal should force termination
+   * @param componentPin  the pin to remove
+   * @param withPrejudice {@code true} to force removal when the pin is currently processing
    */
   public void removePin (ComponentPin<C> componentPin, boolean withPrejudice) {
 
@@ -283,7 +337,7 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Terminates all components currently processing.
+   * Forcibly terminates all component instances that are currently checked out.
    */
   public void killAllProcessing () {
 
@@ -291,9 +345,10 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns the total size of the pool.
+   * Returns the total number of component instances managed by this pool, including both
+   * free (idle) and processing (checked out) instances.
    *
-   * @return number of managed components
+   * @return the total pool size
    */
   public int getPoolSize () {
 
@@ -301,9 +356,10 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns the number of free components.
+   * Returns the number of component instances currently sitting on the free queue, available
+   * for immediate acquisition.
    *
-   * @return number of available components
+   * @return the number of idle components
    */
   public int getFreeSize () {
 
@@ -311,9 +367,9 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
-   * Returns the number of components currently checked out.
+   * Returns the number of component instances currently checked out by callers.
    *
-   * @return number of processing components
+   * @return the number of components in the processing state
    */
   public int getProcessingSize () {
 

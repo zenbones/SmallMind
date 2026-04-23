@@ -33,8 +33,17 @@
 package org.smallmind.liquibase.spring;
 
 /**
- * Describes the change log files used by {@link SpringLiquibase}.
- * A change log specifies Liquibase changesets to preview, execute or document.
+ * Describes a single Liquibase change log file processed by {@link SpringLiquibase}.
+ *
+ * <p>A change log pairs an {@code input} location (the change log to read) with an optional
+ * {@code output} location used when the active {@link Goal} produces a file artifact, such
+ * as {@link Goal#GENERATE}. For goals that do not write a file ({@link Goal#PREVIEW},
+ * {@link Goal#UPDATE}, {@link Goal#DOCUMENT}), the {@code output} field is ignored.</p>
+ *
+ * <p>The {@code input} path is interpreted according to the {@link Source} configured on
+ * {@link SpringLiquibase}: a {@link Source#FILE} source resolves it relative to the user's
+ * home directory, while a {@link Source#CLASSPATH} source resolves it through the class
+ * loader.</p>
  */
 public class ChangeLog {
 
@@ -42,7 +51,12 @@ public class ChangeLog {
   private String output;
 
   /**
-   * @return path or classpath location for the source change log to process
+   * Returns the source location of the change log to process.
+   *
+   * <p>The returned value is a path or classpath resource name whose exact interpretation
+   * depends on the {@link Source} set on {@link SpringLiquibase}.</p>
+   *
+   * @return the input path or classpath location of the change log, or {@code null} if not set
    */
   public String getInput () {
 
@@ -50,7 +64,10 @@ public class ChangeLog {
   }
 
   /**
-   * @param input path or classpath location for the change log to read
+   * Sets the source location of the change log to process.
+   *
+   * @param input path or classpath resource name of the change log to read;
+   *              must not be {@code null} when a non-{@link Goal#NONE} goal is configured
    */
   public void setInput (String input) {
 
@@ -58,7 +75,12 @@ public class ChangeLog {
   }
 
   /**
-   * @return destination path for generated change log output when applicable
+   * Returns the destination path for generated output produced by this change log.
+   *
+   * <p>Only meaningful when the active goal writes a file artifact (e.g., {@link Goal#GENERATE}).
+   * Returns {@code null} when no output path has been configured.</p>
+   *
+   * @return the output file path, or {@code null} if not set
    */
   public String getOutput () {
 
@@ -66,7 +88,10 @@ public class ChangeLog {
   }
 
   /**
-   * @param output destination path for generated change log output when applicable
+   * Sets the destination path for generated output produced by this change log.
+   *
+   * @param output filesystem path where the generated artifact should be written;
+   *               ignored for goals that do not produce a file
    */
   public void setOutput (String output) {
 

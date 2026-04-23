@@ -42,8 +42,7 @@ import java.util.concurrent.locks.StampedLock;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
 /**
- * Generates 18-byte Snowflake-like identifiers that encode time, MAC address (or random), JVM process id, and a counter.
- * Provides multiple string encodings (hex, compact base64-like, dotted template).
+ * Produces and encodes 18-byte Snowflake-style identifiers that embed a millisecond timestamp, MAC address (or random fallback), JVM process id, and a per-millisecond counter.
  */
 public class SnowflakeId implements Comparable<SnowflakeId> {
 
@@ -71,7 +70,7 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   private final byte[] uniqueArray;
 
   /**
-   * Creates a new id using the current time and generated machine/JVM identifiers.
+   * Generates a new identifier using the current time, MAC address, JVM process id, and an incrementing counter.
    */
   public SnowflakeId () {
 
@@ -79,9 +78,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * Wraps an existing 18-byte id.
+   * Constructs an identifier from an existing 18-byte array, for example when deserializing.
    *
-   * @param uniqueArray raw id bytes
+   * @param uniqueArray the raw identifier bytes
    */
   public SnowflakeId (byte[] uniqueArray) {
 
@@ -89,7 +88,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return fixed byte size of this id
+   * Returns the fixed byte length of every {@link SnowflakeId}.
+   *
+   * @return {@code 18}
    */
   public static int byteSize () {
 
@@ -97,7 +98,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * Factory for generating a new id.
+   * Creates and returns a new {@link SnowflakeId} using the current time and machine identifiers.
+   *
+   * @return a freshly generated identifier
    */
   public static SnowflakeId newInstance () {
 
@@ -189,7 +192,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return raw identifier bytes
+   * Returns the raw 18-byte array that constitutes this identifier.
+   *
+   * @return the underlying identifier bytes
    */
   public byte[] asByteArray () {
 
@@ -197,7 +202,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return {@link BigInteger} representation of the id
+   * Interprets the identifier bytes as a {@link BigInteger}.
+   *
+   * @return {@link BigInteger} representation of this identifier
    */
   public BigInteger generateBigInteger () {
 
@@ -205,7 +212,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return hex-encoded representation of the id
+   * Encodes the identifier as a lowercase hexadecimal string.
+   *
+   * @return hex-encoded string representation of this identifier
    */
   public String generateHexEncoding () {
 
@@ -213,7 +222,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return compact string using a 64-character template
+   * Encodes the identifier as a compact string using a 64-character alphanumeric template.
+   *
+   * @return compact encoded string representation of this identifier
    */
   public String generateCompactString () {
 
@@ -221,7 +232,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * @return dotted string using a 32-character template with evenly spaced dots
+   * Encodes the identifier as a dotted string using a 32-character template, with dots inserted at evenly spaced positions.
+   *
+   * @return dotted encoded string representation of this identifier
    */
   public String generateDottedString () {
 
@@ -279,7 +292,9 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * Hashes based on underlying bytes.
+   * Returns a hash code derived from the raw identifier bytes.
+   *
+   * @return hash code of this identifier
    */
   @Override
   public int hashCode () {
@@ -288,7 +303,10 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * Equality based on byte-for-byte match.
+   * Returns {@code true} if {@code obj} is a {@link SnowflakeId} with byte-for-byte identical content.
+   *
+   * @param obj the object to compare with
+   * @return {@code true} if both identifiers have identical byte arrays
    */
   @Override
   public boolean equals (Object obj) {
@@ -297,10 +315,10 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   }
 
   /**
-   * Orders ids by time, then counter, then MAC bytes, then JVM bytes.
+   * Compares this identifier to another first by timestamp, then by counter, then by MAC bytes, and finally by JVM bytes.
    *
-   * @param snowflakeId other id to compare
-   * @return comparison result per {@link Comparable} contract
+   * @param snowflakeId the identifier to compare against
+   * @return a negative integer, zero, or positive integer per the {@link Comparable} contract
    */
   public int compareTo (SnowflakeId snowflakeId) {
 

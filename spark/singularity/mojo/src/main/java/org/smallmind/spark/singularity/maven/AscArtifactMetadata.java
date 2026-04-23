@@ -44,7 +44,9 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataStoreException;
 
 /**
- * Metadata wrapper that allows a detached GPG signature (.asc) file to be deployed or installed alongside the primary artifact.
+ * Attaches a detached GPG signature ({@code .asc}) file to a Maven {@link Artifact} so that Maven's install and
+ * deploy machinery will ship the signature alongside the artifact itself. The filename is derived from the
+ * artifact's coordinates at construction time.
  */
 public class AscArtifactMetadata extends AbstractArtifactMetadata {
 
@@ -53,8 +55,10 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   private final String fileName;
 
   /**
-   * @param artifact artifact being signed
-   * @param path     location of the ASC signature file
+   * Binds the signature on disk to the artifact it was produced for and caches the canonical filename.
+   *
+   * @param artifact the artifact whose signature is being carried
+   * @param path     filesystem location of the {@code .asc} signature file
    */
   public AscArtifactMetadata (Artifact artifact, Path path) {
 
@@ -67,7 +71,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @return path to the signature file
+   * Returns the on-disk location of the signature file supplied at construction.
+   *
+   * @return the {@link Path} to the {@code .asc} file
    */
   public Path getPath () {
 
@@ -75,7 +81,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @return unique metadata key describing this signature
+   * Produces a metadata key unique per artifact type and classifier so that merges can detect collisions.
+   *
+   * @return a stable string key for this signature metadata
    */
   @Override
   public Object getKey () {
@@ -84,7 +92,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @return base version of the signed artifact
+   * Exposes the artifact's base version so that Maven can place the signature in the correct version directory.
+   *
+   * @return the artifact's base version
    */
   @Override
   public String getBaseVersion () {
@@ -93,8 +103,10 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @param repository target local repository
-   * @return local filename for the signature
+   * Supplies the filename used when the signature is written into the local repository.
+   *
+   * @param repository the local repository this metadata is being installed into (not consulted)
+   * @return the precomputed {@code .asc} filename
    */
   @Override
   public String getLocalFilename (ArtifactRepository repository) {
@@ -103,7 +115,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @return remote filename for the signature
+   * Supplies the filename used when the signature is transferred to a remote repository.
+   *
+   * @return the precomputed {@code .asc} filename
    */
   @Override
   public String getRemoteFilename () {
@@ -112,7 +126,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * @return {@code true} because the signature lives alongside a specific artifact version
+   * Signals that the signature belongs next to a specific version of the artifact rather than at the groupId level.
+   *
+   * @return {@code true} always
    */
   @Override
   public boolean storedInArtifactVersionDirectory () {
@@ -121,11 +137,11 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * Copies the signature into the local repository location calculated by Maven.
+   * Copies the signature file into the local repository location that Maven computes for this metadata.
    *
-   * @param localRepository  destination repository
-   * @param remoteRepository origin repository used for path calculation
-   * @throws RepositoryMetadataStoreException if the copy fails
+   * @param localRepository  repository to receive the signature
+   * @param remoteRepository remote repository that is the nominal origin; used only to help Maven compute the path
+   * @throws RepositoryMetadataStoreException if the signature file cannot be copied into the local repository
    */
   @Override
   public void storeInLocalRepository (ArtifactRepository localRepository, ArtifactRepository remoteRepository)
@@ -141,9 +157,11 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * Ensures only a single signature file is associated with a given artifact key.
+   * Guards against two distinct signature files being registered under the same key. Merging is a no-op when both
+   * instances point at the same file.
    *
-   * @param metadata other metadata instance
+   * @param metadata another {@link AscArtifactMetadata} claiming the same key
+   * @throws IllegalStateException if {@code metadata} references a different file than this instance
    */
   @Override
   public void merge (ArtifactMetadata metadata) {
@@ -154,9 +172,10 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * Ensures only a single signature file is associated with a given artifact key (legacy metadata interface).
+   * Legacy overload of {@link #merge(ArtifactMetadata)} that serves the same purpose for the older metadata API.
    *
-   * @param metadata other metadata instance
+   * @param metadata another {@link AscArtifactMetadata} claiming the same key
+   * @throws IllegalStateException if {@code metadata} references a different file than this instance
    */
   @Override
   public void merge (org.apache.maven.repository.legacy.metadata.ArtifactMetadata metadata) {
@@ -167,9 +186,9 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   }
 
   /**
-   * Builds the canonical signature filename for the wrapped artifact.
+   * Computes the canonical {@code artifactId-version[-classifier].extension.asc} filename for the wrapped artifact.
    *
-   * @return calculated asc filename
+   * @return the signature filename that Maven is expected to publish
    */
   private String getFilename () {
 

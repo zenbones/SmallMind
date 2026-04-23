@@ -37,7 +37,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Chains multiple iterators into a single iterator/iterable, advancing to the next when one is exhausted.
+ * Chains multiple iterators into a single sequential iterator and iterable, advancing to the next constituent iterator when one is exhausted.
  *
  * @param <T> element type
  */
@@ -47,7 +47,7 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   private int index = 0;
 
   /**
-   * Adds an iterator to the chain.
+   * Appends an iterator to the end of the chain.
    *
    * @param iterator iterator to append
    */
@@ -57,7 +57,7 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Advances past any empty iterators at the current position.
+   * Advances the internal cursor past any exhausted iterators at the current position.
    */
   public void done () {
 
@@ -72,7 +72,9 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * @return this iterator to allow enhanced-for usage
+   * Returns this instance so that it may be used directly in an enhanced-for loop.
+   *
+   * @return this iterator
    */
   public Iterator<T> iterator () {
 
@@ -80,7 +82,9 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * @return {@code true} if any remaining iterator has elements
+   * Returns {@code true} if any remaining iterator in the chain has at least one element.
+   *
+   * @return {@code true} if more elements are available
    */
   public boolean hasNext () {
 
@@ -88,9 +92,10 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Returns the next element from the current iterator, moving to the next iterator as needed.
+   * Returns the next element from the current iterator, advancing to the next iterator in the chain as needed.
    *
-   * @throws NoSuchElementException if no elements remain
+   * @return next element
+   * @throws NoSuchElementException if no elements remain across all chained iterators
    */
   public T next () {
 
@@ -106,7 +111,7 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Removes the last element returned by {@link #next()} from the current iterator.
+   * Removes the last element returned by {@link #next()} from the underlying iterator that supplied it.
    *
    * @throws IllegalStateException if {@link #next()} has not been called or the chain is exhausted
    */

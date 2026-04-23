@@ -35,14 +35,14 @@ package org.smallmind.schedule.quartz.spring;
 import org.quartz.SchedulerException;
 
 /**
- * {@link SchedulerException} variant that supports {@link String#format(String, Object...)}
- * style message construction for clearer error reporting when working with
- * Quartz from Spring components.
+ * Extension of {@link SchedulerException} that accepts a
+ * {@link String#format(String, Object...)}-style message template, eliminating
+ * manual string concatenation at throw sites.
  */
 public class FormattedSchedulerException extends SchedulerException {
 
   /**
-   * Create an empty exception.
+   * Creates an exception with no message or cause.
    */
   public FormattedSchedulerException () {
 
@@ -50,10 +50,11 @@ public class FormattedSchedulerException extends SchedulerException {
   }
 
   /**
-   * Create an exception with a formatted message.
+   * Creates an exception whose message is built from a format string and
+   * arguments.
    *
-   * @param message format string
-   * @param args    arguments referenced by the format specifiers in the message
+   * @param message format string passed to {@link String#format(String, Object...)}
+   * @param args    values substituted into the format string
    */
   public FormattedSchedulerException (String message, Object... args) {
 
@@ -61,11 +62,12 @@ public class FormattedSchedulerException extends SchedulerException {
   }
 
   /**
-   * Create an exception with a formatted message and root cause.
+   * Creates an exception with both a formatted message and an underlying
+   * cause.
    *
-   * @param throwable underlying cause
-   * @param message   format string
-   * @param args      arguments referenced by the format specifiers in the message
+   * @param throwable root cause of the scheduler error
+   * @param message   format string passed to {@link String#format(String, Object...)}
+   * @param args      values substituted into the format string
    */
   public FormattedSchedulerException (Throwable throwable, String message, Object... args) {
 
@@ -73,9 +75,10 @@ public class FormattedSchedulerException extends SchedulerException {
   }
 
   /**
-   * Create an exception that wraps an underlying cause.
+   * Creates an exception that wraps another throwable without an additional
+   * message.
    *
-   * @param throwable underlying scheduler error
+   * @param throwable root cause to wrap
    */
   public FormattedSchedulerException (Throwable throwable) {
 

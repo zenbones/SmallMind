@@ -35,14 +35,15 @@ package org.smallmind.mongodb.throng;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Unchecked exception representing runtime failures within the Throng layer.
+ * Unchecked exception representing operational failures within the Throng layer such as codec lookup failures,
+ * reflection errors, or unexpected state during encode/decode.
  */
 public class ThrongRuntimeException extends FormattedRuntimeException {
 
   /**
-   * Wraps an underlying throwable in a runtime exception.
+   * Wraps the given throwable as the cause of this runtime exception.
    *
-   * @param throwable the cause of the failure
+   * @param throwable the underlying cause
    */
   public ThrongRuntimeException (Throwable throwable) {
 
@@ -50,10 +51,10 @@ public class ThrongRuntimeException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates a new runtime exception with a formatted message.
+   * Constructs the exception with a printf-style formatted message.
    *
-   * @param message message template
-   * @param args    template arguments
+   * @param message format string for the error message
+   * @param args    arguments substituted into the format string
    */
   public ThrongRuntimeException (String message, Object... args) {
 

@@ -33,12 +33,17 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Conversation that represents a fire-and-forget call with no timeout.
+ * {@link Conversation} implementation for fire-and-forget calls that expect no response.
+ *
+ * <p>The conversation type is fixed at {@link ConversationType#IN_ONLY} and the timeout is
+ * always {@code null}, since no reply or deadline is meaningful for a one-way call.</p>
  */
 public class OneWayConversation implements Conversation<Void> {
 
   /**
-   * {@inheritDoc}
+   * Returns {@link ConversationType#IN_ONLY}, indicating that no response is expected.
+   *
+   * @return {@link ConversationType#IN_ONLY}
    */
   @Override
   public ConversationType getConversationType () {
@@ -47,7 +52,9 @@ public class OneWayConversation implements Conversation<Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because one-way calls carry no timeout.
+   *
+   * @return {@code null} always
    */
   @Override
   public Void getTimeout () {

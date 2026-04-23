@@ -43,8 +43,9 @@ import tools.jackson.databind.JavaType;
 import tools.jackson.databind.deser.std.StdValueInstantiator;
 
 /**
- * Value instantiator that ensures Jackson updates the real polymorphic instance by creating a proxy
- * around the instance placed in a thread-local by {@link AttributedPolymorphicXmlAdapter}.
+ * Jackson value instantiator that returns a proxy wrapping the real polymorphic instance stored in
+ * a thread-local by {@link AttributedPolymorphicXmlAdapter}, ensuring deserialized properties are
+ * applied to the correct object.
  */
 public class PolymorphicValueInstantiator extends StdValueInstantiator {
 
@@ -52,9 +53,11 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   private final Class<?> polymorphicSubClass;
 
   /**
-   * @param deserializationConfig the deserialization config passed to the module
-   * @param javaType              the java type of the bean reference being bound in the module
-   * @param polymorphicSubClass   concrete subclass that should be instantiated
+   * Creates the instantiator for the given deserialization configuration and target polymorphic subclass.
+   *
+   * @param deserializationConfig deserialization configuration from the Jackson module setup
+   * @param javaType              Java type of the bean reference being bound
+   * @param polymorphicSubClass   concrete subclass to instantiate
    */
   public PolymorphicValueInstantiator (DeserializationConfig deserializationConfig, JavaType javaType, Class<?> polymorphicSubClass) {
 
@@ -64,9 +67,9 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   }
 
   /**
-   * Places the target polymorphic instance into a thread-local for later retrieval during creation.
+   * Stores the target polymorphic instance in the thread-local so it can be wrapped during creation.
    *
-   * @param obj polymorphic instance being deserialized into
+   * @param obj polymorphic instance to use as the deserialization target
    */
   public static void setPolymorphicInstance (Object obj) {
 
@@ -74,7 +77,7 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   }
 
   /**
-   * @return {@code true}; default creation is supported via the thread-local instance
+   * @return {@code true} because this instantiator supports default (no-arg) creation via the thread-local
    */
   @Override
   public boolean canCreateUsingDefault () {
@@ -83,11 +86,11 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   }
 
   /**
-   * Returns a proxy that forwards to the polymorphic instance set in the thread-local.
+   * Returns a proxy that forwards to the polymorphic instance held in the thread-local, then clears it.
    *
    * @param ctxt deserialization context
-   * @return proxy instance for the polymorphic type
-   * @throws JAXBProcessingException if no polymorphic instance was provided
+   * @return proxy delegating to the stored polymorphic instance
+   * @throws JAXBProcessingException if no polymorphic instance has been set in the thread-local
    */
   @Override
   public Object createUsingDefault (DeserializationContext ctxt) {

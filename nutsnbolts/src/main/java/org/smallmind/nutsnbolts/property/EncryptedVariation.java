@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.property;
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
 /**
- * Variation handler that marks property values requiring decryption. Uses a prefix to detect encrypted
- * values and supplies the {@link Decryptor} to perform decryption.
+ * Pairs a {@link Decryptor} with a prefix string that identifies encrypted property placeholders
+ * within an expression, allowing {@link PropertyClosure} to distinguish them from plain ones.
  */
 public class EncryptedVariation {
 
@@ -44,11 +44,11 @@ public class EncryptedVariation {
   private final String prefix;
 
   /**
-   * Creates an encrypted variation using the default prefix {@code "!{@literal {}}"}.
+   * Constructs an encrypted variation with the default encrypted prefix {@code "!{"}.
    *
-   * @param decryptor the decryptor used to decrypt property values
-   * @throws PropertyExpanderException if the prefix is invalid
-   * @throws NullPointerException      if decryptor is {@code null}
+   * @param decryptor the decryptor that will be applied to resolved values bearing this prefix
+   * @throws PropertyExpanderException if the default prefix would be invalid
+   * @throws NullPointerException      if {@code decryptor} is {@code null}
    */
   public EncryptedVariation (Decryptor decryptor)
     throws PropertyExpanderException {
@@ -57,12 +57,12 @@ public class EncryptedVariation {
   }
 
   /**
-   * Creates an encrypted variation with a custom prefix.
+   * Constructs an encrypted variation with a caller-supplied prefix and decryptor.
    *
-   * @param decryptor the decryptor used to decrypt property values
-   * @param prefix    the prefix that indicates encrypted text
-   * @throws PropertyExpanderException if the prefix is blank
-   * @throws NullPointerException      if decryptor or prefix is null
+   * @param decryptor the decryptor that will be applied to resolved values bearing this prefix
+   * @param prefix    the non-blank prefix string that marks encrypted placeholders
+   * @throws PropertyExpanderException if {@code prefix} is blank
+   * @throws NullPointerException      if {@code decryptor} or {@code prefix} is {@code null}
    */
   public EncryptedVariation (Decryptor decryptor, String prefix)
     throws PropertyExpanderException {
@@ -78,7 +78,9 @@ public class EncryptedVariation {
   }
 
   /**
-   * @return the decryptor used for encrypted values
+   * Returns the decryptor associated with this variation.
+   *
+   * @return the {@link Decryptor} to use when an encrypted placeholder is resolved
    */
   public Decryptor getDecryptor () {
 
@@ -86,7 +88,9 @@ public class EncryptedVariation {
   }
 
   /**
-   * @return the prefix that denotes encrypted property values
+   * Returns the prefix string that marks encrypted property placeholders in an expression.
+   *
+   * @return the prefix used to identify encrypted values
    */
   public String getPrefix () {
 

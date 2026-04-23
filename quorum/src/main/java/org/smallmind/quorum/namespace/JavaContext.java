@@ -50,14 +50,48 @@ import javax.naming.directory.SearchResult;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 /**
- * JNDI {@link DirContext} wrapper that translates names between internal and external representations
- * and optionally wraps nested contexts. Supports pooled and modifiable configurations.
+ * JNDI {@link DirContext} implementation that fronts an arbitrary backing-store directory context
+ * (for example, LDAP) and translates between the {@code java:} namespace's internal name format
+ * and the backing store's native name format on every operation.
+ * <p>
+ * Two construction paths exist:
+ * <ul>
+ *   <li>Top-level context (no backing context): created by {@link javaURLContextFactory} when no
+ *       existing context is available. The first component of any name supplied to this context
+ *       must be {@code java:}; the translator opens a new initial context for each such call.</li>
+ *   <li>Nested context (wraps an existing {@link DirContext}): created when {@link #lookup} or
+ *       {@link #createSubcontext} returns a directory context. The backing context is used directly
+ *       without opening a new connection.</li>
+ * </ul>
+ * <p>
+ * Mutation operations ({@link #bind}, {@link #rebind}, {@link #unbind}, {@link #rename},
+ * {@link #destroySubcontext}, {@link #createSubcontext}, {@link #modifyAttributes},
+ * {@link #addToEnvironment}, {@link #removeFromEnvironment}) throw
+ * {@link OperationNotSupportedException} when the context is not modifiable.
+ * <p>
+ * Enumeration operations ({@link #list}, {@link #listBindings}, {@link #search}) wrap the
+ * backing-store result in a {@link JavaNamingEnumeration} that translates each element on the fly.
+ * <p>
+ * Every {@code Name}-typed method has a {@code String}-typed overload that parses the string
+ * with {@link JavaNameParser#parse} before delegating.
  */
 public class JavaContext implements DirContext {
 
+  /**
+   * Environment key whose value is a {@link org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails} instance.
+   */
   public static final String CONNECTION_DETAILS = "org.smallmind.quorum.namespace.java.connection details";
+  /**
+   * Environment key whose value is the short backing-store identifier string (e.g., {@code ldap}).
+   */
   public static final String CONTEXT_STORE = "org.smallmind.quorum.namespace.java.store";
+  /**
+   * Environment key whose value is {@code "true"} to allow mutations on the backing store.
+   */
   public static final String CONTEXT_MODIFIABLE = "org.smallmind.quorum.namespace.java.modifiable";
+  /**
+   * Environment key whose value is {@code "true"} to return pooled child contexts from {@link #lookup}.
+   */
   public static final String POOLED_CONNECTION = "org.smallmind.quorum.namespace.java.pooled";
 
   private final Hashtable<String, Object> environment;
@@ -68,12 +102,18 @@ public class JavaContext implements DirContext {
   private final boolean pooled;
 
   /**
-   * Constructs a top-level JavaContext without an existing internal context.
+   * Creates a top-level context with no pre-existing backing context.
+   * <p>
+   * Used by {@link javaURLContextFactory} when constructing the initial context. Every name
+   * resolved through this instance must begin with {@code java:}; the translator will open a new
+   * initial context from the {@link org.smallmind.quorum.namespace.backingStore.ContextCreator}
+   * on each such call.
    *
-   * @param nameTranslator translator for converting names
-   * @param environment    JNDI environment
-   * @param modifiable     whether the backing store allows mutations
-   * @param pooled         whether created child contexts should be pooled
+   * @param nameTranslator the translator that converts between internal and external name forms
+   * @param environment    the JNDI environment for this context
+   * @param modifiable     {@code true} to allow mutations on the backing store
+   * @param pooled         {@code true} to wrap child contexts returned by {@link #lookup} in
+   *                       {@link PooledJavaContext} instances
    */
   protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
 
@@ -87,13 +127,17 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Constructs a JavaContext that wraps an existing internal {@link DirContext}.
+   * Creates a nested context that wraps an existing backing-store {@link DirContext}.
+   * <p>
+   * Used when {@link #lookup} or {@link #createSubcontext} returns a directory context from the
+   * backing store. The supplied context is used directly for all operations without opening a
+   * new connection. Pooling is always disabled for nested contexts.
    *
-   * @param environment     JNDI environment
-   * @param internalContext backing context
-   * @param nameTranslator  translator used for name conversions
-   * @param nameParser      parser to use for string names
-   * @param modifiable      whether the backing store allows mutations
+   * @param environment     the JNDI environment for this context
+   * @param internalContext the backing-store context to wrap
+   * @param nameTranslator  the translator shared with the parent context
+   * @param nameParser      the name parser shared with the parent context
+   * @param modifiable      {@code true} to allow mutations on the backing store
    */
   protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
@@ -107,12 +151,17 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Ensures that each element of the path exists by creating subcontexts when necessary.
+   * Ensures that every path component of {@code namingPath} exists as a subcontext of
+   * {@code javaContext}, creating missing nodes one at a time from the outermost inward.
+   * <p>
+   * The path is split on {@code /} and accumulated from the end; each accumulated candidate is
+   * looked up, and a {@link NameNotFoundException} triggers a {@link #createSubcontext} call.
    *
-   * @param javaContext context used to resolve/create the path
-   * @param namingPath  slash-delimited path
-   * @return the deepest existing/created context
-   * @throws NamingException if lookup or creation fails
+   * @param javaContext the context relative to which the path is resolved and created
+   * @param namingPath  the slash-delimited path whose nodes should all exist
+   * @return the deepest context that was either found or created
+   * @throws NamingException if any lookup or subcontext creation fails for a reason other than the
+   *                         node not yet existing
    */
   public static JavaContext insureContext (JavaContext javaContext, String namingPath)
     throws NamingException {
@@ -139,11 +188,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Looks up an object using a {@link Name}, converting to the underlying context.
+   * Looks up the object bound to {@code name}.
+   * <p>
+   * If the backing store returns a directory context of the same class as the current context, it is
+   * wrapped in a new {@link JavaContext} (or {@link PooledJavaContext} when pooling is enabled).
    *
-   * @param name name to resolve
-   * @return located object or wrapped context
-   * @throws NamingException if lookup fails
+   * @param name the internal name to look up
+   * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
+   * @throws NamingException if the name is not bound or the backing store lookup fails
    */
   public Object lookup (Name name)
     throws NamingException {
@@ -165,11 +217,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Looks up an object using a string name.
+   * Looks up the object bound to the string name {@code name}.
    *
-   * @param name string representation of the name
-   * @return located object or wrapped context
-   * @throws NamingException if lookup fails
+   * @param name the slash-delimited internal name to look up
+   * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
+   * @throws NamingException if the name is not bound or the backing store lookup fails
    */
   public Object lookup (String name)
     throws NamingException {
@@ -178,11 +230,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Binds an object to a name.
+   * Binds {@code obj} to {@code name} in the backing store.
    *
-   * @param name name to bind
-   * @param obj  object to bind
-   * @throws NamingException if binding fails or store is not modifiable
+   * @param name the internal name to bind
+   * @param obj  the object to bind
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the bind fails for any other reason
    */
   public void bind (Name name, Object obj)
     throws NamingException {
@@ -198,11 +251,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Binds an object to a string name.
+   * Binds {@code obj} to the string name {@code name} in the backing store.
    *
-   * @param name name to bind
-   * @param obj  object to bind
-   * @throws NamingException if binding fails or store is not modifiable
+   * @param name the slash-delimited internal name to bind
+   * @param obj  the object to bind
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the bind fails for any other reason
    */
   public void bind (String name, Object obj)
     throws NamingException {
@@ -211,11 +265,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Rebinds an object to a name, replacing any existing binding.
+   * Binds {@code obj} to {@code name}, replacing any existing binding.
    *
-   * @param name name to bind
-   * @param obj  object to bind
-   * @throws NamingException if rebinding fails or store is not modifiable
+   * @param name the internal name to rebind
+   * @param obj  the object to bind
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj)
     throws NamingException {
@@ -231,11 +286,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Rebinds an object to a string name, replacing any existing binding.
+   * Binds {@code obj} to the string name {@code name}, replacing any existing binding.
    *
-   * @param name name to bind
-   * @param obj  object to bind
-   * @throws NamingException if rebinding fails or store is not modifiable
+   * @param name the slash-delimited internal name to rebind
+   * @param obj  the object to bind
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj)
     throws NamingException {
@@ -244,10 +300,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Unbinds an object from the provided name.
+   * Removes the binding for {@code name} from the backing store.
    *
-   * @param name name to unbind
-   * @throws NamingException if unbinding fails or store is not modifiable
+   * @param name the internal name whose binding is to be removed
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the unbind fails for any other reason
    */
   public void unbind (Name name)
     throws NamingException {
@@ -263,10 +320,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Unbinds an object from the provided string name.
+   * Removes the binding for the string name {@code name} from the backing store.
    *
-   * @param name name to unbind
-   * @throws NamingException if unbinding fails or store is not modifiable
+   * @param name the slash-delimited internal name whose binding is to be removed
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the unbind fails for any other reason
    */
   public void unbind (String name)
     throws NamingException {
@@ -275,11 +333,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Renames an entry.
+   * Renames the entry at {@code oldName} to {@code newName} in the backing store.
    *
-   * @param oldName existing name
-   * @param newName new name
-   * @throws NamingException if renaming fails or store is not modifiable
+   * @param oldName the current internal name of the entry
+   * @param newName the new internal name for the entry
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rename fails for any other reason
    */
   public void rename (Name oldName, Name newName)
     throws NamingException {
@@ -295,11 +354,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Renames an entry using string names.
+   * Renames the entry at the string name {@code oldName} to the string name {@code newName}.
    *
-   * @param oldName existing name
-   * @param newName new name
-   * @throws NamingException if renaming fails or store is not modifiable
+   * @param oldName the slash-delimited current internal name
+   * @param newName the slash-delimited new internal name
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rename fails for any other reason
    */
   public void rename (String oldName, String newName)
     throws NamingException {
@@ -308,11 +368,15 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Lists name/class pairs beneath the supplied name.
+   * Returns an enumeration of the names and class names of all bindings under {@code name}.
+   * <p>
+   * The returned enumeration translates each element on the fly; directory context class names
+   * are replaced with {@code JavaContext}.
    *
-   * @param name base name
-   * @return enumeration of name/class pairs or {@code null}
-   * @throws NamingException if listing fails
+   * @param name the internal name of the context to list
+   * @return a {@link JavaNamingEnumeration} of {@link NameClassPair}s, or {@code null} if the
+   * backing store returns {@code null}
+   * @throws NamingException if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (Name name)
     throws NamingException {
@@ -330,11 +394,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Lists name/class pairs beneath a string name.
+   * Returns an enumeration of the names and class names of all bindings under the string name
+   * {@code name}.
    *
-   * @param name base name
-   * @return enumeration of name/class pairs or {@code null}
-   * @throws NamingException if listing fails
+   * @param name the slash-delimited internal name of the context to list
+   * @return a {@link JavaNamingEnumeration} of {@link NameClassPair}s, or {@code null}
+   * @throws NamingException if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (String name)
     throws NamingException {
@@ -343,11 +408,15 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Lists bindings beneath the supplied name.
+   * Returns an enumeration of the name-object bindings under {@code name}.
+   * <p>
+   * The returned enumeration translates each element on the fly; directory context objects are
+   * wrapped in new {@link JavaContext} instances.
    *
-   * @param name base name
-   * @return enumeration of bindings or {@code null}
-   * @throws NamingException if listing fails
+   * @param name the internal name of the context whose bindings to list
+   * @return a {@link JavaNamingEnumeration} of {@link Binding}s, or {@code null} if the backing
+   * store returns {@code null}
+   * @throws NamingException if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (Name name)
     throws NamingException {
@@ -365,11 +434,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Lists bindings beneath the supplied string name.
+   * Returns an enumeration of the name-object bindings under the string name {@code name}.
    *
-   * @param name base name
-   * @return enumeration of bindings or {@code null}
-   * @throws NamingException if listing fails
+   * @param name the slash-delimited internal name of the context whose bindings to list
+   * @return a {@link JavaNamingEnumeration} of {@link Binding}s, or {@code null}
+   * @throws NamingException if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (String name)
     throws NamingException {
@@ -378,10 +447,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Destroys a subcontext.
+   * Destroys the subcontext identified by {@code name}.
    *
-   * @param name name of subcontext to destroy
-   * @throws NamingException if destruction fails or store is not modifiable
+   * @param name the internal name of the subcontext to destroy
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if destruction fails for any other reason
    */
   public void destroySubcontext (Name name)
     throws NamingException {
@@ -397,10 +467,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Destroys a subcontext referenced by string name.
+   * Destroys the subcontext identified by the string name {@code name}.
    *
-   * @param name name of subcontext to destroy
-   * @throws NamingException if destruction fails or store is not modifiable
+   * @param name the slash-delimited internal name of the subcontext to destroy
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if destruction fails for any other reason
    */
   public void destroySubcontext (String name)
     throws NamingException {
@@ -409,11 +480,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Creates a subcontext.
+   * Creates a new subcontext with the given name and returns it wrapped in a {@link JavaContext}.
    *
-   * @param name name of subcontext to create
-   * @return created context wrapped in {@link JavaContext}
-   * @throws NamingException if creation fails or store is not modifiable
+   * @param name the internal name of the subcontext to create
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if creation fails for any other reason
    */
   public Context createSubcontext (Name name)
     throws NamingException {
@@ -432,11 +504,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Creates a subcontext using a string name.
+   * Creates a new subcontext with the string name {@code name} and returns it wrapped in a
+   * {@link JavaContext}.
    *
-   * @param name name of subcontext to create
-   * @return created context wrapped in {@link JavaContext}
-   * @throws NamingException if creation fails or store is not modifiable
+   * @param name the slash-delimited internal name of the subcontext to create
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if creation fails for any other reason
    */
   public Context createSubcontext (String name)
     throws NamingException {
@@ -445,11 +519,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Looks up a link reference.
+   * Looks up the object bound to {@code name} without following link references.
+   * <p>
+   * If the result is a directory context it is wrapped in a new {@link JavaContext}.
    *
-   * @param name name to resolve
-   * @return linked object or wrapped context
-   * @throws NamingException if lookup fails
+   * @param name the internal name to look up
+   * @return the bound object or a {@link JavaContext} wrapping a nested directory context
+   * @throws NamingException if the lookup fails
    */
   public Object lookupLink (Name name)
     throws NamingException {
@@ -469,11 +545,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Looks up a link reference using a string name.
+   * Looks up the object bound to the string name {@code name} without following link references.
    *
-   * @param name name to resolve
-   * @return linked object or wrapped context
-   * @throws NamingException if lookup fails
+   * @param name the slash-delimited internal name to look up
+   * @return the bound object or a {@link JavaContext} wrapping a nested directory context
+   * @throws NamingException if the lookup fails
    */
   public Object lookupLink (String name)
     throws NamingException {
@@ -482,11 +558,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Returns the parser used for this context.
+   * Returns the {@link NameParser} associated with this context.
+   * <p>
+   * The {@code name} parameter is accepted for API compatibility but is not used.
    *
-   * @param name name whose parser is requested
-   * @return name parser
-   * @throws NamingException if retrieval fails
+   * @param name not used
+   * @return the {@link JavaNameParser} held by this context
+   * @throws NamingException never thrown by this implementation
    */
   public NameParser getNameParser (Name name)
     throws NamingException {
@@ -495,11 +573,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Returns the parser used for this context using a string name.
+   * Returns the {@link NameParser} associated with this context.
+   * <p>
+   * The {@code name} parameter is accepted for API compatibility but is not used.
    *
-   * @param name name whose parser is requested
-   * @return name parser
-   * @throws NamingException if retrieval fails
+   * @param name not used
+   * @return the {@link JavaNameParser} held by this context
+   * @throws NamingException never thrown by this implementation
    */
   public NameParser getNameParser (String name)
     throws NamingException {
@@ -508,11 +588,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Composes two names.
+   * Composes two names by appending {@code name} to a clone of {@code prefix}.
    *
-   * @param name   name to add
-   * @param prefix prefix to prepend
-   * @return composed name
+   * @param name   the name to append
+   * @param prefix the prefix to prepend
+   * @return a new {@link Name} equal to {@code prefix + name}
    * @throws NamingException if composition fails
    */
   public Name composeName (Name name, Name prefix)
@@ -522,12 +602,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Composes two string names.
+   * Composes two string names and returns the result as a slash-delimited string.
    *
-   * @param name   name to add
-   * @param prefix prefix to prepend
-   * @return composed name string
-   * @throws NamingException if composition fails
+   * @param name   the name portion to append
+   * @param prefix the prefix portion to prepend
+   * @return the composed name string
+   * @throws NamingException if parsing or composition fails
    */
   public String composeName (String name, String prefix)
     throws NamingException {
@@ -536,12 +616,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Adds a property to the environment.
+   * Adds a property to the JNDI environment, returning the previous value if any.
    *
-   * @param propName property name
-   * @param propVal  property value
-   * @return previous value associated with the property
-   * @throws NamingException if the store is not modifiable
+   * @param propName the name of the environment property to add or replace
+   * @param propVal  the new value for the property
+   * @return the previous value associated with {@code propName}, or {@code null} if none
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                never thrown by this implementation beyond the
+   *                                        modifiability check
    */
   public Object addToEnvironment (String propName, Object propVal)
     throws NamingException {
@@ -557,11 +639,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Removes a property from the environment.
+   * Removes a property from the JNDI environment, returning its previous value if any.
    *
-   * @param propName property name
-   * @return previous value associated with the property
-   * @throws NamingException if the store is not modifiable
+   * @param propName the name of the environment property to remove
+   * @return the value that was associated with {@code propName}, or {@code null} if none
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                never thrown by this implementation beyond the
+   *                                        modifiability check
    */
   public Object removeFromEnvironment (String propName)
     throws NamingException {
@@ -573,10 +657,10 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Returns the backing environment hashtable.
+   * Returns the JNDI environment hashtable for this context.
    *
-   * @return environment
-   * @throws NamingException never thrown
+   * @return the environment; never {@code null}
+   * @throws NamingException never thrown by this implementation
    */
   public Hashtable getEnvironment ()
     throws NamingException {
@@ -585,9 +669,9 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Closes the internal context if present.
+   * Closes the backing-store context if one is held; does nothing for top-level contexts.
    *
-   * @throws NamingException if close fails
+   * @throws NamingException if the backing-store context's {@code close} method throws
    */
   public void close ()
     throws NamingException {
@@ -598,10 +682,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Returns the fully qualified name of this context in the namespace.
+   * Returns the fully qualified name of this context in the {@code java:} namespace.
+   * <p>
+   * Delegates to the backing context's {@link DirContext#getNameInNamespace()} and converts the
+   * result from its external form back to the internal form using the name translator.
    *
-   * @return full name
-   * @throws NamingException if retrieval fails
+   * @return the internal qualified name string
+   * @throws NamingException if the backing context's {@code getNameInNamespace} throws or if the
+   *                         returned string cannot be translated
    */
   public String getNameInNamespace ()
     throws NamingException {
@@ -610,11 +698,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves attributes associated with a name.
+   * Returns all attributes associated with the entry at {@code name}.
    *
-   * @param name name whose attributes to fetch
-   * @return attributes
-   * @throws NamingException if retrieval fails
+   * @param name the internal name of the entry
+   * @return all attributes for the entry
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (Name name)
     throws NamingException {
@@ -627,11 +715,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves attributes associated with a string name.
+   * Returns all attributes associated with the entry at the string name {@code name}.
    *
-   * @param name name whose attributes to fetch
-   * @return attributes
-   * @throws NamingException if retrieval fails
+   * @param name the slash-delimited internal name of the entry
+   * @return all attributes for the entry
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (String name)
     throws NamingException {
@@ -640,12 +728,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves specific attributes associated with a name.
+   * Returns the specified attributes associated with the entry at {@code name}.
    *
-   * @param name    name whose attributes to fetch
-   * @param attrIds attribute identifiers to return
-   * @return attributes
-   * @throws NamingException if retrieval fails
+   * @param name    the internal name of the entry
+   * @param attrIds the identifiers of the attributes to return; {@code null} returns all attributes
+   * @return the requested attributes for the entry
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (Name name, String[] attrIds)
     throws NamingException {
@@ -658,12 +746,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves specific attributes associated with a string name.
+   * Returns the specified attributes associated with the entry at the string name {@code name}.
    *
-   * @param name    name whose attributes to fetch
-   * @param attrIds attribute identifiers to return
-   * @return attributes
-   * @throws NamingException if retrieval fails
+   * @param name    the slash-delimited internal name of the entry
+   * @param attrIds the identifiers of the attributes to return
+   * @return the requested attributes for the entry
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (String name, String[] attrIds)
     throws NamingException {
@@ -672,12 +760,15 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Modifies attributes using the supplied operation.
+   * Modifies the attributes of the entry at {@code name} using the given operation code and
+   * attribute set.
    *
-   * @param name   name whose attributes to modify
-   * @param mod_op modification operation
-   * @param attrs  attributes to apply
-   * @throws NamingException if modification fails or store is not modifiable
+   * @param name   the internal name of the entry to modify
+   * @param mod_op the modification operation ({@link DirContext#ADD_ATTRIBUTE},
+   *               {@link DirContext#REPLACE_ATTRIBUTE}, or {@link DirContext#REMOVE_ATTRIBUTE})
+   * @param attrs  the attributes to apply
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -693,12 +784,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Modifies attributes using the supplied operation.
+   * Modifies the attributes of the entry at the string name {@code name} using the given operation
+   * code and attribute set.
    *
-   * @param name   name whose attributes to modify
-   * @param mod_op modification operation
-   * @param attrs  attributes to apply
-   * @throws NamingException if modification fails or store is not modifiable
+   * @param name   the slash-delimited internal name of the entry to modify
+   * @param mod_op the modification operation
+   * @param attrs  the attributes to apply
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the modification fails for any other reason
    */
   public void modifyAttributes (String name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -707,11 +800,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Applies an array of modifications to attributes.
+   * Applies an ordered sequence of modification items to the entry at {@code name}.
    *
-   * @param name name whose attributes to modify
-   * @param mods modifications to apply
-   * @throws NamingException if modification fails or store is not modifiable
+   * @param name the internal name of the entry to modify
+   * @param mods the ordered modifications to apply
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, ModificationItem[] mods)
     throws NamingException {
@@ -727,11 +821,12 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Applies an array of modifications to attributes using a string name.
+   * Applies an ordered sequence of modification items to the entry at the string name {@code name}.
    *
-   * @param name name whose attributes to modify
-   * @param mods modifications to apply
-   * @throws NamingException if modification fails or store is not modifiable
+   * @param name the slash-delimited internal name of the entry to modify
+   * @param mods the ordered modifications to apply
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the modification fails for any other reason
    */
   public void modifyAttributes (String name, ModificationItem[] mods)
     throws NamingException {
@@ -740,12 +835,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Binds an object with attributes to a name.
+   * Binds {@code obj} to {@code name} in the backing store, associating the given attributes.
    *
-   * @param name  name to bind
-   * @param obj   object to bind
-   * @param attrs attributes to associate
-   * @throws NamingException if binding fails or store is not modifiable
+   * @param name  the internal name to bind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the bind fails for any other reason
    */
   public void bind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -761,12 +857,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Binds an object with attributes to a string name.
+   * Binds {@code obj} to the string name {@code name}, associating the given attributes.
    *
-   * @param name  name to bind
-   * @param obj   object to bind
-   * @param attrs attributes to associate
-   * @throws NamingException if binding fails or store is not modifiable
+   * @param name  the slash-delimited internal name to bind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the bind fails for any other reason
    */
   public void bind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -775,12 +872,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Rebinds an object with attributes to a name.
+   * Binds {@code obj} to {@code name}, replacing any existing binding and associating the given
+   * attributes.
    *
-   * @param name  name to bind
-   * @param obj   object to bind
-   * @param attrs attributes to associate
-   * @throws NamingException if rebinding fails or store is not modifiable
+   * @param name  the internal name to rebind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -796,12 +895,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Rebinds an object with attributes to a string name.
+   * Binds {@code obj} to the string name {@code name}, replacing any existing binding and
+   * associating the given attributes.
    *
-   * @param name  name to bind
-   * @param obj   object to bind
-   * @param attrs attributes to associate
-   * @throws NamingException if rebinding fails or store is not modifiable
+   * @param name  the slash-delimited internal name to rebind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -810,12 +911,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Creates a subcontext with attributes.
+   * Creates a subcontext with the given name and initial attributes, returning it wrapped in a
+   * {@link JavaContext}.
    *
-   * @param name  name of subcontext
-   * @param attrs attributes to apply
-   * @return created context wrapped in {@link JavaContext}
-   * @throws NamingException if creation fails or store is not modifiable
+   * @param name  the internal name of the subcontext to create
+   * @param attrs the initial attributes to associate with the new subcontext
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if creation fails for any other reason
    */
   public DirContext createSubcontext (Name name, Attributes attrs)
     throws NamingException {
@@ -834,12 +937,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Creates a subcontext with attributes using a string name.
+   * Creates a subcontext with the string name {@code name} and initial attributes, returning it
+   * wrapped in a {@link JavaContext}.
    *
-   * @param name  name of subcontext
-   * @param attrs attributes to apply
-   * @return created context wrapped in {@link JavaContext}
-   * @throws NamingException if creation fails or store is not modifiable
+   * @param name  the slash-delimited internal name of the subcontext to create
+   * @param attrs the initial attributes to associate with the new subcontext
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
+   * @throws OperationNotSupportedException if this context is not modifiable
+   * @throws NamingException                if creation fails for any other reason
    */
   public DirContext createSubcontext (String name, Attributes attrs)
     throws NamingException {
@@ -848,11 +953,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves schema information for a name.
+   * Returns the schema context associated with the entry at {@code name}.
    *
-   * @param name name whose schema to fetch
-   * @return schema context
-   * @throws NamingException if retrieval fails
+   * @param name the internal name of the entry
+   * @return the schema context from the backing store
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchema (Name name)
     throws NamingException {
@@ -865,11 +970,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves schema information for a string name.
+   * Returns the schema context associated with the entry at the string name {@code name}.
    *
-   * @param name name whose schema to fetch
-   * @return schema context
-   * @throws NamingException if retrieval fails
+   * @param name the slash-delimited internal name of the entry
+   * @return the schema context from the backing store
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchema (String name)
     throws NamingException {
@@ -878,11 +983,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves schema class definition for a name.
+   * Returns the schema class definition context for the entry at {@code name}.
    *
-   * @param name name whose class definition to fetch
-   * @return schema class definition context
-   * @throws NamingException if retrieval fails
+   * @param name the internal name of the entry
+   * @return the schema class definition context from the backing store
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (Name name)
     throws NamingException {
@@ -895,11 +1000,11 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Retrieves schema class definition for a string name.
+   * Returns the schema class definition context for the entry at the string name {@code name}.
    *
-   * @param name name whose class definition to fetch
-   * @return schema class definition context
-   * @throws NamingException if retrieval fails
+   * @param name the slash-delimited internal name of the entry
+   * @return the schema class definition context from the backing store
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (String name)
     throws NamingException {
@@ -908,13 +1013,16 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory with attributes and an attribute filter.
+   * Searches under {@code name} for entries matching {@code matchingAttributes}, returning only
+   * the requested attributes.
    *
-   * @param name               base name
-   * @param matchingAttributes attributes to match
-   * @param attributesToReturn attributes to return
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name               the internal base name for the search
+   * @param matchingAttributes the attributes to match; may be empty
+   * @param attributesToReturn the attribute identifiers to include in each result; {@code null}
+   *                           returns all attributes
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -932,13 +1040,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory with attributes and an attribute filter using a string name.
+   * Searches under the string name {@code name} for entries matching {@code matchingAttributes},
+   * returning only the requested attributes.
    *
-   * @param name               base name
-   * @param matchingAttributes attributes to match
-   * @param attributesToReturn attributes to return
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name               the slash-delimited internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @param attributesToReturn the attribute identifiers to include in each result
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -947,12 +1056,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory with attributes.
+   * Searches under {@code name} for entries matching all attributes in {@code matchingAttributes}.
    *
-   * @param name               base name
-   * @param matchingAttributes attributes to match
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name               the internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
     throws NamingException {
@@ -970,12 +1080,13 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory with attributes using a string name.
+   * Searches under the string name {@code name} for entries matching all attributes in
+   * {@code matchingAttributes}.
    *
-   * @param name               base name
-   * @param matchingAttributes attributes to match
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name               the slash-delimited internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
     throws NamingException {
@@ -984,13 +1095,15 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory using a filter expression.
+   * Searches under {@code name} using the RFC 2254 filter string {@code filter} and the given
+   * search controls.
    *
-   * @param name   base name
-   * @param filter search filter
-   * @param cons   search controls
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name   the internal base name for the search
+   * @param filter the RFC 2254 search filter string
+   * @param cons   the search controls (scope, size limit, time limit, etc.)
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
     throws NamingException {
@@ -1008,13 +1121,14 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory using a filter expression and string name.
+   * Searches under the string name {@code name} using the RFC 2254 filter string {@code filter}
+   * and the given search controls.
    *
-   * @param name   base name
-   * @param filter search filter
-   * @param cons   search controls
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name   the slash-delimited internal base name for the search
+   * @param filter the RFC 2254 search filter string
+   * @param cons   the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
     throws NamingException {
@@ -1023,14 +1137,17 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory using a filter expression with parameters.
+   * Searches under {@code name} using a parameterised filter expression and the given search
+   * controls.
    *
-   * @param name       base name
-   * @param filterExpr filter expression
-   * @param filterArgs filter arguments
-   * @param cons       search controls
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name       the internal base name for the search
+   * @param filterExpr the RFC 2254 filter expression, which may contain substitution variables
+   *                   ({@code {0}}, {@code {1}}, etc.)
+   * @param filterArgs the values to substitute into the filter expression
+   * @param cons       the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {
@@ -1049,14 +1166,15 @@ public class JavaContext implements DirContext {
   }
 
   /**
-   * Searches the directory using a filter expression with parameters and string name.
+   * Searches under the string name {@code name} using a parameterised filter expression and the
+   * given search controls.
    *
-   * @param name       base name
-   * @param filterExpr filter expression
-   * @param filterArgs filter arguments
-   * @param cons       search controls
-   * @return search results
-   * @throws NamingException if search fails
+   * @param name       the slash-delimited internal base name for the search
+   * @param filterExpr the RFC 2254 filter expression with optional substitution variables
+   * @param filterArgs the values to substitute into the filter expression
+   * @param cons       the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {

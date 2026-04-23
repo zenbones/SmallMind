@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Short literal operand.
+ * {@link WhereOperand} carrying a single {@code short} literal value.
  */
 @XmlRootElement(name = "short", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -54,7 +54,7 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   /**
-   * Creates an operand with the provided short value.
+   * Creates an operand wrapping the given short value.
    *
    * @param value short literal
    */
@@ -67,7 +67,7 @@ public class ShortWhereOperand extends WhereOperand<Short> {
    * Convenience factory for a short operand.
    *
    * @param value short literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static ShortWhereOperand instance (Short value) {
 
@@ -75,6 +75,8 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   /**
+   * Returns the element type for this operand.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   /**
+   * Returns the operand type discriminator for this operand.
+   *
    * @return {@link OperandType#SHORT}
    */
   @Override
@@ -95,9 +99,9 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   /**
-   * Returns the short value.
+   * Returns the short value held by this operand.
    *
-   * @return short literal or {@code null}
+   * @return short literal, or {@code null} if unset
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   /**
-   * Returns the serialized short value.
+   * Returns the short value for serialization.
    *
-   * @return short literal or {@code null}
+   * @return short literal, or {@code null} if unset
    */
   @XmlElement(name = "value", required = true)
   public Short getValue () {

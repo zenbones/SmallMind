@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.reflection;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime wrapper used when ASM-based byte code parsing or generation fails.
+ * Thrown when ASM-based byte code inspection or proxy generation encounters an unrecoverable error.
  */
 public class ByteCodeManipulationException extends FormattedRuntimeException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public ByteCodeManipulationException () {
 
@@ -48,10 +48,10 @@ public class ByteCodeManipulationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the failure
+   * @param args    arguments substituted into the format string
    */
   public ByteCodeManipulationException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class ByteCodeManipulationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying failure
-   * @param message   a {@link java.util.Formatter}-style message
-   * @param args      values interpolated into the message
+   * @param throwable the underlying failure that triggered this exception
+   * @param message   a {@link java.util.Formatter}-style format string describing the failure
+   * @param args      arguments substituted into the format string
    */
   public ByteCodeManipulationException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class ByteCodeManipulationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a cause and no message.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying failure
+   * @param throwable the underlying failure that triggered this exception
    */
   public ByteCodeManipulationException (Throwable throwable) {
 

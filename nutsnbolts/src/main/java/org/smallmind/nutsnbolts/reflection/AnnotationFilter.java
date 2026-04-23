@@ -35,9 +35,8 @@ package org.smallmind.nutsnbolts.reflection;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Filters annotation descriptors as they are encountered during byte code parsing.
- * The filter can either include only a configured set of annotations or exclude them,
- * depending on the configured {@link PassType}.
+ * Determines whether a given annotation descriptor should be copied to a generated proxy class,
+ * using an {@link PassType#INCLUDE} or {@link PassType#EXCLUDE} policy against a configured set of annotations.
  */
 public class AnnotationFilter {
 
@@ -45,10 +44,12 @@ public class AnnotationFilter {
   private String[] annotationSignatures = null;
 
   /**
-   * Constructs a filter that either allows only the supplied annotations or blocks them.
+   * Constructs a filter with the specified policy and annotation set.
    *
-   * @param passType          determines whether the supplied annotations are included or excluded
-   * @param annotationClasses annotation classes expressed as {@link Class} objects; when omitted, all descriptors pass
+   * @param passType          {@link PassType#INCLUDE} to allow only the listed annotations, or
+   *                          {@link PassType#EXCLUDE} to block only the listed annotations
+   * @param annotationClasses the annotation types the policy applies to; when absent all descriptors
+   *                          are allowed ({@code EXCLUDE}) or none are ({@code INCLUDE})
    */
   public AnnotationFilter (PassType passType, Class... annotationClasses) {
 
@@ -63,11 +64,11 @@ public class AnnotationFilter {
   }
 
   /**
-   * Tests whether the supplied annotation descriptor should be allowed based on the configured mode.
+   * Decides whether the given annotation descriptor passes the configured include/exclude policy.
    *
-   * @param desc the JVM descriptor of the annotation (for example {@code Ljava/lang/Deprecated;})
-   * @return {@code true} if the descriptor is allowed for the current mode
-   * @throws UnknownSwitchCaseException if the configured {@link PassType} is not recognized
+   * @param desc the JVM type descriptor of the annotation, e.g. {@code Ljava/lang/Deprecated;}
+   * @return {@code true} if the annotation should be kept according to the policy; {@code false} if it should be dropped
+   * @throws UnknownSwitchCaseException if the configured {@link PassType} is not handled by this method
    */
   public boolean isAllowed (String desc) {
 

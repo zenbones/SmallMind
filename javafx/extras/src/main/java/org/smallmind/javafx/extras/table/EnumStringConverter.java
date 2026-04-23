@@ -36,16 +36,20 @@ import javafx.util.StringConverter;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
 /**
- * {@link StringConverter} that renders enum constants using display case while parsing using the enum name.
+ * A {@link StringConverter} for enum types that converts constants to human-readable display-case
+ * strings (underscores replaced with spaces, title-cased) and parses display-case strings back to
+ * enum constants by delegating to {@link Enum#valueOf}.
  *
- * @param <E> the enum type
+ * @param <E> the enum type managed by this converter
  */
 public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
 
   private final Class<E> enumClass;
 
   /**
-   * @param enumClass the enum type this converter supports
+   * Creates a converter for the given enum class.
+   *
+   * @param enumClass the enum type to convert; must not be {@code null}
    */
   public EnumStringConverter (Class<E> enumClass) {
 
@@ -53,10 +57,11 @@ public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
   }
 
   /**
-   * Converts an enum constant to a display-friendly string.
+   * Converts an enum constant to a display-case string by transforming the constant's name
+   * (e.g. {@code SOME_VALUE} becomes {@code Some Value}).
    *
-   * @param item the enum value
-   * @return display-cased name
+   * @param item the enum constant to convert; must not be {@code null}
+   * @return the display-case string representation
    */
   @Override
   public String toString (E item) {
@@ -65,11 +70,12 @@ public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
   }
 
   /**
-   * Parses the provided string to an enum constant using {@link Enum#valueOf(Class, String)}.
+   * Parses a string back to an enum constant. The string is expected to match an enum constant
+   * name exactly (case-sensitive) as understood by {@link Enum#valueOf}.
    *
-   * @param name the string representation
-   * @return matching enum constant
-   * @throws IllegalArgumentException if the string does not match an enum constant
+   * @param name the string to parse; must not be {@code null}
+   * @return the matching enum constant
+   * @throws IllegalArgumentException if {@code name} does not correspond to any constant in the enum
    */
   @Override
   public E fromString (String name) {

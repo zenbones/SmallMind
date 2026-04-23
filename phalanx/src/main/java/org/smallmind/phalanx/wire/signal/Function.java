@@ -46,11 +46,12 @@ import org.smallmind.phalanx.wire.CallAs;
 import org.smallmind.phalanx.wire.Result;
 import org.smallmind.phalanx.wire.SignatureUtility;
 
+/**
+ * Serializable descriptor of a callable wire function, capturing its name, parameter signature,
+ * neutral result type, and native JVM return-type encoding.
+ */
 @XmlRootElement(name = "function", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-/**
- * Serializable description of a callable function, including its signature and result type.
- */
 public class Function implements Serializable {
 
   private String name;
@@ -59,14 +60,14 @@ public class Function implements Serializable {
   private String[] signature;
 
   /**
-   * Default constructor for JAXB.
+   * No-argument constructor required by JAXB.
    */
   public Function () {
 
   }
 
   /**
-   * Constructs a function descriptor with a name only.
+   * Creates a partial descriptor containing only the function name.
    *
    * @param name function name
    */
@@ -76,10 +77,10 @@ public class Function implements Serializable {
   }
 
   /**
-   * Constructs a function descriptor with name and native return type encoding.
+   * Creates a descriptor with a function name and native return-type encoding.
    *
    * @param name       function name
-   * @param nativeType JVM descriptor for the return type
+   * @param nativeType JVM descriptor string for the return type
    */
   public Function (String name, String nativeType) {
 
@@ -88,9 +89,12 @@ public class Function implements Serializable {
   }
 
   /**
-   * Builds a descriptor from a reflected method, inspecting annotations to determine names and types.
+   * Builds a complete descriptor from a reflected method, deriving the name from
+   * {@link org.smallmind.phalanx.wire.CallAs} when present, the result type from
+   * {@link org.smallmind.phalanx.wire.Result} when present, and the parameter signature
+   * from {@link org.smallmind.phalanx.wire.Argument} type hints or neutral encoding.
    *
-   * @param method reflected method to describe
+   * @param method the reflected method to describe
    */
   public Function (Method method) {
 
@@ -131,9 +135,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Indicates whether this descriptor is missing signature or result details.
+   * Returns {@code true} when the signature or result type is absent, indicating an incomplete descriptor.
    *
-   * @return {@code true} when any component is null
+   * @return {@code true} if either the signature or the result type is {@code null}
    */
   @XmlTransient
   public boolean isPartial () {
@@ -142,7 +146,7 @@ public class Function implements Serializable {
   }
 
   /**
-   * Returns the function name.
+   * Returns the function name used on the wire.
    *
    * @return function name
    */
@@ -153,9 +157,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Sets the function name.
+   * Sets the function name used on the wire.
    *
-   * @param name new function name
+   * @param name function name
    */
   public void setName (String name) {
 
@@ -163,9 +167,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Returns the JVM descriptor for the return type.
+   * Returns the JVM descriptor string for the return type (e.g., {@code Ljava/lang/String;}).
    *
-   * @return native type descriptor
+   * @return native type descriptor, or {@code null} if not set
    */
   @XmlElement(name = "nativeType")
   public String getNativeType () {
@@ -174,9 +178,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Sets the JVM descriptor for the return type.
+   * Sets the JVM descriptor string for the return type.
    *
-   * @param nativeType native descriptor string
+   * @param nativeType native type descriptor string
    */
   public void setNativeType (String nativeType) {
 
@@ -184,9 +188,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Returns the neutral or named result type.
+   * Returns the neutral or named result type encoding; a leading {@code !} denotes a named type alias.
    *
-   * @return result type encoding
+   * @return result type encoding, or {@code null} if not set
    */
   @XmlElement(name = "resultType")
   public String getResultType () {
@@ -195,7 +199,7 @@ public class Function implements Serializable {
   }
 
   /**
-   * Sets the result type encoding.
+   * Sets the neutral or named result type encoding.
    *
    * @param resultType result type encoding
    */
@@ -205,9 +209,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Returns the encoded parameter signature.
+   * Returns the array of encoded parameter type strings that form the function's signature.
    *
-   * @return signature array
+   * @return parameter signature array, or {@code null} if not set
    */
   @XmlElement(name = "signature")
   public String[] getSignature () {
@@ -216,9 +220,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Sets the encoded parameter signature.
+   * Sets the array of encoded parameter type strings.
    *
-   * @param signature signature array
+   * @param signature parameter signature array
    */
   public void setSignature (String[] signature) {
 
@@ -226,9 +230,9 @@ public class Function implements Serializable {
   }
 
   /**
-   * Computes a hash code based on name, result type, and signature entries.
+   * Returns a hash code derived from the name, result type, and each parameter type string.
    *
-   * @return hash code for the descriptor
+   * @return hash code for this descriptor
    */
   public int hashCode () {
 
@@ -250,10 +254,11 @@ public class Function implements Serializable {
   }
 
   /**
-   * Compares descriptors by name, result type, and signature contents.
+   * Returns {@code true} when {@code obj} is a {@code Function} with the same name, result type,
+   * and parameter signature array (compared element-by-element).
    *
-   * @param obj other object
-   * @return {@code true} when equivalent
+   * @param obj the object to compare against
+   * @return {@code true} if this descriptor is equal to {@code obj}
    */
   public boolean equals (Object obj) {
 

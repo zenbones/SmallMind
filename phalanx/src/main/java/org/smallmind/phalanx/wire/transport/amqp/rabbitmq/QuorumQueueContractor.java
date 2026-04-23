@@ -44,7 +44,9 @@ public class QuorumQueueContractor implements QueueContractor {
   private final int replicationCount;
 
   /**
-   * @param replicationCount number of quorum replicas to request.
+   * Creates a contractor configured for the given replication factor.
+   *
+   * @param replicationCount number of quorum replicas to request from the broker.
    */
   public QuorumQueueContractor (int replicationCount) {
 
@@ -52,6 +54,8 @@ public class QuorumQueueContractor implements QueueContractor {
   }
 
   /**
+   * Returns the queue type declared by this contractor.
+   *
    * @return {@link QueueType#QUORUM}.
    */
   @Override

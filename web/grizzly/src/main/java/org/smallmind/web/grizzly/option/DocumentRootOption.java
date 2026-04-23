@@ -35,7 +35,7 @@ package org.smallmind.web.grizzly.option;
 import java.util.Map;
 
 /**
- * Configures static file system roots that should be exposed under a specific context path.
+ * Configures one or more filesystem document roots and the base URI path under which they are mounted.
  */
 public class DocumentRootOption {
 
@@ -43,7 +43,9 @@ public class DocumentRootOption {
   private String documentPath = "/document";
 
   /**
-   * @return mapping of URI prefixes to filesystem directories that should be served
+   * Returns the mapping of URI sub-path prefixes to filesystem directory paths.
+   *
+   * @return URI-to-directory mapping
    */
   public Map<String, String> getDocumentRoots () {
 
@@ -51,7 +53,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * @param documentRoots mapping of URI prefixes to filesystem directories that should be served
+   * Sets the mapping of URI sub-path prefixes to filesystem directory paths.
+   *
+   * @param documentRoots URI-to-directory mapping for static file serving
    */
   public void setDocumentRoots (Map<String, String> documentRoots) {
 
@@ -59,7 +63,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * @return base URI path under which document roots will be mounted
+   * Returns the base URI path under which all document roots are mounted.
+   *
+   * @return document base path
    */
   public String getDocumentPath () {
 
@@ -67,7 +73,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * @param documentPath base URI path under which document roots will be mounted
+   * Sets the base URI path under which all document roots are mounted.
+   *
+   * @param documentPath document base path
    */
   public void setDocumentPath (String documentPath) {
 

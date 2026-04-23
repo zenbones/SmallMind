@@ -36,24 +36,26 @@ import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
 /**
- * {@link AbstractWrapperListener} that bootstraps and manages a Spring {@link ConfigurableApplicationContext}.
+ * {@link AbstractWrapperListener} specialization that maps the wrapper's start/stop lifecycle onto a Spring
+ * {@link ConfigurableApplicationContext}: startup loads and refreshes the context, shutdown closes it. Concrete
+ * subclasses decide how the context is produced.
  */
 public abstract class SpringContextWrapperListener extends AbstractWrapperListener {
 
   private ConfigurableApplicationContext applicationContext;
 
   /**
-   * Loads the Spring application context for this listener.
+   * Factory hook implemented by subclasses to supply the Spring context that the listener should manage.
    *
-   * @param args configuration locations or other bootstrap arguments
-   * @return the newly created application context
+   * @param args the wrapper-supplied arguments (after timeout stripping); normally interpreted as config locations
+   * @return a newly created context, typically unrefreshed
    */
   public abstract ConfigurableApplicationContext loadApplicationContext (String[] args);
 
   /**
-   * Loads or refreshes the application context as part of wrapper startup.
+   * Lazily creates the application context on first start and ensures it is refreshed so Spring beans are available.
    *
-   * @param args arguments forwarded from the wrapper
+   * @param args arguments forwarded from the wrapper, passed through to {@link #loadApplicationContext(String[])}
    */
   public void startup (String[] args) {
 
@@ -66,7 +68,7 @@ public abstract class SpringContextWrapperListener extends AbstractWrapperListen
   }
 
   /**
-   * Closes the application context if it is active.
+   * Closes the managed application context if one has been created and is still active.
    */
   public void shutdown () {
 

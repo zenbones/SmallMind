@@ -38,18 +38,31 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean producing a singleton {@link Stint} from configured time and unit.
+ * Spring {@link FactoryBean} that constructs a singleton {@link Stint} from an injected
+ * numeric {@code time} value and a {@link TimeUnit}. The {@link Stint} is assembled during
+ * {@link #afterPropertiesSet()} after Spring has populated both properties.
  */
 public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
 
+  /**
+   * The {@link Stint} singleton produced by this factory bean.
+   */
   private Stint stint;
+
+  /**
+   * The {@link TimeUnit} that qualifies the numeric {@link #time} value.
+   */
   private TimeUnit timeUnit;
+
+  /**
+   * The numeric duration quantity used to construct the {@link Stint}.
+   */
   private long time;
 
   /**
-   * Sets the time value for the stint.
+   * Sets the numeric duration quantity for the {@link Stint}.
    *
-   * @param time duration quantity
+   * @param time the duration amount expressed in the configured {@link TimeUnit}
    */
   public void setTime (long time) {
 
@@ -57,9 +70,9 @@ public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
   }
 
   /**
-   * Sets the time unit for the stint.
+   * Sets the {@link TimeUnit} that qualifies the numeric time value.
    *
-   * @param timeUnit duration unit
+   * @param timeUnit the unit of the {@code time} duration; must not be {@code null}
    */
   public void setTimeUnit (TimeUnit timeUnit) {
 
@@ -67,9 +80,9 @@ public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
   }
 
   /**
-   * Stints are singletons for a given factory bean configuration.
+   * Indicates that the produced {@link Stint} is a singleton within the Spring context.
    *
-   * @return always true
+   * @return {@code true} always
    */
   @Override
   public boolean isSingleton () {
@@ -78,7 +91,9 @@ public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
   }
 
   /**
-   * @return produced object type ({@link Stint})
+   * Returns the type of object produced by this factory bean.
+   *
+   * @return {@link Stint}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -87,7 +102,10 @@ public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
   }
 
   /**
-   * @return the constructed stint
+   * Returns the {@link Stint} singleton constructed during {@link #afterPropertiesSet()}.
+   *
+   * @return the constructed {@link Stint}, or {@code null} if {@link #afterPropertiesSet()} has
+   * not yet run
    */
   @Override
   public Stint getObject () {
@@ -96,7 +114,9 @@ public class StintFactoryBean implements FactoryBean<Stint>, InitializingBean {
   }
 
   /**
-   * Builds the stint after Spring injects properties.
+   * Constructs the {@link Stint} from the configured {@link #time} and {@link #timeUnit}
+   * values. Invoked automatically by the Spring container after all bean properties have
+   * been set.
    */
   @Override
   public void afterPropertiesSet () {

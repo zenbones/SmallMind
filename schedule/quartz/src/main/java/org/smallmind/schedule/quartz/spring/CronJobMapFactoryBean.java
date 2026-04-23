@@ -43,10 +43,11 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 /**
- * FactoryBean that assembles a map of Quartz {@link JobDetail} to
- * {@link CronTrigger} definitions discovered in the Spring context. Only
- * {@link CronJob} beans whose identifiers are explicitly allowed are
- * included.
+ * Spring {@link FactoryBean} that scans the application context for
+ * {@link CronJob} beans and assembles those whose identifiers appear in an
+ * explicit allowlist into a {@link Map} of {@link JobDetail} to
+ * {@link CronTrigger} lists. The produced map is intended as input to
+ * {@link CronJobInitializingBean}.
  */
 public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<CronTrigger>>>, BeanPostProcessor {
 
@@ -54,9 +55,11 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
   private List<String> allowedJobIds;
 
   /**
-   * Restrict which jobs should be collected by id of form {@code group.name}.
+   * Sets the identifiers of jobs that should be included in the produced map.
+   * Each identifier must be of the form {@code group.name}, matching the
+   * {@link JobKey} of the corresponding {@link CronJob}.
    *
-   * @param allowedJobIds list of allowed identifiers
+   * @param allowedJobIds list of {@code group.name} strings designating permitted jobs
    */
   public void setAllowedJobIds (List<String> allowedJobIds) {
 
@@ -64,7 +67,7 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
   }
 
   /**
-   * FactoryBean contract indicating the produced map is a singleton.
+   * Declares the produced object as a singleton.
    *
    * @return {@code true}
    */
@@ -75,7 +78,7 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
   }
 
   /**
-   * Declares {@link Map} as the produced object type.
+   * Declares the type of the produced object.
    *
    * @return {@code Map.class}
    */
@@ -86,14 +89,14 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
   }
 
   /**
-   * Collect {@link CronJob} beans after initialization. Matches only beans
-   * whose {@link JobDetail} key forms an identifier present in
-   * {@link #allowedJobIds}. Matching entries are added to the produced map.
+   * Inspects each initialized bean and, if it is a {@link CronJob} whose
+   * {@link JobKey} produces an identifier present in {@link #allowedJobIds},
+   * adds it to the internal map. Non-matching beans are returned unchanged.
    *
-   * @param bean     the initialized bean
-   * @param beanName Spring bean name
-   * @return the original bean
-   * @throws BeansException if post-processing fails
+   * @param bean     the bean that has just been initialized
+   * @param beanName the bean's name within the context
+   * @return the original {@code bean} instance, unmodified
+   * @throws BeansException if post-processing encounters an error
    */
   @Override
   public Object postProcessAfterInitialization (Object bean, String beanName)
@@ -116,9 +119,9 @@ public class CronJobMapFactoryBean implements FactoryBean<Map<JobDetail, List<Cr
   }
 
   /**
-   * Provide the collected mapping of job details to cron triggers.
+   * Returns the assembled map of job details to their cron triggers.
    *
-   * @return map of configured jobs to their triggers
+   * @return map populated from allowed {@link CronJob} beans
    */
   @Override
   public Map<JobDetail, List<CronTrigger>> getObject () {

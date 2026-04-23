@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.layout;
 import java.util.List;
 
 /**
- * Computes baseline positions and ascent/descent pairs for a set of {@link ParaboxElement}s
- * within a container. Useful for aligning elements sharing a common baseline.
+ * Computes per-element ascent/descent pairs and an idealized baseline position for a group of
+ * {@link ParaboxElement}s, enabling {@link Alignment#BASELINE} layout within a {@link ParallelBox}.
  */
 public class BaselineCalculations {
 
@@ -44,13 +44,14 @@ public class BaselineCalculations {
   private final double idealizedBaseline;
 
   /**
-   * Calculates ascents/descents for each element and determines an idealized baseline position.
+   * Measures each element's ascent and descent along the given axis and derives an idealized baseline
+   * that centers the combined ascent-plus-descent span within the container.
    *
-   * @param bias                       the measurement axis
-   * @param maximumOverrideMeasurement optional cap on element size along the axis
-   * @param containerMeasurement       the available space along the axis
-   * @param elements                   the elements to measure
-   * @param tailor                     layout tailor used for element measurement
+   * @param bias                       the axis of measurement
+   * @param maximumOverrideMeasurement optional upper bound on each element's size; {@code null} defers to the element's own maximum
+   * @param containerMeasurement       the total available space along the axis
+   * @param elements                   the elements whose baselines are to be calculated
+   * @param tailor                     the layout tailor used to retrieve element measurements
    */
   public BaselineCalculations (Bias bias, Double maximumOverrideMeasurement, double containerMeasurement, List<ParaboxElement<?>> elements, LayoutTailor tailor) {
 
@@ -78,15 +79,22 @@ public class BaselineCalculations {
     idealizedBaseline = maxAscent + (Math.max(0, containerMeasurement - (maxAscent + maxDescent)) / 2);
   }
 
+  /**
+   * Returns the idealized baseline position within the container, calculated as the maximum ascent
+   * plus half of any remaining space after accounting for the tallest ascent-descent pair.
+   *
+   * @return the idealized baseline offset from the container's leading edge
+   */
   public double getIdealizedBaseline () {
 
     return idealizedBaseline;
   }
 
   /**
-   * Returns the ascent/descent pair computed for each element in order.
+   * Returns the ascent/descent {@link Pair} computed for each element, in the same order as the
+   * element list passed to the constructor.
    *
-   * @return array of ascent/descent values
+   * @return array of ascent/descent pairs indexed by element position
    */
   public Pair[] getElementAscentsDescents () {
 

@@ -41,7 +41,9 @@ import org.smallmind.scribe.pen.Level;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Base Spring logging plan that wires an appender and templates based on provided patterns and default level.
+ * Abstract Spring {@link InitializingBean} base class for logging plans that wraps a concrete appender in an
+ * {@link AsynchronousAppender}, registers a {@link DefaultTemplate} at the configured default level, and
+ * optionally registers a {@link ClassNameTemplate} for each supplied {@link Log} entry.
  */
 public abstract class LoggingPlan implements InitializingBean {
 
@@ -51,16 +53,20 @@ public abstract class LoggingPlan implements InitializingBean {
   private int concurrencyLimit = 1;
 
   /**
-   * Provides the concrete appender for this plan.
+   * Constructs and returns the concrete {@link Appender} that this plan will wrap asynchronously; subclasses
+   * provide the actual appender implementation (console, file, Fluent Bit, etc.).
    *
-   * @return appender to use
-   * @throws IOException if appender initialization fails
+   * @return the configured appender for this plan
+   * @throws IOException if the appender cannot be created or its underlying resource cannot be opened
    */
   public abstract Appender getAppender ()
     throws IOException;
 
   /**
-   * Sets the default log level applied to the root template.
+   * Sets the level threshold applied to the {@link DefaultTemplate} registered during initialization;
+   * defaults to {@link Level#INFO}.
+   *
+   * @param defaultLogLevel the minimum level at which the default template will emit records
    */
   public void setDefaultLogLevel (Level defaultLogLevel) {
 
@@ -68,7 +74,10 @@ public abstract class LoggingPlan implements InitializingBean {
   }
 
   /**
-   * Sets the buffer size for the asynchronous wrapper.
+   * Sets the number of log records that the {@link AsynchronousAppender}'s internal queue can hold before
+   * producers block; defaults to 400.
+   *
+   * @param logRecordBufferSize the capacity of the asynchronous record buffer
    */
   public void setLogRecordBufferSize (int logRecordBufferSize) {
 
@@ -76,7 +85,10 @@ public abstract class LoggingPlan implements InitializingBean {
   }
 
   /**
-   * Sets the concurrency limit for asynchronous workers.
+   * Sets the number of worker threads that the {@link AsynchronousAppender} uses to drain the record queue;
+   * defaults to 1.
+   *
+   * @param concurrencyLimit the number of concurrent dispatch threads
    */
   public void setConcurrencyLimit (int concurrencyLimit) {
 
@@ -84,7 +96,10 @@ public abstract class LoggingPlan implements InitializingBean {
   }
 
   /**
-   * Sets the specific logger patterns and levels to configure.
+   * Sets the array of {@link Log} entries whose class-name patterns and levels will each be registered as
+   * a {@link ClassNameTemplate} during initialization; may be {@code null} if no per-logger overrides are needed.
+   *
+   * @param logs the per-logger level and pattern entries to register
    */
   public void setLogs (Log[] logs) {
 
@@ -92,9 +107,12 @@ public abstract class LoggingPlan implements InitializingBean {
   }
 
   /**
-   * Wraps the concrete appender asynchronously, registers a default template, and applies any specific logger mappings.
+   * Retrieves the concrete appender from {@link #getAppender()}, wraps it in an {@link AsynchronousAppender}
+   * with the configured buffer size and concurrency limit, registers a {@link DefaultTemplate} at the default
+   * log level, and for each {@link Log} entry registers a {@link ClassNameTemplate} at the entry's level and pattern.
    *
-   * @throws Exception if appender creation or template registration fails
+   * @throws IOException if the concrete appender cannot be created
+   * @throws Exception   if template registration or any other initialization step fails
    */
   @Override
   public void afterPropertiesSet ()

@@ -33,15 +33,15 @@
 package org.smallmind.batch.base;
 
 /**
- * {@link String} implementation of {@link BatchParameter}.
+ * {@link BatchParameter} specialisation that carries a {@link String} value.
  */
 public class StringBatchParameter extends BatchParameter<String> {
 
   /**
-   * Creates a string parameter wrapper.
+   * Wraps a string value as a batch parameter.
    *
-   * @param value       the string to pass to the batch job
-   * @param identifying whether the value should contribute to job identity
+   * @param value       the string to forward to the batch job
+   * @param identifying {@code true} if the string should form part of the job-instance key
    */
   public StringBatchParameter (String value, boolean identifying) {
 

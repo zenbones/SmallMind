@@ -51,16 +51,17 @@ import org.bson.BsonWriter;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 /**
- * Utility helpers for translating between streaming BSON readers/writers and {@link BsonValue} trees.
+ * Low-level helpers for converting between the MongoDB driver's streaming BSON API and in-memory {@link BsonValue} trees.
  */
 public class BsonUtility {
 
   /**
-   * Recursively reads the current value from the provided {@link BsonReader}, materializing it into a {@link BsonValue}.
+   * Reads the value at the current position of the reader and materialises it as a {@link BsonValue} tree,
+   * recursively handling documents and arrays.
    *
-   * @param reader the reader positioned at the value to decode
-   * @return the decoded {@link BsonValue} tree rooted at the current position
-   * @throws DocumentParsingException if the BSON node type is unknown or unsupported
+   * @param reader a {@link BsonReader} positioned at the value to decode
+   * @return the decoded {@link BsonValue} representing the current BSON node
+   * @throws DocumentParsingException if the current BSON type is not handled
    */
   public static BsonValue read (BsonReader reader) {
 
@@ -115,11 +116,11 @@ public class BsonUtility {
   }
 
   /**
-   * Writes the given {@link BsonValue} tree to the supplied {@link BsonWriter}, honoring nested documents and arrays.
+   * Writes the given {@link BsonValue} tree to the supplied writer, recursively serialising documents and arrays.
    *
-   * @param writer    the destination writer
-   * @param bsonValue the value to serialize
-   * @throws DocumentParsingException if the BSON type is not recognized
+   * @param writer    the destination {@link BsonWriter}
+   * @param bsonValue the value to serialise
+   * @throws DocumentParsingException if the BSON type of the value is not handled
    */
   public static void write (BsonWriter writer, BsonValue bsonValue) {
 

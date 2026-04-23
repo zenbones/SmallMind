@@ -33,28 +33,54 @@
 package org.smallmind.liquibase.spring;
 
 /**
- * Enumerates the supported Liquibase actions that {@link SpringLiquibase} can execute.
+ * Enumerates the Liquibase actions that {@link SpringLiquibase} can execute during application startup.
+ *
+ * <p>The chosen goal determines what {@link SpringLiquibase#afterPropertiesSet()} does with each
+ * configured {@link ChangeLog}. Only one goal applies per {@code SpringLiquibase} bean instance;
+ * all change logs in that instance are processed with the same goal.</p>
  */
 public enum Goal {
 
   /**
-   * Do nothing beyond optional type registration.
+   * Perform no Liquibase operation.
+   *
+   * <p>Custom data types registered via {@link SpringLiquibase#setDataTypes} are still applied,
+   * but no change log is read and no database interaction occurs.</p>
    */
   NONE,
+
   /**
-   * Generate SQL for the requested change logs without executing.
+   * Generate the SQL that would be executed without applying it to the database.
+   *
+   * <p>The SQL is written to the stream configured via {@link SpringLiquibase#setPreviewStream},
+   * or to {@link System#out} if no stream has been set. The target database is contacted only
+   * to determine its type; no DDL or DML is applied.</p>
    */
   PREVIEW,
+
   /**
-   * Apply change sets to the target database.
+   * Apply all pending change sets in each change log to the target database.
+   *
+   * <p>This is the standard production use case. Liquibase tracks which change sets have already
+   * been applied via its {@code DATABASECHANGELOG} table and skips them on subsequent runs.</p>
    */
   UPDATE,
+
   /**
-   * Generate a change log from the current database state.
+   * Reverse-engineer the current database schema into a Liquibase change log file.
+   *
+   * <p>One output file is produced per distinct catalog encountered across the configured
+   * change logs. The file is written to the directory set via {@link SpringLiquibase#setOutputDir},
+   * falling back to the system temporary directory when that property is blank or null.
+   * The change set author is set to {@code "auto.generated"}.</p>
    */
   GENERATE,
+
   /**
-   * Produce database documentation for the supplied change log.
+   * Produce HTML database documentation for the supplied change log.
+   *
+   * <p>Documentation is written to the directory configured via {@link SpringLiquibase#setOutputDir},
+   * or to the system temporary directory when that property is blank or null.</p>
    */
   DOCUMENT
 }

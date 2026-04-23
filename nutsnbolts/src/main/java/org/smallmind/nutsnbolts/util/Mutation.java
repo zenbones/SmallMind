@@ -36,7 +36,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Functional interface for transformations that can throw checked exceptions.
+ * Functional interface for a transformation that accepts one input, returns one output, and may throw a checked exception.
  *
  * @param <T> input type
  * @param <R> result type
@@ -45,8 +45,10 @@ import java.util.function.Function;
 public interface Mutation<T, R> {
 
   /**
+   * Returns a standard {@link Function} that returns its argument unchanged.
+   *
    * @param <T> element type
-   * @return identity function returning its input
+   * @return identity function that returns its input
    */
   static <T> Function<T, T> identity () {
 
@@ -54,17 +56,17 @@ public interface Mutation<T, R> {
   }
 
   /**
-   * Applies the transformation.
+   * Applies this transformation to the given input value.
    *
    * @param t input value
    * @return transformed result
-   * @throws Exception if the transformation fails
+   * @throws Exception if the transformation fails for any reason
    */
   R apply (T t)
     throws Exception;
 
   /**
-   * Composes this mutation after another.
+   * Returns a composed mutation that first applies {@code before} and then applies this mutation to the result.
    *
    * @param before mutation to apply first
    * @param <V>    input type of the composed mutation
@@ -77,7 +79,7 @@ public interface Mutation<T, R> {
   }
 
   /**
-   * Chains another mutation after this one.
+   * Returns a composed mutation that first applies this mutation and then applies {@code after} to the result.
    *
    * @param after mutation to apply after this
    * @param <V>   output type of the composed mutation

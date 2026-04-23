@@ -36,7 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * InputStream wrapper that supports marking by buffering up to a configured limit of read bytes.
+ * {@link InputStream} decorator that adds mark/reset support to any underlying stream by buffering
+ * bytes read since the last {@link #mark(int)} call.
  */
 public class MarkableInputStream extends InputStream {
 
@@ -47,7 +48,9 @@ public class MarkableInputStream extends InputStream {
   private int writePos = 0;
 
   /**
-   * @param inputStream underlying stream to read from
+   * Constructs a markable stream wrapping the given delegate.
+   *
+   * @param inputStream the underlying stream to decorate
    */
   public MarkableInputStream (InputStream inputStream) {
 
@@ -55,9 +58,10 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Reads a single byte, honoring buffered data after a mark.
+   * Reads a single byte, returning it from the mark buffer if a reset has occurred.
    *
-   * @throws IOException if closed
+   * @return the next byte as an unsigned int, or {@code -1} on end of stream
+   * @throws IOException if the stream has been closed or reading fails
    */
   @Override
   public synchronized int read ()
@@ -85,9 +89,11 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Reads into a byte array.
+   * Reads up to {@code b.length} bytes into the array.
    *
-   * @throws IOException if closed or bounds invalid
+   * @param b destination array
+   * @return number of bytes read, or {@code -1} on end of stream
+   * @throws IOException if the stream has been closed or reading fails
    */
   @Override
   public int read (byte[] b)
@@ -97,10 +103,14 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Reads up to {@code len} bytes into {@code b} starting at {@code off}, combining buffered and fresh bytes.
+   * Reads up to {@code len} bytes into {@code b} at offset {@code off}, drawing first from the mark buffer
+   * and then from the underlying stream.
    *
-   * @return total bytes read or -1 on EOF
-   * @throws IOException if closed or bounds invalid
+   * @param b   destination array
+   * @param off starting index in {@code b}
+   * @param len maximum bytes to read
+   * @return total bytes read, or {@code -1} if end of stream is reached with no data
+   * @throws IOException if the stream is closed or the offset/length are out of bounds
    */
   @Override
   public synchronized int read (byte[] b, int off, int len)
@@ -141,9 +151,11 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Skips bytes, buffering skipped data when within the mark window.
+   * Skips up to {@code n} bytes, capturing skipped data into the mark buffer when space remains.
    *
-   * @throws IOException if closed
+   * @param n maximum bytes to skip
+   * @return number of bytes actually skipped
+   * @throws IOException if the stream has been closed or skipping fails
    */
   @Override
   public synchronized long skip (long n)
@@ -166,8 +178,10 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * @return available bytes accounting for buffered content after mark
-   * @throws IOException if closed
+   * Returns an estimate of bytes that can be read without blocking, including any bytes held in the mark buffer.
+   *
+   * @return estimated available bytes
+   * @throws IOException if the stream has been closed
    */
   @Override
   public synchronized int available ()
@@ -188,7 +202,9 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Closes the stream and discards the buffer.
+   * Closes this stream, releasing the mark buffer and closing the underlying stream.
+   *
+   * @throws IOException if closing the underlying stream fails
    */
   @Override
   public synchronized void close ()
@@ -202,7 +218,10 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Marks the current position, allocating a buffer up to {@code readLimit}.
+   * Records the current position so that a future {@link #reset()} can return to it, allocating an internal buffer
+   * of up to {@code readLimit} bytes.
+   *
+   * @param readLimit the number of bytes that can be read before the mark is invalidated
    */
   @Override
   public synchronized void mark (int readLimit) {
@@ -225,9 +244,9 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * Resets to the last marked position.
+   * Repositions the stream to the location recorded by the most recent {@link #mark(int)} call.
    *
-   * @throws IOException if no mark exists or the stream is closed
+   * @throws IOException if no mark has been set, if the mark has been invalidated, or if the stream is closed
    */
   @Override
   public synchronized void reset ()
@@ -243,7 +262,9 @@ public class MarkableInputStream extends InputStream {
   }
 
   /**
-   * @return {@code true}; marking is supported
+   * Returns {@code true} because this stream always supports mark and reset.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean markSupported () {

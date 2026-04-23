@@ -33,12 +33,27 @@
 package org.smallmind.sleuth.runner;
 
 /**
- * Contract for runnable controllers that execute a test tier unit of work.
+ * Contract for runnable units of work dispatched by {@link SleuthThreadPool}.
+ * <p>
+ * Implementations ({@link SuiteRunner} and {@link TestRunner}) execute test logic in {@link #run()}
+ * and release their semaphore slot, decrement completion latches, and notify dependent nodes in
+ * {@link #complete()}. The {@code complete()} method must always be called — even when execution is
+ * cancelled or an exception escapes — to prevent the scheduler from deadlocking.
+ *
+ * @see SuiteRunner
+ * @see TestRunner
+ * @see SleuthThreadPool
  */
 public interface TestController extends Runnable {
 
   /**
-   * Invoked after run completion to release resources and notify dependents.
+   * Releases all resources held by this controller and notifies the scheduler that this unit
+   * of work is done.
+   * <p>
+   * Specifically, implementations release the tier semaphore permit, mark the corresponding
+   * {@link Dependency} complete in the {@link DependencyQueue}, and count down any
+   * {@link java.util.concurrent.CountDownLatch} that callers are waiting on. Must be called
+   * exactly once per controller instance, even on error or cancellation paths.
    */
   void complete ();
 }

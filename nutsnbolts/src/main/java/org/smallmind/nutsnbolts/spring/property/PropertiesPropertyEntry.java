@@ -35,26 +35,38 @@ package org.smallmind.nutsnbolts.spring.property;
 import java.util.Map;
 
 /**
- * {@link PropertyEntry} backed by a {@link Map.Entry} from a {@link java.util.Properties} object.
+ * A {@link PropertyEntry} backed by a single entry from a {@link java.util.Properties} map.
  */
 public class PropertiesPropertyEntry implements PropertyEntry {
 
   private final Map.Entry<Object, Object> entry;
 
   /**
-   * @param entry the underlying map entry
+   * Creates an entry wrapping the given map entry.
+   *
+   * @param entry the underlying {@link java.util.Properties} entry
    */
   public PropertiesPropertyEntry (Map.Entry<Object, Object> entry) {
 
     this.entry = entry;
   }
 
+  /**
+   * Returns the property key as a string.
+   *
+   * @return the string form of the underlying entry's key
+   */
   @Override
   public String getKey () {
 
     return entry.getKey().toString();
   }
 
+  /**
+   * Returns the raw property value from the underlying entry.
+   *
+   * @return the entry's value object
+   */
   @Override
   public Object getValue () {
 

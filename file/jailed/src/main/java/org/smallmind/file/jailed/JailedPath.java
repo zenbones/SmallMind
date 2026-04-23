@@ -44,24 +44,58 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
- * {@link Path} implementation that enforces jailed path semantics and performs minimal parsing for segment operations.
+ * A {@link Path} implementation that operates within the confines of a {@link JailedFileSystem}.
+ *
+ * <p>Path text is stored as a raw {@code char[]} and decomposed into {@link Segment} index
+ * pairs on construction to enable efficient, allocation-free segment operations. The separator
+ * is always the forward slash ({@code '/'}).
+ *
+ * <p>All cross-path operations ({@link #startsWith}, {@link #endsWith}, {@link #resolve},
+ * {@link #relativize}, {@link #compareTo}) require the other path to be a {@code JailedPath};
+ * a {@link ProviderMismatchException} is thrown if it is not.
+ *
+ * <p>{@link #register(WatchService, WatchEvent.Kind[], WatchEvent.Modifier...)} is not
+ * supported and throws {@link UnsupportedOperationException}.
+ *
+ * @see JailedFileSystem
+ * @see JailedFileSystemProvider
  */
 public class JailedPath implements Path {
 
+  /**
+   * The path separator character used by all jailed paths, regardless of the underlying
+   * operating system.
+   */
   protected static final char SEPARATOR = '/';
 
+  /**
+   * The file system that owns this path.
+   */
   private final JailedFileSystem jailedFileSystem;
+
+  /**
+   * Parsed segment boundaries within {@link #text}.
+   */
   private final Segment[] segments;
+
+  /**
+   * The raw character representation of the full path string.
+   */
   private final char[] text;
+
+  /**
+   * Whether this path is absolute (starts with the separator).
+   */
   private final boolean hasRoot;
 
   /**
-   * Internal constructor used once components have been parsed.
+   * Low-level constructor used internally when segment boundaries have already been
+   * computed, avoiding a redundant parse.
    *
-   * @param jailedFileSystem owning file system
-   * @param text             raw path text
-   * @param hasRoot          whether the path is absolute
-   * @param segments         parsed path segments
+   * @param jailedFileSystem the owning {@link JailedFileSystem}
+   * @param text             the raw path characters
+   * @param hasRoot          {@code true} if the path is absolute
+   * @param segments         pre-parsed segment boundaries within {@code text}
    */
   protected JailedPath (JailedFileSystem jailedFileSystem, char[] text, boolean hasRoot, Segment... segments) {
 
@@ -72,10 +106,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Creates a path from raw text characters.
+   * Creates a path by parsing the raw character array.
    *
-   * @param jailedFileSystem owning file system
-   * @param text             raw path characters
+   * <p>Absoluteness is determined by whether the first character is the separator.
+   * Segments are extracted by scanning for separator-delimited tokens.
+   *
+   * @param jailedFileSystem the owning {@link JailedFileSystem}
+   * @param text             the raw path characters to parse
    */
   public JailedPath (JailedFileSystem jailedFileSystem, char... text) {
 
@@ -87,10 +124,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Creates a path from a text value.
+   * Creates a path by parsing a string.
    *
-   * @param jailedFileSystem owning file system
-   * @param text             string representation of the path
+   * <p>The string is converted to a {@code char[]} and delegated to
+   * {@link #JailedPath(JailedFileSystem, char...)}.
+   *
+   * @param jailedFileSystem the owning {@link JailedFileSystem}
+   * @param text             the string representation of the path
    */
   public JailedPath (JailedFileSystem jailedFileSystem, String text) {
 
@@ -98,9 +138,12 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Parses the raw text into discrete path segments separated by the jail separator.
+   * Parses {@link #text} into an array of {@link Segment} boundaries.
    *
-   * @return parsed segments
+   * <p>Consecutive separators are collapsed and leading/trailing separators are ignored
+   * for segment purposes.
+   *
+   * @return an array of {@link Segment} objects describing each path component
    */
   private Segment[] divideAndConquer () {
 
@@ -142,18 +185,34 @@ public class JailedPath implements Path {
     return segments;
   }
 
+  /**
+   * Returns the raw character array backing this path.
+   *
+   * @return the raw path characters
+   */
   private char[] getText () {
 
     return text;
   }
 
+  /**
+   * Returns the parsed segment array for this path.
+   *
+   * @return the array of {@link Segment} boundaries; never {@code null}
+   */
   private Segment[] getSegments () {
 
     return segments;
   }
 
   /**
-   * Compares a local segment to another path's segment.
+   * Tests whether the segment at {@code segmentIndex} in this path is character-for-character
+   * equal to the given segment in another path's text buffer.
+   *
+   * @param otherText    the raw text of the other path
+   * @param otherSegment the segment within {@code otherText} to compare against
+   * @param segmentIndex the index of the segment in this path to compare
+   * @return {@code true} if the two segments are identical
    */
   private boolean sameSegment (char[] otherText, Segment otherSegment, int segmentIndex) {
 
@@ -174,13 +233,34 @@ public class JailedPath implements Path {
     return false;
   }
 
+  /**
+   * Convenience overload that builds a new path from text and segments without a prologue.
+   *
+   * @param text     raw text for the new path
+   * @param hasRoot  whether the new path should be absolute
+   * @param segments segment boundaries within {@code text}
+   * @return the constructed {@link JailedPath}
+   */
   private Path constructPath (char[] text, boolean hasRoot, Segment... segments) {
 
     return constructPath(null, null, text, hasRoot, segments);
   }
 
   /**
-   * Constructs a new path from existing prologue segments and additional segments.
+   * Builds a new {@link JailedPath} by concatenating an optional prologue (text and
+   * segments already accumulated) with additional segments extracted from {@code text}.
+   *
+   * <p>Separator characters are inserted between segments as required to produce a valid
+   * path string.
+   *
+   * @param prologueText     optional text that forms the prefix of the new path, or
+   *                         {@code null} if there is no prefix
+   * @param prologueSegments optional pre-parsed segments for the prologue portion, or
+   *                         {@code null} if there is no prefix
+   * @param text             the text from which {@code segments} are drawn
+   * @param hasRoot          whether the resulting path should be absolute
+   * @param segments         the segments from {@code text} to append after the prologue
+   * @return a new {@link JailedPath} combining the prologue and the given segments
    */
   private Path constructPath (char[] prologueText, Segment[] prologueSegments, char[] text, boolean hasRoot, Segment... segments) {
 
@@ -216,7 +296,9 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the file system that created this path.
+   *
+   * @return the {@link JailedFileSystem} that owns this path
    */
   @Override
   public FileSystem getFileSystem () {
@@ -225,7 +307,9 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether this path is absolute.
+   *
+   * @return {@code true} if this path starts with the separator character
    */
   @Override
   public boolean isAbsolute () {
@@ -234,7 +318,10 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the root component of this path.
+   *
+   * @return a {@link JailedPath} representing {@code "/"} if this path is absolute,
+   * or {@code null} if it is relative
    */
   @Override
   public Path getRoot () {
@@ -243,7 +330,10 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the last segment of this path as a relative single-element path, or
+   * {@code null} if this path has no segments (e.g., the root path).
+   *
+   * @return the last path element, or {@code null}
    */
   @Override
   public Path getFileName () {
@@ -252,7 +342,11 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the parent of this path: this path with the last segment removed.
+   * Returns the root if this path has exactly one segment and is absolute, or
+   * {@code null} if there is no parent.
+   *
+   * @return the parent path, the root, or {@code null}
    */
   @Override
   public Path getParent () {
@@ -274,7 +368,9 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the number of name elements (segments) in this path.
+   *
+   * @return the segment count; {@code 0} for the root or empty path
    */
   @Override
   public int getNameCount () {
@@ -283,7 +379,11 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the segment at position {@code index} as a relative single-element path.
+   *
+   * @param index zero-based index of the segment to retrieve
+   * @return the path segment at the given index
+   * @throws IllegalArgumentException if {@code index} is out of range
    */
   @Override
   public Path getName (int index) {
@@ -297,7 +397,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a relative path consisting of the segments in the range
+   * [{@code beginIndex}, {@code endIndex}).
+   *
+   * @param beginIndex the index of the first segment, inclusive
+   * @param endIndex   the index of the last segment, exclusive
+   * @return the sub-path
+   * @throws IllegalArgumentException if the range is invalid
    */
   @Override
   public Path subpath (int beginIndex, int endIndex) {
@@ -315,7 +421,12 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true} if this path begins with {@code other}, meaning the leading
+   * segments are identical to all segments of {@code other} and their absoluteness agrees.
+   *
+   * @param other the path to test against; must be a {@link JailedPath}
+   * @return {@code true} if this path starts with {@code other}
+   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public boolean startsWith (Path other) {
@@ -340,7 +451,12 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true} if this path ends with {@code other}. If {@code other} is
+   * absolute, this path must also be absolute with the same segments.
+   *
+   * @param other the path to test against; must be a {@link JailedPath}
+   * @return {@code true} if this path ends with {@code other}
+   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public boolean endsWith (Path other) {
@@ -365,7 +481,10 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a path with {@code "."} and {@code ".."} segments resolved. If no such segments
+   * are present this path is returned unchanged.
+   *
+   * @return a normalized path
    */
   @Override
   public Path normalize () {
@@ -407,7 +526,12 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves {@code other} against this path. If {@code other} is absolute it is returned
+   * as-is; if it has no segments this path is returned; otherwise its segments are appended.
+   *
+   * @param other the path to resolve; must be a {@link JailedPath}
+   * @return the resolved path
+   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public Path resolve (Path other) {
@@ -427,7 +551,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Constructs a relative path from this path to {@code other}. Common leading segments are
+   * cancelled and replaced with {@code ".."} steps as necessary.
+   *
+   * @param other the target path; must be a {@link JailedPath} with matching absoluteness
+   * @return a relative path from this path to {@code other}
+   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
+   * @throws IllegalArgumentException  if the two paths differ in absoluteness
    */
   @Override
   public Path relativize (Path other) {
@@ -468,7 +598,10 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an absolute form of this path. If already absolute, returns {@code this};
+   * otherwise a new path with the same segments but marked as absolute is returned.
+   *
+   * @return an absolute version of this path
    */
   @Override
   public Path toAbsolutePath () {
@@ -483,7 +616,11 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a normalized, absolute path. This implementation does not perform I/O or
+   * symbolic-link resolution.
+   *
+   * @param options link options (currently unused)
+   * @return a normalized, absolute path equivalent to this path
    */
   @Override
   public Path toRealPath (LinkOption... options) {
@@ -492,7 +629,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Compares this path to {@code other} lexicographically by segment. Absolute paths sort
+   * after relative paths when absoluteness differs.
+   *
+   * @param other the path to compare to; must be a {@link JailedPath}
+   * @return a negative integer, zero, or a positive integer as this path is less than,
+   * equal to, or greater than {@code other}
+   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public int compareTo (Path other) {
@@ -526,7 +669,14 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Compares two segments lexicographically.
+   * Performs a lexicographic character-by-character comparison between a segment in this
+   * path and a segment in another path's text buffer.
+   *
+   * @param segment      the segment in this path to compare
+   * @param otherText    the raw text of the other path
+   * @param otherSegment the segment within {@code otherText} to compare against
+   * @return a negative integer, zero, or a positive integer as the local segment is less
+   * than, equal to, or greater than the other segment
    */
   private int compareSegment (Segment segment, char[] otherText, Segment otherSegment) {
 
@@ -553,7 +703,10 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a URI of the form {@code <scheme>://<absolutePath>}. Any checked exception
+   * during {@link URI} construction is wrapped in a {@link RuntimeException}.
+   *
+   * @return a URI that identifies this path within the jailed file system
    */
   @Override
   public URI toUri () {
@@ -566,7 +719,13 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported by jailed paths.
+   *
+   * @param watcher   the watch service to register with (unused)
+   * @param events    the events to watch for (unused)
+   * @param modifiers optional modifiers (unused)
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
    */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
@@ -575,7 +734,9 @@ public class JailedPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the string representation of this path.
+   *
+   * @return the path string as stored in the underlying char array
    */
   @Override
   public String toString () {
@@ -584,16 +745,29 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Simple representation of a path segment's bounds within the raw char array.
+   * Immutable record of a single path segment's character boundaries within the
+   * owning {@link JailedPath}'s raw text array.
+   *
+   * <p>The segment spans {@code text[begin..end-1]} (i.e., {@code begin} is inclusive
+   * and {@code end} is exclusive).
    */
   protected static class Segment {
 
+    /**
+     * Inclusive start index of the segment within the path text array.
+     */
     private final int begin;
+
+    /**
+     * Exclusive end index of the segment within the path text array.
+     */
     private final int end;
 
     /**
-     * @param begin inclusive start index in the raw text
-     * @param end   exclusive end index in the raw text
+     * Creates a segment record with the given bounds.
+     *
+     * @param begin the inclusive start index within the parent path's char array
+     * @param end   the exclusive end index within the parent path's char array
      */
     public Segment (int begin, int end) {
 
@@ -602,6 +776,8 @@ public class JailedPath implements Path {
     }
 
     /**
+     * Returns the inclusive start index of this segment within the parent path's char array.
+     *
      * @return the inclusive start index
      */
     public int getBegin () {
@@ -610,6 +786,8 @@ public class JailedPath implements Path {
     }
 
     /**
+     * Returns the exclusive end index of this segment within the parent path's char array.
+     *
      * @return the exclusive end index
      */
     public int getEnd () {
@@ -618,7 +796,9 @@ public class JailedPath implements Path {
     }
 
     /**
-     * @return the segment length
+     * Returns the number of characters in this segment ({@code end - begin}).
+     *
+     * @return the segment length; always non-negative
      */
     public int length () {
 

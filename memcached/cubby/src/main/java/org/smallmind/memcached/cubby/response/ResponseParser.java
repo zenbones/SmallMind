@@ -38,18 +38,30 @@ import org.smallmind.memcached.cubby.IncomprehensibleRequestException;
 import org.smallmind.memcached.cubby.IncomprehensibleResponseException;
 
 /**
- * Parses raw protocol lines into structured {@link Response} objects.
+ * Stateless parser that converts a raw memcached meta-protocol response line into a {@link Response}.
+ *
+ * <p>The parser reads from a {@link JoinedBuffer} that spans both previously accumulated bytes and a
+ * newly received read buffer, enabling correct handling of responses that straddle read boundaries.
+ * All methods are static; no instances of this class need to be created.</p>
+ *
+ * <p>The supported response codes and their optional flag characters follow the memcached meta
+ * protocol specification. An unrecognised response causes an {@link IncomprehensibleResponseException}
+ * to be thrown, while a bare {@code ERROR} line causes an {@link IncomprehensibleRequestException}.</p>
  */
 public class ResponseParser {
 
   /**
-   * Parses the provided buffer window into a response.
+   * Parses a single response line from the joined buffer into a structured {@link Response}.
    *
-   * @param joinedBuffer buffer spanning accumulated and newly read bytes
-   * @param offset       starting offset
-   * @param length       number of bytes representing the response line
-   * @return parsed response
-   * @throws IOException if parsing fails or the buffer is malformed
+   * <p>The buffer's mark is set at entry so that error-reporting helpers can rewind and capture
+   * the offending bytes. After the two-character response code is identified the method delegates
+   * to {@link #parseFlags} to consume any remaining space-separated flags on the same line.</p>
+   *
+   * @param joinedBuffer the buffer spanning accumulated and newly read bytes
+   * @param offset       the absolute position within {@code joinedBuffer} where the response line begins
+   * @param length       the number of bytes in the response line (excluding the trailing {@code \r\n})
+   * @return a fully populated {@link Response} representing the parsed server reply
+   * @throws IOException if the line is malformed, too short, or contains an unrecognised code
    */
   public static Response parse (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
@@ -97,11 +109,14 @@ public class ResponseParser {
   }
 
   /**
-   * Determines whether the current buffer window represents an ERROR response.
+   * Determines whether the current response line is the literal text {@code ERROR}.
    *
-   * @param joinedBuffer buffer positioned at response start
-   * @param length       length of the response line
-   * @return {@code true} if the line is exactly "ERROR"
+   * <p>The buffer position is reset to the mark before returning so that subsequent
+   * reads begin from the same starting point regardless of the outcome.</p>
+   *
+   * @param joinedBuffer the buffer positioned at the beginning of the response line
+   * @param length       the byte length of the response line
+   * @return {@code true} if the line consists exactly of the five bytes {@code ERROR}
    */
   private static boolean isError (JoinedBuffer joinedBuffer, int length) {
 
@@ -118,13 +133,23 @@ public class ResponseParser {
   }
 
   /**
-   * Parses optional flags in a response line and populates the {@link Response}.
+   * Parses the space-separated flag tokens that follow the response code and populates the response.
    *
-   * @param response     response to update
-   * @param joinedBuffer buffer positioned after the response code
-   * @param offset       offset where the response line begins
-   * @param length       total response line length
-   * @throws IOException if the format is invalid
+   * <p>Recognised flag characters:</p>
+   * <ul>
+   *   <li>{@code O} &ndash; opaque client token (string)</li>
+   *   <li>{@code c} &ndash; CAS token (long)</li>
+   *   <li>{@code s} &ndash; stored object size (int)</li>
+   *   <li>{@code W} &ndash; won flag (boolean)</li>
+   *   <li>{@code Z} &ndash; also-won flag (boolean)</li>
+   *   <li>{@code X} &ndash; stale flag (boolean)</li>
+   * </ul>
+   *
+   * @param response     the response to be updated with flag values
+   * @param joinedBuffer the buffer positioned immediately after the response code (and value length for VA)
+   * @param offset       the absolute start position of the response line in {@code joinedBuffer}
+   * @param length       the total byte length of the response line
+   * @throws IOException if an unexpected byte is encountered where a flag character is expected
    */
   private static void parseFlags (Response response, JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
@@ -160,13 +185,13 @@ public class ResponseParser {
   }
 
   /**
-   * Parses an integer flag value from the buffer.
+   * Reads the next whitespace-delimited token from the buffer and parses it as an {@code int}.
    *
-   * @param joinedBuffer buffer containing the value
-   * @param offset       offset where the response line begins
-   * @param length       total response line length
-   * @return parsed integer
-   * @throws IOException if the token is not a number or the format is invalid
+   * @param joinedBuffer the buffer positioned at the start of the numeric token
+   * @param offset       the absolute start of the response line
+   * @param length       the total byte length of the response line
+   * @return the integer value of the token
+   * @throws IOException if the token is not a valid integer, or the line format is invalid
    */
   private static int accumulateInt (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
@@ -179,13 +204,13 @@ public class ResponseParser {
   }
 
   /**
-   * Parses a long flag value from the buffer.
+   * Reads the next whitespace-delimited token from the buffer and parses it as a {@code long}.
    *
-   * @param joinedBuffer buffer containing the value
-   * @param offset       offset where the response line begins
-   * @param length       total response line length
-   * @return parsed long
-   * @throws IOException if the token is not a number or the format is invalid
+   * @param joinedBuffer the buffer positioned at the start of the numeric token
+   * @param offset       the absolute start of the response line
+   * @param length       the total byte length of the response line
+   * @return the long value of the token
+   * @throws IOException if the token is not a valid long, or the line format is invalid
    */
   private static long accumulateLong (JoinedBuffer joinedBuffer, int offset, int length)
     throws IOException {
@@ -198,12 +223,16 @@ public class ResponseParser {
   }
 
   /**
-   * Extracts a token up to the next space or end of the response line.
+   * Extracts the next whitespace-delimited or end-of-line token from the buffer as a UTF-8 string.
    *
-   * @param joinedBuffer buffer containing the token
-   * @param offset       offset where the response line begins
-   * @param length       total response line length
-   * @return token string
+   * <p>The method scans forward from the current position to find the next space character or the
+   * end of the response line, then bulk-reads those bytes into a new string without consuming
+   * the terminating space.</p>
+   *
+   * @param joinedBuffer the buffer positioned at the first character of the token
+   * @param offset       the absolute start of the response line
+   * @param length       the total byte length of the response line
+   * @return the token as a UTF-8 string
    */
   private static String accumulateToken (JoinedBuffer joinedBuffer, int offset, int length) {
 
@@ -222,11 +251,14 @@ public class ResponseParser {
   }
 
   /**
-   * Builds an {@link IncomprehensibleResponseException} using the current response slice.
+   * Constructs an {@link IncomprehensibleResponseException} that includes the offending response text.
    *
-   * @param joinedBuffer buffer positioned at the start of the response
-   * @param length       length of the response line
-   * @return exception populated with the offending response text
+   * <p>The buffer is reset to its mark and {@code length} bytes are read to capture the raw line
+   * for inclusion in the exception message.</p>
+   *
+   * @param joinedBuffer the buffer whose mark points to the start of the response line
+   * @param length       the byte length of the response line
+   * @return an exception populated with the raw response text
    */
   private static IncomprehensibleResponseException createIncomprehensibleResponseException (JoinedBuffer joinedBuffer, int length) {
 

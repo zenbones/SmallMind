@@ -86,7 +86,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   private Integer connectionPoolMaxConnectionIdleTimeSeconds;
 
   /**
-   * @param codecRegistry additional codec registry to merge with the driver's defaults
+   * Sets an additional codec registry to merge with the driver's defaults.
+   *
+   * @param codecRegistry the codec registry to prepend when building the settings
    */
   public void setCodecRegistry (CodecRegistry codecRegistry) {
 
@@ -94,7 +96,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param certResource TLS certificate resource used to build the SSL context
+   * Sets the TLS certificate resource used to build the SSL context.
+   *
+   * @param certResource the resource containing the trusted certificate
    */
   public void setCertResource (Resource certResource) {
 
@@ -102,7 +106,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param mongoCredential credentials to authenticate with the server
+   * Sets the credentials used to authenticate with the server.
+   *
+   * @param mongoCredential the authentication credential
    */
   public void setMongoCredential (MongoCredential mongoCredential) {
 
@@ -110,7 +116,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param serverAddresses list of server addresses to configure the cluster
+   * Sets the list of server addresses used to configure the cluster.
+   *
+   * @param serverAddresses the seed list of server addresses
    */
   public void setServerAddresses (ServerAddress[] serverAddresses) {
 
@@ -118,7 +126,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param readPreference read preference to apply
+   * Sets the read preference applied to all read operations.
+   *
+   * @param readPreference the desired read preference
    */
   public void setReadPreference (ReadPreference readPreference) {
 
@@ -126,7 +136,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param readConcern read concern to apply
+   * Sets the read concern applied to all read operations.
+   *
+   * @param readConcern the desired read concern
    */
   public void setReadConcern (ReadConcern readConcern) {
 
@@ -134,7 +146,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param writeConcern write concern to apply
+   * Sets the write concern applied to all write operations.
+   *
+   * @param writeConcern the desired write concern
    */
   public void setWriteConcern (WriteConcern writeConcern) {
 
@@ -142,7 +156,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param writeConcernEnabled flag controlling whether the configured write concern is honored
+   * Controls whether the configured write concern is honored; set to {@code false} to suppress it.
+   *
+   * @param writeConcernEnabled {@code false} to ignore the configured write concern
    */
   public void setWriteConcernEnabled (Boolean writeConcernEnabled) {
 
@@ -150,7 +166,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param retryReads whether retryable reads are enabled
+   * Sets whether retryable reads are enabled.
+   *
+   * @param retryReads {@code true} to enable automatic read retries
    */
   public void setRetryReads (Boolean retryReads) {
 
@@ -158,7 +176,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param retryWrites whether retryable writes are enabled
+   * Sets whether retryable writes are enabled.
+   *
+   * @param retryWrites {@code true} to enable automatic write retries
    */
   public void setRetryWrites (Boolean retryWrites) {
 
@@ -166,7 +186,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param sslEnabled whether SSL/TLS is enabled
+   * Sets whether SSL/TLS is enabled for server connections.
+   *
+   * @param sslEnabled {@code true} to require TLS
    */
   public void setSslEnabled (Boolean sslEnabled) {
 
@@ -174,7 +196,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param allowInvalidHostNames whether to allow invalid host names when SSL is enabled
+   * Sets whether invalid host names are allowed when SSL is enabled.
+   *
+   * @param allowInvalidHostNames {@code true} to skip host name verification
    */
   public void setAllowInvalidHostNames (Boolean allowInvalidHostNames) {
 
@@ -182,7 +206,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param socketConnectTimeoutMilliseconds socket connection timeout in milliseconds
+   * Sets the socket connection timeout.
+   *
+   * @param socketConnectTimeoutMilliseconds timeout in milliseconds
    */
   public void setSocketConnectTimeoutMilliseconds (Integer socketConnectTimeoutMilliseconds) {
 
@@ -190,7 +216,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param serverSelectionTimeoutMilliseconds server selection timeout in milliseconds
+   * Sets the server selection timeout.
+   *
+   * @param serverSelectionTimeoutMilliseconds timeout in milliseconds
    */
   public void setServerSelectionTimeoutMilliseconds (Integer serverSelectionTimeoutMilliseconds) {
 
@@ -198,7 +226,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param connectionPoolMinSize minimum number of pooled connections
+   * Sets the minimum number of connections maintained in the pool.
+   *
+   * @param connectionPoolMinSize minimum pool size
    */
   public void setConnectionPoolMinSize (Integer connectionPoolMinSize) {
 
@@ -206,7 +236,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param connectionPoolMaxSize maximum number of pooled connections
+   * Sets the maximum number of connections allowed in the pool.
+   *
+   * @param connectionPoolMaxSize maximum pool size
    */
   public void setConnectionPoolMaxSize (Integer connectionPoolMaxSize) {
 
@@ -214,6 +246,8 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
+   * Sets the maximum number of connections that may be establishing concurrently.
+   *
    * @param connectionPoolMaxConnecting maximum number of concurrent connecting threads
    */
   public void setConnectionPoolMaxConnecting (Integer connectionPoolMaxConnecting) {
@@ -222,7 +256,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param connectionPoolMaxWaitTimeMilliseconds maximum time to wait for a pooled connection in milliseconds
+   * Sets the maximum time a thread will wait to acquire a connection from the pool.
+   *
+   * @param connectionPoolMaxWaitTimeMilliseconds wait timeout in milliseconds
    */
   public void setConnectionPoolMaxWaitTimeMilliseconds (Integer connectionPoolMaxWaitTimeMilliseconds) {
 
@@ -230,7 +266,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param connectionPoolMaxConnectionLifeTimeSeconds maximum lifetime for pooled connections in seconds
+   * Sets the maximum total lifetime for pooled connections.
+   *
+   * @param connectionPoolMaxConnectionLifeTimeSeconds maximum lifetime in seconds
    */
   public void setConnectionPoolMaxConnectionLifeTimeSeconds (Integer connectionPoolMaxConnectionLifeTimeSeconds) {
 
@@ -238,7 +276,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * @param connectionPoolMaxConnectionIdleTimeSeconds maximum idle time for pooled connections in seconds
+   * Sets the maximum idle time before a pooled connection is eligible for eviction.
+   *
+   * @param connectionPoolMaxConnectionIdleTimeSeconds maximum idle time in seconds
    */
   public void setConnectionPoolMaxConnectionIdleTimeSeconds (Integer connectionPoolMaxConnectionIdleTimeSeconds) {
 
@@ -246,7 +286,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true}; the configured settings object is a shared singleton.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {
@@ -255,7 +297,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code MongoClientSettings.class}.
+   *
+   * @return {@code MongoClientSettings.class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -264,7 +308,9 @@ public class MongoClientSettingsFactoryBean implements InitializingBean, Factory
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the built {@link MongoClientSettings}.
+   *
+   * @return the constructed settings
    */
   @Override
   public MongoClientSettings getObject () {

@@ -33,7 +33,8 @@
 package org.smallmind.kafka.utility;
 
 /**
- * Simple value object describing a Kafka broker host/port pair.
+ * Immutable-by-convention value object representing a single Kafka broker address as a host/port pair.
+ * Instances are naturally ordered first by host name, then by port number.
  */
 public class KafkaServer implements Comparable<KafkaServer> {
 
@@ -41,17 +42,18 @@ public class KafkaServer implements Comparable<KafkaServer> {
   private int port = 9094;
 
   /**
-   * Creates an empty broker descriptor with the default port {@code 9094}.
+   * Creates an empty broker descriptor whose port defaults to {@code 9094}.
+   * Intended for use by bean-wiring frameworks that set properties after construction.
    */
   public KafkaServer () {
 
   }
 
   /**
-   * Creates a broker descriptor.
+   * Creates a fully specified broker descriptor.
    *
-   * @param host broker host name or address
-   * @param port broker listener port
+   * @param host broker hostname or IP address
+   * @param port broker listener port number
    */
   public KafkaServer (String host, int port) {
 
@@ -60,9 +62,9 @@ public class KafkaServer implements Comparable<KafkaServer> {
   }
 
   /**
-   * Returns the broker host name or address.
+   * Returns the broker hostname or IP address.
    *
-   * @return host value
+   * @return host string, or {@code null} if not yet set
    */
   public String getHost () {
 
@@ -70,9 +72,9 @@ public class KafkaServer implements Comparable<KafkaServer> {
   }
 
   /**
-   * Updates the broker host name or address.
+   * Sets the broker hostname or IP address.
    *
-   * @param host host value
+   * @param host broker hostname or IP address
    */
   public void setHost (String host) {
 
@@ -80,9 +82,9 @@ public class KafkaServer implements Comparable<KafkaServer> {
   }
 
   /**
-   * Returns the configured broker port.
+   * Returns the broker listener port number.
    *
-   * @return port value
+   * @return port number; defaults to {@code 9094} when not explicitly assigned
    */
   public int getPort () {
 
@@ -90,9 +92,9 @@ public class KafkaServer implements Comparable<KafkaServer> {
   }
 
   /**
-   * Updates the broker port.
+   * Sets the broker listener port number.
    *
-   * @param port port value
+   * @param port broker listener port number
    */
   public void setPort (int port) {
 
@@ -100,10 +102,12 @@ public class KafkaServer implements Comparable<KafkaServer> {
   }
 
   /**
-   * Orders brokers lexicographically by host, then numerically by port.
+   * Compares this broker to another, ordering first by host name lexicographically and then
+   * by port number numerically when hosts are equal.
    *
-   * @param server the broker to compare against
-   * @return negative if this broker sorts before {@code server}, zero if equal, positive otherwise
+   * @param server the broker to compare against; must not be {@code null}
+   * @return a negative integer, zero, or a positive integer as this broker is less than,
+   * equal to, or greater than {@code server}
    */
   @Override
   public int compareTo (KafkaServer server) {

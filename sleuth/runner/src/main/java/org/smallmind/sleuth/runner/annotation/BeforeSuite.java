@@ -39,6 +39,16 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a method to be executed once before any tests in a suite run.
+ * <p>
+ * Exactly one invocation of each annotated method occurs per suite instance, before the first
+ * {@link Test}-annotated method is dispatched. Intended for suite-wide setup such as opening
+ * shared connections, populating fixtures, or configuring global state required by all tests.
+ * The annotated method must accept no arguments; its return value is ignored. If the method
+ * throws, the error is captured as a culprit and all subsequent lifecycle and test methods
+ * in the suite are skipped.
+ *
+ * @see AfterSuite
+ * @see BeforeTest
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

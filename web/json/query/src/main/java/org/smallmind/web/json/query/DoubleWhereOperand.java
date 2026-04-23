@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Double literal operand.
+ * A where operand that holds a single double literal value.
  */
 @XmlRootElement(name = "double", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   private Double value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public DoubleWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided double value.
+   * Constructs an operand wrapping the given double.
    *
    * @param value double literal
    */
@@ -64,10 +64,10 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
-   * Convenience factory for a double operand.
+   * Factory method that wraps a double in a {@code DoubleWhereOperand}.
    *
    * @param value double literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static DoubleWhereOperand instance (Double value) {
 
@@ -75,6 +75,8 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
+   * Returns the element type for double operands.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#DOUBLE}
    */
   @Override
@@ -95,9 +99,9 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
-   * Returns the double value.
+   * Returns the stored double value.
    *
-   * @return double literal or {@code null}
+   * @return double literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
-   * Returns the serialized double value.
+   * Returns the double value used during serialization.
    *
-   * @return double literal or {@code null}
+   * @return double literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Double getValue () {
@@ -118,7 +122,7 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   /**
-   * Sets the double value.
+   * Sets the double value for this operand.
    *
    * @param value double literal
    */

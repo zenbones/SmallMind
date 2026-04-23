@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * Supported message digest algorithms.
+ * Enumeration of supported message digest algorithms together with their JCA names.
  */
 public enum HashAlgorithm implements SecurityAlgorithm {
 
@@ -42,7 +42,9 @@ public enum HashAlgorithm implements SecurityAlgorithm {
   private final String algorithmName;
 
   /**
-   * @param algorithmName the JCA digest name
+   * Constructs an enum constant with the given JCA digest algorithm name.
+   *
+   * @param algorithmName the JCA name passed to {@link java.security.MessageDigest#getInstance(String)}
    */
   HashAlgorithm (String algorithmName) {
 
@@ -50,7 +52,9 @@ public enum HashAlgorithm implements SecurityAlgorithm {
   }
 
   /**
-   * @return the JCA name used when instantiating {@link java.security.MessageDigest}
+   * Returns the JCA algorithm name used when instantiating {@link java.security.MessageDigest}.
+   *
+   * @return the JCA digest algorithm name string
    */
   public String getAlgorithmName () {
 

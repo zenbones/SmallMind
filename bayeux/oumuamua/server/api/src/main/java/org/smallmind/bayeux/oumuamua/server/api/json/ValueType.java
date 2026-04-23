@@ -33,9 +33,38 @@
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
 /**
- * Enumeration of supported JSON value kinds.
+ * Exhaustive set of JSON value kinds as defined by the JSON specification, used to discriminate
+ * {@link Value} instances without instanceof checks.
  */
 public enum ValueType {
 
-  OBJECT, ARRAY, STRING, NUMBER, BOOLEAN, NULL
+  /**
+   * A JSON object: an unordered collection of name/value pairs.
+   */
+  OBJECT,
+
+  /**
+   * A JSON array: an ordered sequence of values.
+   */
+  ARRAY,
+
+  /**
+   * A JSON string value.
+   */
+  STRING,
+
+  /**
+   * A JSON number value (integer, long, or double).
+   */
+  NUMBER,
+
+  /**
+   * A JSON boolean value ({@code true} or {@code false}).
+   */
+  BOOLEAN,
+
+  /**
+   * The JSON {@code null} literal.
+   */
+  NULL
 }

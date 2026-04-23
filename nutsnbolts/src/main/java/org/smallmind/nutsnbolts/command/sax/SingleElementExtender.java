@@ -37,13 +37,15 @@ import org.smallmind.nutsnbolts.command.template.SingleArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
 /**
- * Parses a {@code <single>} argument element into a {@link SingleArgument}.
+ * SAX element extender for the {@code <single>} element that creates a {@link SingleArgument} whose description is taken from the element's text content.
  */
 public class SingleElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private SingleArgument singleArgument;
 
   /**
+   * Returns the compiled argument as an {@link Argument} reference.
+   *
    * @return compiled {@link SingleArgument}
    */
   @Override
@@ -53,7 +55,9 @@ public class SingleElementExtender extends AbstractElementExtender implements Ar
   }
 
   /**
-   * @return single argument built from the element content
+   * Returns the strongly typed single argument assembled from the element content.
+   *
+   * @return {@link SingleArgument} with the description string from the element body
    */
   public SingleArgument getSingleArgument () {
 
@@ -61,7 +65,12 @@ public class SingleElementExtender extends AbstractElementExtender implements Ar
   }
 
   /**
-   * Finalizes the single argument using the content of the element.
+   * Constructs the {@link SingleArgument} using the element's text content as the description.
+   *
+   * @param namespaceURI   namespace URI of the closing element
+   * @param localName      local name of the closing element
+   * @param qName          qualified name of the closing element
+   * @param contentBuilder text content accumulated within the element
    */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {

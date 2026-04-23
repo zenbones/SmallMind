@@ -35,28 +35,30 @@ package org.smallmind.forge.deploy;
 import java.nio.file.Path;
 
 /**
- * Hook for performing platform or environment specific updates after an application is deployed.
- * Implementations may create service wrappers, configuration files, or any other installation side-effects.
+ * Post-deployment hook invoked by {@link ApplicationUpdater} after an artifact archive has been
+ * extracted. Implementations may generate service wrapper scripts, write configuration files, or
+ * perform any other platform-specific installation step. A decorator is permitted to be a no-op
+ * for operating systems it does not support.
  */
 public interface Decorator {
 
   /**
-   * Apply a decoration step to the extracted installation.
+   * Apply a decoration step to the freshly extracted installation.
    *
-   * @param operatingSystem the target operating system
-   * @param appUser         the system user that should own the installation
-   * @param installPath     the root installation directory
-   * @param nexusHost       the Nexus host that supplied the artifact
-   * @param nexusUser       the Nexus user
-   * @param nexusPassword   the Nexus password
-   * @param repository      the repository from which the artifact was retrieved
-   * @param groupId         the artifact group id
-   * @param artifactId      the artifact id
-   * @param version         the artifact version
-   * @param classifier      the artifact classifier, or {@code null}
-   * @param extension       the artifact extension (e.g. {@code jar})
-   * @param envVars         optional environment variable declarations to apply
-   * @throws Exception if any decoration step fails; implementations may throw IO or templating exceptions
+   * @param operatingSystem target platform; implementations may no-op on unsupported systems
+   * @param appUser         OS account that owns the installation
+   * @param installPath     root directory of the extracted application
+   * @param nexusHost       hostname of the Nexus server that supplied the artifact
+   * @param nexusUser       Nexus username
+   * @param nexusPassword   Nexus password
+   * @param repository      repository from which the artifact was downloaded
+   * @param groupId         Maven {@code groupId} of the deployed artifact
+   * @param artifactId      Maven {@code artifactId} of the deployed artifact
+   * @param version         deployed artifact version
+   * @param classifier      artifact classifier, or {@code null} if none
+   * @param extension       artifact packaging extension (e.g. {@code zip})
+   * @param envVars         environment variable declarations to embed in generated scripts or config
+   * @throws Exception if any I/O or templating operation fails
    */
   void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
     throws Exception;

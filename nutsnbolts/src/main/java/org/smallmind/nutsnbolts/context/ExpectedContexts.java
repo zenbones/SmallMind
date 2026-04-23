@@ -39,7 +39,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares the contexts that must be present when invoking the annotated method.
+ * Declares the set of {@link Context} types that must be active on the current thread when the annotated method is invoked, enforced by {@link ContextFactory#filterContextsOn}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -47,6 +47,8 @@ import java.lang.annotation.Target;
 public @interface ExpectedContexts {
 
   /**
+   * One or more context types that must be present on the thread-local stack at invocation time.
+   *
    * @return required context types
    */
   Class<? extends Context>[] value ();

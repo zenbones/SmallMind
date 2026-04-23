@@ -50,7 +50,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
- * Deploys Singularity-based single-jar applications and optional asc signatures to the configured distribution repository.
+ * Mojo goal {@code deploy-singularity} that publishes the single-jar Singularity artifact produced by
+ * {@link GenerateSingularityMojo} to the project's configured distribution repository. If a sibling {@code .asc}
+ * file is present, it is attached as {@link AscArtifactMetadata} so that the GPG signature is deployed too.
  */
 @Mojo(name = "deploy-singularity", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class DeploySingularityMojo extends AbstractMojo {
@@ -69,9 +71,10 @@ public class DeploySingularityMojo extends AbstractMojo {
   ArtifactDeployer artifactDeployer;
 
   /**
-   * Performs the deployment unless skipping is requested.
+   * Resolves the Singularity jar in the build directory, attaches the optional signature, and deploys the artifact.
    *
-   * @throws MojoExecutionException if deployment fails or artifacts cannot be resolved
+   * @throws MojoExecutionException if the underlying deployment fails; the cause is the original
+   *                                {@link ArtifactDeploymentException}
    */
   public void execute ()
     throws MojoExecutionException {

@@ -36,9 +36,10 @@ import java.util.HashSet;
 import org.smallmind.persistence.orm.ProxySession;
 
 /**
- * Tracks a set of session-aware resources within a boundary, enforcing allowed data sources.
+ * A {@link HashSet} that represents a single AOP boundary scope and controls which session source keys
+ * are permitted to participate in it.
  *
- * @param <T> the resource type tracked in the boundary
+ * @param <T> the resource type (session or transaction) tracked within this boundary
  */
 public class BoundarySet<T> extends HashSet<T> {
 
@@ -46,10 +47,10 @@ public class BoundarySet<T> extends HashSet<T> {
   private final boolean implicit;
 
   /**
-   * Creates a boundary set with the given allowed session sources and implicit flag.
+   * Constructs a boundary set for the given session source constraints.
    *
-   * @param sessionSourceKeys allowed session source keys; empty means all
-   * @param implicit          whether the boundary was implicitly established
+   * @param sessionSourceKeys the session source keys permitted in this boundary; empty means all sources are allowed
+   * @param implicit          whether this boundary was established implicitly by a class-level annotation
    */
   public BoundarySet (String[] sessionSourceKeys, boolean implicit) {
 
@@ -60,9 +61,9 @@ public class BoundarySet<T> extends HashSet<T> {
   }
 
   /**
-   * Indicates whether the boundary is implicit and unconstrained by explicit session sources.
+   * Returns {@code true} when this boundary is both implicit and unconstrained by any explicit session source keys.
    *
-   * @return {@code true} when no specific session sources are declared and the boundary is implicit
+   * @return {@code true} if the boundary is implicit and no source keys are listed
    */
   public boolean isImplicit () {
 
@@ -70,10 +71,10 @@ public class BoundarySet<T> extends HashSet<T> {
   }
 
   /**
-   * Determines whether the provided session is permitted by this boundary.
+   * Returns {@code true} if the given session's source key is permitted by this boundary.
    *
-   * @param proxySession the session to check
-   * @return {@code true} if allowed
+   * @param proxySession the session whose source key is checked
+   * @return {@code true} if the session is allowed
    */
   public boolean allows (ProxySession<?, ?> proxySession) {
 
@@ -81,11 +82,11 @@ public class BoundarySet<T> extends HashSet<T> {
   }
 
   /**
-   * Determines whether the provided session source key is permitted by this boundary.
+   * Returns {@code true} if the given session source key is permitted by this boundary.
    *
-   * @param sessionSourceKey the session source key to check
-   * @return {@code true} if allowed
-   * @throws IllegalArgumentException if implicit is true while sources are explicitly listed
+   * @param sessionSourceKey the session source key to test; {@code null} is accepted when no keys are listed
+   * @return {@code true} if the key is allowed
+   * @throws IllegalArgumentException if the boundary is marked implicit but also lists explicit source keys
    */
   public boolean allows (String sessionSourceKey) {
 

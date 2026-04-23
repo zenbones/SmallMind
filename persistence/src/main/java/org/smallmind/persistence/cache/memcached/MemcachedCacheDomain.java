@@ -44,11 +44,21 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
 
 /**
- * {@link CacheDomain} implementation that provisions memcached-backed caches for durables, collections,
- * and vectors. Instances are scoped by a discriminator to avoid key collisions across domains.
+ * {@link CacheDomain} implementation that provisions lazily created, memcached-backed
+ * {@link MemcachedCache} instances for durable entities, wide entity lists, and durable vectors.
  *
- * @param <I> identifier type of the durable
- * @param <D> durable entity type
+ * <p>All caches within a domain share the same {@link ProxyMemcachedClient} and the same
+ * discriminator namespace. A per-class TTL override map can be provided to vary the
+ * time-to-live on a class-by-class basis; classes not present in the map receive the domain's
+ * default TTL.</p>
+ *
+ * <p>Cache instances are created lazily on first use and are stored in {@link ConcurrentHashMap}s
+ * with double-checked locking to guarantee safe single-instance creation in a concurrent
+ * environment.</p>
+ *
+ * @param <I> the identifier type of the managed durable entities, must be {@link Serializable}
+ *            and {@link Comparable}
+ * @param <D> the durable entity type managed by this domain
  */
 public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
@@ -61,11 +71,11 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   private final int timeToLiveSeconds;
 
   /**
-   * Constructs a cache domain with a shared TTL for all managed classes.
+   * Constructs a cache domain with a uniform TTL applied to all managed entity classes.
    *
-   * @param memcachedClient   memcached client used to create caches
-   * @param discriminator     namespace applied to every key
-   * @param timeToLiveSeconds default TTL in seconds for cached entries
+   * @param memcachedClient   the client used to interact with the memcached cluster
+   * @param discriminator     the namespace prefix applied to every key in this domain
+   * @param timeToLiveSeconds the default TTL in seconds for all cached entries
    */
   public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds) {
 
@@ -73,12 +83,13 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Constructs a cache domain with optional per-class TTL overrides.
+   * Constructs a cache domain with an optional per-class TTL override map.
    *
-   * @param memcachedClient       memcached client used to create caches
-   * @param discriminator         namespace applied to every key
-   * @param timeToLiveSeconds     default TTL in seconds for cached entries
-   * @param timeTiLiveOverrideMap optional mapping from managed class to override TTL
+   * @param memcachedClient       the client used to interact with the memcached cluster
+   * @param discriminator         the namespace prefix applied to every key in this domain
+   * @param timeToLiveSeconds     the default TTL in seconds for all cached entries
+   * @param timeTiLiveOverrideMap optional map from managed entity class to a per-class TTL
+   *                              override; may be {@code null}
    */
   public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
 
@@ -89,7 +100,9 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * @return metric source identifier for memcached-backed caches
+   * Returns the metric source identifier used when reporting cache statistics.
+   *
+   * @return the display name for {@link EntitySource#MEMCACHED}
    */
   @Override
   public String getMetricSource () {
@@ -98,10 +111,11 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Supplies a cache for singular durable instances, creating it lazily.
+   * Returns the {@link PersistenceCache} used to store and retrieve individual durable instances,
+   * creating it lazily if necessary.
    *
-   * @param managedClass durable type for which the cache is required
-   * @return persistence cache keyed by discriminator-prefixed string ids
+   * @param managedClass the entity class for which the cache is required
+   * @return the per-instance cache scoped to {@code managedClass}
    */
   @Override
   public PersistenceCache<String, D> getInstanceCache (Class<D> managedClass) {
@@ -120,10 +134,11 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Supplies a cache for lists of durables, creating it lazily.
+   * Returns the {@link PersistenceCache} used to store and retrieve lists of durable instances
+   * (wide results), creating it lazily if necessary.
    *
-   * @param managedClass durable type for which the cache is required
-   * @return persistence cache keyed by discriminator-prefixed string ids for wide results
+   * @param managedClass the entity class for which the wide cache is required
+   * @return the wide-instance cache scoped to {@code managedClass}
    */
   @Override
   public PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> managedClass) {
@@ -142,10 +157,11 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Supplies a cache for durable vectors, creating it lazily.
+   * Returns the {@link PersistenceCache} used to store and retrieve {@link DurableVector} entries,
+   * creating it lazily if necessary.
    *
-   * @param managedClass durable type for which the cache is required
-   * @return persistence cache keyed by discriminator-prefixed string ids for vector entries
+   * @param managedClass the entity class for which the vector cache is required
+   * @return the vector cache scoped to {@code managedClass}
    */
   @Override
   public PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass) {
@@ -164,10 +180,13 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Resolves the time-to-live for a specific managed class, applying overrides when available.
+   * Resolves the effective TTL for the given entity class by consulting the override map.
    *
-   * @param managedClass durable type
-   * @return TTL in seconds for cache entries representing the class
+   * <p>If {@code timeTiLiveOverrideMap} is non-null and contains an entry for
+   * {@code managedClass}, that override is returned; otherwise the domain default is used.</p>
+   *
+   * @param managedClass the entity class whose TTL is being resolved
+   * @return the TTL in seconds to use for entries cached on behalf of {@code managedClass}
    */
   private int getTimeToLiveSeconds (Class<D> managedClass) {
 

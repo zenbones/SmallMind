@@ -36,9 +36,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Base configuration for pools providing limits on pool size and wait times.
+ * Shared base configuration for pool implementations, holding limits on pool size and how long
+ * callers will wait when no component is immediately available.
+ * <p>
+ * Both properties are stored in atomic fields so that live changes to a running pool are visible
+ * without additional synchronization on the caller's side. Setters return the concrete
+ * configuration type {@code P} to support fluent-style chaining.
+ * <p>
+ * Defaults: {@code maxPoolSize = 10}, {@code acquireWaitTimeMillis = 0} (do not wait).
  *
- * @param <P> concrete configuration type for fluent setters
+ * @param <P> the concrete configuration subclass, used to type the fluent setters
  */
 public abstract class PoolConfig<P extends PoolConfig> {
 
@@ -46,16 +53,16 @@ public abstract class PoolConfig<P extends PoolConfig> {
   private final AtomicInteger maxPoolSize = new AtomicInteger(10);
 
   /**
-   * Constructs a default configuration.
+   * Creates a configuration with default values ({@code maxPoolSize=10}, {@code acquireWaitTimeMillis=0}).
    */
   public PoolConfig () {
 
   }
 
   /**
-   * Copy constructor.
+   * Copy constructor that copies the pool size and acquire wait time from {@code poolConfig}.
    *
-   * @param poolConfig source configuration to copy
+   * @param poolConfig the source configuration to copy from
    */
   public PoolConfig (PoolConfig<?> poolConfig) {
 
@@ -64,16 +71,20 @@ public abstract class PoolConfig<P extends PoolConfig> {
   }
 
   /**
-   * Returns the concrete configuration class, enabling fluent APIs with generics.
+   * Returns the runtime class of the concrete configuration subclass.
+   * <p>
+   * Used by the fluent setters to cast {@code this} to {@code P} before returning.
    *
-   * @return configuration class
+   * @return the concrete configuration class
    */
   public abstract Class<P> getConfigurationClass ();
 
   /**
-   * Gets the maximum number of pooled instances allowed.
+   * Returns the maximum number of component instances the pool will hold concurrently.
+   * <p>
+   * A value of {@code 0} means unbounded.
    *
-   * @return pool size limit
+   * @return the pool size cap; {@code 0} for unbounded
    */
   public int getMaxPoolSize () {
 
@@ -81,10 +92,12 @@ public abstract class PoolConfig<P extends PoolConfig> {
   }
 
   /**
-   * Sets the maximum number of pooled instances.
+   * Sets the maximum number of component instances the pool will hold concurrently.
+   * <p>
+   * A value of {@code 0} means unbounded.
    *
-   * @param maxPoolSize pool size limit, must be non-negative
-   * @return this configuration instance
+   * @param maxPoolSize the new pool size cap; must be non-negative
+   * @return this configuration instance cast to {@code P}, for fluent chaining
    * @throws IllegalArgumentException if {@code maxPoolSize} is negative
    */
   public P setMaxPoolSize (int maxPoolSize) {
@@ -99,9 +112,13 @@ public abstract class PoolConfig<P extends PoolConfig> {
   }
 
   /**
-   * Gets the maximum time in milliseconds to wait for an instance before giving up.
+   * Returns the maximum time in milliseconds a caller will block waiting for a component when the
+   * pool is at capacity.
+   * <p>
+   * A value of {@code 0} means the pool will not wait; it will throw immediately if no component
+   * is free.
    *
-   * @return wait time in milliseconds
+   * @return the wait time in milliseconds; {@code 0} for no waiting
    */
   public long getAcquireWaitTimeMillis () {
 
@@ -109,10 +126,13 @@ public abstract class PoolConfig<P extends PoolConfig> {
   }
 
   /**
-   * Sets the maximum time in milliseconds to wait for an instance before giving up.
+   * Sets the maximum time in milliseconds a caller will block waiting for a component when the
+   * pool is at capacity.
+   * <p>
+   * A value of {@code 0} means the pool will not wait.
    *
-   * @param acquireWaitTimeMillis wait time in milliseconds, must be non-negative
-   * @return this configuration instance
+   * @param acquireWaitTimeMillis the new wait time in milliseconds; must be non-negative
+   * @return this configuration instance cast to {@code P}, for fluent chaining
    * @throws IllegalArgumentException if {@code acquireWaitTimeMillis} is negative
    */
   public P setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {

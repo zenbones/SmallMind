@@ -50,7 +50,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 /**
- * Generates byte code proxies using ASM for classes and interfaces, optionally filtering annotations.
+ * Uses ASM to dynamically generate a subclass or interface implementation that routes every public
+ * non-final method call through a supplied {@link InvocationHandler}, with optional annotation filtering.
  */
 public class ProxyGenerator {
 
@@ -66,13 +67,14 @@ public class ProxyGenerator {
   }
 
   /**
-   * Creates a proxy instance that delegates to the supplied invocation handler.
+   * Generates and instantiates a proxy for the given type that routes all calls to the supplied handler.
    *
-   * @param toBeProxiedClass the interface or class to proxy
-   * @param handler          the handler that receives invocations
-   * @param <T>              the proxied type
-   * @return a new proxy instance
-   * @throws ByteCodeManipulationException if proxy generation or construction fails
+   * @param toBeProxiedClass the public, non-abstract, non-static class or interface to proxy
+   * @param handler          the {@link InvocationHandler} that will receive every method invocation
+   * @param <T>              the type of the proxy
+   * @return a new proxy instance that is assignable to {@code toBeProxiedClass}
+   * @throws ByteCodeManipulationException if the class is ineligible, byte code generation fails, or
+   *                                       the generated class cannot be instantiated
    */
   public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler) {
 
@@ -80,14 +82,17 @@ public class ProxyGenerator {
   }
 
   /**
-   * Creates a proxy instance that delegates to the supplied invocation handler while optionally filtering annotations.
+   * Generates and instantiates a proxy for the given type, routing all calls to the supplied handler,
+   * and filtering method-level annotations according to the provided filter.
    *
-   * @param toBeProxiedClass the interface or class to proxy
-   * @param handler          the handler that receives invocations
-   * @param annotationFilter optional filter controlling which annotations are copied to the proxy
-   * @param <T>              the proxied type
-   * @return a new proxy instance
-   * @throws ByteCodeManipulationException if proxy generation or construction fails
+   * @param toBeProxiedClass the public, non-abstract, non-static class or interface to proxy
+   * @param handler          the {@link InvocationHandler} that will receive every method invocation
+   * @param annotationFilter an optional filter that controls which annotations are preserved on
+   *                         generated proxy methods; {@code null} preserves all annotations
+   * @param <T>              the type of the proxy
+   * @return a new proxy instance that is assignable to {@code toBeProxiedClass}
+   * @throws ByteCodeManipulationException if the class is ineligible, byte code generation fails, or
+   *                                       the generated class cannot be instantiated
    */
   public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
 
@@ -162,7 +167,8 @@ public class ProxyGenerator {
   }
 
   /**
-   * Tracks visited methods by name and descriptor to avoid duplicate generation.
+   * Records a method by name and descriptor so that duplicate proxy methods are not emitted when
+   * the same signature appears in multiple classes of the hierarchy.
    */
   private static class MethodTracker {
 
@@ -176,6 +182,8 @@ public class ProxyGenerator {
     }
 
     /**
+     * Returns the method name tracked by this record.
+     *
      * @return the method name
      */
     public String getName () {
@@ -184,7 +192,9 @@ public class ProxyGenerator {
     }
 
     /**
-     * @return the JVM method descriptor
+     * Returns the JVM method descriptor tracked by this record.
+     *
+     * @return the JVM descriptor string, e.g. {@code (Ljava/lang/String;)V}
      */
     public String getDescription () {
 
@@ -192,7 +202,9 @@ public class ProxyGenerator {
     }
 
     /**
-     * @return a hash code based on the method name and descriptor
+     * Computes a hash code from the method name and descriptor for use in {@link java.util.HashSet} membership tests.
+     *
+     * @return the combined hash of the name and descriptor
      */
     @Override
     public int hashCode () {
@@ -201,10 +213,10 @@ public class ProxyGenerator {
     }
 
     /**
-     * Compares trackers by name and descriptor.
+     * Returns {@code true} if {@code obj} is a {@code MethodTracker} with the same name and descriptor.
      *
-     * @param obj the object to compare
-     * @return {@code true} if both refer to the same method signature
+     * @param obj the object to compare with this tracker
+     * @return {@code true} if both trackers represent the same method signature
      */
     @Override
     public boolean equals (Object obj) {
@@ -214,12 +226,15 @@ public class ProxyGenerator {
   }
 
   /**
-   * Class loader used to define generated proxy classes.
+   * A dedicated {@link ClassLoader} that can define dynamically generated proxy class bytes
+   * as {@link Class} objects in the same hierarchy as the proxied class.
    */
   private static class ProxyClassLoader extends ClassLoader {
 
     /**
-     * @param parent the parent loader
+     * Constructs a proxy class loader that delegates to the specified parent.
+     *
+     * @param parent the parent class loader to delegate standard class loading to
      */
     public ProxyClassLoader (ClassLoader parent) {
 
@@ -227,11 +242,11 @@ public class ProxyGenerator {
     }
 
     /**
-     * Defines a generated class from byte array data.
+     * Defines a new {@link Class} from the supplied byte code and returns it.
      *
-     * @param name the generated class name
-     * @param b    the class byte code
-     * @return the defined class
+     * @param name the binary name of the class to define
+     * @param b    the raw class byte code produced by ASM
+     * @return the newly defined {@link Class} object
      */
     public Class<?> extractInterface (String name, byte[] b) {
 
@@ -240,7 +255,8 @@ public class ProxyGenerator {
   }
 
   /**
-   * ASM class visitor that constructs the proxy subclass or interface implementation.
+   * ASM {@link ClassVisitor} that walks the byte code of the proxied class hierarchy and emits a
+   * new class that dispatches every eligible method through the stored {@link InvocationHandler} field.
    */
   private static class ProxyClassVisitor extends ClassVisitor {
 
@@ -253,12 +269,14 @@ public class ProxyGenerator {
     private boolean constructed = false;
 
     /**
-     * @param nextClassVisitor downstream visitor that writes the class
-     * @param toBeProxiedClass the original type being proxied
-     * @param currentClass     the class whose members are currently being copied
-     * @param annotationFilter optional filter controlling annotation copying
-     * @param methodTrackerSet signatures that have already been emitted
-     * @param initialized      whether the class header has already been emitted
+     * Constructs the visitor for one class in the proxied class hierarchy.
+     *
+     * @param nextClassVisitor downstream visitor that accumulates the generated byte code
+     * @param toBeProxiedClass the root type being proxied; used to form the generated class name
+     * @param currentClass     the specific class in the hierarchy currently being visited
+     * @param annotationFilter optional filter applied to method annotations; {@code null} passes all
+     * @param methodTrackerSet set of method signatures already emitted to prevent duplicates
+     * @param initialized      {@code true} when the class header and handler field have already been written
      */
     public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class<?> toBeProxiedClass, Class<?> currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
@@ -273,7 +291,8 @@ public class ProxyGenerator {
     }
 
     /**
-     * Writes the proxy class header the first time a class is visited.
+     * Emits the generated class header and the {@code $proxy$_handler} field on the first call;
+     * subsequent calls (for superclasses) are ignored.
      */
     @Override
     public void visit (int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -290,10 +309,12 @@ public class ProxyGenerator {
     }
 
     /**
-     * Emits a simple constructor that accepts an {@link InvocationHandler}.
+     * Emits a public constructor that accepts an {@link InvocationHandler} and stores it in the
+     * handler field, calling the no-arg super constructor.  Does nothing if a constructor has
+     * already been emitted or the class has not yet been initialised.
      *
-     * @param signature  the generic signature of the constructor
-     * @param exceptions checked exceptions declared by the original constructor
+     * @param signature  the generic type signature of the original constructor, or {@code null}
+     * @param exceptions the checked exception type names declared by the original constructor, or {@code null}
      */
     private void createConstructor (String signature, String[] exceptions) {
 
@@ -329,7 +350,10 @@ public class ProxyGenerator {
     }
 
     /**
-     * Visits methods and emits proxy dispatchers for eligible ones.
+     * Visits a method of the current class and emits a proxy dispatcher for it when the method is
+     * public, non-static, non-final, non-synthetic, and has not yet been emitted.
+     *
+     * @return a {@link MethodVisitor} that copies annotations through the filter, or {@code null} to skip
      */
     @Override
     public MethodVisitor visitMethod (int access, String name, String desc, String signature, String[] exceptions) {
@@ -598,7 +622,8 @@ public class ProxyGenerator {
     }
 
     /**
-     * Ensures a constructor is generated even if no suitable constructor was encountered.
+     * Called when the class visitor is done; ensures the constructor is emitted even if
+     * the proxied class has no no-arg constructor visible to the visitor.
      */
     @Override
     public void visitEnd () {
@@ -607,10 +632,12 @@ public class ProxyGenerator {
     }
 
     /**
-     * Inserts a constant integer into the method byte code using the smallest opcode available.
+     * Pushes an integer constant onto the operand stack using the most compact opcode available.
      *
-     * @param methodVisitor the visitor to emit instructions to
-     * @param number        the integer to place on the stack
+     * @param methodVisitor the visitor that should receive the push instruction
+     * @param number        the non-negative integer to push; values {@code 0}–{@code 5} use
+     *                      {@code ICONST_n}, values up to {@link Byte#MAX_VALUE} use {@code BIPUSH},
+     *                      and larger values use {@code SIPUSH}
      */
     private void insertNumber (MethodVisitor methodVisitor, int number) {
 
@@ -645,7 +672,8 @@ public class ProxyGenerator {
   }
 
   /**
-   * Filters annotations while copying method bodies to the generated proxy.
+   * ASM {@link MethodVisitor} that forwards annotation visits to a downstream visitor only when
+   * the configured {@link AnnotationFilter} allows the annotation.
    */
   private static class ProxyMethodVisitor extends MethodVisitor {
 
@@ -653,8 +681,10 @@ public class ProxyGenerator {
     private final AnnotationFilter annotationFilter;
 
     /**
-     * @param nextMethodVisitor downstream visitor that writes the method
-     * @param annotationFilter  optional filter controlling annotation copying
+     * Constructs a method visitor that wraps {@code nextMethodVisitor} and applies the filter.
+     *
+     * @param nextMethodVisitor the downstream visitor that accumulates method byte code
+     * @param annotationFilter  optional filter; {@code null} means all annotations are forwarded
      */
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 
@@ -665,7 +695,9 @@ public class ProxyGenerator {
     }
 
     /**
-     * @return the default annotation visitor
+     * Forwards the annotation-default visit to the downstream visitor.
+     *
+     * @return the annotation visitor provided by the downstream visitor
      */
     @Override
     public AnnotationVisitor visitAnnotationDefault () {
@@ -674,7 +706,11 @@ public class ProxyGenerator {
     }
 
     /**
-     * Copies method-level annotations when the filter allows them.
+     * Forwards the method-level annotation to the downstream visitor only when the filter permits it.
+     *
+     * @param desc    the JVM descriptor of the annotation
+     * @param visible {@code true} if the annotation is visible at runtime
+     * @return the downstream annotation visitor if allowed, or {@code null} to discard the annotation
      */
     @Override
     public AnnotationVisitor visitAnnotation (String desc, boolean visible) {
@@ -688,7 +724,12 @@ public class ProxyGenerator {
     }
 
     /**
-     * Copies parameter annotations when the filter allows them.
+     * Forwards a parameter-level annotation to the downstream visitor only when the filter permits it.
+     *
+     * @param parameter the zero-based parameter index
+     * @param desc      the JVM descriptor of the annotation
+     * @param visible   {@code true} if the annotation is visible at runtime
+     * @return the downstream annotation visitor if allowed, or {@code null} to discard the annotation
      */
     @Override
     public AnnotationVisitor visitParameterAnnotation (int parameter, String desc, boolean visible) {
@@ -702,7 +743,7 @@ public class ProxyGenerator {
     }
 
     /**
-     * Finishes the method copy.
+     * Signals the end of the method to the downstream visitor.
      */
     @Override
     public void visitEnd () {

@@ -38,23 +38,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares polymorphic handling for generated views, producing adapters capable of serializing
- * subtypes with discriminator-based resolution. This annotation should be used by polymorphic
- * base classes, listing all polymorphic *leaf* subclasses viewable from this base class. Intermediate
- * classes in the hierarchy should use the Hierarchy annotation {@link Hierarchy} instead.
+ * Marks a polymorphic base class, causing the processor to generate XML adapter classes that handle
+ * discriminator-based subtype resolution; should be used on base classes while intermediate classes use {@link Hierarchy}.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Polymorphic {
 
   /**
-   * @return subclasses that participate in the polymorphic graph
+   * @return leaf subclasses in the polymorphic graph that should receive generated views with polymorphic annotations
    */
   // the list of *leaf* subclasses which will be generated with polymorphic annotations
   Class[] subClasses () default {};
 
   /**
-   * @return whether the polymorphic discriminator should be emitted as an XML attribute instead of an element
+   * @return whether the polymorphic discriminator should be emitted as an XML attribute rather than an element
    */
   // if true, will generate json with an object type attribute
   boolean useAttribute () default false;

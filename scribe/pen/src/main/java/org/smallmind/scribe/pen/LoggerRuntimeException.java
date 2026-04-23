@@ -35,12 +35,13 @@ package org.smallmind.scribe.pen;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Unchecked exception representing failures within the logging subsystem.
+ * An unchecked exception that represents a programming error or unexpected runtime failure within
+ * the Scribe logging subsystem, such as attempting to re-initialize a single-init template.
  */
 public class LoggerRuntimeException extends FormattedRuntimeException {
 
   /**
-   * Creates an exception without message or cause.
+   * Constructs an exception with no message and no cause.
    */
   public LoggerRuntimeException () {
 
@@ -48,10 +49,10 @@ public class LoggerRuntimeException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Constructs an exception with a formatted message and no cause.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message a format string describing the failure
+   * @param args    arguments to substitute into {@code message}
    */
   public LoggerRuntimeException (String message, Object... args) {
 
@@ -59,11 +60,11 @@ public class LoggerRuntimeException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Constructs an exception with a cause and a formatted message.
    *
-   * @param throwable cause of the failure
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable the underlying exception that caused this failure
+   * @param message   a format string describing the failure
+   * @param args      arguments to substitute into {@code message}
    */
   public LoggerRuntimeException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +72,9 @@ public class LoggerRuntimeException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with only a cause.
+   * Constructs an exception with a cause and no additional message.
    *
-   * @param exception underlying exception
+   * @param exception the underlying exception that caused this failure
    */
   public LoggerRuntimeException (Throwable exception) {
 

@@ -35,18 +35,35 @@ package org.smallmind.claxon.registry.aggregate;
 import org.HdrHistogram.Histogram;
 
 /**
- * Wraps an HdrHistogram with the time normalization factor used during collection.
+ * Pairs an HdrHistogram snapshot with the time-normalization factor needed to project its
+ * counts onto the configured collection window.
+ *
+ * <p>Because {@link Stratified} flips recorders on demand rather than on a fixed schedule,
+ * the actual elapsed time between two consecutive reads may differ from the nominal window
+ * duration. The {@link #timeFactor} encodes the ratio
+ * {@code actualElapsed / nominalWindowNanos}, allowing consumers to scale counts and rates
+ * so they are comparable across reporting intervals of varying length.</p>
  */
 public class HistogramTime {
 
+  /**
+   * The HdrHistogram snapshot captured at the end of a collection window.
+   */
   private final Histogram histogram;
+
+  /**
+   * Ratio of actual elapsed nanoseconds to the configured window duration.
+   * A value of {@code 1.0} means the collection interval matched the window exactly;
+   * values above or below {@code 1.0} indicate a longer or shorter actual interval.
+   */
   private final double timeFactor;
 
   /**
-   * Creates a timed histogram wrapper.
+   * Constructs a timed histogram wrapper.
    *
-   * @param histogram  histogram snapshot
-   * @param timeFactor factor representing window duration vs. collection span
+   * @param histogram  the HdrHistogram snapshot for the completed collection window; must not be {@code null}
+   * @param timeFactor ratio of actual elapsed time to the nominal window duration, used to
+   *                   normalise per-window counts and rates
    */
   public HistogramTime (Histogram histogram, double timeFactor) {
 
@@ -55,7 +72,9 @@ public class HistogramTime {
   }
 
   /**
-   * @return the histogram snapshot
+   * Returns the HdrHistogram snapshot captured at the end of the collection window.
+   *
+   * @return the histogram snapshot; never {@code null}
    */
   public Histogram getHistogram () {
 
@@ -63,7 +82,12 @@ public class HistogramTime {
   }
 
   /**
-   * @return scaling factor to normalize counts to the configured window
+   * Returns the scaling factor that normalises histogram counts to the configured window duration.
+   *
+   * <p>Consumers should divide raw counts by this factor to obtain rates expressed per nominal
+   * window, or multiply per-window targets by this factor to obtain raw thresholds.</p>
+   *
+   * @return ratio of actual elapsed nanoseconds to the nominal window nanoseconds
    */
   public double getTimeFactor () {
 

@@ -33,9 +33,18 @@
 package org.smallmind.nutsnbolts.reflection;
 
 /**
- * Indicates whether a filter should include only listed items or exclude them.
+ * Controls whether an {@link AnnotationFilter} operates in allow-list ({@code INCLUDE}) or deny-list
+ * ({@code EXCLUDE}) mode when deciding which annotations to copy to a generated proxy.
  */
 public enum PassType {
 
-  INCLUDE, EXCLUDE
+  /**
+   * Only the configured annotations are allowed through the filter.
+   */
+  INCLUDE,
+
+  /**
+   * All annotations except the configured ones are allowed through the filter.
+   */
+  EXCLUDE
 }

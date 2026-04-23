@@ -33,20 +33,21 @@
 package org.smallmind.persistence.orm.aop;
 
 /**
- * Boundary set that also tracks whether rollback-only semantics are required.
+ * A {@link BoundarySet} that additionally carries rollback-only semantics, indicating that all
+ * transactions within this boundary must be rolled back rather than committed.
  *
- * @param <T> the resource type tracked in the boundary
+ * @param <T> the transaction resource type tracked within this boundary
  */
 public class RollbackAwareBoundarySet<T> extends BoundarySet<T> {
 
   private final boolean rollbackOnly;
 
   /**
-   * Creates a rollback-aware boundary set.
+   * Constructs a rollback-aware boundary set.
    *
-   * @param sessionSourceKeys allowed session sources; empty means all
-   * @param implicit          whether the boundary is implicit
-   * @param rollbackOnly      whether the boundary requires rollback-only transactions
+   * @param sessionSourceKeys the session source keys permitted in this boundary; empty means all
+   * @param implicit          whether this boundary was established implicitly by a class-level annotation
+   * @param rollbackOnly      whether all transactions in this boundary must be rolled back
    */
   public RollbackAwareBoundarySet (String[] sessionSourceKeys, boolean implicit, boolean rollbackOnly) {
 
@@ -56,7 +57,9 @@ public class RollbackAwareBoundarySet<T> extends BoundarySet<T> {
   }
 
   /**
-   * @return true when transactions in this boundary must be rollback-only
+   * Returns {@code true} if all transactions within this boundary must be rolled back.
+   *
+   * @return {@code true} when rollback-only semantics are enforced
    */
   public boolean isRollbackOnly () {
 

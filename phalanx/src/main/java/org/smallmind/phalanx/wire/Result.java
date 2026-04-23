@@ -38,16 +38,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks the argument name that should receive a method's return value on the receiving side.
+ * Declares the wire-level name under which a method's return value is encoded in the
+ * response payload. Without this annotation the framework uses a default key; annotating
+ * with {@code @Result} makes the contract explicit and independent of implementation details.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Result {
 
   /**
-   * Logical name that corresponds to the result payload.
+   * The key used to encode the return value in the response message.
    *
-   * @return name of the result parameter
+   * @return the wire-level result name; must not be empty
    */
   String value ();
 }

@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.context;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Indicates an error while managing contextual data.
+ * Unchecked exception indicating an error during context management operations such as missing required contexts or stack manipulation failures.
  */
 public class ContextException extends FormattedRuntimeException {
 
   /**
-   * Constructs an empty exception.
+   * Constructs an exception with no detail message.
    */
   public ContextException () {
 
@@ -48,8 +48,10 @@ public class ContextException extends FormattedRuntimeException {
   }
 
   /**
-   * @param message formatted error message
-   * @param args    message parameters
+   * Constructs an exception with a formatted detail message.
+   *
+   * @param message message pattern using {@code String.format} conventions
+   * @param args    arguments for the message pattern
    */
   public ContextException (String message, Object... args) {
 
@@ -57,9 +59,11 @@ public class ContextException extends FormattedRuntimeException {
   }
 
   /**
+   * Constructs an exception with an underlying cause and a formatted detail message.
+   *
    * @param throwable underlying cause
-   * @param message   formatted error message
-   * @param args      message parameters
+   * @param message   message pattern using {@code String.format} conventions
+   * @param args      arguments for the message pattern
    */
   public ContextException (Throwable throwable, String message, Object... args) {
 
@@ -67,6 +71,8 @@ public class ContextException extends FormattedRuntimeException {
   }
 
   /**
+   * Constructs an exception wrapping an underlying cause with no additional message.
+   *
    * @param throwable underlying cause
    */
   public ContextException (Throwable throwable) {

@@ -35,18 +35,29 @@ package org.smallmind.file.ephemeral.heap;
 import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
 
 /**
- * Represents a heap-backed file storing its bytes in a {@link ByteArrayIOBuffer}.
+ * Represents an in-memory file node in the ephemeral heap file-system tree.
+ *
+ * <p>A {@code FileNode} stores its content in a {@link ByteArrayIOBuffer}, which grows
+ * as data is written. The initial capacity of the buffer can be specified at construction
+ * time, or an existing buffer can be provided directly (for example when copying a file).
+ * The node's {@link #size()} reflects the current write position within the buffer.
+ *
+ * @see HeapNode
+ * @see DirectoryNode
  */
 public class FileNode extends HeapNode {
 
+  /**
+   * The backing buffer that holds the file's raw byte content.
+   */
   private final ByteArrayIOBuffer segmentBuffer;
 
   /**
-   * Constructs a file node with a newly allocated buffer.
+   * Constructs a new file node with a freshly allocated backing buffer.
    *
-   * @param parent     the containing directory
-   * @param name       the file name
-   * @param allocation initial allocation size for the backing buffer
+   * @param parent     the {@link DirectoryNode} that will contain this file
+   * @param name       the simple name of the file
+   * @param allocation the initial byte capacity to pre-allocate for the backing buffer
    */
   public FileNode (DirectoryNode parent, String name, int allocation) {
 
@@ -56,11 +67,14 @@ public class FileNode extends HeapNode {
   }
 
   /**
-   * Constructs a file node using an existing buffer.
+   * Constructs a new file node backed by an existing buffer.
    *
-   * @param parent        the containing directory
-   * @param name          the file name
-   * @param segmentBuffer the buffer that stores file contents
+   * <p>Use this constructor to wrap a pre-populated {@link ByteArrayIOBuffer}, for
+   * instance when duplicating or moving file content.
+   *
+   * @param parent        the {@link DirectoryNode} that will contain this file
+   * @param name          the simple name of the file
+   * @param segmentBuffer the buffer that provides the initial file content
    */
   public FileNode (DirectoryNode parent, String name, ByteArrayIOBuffer segmentBuffer) {
 
@@ -70,7 +84,9 @@ public class FileNode extends HeapNode {
   }
 
   /**
-   * @return {@link HeapNodeType#FILE}
+   * Returns the type identifier for this node.
+   *
+   * @return {@link HeapNodeType#FILE}, always
    */
   @Override
   public HeapNodeType getType () {
@@ -79,7 +95,12 @@ public class FileNode extends HeapNode {
   }
 
   /**
-   * @return the buffer holding the file bytes
+   * Returns the backing buffer used to store this file's byte content.
+   *
+   * <p>Callers may read from or write to the buffer directly; concurrent access must
+   * be coordinated externally.
+   *
+   * @return the {@link ByteArrayIOBuffer} holding the file's raw bytes
    */
   public ByteArrayIOBuffer getSegmentBuffer () {
 
@@ -87,7 +108,12 @@ public class FileNode extends HeapNode {
   }
 
   /**
-   * @return the current file length in bytes
+   * Returns the current size of the file in bytes.
+   *
+   * <p>The size is determined by the position of the limit bookmark within the backing
+   * buffer, which reflects how many bytes have been written to the file.
+   *
+   * @return the number of bytes currently in the file
    */
   @Override
   public long size () {

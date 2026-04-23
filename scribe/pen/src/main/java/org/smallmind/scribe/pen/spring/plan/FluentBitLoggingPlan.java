@@ -62,7 +62,9 @@ import org.smallmind.scribe.pen.fluentbit.FluentBitAppender;
  */
 
 /**
- * Logging plan that configures a {@link FluentBitAppender} with optional extra event data and console error fallback.
+ * Concrete {@link LoggingPlan} that builds and initializes a {@link FluentBitAppender} targeting a configurable
+ * TCP host and port, enriching every event with optional static key/value metadata and routing appender errors
+ * to a console-backed {@link DefaultErrorHandler}.
  */
 public class FluentBitLoggingPlan extends LoggingPlan {
 
@@ -73,7 +75,9 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   private int port;
 
   /**
-   * Sets the timestamp format used in the Fluent Bit message formatter.
+   * Replaces the default ISO-8601 timestamp formatter used in the console error handler's pattern formatter.
+   *
+   * @param fullTimestamp the timestamp implementation to use for console error output
    */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
@@ -81,7 +85,10 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets additional key/value pairs to include in each Fluent Bit record.
+   * Sets a map of static key/value pairs that are merged into every event sent to Fluent Bit, such as
+   * pod name, namespace, or environment metadata.
+   *
+   * @param additionalEventData the map of static fields to include in each Fluent Bit event
    */
   public void setAdditionalEventData (Map<String, String> additionalEventData) {
 
@@ -89,7 +96,10 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the appender/stream name to send to Fluent Bit.
+   * Sets the stream or tag name passed to the {@link FluentBitAppender} constructor and included in each
+   * event forwarded to Fluent Bit.
+   *
+   * @param name the stream name to identify this source in Fluent Bit
    */
   public void setName (String name) {
 
@@ -97,7 +107,9 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the Fluent Bit host.
+   * Sets the host name or IP address of the Fluent Bit TCP input to which events are forwarded.
+   *
+   * @param host the target Fluent Bit host
    */
   public void setHost (String host) {
 
@@ -105,7 +117,9 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the Fluent Bit port.
+   * Sets the TCP port on which the Fluent Bit input is listening.
+   *
+   * @param port the target port number
    */
   public void setPort (int port) {
 
@@ -113,7 +127,11 @@ public class FluentBitLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Builds and initializes the Fluent Bit appender, wrapping with a console error handler.
+   * Constructs a {@link FluentBitAppender} with the configured name, host, port, and additional event data,
+   * attaches a {@link DefaultErrorHandler} backed by a console appender, calls
+   * {@link FluentBitAppender#afterPropertiesSet()} to start worker threads, and returns the ready appender.
+   *
+   * @return a fully initialized {@link FluentBitAppender}
    */
   @Override
   public Appender getAppender () {

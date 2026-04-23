@@ -43,11 +43,13 @@ import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Consolidates rapid bursts of {@link ChangeListener#changed(ObservableValue, Object, Object)} callbacks into
- * a single update delivered after a configurable quiet period. This is useful when reacting to noisy or high-frequency
- * change streams where intermediate states are unimportant.
+ * A debouncing wrapper around a {@link ChangeListener} that consolidates rapid bursts of change
+ * notifications into a single delivery after a configurable quiet period. While the quiet window
+ * is open each new change supersedes the previous one so only the most recent state is forwarded.
+ * Delivery is always dispatched on the JavaFX application thread. A shared daemon thread polls for
+ * expired entries every 50 ms.
  *
- * @param <T> the observed value type
+ * @param <T> the type of the observed value
  */
 public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
 
@@ -66,10 +68,13 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Creates a listener wrapper that will coalesce change notifications occurring within the supplied time window.
+   * Creates a listener that coalesces notifications arriving within the given window and forwards
+   * only the last one to {@code innerChangeListener}.
    *
-   * @param consolidationTimeMillis the minimum quiet period in milliseconds before a change is forwarded
-   * @param innerChangeListener     the listener that ultimately receives the consolidated change notification
+   * @param consolidationTimeMillis quiet-period length in milliseconds; notifications received
+   *                                within this window after the first are suppressed
+   * @param innerChangeListener     the delegate that receives the consolidated notification;
+   *                                must not be {@code null}
    */
   public ConsolidatingChangeListener (long consolidationTimeMillis, ChangeListener<T> innerChangeListener) {
 
@@ -78,7 +83,9 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * @return the wrapped listener that receives consolidated callbacks
+   * Returns the delegate listener that ultimately receives consolidated change notifications.
+   *
+   * @return the inner listener; never {@code null}
    */
   private ChangeListener<T> getInnerChangeListener () {
 
@@ -86,7 +93,10 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * @return the latest generation number used to identify the most recent change submitted
+   * Returns the current generation counter. The counter is incremented each time {@link #changed}
+   * is called; the worker thread uses it to detect whether a queued entry is still the latest.
+   *
+   * @return the current generation number
    */
   private synchronized int getGeneration () {
 
@@ -94,12 +104,12 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Queues the observed change and schedules it to be delivered after the consolidation window expires. Any subsequent
-   * changes before expiry supersede earlier ones.
+   * Queues the observed change for deferred delivery. Any previously queued change for this
+   * listener is superseded. The method is safe to call from any thread.
    *
-   * @param observableValue the observed value
-   * @param initialValue    the previous value
-   * @param currentValue    the new value
+   * @param observableValue the source observable
+   * @param initialValue    the previous value before the change
+   * @param currentValue    the new value after the change
    */
   @Override
   public synchronized final void changed (ObservableValue<? extends T> observableValue, T initialValue, T currentValue) {
@@ -108,10 +118,11 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Compares listeners by identity to provide ordering within the consolidation map.
+   * Compares this listener to another by identity hash code to produce a consistent ordering
+   * within the shared skip-list map.
    *
-   * @param listener another listener to compare
-   * @return a positive, negative or zero result based on the instance hash codes
+   * @param listener the listener to compare against; must not be {@code null}
+   * @return a negative, zero, or positive integer based on hash code difference
    */
   @Override
   public int compareTo (ConsolidatingChangeListener<?> listener) {
@@ -120,12 +131,15 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Drains expired entries from the queue and delivers the last change for each listener generation on the JavaFX thread.
+   * Background worker that drains expired entries from the pending-change map and dispatches
+   * the latest generation for each listener on the JavaFX application thread.
    */
   private static class ConsolidationWorker implements Runnable {
 
     /**
-     * Polls for expired entries until signalled to stop, dispatching consolidated changes for each listener generation.
+     * Polls every 50 ms for changes whose quiet window has expired. For each expired entry, if the
+     * entry's generation matches the listener's current generation, the change is dispatched
+     * synchronously on the JavaFX application thread.
      */
     @Override
     public void run () {
@@ -166,9 +180,10 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Key used to order pending changes by expiration time and listener identity.
+   * Ordering key used to schedule and retrieve pending change notifications in the shared
+   * skip-list map. Keys are ordered first by expiration time, then by listener identity.
    *
-   * @param <U> the observed value type
+   * @param <U> the observed value type of the associated listener
    */
   private static class ConsolidatingKey<U> implements Comparable<ConsolidatingKey<U>> {
 
@@ -177,7 +192,8 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     private final int generation;
 
     /**
-     * Constructs a sentinel key with no listener used to query the head map for expired entries.
+     * Creates a sentinel key with an expiration of zero, used as the exclusive upper bound
+     * argument when querying the map for entries whose quiet window has elapsed.
      */
     private ConsolidatingKey () {
 
@@ -185,11 +201,11 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
 
     /**
-     * Constructs a key representing a scheduled change.
+     * Creates a key representing a scheduled change notification.
      *
-     * @param listener                the listener associated with the change
-     * @param generation              the generation number of the change
-     * @param consolidationTimeMillis the delay before the change should be emitted
+     * @param listener                the listener that will receive the notification
+     * @param generation              monotonically increasing identifier for this notification
+     * @param consolidationTimeMillis the delay in milliseconds before the notification may be dispatched
      */
     private ConsolidatingKey (ConsolidatingChangeListener<U> listener, int generation, long consolidationTimeMillis) {
 
@@ -200,7 +216,9 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
 
     /**
-     * @return the listener that will receive the consolidated change
+     * Returns the listener associated with this scheduled change.
+     *
+     * @return the owning listener, or {@code null} for a sentinel key
      */
     private ConsolidatingChangeListener<?> getListener () {
 
@@ -208,7 +226,10 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
 
     /**
-     * @return the generation number for the scheduled change
+     * Returns the generation number that identifies this particular change within the listener's
+     * notification sequence.
+     *
+     * @return the generation counter value
      */
     private int getGeneration () {
 
@@ -216,7 +237,9 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
 
     /**
-     * @return the epoch time in milliseconds when this change expires
+     * Returns the wall-clock time in milliseconds at which this entry becomes eligible for dispatch.
+     *
+     * @return expiration epoch time in milliseconds
      */
     private long getExpiration () {
 
@@ -224,10 +247,11 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     }
 
     /**
-     * Orders keys by expiration time, then by listener identity to maintain a deterministic ordering.
+     * Orders keys by expiration time ascending. When expiration times are equal, sentinel keys
+     * (null listener) sort before live keys, and live keys are ordered by listener identity.
      *
-     * @param key another key
-     * @return comparison result suitable for sorted map usage
+     * @param key the key to compare against; must not be {@code null}
+     * @return a negative, zero, or positive integer
      */
     @Override
     public int compareTo (ConsolidatingKey key) {
@@ -244,12 +268,12 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Encapsulates the change state captured for consolidation.
+   * Immutable snapshot of a single change notification held in the queue until the quiet window expires.
    *
    * @param <U>             the observed value type
-   * @param observableValue the observed value source
-   * @param initialValue    the previous value
-   * @param currentValue    the new value
+   * @param observableValue the source observable that emitted the change
+   * @param initialValue    the value prior to the change
+   * @param currentValue    the value after the change
    */
   private record LooseChange<U>(ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
 

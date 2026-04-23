@@ -37,24 +37,27 @@ import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 
 /**
- * Handles creation and sending of JMS messages.
+ * Abstraction for creating and dispatching JMS messages on behalf of a specific destination.
+ *
+ * <p>Implementations ({@link QueueOperator}, {@link TopicOperator}) delegate to their
+ * underlying {@link ConnectionManager} to obtain sessions and producers.
  */
 public interface MessageHandler {
 
   /**
-   * Creates a bytes message ready for population.
+   * Creates an empty JMS {@link BytesMessage} ready to be populated with a payload.
    *
-   * @return new {@link BytesMessage}
-   * @throws JMSException if creation fails
+   * @return a new, empty {@link BytesMessage}
+   * @throws JMSException if the session cannot create the message
    */
   BytesMessage createMessage ()
     throws JMSException;
 
   /**
-   * Sends the provided message.
+   * Sends the given message using the producer associated with this handler's destination.
    *
-   * @param message message to send
-   * @throws JMSException if sending fails
+   * @param message the fully populated message to send
+   * @throws JMSException if the producer cannot dispatch the message
    */
   void send (Message message)
     throws JMSException;

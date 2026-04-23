@@ -33,50 +33,69 @@
 package org.smallmind.quorum.pool.complex;
 
 /**
- * Factory for producing and lifecycle-managing component instances used in the complex pool.
+ * Strategy interface responsible for constructing {@link ComponentInstance} objects and
+ * participating in the pool's lifecycle.
+ * <p>
+ * The pool calls the four lifecycle methods in order during its own startup and shutdown
+ * sequences: {@link #initialize()} then {@link #startup()} on the way up, and
+ * {@link #shutdown()} then {@link #deconstruct()} on the way down. {@link #createInstance}
+ * may be called any time between startup and shutdown.
+ * <p>
+ * {@link AbstractComponentInstanceFactory} provides no-op implementations of all lifecycle
+ * methods for implementations that do not need them.
  *
- * @param <C> component type
+ * @param <C> the type of component that instances produced by this factory will manage
  */
 public interface ComponentInstanceFactory<C> {
 
   /**
-   * Creates a new component instance associated with the provided pool.
+   * Creates a new {@link ComponentInstance} associated with the given pool.
+   * <p>
+   * Called by the pool whenever it needs to add a component — at startup when pre-warming,
+   * when a caller requests a component and the free queue is empty and the size cap allows
+   * growth, or when replacing a terminated instance.
    *
-   * @param componentPool owning pool
-   * @return new component instance
-   * @throws Exception if creation fails
+   * @param componentPool the pool on whose behalf the instance is being created
+   * @return a freshly constructed {@link ComponentInstance} ready for the pool
+   * @throws Exception if construction of the component or its wrapper fails
    */
   ComponentInstance<C> createInstance (ComponentPool<C> componentPool)
     throws Exception;
 
   /**
-   * Performs one-time factory initialization.
+   * Called once before {@link #startup()} to allow the factory to establish any external
+   * connections or one-time resources required for subsequent {@link #createInstance} calls.
    *
-   * @throws Exception if initialization fails
+   * @throws Exception if initialization fails; the pool will propagate this as a
+   *                   {@link org.smallmind.quorum.pool.ComponentPoolException}
    */
   void initialize ()
     throws Exception;
 
   /**
-   * Starts the factory after initialization.
+   * Called after {@link #initialize()} and before the pool begins serving components.
+   * May be used to warm connections, register listeners, or perform any other startup work.
    *
-   * @throws Exception if startup fails
+   * @throws Exception if startup fails; the pool will propagate this as a
+   *                   {@link org.smallmind.quorum.pool.ComponentPoolException}
    */
   void startup ()
     throws Exception;
 
   /**
-   * Shuts down the factory before deconstruction.
+   * Called when the pool begins its shutdown sequence, before {@link #deconstruct()}.
+   * Implementations should stop accepting new requests and quiesce any background activity.
    *
-   * @throws Exception if shutdown fails
+   * @throws Exception if shutdown fails; the pool will log and continue shutting down
    */
   void shutdown ()
     throws Exception;
 
   /**
-   * Deconstructs any resources held by the factory.
+   * Called after all component instances have been closed and the pool has fully stopped,
+   * to release any resources held by the factory itself.
    *
-   * @throws Exception if cleanup fails
+   * @throws Exception if cleanup fails; the pool will log and continue
    */
   void deconstruct ()
     throws Exception;

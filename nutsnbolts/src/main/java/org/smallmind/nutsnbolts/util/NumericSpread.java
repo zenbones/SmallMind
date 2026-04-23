@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Expands comma-delimited numeric ranges (e.g. {@code 1..3,7}) into arrays of integers.
+ * Parses and expands comma-delimited numeric spread expressions such as {@code 1..3,7} into ordered integer arrays.
  */
 public class NumericSpread {
 
@@ -45,11 +45,11 @@ public class NumericSpread {
   private static final Pattern SPREAD_PATTERN = Pattern.compile("(\\d+)\\.\\.(\\d+)");
 
   /**
-   * Parses and expands the supplied numeric spread expression.
+   * Parses the supplied expression and returns the full sequence of integers it represents.
    *
-   * @param numbers comma-separated list of numbers or ranges
-   * @return ordered array of ints represented by the spread
-   * @throws SpreadParserException if parsing fails or an element is empty/invalid
+   * @param numbers comma-separated list of individual numbers and/or {@code start..end} ranges; {@code null} or empty returns an empty array
+   * @return ordered array of all integers described by the expression
+   * @throws SpreadParserException if an element is blank, cannot be matched as a number or range, or any other parse error occurs
    */
   public static int[] calculate (String numbers)
     throws SpreadParserException {

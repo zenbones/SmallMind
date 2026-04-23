@@ -36,17 +36,26 @@ import java.util.Arrays;
 import java.util.IllegalFormatException;
 
 /**
- * Utility for formatting messages with defensive error handling.
+ * Utility class that applies {@link String#format} to a message template and its arguments,
+ * converting any {@link java.util.IllegalFormatException} or misuse into a
+ * {@link MessageFormattingException} rather than allowing raw format exceptions to propagate.
  */
 public class MessageTranslator {
 
   /**
-   * Formats a message with optional arguments using {@link String#format(String, Object...)}.
+   * Formats {@code message} with the supplied arguments using {@link String#format(String, Object[])}.
+   * Returns {@code null} when both the template and the argument array are empty. Throws
+   * {@link MessageFormattingException} when arguments are provided for a {@code null} template, or
+   * when the format string is syntactically invalid for the given arguments.
    *
-   * @param message message template (may be {@code null})
-   * @param args    optional substitution arguments
-   * @return formatted message, or {@code null} when the template is {@code null} and no args are provided
-   * @throws MessageFormattingException when formatting fails or args are supplied for a null template
+   * @param message {@link String#format}-style template; may be {@code null} only when {@code args}
+   *                is also empty
+   * @param args    substitution arguments; may be {@code null} or empty to return the template unchanged
+   * @return the formatted string, the original template (when no arguments are given), or
+   * {@code null} when both {@code message} and {@code args} are absent
+   * @throws MessageFormattingException if {@code args} is non-empty and {@code message} is
+   *                                    {@code null}, or if the format string is invalid for the
+   *                                    supplied arguments
    */
   public static String translateMessage (String message, Object... args) {
 

@@ -33,7 +33,8 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Voice representing a broadcast shout to all listeners in a service group.
+ * {@link Voice} implementation that broadcasts a fire-and-forget message to all listeners
+ * in a named service group using the {@link VocalMode#SHOUT} delivery mode.
  */
 public class Shouting implements Voice<String, Void> {
 
@@ -42,9 +43,9 @@ public class Shouting implements Voice<String, Void> {
   private final String serviceGroup;
 
   /**
-   * Creates a shouting voice that targets the given service group.
+   * Constructs a {@code Shouting} voice targeting the specified service group.
    *
-   * @param serviceGroup destination group for the broadcast
+   * @param serviceGroup the name of the service group to broadcast to
    */
   public Shouting (String serviceGroup) {
 
@@ -52,7 +53,9 @@ public class Shouting implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link VocalMode#SHOUT}, identifying this voice as a broadcast delivery.
+   *
+   * @return {@link VocalMode#SHOUT}
    */
   @Override
   public VocalMode getMode () {
@@ -61,9 +64,9 @@ public class Shouting implements Voice<String, Void> {
   }
 
   /**
-   * Returns the one-way conversation definition used for shouts.
+   * Returns the shared one-way conversation used for all shout invocations.
    *
-   * @return conversation indicating fire-and-forget
+   * @return the {@link OneWayConversation} singleton for fire-and-forget messaging
    */
   public Conversation getConversation () {
 
@@ -71,7 +74,9 @@ public class Shouting implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name of the service group to which this shout is broadcast.
+   *
+   * @return the target service group name
    */
   @Override
   public String getServiceGroup () {
@@ -80,7 +85,9 @@ public class Shouting implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because shouts are not directed at a specific instance.
+   *
+   * @return {@code null} always
    */
   @Override
   public Void getInstanceId () {

@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.spring.property;
 
 /**
- * {@link PropertyEntry} for YAML-sourced properties.
+ * A {@link PropertyEntry} holding a single flattened key/value pair extracted from a YAML source.
  */
 public class YamlPropertyEntry implements PropertyEntry {
 
@@ -41,8 +41,10 @@ public class YamlPropertyEntry implements PropertyEntry {
   private final Object value;
 
   /**
-   * @param key   property key
-   * @param value property value
+   * Creates a YAML property entry with the given key and value.
+   *
+   * @param key   the dot-notated property key
+   * @param value the property value as parsed from the YAML document
    */
   public YamlPropertyEntry (String key, Object value) {
 
@@ -50,12 +52,22 @@ public class YamlPropertyEntry implements PropertyEntry {
     this.value = value;
   }
 
+  /**
+   * Returns the dot-notated property key.
+   *
+   * @return the property key string
+   */
   @Override
   public String getKey () {
 
     return key;
   }
 
+  /**
+   * Returns the property value as parsed from the YAML document.
+   *
+   * @return the raw value object, or {@code null} if the YAML node was null
+   */
   @Override
   public Object getValue () {
 

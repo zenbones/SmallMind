@@ -35,7 +35,14 @@ package org.smallmind.sleuth.runner.annotation;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Runtime literal implementation of {@link Test}.
+ * Concrete {@link Test} annotation instance for programmatic construction at runtime.
+ * <p>
+ * Used by {@link AnnotationTranslator} implementations — particularly
+ * {@link TestNGAnnotationTranslator} — to bridge foreign test-method annotations onto the Sleuth
+ * scheduling model without requiring compile-time annotation use.
+ *
+ * @see Test
+ * @see AnnotationTranslator
  */
 public class TestLiteral extends AnnotationLiteral<Test> implements Test {
 
@@ -45,10 +52,12 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   private final int priority;
 
   /**
-   * @param priority     execution priority
-   * @param executeAfter methods that should complete before this one
-   * @param dependsOn    methods that must succeed before this one
-   * @param enabled      whether the test is enabled
+   * Constructs a fully specified test literal.
+   *
+   * @param priority     scheduling priority within the suite; lower values execute first
+   * @param executeAfter names of methods that must finish before this test starts (soft ordering)
+   * @param dependsOn    names of methods that must succeed before this test starts (hard dependency)
+   * @param enabled      {@code false} to unconditionally exclude this test from execution
    */
   public TestLiteral (int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
@@ -59,7 +68,7 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   }
 
   /**
-   * @return priority value used for ordering
+   * @return scheduling priority value; lower values run first
    */
   @Override
   public int priority () {
@@ -68,7 +77,7 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   }
 
   /**
-   * @return methods that should complete before this one
+   * @return names of methods that must complete (regardless of outcome) before this test starts
    */
   @Override
   public String[] executeAfter () {
@@ -77,7 +86,7 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   }
 
   /**
-   * @return methods that must succeed before this one
+   * @return names of methods that must succeed before this test starts
    */
   @Override
   public String[] dependsOn () {
@@ -86,7 +95,7 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   }
 
   /**
-   * @return whether the test is enabled
+   * @return {@code true} if this test participates in execution; {@code false} to exclude it
    */
   @Override
   public boolean enabled () {

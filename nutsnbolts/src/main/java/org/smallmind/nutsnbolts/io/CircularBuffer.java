@@ -38,8 +38,8 @@ import java.nio.channels.AsynchronousCloseException;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Thread-safe circular byte buffer supporting blocking reads/writes with optional timeouts.
- * Tracks state to distinguish full vs empty when read/write positions coincide.
+ * Thread-safe fixed-capacity circular byte buffer that blocks producers and consumers until space or data is available,
+ * with optional per-operation timeouts.
  */
 public class CircularBuffer implements Closeable {
 
@@ -55,7 +55,9 @@ public class CircularBuffer implements Closeable {
   private byte[] buffer;
 
   /**
-   * @param size capacity of the buffer in bytes
+   * Creates a buffer with the specified capacity.
+   *
+   * @param size total byte capacity of the circular buffer
    */
   public CircularBuffer (int size) {
 
@@ -63,7 +65,9 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * @return {@code true} if the buffer has been closed
+   * Returns whether this buffer has been closed.
+   *
+   * @return {@code true} if {@link #close()} has been called
    */
   public synchronized boolean isClosed () {
 
@@ -71,7 +75,7 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Closes the buffer, waking any waiting threads.
+   * Closes the buffer and wakes all threads blocked in read, write, or skip calls.
    */
   public synchronized void close () {
 
@@ -84,8 +88,10 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * @return number of bytes currently readable without blocking
-   * @throws IOException if closed
+   * Returns the number of bytes currently available to read without blocking.
+   *
+   * @return bytes ready to be consumed
+   * @throws IOException if the buffer has been closed
    */
   public synchronized int readAvailable ()
     throws IOException {
@@ -105,8 +111,10 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * @return number of bytes writable without blocking
-   * @throws IOException if closed
+   * Returns the number of bytes that can be written without blocking.
+   *
+   * @return free bytes in the buffer
+   * @throws IOException if the buffer has been closed
    */
   public synchronized int writeAvailable ()
     throws IOException {
@@ -126,12 +134,12 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Reads exactly {@code data.length} bytes, blocking indefinitely if needed.
+   * Reads exactly {@code data.length} bytes into the array, blocking indefinitely until all bytes are available.
    *
-   * @param data destination buffer
-   * @return bytes read
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted while waiting
+   * @param data destination array to fill
+   * @return number of bytes read (equal to {@code data.length})
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int read (byte[] data)
     throws IOException, InterruptedException {
@@ -140,13 +148,13 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Reads exactly {@code data.length} bytes, waiting up to {@code timeout} ms between availability checks.
+   * Reads up to {@code data.length} bytes, waiting at most {@code timeout} milliseconds for data.
    *
-   * @param data    destination buffer
-   * @param timeout wait time in milliseconds (0 for indefinite)
-   * @return bytes read (may be less than requested if timeout elapses)
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted while waiting
+   * @param data    destination array
+   * @param timeout maximum wait in milliseconds between availability checks; 0 means wait indefinitely
+   * @return number of bytes read, which may be less than {@code data.length} if the timeout elapses
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int read (byte[] data, long timeout)
     throws IOException, InterruptedException {
@@ -155,7 +163,14 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, blocking as needed.
+   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, blocking indefinitely as needed.
+   *
+   * @param data destination array
+   * @param off  starting index in {@code data}
+   * @param len  maximum bytes to read
+   * @return bytes read
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if interrupted while waiting
    */
   public int read (byte[] data, int off, int len)
     throws IOException, InterruptedException {
@@ -164,15 +179,15 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, waiting up to {@code timeout} ms.
+   * Reads up to {@code len} bytes into {@code data} starting at {@code off}, waiting at most {@code timeout} milliseconds.
    *
-   * @param data    destination buffer
-   * @param off     offset into destination
-   * @param len     requested byte count
-   * @param timeout maximum wait time in ms (0 for indefinite)
-   * @return bytes read ({@literal <}= len)
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted
+   * @param data    destination array
+   * @param off     starting index in {@code data}
+   * @param len     maximum bytes to read
+   * @param timeout maximum wait in milliseconds; 0 means wait indefinitely
+   * @return bytes read, which may be less than {@code len} if the timeout elapses first
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int read (byte[] data, int off, int len, long timeout)
     throws IOException, InterruptedException {
@@ -181,12 +196,12 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Writes all bytes from {@code data}, blocking indefinitely if necessary.
+   * Writes all bytes from {@code data} into the buffer, blocking indefinitely until space is available.
    *
-   * @param data source data
-   * @return bytes written
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted
+   * @param data source array to write
+   * @return number of bytes written (equal to {@code data.length})
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int write (byte[] data)
     throws IOException, InterruptedException {
@@ -195,7 +210,13 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Writes all bytes from {@code data}, waiting up to {@code timeout} ms between availability checks.
+   * Writes up to {@code data.length} bytes, waiting at most {@code timeout} milliseconds for space.
+   *
+   * @param data    source array
+   * @param timeout maximum wait in milliseconds; 0 means wait indefinitely
+   * @return bytes written, which may be less than {@code data.length} if the timeout elapses
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int write (byte[] data, long timeout)
     throws IOException, InterruptedException {
@@ -204,7 +225,14 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Writes up to {@code len} bytes from {@code data} starting at {@code off}, blocking as needed.
+   * Writes up to {@code len} bytes from {@code data} starting at {@code off}, blocking indefinitely as needed.
+   *
+   * @param data source array
+   * @param off  starting index in {@code data}
+   * @param len  maximum bytes to write
+   * @return bytes written
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if interrupted while waiting
    */
   public int write (byte[] data, int off, int len)
     throws IOException, InterruptedException {
@@ -213,15 +241,15 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Writes up to {@code len} bytes, waiting up to {@code timeout} ms.
+   * Writes up to {@code len} bytes from {@code data} starting at {@code off}, waiting at most {@code timeout} milliseconds.
    *
-   * @param data    source buffer
-   * @param off     offset into source
-   * @param len     byte count to write
-   * @param timeout maximum wait time in ms (0 for indefinite)
-   * @return bytes written ({@literal <}= len)
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted
+   * @param data    source array
+   * @param off     starting index in {@code data}
+   * @param len     maximum bytes to write
+   * @param timeout maximum wait in milliseconds; 0 means wait indefinitely
+   * @return bytes written, which may be less than {@code len} if the timeout elapses first
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public int write (byte[] data, int off, int len, long timeout)
     throws IOException, InterruptedException {
@@ -230,12 +258,12 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Skips (discards) up to {@code len} bytes, blocking as needed.
+   * Discards up to {@code len} bytes from the buffer, blocking indefinitely as needed.
    *
-   * @param len bytes to skip
-   * @return number of bytes skipped
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted
+   * @param len number of bytes to discard
+   * @return number of bytes actually discarded
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public long skip (long len)
     throws IOException, InterruptedException {
@@ -244,13 +272,13 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Skips (discards) up to {@code len} bytes, waiting up to {@code timeout} ms.
+   * Discards up to {@code len} bytes from the buffer, waiting at most {@code timeout} milliseconds.
    *
-   * @param len     bytes to skip
-   * @param timeout maximum wait time in ms (0 for indefinite)
-   * @return number of bytes skipped
-   * @throws IOException          if closed
-   * @throws InterruptedException if interrupted
+   * @param len     number of bytes to discard
+   * @param timeout maximum wait in milliseconds; 0 means wait indefinitely
+   * @return number of bytes actually discarded, which may be less than {@code len} if timeout elapses
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public synchronized long skip (long len, long timeout)
     throws IOException, InterruptedException {
@@ -293,7 +321,17 @@ public class CircularBuffer implements Closeable {
   }
 
   /**
-   * Transfers bytes to/from the circular buffer depending on the operation type.
+   * Performs a read or write transfer on the circular buffer, blocking and retrying until the requested bytes
+   * are transferred or the timeout elapses.
+   *
+   * @param data      the byte array to read into or write from
+   * @param off       starting offset in {@code data}
+   * @param len       maximum bytes to transfer
+   * @param timeout   maximum wait in milliseconds; 0 means indefinite
+   * @param operation whether to READ from or WRITE to the buffer
+   * @return number of bytes actually transferred
+   * @throws IOException          if the buffer has been closed
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   private synchronized int transfer (byte[] data, int off, int len, long timeout, Operation operation)
     throws IOException, InterruptedException {

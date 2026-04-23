@@ -154,7 +154,9 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
   }
 
   /**
-   * @return entity or embedded class represented by this metadata
+   * Returns the entity or embedded class whose properties are described by this metadata.
+   *
+   * @return the owner class
    */
   public Class<T> getEntityClass () {
 
@@ -162,7 +164,9 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
   }
 
   /**
-   * @return whether {@code null} values should be stored when encoding
+   * Returns whether null property values are encoded as BSON null rather than omitted.
+   *
+   * @return {@code true} if null values are persisted
    */
   public boolean isStoreNulls () {
 
@@ -183,7 +187,9 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the aggregated index definitions collected from property and class-level index annotations.
+   *
+   * @return index definitions for the represented type
    */
   @Override
   public ThrongIndexes provideIndexes () {

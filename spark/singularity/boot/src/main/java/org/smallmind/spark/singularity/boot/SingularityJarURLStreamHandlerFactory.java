@@ -36,16 +36,17 @@ import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
 /**
- * {@link URLStreamHandlerFactory} that recognizes the {@code singularity} protocol and supplies the custom handler used
- * by the boot class loader to load nested jar content.
+ * JVM-wide factory registered by {@link SingularityClassLoader} during class initialization. It claims the
+ * {@code singularity} protocol and delegates every other scheme to the platform's default handler selection.
  */
 public class SingularityJarURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
   /**
-   * Creates a {@link URLStreamHandler} when the {@code singularity} protocol is requested.
+   * Supplies a handler for the {@code singularity} protocol so that {@code URL} instances using it can be opened.
    *
-   * @param protocol the protocol requested by the URL construction
-   * @return the {@link SingularityJarURLStreamHandler} for the protocol or {@code null} for all other protocols
+   * @param protocol the scheme of a URL being constructed
+   * @return a {@link SingularityJarURLStreamHandler} when {@code protocol} equals {@code "singularity"};
+   * {@code null} otherwise, instructing the JVM to consult the default handler chain
    */
   @Override
   public URLStreamHandler createURLStreamHandler (String protocol) {

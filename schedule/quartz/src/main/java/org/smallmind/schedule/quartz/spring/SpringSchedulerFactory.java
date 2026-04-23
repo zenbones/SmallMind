@@ -47,10 +47,11 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 
 /**
- * Quartz {@link StdSchedulerFactory} that integrates with Spring lifecycle.
- * It wires in a {@link SpringJobFactory} for job creation, starts or
- * suspends the scheduler based on configuration, and shuts down the
- * scheduler and job factory when the Spring context closes.
+ * Quartz {@link StdSchedulerFactory} integrated with the Spring application
+ * lifecycle. Installs a {@link SpringJobFactory} for Spring-managed job
+ * creation, starts or suspends the scheduler according to the configured
+ * active mode, and shuts down the scheduler and closes the job factory when
+ * the Spring context closes.
  */
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
@@ -58,10 +59,11 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   private OnOrOff activeMode = OnOrOff.ON;
 
   /**
-   * Construct the factory using the provided Quartz properties.
+   * Initializes the underlying {@link StdSchedulerFactory} with the provided
+   * Quartz properties.
    *
-   * @param properties scheduler configuration properties
-   * @throws SchedulerException if the scheduler factory cannot be initialized
+   * @param properties Quartz scheduler configuration properties
+   * @throws SchedulerException if the factory cannot be initialized from the given properties
    */
   public SpringSchedulerFactory (Properties properties)
     throws SchedulerException {
@@ -70,10 +72,10 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   /**
-   * Configure whether the scheduler should start immediately ({@link OnOrOff#ON})
-   * or remain in standby ({@link OnOrOff#OFF}) when obtained.
+   * Controls whether the scheduler starts immediately or is placed in standby
+   * when first obtained via {@link #getScheduler()}.
    *
-   * @param activeMode desired activation mode
+   * @param activeMode {@link OnOrOff#ON} to start, {@link OnOrOff#OFF} to standby
    */
   public void setActiveMode (OnOrOff activeMode) {
 
@@ -81,10 +83,10 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   /**
-   * Capture the application context so that job instances can be created
-   * via {@link SpringJobFactory}.
+   * Receives the Spring application context and uses it to construct the
+   * {@link SpringJobFactory} that will supply job instances at runtime.
    *
-   * @param applicationContext Spring application context
+   * @param applicationContext the Spring context containing job bean definitions
    * @throws BeansException if the context cannot be applied
    */
   @Override
@@ -95,10 +97,11 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   /**
-   * Respond to Spring context shutdown by stopping the scheduler and closing
-   * the job factory to release resources.
+   * Handles Spring context shutdown by stopping the scheduler (waiting for
+   * executing jobs to finish) and closing the job factory. Errors from either
+   * operation are logged but do not propagate.
    *
-   * @param event Spring context closed event
+   * @param event the context-closed event fired by Spring
    */
   @Override
   public synchronized void onApplicationEvent (ContextClosedEvent event) {
@@ -123,11 +126,12 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   /**
-   * Obtain a scheduler configured with the Spring-aware job factory. The
-   * scheduler is started or placed in standby based on {@link #activeMode}.
+   * Returns a fully configured scheduler with the Spring job factory
+   * installed. Starts or suspends the scheduler based on {@link #activeMode}.
    *
-   * @return configured {@link Scheduler}
-   * @throws SchedulerException if the scheduler cannot be created or configured
+   * @return the configured {@link Scheduler}
+   * @throws SchedulerException if the scheduler cannot be obtained or configured,
+   *                            or if {@code activeMode} holds an unrecognized value
    */
   @Override
   public synchronized Scheduler getScheduler ()

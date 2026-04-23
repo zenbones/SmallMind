@@ -37,7 +37,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Formatter that renders records according to a flexible pattern syntax.
+ * Formatter that converts log records to strings according to a configurable pattern syntax.
+ * A pattern is composed of literal text and conversion tokens of the form
+ * {@code [{header]%[<+|->width][.precision][!(+|-)prefix!]conversion[footer}]}; available
+ * conversion characters are: {@code d} (date), {@code t} (epoch millis), {@code n} (logger name),
+ * {@code l} (level), {@code m} (message), {@code T} (thread name), {@code C} (class),
+ * {@code M} (method), {@code N} (native flag), {@code L} (line number), {@code F} (file name),
+ * {@code s} (stack trace), and {@code p} (parameters). The default pattern is
+ * {@code "%d %n %+5l [%T] - %m"}.
  */
 public class PatternFormatter implements Formatter {
 
@@ -94,7 +101,8 @@ public class PatternFormatter implements Formatter {
   private Timestamp timestamp;
 
   /**
-   * Creates a formatter with the default timestamp and pattern.
+   * Constructs a formatter using the default {@link DateFormatTimestamp} and the default pattern
+   * {@code "%d %n %+5l [%T] - %m"}.
    */
   public PatternFormatter () {
 
@@ -102,9 +110,9 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Creates a formatter with the default timestamp and supplied pattern.
+   * Constructs a formatter using the default {@link DateFormatTimestamp} and the supplied pattern.
    *
-   * @param format pattern format string
+   * @param format the pattern format string to parse and apply; must not be {@code null}
    */
   public PatternFormatter (String format) {
 
@@ -112,10 +120,11 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Creates a formatter with the provided timestamp strategy and pattern.
+   * Constructs a formatter with an explicit timestamp provider and pattern. If {@code format} is
+   * {@code null}, no pattern rules are installed and every record formats to an empty line.
    *
-   * @param timestamp timestamp provider
-   * @param format    pattern format string
+   * @param timestamp the timestamp provider used for {@code %d} conversions
+   * @param format    the pattern format string to parse, or {@code null} to install no rules
    */
   public PatternFormatter (Timestamp timestamp, String format) {
 
@@ -127,9 +136,9 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Returns the timestamp provider used for date/time conversions.
+   * Returns the timestamp provider used to render {@code %d} (date) conversion tokens.
    *
-   * @return timestamp provider
+   * @return the active timestamp provider
    */
   public Timestamp getTimestamp () {
 
@@ -137,9 +146,9 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Sets the timestamp strategy used for date/time conversions.
+   * Sets the timestamp provider used to render {@code %d} (date) conversion tokens.
    *
-   * @param timestamp timestamp provider
+   * @param timestamp the new timestamp provider; must not be {@code null}
    */
   public void setTimestamp (Timestamp timestamp) {
 
@@ -147,9 +156,12 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Parses and installs a new pattern format string.
+   * Parses the given pattern format string and replaces the current set of pattern rules. Literal
+   * text between conversion tokens becomes {@link StaticPatternRule} instances; each matched
+   * conversion token becomes a {@link ConversionPatternRule}; and the {@code %%} escape becomes a
+   * static rule that emits a single {@code %}.
    *
-   * @param format pattern format string
+   * @param format the pattern format string to parse; must not be {@code null}
    */
   public void setFormat (String format) {
 
@@ -181,10 +193,12 @@ public class PatternFormatter implements Formatter {
   }
 
   /**
-   * Formats the record according to the configured pattern.
+   * Applies all pattern rules to the record and returns the resulting string, appending the
+   * platform line separator at the end. Rules whose {@code convert()} method returns {@code null}
+   * are omitted, including their header and footer.
    *
-   * @param record record to format
-   * @return formatted text including trailing line separator
+   * @param record the log record to format
+   * @return the formatted log line, terminated by the platform-specific line separator
    */
   public String format (Record<?> record) {
 

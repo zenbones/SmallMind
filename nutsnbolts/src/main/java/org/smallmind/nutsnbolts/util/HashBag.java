@@ -41,9 +41,9 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Hash-based {@link Bag} implementation tracking element multiplicities.
+ * A {@link HashMap}-backed {@link Bag} implementation that tracks the multiplicity of each distinct element.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class HashBag<T> implements Bag<T> {
 
@@ -51,7 +51,7 @@ public class HashBag<T> implements Bag<T> {
   private int size;
 
   /**
-   * Creates an empty bag.
+   * Constructs an empty bag.
    */
   public HashBag () {
 
@@ -60,9 +60,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Seeds the bag with the contents of a collection (each occurrence counted once).
+   * Constructs a bag populated with each element of the given collection, counting each occurrence once.
    *
-   * @param c initial elements
+   * @param c the initial elements to add
    */
   public HashBag (Collection<? extends T> c) {
 
@@ -72,9 +72,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Seeds the bag by copying multiplicities from another bag.
+   * Constructs a bag by copying all elements and their multiplicities from another bag.
    *
-   * @param b source bag
+   * @param b the source bag whose elements and counts are copied
    */
   public HashBag (Bag<? extends T> b) {
 
@@ -87,7 +87,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return total element count including multiplicity
+   * Returns the total number of element occurrences in this bag, counting multiplicities.
+   *
+   * @return the total occurrence count
    */
   @Override
   public int size () {
@@ -96,7 +98,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return {@code true} when the bag has no elements
+   * Returns {@code true} if this bag contains no elements.
+   *
+   * @return {@code true} if the bag is empty
    */
   @Override
   public boolean isEmpty () {
@@ -105,10 +109,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Returns the multiplicity for a given element.
+   * Returns the number of occurrences of the given element in this bag.
    *
-   * @param t element to query
-   * @return count or {@code null} if absent
+   * @param t the element to query
+   * @return the occurrence count, or {@code null} if the element is not present
    */
   public Integer get (T t) {
 
@@ -116,7 +120,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return {@code true} if at least one instance of the object exists in the bag
+   * Returns {@code true} if this bag contains at least one occurrence of the given object.
+   *
+   * @param obj the object to test for presence
+   * @return {@code true} if the object is present
    */
   @Override
   public boolean contains (Object obj) {
@@ -125,7 +132,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Tests whether all elements in the collection are present at least once.
+   * Returns {@code true} if this bag contains at least one occurrence of every element in the given collection.
+   *
+   * @param c the collection of elements to test
+   * @return {@code true} if all elements are present
    */
   @Override
   public boolean containsAll (Collection<?> c) {
@@ -134,7 +144,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Tests whether this bag contains all elements (respecting multiplicity) of another bag.
+   * Returns {@code true} if this bag contains at least as many occurrences of each element as the given bag.
+   *
+   * @param b the bag of elements and multiplicities to test
+   * @return {@code true} if this bag satisfies all multiplicity requirements of the given bag
    */
   public boolean containsAll (Bag<?> b) {
 
@@ -152,7 +165,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Adds one occurrence of the element.
+   * Adds one occurrence of the given element to this bag.
+   *
+   * @param t the element to add
+   * @return {@code true} always, as the bag always changes when an element is added
    */
   @Override
   public boolean add (T t) {
@@ -161,10 +177,12 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Adds the element with a specified multiplicity.
+   * Adds the specified number of occurrences of the given element to this bag.
    *
-   * @param multiple number of occurrences to add; must be positive
-   * @throws IllegalStateException if {@code multiple < 1}
+   * @param t        the element to add
+   * @param multiple the number of occurrences to add; must be at least 1
+   * @return {@code true} always, as the bag always changes when occurrences are added
+   * @throws IllegalStateException if {@code multiple} is less than 1
    */
   @Override
   public boolean add (T t, int multiple) {
@@ -188,7 +206,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Removes a single occurrence of the element.
+   * Removes one occurrence of the given element from this bag.
+   *
+   * @param obj the element to remove
+   * @return {@code true} if the bag contained at least one occurrence of the element
    */
   @Override
   public boolean remove (Object obj) {
@@ -197,12 +218,12 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Removes up to {@code multiple} occurrences of the element.
+   * Removes up to the specified number of occurrences of the given element from this bag.
    *
-   * @param t        element to remove
-   * @param multiple number of occurrences to remove; must be positive
-   * @return {@code true} if the bag changed
-   * @throws IllegalStateException if {@code multiple < 1}
+   * @param t        the element to remove
+   * @param multiple the number of occurrences to remove; must be at least 1
+   * @return {@code true} if the bag changed as a result of the call
+   * @throws IllegalStateException if {@code multiple} is less than 1
    */
   @Override
   public boolean remove (T t, int multiple) {
@@ -230,7 +251,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Adds each element of the collection once.
+   * Adds one occurrence of each element in the given collection to this bag.
+   *
+   * @param c the collection of elements to add
+   * @return {@code true} if the bag changed as a result of the call
    */
   @Override
   public boolean addAll (Collection<? extends T> c) {
@@ -247,7 +271,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Removes one occurrence of each element present in the collection.
+   * Removes one occurrence of each element present in the given collection from this bag.
+   *
+   * @param c the collection of elements to remove
+   * @return {@code true} if the bag changed as a result of the call
    */
   @Override
   public boolean removeAll (Collection<?> c) {
@@ -264,7 +291,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Retains only those elements also present in the provided collection (by multiplicity).
+   * Retains only the elements present in the given collection, reducing multiplicities to match those of the collection.
+   *
+   * @param c the collection of elements to retain
+   * @return {@code true} if the bag changed as a result of the call
    */
   @Override
   public boolean retainAll (Collection<?> c) {
@@ -295,7 +325,7 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Removes all entries from the bag.
+   * Removes all elements and resets the bag to an empty state.
    */
   @Override
   public void clear () {
@@ -305,7 +335,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return set of distinct keys contained in the bag
+   * Returns the set of distinct elements currently in this bag.
+   *
+   * @return the set of unique element keys
    */
   @Override
   public Set<T> keySet () {
@@ -314,7 +346,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return entries mapping each key to its multiplicity
+   * Returns the set of entries mapping each distinct element to its occurrence count.
+   *
+   * @return the element-to-count entry set
    */
   public Set<Map.Entry<T, Integer>> entrySet () {
 
@@ -322,7 +356,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Iterates over all elements, repeating values according to their multiplicity.
+   * Returns an iterator over all element occurrences in this bag, yielding each element once per its multiplicity.
+   *
+   * @return an iterator over all occurrences
    */
   @Override
   public Iterator<T> iterator () {
@@ -331,7 +367,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * @return array containing each element occurrence
+   * Returns an array containing all element occurrences in this bag, with each element repeated its multiplicity number of times.
+   *
+   * @return an array of all occurrences
    */
   @Override
   public T[] toArray () {
@@ -340,7 +378,11 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Populates the supplied array (or a new one) with each element occurrence.
+   * Fills the given array (or a new one of the same type) with all element occurrences in this bag.
+   *
+   * @param a    the array to fill, or a template for a new array if it is not large enough
+   * @param <T1> the component type of the array
+   * @return the array containing all occurrences
    */
   @Override
   public <T1> T1[] toArray (T1[] a) {
@@ -356,7 +398,9 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Hash code is derived from the internal map of counts.
+   * Returns a hash code derived from the internal map of element-to-count pairs.
+   *
+   * @return the hash code
    */
   @Override
   public int hashCode () {
@@ -365,7 +409,10 @@ public class HashBag<T> implements Bag<T> {
   }
 
   /**
-   * Equality is delegated to {@link Objects#equals(Object, Object)} on this bag and the other object.
+   * Returns {@code true} if the given object is a {@link Bag} equal to this bag according to {@link Objects#equals(Object, Object)}.
+   *
+   * @param obj the object to compare
+   * @return {@code true} if the objects are equal
    */
   @Override
   public boolean equals (Object obj) {
@@ -380,7 +427,9 @@ public class HashBag<T> implements Bag<T> {
     private int count = 0;
 
     /**
-     * @return {@code true} if another occurrence exists
+     * Returns {@code true} if there are more element occurrences to iterate over.
+     *
+     * @return {@code true} if there are remaining occurrences
      */
     @Override
     public boolean hasNext () {
@@ -389,7 +438,11 @@ public class HashBag<T> implements Bag<T> {
     }
 
     /**
-     * Returns the next element occurrence, throwing {@link NoSuchElementException} when exhausted.
+     * Returns the next element occurrence, advancing past one of the current element's remaining counts
+     * and moving to the next distinct element when those counts are exhausted.
+     *
+     * @return the next element occurrence
+     * @throws NoSuchElementException if no further occurrences remain
      */
     @Override
     public T next () {
@@ -412,9 +465,9 @@ public class HashBag<T> implements Bag<T> {
     }
 
     /**
-     * Removes one occurrence of the most recently returned element.
+     * Removes one occurrence of the most recently returned element from the enclosing bag.
      *
-     * @throws IllegalStateException if called before {@link #next()}
+     * @throws IllegalStateException if {@link #next()} has not yet been called
      */
     @Override
     public void remove () {

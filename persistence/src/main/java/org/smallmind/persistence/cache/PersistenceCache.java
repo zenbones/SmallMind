@@ -35,7 +35,8 @@ package org.smallmind.persistence.cache;
 import java.util.Map;
 
 /**
- * Abstraction over a persistence cache used by the cache DAOs.
+ * Core cache abstraction used by the persistence cache DAOs, providing single and bulk get, set,
+ * conditional put, and remove operations.
  *
  * @param <K> key type
  * @param <V> value type
@@ -43,58 +44,60 @@ import java.util.Map;
 public interface PersistenceCache<K, V> {
 
   /**
-   * @return default TTL in seconds applied when none is specified
+   * Returns the TTL applied to entries when no explicit TTL is provided by the caller.
+   *
+   * @return default time-to-live in seconds
    */
   int getDefaultTimeToLiveSeconds ();
 
   /**
-   * Retrieves a value by key.
+   * Returns the cached value for the given key.
    *
-   * @param key cache key
-   * @return cached value or {@code null}
-   * @throws CacheOperationException on cache access failure
+   * @param key cache key to look up
+   * @return the cached value, or {@code null} if no entry exists
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   V get (K key)
     throws CacheOperationException;
 
   /**
-   * Retrieves a map of values for the provided keys.
+   * Returns a map of cached values for all provided keys; keys with no entry are omitted.
    *
-   * @param keys keys to fetch
-   * @return map of found entries (may be empty)
-   * @throws CacheOperationException on cache access failure
+   * @param keys array of cache keys to fetch
+   * @return map from key to cached value for every key that had an entry
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   Map<K, V> get (K[] keys)
     throws CacheOperationException;
 
   /**
-   * Unconditionally sets a value with the specified TTL.
+   * Unconditionally stores a value under the given key with the specified TTL.
    *
-   * @param key               cache key
+   * @param key               cache key under which to store the value
    * @param value             value to store
-   * @param timeToLiveSeconds TTL in seconds
-   * @throws CacheOperationException on cache write failure
+   * @param timeToLiveSeconds TTL in seconds for this entry
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   void set (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
   /**
-   * Stores the value only if no entry exists.
+   * Stores a value only if no entry currently exists for the key.
    *
-   * @param key               cache key
-   * @param value             value to store
-   * @param timeToLiveSeconds TTL in seconds
-   * @return existing value if present, otherwise {@code null} and the new value is stored
-   * @throws CacheOperationException on cache write failure
+   * @param key               cache key to store the value under
+   * @param value             value to store if absent
+   * @param timeToLiveSeconds TTL in seconds for the new entry
+   * @return the pre-existing value if an entry was already present, otherwise {@code null}
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   V putIfAbsent (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
   /**
-   * Removes the entry for the given key.
+   * Evicts the entry for the given key from the cache.
    *
-   * @param key key to evict
-   * @throws CacheOperationException on cache removal failure
+   * @param key cache key whose entry should be removed
+   * @throws CacheOperationException if the underlying cache operation fails
    */
   void remove (K key)
     throws CacheOperationException;

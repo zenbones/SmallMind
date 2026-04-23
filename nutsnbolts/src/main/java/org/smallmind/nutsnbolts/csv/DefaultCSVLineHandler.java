@@ -35,28 +35,28 @@ package org.smallmind.nutsnbolts.csv;
 import java.util.Arrays;
 
 /**
- * No-op {@link CSVLineHandler} that simply traverses the data.
+ * Convenience base implementation of {@link CSVLineHandler} with empty lifecycle callbacks and a no-op record handler, intended to be subclassed by implementations that only need to override specific methods.
  */
 public class DefaultCSVLineHandler implements CSVLineHandler {
 
   /**
-   * Invoked before parsing; default implementation does nothing.
+   * Called before the first record is processed; this default implementation does nothing.
    */
   public void startDocument () {
 
   }
 
   /**
-   * Invoked after parsing; default implementation does nothing.
+   * Called after the last record has been processed; this default implementation does nothing.
    */
   public void endDocument () {
 
   }
 
   /**
-   * Processes a row by materializing its string representation; intended to be overridden.
+   * Called for each parsed record; this default implementation performs no meaningful work and is intended to be overridden.
    *
-   * @param fields parsed fields
+   * @param fields array of field values for the current record
    */
   public void handleFields (String[] fields) {
 

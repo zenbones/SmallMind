@@ -38,17 +38,17 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 /**
- * Utility for obtaining the MAC address of the network interface associated with the local host address.
+ * Utility for resolving the hardware (MAC) address of the network interface bound to the local host address.
  */
 public class MacAddress {
 
   /**
-   * Resolves the MAC address for the non-loopback local host interface.
+   * Resolves and returns the MAC address of the network interface associated with the non-loopback local host address.
    *
-   * @return byte array of the interface hardware address
-   * @throws SocketException      if network interfaces cannot be queried
-   * @throws UnknownHostException if the local host address cannot be resolved
-   * @throws MacAddressException  if only loopback is available or no matching interface is found
+   * @return the hardware address bytes of the matching network interface
+   * @throws SocketException      if the list of network interfaces cannot be retrieved
+   * @throws UnknownHostException if the local host address cannot be determined
+   * @throws MacAddressException  if the local host resolves to the loopback address or no interface matches the local host address
    */
   public static byte[] getBytes ()
     throws SocketException, UnknownHostException, MacAddressException {

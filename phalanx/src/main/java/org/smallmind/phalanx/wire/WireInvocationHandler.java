@@ -44,7 +44,17 @@ import org.smallmind.phalanx.wire.signal.WireContext;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 
 /**
- * Invocation handler that converts local interface calls into wire transports with contextual metadata.
+ * {@link InvocationHandler} that intercepts calls on a wire service proxy and converts them
+ * into {@link RequestTransport} transmissions.
+ * On construction, it validates that every method in the service interface carries {@link Argument}
+ * annotations on all parameters, then at invocation time it:
+ * <ol>
+ *   <li>Builds an argument map from the annotated parameter names.</li>
+ *   <li>Collects any active {@link WireContext} instances from the current thread.</li>
+ *   <li>Selects a {@link Voice} ({@link Shouting}, {@link Whispering}, or {@link Talking})
+ *       based on the method's {@link Shout}, {@link Whisper}, {@link InOnly}, or {@link InOut} annotation.</li>
+ *   <li>Delegates to the transport to transmit the request and return the response.</li>
+ * </ol>
  */
 public class WireInvocationHandler implements InvocationHandler {
 
@@ -63,16 +73,18 @@ public class WireInvocationHandler implements InvocationHandler {
   private final int version;
 
   /**
-   * Creates a handler that marshals method calls into wire transmissions using the provided parameter extractors.
+   * Constructs a {@code WireInvocationHandler}, validates the service interface annotations,
+   * and builds an internal method-to-argument-names map used at invocation time.
    *
-   * @param transport             transport used to send requests
-   * @param version               protocol version to include in the route
-   * @param serviceName           logical service name
-   * @param serviceInterface      service interface implemented by the proxy
-   * @param serviceGroupExtractor extractor for the destination service group
-   * @param instanceIdExtractor   extractor for a specific instance id, required for whispers
-   * @param timeoutExtractor      extractor for dynamic timeout values
-   * @throws Exception if the service interface is improperly annotated
+   * @param transport             the {@link RequestTransport} used to send requests over the wire
+   * @param version               the protocol version number included in every {@link Route}
+   * @param serviceName           the logical name of the service, included in every {@link Route}
+   * @param serviceInterface      the service interface whose methods are proxied by this handler
+   * @param serviceGroupExtractor extractor that resolves the destination service group name at call time; must not be {@code null}
+   * @param instanceIdExtractor   extractor that resolves the target instance id for {@link Whisper} methods; may be {@code null} if no whisper methods are present
+   * @param timeoutExtractor      extractor that resolves a dynamic timeout override at call time; may be {@code null} to fall back to annotation-level timeouts
+   * @throws ServiceDefinitionException if {@code serviceGroupExtractor} is {@code null}, or if any method in the interface is missing {@link Argument} annotations on its parameters
+   * @throws Exception                  if reflection access to {@link Object} methods fails unexpectedly
    */
   public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {
@@ -128,13 +140,18 @@ public class WireInvocationHandler implements InvocationHandler {
   }
 
   /**
-   * Converts a proxy method invocation into a transport request or synchronous shout/whisper conversation.
+   * Handles a proxy method call by selecting the appropriate {@link Voice}, assembling the argument
+   * map and wire contexts, and delegating to the {@link RequestTransport}.
    *
-   * @param proxy  the proxy instance
-   * @param method method being invoked
-   * @param args   arguments passed to the call
-   * @return method result, potentially a remote return value
-   * @throws Throwable if invocation cannot be mapped or the transport reports an error
+   * @param proxy  the proxy instance on which the method was invoked
+   * @param method the {@link Method} being called
+   * @param args   the arguments supplied to the call, or {@code null} if none
+   * @return the value returned by the remote service, or {@code null} for one-way calls
+   * @throws MissingInvocationException if {@code method} is not part of the service interface
+   * @throws ServiceDefinitionException if the method's annotations conflict with its signature
+   *                                    (e.g., {@link InOnly} on a non-void method), or a whisper
+   *                                    is attempted without an instance-id extractor
+   * @throws Throwable                  if the transport layer or the remote service throws an error
    */
   public Object invoke (Object proxy, final Method method, final Object[] args)
     throws Throwable {

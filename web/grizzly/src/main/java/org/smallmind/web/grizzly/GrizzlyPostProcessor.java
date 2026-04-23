@@ -41,9 +41,8 @@ import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 /**
- * Bean post-processor that collects installer beans created by Spring and attaches them to their corresponding
- * {@link GrizzlyWebAppState}. Beans created before the locator is available are queued and processed once the locator
- * is discovered.
+ * Spring {@link BeanPostProcessor} that discovers installer beans and routes them to the matching
+ * {@link GrizzlyWebAppState}, queuing any beans that arrive before the {@link GrizzlyWebAppStateLocator} is ready.
  */
 public class GrizzlyPostProcessor implements BeanPostProcessor {
 
@@ -51,10 +50,9 @@ public class GrizzlyPostProcessor implements BeanPostProcessor {
   private GrizzlyWebAppStateLocator locator;
 
   /**
-   * Routes installer beans to the appropriate web application state or creates a {@link WebServiceInstaller} for
-   * classes annotated with {@link ServicePath}.
+   * Dispatches a single installer bean to the appropriate web application state.
    *
-   * @param bean the bean to process
+   * @param bean installer bean or {@link ServicePath}-annotated service to register
    */
   private void processBean (Object bean) {
 
@@ -74,12 +72,12 @@ public class GrizzlyPostProcessor implements BeanPostProcessor {
   }
 
   /**
-   * Captures the locator when it becomes available and replays any queued beans; otherwise defers processing until the
-   * locator is known.
+   * Registers the locator when it is first seen, replays any deferred installer beans, and then processes the current
+   * bean.
    *
-   * @param bean     newly initialized bean
-   * @param beanName Spring bean name
-   * @return the original bean
+   * @param bean     the fully initialized bean instance
+   * @param beanName Spring name of the bean
+   * @return the original bean, unmodified
    */
   @Override
   public synchronized Object postProcessAfterInitialization (Object bean, String beanName) {

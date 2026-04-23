@@ -42,8 +42,16 @@ import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
 
 /**
- * Base {@link WrapperListener} implementation that wires Tanuki's Java Service Wrapper into a SmallMind application,
- * handling startup signaling and shutdown lifecycle.
+ * Bridge between Tanuki's Java Service Wrapper and a SmallMind application. Subclasses supply concrete
+ * {@link #startup(String[])} and {@link #shutdown()} behavior; this class takes care of:
+ * <ul>
+ *   <li>reflectively instantiating the configured listener from {@code main} and handing it to {@link WrapperManager};</li>
+ *   <li>spawning a background "keep-alive" thread that repeatedly calls {@link WrapperManager#signalStarting(int)}
+ *       so slow startups are not killed by the wrapper watchdog (bounded by a fail-safe ceiling);</li>
+ *   <li>translating wrapper control events into {@link WrapperManager#stop(int)} calls when running without the
+ *       native wrapper;</li>
+ *   <li>converting exceptions thrown by {@link #startup(String[])} or {@link #shutdown()} into stack-trace exit codes.</li>
+ * </ul>
  */
 public abstract class AbstractWrapperListener extends PerApplicationContext implements WrapperListener {
 
@@ -53,10 +61,17 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   private static final int FAIL_SAFE_TIMEOUT_SECONDS = 180;
 
   /**
-   * Launches the configured {@link WrapperListener} implementation after expanding system properties and validating the timeout.
+   * Entry point invoked by the wrapper. The first argument must name the concrete {@link WrapperListener} subclass
+   * to instantiate; remaining arguments are expanded via {@link PropertyExpander} so that
+   * {@code ${system.property}}-style placeholders work, and the effective wrapper startup timeout is prepended for
+   * later consumption by {@link #start(String[])}.
    *
-   * @param args expected to contain the fully qualified listener class followed by its arguments
-   * @throws Throwable if startup cannot proceed
+   * @param args the first element is the fully qualified listener class name; subsequent elements are passed to its
+   *             {@link #startup(String[])} after the timeout prefix is stripped again
+   * @throws IllegalArgumentException if no listener class name is provided
+   * @throws IllegalStateException    if {@code wrapper.startup.timeout} is set but unparsable or smaller than the
+   *                                  allowed minimum
+   * @throws Throwable                if reflectively instantiating the listener or handing it to the wrapper fails
    */
   public static void main (String... args)
     throws Throwable {
@@ -93,26 +108,27 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Called by implementations to perform application startup logic.
+   * Hook for subclasses to perform application startup. Invoked on the wrapper start thread.
    *
-   * @param args listener arguments after wrapper-specific parameters are stripped
-   * @throws Exception if startup fails
+   * @param args application arguments, after the wrapper-specific timeout prefix has been removed
+   * @throws Exception if application startup fails; the failure is turned into a stack-trace exit code
    */
   public abstract void startup (String[] args)
     throws Exception;
 
   /**
-   * Called by implementations to perform shutdown/cleanup logic.
+   * Hook for subclasses to perform application shutdown. Invoked on the wrapper stop thread.
    *
-   * @throws Exception if shutdown fails
+   * @throws Exception if application shutdown fails; the failure is turned into a stack-trace exit code
    */
   public abstract void shutdown ()
     throws Exception;
 
   /**
-   * Responds to control events when not controlled by the native wrapper.
+   * Receives wrapper control events. When running without the native wrapper, interpret Ctrl-C, Close, and Shutdown
+   * as a request to stop the application; otherwise the native wrapper itself handles these events.
    *
-   * @param event wrapper control code
+   * @param event one of the {@code WrapperManager.WRAPPER_CTRL_*} constants
    */
   public void controlEvent (int event) {
 
@@ -124,10 +140,13 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Initiates the listener startup sequence, launching a signaling worker and delegating to {@link #startup(String[])}.
+   * Wrapper start callback. Launches the background "still starting" signaller, invokes {@link #startup(String[])},
+   * and releases the latch so the signaller terminates once startup returns.
    *
-   * @param args first argument is the startup timeout, remaining are application arguments
-   * @return {@code null} on success or a numeric exit code on failure
+   * @param args arguments where {@code args[0]} is the startup timeout in seconds and the remainder are the
+   *             application arguments forwarded to {@link #startup(String[])}
+   * @return {@code null} on success, or {@code 2} if {@link #startup(String[])} threw; {@code null} signals the
+   * wrapper to keep running
    */
   public Integer start (String[] args) {
 
@@ -157,10 +176,11 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Delegates to {@link #shutdown()} and returns the supplied exit code, or a stack-trace code on failure.
+   * Wrapper stop callback. Invokes {@link #shutdown()} and converts any {@link Throwable} thrown during shutdown
+   * into a distinguishable exit code.
    *
-   * @param exitCode exit code requested by the wrapper
-   * @return the effective exit code to return to the wrapper
+   * @param exitCode the exit code the wrapper wants to use
+   * @return {@code exitCode} if shutdown succeeded; {@code 2} if shutdown threw
    */
   public int stop (int exitCode) {
 
@@ -180,8 +200,11 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     private final int startupTimeoutSeconds;
 
     /**
-     * @param completedLatch        latch that signals when startup is complete
-     * @param startupTimeoutSeconds timeout reported to the wrapper while starting
+     * Creates a signaller that pings the wrapper while waiting for startup to complete.
+     *
+     * @param completedLatch        latch the outer {@link #start(String[])} counts down when startup finishes
+     * @param startupTimeoutSeconds duration to promise to the wrapper on each signal; also controls the wake-up
+     *                              interval (slightly shorter so signals land before the wrapper's deadline)
      */
     public SignalWorker (CountDownLatch completedLatch, int startupTimeoutSeconds) {
 
@@ -190,7 +213,9 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     }
 
     /**
-     * Periodically notifies the wrapper that startup is still in progress until completion or a fail-safe limit is reached.
+     * Loops until startup completes or the fail-safe ceiling is reached, calling
+     * {@link WrapperManager#signalStarting(int)} each iteration to extend the wrapper's patience. Interruption
+     * terminates the loop silently.
      */
     @Override
     public void run () {

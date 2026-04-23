@@ -37,7 +37,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Null literal operand implemented as a singleton.
+ * A singleton where operand representing the SQL/JSON null literal.
  */
 @XmlRootElement(name = "null", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -46,7 +46,9 @@ public class NullWhereOperand extends WhereOperand<Void> {
   private static final NullWhereOperand INSTANCE = new NullWhereOperand();
 
   /**
-   * @return singleton null operand instance
+   * Returns the singleton null operand instance.
+   *
+   * @return shared null operand
    */
   public static NullWhereOperand instance () {
 
@@ -54,6 +56,8 @@ public class NullWhereOperand extends WhereOperand<Void> {
   }
 
   /**
+   * Returns the element type for the null operand.
+   *
    * @return {@link ElementType#NULL}
    */
   @Override
@@ -64,6 +68,8 @@ public class NullWhereOperand extends WhereOperand<Void> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#NULL}
    */
   @Override
@@ -74,9 +80,9 @@ public class NullWhereOperand extends WhereOperand<Void> {
   }
 
   /**
-   * Always returns {@code null}.
+   * Always returns {@code null} because this operand represents the null literal.
    *
-   * @return null
+   * @return {@code null}
    */
   @Override
   @XmlTransient

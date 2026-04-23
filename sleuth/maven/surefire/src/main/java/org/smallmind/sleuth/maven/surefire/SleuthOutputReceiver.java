@@ -42,8 +42,14 @@ import org.smallmind.sleuth.runner.TestIdentifier;
 /**
  * Bridges raw test output from the Sleuth runner into Surefire's reporting API.
  * <p>
- * Each message is re-wrapped with the current {@link RunMode} and the active {@link TestIdentifier}
- * so Surefire can attribute stdout/stderr to the correct test case.
+ * Accepts {@link OutputReportEntry} objects from {@link ForwardingPrintStream} and wraps each
+ * one in a {@link TestOutputReportEntry} that also carries the current {@link RunMode} and the
+ * numeric test identifier obtained from {@link TestIdentifier#getTestIdentifier()}. This allows
+ * Surefire to attribute every stdout/stderr line to the specific test that was running on the
+ * current thread at the time the output was written.
+ *
+ * @see ForwardingPrintStream
+ * @see TestIdentifier
  */
 public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntry> {
 
@@ -51,10 +57,10 @@ public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntr
   private final RunMode runMode;
 
   /**
-   * Creates a receiver that forwards to the given Surefire report listener.
+   * Constructs a receiver that wraps and forwards output entries to the given Surefire listener.
    *
-   * @param reportListener target listener that handles test output entries
-   * @param runMode        execution mode of the current run (normal/forked)
+   * @param reportListener target Surefire listener that processes {@link TestOutputReportEntry} objects; must not be {@code null}
+   * @param runMode        execution mode of the current run (e.g., {@link RunMode#NORMAL_RUN}); must not be {@code null}
    */
   public SleuthOutputReceiver (TestReportListener<TestOutputReportEntry> reportListener, RunMode runMode) {
 
@@ -63,9 +69,10 @@ public class SleuthOutputReceiver implements TestOutputReceiver<OutputReportEntr
   }
 
   /**
-   * Wraps and forwards the output entry including the current run mode and test id.
+   * Wraps the raw output entry with the active run mode and test identifier, then forwards it
+   * to the Surefire report listener.
    *
-   * @param reportEntry raw output entry emitted by Sleuth
+   * @param reportEntry raw output entry emitted by the Sleuth runner; must not be {@code null}
    */
   @Override
   public void writeTestOutput (OutputReportEntry reportEntry) {

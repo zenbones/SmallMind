@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty.option;
 
 /**
- * Aggregates all configuration options for a single Jetty web application context.
+ * Aggregates all optional feature configuration for a single Jetty web application context, including static resources, REST, SOAP, WebSocket, and Spring support.
  */
 public class WebApplicationOption {
 
@@ -46,9 +46,9 @@ public class WebApplicationOption {
   private String soapPath = "/soap";
 
   /**
-   * Retrieves the configuration for serving classpath resources.
+   * Returns the classpath-resource serving option, or {@code null} if disabled.
    *
-   * @return the class loader resource option or {@code null} if disabled
+   * @return classpath resource option
    */
   public ClassLoaderResourceOption getClassLoaderResourceOption () {
 
@@ -56,9 +56,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the configuration for serving classpath resources.
+   * Sets the option for serving static resources from the classpath.
    *
-   * @param classLoaderResourceOption the class loader resource option
+   * @param classLoaderResourceOption classpath resource configuration
    */
   public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
 
@@ -66,9 +66,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the configuration for serving filesystem document roots.
+   * Returns the filesystem document-root serving option, or {@code null} if disabled.
    *
-   * @return the document root option or {@code null} if none
+   * @return document root option
    */
   public DocumentRootOption getDocumentRootOption () {
 
@@ -76,9 +76,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the configuration for serving filesystem document roots.
+   * Sets the option for serving static files from filesystem document roots.
    *
-   * @param documentRootOption the document root option
+   * @param documentRootOption document root configuration
    */
   public void setDocumentRootOption (DocumentRootOption documentRootOption) {
 
@@ -86,9 +86,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the JAX-RS configuration for the context.
+   * Returns the JAX-RS configuration for this context, or {@code null} if REST is not enabled.
    *
-   * @return JAX-RS option or {@code null} if REST is not exposed
+   * @return JAX-RS option
    */
   public JaxRSOption getJaxRSOption () {
 
@@ -96,9 +96,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the JAX-RS configuration for the context.
+   * Sets the JAX-RS configuration that causes a Jersey servlet to be installed.
    *
-   * @param jaxRSOption JAX-RS option
+   * @param jaxRSOption JAX-RS configuration
    */
   public void setJaxRSOption (JaxRSOption jaxRSOption) {
 
@@ -106,9 +106,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the Spring support option, if enabled.
+   * Returns the Spring support option, or {@code null} if Spring request-context wiring is not requested.
    *
-   * @return Spring support option or {@code null} if not requested
+   * @return Spring support option
    */
   public SpringSupportOption getSpringSupportOption () {
 
@@ -116,9 +116,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the Spring support option used to enable request context wiring.
+   * Sets the marker option that causes a Spring request-context listener to be registered.
    *
-   * @param springSupportOption Spring support option
+   * @param springSupportOption Spring support marker
    */
   public void setSpringSupportOption (SpringSupportOption springSupportOption) {
 
@@ -126,9 +126,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the WebSocket configuration for this context.
+   * Returns the WebSocket configuration for this context, or {@code null} if WebSockets are not enabled.
    *
-   * @return WebSocket option or {@code null} if WebSockets are not configured
+   * @return WebSocket option
    */
   public WebSocketOption getWebSocketOption () {
 
@@ -138,7 +138,7 @@ public class WebApplicationOption {
   /**
    * Sets the WebSocket configuration for this context.
    *
-   * @param webSocketOption WebSocket option
+   * @param webSocketOption WebSocket configuration
    */
   public void setWebSocketOption (WebSocketOption webSocketOption) {
 
@@ -146,7 +146,7 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the context path under which the web application will be served.
+   * Returns the context path under which this web application is mounted.
    *
    * @return the context path
    */
@@ -156,7 +156,7 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the context path under which the web application will be served.
+   * Sets the context path under which this web application will be mounted.
    *
    * @param contextPath the context path
    */
@@ -166,9 +166,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Retrieves the base path used for SOAP web services in this context.
+   * Returns the path segment appended to the context path for SOAP service endpoints.
    *
-   * @return SOAP path segment
+   * @return the SOAP sub-path
    */
   public String getSoapPath () {
 
@@ -176,9 +176,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * Sets the base path used for SOAP web services in this context.
+   * Sets the path segment used to prefix all SOAP service endpoints within this context.
    *
-   * @param soapPath SOAP path segment
+   * @param soapPath the SOAP sub-path
    */
   public void setSoapPath (String soapPath) {
 

@@ -33,19 +33,20 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Describes the orientation of a layout using a {@link Bias} axis and {@link Flow} direction.
+ * Captures the primary axis and flow direction of a layout, used by {@link ParaboxPlatform}
+ * to resolve {@code LEADING} and {@code TRAILING} alignment and justification to concrete directions.
  *
- * @param bias axis along which layout is evaluated
- * @param flow ordering direction along the axis
+ * @param bias the primary axis of the layout (horizontal or vertical)
+ * @param flow the ordering direction along that axis (first-to-last or last-to-first)
  */
 public record Orientation(Bias bias, Flow flow) {
 
   private static final Orientation DEFAULT = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
   /**
-   * Returns the default orientation (horizontal, first-to-last).
+   * Returns the default orientation of horizontal bias with first-to-last flow.
    *
-   * @return the default orientation
+   * @return the shared default {@code Orientation} instance
    */
   public static Orientation getDefaultOrientation () {
 

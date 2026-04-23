@@ -36,14 +36,15 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Simple {@link Sequence} backed by in-memory counters for each named sequence.
+ * In-memory {@link Sequence} implementation that maintains a per-name {@link AtomicLong} counter.
+ * Suitable for testing and single-JVM scenarios where persistence across restarts is not required.
  */
 public class InMemorySequence extends Sequence {
 
   private final HashMap<String, AtomicLong> counterMap = new HashMap<>();
 
   /**
-   * Registers this sequence implementation as the global {@link SequenceManager} provider.
+   * Registers this instance as the active provider in the {@link SequenceManager}.
    */
   public void register () {
 
@@ -51,7 +52,10 @@ public class InMemorySequence extends Sequence {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the next value for the named sequence, creating the counter if it does not yet exist.
+   *
+   * @param name logical sequence name
+   * @return next generated value, starting at 1
    */
   @Override
   public synchronized long nextLong (String name) {

@@ -36,24 +36,24 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Strategy interface for custom file and directory operations used during tree walks.
+ * Strategy interface for applying custom operations to files and directories encountered during a tree walk.
  */
 public interface FileManipulation {
 
   /**
-   * Performs an operation on a file.
+   * Applies an operation to the given file.
    *
-   * @param path file path
-   * @throws IOException if manipulation fails
+   * @param path the file on which the operation is performed
+   * @throws IOException if the operation fails
    */
   void manipulateFile (Path path)
     throws IOException;
 
   /**
-   * Performs an operation on a directory.
+   * Applies an operation to the given directory.
    *
-   * @param path directory path
-   * @throws IOException if manipulation fails
+   * @param path the directory on which the operation is performed
+   * @throws IOException if the operation fails
    */
   void manipulateDirectory (Path path)
     throws IOException;

@@ -38,12 +38,15 @@ import java.io.InputStream;
 import java.net.URI;
 
 /**
- * {@link Resource} that streams content from a remote or local URL.
+ * A {@link Resource} implementation that streams content from any URL addressable by the
+ * Java platform, including remote HTTP endpoints and local file URLs.
  */
 public class URLResource extends AbstractResource {
 
   /**
-   * @param path valid URL string
+   * Constructs a {@code URLResource} for the given URL string.
+   *
+   * @param path a valid URL string that {@link java.net.URI#create(String)} can parse
    */
   public URLResource (String path) {
 
@@ -51,7 +54,9 @@ public class URLResource extends AbstractResource {
   }
 
   /**
-   * @return {@code url}
+   * Returns the scheme identifier for this resource type.
+   *
+   * @return the string {@code "url"}
    */
   public String getScheme () {
 
@@ -59,10 +64,10 @@ public class URLResource extends AbstractResource {
   }
 
   /**
-   * Opens the URL for reading.
+   * Opens the URL for reading and wraps the result in a {@link java.io.BufferedInputStream}.
    *
-   * @return buffered input stream for the URL content
-   * @throws ResourceException if the URL cannot be opened
+   * @return a buffered input stream positioned at the start of the URL content
+   * @throws ResourceException if the URL cannot be opened due to an I/O error
    */
   public InputStream getInputStream ()
     throws ResourceException {

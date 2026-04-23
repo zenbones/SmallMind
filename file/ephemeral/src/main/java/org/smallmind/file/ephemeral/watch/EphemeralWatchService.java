@@ -47,20 +47,68 @@ import org.smallmind.file.ephemeral.EphemeralPath;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
 /**
- * In-memory {@link WatchService} implementation that consumes heap events and presents them to registered clients.
+ * In-memory {@link WatchService} implementation that drives notifications from
+ * {@link org.smallmind.file.ephemeral.heap.HeapEvent heap events} produced by the
+ * {@link EphemeralFileStore}.
+ *
+ * <p>The service maintains two internal data structures:
+ * <ul>
+ *   <li>A map from {@link EphemeralPath} to the list of {@link EphemeralWatchKey} instances
+ *       registered for that path, used to route fired events to interested keys.</li>
+ *   <li>A {@link LinkedBlockingQueue} of signalled keys whose pending events are ready to
+ *       be consumed via {@link #poll()}, {@link #poll(long, TimeUnit)}, or {@link #take()}.</li>
+ * </ul>
+ *
+ * <p>A single {@link EphemeralHeapEventListener} is shared across all registrations; it is
+ * attached to the {@link EphemeralFileStore} the first time a key is registered for a
+ * given path and detached when the last key for that path is cancelled.
+ *
+ * <p>The service is thread-safe. State-mutating methods are {@code synchronized} on the
+ * service instance. The {@code closed} flag is {@code volatile} to allow the
+ * {@link #isClosed()} check to be read without locking.
  */
 public class EphemeralWatchService implements WatchService {
 
+  /**
+   * The file store whose heap events are the source of all watch notifications.
+   */
   private final EphemeralFileStore ephemeralFileStore;
+
+  /**
+   * The single heap event listener that forwards all heap events to {@link #fire}. Shared
+   * across all registered paths.
+   */
   private final HeapEventListener heapEventListener;
+
+  /**
+   * Maps each watched {@link EphemeralPath} to the ordered list of
+   * {@link EphemeralWatchKey} instances registered for it. When the list becomes empty the
+   * entry is removed and the heap listener is detached from the file store.
+   */
   private final HashMap<EphemeralPath, LinkedList<EphemeralWatchKey>> watchKeyMap = new HashMap<>();
+
+  /**
+   * Queue of signalled keys available for consumption. Keys are added here when they
+   * transition from the un-signalled to signalled state (i.e. their first event since the
+   * last {@code reset} fires), and removed when consumed by {@code poll} or {@code take}.
+   */
   private final LinkedBlockingQueue<EphemeralWatchKey> watchKeyQueue = new LinkedBlockingQueue<>();
+
+  /**
+   * {@code true} after {@link #close()} has been called. Declared {@code volatile} so
+   * that read-only checks in {@link #isClosed()} and the polling loop in
+   * {@link #poll(long, TimeUnit)} see the updated value without acquiring the monitor.
+   */
   private volatile boolean closed = false;
 
   /**
-   * Creates a watch service backed by the provided file store.
+   * Creates a watch service backed by the provided ephemeral file store.
    *
-   * @param ephemeralFileStore the file store whose heap events will drive this watcher
+   * <p>A shared {@link EphemeralHeapEventListener} is created immediately and will be
+   * registered with the file store on a per-path basis as watch keys are added.
+   *
+   * @param ephemeralFileStore the {@link EphemeralFileStore} whose heap this service will
+   *                           monitor; must not be {@code null}
    */
   public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
 
@@ -70,7 +118,12 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * @return {@code true} when the service has been closed
+   * Returns whether this watch service has been closed.
+   *
+   * <p>This method may be called without holding the service's monitor and is therefore
+   * suitable for use in polling loops that need to detect closure without blocking.
+   *
+   * @return {@code true} if {@link #close()} has been called; {@code false} otherwise
    */
   public boolean isClosed () {
 
@@ -78,7 +131,15 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Closes the watch service and cancels all keys.
+   * Closes this watch service, invalidating all registered watch keys.
+   *
+   * <p>All {@link EphemeralWatchKey} instances currently registered with this service are
+   * cancelled without deregistering them from the internal map (to avoid concurrent
+   * modification). The {@code closed} flag is set to {@code true}, causing all subsequent
+   * calls to {@link #poll()}, {@link #poll(long, TimeUnit)}, and {@link #take()} to throw
+   * {@link ClosedWatchServiceException}.
+   *
+   * <p>Calling this method on an already-closed service has no effect.
    */
   @Override
   public synchronized void close () {
@@ -95,11 +156,19 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Registers a new watch key, ensuring the heap listener is attached to the path.
+   * Registers an {@link EphemeralWatchKey} with this service.
    *
-   * @param ephemeralWatchKey the key to register
-   * @throws NoSuchFileException   if the path does not exist
-   * @throws NotDirectoryException if the path is not a directory
+   * <p>If this is the first key registered for the key's path, a new list is created in
+   * the internal map and the shared {@link EphemeralHeapEventListener} is attached to that
+   * path in the {@link EphemeralFileStore}. The key is then appended to the list regardless
+   * of whether other keys for the same path already exist.
+   *
+   * @param ephemeralWatchKey the key to register; must not be {@code null}
+   * @throws ClosedWatchServiceException if this service has already been closed
+   * @throws NoSuchFileException         if the path associated with the key does not exist
+   *                                     in the file store
+   * @throws NotDirectoryException       if the path associated with the key exists but is
+   *                                     not a directory
    */
   public synchronized void register (EphemeralWatchKey ephemeralWatchKey)
     throws NoSuchFileException, NotDirectoryException {
@@ -120,10 +189,18 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Removes a watch key and detaches heap listeners when no keys remain for the path.
+   * Removes an {@link EphemeralWatchKey} from this service's registry.
    *
-   * @param ephemeralWatchKey the key to remove
-   * @throws NoSuchFileException if the path does not exist
+   * <p>If the key is found in the list for its path, it is removed. When the list becomes
+   * empty the path entry is removed from the map and the shared heap listener is detached
+   * from the {@link EphemeralFileStore} for that path. The key is also removed from the
+   * ready queue if it was signalled.
+   *
+   * <p>If the key is not currently registered, this method returns silently.
+   *
+   * @param ephemeralWatchKey the key to remove; must not be {@code null}
+   * @throws NoSuchFileException if removing the heap listener requires the path to exist
+   *                             but it no longer does
    */
   public synchronized void unregister (EphemeralWatchKey ephemeralWatchKey)
     throws NoSuchFileException {
@@ -143,10 +220,19 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Fires an event to all keys registered for the supplied path.
+   * Dispatches a file-system change event to all keys registered for the given path.
    *
-   * @param path  the path whose listeners should be notified
-   * @param event the event kind that occurred
+   * <p>For each key in the path's list, {@link EphemeralWatchKey#fire(WatchEvent.Kind)} is
+   * called. If the key transitions to the signalled state as a result (i.e. it was not
+   * previously signalled), it is added to the ready queue so it can be returned by the
+   * next {@code poll} or {@code take} call.
+   *
+   * <p>This method is a no-op when the service has been closed.
+   *
+   * @param path  the {@link EphemeralPath} whose registered keys should be notified;
+   *              must not be {@code null}
+   * @param event the {@link WatchEvent.Kind} describing the change that occurred;
+   *              must not be {@code null}
    */
   public synchronized void fire (EphemeralPath path, WatchEvent.Kind<?> event) {
 
@@ -165,9 +251,14 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Re-enqueues a signalled key whose events have been processed.
+   * Re-enqueues a key that has been reset but still has pending events.
    *
-   * @param watchKey the key to requeue
+   * <p>Called by {@link EphemeralWatchKey#reset()} when the key's event queue is
+   * non-empty at the time of the reset, ensuring the key remains available for immediate
+   * consumption. This method is a no-op when the service has been closed.
+   *
+   * @param watchKey the {@link EphemeralWatchKey} to re-add to the ready queue;
+   *                 must not be {@code null}
    */
   public synchronized void requeue (EphemeralWatchKey watchKey) {
 
@@ -177,7 +268,15 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves and removes the next signalled watch key, returning {@code null} if none is
+   * currently available.
+   *
+   * <p>This method does not block. If no key is ready, {@code null} is returned
+   * immediately.
+   *
+   * @return the next signalled {@link WatchKey}, or {@code null} if the ready queue is
+   * empty
+   * @throws ClosedWatchServiceException if this service has been closed
    */
   @Override
   public WatchKey poll () {
@@ -190,7 +289,22 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves and removes the next signalled watch key, waiting up to the specified timeout
+   * for one to become available.
+   *
+   * <p>For timeouts shorter than 500 milliseconds the call is delegated directly to
+   * {@link LinkedBlockingQueue#poll(long, TimeUnit)}. For longer timeouts the service polls
+   * in 500-millisecond increments so that it can detect mid-wait closure and throw
+   * {@link ClosedWatchServiceException} promptly rather than waiting out the full timeout
+   * after the service is closed.
+   *
+   * @param timeout the maximum time to wait for a key
+   * @param unit    the {@link TimeUnit} of the {@code timeout} argument
+   * @return the next signalled {@link WatchKey}, or {@code null} if the timeout elapses
+   * before one becomes available
+   * @throws ClosedWatchServiceException if this service is or becomes closed before a key
+   *                                     is available
+   * @throws InterruptedException        if the current thread is interrupted while waiting
    */
   @Override
   public WatchKey poll (long timeout, TimeUnit unit)
@@ -229,7 +343,16 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves and removes the next signalled watch key, blocking indefinitely until one
+   * becomes available.
+   *
+   * <p>The service polls in 500-millisecond increments so that it can detect closure and
+   * throw {@link ClosedWatchServiceException} promptly rather than blocking forever.
+   *
+   * @return the next signalled {@link WatchKey}; never {@code null}
+   * @throws ClosedWatchServiceException if this service is or becomes closed before a key
+   *                                     is available
+   * @throws InterruptedException        if the current thread is interrupted while waiting
    */
   @Override
   public WatchKey take ()

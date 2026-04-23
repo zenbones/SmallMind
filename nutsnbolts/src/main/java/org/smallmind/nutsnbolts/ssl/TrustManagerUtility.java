@@ -47,22 +47,22 @@ import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
 /**
- * Helper utilities for constructing {@link TrustManager} arrays from certificate resources.
- * Supports loading a single certificate into an in-memory keystore for use in SSL contexts.
+ * Utility methods for building {@link TrustManager} arrays from certificate resources.
  */
 public class TrustManagerUtility {
 
   /**
-   * Loads a certificate resource into a temporary keystore and returns the initialized trust managers.
+   * Parses an X509 certificate from the given resource, loads it into a temporary in-memory keystore under the
+   * provided alias, and returns the resulting trust managers ready for SSL context initialization.
    *
-   * @param alias        the alias under which to store the certificate
-   * @param certResource the resource supplying the X509 certificate data
-   * @return an array of trust managers ready for SSL context initialization
-   * @throws IOException              if the certificate data cannot be read
+   * @param alias        the alias under which the certificate is stored in the temporary keystore
+   * @param certResource the resource supplying the DER or PEM encoded X509 certificate
+   * @return an array of initialized {@link TrustManager} instances
+   * @throws IOException              if the certificate data cannot be read from the resource
    * @throws ResourceException        if the resource cannot be opened
    * @throws CertificateException     if the certificate cannot be parsed
-   * @throws KeyStoreException        if the keystore cannot be created or populated
-   * @throws NoSuchAlgorithmException if the default trust manager algorithm is unavailable
+   * @throws KeyStoreException        if the temporary keystore cannot be created or populated
+   * @throws NoSuchAlgorithmException if the default trust manager factory algorithm is unavailable
    */
   public static TrustManager[] load (String alias, Resource certResource)
     throws IOException, ResourceException, CertificateException, KeyStoreException, NoSuchAlgorithmException {

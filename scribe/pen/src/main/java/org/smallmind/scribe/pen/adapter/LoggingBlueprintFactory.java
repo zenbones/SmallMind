@@ -39,7 +39,9 @@ import java.util.ServiceLoader;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 /**
- * Discovers and exposes the single available {@link LoggingBlueprint} via Java SPI.
+ * Singleton factory that discovers exactly one {@link LoggingBlueprint} implementation on the classpath
+ * using {@link ServiceLoader} and exposes it for use by the Scribe framework; a
+ * {@code StaticInitializationError} is thrown at class-load time if zero or more than one provider is found.
  */
 public class LoggingBlueprintFactory {
 
@@ -73,9 +75,9 @@ public class LoggingBlueprintFactory {
   }
 
   /**
-   * Returns the discovered logging blueprint implementation.
+   * Returns the single {@link LoggingBlueprint} discovered during class initialization.
    *
-   * @return the active {@link LoggingBlueprint}
+   * @return the active logging blueprint
    */
   public static LoggingBlueprint getLoggingBlueprint () {
 

@@ -35,17 +35,19 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Work unit that operates on a branch of the channel tree.
+ * Functional callback applied to every {@link ChannelBranch} visited during a tree walk; used to
+ * implement bulk operations such as idle-channel pruning and session departure.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 @FunctionalInterface
 public interface ChannelOperation<V extends Value<V>> {
 
   /**
-   * Performs an operation against the supplied branch.
+   * Executes this operation against the given branch.
    *
-   * @param channelBranch target branch within the channel hierarchy
+   * @param channelBranch the branch currently being visited; may hold a channel or may be an
+   *                      intermediate node with no channel assigned
    */
   void operate (ChannelBranch<V> channelBranch);
 }

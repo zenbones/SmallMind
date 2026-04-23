@@ -33,7 +33,9 @@
 package org.smallmind.forge.style;
 
 /**
- * Immutable value object representing a Maven dependency reference parsed from text.
+ * Immutable value object representing a Maven dependency coordinate parsed from
+ * {@code mvn dependency:analyze} output. The expected textual format is colon-delimited:
+ * {@code groupId:artifactId:classifier:version:scope}.
  */
 public class DependencyReference {
 
@@ -44,9 +46,13 @@ public class DependencyReference {
   private final String scope;
 
   /**
-   * Parse a colon-delimited dependency reference of the form {@code groupId:artifactId:classifier:version:scope}.
+   * Parse a colon-delimited dependency reference.
    *
-   * @param reference the textual representation of a dependency
+   * <p>Expects exactly five colon-separated fields in the order
+   * {@code groupId:artifactId:classifier:version:scope}.
+   *
+   * @param reference the raw dependency string as produced by {@code mvn dependency:analyze}
+   * @throws ArrayIndexOutOfBoundsException if {@code reference} contains fewer than five fields
    */
   public DependencyReference (String reference) {
 
@@ -60,7 +66,9 @@ public class DependencyReference {
   }
 
   /**
-   * @return the group id portion of the reference
+   * Returns the Maven {@code groupId} of this dependency.
+   *
+   * @return groupId, e.g. {@code org.smallmind}
    */
   public String getGroupId () {
 
@@ -68,7 +76,9 @@ public class DependencyReference {
   }
 
   /**
-   * @return the artifact id portion of the reference
+   * Returns the Maven {@code artifactId} of this dependency.
+   *
+   * @return artifactId, e.g. {@code forge-deploy}
    */
   public String getArtifactId () {
 
@@ -76,7 +86,9 @@ public class DependencyReference {
   }
 
   /**
-   * @return the version portion of the reference
+   * Returns the Maven version of this dependency.
+   *
+   * @return version string as it appears in the analyze output
    */
   public String getVersion () {
 
@@ -84,7 +96,9 @@ public class DependencyReference {
   }
 
   /**
-   * @return the classifier portion of the reference
+   * Returns the Maven classifier of this dependency.
+   *
+   * @return classifier string, or an empty string when no classifier is present
    */
   public String getClassifier () {
 
@@ -92,7 +106,9 @@ public class DependencyReference {
   }
 
   /**
-   * @return the dependency scope
+   * Returns the Maven scope of this dependency.
+   *
+   * @return scope string, e.g. {@code compile}, {@code test}, or {@code provided}
    */
   public String getScope () {
 

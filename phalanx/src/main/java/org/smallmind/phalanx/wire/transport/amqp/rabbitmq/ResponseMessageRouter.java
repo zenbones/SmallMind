@@ -66,18 +66,20 @@ public class ResponseMessageRouter extends MessageRouter {
   private final int ttlSeconds;
 
   /**
-   * @param connector                    connector for creating channels.
+   * Creates a response message router for the given service group and instance.
+   *
+   * @param connector                    connector for creating AMQP channels.
    * @param enduringQueueContractor      contractor for durable talk queues.
-   * @param ephemeralQueueContractor     contractor for ephemeral whisper/shout queues.
-   * @param nameConfiguration            exchange/queue naming scheme.
-   * @param responseTransport            owning response transport.
-   * @param signalCodec                  codec for serialization.
-   * @param serviceGroup                 service group name used in routing keys.
-   * @param instanceId                   unique id for whisper routing.
-   * @param index                        router index for consumer tags.
-   * @param ttlSeconds                   message TTL in seconds.
-   * @param autoAcknowledge              whether consumers should auto-ack messages.
-   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   * @param ephemeralQueueContractor     contractor for ephemeral whisper and shout queues.
+   * @param nameConfiguration            exchange and queue naming scheme.
+   * @param responseTransport            owning response transport that receives dispatched messages.
+   * @param signalCodec                  codec for serializing and deserializing signals.
+   * @param serviceGroup                 service group name embedded in AMQP routing keys.
+   * @param instanceId                   unique instance identifier used in whisper routing keys.
+   * @param index                        ordinal index of this router, used in consumer tags.
+   * @param ttlSeconds                   message time-to-live in seconds.
+   * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
+   * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
    */
   public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 

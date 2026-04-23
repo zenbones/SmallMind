@@ -52,7 +52,12 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * JMS listener that consumes response messages, decodes them, and completes pending callbacks.
+ * JMS {@link MessageListener} that subscribes to the response topic, decodes incoming
+ * {@link ResultSignal} payloads, and completes the pending callback on the owning
+ * {@link JmsRequestTransport}.
+ *
+ * <p>The consumer is filtered by the caller id of the owning transport so that each
+ * {@code ResponseListener} receives only the responses belonging to its transport instance.
  */
 public class ResponseListener implements SessionEmployer, MessageListener {
 
@@ -65,14 +70,15 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   private final byte[] buffer;
 
   /**
-   * Creates a response listener subscribed to responses for the given caller id.
+   * Constructs a response listener, builds a caller-id message-selector, allocates the decode
+   * buffer, creates the consumer, and starts the connection.
    *
-   * @param requestTransport          owning request transport to complete callbacks
-   * @param responseConnectionManager connection manager for the response topic
-   * @param responseTopic             topic on which responses are published
-   * @param signalCodec               codec used to decode {@link ResultSignal} payloads
-   * @param callerId                  caller id selector to filter responses
-   * @param maximumMessageLength      maximum allowed message payload size
+   * @param requestTransport          owning request transport whose callbacks are completed
+   * @param responseConnectionManager connection manager providing the JMS session and consumer
+   * @param responseTopic             topic on which service results are published
+   * @param signalCodec               codec used to deserialise {@link ResultSignal} payloads
+   * @param callerId                  unique caller id used as the JMS message-selector value
+   * @param maximumMessageLength      maximum byte length of any single response payload
    * @throws JMSException if consumer creation fails
    */
   public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String callerId, int maximumMessageLength)
@@ -90,7 +96,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the response topic that this listener is subscribed to.
+   *
+   * @return the JMS {@link Topic} supplied at construction
    */
   @Override
   public Destination getDestination () {
@@ -99,7 +107,10 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the JMS message-selector that restricts delivery to responses addressed to
+   * this listener's caller id.
+   *
+   * @return non-null JMS selector string
    */
   @Override
   public String getMessageSelector () {
@@ -108,9 +119,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Closes the listener and underlying connection resources.
+   * Stops and closes the underlying connection manager.  Idempotent; safe to call multiple times.
    *
-   * @throws JMSException if shutdown fails
+   * @throws JMSException if stopping or closing the connection manager fails
    */
   public void close ()
     throws JMSException {
@@ -122,7 +133,11 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Handles incoming response messages, updating transit metrics and completing callbacks.
+   * Receives an inbound response message, records the topic transit time as a Claxon metric,
+   * decodes the {@link ResultSignal} from the byte payload, and completes the matching callback
+   * on the owning request transport.
+   *
+   * @param message the inbound JMS message containing an encoded {@link ResultSignal}
    */
   @Override
   public void onMessage (final Message message) {

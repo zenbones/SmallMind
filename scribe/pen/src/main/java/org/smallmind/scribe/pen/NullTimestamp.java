@@ -35,15 +35,16 @@ package org.smallmind.scribe.pen;
 import java.time.LocalDateTime;
 
 /**
- * Timestamp implementation that always returns an empty string.
+ * A {@link Timestamp} implementation that produces no output, returning an empty string for every
+ * date; useful when rolled file names should carry no timestamp segment.
  */
 public class NullTimestamp implements Timestamp {
 
   /**
-   * Returns an empty string for any date.
+   * Returns an empty string regardless of the date supplied.
    *
-   * @param date ignored
-   * @return empty string
+   * @param date the date to format; ignored
+   * @return an empty string
    */
   public String getTimestamp (LocalDateTime date) {
 

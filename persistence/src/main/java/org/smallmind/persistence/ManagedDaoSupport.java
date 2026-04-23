@@ -37,17 +37,19 @@ import java.lang.reflect.Type;
 import org.springframework.beans.FatalBeanException;
 
 /**
- * Utility methods to assist {@link ManagedDao} implementations in discovering durable types.
+ * Static helpers for {@link ManagedDao} implementations, primarily used to discover the
+ * managed {@link Durable} class through generic type inspection at Spring bean init time.
  */
 public class ManagedDaoSupport {
 
   /**
-   * Attempts to determine the {@link Durable} class managed by the supplied bean by
-   * inspecting generics on {@code getManagedClass()} and superclasses.
+   * Infers the {@link Durable} class managed by a DAO bean. Checks the generic return type
+   * of {@code getManagedClass()} first, then walks the superclass hierarchy looking for a
+   * concrete {@link Durable} type argument.
    *
-   * @param beanClass the DAO bean class to inspect
-   * @return the durable class if one can be inferred, otherwise {@code null}
-   * @throws FatalBeanException if the expected {@code getManagedClass()} method is missing
+   * @param beanClass the DAO class to inspect
+   * @return the resolved durable class, or {@code null} when it cannot be determined
+   * @throws FatalBeanException if the {@code getManagedClass()} method is absent from {@code beanClass}
    */
   public static Class<?> findDurableClass (Class<?> beanClass) {
 

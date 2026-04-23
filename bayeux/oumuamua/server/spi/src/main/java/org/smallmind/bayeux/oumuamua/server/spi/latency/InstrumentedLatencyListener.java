@@ -49,18 +49,21 @@ import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 
 /**
- * Protocol listener that measures end-to-end latency between message receipt and delivery.
+ * {@link Protocol.ProtocolListener} that instruments end-to-end message latency by stamping each
+ * inbound message with a server receipt timestamp and, at delivery time, recording the elapsed
+ * duration as a Claxon histogram metric tagged with host name, delivery type, and whether the
+ * packet originated from a remote backbone node.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
  */
 public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol.ProtocolListener<V> {
 
   private final String hostName;
 
   /**
-   * Builds the listener, capturing the local host name for tagging metrics.
+   * Constructs the listener and resolves the local host name used to tag all emitted metrics.
    *
-   * @throws UnknownHostException if the local host cannot be resolved
+   * @throws UnknownHostException if the local hostname cannot be resolved by the JVM
    */
   public InstrumentedLatencyListener ()
     throws UnknownHostException {
@@ -71,9 +74,10 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   }
 
   /**
-   * Stamps incoming messages with the current timestamp for later latency calculation.
+   * Writes a {@code ext.latency.timestamp} field containing the current server wall-clock time into
+   * every message, establishing the start of the latency measurement window.
    *
-   * @param incomingMessages messages received from the transport
+   * @param incomingMessages the messages just received from the transport layer
    */
   @Override
   public void onReceipt (Message<V>[] incomingMessages) {
@@ -89,10 +93,11 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   }
 
   /**
-   * Copies latency metadata from the originating message to the outgoing message so it survives publish.
+   * Propagates the {@code ext.latency} object from the originating message to the outgoing fan-out
+   * message so that the receipt timestamp is available when delivery latency is recorded.
    *
-   * @param originatingMessage original message from the client
-   * @param outgoingMessage    message being delivered
+   * @param originatingMessage the original client message carrying the latency timestamp
+   * @param outgoingMessage    the fan-out copy being dispatched to a subscriber
    */
   @Override
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
@@ -110,9 +115,11 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   }
 
   /**
-   * Computes delivery latency metrics and records them via Claxon.
+   * Calculates the elapsed time since receipt for each message that carries a latency timestamp and
+   * records the value (in milliseconds, offset by one to avoid zero-bucket issues) in a Claxon
+   * histogram tagged with {@code host}, {@code delivery}, and {@code remote}.
    *
-   * @param outgoingPacket packet being delivered
+   * @param outgoingPacket the packet about to be written to the transport
    */
   @Override
   public void onDelivery (Packet<V> outgoingPacket) {
@@ -146,10 +153,11 @@ public class InstrumentedLatencyListener<V extends Value<V>> implements Protocol
   }
 
   /**
-   * Determines whether the packet originated from a remote backbone hop.
+   * Inspects {@code ext.backbone.remote} to determine whether the packet arrived via a backbone
+   * relay from another cluster node.
    *
-   * @param extValue extension object holding backbone metadata
-   * @return {@code true} if the packet was received from another node
+   * @param extValue the {@code ext} object of the message being evaluated
+   * @return {@code true} if {@code ext.backbone.remote} is present and {@code true}
    */
   private boolean isRemote (ObjectValue<V> extValue) {
 

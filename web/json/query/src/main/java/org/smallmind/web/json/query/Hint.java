@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
 /**
- * Base type describing metadata used to interpret operand values.
+ * Abstract base for type metadata that describes how to interpret an array operand's element values.
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(HintPolymorphicXmlAdapter.class)
@@ -46,7 +46,7 @@ import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 public abstract class Hint {
 
   /**
-   * Returns the hint discriminator.
+   * Returns the discriminator identifying the concrete hint subtype.
    *
    * @return hint type
    */

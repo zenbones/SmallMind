@@ -41,16 +41,17 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Map-backed object value for the orthodox codec.
+ * {@link HashMap}-backed {@link ObjectValue} implementation for the orthodox codec, providing
+ * unordered field storage with constant-time get, put, and remove operations.
  */
 public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<OrthodoxValue> {
 
   private final HashMap<String, Value<OrthodoxValue>> valueMap = new HashMap<>();
 
   /**
-   * Creates an empty object value.
+   * Constructs an empty object value associated with the given factory.
    *
-   * @param factory owning factory
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
    */
   protected OrthodoxObjectValue (OrthodoxValueFactory factory) {
 
@@ -58,7 +59,9 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * @return number of stored fields
+   * Returns the number of fields currently stored in the object.
+   *
+   * @return field count
    */
   @Override
   public int size () {
@@ -67,7 +70,9 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * @return {@code true} if no fields exist
+   * Reports whether the object contains no fields.
+   *
+   * @return {@code true} when no fields have been stored
    */
   @Override
   public boolean isEmpty () {
@@ -76,7 +81,9 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * @return iterator over field names
+   * Returns an iterator over the names of all stored fields in unspecified order.
+   *
+   * @return field name iterator reflecting the current map key set
    */
   @Override
   public Iterator<String> fieldNames () {
@@ -85,10 +92,10 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * Retrieves a field value.
+   * Returns the value stored under {@code field}, or {@code null} if the field is absent.
    *
-   * @param field field name
-   * @return stored value or {@code null}
+   * @param field name of the field to look up
+   * @return the associated value, or {@code null} if no such field exists
    */
   @Override
   public Value<OrthodoxValue> get (String field) {
@@ -97,11 +104,11 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * Adds or replaces a field.
+   * Stores {@code value} under {@code field}, replacing any previously stored value.
    *
-   * @param field field name
-   * @param value value to store
-   * @return this object
+   * @param field name of the field to set
+   * @param value value to associate with the field
+   * @return this object for chaining
    */
   @Override
   public <U extends Value<OrthodoxValue>> ObjectValue<OrthodoxValue> put (String field, U value) {
@@ -112,10 +119,10 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * Removes a field by name.
+   * Removes the field named {@code field} and returns its former value.
    *
-   * @param field field to remove
-   * @return removed value or {@code null}
+   * @param field name of the field to remove
+   * @return the value previously associated with the field, or {@code null} if absent
    */
   @Override
   public Value<OrthodoxValue> remove (String field) {
@@ -124,9 +131,9 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * Clears all fields.
+   * Removes all fields from the object, leaving it empty.
    *
-   * @return this object
+   * @return this object for chaining
    */
   @Override
   public ObjectValue<OrthodoxValue> removeAll () {
@@ -137,10 +144,10 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
   }
 
   /**
-   * Encodes the object to JSON.
+   * Writes the JSON object representation of all non-null fields to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

@@ -36,17 +36,15 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
 /**
- * A permissive {@link HostnameVerifier} that accepts any host name presented
- * in an SSL session. This should only be used in testing scenarios where
- * hostname verification is intentionally disabled.
+ * {@link HostnameVerifier} that unconditionally accepts any hostname, intended only for testing environments
+ * where hostname verification must be disabled.
  */
 public class NaiveHostNameVerifier implements HostnameVerifier {
 
   /**
-   * Always returns {@code true}, allowing the SSL handshake to proceed regardless
-   * of the peer's presented host name.
+   * Always returns {@code true}, bypassing all hostname validation and permitting the SSL handshake to proceed.
    *
-   * @param hostname the peer host name
+   * @param hostname the peer hostname presented during the SSL handshake
    * @param session  the active SSL session
    * @return always {@code true}
    */

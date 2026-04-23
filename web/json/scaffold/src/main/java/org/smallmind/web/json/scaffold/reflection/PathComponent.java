@@ -37,8 +37,8 @@ import java.util.LinkedList;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Represents one parsed segment of a dotted bean path, including optional method arguments
- * and array subscripts that should be applied after invocation.
+ * Represents one parsed segment of a dotted bean/method path, holding the component name along with
+ * any optional parsed method arguments and array subscripts.
  */
 public class PathComponent {
 
@@ -47,7 +47,9 @@ public class PathComponent {
   private Object[] arguments;
 
   /**
-   * @param name name of the property or method represented by this component
+   * Creates a component with the given name and no arguments or subscripts.
+   *
+   * @param name property or method name for this segment
    */
   public PathComponent (String name) {
 
@@ -55,7 +57,7 @@ public class PathComponent {
   }
 
   /**
-   * @return component name (property or method)
+   * @return property or method name for this path segment
    */
   public String getName () {
 
@@ -63,7 +65,7 @@ public class PathComponent {
   }
 
   /**
-   * @return parsed argument list or {@code null} if none specified
+   * @return parsed argument array, or {@code null} if no argument list was specified
    */
   public Object[] getArguments () {
 
@@ -71,10 +73,10 @@ public class PathComponent {
   }
 
   /**
-   * Parses and stores the argument list from the raw substring of the path.
+   * Parses a JSON-formatted argument substring and stores the result as the argument array.
    *
-   * @param argumentSubPath text between the parentheses for this component
-   * @throws IOException if the arguments cannot be parsed as JSON
+   * @param argumentSubPath text between the parentheses of this method component
+   * @throws IOException if the text cannot be parsed as a JSON array
    */
   public void createArguments (String argumentSubPath)
     throws IOException {
@@ -83,9 +85,9 @@ public class PathComponent {
   }
 
   /**
-   * Returns the collected subscripts as a primitive array.
+   * Returns all accumulated subscripts as a primitive int array.
    *
-   * @return subscripts or {@code null} when none exist
+   * @return subscript array, or {@code null} if no subscripts have been added
    */
   public int[] getSubscripts () {
 
@@ -106,9 +108,9 @@ public class PathComponent {
   }
 
   /**
-   * Adds an array subscript parsed from the path segment.
+   * Appends an array subscript parsed from the path expression.
    *
-   * @param subscriptSubPath textual subscript content
+   * @param subscriptSubPath text content of the subscript (digits, whitespace stripped)
    */
   public void addSubscript (String subscriptSubPath) {
 

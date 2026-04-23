@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.servlet;
 import jakarta.servlet.ServletException;
 
 /**
- * {@link ServletException} variant that supports formatted messages.
+ * A {@link ServletException} subclass that accepts {@link java.util.Formatter}-style format strings for its detail message.
  */
 public class FormattedServletException extends ServletException {
 
@@ -50,8 +50,8 @@ public class FormattedServletException extends ServletException {
   /**
    * Creates an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string
+   * @param args    arguments interpolated into the format string
    */
   public FormattedServletException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class FormattedServletException extends ServletException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Creates an exception with a formatted detail message and an underlying cause.
    *
-   * @param throwable the underlying cause
-   * @param message   a {@link java.util.Formatter}-style message
-   * @param args      values interpolated into the message
+   * @param throwable the cause of this exception
+   * @param message   a {@link java.util.Formatter}-style format string
+   * @param args      arguments interpolated into the format string
    */
   public FormattedServletException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class FormattedServletException extends ServletException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Creates an exception wrapping the given cause with no additional detail message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the cause of this exception
    */
   public FormattedServletException (Throwable throwable) {
 

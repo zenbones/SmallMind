@@ -35,14 +35,16 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 /**
- * Thrown when a response cannot be parsed from the memcached protocol stream.
+ * Thrown when a byte sequence received from the memcached server cannot be parsed
+ * into a recognized protocol response. This may indicate a protocol version mismatch,
+ * a corrupted stream, or an unanticipated server response format.
  */
 public class IncomprehensibleResponseException extends FormattedIOException {
 
   /**
-   * Constructs the exception with a formatted message.
+   * Constructs the exception with a formatted detail message.
    *
-   * @param message message format string
+   * @param message a format string for the exception message
    * @param args    arguments applied to the format string
    */
   public IncomprehensibleResponseException (String message, Object... args) {

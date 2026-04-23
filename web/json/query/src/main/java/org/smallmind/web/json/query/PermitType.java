@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Categories of where-clause permissions.
+ * Classifies the access-control role of a {@link WherePermit} entry.
  */
 public enum PermitType {
 

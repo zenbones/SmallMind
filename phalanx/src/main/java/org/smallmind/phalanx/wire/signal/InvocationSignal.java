@@ -40,11 +40,12 @@ import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Wire signal that carries a service invocation request, including the target route,
+ * named argument map, propagated contexts, and a flag indicating whether a response is expected.
+ */
 @XmlRootElement(name = "invocation", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-/**
- * Signal carrying a request invocation, including routing information, arguments, and contexts.
- */
 public class InvocationSignal implements Signal {
 
   private Route route;
@@ -53,19 +54,19 @@ public class InvocationSignal implements Signal {
   private boolean inOnly;
 
   /**
-   * Default constructor for JAXB.
+   * No-argument constructor required by JAXB.
    */
   public InvocationSignal () {
 
   }
 
   /**
-   * Creates an invocation signal populated with route, arguments, and contexts.
+   * Creates a fully populated invocation signal.
    *
-   * @param inOnly    whether the invocation is one-way
-   * @param route     destination route
-   * @param arguments argument map keyed by name
-   * @param contexts  optional wire contexts to propagate
+   * @param inOnly    {@code true} if the call is one-way and no response is expected
+   * @param route     the target route identifying service, version, and function
+   * @param arguments named arguments to pass to the remote function
+   * @param contexts  zero or more wire contexts to propagate with the invocation
    */
   public InvocationSignal (boolean inOnly, Route route, Map<String, Object> arguments, WireContext... contexts) {
 
@@ -76,9 +77,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Indicates whether the invocation expects no response.
+   * Returns {@code true} when the caller does not expect a response to this invocation.
    *
-   * @return {@code true} for one-way calls
+   * @return {@code true} for one-way (fire-and-forget) calls
    */
   @XmlElement(name = "inOnly")
   public boolean isInOnly () {
@@ -87,9 +88,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Sets the one-way flag for the invocation.
+   * Sets whether the invocation is one-way (no response expected).
    *
-   * @param inOnly {@code true} when no response is expected
+   * @param inOnly {@code true} to mark the call as one-way
    */
   public void setInOnly (boolean inOnly) {
 
@@ -97,9 +98,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Returns the target route.
+   * Returns the routing information for this invocation.
    *
-   * @return route information
+   * @return the target {@link Route}
    */
   @XmlElementRef
   public Route getRoute () {
@@ -108,9 +109,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Updates the target route for the signal.
+   * Sets the routing information for this invocation.
    *
-   * @param route new route
+   * @param route the target {@link Route}
    */
   public void setRoute (Route route) {
 
@@ -118,9 +119,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Returns the propagated wire contexts.
+   * Returns the wire contexts propagated with this invocation, or {@code null} if none were set.
    *
-   * @return array of contexts or {@code null}
+   * @return array of {@link WireContext} instances, or {@code null}
    */
   @XmlJavaTypeAdapter(WireContextXmlAdapter.class)
   @XmlElement(name = "contexts")
@@ -130,9 +131,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Sets the wire contexts associated with the invocation.
+   * Sets the wire contexts to propagate with this invocation.
    *
-   * @param contexts contexts to attach
+   * @param contexts contexts to attach to the signal
    */
   public void setContexts (WireContext[] contexts) {
 
@@ -140,9 +141,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Returns the argument payload keyed by name.
+   * Returns the map of named arguments to pass to the remote function.
    *
-   * @return argument map
+   * @return argument map keyed by parameter name
    */
   @XmlElement(name = "arguments")
   public Map<String, Object> getArguments () {
@@ -151,9 +152,9 @@ public class InvocationSignal implements Signal {
   }
 
   /**
-   * Sets the argument payload keyed by name.
+   * Sets the map of named arguments for the remote function.
    *
-   * @param arguments argument map
+   * @param arguments argument map keyed by parameter name
    */
   public void setArguments (Map<String, Object> arguments) {
 

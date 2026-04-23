@@ -38,17 +38,18 @@ import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import tools.jackson.core.io.JsonStringEncoder;
 
 /**
- * Text value implementation for the orthodox codec.
+ * Immutable {@link StringValue} implementation for the orthodox codec that stores a Java string and
+ * encodes it as a properly escaped JSON string using the Jackson {@link JsonStringEncoder}.
  */
 public class OrthodoxTextValue extends OrthodoxValue implements StringValue<OrthodoxValue> {
 
   private final String text;
 
   /**
-   * Creates a string value.
+   * Constructs a string value associated with the given factory.
    *
-   * @param factory owning factory
-   * @param text    text to store
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param text    the string to wrap; may be empty but should not be {@code null}
    */
   protected OrthodoxTextValue (OrthodoxValueFactory factory, String text) {
 
@@ -58,7 +59,9 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
   }
 
   /**
-   * @return underlying text
+   * Returns the raw wrapped string without any escaping applied.
+   *
+   * @return the original string as stored at construction
    */
   @Override
   public String asText () {
@@ -67,10 +70,11 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
   }
 
   /**
-   * Encodes the text with proper JSON escaping.
+   * Writes the JSON string representation of the text to {@code writer}, surrounding it with
+   * double-quotes and applying Jackson's JSON character escaping.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

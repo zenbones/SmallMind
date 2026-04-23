@@ -38,17 +38,32 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean producing a singleton {@link MessageEmitter} with a configurable consumer.
+ * Spring {@link FactoryBean} that constructs a singleton {@link MessageEmitter} wired with a
+ * configurable {@link Consumer}{@code <String>} message consumer.
+ *
+ * <p>The consumer is injected via {@link #setMessageConsumer(Consumer)} before the Spring
+ * container calls {@link #afterPropertiesSet()}, at which point the emitter is built. A
+ * typical use case is to supply a {@link org.smallmind.claxon.emitter.message.ScribeLoggerConsumer}
+ * as the consumer so that metric messages are routed to the application's logging framework.
  */
 public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, InitializingBean {
 
+  /**
+   * The singleton {@link MessageEmitter} produced by this factory; populated during
+   * {@link #afterPropertiesSet()}.
+   */
   private org.smallmind.claxon.emitter.message.MessageEmitter emitter;
+
+  /**
+   * The consumer to which the {@link MessageEmitter} will forward formatted metric strings.
+   */
   private Consumer<String> messageConsumer;
 
   /**
-   * Sets the consumer that will receive formatted metric messages.
+   * Sets the {@link Consumer}{@code <String>} that the produced {@link MessageEmitter} will
+   * use to dispatch formatted metric strings.
    *
-   * @param messageConsumer consumer to use
+   * @param messageConsumer the consumer to inject; must not be {@code null}
    */
   public void setMessageConsumer (Consumer<String> messageConsumer) {
 
@@ -56,7 +71,9 @@ public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, I
   }
 
   /**
-   * @return always true; emitter is a singleton
+   * Indicates that this factory always returns the same emitter instance.
+   *
+   * @return {@code true} because the produced {@link MessageEmitter} is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -65,7 +82,9 @@ public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, I
   }
 
   /**
-   * @return produced object type ({@link MessageEmitter})
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link MessageEmitter}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -74,7 +93,9 @@ public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, I
   }
 
   /**
-   * @return the configured message emitter
+   * Returns the singleton {@link MessageEmitter} built during {@link #afterPropertiesSet()}.
+   *
+   * @return the configured {@link MessageEmitter}
    */
   @Override
   public org.smallmind.claxon.emitter.message.MessageEmitter getObject () {
@@ -83,7 +104,8 @@ public class MessageEmitterFactoryBean implements FactoryBean<MessageEmitter>, I
   }
 
   /**
-   * Instantiates the emitter after properties are set.
+   * Constructs the {@link MessageEmitter} using the configured message consumer after Spring
+   * has finished injecting all values.
    */
   @Override
   public void afterPropertiesSet () {

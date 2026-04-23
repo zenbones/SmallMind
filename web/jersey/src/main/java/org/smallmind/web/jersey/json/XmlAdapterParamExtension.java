@@ -36,14 +36,15 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 /**
- * Resource configuration extension that registers {@link XmlAdapterParamConverterProvider}.
+ * Jersey resource configuration extension that registers {@link XmlAdapterParamConverterProvider} for
+ * JAXB-adapter-based parameter conversion.
  */
 public class XmlAdapterParamExtension extends PrioritizedResourceConfigExtension {
 
   /**
-   * Adds the XML adapter-based parameter converter to the Jersey configuration.
+   * Registers {@link XmlAdapterParamConverterProvider} with the supplied Jersey resource configuration.
    *
-   * @param resourceConfig Jersey resource configuration
+   * @param resourceConfig the Jersey resource configuration to extend
    */
   @Override
   public void apply (ResourceConfig resourceConfig) {

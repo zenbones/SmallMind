@@ -39,12 +39,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
- * {@link Resource} implementation that reads directly from the local filesystem.
+ * A {@link Resource} implementation that reads content directly from the local filesystem.
  */
 public class FileResource extends AbstractResource {
 
   /**
-   * @param path file system path to the target resource
+   * Constructs a {@code FileResource} for the given filesystem path.
+   *
+   * @param path absolute or relative filesystem path to the target file
    */
   public FileResource (String path) {
 
@@ -52,7 +54,9 @@ public class FileResource extends AbstractResource {
   }
 
   /**
-   * @return {@code file}
+   * Returns the scheme identifier for this resource type.
+   *
+   * @return the string {@code "file"}
    */
   public String getScheme () {
 
@@ -62,8 +66,8 @@ public class FileResource extends AbstractResource {
   /**
    * Opens the referenced file for reading.
    *
-   * @return input stream for the file contents
-   * @throws ResourceException if the file cannot be opened
+   * @return an input stream positioned at the start of the file's contents
+   * @throws ResourceException if the file cannot be opened due to an I/O error
    */
   public InputStream getInputStream ()
     throws ResourceException {

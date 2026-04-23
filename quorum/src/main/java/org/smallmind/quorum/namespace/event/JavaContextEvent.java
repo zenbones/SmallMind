@@ -36,16 +36,24 @@ import java.util.EventObject;
 import javax.naming.CommunicationException;
 
 /**
- * Event describing the closure or abort of a {@link org.smallmind.quorum.namespace.JavaContext}.
+ * Event fired by a {@link org.smallmind.quorum.namespace.PooledJavaContext} when its
+ * lifecycle changes — either because it was intentionally closed or because a backing-store
+ * communication failure forced an abort.
+ * <p>
+ * The event optionally carries the {@link CommunicationException} that triggered an abort.
+ * Use {@link #containsCommunicationException()} to distinguish a normal close (no exception)
+ * from an aborted context (exception present) without a null check.
  */
 public class JavaContextEvent extends EventObject {
 
   private final CommunicationException communicationException;
 
   /**
-   * Creates an event without an associated communication exception.
+   * Creates an event representing a normal, intentional context close with no communication
+   * error.
    *
-   * @param source context source
+   * @param source the {@link org.smallmind.quorum.namespace.PooledJavaContext} that fired
+   *               the event
    */
   public JavaContextEvent (Object source) {
 
@@ -53,10 +61,15 @@ public class JavaContextEvent extends EventObject {
   }
 
   /**
-   * Creates an event with an optional communication exception.
+   * Creates an event with an optional communication error.
+   * <p>
+   * Pass {@code null} for {@code communicationException} when constructing a normal-close
+   * event; pass the actual exception when constructing an abort event.
    *
-   * @param source                 context source
-   * @param communicationException underlying communication error, or {@code null}
+   * @param source                 the {@link org.smallmind.quorum.namespace.PooledJavaContext}
+   *                               that fired the event
+   * @param communicationException the exception that caused the context to abort, or
+   *                               {@code null} for a normal close
    */
   public JavaContextEvent (Object source, CommunicationException communicationException) {
 
@@ -66,9 +79,10 @@ public class JavaContextEvent extends EventObject {
   }
 
   /**
-   * Indicates whether the event carries a communication exception.
+   * Returns {@code true} when this event was triggered by a communication failure rather
+   * than an intentional close.
    *
-   * @return {@code true} if a communication error is present
+   * @return {@code true} if a {@link CommunicationException} is present
    */
   public boolean containsCommunicationException () {
 
@@ -76,9 +90,10 @@ public class JavaContextEvent extends EventObject {
   }
 
   /**
-   * Returns the associated communication exception, if any.
+   * Returns the communication exception that caused the context abort, or {@code null} if
+   * this is a normal-close event.
    *
-   * @return communication exception or {@code null}
+   * @return the {@link CommunicationException}, or {@code null}
    */
   public CommunicationException getCommunicationException () {
 

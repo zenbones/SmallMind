@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Leaf criterion representing a field comparison against an operand using an operator.
+ * Leaf criterion that compares a named field against an operand using a comparison operator.
  */
 @XmlRootElement(name = "field", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
@@ -57,11 +57,11 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Creates a field criterion within the default entity context.
+   * Creates a field criterion in the default entity context.
    *
    * @param name     field name
    * @param operator comparison operator
-   * @param operand  operand value
+   * @param operand  right-hand side operand
    */
   public WhereField (String name, WhereOperator operator, WhereOperand operand) {
 
@@ -71,12 +71,12 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Creates a field criterion within a specific entity alias.
+   * Creates a field criterion scoped to a specific entity.
    *
    * @param entity   entity alias
    * @param name     field name
    * @param operator comparison operator
-   * @param operand  operand value
+   * @param operand  right-hand side operand
    */
   public WhereField (String entity, String name, WhereOperator operator, WhereOperand operand) {
 
@@ -85,11 +85,11 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Convenience factory for a field in the default entity.
+   * Convenience factory for a field criterion in the default entity context.
    *
    * @param name     field name
    * @param operator comparison operator
-   * @param operand  operand value
+   * @param operand  right-hand side operand
    * @return configured field criterion
    */
   public static WhereField instance (String name, WhereOperator operator, WhereOperand operand) {
@@ -98,12 +98,12 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Convenience factory for a field in a specific entity.
+   * Convenience factory for a field criterion scoped to a specific entity.
    *
    * @param entity   entity alias
    * @param name     field name
    * @param operator comparison operator
-   * @param operand  operand value
+   * @param operand  right-hand side operand
    * @return configured field criterion
    */
   public static WhereField instance (String entity, String name, WhereOperator operator, WhereOperand operand) {
@@ -112,7 +112,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Identifies this criterion as a field comparison.
+   * Identifies this criterion as a field comparison leaf node.
    *
    * @return {@link CriterionType#FIELD}
    */
@@ -124,9 +124,9 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Returns the entity alias, if any, associated with the field.
+   * Returns the entity alias, if any.
    *
-   * @return entity alias or {@code null}
+   * @return entity alias, or {@code null} for the default entity
    */
   @XmlElement(name = "entity")
   public String getEntity () {
@@ -135,7 +135,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Sets the entity alias associated with the field.
+   * Sets the entity alias.
    *
    * @param entity entity alias
    */
@@ -166,7 +166,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Returns the operand used in the comparison.
+   * Returns the right-hand side operand for the comparison.
    *
    * @return operand value
    */
@@ -177,7 +177,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Sets the operand used in the comparison.
+   * Sets the right-hand side operand.
    *
    * @param operand operand value
    */
@@ -187,7 +187,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Returns the operator applied to the field.
+   * Returns the comparison operator applied to the field.
    *
    * @return comparison operator
    */
@@ -199,7 +199,7 @@ public class WhereField extends WhereCriterion {
   }
 
   /**
-   * Sets the operator applied to the field.
+   * Sets the comparison operator.
    *
    * @param operator comparison operator
    */

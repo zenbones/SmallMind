@@ -35,14 +35,14 @@ package org.smallmind.web.jersey.aop;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception indicating a failure while extracting or converting parameters from a {@link JsonEntity}.
+ * Runtime exception thrown when a parameter cannot be extracted or converted from a {@link JsonEntity}.
  */
 public class ParameterProcessingException extends FormattedRuntimeException {
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a formatted message.
    *
-   * @param message message template
+   * @param message printf-style message template
    * @param args    template arguments
    */
   public ParameterProcessingException (String message, Object... args) {
@@ -51,9 +51,9 @@ public class ParameterProcessingException extends FormattedRuntimeException {
   }
 
   /**
-   * Wraps an underlying cause with a generic message.
+   * Constructs the exception wrapping an underlying cause.
    *
-   * @param throwable cause of the failure
+   * @param throwable root cause of the failure
    */
   public ParameterProcessingException (Throwable throwable) {
 
@@ -61,10 +61,10 @@ public class ParameterProcessingException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs the exception with both a cause and a formatted message.
    *
-   * @param throwable cause of the failure
-   * @param message   message template
+   * @param throwable root cause of the failure
+   * @param message   printf-style message template
    * @param args      template arguments
    */
   public ParameterProcessingException (Throwable throwable, String message, Object... args) {

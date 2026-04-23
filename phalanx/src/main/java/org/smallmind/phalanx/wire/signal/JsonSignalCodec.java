@@ -40,7 +40,8 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * JSON-based implementation of {@link SignalCodec} with optional verbose logging of payloads.
+ * JSON-based {@link SignalCodec} that encodes signals as UTF-8 JSON and decodes them using
+ * {@code JsonCodec}; optionally logs raw payloads at a configurable level.
  */
 public class JsonSignalCodec implements SignalCodec {
 
@@ -48,9 +49,9 @@ public class JsonSignalCodec implements SignalCodec {
   private boolean verbose = false;
 
   /**
-   * Enables or disables verbose logging of encoded/decoded payloads.
+   * Enables or disables verbose payload logging for both encode and decode operations.
    *
-   * @param verbose {@code true} to log payloads
+   * @param verbose {@code true} to log each payload; {@code false} to suppress logging
    */
   public void setVerbose (boolean verbose) {
 
@@ -58,9 +59,9 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * Sets the log level used when verbose logging is enabled.
+   * Sets the log level at which payloads are written when verbose logging is enabled.
    *
-   * @param verboseLogLevel log level for payload output
+   * @param verboseLogLevel the desired log level (defaults to {@link Level#DEBUG})
    */
   public void setVerboseLogLevel (Level verboseLogLevel) {
 
@@ -68,7 +69,9 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code application/json} as the content type produced by this codec.
+   *
+   * @return the MIME type string {@code application/json}
    */
   @Override
   public String getContentType () {
@@ -77,7 +80,10 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * Encodes the signal to JSON bytes and optionally logs the result.
+   * Encodes {@code signal} to a JSON byte array, logging the payload if verbose mode is active.
+   *
+   * @param signal the signal to encode
+   * @return UTF-8 JSON bytes representing the signal
    */
   @Override
   public byte[] encode (Signal signal) {
@@ -92,7 +98,16 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * Decodes JSON bytes into a signal instance, with optional logging of the payload.
+   * Decodes the specified region of {@code buffer} from JSON into a signal of type {@code signalClass},
+   * logging the raw bytes if verbose mode is active.
+   *
+   * @param buffer      byte array containing the JSON payload
+   * @param offset      starting offset within {@code buffer}
+   * @param len         number of bytes to decode
+   * @param signalClass the target signal type
+   * @param <S>         the signal type parameter
+   * @return the deserialized signal instance
+   * @throws IOException if JSON parsing fails
    */
   @Override
   public <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
@@ -106,7 +121,13 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * Converts a decoded JSON value into the requested type.
+   * Converts a decoded JSON value (typically a {@code JsonNode} or {@code Map}) into an instance
+   * of {@code clazz} using {@code JsonCodec}.
+   *
+   * @param value the raw decoded value to convert
+   * @param clazz the target type
+   * @param <T>   the target type parameter
+   * @return the converted object
    */
   @Override
   public <T> T extractObject (Object value, Class<T> clazz) {
@@ -115,14 +136,15 @@ public class JsonSignalCodec implements SignalCodec {
   }
 
   /**
-   * Utility wrapper to log byte arrays as UTF-8 strings.
+   * Lazy {@code toString} wrapper that converts a byte-array slice to a UTF-8 string only when
+   * needed (e.g., when the logger actually writes a log record).
    */
   private record StringConverter(byte[] buffer, int offset, int len) {
 
     /**
-     * Wraps an entire byte array for conversion.
+     * Creates a converter that covers the entire {@code buffer}.
      *
-     * @param buffer byte array to convert
+     * @param buffer the byte array to wrap
      */
     public StringConverter (byte[] buffer) {
 
@@ -130,10 +152,10 @@ public class JsonSignalCodec implements SignalCodec {
     }
 
     /**
-     * Wraps a subsection of a byte array for conversion.
+     * Canonical record constructor; parameters are assigned by the record mechanism.
      *
      * @param buffer byte array containing the data
-     * @param offset start offset
+     * @param offset start offset within the array
      * @param len    number of bytes to include
      */
     private StringConverter {
@@ -141,7 +163,9 @@ public class JsonSignalCodec implements SignalCodec {
     }
 
     /**
-     * Returns the wrapped bytes as a UTF-8 string.
+     * Decodes the wrapped byte slice as a UTF-8 string.
+     *
+     * @return UTF-8 string representation of the wrapped bytes
      */
     @Override
     public String toString () {

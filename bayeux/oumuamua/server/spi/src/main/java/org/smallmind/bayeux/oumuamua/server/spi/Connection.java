@@ -47,18 +47,20 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 /**
- * Represents a logical connection capable of processing inbound Bayeux messages and producing packets.
+ * Logical connection through which a client exchanges Bayeux messages with the server;
+ * encapsulates session lifecycle, meta-channel routing, and packet delivery for one transport endpoint.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
  */
 public interface Connection<V extends Value<V>> {
 
   /**
-   * Processes a batch of incoming messages, routing them through the meta lifecycle and sending results to the response consumer.
+   * Processes an array of inbound messages through the full Bayeux meta lifecycle, delivering
+   * each resulting packet to {@code responseConsumer}; errors are converted to error-response packets.
    *
-   * @param server           server handling the messages
-   * @param responseConsumer callback for generated packets
-   * @param messages         incoming messages
+   * @param server           server that owns this connection
+   * @param responseConsumer callback that receives each generated response packet paired with its session
+   * @param messages         messages received from the client in one batch
    */
   default void process (Server<V> server, ResponseConsumer<V> responseConsumer, Message<V>[] messages) {
 
@@ -114,17 +116,18 @@ public interface Connection<V extends Value<V>> {
   }
 
   /**
-   * Executes the full meta cycle for a message.
+   * Updates the session, delegates to {@link #respond}, and triggers disconnect handling when
+   * the session transitions to disconnected as a result of processing.
    *
-   * @param meta    meta operation represented by the message
-   * @param route   resolved route
-   * @param server  hosting server
+   * @param meta    meta operation identified from the message channel
+   * @param route   resolved {@link Route} for the message
+   * @param server  server hosting this connection
    * @param session session associated with the message
-   * @param request the incoming message
-   * @return resulting packet or {@code null} if nothing should be sent
-   * @throws IOException          if encoding fails
-   * @throws InterruptedException if waiting for responses is interrupted
-   * @throws InvalidPathException if the route is invalid
+   * @param request inbound message being processed
+   * @return the response packet, or {@code null} if no response should be sent
+   * @throws IOException          if packet encoding fails
+   * @throws InterruptedException if the thread is interrupted while awaiting a response
+   * @throws InvalidPathException if the resolved route contains an invalid path
    */
   private Packet<V> cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws IOException, InterruptedException, InvalidPathException {
@@ -142,16 +145,17 @@ public interface Connection<V extends Value<V>> {
   }
 
   /**
-   * Routes the request through protocol handlers and aggregates the response.
+   * Submits the request packet to {@link Server#onRequest}, runs each processed message through
+   * the meta handler and {@link Server#onResponse}, and merges all response packets into one.
    *
-   * @param meta    meta operation represented by the message
-   * @param route   resolved route
-   * @param server  hosting server
+   * @param meta    meta operation identified from the message channel
+   * @param route   resolved {@link Route} for the message
+   * @param server  server hosting this connection
    * @param session session associated with the message
-   * @param request processed request message
-   * @return response packet or {@code null} when none should be returned
-   * @throws InterruptedException if waiting for responses is interrupted
-   * @throws InvalidPathException if the route is invalid
+   * @param request inbound message to process
+   * @return merged response packet, or {@code null} if {@code onRequest} suppressed the message
+   * @throws InterruptedException if the thread is interrupted while awaiting a response
+   * @throws InvalidPathException if the resolved route contains an invalid path
    */
   private Packet<V> respond (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
     throws InterruptedException, InvalidPathException {
@@ -183,62 +187,68 @@ public interface Connection<V extends Value<V>> {
   }
 
   /**
-   * @return unique identifier for this connection
+   * Returns the unique identifier assigned to this connection.
+   *
+   * @return connection identifier
    */
   String getId ();
 
   /**
-   * @return the transport backing this connection
+   * Returns the transport underlying this connection.
+   *
+   * @return transport instance used to send and receive data
    */
   Transport<V> getTransport ();
 
   /**
-   * Creates a new session associated with the connection.
+   * Creates a new server-side session to represent the client on this connection.
    *
-   * @param server hosting server
-   * @return newly created session
+   * @param server server that will own the new session
+   * @return the newly created session
    */
   Session<V> createSession (Server<V> server);
 
   /**
-   * Validates that the supplied session is compatible with this connection.
+   * Determines whether the given session is of the type expected for this connection.
    *
-   * @param session session to validate
-   * @return {@code true} when acceptable
+   * @param session session to examine
+   * @return {@code true} if the session is compatible with this connection type
    */
   boolean validateSession (Session<V> session);
 
   /**
-   * Updates session state prior to processing a request.
+   * Refreshes any connection-specific state on the session before request processing begins.
    *
    * @param session session to update
    */
   void updateSession (Session<V> session);
 
   /**
-   * Claims a session that may have been previously associated with another connection.
+   * Associates an existing session with this connection, displacing any prior association;
+   * used to support clients that reuse sessions across reconnects without re-handshaking.
    *
-   * @param session session to hijack
+   * @param session session to claim for this connection
    */
   void hijackSession (Session<V> session);
 
   /**
-   * Callback invoked when a session transitions to disconnected.
+   * Called after a session transitions to the disconnected state so the connection can
+   * perform any server-side cleanup or notification.
    *
-   * @param server  hosting server
-   * @param session disconnected session
+   * @param server  server that owns the session
+   * @param session session that has just disconnected
    */
   void onDisconnect (Server<V> server, Session<V> session);
 
   /**
-   * Performs any cleanup when the connection is being discarded.
+   * Releases any resources held by this connection when it is permanently discarded.
    */
   void onCleanup ();
 
   /**
-   * Delivers an outgoing packet to the connection.
+   * Pushes an outgoing packet to the client over this connection.
    *
-   * @param packet packet to send
+   * @param packet packet to deliver
    */
   void deliver (Packet<V> packet);
 }

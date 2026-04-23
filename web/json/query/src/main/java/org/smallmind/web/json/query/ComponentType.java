@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Enumerates basic component types for array operands.
+ * Enumerates the primitive and common object types that may appear as array operand elements.
  */
 public enum ComponentType {
 

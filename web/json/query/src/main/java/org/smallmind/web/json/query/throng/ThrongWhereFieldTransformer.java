@@ -36,14 +36,14 @@ import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
 /**
- * Translates field references into Throng {@link ThrongWherePath} instances (field-name only).
+ * Concrete {@link WhereFieldTransformer} for Throng (MongoDB) queries that resolves field references to {@link ThrongWherePath} instances.
  */
 public class ThrongWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
   /**
-   * Creates a transformer using the provided transform function.
+   * Creates a transformer backed by the given transform function.
    *
-   * @param transform function that produces a {@link ThrongWherePath} from entity/name
+   * @param transform function that produces a {@link ThrongWherePath} from an entity/name pair
    */
   public ThrongWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 

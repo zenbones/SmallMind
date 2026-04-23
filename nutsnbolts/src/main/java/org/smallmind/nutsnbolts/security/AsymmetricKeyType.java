@@ -40,24 +40,24 @@ import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 
 /**
- * Indicates whether a key is public or private and can construct keys from text using a given spec.
+ * Distinguishes between public and private asymmetric keys and provides a factory method to construct each from raw text.
  */
 public enum AsymmetricKeyType {
 
   PUBLIC {
     /**
-     * Generates a public key using the provided spec and algorithm.
+     * Constructs a public key by parsing the raw text with the given encoding and algorithm.
      *
-     * @param algorithm the asymmetric algorithm
-     * @param spec the encoding to use
-     * @param provider optional security provider (or {@link SecurityProvider#DEFAULT})
-     * @param raw raw key text
+     * @param algorithm the asymmetric algorithm associated with the key
+     * @param spec      the encoding format of the raw key text
+     * @param provider  the security provider to use, or {@link SecurityProvider#DEFAULT} for the JVM default
+     * @param raw       the raw key text in the format described by {@code spec}
      * @return the generated public key
-     * @throws IOException if the raw key cannot be parsed
-     * @throws NoSuchProviderException if the provider is unknown
-     * @throws NoSuchAlgorithmException if the algorithm is unavailable
-     * @throws InvalidKeySpecException if the spec is invalid
-     * @throws InappropriateKeySpecException if the spec is not suitable for a public key
+     * @throws IOException                   if the raw key text cannot be parsed
+     * @throws NoSuchProviderException       if the specified security provider is not registered
+     * @throws NoSuchAlgorithmException      if the algorithm is not available
+     * @throws InvalidKeySpecException       if the parsed key spec is invalid
+     * @throws InappropriateKeySpecException if the encoding is not suitable for a public key
      */
     @Override
     public Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
@@ -68,18 +68,18 @@ public enum AsymmetricKeyType {
   },
   PRIVATE {
     /**
-     * Generates a private key using the provided spec and algorithm.
+     * Constructs a private key by parsing the raw text with the given encoding and algorithm.
      *
-     * @param algorithm the asymmetric algorithm
-     * @param spec the encoding to use
-     * @param provider optional security provider (or {@link SecurityProvider#DEFAULT})
-     * @param raw raw key text
+     * @param algorithm the asymmetric algorithm associated with the key
+     * @param spec      the encoding format of the raw key text
+     * @param provider  the security provider to use, or {@link SecurityProvider#DEFAULT} for the JVM default
+     * @param raw       the raw key text in the format described by {@code spec}
      * @return the generated private key
-     * @throws IOException if the raw key cannot be parsed
-     * @throws NoSuchProviderException if the provider is unknown
-     * @throws NoSuchAlgorithmException if the algorithm is unavailable
-     * @throws InvalidKeySpecException if the spec is invalid
-     * @throws InappropriateKeySpecException if the spec is not suitable for a private key
+     * @throws IOException                   if the raw key text cannot be parsed
+     * @throws NoSuchProviderException       if the specified security provider is not registered
+     * @throws NoSuchAlgorithmException      if the algorithm is not available
+     * @throws InvalidKeySpecException       if the parsed key spec is invalid
+     * @throws InappropriateKeySpecException if the encoding is not suitable for a private key
      */
     @Override
     public Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
@@ -96,18 +96,18 @@ public enum AsymmetricKeyType {
   }
 
   /**
-   * Constructs a key of this type using the given algorithm and encoding.
+   * Constructs a key of this type from raw text using the specified algorithm and encoding.
    *
-   * @param algorithm the algorithm corresponding to the key
-   * @param spec      the key encoding format
-   * @param provider  optional security provider
-   * @param raw       raw key text in the specified format
+   * @param algorithm the algorithm corresponding to the key material
+   * @param spec      the encoding format of the supplied raw key text
+   * @param provider  the security provider to use when creating the key factory
+   * @param raw       the raw encoded key text
    * @return the generated {@link Key}
-   * @throws IOException                   if parsing fails
-   * @throws NoSuchProviderException       if the provider is unknown
-   * @throws NoSuchAlgorithmException      if the algorithm is unavailable
-   * @throws InvalidKeySpecException       if the spec is invalid
-   * @throws InappropriateKeySpecException if the spec does not match this key type
+   * @throws IOException                   if the raw key text cannot be parsed
+   * @throws NoSuchProviderException       if the specified security provider is not registered
+   * @throws NoSuchAlgorithmException      if the algorithm is not available
+   * @throws InvalidKeySpecException       if the key spec derived from the raw text is invalid
+   * @throws InappropriateKeySpecException if the encoding does not match this key type
    */
   public abstract Key constructKey (AsymmetricAlgorithm algorithm, AsymmetricKeySpec spec, SecurityProvider provider, String raw)
     throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InappropriateKeySpecException;

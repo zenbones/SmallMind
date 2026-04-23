@@ -36,18 +36,18 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Validator for {@link Sanitized} ensuring the string is non-empty and contains no disallowed characters.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link Sanitized} constraint that rejects empty strings and strings containing any character from a fixed set of illegal characters.
  */
 public class SanitizedValidator implements ConstraintValidator<Sanitized, String> {
 
   private static final String ILLEGAL_CHARACTERS = "`$%^*()+={}[]|;\"<>?";
 
   /**
-   * Checks that the string is non-empty and does not include any characters from {@link #ILLEGAL_CHARACTERS}; {@code null} is valid.
+   * Returns {@code true} if the value is {@code null}, non-empty, and contains no characters from the illegal-character set.
    *
-   * @param value   candidate string
-   * @param context validation context (unused)
-   * @return {@code true} when the value passes sanitization rules
+   * @param value   the candidate string to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or passes the sanitization rules
    */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {

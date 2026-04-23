@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Marker argument type indicating an option takes no value.
+ * Singleton argument definition representing an option that accepts no value.
  */
 public class NoneArgument extends Argument {
 
@@ -44,7 +44,9 @@ public class NoneArgument extends Argument {
   }
 
   /**
-   * @return singleton none argument instance
+   * Returns the singleton {@link NoneArgument} instance.
+   *
+   * @return shared singleton representing a no-value argument
    */
   public static NoneArgument instance () {
 
@@ -52,6 +54,8 @@ public class NoneArgument extends Argument {
   }
 
   /**
+   * Returns {@link ArgumentType#NONE}.
+   *
    * @return {@link ArgumentType#NONE}
    */
   @Override

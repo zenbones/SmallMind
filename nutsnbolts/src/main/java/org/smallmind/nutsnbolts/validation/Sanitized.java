@@ -45,7 +45,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 
 /**
- * Bean Validation constraint that ensures a string is non-empty and contains only letters, digits, hyphens, or underscores.
+ * Bean Validation constraint that requires an annotated string to be non-empty and free of illegal characters.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -54,7 +54,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 public @interface Sanitized {
 
   /**
-   * Allows multiple {@link Sanitized} annotations on the same element.
+   * Container annotation that allows multiple {@link Sanitized} constraints on the same element.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({FIELD, PARAMETER, METHOD, RECORD_COMPONENT})
@@ -62,23 +62,23 @@ public @interface Sanitized {
   @interface List {
 
     /**
-     * @return array of {@link Sanitized} constraints
+     * @return the contained {@link Sanitized} constraints
      */
     Sanitized[] value ();
   }
 
   /**
-   * @return validation message used when the value is invalid
+   * @return the constraint violation message
    */
   String message () default "Must not be empty or contain illegal characters";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return payload for Bean Validation clients
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 }

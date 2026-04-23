@@ -35,13 +35,16 @@ package org.smallmind.nutsnbolts.util;
 import java.nio.ByteBuffer;
 
 /**
- * Utilities for encoding/decoding primitive integer types to and from byte arrays using big-endian {@link ByteBuffer}.
+ * Utility methods for encoding primitive integer types to byte arrays and decoding them back,
+ * using big-endian byte order via {@link ByteBuffer}.
  */
 public class Bytes {
 
   /**
-   * @param l long value
-   * @return 8-byte array representation
+   * Encodes a {@code long} value into an 8-byte big-endian array.
+   *
+   * @param l the long value to encode
+   * @return an 8-byte array containing the big-endian representation of {@code l}
    */
   public static byte[] getBytes (long l) {
 
@@ -54,8 +57,10 @@ public class Bytes {
   }
 
   /**
-   * @param i int value
-   * @return 4-byte array representation
+   * Encodes an {@code int} value into a 4-byte big-endian array.
+   *
+   * @param i the int value to encode
+   * @return a 4-byte array containing the big-endian representation of {@code i}
    */
   public static byte[] getBytes (int i) {
 
@@ -68,8 +73,10 @@ public class Bytes {
   }
 
   /**
-   * @param s short value
-   * @return 2-byte array representation
+   * Encodes a {@code short} value into a 2-byte big-endian array.
+   *
+   * @param s the short value to encode
+   * @return a 2-byte array containing the big-endian representation of {@code s}
    */
   public static byte[] getBytes (short s) {
 
@@ -82,8 +89,10 @@ public class Bytes {
   }
 
   /**
-   * @param byteArray 8-byte array
-   * @return decoded long
+   * Decodes a {@code long} value from an 8-byte big-endian array.
+   *
+   * @param byteArray the 8-byte array to decode
+   * @return the decoded long value
    */
   public static long getLong (byte[] byteArray) {
 
@@ -94,8 +103,10 @@ public class Bytes {
   }
 
   /**
-   * @param byteArray 4-byte array
-   * @return decoded int
+   * Decodes an {@code int} value from a 4-byte big-endian array.
+   *
+   * @param byteArray the 4-byte array to decode
+   * @return the decoded int value
    */
   public static int getInt (byte[] byteArray) {
 
@@ -106,8 +117,10 @@ public class Bytes {
   }
 
   /**
-   * @param byteArray 2-byte array
-   * @return decoded short
+   * Decodes a {@code short} value from a 2-byte big-endian array.
+   *
+   * @param byteArray the 2-byte array to decode
+   * @return the decoded short value
    */
   public static short getShort (byte[] byteArray) {
 

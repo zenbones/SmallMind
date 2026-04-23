@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.aop;
 
 /**
- * Simple key/value pair representing an argument to a proxied Jersey resource method.
+ * Immutable key/value pair representing a named argument passed to a proxied Jersey resource method.
  */
 public class Argument {
 
@@ -41,10 +41,10 @@ public class Argument {
   private final Object value;
 
   /**
-   * Creates a new argument entry.
+   * Constructs a named argument.
    *
-   * @param key   identifier for the parameter
-   * @param value parameter value
+   * @param key   parameter name or identifier
+   * @param value argument value
    */
   public Argument (String key, Object value) {
 
@@ -53,9 +53,9 @@ public class Argument {
   }
 
   /**
-   * Returns the argument key.
+   * Returns the parameter name.
    *
-   * @return parameter name or identifier
+   * @return parameter key
    */
   public String getKey () {
 
@@ -63,9 +63,9 @@ public class Argument {
   }
 
   /**
-   * Returns the argument value.
+   * Returns the parameter value.
    *
-   * @return parameter value
+   * @return argument value
    */
   public Object getValue () {
 

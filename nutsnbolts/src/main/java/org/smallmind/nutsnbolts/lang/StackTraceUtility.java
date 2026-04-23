@@ -33,16 +33,17 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Utility helpers for rendering {@link Throwable} stack traces to strings or arrays while
- * collapsing repeated frames across causes in a human-readable format.
+ * Static helpers that render a {@link Throwable} and its cause chain into either a string or a
+ * line array, collapsing repeated frames across causes in the same style as the JDK.
  */
 public class StackTraceUtility {
 
   /**
-   * Returns a stack trace rendered into an array of lines.
+   * Renders the full stack trace of the given throwable, including its cause chain, into an array
+   * of individual text lines.
    *
-   * @param throwable the throwable whose trace should be rendered
-   * @return stack trace lines
+   * @param throwable the throwable to render
+   * @return an array of lines representing the stack trace
    */
   public static String[] obtainStackTraceAsArray (Throwable throwable) {
 
@@ -50,10 +51,11 @@ public class StackTraceUtility {
   }
 
   /**
-   * Returns a stack trace rendered into a single string with newline separators.
+   * Renders the full stack trace of the given throwable, including its cause chain, into a single
+   * string with each line separated by the platform line separator.
    *
-   * @param throwable the throwable whose trace should be rendered
-   * @return stack trace as text
+   * @param throwable the throwable to render
+   * @return the stack trace as a multi-line string
    */
   public static String obtainStackTraceAsString (Throwable throwable) {
 
@@ -61,12 +63,13 @@ public class StackTraceUtility {
   }
 
   /**
-   * Renders a stack trace using the supplied accumulator implementation.
+   * Renders the throwable and its full cause chain into the given accumulator, collapsing frames
+   * that repeat from the enclosing cause with a "{@code ... N more}" summary.
    *
-   * @param accumulator the accumulator that collects the trace lines
-   * @param throwable   the throwable to render
-   * @param <S>         accumulator type
-   * @return the populated accumulator
+   * @param accumulator the accumulator that receives each rendered line
+   * @param throwable   the throwable whose trace is to be rendered
+   * @param <S>         the concrete accumulator type
+   * @return the same accumulator after all lines have been appended
    */
   private static <S extends StackTraceAccumulator> S obtainStackTrace (S accumulator, Throwable throwable) {
 
@@ -109,11 +112,13 @@ public class StackTraceUtility {
   }
 
   /**
-   * Identifies repeated stack frames between the current element and a previous trace.
+   * Searches {@code prevStackTrace} for {@code singleElement} and, if found, returns the number of
+   * frames that remain from that position to the end of the previous trace; returns {@code -1} if
+   * no match is found.
    *
-   * @param singleElement  the current stack frame
-   * @param prevStackTrace the previous stack trace to compare against
-   * @return the number of repeated frames from the previous trace, or {@code -1} if none
+   * @param singleElement  the frame from the current throwable being checked
+   * @param prevStackTrace the stack trace of the enclosing cause
+   * @return the count of repeated trailing frames, or {@code -1} if this element is not repeated
    */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 

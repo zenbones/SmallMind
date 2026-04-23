@@ -33,29 +33,32 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Abstraction for a service bound to a response transport.
+ * Represents a service implementation bound to a {@link ResponseTransport}, providing the
+ * transport with the metadata and back-channel it needs to route inbound requests and return
+ * results.
  */
 public interface WiredService {
 
   /**
-   * Returns the service version.
+   * Returns the version number of the service implementation, used to match versioned inbound requests.
    *
-   * @return version number
+   * @return service version number
    */
   int getVersion ();
 
   /**
-   * Returns the logical service name.
+   * Returns the logical name of the service, used as a routing key for inbound requests.
    *
-   * @return service name
+   * @return logical service name
    */
   String getServiceName ();
 
   /**
-   * Injects the response transport used to send results.
+   * Provides the service with the {@link ResponseTransport} it should use to send invocation
+   * results back to callers.
    *
-   * @param responseTransport transport to use
-   * @throws Exception if initialization fails
+   * @param responseTransport transport through which results are returned
+   * @throws Exception if the transport cannot be associated with this service
    */
   void setResponseTransport (ResponseTransport responseTransport)
     throws Exception;

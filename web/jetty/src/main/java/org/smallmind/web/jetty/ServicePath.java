@@ -38,21 +38,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a Spring bean as a SOAP web service and supplies its publication details.
+ * Marks a Spring bean as a SOAP web service endpoint and supplies the path and context under which it should be published.
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServicePath {
 
   /**
-   * The relative URL path under which the SOAP endpoint is exposed.
+   * The relative URL path at which the SOAP endpoint is exposed.
    *
    * @return the service URI path segment
    */
   String value ();
 
   /**
-   * The Jetty context path to which this service belongs.
+   * The Jetty application context path that owns this service.
    *
    * @return the owning context path
    */

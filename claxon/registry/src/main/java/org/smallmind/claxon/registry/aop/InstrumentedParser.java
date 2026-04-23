@@ -36,19 +36,33 @@ import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 /**
- * Parses JSON configuration into a meter builder for AOP instrumentation.
+ * Strategy interface that converts a JSON configuration string into a
+ * {@link MeterBuilder} for use by the {@link InstrumentedAspect}.
  *
- * @param <M> meter type
+ * <p>Implementations are instantiated by the aspect via their public no-argument constructor
+ * on each intercepted invocation, so they must be stateless (or safe for repeated single-use
+ * construction). The {@link #parse(String)} method receives the literal value of
+ * {@link Instrumented#json()} and is responsible for deserialising it into whatever builder
+ * parameters the target meter type requires.</p>
+ *
+ * <p>This interface is marked {@link FunctionalInterface} and can therefore be implemented as
+ * a lambda or method reference where appropriate.</p>
+ *
+ * @param <M> the concrete {@link Meter} type produced by the builder returned from
+ *            {@link #parse(String)}
  */
 @FunctionalInterface
 public interface InstrumentedParser<M extends Meter> {
 
   /**
-   * Parses the JSON representation and produces a meter builder.
+   * Parses {@code json} and returns a fully configured {@link MeterBuilder} ready to construct
+   * a meter of type {@code M}.
    *
-   * @param json JSON configuration
-   * @return configured meter builder
-   * @throws Exception on parse errors
+   * @param json the JSON string from {@link Instrumented#json()}; may be {@code "{}"} for
+   *             parsers that require no configuration
+   * @return a non-{@code null} {@link MeterBuilder} configured according to {@code json}
+   * @throws Exception if {@code json} cannot be parsed or is missing required fields;
+   *                   the aspect will propagate this as an unchecked {@link InstrumentationException}
    */
   MeterBuilder<M> parse (String json)
     throws Exception;

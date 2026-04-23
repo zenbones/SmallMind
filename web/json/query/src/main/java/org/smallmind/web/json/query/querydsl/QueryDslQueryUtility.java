@@ -58,14 +58,14 @@ import org.smallmind.web.json.query.WherePath;
 import org.smallmind.web.json.query.WildcardUtility;
 
 /**
- * Utility for translating JSON where/sort structures into QueryDSL predicates and order specifiers.
+ * Translates JSON where/sort structures into QueryDSL predicates and order specifiers.
  */
 public class QueryDslQueryUtility {
 
   /**
-   * Translates a {@link Where} into a QueryDSL predicate product.
+   * Converts a {@link Where} clause into a QueryDSL predicate product.
    *
-   * @param where                     where clause
+   * @param where                     where clause to translate
    * @param fieldTransformer          transformer that resolves field names to QueryDSL paths
    * @param allowNonTerminalWildcards whether wildcards may appear mid-string in LIKE patterns
    * @return product containing roots and predicate, or {@link NoneProduct} if no criteria
@@ -90,13 +90,13 @@ public class QueryDslQueryUtility {
   }
 
   /**
-   * Recursively walks conjunctions to build nested QueryDSL predicates.
+   * Recursively walks a conjunction node to build a composed QueryDSL predicate.
    *
    * @param rootSet                   accumulator for discovered QueryDSL roots
-   * @param whereConjunction          conjunction to translate
-   * @param fieldTransformer          field transformer for path resolution
+   * @param whereConjunction          conjunction node to translate
+   * @param fieldTransformer          transformer for resolving field paths
    * @param allowNonTerminalWildcards whether non-terminal wildcards are permitted in LIKE patterns
-   * @return composed predicate or {@code null} if the conjunction has no effective criteria
+   * @return composed predicate, or {@code null} if the conjunction has no effective criteria
    */
   private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -152,13 +152,13 @@ public class QueryDslQueryUtility {
   }
 
   /**
-   * Translates a single field criterion into a QueryDSL predicate, adding its root to the root set.
+   * Translates a single {@link WhereField} criterion into a QueryDSL predicate, registering its root.
    *
    * @param rootSet                   accumulator for discovered QueryDSL roots
    * @param whereField                field criterion to translate
-   * @param fieldTransformer          field transformer for path resolution
+   * @param fieldTransformer          transformer for resolving field paths
    * @param allowNonTerminalWildcards whether non-terminal wildcards are permitted in LIKE patterns
-   * @return predicate for the field or {@code null} when an IN clause is empty
+   * @return predicate for the field, or {@code null} when an IN clause has an empty array
    */
   private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -213,9 +213,9 @@ public class QueryDslQueryUtility {
   }
 
   /**
-   * Translates a {@link Sort} into a QueryDSL product of order specifiers.
+   * Converts a {@link Sort} definition into a QueryDSL product of order specifiers.
    *
-   * @param sort             sort definition
+   * @param sort             sort definition to translate
    * @param fieldTransformer transformer that resolves field names to QueryDSL paths
    * @return product containing roots and order specifiers, or {@link NoneProduct} when no sort is provided
    */

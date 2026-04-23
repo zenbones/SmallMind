@@ -33,7 +33,10 @@
 package org.smallmind.phalanx.wire.transport.jms;
 
 /**
- * Configuration for handling JMS reconnection attempts after failures.
+ * Configuration bean that governs how a {@link ConnectionManager} reacts to JMS provider failures.
+ *
+ * <p>The policy defines the maximum number of reconnection attempts (negative means unlimited)
+ * and the delay between consecutive attempts.  Defaults are unlimited attempts and a 500 ms delay.
  */
 public class ReconnectionPolicy {
 
@@ -41,9 +44,9 @@ public class ReconnectionPolicy {
   private int reconnectionAttempts = -1;
 
   /**
-   * Returns the maximum number of reconnection attempts (-1 for unlimited).
+   * Returns the maximum number of reconnection attempts.  A negative value means unlimited.
    *
-   * @return attempt count
+   * @return maximum reconnection attempt count, or a negative integer for unlimited
    */
   public int getReconnectionAttempts () {
 
@@ -51,9 +54,9 @@ public class ReconnectionPolicy {
   }
 
   /**
-   * Sets the maximum reconnection attempts (-1 for unlimited).
+   * Sets the maximum number of reconnection attempts.  Use a negative value for unlimited retries.
    *
-   * @param reconnectionAttempts attempt count
+   * @param reconnectionAttempts maximum attempt count, or a negative integer for unlimited
    */
   public void setReconnectionAttempts (int reconnectionAttempts) {
 
@@ -61,9 +64,9 @@ public class ReconnectionPolicy {
   }
 
   /**
-   * Returns the delay between reconnection attempts in milliseconds.
+   * Returns the delay between consecutive reconnection attempts in milliseconds.
    *
-   * @return delay in ms
+   * @return delay in milliseconds
    */
   public long getReconnectionDelayMilliseconds () {
 
@@ -71,9 +74,9 @@ public class ReconnectionPolicy {
   }
 
   /**
-   * Sets the delay between reconnection attempts in milliseconds.
+   * Sets the delay in milliseconds between consecutive reconnection attempts.
    *
-   * @param reconnectionDelayMilliseconds delay in ms
+   * @param reconnectionDelayMilliseconds delay in milliseconds; must be non-negative
    */
   public void setReconnectionDelayMilliseconds (long reconnectionDelayMilliseconds) {
 

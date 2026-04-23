@@ -41,6 +41,8 @@ import com.rabbitmq.client.Channel;
 public class ClassicQueueContractor implements QueueContractor {
 
   /**
+   * Returns the queue type declared by this contractor.
+   *
    * @return {@link QueueType#CLASSIC}.
    */
   @Override

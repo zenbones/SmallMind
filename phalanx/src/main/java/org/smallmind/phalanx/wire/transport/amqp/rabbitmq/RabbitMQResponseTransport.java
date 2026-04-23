@@ -63,21 +63,23 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
   /**
-   * @param rabbitMQConnector            connector for creating channels.
-   * @param enduringQueueContractor      contractor for durable queues (talk).
-   * @param ephemeralQueueContractor     contractor for ephemeral queues (shout/whisper).
-   * @param nameConfiguration            exchange/queue naming scheme.
-   * @param workerClass                  worker implementation for invocation handling.
-   * @param signalCodec                  codec for serialization.
-   * @param serviceGroup                 service group name used in routing keys.
-   * @param clusterSize                  number of routers to create.
-   * @param concurrencyLimit             worker concurrency limit.
+   * Creates a response transport, wires request routers, and starts the worker pool.
+   *
+   * @param rabbitMQConnector            connector for creating AMQP channels.
+   * @param enduringQueueContractor      contractor for durable talk queues.
+   * @param ephemeralQueueContractor     contractor for ephemeral shout and whisper queues.
+   * @param nameConfiguration            exchange and queue naming scheme.
+   * @param workerClass                  worker class used for invocation handling.
+   * @param signalCodec                  codec for serializing and deserializing signals.
+   * @param serviceGroup                 service group name embedded in AMQP routing keys.
+   * @param clusterSize                  number of response routers to create.
+   * @param concurrencyLimit             maximum number of concurrent invocation workers.
    * @param messageTTLSeconds            message time-to-live in seconds.
-   * @param autoAcknowledge              whether consumers should auto-ack.
-   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
+   * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
    * @throws IOException          if router initialization fails.
-   * @throws InterruptedException if initialization is interrupted.
-   * @throws TimeoutException     if initialization times out.
+   * @throws InterruptedException if startup is interrupted.
+   * @throws TimeoutException     if router initialization times out.
    */
   public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, InterruptedException, TimeoutException {

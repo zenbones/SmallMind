@@ -35,14 +35,23 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when a test completes successfully.
+ * Event fired when a test method completes without throwing any exception.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.TestRunner} immediately after the reflective
+ * invocation of the test method returns normally. The elapsed time records the wall-clock
+ * duration of the test body only (before-test and after-test hooks are not included).
+ *
+ * @see FailureSleuthEvent
+ * @see ErrorSleuthEvent
  */
 public class SuccessSleuthEvent extends TimedSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
+   * Constructs a success event for the given test.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test method that passed; must not be {@code null}
+   * @param elapsed    wall-clock duration of the test method invocation in milliseconds; non-negative
    */
   public SuccessSleuthEvent (String className, String methodName, long elapsed) {
 
@@ -50,6 +59,8 @@ public class SuccessSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#SUCCESS}.
+   *
    * @return {@link SleuthEventType#SUCCESS}
    */
   @Override
@@ -59,7 +70,9 @@ public class SuccessSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
-   * @return bright green to indicate success
+   * Returns bright green, used to make passing tests visually distinct on the console.
+   *
+   * @return {@link AnsiColor#BRIGHT_GREEN}
    */
   @Override
   public AnsiColor getColor () {

@@ -37,14 +37,16 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.springframework.web.context.ContextLoaderListener;
 
 /**
- * Ensures a {@link PerApplicationContext} is available in the servlet context before delegating to Spring.
+ * Spring {@link ContextLoaderListener} extension that installs a {@link PerApplicationContext} as a servlet context
+ * attribute before delegating to the standard Spring context initialization.
  */
 public class WebContextLoaderListener extends ContextLoaderListener {
 
   /**
-   * Initializes the per-application context and then the Spring web context.
+   * Registers a new {@link PerApplicationContext} in the servlet context under its class name as the attribute key
+   * if one has not already been set, then delegates to Spring's standard context initialization.
    *
-   * @param servletContextEvent the servlet context event
+   * @param servletContextEvent the event carrying the servlet context being initialized
    */
   public void contextInitialized (ServletContextEvent servletContextEvent) {
 

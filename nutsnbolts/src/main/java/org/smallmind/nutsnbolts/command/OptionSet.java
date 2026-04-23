@@ -37,7 +37,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Captures parsed options and their associated arguments.
+ * Holds the options and their associated argument values produced by {@link org.smallmind.nutsnbolts.command.CommandLineParser}.
  */
 public class OptionSet {
 
@@ -45,9 +45,9 @@ public class OptionSet {
   private final LinkedList<String> remainingList = new LinkedList<>();
 
   /**
-   * Adds an option without arguments if it has not been recorded yet.
+   * Records an option that carries no arguments, doing nothing if the option is already present.
    *
-   * @param option option name or flag (as a string)
+   * @param option option name or single-character flag as a string key
    */
   public synchronized void addOption (String option) {
 
@@ -57,10 +57,10 @@ public class OptionSet {
   }
 
   /**
-   * Adds an argument to an option, creating the option entry if needed.
+   * Appends an argument value to an option, creating the option entry if it does not yet exist.
    *
-   * @param option   option name or flag
-   * @param argument argument value
+   * @param option   option name or single-character flag as a string key
+   * @param argument argument value to associate with the option
    */
   public synchronized void addArgument (String option, String argument) {
 
@@ -69,9 +69,9 @@ public class OptionSet {
   }
 
   /**
-   * Records an undeclared trailing argument.
+   * Stores a non-option token that was not associated with any declared option.
    *
-   * @param argument free-form argument
+   * @param argument undeclared trailing token to preserve
    */
   public synchronized void addRemaining (String argument) {
 
@@ -79,7 +79,9 @@ public class OptionSet {
   }
 
   /**
-   * @return remaining undeclared arguments in encounter order
+   * Returns all undeclared trailing arguments in the order they were encountered.
+   *
+   * @return array of undeclared argument tokens, empty if none were recorded
    */
   public synchronized String[] getRemaining () {
 
@@ -87,7 +89,9 @@ public class OptionSet {
   }
 
   /**
-   * @return options that were provided
+   * Returns the keys of all options that were parsed, each representing either a long name or a single-character flag.
+   *
+   * @return array of option keys in no guaranteed order
    */
   public synchronized String[] getOptions () {
 
@@ -95,7 +99,10 @@ public class OptionSet {
   }
 
   /**
-   * Tests whether an option with the given long name was provided.
+   * Tests whether an option identified by its long name was parsed.
+   *
+   * @param name long option name to look up
+   * @return {@code true} if the option was present in the parsed arguments
    */
   public synchronized boolean containsOption (String name) {
 
@@ -103,7 +110,10 @@ public class OptionSet {
   }
 
   /**
-   * Tests whether an option with the given flag was provided.
+   * Tests whether an option identified by its single-character flag was parsed.
+   *
+   * @param flag single-character flag to look up
+   * @return {@code true} if the option was present in the parsed arguments
    */
   public synchronized boolean containsOption (Character flag) {
 
@@ -111,11 +121,11 @@ public class OptionSet {
   }
 
   /**
-   * Tests whether an option was provided by name or flag.
+   * Tests whether an option was parsed, checking both the long name and the single-character flag.
    *
-   * @param name long option name
-   * @param flag single-character flag
-   * @return {@code true} if the option exists
+   * @param name long option name; checked first when non-{@code null}
+   * @param flag single-character flag; checked when the name produces no match
+   * @return {@code true} if either the name or the flag is found
    */
   public synchronized boolean containsOption (String name, Character flag) {
 
@@ -123,7 +133,10 @@ public class OptionSet {
   }
 
   /**
-   * Returns the first argument for a named option, or {@code null} if none exist.
+   * Returns the first argument value for the option identified by its long name, or {@code null} if the option was not parsed or has no arguments.
+   *
+   * @param name long option name to look up
+   * @return first argument value, or {@code null} if absent
    */
   public synchronized String getArgument (String name) {
 
@@ -131,7 +144,10 @@ public class OptionSet {
   }
 
   /**
-   * Returns the first argument for a flagged option, or {@code null} if none exist.
+   * Returns the first argument value for the option identified by its single-character flag, or {@code null} if the option was not parsed or has no arguments.
+   *
+   * @param flag single-character flag to look up
+   * @return first argument value, or {@code null} if absent
    */
   public synchronized String getArgument (char flag) {
 
@@ -139,11 +155,11 @@ public class OptionSet {
   }
 
   /**
-   * Retrieves the first argument for an option referenced by name or flag.
+   * Retrieves the first argument value for an option referenced by either its long name or its single-character flag.
    *
-   * @param name long option name
-   * @param flag single-character flag
-   * @return first argument value or {@code null} if absent
+   * @param name long option name; checked first when non-{@code null}
+   * @param flag single-character flag; used as fallback when name produces no match
+   * @return first argument value, or {@code null} if the option was not present or carries no arguments
    */
   public synchronized String getArgument (String name, Character flag) {
 
@@ -163,7 +179,10 @@ public class OptionSet {
   }
 
   /**
-   * Returns all arguments for a named option or {@code null} if the option was not provided.
+   * Returns all argument values for the option identified by its long name, or {@code null} if the option was not parsed.
+   *
+   * @param name long option name to look up
+   * @return array of all argument values, or {@code null} if the option was absent
    */
   public synchronized String[] getArguments (String name) {
 
@@ -171,7 +190,10 @@ public class OptionSet {
   }
 
   /**
-   * Returns all arguments for a flagged option or {@code null} if the option was not provided.
+   * Returns all argument values for the option identified by its single-character flag, or {@code null} if the option was not parsed.
+   *
+   * @param flag single-character flag to look up
+   * @return array of all argument values, or {@code null} if the option was absent
    */
   public synchronized String[] getArguments (char flag) {
 
@@ -179,11 +201,11 @@ public class OptionSet {
   }
 
   /**
-   * Retrieves all arguments for an option referenced by name or flag.
+   * Retrieves all argument values for an option referenced by either its long name or its single-character flag.
    *
-   * @param name long option name
-   * @param flag single-character flag
-   * @return array of arguments or {@code null} if the option was not present
+   * @param name long option name; checked first when non-{@code null}
+   * @param flag single-character flag; used as fallback when name produces no match
+   * @return array of all argument values, or {@code null} if the option was not present
    */
   public synchronized String[] getArguments (String name, Character flag) {
 
@@ -203,7 +225,9 @@ public class OptionSet {
   }
 
   /**
-   * Formats the options and their arguments for debugging.
+   * Returns a human-readable representation of all parsed options and their argument values, useful for debugging.
+   *
+   * @return bracketed string listing each option and its associated arguments
    */
   public String toString () {
 

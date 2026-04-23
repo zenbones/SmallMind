@@ -35,12 +35,13 @@ package org.smallmind.scribe.pen;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Checked exception representing failures within the logging subsystem.
+ * A checked exception that represents a recoverable or expected failure within the Scribe logging
+ * subsystem, such as a configuration error or an invalid logger name pattern.
  */
 public class LoggerException extends FormattedException {
 
   /**
-   * Creates an exception without message or cause.
+   * Constructs an exception with no message and no cause.
    */
   public LoggerException () {
 
@@ -48,10 +49,10 @@ public class LoggerException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Constructs an exception with a formatted message and no cause.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message a format string describing the failure
+   * @param args    arguments to substitute into {@code message}
    */
   public LoggerException (String message, Object... args) {
 
@@ -59,11 +60,11 @@ public class LoggerException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Constructs an exception with a cause and a formatted message.
    *
-   * @param throwable cause of the failure
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable the underlying exception that caused this failure
+   * @param message   a format string describing the failure
+   * @param args      arguments to substitute into {@code message}
    */
   public LoggerException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +72,9 @@ public class LoggerException extends FormattedException {
   }
 
   /**
-   * Creates an exception with only a cause.
+   * Constructs an exception with a cause and no additional message.
    *
-   * @param exception underlying exception
+   * @param exception the underlying exception that caused this failure
    */
   public LoggerException (Throwable exception) {
 

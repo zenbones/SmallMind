@@ -43,7 +43,8 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
- * Lightweight jar cache that stores compressed entry data from an embedded jar to accelerate repeat lookups.
+ * In-memory snapshot of a nested jar whose entries are held in deflated form so that subsequent reads of the same
+ * bundled library do not need to reopen the enclosing archive.
  */
 public class CachedJarFile {
 
@@ -51,11 +52,11 @@ public class CachedJarFile {
   private final String entryName;
 
   /**
-   * Reads each entry from the supplied inner jar stream and stores a compressed copy for later retrieval.
+   * Drains the supplied jar stream and stores each entry's payload as a deflated byte array keyed by entry name.
    *
-   * @param entryName      name of the enclosing jar entry being cached
-   * @param jarInputStream stream of the nested jar content positioned at its first entry
-   * @throws IOException if any entry cannot be read or buffered
+   * @param entryName      identifier of the outer jar entry that provided this cache, preserved for diagnostic lookups
+   * @param jarInputStream open stream over the nested jar; read to exhaustion by this constructor
+   * @throws IOException if an entry cannot be read or its bytes cannot be written to the internal buffer
    */
   public CachedJarFile (String entryName, JarInputStream jarInputStream)
     throws IOException {
@@ -82,7 +83,9 @@ public class CachedJarFile {
   }
 
   /**
-   * @return the name of the jar entry that produced this cache
+   * Returns the identifier of the outer jar entry that originally produced this cache.
+   *
+   * @return the outer entry name supplied at construction
    */
   public String getEntryName () {
 
@@ -90,10 +93,11 @@ public class CachedJarFile {
   }
 
   /**
-   * Returns an {@link InputStream} for a previously cached entry or {@code null} if the name is unknown.
+   * Opens a fresh inflating stream over the bytes held for the requested entry.
    *
-   * @param name the inner entry name to resolve
-   * @return an inflated stream for the cached entry or {@code null} when not cached
+   * @param name path of the entry to resolve, as it appeared inside the nested jar
+   * @return an inflating {@link InputStream} positioned at the start of the decompressed entry, or {@code null}
+   * when no entry with that name was captured
    */
   public InputStream getInputStream (String name) {
 

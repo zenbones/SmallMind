@@ -33,17 +33,17 @@
 package org.smallmind.web.json.query;
 
 /**
- * Describes a required field relationship for dependency rules.
+ * Annotation element within {@link Dependent} naming the field that must also be present when the dependent field appears.
  */
 public @interface Requirement {
 
   /**
-   * @return entity alias for the required field (optional)
+   * @return optional entity alias scoping the required field
    */
   String entity () default "";
 
   /**
-   * @return name of the required field
+   * @return name of the field whose presence is required
    */
   String field ();
 }

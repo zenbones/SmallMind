@@ -33,7 +33,7 @@
 package org.smallmind.persistence.cache;
 
 /**
- * Encapsulates the components of a vector key: namespace and indices.
+ * Value object holding the namespace and index set that together define a cache vector key.
  */
 public class VectorArtifact {
 
@@ -41,8 +41,10 @@ public class VectorArtifact {
   private final VectorIndex[] vectorIndices;
 
   /**
-   * @param vectorNamespace namespace for the vector (often derived from annotation)
-   * @param vectorIndices   indices composing the vector key
+   * Constructs an artifact with the given namespace and index array.
+   *
+   * @param vectorNamespace namespace string that scopes the vector, typically derived from a cache annotation
+   * @param vectorIndices   ordered array of index values used to compose the vector key
    */
   public VectorArtifact (String vectorNamespace, VectorIndex[] vectorIndices) {
 
@@ -51,7 +53,9 @@ public class VectorArtifact {
   }
 
   /**
-   * @return vector namespace
+   * Returns the namespace that scopes this vector.
+   *
+   * @return vector namespace string
    */
   public String getVectorNamespace () {
 
@@ -59,7 +63,9 @@ public class VectorArtifact {
   }
 
   /**
-   * @return indices used to build the key
+   * Returns the array of index values used to construct the vector key.
+   *
+   * @return array of {@link VectorIndex} instances
    */
   public VectorIndex[] getVectorIndices () {
 

@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Indicates which axis a measurement or alignment operation applies to.
+ * Identifies the axis along which a measurement, alignment, or layout operation is applied.
  */
 public enum Bias {
 

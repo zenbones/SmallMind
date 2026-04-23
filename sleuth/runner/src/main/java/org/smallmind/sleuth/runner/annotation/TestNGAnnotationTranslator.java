@@ -41,15 +41,34 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Translates TestNG annotations into Sleuth {@link AnnotationDictionary} metadata.
+ * {@link AnnotationTranslator} that maps TestNG annotations onto Sleuth's lifecycle model.
+ * <p>
+ * The following conversions are applied:
+ * <ul>
+ *   <li>Class-level {@code @Test} → {@link Suite} (via {@link SuiteLiteral})</li>
+ *   <li>{@code @BeforeClass} → {@link BeforeSuite} (via {@link BeforeSuiteLiteral})</li>
+ *   <li>{@code @AfterClass}  → {@link AfterSuite}  (via {@link AfterSuiteLiteral})</li>
+ *   <li>{@code @BeforeMethod} → {@link BeforeTest} (via {@link BeforeTestLiteral})</li>
+ *   <li>{@code @AfterMethod}  → {@link AfterTest}  (via {@link AfterTestLiteral})</li>
+ *   <li>Method-level {@code @Test} → {@link org.smallmind.sleuth.runner.annotation.Test}
+ *       (via {@link TestLiteral})</li>
+ * </ul>
+ * Group, priority, dependency, and enabled state are forwarded from the TestNG annotation where
+ * TestNG provides equivalent attributes; attributes with no TestNG equivalent are left at defaults.
+ *
+ * @see AnnotationTranslator
+ * @see NativeAnnotationTranslator
  */
 public class TestNGAnnotationTranslator implements AnnotationTranslator {
 
   /**
-   * Maps TestNG suite/test annotations onto Sleuth equivalents.
+   * Scans the given class for TestNG annotations and translates them into a Sleuth dictionary.
+   * <p>
+   * An empty (un-implemented) dictionary is returned when no TestNG annotations are found.
+   * This method never returns {@code null}.
    *
-   * @param clazz class to inspect
-   * @return populated annotation dictionary (may be empty)
+   * @param clazz class to inspect; must not be {@code null}
+   * @return populated or empty annotation dictionary; never {@code null}
    */
   @Override
   public AnnotationDictionary process (Class<?> clazz) {

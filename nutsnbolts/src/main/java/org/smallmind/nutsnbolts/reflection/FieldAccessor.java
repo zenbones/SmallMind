@@ -38,7 +38,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 /**
- * Convenient wrapper for a field and its associated getter/setter, if present.
+ * Bundles a {@link Field} with its optional getter and setter methods so that values can be read and
+ * written through bean-style accessors when they exist, falling back to direct field access otherwise.
  */
 public class FieldAccessor {
 
@@ -47,11 +48,11 @@ public class FieldAccessor {
   private final Field field;
 
   /**
-   * Creates an accessor for the supplied field and companion methods.
+   * Constructs an accessor for the given field with optional companion getter and setter methods.
    *
-   * @param field        the backing field
-   * @param getterMethod the resolved getter, or {@code null} if access should go through the field
-   * @param setterMethod the resolved setter, or {@code null} if access should go through the field
+   * @param field        the reflected field this accessor wraps
+   * @param getterMethod the getter method for this field, or {@code null} to use direct field access for reads
+   * @param setterMethod the setter method for this field, or {@code null} to use direct field access for writes
    */
   public FieldAccessor (Field field, Method getterMethod, Method setterMethod) {
 
@@ -61,7 +62,9 @@ public class FieldAccessor {
   }
 
   /**
-   * @return the field name
+   * Returns the name of the underlying field.
+   *
+   * @return the field name as declared in source code
    */
   public String getName () {
 
@@ -69,7 +72,9 @@ public class FieldAccessor {
   }
 
   /**
-   * @return the raw field type
+   * Returns the erased type of the underlying field.
+   *
+   * @return the raw {@link Class} of the field
    */
   public Class<?> getType () {
 
@@ -77,7 +82,9 @@ public class FieldAccessor {
   }
 
   /**
-   * @return the generic field type
+   * Returns the generic type of the underlying field, preserving type parameter information.
+   *
+   * @return the generic {@link Type} of the field
    */
   public Type getGenericType () {
 
@@ -85,7 +92,9 @@ public class FieldAccessor {
   }
 
   /**
-   * @return the backing {@link Field}
+   * Returns the reflected {@link Field} this accessor wraps.
+   *
+   * @return the underlying {@link Field} object
    */
   public Field getField () {
 
@@ -93,12 +102,13 @@ public class FieldAccessor {
   }
 
   /**
-   * Reads the field value from the supplied target via getter when possible.
+   * Reads this field's value from the given target, using the getter method when one is available
+   * and falling back to direct field access otherwise.
    *
-   * @param target the instance to read from
-   * @return the field value
-   * @throws IllegalAccessException    if access to the field or method is denied
-   * @throws InvocationTargetException if the getter throws an exception
+   * @param target the object instance from which the value should be read
+   * @return the current field value
+   * @throws IllegalAccessException    if the getter or field is not accessible
+   * @throws InvocationTargetException if the getter method throws an exception
    */
   public Object get (Object target)
     throws IllegalAccessException, InvocationTargetException {
@@ -107,12 +117,13 @@ public class FieldAccessor {
   }
 
   /**
-   * Writes a value to the supplied target, preferring the setter when available.
+   * Writes a value to this field on the given target, using the setter method when one is available
+   * and falling back to direct field assignment otherwise.
    *
-   * @param target the instance to mutate
-   * @param value  the value to apply
-   * @throws IllegalAccessException    if access to the field or method is denied
-   * @throws InvocationTargetException if the setter throws an exception
+   * @param target the object instance whose field value should be updated
+   * @param value  the new value to assign
+   * @throws IllegalAccessException    if the setter or field is not accessible
+   * @throws InvocationTargetException if the setter method throws an exception
    */
   public void set (Object target, Object value)
     throws IllegalAccessException, InvocationTargetException {

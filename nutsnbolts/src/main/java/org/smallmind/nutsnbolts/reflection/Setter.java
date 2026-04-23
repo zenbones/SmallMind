@@ -37,7 +37,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * Represents a JavaBean-style setter method and exposes its attribute metadata.
+ * Wraps a JavaBean-style setter method, parsing its attribute name and validating its signature
+ * on construction so callers can safely invoke it and query its metadata.
  */
 public class Setter implements Serializable {
 
@@ -46,10 +47,12 @@ public class Setter implements Serializable {
   private final String attributeName;
 
   /**
-   * Validates and wraps a setter method.
+   * Wraps the supplied method as a setter, parsing the attribute name from the method name and
+   * verifying that it returns void and accepts exactly one parameter.
    *
-   * @param method the reflected setter
-   * @throws ReflectionContractException if the method name or signature does not conform to setter rules
+   * @param method the public setter method to wrap; must start with {@code set} followed by a
+   *               capitalised attribute name
+   * @throws ReflectionContractException if the method name or signature violates setter conventions
    */
   public Setter (Method method)
     throws ReflectionContractException {
@@ -73,7 +76,9 @@ public class Setter implements Serializable {
   }
 
   /**
-   * @return the bean property name derived from the method
+   * Returns the bean property name derived from the setter method name.
+   *
+   * @return the lower-camel-case attribute name, e.g. {@code firstName} for {@code setFirstName}
    */
   public String getAttributeName () {
 
@@ -81,7 +86,9 @@ public class Setter implements Serializable {
   }
 
   /**
-   * @return the setter parameter type
+   * Returns the type of the single parameter accepted by the setter.
+   *
+   * @return the raw {@link Class} of the setter's parameter
    */
   public Class getAttributeClass () {
 
@@ -89,14 +96,14 @@ public class Setter implements Serializable {
   }
 
   /**
-   * Invokes the setter on a target instance.
+   * Invokes the underlying setter on the supplied target object with the given value.
    *
-   * @param target the object to mutate
-   * @param value  the value to set
-   * @return the return value of the setter (typically {@code null})
-   * @throws IllegalAccessException    if the method is inaccessible
-   * @throws IllegalArgumentException  if the value is incompatible
-   * @throws InvocationTargetException if the setter throws an exception
+   * @param target the object on which the setter should be called
+   * @param value  the new value to assign to the property
+   * @return the return value of the method invocation (typically {@code null} for setters)
+   * @throws IllegalAccessException    if the underlying method is not accessible
+   * @throws IllegalArgumentException  if {@code target} or {@code value} is incompatible
+   * @throws InvocationTargetException if the setter throws a checked or unchecked exception
    */
   public Object invoke (Object target, Object value)
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {

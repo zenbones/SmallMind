@@ -35,38 +35,38 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import java.util.Set;
 
 /**
- * Represents a container for arbitrary named attributes that can be set, retrieved, and removed.
+ * Key-value attribute store attached to server-side objects such as channels and sessions.
  */
 public interface Attributed {
 
   /**
-   * Retrieves the set of attribute names currently stored.
+   * Returns the names of all currently stored attributes.
    *
-   * @return all attribute names; never {@code null} but possibly empty
+   * @return set of attribute names; never {@code null}, possibly empty
    */
   Set<String> getAttributeNames ();
 
   /**
-   * Fetches an attribute value by name.
+   * Returns the value associated with the given name.
    *
-   * @param name the attribute key
-   * @return the stored value or {@code null} if absent
+   * @param name attribute key to look up
+   * @return stored value, or {@code null} if no attribute with that name exists
    */
   Object getAttribute (String name);
 
   /**
-   * Stores or replaces an attribute value.
+   * Stores a value under the given name, replacing any existing value.
    *
-   * @param name  the attribute key to set
-   * @param value the value to associate; may be {@code null}
+   * @param name  attribute key
+   * @param value value to store; may be {@code null}
    */
   void setAttribute (String name, Object value);
 
   /**
-   * Removes the attribute with the given name.
+   * Removes the attribute with the given name and returns its previous value.
    *
-   * @param name the key to remove
-   * @return the previous value or {@code null} if none existed
+   * @param name attribute key to remove
+   * @return the value that was removed, or {@code null} if no such attribute existed
    */
   Object removeAttribute (String name);
 }

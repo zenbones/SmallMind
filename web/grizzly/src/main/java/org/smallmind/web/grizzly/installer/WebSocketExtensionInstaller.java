@@ -35,7 +35,7 @@ package org.smallmind.web.grizzly.installer;
 import jakarta.websocket.Extension;
 
 /**
- * Describes WebSocket extensions to be registered for a specific endpoint within a Grizzly context.
+ * Descriptor for one or more WebSocket extensions to merge into a specific endpoint's configuration.
  */
 public class WebSocketExtensionInstaller extends GrizzlyInstaller {
 
@@ -44,6 +44,8 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   private String path;
 
   /**
+   * Returns the installer type discriminator.
+   *
    * @return {@link GrizzlyInstallerType#WEB_SOCKET_EXTENSION}
    */
   @Override
@@ -53,7 +55,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return extensions that should be appended to the endpoint configuration
+   * Returns the extensions to add to the target endpoint's configuration.
+   *
+   * @return array of WebSocket extensions
    */
   public Extension[] getExtensions () {
 
@@ -61,7 +65,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param extensions extensions to register for the endpoint
+   * Sets the extensions to add to the target endpoint's configuration.
+   *
+   * @param extensions WebSocket extensions to register
    */
   public void setExtensions (Extension[] extensions) {
 
@@ -69,7 +75,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return WebSocket endpoint class the extensions target
+   * Returns the endpoint class that these extensions target.
+   *
+   * @return WebSocket endpoint class
    */
   public Class<?> getEndpointClass () {
 
@@ -77,7 +85,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param endpointClass WebSocket endpoint class the extensions target
+   * Sets the endpoint class that these extensions target.
+   *
+   * @param endpointClass WebSocket endpoint class
    */
   public void setEndpointClass (Class<?> endpointClass) {
 
@@ -85,7 +95,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return endpoint path to match when merging extensions
+   * Returns the endpoint path used to match the target endpoint during merging.
+   *
+   * @return endpoint path
    */
   public String getPath () {
 
@@ -93,7 +105,9 @@ public class WebSocketExtensionInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param path endpoint path to match when merging extensions
+   * Sets the endpoint path used to match the target endpoint during merging.
+   *
+   * @param path endpoint path
    */
   public void setPath (String path) {
 

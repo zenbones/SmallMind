@@ -39,8 +39,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 /**
- * Records which purposes and directions are applicable to classes during processing.
- * Used to enforce pledges and to locate subclasses with matching visibility.
+ * Records which purpose/visibility combinations are applicable to each class, supporting pledge fulfillment checks
+ * and visibility queries during view generation.
  */
 public class VisibilityTracker {
 
@@ -48,10 +48,10 @@ public class VisibilityTracker {
   private final HashMap<TypeElement, HashMap<String, Visibility>> forswornMap = new HashMap<>();
 
   /**
-   * Propagates visibility information from a superclass to a subclass.
+   * Propagates all purpose/visibility entries from a superclass into a subclass.
    *
-   * @param classElement      subclass being processed
-   * @param superclassElement superclass carrying visibility data
+   * @param classElement      the subclass to receive the inherited entries
+   * @param superclassElement the superclass whose entries are copied
    */
   public void add (TypeElement classElement, TypeElement superclassElement) {
 
@@ -65,12 +65,12 @@ public class VisibilityTracker {
   }
 
   /**
-   * Records visibility for a purpose when real or virtual properties are present.
+   * Records visibility for a purpose on a class only when the lexicon contains at least one real or virtual property.
    *
-   * @param classElement    class being processed
-   * @param purpose         purpose identifier
-   * @param visibility      visibility to record
-   * @param propertyLexicon property metadata informing whether fields exist
+   * @param classElement    the class being processed
+   * @param purpose         the purpose identifier
+   * @param visibility      the visibility to record
+   * @param propertyLexicon the lexicon used to determine whether any properties exist
    */
   public void add (TypeElement classElement, String purpose, Visibility visibility, PropertyLexicon propertyLexicon) {
 
@@ -80,12 +80,12 @@ public class VisibilityTracker {
   }
 
   /**
-   * Records visibility for a purpose, optionally marking it as pledged (excluded from forsworn tracking).
+   * Records visibility for a purpose on a class, optionally excluding it from forsworn tracking when the entry comes from a pledge.
    *
-   * @param classElement class being processed
-   * @param purpose      purpose identifier
-   * @param visibility   visibility to record
-   * @param pledged      whether the visibility came from a pledge
+   * @param classElement the class being processed
+   * @param purpose      the purpose identifier
+   * @param visibility   the visibility to record
+   * @param pledged      {@code true} when the visibility originates from a {@link Pledge} rather than actual properties
    */
   public void add (TypeElement classElement, String purpose, Visibility visibility, boolean pledged) {
 
@@ -105,8 +105,10 @@ public class VisibilityTracker {
   }
 
   /**
-   * @param classElement class to inspect
-   * @return {@code true} if no purposes have been recorded for the class
+   * Returns whether no purposes have been recorded for the given class.
+   *
+   * @param classElement the class to inspect
+   * @return {@code true} if the class has no registered purpose entries
    */
   public boolean hasNoPurpose (TypeElement classElement) {
 
@@ -116,12 +118,12 @@ public class VisibilityTracker {
   }
 
   /**
-   * Determines whether a pledged purpose/direction was never fulfilled.
+   * Returns whether a pledged purpose/direction was never fulfilled by actual properties.
    *
-   * @param classElement class to inspect
-   * @param purpose      pledged purpose
-   * @param direction    direction being checked
-   * @return {@code true} if the purpose/direction is missing from generated output
+   * @param classElement the class to inspect
+   * @param purpose      the pledged purpose to check
+   * @param direction    the direction being evaluated
+   * @return {@code true} if the purpose/direction was never added via real properties
    */
   public boolean isForsworn (TypeElement classElement, String purpose, Direction direction) {
 
@@ -141,12 +143,12 @@ public class VisibilityTracker {
   }
 
   /**
-   * Computes purposes that still need to be generated for the given direction.
+   * Returns the purpose identifiers that are tracked for the given direction but have not yet been fulfilled.
    *
-   * @param classElement class to inspect
-   * @param direction    direction being evaluated
-   * @param fulfilledMap purposes already generated
-   * @return iterable of remaining purposes
+   * @param classElement the class to inspect
+   * @param direction    the direction being evaluated
+   * @param fulfilledMap purposes already generated, keyed by purpose with their fulfilled visibility
+   * @return iterable of unfulfilled purpose strings
    */
   public Iterable<String> unfulfilledPurposes (TypeElement classElement, Direction direction, HashMap<String, Visibility> fulfilledMap) {
 
@@ -170,11 +172,11 @@ public class VisibilityTracker {
   }
 
   /**
-   * Retrieves visibility recorded for a specific class/purpose pair.
+   * Returns the recorded visibility for the given class and purpose.
    *
-   * @param classElement class to inspect
-   * @param purpose      purpose identifier
-   * @return visibility value or {@code null} if none recorded
+   * @param classElement the class to inspect
+   * @param purpose      the purpose identifier
+   * @return the recorded visibility, or {@code null} if none has been registered
    */
   public Visibility getVisibility (TypeElement classElement, String purpose) {
 
@@ -184,15 +186,15 @@ public class VisibilityTracker {
   }
 
   /**
-   * Determines whether a type is visible for a given purpose/direction either because it was recorded
-   * during processing or already exists on the classpath.
+   * Returns whether the given type element is visible for the given purpose and direction, either because
+   * it was registered during processing or because a precompiled generated view already exists on the classpath.
    *
-   * @param processingEnvironment current processing environment
-   * @param classTracker          tracker that can detect precompiled generated types
-   * @param purpose               purpose identifier
-   * @param direction             direction being evaluated
-   * @param typeElement           type to inspect
-   * @return {@code true} if the type is usable for the given purpose/direction
+   * @param processingEnvironment the current annotation processing environment
+   * @param classTracker          tracker used to detect precompiled generated view types
+   * @param purpose               the purpose identifier
+   * @param direction             the direction being evaluated
+   * @param typeElement           the type to test
+   * @return {@code true} if a view exists for the type at the given purpose and direction
    */
   public boolean isVisible (ProcessingEnvironment processingEnvironment, ClassTracker classTracker, String purpose, Direction direction, TypeElement typeElement) {
 

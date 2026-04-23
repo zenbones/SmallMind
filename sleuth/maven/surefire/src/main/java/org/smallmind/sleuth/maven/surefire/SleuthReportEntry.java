@@ -35,7 +35,15 @@ package org.smallmind.sleuth.maven.surefire;
 import org.apache.maven.surefire.api.report.OutputReportEntry;
 
 /**
- * Simple output entry implementation used to stream test output through Surefire.
+ * Minimal {@link OutputReportEntry} implementation used to relay individual test output
+ * lines through the Surefire reporting pipeline.
+ * <p>
+ * Instances are created by {@link ForwardingPrintStream} on every write and passed to
+ * {@link SleuthOutputReceiver}, which wraps them in a {@code TestOutputReportEntry} before
+ * forwarding to the Surefire listener.
+ *
+ * @see ForwardingPrintStream
+ * @see SleuthOutputReceiver
  */
 public class SleuthReportEntry implements OutputReportEntry {
 
@@ -44,10 +52,10 @@ public class SleuthReportEntry implements OutputReportEntry {
   private final boolean newLine;
 
   /**
-   * Creates a report entry without forcing a trailing newline flag.
+   * Constructs a report entry without a trailing-newline flag (defaults to {@code false}).
    *
-   * @param message message contents
-   * @param stdOut  {@code true} if the message originated on stdout, {@code false} for stderr
+   * @param message the output text captured from the test; must not be {@code null}
+   * @param stdOut  {@code true} if the message originated from {@code System.out}; {@code false} for {@code System.err}
    */
   public SleuthReportEntry (String message, boolean stdOut) {
 
@@ -55,11 +63,11 @@ public class SleuthReportEntry implements OutputReportEntry {
   }
 
   /**
-   * Creates a report entry with explicit newline handling.
+   * Constructs a report entry with explicit control over the trailing-newline flag.
    *
-   * @param message message contents
-   * @param stdOut  {@code true} if the message originated on stdout, {@code false} for stderr
-   * @param newLine {@code true} if the message already ends with a newline
+   * @param message the output text captured from the test; must not be {@code null}
+   * @param stdOut  {@code true} if the message originated from {@code System.out}; {@code false} for {@code System.err}
+   * @param newLine {@code true} if the message already ends with a platform line separator
    */
   public SleuthReportEntry (String message, boolean stdOut, boolean newLine) {
 
@@ -69,7 +77,9 @@ public class SleuthReportEntry implements OutputReportEntry {
   }
 
   /**
-   * @return the full log message
+   * Returns the captured output text.
+   *
+   * @return the log message; never {@code null}
    */
   @Override
   public String getLog () {
@@ -78,7 +88,9 @@ public class SleuthReportEntry implements OutputReportEntry {
   }
 
   /**
-   * @return {@code true} if the log is stdout, {@code false} otherwise
+   * Returns whether this entry originated from the standard output stream.
+   *
+   * @return {@code true} for stdout output, {@code false} for stderr output
    */
   @Override
   public boolean isStdOut () {
@@ -87,7 +99,9 @@ public class SleuthReportEntry implements OutputReportEntry {
   }
 
   /**
-   * @return {@code true} if the message already contains a trailing newline
+   * Returns whether the message already ends with a platform line separator.
+   *
+   * @return {@code true} if the message contains a trailing newline; {@code false} otherwise
    */
   @Override
   public boolean isNewLine () {

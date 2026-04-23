@@ -37,7 +37,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 
 /**
- * URL percent-encoding/decoding utility implementing RFC 3986 rules.
+ * Encodes and decodes URL components using RFC 3986 percent-encoding rules.
  */
 public class URLCodec {
 
@@ -78,11 +78,11 @@ public class URLCodec {
   }
 
   /**
-   * Decodes a percent-encoded string, converting '+' to space.
+   * Decodes a percent-encoded string, treating {@code +} as a space character.
    *
-   * @param encoded percent-encoded string
-   * @return decoded text
-   * @throws UnsupportedEncodingException if encoding is invalid
+   * @param encoded the percent-encoded input string
+   * @return decoded Unicode string
+   * @throws UnsupportedEncodingException if the string contains invalid percent-escape sequences
    */
   public static String urlDecode (String encoded)
     throws UnsupportedEncodingException {
@@ -162,12 +162,12 @@ public class URLCodec {
   }
 
   /**
-   * Converts two hex characters to a byte value.
+   * Combines two hexadecimal digits into the byte value they represent.
    *
-   * @param highHexNumber high-order hex digit
-   * @param lowHexNumber  low-order hex digit
-   * @return byte value represented by the two digits
-   * @throws UnsupportedEncodingException if either digit is invalid
+   * @param highHexNumber the high-order hex digit
+   * @param lowHexNumber  the low-order hex digit
+   * @return the integer byte value in the range 0–255
+   * @throws UnsupportedEncodingException if either character is not a valid hexadecimal digit
    */
   private static int getByte (char highHexNumber, char lowHexNumber)
     throws UnsupportedEncodingException {
@@ -184,11 +184,11 @@ public class URLCodec {
   }
 
   /**
-   * Encodes a string as application/x-www-form-urlencoded.
+   * Percent-encodes a string for use in a URL, encoding spaces as {@code +}.
    *
-   * @param original text to encode
-   * @return percent-encoded string
-   * @throws UnsupportedEncodingException if input contains invalid surrogate pairs
+   * @param original the source string to encode
+   * @return URL-encoded string
+   * @throws UnsupportedEncodingException if the input contains an unpaired surrogate
    */
   public static String urlEncode (String original)
     throws UnsupportedEncodingException {
@@ -197,12 +197,12 @@ public class URLCodec {
   }
 
   /**
-   * Encodes a string as application/x-www-form-urlencoded.
+   * Percent-encodes a string for use in a URL with configurable space handling.
    *
-   * @param original       text to encode
-   * @param spacesAsPluses {@code true} to emit spaces as '+', {@code false} to percent-encode
-   * @return percent-encoded string
-   * @throws UnsupportedEncodingException if input contains invalid surrogate pairs
+   * @param original       the source string to encode
+   * @param spacesAsPluses {@code true} to encode spaces as {@code +}; {@code false} to percent-encode them as {@code %20}
+   * @return URL-encoded string
+   * @throws UnsupportedEncodingException if the input contains an unpaired surrogate
    */
   public static String urlEncode (String original, boolean spacesAsPluses)
     throws UnsupportedEncodingException {
@@ -263,10 +263,10 @@ public class URLCodec {
   }
 
   /**
-   * Writes a single byte as {@code %HH} to the builder.
+   * Appends a single byte as a {@code %XX} percent-escape sequence to the builder.
    *
-   * @param encodedBuilder destination builder
-   * @param singleByte     byte value to encode
+   * @param encodedBuilder the output buffer to append to
+   * @param singleByte     the byte value to encode as two uppercase hex digits
    */
   private static void writeHexString (StringBuilder encodedBuilder, int singleByte) {
 

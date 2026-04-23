@@ -39,8 +39,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Meta-annotation used to mark other annotations as nullifiers during overlay processing.
- * The annotation identifies a validator that determines when a value should be treated as {@code null}.
+ * Meta-annotation applied to other field annotations to declare them as overlay nullifiers, linking
+ * each such annotation to the {@link OverlayNullifierValidator} that decides when its field value
+ * should be replaced with {@code null}.
  */
 @Documented
 @Target({ElementType.ANNOTATION_TYPE})
@@ -48,7 +49,9 @@ import java.lang.annotation.Target;
 public @interface OverlayNullifier {
 
   /**
-   * @return the validator responsible for deciding whether a value should be treated as {@code null}
+   * Specifies the validator class responsible for evaluating whether a field value should be treated as {@code null}.
+   *
+   * @return the {@link OverlayNullifierValidator} implementation to instantiate during overlay processing
    */
   Class<? extends OverlayNullifierValidator<?, ?>> validatedBy ();
 }

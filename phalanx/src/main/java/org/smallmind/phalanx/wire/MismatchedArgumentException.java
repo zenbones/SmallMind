@@ -33,15 +33,16 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Raised when invocation arguments cannot be matched to expected parameters.
+ * Thrown when the arguments supplied to a wire invocation do not match the parameter
+ * signature expected by the target service method.
  */
 public class MismatchedArgumentException extends TransportException {
 
   /**
-   * Creates the exception with a formatted mismatch message.
+   * Constructs a {@code MismatchedArgumentException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the mismatch
-   * @param args    arguments applied to the format string
+   * @param message the format string describing the argument mismatch
+   * @param args    the arguments referenced by the format string
    */
   public MismatchedArgumentException (String message, Object... args) {
 

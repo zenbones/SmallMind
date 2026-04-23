@@ -42,17 +42,19 @@ import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
 
 /**
- * Wires Jersey parameter resolution so {@link EntityParam}-annotated parameters are pulled from the proxied JsonEntity.
+ * Container class holding the Jersey infrastructure needed to resolve {@link EntityParam}-annotated parameters from
+ * the request's {@link JsonEntity}.
  */
 public class EntityParamResolver {
 
   /**
-   * Value provider that supplies argument values from an {@link EntityTranslator} when {@link EntityParam} is present.
+   * Jersey {@link ValueParamProvider} that extracts values from the thread-local {@link JsonEntity} for parameters
+   * annotated with {@link EntityParam}.
    */
   private static final class EntityParamValueParamProvider implements ValueParamProvider {
 
     /**
-     * Indicates normal priority for value resolution.
+     * Returns the resolution priority for this provider.
      *
      * @return {@link PriorityType#NORMAL}
      */
@@ -63,11 +65,11 @@ public class EntityParamResolver {
     }
 
     /**
-     * Returns a function that extracts the parameter value from the current {@link ContainerRequest} if the target
-     * parameter is annotated with {@link EntityParam}.
+     * Returns a function that reads the parameter from the current request's {@link JsonEntity}, or {@code null} if
+     * the parameter is not annotated with {@link EntityParam}.
      *
-     * @param parameter Jersey parameter metadata
-     * @return provider function or {@code null} when the parameter is not entity-backed
+     * @param parameter Jersey parameter descriptor
+     * @return resolver function, or {@code null} when the parameter is not entity-backed
      */
     @Override
     public Function<ContainerRequest, ?> getValueProvider (Parameter parameter) {
@@ -85,15 +87,15 @@ public class EntityParamResolver {
   }
 
   /**
-   * Jersey feature that installs the {@link EntityParamValueParamProvider}.
+   * Jersey {@link Feature} that binds {@link EntityParamValueParamProvider} into the HK2 injection framework.
    */
   public static final class EntityParamFeature implements Feature {
 
     /**
-     * Registers the provider in the supplied context.
+     * Registers the {@link EntityParamValueParamProvider} as a singleton {@link ValueParamProvider}.
      *
-     * @param context feature context
-     * @return {@code true} once registration succeeds
+     * @param context the feature registration context
+     * @return {@code true} after registration succeeds
      */
     @Override
     public boolean configure (FeatureContext context) {

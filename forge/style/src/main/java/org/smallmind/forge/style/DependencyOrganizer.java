@@ -58,15 +58,19 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Utility that sorts dependency declarations within Maven pom files to provide consistent ordering.
+ * Walks a Maven project tree and rewrites each {@code pom.xml} to sort {@code <dependency>}
+ * declarations alphabetically by {@code groupId} and then by {@code artifactId}, establishing a
+ * stable canonical order. The XML output is pretty-printed using a bundled XSLT stylesheet.
+ * Both the top-level {@code <dependencies>} element and any {@code <dependencyManagement>}
+ * block are sorted.
  */
 public class DependencyOrganizer {
 
   /**
-   * Entry point that accepts the root path of a Maven project to organize.
+   * Command-line entry point.
    *
-   * @param args command line arguments; the first argument is the project root
-   * @throws IOException if traversal fails
+   * @param args command-line arguments; {@code args[0]} must be the root path of the Maven project to process
+   * @throws IOException if the project tree cannot be traversed
    */
   public static void main (String... args)
     throws IOException {
@@ -75,10 +79,10 @@ public class DependencyOrganizer {
   }
 
   /**
-   * Walk the project tree and rewrite each {@code pom.xml} to sort dependencies.
+   * Recursively visit every {@code pom.xml} under {@code projectPath} and sort its dependency declarations.
    *
-   * @param projectPath the path to traverse
-   * @throws IOException if traversal fails
+   * @param projectPath root of the Maven project tree to process
+   * @throws IOException if directory traversal or a pom rewrite fails
    */
   public static void walkProject (Path projectPath)
     throws IOException {
@@ -102,13 +106,16 @@ public class DependencyOrganizer {
   }
 
   /**
-   * Rewrite the provided pom with dependencies sorted by group id and artifact id.
+   * Parse the pom at {@code pomPath}, sort its dependency declarations, and write the result back.
    *
-   * @param pomPath the pom to rewrite
-   * @throws IOException                  if the pom cannot be read or written
-   * @throws SAXException                 if the pom cannot be parsed
-   * @throws ParserConfigurationException if a parser cannot be created
-   * @throws TransformerException         if the rewritten pom cannot be emitted
+   * <p>Both the top-level {@code <dependencies>} element and the {@code <dependencies>} child
+   * of any {@code <dependencyManagement>} block are sorted if present.
+   *
+   * @param pomPath path to the {@code pom.xml} to rewrite
+   * @throws IOException                  if the file cannot be read or written
+   * @throws SAXException                 if the XML cannot be parsed
+   * @throws ParserConfigurationException if a DOM builder cannot be created
+   * @throws TransformerException         if the serialized XML cannot be written
    */
   private static void rewritePom (Path pomPath)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
@@ -160,10 +167,11 @@ public class DependencyOrganizer {
   }
 
   /**
-   * Sort dependency nodes within a dependencies element.
+   * Produce a copy of {@code parentNode} with its {@code <dependency>} children sorted by
+   * {@code groupId} and then by {@code artifactId}.
    *
-   * @param parentNode the dependencies node to sort
-   * @return a new dependencies node with sorted children
+   * @param parentNode the {@code <dependencies>} DOM node whose children are to be sorted
+   * @return a new node with the same attributes as {@code parentNode} but children in sorted order
    */
   private static Node sortDependencies (Node parentNode) {
 

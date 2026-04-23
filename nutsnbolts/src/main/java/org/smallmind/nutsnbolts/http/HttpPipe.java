@@ -40,8 +40,8 @@ import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Thin wrapper around {@link HttpURLConnection} that enforces read/write sequencing.
- * Allows chaining writes and reads while managing connection state transitions.
+ * Stateful wrapper around an {@link HttpURLConnection} that enforces ordered write-then-read sequencing
+ * and exposes a chainable API for sending request bodies and reading response bodies.
  */
 public class HttpPipe {
 
@@ -53,10 +53,10 @@ public class HttpPipe {
   private State state = State.DISCONNECTED;
 
   /**
-   * Wraps an existing {@link HttpURLConnection}.
+   * Constructs a pipe around the given connection without opening it.
    *
-   * @param urlConnection connection to manage
-   * @throws IOException unused but retained for compatibility
+   * @param urlConnection the underlying HTTP connection to manage
+   * @throws IOException declared for subclass compatibility; not thrown by this constructor
    */
   public HttpPipe (HttpURLConnection urlConnection)
     throws IOException {
@@ -65,11 +65,11 @@ public class HttpPipe {
   }
 
   /**
-   * Sets a request header on the underlying connection.
+   * Adds or replaces a request property on the underlying connection before it is opened.
    *
-   * @param key   header name
-   * @param value header value
-   * @return this pipe for chaining
+   * @param key   HTTP header field name
+   * @param value header field value
+   * @return this pipe for method chaining
    */
   public synchronized HttpPipe setRequestHeader (String key, String value) {
 
@@ -79,12 +79,11 @@ public class HttpPipe {
   }
 
   /**
-   * Opens the connection and prepares for write or read depending on configured I/O flags.
+   * Opens the underlying connection and transitions to WRITE, READ, or TERMINATED state based on the configured I/O flags.
    *
-   * @return this pipe for chaining
-   * @throws IOException                if the connection cannot be opened
-   * @throws IllegalStateException      if called in an invalid state
-   * @throws UnknownSwitchCaseException if an unexpected state is reached
+   * @return this pipe for method chaining
+   * @throws IOException           if the connection cannot be established
+   * @throws IllegalStateException if the pipe has already been connected or disconnected
    */
   public synchronized HttpPipe connect ()
     throws IOException {
@@ -117,12 +116,12 @@ public class HttpPipe {
   }
 
   /**
-   * Writes a UTF-8 body to the connection output stream.
+   * Encodes {@code body} as UTF-8 and writes it to the connection's output stream.
    *
-   * @param body content to send
-   * @return this pipe for chaining
-   * @throws IOException           if writing fails
-   * @throws IllegalStateException if the pipe is not in write mode
+   * @param body text to send as the request body
+   * @return this pipe for method chaining
+   * @throws IOException           if the write to the output stream fails
+   * @throws IllegalStateException if the pipe is not currently in WRITE state
    */
   public synchronized HttpPipe write (String body)
     throws IOException {
@@ -138,10 +137,10 @@ public class HttpPipe {
   }
 
   /**
-   * Signals end-of-stream for writing, transitioning to read or termination.
+   * Closes the output stream and transitions the pipe to READ state if reading is configured, or TERMINATED otherwise.
    *
-   * @throws IOException           if closing fails
-   * @throws IllegalStateException if the pipe is not in write mode
+   * @throws IOException           if closing the output stream fails
+   * @throws IllegalStateException if the pipe is not currently in WRITE state
    */
   public synchronized void doneWriting ()
     throws IOException {
@@ -162,12 +161,12 @@ public class HttpPipe {
   }
 
   /**
-   * Reads bytes into the provided buffer.
+   * Reads bytes from the response stream into {@code buffer}, automatically closing the pipe on EOF.
    *
-   * @param buffer destination buffer
-   * @return number of bytes read or -1 on EOF
-   * @throws IOException           if reading fails
-   * @throws IllegalStateException if the pipe is not in read mode
+   * @param buffer destination array to fill
+   * @return number of bytes read, or {@code -1} when the response body is exhausted
+   * @throws IOException           if the read operation fails
+   * @throws IllegalStateException if the pipe is not currently in READ state
    */
   public synchronized int read (byte[] buffer)
     throws IOException {
@@ -188,10 +187,10 @@ public class HttpPipe {
   }
 
   /**
-   * Finishes reading and closes the connection.
+   * Closes the response input stream and disconnects the underlying connection.
    *
-   * @throws IOException           if closing fails
-   * @throws IllegalStateException if the pipe is not in read mode
+   * @throws IOException           if closing the input stream fails
+   * @throws IllegalStateException if the pipe is not currently in READ state
    */
   public synchronized void doneReading ()
     throws IOException {

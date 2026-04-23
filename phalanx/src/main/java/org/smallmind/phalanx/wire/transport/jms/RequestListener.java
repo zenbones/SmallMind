@@ -47,7 +47,12 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * JMS message listener that dispatches incoming requests to a {@link JmsResponseTransport}.
+ * JMS {@link MessageListener} that receives inbound service-invocation requests from a queue or
+ * topic and forwards them to a {@link JmsResponseTransport} worker pool for execution.
+ *
+ * <p>A JMS message-selector is constructed from the {@code serviceGroup} and optional
+ * {@code instanceId} at construction time and applied to the consumer, ensuring that only
+ * messages addressed to the correct service and instance are delivered.
  */
 public class RequestListener implements SessionEmployer, MessageListener {
 
@@ -58,13 +63,15 @@ public class RequestListener implements SessionEmployer, MessageListener {
   private final String selector;
 
   /**
-   * Creates a request listener subscribed to the given destination and service/instance selector.
+   * Constructs the listener, builds a JMS message-selector from the service group and optional
+   * instance id, creates the consumer, and starts the connection.
    *
-   * @param jmsResponseTransport     response transport used to execute requests
-   * @param requestConnectionManager connection manager providing sessions/consumers
-   * @param requestDestination       destination to consume from
-   * @param serviceGroup             service group filter
-   * @param instanceId               optional instance id filter
+   * @param jmsResponseTransport     response transport to which received messages are forwarded
+   * @param requestConnectionManager connection manager that provides the JMS session and consumer
+   * @param requestDestination       destination (queue or topic) to subscribe to
+   * @param serviceGroup             service group name included in the message-selector filter
+   * @param instanceId               optional instance id for whisper-mode filtering; {@code null}
+   *                                 for shout and talk modes
    * @throws JMSException if consumer creation fails
    */
   public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String serviceGroup, String instanceId)
@@ -80,7 +87,9 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the destination (queue or topic) that this listener is subscribed to.
+   *
+   * @return the JMS {@link Destination} supplied at construction
    */
   @Override
   public Destination getDestination () {
@@ -89,7 +98,10 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the JMS message-selector that filters messages by service group and, for whisper
+   * mode, by instance id.
+   *
+   * @return non-null JMS selector string
    */
   @Override
   public String getMessageSelector () {
@@ -98,9 +110,9 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Starts message consumption.
+   * Resumes message consumption by starting the underlying connection.
    *
-   * @throws JMSException if start fails
+   * @throws JMSException if the connection cannot be started
    */
   public void play ()
     throws JMSException {
@@ -109,9 +121,9 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Stops message consumption without closing resources.
+   * Suspends message consumption by stopping the underlying connection without releasing resources.
    *
-   * @throws JMSException if stop fails
+   * @throws JMSException if the connection cannot be stopped
    */
   public void pause ()
     throws JMSException {
@@ -120,9 +132,9 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Stops and closes the listener, ensuring it is only performed once.
+   * Stops and closes the underlying connection manager.  Idempotent; safe to call multiple times.
    *
-   * @throws JMSException if shutdown fails
+   * @throws JMSException if stopping or closing the connection manager fails
    */
   public void close ()
     throws JMSException {
@@ -134,7 +146,10 @@ public class RequestListener implements SessionEmployer, MessageListener {
   }
 
   /**
-   * Handles inbound JMS messages, recording queue transit time and delegating to the response transport.
+   * Receives an inbound request message, records the queue transit time as a Claxon metric,
+   * and submits the message to the {@link JmsResponseTransport} for asynchronous execution.
+   *
+   * @param message the inbound JMS message containing an encoded invocation signal
    */
   @Override
   public void onMessage (final Message message) {

@@ -41,7 +41,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 
 /**
- * Container for a set of sort fields expressed alongside where clauses.
+ * Container for an ordered list of {@link SortField} instances that describes how query results should be sorted.
  */
 @XmlRootElement(name = "sort", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -57,9 +57,9 @@ public class Sort implements WherePermissible<Sort> {
   }
 
   /**
-   * Creates a sort definition with the provided fields.
+   * Creates a sort definition from the provided fields.
    *
-   * @param fields sort fields
+   * @param fields ordered sort fields
    */
   public Sort (SortField... fields) {
 
@@ -69,8 +69,8 @@ public class Sort implements WherePermissible<Sort> {
   /**
    * Convenience factory for a sort definition.
    *
-   * @param fields sort fields
-   * @return sort container
+   * @param fields ordered sort fields
+   * @return configured sort container
    */
   public static Sort instance (SortField... fields) {
 
@@ -78,9 +78,9 @@ public class Sort implements WherePermissible<Sort> {
   }
 
   /**
-   * Exposes the set of target permits for validation (each sorted field).
+   * Returns the set of target permits derived from the sort fields, used during validation.
    *
-   * @return targets derived from sort fields
+   * @return set of {@link TargetWherePermit} instances, one per sort field
    */
   @Override
   @XmlTransient
@@ -96,9 +96,9 @@ public class Sort implements WherePermissible<Sort> {
   }
 
   /**
-   * Indicates whether the sort definition contains any fields.
+   * Returns whether the sort definition contains no fields.
    *
-   * @return {@code true} if no sort fields were specified
+   * @return {@code true} if no sort fields are present
    */
   @XmlTransient
   public synchronized boolean isEmpty () {
@@ -109,7 +109,7 @@ public class Sort implements WherePermissible<Sort> {
   /**
    * Returns the sort fields.
    *
-   * @return array of sort fields or {@code null}
+   * @return array of sort fields, or {@code null} if unset
    */
   @XmlElement(name = "fields")
   public synchronized SortField[] getFields () {
@@ -120,7 +120,7 @@ public class Sort implements WherePermissible<Sort> {
   /**
    * Sets the sort fields.
    *
-   * @param fields sort fields
+   * @param fields ordered sort fields
    */
   public synchronized void setFields (SortField... fields) {
 

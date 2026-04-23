@@ -66,10 +66,7 @@ import org.smallmind.nutsnbolts.util.IteratorEnumeration;
 */
 
 /**
- * {@link SecureClassLoader} that loads classes from one or more {@link ClassGate}s and can detect
- * stale classes based on last-modified timestamps. A grace period governs how long a loaded class
- * remains valid before its source is checked for updates, throwing {@link StaleClassLoaderException}
- * when newer bytes are detected.
+ * A {@link SecureClassLoader} that loads classes through one or more {@link ClassGate}s and optionally detects stale class definitions by comparing last-modified timestamps against a configurable grace period.
  */
 public class GatingClassLoader extends SecureClassLoader {
 
@@ -84,10 +81,10 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Constructs a loader with no explicit parent using the supplied grace period and class gates.
+   * Creates a loader with no explicit parent that searches the supplied gates and checks for staleness after the given grace period.
    *
-   * @param gracePeriodSeconds number of seconds before checking for class staleness; negative to disable checks
-   * @param classGates         the gates used to resolve classes and resources
+   * @param gracePeriodSeconds the number of seconds a loaded class is considered fresh before its source is checked; a negative value disables staleness checking
+   * @param classGates         the ordered set of gates used to locate classes and resources
    */
   public GatingClassLoader (int gracePeriodSeconds, ClassGate... classGates) {
 
@@ -95,11 +92,11 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Constructs a loader with the given parent, grace period, and class gates.
+   * Creates a loader with the given parent that searches the supplied gates and checks for staleness after the given grace period.
    *
-   * @param parent             the parent class loader, or {@code null} to use the bootstrap/system loaders
-   * @param gracePeriodSeconds number of seconds before checking for class staleness; negative to disable checks
-   * @param classGates         the gates used to resolve classes and resources
+   * @param parent             the parent class loader, or {@code null} to fall back to the bootstrap and system loaders
+   * @param gracePeriodSeconds the number of seconds a loaded class is considered fresh before its source is checked; a negative value disables staleness checking
+   * @param classGates         the ordered set of gates used to locate classes and resources
    */
   public GatingClassLoader (ClassLoader parent, int gracePeriodSeconds, ClassGate... classGates) {
 
@@ -118,9 +115,9 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Returns the set of gates this loader consults.
+   * Returns the array of {@link ClassGate}s this loader consults when resolving classes and resources.
    *
-   * @return the configured class gates
+   * @return the configured class gates in search order
    */
   public ClassGate[] getClassGates () {
 
@@ -128,7 +125,10 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the superclass permission lookup; subclasses may override to apply custom security policies.
+   *
+   * @param codesource the code source for which permissions are requested
+   * @return the permission collection granted to the code source
    */
   @Override
   protected PermissionCollection getPermissions (CodeSource codesource) {
@@ -137,9 +137,14 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * After loading a class, optionally checks for staleness once the configured grace period has elapsed.
+   * Loads the class with the specified name, delegating first to the parent or system loader and then to the configured gates.
+   * If staleness detection is enabled and the grace period has elapsed for an already-loaded class, the source is checked and
+   * {@link StaleClassLoaderException} is thrown when a newer version is found.
+   *
+   * @param name    the fully qualified name of the class to load
+   * @param resolve whether to resolve the class after loading
+   * @return the loaded {@link Class} object
+   * @throws ClassNotFoundException if the class cannot be found by any loader or gate
    */
   @Override
   public synchronized Class<?> loadClass (String name, boolean resolve)
@@ -195,10 +200,12 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * Iterates through configured gates to locate and define the requested class. Updates the ticket map
-   * when staleness detection is enabled.
+   * Searches the configured gates in order to locate, read, and define the named class.
+   * Records a {@link ClassGateTicket} in the internal map when staleness detection is enabled.
+   *
+   * @param name the fully qualified binary name of the class to define
+   * @return the defined {@link Class} object
+   * @throws ClassNotFoundException if no gate can supply the class bytes
    */
   @Override
   public synchronized Class<?> findClass (String name)
@@ -239,9 +246,9 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Defines a package for the supplied class name if it has not been defined already.
+   * Defines the package for the given class if it has not already been defined, populating it with JVM specification and vendor metadata.
    *
-   * @param name the fully qualified class name
+   * @param name the fully qualified binary class name from which the package name is derived
    */
   private void definePackage (String name) {
 
@@ -255,11 +262,11 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Reads class bytes from an input stream into a byte array.
+   * Reads all bytes from the given stream into a byte array suitable for passing to {@link ClassLoader#defineClass}.
    *
-   * @param classInputStream the stream containing class data
-   * @return the class bytes
-   * @throws IOException if reading fails
+   * @param classInputStream the stream supplying the raw class bytes
+   * @return a byte array containing the entire contents of the stream
+   * @throws IOException if an I/O error occurs while reading
    */
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
@@ -278,9 +285,10 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * Falls back to configured gates when the parent loader cannot supply the resource.
+   * Returns a stream for the named resource, consulting the configured gates after the parent loader if the resource is not found via the standard delegation chain.
+   *
+   * @param name the resource name to locate
+   * @return an open {@link InputStream} to the resource, or {@code null} if not found
    */
   @Override
   public InputStream getResourceAsStream (String name) {
@@ -306,9 +314,10 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * Attempts to locate a resource via the configured gates when not found by the parent loader.
+   * Searches the configured gates in order for the named resource and returns the first matching URL.
+   *
+   * @param name the resource name to locate
+   * @return a URL to the resource, or {@code null} if no gate can supply it
    */
   @Override
   public URL findResource (String name) {
@@ -329,9 +338,10 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * Aggregates resource URLs from all configured gates.
+   * Collects URLs for the named resource from all configured gates and returns them as an enumeration.
+   *
+   * @param name the resource name to locate across all gates
+   * @return an enumeration of all URLs found for the resource; never {@code null}
    */
   @Override
   protected Enumeration<URL> findResources (String name) {

@@ -37,39 +37,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a cache vector that should be removed when a durable instance changes.
- * The annotation can filter which updates trigger invalidation and control which
- * related entities provide the cache key.
+ * Embedded annotation on {@link CachedWith} that declares a cache vector to be deleted
+ * entirely when the managed durable is persisted or removed.
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Invalidate {
 
   /**
-   * Vector definition identifying the cached entry to invalidate.
-   *
-   * @return vector descriptor that supplies the cache key
+   * Vector descriptor identifying the cache entry to delete.
    */
   Vector value ();
 
   /**
-   * Optional DAO method invoked to determine whether invalidation should occur.
-   *
-   * @return filter method name that returns a boolean result
+   * Optional DAO method name returning {@code boolean} that gates whether invalidation occurs.
    */
   String filter () default "";
 
   /**
-   * Finder that supplies the durable instances used to compose the cache key.
-   *
-   * @return finder configuration for locating affected entities
+   * Finder that produces the durable instances whose identifiers form the cache key to invalidate.
    */
   Finder finder () default @Finder();
 
   /**
-   * Optional proxy used to substitute a related durable when computing the cache key.
-   *
-   * @return proxy configuration that transforms the durable prior to invalidation
+   * Optional proxy that transforms each found durable before the invalidation key is computed.
    */
   Proxy proxy () default @Proxy();
 }

@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Simple tri-state outcome indicator for operations.
+ * Three-state outcome enumeration indicating whether an operation succeeded, failed, or was interrupted.
  */
 public enum SuccessOrFailure {
 

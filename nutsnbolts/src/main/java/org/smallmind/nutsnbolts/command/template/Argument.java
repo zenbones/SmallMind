@@ -33,12 +33,14 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Base class for command line argument definitions.
+ * Abstract base class for command line argument definitions that describes how many values an option accepts.
  */
 public abstract class Argument {
 
   /**
-   * @return argument cardinality/type
+   * Returns the cardinality type that governs how this argument is parsed.
+   *
+   * @return {@link ArgumentType} constant for this argument definition
    */
   public abstract ArgumentType getType ();
 }

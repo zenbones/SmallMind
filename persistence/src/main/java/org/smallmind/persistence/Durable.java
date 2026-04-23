@@ -35,23 +35,24 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 
 /**
- * Represents a persistent domain object with a comparable, serializable identifier.
+ * Contract for a persistent domain object whose identity is expressed by a typed, comparable,
+ * serializable identifier.
  *
- * @param <I> the identifier type
+ * @param <I> the identifier type; must be both {@link Comparable} and {@link Serializable}
  */
 public interface Durable<I extends Serializable & Comparable<I>> extends Serializable, Comparable<Durable<I>> {
 
   /**
-   * Returns the durable identifier.
+   * Returns the durable's identifier, or {@code null} when the instance is transient.
    *
-   * @return the identifier, or {@code null} for transient instances
+   * @return the identifier
    */
   I getId ();
 
   /**
-   * Assigns the durable identifier.
+   * Sets the durable's identifier.
    *
-   * @param id the identifier value to assign
+   * @param id the identifier to assign
    */
   void setId (I id);
 }

@@ -35,15 +35,15 @@ package org.smallmind.web.json.query;
 import org.smallmind.nutsnbolts.validation.FormattedValidationException;
 
 /**
- * Thrown when a where clause violates validation rules (required, excluded, dependency, or allow lists).
+ * Thrown when a where clause violates an allowed, required, excluded, or dependency permit rule.
  */
 public class WhereValidationException extends FormattedValidationException {
 
   /**
    * Creates a validation exception with a formatted message.
    *
-   * @param message description of the validation failure
-   * @param args    message formatting arguments
+   * @param message format string describing the violation
+   * @param args    arguments for the format string
    */
   public WhereValidationException (String message, Object... args) {
 

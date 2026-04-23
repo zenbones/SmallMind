@@ -36,16 +36,22 @@ import java.util.EventObject;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
- * Base event carrying a reference to the originating {@link ComponentPool}.
+ * Base class for all events emitted by a complex component pool.
+ * <p>
+ * Extends {@link EventObject} with a typed source reference so that subclasses and listeners
+ * can access the originating pool without an unchecked cast. The source is recorded by
+ * {@link EventObject#getSource()} as an {@link Object}, but callers that know the
+ * component type can use the type parameter for safe downcasting.
  *
- * @param <C> component type managed by the pool
+ * @param <C> the type of component managed by the originating pool
  */
 public abstract class ComponentPoolEvent<C> extends EventObject {
 
   /**
-   * Creates an event for the given pool source.
+   * Creates an event sourced from the given pool.
    *
-   * @param componentPool pool that generated the event
+   * @param componentPool the pool that generated this event; stored as the {@code source}
+   *                      by {@link EventObject}
    */
   public ComponentPoolEvent (ComponentPool<C> componentPool) {
 

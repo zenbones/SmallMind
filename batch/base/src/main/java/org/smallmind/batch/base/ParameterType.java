@@ -33,7 +33,8 @@
 package org.smallmind.batch.base;
 
 /**
- * Enumerates the supported parameter types accepted by the job factory helpers.
+ * Discriminant enum used by {@link BatchParameter} subclasses to indicate which Spring Batch
+ * {@code JobParameter} variant should be used when translating parameters.
  */
 public enum ParameterType {
 

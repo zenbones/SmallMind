@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Discriminates between field criteria and logical conjunction nodes.
+ * Discriminates whether a {@link WhereCriterion} is a leaf field test or a nested conjunction.
  */
 public enum CriterionType {
 

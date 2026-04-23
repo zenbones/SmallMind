@@ -50,12 +50,12 @@ import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
 
 /**
- * Roster implementation that stores {@link DurableKey} instances but exposes the corresponding
- * {@link Durable} objects on access. Elements are resolved lazily via an {@link ORMDao} to keep
- * cache payloads small while still supporting list semantics.
+ * {@link Roster} implementation that stores {@link DurableKey} instances internally but exposes
+ * the corresponding {@link Durable} objects on access, resolving them lazily via an {@link ORMDao}.
+ * This keeps cache payloads compact while still presenting full list semantics to callers.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
@@ -64,10 +64,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   private transient volatile ORMDao<I, D, ?, ?> ormDao;
 
   /**
-   * Creates a roster that wraps a backing key roster for the provided durable class.
+   * Creates a roster that wraps the provided key roster and resolves durables of the given class.
    *
-   * @param durableClass durable type represented by the keys
-   * @param keyRoster    underlying roster of keys
+   * @param durableClass the durable type whose instances the keys reference
+   * @param keyRoster    the underlying roster of {@link DurableKey} values
    */
   public ByKeyRoster (Class<D> durableClass, Roster<DurableKey<I, D>> keyRoster) {
 
@@ -76,9 +76,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Lazily resolves the {@link ORMDao} used to hydrate durable instances.
+   * Lazily resolves and caches the {@link ORMDao} used to hydrate durable instances from their keys.
    *
-   * @return ORM DAO for the managed durable
+   * @return the ORM DAO for the managed durable class
+   * @throws CacheOperationException when no DAO is registered for the durable class
    */
   private ORMDao<I, D, ?, ?> getORMDao () {
 
@@ -92,9 +93,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Retrieves each durable referenced by the roster keys, preferring the {@link VectoredDao} cache when present.
+   * Hydrates all durables referenced by the roster keys, preferring the {@link VectoredDao} cache when available.
+   * Keys not found in the vector cache are fetched individually via the ORM DAO.
    *
-   * @return list of hydrated durables in roster order
+   * @return an ordered list of hydrated durables; absent entries are silently skipped
    */
   public List<D> prefetch () {
 
@@ -124,10 +126,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Resolves a durable instance for the given key.
+   * Resolves a single durable from its key.
    *
-   * @param durableKey key identifying the durable
-   * @return durable instance or {@code null} when the key is null
+   * @param durableKey the key identifying the durable; returns {@code null} when this parameter is {@code null}
+   * @return the hydrated durable
+   * @throws CacheOperationException when the durable cannot be found in the backing store
    */
   private D getDurable (DurableKey<I, D> durableKey) {
 
@@ -146,7 +149,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return class of the durables represented by this roster
+   * Returns the class of the durables managed by this roster.
+   *
+   * @return the durable class
    */
   public Class<D> getDurableClass () {
 
@@ -154,7 +159,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return underlying roster of durable keys
+   * Returns the underlying key roster backing this instance.
+   *
+   * @return the roster of {@link DurableKey} values
    */
   public Roster<DurableKey<I, D>> getInternalRoster () {
 
@@ -162,7 +169,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return number of elements in the roster
+   * Returns the number of elements in this roster.
+   *
+   * @return the element count
    */
   public int size () {
 
@@ -170,7 +179,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return {@code true} when the roster contains no elements
+   * Returns {@code true} when this roster contains no elements.
+   *
+   * @return {@code true} if empty
    */
   public boolean isEmpty () {
 
@@ -178,10 +189,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Determines whether the roster contains the supplied durable.
+   * Tests whether this roster contains a durable equal to the supplied object.
    *
-   * @param obj candidate durable
-   * @return {@code true} when the corresponding key exists
+   * @param obj the candidate object
+   * @return {@code true} when a corresponding key exists in the key roster
    */
   public boolean contains (Object obj) {
 
@@ -189,7 +200,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return array of hydrated durables in roster order
+   * Returns an array of all hydrated durables in roster order.
+   *
+   * @return array of durables
    */
   @Override
   public Object[] toArray () {
@@ -198,10 +211,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Copies roster contents into the provided array, hydrating durables from their keys.
+   * Copies hydrated durables into the provided array, allocating a new array of the appropriate size when needed.
    *
-   * @param a   destination array or {@code null} to allocate a new one
-   * @param <T> array element type
+   * @param a   destination array, or {@code null} to allocate a new one
+   * @param <T> the component type of the array
    * @return populated array containing the roster durables
    */
   @Override
@@ -223,10 +236,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Retrieves the durable at the specified position.
+   * Returns the hydrated durable at the specified position.
    *
-   * @param index position of the element to return
-   * @return hydrated durable at the index
+   * @param index the zero-based position
+   * @return the durable at the given index
    */
   public D get (int index) {
 
@@ -234,11 +247,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Replaces the durable at the given index and returns the previous value.
+   * Replaces the durable at the given index and returns the previously stored durable.
    *
-   * @param index   position of the element to replace
-   * @param durable new durable value
-   * @return previously stored durable
+   * @param index   the position to update
+   * @param durable the new durable value
+   * @return the durable that was previously stored at the index
    */
   public D set (int index, D durable) {
 
@@ -248,7 +261,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   /**
    * Inserts a durable at the beginning of the roster.
    *
-   * @param durable durable to add
+   * @param durable the durable to prepend
    */
   public void addFirst (D durable) {
 
@@ -256,9 +269,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Appends a durable to the roster.
+   * Appends a durable to the end of the roster.
    *
-   * @param durable durable to add
+   * @param durable the durable to append
    * @return {@code true} when the roster changes
    */
   public boolean add (D durable) {
@@ -267,10 +280,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Inserts a durable at the specified index.
+   * Inserts a durable at the specified position.
    *
-   * @param index   insertion index
-   * @param durable durable to add
+   * @param index   the insertion index
+   * @param durable the durable to insert
    */
   public void add (int index, D durable) {
 
@@ -278,9 +291,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Removes the first occurrence of the supplied durable.
+   * Removes the first occurrence of the specified durable.
    *
-   * @param obj durable to remove
+   * @param obj the durable to remove
    * @return {@code true} when an element was removed
    */
   public boolean remove (Object obj) {
@@ -291,7 +304,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   /**
    * Removes and returns the last durable in the roster.
    *
-   * @return removed durable
+   * @return the removed durable
    */
   public D removeLast () {
 
@@ -301,8 +314,8 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   /**
    * Removes and returns the durable at the given index.
    *
-   * @param index index of the element to remove
-   * @return removed durable
+   * @param index the position to remove
+   * @return the durable that was at the index
    */
   public D remove (int index) {
 
@@ -310,10 +323,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Tests whether all supplied durables are present in the roster.
+   * Tests whether all durables in the provided collection are present in this roster.
    *
-   * @param c collection of durables
-   * @return {@code true} when every durable exists
+   * @param c the collection of durables to check
+   * @return {@code true} when every element in {@code c} is found
    */
   public boolean containsAll (Collection<?> c) {
 
@@ -332,9 +345,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Adds every durable in the provided collection.
+   * Appends all durables from the provided collection to this roster.
    *
-   * @param c collection of durables to add
+   * @param c the collection of durables to add
    * @return {@code true} when the roster changes
    */
   public boolean addAll (Collection<? extends D> c) {
@@ -351,10 +364,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Inserts all durables from the provided collection starting at the given index.
+   * Inserts all durables from the provided collection starting at the specified index.
    *
-   * @param index insertion point
-   * @param c     collection of durables to add
+   * @param index the insertion point
+   * @param c     the collection of durables to add
    * @return {@code true} when the roster changes
    */
   public boolean addAll (int index, Collection<? extends D> c) {
@@ -371,9 +384,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Removes all durables contained in the provided collection.
+   * Removes all durables contained in the provided collection from this roster.
    *
-   * @param c collection of durables to remove
+   * @param c the collection of durables to remove
    * @return {@code true} when the roster changes
    */
   public boolean removeAll (Collection<?> c) {
@@ -390,9 +403,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Retains only the durables contained in the provided collection.
+   * Retains only those durables that are present in the provided collection.
    *
-   * @param c collection of durables to retain
+   * @param c the collection of durables to retain
    * @return {@code true} when the roster changes
    */
   public boolean retainAll (Collection<?> c) {
@@ -409,7 +422,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Clears all elements from the roster.
+   * Removes all elements from this roster.
    */
   public void clear () {
 
@@ -417,10 +430,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Finds the index of the first occurrence of a durable.
+   * Returns the index of the first occurrence of the specified durable.
    *
-   * @param obj durable to locate
-   * @return index or {@code -1} when not found
+   * @param obj the durable to locate
+   * @return the zero-based index, or {@code -1} when not found
    */
   public int indexOf (Object obj) {
 
@@ -428,10 +441,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Finds the index of the last occurrence of a durable.
+   * Returns the index of the last occurrence of the specified durable.
    *
-   * @param obj durable to locate
-   * @return index or {@code -1} when not found
+   * @param obj the durable to locate
+   * @return the zero-based index, or {@code -1} when not found
    */
   public int lastIndexOf (Object obj) {
 
@@ -439,7 +452,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return iterator that hydrates durables from stored keys
+   * Returns an iterator that hydrates each durable from its stored key as it is traversed.
+   *
+   * @return an iterator over the hydrated durables
    */
   public Iterator<D> iterator () {
 
@@ -447,7 +462,9 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @return list iterator that hydrates durables from stored keys
+   * Returns a list iterator that hydrates each durable from its stored key as it is traversed.
+   *
+   * @return a list iterator over the hydrated durables
    */
   public ListIterator<D> listIterator () {
 
@@ -455,8 +472,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * @param index starting position for the iterator
-   * @return list iterator beginning at the supplied index
+   * Returns a list iterator starting at the given index that hydrates durables from their stored keys.
+   *
+   * @param index the starting position
+   * @return a positioned list iterator over the hydrated durables
    */
   public ListIterator<D> listIterator (int index) {
 
@@ -464,11 +483,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   }
 
   /**
-   * Creates a new roster representing the requested slice of this roster.
+   * Returns a view of this roster between the specified indices.
    *
-   * @param fromIndex start index inclusive
-   * @param toIndex   end index exclusive
-   * @return sub roster containing the specified range
+   * @param fromIndex the start index, inclusive
+   * @param toIndex   the end index, exclusive
+   * @return a {@link ByKeyRoster} over the requested range
    */
   public List<D> subList (int fromIndex, int toIndex) {
 

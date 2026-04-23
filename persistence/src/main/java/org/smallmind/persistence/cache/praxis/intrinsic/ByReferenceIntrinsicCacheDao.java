@@ -44,14 +44,18 @@ import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByReferenceSingularVector;
 
 /**
- * Cache DAO for thread-safe, in-process caches where vectors hold direct references to cached instances.
+ * Cache DAO for thread-safe, in-process caches where vectors store direct object references to cached
+ * durable instances. Elements added to vectors are always normalized to the canonical in-cache instance.
+ *
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
   /**
-   * Creates an intrinsic cache DAO using the provided cache domain.
+   * Creates a reference-based intrinsic cache DAO backed by the provided cache domain.
    *
-   * @param cacheDomain cache domain supplying instance and vector caches
+   * @param cacheDomain the cache domain supplying instance and vector caches
    */
   public ByReferenceIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
@@ -59,12 +63,13 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Persists a durable into the instance cache, returning any existing value.
+   * Stores a durable in the instance cache using a put-if-absent strategy, returning any pre-existing entry.
+   * The {@code mode} parameter is accepted for interface compatibility but is not used.
    *
-   * @param durableClass managed durable class
-   * @param durable      durable to cache
-   * @param mode         ignored for intrinsic caches; kept for interface compatibility
-   * @return cached durable or {@code null} when input is null
+   * @param durableClass the managed durable class
+   * @param durable      the durable to cache; ignored when {@code null}
+   * @param mode         not used by this implementation
+   * @return the cached durable (existing or provided), or {@code null} when {@code durable} is {@code null}
    */
   public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
@@ -80,10 +85,10 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Adds a durable to a cached vector if the vector exists.
+   * Adds the supplied durable to a cached vector if that vector currently exists.
    *
-   * @param vectorKey cache key describing the vector
-   * @param durable   durable to add
+   * @param vectorKey the cache key identifying the vector
+   * @param durable   the durable to add; ignored when {@code null}
    */
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
 
@@ -98,10 +103,10 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Removes a durable from a cached vector, deleting the vector when it becomes singular.
+   * Removes the supplied durable from a cached vector, deleting the vector entirely when it is singular.
    *
-   * @param vectorKey cache key describing the vector
-   * @param durable   durable to remove
+   * @param vectorKey the cache key identifying the vector
+   * @param durable   the durable to remove; ignored when {@code null}
    */
   public void removeFromVector (VectorKey<D> vectorKey, D durable) {
 
@@ -120,11 +125,12 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Converts an arbitrary vector into an intrinsic reference-based vector compatible with this DAO.
+   * Converts an arbitrary vector into the reference-based intrinsic form required by this DAO,
+   * leaving the vector unchanged when it is already the correct type.
    *
-   * @param managedClass durable class stored in the vector
-   * @param vector       vector to migrate
-   * @return migrated vector
+   * @param managedClass the durable class stored in the vector
+   * @param vector       the vector to migrate
+   * @return the original vector when already compatible, or a new reference-based equivalent
    */
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
@@ -146,12 +152,13 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Creates a singular vector containing a cached reference to the supplied durable.
+   * Creates a new singular vector referencing the canonical in-cache instance of the supplied durable.
+   * The durable is stored in the instance cache via put-if-absent before being wrapped in the vector.
    *
-   * @param vectorKey         cache key describing the vector
-   * @param durable           durable to cache
-   * @param timeToLiveSeconds TTL for the vector
-   * @return singular vector referencing a cached durable instance
+   * @param vectorKey         the cache key describing the target vector
+   * @param durable           the durable to cache
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @return a new {@link ByReferenceSingularVector} pointing to the canonical cached instance
    */
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
@@ -168,15 +175,16 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
   }
 
   /**
-   * Creates a vector containing cached references to the supplied durables.
+   * Creates a new multi-element intrinsic vector from the provided durables.
+   * Each element is normalized to the canonical cached instance via put-if-absent before being added to the vector.
    *
-   * @param vectorKey         cache key describing the vector
-   * @param elementIter       iterable of durables to include
-   * @param comparator        comparator used for ordering; {@code null} for natural order
-   * @param maxSize           maximum number of elements to retain
-   * @param timeToLiveSeconds TTL for the vector
-   * @param ordered           whether to maintain sorted order
-   * @return new intrinsic vector
+   * @param vectorKey         the cache key describing the target vector
+   * @param elementIter       the durables to include
+   * @param comparator        comparator for ordered vectors; {@code null} uses natural ordering
+   * @param maxSize           maximum number of elements to retain; zero or negative means unbounded
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @param ordered           {@code true} to maintain elements in sorted order
+   * @return a new {@link ByReferenceIntrinsicVector} containing canonical cached instances
    */
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 

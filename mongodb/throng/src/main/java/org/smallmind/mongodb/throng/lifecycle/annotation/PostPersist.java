@@ -37,13 +37,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks an instance method to run after an entity has been encoded to BSON.
+ * The annotated method must accept a single {@code BsonDocument} parameter.
+ * Only applicable to {@code @Entity} classes.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-// public method (BsonDocument bsonDocument) {}
-// Only usable in @Entity classes
-/**
- * Marks an instance method to run after an entity has been encoded to BSON. Signature must accept a {@code BsonDocument}.
- */
 public @interface PostPersist {
 
 }

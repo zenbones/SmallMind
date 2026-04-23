@@ -39,7 +39,8 @@ import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
 /**
- * Name-binding annotation indicating that responses should include pagination range headers.
+ * Method-level JAX-RS name-binding annotation that triggers {@link PageRangeResponseFilter} to add Content-Range
+ * headers to paginated responses.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

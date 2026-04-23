@@ -35,7 +35,7 @@ package org.smallmind.web.grizzly.installer;
 // @ServicePath(value="/<service Uri>", context="/context")
 
 /**
- * Simple descriptor that binds a SOAP service bean to a URI within a specific Grizzly context.
+ * Binds a SOAP service object to a URI path within a specific Grizzly web application context.
  */
 public class WebServiceInstaller {
 
@@ -44,8 +44,10 @@ public class WebServiceInstaller {
   private Boolean asyncSupported;
 
   /**
-   * @param path    service URI relative to the SOAP root
-   * @param service service instance to expose
+   * Constructs a descriptor associating a service with a path.
+   *
+   * @param path    endpoint URI relative to the application's SOAP root
+   * @param service service bean to expose
    */
   public WebServiceInstaller (String path, Object service) {
 
@@ -54,7 +56,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @return service URI relative to the SOAP root
+   * Returns the endpoint URI relative to the SOAP root.
+   *
+   * @return service path
    */
   public String getPath () {
 
@@ -62,7 +66,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @param path service URI relative to the SOAP root
+   * Sets the endpoint URI relative to the SOAP root.
+   *
+   * @param path service path fragment
    */
   public void setPath (String path) {
 
@@ -70,7 +76,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @return service instance to expose
+   * Returns the service bean to expose.
+   *
+   * @return service instance
    */
   public Object getService () {
 
@@ -78,7 +86,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @param service service instance to expose
+   * Sets the service bean to expose.
+   *
+   * @param service service instance
    */
   public void setService (Object service) {
 
@@ -86,7 +96,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @return whether the SOAP handler should be marked async supported; {@code null} leaves default
+   * Returns whether the JAX-WS handler should be marked as async capable.
+   *
+   * @return {@code Boolean.TRUE} to enable async, or {@code null} to use the default
    */
   public Boolean getAsyncSupported () {
 
@@ -94,7 +106,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * @param asyncSupported flag indicating async support
+   * Sets whether the JAX-WS handler should be marked as async capable.
+   *
+   * @param asyncSupported async-support flag, or {@code null} to use the default
    */
   public void setAsyncSupported (Boolean asyncSupported) {
 

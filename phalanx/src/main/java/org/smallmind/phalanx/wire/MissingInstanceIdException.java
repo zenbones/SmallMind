@@ -35,15 +35,16 @@ package org.smallmind.phalanx.wire;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception thrown when a required instance id cannot be resolved for a whisper.
+ * Thrown when a required service instance id cannot be resolved for a {@link Whispering} invocation,
+ * typically because the instance-id extractor returned no value.
  */
 public class MissingInstanceIdException extends FormattedException {
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs a {@code MissingInstanceIdException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the missing identifier
-   * @param args    arguments applied to the format string
+   * @param message the format string describing why the instance id is missing
+   * @param args    the arguments referenced by the format string
    */
   public MissingInstanceIdException (String message, Object... args) {
 
@@ -51,11 +52,11 @@ public class MissingInstanceIdException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs a {@code MissingInstanceIdException} with a root cause and a formatted message.
    *
-   * @param throwable root cause
-   * @param message   format string describing the missing identifier
-   * @param args      arguments applied to the format string
+   * @param throwable the underlying cause
+   * @param message   the format string describing why the instance id is missing
+   * @param args      the arguments referenced by the format string
    */
   public MissingInstanceIdException (Throwable throwable, String message, Object... args) {
 
@@ -63,9 +64,9 @@ public class MissingInstanceIdException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and no message formatting.
+   * Constructs a {@code MissingInstanceIdException} wrapping an existing throwable with no additional message.
    *
-   * @param throwable root cause
+   * @param throwable the underlying cause
    */
   public MissingInstanceIdException (Throwable throwable) {
 

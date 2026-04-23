@@ -38,17 +38,17 @@ import java.time.ZonedDateTime;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * JAXB adapter converting milliseconds-since-epoch timestamps to ISO-8601 strings and back.
+ * JAXB adapter that converts milliseconds-since-epoch {@link Long} timestamps to and from ISO-8601 formatted strings.
  */
 public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   /**
-   * Parses an ISO-8601 string into a millisecond timestamp.
+   * Parses an ISO-8601 date/time string into a milliseconds-since-epoch timestamp.
    *
-   * @param value formatted date/time text
-   * @return timestamp in milliseconds, or {@code null} when the input is {@code null}
+   * @param value the ISO-8601 formatted date/time string to parse
+   * @return the corresponding epoch-millisecond value, or {@code null} when the input is {@code null}
    */
   @Override
   public Long unmarshal (String value) {
@@ -57,10 +57,10 @@ public class TimestampXmlAdapter extends XmlAdapter<String, Long> {
   }
 
   /**
-   * Formats a timestamp into an ISO-8601 string.
+   * Formats a milliseconds-since-epoch timestamp into an ISO-8601 string in the system default time zone.
    *
-   * @param timestamp milliseconds since the epoch
-   * @return formatted date/time, or {@code null} when the input is {@code null}
+   * @param timestamp the epoch-millisecond value to format
+   * @return the ISO-8601 formatted date/time string, or {@code null} when {@code timestamp} is {@code null}
    */
   @Override
   public String marshal (Long timestamp) {

@@ -35,15 +35,16 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 
 /**
- * Indicates a failure while processing a Bayeux meta message.
+ * Thrown when a Bayeux meta-channel message cannot be processed due to a protocol
+ * violation, missing session identifier, or invalid session state.
  */
 public class MetaProcessingException extends OumuamuaException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Constructs an exception with a {@link String#format}-style message.
    *
-   * @param message message template describing the problem
-   * @param args    optional formatting arguments
+   * @param message format string describing the failure
+   * @param args    arguments substituted into the format string
    */
   public MetaProcessingException (String message, Object... args) {
 
@@ -51,9 +52,9 @@ public class MetaProcessingException extends OumuamuaException {
   }
 
   /**
-   * Creates an exception that wraps another throwable.
+   * Constructs an exception wrapping a lower-level cause.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying exception that triggered this failure
    */
   public MetaProcessingException (Throwable throwable) {
 

@@ -33,15 +33,15 @@
 package org.smallmind.web.jetty;
 
 /**
- * Contract for locating the mutable {@link JettyWebAppState} associated with a context path.
+ * Contract for looking up the {@link JettyWebAppState} associated with a named Jetty context path.
  */
 public interface JettyWebAppStateLocator {
 
   /**
-   * Finds the application state bucket that should receive installers for the given context.
+   * Returns the installer accumulator for the given context path.
    *
-   * @param context the context path for which state is requested
-   * @return the matching {@link JettyWebAppState}
+   * @param context the context path whose state is requested
+   * @return the {@link JettyWebAppState} for that context
    */
   JettyWebAppState webAppStateFor (String context);
 }

@@ -35,7 +35,8 @@ package org.smallmind.spark.tanukisoft.maven;
 import org.apache.maven.artifact.Artifact;
 
 /**
- * Declares an additional dependency that should be bundled into the Tanuki wrapper distribution.
+ * POM-configurable (groupId, artifactId) pair used by {@link GenerateWrapperMojo} to pull additional non-runtime
+ * dependencies (for example {@code compile} or {@code provided} scope) into the wrapper distribution.
  */
 public class Dependency {
 
@@ -43,7 +44,9 @@ public class Dependency {
   private String artifactId;
 
   /**
-   * @return dependency groupId
+   * Returns the configured groupId.
+   *
+   * @return the Maven groupId to include
    */
   public String getGroupId () {
 
@@ -51,7 +54,9 @@ public class Dependency {
   }
 
   /**
-   * @param groupId dependency groupId
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param groupId the Maven groupId to include
    */
   public void setGroupId (String groupId) {
 
@@ -59,7 +64,9 @@ public class Dependency {
   }
 
   /**
-   * @return dependency artifactId
+   * Returns the configured artifactId.
+   *
+   * @return the Maven artifactId to include
    */
   public String getArtifactId () {
 
@@ -67,7 +74,9 @@ public class Dependency {
   }
 
   /**
-   * @param artifactId dependency artifactId
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param artifactId the Maven artifactId to include
    */
   public void setArtifactId (String artifactId) {
 
@@ -75,8 +84,10 @@ public class Dependency {
   }
 
   /**
-   * @param artifact artifact to test
-   * @return {@code true} when the artifact matches the configured coordinates
+   * Evaluates whether a resolved artifact matches the configured coordinates.
+   *
+   * @param artifact the artifact under consideration
+   * @return {@code true} if both groupId and artifactId match exactly
    */
   public boolean matchesArtifact (Artifact artifact) {
 

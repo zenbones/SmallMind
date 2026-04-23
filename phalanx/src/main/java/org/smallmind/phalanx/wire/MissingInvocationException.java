@@ -33,15 +33,16 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Thrown when an invocation cannot be mapped to a known service method.
+ * Thrown when an invoked proxy method cannot be mapped to any method registered in the
+ * service interface, indicating the handler received an unexpected or unregistered call.
  */
 public class MissingInvocationException extends TransportException {
 
   /**
-   * Creates the exception with a formatted description of the missing invocation.
+   * Constructs a {@code MissingInvocationException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the missing method
-   * @param args    arguments applied to the format string
+   * @param message the format string describing which method could not be resolved
+   * @param args    the arguments referenced by the format string
    */
   public MissingInvocationException (String message, Object... args) {
 

@@ -48,22 +48,22 @@ import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Inspects a {@link Doppelganger}-annotated class and collects property metadata from fields and accessor methods.
- * Detected properties are forwarded to {@link DoppelgangerInformation} so views can be generated.
+ * Inspects the enclosed fields and methods of a {@link Doppelganger}-annotated class and registers
+ * discovered properties into a {@link DoppelgangerInformation} accumulator.
  */
 public class ClassWalker {
 
   /**
-   * Traverses the enclosed elements of the provided class, validating and registering properties according
-   * to {@link View} annotations and naming conventions.
+   * Traverses all enclosed elements of the given class, validates their annotations, and populates
+   * the in and out directional guides of the provided {@link DoppelgangerInformation}.
    *
-   * @param processingEnvironment           current annotation processing environment
-   * @param doppelgangerAnnotationProcessor the processor coordinating generation
-   * @param classElement                    the class being inspected
-   * @param doppelgangerInformation         accumulator for property and idiom details
-   * @param usefulTypeMirrors               cached type mirrors for commonly used annotations
-   * @throws IOException         if parsing nested types requires IO
-   * @throws DefinitionException if the class structure or annotations violate processing rules
+   * @param processingEnvironment           the current annotation processing environment
+   * @param doppelgangerAnnotationProcessor the processor coordinating view generation
+   * @param classElement                    the annotated class whose members are inspected
+   * @param doppelgangerInformation         accumulator that receives discovered property registrations
+   * @param usefulTypeMirrors               cached type mirrors for frequently referenced annotation types
+   * @throws IOException         if processing a referenced type requires source generation that fails
+   * @throws DefinitionException if any member violates annotation constraints (e.g., static or abstract with {@link View})
    */
   public static void walk (ProcessingEnvironment processingEnvironment, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, DoppelgangerInformation doppelgangerInformation, UsefulTypeMirrors usefulTypeMirrors)
     throws IOException, DefinitionException {
@@ -188,14 +188,14 @@ public class ClassWalker {
   }
 
   /**
-   * Registers an inbound property, ensuring a setter exists.
+   * Registers a field as an inbound property, requiring that a matching setter method exists.
    *
    * @param classElement            the owning class
-   * @param doppelgangerInformation accumulator for property registration
-   * @param setMethodMap            map of discovered setters keyed by field name
-   * @param fieldName               the logical field name
-   * @param propertyBox             parsed property metadata
-   * @throws DefinitionException if no matching setter exists
+   * @param doppelgangerInformation accumulator to receive the property registration
+   * @param setMethodMap            map of discovered setter methods keyed by logical field name
+   * @param fieldName               the logical field name derived from the element
+   * @param propertyBox             parsed property metadata including purpose and visibility
+   * @throws DefinitionException if no matching setter is found for the field
    */
   private static void addInField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashMap<String, ExecutableElement> setMethodMap, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {
@@ -208,15 +208,15 @@ public class ClassWalker {
   }
 
   /**
-   * Registers an outbound property, ensuring a getter exists.
+   * Registers a field as an outbound property, requiring that a matching getter or boolean accessor exists.
    *
    * @param classElement            the owning class
-   * @param doppelgangerInformation accumulator for property registration
-   * @param getFieldNameSet         names of fields with {@code getXxx} accessors
-   * @param isFieldNameSet          names of boolean fields with {@code isXxx} accessors
-   * @param fieldName               the logical field name
-   * @param propertyBox             parsed property metadata
-   * @throws DefinitionException if no matching getter exists
+   * @param doppelgangerInformation accumulator to receive the property registration
+   * @param getFieldNameSet         names of fields that have a {@code getXxx} accessor
+   * @param isFieldNameSet          names of boolean fields that have an {@code isXxx} accessor
+   * @param fieldName               the logical field name derived from the element
+   * @param propertyBox             parsed property metadata including purpose and visibility
+   * @throws DefinitionException if no matching getter is found for the field
    */
   private static void addOutField (TypeElement classElement, DoppelgangerInformation doppelgangerInformation, HashSet<String> getFieldNameSet, HashSet<String> isFieldNameSet, String fieldName, PropertyBox propertyBox)
     throws DefinitionException {

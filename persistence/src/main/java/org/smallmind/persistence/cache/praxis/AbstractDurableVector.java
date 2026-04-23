@@ -39,21 +39,21 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 
 /**
- * Base implementation of {@link DurableVector} backed by a {@link Roster}. Concrete subclasses
- * supply roster storage and copy semantics while this class manages ordering, uniqueness, and sizing.
+ * Abstract base for {@link DurableVector} implementations backed by a {@link Roster}.
+ * Subclasses supply the roster and copy semantics; this class enforces ordering, uniqueness, and max-size constraints.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public abstract class AbstractDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   /**
-   * Creates a vector with the supplied ordering and sizing rules.
+   * Constructs a vector with the given ordering and sizing parameters.
    *
-   * @param comparator        comparator used for ordering; {@code null} falls back to natural ordering
-   * @param maxSize           maximum number of entries to retain; zero or less means unbounded
-   * @param timeToLiveSeconds time-to-live for the vector
-   * @param ordered           whether elements should be maintained in sorted order
+   * @param comparator        comparator used to order elements; {@code null} falls back to natural ordering
+   * @param maxSize           maximum number of elements to retain; zero or negative means unbounded
+   * @param timeToLiveSeconds time-to-live for the vector in seconds
+   * @param ordered           {@code true} to maintain elements in sorted order
    */
   public AbstractDurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
@@ -61,19 +61,23 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
   }
 
   /**
-   * @return backing roster storing elements of this vector
+   * Returns the backing roster that stores this vector's elements.
+   *
+   * @return the roster backing this vector
    */
   public abstract Roster<D> getRoster ();
 
   /**
-   * @return a deep copy of the vector state
+   * Creates a deep copy of this vector.
+   *
+   * @return a new vector with the same configuration and element state
    */
   public abstract DurableVector<I, D> copy ();
 
   /**
    * Indicates whether this vector is restricted to a single element.
    *
-   * @return {@code true} for singular vectors
+   * @return {@code false}; subclasses that are singular must override
    */
   public boolean isSingular () {
 
@@ -81,10 +85,12 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
   }
 
   /**
-   * Adds the supplied durable to the vector respecting ordering, uniqueness, and max size rules.
+   * Adds the supplied durable to the vector, respecting ordering, uniqueness, and max-size rules.
+   * If the vector is ordered, the element is inserted at the correct sorted position; otherwise it is prepended.
+   * When the roster exceeds {@code maxSize}, the last element is removed.
    *
-   * @param durable element to add
-   * @return {@code true} when the vector changes
+   * @param durable the element to add; ignored when {@code null}
+   * @return {@code true} when the vector's content changes as a result of this call
    */
   public synchronized boolean add (D durable) {
 
@@ -154,8 +160,8 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
   /**
    * Removes all occurrences of the supplied durable from the vector.
    *
-   * @param durable element to remove
-   * @return {@code true} when at least one element is removed
+   * @param durable the element to remove
+   * @return {@code true} when at least one element was removed
    */
   public synchronized boolean remove (D durable) {
 
@@ -172,9 +178,9 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
   }
 
   /**
-   * Returns the first element in the roster or {@code null} when empty.
+   * Returns the first element in the roster, or {@code null} when the roster is empty.
    *
-   * @return head of the vector
+   * @return the head element, or {@code null}
    */
   public synchronized D head () {
 

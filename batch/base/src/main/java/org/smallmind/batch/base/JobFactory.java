@@ -35,27 +35,33 @@ package org.smallmind.batch.base;
 import java.util.Map;
 
 /**
- * Abstraction for creating and restarting batch jobs.
+ * Contract for creating and restarting batch jobs without coupling callers to a specific
+ * batch framework.
+ * <p>
+ * Implementations translate the framework-neutral {@link BatchParameter} wrappers into
+ * whatever representation the underlying engine requires.
  */
 public interface JobFactory {
 
   /**
-   * Creates and launches a batch job.
+   * Creates a new job execution and returns its identifier.
    *
-   * @param logicalName  the job name used to locate the definition
-   * @param parameterMap parameters to pass to the job, keyed by name
-   * @param reason       optional description of why the job is being started (for logging/auditing)
-   * @return the unique job execution id
-   * @throws Exception if the job cannot be located or started
+   * @param logicalName  name used to look up the job definition
+   * @param parameterMap job parameters keyed by name; may be {@code null} or empty
+   * @param reason       optional description of why the job is being started; used only for
+   *                     logging or auditing and may be {@code null}
+   * @return the unique execution id assigned to the newly launched job
+   * @throws Exception if the job cannot be located, parameters are invalid, or the execution
+   *                   cannot be started
    */
   Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap, String reason)
     throws Exception;
 
   /**
-   * Restarts a previously executed job.
+   * Re-runs a previously executed job identified by its execution id.
    *
-   * @param executionId the job execution id to restart
-   * @throws Exception if the execution cannot be found or restarted
+   * @param executionId the id of the job execution to restart
+   * @throws Exception if the execution cannot be found or the job does not support restart
    */
   void restart (long executionId)
     throws Exception;

@@ -41,14 +41,28 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 /**
- * Wraps another translator to hash overly long keys, keeping them within memcached limits.
+ * Decorator {@link KeyTranslator} that transparently hashes keys whose encoded form exceeds the
+ * memcached 250-character limit.
+ *
+ * <p>The delegate translator is invoked first. If the resulting key is within the 250-character
+ * limit it is returned as-is. When the limit is exceeded the <em>original</em> key (not the
+ * encoded one) is hashed using SHA3-512 and the raw digest is Base64-encoded to produce a
+ * compact, safe key. A SHA3-512 digest is 64 bytes, which Base64-encodes to 88 characters&mdash;
+ * well within the 250-character limit.</p>
+ *
+ * <p>Typical usage is to wrap a {@link DefaultKeyTranslator}:</p>
+ * <pre>{@code
+ * KeyTranslator translator = new LargeKeyHashingTranslator(new DefaultKeyTranslator());
+ * }</pre>
  */
 public class LargeKeyHashingTranslator implements KeyTranslator {
 
   private final KeyTranslator keyTranslator;
 
   /**
-   * @param keyTranslator delegate used before hashing long keys
+   * Constructs a large-key hashing translator that wraps the given delegate.
+   *
+   * @param keyTranslator the delegate translator applied before the length check
    */
   public LargeKeyHashingTranslator (KeyTranslator keyTranslator) {
 
@@ -56,7 +70,17 @@ public class LargeKeyHashingTranslator implements KeyTranslator {
   }
 
   /**
-   * {@inheritDoc}
+   * Encodes the key using the delegate translator, falling back to a SHA3-512 hash when the
+   * encoded result exceeds 250 characters.
+   *
+   * <p>When hashing is required the raw UTF-8 bytes of the original {@code key} are hashed
+   * (not the delegate-encoded form) and the digest is then Base64-encoded to produce the
+   * final memcached key.</p>
+   *
+   * @param key the original application-level cache key
+   * @return a memcached-safe encoded key of at most 250 characters
+   * @throws IOException             if encoding fails in the delegate or during Base64 encoding
+   * @throws CubbyOperationException if the SHA3-512 algorithm is unavailable on this platform
    */
   @Override
   public String encode (String key)

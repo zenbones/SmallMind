@@ -40,8 +40,7 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Base JsonEntity implementation that exposes parameters from a named argument map.
- * Entries are converted on demand, optionally passing through any {@link XmlJavaTypeAdapter} associated with the parameter.
+ * Abstract {@link JsonEntity} that resolves parameters by name from a backing {@link Map} of argument values.
  */
 public abstract class AbstractMappedJsonEntity implements JsonEntity {
 
@@ -50,16 +49,16 @@ public abstract class AbstractMappedJsonEntity implements JsonEntity {
   private Map<String, Object> arguments;
 
   /**
-   * Constructs an empty entity with no argument map.
+   * Constructs an entity with no backing argument map.
    */
   public AbstractMappedJsonEntity () {
 
   }
 
   /**
-   * Constructs an entity that will resolve parameters from the supplied argument map.
+   * Constructs an entity backed by the supplied named argument map.
    *
-   * @param arguments map keyed by parameter name holding argument values
+   * @param arguments map of parameter names to argument values
    */
   public AbstractMappedJsonEntity (Map<String, Object> arguments) {
 
@@ -67,9 +66,9 @@ public abstract class AbstractMappedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Returns the backing map of parameter values.
+   * Returns the backing named argument map.
    *
-   * @return map of argument values keyed by name, or {@code null} if none supplied
+   * @return map of parameter names to argument values, or {@code null} if not set
    */
   public Map<String, Object> getArguments () {
 
@@ -77,9 +76,9 @@ public abstract class AbstractMappedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Replaces the argument map used for parameter lookup.
+   * Replaces the backing named argument map.
    *
-   * @param arguments map of parameter values keyed by name
+   * @param arguments map of parameter names to argument values
    */
   public void setArguments (Map<String, Object> arguments) {
 
@@ -87,14 +86,15 @@ public abstract class AbstractMappedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Resolves a parameter by name from the backing map, converting it to the requested type and honoring any
-   * {@link XmlJavaTypeAdapter} annotation.
+   * Looks up the argument by name and converts it to the requested type, applying any {@link XmlJavaTypeAdapter}
+   * declared on the consuming parameter.
    *
    * @param key                  parameter name
-   * @param clazz                target type
-   * @param parameterAnnotations annotations present on the parameter definition
-   * @return converted value, or {@code null} if the key is not present
-   * @throws ParameterProcessingException if adapter construction or value conversion fails
+   * @param clazz                target type to convert the argument to
+   * @param parameterAnnotations annotations present on the consuming parameter
+   * @param <T>                  desired return type
+   * @return the converted argument value, or {@code null} if the key is absent from the map
+   * @throws ParameterProcessingException if adapter construction or type conversion fails
    */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {

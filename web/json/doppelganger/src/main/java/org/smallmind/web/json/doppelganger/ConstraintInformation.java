@@ -37,7 +37,7 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Extracted constraint metadata from {@link Constraint} annotations used on properties or idioms.
+ * Parsed representation of a {@link Constraint} annotation, holding the constraint type and its arguments.
  */
 public class ConstraintInformation {
 
@@ -45,9 +45,9 @@ public class ConstraintInformation {
   private final String arguments;
 
   /**
-   * Parses a {@link Constraint} annotation to concrete type and argument strings.
+   * Extracts the constraint type and argument string from a {@link Constraint} annotation mirror.
    *
-   * @param constraintAnnotationMirror the annotation mirror describing the constraint
+   * @param constraintAnnotationMirror the annotation mirror of the {@link Constraint} to parse
    */
   public ConstraintInformation (AnnotationMirror constraintAnnotationMirror) {
 
@@ -56,7 +56,7 @@ public class ConstraintInformation {
   }
 
   /**
-   * @return the constraint annotation type to emit
+   * @return the type mirror of the constraint annotation to emit
    */
   public TypeMirror getType () {
 
@@ -64,7 +64,7 @@ public class ConstraintInformation {
   }
 
   /**
-   * @return raw arguments to include inside the annotation, or empty when none
+   * @return the raw argument string to place inside the constraint annotation, or empty when none
    */
   public String getArguments () {
 

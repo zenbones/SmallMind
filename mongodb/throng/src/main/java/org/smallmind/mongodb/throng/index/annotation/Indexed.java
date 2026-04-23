@@ -38,20 +38,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.smallmind.mongodb.throng.index.IndexType;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
 /**
  * Marks a field for the creation of a single-field index.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface Indexed {
 
   /**
-   * @return index type to apply to the field
+   * The index type to apply to the annotated field; defaults to ascending.
+   *
+   * @return the index type
    */
   IndexType value () default IndexType.ASCENDING;
 
   /**
-   * @return additional index options
+   * Additional creation options for the single-field index.
+   *
+   * @return the index options
    */
   IndexOptions options () default @IndexOptions();
 }

@@ -44,7 +44,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
 
 /**
- * A minimal JWT consumer that can process nested JWE/JWS tokens and configure signature/encryption requirements.
+ * Parses, verifies, and decrypts compact-serialized JWTs, supporting nested JWE/JWS structures and configurable signature and encryption requirements.
  */
 public class JWTConsumer {
 
@@ -55,10 +55,10 @@ public class JWTConsumer {
   private boolean requireIntegrity;
 
   /**
-   * Controls whether signature verification is performed.
+   * Configures whether signature verification is skipped entirely.
    *
-   * @param skipSignatureVerification {@code true} to bypass signature checks
-   * @return this consumer for chaining
+   * @param skipSignatureVerification {@code true} to bypass all signature checks
+   * @return this consumer for method chaining
    */
   public JWTConsumer setSkipSignatureVerification (boolean skipSignatureVerification) {
 
@@ -68,10 +68,10 @@ public class JWTConsumer {
   }
 
   /**
-   * Controls whether a verification key is applied when the header algorithm is {@code none}.
+   * Configures whether the verification key is applied when the header algorithm is {@code none}.
    *
-   * @param skipVerificationKeyResolutionOnNone {@code true} to avoid applying the verification key for {@code none} algorithms
-   * @return this consumer for chaining
+   * @param skipVerificationKeyResolutionOnNone {@code true} to omit setting the verification key for unsecured ({@code none}) JWTs
+   * @return this consumer for method chaining
    */
   public JWTConsumer setSkipVerificationKeyResolutionOnNone (boolean skipVerificationKeyResolutionOnNone) {
 
@@ -81,10 +81,10 @@ public class JWTConsumer {
   }
 
   /**
-   * Configures whether a signature is required.
+   * Configures whether the presence of a signature is required.
    *
-   * @param requireSignature {@code true} to demand a signature
-   * @return this consumer for chaining
+   * @param requireSignature {@code true} to require a non-{@code none} algorithm signature
+   * @return this consumer for method chaining
    */
   public JWTConsumer setRequireSignature (boolean requireSignature) {
 
@@ -94,10 +94,10 @@ public class JWTConsumer {
   }
 
   /**
-   * Configures whether encryption is required.
+   * Configures whether the JWT must be encrypted.
    *
-   * @param requireEncryption {@code true} to demand encryption
-   * @return this consumer for chaining
+   * @param requireEncryption {@code true} to require at least one JWE layer
+   * @return this consumer for method chaining
    */
   public JWTConsumer setRequireEncryption (boolean requireEncryption) {
 
@@ -107,10 +107,10 @@ public class JWTConsumer {
   }
 
   /**
-   * Configures whether integrity protection (signature/MAC or symmetric AEAD encryption) is required.
+   * Configures whether integrity protection via a signature or symmetric AEAD encryption is required.
    *
-   * @param requireIntegrity {@code true} to demand integrity protection
-   * @return this consumer for chaining
+   * @param requireIntegrity {@code true} to require either a signature or symmetric AEAD encryption
+   * @return this consumer for method chaining
    */
   public JWTConsumer setRequireIntegrity (boolean requireIntegrity) {
 
@@ -120,14 +120,14 @@ public class JWTConsumer {
   }
 
   /**
-   * Parses and verifies a JWT, automatically handling nested structures and returning the payload as the given type.
+   * Unwraps, verifies, and deserializes a compact JWT, peeling nested JWE and JWS layers until the claims payload is reached.
    *
-   * @param jwt           the compact JWT string
-   * @param decryptionKey the key to use for signature verification or decryption
-   * @param claimsClass   the expected payload type
-   * @param <T>           the claim type
+   * @param jwt           the compact-serialized JWT string
+   * @param decryptionKey the key used for decryption and/or signature verification
+   * @param claimsClass   the target type for the JSON claims payload
+   * @param <T>           the claims type
    * @return the deserialized claims object
-   * @throws Exception if parsing, verification, or deserialization fails
+   * @throws Exception if parsing, verification, decryption, or deserialization fails
    */
   public <T> T process (String jwt, Key decryptionKey, Class<T> claimsClass)
     throws Exception {
@@ -172,12 +172,12 @@ public class JWTConsumer {
   }
 
   /**
-   * Validates the collected JOSE structures against configured requirements.
+   * Verifies all collected JOSE layers against the configured policy requirements.
    *
-   * @param jwt             the original token for error reporting
-   * @param verificationKey the key used to verify signatures
-   * @param joseObjects     the ordered list of JOSE layers (inner-most first)
-   * @throws Exception if verification fails or requirements are not met
+   * @param jwt             the original token string used in error messages
+   * @param verificationKey the key applied to verify JWS signatures
+   * @param joseObjects     the ordered list of JOSE structures, innermost first
+   * @throws Exception if signature verification fails or a required protection layer is absent
    */
   public void processContext (String jwt, Key verificationKey, LinkedList<JsonWebStructure> joseObjects)
     throws Exception {
@@ -231,10 +231,10 @@ public class JWTConsumer {
   }
 
   /**
-   * Determines whether the JOSE object wraps another JWT.
+   * Tests whether a JOSE structure carries a nested JWT indicated by a {@code cty} header of {@code jwt} or {@code application/jwt}.
    *
-   * @param joseObject the JOSE structure to test
-   * @return {@code true} if the content type denotes a nested JWT
+   * @param joseObject the JOSE structure to inspect
+   * @return {@code true} if the content-type header identifies a nested JWT
    */
   private boolean isNestedJwt (JsonWebStructure joseObject) {
 

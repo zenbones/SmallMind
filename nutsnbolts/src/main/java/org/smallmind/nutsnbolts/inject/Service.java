@@ -38,7 +38,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a type as a service component for discovery/registration by dependency injection frameworks.
+ * Marks a class or interface as a service component to be discovered and registered by a dependency injection framework.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

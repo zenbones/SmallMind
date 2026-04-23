@@ -39,29 +39,30 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * JAXB adapter for maps with string keys, representing them as JSON objects where {@code null}
- * keys are encoded as the literal string "null".
+ * Abstract JAXB adapter for string-keyed maps, representing them as JSON objects and encoding
+ * {@code null} keys as the literal string {@code "null"}.
  *
- * @param <M> concrete map type
+ * @param <M> concrete map type with string keys
  * @param <V> value type
  */
 public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends XmlAdapter<JsonNode, M> {
 
   /**
-   * @return an empty mutable map of the desired type
+   * @return an empty mutable map of the target type
    */
   public abstract M getEmptyMap ();
 
   /**
-   * @return value class for conversion
+   * @return class used to convert values when unmarshalling
    */
   public abstract Class<V> getValueClass ();
 
   /**
-   * Deserializes a JSON object into a map, converting "null" keys back to {@code null}.
+   * Converts a JSON object node into a map, treating the literal key {@code "null"} as a {@code null}
+   * map key.
    *
-   * @param node JSON node to convert
-   * @return populated map or {@code null} if the node is {@code null}
+   * @param node JSON object node to convert, or {@code null}
+   * @return populated map, or {@code null} if the node is {@code null}
    */
   @Override
   public M unmarshal (JsonNode node) {
@@ -85,10 +86,10 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
   }
 
   /**
-   * Serializes a map into a JSON object, encoding {@code null} keys as the literal "null".
+   * Converts a map into a JSON object, encoding {@code null} keys as the literal string {@code "null"}.
    *
-   * @param map map to serialize
-   * @return JSON representation or {@code null} if the map is {@code null}
+   * @param map map to serialize, or {@code null}
+   * @return JSON object node, or {@code null} if the map is {@code null}
    * @throws Exception if serialization fails
    */
   @Override

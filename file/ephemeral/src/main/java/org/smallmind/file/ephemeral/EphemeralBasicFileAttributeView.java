@@ -37,14 +37,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 /**
- * Basic file attribute view backed by an {@link EphemeralBasicFileAttributes} instance.
+ * {@link BasicFileAttributeView} implementation backed by an {@link EphemeralBasicFileAttributes}
+ * instance. Exposes the standard {@code "basic"} view name and delegates reads and time-stamp
+ * mutations to the underlying attributes object.
  */
 public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
 
   private final EphemeralBasicFileAttributes attributes;
 
   /**
-   * @param attributes the backing attributes to expose and mutate
+   * Creates a view that wraps the supplied attributes object.
+   *
+   * @param attributes the backing attributes to expose and mutate; must not be {@code null}
    */
   public EphemeralBasicFileAttributeView (EphemeralBasicFileAttributes attributes) {
 
@@ -52,7 +56,9 @@ public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name of this attribute view.
+   *
+   * @return {@code "basic"}
    */
   @Override
   public String name () {
@@ -61,7 +67,9 @@ public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
   }
 
   /**
-   * {@inheritDoc}
+   * Reads the basic file attributes associated with this view.
+   *
+   * @return the underlying {@link EphemeralBasicFileAttributes}; never {@code null}
    */
   @Override
   public BasicFileAttributes readAttributes () {
@@ -70,7 +78,12 @@ public class EphemeralBasicFileAttributeView implements BasicFileAttributeView {
   }
 
   /**
-   * {@inheritDoc}
+   * Updates one or more of the file timestamps. Any parameter that is {@code null} is left
+   * unchanged.
+   *
+   * @param lastModifiedTime the new last-modified time, or {@code null} to leave unchanged
+   * @param lastAccessTime   the new last-access time, or {@code null} to leave unchanged
+   * @param createTime       the new creation time, or {@code null} to leave unchanged
    */
   @Override
   public void setTimes (FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {

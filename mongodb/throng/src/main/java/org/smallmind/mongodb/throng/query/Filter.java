@@ -80,7 +80,9 @@ public class Filter {
   }
 
   /**
-   * @return an empty filter that matches all documents
+   * Creates a filter that matches all documents (no restrictions).
+   *
+   * @return an empty filter
    */
   public static Filter empty () {
 
@@ -88,11 +90,11 @@ public class Filter {
   }
 
   /**
-   * Combines multiple filters with a logical AND.
+   * Combines multiple filters with a logical AND; returns an empty filter when {@code filters} is null or empty.
    *
    * @param filters filters to combine
-   * @return composed filter
-   * @throws IllegalFilterStateException if any filter is incomplete
+   * @return composed AND filter, or an empty filter when no inputs are supplied
+   * @throws IllegalFilterStateException if any filter has not had a comparison applied
    */
   public static Filter and (Filter... filters) {
 
@@ -121,11 +123,11 @@ public class Filter {
   }
 
   /**
-   * Combines multiple filters with a logical OR.
+   * Combines multiple filters with a logical OR; returns an empty filter when {@code filters} is null or empty.
    *
    * @param filters filters to combine
-   * @return composed filter
-   * @throws IllegalFilterStateException if any filter is incomplete
+   * @return composed OR filter, or an empty filter when no inputs are supplied
+   * @throws IllegalFilterStateException if any filter has not had a comparison applied
    */
   public static Filter or (Filter... filters) {
 
@@ -386,7 +388,7 @@ public class Filter {
    * @param documentClass class of the target document
    * @param codecRegistry registry for encoding values
    * @return BSON representation of the filter
-   * @throws UnsupportedOperationException if the filter has not been finalized
+   * @throws UnsupportedOperationException if no comparison operation has been applied to this filter
    */
   public Bson toBsonDocument (Class<?> documentClass, CodecRegistry codecRegistry) {
 

@@ -39,9 +39,14 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that materializes an array of {@link KafkaServer} instances from either a
- * single explicit host/port or a spread pattern (e.g., {@code kafka-#}.example.com).
- * This allows configuring multiple brokers via a compact property string.
+ * Spring {@link FactoryBean} that produces a {@link KafkaServer}{@code []} from a compact
+ * pattern string, optionally expanded via a spread expression.
+ *
+ * <p>The pattern may be a plain {@code host:port} pair, a bare hostname (defaulting to port
+ * {@code 9092}), or a template containing {@code #} which is replaced by each value produced
+ * by the spread — e.g. pattern {@code kafka-#.example.com:9092} with spread {@code 1-3} yields
+ * three brokers: {@code kafka-1.example.com:9092}, {@code kafka-2.example.com:9092}, and
+ * {@code kafka-3.example.com:9092}.
  */
 public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, InitializingBean {
 
@@ -50,10 +55,10 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   private String serverSpread;
 
   /**
-   * Sets the pattern representing broker addresses. A {@code #} character will be replaced with
-   * values from the configured spread, and an optional port may follow a colon.
+   * Sets the broker address pattern.  A {@code #} placeholder is substituted with each value
+   * from the spread; an optional {@code :port} suffix overrides the default port {@code 9092}.
    *
-   * @param serverPattern pattern describing the brokers
+   * @param serverPattern address pattern, e.g. {@code kafka-#.internal:9094} or {@code broker.example.com:9094}
    */
   public void setServerPattern (String serverPattern) {
 
@@ -61,9 +66,10 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   }
 
   /**
-   * Sets the spread expression used to expand {@code serverPattern} when it contains {@code #}.
+   * Sets the spread expression used to expand a pattern that contains {@code #}.
+   * The value is interpreted by {@link Spread#calculate(String)}.
    *
-   * @param serverSpread spread descriptor understood by {@link Spread#calculate(String)}
+   * @param serverSpread spread descriptor such as {@code 1-3} or {@code a,b,c}
    */
   public void setServerSpread (String serverSpread) {
 
@@ -71,7 +77,7 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   }
 
   /**
-   * Always produces a singleton array.
+   * Indicates that this factory always returns the same array instance.
    *
    * @return {@code true}
    */
@@ -82,9 +88,9 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   }
 
   /**
-   * Declares the object type managed by this factory.
+   * Returns the managed object type.
    *
-   * @return {@link KafkaServer} array class
+   * @return {@code KafkaServer[].class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -93,9 +99,9 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   }
 
   /**
-   * Returns the broker array constructed during initialization.
+   * Returns the broker array assembled by {@link #afterPropertiesSet()}.
    *
-   * @return configured {@link KafkaServer} array or {@code null} if not initialized
+   * @return configured {@link KafkaServer} array, or {@code null} before initialization
    */
   @Override
   public KafkaServer[] getObject () {
@@ -104,9 +110,11 @@ public class KafkaServerFactoryBean implements FactoryBean<KafkaServer[]>, Initi
   }
 
   /**
-   * Parses the provided pattern and spread into an array of {@link KafkaServer} objects.
+   * Parses {@code serverPattern} and, when it contains {@code #}, expands it with
+   * {@code serverSpread} to produce one {@link KafkaServer} per spread value.
+   * Patterns without {@code #} yield a single-element array.
    *
-   * @throws SpreadParserException if the spread expression cannot be parsed
+   * @throws SpreadParserException if {@code serverSpread} is set but cannot be parsed
    */
   @Override
   public void afterPropertiesSet ()

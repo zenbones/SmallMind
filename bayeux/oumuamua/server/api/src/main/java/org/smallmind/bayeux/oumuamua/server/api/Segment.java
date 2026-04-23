@@ -33,27 +33,31 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Represents a segment of a channel route with matching rules.
+ * Single path component of a channel {@link Route}, supporting character-sequence matching
+ * that may be literal or wildcard depending on the concrete subtype.
  */
 public abstract class Segment implements CharSequence {
 
   /**
-   * Determines whether this segment matches the provided character sequence.
+   * Evaluates whether this segment matches the given character sequence according to its
+   * matching rules (literal equality, single-level wildcard, or deep wildcard).
    *
-   * @param charSequence the sequence to test
-   * @return {@code true} if the segment matches
+   * @param charSequence sequence to test against this segment
+   * @return {@code true} if the sequence satisfies this segment's matching criterion
    */
   public abstract boolean matches (CharSequence charSequence);
 
   /**
-   * @return the literal representation of the segment
+   * Returns the literal text of this segment as it appears in the channel path.
+   *
+   * @return segment text
    */
   public abstract String toString ();
 
   /**
-   * Computes a hash code based on the characters in the segment.
+   * Computes a hash code derived from the characters of this segment.
    *
-   * @return hash code for the segment
+   * @return character-based hash code
    */
   @Override
   public int hashCode () {
@@ -68,10 +72,10 @@ public abstract class Segment implements CharSequence {
   }
 
   /**
-   * Compares another object for equality based on segment matching rules.
+   * Returns whether another object is a {@link Segment} that this segment matches.
    *
    * @param obj object to compare
-   * @return {@code true} if the object is a segment with equivalent content
+   * @return {@code true} if {@code obj} is a {@link Segment} and {@link #matches(CharSequence)} returns {@code true} for it
    */
   @Override
   public boolean equals (Object obj) {

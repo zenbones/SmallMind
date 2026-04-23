@@ -35,21 +35,21 @@ package org.smallmind.web.jwt;
 import java.security.Key;
 
 /**
- * Represents a source of cryptographic material and algorithm selection used to sign or verify JWTs.
+ * Provides the cryptographic key and corresponding signing algorithm needed to sign or verify a JWT.
  */
 public interface JWTKeyMaster {
 
   /**
-   * Provides the signing/verification algorithm that corresponds to the supplied key.
+   * Returns the JWT signing algorithm associated with the key held by this master.
    *
-   * @return the configured JWT encryption/signing algorithm
+   * @return the encryption/signing algorithm
    */
   JWTEncryptionAlgorithm getEncryptionAlgorithm ();
 
   /**
-   * Supplies the key that will be used for signing or verification.
+   * Returns the cryptographic key used for signing or verification.
    *
-   * @return the cryptographic key
+   * @return the signing or verification key
    */
   Key getKey ();
 }

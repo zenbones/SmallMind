@@ -40,8 +40,8 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Declares that an empty string value should be treated as {@code null} for the annotated field.
- * The constraint is enforced by {@link EmptyStringNullifierValidator}.
+ * Field annotation that instructs overlay processing to replace an empty string value with
+ * {@code null}, validated by {@link EmptyStringNullifierValidator}.
  */
 @Documented
 @Retention(RUNTIME)
@@ -50,7 +50,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface EmptyStringNullifier {
 
   /**
-   * @return the validation message used when the constraint fails
+   * Specifies the diagnostic message associated with the nullification rule.
+   *
+   * @return the message describing why an empty string is treated as {@code null}
    */
   String message () default "empty string";
 }

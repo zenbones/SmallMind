@@ -33,15 +33,16 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Exception indicating a request exceeded its allotted transport timeout.
+ * Thrown when a wire request does not receive a response within the allotted timeout period,
+ * as configured by the {@link TwoWayConversation} or the transport default.
  */
 public class TransportTimeoutException extends TransportException {
 
   /**
-   * Creates the exception with a formatted timeout message.
+   * Constructs a {@code TransportTimeoutException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the timeout
-   * @param args    arguments applied to the format string
+   * @param message the format string describing which request timed out and under what conditions
+   * @param args    the arguments referenced by the format string
    */
   public TransportTimeoutException (String message, Object... args) {
 

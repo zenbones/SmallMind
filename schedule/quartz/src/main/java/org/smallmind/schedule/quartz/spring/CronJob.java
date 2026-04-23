@@ -36,8 +36,10 @@ import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 
 /**
- * Simple container that couples a {@link JobDetail} with its associated
- * {@link CronTrigger}. Useful for Spring wiring of scheduled jobs.
+ * Pairs a Quartz {@link JobDetail} with a {@link CronTrigger} for convenient
+ * Spring bean configuration. Instances are discovered by
+ * {@link CronJobMapFactoryBean} and registered with the scheduler by
+ * {@link CronJobInitializingBean}.
  */
 public class CronJob {
 
@@ -45,9 +47,9 @@ public class CronJob {
   private CronTrigger cronTrigger;
 
   /**
-   * Job definition to be scheduled.
+   * Returns the job definition to be scheduled.
    *
-   * @return the configured {@link JobDetail}
+   * @return the associated {@link JobDetail}
    */
   public JobDetail getJobDetail () {
 
@@ -55,9 +57,9 @@ public class CronJob {
   }
 
   /**
-   * Configure the job definition to schedule.
+   * Sets the job definition to schedule.
    *
-   * @param jobDetail the {@link JobDetail} to associate
+   * @param jobDetail the {@link JobDetail} describing the job class and data
    */
   public void setJobDetail (JobDetail jobDetail) {
 
@@ -65,9 +67,9 @@ public class CronJob {
   }
 
   /**
-   * Cron trigger that controls the job's firing schedule.
+   * Returns the cron trigger that governs when the job fires.
    *
-   * @return the configured {@link CronTrigger}
+   * @return the associated {@link CronTrigger}
    */
   public CronTrigger getCronTrigger () {
 
@@ -75,9 +77,9 @@ public class CronJob {
   }
 
   /**
-   * Configure the cron trigger for the job.
+   * Sets the cron trigger that governs when the job fires.
    *
-   * @param cronTrigger the {@link CronTrigger} to associate
+   * @param cronTrigger the {@link CronTrigger} defining the firing schedule
    */
   public void setCronTrigger (CronTrigger cronTrigger) {
 

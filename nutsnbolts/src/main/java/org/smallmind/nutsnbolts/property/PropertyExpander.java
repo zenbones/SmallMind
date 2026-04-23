@@ -39,8 +39,8 @@ import org.smallmind.nutsnbolts.security.kms.Decryptor;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 
 /**
- * Expands property placeholders in strings, optionally decrypting values and consulting system properties
- * and environment variables based on configured resolution modes.
+ * Resolves property placeholders embedded in strings by consulting a caller-supplied map, system
+ * properties, and environment variables according to a configurable {@link SystemPropertyMode}.
  */
 public class PropertyExpander {
 
@@ -50,10 +50,10 @@ public class PropertyExpander {
   private final boolean searchSystemEnvironment;
 
   /**
-   * Creates an expander with default closure, resolves using {@link SystemPropertyMode#FALLBACK},
-   * searches the system environment, and fails on unresolved properties.
+   * Constructs an expander with the default {@link PropertyClosure}, {@link SystemPropertyMode#FALLBACK}
+   * resolution order, system-environment lookup enabled, and strict failure on unresolvable placeholders.
    *
-   * @throws PropertyExpanderException if the default closure cannot be created
+   * @throws PropertyExpanderException if the default property closure cannot be constructed
    */
   public PropertyExpander ()
     throws PropertyExpanderException {
@@ -62,12 +62,13 @@ public class PropertyExpander {
   }
 
   /**
-   * Creates a configurable expander.
+   * Constructs a fully configured expander.
    *
-   * @param propertyClosure              delimiters and encrypted variation handling
-   * @param ignoreUnresolvableProperties whether to leave unresolved placeholders intact rather than throwing
-   * @param systemPropertyMode           how to resolve against system properties/environment relative to the provided map
-   * @param searchSystemEnvironment      whether to consult environment variables in addition to system properties
+   * @param propertyClosure              the placeholder delimiter and optional encrypted-value configuration
+   * @param ignoreUnresolvableProperties when {@code true}, unresolvable placeholders are left in place
+   *                                     rather than causing an exception
+   * @param systemPropertyMode           controls whether system properties override or fall back to the caller map
+   * @param searchSystemEnvironment      when {@code true}, environment variables are also consulted
    */
   public PropertyExpander (PropertyClosure propertyClosure, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment) {
 
@@ -78,11 +79,12 @@ public class PropertyExpander {
   }
 
   /**
-   * Expands placeholders within the provided string using the configured resolution rules and no additional map.
+   * Expands all property placeholders in the given string using only system properties and environment
+   * variables according to the configured resolution mode.
    *
-   * @param expansion the string containing property placeholders
-   * @return the expanded string
-   * @throws PropertyExpanderException if a placeholder cannot be resolved and ignoring is disabled, or parsing fails
+   * @param expansion the expression string whose placeholders should be resolved
+   * @return the fully expanded string
+   * @throws PropertyExpanderException if a placeholder cannot be resolved and strict mode is enabled
    */
   public String expand (String expansion)
     throws PropertyExpanderException {
@@ -91,12 +93,13 @@ public class PropertyExpander {
   }
 
   /**
-   * Expands placeholders within the provided string using the supplied map before falling back to system sources.
+   * Expands all property placeholders in the given string, consulting the supplied map before or after
+   * system sources depending on the configured {@link SystemPropertyMode}.
    *
-   * @param expansion    the string containing property placeholders
-   * @param expansionMap map of property names to values
-   * @return the expanded string
-   * @throws PropertyExpanderException if a placeholder cannot be resolved and ignoring is disabled, or parsing fails
+   * @param expansion    the expression string whose placeholders should be resolved
+   * @param expansionMap a map of additional property keys to values used during resolution
+   * @return the fully expanded string
+   * @throws PropertyExpanderException if a placeholder cannot be resolved and strict mode is enabled
    */
   public String expand (String expansion, Map<String, Object> expansionMap)
     throws PropertyExpanderException {
@@ -105,14 +108,15 @@ public class PropertyExpander {
   }
 
   /**
-   * Recursive expansion implementation that walks the string, resolves placeholders, and replaces them with
-   * concrete values. Detects circular references and applies decryption when configured.
+   * Internal recursive implementation that walks {@code expansionBuilder}, resolves each placeholder it
+   * finds against the configured sources, decrypts values when required, and detects circular references.
    *
-   * @param originalExpansion the full original expression, used for error context
-   * @param expansionBuilder  mutable builder containing the current expression being expanded
-   * @param expansionMap      user-supplied property map
-   * @return the builder after expansion
-   * @throws PropertyExpanderException if resolution fails, circular references are detected, or parsing errors occur
+   * @param originalExpansion the original expression text, retained for meaningful error messages
+   * @param expansionBuilder  the mutable string being transformed in place
+   * @param expansionMap      the caller-supplied map consulted during resolution
+   * @return {@code expansionBuilder} after all resolvable placeholders have been substituted
+   * @throws PropertyExpanderException if a circular reference is detected, a placeholder is unclosed,
+   *                                   or a required value cannot be found and strict mode is enabled
    */
   private StringBuilder expand (String originalExpansion, StringBuilder expansionBuilder, Map<String, Object> expansionMap)
     throws PropertyExpanderException {

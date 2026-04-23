@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq.spring;
 
 /**
- * Holds host/port information for a RabbitMQ broker.
+ * Holds the host and port for a single RabbitMQ broker endpoint.
  */
 public class RabbitMQServer {
 
@@ -41,7 +41,9 @@ public class RabbitMQServer {
   private int port = 5672;
 
   /**
-   * @param host broker hostname.
+   * Creates a server entry using the default AMQP port 5672.
+   *
+   * @param host broker hostname or IP address.
    */
   public RabbitMQServer (String host) {
 
@@ -49,8 +51,10 @@ public class RabbitMQServer {
   }
 
   /**
-   * @param host broker hostname.
-   * @param port broker port.
+   * Creates a server entry with an explicit port.
+   *
+   * @param host broker hostname or IP address.
+   * @param port broker AMQP port.
    */
   public RabbitMQServer (String host, int port) {
 
@@ -60,7 +64,9 @@ public class RabbitMQServer {
   }
 
   /**
-   * @return broker hostname.
+   * Returns the broker hostname or IP address.
+   *
+   * @return broker host.
    */
   public String getHost () {
 
@@ -68,7 +74,9 @@ public class RabbitMQServer {
   }
 
   /**
-   * @param host broker hostname.
+   * Sets the broker hostname or IP address.
+   *
+   * @param host broker host.
    */
   public void setHost (String host) {
 
@@ -76,6 +84,8 @@ public class RabbitMQServer {
   }
 
   /**
+   * Returns the broker AMQP port.
+   *
    * @return broker port.
    */
   public int getPort () {
@@ -84,6 +94,8 @@ public class RabbitMQServer {
   }
 
   /**
+   * Sets the broker AMQP port.
+   *
    * @param port broker port.
    */
   public void setPort (int port) {

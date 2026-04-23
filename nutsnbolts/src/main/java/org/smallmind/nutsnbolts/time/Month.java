@@ -35,16 +35,16 @@ package org.smallmind.nutsnbolts.time;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
 /**
- * Lightweight month enumeration with display formatting support.
+ * Enumeration of the twelve calendar months in order, with display-name formatting.
  */
 public enum Month {
 
   JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER;
 
   /**
-   * Returns a capitalized display form of the enum constant name.
+   * Returns the month name formatted for display, with only the first letter capitalized.
    *
-   * @return human-friendly month name
+   * @return a human-readable month name such as {@code January} or {@code February}
    */
   public String getDisplayName () {
 

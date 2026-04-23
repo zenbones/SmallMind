@@ -33,17 +33,21 @@
 package org.smallmind.nutsnbolts.spring.property;
 
 /**
- * Represents a single property key/value pair.
+ * Represents a single key/value pair loaded from a property source.
  */
 public interface PropertyEntry {
 
   /**
-   * @return the property key
+   * Returns the property key.
+   *
+   * @return the non-null property key string
    */
   String getKey ();
 
   /**
-   * @return the property value (raw form)
+   * Returns the raw property value as read from the source.
+   *
+   * @return the property value object, or {@code null} if no value is set
    */
   Object getValue ();
 }

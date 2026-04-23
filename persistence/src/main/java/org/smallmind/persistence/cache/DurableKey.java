@@ -36,8 +36,11 @@ import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
 /**
- * Cache key wrapper that combines a durable class name with its identifier to form a unique string
- * key.
+ * Serializable cache key that uniquely identifies a durable instance by combining its simple class
+ * name with its identifier, in the form {@code ClassName=id}.
+ *
+ * @param <I> durable identifier type
+ * @param <D> durable type
  */
 public class DurableKey<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable {
 
@@ -45,10 +48,10 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   private final String key;
 
   /**
-   * Builds a key string from the durable's simple class name and identifier.
+   * Constructs a key by formatting the durable's simple class name and identifier.
    *
-   * @param durableClass durable type
-   * @param id           durable identifier
+   * @param durableClass durable class this key refers to
+   * @param id           identifier of the durable instance
    */
   public DurableKey (Class<D> durableClass, I id) {
 
@@ -58,7 +61,9 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   }
 
   /**
-   * @return durable class this key refers to
+   * Returns the durable class represented by this key.
+   *
+   * @return durable class
    */
   public Class<D> getDurableClass () {
 
@@ -66,7 +71,9 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   }
 
   /**
-   * @return cacheable key string combining class and id
+   * Returns the formatted cache key string.
+   *
+   * @return key string of the form {@code ClassName=id}
    */
   public String getKey () {
 
@@ -74,7 +81,9 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   }
 
   /**
-   * @return id portion of the key as a string
+   * Returns the identifier portion of the key as a string.
+   *
+   * @return string representation of the durable identifier
    */
   public String getIdAsString () {
 
@@ -93,9 +102,9 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   }
 
   /**
-   * Hashes based on the generated key string.
+   * Returns a hash code based on the generated key string.
    *
-   * @return hash code of the key
+   * @return hash code of the key string
    */
   @Override
   public int hashCode () {
@@ -104,10 +113,10 @@ public class DurableKey<I extends Serializable & Comparable<I>, D extends Durabl
   }
 
   /**
-   * Compares by key string to determine equality.
+   * Returns {@code true} when {@code obj} is a {@link DurableKey} with an identical key string.
    *
-   * @param obj object to compare
-   * @return {@code true} when the other object is a {@link DurableKey} with the same key
+   * @param obj object to compare against this key
+   * @return {@code true} if the keys are equal
    */
   @Override
   public boolean equals (Object obj) {

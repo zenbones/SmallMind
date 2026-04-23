@@ -39,7 +39,7 @@ import javax.lang.model.element.AnnotationMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Parsed representation of an {@link Idiom} definition, including constraints, purposes, visibility, and requirement.
+ * Parsed representation of an {@link Idiom} annotation, capturing constraints, purposes, visibility, and required flag.
  */
 public class IdiomInformation {
 
@@ -49,11 +49,12 @@ public class IdiomInformation {
   private Boolean required;
 
   /**
-   * Extracts idiom details from an {@link Idiom} annotation.
+   * Extracts idiom metadata from the given annotation mirror, inferring {@code required} from a {@code @NotNull}
+   * constraint when the explicit flag is false.
    *
-   * @param processingEnvironment current processing environment
-   * @param usefulTypeMirrors     cached type mirrors for common annotations
-   * @param idiomAnnotationMirror idiom annotation to parse
+   * @param processingEnvironment the current annotation processing environment
+   * @param usefulTypeMirrors     cached type mirrors used to detect a {@code @NotNull} constraint
+   * @param idiomAnnotationMirror the annotation mirror of the {@link Idiom} to parse
    */
   public IdiomInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror idiomAnnotationMirror) {
 
@@ -74,13 +75,16 @@ public class IdiomInformation {
     }
   }
 
+  /**
+   * @return the visibility (IN, OUT, or BOTH) for which this idiom applies
+   */
   public Visibility getVisibility () {
 
     return visibility;
   }
 
   /**
-   * @return the purposes this idiom applies to
+   * @return the list of purpose identifiers this idiom is scoped to
    */
   public List<String> getPurposeList () {
 
@@ -88,7 +92,7 @@ public class IdiomInformation {
   }
 
   /**
-   * @return constraints that should be applied under this idiom
+   * @return the constraints to apply under this idiom
    */
   public List<ConstraintInformation> getConstraintList () {
 
@@ -96,7 +100,7 @@ public class IdiomInformation {
   }
 
   /**
-   * @return whether this idiom marks the property as required
+   * @return {@code true} if the property is required under this idiom, either explicitly or via {@code @NotNull}
    */
   public boolean isRequired () {
 

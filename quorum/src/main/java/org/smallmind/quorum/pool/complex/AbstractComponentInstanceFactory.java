@@ -33,14 +33,19 @@
 package org.smallmind.quorum.pool.complex;
 
 /**
- * Convenience base class for component instance factories with no-op lifecycle methods.
+ * Convenience base class for {@link ComponentInstanceFactory} implementations that do not need
+ * lifecycle callbacks.
+ * <p>
+ * All four lifecycle methods — {@link #initialize()}, {@link #startup()}, {@link #shutdown()},
+ * and {@link #deconstruct()} — are implemented as no-ops. Subclasses override only the methods
+ * they need, and must implement {@link #createInstance(ComponentPool)}.
  *
- * @param <C> component type
+ * @param <C> the type of component produced by the factory
  */
 public abstract class AbstractComponentInstanceFactory<C> implements ComponentInstanceFactory<C> {
 
   /**
-   * No-op initialization; subclasses may override for setup.
+   * No-op; subclasses may override to perform one-time initialization before the pool starts.
    */
   @Override
   public void initialize () {
@@ -48,7 +53,8 @@ public abstract class AbstractComponentInstanceFactory<C> implements ComponentIn
   }
 
   /**
-   * No-op startup; subclasses may override for startup hooks.
+   * No-op; subclasses may override to perform work after the pool has initialized and before
+   * it begins serving components.
    */
   @Override
   public void startup () {
@@ -56,7 +62,8 @@ public abstract class AbstractComponentInstanceFactory<C> implements ComponentIn
   }
 
   /**
-   * No-op shutdown; subclasses may override for shutdown hooks.
+   * No-op; subclasses may override to release resources when the pool begins its shutdown
+   * sequence, before {@link #deconstruct()} is called.
    */
   @Override
   public void shutdown () {
@@ -64,7 +71,7 @@ public abstract class AbstractComponentInstanceFactory<C> implements ComponentIn
   }
 
   /**
-   * No-op deconstruction; subclasses may override for cleanup.
+   * No-op; subclasses may override to perform final cleanup after the pool has fully stopped.
    */
   @Override
   public void deconstruct () {

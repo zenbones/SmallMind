@@ -38,13 +38,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Starts an external {@code rmid} process during Spring initialization and can stop it on demand.
+ * Launches the external {@code rmid} activation daemon as a sub-process during Spring initialization and provides a method to stop it.
  */
 public class RMIDaemonInitializingBean implements InitializingBean {
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private Process rmidProcess;
 
+  /**
+   * Starts the {@code rmid} process using the runtime environment.
+   *
+   * @throws IOException          if the process cannot be started
+   * @throws InterruptedException if the current thread is interrupted while waiting
+   */
   @Override
   public void afterPropertiesSet ()
     throws IOException, InterruptedException {
@@ -53,9 +59,9 @@ public class RMIDaemonInitializingBean implements InitializingBean {
   }
 
   /**
-   * Stops the {@code rmid} process if it is running.
+   * Destroys the {@code rmid} sub-process if it is currently running; subsequent calls have no effect.
    *
-   * @throws RemoteException if a communication error occurs while stopping
+   * @throws RemoteException if a communication error occurs while stopping the process
    */
   public void stop ()
     throws RemoteException {

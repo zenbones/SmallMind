@@ -33,20 +33,22 @@
 package org.smallmind.nutsnbolts.retry;
 
 /**
- * Executes a {@link RetryCall} with configurable retry attempts and delays.
+ * Utility class that executes a {@link RetryCall} repeatedly until it succeeds or the
+ * allowed number of retries is exhausted, with optional exponential back-off between attempts.
  */
 public class Retry {
 
   /**
-   * Executes the supplied call in a separate thread until it completes without throwing or
-   * the retry limit is exhausted.
+   * Executes the supplied call in a dedicated thread, retrying on failure up to {@code retries}
+   * additional times with a configurable inter-attempt delay.
    *
-   * @param retryCall   the operation to execute
-   * @param retries     the maximum number of retries allowed after the initial attempt
-   * @param delay       the base delay, in milliseconds, between attempts
-   * @param exponential when {@code true}, increases the delay linearly by attempt count; otherwise uses a constant delay
-   * @return {@code true} if the call completes without throwing an exception
-   * @throws InterruptedException if the retry loop is interrupted while waiting between attempts
+   * @param retryCall   the operation to attempt; failure is indicated by throwing any {@link Throwable}
+   * @param retries     the maximum number of additional attempts after the first; {@code 0} means try once only
+   * @param delay       the base wait time in milliseconds between consecutive attempts
+   * @param exponential when {@code true}, multiplies {@code delay} by the current attempt number for each pause;
+   *                    when {@code false}, uses a flat {@code delay} between every attempt
+   * @return {@code true} if an attempt completed without throwing; {@code false} if all attempts failed
+   * @throws InterruptedException if the calling thread is interrupted while sleeping between attempts
    */
   public static boolean execute (RetryCall retryCall, int retries, long delay, boolean exponential)
     throws InterruptedException {

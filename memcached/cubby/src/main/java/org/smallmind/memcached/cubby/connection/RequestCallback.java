@@ -36,21 +36,39 @@ import java.io.IOException;
 import org.smallmind.memcached.cubby.response.Response;
 
 /**
- * Callback for receiving responses or errors for a sent command.
+ * Callback interface invoked by the NIO I/O loop when the server's response to a previously
+ * submitted command has been parsed or when an error prevented the response from being read.
+ *
+ * <p>Exactly one of {@link #setResult(Response)} or {@link #setException(IOException)} will
+ * be called for each in-flight command, and it will be called at most once. Implementations
+ * must be thread-safe because the callbacks are invoked from the connection's I/O thread.</p>
+ *
+ * <p>Two implementations are provided:
+ * <ul>
+ *   <li>{@link ClientRequestCallback} — used when a client thread is blocking on the result
+ *       and must be woken up.</li>
+ *   <li>{@link ServerRequestCallback} — used for internally generated maintenance commands
+ *       (e.g. keep-alive NOOPs) where no client is waiting.</li>
+ * </ul>
+ * </p>
  */
 public interface RequestCallback {
 
   /**
-   * Supplies the received response.
+   * Delivers the successfully parsed server response to this callback.
    *
-   * @param response parsed response
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
+   *
+   * @param response the parsed {@link Response} received from the server; never {@code null}
    */
   void setResult (Response response);
 
   /**
-   * Supplies an I/O exception that occurred while sending or receiving.
+   * Delivers an I/O exception that occurred while writing the command or reading its response.
    *
-   * @param ioException encountered exception
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
+   *
+   * @param ioException the exception describing the I/O failure; never {@code null}
    */
   void setException (IOException ioException);
 }

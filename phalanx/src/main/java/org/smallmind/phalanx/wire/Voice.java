@@ -33,38 +33,44 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Represents the routing and conversational intent for a transport request.
+ * Couples routing intent with conversational context for a single outbound wire request.
  *
- * @param <G> service group identifier type
- * @param <I> instance identifier type
+ * <p>A {@code Voice} pairs a {@link VocalMode} — controlling whether the request is directed
+ * at a specific service instance or broadcast to an entire group — with a {@link Conversation}
+ * that governs the exchange pattern and timeout. Transport components consume a {@code Voice}
+ * when dispatching calls.</p>
+ *
+ * @param <G> the type used to identify the target service group
+ * @param <I> the type used to identify a specific service instance
  */
 public interface Voice<G, I> {
 
   /**
-   * Mode indicating how the voice should be routed (e.g., whisper vs. shout).
+   * Returns the routing mode for this voice.
    *
-   * @return mode enum
+   * @return the {@link VocalMode} indicating directed or broadcast delivery
    */
   VocalMode getMode ();
 
   /**
-   * Conversation metadata associated with the voice.
+   * Returns the conversation governing the exchange pattern and timeout for this voice.
    *
-   * @return conversation definition
+   * @return the associated {@link Conversation}; never {@code null}
    */
   Conversation<?> getConversation ();
 
   /**
-   * Returns the target service group.
+   * Returns the logical identifier of the target service group.
    *
-   * @return service group identifier
+   * @return the service group identifier; never {@code null}
    */
   G getServiceGroup ();
 
   /**
-   * Returns the specific instance id if applicable.
+   * Returns the identifier of the specific service instance to target, if any.
    *
-   * @return instance identifier or {@code null} for broadcast shouts
+   * @return the instance identifier, or {@code null} when the voice targets all instances
+   * in the service group
    */
   I getInstanceId ();
 }

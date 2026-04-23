@@ -37,20 +37,27 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Push emitter that ignores all incoming metrics.
+ * Push emitter that silently discards all incoming metrics without performing any I/O or
+ * side effects.
+ *
+ * <p>This implementation is useful as a placeholder in environments where metric emission is
+ * intentionally disabled, or during testing when actual metric transport is not desired.
  */
 public class NoopEmitter extends PushEmitter {
 
+  /**
+   * Creates a no-operation emitter.
+   */
   public NoopEmitter () {
 
   }
 
   /**
-   * Discards all recorded quantities.
+   * Accepts metric data and discards it without performing any action.
    *
-   * @param meterName  meter name
-   * @param tags       associated tags
-   * @param quantities values to discard
+   * @param meterName  the name of the meter (ignored)
+   * @param tags       the associated tags (ignored)
+   * @param quantities the measured values (ignored)
    */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {

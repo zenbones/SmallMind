@@ -1,14 +1,19 @@
 package org.smallmind.license.stencil;
 
 /**
- * Stencil implementation whose formatting settings are immutable and derived from the concrete class.
+ * Base class for stencils whose formatting configuration is fixed at compile time.
+ *
+ * <p>Subclasses override the getter methods inherited from {@link Stencil} to return hard-coded
+ * values. Every setter is overridden here to throw {@link UnsupportedOperationException},
+ * preventing runtime mutation. The stencil id is derived automatically from
+ * {@link Class#getName()} and is likewise immutable.
  */
 public class StaticStencil extends Stencil {
 
   /**
-   * Returns the fully qualified class name as the immutable stencil identifier.
+   * Returns the fully-qualified class name of this stencil as its immutable identifier.
    *
-   * @return the class name of the stencil implementation
+   * @return the stencil id derived from {@link Class#getName()}; never {@code null}
    */
   @Override
   public final String getId () {
@@ -17,10 +22,10 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because identifiers are fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil ids are immutable.
    *
    * @param id ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setId (String id) {
@@ -29,10 +34,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param skipLinePattern ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setSkipLinePattern (String skipLinePattern) {
@@ -41,10 +47,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param firstLine ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setFirstLine (String firstLine) {
@@ -53,10 +60,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param lastLine ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setLastLine (String lastLine) {
@@ -65,10 +73,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param linePrefix ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setLinePrefix (String linePrefix) {
@@ -77,10 +86,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param blankLinePrefix ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public void setBlankLinePrefix (String blankLinePrefix) {
@@ -89,10 +99,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param blankLinesBefore ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setBlankLinesBefore (int blankLinesBefore) {
@@ -101,10 +112,11 @@ public class StaticStencil extends Stencil {
   }
 
   /**
-   * Unsupported for static stencils because formatting is fixed.
+   * Always throws {@link UnsupportedOperationException} because static stencil formatting is
+   * immutable.
    *
    * @param blankLinesAfter ignored
-   * @throws UnsupportedOperationException always thrown to indicate immutability
+   * @throws UnsupportedOperationException always
    */
   @Override
   public final void setBlankLinesAfter (int blankLinesAfter) {

@@ -33,21 +33,22 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Appender that renders records via a {@link Formatter} before publishing.
+ * Specialization of {@link Appender} that converts each {@link Record} to a string via a pluggable
+ * {@link Formatter} before writing it to the output target.
  */
 public interface FormattedAppender extends Appender {
 
   /**
-   * Returns the formatter in use.
+   * Returns the formatter currently used by this appender to convert records to strings.
    *
-   * @return formatter or {@code null}
+   * @return the configured {@link Formatter}, or {@code null} if none has been set
    */
   Formatter getFormatter ();
 
   /**
-   * Sets the formatter to use for rendering records.
+   * Sets the formatter that this appender will use to convert records to strings before writing.
    *
-   * @param formatter formatter to install
+   * @param formatter the formatter to install; may be {@code null} to clear the formatter
    */
   void setFormatter (Formatter formatter);
 }

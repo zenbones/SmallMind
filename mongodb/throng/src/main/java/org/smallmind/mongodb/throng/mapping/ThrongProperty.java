@@ -44,9 +44,11 @@ public class ThrongProperty {
   private final String name;
 
   /**
+   * Constructs a property descriptor for a single mapped field.
+   *
    * @param fieldAccessor accessor for the backing Java field
-   * @param codec         codec used to encode/decode the field
-   * @param name          persisted field name
+   * @param codec         codec used to encode and decode the field value
+   * @param name          persisted BSON field name
    */
   public ThrongProperty (FieldAccessor fieldAccessor, org.bson.codecs.Codec<?> codec, String name) {
 
@@ -56,7 +58,9 @@ public class ThrongProperty {
   }
 
   /**
-   * @return accessor for the Java field
+   * Returns the accessor for the backing Java field.
+   *
+   * @return the field accessor
    */
   public FieldAccessor getFieldAccessor () {
 
@@ -64,7 +68,9 @@ public class ThrongProperty {
   }
 
   /**
-   * @return codec used to encode/decode the field
+   * Returns the codec used to encode and decode the field value.
+   *
+   * @return the field codec
    */
   public org.bson.codecs.Codec<?> getCodec () {
 
@@ -72,7 +78,9 @@ public class ThrongProperty {
   }
 
   /**
-   * @return persisted property name
+   * Returns the persisted BSON field name.
+   *
+   * @return the property name as stored in the document
    */
   public String getName () {
 

@@ -41,7 +41,7 @@ import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Handles CORS preflight and response headers for Jersey resources.
+ * Pre-matching JAX-RS filter that handles CORS preflight requests and appends CORS headers to all responses.
  */
 @PreMatching
 public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilter {
@@ -50,10 +50,10 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
   private final String exposedHeaders;
 
   /**
-   * Creates a CORS filter that will advertise the supplied allowed and exposed headers.
+   * Creates a CORS filter with the given allowed and exposed header lists.
    *
-   * @param allowedHeaders comma-separated headers clients may send
-   * @param exposedHeaders comma-separated headers exposed to clients
+   * @param allowedHeaders comma-separated list of headers clients may send, or {@code null} to omit the header
+   * @param exposedHeaders comma-separated list of headers exposed to clients, or {@code null} to omit the header
    */
   public CorsFilter (String allowedHeaders, String exposedHeaders) {
 
@@ -62,10 +62,10 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
   }
 
   /**
-   * Intercepts preflight requests and returns appropriate CORS headers.
+   * Short-circuits OPTIONS preflight requests with an appropriate CORS response.
    *
-   * @param requestContext incoming request
-   * @throws IOException if response creation fails
+   * @param requestContext the incoming container request
+   * @throws IOException if an I/O error occurs while building the response
    */
   @Override
   public void filter (ContainerRequestContext requestContext)
@@ -98,10 +98,10 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
   }
 
   /**
-   * Appends CORS headers to non-preflight responses.
+   * Appends CORS headers to non-OPTIONS responses.
    *
-   * @param requestContext  incoming request
-   * @param responseContext outgoing response
+   * @param requestContext  the incoming container request
+   * @param responseContext the outgoing container response
    */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {

@@ -33,11 +33,13 @@
 package org.smallmind.javafx.extras.instrument;
 
 /**
- * Simple container for a low/high value pair.
+ * Immutable pair representing the lower and upper endpoints of a closed interval. Used by
+ * {@link TimeAxis} to package the current axis range as a single object returned from
+ * {@link TimeAxis#getRange()}.
  *
- * @param <T>  value type
- * @param low  lower endpoint
- * @param high upper endpoint
+ * @param <T>  the type of the endpoint values
+ * @param low  the lower (minimum) endpoint of the interval
+ * @param high the upper (maximum) endpoint of the interval
  */
 public record EndPoints<T>(T low, T high) {
 

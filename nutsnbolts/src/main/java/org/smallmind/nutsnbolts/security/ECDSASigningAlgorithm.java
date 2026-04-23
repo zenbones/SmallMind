@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * ECDSA signing algorithms supported by the library.
+ * Enumeration of ECDSA-based asymmetric signing algorithms supported by the library.
  */
 public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
 
@@ -42,7 +42,9 @@ public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
   private final String algorithmName;
 
   /**
-   * @param algorithmName the JCA signature algorithm name
+   * Constructs an enum constant with the given JCA signature algorithm name.
+   *
+   * @param algorithmName the JCA name passed to {@link java.security.Signature#getInstance(String)}
    */
   ECDSASigningAlgorithm (String algorithmName) {
 
@@ -50,7 +52,9 @@ public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
   }
 
   /**
-   * @return the JCA algorithm name used when creating {@link java.security.Signature} instances
+   * Returns the JCA algorithm name used when creating {@link java.security.Signature} instances.
+   *
+   * @return the JCA algorithm name string
    */
   public String getAlgorithmName () {
 

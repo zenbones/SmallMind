@@ -36,21 +36,58 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 
 /**
- * Maps heap-level changes to the {@link java.nio.file.WatchEvent.Kind} values understood by watch services.
+ * Enumerates the kinds of changes that can occur within the ephemeral heap file-system tree
+ * and maps each kind to its corresponding NIO {@link WatchEvent.Kind}.
+ *
+ * <p>Each constant wraps a {@link StandardWatchEventKinds} value so that
+ * {@link HeapEventListener} implementations can forward events to the NIO
+ * {@link java.nio.file.WatchService} subsystem without additional mapping logic.
+ *
+ * @see HeapEvent
+ * @see HeapEventListener
  */
 public enum HeapEventType {
 
-  CREATE(StandardWatchEventKinds.ENTRY_CREATE), DELETE(StandardWatchEventKinds.ENTRY_DELETE), MODIFY(StandardWatchEventKinds.ENTRY_MODIFY);
+  /**
+   * A new file or directory was created within a watched directory.
+   * Maps to {@link StandardWatchEventKinds#ENTRY_CREATE}.
+   */
+  CREATE(StandardWatchEventKinds.ENTRY_CREATE),
 
+  /**
+   * An existing file or directory was deleted from a watched directory.
+   * Maps to {@link StandardWatchEventKinds#ENTRY_DELETE}.
+   */
+  DELETE(StandardWatchEventKinds.ENTRY_DELETE),
+
+  /**
+   * An existing file or directory within a watched directory was modified.
+   * Maps to {@link StandardWatchEventKinds#ENTRY_MODIFY}.
+   */
+  MODIFY(StandardWatchEventKinds.ENTRY_MODIFY);
+
+  /**
+   * The NIO watch-event kind that corresponds to this heap event type.
+   */
   private final WatchEvent.Kind<?> kind;
 
+  /**
+   * Constructs a heap event type that wraps the given NIO watch-event kind.
+   *
+   * @param kind the {@link WatchEvent.Kind} that this enum constant represents
+   */
   HeapEventType (WatchEvent.Kind<?> kind) {
 
     this.kind = kind;
   }
 
   /**
-   * @return the corresponding {@link WatchEvent.Kind} for this heap event
+   * Returns the NIO {@link WatchEvent.Kind} that corresponds to this heap event type.
+   *
+   * <p>The returned value can be passed directly to NIO watch-service APIs when
+   * translating a {@link HeapEvent} into a standard file-system watch event.
+   *
+   * @return the corresponding {@link WatchEvent.Kind}; never {@code null}
    */
   public WatchEvent.Kind<?> getKind () {
 

@@ -39,7 +39,10 @@ import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.Perimeter;
 
 /**
- * JavaFX-specific implementation of {@link ParaboxPlatform} providing default gaps, padding, and orientation.
+ * JavaFX-specific implementation of {@link ParaboxPlatform} that supplies the default spacing and
+ * frame padding values used by the parabox layout engine when no explicit overrides are provided.
+ * The defaults reflect standard JavaFX UI conventions: a 10 px frame perimeter, 5 px related gap,
+ * and 10 px unrelated gap, with a horizontal-first, left-to-right orientation.
  */
 public class JavaFxParaboxPlatform implements ParaboxPlatform {
 
@@ -47,7 +50,9 @@ public class JavaFxParaboxPlatform implements ParaboxPlatform {
   private static final Orientation ORIENTATION = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
   /**
-   * @return the pixel gap for related components
+   * Returns the default gap in pixels between logically related components.
+   *
+   * @return 5.0 pixels
    */
   @Override
   public double getRelatedGap () {
@@ -56,7 +61,9 @@ public class JavaFxParaboxPlatform implements ParaboxPlatform {
   }
 
   /**
-   * @return the pixel gap for unrelated components
+   * Returns the default gap in pixels between logically unrelated components.
+   *
+   * @return 10.0 pixels
    */
   @Override
   public double getUnrelatedGap () {
@@ -65,7 +72,10 @@ public class JavaFxParaboxPlatform implements ParaboxPlatform {
   }
 
   /**
-   * @return the default frame padding applied to layouts
+   * Returns the default frame perimeter — 10 px of padding on all four sides — applied by
+   * {@link ParaboxPane} when no explicit insets are specified.
+   *
+   * @return the frame perimeter; never {@code null}
    */
   @Override
   public Perimeter getFramePerimeter () {
@@ -74,7 +84,10 @@ public class JavaFxParaboxPlatform implements ParaboxPlatform {
   }
 
   /**
-   * @return the default orientation (horizontal bias, first-to-last flow)
+   * Returns the default layout orientation: horizontal primary axis with left-to-right (first-to-
+   * last) flow.
+   *
+   * @return the orientation; never {@code null}
    */
   @Override
   public Orientation getOrientation () {

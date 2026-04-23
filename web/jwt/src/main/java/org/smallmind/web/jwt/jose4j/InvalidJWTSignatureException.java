@@ -35,14 +35,14 @@ package org.smallmind.web.jwt.jose4j;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Thrown when a JWT signature does not validate against the supplied key or algorithm.
+ * Thrown when a JWT's cryptographic signature does not pass verification against the supplied key.
  */
 public class InvalidJWTSignatureException extends FormattedException {
 
   /**
-   * Constructs the exception with a formatted message.
+   * Constructs the exception with a printf-style message.
    *
-   * @param message the format string describing the invalid signature
+   * @param message format string describing the invalid-signature condition
    * @param args    arguments referenced by the format specifiers in the message
    */
   public InvalidJWTSignatureException (String message, Object... args) {

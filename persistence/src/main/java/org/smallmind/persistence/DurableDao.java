@@ -37,82 +37,76 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * DAO contract tailored to {@link Durable} entities, providing CRUD and batch retrieval helpers.
+ * Full CRUD and batch-retrieval contract for {@link Durable} entities, extending the base
+ * {@link Dao} interface with persist, paginated list, and multi-id lookup operations.
  *
  * @param <I> the durable identifier type
- * @param <D> the durable type
+ * @param <D> the durable entity type
  */
 public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
   /**
-   * Finds a durable by id.
+   * Returns the durable with the given identifier, or {@code null} when not found.
    *
-   * @param id the identifier of the durable
-   * @return the matching durable instance, or {@code null} when not found
-   * @throws PersistenceException if the lookup fails
+   * @param id the identifier to look up
+   * @return the matching durable, or {@code null}
    */
   D get (I id);
 
   /**
-   * Persists the given durable, updating it if already present or inserting it otherwise.
+   * Inserts or updates the given durable.
    *
-   * @param durable the durable to persist
-   * @return the stored durable (potentially a different instance depending on the implementation)
-   * @throws PersistenceException if the persist operation fails
+   * @param durable the durable to store
+   * @return the persisted durable, which may differ from the input instance
    */
   D persist (D durable);
 
   /**
-   * Persists the given durable, explicitly providing the durable class.
+   * Inserts or updates the given durable using an explicit class reference.
    *
-   * @param durableClass the declared durable class
-   * @param durable      the durable to persist
-   * @return the stored durable
-   * @throws PersistenceException if the persist operation fails
+   * @param durableClass the declared class of the durable
+   * @param durable      the durable to store
+   * @return the persisted durable, which may differ from the input instance
    */
   D persist (Class<D> durableClass, D durable);
 
   /**
-   * Deletes the supplied durable.
+   * Removes the given durable from the store.
    *
-   * @param durable the durable to remove
-   * @throws PersistenceException if the delete operation fails
+   * @param durable the durable to delete
    */
   void delete (D durable);
 
   /**
-   * Lists all durable instances.
+   * Returns all durable instances managed by this DAO.
    *
-   * @return the full collection of durables
-   * @throws PersistenceException if retrieval fails
+   * @return a list of all durables, possibly empty
    */
   List<D> list ();
 
   /**
-   * Lists durable instances, capped by the given fetch size.
+   * Returns up to {@code fetchSize} durable instances.
    *
    * @param fetchSize the maximum number of records to return
-   * @return a limited list of durables
-   * @throws PersistenceException if retrieval fails
+   * @return a list containing at most {@code fetchSize} durables
    */
   List<D> list (int fetchSize);
 
   /**
-   * Lists durable instances with identifiers greater than the supplied value, up to the fetch size.
+   * Returns up to {@code fetchSize} durables whose identifiers are strictly greater than
+   * {@code greaterThan}, ordered by identifier ascending.
    *
-   * @param greaterThan the lower bound identifier (exclusive)
+   * @param greaterThan the exclusive lower-bound identifier
    * @param fetchSize   the maximum number of records to return
-   * @return a limited list of durables beyond the supplied id
-   * @throws PersistenceException if retrieval fails
+   * @return a page of durables starting after {@code greaterThan}
    */
   List<D> list (I greaterThan, int fetchSize);
 
   /**
-   * Retrieves a collection of durables whose identifiers are included in the provided set.
+   * Returns all durables whose identifiers appear in {@code idCollection}.
    *
-   * @param idCollection identifiers to search for
-   * @return the durables that match the requested identifiers
-   * @throws PersistenceException if retrieval fails
+   * @param idCollection the set of identifiers to retrieve
+   * @return durables matching the requested identifiers, in an unspecified order
    */
   List<D> list (Collection<I> idCollection);
 }

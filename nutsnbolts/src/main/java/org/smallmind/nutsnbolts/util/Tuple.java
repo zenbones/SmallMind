@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
- * Ordered collection of key/value pairs allowing duplicate keys while preserving insertion order.
+ * Ordered, serializable collection of key/value pairs that permits duplicate keys and preserves insertion order.
  *
  * @param <K> key type
  * @param <V> value type
@@ -57,7 +57,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   private int version = 0;
 
   /**
-   * Creates an empty tuple.
+   * Constructs an empty tuple.
    */
   public Tuple () {
 
@@ -66,7 +66,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Removes all pairs.
+   * Removes all key/value pairs from this tuple.
    */
   public void clear () {
 
@@ -76,9 +76,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Appends all pairs from another tuple.
+   * Appends all pairs from the supplied tuple to the end of this tuple in their original order.
    *
-   * @param tuple tuple whose entries will be appended
+   * @param tuple the tuple whose pairs will be appended
    */
   public void add (Tuple<K, V> tuple) {
 
@@ -89,10 +89,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Adds a pair to the end.
+   * Appends a new key/value pair to the end of this tuple.
    *
-   * @param key   key to add
-   * @param value value to add
+   * @param key   key to append
+   * @param value value to append
    */
   public void addPair (K key, V value) {
 
@@ -102,11 +102,11 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Inserts a pair at a given index.
+   * Inserts a new key/value pair at the specified index, shifting subsequent pairs right.
    *
-   * @param index position to insert
-   * @param key   key to add
-   * @param value value to add
+   * @param index zero-based position at which to insert the pair
+   * @param key   key to insert
+   * @param value value to insert
    */
   public void addPair (int index, K key, V value) {
 
@@ -116,7 +116,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Sets the value for an existing key or adds a new pair if the key is absent.
+   * Updates the value for the first occurrence of the key, or appends a new pair if the key is absent.
    *
    * @param key   key to update or insert
    * @param value value to set
@@ -134,7 +134,11 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Sets a value at a specific index, matching or inserting the key as needed.
+   * Updates the value for the first occurrence of the key, or inserts a new pair at the given index if the key is absent.
+   *
+   * @param index position at which to insert if the key is not already present
+   * @param key   key to update or insert
+   * @param value value to set
    */
   public void setPair (int index, K key, V value) {
 
@@ -149,9 +153,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Removes all occurrences of a key.
+   * Removes all pairs whose key is equal to the specified key.
    *
-   * @param key key to remove
+   * @param key the key whose pairs should be removed
    */
   public void removeKey (K key) {
 
@@ -169,10 +173,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Removes the first pair matching the key.
+   * Removes the first pair whose key is equal to the specified key and returns its value.
    *
-   * @param key key to remove
-   * @return removed value or {@code null} if not found
+   * @param key key of the pair to remove
+   * @return the removed value, or {@code null} if the key was not found
    */
   public V removePair (K key) {
 
@@ -186,10 +190,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Removes the pair at the specified index.
+   * Removes the pair at the specified index and returns its value.
    *
-   * @param index index of the pair to remove
-   * @return removed value
+   * @param index zero-based index of the pair to remove
+   * @return the value of the removed pair
    */
   public V removePair (int index) {
 
@@ -199,10 +203,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Sets the value at the specified index.
+   * Replaces the value at the specified index.
    *
-   * @param index index to update
-   * @param value new value
+   * @param index zero-based index of the value to replace
+   * @param value the new value
    */
   public void setValue (int index, V value) {
 
@@ -211,10 +215,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Sets the value for the first occurrence of the key.
+   * Replaces the value for the first occurrence of the specified key.
    *
-   * @param key   key to update
-   * @param value new value
+   * @param key   key whose first associated value should be replaced
+   * @param value the new value
    */
   public void setValue (K key, V value) {
 
@@ -223,7 +227,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * @return number of pairs
+   * Returns the number of key/value pairs in this tuple.
+   *
+   * @return pair count
    */
   public int size () {
 
@@ -232,6 +238,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
 
   /**
    * Returns the key at the specified index.
+   *
+   * @param index zero-based index of the key to retrieve
+   * @return the key at {@code index}
    */
   public K getKey (int index) {
 
@@ -239,7 +248,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * @return list view of keys (backed by the tuple)
+   * Returns the underlying key list, backed by this tuple.
+   *
+   * @return ordered list of all keys including duplicates
    */
   public List<K> getKeys () {
 
@@ -247,7 +258,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * @return set of unique keys present
+   * Returns a set containing each distinct key that appears at least once in this tuple.
+   *
+   * @return set of unique keys
    */
   public Set<K> getUniqueKeys () {
 
@@ -262,7 +275,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Returns the first index of the given key, or -1 if absent.
+   * Returns the index of the first occurrence of the specified key, or {@code -1} if not present.
+   *
+   * @param key the key to search for
+   * @return zero-based index, or {@code -1} if absent
    */
   public int indexOfKey (K key) {
 
@@ -270,7 +286,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Returns the value at a given index.
+   * Returns the value at the specified index.
+   *
+   * @param index zero-based index of the value to retrieve
+   * @return the value at {@code index}
    */
   public V getValue (int index) {
 
@@ -278,7 +297,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Returns the value for the first occurrence of the key, or {@code null} if absent.
+   * Returns the value associated with the first occurrence of the specified key, or {@code null} if the key is absent.
+   *
+   * @param key the key whose value should be returned
+   * @return the first matching value, or {@code null} if not found
    */
   public V getValue (K key) {
 
@@ -292,7 +314,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Returns all values matching the supplied key, or {@code null} if the key is not present.
+   * Returns all values associated with the specified key in insertion order, or {@code null} if the key is not present.
+   *
+   * @param key the key whose values should be returned
+   * @return list of all values for {@code key}, or {@code null} if the key is absent
    */
   public List<V> getValues (K key) {
 
@@ -313,7 +338,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * @return {@code true} if the key exists in any position
+   * Returns {@code true} if this tuple contains at least one pair with the specified key.
+   *
+   * @param key key to test
+   * @return {@code true} if the key is present
    */
   public boolean containsKey (K key) {
 
@@ -321,7 +349,11 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Tests whether the tuple contains the specific key/value pair.
+   * Returns {@code true} if this tuple contains at least one pair whose key and value both match the supplied arguments.
+   *
+   * @param key   key to search for
+   * @param value value to match against pairs with that key
+   * @return {@code true} if a matching key/value pair exists
    */
   public boolean containsKeyValuePair (K key, V value) {
 
@@ -337,9 +369,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Collapses the tuple into a map where each key maps to a list of values preserving order.
+   * Collapses this tuple into a {@link Map} where each key is mapped to a list of all its associated values in insertion order.
    *
-   * @return map from key to list of values
+   * @return map from each key to its ordered list of values
    */
   public Map<K, List<V>> asMap () {
 
@@ -360,7 +392,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * @return iterator over pairs in insertion order
+   * Returns an iterator over all pairs in insertion order.
+   *
+   * @return iterator yielding each {@link Pair} in order
    */
   @Override
   public Iterator<Pair<K, V>> iterator () {
@@ -369,7 +403,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Produces a shallow clone of the tuple (keys/values are not cloned).
+   * Creates and returns a shallow copy of this tuple containing the same key and value references in the same order.
+   *
+   * @return a new tuple with the same pairs
    */
   public Object clone () {
 
@@ -383,7 +419,9 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
   }
 
   /**
-   * Formats the tuple as "[size](key=value;...)".
+   * Returns a string in the format {@code [size](key=value;...)} listing all pairs in insertion order.
+   *
+   * @return human-readable representation of this tuple
    */
   public String toString () {
 
@@ -410,6 +448,8 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     int version = Tuple.this.version;
 
     /**
+     * Returns {@code true} if there are more pairs to iterate.
+     *
      * @return {@code true} if another pair exists
      */
     @Override
@@ -419,7 +459,11 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     }
 
     /**
-     * Returns the next pair or throws if exhausted or structurally modified.
+     * Returns the next pair in insertion order.
+     *
+     * @return the next {@link Pair}
+     * @throws NoSuchElementException          if no more pairs remain
+     * @throws ConcurrentModificationException if the tuple was structurally modified since this iterator was created
      */
     @Override
     public Pair<K, V> next () {
@@ -438,10 +482,10 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     }
 
     /**
-     * Removes the last-returned pair.
+     * Removes the last pair returned by {@link #next()}.
      *
-     * @throws IllegalStateException           if next() has not been called
-     * @throws ConcurrentModificationException if the tuple was modified
+     * @throws IllegalStateException           if {@link #next()} has not yet been called
+     * @throws ConcurrentModificationException if the tuple was structurally modified since this iterator was created
      */
     @Override
     public void remove () {

@@ -38,14 +38,23 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Push emitter that formats metrics into strings and delegates to a consumer (defaults to stdout).
+ * Push emitter that formats Claxon metrics into human-readable strings and forwards them to a
+ * configurable {@link Consumer}{@code <String>}.
+ *
+ * <p>Each quantity produces one message of the form
+ * {@code meterName[key1=val1, key2=val2].quantityName=value}. By default messages are written
+ * to standard output, but any {@link Consumer}{@code <String>} may be supplied — for example a
+ * logging adapter such as {@link ScribeLoggerConsumer}.
  */
 public class MessageEmitter extends PushEmitter {
 
+  /**
+   * The consumer to which each formatted metric message is delivered.
+   */
   private final Consumer<String> output;
 
   /**
-   * Creates a message emitter that prints to standard out.
+   * Creates a message emitter that prints formatted metric lines to {@link System#out}.
    */
   public MessageEmitter () {
 
@@ -53,9 +62,10 @@ public class MessageEmitter extends PushEmitter {
   }
 
   /**
-   * Creates a message emitter with a custom output consumer.
+   * Creates a message emitter that delivers formatted metric lines to the given consumer.
    *
-   * @param output consumer to receive formatted metric lines
+   * @param output the {@link Consumer}{@code <String>} that will receive each formatted metric
+   *               line; must not be {@code null}
    */
   public MessageEmitter (Consumer<String> output) {
 
@@ -63,11 +73,15 @@ public class MessageEmitter extends PushEmitter {
   }
 
   /**
-   * Formats meter, tags, and quantities into strings and sends them to the consumer.
+   * Formats each quantity into a metric string and passes it to the configured output consumer.
    *
-   * @param meterName  meter name
-   * @param tags       associated tags
-   * @param quantities measurements to emit
+   * <p>The format of each emitted string is:
+   * <pre>{@code meterName[key1=val1, key2=val2].quantityName=value}</pre>
+   * When there are no tags, the bracket section is empty: {@code meterName[].quantityName=value}.
+   *
+   * @param meterName  the base name of the meter
+   * @param tags       the tags to include in the formatted string; may be {@code null} or empty
+   * @param quantities the measured values to format and emit; must not be {@code null}
    */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {

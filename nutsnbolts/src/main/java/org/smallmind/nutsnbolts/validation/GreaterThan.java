@@ -47,7 +47,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint that enforces a numeric value to be strictly greater than the configured bound.
+ * Bean Validation constraint that requires an annotated numeric value to be strictly greater than the configured threshold.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface GreaterThan {
 
   /**
-   * Allows multiple {@link GreaterThan} annotations on the same element.
+   * Container annotation that allows multiple {@link GreaterThan} constraints on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
@@ -64,28 +64,28 @@ public @interface GreaterThan {
   @interface List {
 
     /**
-     * @return array of {@link GreaterThan} constraints
+     * @return the contained {@link GreaterThan} constraints
      */
     GreaterThan[] value ();
   }
 
   /**
-   * @return validation failure message
+   * @return the constraint violation message
    */
   String message () default "must be greater than {value}";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return payload for clients of the Bean Validation API
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 
   /**
-   * @return threshold that the value must exceed
+   * @return the exclusive lower bound that the annotated value must exceed
    */
   long value ();
 }

@@ -37,7 +37,7 @@ import org.smallmind.web.jersey.aop.Envelope;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Encapsulates a JSON request body and its content type for proxy invocations.
+ * Holds the serialized JSON byte payload and its content type for use in proxied HTTP requests.
  */
 public class JsonBody {
 
@@ -45,9 +45,9 @@ public class JsonBody {
   private final ContentType contentType;
 
   /**
-   * Creates a JSON body from a raw JSON string.
+   * Creates a body by encoding a raw JSON string to bytes.
    *
-   * @param json JSON string
+   * @param json JSON string to send as the request body
    */
   public JsonBody (String json) {
 
@@ -56,9 +56,9 @@ public class JsonBody {
   }
 
   /**
-   * Serializes an {@link Envelope} to JSON.
+   * Creates a body by serializing an {@link Envelope} with {@link JsonCodec}.
    *
-   * @param envelope request envelope to serialize
+   * @param envelope envelope to serialize
    */
   public JsonBody (Envelope envelope) {
 
@@ -67,7 +67,7 @@ public class JsonBody {
   }
 
   /**
-   * Serializes an arbitrary object using {@link JsonCodec}.
+   * Creates a body by serializing an arbitrary object with {@link JsonCodec}.
    *
    * @param obj object to serialize
    */
@@ -78,7 +78,7 @@ public class JsonBody {
   }
 
   /**
-   * Returns the content type (always JSON).
+   * Returns the content type, which is always {@code application/json}.
    *
    * @return content type
    */
@@ -88,9 +88,9 @@ public class JsonBody {
   }
 
   /**
-   * Returns the serialized payload.
+   * Returns the serialized JSON payload.
    *
-   * @return body bytes
+   * @return body as a byte array
    */
   public byte[] getBodyAsBytes () {
 

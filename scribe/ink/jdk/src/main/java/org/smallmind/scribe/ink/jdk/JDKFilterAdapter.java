@@ -37,16 +37,17 @@ import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a JUL {@link java.util.logging.Filter} to the scribe {@link Filter} interface.
+ * Scribe {@link Filter} that wraps a native JUL {@link java.util.logging.Filter}, forwarding
+ * {@link #willLog} decisions by casting the record's native log entry to a {@link LogRecord}.
  */
 public class JDKFilterAdapter implements Filter {
 
   private final java.util.logging.Filter filter;
 
   /**
-   * Creates an adapter around the provided JUL filter.
+   * Builds an adapter that delegates filtering decisions to the given native JUL filter.
    *
-   * @param filter the native filter
+   * @param filter the JUL filter to wrap
    */
   public JDKFilterAdapter (java.util.logging.Filter filter) {
 
@@ -54,9 +55,9 @@ public class JDKFilterAdapter implements Filter {
   }
 
   /**
-   * Returns the wrapped JUL filter.
+   * Returns the native JUL filter that this adapter wraps.
    *
-   * @return the native filter
+   * @return the wrapped JUL filter
    */
   protected java.util.logging.Filter getNativeFilter () {
 
@@ -64,10 +65,11 @@ public class JDKFilterAdapter implements Filter {
   }
 
   /**
-   * Determines whether the supplied record should be logged by delegating to the JUL filter.
+   * Returns the JUL filter's decision on the record by casting the native log entry to a {@link LogRecord}
+   * and calling {@link java.util.logging.Filter#isLoggable}.
    *
-   * @param record candidate record
-   * @return {@code true} if logging should proceed
+   * @param record the candidate scribe record to evaluate
+   * @return {@code true} if the JUL filter permits the record to be logged
    */
   public boolean willLog (Record<?> record) {
 
@@ -75,9 +77,9 @@ public class JDKFilterAdapter implements Filter {
   }
 
   /**
-   * Computes the hash code of the adapter, delegating to the native filter.
+   * Returns the hash code of the wrapped native JUL filter.
    *
-   * @return the filter hash code
+   * @return hash code delegated to the native filter
    */
   public int hashCode () {
 
@@ -85,10 +87,11 @@ public class JDKFilterAdapter implements Filter {
   }
 
   /**
-   * Compares this adapter to another object based on the underlying filter.
+   * Compares this adapter for equality by comparing the underlying native filter; unwraps the other
+   * object if it is also a {@link JDKFilterAdapter}.
    *
-   * @param obj object to compare against
-   * @return {@code true} if the wrapped filters are equal
+   * @param obj the object to compare against
+   * @return {@code true} if both adapters wrap the same native filter, or the native filter equals {@code obj}
    */
   public boolean equals (Object obj) {
 

@@ -40,8 +40,8 @@ import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
 /**
- * Encapsulates access to keystore material stored as a {@link Resource}. Provides helpers
- * to retrieve the raw bytes and manage the associated password.
+ * Holds the location and password for keystore material stored as a {@link Resource}, and
+ * provides a method to read the raw bytes of that material.
  */
 public class SecureStore {
 
@@ -51,11 +51,12 @@ public class SecureStore {
   private String password;
 
   /**
-   * Loads the referenced resource and returns its contents as a byte array.
+   * Reads the keystore resource identified by this store's resource specification and returns
+   * its complete contents as a byte array.
    *
-   * @return the resource contents
-   * @throws IOException       if the resource cannot be read
-   * @throws ResourceException if the resource reference is invalid
+   * @return the raw bytes of the keystore resource
+   * @throws IOException       if the resource stream cannot be opened or fully read
+   * @throws ResourceException if the resource specification is invalid or unresolvable
    */
   public byte[] getBytes ()
     throws IOException, ResourceException {
@@ -77,9 +78,9 @@ public class SecureStore {
   }
 
   /**
-   * Returns the resource specification used to locate the keystore.
+   * Returns the resource specification string that identifies the keystore location.
    *
-   * @return the resource location string
+   * @return the resource specification
    */
   public String getResource () {
 
@@ -87,9 +88,9 @@ public class SecureStore {
   }
 
   /**
-   * Sets the resource specification used to locate the keystore.
+   * Sets the resource specification string that identifies the keystore location.
    *
-   * @param resource the resource location string
+   * @param resource the resource specification to use
    */
   public void setResource (String resource) {
 
@@ -97,9 +98,9 @@ public class SecureStore {
   }
 
   /**
-   * Returns the password protecting the keystore.
+   * Returns the password used to unlock the keystore.
    *
-   * @return the password text
+   * @return the keystore password
    */
   public String getPassword () {
 
@@ -107,9 +108,9 @@ public class SecureStore {
   }
 
   /**
-   * Sets the password protecting the keystore.
+   * Sets the password used to unlock the keystore.
    *
-   * @param password the password text
+   * @param password the keystore password
    */
   public void setPassword (String password) {
 

@@ -50,8 +50,12 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.chart.ValueAxis;
 
 /**
- * {@link ValueAxis} implementation that shows a sliding window of wall-clock time with periodic updates.
- * The axis manages its own scheduled executor to advance the time window and exposes a pause flag.
+ * A {@link ValueAxis} implementation for wall-clock epoch-millisecond values that maintains a
+ * sliding window of fixed duration. The axis advances its lower and upper bounds once per second
+ * via a shared daemon scheduler, producing a continuously scrolling time view. Tick labels are
+ * formatted as {@code HH:mm:ss} in the system time zone. Major ticks are placed at 15-second
+ * intervals and minor ticks at 5-second intervals. Advancement can be suspended via the paused
+ * property.
  */
 public class TimeAxis extends ValueAxis<Long> {
 
@@ -82,9 +86,10 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Creates a time axis showing a sliding window spanning the specified number of milliseconds.
+   * Creates a time axis whose visible window spans {@code spanInMilliseconds} milliseconds. The
+   * axis begins advancing immediately, updating bounds once per second.
    *
-   * @param spanInMilliseconds the width of the displayed time window
+   * @param spanInMilliseconds the fixed width of the displayed time window in milliseconds; must be positive
    */
   public TimeAxis (long spanInMilliseconds) {
 
@@ -106,10 +111,11 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Creates a time axis with a label and a sliding window spanning the specified number of milliseconds.
+   * Creates a time axis with a visible label and the given window span. The axis begins advancing
+   * immediately, updating bounds once per second.
    *
-   * @param axisLabel          axis label
-   * @param spanInMilliseconds the width of the displayed time window
+   * @param axisLabel          the text label shown alongside the axis
+   * @param spanInMilliseconds the fixed width of the displayed time window in milliseconds; must be positive
    */
   public TimeAxis (String axisLabel, long spanInMilliseconds) {
 
@@ -119,7 +125,8 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Recomputes the lower and upper bounds unless paused.
+   * Recomputes the lower and upper bounds to span the current wall-clock time window. Has no
+   * effect when the axis is paused.
    */
   private void updateTime () {
 
@@ -133,7 +140,10 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * @return a property controlling whether the axis updates its bounds
+   * Returns the observable property that controls whether the axis advances its time bounds.
+   * Setting this to {@code true} freezes the displayed range at the current position.
+   *
+   * @return the paused property; never {@code null}
    */
   public BooleanProperty pausedProperty () {
 
@@ -141,7 +151,9 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * @return whether the axis is currently paused
+   * Returns whether the axis is currently paused.
+   *
+   * @return {@code true} if time-bound updates are suspended
    */
   public boolean getPaused () {
 
@@ -149,9 +161,9 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Enables or disables automatic bound updates.
+   * Suspends or resumes automatic time-bound updates.
    *
-   * @param paused {@code true} to stop updating bounds
+   * @param paused {@code true} to freeze the axis; {@code false} to resume advancing
    */
   public void setPaused (boolean paused) {
 
@@ -159,7 +171,11 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * No-op because range is managed internally by {@link #updateTime()}.
+   * No-op; the range is managed internally by the scheduled {@link #updateTime()} calls and is
+   * not restored from an external range object.
+   *
+   * @param range   ignored
+   * @param animate ignored
    */
   @Override
   protected void setRange (Object range, boolean animate) {
@@ -167,7 +183,9 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * @return current lower and upper bounds packaged as {@link EndPoints}
+   * Returns the current lower and upper bounds as an {@link EndPoints} of epoch-millisecond values.
+   *
+   * @return the current axis range; never {@code null}
    */
   @Override
   protected Object getRange () {
@@ -176,7 +194,11 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Computes major tick values at 15 second intervals within the current range.
+   * Computes major tick positions at 15-second boundaries within the supplied range.
+   *
+   * @param length the pixel length of the axis (unused)
+   * @param range  the current range as an {@link EndPoints} of epoch-millisecond values
+   * @return an ordered list of epoch-millisecond values at which major ticks should appear
    */
   @Override
   protected List<Long> calculateTickValues (double length, Object range) {
@@ -201,7 +223,10 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Computes minor tick marks at 5 second intervals, excluding major ticks.
+   * Computes minor tick positions at 5-second boundaries, excluding positions that coincide with
+   * a major tick (i.e. multiples of 15 seconds).
+   *
+   * @return an ordered list of epoch-millisecond values at which minor ticks should appear
    */
   @Override
   protected List<Long> calculateMinorTickMarks () {
@@ -230,7 +255,11 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Formats tick labels using {@code HH:mm:ss} in the system time zone.
+   * Converts an epoch-millisecond tick value to a display string formatted as {@code HH:mm:ss}
+   * using the system time zone offset determined at class load time.
+   *
+   * @param milliseconds the epoch-millisecond value of the tick
+   * @return formatted time string; never {@code null}
    */
   @Override
   protected String getTickMarkLabel (Long milliseconds) {
@@ -239,7 +268,8 @@ public class TimeAxis extends ValueAxis<Long> {
   }
 
   /**
-   * Cancels the scheduled updater thread.
+   * Cancels the scheduled time-update task, stopping the axis from advancing. Should be called
+   * when the owning chart is no longer needed to release the background thread.
    */
   public void stop () {
 

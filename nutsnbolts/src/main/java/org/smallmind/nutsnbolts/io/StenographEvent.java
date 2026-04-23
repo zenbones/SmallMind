@@ -35,15 +35,17 @@ package org.smallmind.nutsnbolts.io;
 import java.util.EventObject;
 
 /**
- * Event carrying text emitted by a {@link StenographWriter}.
+ * Event dispatched by {@link StenographWriter} when buffered text is flushed to listeners.
  */
 public class StenographEvent extends EventObject {
 
   private final String output;
 
   /**
-   * @param source event source
-   * @param output text that was written
+   * Constructs an event carrying the flushed text.
+   *
+   * @param source the {@link StenographWriter} that generated the event
+   * @param output the accumulated text that was flushed
    */
   public StenographEvent (Object source, String output) {
 
@@ -53,7 +55,9 @@ public class StenographEvent extends EventObject {
   }
 
   /**
-   * @return text output associated with the event
+   * Returns the text that was flushed from the writer's buffer.
+   *
+   * @return the accumulated output string
    */
   public String getOutput () {
 

@@ -1,969 +1,1305 @@
-[[kafka, Kafka]]
-= Kafka
+= SmallMind Kafka
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
 
-[partintro]
-Kafka is Smallmind's thin integration module for the Apache Kafka client library.
-It gives library users three explicit pieces:
+== Overview
 
-* `KafkaServer` for broker host/port descriptors
-* `KafkaConnector` for creating native Kafka admin, producer, and consumer clients from those descriptors
-* `KafkaServerFactoryBean` for optional Spring-driven broker array construction
+The `smallmind-kafka` module is a thin, opinionated facade over the stock
+https://kafka.apache.org/[Apache Kafka] `kafka-clients` library. It is
+organized as a single publishable artifact today:
 
-The module stays intentionally small.
-It centers on reusable broker descriptors, native client construction, and startup checks so Kafka behavior stays visible in your code.
+* **`kafka-utility`** — four small classes that solve the recurring integration
+  chores that the `kafka-clients` API expects every caller to redo: assembling
+  a bootstrap server string from a set of broker descriptors, spinning up a
+  short-lived `AdminClient` for a single operation, creating producers and
+  consumers whose defaults match this project's telemetry patterns, gating
+  application startup on broker reachability, and wiring broker address lists
+  from a compact Spring property.
 
-Audience: developers wiring Kafka into applications or reusable libraries and who want to keep startup, shutdown, retry, and message-handling policy explicit.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you have a specific reason not to.
+The module is small by design: one value object (`KafkaServer`), one Spring
+`FactoryBean` that expands a pattern into an array of those value objects
+(`KafkaServerFactoryBean`), one factory for client objects (`KafkaConnector`),
+one formatted exception (`KafkaConnectionException`), and one reference-only
+class that documents recommended broker-side settings as a comment block
+(`KafkaConfiguration`). It exists to turn "create a producer, create a
+consumer, check the cluster is up" into a handful of lines of calling code
+without dragging every caller through the `Properties` / `ProducerConfig` /
+`ConsumerConfig` vocabulary by hand.
 
-== Quick Navigation
+=== Why This Package Exists
 
-* <<kafka-reading-paths,Reading Paths>>
-* <<kafka-at-a-glance,At A Glance>>
-* <<kafka-why-use,Why Use Kafka Module>>
-* <<kafka-installation,Installation>>
-* <<kafka-first-run,First Run In 5 Minutes>>
-* <<kafka-quick-start,Quick Start>>
-* <<kafka-example-catalog,Example Catalog>>
-* <<kafka-core-types,Core Types>>
-* <<kafka-client-profiles,Built-In Client Profiles>>
-* <<kafka-lifecycle,Lifecycle And Ownership>>
-* <<kafka-api-index,API Index>>
-* <<kafka-defaults,Defaults Reference>>
-* <<kafka-edge-cases,Behavioral Edge Cases>>
-* <<kafka-troubleshooting,Troubleshooting>>
-* <<kafka-verification,Verification Checklist>>
+`kafka-clients` is a complete, transport-level API. Every service that uses
+it ends up writing the same glue:
 
-[[kafka-reading-paths, Reading Paths]]
-== Reading Paths
+1. Turn a list of broker hostnames or `host:port` pairs into the single
+   comma-separated `bootstrap.servers` string that every client constructor
+   accepts.
+2. Assemble a `Properties` object with the right serializer / deserializer
+   classes, the right reliability settings (`acks`, `retries`, idempotence),
+   the right timeouts (`delivery.timeout.ms`, `request.timeout.ms`,
+   `max.block.ms`), and the right batching knobs (`linger.ms`, `batch.size`).
+3. Open an `AdminClient` just long enough to describe the cluster, then close
+   it cleanly. Retry until the cluster is reachable so the rest of the
+   application doesn't start against a phantom broker list.
+4. In a Spring-driven application, turn `kafka-1.internal`, `kafka-2.internal`,
+   `kafka-3.internal` into three `KafkaServer` beans without writing three
+   near-identical XML entries or maintaining a parallel spreadsheet of
+   broker DNS names.
+5. Agree somewhere in the project on the *broker* side settings (partition
+   count, replication factor, retention, compression) that the service's
+   producers and consumers implicitly rely on, so the tuning conversation
+   does not get re-litigated in each team's design review.
 
-If you are integrating this module for the first time, read in this order:
+`smallmind-kafka` assembles (1) through (4) once, as a four-class Java
+facade, and solves (5) with a reference class whose body is a commented
+broker config template. A caller that needs a producer writes:
 
-1. <<kafka-why-use,Why Use Kafka Module>>
-2. <<kafka-installation,Installation>>
-3. <<kafka-first-run,First Run In 5 Minutes>>
-4. <<kafka-quick-start,Quick Start>>
-5. <<kafka-example-catalog,Example Catalog>>
-6. <<kafka-client-profiles,Built-In Client Profiles>>
-7. <<kafka-edge-cases,Behavioral Edge Cases>>
+[source,java]
+----
+Producer<Long, byte[]> producer =
+    new KafkaConnector(servers).check(30).createProducer("order-ingest");
+----
 
-If you already use the module and need exact behavior quickly, jump to:
+…and never touches `Properties`, `ProducerConfig`, or
+`AdminClient#describeCluster` directly.
 
-* <<kafka-core-types,Core Types>>
-* <<kafka-api-index,API Index>>
-* <<kafka-defaults,Defaults Reference>>
-* <<kafka-troubleshooting,Troubleshooting>>
+=== What It Does, Concretely
 
-[[kafka-at-a-glance, At A Glance]]
-== At A Glance
+* **Models a broker as a value object.** `KafkaServer` is a
+  `(host, port)` pair, default port `9094`, `Comparable` for predictable
+  ordering in sets and log lines. It is the unit of wiring that Spring XML or
+  programmatic setup produces.
+* **Expands a broker pattern into an array.** `KafkaServerFactoryBean` takes
+  a template like `kafka-#.internal:9094` and a spread like `1-3` and emits
+  three `KafkaServer` beans, so adding a node is a property edit rather than
+  a bean-definition edit.
+* **Builds a bootstrap server string once.** `KafkaConnector` accepts a
+  `KafkaServer...` vararg and caches the comma-separated
+  `host1:port1,host2:port2,…` string that every client constructor needs.
+* **Proves reachability before startup continues.** `KafkaConnector.check`
+  opens an `AdminClient`, calls `describeCluster().nodes().get()`, and retries
+  once a second until either a non-empty node list comes back or the supplied
+  grace period elapses — in which case it throws `KafkaConnectionException`
+  rather than letting the application start against a cluster that might be
+  uncontactable.
+* **Vends pre-configured producers and consumers** whose defaults match a
+  specific use profile: low-latency `Long`-keyed telemetry with `byte[]`
+  payloads, fire-and-forget reliability on the producer side, manual offset
+  commits on the consumer side.
+* **Runs one-off admin operations** through `invokeAdminClient`, a
+  function-style helper that opens an `AdminClient`, passes it to a caller
+  lambda, and closes it on return.
+* **Documents broker-side configuration** in `KafkaConfiguration` as a
+  commented reference the operations team can paste into `server.properties`
+  or a Kubernetes `ConfigMap`. There is no runtime code in `KafkaConfiguration`;
+  it is deliberately a pinned location for the tuning decisions the producer
+  and consumer defaults assume.
 
-[cols="1,2,3",options="header"]
+=== What It Intentionally Does Not Do
+
+* It does not wrap `KafkaProducer` or `KafkaConsumer`. The types the factory
+  returns are the stock `org.apache.kafka.clients.producer.Producer` and
+  `org.apache.kafka.clients.consumer.Consumer` interfaces. Callers use them
+  directly.
+* It does not own lifecycle for those clients. Every `createProducer` /
+  `createConsumer` call returns a freshly constructed client; closing it is
+  the caller's responsibility.
+* It does not provide serializers beyond `LongSerializer` / `LongDeserializer`
+  for keys and `ByteArraySerializer` / `ByteArrayDeserializer` for values.
+  A service that wants JSON, Avro, or Protobuf payloads encodes them *into*
+  the `byte[]` before calling `producer.send` and decodes on the consumer
+  side; the framework does not negotiate that choice.
+* It does not manage topics, ACLs, quotas, or schemas. `invokeAdminClient`
+  makes it easy to run a single admin operation, but the module does not
+  maintain any topic catalog, migration, or schema registry.
+* It does not pull in ZooKeeper, Kafka Streams, Kafka Connect, or any
+  managed-service SDK. The only Kafka dependency is `kafka-clients` itself.
+
+== Package Structure
+
+[cols="1,3",options="header"]
 |===
-|Module |Artifact |Purpose
+| Class | Role
 
-|Kafka parent
-|`org.smallmind:smallmind-kafka`
-|Aggregator POM for Kafka-related modules
+| `KafkaServer`
+| Immutable-by-convention value object carrying a broker's host name or IP
+  address and listener port. Has a no-arg constructor so Spring can build it
+  by property injection and a `(host, port)` constructor for programmatic
+  use. Default port is `9094`. Implements `Comparable<KafkaServer>` by host
+  first, port second.
 
-|Utility
-|`org.smallmind:kafka-utility`
-|Broker descriptors, client construction helpers, startup connectivity checks, and optional Spring broker-array wiring
+| `KafkaServerFactoryBean`
+| Spring `FactoryBean<KafkaServer[]>`. Parses a `serverPattern` such as
+  `kafka-#.internal:9094` and, when the pattern contains `#`, expands it
+  using a `serverSpread` expression handed to
+  `org.smallmind.nutsnbolts.util.Spread.calculate`. Emits one `KafkaServer`
+  per expansion value. For patterns with no `#`, the default port is `9092`
+  when no `:port` suffix is supplied.
+
+| `KafkaConnector`
+| Factory for all client objects that share a single bootstrap server
+  string. Supplies `check`, `invokeAdminClient`, `createProducer`, and
+  `createConsumer`. Holds no client state; each call constructs a new
+  client.
+
+| `KafkaConnectionException`
+| Checked exception thrown by `KafkaConnector.check` when no broker can be
+  confirmed reachable within the allowed grace period. Extends
+  `org.smallmind.nutsnbolts.lang.FormattedException` so throw sites can
+  embed format arguments without a separate `String.format` call.
+
+| `KafkaConfiguration`
+| Documentation-only class. Its body is a multi-line comment that lists the
+  broker-side `server.properties` values the module's client defaults
+  assume. Contains no fields, methods, or runtime behavior.
 |===
 
-[[kafka-why-use, Why Use Kafka Module]]
-== Why Use Kafka Module
+== Conceptual Model
 
-Use this module when you want Kafka wiring to stay explicit and library-safe.
+A few ideas recur throughout the module and are worth naming up front.
 
-What it does well:
+Bootstrap server list::
+    The comma-separated `host:port,host:port,…` string that every Kafka
+    client constructor accepts as `bootstrap.servers`. `KafkaConnector`
+    builds it once in its constructor; every client it subsequently vends
+    uses the same string. A bootstrap list does not need to enumerate
+    every broker — one or two reachable hosts are enough for the client to
+    discover the rest — but listing every known broker makes the client
+    robust against any single entry being down during startup.
 
-* keeps broker configuration as ordinary values instead of container-owned magic
-* gives you native Kafka clients instead of hiding Kafka behind a template or listener framework
-* makes startup availability checks explicit through `KafkaConnector.check(...)`
-* keeps Spring support optional and narrowly scoped to broker list construction
+Fire-and-forget telemetry::
+    The reliability profile baked into `createProducer`: `acks=0` (the
+    producer does not wait for any broker acknowledgement),
+    `retries=0` (a send that fails is simply dropped), and
+    `delivery.timeout.ms=500` (any send that has not reached the broker
+    in half a second is abandoned). This is the right setting for
+    high-volume, loss-tolerant streams — click events, heartbeats,
+    metrics — and the wrong setting for data whose loss is observable to
+    a user. The profile is intentionally *not* configurable through
+    `KafkaConnector`; a service that needs durable semantics should build
+    its own `Properties` rather than subverting a factory whose name
+    implies a specific profile.
 
-This module is a good fit when:
+Manual offset commit::
+    The consumer profile baked into `createConsumer`:
+    `enable.auto.commit=false` combined with `auto.offset.reset=latest`.
+    The consumer does not advance its committed position automatically;
+    the caller commits explicitly (usually via `commitSync()` after a
+    batch is processed) so that offset advancement lines up with durable
+    side effects. A brand-new consumer group starts at the tail of the
+    log, not the head — it reads what is produced after it joins, not
+    the backlog.
 
-* you want one small shared helper for bootstrap server handling
-* your code already uses native Kafka APIs or you want to use them directly
-* you need explicit ownership over startup, polling, committing, and shutdown
+Startup grace period::
+    The maximum number of seconds `KafkaConnector.check` will keep
+    retrying `describeCluster().nodes()` before giving up. Inside that
+    window the call sleeps one second between attempts. Pass a value
+    generous enough to cover the worst-case broker restart on your
+    deployment (30–60 seconds is typical); pass `0` to fail immediately
+    if the first probe does not come back.
 
-It pairs especially well with applications or shared libraries that already use the native Kafka APIs and want a small shared bootstrap layer.
+Spread expansion::
+    The mechanism `KafkaServerFactoryBean` uses to turn one pattern
+    into many `KafkaServer` instances. A `#` in the pattern is replaced
+    by each value produced by `Spread.calculate(serverSpread)`. The
+    spread expression accepts numeric ranges (`1-3`), alpha ranges
+    (`a-c`), and comma-separated lists. An `a-c` spread against pattern
+    `kafka-#.internal` yields `kafka-a.internal`, `kafka-b.internal`,
+    `kafka-c.internal`.
 
-[[kafka-layout, Project Layout]]
-== Project Layout
-
-[cols="1,2,3",options="header"]
-|===
-|Path |Artifact |Notes
-
-|`kafka/`
-|`org.smallmind:smallmind-kafka`
-|Aggregator POM
-
-|`kafka/utility/`
-|`org.smallmind:kafka-utility`
-|Published jar containing `org.smallmind.kafka.utility`
-|===
-
-[[kafka-installation, Installation]]
 == Installation
 
-Add `kafka-utility` to the module that owns Kafka integration.
+The utility artifact is published under `org.smallmind`:
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>kafka-utility</artifactId>
-  <version>${smallmind.version}</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
-Current direct dependencies from `kafka/utility/pom.xml`:
+This pulls in `org.apache.kafka:kafka-clients` at the version declared by
+the parent POM, `org.smallmind:scribe-pen` for logging, and
+`org.springframework:spring-beans` for the `FactoryBean` interface that
+`KafkaServerFactoryBean` implements.
 
-* `org.apache.kafka:kafka-clients`
-* `org.smallmind:scribe-pen`
-* `org.springframework:spring-beans`
+=== Runtime prerequisites
 
-[NOTE]
-====
-`KafkaServerFactoryBean` is the only Spring-specific type in this module.
-If you do not use that type, the rest of the API remains container-neutral.
-====
+* A running Kafka cluster reachable from the application process. The
+  module assumes PLAINTEXT listeners on the port carried by each
+  `KafkaServer`. SSL, SASL, mTLS, or any other authentication scheme
+  requires extra `Properties` entries that `KafkaConnector` does not
+  supply — see <<adding-security>> below for the escape hatch.
+* A classpath where exactly one version of `kafka-clients` is present.
+  Mixing client versions across modules is a common source of
+  `NoSuchMethodError` at `KafkaProducer` construction time.
 
-[NOTE]
-====
-`KafkaConnector.check(...)` logs failures through Scribe's `LoggerManager`.
-If you want those log messages to be emitted, include the Scribe runtime pieces your application normally uses.
-====
+=== Broker-side configuration
 
-[[kafka-first-run, First Run In 5 Minutes]]
-== First Run In 5 Minutes
+The client defaults in `KafkaConnector` assume a broker cluster tuned for
+short-retention, high-throughput telemetry: message TTL around 28 minutes,
+LZ4 compression, three-way replication when `acks=all` is in use,
+rack-aware replica selection when the deployment spans data centres. The
+full recommended `server.properties` snippet lives in
+`KafkaConfiguration`'s class-level comment; the most important values are
+reproduced in <<broker-configuration-reference>> below.
 
-If you need the shortest safe adoption path:
-
-1. Define broker endpoints explicitly with `KafkaServer`.
-2. Build one `KafkaConnector` for that broker set.
-3. Run `check(...)` during startup if your component should fail fast when Kafka is unavailable.
-4. Create the producer or consumer you actually need.
-5. Keep runtime policy in your code: retries, offset commits, thread model, shutdown order.
-6. Close producer and consumer instances explicitly.
-
-That path gives you the value of the module without letting it take ownership of your application.
-
-[[kafka-quick-start, Quick Start]]
 == Quick Start
 
-=== Explicit Broker Wiring And Startup Check
+The fastest path is to define a `KafkaServer` array through Spring, hand it
+to a `KafkaConnector`, and pull a producer or consumer off it.
+
+=== Spring wiring
+
+[source,xml]
+----
+<bean id="kafkaServers"
+      class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
+  <property name="serverPattern" value="kafka-#.internal:9094"/>  <1>
+  <property name="serverSpread" value="1-3"/>                    <2>
+</bean>
+
+<bean id="kafkaConnector"
+      class="org.smallmind.kafka.utility.KafkaConnector">
+  <constructor-arg ref="kafkaServers"/>                          <3>
+</bean>
+----
+<1> The `#` is the expansion point. The literal suffix `:9094` overrides the
+    factory's own default of `9092`, so the three produced brokers all listen
+    on port 9094 — the port `KafkaServer`'s no-arg constructor also uses as
+    its default.
+<2> The spread `1-3` produces the strings `1`, `2`, `3`, giving three brokers.
+    `a-c`, `1,2,5`, or any other expression `Spread.calculate` understands is
+    equally valid.
+<3> `KafkaConnector` takes the broker array as a single constructor argument
+    through Spring's vararg-to-array binding.
+
+=== Programmatic wiring
+
+[source,java]
+----
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaServer;
+
+KafkaConnector connector = new KafkaConnector(
+    new KafkaServer("kafka-1.internal", 9094),
+    new KafkaServer("kafka-2.internal", 9094),
+    new KafkaServer("kafka-3.internal", 9094));
+----
+
+=== Producing a single record
+
+[source,java]
+----
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.smallmind.kafka.utility.KafkaConnector;
+
+public class HeartbeatEmitter {
+
+  private final KafkaConnector connector;
+
+  public HeartbeatEmitter (KafkaConnector connector) {
+
+    this.connector = connector;
+  }
+
+  public void emit (long nodeId, byte[] payload) {
+
+    try (Producer<Long, byte[]> producer = connector.createProducer("heartbeat")) {   <1>
+      producer.send(new ProducerRecord<>("service.heartbeat", nodeId, payload));      <2>
+    }
+  }
+}
+----
+<1> `"heartbeat"` becomes the `client.id` the broker will report in its JMX
+    metrics. Pick a name that identifies the sender, not the topic.
+<2> No `get()` on the returned `Future`: with `acks=0` there is nothing to
+    wait for. The send either makes it onto the wire before the producer is
+    closed or it does not.
+
+[IMPORTANT]
+====
+Opening a new `KafkaProducer` for each record is expensive and defeats the
+connection pooling Kafka provides. In production, keep one `Producer`
+instance per logical emitter and close it during application shutdown; the
+example above uses try-with-resources for illustrative brevity, not as a
+recommended lifecycle.
+====
+
+=== Consuming a stream
+
+[source,java]
+----
+import java.time.Duration;
+import java.util.Map;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.smallmind.kafka.utility.KafkaConnector;
+
+public class HeartbeatSink {
+
+  public void run (KafkaConnector connector) {
+
+    try (Consumer<Long, byte[]> consumer =
+             connector.createConsumer("heartbeat-reader", "heartbeat-sink",     <1>
+                                      "service.heartbeat")) {                   <2>
+
+      while (!Thread.currentThread().isInterrupted()) {
+        ConsumerRecords<Long, byte[]> batch = consumer.poll(Duration.ofSeconds(1));
+
+        for (ConsumerRecord<Long, byte[]> record : batch) {
+          process(record.key(), record.value());
+        }
+
+        if (!batch.isEmpty()) {
+          consumer.commitSync();                                                <3>
+        }
+      }
+    }
+  }
+
+  private void process (Long nodeId, byte[] payload) { /* ... */ }
+}
+----
+<1> `client.id` (reported to the broker) and `group.id` (the consumer
+    group). Two consumers sharing a `group.id` partition the topic between
+    themselves; a second `group.id` receives its own independent stream of
+    every record.
+<2> The vararg topic list subscribes immediately. Passing zero topics here
+    is legal and leaves the consumer unsubscribed; callers then use
+    `consumer.assign(...)` for manual partition control.
+<3> Explicit commit. Because the factory sets `enable.auto.commit=false`,
+    failing to commit here means the next `poll` after a restart will
+    re-deliver the same batch — which is exactly the point.
+
+=== Gating startup on broker reachability
 
 [source,java]
 ----
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
-import org.smallmind.kafka.utility.KafkaServer;
 
-KafkaConnector connector = new KafkaConnector(
-    new KafkaServer("kafka-1.example.net", 9092),
-    new KafkaServer("kafka-2.example.net", 9092),
-    new KafkaServer("kafka-3.example.net", 9092)
-);
-
-try {
-  connector.check(30);
-} catch (KafkaConnectionException exception) {
-  throw exception;
-}
+KafkaConnector connector =
+    new KafkaConnector(servers).check(30);      <1>
 ----
+<1> Blocks for up to 30 seconds, probing once a second. If any attempt
+    returns a non-empty node list, the method returns immediately. If the
+    full 30 seconds elapse with no success, a `KafkaConnectionException`
+    is thrown. The method returns `this` so it can be chained in-line.
 
-`check(30)` retries cluster discovery for up to roughly 30 seconds and throws `KafkaConnectionException` if it cannot prove that at least one broker node is available.
-Use it for explicit startup readiness checks, not as a long-running health system.
+== Usage Examples
 
-=== Send Records With The Built-In Producer Profile
+=== Describing the cluster with a one-off admin client
+
+`invokeAdminClient` is the right tool when an application needs exactly
+one admin operation — list topics, describe a consumer group, look up
+broker metadata — and does not want to own an `AdminClient` lifecycle.
 
 [source,java]
 ----
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import java.util.Set;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.smallmind.kafka.utility.KafkaConnector;
 
-byte[] payload = loadPayload();
+public Set<String> listTopics (KafkaConnector connector)
+  throws Exception {
 
-try (Producer<Long, byte[]> producer = connector.createProducer("orders-producer")) {
-  producer.send(new ProducerRecord<>("orders.events", 101L, payload));
-  producer.flush();
-}
-----
-
-The built-in producer profile is intentionally lightweight: `acks=0`, `retries=0`, and `enable.idempotence=false`.
-That keeps the wrapper thin, but it also means durability guarantees stay low unless you build a producer yourself.
-
-=== Poll And Commit With The Built-In Consumer Profile
-
-[source,java]
-----
-import java.time.Duration;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-
-try (Consumer<Long, byte[]> consumer = connector.createConsumer(
-    "orders-consumer-1",
-    "orders-group",
-    "orders.events"
-)) {
-  while (running()) {
-    ConsumerRecords<Long, byte[]> records = consumer.poll(Duration.ofSeconds(1));
-
-    for (ConsumerRecord<Long, byte[]> record : records) {
-      process(record.key(), record.value());
+  return connector.invokeAdminClient(admin -> {
+    try {
+      return admin.listTopics().names().get();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-
-    if (!records.isEmpty()) {
-      consumer.commitSync();
-    }
-  }
+  });
 }
 ----
 
-The built-in consumer profile sets `enable.auto.commit=false`.
-If processing succeeds and you care about progress, commit offsets yourself.
+The admin client is opened inside `invokeAdminClient`, the lambda runs
+with it, and the client is closed on return even if the lambda threw.
+`AdminClient` operations return `KafkaFuture`, so lambdas that need a
+synchronous result call `.get()`; callers that want the raw future back
+can return it from the lambda and await it outside.
 
-=== Run One Admin Operation
-
-[source,java]
-----
-import java.util.Collection;
-import org.apache.kafka.common.Node;
-
-Collection<Node> nodes = connector.invokeAdminClient(adminClient ->
-    adminClient.describeCluster().nodes().get()
-);
-----
-
-`invokeAdminClient(...)` creates a short-lived `AdminClient`, passes it to your callback, and closes it before returning.
-It is a convenience for one-off admin work, not a cached admin-client manager.
-
-[[kafka-example-catalog, Example Catalog]]
-== Example Catalog
-
-=== Producer-Only Component
-
-Use this shape when the component only publishes and the caller owns shutdown.
+=== Creating a topic
 
 [source,java]
 ----
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import java.util.Collections;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.smallmind.kafka.utility.KafkaConnector;
 
-public class OrderPublisher {
+public void ensureTopic (KafkaConnector connector,
+                         String name, int partitions, short replication) {
 
-  private final Producer<Long, byte[]> producer;
-
-  public OrderPublisher (KafkaConnector connector) {
-
-    producer = connector.createProducer("order-publisher");
-  }
-
-  public void publish (long orderId, byte[] payload) {
-
-    producer.send(new ProducerRecord<>("orders.events", orderId, payload));
-  }
-
-  public void shutdown () {
-
-    producer.flush();
-    producer.close();
-  }
+  connector.invokeAdminClient(admin -> {
+    try {
+      admin.createTopics(Collections.singleton(
+          new NewTopic(name, partitions, replication))).all().get();
+    } catch (Exception ignore) {
+      // TopicExistsException is the common, safe case
+    }
+    return null;
+  });
 }
 ----
 
-This keeps Smallmind's role narrow: the connector creates the client once, and the component owns the client afterward.
+This pattern is useful in integration tests and in one-shot provisioning
+jobs. In production, topic creation is typically delegated to
+`auto.create.topics.enable=true` on the broker (see
+<<broker-configuration-reference>>) or to an out-of-band operations
+process.
 
-=== Consumer Loop With Explicit Failure Boundary
+=== Reusing one connector across many clients
 
-This pattern works when you want the polling loop, processing rules, and commit strategy to remain in ordinary application code.
-
-[source,java]
-----
-import java.time.Duration;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-
-Consumer<Long, byte[]> consumer = connector.createConsumer(
-    "invoice-consumer-1",
-    "invoice-group",
-    "invoices.ready"
-);
-
-try {
-  while (running()) {
-    ConsumerRecords<Long, byte[]> records = consumer.poll(Duration.ofMillis(500));
-
-    for (ConsumerRecord<Long, byte[]> record : records) {
-      handleInvoice(record.value());
-    }
-
-    if (!records.isEmpty()) {
-      consumer.commitSync();
-    }
-  }
-} finally {
-  consumer.close();
-}
-----
-
-If message handling throws, the failure stays visible to your code.
-The module does not swallow the exception and does not apply hidden commit or retry policy.
-
-=== Custom Producer When The Built-In Profile Is Too Small
-
-`createProducer(...)` is fixed to `Producer<Long, byte[]>` and to a low-durability property set.
-If you need different serializers or stronger delivery semantics, build a producer directly and reuse the connector's bootstrap string.
+A `KafkaConnector` caches its bootstrap server string; creating many
+producers and consumers from the same connector is cheap.
 
 [source,java]
 ----
-import java.util.Properties;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
+KafkaConnector connector = new KafkaConnector(servers).check(30);
 
-Properties properties = new Properties();
+Producer<Long, byte[]> orders      = connector.createProducer("order-ingest");
+Producer<Long, byte[]> metrics     = connector.createProducer("metrics-ingest");
+Consumer<Long, byte[]> orderReader = connector.createConsumer("order-reader", "order-service", "orders");
+----
 
-properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, connector.getBoostrapServers());
-properties.put(ProducerConfig.CLIENT_ID_CONFIG, "orders-json-producer");
-properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-properties.put(ProducerConfig.ACKS_CONFIG, "all");
-properties.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
-properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+Each call returns a fresh, independent client. They do not share any
+underlying network resource — every `KafkaProducer` and `KafkaConsumer`
+opens its own connection pool — but they do share the bootstrap list,
+which is the only state the connector holds.
 
-Producer<String, byte[]> producer = new KafkaProducer<>(properties);
+[[adding-security]]
+=== Layering SASL / SSL on top
+
+`KafkaConnector` does not accept extra `Properties`; the factory methods
+commit to a specific profile and deliberately hide the knobs that
+contradict it. When a deployment needs authentication, the cleanest
+escape hatch is to treat the factory methods as a starting point and
+stop using them when the deployment's requirements diverge:
+
+[source,java]
+----
+Properties props = new Properties();
+
+// Start from the connector-supplied bootstrap list:
+props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, connector.getBoostrapServers());
+
+// Apply the rest yourself:
+props.put(ProducerConfig.CLIENT_ID_CONFIG, "secure-ingest");
+props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,   LongSerializer.class.getName());
+props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+props.put("security.protocol", "SASL_SSL");
+props.put("sasl.mechanism",    "PLAIN");
+props.put("sasl.jaas.config",  "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"...\" password=\"...\";");
+props.put(ProducerConfig.ACKS_CONFIG,    "all");
+props.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+
+Producer<Long, byte[]> producer = new KafkaProducer<>(props);
 ----
 
 [NOTE]
 ====
-The public accessor is spelled `getBoostrapServers()`.
-That spelling is part of the current public API.
+The accessor on `KafkaConnector` is named `getBoostrapServers` (note the
+typo: `boostrap`, not `bootstrap`). Both the field and the method
+preserve the misspelling for source compatibility; callers reference the
+method exactly as written.
 ====
 
-=== Spring XML Broker Expansion
+=== Polling with a deadline
 
-Use `KafkaServerFactoryBean` only when Spring bean configuration is already how you want to materialize broker lists.
-It does not create Kafka clients by itself.
-
-[source,xml]
-----
-<bean id="kafkaServers" class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
-  <property name="serverPattern" value="kafka-#.example.net:9092"/>
-  <property name="serverSpread" value="1..3"/>
-</bean>
-
-<bean id="kafkaConnector" class="org.smallmind.kafka.utility.KafkaConnector">
-  <constructor-arg ref="kafkaServers"/>
-</bean>
-----
-
-The example above expands to three brokers: `kafka-1.example.net:9092`, `kafka-2.example.net:9092`, and `kafka-3.example.net:9092`.
-
-=== Programmatic FactoryBean Use Outside A Container
+The built-in consumer has no notion of "read for N seconds and stop,"
+but the factory's defaults make it easy to compose one.
 
 [source,java]
 ----
-import org.smallmind.kafka.utility.KafkaConnector;
-import org.smallmind.kafka.utility.KafkaServer;
-import org.smallmind.kafka.utility.KafkaServerFactoryBean;
+import java.time.Duration;
+import java.time.Instant;
 
-KafkaServerFactoryBean factoryBean = new KafkaServerFactoryBean();
-factoryBean.setServerPattern("kafka-#.example.net:9092");
-factoryBean.setServerSpread("1..3");
-factoryBean.afterPropertiesSet();
+public void drain (Consumer<Long, byte[]> consumer, Duration budget) {
 
-KafkaServer[] servers = factoryBean.getObject();
-KafkaConnector connector = new KafkaConnector(servers);
+  Instant deadline = Instant.now().plus(budget);
+
+  while (Instant.now().isBefore(deadline)) {
+    ConsumerRecords<Long, byte[]> records =
+        consumer.poll(Duration.ofMillis(500));                         <1>
+
+    records.forEach(r -> process(r));
+    consumer.commitSync();
+  }
+}
 ----
+<1> `FETCH_MAX_WAIT_MS_CONFIG` on the consumer is `500ms` by default, so
+    asking for a 500ms poll gives the broker room to wait for a full
+    batch before returning, at the cost of 500ms of tail latency on a
+    quiet topic. Shorten the poll to respond faster; lengthen it to
+    trade latency for throughput.
 
-If you instantiate `KafkaServerFactoryBean` yourself, you must call `afterPropertiesSet()` before `getObject()`.
+== Behavioral Reference
 
-[[kafka-core-types, Core Types]]
-== Core Types
+=== Bootstrap server assembly
 
-=== `KafkaServer`
+`KafkaConnector` concatenates each broker's host and port with a comma
+separator in the order they were passed to the constructor. The string
+is cached; it does not regenerate per call. Calling
+`getBoostrapServers()` after construction always returns the same
+instance.
 
-`KafkaServer` is a mutable host/port descriptor.
-Use it when you want broker configuration to stay as ordinary values.
+Edge cases:
 
-Behavior to know:
+* Passing zero brokers yields an empty string. Any subsequent client
+  construction will fail with `kafka-clients`' own
+  `ConfigException("No bootstrap servers")`.
+* Passing the same broker twice produces a bootstrap string with
+  duplicates. `kafka-clients` tolerates this.
+* Host names are used verbatim; no DNS resolution or trimming occurs.
 
-* the no-arg constructor leaves `host` unset and defaults `port` to `9094`
-* the two-arg constructor sets both values explicitly
-* instances are comparable by host first, then port
+=== `check` semantics
 
-[IMPORTANT]
-====
-`KafkaServer.compareTo(...)` assumes both hosts are non-null.
-If either host is null, comparison can fail with `NullPointerException`.
-====
+* The first iteration runs immediately, with no sleep.
+* On each unsuccessful iteration, the thread sleeps one second before
+  retrying.
+* The loop exits successfully when `describeCluster().nodes().get()`
+  returns a non-null, non-empty collection.
+* The loop exits unsuccessfully when `(System.currentTimeMillis() -
+  startTimestamp) >= startupGracePeriodSeconds * 1000L` on an error
+  iteration — i.e., the timeout is evaluated *after* the failure, so
+  the call may take up to one second longer than the grace period.
+* An `InterruptedException` during the inner `Thread.sleep` is logged
+  and causes the method to return failure immediately, without throwing.
+  The caller's interrupt flag is preserved by the underlying
+  `Thread.sleep` contract for callers that want to observe it.
+* A successful `check` returns the connector itself, so
+  `new KafkaConnector(servers).check(30).createProducer("...")` is a
+  legal one-liner.
 
-=== `KafkaConnector`
+=== Producer defaults
 
-`KafkaConnector` is the main entry point.
-It accepts `KafkaServer...` and turns them into a comma-separated bootstrap server string in the same order they were supplied.
+`createProducer` sets exactly these values:
 
-Public responsibilities:
-
-* expose the computed bootstrap string through `getBoostrapServers()`
-* check broker reachability through `check(int)`
-* run one admin callback through `invokeAdminClient(...)`
-* create a producer through `createProducer(String)`
-* create a consumer through `createConsumer(String, String, String...)`
-
-Validation is deliberately thin.
-The constructor does not reject an empty server list, null hosts, or unusual port values.
-If you want stricter validation, do it in the calling code.
-
-=== `KafkaServerFactoryBean`
-
-`KafkaServerFactoryBean` exists only for Spring bean materialization of `KafkaServer[]`.
-It understands either:
-
-* one explicit host, optionally followed by `:port`
-* one host pattern containing `#`, expanded by `serverSpread`
-
-Examples:
-
-* `kafka-a.example.net:9092`
-* `kafka-#.example.net:9092` with `serverSpread=1..3`
-* `broker-#.example.net` with `serverSpread=a..c`
-
-When `:port` is omitted, the factory bean defaults to `9092`.
-
-=== `KafkaConnectionException`
-
-`KafkaConnectionException` is the checked exception thrown by `KafkaConnector.check(...)`.
-Use it to make startup connectivity failures explicit at the call site.
-
-=== `KafkaConfiguration`
-
-`KafkaConfiguration` is not a runtime configuration type.
-It is a source file containing commented broker-setting guidance.
-Treat it as notes embedded in source, not as a library API.
-
-[[kafka-client-profiles, Built-In Client Profiles]]
-== Built-In Client Profiles
-
-The convenience methods in `KafkaConnector` do not try to cover every Kafka use case.
-They express one explicit profile for admin work, one for producing, and one for consuming.
-That makes the behavior easy to reason about, but it also means callers should bypass the helpers when their requirements differ.
-
-=== Admin Client Profile
-
-Method:
-
-* `<R> R invokeAdminClient(Function<AdminClient, R> clientFunction)`
-
-Properties applied by the helper:
-
-[cols="1,2",options="header"]
+[cols="2,1,3",options="header"]
 |===
-|Property |Value
+| Key | Value | Rationale
 
-|`bootstrap.servers`
-|connector bootstrap string
+| `bootstrap.servers`
+| connector's cached string
+| Every client must carry it.
 
-|`connections.max.idle.ms`
-|`300000`
+| `client.id`
+| caller-supplied
+| Reported in broker JMX; make it identify the sender.
 
-|`request.timeout.ms`
-|`3000`
+| `key.serializer`
+| `LongSerializer`
+| Numeric keys hash evenly across partitions without
+  `null`-key round-robin.
 
-|`default.api.timeout.ms`
-|`3000`
+| `value.serializer`
+| `ByteArraySerializer`
+| Payload framing is the caller's responsibility; the framework stays
+  out of encoding decisions.
 
-|`retries`
-|`0`
+| `acks`
+| `0`
+| Fire-and-forget. The producer does not wait for broker
+  acknowledgement.
 
-|`client.id`
-|empty string
-|===
+| `retries`
+| `0`
+| A failed send is dropped. Combined with `acks=0`, there is nothing
+  to retry anyway.
 
-Operational behavior:
+| `retry.backoff.ms`
+| `100`
+| Relevant only if `retries` is later overridden; set conservatively.
 
-* one `AdminClient` is created per invocation
-* the client is always closed before the method returns
-* exceptions thrown by your callback are not wrapped by `KafkaConnector`
+| `max.in.flight.requests.per.connection`
+| `5`
+| Standard high-throughput value. Safe to raise only if ordering
+  concerns allow.
 
-=== Producer Profile
+| `delivery.timeout.ms`
+| `500`
+| Half a second from `send` to success-or-giveup. Must be at least
+  `request.timeout.ms + linger.ms`.
 
-Method:
+| `request.timeout.ms`
+| `500`
+| Must exceed `replica.lag.time.max.ms` on the broker side.
 
-* `Producer<Long, byte[]> createProducer(String clientId)`
+| `linger.ms`
+| `0`
+| Send as soon as a batch is eligible. Trade off against throughput on
+  high-volume topics by raising to 5–20ms.
 
-Fixed serializers:
+| `max.request.size`
+| `1048576` (1 MB)
+| Matches broker's `message.max.bytes` recommendation.
 
-* key serializer: `LongSerializer`
-* value serializer: `ByteArraySerializer`
+| `batch.size`
+| `16384` (16 KB)
+| Standard default. The producer will flush earlier if `linger.ms` or
+  the deadline forces it.
 
-Properties applied by the helper:
+| `max.block.ms`
+| `1000`
+| How long `send` blocks when the send buffer is full. One second
+  protects callers from head-of-line blocking on a choked broker.
 
-[cols="1,2",options="header"]
-|===
-|Property |Value
-
-|`bootstrap.servers`
-|connector bootstrap string
-
-|`client.id`
-|caller supplied
-
-|`acks`
-|`0`
-
-|`retries`
-|`0`
-
-|`retry.backoff.ms`
-|`100`
-
-|`max.in.flight.requests.per.connection`
-|`5`
-
-|`delivery.timeout.ms`
-|`500`
-
-|`request.timeout.ms`
-|`500`
-
-|`linger.ms`
-|`0`
-
-|`max.request.size`
-|`1048576`
-
-|`batch.size`
-|`16384`
-
-|`max.block.ms`
-|`1000`
-
-|`enable.idempotence`
-|`false`
+| `enable.idempotence`
+| `false`
+| Incompatible with `acks=0`; explicitly disabled.
 |===
 
-Practical meaning:
+A caller that needs durable semantics (`acks=all`, retries, idempotence)
+must build its own `Properties`; see <<adding-security>> for the
+pattern.
 
-* key and value types are fixed to `Long` and `byte[]`
-* broker acknowledgment durability is low because `acks=0`
-* the helper does not retry failed sends
-* the helper does not enable idempotence
+=== Consumer defaults
 
-Use the helper when those defaults match your use case.
-Build a producer directly when you need different serializers, stronger delivery guarantees, or a wider property set.
+`createConsumer` sets exactly these values:
 
-=== Consumer Profile
-
-Method:
-
-* `Consumer<Long, byte[]> createConsumer(String clientId, String groupId, String... topics)`
-
-Fixed deserializers:
-
-* key deserializer: `LongDeserializer`
-* value deserializer: `ByteArrayDeserializer`
-
-Properties applied by the helper:
-
-[cols="1,2",options="header"]
+[cols="2,1,3",options="header"]
 |===
-|Property |Value
+| Key | Value | Rationale
 
-|`bootstrap.servers`
-|connector bootstrap string
+| `bootstrap.servers`
+| connector's cached string
+| Every client must carry it.
 
-|`client.id`
-|caller supplied
+| `client.id`
+| caller-supplied
+| Reported in broker JMX.
 
-|`group.id`
-|caller supplied
+| `group.id`
+| caller-supplied
+| Defines the consumer group this instance joins.
 
-|`group.protocol`
-|`consumer`
+| `group.protocol`
+| `consumer`
+| KIP-848 "new" consumer group protocol. Supersedes the classic
+  client-side rebalance protocol. This value also forbids setting
+  `heartbeat.interval.ms` and `session.timeout.ms` from the client
+  side — those are broker-side settings under the new protocol.
 
-|`max.poll.interval.ms`
-|`300000`
+| `key.deserializer`
+| `LongDeserializer`
+| Mirror of the producer's key serializer.
 
-|`max.poll.records`
-|`500`
+| `value.deserializer`
+| `ByteArrayDeserializer`
+| Mirror of the producer's value serializer.
 
-|`fetch.min.bytes`
-|`1`
+| `max.poll.interval.ms`
+| `300000` (5 min)
+| Maximum gap between `poll` calls before the broker removes the
+  consumer from the group.
 
-|`fetch.max.wait.ms`
-|`500`
+| `max.poll.records`
+| `500`
+| Records returned in a single `poll`.
 
-|`fetch.max.bytes`
-|`52428800`
+| `fetch.min.bytes`
+| `1`
+| Return as soon as any data is available; do not wait for the batch
+  to fill.
 
-|`max.partition.fetch.bytes`
-|`1048576`
+| `fetch.max.wait.ms`
+| `500`
+| Broker-side wait when `fetch.min.bytes` is not yet met.
 
-|`enable.auto.commit`
-|`false`
+| `fetch.max.bytes`
+| `52428800` (50 MB)
+| Per-fetch ceiling across all partitions. Large to accommodate bursty
+  traffic.
 
-|`auto.commit.interval.ms`
-|`500`
+| `max.partition.fetch.bytes`
+| `1048576` (1 MB)
+| Per-partition ceiling. Matches broker `message.max.bytes`.
 
-|`auto.offset.reset`
-|`latest`
-|===
+| `enable.auto.commit`
+| `false`
+| Caller commits explicitly. Auto-commit is disabled to prevent
+  offsets from advancing before the records are durably processed.
 
-Subscription behavior:
+| `auto.commit.interval.ms`
+| `500`
+| Inert while `enable.auto.commit=false`; left for completeness in
+  case a caller overrides the flag.
 
-* if `topics` is non-null and non-empty, the consumer subscribes immediately
-* if `topics` is null or empty, the consumer is returned unsubscribed
-
-Practical meaning:
-
-* key and value types are fixed to `Long` and `byte[]`
-* offset management is caller-owned because auto-commit is disabled
-* a brand new consumer group starts at `latest` unless you change the policy in a custom consumer
-
-[[kafka-lifecycle, Lifecycle And Ownership]]
-== Lifecycle And Ownership
-
-Resource ownership is intentionally explicit:
-
-* `KafkaConnector` is just configuration and helper logic; it does not keep open network resources
-* `invokeAdminClient(...)` owns the `AdminClient` lifecycle for the duration of one call
-* `createProducer(...)` returns an open producer owned by the caller
-* `createConsumer(...)` returns an open consumer owned by the caller
-
-Caller responsibilities:
-
-* close producers and consumers explicitly
-* stop polling and publishing loops before closing the underlying client
-* decide whether clients are process-wide, component-scoped, or request-scoped
-* decide how startup checks fit into application readiness and failure policy
-
-=== Startup Check Semantics
-
-`KafkaConnector.check(int startupGracePeriodSeconds)` works like this:
-
-* it creates an `AdminClient` through `invokeAdminClient(...)`
-* it calls `describeCluster().nodes().get()` until it sees a non-empty node collection or the grace period expires
-* it sleeps for `1000 ms` between failed attempts
-* it throws `KafkaConnectionException` after the grace period if no nodes can be proven available
-
-Operational details worth knowing:
-
-* failures are logged through `LoggerManager`
-* interruption during the retry sleep causes the method to fail
-* the method does not re-set the interrupt flag after catching `InterruptedException`
-* actual wall-clock time can exceed the nominal grace period because each admin request can consume its own timeout budget first
-
-[[kafka-api-index, API Index]]
-== API Index
-
-[cols="1,2,3",options="header"]
-|===
-|Type |Signature |Purpose
-
-|`KafkaServer`
-|`KafkaServer()`
-|Create a broker descriptor with default port `9094`
-
-|`KafkaServer`
-|`KafkaServer(String host, int port)`
-|Create a broker descriptor with explicit host and port
-
-|`KafkaServer`
-|`String getHost() / void setHost(String)`
-|Read or update the host value
-
-|`KafkaServer`
-|`int getPort() / void setPort(int)`
-|Read or update the port value
-
-|`KafkaServer`
-|`int compareTo(KafkaServer)`
-|Sort by host, then port
-
-|`KafkaConnector`
-|`KafkaConnector(KafkaServer... servers)`
-|Build a connector from broker descriptors
-
-|`KafkaConnector`
-|`String getBoostrapServers()`
-|Return the computed bootstrap server list
-
-|`KafkaConnector`
-|`KafkaConnector check(int)`
-|Verify that at least one broker node becomes reachable within the grace period
-
-|`KafkaConnector`
-|`<R> R invokeAdminClient(Function<AdminClient, R>)`
-|Run one callback with a short-lived `AdminClient`
-
-|`KafkaConnector`
-|`Producer<Long, byte[]> createProducer(String clientId)`
-|Create a producer using the built-in producer profile
-
-|`KafkaConnector`
-|`Consumer<Long, byte[]> createConsumer(String clientId, String groupId, String... topics)`
-|Create a consumer using the built-in consumer profile and optional immediate subscription
-
-|`KafkaServerFactoryBean`
-|`void setServerPattern(String)`
-|Set the explicit host or host pattern
-
-|`KafkaServerFactoryBean`
-|`void setServerSpread(String)`
-|Set the spread expression used with `#`
-
-|`KafkaServerFactoryBean`
-|`void afterPropertiesSet()`
-|Parse the configured pattern into `KafkaServer[]`
-
-|`KafkaServerFactoryBean`
-|`KafkaServer[] getObject()`
-|Return the materialized broker array
-
-|`KafkaServerFactoryBean`
-|`Class<?> getObjectType()`
-|Return `KafkaServer[].class`
-
-|`KafkaServerFactoryBean`
-|`boolean isSingleton()`
-|Always returns `true`
-
-|`KafkaConnectionException`
-|`KafkaConnectionException(String, Object... args)`
-|Describe a startup connectivity failure
+| `auto.offset.reset`
+| `latest`
+| A brand-new group starts at the tail. A group that already has
+  committed offsets continues from them; the reset only applies when
+  there is no committed offset for the group.
 |===
 
-[[kafka-defaults, Defaults Reference]]
+=== Topic subscription behavior
+
+`createConsumer`'s vararg `topics` parameter has three cases:
+
+1. `null`: the consumer is created unsubscribed. The caller is expected
+   to call `subscribe(...)` or `assign(...)` before `poll`.
+2. Empty array (zero varargs): same as `null`.
+3. One or more names: `subscribe(Arrays.asList(topics))` is invoked
+   before the consumer is returned.
+
+There is no regex subscription variant in the factory; callers that
+need one use `consumer.subscribe(Pattern.compile(...))` after receiving
+the unsubscribed consumer.
+
+=== Admin client defaults
+
+`invokeAdminClient` builds a fresh `AdminClient` with:
+
+[cols="2,1,3",options="header"]
+|===
+| Key | Value | Rationale
+
+| `bootstrap.servers`
+| connector's cached string
+| Standard.
+
+| `connections.max.idle.ms`
+| `300000` (5 min)
+| Irrelevant for the one-shot lifetime but set defensively.
+
+| `request.timeout.ms`
+| `3000`
+| Each admin call must respond in 3 seconds or fail.
+
+| `default.api.timeout.ms`
+| `3000`
+| Must not exceed `request.timeout.ms`; explicitly pinned equal.
+
+| `retries`
+| `0`
+| One attempt. The caller is expected to retry at a higher level if
+  appropriate.
+
+| `client.id`
+| empty string
+| Admin operations are not attributed to a particular sender in this
+  module. Override in user `Properties` if an operations team needs
+  attribution.
+|===
+
+The client is `try-with-resources`-scoped; it closes before the method
+returns, regardless of whether the lambda succeeded or threw.
+
+=== `KafkaServer` ordering
+
+`compareTo` first compares hosts lexicographically. If hosts are equal,
+it returns `this.port - other.port`. There is no defense against
+integer overflow because broker ports fit in 16 bits by definition.
+Hosts are compared with `String.compareTo`; a `null` host on either
+side throws `NullPointerException`, which is why the no-arg constructor
+is documented as being "for bean-wiring frameworks that set properties
+after construction" — direct use of the default-constructed instance
+before `setHost` is illegal.
+
+=== `KafkaServerFactoryBean` parsing
+
+The factory applies a straightforward literal substitution, not a
+regular-expression match:
+
+* Find the first `:` — call its position `colonPos`. If absent, there
+  is no port suffix.
+* Find the first `#` — call its position `poundPos`. If absent, the
+  pattern is a single-broker pattern.
+
+Then:
+
+* **No `#`, no `:`:** single broker, host = pattern, port = `9092`.
+* **No `#`, with `:`:** single broker, host = `pattern.substring(0,
+  colonPos)`, port = integer parse of the remainder.
+* **With `#`, no `:`:** for each spread value `v`, host =
+  `pattern.substring(0, poundPos) + v + pattern.substring(poundPos + 1)`,
+  port = `9092`.
+* **With `#` and `:`:** for each spread value `v`, host =
+  `pattern.substring(0, poundPos) + v + pattern.substring(poundPos + 1, colonPos)`,
+  port = integer parse of `pattern.substring(colonPos + 1)`.
+
+Quirks worth knowing:
+
+* The default port when parsed from a pattern is `9092`. The default
+  port on `new KafkaServer()` is `9094`. This asymmetry exists because
+  `KafkaServer`'s default matches the port most often used for
+  *external* (non-broker-to-broker) traffic in this project, while the
+  pattern's default matches Kafka's own documented default. If
+  consistency matters, always include an explicit `:port` suffix in
+  the pattern.
+* A `#` placed *after* the first `:` will be treated as part of the
+  port string and fail with `NumberFormatException`. Keep the `#` in
+  the host portion.
+* `serverPattern == null` or `""` leaves `serverArray` at `null`; the
+  returned object from `getObject()` will be `null`. Callers that
+  require a non-null result must set `serverPattern` explicitly.
+* `serverSpread == null` with a `#`-bearing pattern produces the
+  `SpreadParserException` thrown by `Spread.calculate(null)` — but in
+  fact `Spread.calculate(null)` returns an empty array, yielding a
+  zero-length `KafkaServer[]`. Set both properties together.
+
+=== Thread safety
+
+* `KafkaConnector` is safe for concurrent use. It holds only an
+  immutable string; all client construction happens inside synchronized
+  constructors in `kafka-clients`.
+* `KafkaServer` is effectively immutable once constructed with the
+  `(host, port)` constructor. The no-arg variant plus setters is
+  intended for single-threaded bean assembly; do not mutate a
+  `KafkaServer` that is already in circulation.
+* `KafkaServerFactoryBean` is populated once by Spring in
+  `afterPropertiesSet` and is read-only thereafter. `getObject`
+  returns the same array instance every time.
+* Clients returned from `createProducer` / `createConsumer` carry
+  whatever thread-safety `kafka-clients` documents for them: the
+  `KafkaProducer` is thread-safe and may be shared across threads;
+  the `KafkaConsumer` is *not* thread-safe and must be used from one
+  thread at a time (or with `wakeup`-based coordination).
+
+=== Logging
+
+`KafkaConnector` logs through `scribe-pen`:
+
+* An `InterruptedException` inside the `check` sleep is logged at
+  `ERROR` and the call returns failure.
+* A terminal `ExecutionException` or `InterruptedException` from
+  `describeCluster` (after the grace period has elapsed) is logged at
+  `ERROR` before the method returns failure — which the caller turns
+  into a `KafkaConnectionException`.
+
+No other log output is produced by this module. Producers and
+consumers log through `kafka-clients`' own SLF4J binding; configure
+your SLF4J provider separately if that output is wanted.
+
+== Error Model
+
+The exceptions callers will see fall into three groups.
+
+Startup reachability::
+    `KafkaConnectionException` is raised by `KafkaConnector.check` when
+    the grace period elapses without a successful `describeCluster`.
+    The message includes the bootstrap server string so the failure is
+    diagnosable from the log line alone. The type extends
+    `org.smallmind.nutsnbolts.lang.FormattedException`, so it is a
+    checked exception; methods that call `check` must declare it or
+    catch it.
+
+Client construction::
+    Failures in `createProducer` / `createConsumer` come from
+    `kafka-clients` itself, typically `ConfigException` for bad
+    arguments (including an empty bootstrap string). The factory does
+    not wrap these; they propagate unchanged.
+
+Client operation::
+    Once a producer or consumer has been returned, any further
+    exceptions — `TimeoutException`, `OffsetOutOfRangeException`,
+    `WakeupException`, `CommitFailedException`, and so on — are the
+    standard `kafka-clients` exceptions raised from the caller's own
+    use of `send`, `poll`, or `commitSync`. The factory has no
+    visibility into them.
+
+== Lifecycle
+
+Every object the module creates is owned by the caller. There is no
+registry, pool, or shutdown hook:
+
+* `KafkaConnector` holds no closeable state. Discarding the reference
+  is enough.
+* A `Producer` returned from `createProducer` must be closed by the
+  caller, typically in an application shutdown hook or a
+  try-with-resources block scoped to a request.
+* A `Consumer` returned from `createConsumer` must likewise be closed
+  by the caller. Because the Kafka consumer is not thread-safe, the
+  close is conventionally performed on the same thread that runs
+  `poll`, often in response to a `wakeup` called from another thread.
+* `AdminClient` instances opened by `invokeAdminClient` are closed
+  automatically by that method's try-with-resources.
+
+[[broker-configuration-reference]]
+== Broker Configuration Reference
+
+`KafkaConfiguration` is a commented reference for the broker-side
+`server.properties` values the client defaults assume. It contains no
+runtime code; treat it as documentation pinned next to the client code
+so that tuning changes on one side are visible to maintainers on the
+other.
+
+The settings recommended there fall into a few groups.
+
+=== Replication and durability
+
+[cols="2,1,2",options="header"]
+|===
+| Setting | Value | Meaning
+
+| `num.partitions`
+| `24`
+| A baseline that scales to roughly "consumer threads × broker
+  nodes." Even for small deployments, more partitions cost little.
+
+| `default.replication.factor`
+| `3` (with `acks=all`) or `1` (with `acks=0`)
+| Must be consistent with the producer's `acks`. The module's
+  factory uses `acks=0`; a stronger profile raises this number.
+
+| `min.insync.replicas`
+| `2` (with `acks=all`) or `1` (with `acks=0`)
+| Chooses the durability / availability trade-off. The `n/2+1`
+  formula for three replicas gives `2`.
+
+| `unclean.leader.election.enable`
+| `true`
+| Prefer availability over durability. Override for workloads where
+  accidental data loss during leader failure is worse than
+  short-term unavailability.
+|===
+
+=== Retention and cleanup
+
+[cols="2,1,2",options="header"]
+|===
+| Setting | Value | Meaning
+
+| `log.retention.ms`
+| `1680000` (28 min)
+| TTL for messages in each topic's log. The low value reflects a
+  telemetry-style workload; raise it for event logs meant for
+  longer-term consumption.
+
+| `log.cleanup.policy`
+| `delete`
+| The module does not use keyed compaction. Switch to
+  `compact,delete` if keyed state is being preserved.
+
+| `log.retention.check.interval.ms`
+| `300000` (5 min)
+| Must be lower than `log.retention.ms`; the scanner fires every
+  five minutes.
+
+| `log.cleaner.enable`
+| `true`
+| Background compaction thread is on even when the policy is
+  delete-only.
+
+| `log.cleaner.delete.retention.ms`
+| `86400000` (24 hours)
+| Tombstone retention for compacted topics. Irrelevant to
+  delete-only topics.
+
+| `log.segment.delete.delay.ms`
+| `60000` (1 min)
+| Grace before deleted segment files are unlinked from disk.
+|===
+
+=== Throughput and batching
+
+[cols="2,1,2",options="header"]
+|===
+| Setting | Value | Meaning
+
+| `compression.type`
+| `lz4`
+| Fastest compression that still reduces payload size meaningfully.
+  Alternatives: `none`, `gzip`, `snappy`, `zstd`.
+
+| `message.max.bytes`
+| `1048588`
+| Slightly above `replica.fetch.max.bytes` so a single replicated
+  message never exceeds the inter-broker fetch size.
+
+| `replica.fetch.max.bytes`
+| `1048576` (1 MB)
+| Must be ≤ `message.max.bytes`.
+
+| `num.io.threads`
+| `8`
+| Default.
+
+| `num.network.threads`
+| `3`
+| Default.
+
+| `queued.max.requests`
+| `500`
+| Maximum queued requests before the network thread applies back
+  pressure.
+
+| `replica.lag.time.max.ms`
+| `10000`
+| Upper bound on how long a follower may lag before being removed
+  from the ISR. Producer `request.timeout.ms` should exceed this.
+|===
+
+=== Operational and group behavior
+
+[cols="2,1,2",options="header"]
+|===
+| Setting | Value | Meaning
+
+| `auto.create.topics.enable`
+| `true`
+| Producer sends to unknown topics implicitly create them. Turn off
+  for strict schema-controlled deployments.
+
+| `auto.leader.rebalance.enable`
+| `true`
+| Re-balances partition leadership periodically.
+
+| `leader.imbalance.check.interval.seconds`
+| `300`
+| Check cadence for leader imbalance.
+
+| `leader.imbalance.per.broker.percentage`
+| `10`
+| Imbalance tolerance before a re-balance fires.
+
+| `delete.topic.enable`
+| `true`
+| Deletion through `AdminClient.deleteTopics` is honored.
+
+| `group.initial.rebalance.delay.ms`
+| `3000`
+| Startup grace period for a new consumer group, letting all members
+  join before the first re-balance.
+
+| `log.cleaner.backoff.ms`
+| `15000`
+| Polling cadence for the cleaner.
+|===
+
+=== Rack awareness
+
+When the deployment spans data centres or availability zones:
+
+* `rack.id` must be set on each broker to its zone identifier.
+* `replica.selector.class` must be set to
+  `org.apache.kafka.common.replica.RackAwareReplicaSelector`.
+* Consumers should additionally set `client.rack` to the consumer's
+  zone identifier so the broker can serve fetches from a same-zone
+  replica. The factory leaves this unset by default; override in a
+  custom `Properties` block when a same-zone read is worth more than
+  fewer `Properties` entries.
+
+=== Transaction and offsets topics
+
+These are internal to Kafka; the comment block in `KafkaConfiguration`
+lists them but marks them "in general, do not override":
+
+* `transaction.state.log.replication.factor=3`
+* `transaction.state.log.min.isr=2`
+* `offsets.topic.num.partitions=50`
+* `offsets.topic.replication.factor=3`
+* `offsets.commit.required.acks=-1`
+
+Lowering any of these is only appropriate on single-broker test
+clusters.
+
 == Defaults Reference
 
-=== Object Defaults
-
-[cols="1,2,2",options="header"]
+[cols="2,1,3",options="header"]
 |===
-|Type |Field or Behavior |Default
+| Setting | Default | Where set
 
-|`KafkaServer`
-|no-arg constructor port
-|`9094`
+| `KafkaServer.port`
+| `9094`
+| `KafkaServer` field initializer.
 
-|`KafkaServerFactoryBean`
-|port when `serverPattern` omits `:port`
-|`9092`
-|===
+| `KafkaServerFactoryBean` port when no `:port` suffix is supplied
+| `9092`
+| `KafkaServerFactoryBean.afterPropertiesSet`.
 
-[IMPORTANT]
-====
-The two broker-construction paths use different default ports.
-If you want predictable behavior, set ports explicitly everywhere.
-====
+| `KafkaServerFactoryBean.isSingleton`
+| `true`
+| `KafkaServerFactoryBean`.
 
-=== Admin Timing Defaults
+| `KafkaConnector.check` retry interval
+| `1000 ms`
+| `KafkaConnector.check`.
 
-[cols="1,2",options="header"]
-|===
-|Behavior |Value
+| Producer `acks`
+| `0`
+| `KafkaConnector.createProducer`.
 
-|retry sleep in `check(...)`
-|`1000 ms`
+| Producer `retries`
+| `0`
+| `KafkaConnector.createProducer`.
 
-|admin `request.timeout.ms`
-|`3000`
+| Producer `delivery.timeout.ms`
+| `500`
+| `KafkaConnector.createProducer`.
 
-|admin `default.api.timeout.ms`
-|`3000`
-|===
+| Producer `enable.idempotence`
+| `false`
+| `KafkaConnector.createProducer`.
 
-=== Producer Defaults
+| Consumer `enable.auto.commit`
+| `false`
+| `KafkaConnector.createConsumer`.
 
-[cols="1,2",options="header"]
-|===
-|Property |Value
+| Consumer `auto.offset.reset`
+| `latest`
+| `KafkaConnector.createConsumer`.
 
-|`acks`
-|`0`
+| Consumer `group.protocol`
+| `consumer`
+| `KafkaConnector.createConsumer` (KIP-848 new protocol).
 
-|`retries`
-|`0`
+| Consumer `max.poll.records`
+| `500`
+| `KafkaConnector.createConsumer`.
 
-|`retry.backoff.ms`
-|`100`
-
-|`max.in.flight.requests.per.connection`
-|`5`
-
-|`enable.idempotence`
-|`false`
-
-|`delivery.timeout.ms`
-|`500`
-
-|`request.timeout.ms`
-|`500`
-
-|`linger.ms`
-|`0`
-
-|`max.request.size`
-|`1048576`
-
-|`batch.size`
-|`16384`
-
-|`max.block.ms`
-|`1000`
+| Admin `request.timeout.ms`
+| `3000`
+| `KafkaConnector.invokeAdminClient`.
 |===
 
-=== Consumer Defaults
-
-[cols="1,2",options="header"]
-|===
-|Property |Value
-
-|`group.protocol`
-|`consumer`
-
-|`enable.auto.commit`
-|`false`
-
-|`auto.commit.interval.ms`
-|`500`
-
-|`auto.offset.reset`
-|`latest`
-
-|`max.poll.interval.ms`
-|`300000`
-
-|`max.poll.records`
-|`500`
-
-|`fetch.min.bytes`
-|`1`
-
-|`fetch.max.wait.ms`
-|`500`
-
-|`fetch.max.bytes`
-|`52428800`
-
-|`max.partition.fetch.bytes`
-|`1048576`
-|===
-
-[[kafka-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-[cols="2,3",options="header"]
-|===
-|Behavior |Current Semantics
-
-|`new KafkaConnector()` with no servers
-|Builds an empty bootstrap string. Later client creation and connectivity behavior is left to Kafka client validation.
-
-|`KafkaConnector` receives a null `KafkaServer` element
-|The constructor dereferences the element and throws `NullPointerException`.
-
-|`KafkaServer` host left null and then used in a connector
-|The resulting bootstrap entry can become `null:port`.
-
-|`KafkaServer.compareTo(...)` with a null host
-|`NullPointerException` can occur.
-
-|`KafkaServerFactoryBean.afterPropertiesSet()` not called outside Spring
-|`getObject()` can return null because parsing is initialization-driven.
-
-|`KafkaServerFactoryBean` with `#` in the pattern and an invalid or missing spread
-|Spread parsing fails and the exception propagates.
-
-|`KafkaServerFactoryBean` pattern contains multiple `:` characters
-|The first `:` is treated as the host/port split point, so IPv6-style literals are not handled cleanly.
-
-|`check(...)` thread interrupted during retry sleep
-|The interruption is logged, the method reports failure, and `KafkaConnectionException` is thrown.
-
-|`check(...)` called with `startupGracePeriodSeconds <= 0`
-|One failed admin attempt is enough to fail the check.
-|===
-
-[[kafka-troubleshooting, Troubleshooting]]
 == Troubleshooting
 
-=== `KafkaConnectionException` During Startup
+`KafkaConnectionException` during startup::
+    `check` exhausted its grace period without seeing a non-empty node
+    list. Confirm: (a) bootstrap hosts resolve from the application
+    pod or host; (b) the broker's advertised listener matches the host
+    and port the connector is using (an `advertised.listeners` entry
+    pointing at an internal DNS name that clients can't reach is the
+    most common cause); (c) no firewall or security group blocks the
+    listener port. The message includes the full bootstrap string for
+    diagnosis.
 
-Typical causes:
+`ConfigException: No bootstrap servers` at client construction::
+    The `KafkaConnector` was built with zero brokers, or the
+    `KafkaServerFactoryBean` emitted an empty array (typically because
+    `serverPattern` was empty or the spread expression evaluated to
+    zero values). Log `connector.getBoostrapServers()` to confirm.
 
-* wrong host names or ports
-* DNS, firewall, or routing problems
-* a grace period that is shorter than the cluster startup time
+Producer `send` succeeds but no data appears on the topic::
+    Expected when `acks=0`. A broker that rejected the record or was
+    unreachable at the moment of the send simply dropped it. If this
+    is not acceptable, the factory's profile is the wrong fit; build
+    a `Properties` with `acks=all` and one or more retries instead.
 
-Checks:
+Consumer starts reading from the end of the topic::
+    Expected when `auto.offset.reset=latest` and the group has no
+    committed offset yet. Either commit at least once on a
+    predecessor run, or override the profile to `earliest` for one-off
+    replay consumers (again, by constructing the consumer directly
+    from a `Properties` object rather than through the factory).
 
-* print `connector.getBoostrapServers()` and validate the endpoints
-* try a larger grace period if the brokers are still starting
-* run Kafka tooling from the same runtime network to confirm reachability
+`CommitFailedException` on `commitSync`::
+    The consumer missed a re-balance deadline, usually because
+    `poll` was called more than `max.poll.interval.ms` (five minutes)
+    after the previous poll. Reduce per-batch work, raise the
+    interval, or reduce `max.poll.records`.
 
-=== Consumer Polls But Nothing Is Processed
+`UnsupportedVersionException` on consumer start::
+    The broker does not understand the new consumer group protocol
+    (`group.protocol=consumer`, KIP-848). Upgrade the broker, or
+    override `group.protocol` in a custom `Properties` block — the
+    factory hard-codes `consumer` and does not expose a toggle.
 
-Typical causes:
+`NumberFormatException` from `KafkaServerFactoryBean`::
+    The pattern's text after the first `:` is not parseable as an
+    integer. The most common cause is a `#` placed after the `:` —
+    the parser only substitutes `#` in the host portion. Move the `#`
+    left of the `:` or split the pattern in two.
 
-* the consumer was created without topics and never subscribed later
-* the consumer group is new and `auto.offset.reset=latest` skips old records
-* processing succeeds but offsets are never committed
+`NullPointerException` from `KafkaServer.compareTo`::
+    The no-arg constructor left `host` null. Always call `setHost`
+    before inserting a default-constructed `KafkaServer` into a
+    sorted collection, or use the `(host, port)` constructor.
 
-Checks:
+== Limitations and Known Issues
 
-* pass topics to `createConsumer(...)` or call `subscribe(...)` yourself
-* use a fresh group only when skipping historical data is acceptable
-* call `commitSync()` or `commitAsync()` after successful processing
+No alternate reliability profile::
+    The factory commits to `acks=0`, `retries=0`, and
+    `enable.idempotence=false`. A caller that needs durable or
+    transactional producers must build its own `Properties`. The
+    bootstrap string remains reusable through
+    `KafkaConnector.getBoostrapServers()`.
 
-=== Producer Sends But Delivery Guarantees Are Too Weak
+No alternate serializer profile::
+    Keys are always `Long`; values are always `byte[]`. Serializing
+    structured payloads is the caller's responsibility. This is a
+    deliberate simplification: it decouples the framework from the
+    encoding choice (JSON, Avro, Protobuf) and keeps the types
+    uniform in the generic parameter signature.
 
-Cause:
+No security configuration::
+    `SSL`, `SASL`, and `mTLS` properties are not exposed. See
+    <<adding-security>> for the recommended escape hatch.
 
-* `createProducer(...)` uses `acks=0`, `retries=0`, and `enable.idempotence=false`
+No metrics export::
+    The factory does not register any metrics or expose
+    `KafkaProducer.metrics()` / `KafkaConsumer.metrics()`. Integrate
+    with your observability layer directly off the returned client.
 
-Fix:
+Typo preserved in the API::
+    `KafkaConnector.getBoostrapServers` is the actual method name.
+    The typo dates from the original revision and is preserved for
+    source compatibility.
 
-* build a producer directly with `connector.getBoostrapServers()` and set the Kafka properties your use case requires
+Inconsistent default port::
+    `KafkaServer`'s no-arg default is `9094`; the pattern parser's
+    default is `9092`. Explicit `:port` suffixes in patterns avoid
+    the ambiguity.
 
-=== Unexpected Broker Port
+No alternate group protocol::
+    The consumer hard-codes `group.protocol=consumer` (KIP-848). Older
+    brokers that expect the classic protocol will reject the client
+    with `UnsupportedVersionException`. The factory does not offer a
+    classic-mode toggle.
 
-Cause:
+No connection pooling or sharing::
+    Each `createProducer` / `createConsumer` call constructs a fresh
+    client with its own connection pool. Callers that want to share a
+    single producer across many emitters must hold the returned
+    instance themselves.
 
-* `KafkaServer` defaults to `9094`, while `KafkaServerFactoryBean` defaults to `9092`
-
-Fix:
-
-* set ports explicitly in every broker declaration and in every `serverPattern`
-
-[[kafka-minimal-checklist, Minimal Checklist]]
 == Minimal Checklist
 
-1. Add `kafka-utility`.
-2. Declare broker endpoints explicitly.
-3. Build one `KafkaConnector` per broker set.
-4. Use `check(...)` only when you want explicit fail-fast startup behavior.
-5. Close producers and consumers explicitly.
-6. Commit consumer offsets explicitly when processing succeeds.
-7. Build custom Kafka clients when the built-in `Long`/`byte[]` profiles are not enough.
+Before shipping an integration:
 
-[[kafka-verification, Verification Checklist]]
-== Verification Checklist
+1. Confirm the Spring XML (or programmatic construction) produces a
+   non-empty `KafkaServer[]` and log the resulting bootstrap string at
+   startup.
+2. Call `check(n)` with a grace period that covers the worst realistic
+   broker restart window in your deployment.
+3. Hold each `Producer` / `Consumer` instance for its intended
+   lifetime — not per record — and close it in an orderly shutdown.
+4. For consumers, commit explicitly after side effects are durable;
+   never rely on `enable.auto.commit` (it is off by default in this
+   factory anyway).
+5. Ensure the broker cluster's `server.properties` is consistent with
+   the values documented in `KafkaConfiguration`, or document any
+   intentional divergence where your service's maintainers will find
+   it.
+6. If the deployment spans availability zones, set `client.rack` on
+   the consumer and rack-aware selector on the brokers — the factory
+   does not set `client.rack`.
+7. If the deployment uses authentication, build `Properties` directly
+   using `connector.getBoostrapServers()` as the starting point, and
+   stop using the factory methods for that client.
 
-Use a focused Kafka-only validation pass after changing wiring or documentation examples:
+== Summary
 
-1. Build the Kafka utility module: `mvn -pl kafka/utility -am -DskipTests package`.
-2. Instantiate `KafkaConnector` with known brokers and confirm `getBoostrapServers()` output.
-3. Run `check(...)` against a reachable cluster and an unreachable endpoint.
-4. Produce one test record and confirm the calling code closes the producer cleanly.
-5. Consume one test record and confirm manual offset commit behavior.
-6. If you use Spring, validate one `KafkaServerFactoryBean` pattern expansion such as `1..3`.
+`smallmind-kafka` turns the rote parts of using `kafka-clients` — the
+bootstrap string, the reachability probe, the properties incantation,
+the address spread — into a four-class facade that stays out of the
+caller's way. Build a `KafkaConnector` from a `KafkaServer[]`, call
+`check` to gate startup, and pull a producer or consumer off the
+connector when the service needs one. The `Properties` choices are
+opinionated toward high-volume, loss-tolerant telemetry; a caller
+whose workload is durable, transactional, or authenticated uses
+`getBoostrapServers` as a starting point and builds its own client.
+Broker-side tuning assumptions are pinned in `KafkaConfiguration` so
+the two sides of the conversation stay in sync.

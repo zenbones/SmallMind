@@ -37,20 +37,24 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
 /**
  * Marks a class as a top-level entity mapped to a MongoDB collection.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface Entity {
 
   /**
-   * @return collection name backing the entity
+   * The name of the MongoDB collection that stores documents for this entity type.
+   *
+   * @return the collection name
    */
   String value ();
 
   /**
-   * @return optional polymorphic configuration for the entity hierarchy
+   * Optional polymorphic configuration for the entity hierarchy; an empty annotation indicates a non-polymorphic entity.
+   *
+   * @return the polymorphic configuration
    */
   Polymorphic polymorphic () default @Polymorphic();
 }

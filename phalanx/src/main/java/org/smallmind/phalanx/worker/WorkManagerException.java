@@ -35,15 +35,16 @@ package org.smallmind.phalanx.worker;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception indicating a failure in {@link WorkManager} lifecycle or coordination.
+ * Unchecked exception thrown when a {@link WorkManager} operation fails due to an invalid lifecycle state
+ * or an unrecoverable coordination error.
  */
 public class WorkManagerException extends FormattedRuntimeException {
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a {@link String#format}-style message.
    *
-   * @param message format string describing the error
-   * @param args    arguments applied to the format string
+   * @param message a format string describing the error condition
+   * @param args    arguments substituted into the format string
    */
   public WorkManagerException (String message, Object... args) {
 

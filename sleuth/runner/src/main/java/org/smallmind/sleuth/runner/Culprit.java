@@ -33,10 +33,13 @@
 package org.smallmind.sleuth.runner;
 
 /**
- * Represents the originating point of a test failure or error.
+ * Records the origin of a test failure or error for propagation through the dependency graph.
  * <p>
- * A {@code Culprit} walks the throwable chain to identify the deepest stack trace element
- * that matches the failing test class and formats a concise description.
+ * When a lifecycle or test method throws, a {@code Culprit} is created and carried forward so that
+ * dependent tests can be skipped with a meaningful message. On construction the throwable chain is
+ * walked to locate the first stack frame belonging to the originating test class, producing a compact
+ * description. If no matching frame is found the outermost throwable and the explicitly supplied class
+ * and method names are used as a fallback.
  */
 public class Culprit {
 
@@ -45,11 +48,14 @@ public class Culprit {
   private final String methodName;
 
   /**
-   * Creates a culprit representation for a failure in the given test location.
+   * Creates a culprit for the given failure location.
+   * <p>
+   * The constructor immediately walks the throwable chain via {@link #findTopmost} to locate the
+   * most relevant stack frame. The result is stored for use by {@link #toString()}.
    *
-   * @param className  fully qualified class name of the test
-   * @param methodName method name of the failing test or lifecycle method
-   * @param throwable  cause to inspect for matching stack frames
+   * @param className  fully qualified name of the class where the failure occurred; must not be {@code null}
+   * @param methodName name of the method where the failure occurred; must not be {@code null}
+   * @param throwable  throwable to scan for a matching stack frame; must not be {@code null}
    */
   public Culprit (String className, String methodName, Throwable throwable) {
 
@@ -60,7 +66,13 @@ public class Culprit {
   }
 
   /**
-   * @return a compact string with the best matching class, method, line number, and throwable message
+   * Returns a compact description of the failure origin.
+   * <p>
+   * The format is {@code <class>.<method>:<line> <ExceptionType> <message>}. When a matching
+   * stack frame was found its coordinates are used; otherwise the constructor-supplied class and
+   * method are used with line {@code -1}.
+   *
+   * @return human-readable failure origin string; never {@code null}
    */
   @Override
   public String toString () {
@@ -79,11 +91,15 @@ public class Culprit {
   }
 
   /**
-   * Walks the throwable chain to find the first stack frame matching the supplied class.
+   * Walks the throwable chain to find the first stack frame belonging to the target class.
+   * <p>
+   * Each throwable's stack trace is searched in order; when a frame whose class name matches
+   * {@code className} is found it is paired with its throwable and returned. If the entire chain
+   * is exhausted without a match, the root throwable is returned with a {@code null} frame.
    *
-   * @param className class to search for
-   * @param throwable throwable to scan
-   * @return {@link Topmost} wrapping the discovered frame or the original throwable when none found
+   * @param className class name to search for in the stack traces; must not be {@code null}
+   * @param throwable root of the throwable chain to scan; must not be {@code null}
+   * @return {@link Topmost} pairing the best-matching throwable with its frame; never {@code null}
    */
   private Topmost findTopmost (String className, Throwable throwable) {
 
@@ -102,7 +118,7 @@ public class Culprit {
   }
 
   /**
-   * Holds the earliest stack frame that matches the failing class along with its throwable.
+   * Pairs a throwable with the stack frame within it that best identifies the failure origin.
    */
   private class Topmost {
 
@@ -110,8 +126,10 @@ public class Culprit {
     private final StackTraceElement stackTraceElement;
 
     /**
-     * @param throwable         throwable that owns the matching frame
-     * @param stackTraceElement stack trace element that matches the target class; may be {@code null} if none match
+     * Constructs a topmost record.
+     *
+     * @param throwable         throwable that owns the matched frame; must not be {@code null}
+     * @param stackTraceElement matching stack frame, or {@code null} if none was found
      */
     public Topmost (Throwable throwable, StackTraceElement stackTraceElement) {
 
@@ -120,7 +138,7 @@ public class Culprit {
     }
 
     /**
-     * @return throwable that produced the culprit frame
+     * @return throwable from which the matched frame was taken; never {@code null}
      */
     public Throwable getThrowable () {
 
@@ -128,7 +146,7 @@ public class Culprit {
     }
 
     /**
-     * @return matching stack trace element or {@code null} when none were found
+     * @return stack frame matching the target class, or {@code null} when none was found
      */
     public StackTraceElement getStackTraceElement () {
 

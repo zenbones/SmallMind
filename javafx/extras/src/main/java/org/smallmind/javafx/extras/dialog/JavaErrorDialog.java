@@ -49,17 +49,22 @@ import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Gap;
 
 /**
- * Dialog that renders a stack trace for a thrown exception and fires an {@link ErrorEvent} when hidden.
+ * A modal dialog that displays the full stack trace of a {@link Throwable} inside a scrollable
+ * text area. When the dialog is closed an {@link ErrorEvent} of type {@link ErrorEvent#OCCURRED}
+ * is fired on the dialog pane, carrying the original source and throwable so that registered
+ * handlers may react to the dismissal.
  */
 public class JavaErrorDialog extends Dialog<ButtonType> {
 
   private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_bug.png"));
 
   /**
-   * Creates the dialog pre-populated with the provided exception details.
+   * Constructs the dialog and populates it with the stack trace from {@code throwable}. An
+   * {@link ErrorEvent#OCCURRED} event is scheduled to fire on the dialog pane when the dialog hides.
    *
-   * @param source    the logical source associated with the exception
-   * @param throwable the exception to display
+   * @param source    the logical object associated with the error; may be {@code null}; carried
+   *                  verbatim in the resulting {@link ErrorEvent}
+   * @param throwable the exception whose stack trace will be displayed; must not be {@code null}
    */
   public JavaErrorDialog (final Object source, final Throwable throwable) {
 
@@ -95,11 +100,13 @@ public class JavaErrorDialog extends Dialog<ButtonType> {
   }
 
   /**
-   * Convenience method to construct and display the dialog in a blocking fashion.
+   * Convenience factory that creates a {@link JavaErrorDialog} and immediately shows it, blocking
+   * until the user dismisses it.
    *
-   * @param source    the logical source associated with the exception
-   * @param throwable the exception to display
-   * @return an {@link Optional} containing the button pressed by the user
+   * @param source    the logical object associated with the error; may be {@code null}
+   * @param throwable the exception to display; must not be {@code null}
+   * @return an {@link Optional} containing the {@link ButtonType} the user clicked, or
+   * {@link Optional#empty()} if the dialog was closed without pressing a button
    */
   public static Optional<ButtonType> showJavaErrorDialog (Object source, Throwable throwable) {
 

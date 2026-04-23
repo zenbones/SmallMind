@@ -33,14 +33,22 @@
 package org.smallmind.claxon.registry.aop;
 
 /**
- * Indicates a problem configuring or applying instrumentation via AOP.
+ * Unchecked exception thrown when the AOP instrumentation infrastructure encounters an
+ * unrecoverable error while configuring or applying a metric.
+ *
+ * <p>Common causes include reflective instantiation failures of an {@link InstrumentedParser},
+ * JSON parse errors returned by the parser, and unexpected exceptions propagated out of the
+ * {@link InstrumentedAspect} around-advice.</p>
+ *
+ * <p>Because this is a {@link RuntimeException}, callers are not required to declare or catch
+ * it, allowing instrumentation failures to surface naturally as unchecked errors.</p>
  */
 public class InstrumentationException extends RuntimeException {
 
   /**
-   * Wraps the underlying cause of the instrumentation failure.
+   * Constructs an {@code InstrumentationException} that wraps the underlying failure.
    *
-   * @param cause root exception
+   * @param cause the root exception that triggered the instrumentation failure; must not be {@code null}
    */
   public InstrumentationException (Throwable cause) {
 

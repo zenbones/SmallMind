@@ -35,12 +35,15 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 import java.util.Iterator;
 
 /**
- * Mutable JSON object value with helpers for primitive assignment.
+ * Mutable ordered map of string-keyed {@link Value} entries corresponding to a JSON object,
+ * with fluent primitive-convenience overloads for field assignment.
+ *
+ * @param <V> concrete value subtype held within this object
  */
 public interface ObjectValue<V extends Value<V>> extends Value<V> {
 
   /**
-   * Identifies this value as an object.
+   * Returns {@link ValueType#OBJECT}, identifying this value as a JSON object.
    *
    * @return {@link ValueType#OBJECT}
    */
@@ -50,11 +53,11 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Adds or replaces a boolean field.
+   * Sets the named field to a boolean, replacing any existing value.
    *
    * @param field field name
-   * @param bool  value to store
-   * @return this object
+   * @param bool  boolean value to store
+   * @return this object for chaining
    */
   default ObjectValue<V> put (String field, boolean bool) {
 
@@ -62,11 +65,11 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Adds or replaces an integer field.
+   * Sets the named field to an integer, replacing any existing value.
    *
    * @param field field name
-   * @param i     value to store
-   * @return this object
+   * @param i     integer value to store
+   * @return this object for chaining
    */
   default ObjectValue<V> put (String field, int i) {
 
@@ -74,11 +77,11 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Adds or replaces a long field.
+   * Sets the named field to a long, replacing any existing value.
    *
    * @param field field name
-   * @param l     value to store
-   * @return this object
+   * @param l     long value to store
+   * @return this object for chaining
    */
   default ObjectValue<V> put (String field, long l) {
 
@@ -86,11 +89,11 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Adds or replaces a double field.
+   * Sets the named field to a double, replacing any existing value.
    *
    * @param field field name
-   * @param d     value to store
-   * @return this object
+   * @param d     double value to store
+   * @return this object for chaining
    */
   default ObjectValue<V> put (String field, double d) {
 
@@ -98,11 +101,12 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Adds or replaces a string field (or null).
+   * Sets the named field to a string, or to JSON {@code null} if {@code text} is {@code null},
+   * replacing any existing value.
    *
    * @param field field name
-   * @param text  value to store; {@code null} results in a JSON null
-   * @return this object
+   * @param text  string to store, or {@code null} to store a JSON null
+   * @return this object for chaining
    */
   default ObjectValue<V> put (String field, String text) {
 
@@ -110,49 +114,56 @@ public interface ObjectValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * @return number of fields present
+   * Returns the number of fields present in this object.
+   *
+   * @return field count, zero when empty
    */
   int size ();
 
   /**
-   * @return {@code true} if no fields are present
+   * Returns whether this object contains no fields.
+   *
+   * @return {@code true} if {@link #size()} is zero
    */
   boolean isEmpty ();
 
   /**
-   * @return iterator over field names
+   * Returns an iterator over the names of all fields in this object.
+   *
+   * @return field name iterator
    */
   Iterator<String> fieldNames ();
 
   /**
-   * Retrieves a field value.
+   * Returns the value associated with the named field.
    *
-   * @param field field name
-   * @return the stored value or {@code null} if missing
+   * @param field field name to look up
+   * @return stored value, or {@code null} if no field with that name exists
    */
   Value<V> get (String field);
 
   /**
-   * Adds or replaces a field with a value.
+   * Sets the named field to the given value, replacing any existing value.
    *
    * @param field field name
    * @param value value to store
-   * @return this object
+   * @param <U>   concrete value subtype
+   * @return this object for chaining
    */
   <U extends Value<V>> ObjectValue<V> put (String field, U value);
 
   /**
-   * Removes a field.
+   * Removes the named field and returns its former value.
    *
    * @param field field name to remove
-   * @return the removed value or {@code null} if absent
+   * @return the removed value, or {@code null} if the field did not exist
    */
   Value<V> remove (String field);
 
   /**
    * Removes all fields from this object.
    *
-   * @return this object
+   * @return this object for chaining
    */
   ObjectValue<V> removeAll ();
 }

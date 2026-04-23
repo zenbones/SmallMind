@@ -48,7 +48,13 @@ import org.smallmind.file.ephemeral.watch.EphemeralWatchKey;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 
 /**
- * {@link Path} implementation representing locations within the ephemeral file system.
+ * {@link Path} implementation representing a location within an {@link EphemeralFileSystem}.
+ * Paths are stored as an ordered array of name components plus an {@code absolute} flag.
+ * The separator character is {@code "/"}.
+ *
+ * <p>Three package-visible constructors exist for special cases (root path, subpath slices,
+ * and pre-parsed component arrays). Public callers should use
+ * {@link EphemeralFileSystem#getPath(String, String...)} to obtain instances.
  */
 public class EphemeralPath implements Path {
 
@@ -59,9 +65,9 @@ public class EphemeralPath implements Path {
   private final boolean absolute;
 
   /**
-   * Creates the root path for the file system.
+   * Creates the root path (zero name components, absolute) for the given file system.
    *
-   * @param fileSystem the owning file system
+   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
    */
   protected EphemeralPath (EphemeralFileSystem fileSystem) {
 
@@ -72,13 +78,15 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Builds a path from the provided components.
+   * Builds a path by parsing and joining the provided string segments. The {@code first}
+   * parameter determines whether the path is absolute (starts with {@code "/"}). Subsequent
+   * elements in {@code more} are always treated as relative and appended in order.
    *
-   * @param fileSystem the owning file system
-   * @param first      the first path segment, which may include separators
-   * @param more       additional segments
-   * @throws NullPointerException if {@code first} is null
-   * @throws InvalidPathException if any segment is empty
+   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
+   * @param first      the first path string; must not be {@code null}
+   * @param more       optional additional path strings to append
+   * @throws NullPointerException if {@code first} is {@code null}
+   * @throws InvalidPathException if any resulting path component is empty
    */
   public EphemeralPath (EphemeralFileSystem fileSystem, String first, String... more) {
 
@@ -104,6 +112,13 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * Creates a subpath view by copying a slice of the name array from another path.
+   *
+   * @param path  the source path
+   * @param begin the start index (inclusive) of the slice
+   * @param end   the end index (exclusive) of the slice
+   */
   private EphemeralPath (EphemeralPath path, int begin, int end) {
 
     fileSystem = (EphemeralFileSystem)path.getFileSystem();
@@ -117,11 +132,11 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Constructs a new path from pre-parsed components.
+   * Constructs a new path from pre-parsed name components and an explicit absoluteness flag.
    *
-   * @param fileSystem the owning file system
-   * @param names      parsed name components
-   * @param absolute   whether the path is absolute
+   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
+   * @param names      the parsed name components; must not be {@code null}
+   * @param absolute   {@code true} if the path is absolute
    */
   private EphemeralPath (EphemeralFileSystem fileSystem, String[] names, boolean absolute) {
 
@@ -131,7 +146,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * @return the separator character used by this file system
+   * Returns the separator character used by ephemeral paths.
+   *
+   * @return the {@code '/'} character
    */
   public static char getSeparatorChar () {
 
@@ -139,7 +156,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * @return the path separator string used by this file system
+   * Returns the separator string used by ephemeral paths.
+   *
+   * @return {@code "/"}
    */
   public static String getSeparator () {
 
@@ -147,12 +166,15 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Splits text into path components, enforcing separator rules.
+   * Splits a raw path string on the separator and appends the resulting non-empty tokens to
+   * {@code nameList}. Leading separator characters are permitted only when {@code absolute}
+   * is {@code true} and {@code text} is the first segment.
    *
-   * @param nameList the list to append components to
-   * @param text     the raw path text
-   * @param absolute whether the path is absolute
-   * @throws InvalidPathException if a component is empty
+   * @param nameList the list to append tokens to
+   * @param text     the raw text to split
+   * @param absolute {@code true} when a leading separator is acceptable
+   * @throws InvalidPathException if {@code text} is empty or yields an empty component in an
+   *                              unexpected position
    */
   private void split (LinkedList<String> nameList, String text, boolean absolute) {
 
@@ -175,13 +197,21 @@ public class EphemeralPath implements Path {
     }
   }
 
+  /**
+   * Returns the parsed name components of this path. The returned array is the internal
+   * backing array and must not be modified by callers.
+   *
+   * @return the name component array; never {@code null}, may be empty for the root path
+   */
   public String[] getNames () {
 
     return names;
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the file system that created this path.
+   *
+   * @return the owning {@link EphemeralFileSystem}; never {@code null}
    */
   @Override
   public FileSystem getFileSystem () {
@@ -190,7 +220,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether this path is absolute.
+   *
+   * @return {@code true} if the path was constructed from a string beginning with {@code "/"}
    */
   @Override
   public boolean isAbsolute () {
@@ -199,7 +231,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the root component of this path, or {@code null} for relative paths.
+   *
+   * @return the root {@link EphemeralPath}, or {@code null} if this path is relative
    */
   @Override
   public EphemeralPath getRoot () {
@@ -208,7 +242,10 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the last name element of this path as a relative single-element path, or
+   * {@code null} for the root path.
+   *
+   * @return the file name path element, or {@code null} when the path has no name components
    */
   @Override
   public EphemeralPath getFileName () {
@@ -217,7 +254,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the parent of this path, or {@code null} when no parent exists.
+   *
+   * @return the parent {@link EphemeralPath}, or {@code null}
    */
   @Override
   public EphemeralPath getParent () {
@@ -226,7 +265,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the number of name elements in this path.
+   *
+   * @return the element count; {@code 0} for the root path
    */
   @Override
   public int getNameCount () {
@@ -235,7 +276,11 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name element at the given position as a relative path.
+   *
+   * @param index the zero-based element index
+   * @return the name element at {@code index}
+   * @throws IllegalArgumentException if {@code index} is negative or {@code >= getNameCount()}
    */
   @Override
   public EphemeralPath getName (int index) {
@@ -248,7 +293,12 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a relative sub-sequence of the name elements of this path.
+   *
+   * @param beginIndex the start index (inclusive)
+   * @param endIndex   the end index (exclusive)
+   * @return the sub-path
+   * @throws IllegalArgumentException if the indices are out of range or inconsistent
    */
   @Override
   public EphemeralPath subpath (int beginIndex, int endIndex) {
@@ -262,7 +312,12 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Tests whether this path starts with the given path. Returns {@code true} only when both
+   * paths belong to an {@link EphemeralFileSystem} and the other path's components form a
+   * prefix of this path's components.
+   *
+   * @param other the candidate prefix path
+   * @return {@code true} if this path starts with {@code other}
    */
   @Override
   public boolean startsWith (Path other) {
@@ -282,7 +337,12 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Tests whether this path ends with the given path. Applies standard NIO rules: an absolute
+   * {@code other} must match the full path; a relative {@code other} need only match the
+   * trailing components.
+   *
+   * @param other the candidate suffix path
+   * @return {@code true} if this path ends with {@code other}
    */
   @Override
   public boolean endsWith (Path other) {
@@ -309,7 +369,10 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a path with redundant {@code "."} and {@code ".."} components resolved. If no
+   * such components are present {@code this} is returned unchanged.
+   *
+   * @return the normalized path
    */
   @Override
   public EphemeralPath normalize () {
@@ -344,7 +407,12 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves the given path against this path. If {@code other} is absolute it is returned
+   * unchanged. If {@code other} is empty this path is returned. Otherwise the name components
+   * of {@code other} are appended to the components of this path.
+   *
+   * @param other the path to resolve
+   * @return the resolved path
    */
   @Override
   public Path resolve (Path other) {
@@ -369,7 +437,13 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Constructs a relative path between this path and the given path. The result is a sequence
+   * of {@code ".."} steps to reach the common ancestor followed by the remaining components
+   * of {@code other}.
+   *
+   * @param other the target path; must have the same absolute/relative status as this path
+   * @return a relative path from this path to {@code other}
+   * @throws IllegalArgumentException if this path and {@code other} differ in absoluteness
    */
   @Override
   public EphemeralPath relativize (Path other) {
@@ -409,7 +483,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Converts this path to a URI using the provider's scheme and the absolute path string.
+   *
+   * @return the URI representation of this path
    */
   @Override
   public URI toUri () {
@@ -418,7 +494,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an absolute form of this path. If already absolute, returns {@code this}.
+   *
+   * @return this path as an absolute path
    */
   @Override
   public EphemeralPath toAbsolutePath () {
@@ -427,7 +505,11 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the real path by normalizing and making this path absolute. Symbolic link
+   * resolution is not currently supported.
+   *
+   * @param options link options (currently unused)
+   * @return the normalized absolute path
    */
   @Override
   public EphemeralPath toRealPath (LinkOption... options) {
@@ -437,7 +519,15 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Registers this path with the given watch service for the specified event kinds.
+   *
+   * @param watcher   the watch service; must be an {@link EphemeralWatchService}
+   * @param events    the kinds of events to watch for
+   * @param modifiers optional modifiers (currently unused)
+   * @return the {@link WatchKey} representing the registration
+   * @throws NoSuchFileException      if this path does not exist in the heap
+   * @throws NotDirectoryException    if this path is not a directory
+   * @throws IllegalArgumentException if {@code watcher} is not an {@link EphemeralWatchService}
    */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
@@ -457,7 +547,12 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Compares this path lexicographically with another {@link EphemeralPath}, first by name
+   * component count and then component-by-component.
+   *
+   * @param other the other path to compare to
+   * @return a negative integer, zero, or positive integer as this path is less than, equal
+   * to, or greater than {@code other}
    */
   @Override
   public int compareTo (Path other) {
@@ -483,7 +578,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a hash code based on the name component array and the absoluteness flag.
+   *
+   * @return a hash code value for this path
    */
   @Override
   public int hashCode () {
@@ -492,7 +589,13 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Compares this path with another object for equality. Two {@link EphemeralPath} instances
+   * are equal when both have the same absoluteness flag and the same sequence of name
+   * components.
+   *
+   * @param obj the object to compare
+   * @return {@code true} if {@code obj} is an {@link EphemeralPath} with identical components
+   * and absoluteness
    */
   @Override
   public boolean equals (Object obj) {
@@ -501,7 +604,10 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the string form of this path. Absolute paths begin with the separator; name
+   * components are joined by the separator.
+   *
+   * @return the path string; never {@code null}
    */
   @Override
   public String toString () {

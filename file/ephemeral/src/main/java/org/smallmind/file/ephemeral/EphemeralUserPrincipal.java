@@ -35,14 +35,18 @@ package org.smallmind.file.ephemeral;
 import java.nio.file.attribute.UserPrincipal;
 
 /**
- * Lightweight {@link UserPrincipal} used by the ephemeral file system.
+ * Lightweight in-memory {@link UserPrincipal} used by the ephemeral file system. Instances
+ * are produced by
+ * {@link EphemeralUserPrincipalLookupService#lookupPrincipalByName(String)}.
  */
 public class EphemeralUserPrincipal implements UserPrincipal {
 
   private String name;
 
   /**
-   * @param name the principal name
+   * Creates a user principal with the given name.
+   *
+   * @param name the principal name; must not be {@code null}
    */
   public EphemeralUserPrincipal (String name) {
 
@@ -50,7 +54,9 @@ public class EphemeralUserPrincipal implements UserPrincipal {
   }
 
   /**
-   * @return the principal name
+   * Returns the name of this user principal.
+   *
+   * @return the principal name; never {@code null}
    */
   @Override
   public String getName () {

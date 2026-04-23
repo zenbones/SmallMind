@@ -42,19 +42,19 @@ import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 /**
- * Marker for asymmetric signing algorithms that can generate and verify signatures.
+ * Contract for asymmetric signing algorithms that can produce and verify digital signatures.
  */
 public interface AsymmetricSigningAlgorithm extends SecurityAlgorithm {
 
   /**
-   * Signs the provided data with the given private key.
+   * Signs the provided data using the given private key and returns the raw signature bytes.
    *
-   * @param privateKey the key used to sign
-   * @param data       the data to sign
+   * @param privateKey the private key used to produce the signature
+   * @param data       the data to be signed
    * @return the signature bytes
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid for the algorithm
-   * @throws SignatureException       if signing fails
+   * @throws NoSuchAlgorithmException if the algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the private key is not valid for this algorithm
+   * @throws SignatureException       if the signing operation fails
    */
   default byte[] sign (PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -63,16 +63,17 @@ public interface AsymmetricSigningAlgorithm extends SecurityAlgorithm {
   }
 
   /**
-   * Verifies a JWT-like three-part structure using this algorithm.
+   * Verifies the signature of a three-part dot-separated token (e.g., a JWT) using the given public key.
    *
-   * @param key     the public key to verify with
-   * @param parts   the token sections (header, payload, signature)
-   * @param urlSafe whether the signature is URL-safe Base64 encoded
-   * @return {@code true} if the signature is valid
-   * @throws IOException              if the signature cannot be decoded
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid for the algorithm
-   * @throws SignatureException       if verification fails
+   * @param key     the public key used to verify the signature
+   * @param parts   the three token sections where {@code parts[0]} and {@code parts[1]} are the signed material
+   *                and {@code parts[2]} is the Base64-encoded signature
+   * @param urlSafe {@code true} if the signature portion uses URL-safe Base64 encoding
+   * @return {@code true} if the signature is valid, {@code false} otherwise
+   * @throws IOException              if the signature cannot be decoded from its Base64 representation
+   * @throws NoSuchAlgorithmException if the algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the public key is not valid for this algorithm
+   * @throws SignatureException       if the verification operation fails
    */
   default boolean verify (PublicKey key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {

@@ -36,10 +36,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
- * Base container for grouping {@link ParaboxElement}s in parallel or serial arrangements.
- * Subclasses implement measurement and layout behaviors for their specific arrangement.
+ * Abstract base for containers that group {@link ParaboxElement}s and participate in
+ * {@link ParaboxLayout} measurement and layout, with concrete subclasses providing
+ * serial or parallel arrangement behavior.
  *
- * @param <B> the concrete box subtype used for fluent APIs
+ * @param <B> the concrete box subtype returned by fluent add methods
  */
 public abstract class Box<B extends Box<B>> {
 
@@ -48,10 +49,10 @@ public abstract class Box<B extends Box<B>> {
   private final Class<B> managedClass;
 
   /**
-   * Creates a box backed by the given layout and using the supplied managed class for fluency.
+   * Constructs a box bound to the specified layout and self-typed via the managed class token.
    *
-   * @param managedClass the concrete class returned by fluent methods
-   * @param layout       the layout controller coordinating this box
+   * @param managedClass the {@link Class} of the concrete subtype, used for fluent return casting
+   * @param layout       the owning {@link ParaboxLayout} that coordinates sizing and placement
    */
   protected Box (Class<B> managedClass, ParaboxLayout layout) {
 
@@ -60,46 +61,46 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Performs layout of contained elements along the given axis.
+   * Performs the actual layout pass for contained elements along the specified axis.
    *
-   * @param bias                 the axis to lay out against
-   * @param containerPosition    the starting position along the axis
-   * @param containerMeasurement the available measurement along the axis
-   * @param tailor               the layout tailor used to size elements
+   * @param bias                 the axis along which to position elements
+   * @param containerPosition    the starting offset along the axis
+   * @param containerMeasurement the total space available along the axis
+   * @param tailor               the {@link LayoutTailor} that caches measurements and applies positions
    */
   protected abstract void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor);
 
   /**
-   * Calculates the minimum size required along the provided axis.
+   * Returns the minimum measurement this box requires along the given axis.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor used for sizing
-   * @return the minimum measurement
+   * @param tailor the {@link LayoutTailor} used for recursive measurement caching; may be {@code null}
+   * @return the minimum size along the axis
    */
   public abstract double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Calculates the preferred size along the provided axis.
+   * Returns the preferred measurement this box requests along the given axis.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor used for sizing
-   * @return the preferred measurement
+   * @param tailor the {@link LayoutTailor} used for recursive measurement caching; may be {@code null}
+   * @return the preferred size along the axis
    */
   public abstract double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Calculates the maximum size along the provided axis.
+   * Returns the maximum measurement this box can occupy along the given axis.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor used for sizing
-   * @return the maximum measurement
+   * @param tailor the {@link LayoutTailor} used for recursive measurement caching; may be {@code null}
+   * @return the maximum size along the axis
    */
   public abstract double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Returns the owning layout.
+   * Returns the {@link ParaboxLayout} that owns this box.
    *
-   * @return the layout controlling this box
+   * @return the owning layout
    */
   protected ParaboxLayout getLayout () {
 
@@ -107,9 +108,9 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Returns the internal list of elements for subclasses to manipulate.
+   * Returns the mutable list of {@link ParaboxElement}s held by this box, intended for use by subclasses.
    *
-   * @return the contained elements
+   * @return the live list of elements in insertion order
    */
   protected LinkedList<ParaboxElement<?>> getElements () {
 
@@ -117,11 +118,11 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Adds a native component with an immutable constraint.
+   * Adds a native platform component to this box with a rigid (immutable) constraint.
    *
-   * @param component the component to add
-   * @param <C>       component type
-   * @return this box for chaining
+   * @param component the platform component to add
+   * @param <C>       the type of the component
+   * @return this box for method chaining
    */
   public synchronized <C> B add (C component) {
 
@@ -131,11 +132,11 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Adds a native component with the supplied constraint.
+   * Adds a native platform component to this box with the specified constraint.
    *
-   * @param component  the component to add
-   * @param constraint sizing and alignment constraint
-   * @return this box for chaining
+   * @param component  the platform component to add
+   * @param constraint the grow/shrink constraint governing the component's sizing
+   * @return this box for method chaining
    */
   public synchronized B add (Object component, Constraint constraint) {
 
@@ -146,10 +147,10 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Adds a nested box with a stretch constraint.
+   * Adds a nested box to this box with a stretch (grow-and-shrink) constraint.
    *
-   * @param box the child box to add
-   * @return this box for chaining
+   * @param box the child box to nest inside this box
+   * @return this box for method chaining
    */
   public synchronized B add (Box<?> box) {
 
@@ -159,11 +160,11 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Adds a nested box with the provided constraint.
+   * Adds a nested box to this box with the specified constraint.
    *
-   * @param box        the child box to add
-   * @param constraint sizing and alignment constraint
-   * @return this box for chaining
+   * @param box        the child box to nest inside this box
+   * @param constraint the grow/shrink constraint governing the nested box's sizing
+   * @return this box for method chaining
    */
   public synchronized B add (Box<?> box, Constraint constraint) {
 
@@ -173,7 +174,8 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Removes all elements (and nested components/boxes) from this box.
+   * Removes every element from this box, recursively cleaning up nested boxes and
+   * notifying the native container to remove all component references.
    */
   public synchronized void removeAll () {
 
@@ -194,10 +196,11 @@ public abstract class Box<B extends Box<B>> {
   }
 
   /**
-   * Removes the first occurrence of the specified component from this box or its descendants.
+   * Removes the first occurrence of the specified component from this box or any nested descendant box,
+   * also notifying the native container.
    *
-   * @param component the component to remove
-   * @return {@code true} if removed from this box or a nested box
+   * @param component the platform component or nested box to remove
+   * @return {@code true} if the component was found and removed; {@code false} otherwise
    */
   public boolean remove (Object component) {
 

@@ -33,12 +33,14 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * Common contract for algorithm enums exposing their JCA name.
+ * Common contract implemented by all algorithm enums to expose their JCA algorithm name.
  */
 public interface SecurityAlgorithm {
 
   /**
-   * @return the algorithm name used with JCA/JCE APIs
+   * Returns the algorithm name string used when requesting services from JCA/JCE APIs.
+   *
+   * @return the JCA algorithm name
    */
   String getAlgorithmName ();
 }

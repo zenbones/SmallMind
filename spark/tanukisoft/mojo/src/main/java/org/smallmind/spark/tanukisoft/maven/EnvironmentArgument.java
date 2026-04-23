@@ -33,7 +33,8 @@
 package org.smallmind.spark.tanukisoft.maven;
 
 /**
- * Represents an environment variable name/value pair to be injected into wrapper scripts.
+ * POM-configurable holder for a single environment variable whose name and value will be interpolated into the
+ * generated Tanuki wrapper scripts.
  */
 public class EnvironmentArgument {
 
@@ -41,7 +42,9 @@ public class EnvironmentArgument {
   private String value;
 
   /**
-   * @return environment variable name
+   * Returns the configured variable name.
+   *
+   * @return the environment variable's name
    */
   public String getName () {
 
@@ -49,7 +52,9 @@ public class EnvironmentArgument {
   }
 
   /**
-   * @param name environment variable name
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param name the environment variable's name
    */
   public void setName (String name) {
 
@@ -57,7 +62,9 @@ public class EnvironmentArgument {
   }
 
   /**
-   * @return environment variable value
+   * Returns the configured variable value.
+   *
+   * @return the environment variable's value
    */
   public String getValue () {
 
@@ -65,7 +72,9 @@ public class EnvironmentArgument {
   }
 
   /**
-   * @param value environment variable value
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param value the environment variable's value
    */
   public void setValue (String value) {
 

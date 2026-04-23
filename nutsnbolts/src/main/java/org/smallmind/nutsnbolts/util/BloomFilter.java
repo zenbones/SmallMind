@@ -40,9 +40,10 @@ import java.util.Collection;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 /**
- * Bloom filter implementation backed by a {@link BitSet}. Supports configurable density and hash count.
+ * A probabilistic membership filter backed by a {@link BitSet} that can report definite non-membership
+ * or probable membership with a configurable false-positive rate.
  *
- * @param <E> element type providing bytes for hashing
+ * @param <E> the element type, which must supply a byte representation for hashing
  */
 public class BloomFilter<E extends BloomFilterElement> implements Serializable {
 
@@ -55,10 +56,12 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   private int size;
 
   /**
-   * @param bitsPerElement target bits per element
-   * @param maxElements    maximum number of elements expected
-   * @param hashCount      number of hash functions to apply
-   * @throws NoSuchAlgorithmException if the SHA-1 digest cannot be instantiated
+   * Constructs a bloom filter with explicit sizing parameters.
+   *
+   * @param bitsPerElement the target number of bits allocated per expected element
+   * @param maxElements    the maximum number of elements the filter is expected to hold
+   * @param hashCount      the number of independent hash functions to apply per element
+   * @throws NoSuchAlgorithmException if the SHA-1 message digest algorithm is unavailable
    */
   public BloomFilter (double bitsPerElement, int maxElements, int hashCount)
     throws NoSuchAlgorithmException {
@@ -75,7 +78,12 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Convenience constructor that computes bits-per-element and hash count from a fixed bit length and capacity.
+   * Constructs a bloom filter sized by a total bit length and expected capacity, deriving bits-per-element
+   * and an optimal hash count automatically.
+   *
+   * @param length      the total number of bits in the filter
+   * @param maxElements the maximum number of elements the filter is expected to hold
+   * @throws NoSuchAlgorithmException if the SHA-1 message digest algorithm is unavailable
    */
   public BloomFilter (int length, int maxElements)
     throws NoSuchAlgorithmException {
@@ -84,7 +92,12 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Convenience constructor that derives sizing from a desired false-positive probability and capacity.
+   * Constructs a bloom filter sized to achieve the given false-positive probability for the expected capacity,
+   * computing the required bit length and hash count automatically.
+   *
+   * @param falsePositiveProbability the desired probability of a false positive (between 0 and 1)
+   * @param maxElements              the maximum number of elements the filter is expected to hold
+   * @throws NoSuchAlgorithmException if the SHA-1 message digest algorithm is unavailable
    */
   public BloomFilter (double falsePositiveProbability, int maxElements)
     throws NoSuchAlgorithmException {
@@ -92,13 +105,20 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     this(-1 * maxElements * Math.log(falsePositiveProbability) / Math.pow(Math.log(2), 2), maxElements, (int)Math.ceil((-1 * maxElements * Math.log(falsePositiveProbability) / Math.pow(Math.log(2), 2)) / maxElements * Math.log(2)));
   }
 
+  /**
+   * Returns the configured bits-per-element density used when this filter was constructed.
+   *
+   * @return the bits-per-element value
+   */
   public double getBitsPerElement () {
 
     return this.bitsPerElement;
   }
 
   /**
-   * @return configured maximum element count
+   * Returns the maximum number of elements this filter is configured to hold.
+   *
+   * @return the maximum element count
    */
   public int getMaxElements () {
 
@@ -106,7 +126,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * @return number of hash functions in use
+   * Returns the number of hash functions applied to each element.
+   *
+   * @return the hash function count
    */
   public int getHashCount () {
 
@@ -114,7 +136,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * @return underlying bitset length
+   * Returns the total number of bits in the underlying bitset.
+   *
+   * @return the bitset length
    */
   public int length () {
 
@@ -122,7 +146,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * @return number of elements added
+   * Returns the number of elements that have been added to this filter.
+   *
+   * @return the current element count
    */
   public synchronized int size () {
 
@@ -130,7 +156,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Computes the current bits-per-element ratio based on {@link #size()} and length.
+   * Computes the actual bits-per-element ratio based on the current number of added elements.
+   *
+   * @return the current bits-per-element ratio
    */
   public double calculateCurrentBitsPerElement () {
 
@@ -138,7 +166,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Estimates the current false-positive probability.
+   * Estimates the current false-positive probability based on the configured hash count, maximum elements, and bit length.
+   *
+   * @return the estimated false-positive probability
    */
   public double calculateFalsePositiveProbability () {
 
@@ -178,15 +208,20 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     return hashes;
   }
 
+  /**
+   * Adds an element to the filter by hashing its byte representation.
+   *
+   * @param element the element to add
+   */
   public void add (E element) {
 
     add(element.getBytes());
   }
 
   /**
-   * Adds an element expressed as bytes to the filter.
+   * Adds an element expressed as a raw byte array to the filter.
    *
-   * @param bytes element representation
+   * @param bytes the byte representation of the element to add
    */
   public void add (byte[] bytes) {
 
@@ -198,9 +233,9 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Adds all elements from the provided collection.
+   * Adds all elements in the given collection to this filter.
    *
-   * @param c collection of elements to add
+   * @param c the collection of elements to add
    */
   public void addAll (Collection<? extends E> c) {
 
@@ -210,10 +245,10 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Checks membership of an element.
+   * Tests whether the given element is possibly present in the filter.
    *
-   * @param element element to test
-   * @return {@code false} if definitely not present; {@code true} if possibly present
+   * @param element the element to test
+   * @return {@code false} if the element is definitely not present; {@code true} if it is probably present
    */
   public boolean contains (E element) {
 
@@ -221,10 +256,10 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Checks membership of an element given its byte representation.
+   * Tests whether an element represented by the given byte array is possibly present in the filter.
    *
-   * @param bytes element representation
-   * @return {@code false} if definitely not present; {@code true} if possibly present
+   * @param bytes the byte representation of the element to test
+   * @return {@code false} if the element is definitely not present; {@code true} if it is probably present
    */
   public boolean contains (byte[] bytes) {
 
@@ -238,6 +273,12 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
     return true;
   }
 
+  /**
+   * Tests whether all elements in the given collection are possibly present in the filter.
+   *
+   * @param c the collection of elements to test
+   * @return {@code true} if all elements are probably present; {@code false} if any element is definitely absent
+   */
   public boolean containsAll (Collection<? extends E> c) {
 
     for (E element : c) {
@@ -251,7 +292,7 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   }
 
   /**
-   * Clears all bits and resets the size to zero.
+   * Resets the filter by clearing all bits and setting the element count to zero.
    */
   public void clear () {
 

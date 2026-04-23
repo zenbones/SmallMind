@@ -38,10 +38,24 @@ import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.sleuth.runner.Culprit;
 
 /**
- * {@link StackTraceWriter} that defers to Sleuth's trimmed stack trace representation.
+ * Surefire {@link StackTraceWriter} implementation that delegates stack trace rendering to
+ * Sleuth's internal utilities.
  * <p>
- * It provides Surefire with safe and trimmed stack traces while also exposing a condensed culprit string
- * that includes the originating class, method, and line number when available.
+ * Created by {@link SurefireSleuthEventListener} when translating
+ * {@link org.smallmind.sleuth.runner.event.FailureSleuthEvent},
+ * {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent}, and
+ * {@link org.smallmind.sleuth.runner.event.MootSleuthEvent} into Surefire report entries.
+ * It provides three representations of the failure:
+ * <ul>
+ *   <li>{@link #writeTraceToString()} — full stack trace via {@link StackTraceUtility}</li>
+ *   <li>{@link #writeTrimmedTraceToString()} — delegates to the full trace (no trimming)</li>
+ *   <li>{@link #smartTrimmedStackTrace()} — a concise single-line summary from {@link Culprit}</li>
+ * </ul>
+ * When no throwable is present all string methods return an empty string and
+ * {@link #getThrowable()} returns {@code null}.
+ *
+ * @see SurefireSleuthEventListener
+ * @see Culprit
  */
 public class SleuthStackTraceWriter
   implements StackTraceWriter {
@@ -51,11 +65,11 @@ public class SleuthStackTraceWriter
   private final String testMethod;
 
   /**
-   * Creates a writer for the provided throwable context.
+   * Constructs a writer for the given failure context.
    *
-   * @param testClass  class where the failure occurred
-   * @param testMethod method where the failure occurred
-   * @param throwable  failure cause; may be {@code null} to indicate no stack trace
+   * @param testClass  fully qualified name of the class where the failure occurred; must not be {@code null}
+   * @param testMethod name of the method where the failure occurred; must not be {@code null}
+   * @param throwable  the exception or error to render; {@code null} indicates no throwable (all methods return empty strings)
    */
   public SleuthStackTraceWriter (String testClass, String testMethod, Throwable throwable) {
 
@@ -65,7 +79,9 @@ public class SleuthStackTraceWriter
   }
 
   /**
-   * @return a {@link SafeThrowable} wrapper or {@code null} when no throwable is present
+   * Returns a {@link SafeThrowable} wrapping the underlying throwable, or {@code null} when none is present.
+   *
+   * @return wrapped throwable, or {@code null}
    */
   @Override
   public SafeThrowable getThrowable () {
@@ -74,7 +90,9 @@ public class SleuthStackTraceWriter
   }
 
   /**
-   * @return the full stack trace text or an empty string if no throwable is present
+   * Returns the full stack trace as a string, or an empty string when no throwable is present.
+   *
+   * @return full stack trace text; never {@code null}
    */
   @Override
   public String writeTraceToString () {
@@ -83,7 +101,9 @@ public class SleuthStackTraceWriter
   }
 
   /**
-   * @return the trimmed stack trace; delegates to {@link #writeTraceToString()}
+   * Returns the trimmed stack trace; delegates to {@link #writeTraceToString()} (no trimming is applied).
+   *
+   * @return stack trace text; never {@code null}
    */
   @Override
   public String writeTrimmedTraceToString () {
@@ -92,7 +112,10 @@ public class SleuthStackTraceWriter
   }
 
   /**
-   * @return a concise culprit string including class, method, line, and message, or an empty string when no throwable exists
+   * Returns a concise single-line culprit summary including the originating class, method, line number,
+   * and exception message. Returns an empty string when no throwable is present.
+   *
+   * @return condensed culprit string, or an empty string; never {@code null}
    */
   @Override
   public String smartTrimmedStackTrace () {

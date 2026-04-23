@@ -33,7 +33,7 @@
 package org.smallmind.web.grizzly.installer;
 
 /**
- * Identifies the type of installer bean being registered with the Grizzly deployment.
+ * Enumerates the kinds of components that can be registered with a Grizzly web application via an installer bean.
  */
 public enum GrizzlyInstallerType {
 

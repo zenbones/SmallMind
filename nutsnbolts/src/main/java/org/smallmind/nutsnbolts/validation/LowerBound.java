@@ -44,7 +44,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Class-level constraint ensuring one numeric field is greater than or equal to another, optionally offset.
+ * Class-level Bean Validation constraint that ensures one named numeric bean property is greater than or equal to another, with an optional numeric offset.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -53,7 +53,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface LowerBound {
 
   /**
-   * Allows multiple {@link LowerBound} constraints on the same type.
+   * Container annotation that allows multiple {@link LowerBound} constraints on the same type.
    */
   @Target({TYPE, ANNOTATION_TYPE})
   @Retention(RUNTIME)
@@ -61,43 +61,43 @@ public @interface LowerBound {
   @interface List {
 
     /**
-     * @return array of {@link LowerBound} constraints
+     * @return the contained {@link LowerBound} constraints
      */
     LowerBound[] value ();
   }
 
   /**
-   * @return validation message template
+   * @return the constraint violation message template
    */
   String message () default "The '{first}' field must be >= '{second}' field offset by {value}";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return custom payloads for Bean Validation clients
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 
   /**
-   * @return name of the field that must be greater than or equal to {@link #second()} plus {@link #value()}
+   * @return the name of the bean property that must be greater than or equal to {@link #second()} plus {@link #value()}
    */
   String first ();
 
   /**
-   * @return name of the reference field to compare against
+   * @return the name of the reference bean property used as the lower bound
    */
   String second ();
 
   /**
-   * @return whether both fields must be non-null to be considered valid
+   * @return whether both properties must be non-null for the constraint to pass; defaults to {@code false}
    */
   boolean notNull () default false;
 
   /**
-   * @return offset added to {@link #second()} when performing the comparison
+   * @return the numeric offset added to the {@link #second()} value before comparison; defaults to {@code 0}
    */
   int value () default 0;
 }

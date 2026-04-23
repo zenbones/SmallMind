@@ -33,15 +33,17 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Default converter that delegates to {@link Object#toString()}.
+ * Default {@link AlphaNumericConverter} implementation that converts values to strings via {@link Object#toString()}.
  *
- * @param <T> value type
+ * @param <T> the type of values this converter handles
  */
 public class DefaultAlphaNumericConverter<T> implements AlphaNumericConverter<T> {
 
   /**
-   * @param object value to convert
-   * @return {@code object.toString()}
+   * Returns the string representation of the given object by calling its {@link Object#toString()} method.
+   *
+   * @param object the value to convert
+   * @return the result of {@code object.toString()}
    */
   public String toString (T object) {
 

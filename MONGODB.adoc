@@ -1,1639 +1,1530 @@
-[[mongodb, MongoDB]]
-= MongoDB
+= SmallMind MongoDB
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
 
-[partintro]
-Smallmind MongoDB is split into two narrow modules:
+== Overview
 
-* `mongodb-throng`: explicit entity mapping, lifecycle callbacks, index declarations, and small query/update builders over the MongoDB sync driver
-* `mongodb-utility`: thin Spring factory beans and small helper types around `MongoClient` construction
+The `smallmind-mongodb` parent module collects two publishable artifacts
+that sit on top of the stock
+https://www.mongodb.com/docs/drivers/java/sync/[MongoDB Java driver]
+(`mongodb-driver-sync`, `mongodb-driver-core`, `bson`):
 
-The modules stay close to the driver and package the repetitive mapping, query, and client-construction seams into explicit APIs.
+* **`mongodb-utility`** — five small classes and a single
+  `MongoAcknowledgment` enum that turn the driver's builder-heavy
+  configuration surface (`MongoClientSettings.builder()`, cluster
+  settings, pool settings, SSL context, credential assembly) into a
+  handful of Spring `FactoryBean` implementations. A running
+  `MongoClient` comes out the other end as a managed singleton with a
+  `destroy()` that closes the client during context shutdown.
 
-Audience: developers wiring MongoDB into applications or reusable libraries.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you have a specific reason to split them.
+* **`mongodb-throng`** — a small, annotation-driven object/document
+  mapper built against the driver's own `Codec` / `CodecRegistry`
+  infrastructure. It vends a single `ThrongClient` whose CRUD surface
+  (`count`, `find`, `findOne`, `insert`, `update`, `delete`) is
+  statically typed over `@Entity`-annotated Java classes and whose
+  query, projection, sort, and update DSLs are thin fluent wrappers
+  around `com.mongodb.client.model.Filters`, `Projections`, `Sorts`, and
+  `Updates`.
 
-== Quick Navigation
+The two modules are independent — `mongodb-throng` does not depend on
+`mongodb-utility`, and an application can adopt either one alone — but
+the common deployment shape is to use `mongodb-utility` to construct
+the driver `MongoClient` and then hand that client to a `ThrongClient`
+together with the list of `@Entity` classes it should recognize.
 
-* <<mongodb-reading-paths,Reading Paths>>
-* <<mongodb-at-a-glance,At A Glance>>
-* <<mongodb-choose-module,Choose A Module>>
-* <<mongodb-why-use,Why Use Smallmind MongoDB>>
-* <<mongodb-throng-vs-morphia,Throng Vs Higher-Level ODMs>>
-* <<mongodb-layout,Project Layout>>
-* <<mongodb-install,Installation>>
-* <<mongodb-use-cases,API By Use Case>>
-* <<mongodb-quick-start,Quick Start>>
-* <<mongodb-throng-overview,Throng Overview>>
-* <<mongodb-mapping-annotations,Mapping Annotations>>
-* <<mongodb-lifecycle,Lifecycle Callbacks>>
-* <<mongodb-indexing,Indexing>>
-* <<mongodb-crud,CRUD API>>
-* <<mongodb-query-api,Query API>>
-* <<mongodb-json-bson,JSON/BSON Utilities>>
-* <<mongodb-utility-module,Utility Module>>
-* <<mongodb-spring,Spring Wiring>>
-* <<mongodb-lifecycle-ownership,Lifecycle And Resource Ownership>>
-* <<mongodb-errors,Error Model>>
-* <<mongodb-api-index,API Index>>
-* <<mongodb-defaults,Defaults Reference>>
-* <<mongodb-edge-cases,Behavioral Edge Cases>>
-* <<mongodb-troubleshooting,Troubleshooting>>
-* <<mongodb-minimal-checklist,Minimal Checklist>>
-* <<mongodb-verification,Verification Checklist>>
+=== Why This Package Exists
 
-[[mongodb-reading-paths, Reading Paths]]
+The MongoDB Java driver is a complete, general-purpose API. Every
+service that uses it ends up writing the same glue:
+
+1. Walk a property file or Spring XML of broker hosts, convert them
+   into `ServerAddress` instances, and feed the resulting array to
+   `ClusterSettings.Builder#hosts`. For anything more than a single
+   mongo instance, produce that array by hand.
+2. Build a `MongoClientSettings` by chaining a half-dozen
+   `applyToClusterSettings` / `applyToSocketSettings` /
+   `applyToConnectionPoolSettings` / `applyToSslSettings` lambdas, each
+   of which mutates a separate builder. Remember which knobs belong to
+   which builder. Remember that `WriteConcern` attaches to the outer
+   builder, not the cluster one.
+3. Carry a plaintext password into a `MongoCredential` without leaving
+   a `String` reference on the heap longer than necessary.
+4. Close the `MongoClient` during application shutdown so connection
+   pools drain cleanly.
+5. Adopt a convention for turning Java classes into BSON documents
+   — the driver vends a `PojoCodecProvider` but leaves decisions about
+   id handling, polymorphism, embedded documents, lifecycle callbacks,
+   and index creation to each project.
+6. Resolve indexes separately from mapping — read an annotation or
+   configuration file, build a `NewIndex`, call
+   `createIndexes(List<IndexModel>)`, and try to keep the two sides in
+   sync when a schema evolves.
+7. Write the dozens of lines of `com.mongodb.client.model.Filters` and
+   `com.mongodb.client.model.Updates` incantations that every typed
+   query requires.
+
+`smallmind-mongodb` assembles (1)–(4) once as `mongodb-utility`, and
+(5)–(7) once as `mongodb-throng`. A caller that needs a working,
+authenticated, pool-tuned `MongoClient` plus typed CRUD over its own
+annotated entities writes this:
+
+[source,java]
+----
+MongoClient mongoClient = /* from MongoClientFactoryBean */;
+ThrongClient throng = new ThrongClient(
+    mongoClient,
+    "orders-db",
+    new ThrongOptions(false, true, true),
+    Order.class, OrderLine.class);
+
+List<Order> open = throng.find(Order.class,
+    Query.with().filter(Filter.where("status").eq("OPEN"))
+                .sort(Sort.on().desc("placedAt"))
+                .limit(50))
+    .asList();
+----
+
+…and never touches `MongoClientSettings.builder`, `PojoCodecProvider`,
+`IndexModel`, or `com.mongodb.client.model.Filters` directly.
+
+=== What It Does, Concretely
+
+* **`mongodb-utility`** turns Spring XML into a `MongoClient`:
+** models the cluster as `ServerAddress[]` produced by a pattern/spread
+   pair (`mongo#.internal:27017` + `1-3`);
+** builds a single `MongoCredential` for SCRAM-SHA-1 authentication;
+** assembles a `MongoClientSettings` from 20+ nullable properties,
+   applying each non-null value to the correct sub-builder and leaving
+   the driver's defaults where nothing is set;
+** constructs and tears down the `MongoClient` as a Spring-managed
+   singleton;
+** canonicalizes the five most common write-concern levels as an enum
+   (`MongoAcknowledgment`) and produces `WriteConcern` instances with
+   or without journaling via a non-singleton `FactoryBean`
+   (`MongoWriteConcern`).
+
+* **`mongodb-throng`** turns annotated Java classes into typed CRUD:
+** discovers mapping from five class-level and field-level annotations
+   (`@Entity`, `@Embedded`, `@Id`, `@Property`, `@Codec`) plus a
+   polymorphism declaration (`@Polymorphic`);
+** wires BSON codecs against the driver's own `CodecRegistry` — so
+   every value passed into a filter or update still goes through the
+   registered chain;
+** supports entity lifecycle callbacks (`@PrePersist`, `@PostPersist`,
+   `@PreLoad`, `@PostLoad`) with strict rules about which are
+   `static`, which take a `BsonDocument`, and which are for `@Entity`
+   classes only;
+** discovers index declarations (`@Indexed`, `@Index`, `@Indexes`,
+   `@AllIndexes`) on the entity and applies them on `ThrongClient`
+   construction when `createIndexes` is on;
+** vends fluent builders for filters (`Filter`), updates (`Updates`),
+   projections (`Projections`), and sorts (`Sort`), and composes them
+   with paging and batch-size settings through `Query`;
+** exposes results as a lazy `ThrongIterable<T>` that decodes each
+   `ThrongDocument` into a typed entity on demand, firing lifecycle
+   callbacks as it goes.
+
+=== What It Intentionally Does Not Do
+
+* It does not wrap `MongoClient` or `MongoCollection`. `ThrongClient`
+  is a single, non-transactional façade over a `MongoDatabase`;
+  applications that need transactions, change streams, or aggregation
+  pipelines should use the driver `MongoClient` directly and keep
+  `ThrongClient` for CRUD.
+* It does not own the `MongoClient` lifecycle from inside
+  `ThrongClient`. The `MongoClient` passed in is owned by the caller
+  (typically `MongoClientFactoryBean`'s `destroy()`).
+* It does not supply an aggregation DSL. Anything beyond
+  `find/count/update/delete` is the driver's job, reached through the
+  raw `MongoClient`.
+* It does not offer a reactive or async surface. Both modules target
+  the synchronous driver.
+* It does not ship connection-string parsing
+  (`MongoClientURI`/`ConnectionString`). The `utility` module builds a
+  `MongoClientSettings` from typed components instead.
+* It does not support entity-level polymorphism. `@Polymorphic` is
+  usable on `@Embedded` classes only; an `@Entity` with
+  `@Polymorphic` fails mapping.
+
 == Reading Paths
 
-First-time integration path:
+If you are new to the module, read in this order:
 
-1. <<mongodb-choose-module,Choose A Module>>
-2. <<mongodb-why-use,Why Use Smallmind MongoDB>>
-3. <<mongodb-install,Installation>>
-4. <<mongodb-use-cases,API By Use Case>>
-5. <<mongodb-quick-start,Quick Start>>
-6. <<mongodb-mapping-annotations,Mapping Annotations>>
-7. <<mongodb-indexing,Indexing>>
-8. <<mongodb-crud,CRUD API>>
-9. <<mongodb-query-api,Query API>>
-10. <<mongodb-spring,Spring Wiring>> if you use Spring
+1. <<conceptual-model,Conceptual Model>>
+2. <<quick-start,Quick Start>>
+3. <<throng-annotations,Throng Annotations>>
+4. <<query-dsl,Query DSL>>
 
-Reference and operations path:
+If you know the driver and need a fast entry point:
 
-* <<mongodb-throng-overview,Throng Overview>>
-* <<mongodb-api-index,API Index>>
-* <<mongodb-defaults,Defaults Reference>>
-* <<mongodb-edge-cases,Behavioral Edge Cases>>
-* <<mongodb-troubleshooting,Troubleshooting>>
+1. <<installation,Installation>>
+2. <<utility-spring-wiring,Utility: Spring Wiring>>
+3. <<throng-api-reference,Throng API Reference>>
 
-[[mongodb-at-a-glance, At A Glance]]
-== At A Glance
+If you are diagnosing a failure:
 
-=== Integration Model In 60 Seconds
+1. <<error-model,Error Model>>
+2. <<troubleshooting,Troubleshooting>>
+3. <<limitations,Limitations and Known Issues>>
 
-1. Use `mongodb-throng` when you want explicit object mapping plus a small CRUD/query layer over the sync driver.
-2. Use `mongodb-utility` when you want optional Spring bean materialization around driver objects.
-3. Mark every persisted field explicitly with `@Property` and mark exactly one field per entity with `@Id`.
-4. Give every decoded `@Entity` and `@Embedded` type a public no-arg constructor.
-5. Register every participating mapped class in the `ThrongClient` constructor. There is no classpath scanning.
-6. Build filters, sorts, projections, updates, and compound indexes with stored MongoDB field names, not Java field names.
-7. Remember that `update(...)` and `delete(...)` are `updateMany(...)` and `deleteMany(...)` wrappers.
-8. Keep `MongoClient` lifecycle explicit unless Spring owns it through `MongoClientFactoryBean`.
+== Module Structure
 
-[cols="1,2,3",options="header"]
+[cols="1,3",options="header"]
 |===
-|Module |Artifact |Purpose
+| Artifact | Role
 
-|MongoDB parent
-|`org.smallmind:smallmind-mongodb`
-|Aggregator POM for MongoDB-related modules
+| `mongodb-utility`
+| Spring `FactoryBean` implementations that build
+  `ServerAddress[]`, `MongoCredential`, `WriteConcern`,
+  `MongoClientSettings`, and a managed `MongoClient`. Depends on
+  `spring-beans` as an optional compile dependency.
 
-|Throng
-|`org.smallmind:mongodb-throng`
-|Mapped entities, codecs, lifecycle callbacks, index declaration, and small CRUD/query helpers
-
-|Utility
-|`org.smallmind:mongodb-utility`
-|Thin Spring factory beans plus `MongoServer` and `MongoAcknowledgment`
+| `mongodb-throng`
+| Annotation-driven object/document mapper over the sync driver.
+  Exposes `ThrongClient`, `ThrongOptions`, the `query.*` DSL, the
+  `mapping.annotation.*` / `lifecycle.annotation.*` /
+  `index.annotation.*` annotation packs, and the `ThrongDocument`
+  codec. Optional integration with Jackson (`jackson-databind`) for
+  JSON ↔ BSON translation in `json.JsonUtility`.
 |===
 
-[[mongodb-choose-module, Choose A Module]]
-== Choose A Module
+[[conceptual-model]]
+== Conceptual Model
 
-[cols="2,4",options="header"]
-|===
-|If you need... |Use...
+A few ideas recur throughout the module and are worth naming up front.
 
-|Explicit entity mapping, CRUD helpers, and query/update builders
-|`mongodb-throng`
+Server pattern and spread::
+    The mechanism `MongoServerFactoryBean` uses to turn one template
+    into a `ServerAddress[]`. A `#` in the pattern is replaced by each
+    value produced by
+    `org.smallmind.nutsnbolts.util.Spread.calculate(serverSpread)`.
+    `mongo#.internal:27017` with spread `1-3` yields
+    `mongo1.internal:27017`, `mongo2.internal:27017`,
+    `mongo3.internal:27017`. With no `#`, the pattern is parsed as a
+    single host (with an explicit `:port` or the driver's default
+    `27017`).
 
-|Spring bean materialization for `MongoClient`, credentials, settings, or server lists
-|`mongodb-utility`
+Acknowledgment level::
+    `MongoAcknowledgment` is a closed enum of five write-concern
+    choices: `ZERO` (unacknowledged, not journable), `ONE`, `TWO`,
+    `THREE`, and `MAJORITY` (all journable). It exists so the Spring
+    XML can use a simple enum literal rather than an
+    `org.springframework.util.PropertiesUtil`-style constant reference
+    against `com.mongodb.WriteConcern`. `MongoWriteConcern`
+    consumes an acknowledgment plus a `journaled` flag and emits a
+    concrete `WriteConcern` — calling `withJournal(true)` only when
+    the chosen level is journable.
 
-|Mapped entities plus Spring-managed driver objects
-|both modules
-|===
+Codec registry composition::
+    `ThrongClient` builds a single `CodecRegistry` out of three
+    pieces, in this order: (1) the `ThrongDocumentCodec` for raw
+    `ThrongDocument` pass-through; (2) the embedded codecs it
+    discovered while scanning `@Embedded` classes; (3) the database's
+    own registry wrapped with an `ArrayCodecProvider` that handles
+    Java array fields. Every filter, update, or value written through
+    the client goes through this merged registry.
 
-[[mongodb-why-use, Why Use Smallmind MongoDB]]
-== Why Use Smallmind MongoDB
+Entity vs. embedded::
+    An `@Entity` is a top-level document that maps to a MongoDB
+    collection. It has exactly one `@Id` field, may declare lifecycle
+    callbacks, and may declare indexes. An `@Embedded` class is a
+    nested object with no collection of its own. It may not declare
+    lifecycle callbacks; it may declare `@Polymorphic` to be
+    discriminated across multiple subtypes; and its indexes, if any,
+    must be declared on the parent entity.
 
-Use Smallmind MongoDB when you want MongoDB integration to stay explicit and library-safe.
+Lazy decoding::
+    `ThrongIterable<T>` wraps the driver's `FindIterable<ThrongDocument>`
+    and decodes each result into a typed entity only when the caller
+    advances the iterator. `asList()` forces the full decode; iterator
+    traversal decodes one document at a time. Lifecycle callbacks
+    (`@PreLoad` / `@PostLoad`) fire at decode time, not at query time.
 
-What these modules do well:
+Filter state machine::
+    A `Filter` built by `Filter.where(field)` is incomplete until a
+    comparison method (`eq`, `gt`, `in`, `regex`, etc.) applies a
+    condition. Calling `toBsonDocument` on an incomplete filter throws
+    `UnsupportedOperationException`; calling a second comparison on a
+    closed filter throws `IllegalFilterStateException`. The rule
+    exists so a typo (`where("x").eq(1).eq(2)`) fails loudly rather
+    than silently overwriting the first comparison.
 
-* keep mapping and query behavior close to the MongoDB sync driver
-* make entity registration visible in `ThrongClient` construction instead of hiding it behind scanning
-* keep Spring support limited to object construction and lifecycle handoff
-* expose raw MongoDB field names and driver options instead of wrapping them in a larger framework vocabulary
-* work well inside shared libraries that cannot assume one container or persistence stack
-
-These modules are especially useful when you want driver-level visibility with repeatable mapping and optional Spring construction helpers.
-
-[[mongodb-throng-vs-morphia, Throng Vs Higher-Level ODMs]]
-== Throng Vs Higher-Level ODMs
-
-Morphia is the obvious comparison point, and the same tradeoff applies to similar ODMs.
-Throng keeps mapping, query building, and lifecycle closer to the MongoDB driver.
-
-Choose Throng when you want:
-
-* explicit mapped-type registration in constructor code
-* field-level annotations without a broader repository abstraction
-* query, sort, projection, and update builders that still look like MongoDB
-* caller-owned runtime policy around connection lifecycle, startup, and configuration
-
-Throng is especially strong in codebases that prefer explicit mapped types, visible query construction, and driver-level lifecycle control.
-
-[[mongodb-layout, Project Layout]]
-== Project Layout
-
-[cols="1,2,3",options="header"]
-|===
-|Path |Artifact |Notes
-
-|`mongodb/`
-|`org.smallmind:smallmind-mongodb`
-|Aggregator POM
-
-|`mongodb/throng/`
-|`org.smallmind:mongodb-throng`
-|Mapping, query builders, utilities, and lifecycle support in `org.smallmind.mongodb.throng`
-
-|`mongodb/utility/`
-|`org.smallmind:mongodb-utility`
-|Spring helpers and small value types in `org.smallmind.mongodb.utility`
-|===
-
-[[mongodb-install, Installation]]
+[[installation]]
 == Installation
 
-=== Throng Dependency
-
-[source,xml]
-----
-<dependency>
-  <groupId>org.smallmind</groupId>
-  <artifactId>mongodb-throng</artifactId>
-  <version>${smallmind.version}</version>
-</dependency>
-----
-
-Direct dependencies declared by `mongodb/throng/pom.xml`:
-
-* `org.mongodb:bson`
-* `org.mongodb:mongodb-driver-core`
-* `org.mongodb:mongodb-driver-sync`
-* `org.smallmind:smallmind-nutsnbolts`
-* `tools.jackson.core:jackson-databind` as an optional dependency for `JsonUtility`
-
-=== Utility Dependency
+Both artifacts are published under `org.smallmind`. Depend on one,
+the other, or both.
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>mongodb-utility</artifactId>
-  <version>${smallmind.version}</version>
+  <version>${project.version}</version>
+</dependency>
+
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>mongodb-throng</artifactId>
+  <version>${project.version}</version>
 </dependency>
 ----
 
-Direct dependencies declared by `mongodb/utility/pom.xml`:
+Transitively each pulls in the driver artifacts
+(`bson`, `mongodb-driver-core`, `mongodb-driver-sync`) at the versions
+declared by the parent POM, plus `smallmind-nutsnbolts` for shared
+utilities (pattern spread expansion, generic-type reflection, field
+accessors, formatted exceptions).
 
-* `org.mongodb:bson`
-* `org.mongodb:mongodb-driver-core`
-* `org.mongodb:mongodb-driver-sync`
-* `org.smallmind:smallmind-nutsnbolts`
-* `org.springframework:spring-beans` as an optional dependency for the factory beans
+Optional dependencies:
 
-[IMPORTANT]
-====
-`JsonUtility` uses `tools.jackson.databind.*` imports from the optional `tools.jackson.core:jackson-databind` dependency. If you call `JsonUtility`, declare that dependency explicitly in your application.
-====
+* `mongodb-utility` declares `spring-beans` as optional `compile`. The
+  Spring `FactoryBean` classes require it; programmatic use of the
+  enums (`MongoAcknowledgment`) and plain value objects
+  (`MongoServer`) does not.
+* `mongodb-throng` declares `tools.jackson.core:jackson-databind` as
+  optional. `org.smallmind.mongodb.throng.json.JsonUtility` only
+  compiles when Jackson is on the classpath.
 
-[NOTE]
-====
-Outside Spring, `mongodb-utility` is intentionally small. Most direct Java code will still build `MongoClientSettings` with the MongoDB driver's own builders.
-====
+=== Runtime Prerequisites
 
-[[mongodb-use-cases, API By Use Case]]
-== API By Use Case
+* A MongoDB cluster reachable from the application. The `utility`
+  module builds settings for plain TCP, SSL (with an optional
+  `certResource`), and SCRAM-SHA-1 authentication. Other
+  authentication mechanisms must be plugged into a caller-supplied
+  `MongoCredential`.
+* Java reflection access to the `@Entity` / `@Embedded` classes'
+  private fields and no-arg constructors. Throng uses
+  `FieldUtility.getFieldAccessors`, which assumes the standard Java
+  reflection model; there is no `Unsafe` or `LambdaMetafactory`
+  shortcut.
+* Exactly one version of the MongoDB driver on the classpath. Mixing
+  driver versions across modules is the common source of
+  `NoSuchMethodError` at client construction.
 
-[cols="2,2,4",options="header"]
-|===
-|Need |Use |Notes
-
-|Build a mapped client over the sync driver
-|`ThrongClient`
-|Register all `@Entity` and `@Embedded` classes explicitly in the constructor
-
-|Control mapping behavior
-|`ThrongOptions`
-|Caller supplies all three booleans: `storeNulls`, `createIndexes`, and `includeCollation`
-
-|Map a top-level document
-|`@Entity`, `@Id`, `@Property`
-|One `@Id` per entity and explicit `@Property` markers for persisted fields
-
-|Map a nested document
-|`@Embedded`, `@Property`
-|Embedded types also need public no-arg constructors for decode paths
-
-|Attach a custom codec to one field
-|`@Codec`
-|Codec class must have a public no-arg constructor
-
-|Declare indexes
-|`@Indexed`, `@Indexes`, `@IndexOptions`, `@Collation`
-|Compound index field names use stored MongoDB names
-
-|Run a query
-|`Filter`, `Query`, `Sort`, `Projections`
-|Builders use raw stored field names and stay close to driver semantics
-
-|Run an update
-|`Updates`, `UpdateOptions`
-|`ThrongClient.update(...)` is a thin `updateMany(...)` wrapper
-
-|Convert JSON or BSON trees
-|`BsonUtility`, `JsonUtility`
-|Helpers for common tree and stream conversion, not a full BSON coverage layer
-
-|Detect duplicate key insert failures
-|`DuplicateKeyUtility.idDuplicateKeyException(...)`
-|Checks MongoDB write error code `11000`
-
-|Create driver objects in Spring
-|`MongoServerFactoryBean`, `MongoCredentialFactoryBean`, `MongoClientSettingsFactoryBean`, `MongoClientFactoryBean`, `MongoWriteConcern`
-|Thin object-construction layer only
-|===
-
-[[mongodb-quick-start, Quick Start]]
+[[quick-start]]
 == Quick Start
 
-=== 1) Define Mapped Types
+The fastest path is: wire a `MongoClient` through `mongodb-utility`,
+instantiate a `ThrongClient` over it, and call typed CRUD.
 
-[source,java]
-----
-import java.util.Date;
-import org.bson.types.ObjectId;
-import org.smallmind.mongodb.throng.index.IndexType;
-import org.smallmind.mongodb.throng.index.annotation.Index;
-import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
-import org.smallmind.mongodb.throng.index.annotation.Indexed;
-import org.smallmind.mongodb.throng.index.annotation.Indexes;
-import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
-import org.smallmind.mongodb.throng.mapping.annotation.Entity;
-import org.smallmind.mongodb.throng.mapping.annotation.Id;
-import org.smallmind.mongodb.throng.mapping.annotation.Property;
-
-@Embedded
-public class Profile {
-
-  @Property
-  private String displayName;
-
-  @Property
-  private String timezone;
-
-  public Profile () {
-  }
-
-  // getters and setters omitted for brevity
-}
-
-@Entity("users")
-@Indexes(
-    value = {
-        @Index("user_name"),
-        @Index(value = "createdAt", type = IndexType.DESCENDING)
-    },
-    options = @IndexOptions(name = "users_lookup")
-)
-public class User {
-
-  @Id
-  private ObjectId id;
-
-  @Property("user_name")
-  @Indexed(options = @IndexOptions(unique = true, name = "users_username"))
-  private String username;
-
-  @Property
-  private String email;
-
-  @Property
-  private Profile profile;
-
-  @Property
-  private String[] roles;
-
-  @Property
-  private Date createdAt;
-
-  public User () {
-  }
-
-  // getters and setters omitted for brevity
-}
-----
-
-[IMPORTANT]
-====
-Only `@Property` fields and one `@Id` field are mapped. Private fields are fine. Public bean getters and setters are used when present, otherwise Throng reads and writes the fields directly.
-====
-
-=== 2) Build `ThrongClient`
-
-[source,java]
-----
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import org.smallmind.mongodb.throng.ThrongClient;
-import org.smallmind.mongodb.throng.ThrongOptions;
-
-MongoClient mongoClient = MongoClients.create("mongodb://127.0.0.1:27017");
-
-ThrongClient throngClient = new ThrongClient(
-    mongoClient,
-    "application",
-    new ThrongOptions(false, true, true),
-    User.class,
-    Profile.class
-);
-
-// later, during application shutdown
-mongoClient.close();
-----
-
-[IMPORTANT]
-====
-Register every participating mapped class in the constructor, not just the top-level entity types. If a mapped field refers to an `@Embedded` class, register that embedded class too.
-====
-
-=== 3) Insert, Query, Update, Count, And Delete
-
-[source,java]
-----
-import java.util.Date;
-import com.mongodb.client.model.DeleteOptions;
-import com.mongodb.client.model.InsertOneOptions;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.result.InsertOneResult;
-import org.smallmind.mongodb.throng.UpdateResult;
-import org.smallmind.mongodb.throng.query.Filter;
-import org.smallmind.mongodb.throng.query.Query;
-import org.smallmind.mongodb.throng.query.Updates;
-
-User user = new User();
-user.setUsername("ada");
-user.setEmail("ada@example.org");
-Profile profile = new Profile();
-profile.setDisplayName("Ada Lovelace");
-profile.setTimezone("America/Los_Angeles");
-user.setProfile(profile);
-user.setRoles(new String[] {"admin", "author"});
-user.setCreatedAt(new Date());
-
-InsertOneResult insertOneResult = throngClient.insert(user, new InsertOneOptions());
-if (user.getId() == null && insertOneResult.getInsertedId() != null) {
-  user.setId(insertOneResult.getInsertedId().asObjectId().getValue());
-}
-
-User loadedUser = throngClient.findOne(
-    User.class,
-    Query.with().filter(Filter.where("user_name").eq("ada"))
-);
-
-UpdateResult updateResult = throngClient.update(
-    User.class,
-    Filter.where("user_name").eq("ada"),
-    Updates.of()
-        .set("profile.timezone", "UTC")
-        .addToSet("roles", "reviewer"),
-    new UpdateOptions()
-);
-
-long totalUsers = throngClient.count(User.class, Filter.empty());
-
-long deletedUsers = throngClient.delete(
-    User.class,
-    Filter.where("user_name").eq("ada"),
-    new DeleteOptions()
-).getDeletedCount();
-----
-
-[IMPORTANT]
-====
-`Filter`, `Sort`, `Projections`, `Updates`, and compound `@Index` declarations all use stored MongoDB field names. In the example above, the correct field name is `user_name`, not `username`.
-====
-
-[[mongodb-throng-overview, Throng Overview]]
-== Throng Overview
-
-`ThrongClient` is a startup-time assembler plus a small runtime facade.
-When you construct it, it:
-
-* reads entity and embedded metadata from annotations
-* resolves field codecs
-* rejects invalid mappings early with `ThrongMappingException`
-* optionally creates indexes for registered entity classes
-* caches the codecs needed for `count`, `find`, `findOne`, `insert`, `update`, and `delete`
-
-[cols="2,2,4",options="header"]
-|===
-|Method |Driver behavior |Notes
-
-|`count(Class<T>, Filter)`
-|`countDocuments(...)`
-|Use `Filter.empty()` to count all documents
-
-|`find(Class<T>, Query)`
-|`find(...)`
-|Returns `ThrongIterable<T>` for lazy iteration or `asList()` materialization
-
-|`findOne(Class<T>, Query)`
-|`find(...).limit(1).first()`
-|Returns the first match or `null`
-
-|`insert(T, InsertOneOptions)`
-|`insertOne(...)`
-|Current implementation ignores the `InsertOneOptions` argument and does not back-fill generated ids into the entity
-
-|`update(Class<T>, Filter, Updates, UpdateOptions)`
-|`updateMany(...)`
-|Returns Smallmind `UpdateResult`
-
-|`delete(Class<T>, Filter, DeleteOptions)`
-|`deleteMany(...)`
-|Returns the driver's `DeleteResult`
-|===
-
-[NOTE]
-====
-There is no `save(...)`, `replaceOne(...)`, or repository abstraction here. If you need driver behavior outside these focused helpers, use the MongoDB driver directly alongside Throng.
-====
-
-[[mongodb-mapping-annotations, Mapping Annotations]]
-== Mapping Annotations
-
-=== Entity And Embedded Types
-
-[cols="2,2,4",options="header"]
-|===
-|Annotation |Target |Meaning
-
-|`@Entity("collection")`
-|type
-|Marks a top-level mapped type and chooses its MongoDB collection
-
-|`@Embedded`
-|type
-|Marks a type that can be embedded inside entities or other embedded types
-
-|`@Id`
-|field
-|Marks the entity id field; the stored name defaults to `_id`
-
-|`@Property`
-|field
-|Marks a persisted field and optionally overrides its stored name
-
-|`@Codec`
-|field
-|Forces a specific BSON codec for that property
-
-|`@Indexed`
-|field
-|Declares a single-field index for a mapped property
-
-|`@Indexes`
-|type
-|Declares a compound index using one or more nested `@Index` elements
-|===
-
-Mapping rules that matter in practice:
-
-* every `@Entity` must define exactly one `@Id`
-* decoded `@Entity` and `@Embedded` types must expose a public no-arg constructor
-* only `@Property` fields participate in persistence beyond the single `@Id` field
-* inherited non-static, non-transient fields participate in mapping
-* persisted property names must be unique across the mapped type
-* `@Indexed` and `@Codec` are only collected from fields already marked with `@Property`
-
-=== Field Mapping
-
-Throng is field-driven, not getter-driven.
-Public getters and setters are used when present, but they are optional.
-A private field with `@Property` is enough for persistence.
-
-Stored names are the names that matter outside the Java class.
-If you rename a property in MongoDB with `@Property("user_name")`, every query and update string must use `user_name`.
-
-[source,java]
-----
-@Entity("users")
-public class User {
-
-  @Id
-  private ObjectId id;
-
-  @Property("user_name")
-  private String username;
-
-  public User () {
-  }
-}
-
-Filter.where("user_name").eq("ada");
-Updates.of().set("user_name", "grace");
-Sort.on().asc("user_name");
-----
-
-=== Custom Codecs
-
-Use `@Codec` when the driver registry does not already know how to handle a field type.
-The codec class must expose a public no-arg constructor because Throng instantiates it reflectively.
-
-[source,java]
-----
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
-import org.bson.types.ObjectId;
-import org.smallmind.mongodb.throng.mapping.annotation.Entity;
-import org.smallmind.mongodb.throng.mapping.annotation.Id;
-import org.smallmind.mongodb.throng.mapping.annotation.Property;
-
-public class EmailAddress {
-
-  private final String value;
-
-  public EmailAddress (String value) {
-    this.value = value;
-  }
-
-  @Override
-  public String toString () {
-    return value;
-  }
-}
-
-public class EmailAddressCodec implements Codec<EmailAddress> {
-
-  @Override
-  public Class<EmailAddress> getEncoderClass () {
-    return EmailAddress.class;
-  }
-
-  @Override
-  public EmailAddress decode (BsonReader reader, DecoderContext decoderContext) {
-    return new EmailAddress(reader.readString());
-  }
-
-  @Override
-  public void encode (BsonWriter writer, EmailAddress value, EncoderContext encoderContext) {
-    writer.writeString(value.toString());
-  }
-}
-
-@Entity("subscribers")
-public class Subscriber {
-
-  @Id
-  private ObjectId id;
-
-  @Property
-  @org.smallmind.mongodb.throng.mapping.annotation.Codec(EmailAddressCodec.class)
-  private EmailAddress email;
-
-  public Subscriber () {
-  }
-}
-----
-
-[IMPORTANT]
-====
-Arrays of embedded values and arrays of codec-backed values are handled automatically.
-Generic containers such as `List<Profile>` or `List<EmailAddress>` are not fully automated in the current implementation.
-If you need those shapes, use a driver codec for the concrete container type itself or model the container as its own concrete mapped type.
-====
-
-=== Polymorphic Embedded Types
-
-Throng has embedded polymorphism support, but it is intentionally narrow.
-It applies to `@Embedded` types, not top-level entities.
-
-[source,java]
-----
-import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
-import org.smallmind.mongodb.throng.mapping.annotation.Polymorphic;
-
-@Embedded(polymorphic = @Polymorphic(
-    key = "kind",
-    value = {CardPayment.class, WirePayment.class}
-))
-public abstract class PaymentMethod {
-
-  public PaymentMethod () {
-  }
-}
-----
-
-What to remember:
-
-* the discriminator key defaults to `java/object` when `key` is empty
-* the discriminator value is the fully qualified Java class name
-* lifecycle annotations are still forbidden on embedded types
-
-=== Annotation Scope Matrix (`@Index`, `@Indexes`, `@Property`, `@Codec`)
-
-[cols="2,1,1,4",options="header"]
-|===
-|Annotation |Type |Field |How to use it
-
-|`@Index`
-|No
-|No
-|Nested only inside `@Indexes(...)` to describe one element of a compound index
-
-|`@Indexes`
-|Yes
-|No
-|Apply to an `@Entity` or `@Embedded` type to declare one or more compound indexes
-
-|`@Property`
-|No
-|Yes
-|Apply to persisted fields and optionally override the stored name
-
-|`@Codec`
-|No
-|Yes
-|Apply to a mapped `@Property` field to force a specific BSON codec
-|===
-
-[[mongodb-lifecycle, Lifecycle Callbacks]]
-== Lifecycle Callbacks
-
-Lifecycle annotations are only supported on `@Entity` classes.
-The callback methods must be public because discovery uses `Class.getMethods()`.
-
-[cols="2,3,3",options="header"]
-|===
-|Annotation |Required signature |When it runs
-
-|`@PreLoad`
-|`public static void method (BsonDocument bsonDocument)`
-|Before a BSON document is decoded into an entity
-
-|`@PostLoad`
-|`public void method ()`
-|After the entity has been decoded
-
-|`@PrePersist`
-|`public void method ()`
-|Before the entity is encoded into BSON
-
-|`@PostPersist`
-|`public void method (BsonDocument bsonDocument)`
-|After the entity has been encoded into BSON
-|===
-
-[source,java]
-----
-import java.util.Date;
-import org.bson.BsonDocument;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PostLoad;
-import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
-
-@Entity("users")
-public class User {
-
-  @Property
-  private Date createdAt;
-
-  public User () {
-  }
-
-  @PrePersist
-  public void ensureCreatedAt () {
-    if (createdAt == null) {
-      createdAt = new Date();
-    }
-  }
-
-  @PostLoad
-  public void normalizeAfterLoad () {
-    if (createdAt == null) {
-      createdAt = new Date(0L);
-    }
-  }
-}
-----
-
-[IMPORTANT]
-====
-Embedded types cannot declare lifecycle annotations.
-`ThrongClient` construction fails with `ThrongMappingException` if lifecycle annotations are present on an `@Embedded` class.
-====
-
-[NOTE]
-====
-Static versus instance usage is validated at startup, but parameter mismatches are not exhaustively validated up front.
-A wrongly shaped callback can still fail later as a `ThrongRuntimeException` during encode or decode.
-====
-
-[[mongodb-indexing, Indexing]]
-== Indexing
-
-=== Index Annotations
-
-Use `@Indexed` for single-field indexes and `@Indexes(...)` for compound indexes.
-The nested `@Index(...)` values are field names as stored in MongoDB documents.
-
-Supported `IndexType` values:
-
-* `ASCENDING`
-* `DESCENDING`
-* `HASHED`
-* `TEXT`
-* `GEO2D`
-* `GEO2DSPHERE`
-
-[source,java]
-----
-import com.mongodb.client.model.CollationStrength;
-import java.util.Date;
-import org.bson.types.ObjectId;
-import org.smallmind.mongodb.throng.index.IndexType;
-import org.smallmind.mongodb.throng.index.annotation.Collation;
-import org.smallmind.mongodb.throng.index.annotation.Index;
-import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
-import org.smallmind.mongodb.throng.index.annotation.Indexed;
-import org.smallmind.mongodb.throng.index.annotation.Indexes;
-
-@Entity("sessions")
-@Indexes(
-    value = {
-        @Index("user_name"),
-        @Index(value = "createdAt", type = IndexType.DESCENDING)
-    },
-    options = @IndexOptions(
-        name = "sessions_user_created",
-        partialFilterExpression = "{ archived : false }"
-    )
-)
-public class SessionRecord {
-
-  @Id
-  private ObjectId id;
-
-  @Property("user_name")
-  private String username;
-
-  @Property
-  @Indexed(options = @IndexOptions(
-      unique = true,
-      name = "sessions_token",
-      collation = @Collation(locale = "en", strength = CollationStrength.SECONDARY)
-  ))
-  private String sessionToken;
-
-  @Property
-  private boolean archived;
-
-  @Property
-  private Date createdAt;
-
-  public SessionRecord () {
-  }
-}
-----
-
-=== Automatic Creation
-
-Annotated indexes are created when `ThrongClient` is constructed and `ThrongOptions.createIndexes` is `true`.
-That means index creation is startup behavior, not a background feature that happens later.
-
-`ThrongOptions.includeCollation` controls whether `@Collation` values are applied when those indexes are created.
-If `includeCollation` is `false`, the index is still created but its collation settings are omitted.
-
-=== Index Option Notes
-
-A few details are easy to miss:
-
-* `partialFilterExpression`, `weights`, `storageEngine`, and `wildcardProjection` are JSON strings parsed with `BasicDBObject.parse(...)`
-* `expireAfterSeconds` is only applied when it is greater than zero
-* `bits`, `version`, `textVersion`, and `sphereVersion` are only applied when they are greater than zero
-* `min` is only applied when it is at least `-180`
-* `max` is only applied when it is at most `180`
-
-[[mongodb-crud, CRUD API]]
-== CRUD API
-
-=== Counting
-
-Use `count(...)` with an explicit `Filter`.
-For a collection-wide count, pass `Filter.empty()`.
-
-[source,java]
-----
-long userCount = throngClient.count(User.class, Filter.empty());
-long adminCount = throngClient.count(User.class, Filter.where("roles").in("admin"));
-----
-
-=== Querying
-
-`find(...)` returns `ThrongIterable<T>`.
-Iterate lazily when you want streaming behavior, or call `asList()` when materializing the full result is acceptable.
-
-[source,java]
-----
-ThrongIterable<User> iterable = throngClient.find(
-    User.class,
-    Query.with()
-        .filter(Filter.where("user_name").regex(java.util.regex.Pattern.compile("^a")))
-        .limit(25)
-);
-
-for (User user : iterable) {
-  process(user);
-}
-
-List<User> users = iterable.asList();
-----
-
-[NOTE]
-====
-`findOne(...)` is just the first result from a query. It applies `limit(1)` and returns `null` when nothing matches.
-====
-
-=== Insert
-
-`insert(...)` returns the driver's `InsertOneResult`.
-There are two current implementation details you should account for:
-
-* the `InsertOneOptions` argument is accepted by the signature but is not passed to the driver
-* if your entity id field is `null`, MongoDB may generate an `_id`, but Throng does not write that generated value back into the Java object
-
-[source,java]
-----
-InsertOneResult insertOneResult = throngClient.insert(user, new InsertOneOptions());
-
-if (user.getId() == null && insertOneResult.getInsertedId() != null) {
-  user.setId(insertOneResult.getInsertedId().asObjectId().getValue());
-}
-----
-
-=== Update
-
-`update(...)` is a thin wrapper around `updateMany(...)`.
-It affects every document matched by the `Filter`.
-The returned Smallmind `UpdateResult` exposes:
-
-* `wasAcknowledged()`
-* `getMatchedCount()`
-* `getModifiedCount()`
-* `getUpsertedId()`
-* `getModifiedPlusInsertedCount()`
-
-`UpdateOptions` is passed straight through to the driver, so driver features such as upsert, collation, hints, comments, array filters, and `let(...)` behave according to the driver and server.
-
-[source,java]
-----
-UpdateResult updateResult = throngClient.update(
-    User.class,
-    Filter.where("user_name").eq("ada"),
-    Updates.of()
-        .set("email", "ada@new.example.org")
-        .setOnInsert("createdAt", new Date())
-        .addToSet("roles", "reviewer"),
-    new UpdateOptions().upsert(true)
-);
-----
-
-=== Delete
-
-`delete(...)` is a thin wrapper around `deleteMany(...)`.
-It returns the driver's `DeleteResult`, so you still inspect `wasAcknowledged()` and `getDeletedCount()` on the driver type.
-
-`DeleteOptions` is also passed straight through to the driver.
-If you need collation, hints, comments, or `let(...)`, configure them on `DeleteOptions` exactly as you would with direct driver usage.
-
-[source,java]
-----
-long deleted = throngClient.delete(
-    User.class,
-    Filter.where("user_name").eq("ada"),
-    new DeleteOptions()
-).getDeletedCount();
-----
-
-=== Duplicate Key Detection
-
-If you want a small helper for duplicate `_id` or unique-index failures, `DuplicateKeyUtility` checks MongoDB error code `11000`.
-
-[source,java]
-----
-import com.mongodb.MongoWriteException;
-import org.smallmind.mongodb.throng.DuplicateKeyUtility;
-
-try {
-  throngClient.insert(user, new InsertOneOptions());
-} catch (MongoWriteException writeException) {
-  if (DuplicateKeyUtility.idDuplicateKeyException(writeException)) {
-    // handle duplicate key case
-  }
-
-  throw writeException;
-}
-----
-
-[[mongodb-query-api, Query API]]
-== Query API
-
-=== `Filter`
-
-`Filter` is intentionally small.
-Each `Filter.where("field")` builds one predicate.
-To combine predicates, create multiple filters and join them with `Filter.and(...)` or `Filter.or(...)`.
-
-[source,java]
-----
-import java.util.regex.Pattern;
-import org.smallmind.mongodb.throng.query.Filter;
-
-Filter activeAuthorFilter = Filter.and(
-    Filter.where("status").eq("ACTIVE"),
-    Filter.where("roles").in("author", "reviewer"),
-    Filter.where("user_name").regex(Pattern.compile("^a"))
-);
-----
-
-Rules worth remembering:
-
-* one field-level builder gets one terminal operator such as `eq(...)`, `lt(...)`, or `regex(...)`
-* call `not()` only after the predicate exists
-* incomplete or already-closed filters throw `IllegalFilterStateException`
-* `Filter.empty()` matches everything and is useful for `count(...)`
-
-=== `Query`
-
-`Query` adds filter, sort, projection, skip, limit, and batch size to a `find(...)` call.
-It does not try to mirror every `FindIterable` feature.
-If you need driver features such as query collation, comments, hints, no-cursor-timeout flags, or specialized cursor controls, use the MongoDB driver directly.
-
-[source,java]
-----
-import org.smallmind.mongodb.throng.ThrongIterable;
-import org.smallmind.mongodb.throng.query.Projections;
-import org.smallmind.mongodb.throng.query.Query;
-import org.smallmind.mongodb.throng.query.Sort;
-
-ThrongIterable<User> page = throngClient.find(
-    User.class,
-    Query.with()
-        .filter(activeAuthorFilter)
-        .sort(Sort.on().asc("user_name").desc("createdAt"))
-        .projection(Projections.with().include("user_name", "email").exclude("_id"))
-        .skip(20)
-        .limit(10)
-        .batchSize(10)
-);
-----
-
-[NOTE]
-====
-`skip` is a `long` in the builder but is narrowed to `int` before it reaches the driver.
-Non-positive values for `skip`, `limit`, and `batchSize` are effectively ignored.
-====
-
-=== `Sort`, `Projections`, `Updates`
-
-`Sort` is a chain of `asc(...)` and `desc(...)` calls.
-`Projections` combines `include(...)` and `exclude(...)` calls.
-`Updates` combines the following operations:
-
-* `set(String fieldName, Object value)`
-* `unset(String fieldName)`
-* `setOnInsert(String fieldName, Object value)`
-* `inc(String fieldName, Number number)`
-* `mul(String fieldName, Number number)`
-* `max(String fieldName, Object value)`
-* `min(String fieldName, Object value)`
-* `push(String fieldName, Object value)`
-* `addToSet(String fieldName, Object value)`
-* `pull(String fieldName, Object value)`
-* `popFirst(String fieldName)`
-* `popLast(String fieldName)`
-* `rename(String fieldName, String updatedFieldName)`
-
-Example:
-
-[source,java]
-----
-Updates updates = Updates.of()
-    .set("profile.timezone", "UTC")
-    .inc("loginCount", 1)
-    .addToSet("roles", "reviewer")
-    .rename("legacyField", "modernField");
-----
-
-[[mongodb-json-bson, JSON/BSON Utilities]]
-== JSON/BSON Utilities
-
-=== `BsonUtility`
-
-`BsonUtility` converts between streaming `BsonReader` and `BsonWriter` instances and in-memory `BsonValue` trees.
-It supports a useful subset of BSON values rather than the entire BSON type system.
-
-Supported BSON types in `BsonUtility`:
-
-* `OBJECT_ID`
-* `TIMESTAMP`
-* `DATE_TIME`
-* `DOCUMENT`
-* `ARRAY`
-* `NULL`
-* `STRING`
-* `BOOLEAN`
-* `DOUBLE`
-* `INT32`
-* `INT64`
-
-=== `JsonUtility`
-
-`JsonUtility` converts between Jackson `JsonNode` values and BSON.
-It covers common document, array, string, boolean, and number cases.
-
-[source,java]
-----
-import org.bson.BsonValue;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeFactory;
-import tools.jackson.databind.node.ObjectNode;
-import org.smallmind.mongodb.throng.json.JsonUtility;
-
-ObjectNode payload = JsonNodeFactory.instance.objectNode();
-payload.put("user_name", "ada");
-payload.put("loginCount", 3);
-
-BsonValue bsonValue = JsonUtility.fromJson(payload);
-JsonNode roundTrip = JsonUtility.toJson(bsonValue);
-----
-
-`JsonUtility` currently supports:
-
-* `JsonNode` object, array, null, string, boolean, integer, long, float, and double values when converting from JSON to BSON
-* `BsonValue` document, array, null, undefined, string, boolean, `INT32`, `INT64`, `DOUBLE`, and `DECIMAL128` values when converting from BSON to JSON
-* the same common scalar and container types when converting through `BsonReader` and `BsonWriter`
-
-[IMPORTANT]
-====
-Neither utility is a complete BSON translation layer.
-If your documents rely on additional BSON types such as binary values, regular expressions, code values, or other specialized nodes, use the MongoDB driver's own document APIs instead.
-====
-
-=== `DuplicateKeyUtility`
-
-`DuplicateKeyUtility.idDuplicateKeyException(MongoWriteException)` is the small helper for duplicate key detection described earlier in <<mongodb-crud,CRUD API>>.
-It does one thing: checks whether the write error code is `11000`.
-
-[[mongodb-utility-module, Utility Module]]
-== Utility Module
-
-`mongodb-utility` is intentionally small.
-It contains a pair of general helper types plus the Spring factory beans described in the next section.
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`MongoServer`
-|Simple host/port value object. Default port is `27017`.
-
-|`MongoAcknowledgment`
-|Enumeration of write concern levels: `ZERO`, `ONE`, `TWO`, `THREE`, and `MAJORITY`.
-|===
-
-[NOTE]
-====
-If you are not using Spring, most of your direct Java wiring will still be plain MongoDB driver code. `mongodb-utility` does not try to replace the driver's own settings builders.
-====
-
-[[mongodb-spring, Spring Wiring]]
-== Spring Wiring
-
-The Spring support in `mongodb-utility` is deliberately narrow.
-It materializes driver objects; it does not auto-discover entities or own broader runtime policy.
+=== Step 1 — Build the driver client
 
 [source,xml]
 ----
-<bean id="mongoServers" class="org.smallmind.mongodb.utility.spring.MongoServerFactoryBean">
-  <property name="serverPattern" value="mongo-#.example.org:27017"/>
-  <property name="serverSpread" value="1-3"/>
+<bean id="mongoServers"
+      class="org.smallmind.mongodb.utility.spring.MongoServerFactoryBean">
+  <property name="serverPattern" value="mongo#.internal:27017"/>  <1>
+  <property name="serverSpread"  value="1-3"/>                    <2>
 </bean>
 
-<bean id="mongoCredential" class="org.smallmind.mongodb.utility.spring.MongoCredentialFactoryBean">
-  <property name="user" value="${mongo.user}"/>
-  <property name="password" value="${mongo.password}"/>
-  <property name="source" value="admin"/>
+<bean id="mongoCredential"
+      class="org.smallmind.mongodb.utility.spring.MongoCredentialFactoryBean">
+  <property name="user"     value="app-service"/>
+  <property name="password" value="${mongo.password}"/>           <3>
+  <property name="source"   value="admin"/>                       <4>
 </bean>
 
-<bean id="writeConcern" class="org.smallmind.mongodb.utility.spring.MongoWriteConcern">
-  <property name="acknowledgment" value="MAJORITY"/>
+<bean id="mongoWriteConcern"
+      class="org.smallmind.mongodb.utility.spring.MongoWriteConcern">
+  <property name="acknowledgment" value="MAJORITY"/>              <5>
+  <property name="journaled"      value="true"/>
 </bean>
 
-<bean id="mongoClientSettings" class="org.smallmind.mongodb.utility.spring.MongoClientSettingsFactoryBean">
+<bean id="mongoClientSettings"
+      class="org.smallmind.mongodb.utility.spring.MongoClientSettingsFactoryBean">
   <property name="serverAddresses" ref="mongoServers"/>
   <property name="mongoCredential" ref="mongoCredential"/>
-  <property name="writeConcern" ref="writeConcern"/>
-  <property name="retryReads" value="true"/>
-  <property name="retryWrites" value="true"/>
-  <property name="sslEnabled" value="false"/>
+  <property name="writeConcern"    ref="mongoWriteConcern"/>
+  <property name="sslEnabled"      value="true"/>
+  <property name="connectionPoolMaxSize" value="50"/>
 </bean>
 
-<bean id="mongoClient" class="org.smallmind.mongodb.utility.spring.MongoClientFactoryBean">
+<bean id="mongoClient"
+      class="org.smallmind.mongodb.utility.spring.MongoClientFactoryBean">
+  <property name="clientSettings" ref="mongoClientSettings"/>     <6>
+</bean>
+----
+<1> Template for the broker host names. `#` marks the expansion point.
+<2> The spread `1-3` produces three addresses on port 27017.
+<3> Plain string; the factory converts it to a `char[]` when it
+    constructs the `MongoCredential`.
+<4> Authentication database. For SCRAM users defined in `admin`, use
+    `admin`; for users defined in the application database, use the
+    database name.
+<5> An enum literal — `ZERO`, `ONE`, `TWO`, `THREE`, or `MAJORITY`.
+    `withJournal(true)` is applied only for journable levels
+    (everything except `ZERO`).
+<6> `MongoClientFactoryBean` calls `MongoClients.create(settings)`
+    eagerly in `afterPropertiesSet` and calls `client.close()` in
+    `destroy`. The surrounding Spring context owns the lifecycle.
+
+=== Step 2 — Declare an entity
+
+[source,java]
+----
+import org.bson.types.ObjectId;
+import org.smallmind.mongodb.throng.mapping.annotation.Entity;
+import org.smallmind.mongodb.throng.mapping.annotation.Id;
+import org.smallmind.mongodb.throng.mapping.annotation.Property;
+
+@Entity("orders")                            <1>
+public class Order {
+
+  @Id                                         <2>
+  private ObjectId id;
+
+  @Property("placed_at")                      <3>
+  private long placedAt;
+
+  @Property                                   <4>
+  private String status;
+
+  public Order () {}                          <5>
+
+  public ObjectId getId () { return id; }
+  public void setId (ObjectId id) { this.id = id; }
+
+  public long getPlacedAt () { return placedAt; }
+  public void setPlacedAt (long placedAt) { this.placedAt = placedAt; }
+
+  public String getStatus () { return status; }
+  public void setStatus (String status) { this.status = status; }
+}
+----
+<1> `value()` on `@Entity` names the MongoDB collection. The
+    annotation's `polymorphic()` member is unused here and must stay at
+    its default `@Polymorphic()` (empty).
+<2> Exactly one `@Id` field is required. Its default storage name is
+    `_id`; pass `@Id("alternative_id")` to override.
+<3> A stored field whose BSON name differs from the Java field name.
+<4> No-arg `@Property` uses the Java field name (`status`) as the BSON
+    name.
+<5> Throng constructs entities reflectively with a no-arg constructor.
+    It is required on both `@Entity` and `@Embedded` classes.
+
+=== Step 3 — Build a `ThrongClient`
+
+[source,java]
+----
+import org.smallmind.mongodb.throng.ThrongClient;
+import org.smallmind.mongodb.throng.ThrongOptions;
+
+ThrongClient throng = new ThrongClient(
+    mongoClient,
+    "orders-db",
+    new ThrongOptions(false, true, true),       <1>
+    Order.class);                                <2>
+----
+<1> `storeNulls=false`, `createIndexes=true`, `includeCollation=true`.
+<2> Entity and embedded classes are registered up front. Any class not
+    listed here produces `ThrongRuntimeException("Unmapped entity
+    type(...)")` at the first CRUD call.
+
+=== Step 4 — Query
+
+[source,java]
+----
+import org.smallmind.mongodb.throng.query.Filter;
+import org.smallmind.mongodb.throng.query.Query;
+import org.smallmind.mongodb.throng.query.Sort;
+
+List<Order> open = throng.find(
+    Order.class,
+    Query.with()
+         .filter(Filter.where("status").eq("OPEN"))
+         .sort(Sort.on().desc("placed_at"))          <1>
+         .limit(50))
+    .asList();                                        <2>
+----
+<1> Sort by the BSON field name, not the Java field name. Throng does
+    not translate Java field references in the DSL.
+<2> `ThrongIterable.asList()` eagerly drains the cursor.
+
+== Utility API Reference
+
+=== `MongoServer`
+
+A plain value object holding a `(host, port)` pair, default port
+`27017`. It has a no-arg constructor for bean wiring and a convenience
+`(String, int)` constructor. It is *not* consumed by the
+`MongoServerFactoryBean` — which uses pattern/spread expansion to
+produce `ServerAddress[]` directly — but is useful in custom wiring
+that needs to aggregate hosts from multiple sources.
+
+=== `MongoAcknowledgment`
+
+[cols="1,2,1",options="header"]
+|===
+| Constant | Driver `WriteConcern` | Journable
+
+| `ZERO`
+| `WriteConcern.UNACKNOWLEDGED`
+| no
+
+| `ONE`
+| `WriteConcern.W1`
+| yes
+
+| `TWO`
+| `WriteConcern.W2`
+| yes
+
+| `THREE`
+| `WriteConcern.W3`
+| yes
+
+| `MAJORITY`
+| `WriteConcern.MAJORITY`
+| yes
+|===
+
+The enum is the contract for `MongoWriteConcern.setAcknowledgment`.
+`journable` is consulted by `MongoWriteConcern` before it decides
+whether to apply `withJournal(true)`.
+
+=== `MongoServerFactoryBean`
+
+Spring `FactoryBean<ServerAddress[]>`. Parses a `serverPattern`
+(`mongo#.internal:27017` or a plain `localhost`) and an optional
+`serverSpread` (`1-3`, `a-c`, `1,2,5`) and emits the corresponding
+array during `afterPropertiesSet`.
+
+Parsing rules (mirroring the Kafka module's equivalent):
+
+* *No `#`, no `:`* — single address, port defaults to `27017`.
+* *No `#`, with `:`* — single address, host is the prefix, port is the
+  suffix parsed as `int`.
+* *With `#`, no `:`* — one address per spread value, port defaults to
+  `27017`.
+* *With `#` and `:`* — one address per spread value; the literal port
+  after `:` applies to every address.
+
+An empty or null `serverPattern` leaves `serverAddresses` at `null`.
+`getObject()` is then `null` — callers that require a non-null result
+must set the pattern explicitly.
+
+[NOTE]
+====
+A `#` placed *after* the first `:` will be treated as part of the port
+string and fail with `NumberFormatException`. Keep the `#` in the host
+portion.
+====
+
+=== `MongoCredentialFactoryBean`
+
+Spring `FactoryBean<MongoCredential>`. Produces a single
+`MongoCredential` via
+`MongoCredential.createScramSha1Credential(user, source, password.toCharArray())`.
+Every property is required; there are no defaults.
+
+For authentication mechanisms other than SCRAM-SHA-1 (SCRAM-SHA-256,
+X.509, Kerberos, AWS IAM), construct the `MongoCredential` directly
+and inject it into `MongoClientSettingsFactoryBean.setMongoCredential`.
+
+=== `MongoWriteConcern`
+
+Spring `FactoryBean<WriteConcern>` with `isSingleton() = false`. The
+contract is:
+
+* `setAcknowledgment(MongoAcknowledgment)` selects the level;
+* `setJournaled(boolean)` asks for journal acknowledgment, but has no
+  effect unless the chosen level is journable.
+
+A journable level plus `journaled=true` emits
+`acknowledgment.getWriteConcern().withJournal(true)`; any other
+combination returns `acknowledgment.getWriteConcern()` unchanged.
+
+=== `MongoClientSettingsFactoryBean`
+
+Spring `FactoryBean<MongoClientSettings>` with 20+ nullable setters.
+Each non-null property applies to the appropriate sub-builder; every
+null property leaves the driver's default in place.
+
+Behavior worth knowing:
+
+* *SSL context* — if `certResource` is set, the factory loads a trust
+  store via
+  `org.smallmind.nutsnbolts.security.TrustManagerUtility.load()` and
+  installs an `SSLContext` initialized with that trust manager. If
+  `certResource` is null, the default JSSE trust store is used.
+* *SSL enabled* — controlled independently by `sslEnabled`. SSL is
+  only applied when the flag is `true`; the trust material is loaded
+  whenever `certResource` is set, regardless of the flag.
+* *Write concern* — applied only if `writeConcern` is non-null *and*
+  `writeConcernEnabled` is not explicitly `false`. This lets an
+  operator disable write-concern overrides without removing the bean
+  reference.
+* *UUID representation* — hard-coded to `UuidRepresentation.STANDARD`.
+  There is no property to override it.
+* *Codec registry* — if `codecRegistry` is set, it is prepended to the
+  driver defaults via `CodecRegistries.fromRegistries(custom,
+  MongoClientSettings.getDefaultCodecRegistry())`. The composite wins
+  for types the custom registry covers and falls through for
+  everything else.
+
+The full setter list (all accept the standard boxed types, all apply
+their value only when non-null):
+
+[cols="2,1,2",options="header"]
+|===
+| Setter | Type | Applied to
+
+| `codecRegistry`
+| `CodecRegistry`
+| client-wide codec registry
+
+| `certResource`
+| `Resource`
+| SSL trust store
+
+| `mongoCredential`
+| `MongoCredential`
+| `credential`
+
+| `serverAddresses`
+| `ServerAddress[]`
+| `ClusterSettings#hosts`
+
+| `readPreference`
+| `ReadPreference`
+| client-wide read preference
+
+| `readConcern`
+| `ReadConcern`
+| client-wide read concern
+
+| `writeConcern`
+| `WriteConcern`
+| client-wide write concern
+
+| `writeConcernEnabled`
+| `Boolean`
+| gate for applying `writeConcern`
+
+| `retryReads`
+| `Boolean`
+| read retry
+
+| `retryWrites`
+| `Boolean`
+| write retry
+
+| `sslEnabled`
+| `Boolean`
+| `SslSettings#enabled`
+
+| `allowInvalidHostNames`
+| `Boolean`
+| `SslSettings#invalidHostNameAllowed`
+
+| `socketConnectTimeoutMilliseconds`
+| `Integer`
+| `SocketSettings#connectTimeout`
+
+| `serverSelectionTimeoutMilliseconds`
+| `Integer`
+| `ClusterSettings#serverSelectionTimeout`
+
+| `connectionPoolMinSize`
+| `Integer`
+| `ConnectionPoolSettings#minSize`
+
+| `connectionPoolMaxSize`
+| `Integer`
+| `ConnectionPoolSettings#maxSize`
+
+| `connectionPoolMaxConnecting`
+| `Integer`
+| `ConnectionPoolSettings#maxConnecting`
+
+| `connectionPoolMaxWaitTimeMilliseconds`
+| `Integer`
+| `ConnectionPoolSettings#maxWaitTime`
+
+| `connectionPoolMaxConnectionLifeTimeSeconds`
+| `Integer`
+| `ConnectionPoolSettings#maxConnectionLifeTime`
+
+| `connectionPoolMaxConnectionIdleTimeSeconds`
+| `Integer`
+| `ConnectionPoolSettings#maxConnectionIdleTime`
+|===
+
+=== `MongoClientFactoryBean`
+
+Spring `FactoryBean<MongoClient>` that also implements
+`InitializingBean` and `DisposableBean`. On context startup it calls
+`MongoClients.create(clientSettings)` and holds the resulting
+`MongoClient`; on context shutdown it calls `client.close()`.
+
+There is no reconnection, refresh, or reload behavior. Replacing
+credentials or server lists at runtime requires either refreshing the
+Spring context that owns the bean or building a new `MongoClient`
+outside of Spring.
+
+[[utility-spring-wiring]]
+=== Utility: Full Spring Wiring Reference
+
+A representative end-to-end configuration:
+
+[source,xml]
+----
+<bean id="mongoServers"
+      class="org.smallmind.mongodb.utility.spring.MongoServerFactoryBean">
+  <property name="serverPattern" value="mongo#.prod.internal:27017"/>
+  <property name="serverSpread"  value="1-3"/>
+</bean>
+
+<bean id="mongoCredential"
+      class="org.smallmind.mongodb.utility.spring.MongoCredentialFactoryBean">
+  <property name="user"     value="${mongo.user}"/>
+  <property name="password" value="${mongo.password}"/>
+  <property name="source"   value="admin"/>
+</bean>
+
+<bean id="mongoWriteConcern"
+      class="org.smallmind.mongodb.utility.spring.MongoWriteConcern">
+  <property name="acknowledgment" value="MAJORITY"/>
+  <property name="journaled"      value="true"/>
+</bean>
+
+<bean id="mongoClientSettings"
+      class="org.smallmind.mongodb.utility.spring.MongoClientSettingsFactoryBean">
+  <property name="serverAddresses"                            ref="mongoServers"/>
+  <property name="mongoCredential"                            ref="mongoCredential"/>
+  <property name="writeConcern"                               ref="mongoWriteConcern"/>
+  <property name="readPreference">
+    <util:constant static-field="com.mongodb.ReadPreference.SECONDARY_PREFERRED"/>
+  </property>
+  <property name="sslEnabled"                                 value="true"/>
+  <property name="retryWrites"                                value="true"/>
+  <property name="retryReads"                                 value="true"/>
+  <property name="socketConnectTimeoutMilliseconds"           value="5000"/>
+  <property name="serverSelectionTimeoutMilliseconds"         value="15000"/>
+  <property name="connectionPoolMinSize"                      value="5"/>
+  <property name="connectionPoolMaxSize"                      value="50"/>
+  <property name="connectionPoolMaxConnectionLifeTimeSeconds" value="600"/>
+</bean>
+
+<bean id="mongoClient"
+      class="org.smallmind.mongodb.utility.spring.MongoClientFactoryBean">
   <property name="clientSettings" ref="mongoClientSettings"/>
 </bean>
 ----
 
-If you want Spring to construct the driver objects but still use Throng directly, add an ordinary bean around the `ThrongClient` constructor:
+== Throng API Reference
+
+[[throng-api-reference]]
+
+=== `ThrongClient`
+
+`ThrongClient` is the entry point for every typed operation. It is
+constructed once per database, holds no connection state beyond what
+the underlying driver maintains, and is safe to share across threads.
 
 [source,java]
 ----
-import com.mongodb.client.MongoClient;
-import org.smallmind.mongodb.throng.ThrongClient;
-import org.smallmind.mongodb.throng.ThrongOptions;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+public ThrongClient(MongoClient mongoClient,
+                    String database,
+                    ThrongOptions options,
+                    Class<?>... entityClasses)
+    throws ThrongMappingException, NoSuchMethodException,
+           InstantiationException, IllegalAccessException,
+           InvocationTargetException;
+----
 
-@Configuration
-public class MongoConfiguration {
+Construction:
 
-  @Bean
-  public ThrongClient throngClient (MongoClient mongoClient)
-    throws Exception {
+1. Resolves the `MongoDatabase` from the `MongoClient`.
+2. Composes an initial `CodecRegistry` that prepends an
+   `ArrayCodecProvider` (respecting `options.isStoreNulls()`) to the
+   database registry.
+3. Scans `entityClasses` twice:
+** first pass registers codecs for `@Embedded` classes
+   (`ThrongEmbeddedUtility.generateEmbeddedCodec`), producing either a
+   plain `ThrongEmbeddedCodec` or a `ThrongPolymorphicEmbeddedCodec`
+   depending on whether the class has `@Polymorphic(value = {...})`;
+** second pass registers `ThrongEntityCodec` instances for `@Entity`
+   classes and, when `options.isCreateIndexes()` is true, calls
+   `IndexUtility.createIndex` on the collection with the entity's
+   compound and single-field indexes.
+4. Builds the final `CodecRegistry` used by every CRUD call:
+   `ThrongDocumentCodec` + embedded codecs + driver registry +
+   `ArrayCodecProvider`.
 
-    return new ThrongClient(
-        mongoClient,
-        "application",
-        new ThrongOptions(false, true, true),
-        User.class,
-        Profile.class
-    );
+CRUD surface:
+
+[cols="2,3",options="header"]
+|===
+| Method | Behavior
+
+| `long count(Class<T>, Filter)`
+| Counts documents satisfying `filter` in the entity's collection.
+
+| `ThrongIterable<T> find(Class<T>, Query)`
+| Applies the query (filter, sort, projection, skip, limit, batch
+  size) and returns a lazy iterable that decodes each
+  `ThrongDocument` into `T` on demand.
+
+| `T findOne(Class<T>, Query)`
+| Convenience over `find` that sets `limit(1)` and returns the first
+  decoded entity, or `null` if the result set is empty.
+
+| `InsertOneResult insert(T, InsertOneOptions)`
+| Encodes the entity into a `ThrongDocument` (firing `@PrePersist`
+  before and `@PostPersist` after encoding) and calls `insertOne`.
+
+| `UpdateResult update(Class<T>, Filter, Updates, UpdateOptions)`
+| Calls `updateMany` and wraps the driver's `UpdateResult` so that
+  `getModifiedPlusInsertedCount` is available (modified count plus 1
+  if an `upsertedId` is set).
+
+| `DeleteResult delete(Class<T>, Filter, DeleteOptions)`
+| Calls `deleteMany` with the supplied filter.
+|===
+
+[NOTE]
+====
+`insert` derives the entity class from the *runtime* type of the
+value (`value.getClass()`), not the declared generic parameter. A
+value whose runtime class is not registered produces
+`ThrongRuntimeException("Unmapped entity type(...)")`.
+====
+
+=== `ThrongOptions`
+
+Three flags:
+
+[cols="2,3",options="header"]
+|===
+| Flag | Meaning
+
+| `storeNulls`
+| When `true`, null property values are persisted as BSON null. When
+  `false` (the typical choice), null-valued properties are omitted
+  from the encoded document. The flag propagates into
+  `ThrongPropertiesCodec`, `ThrongEmbeddedCodec`, and `ArrayCodec`;
+  the encode path skips null writes when the flag is off and writes
+  BSON null otherwise.
+
+| `createIndexes`
+| When `true`, indexes declared by the entity's `@Indexed` /
+  `@Index` / `@Indexes` / `@AllIndexes` annotations are created at
+  `ThrongClient` construction via `IndexUtility.createIndex` on the
+  corresponding collection.
+
+| `includeCollation`
+| When `true`, collation settings from each `@IndexOptions.collation`
+  are applied during index creation. When `false`, collation is
+  skipped — useful for clusters that do not support the default ICU
+  collator or deployments that store collation rules server-side.
+|===
+
+`ThrongOptions` has a `(boolean, boolean, boolean)` constructor and
+fluent setters (`setStoreNulls`, `setCreateIndexes`,
+`setIncludeCollation`) that return `this`. Its no-arg constructor is
+private; use the three-argument form.
+
+[[throng-annotations]]
+=== Throng Annotations
+
+==== Mapping (`mapping.annotation.*`)
+
+`@Entity(value)`::
+    Class-level. Marks a top-level document.
++
+* `value()` — the collection name (required).
+* `polymorphic()` — must be left at the default `@Polymorphic()`. An
+  entity with a non-empty `@Polymorphic` fails mapping (see
+  <<limitations,Limitations>>).
+
+`@Embedded`::
+    Class-level. Marks a non-collection document type.
++
+* `polymorphic()` — optional. A non-empty `value()` list triggers
+  polymorphic encode/decode through `ThrongPolymorphicEmbeddedCodec`.
+
+`@Id(value = "_id")`::
+    Field-level. Identifies the primary key field.
++
+* `value()` — the BSON name. Default `_id`. Exactly one `@Id` field
+  per `@Entity`; missing or duplicate throws `ThrongMappingException`.
+
+`@Property(value = "")`::
+    Field-level. Declares a stored field.
++
+* `value()` — the BSON name. Empty (the default) means "use the Java
+  field name."
+
+`@Codec(value)`::
+    Field-level. Binds a specific `org.bson.codecs.Codec<?>` to the
+    field, overriding the registry.
++
+* `value()` — the codec class. The codec is instantiated reflectively
+  via `CodecUtility`; a type mismatch between the codec's encoder
+  class and the field type throws `ThrongMappingException` at
+  registration.
+
+`@Polymorphic(value = {}, key = "")`::
+    Class-level. Declares a polymorphic hierarchy on an `@Embedded`
+    class.
++
+* `value()` — the permissible concrete subtypes. Empty disables
+  polymorphism.
+* `key()` — the discriminator field name in BSON. Empty means "use
+  `java/object`" (the legacy default).
+
+==== Lifecycle (`lifecycle.annotation.*`)
+
+All four lifecycle annotations are `@Entity`-only; declaring any of
+them on an `@Embedded` class fails mapping with
+`ThrongLifecycleRejection.reject`.
+
+`@PreLoad`::
+    *Must be `static`.* Takes a single `BsonDocument` parameter. Fires
+    before the entity is decoded. Use it to inspect or transform the
+    raw BSON.
+
+`@PostLoad`::
+    Instance method, no arguments. Fires after the entity has been
+    decoded. Use it to compute derived state or validate the loaded
+    object.
+
+`@PrePersist`::
+    Instance method, no arguments. Fires before the entity is
+    encoded. Use it to stamp `updatedAt` fields or validate state
+    pre-write.
+
+`@PostPersist`::
+    Instance method. Takes a single `BsonDocument` parameter. Fires
+    after the encoded `BsonDocument` has been produced but before it
+    is handed to the driver. Rarely needed; most projects use
+    `@PrePersist`.
+
+==== Indexes (`index.annotation.*`)
+
+`@Indexed(IndexType value = ASCENDING, IndexOptions options = ...)`::
+    Field-level. Declares a single-field index.
+
+`@Index(String value, IndexType type = ASCENDING)`::
+    Component of a compound-index declaration. Not a standalone field
+    annotation.
+
+`@Indexes(Index[] value, IndexOptions options = ...)`::
+    Class-level (repeatable via `@AllIndexes`). Declares a compound
+    index comprising the listed `@Index` elements and shared options.
+
+`@AllIndexes(Indexes[] value)`::
+    Class-level. Container annotation aggregating multiple
+    `@Indexes`. Required because `@Indexes` is itself an array wrapper
+    and not directly `@Repeatable`-compatible with Java's annotation
+    inheritance semantics.
+
+`@IndexOptions`::
+    Carries the MongoDB driver's full `IndexOptions` surface:
+    `background`, `unique`, `name`, `sparse`, `expireAfterSeconds`,
+    `version`, `weights`, `defaultLanguage`, `languageOverride`,
+    `textVersion`, `sphereVersion`, `bits`, `min`, `max`,
+    `storageEngine`, `partialFilterExpression`, `collation`,
+    `wildcardProjection`, `hidden`. Every member has a default; only
+    override the ones that deviate from MongoDB's standard behavior.
+
+`@Collation`::
+    Embedded inside `@IndexOptions.collation()`. Carries the locale
+    and strength settings that the driver's `Collation.builder()`
+    understands.
+
+`IndexType`::
+    Six-case enum: `ASCENDING`, `DESCENDING`, `HASHED`, `TEXT`,
+    `GEO2D`, `GEO2DSPHERE`. Each case knows how to produce a `Bson`
+    index spec by delegating to
+    `com.mongodb.client.model.Indexes`.
+
+=== Mapping Example
+
+An entity with single-field indexes, a compound index, and a
+lifecycle callback:
+
+[source,java]
+----
+import org.bson.BsonDocument;
+import org.bson.types.ObjectId;
+import org.smallmind.mongodb.throng.index.IndexType;
+import org.smallmind.mongodb.throng.index.annotation.Index;
+import org.smallmind.mongodb.throng.index.annotation.IndexOptions;
+import org.smallmind.mongodb.throng.index.annotation.Indexed;
+import org.smallmind.mongodb.throng.index.annotation.Indexes;
+import org.smallmind.mongodb.throng.lifecycle.annotation.PrePersist;
+import org.smallmind.mongodb.throng.mapping.annotation.Entity;
+import org.smallmind.mongodb.throng.mapping.annotation.Id;
+import org.smallmind.mongodb.throng.mapping.annotation.Property;
+
+@Entity("orders")
+@Indexes(                                               <1>
+    value   = {@Index(value = "status"),
+               @Index(value = "placed_at", type = IndexType.DESCENDING)},
+    options = @IndexOptions(name = "status_placedAt_idx"))
+public class Order {
+
+  @Id
+  private ObjectId id;
+
+  @Indexed                                              <2>
+  @Property("customer_id")
+  private String customerId;
+
+  @Indexed(value = IndexType.DESCENDING,
+           options = @IndexOptions(background = true)) <3>
+  @Property("placed_at")
+  private long placedAt;
+
+  @Property
+  private String status;
+
+  @Property
+  private long updatedAt;
+
+  @PrePersist
+  private void touch () {
+    updatedAt = System.currentTimeMillis();             <4>
   }
 }
 ----
+<1> Compound index on `status` (ascending) + `placed_at`
+    (descending), with an explicit name so migrations can reference
+    it.
+<2> Single-field ascending index on `customer_id` with default
+    options.
+<3> Single-field descending index on `placed_at` built in the
+    background so index creation does not block.
+<4> Lifecycle callback. Throng fires this before encoding the
+    document on every `insert` and before every `update` *that uses
+    the encoded-entity path* — the typed `Updates` DSL does not
+    dispatch lifecycle callbacks.
 
-=== `MongoServerFactoryBean`
+[[query-dsl]]
+=== Query DSL
 
-`MongoServerFactoryBean` creates `ServerAddress[]` from a `serverPattern` and optional `serverSpread`.
+==== `Filter`
 
-Pattern behavior:
+A `Filter` is built in three steps: pick a field, apply a comparison,
+and (optionally) negate.
 
-* if there is no `#` placeholder, it creates one `ServerAddress`
-* if there is a `#` placeholder, it expands that placeholder with `Spread.calculate(serverSpread)`
-* if the pattern omits `:port`, the default port is `27017`
+[source,java]
+----
+Filter f = Filter.where("status").eq("OPEN");                 <1>
+Filter g = Filter.where("price").gte(100).not();              <2>
+Filter h = Filter.where("tags").in("urgent", "expedited");    <3>
+Filter i = Filter.and(                                        <4>
+    Filter.where("status").eq("OPEN"),
+    Filter.where("placed_at").gt(since));
+Filter j = Filter.empty();                                    <5>
+----
+<1> Single comparison.
+<2> `not()` negates the *current* filter; only legal after a
+    comparison. `not()` on an uninitialized filter throws
+    `IllegalFilterStateException`.
+<3> `in(Object...)` and `in(Iterable<?>)` both exist. The iterable
+    form is preferred when the values come from a collection.
+<4> `and` and `or` accept varargs; passing zero filters returns
+    `Filter.empty()`. Passing a filter that has not had a comparison
+    applied throws `IllegalFilterStateException`.
+<5> "Match everything." Used as a filter on `count`, `find`,
+    `update`, or `delete` when the caller wants to operate on the
+    whole collection.
 
-Example: `mongo-#.example.org:27017` with `serverSpread` set to `1-3` produces `mongo-1.example.org`, `mongo-2.example.org`, and `mongo-3.example.org`.
+Supported comparisons:
 
-=== `MongoCredentialFactoryBean`
+[cols="1,3",options="header"]
+|===
+| Method | MongoDB operator
 
-`MongoCredentialFactoryBean` produces a driver `MongoCredential` from `user`, `password`, and `source`.
-It always builds a SCRAM-SHA-1 credential.
-If you need a different authentication mechanism, construct `MongoCredential` yourself and inject it directly.
+| `eq(Object)` | `$eq`
+| `ne(Object)` | `$ne`
+| `gt(Object)` | `$gt`
+| `gte(Object)` | `$gte`
+| `lt(Object)` | `$lt`
+| `lte(Object)` | `$lte`
+| `exists(boolean)` | `$exists`
+| `in(Iterable<?>)` / `in(Object...)` | `$in`
+| `nin(Object...)` | `$nin`
+| `regex(Pattern)` | `$regex`
+| `not()` | `$not` (wraps the current filter)
+|===
 
-=== `MongoClientSettingsFactoryBean`
+==== `Query`
 
-`MongoClientSettingsFactoryBean` exposes the most commonly needed driver settings as Spring bean properties.
-It supports:
+A `Query` composes a `Filter` with paging and cursor controls.
 
-* cluster hosts through `serverAddresses`
-* optional credential assignment through `mongoCredential`
-* optional `codecRegistry` merging with the driver's default registry
-* `readPreference`, `readConcern`, `writeConcern`, `writeConcernEnabled`, `retryReads`, and `retryWrites`
-* TLS configuration through `certResource`, `sslEnabled`, and `allowInvalidHostNames`
-* timeouts and pool settings such as `socketConnectTimeoutMilliseconds`, `serverSelectionTimeoutMilliseconds`, `connectionPoolMinSize`, `connectionPoolMaxSize`, `connectionPoolMaxConnecting`, `connectionPoolMaxWaitTimeMilliseconds`, `connectionPoolMaxConnectionLifeTimeSeconds`, and `connectionPoolMaxConnectionIdleTimeSeconds`
+[source,java]
+----
+Query q = Query.with()
+    .filter(Filter.where("status").eq("OPEN"))
+    .sort(Sort.on().desc("placed_at").asc("customer_id"))
+    .projection(Projections.with()
+                          .include("customer_id", "status", "placed_at")
+                          .exclude("_id"))
+    .skip(100)
+    .limit(25)
+    .batchSize(50);
+----
 
-A few defaults and constraints matter:
+Defaults: `skip=0`, `limit=0` (no limit), `batchSize=0` (driver
+default, usually 101 for the first batch). `skip` accepts a `long`
+but the driver only honors an `int`-sized value.
 
-* `serverAddresses` is required; the factory always applies hosts from that property
-* `uuidRepresentation` is forced to `UuidRepresentation.STANDARD`
-* `certResource` alone does not enable TLS; set `sslEnabled` to `true` as well
-* if you need SSL, auth, or cluster behavior beyond these setters, build `MongoClientSettings` directly with the driver
+==== `Sort`
 
-=== `MongoClientFactoryBean`
+[source,java]
+----
+Sort s = Sort.on()
+    .desc("placed_at")
+    .asc("customer_id");
+----
 
-`MongoClientFactoryBean` builds a singleton `MongoClient` from `MongoClientSettings` and closes it in `destroy()`.
-Use it when you want Spring to own client shutdown.
+Order of invocation is the order applied by the driver.
 
-=== `MongoWriteConcern`
+==== `Projections`
 
-`MongoWriteConcern` builds a `WriteConcern` from `MongoAcknowledgment` and an optional `journaled` flag.
+[source,java]
+----
+Projections p = Projections.with()
+    .include("customer_id", "status")
+    .exclude("_id");
+----
 
-[IMPORTANT]
-====
-In the current implementation, `setJournaled(true)` does not change the returned `WriteConcern` because the result of `withJournal(...)` is not reassigned.
-If journaling matters, construct the driver `WriteConcern` yourself and inject it directly.
-====
+Include and exclude follow MongoDB's rules: mixing them is legal only
+when excluding `_id`.
 
-[[mongodb-lifecycle-ownership, Lifecycle And Resource Ownership]]
-== Lifecycle And Resource Ownership
+==== `Updates`
 
-Ownership is explicit:
+[source,java]
+----
+Updates u = Updates.of()
+    .set("status", "FULFILLED")
+    .inc("version", 1)
+    .setOnInsert("createdAt", now)
+    .push("history", event);
+----
 
-* `ThrongClient` does not close the `MongoClient` passed to it
-* `MongoClientFactoryBean` does close the client when the Spring bean is destroyed
-* `ThrongClient` construction can create indexes if `createIndexes` is enabled, so startup may perform writes
-* `ThrongIterable` does not expose an explicit cursor-close API; for cursor-level control, use the driver directly
+Supported operators: `set`, `unset`, `setOnInsert`, `inc`, `mul`,
+`max`, `min`, `push`, `addToSet`, `pull`, `popFirst`, `popLast`,
+`rename`. Each call appends to an ordered list; `toBsonDocument`
+combines the list via
+`com.mongodb.client.model.Updates.combine(...)`.
 
-Operational guidance:
+=== Iteration
 
-* prefer long-lived `MongoClient` instances rather than one client per operation
-* treat `ThrongClient` as reusable infrastructure after it has validated mappings at startup
-* if you disable automatic index creation, move index management into your own deployment or migration path
+`ThrongIterable<T>` exposes two ways to consume a result set:
 
-[[mongodb-errors, Error Model]]
+[source,java]
+----
+// Eager
+List<Order> open = throng.find(Order.class, q).asList();
+
+// Lazy
+try (var cursor = throng.find(Order.class, q).iterator()) {   <1>
+  while (cursor.hasNext()) {
+    process(cursor.next());
+  }
+}
+----
+<1> The underlying `MongoCursor` is closeable; rely on
+    try-with-resources or explicit close when draining a long cursor.
+
+Each `next()` call performs exactly one decode and fires `@PreLoad` /
+`@PostLoad` once. A query with 10,000 matches and
+`Iterator#hasNext`/`next` iteration decodes 10,000 times; `asList()`
+is equivalent but eager.
+
+== Behavioral Reference
+
+=== Codec Composition
+
+`ThrongClient` builds a stacked `CodecRegistry` exactly once during
+construction:
+
+1. *Driver base + array support.* The first layer merges the
+   database's own registry with an `ArrayCodecProvider` that wraps
+   every Java array type seen during mapping. The `storeNulls`
+   setting flows into the array codec so that null elements in a
+   stored array follow the same encoding rule as null scalar
+   properties.
+2. *Embedded codecs.* The second layer adds one `ThrongEmbeddedCodec`
+   (or `ThrongPolymorphicEmbeddedCodec`) per registered `@Embedded`
+   class. Polymorphic variants dispatch at encode time by inspecting
+   the runtime class and at decode time by reading the discriminator
+   field (default `java/object`, or whatever `@Polymorphic.key()` is).
+3. *Document pass-through.* The outermost layer adds a
+   `ThrongDocumentCodec` so that a `ThrongDocument` round-trips
+   without further rewriting.
+
+All filters, updates, and values pass through the outermost registry.
+That is how a `Filter.where("placed_at").gt(Instant.now())` is
+encoded using the same rules that would encode a stored property.
+
+=== Lifecycle Execution
+
+`TranslationUtility.fromBson` invokes callbacks in this order during
+decode:
+
+1. `@PreLoad` static method (if present), with the raw `BsonDocument`.
+2. The codec decodes the document into a new instance.
+3. `@PostLoad` instance method (if present).
+
+`TranslationUtility.toBson` invokes callbacks during encode:
+
+1. `@PrePersist` instance method (if present).
+2. The codec encodes the instance into a `BsonDocument`.
+3. `@PostPersist` instance method (if present), with the encoded
+   `BsonDocument`.
+
+Callbacks that throw propagate through the triggering operation
+unchanged; a throwing `@PrePersist` short-circuits the insert before
+anything touches the driver.
+
+=== Null Handling
+
+With `storeNulls=false` (the typical setting):
+
+* null property values are *omitted* from the encoded document;
+* decoding tolerates either a missing field or a BSON null — in both
+  cases the Java field is left at its default (`null` for references,
+  `0` for primitives);
+* null elements inside a stored array are dropped on encode.
+
+With `storeNulls=true`:
+
+* null property values become BSON null;
+* absent fields still decode to the Java default.
+
+The flag affects encode only; decode is symmetrical.
+
+=== Index Creation
+
+`IndexUtility.createIndex` collects the entity's compound indexes
+(from `@Indexes`/`@AllIndexes`) and single-field indexes (from
+`@Indexed`), resolves each `IndexType` into its driver
+`Indexes.ascending` / `descending` / `hashed` / `text` / `geo2d` /
+`geo2dsphere` factory call, applies each `@IndexOptions` to a driver
+`IndexOptions`, and calls `MongoCollection#createIndex` per entry.
+
+If `options.isIncludeCollation()` is `false`, the `@Collation` on
+each `@IndexOptions.collation()` is ignored.
+
+Index creation is *not* transactional and is *not* idempotent across
+schema changes. Renaming a field without dropping the old index
+leaves orphan indexes in place; removing an `@Indexed` annotation
+does not drop the server-side index.
+
+=== Thread Safety
+
+* `ThrongClient` is safe to share across threads. Its internal state
+  (database handle, codec registry, codec map) is set once during
+  construction and only read thereafter.
+* `Filter`, `Query`, `Sort`, `Projections`, and `Updates` are
+  single-use builders; do not mutate one from multiple threads. Each
+  CRUD call is idiomatic: build the query, pass it in, discard.
+* `ThrongIterable` and its `ThrongIterator` wrap the driver's own
+  `FindIterable` / `MongoCursor`; the cursor is not thread-safe and
+  must be iterated from one thread.
+
+[[error-model]]
 == Error Model
 
-[cols="2,4",options="header"]
-|===
-|Type |Meaning
-
-|`ThrongMappingException`
-|Checked exception for invalid entity metadata, codec resolution problems, lifecycle misuse, or other startup-time mapping failures
-
-|`ThrongRuntimeException`
-|Runtime failure during encode, decode, lifecycle invocation, or mapped type lookup
-
-|`IllegalFilterStateException`
-|Invalid `Filter` builder usage such as combining incomplete filters or applying multiple terminal operators to one field builder
-
-|`DocumentParsingException`
-|`BsonUtility` saw an unsupported or unexpected BSON shape
-
-|`BSONParsingException`
-|`JsonUtility` saw an unsupported BSON or JSON shape
-
-|Driver exceptions such as `MongoWriteException`
-|Propagate directly when the underlying MongoDB driver reports a write or connectivity failure
-|===
-
-[[mongodb-api-index, API Index]]
-== API Index
-
-=== Core Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.mongodb.throng`
-|`ThrongClient`
-|Mapped client over the MongoDB sync driver with focused CRUD helpers
-
-|`org.smallmind.mongodb.throng`
-|`ThrongOptions`
-|Explicit booleans for null storage, index creation, and index collation inclusion
-
-|`org.smallmind.mongodb.throng`
-|`ThrongIterable<T>`
-|Iterable wrapper over decoded query results with `asList()` materialization
-
-|`org.smallmind.mongodb.throng`
-|`UpdateResult`
-|Wrapper around the driver's update result with `getModifiedPlusInsertedCount()`
-
-|`org.smallmind.mongodb.throng.query`
-|`Filter`
-|Predicate builder for MongoDB filter expressions
-
-|`org.smallmind.mongodb.throng.query`
-|`Query`
-|Find builder for filter, sort, projection, skip, limit, and batch size
-
-|`org.smallmind.mongodb.throng.query`
-|`Sort`
-|Ascending and descending sort builder
-
-|`org.smallmind.mongodb.throng.query`
-|`Projections`
-|Include and exclude projection builder
-
-|`org.smallmind.mongodb.throng.query`
-|`Updates`
-|Builder for combined MongoDB update operations
-
-|`org.smallmind.mongodb.throng`
-|`BsonUtility`
-|`BsonReader` and `BsonWriter` to `BsonValue` helpers
-
-|`org.smallmind.mongodb.throng.json`
-|`JsonUtility`
-|Jackson `JsonNode` to BSON helpers
-
-|`org.smallmind.mongodb.throng`
-|`DuplicateKeyUtility`
-|Helper for MongoDB duplicate key error detection
-
-|`org.smallmind.mongodb.utility`
-|`MongoServer`
-|Host/port value object
-
-|`org.smallmind.mongodb.utility`
-|`MongoAcknowledgment`
-|Write concern acknowledgment enum
-|===
-
-=== Annotation Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Annotation |Role
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Entity`
-|Marks a mapped collection-backed class
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Embedded`
-|Marks a mapped embedded class
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Id`
-|Marks the entity id field
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Property`
-|Marks a persisted field and optionally overrides its stored name
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Codec`
-|Forces a specific codec for one property
-
-|`org.smallmind.mongodb.throng.mapping.annotation`
-|`Polymorphic`
-|Configures embedded polymorphism and discriminator key
-
-|`org.smallmind.mongodb.throng.index.annotation`
-|`Indexed`
-|Declares a single-field index
-
-|`org.smallmind.mongodb.throng.index.annotation`
-|`Indexes`
-|Declares a compound index
-
-|`org.smallmind.mongodb.throng.index.annotation`
-|`Index`
-|One element inside a compound index declaration
-
-|`org.smallmind.mongodb.throng.index.annotation`
-|`IndexOptions`
-|Driver-like index options expressed as an annotation
-
-|`org.smallmind.mongodb.throng.index.annotation`
-|`Collation`
-|Index collation options nested inside `IndexOptions`
-
-|`org.smallmind.mongodb.throng.lifecycle.annotation`
-|`PreLoad`, `PostLoad`, `PrePersist`, `PostPersist`
-|Entity lifecycle callbacks
-|===
-
-=== Spring Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.mongodb.utility.spring`
-|`MongoServerFactoryBean`
-|Creates `ServerAddress[]` from a pattern and spread
-
-|`org.smallmind.mongodb.utility.spring`
-|`MongoCredentialFactoryBean`
-|Creates SCRAM-SHA-1 `MongoCredential`
-
-|`org.smallmind.mongodb.utility.spring`
-|`MongoClientSettingsFactoryBean`
-|Creates `MongoClientSettings` from explicit Spring properties
-
-|`org.smallmind.mongodb.utility.spring`
-|`MongoClientFactoryBean`
-|Creates and destroys `MongoClient`
-
-|`org.smallmind.mongodb.utility.spring`
-|`MongoWriteConcern`
-|Creates `WriteConcern` from `MongoAcknowledgment`
-|===
-
-[[mongodb-defaults, Defaults Reference]]
-== Defaults Reference
-
-[cols="2,2,4",options="header"]
-|===
-|Area |Default |Notes
-
-|`@Id.value`
-|`"_id"`
-|Stored id field name
-
-|`@Property.value`
-|`""`
-|Falls back to the Java field name
-
-|`@Indexed.value`
-|`IndexType.ASCENDING`
-|Default single-field index type
-
-|`@Collation.locale`
-|`"simple"`
-|Annotation default for index collation
-
-|`@Polymorphic.key`
-|`""`
-|Runtime fallback key is `java/object`
-
-|`MongoServer.port`
-|`27017`
-|Default constructor field value
-
-|`MongoServerFactoryBean` port
-|`27017`
-|Used when `serverPattern` has no explicit `:port`
-
-|`MongoCredentialFactoryBean`
-|SCRAM-SHA-1
-|Auth mechanism created by the factory bean
-
-|`Query.skip`
-|`0`
-|No skip unless explicitly set
-
-|`Query.limit`
-|`0`
-|No limit unless explicitly set
-
-|`Query.batchSize`
-|`0`
-|Driver default unless explicitly set
-
-|`MongoClientSettingsFactoryBean.uuidRepresentation`
-|`STANDARD`
-|Applied unconditionally by the factory bean
-
-|`ThrongOptions`
-|no implicit defaults
-|Caller must supply all three booleans in the constructor
-|===
-
-[[mongodb-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-[cols="3,5",options="header"]
-|===
-|Behavior |Why it matters
-
-|Query, update, sort, projection, and compound-index field names use stored MongoDB names
-|If you rename fields with `@Property("...")`, all string-based query and index definitions must use the stored name
-
-|Entity decode expects the id field first in the document
-|Documents produced outside Throng can fail to decode with `ThrongRuntimeException` if the first field is not the entity id
-
-|`insert(T, InsertOneOptions)` ignores `InsertOneOptions`
-|Do not expect insert options such as bypass flags to take effect through Throng's insert wrapper
-
-|Generated ids are not written back into the entity after insert
-|If the id field starts as `null`, inspect `InsertOneResult.getInsertedId()` and assign it yourself if needed
-
-|`update(...)` and `delete(...)` are many-document wrappers
-|If you expected single-document semantics, you need direct driver calls instead
-
-|`Query.skip(long)` is narrowed to `int`
-|Large skip values can overflow the driver call boundary
-
-|Non-positive `skip`, `limit`, and `batchSize` values are ignored
-|The builder is permissive and does not fail fast on those values
-
-|Generic containers of `@Embedded` or `@Codec` types are not fully automated
-|Arrays work, but generic containers often need their own codec or concrete wrapper type
-
-|Lifecycle annotations are forbidden on embedded types
-|Startup fails with `ThrongMappingException` if embedded classes declare lifecycle callbacks
-
-|`@Entity(polymorphic = ...)` is not used by current mapping logic
-|Entity polymorphism is not a feature you should rely on in the current implementation
-
-|Embedded polymorphic subtype validation is strict
-|Ordinary subtype lists can be rejected; test that path directly before adopting it
-
-|`MongoWriteConcern.setJournaled(...)` is currently ineffective
-|Supply a driver-built `WriteConcern` when journaling matters
-
-|`MongoClientSettingsFactoryBean` requires `serverAddresses`, and `certResource` does not imply `sslEnabled=true`
-|Missing hosts or incomplete TLS setup causes Spring bean initialization failures
-
-|`BsonUtility` and `JsonUtility` only cover subsets of BSON and JSON shapes
-|Use the driver document APIs for specialized BSON types
-|===
-
-[[mongodb-troubleshooting, Troubleshooting]]
+The exceptions callers will see fall into four groups.
+
+Mapping::
+    `ThrongMappingException` (checked) is raised during
+    `ThrongClient` construction when an annotation is wrong, a codec
+    cannot be resolved, an embedded class declares a lifecycle
+    callback, or an entity has zero or multiple `@Id` fields. It
+    extends `org.smallmind.nutsnbolts.lang.FormattedException`, so
+    callers declare or catch it.
+
+Reflection::
+    `NoSuchMethodException`, `InstantiationException`,
+    `IllegalAccessException`, and `InvocationTargetException`
+    propagate from `ThrongClient` construction when an `@Entity`,
+    `@Embedded`, or `@Codec` class lacks a no-arg constructor or
+    access cannot be granted.
+
+Runtime::
+    `ThrongRuntimeException` is raised for unmapped entity lookups
+    (`Unmapped entity type(...)`), codec dispatch failures in
+    polymorphic encode, and reflection errors inside lifecycle
+    execution. Extends
+    `org.smallmind.nutsnbolts.lang.FormattedRuntimeException`.
+
+Filter::
+    `IllegalFilterStateException` (runtime) is thrown when a
+    comparison is applied to a closed filter or when `not()` is
+    applied to an uninitialized one. `UnsupportedOperationException`
+    is thrown by `Filter.toBsonDocument` when the filter has never
+    had a comparison applied — callers compose queries such that
+    every leaf filter has exactly one comparison.
+
+Driver::
+    `MongoException` and its subclasses pass through unchanged from
+    the underlying driver. `DuplicateKeyUtility.idDuplicateKeyException`
+    is a small helper for detecting error code 11000
+    (`E11000 duplicate key error`) in a `MongoWriteException`.
+
+[[troubleshooting]]
 == Troubleshooting
 
-=== `ThrongMappingException` During Construction
+`ThrongMappingException: Missing id property`::
+    The entity has no `@Id` field. Add one or, if the entity is
+    intended to be embedded rather than top-level, change the
+    annotation from `@Entity` to `@Embedded`.
 
-Common causes:
+`ThrongMappingException: More than one id property`::
+    The entity has multiple `@Id` fields. Keep exactly one.
 
-* missing `@Id` on an entity
-* multiple `@Id` fields on one entity
-* duplicate stored property names
-* missing public no-arg constructor on a decoded type
-* unknown codec for a field type
-* lifecycle annotations on an embedded type
-* forgetting to register an `@Embedded` class in the `ThrongClient` constructor
+`ThrongMappingException: Lifecycle methods are not supported on embedded types`::
+    An `@Embedded` class declares `@PrePersist`, `@PostPersist`,
+    `@PreLoad`, or `@PostLoad`. Move the behavior to the parent
+    `@Entity` — a callback on the parent sees the whole document,
+    including the embedded subtree.
 
-Checks:
+`ThrongMappingException: Polymorphism is not supported on entities`::
+    An `@Entity` declares `@Polymorphic(value = {...})`. Entities
+    must not use `@Polymorphic`. If the hierarchy is a top-level
+    collection, store the discriminator as an ordinary field and
+    dispatch application-side; if the hierarchy is embedded, move it
+    into an `@Embedded` class that can declare `@Polymorphic`.
 
-* verify that every persisted field is marked with `@Property`
-* verify that custom codec classes expose public no-arg constructors
-* verify that all mapped entities and embedded types are passed to `ThrongClient`
-* verify that renamed properties are unique after applying `@Property("...")`
+`ThrongRuntimeException: Unmapped entity type(...)`::
+    A CRUD call referenced a `Class` that was not passed in the
+    `entityClasses` vararg to the `ThrongClient` constructor. Add it.
 
-=== Queries Or Updates Match Nothing
+`IllegalFilterStateException: The filter(...) is closed`::
+    A second comparison was applied to a filter that already had
+    one. `Filter.where("x").eq(1).eq(2)` is not legal. Split into
+    two filters and combine with `Filter.and(...)`.
 
-The most common cause is using Java field names after you renamed a stored property.
+`IllegalFilterStateException: The filter(...) is incomplete`::
+    A comparison-less filter was passed to `Filter.and`, `Filter.or`,
+    or `not()`. Apply a comparison method before composing.
 
-If the entity uses `@Property("user_name")`, these are the correct strings:
+`UnsupportedOperationException` from `Filter.toBsonDocument`::
+    Same root cause as the incomplete-filter case, surfaced when the
+    filter is handed to `count`/`find`/`update`/`delete` without a
+    comparison. Add a comparison or use `Filter.empty()` to match all
+    documents.
 
-* `Filter.where("user_name")`
-* `Sort.on().asc("user_name")`
-* `Updates.of().set("user_name", "...")`
-* `@Index("user_name")`
+`ThrongRuntimeException` wrapping an `ExecutionException` during decode::
+    A lifecycle method threw. The underlying exception is the
+    `cause`; fix the callback and retry.
 
-=== `ThrongRuntimeException` On Read
+`NumberFormatException` during Spring context startup::
+    `MongoServerFactoryBean`'s pattern has a `#` placed after the
+    `:` port separator. Move the `#` left of the `:`.
 
-Common causes:
+`ConfigException: No bootstrap hosts` at `MongoClient` construction::
+    `MongoClientSettingsFactoryBean.serverAddresses` is null or
+    empty. Confirm `MongoServerFactoryBean.serverPattern` is set and
+    the spread expression evaluates to at least one value.
 
-* the first document field is not the mapped id field
-* a lifecycle callback threw an exception
-* a non-public callback was assumed to be discovered but was not
-* a stored polymorphic discriminator does not map to a registered class
-* a document contains a shape your custom codec does not understand
+`MongoWriteException` with code `11000`::
+    Duplicate key — a unique index refused the write. Use
+    `DuplicateKeyUtility.idDuplicateKeyException(mongoWriteException)`
+    to classify.
 
-Checks:
+[[limitations]]
+== Limitations and Known Issues
 
-* inspect the raw stored document shape in MongoDB
-* verify callback visibility and signatures
-* verify polymorphic discriminator names if you are using embedded polymorphism
-* verify that documents written outside Throng still match Throng's decode expectations
+No polymorphism for `@Entity`::
+    `@Polymorphic` is an `@Embedded`-only feature. Top-level
+    hierarchies must encode their discriminator as an ordinary
+    property and dispatch application-side.
 
-=== Filter Builder Exceptions
+No lifecycle callbacks for `@Embedded`::
+    Lifecycle behavior must live on the parent `@Entity`. The
+    rejection is enforced by `ThrongLifecycleRejection.reject`
+    during codec generation.
 
-`IllegalFilterStateException` usually means one of three things:
+Partial support for generic containers::
+    `List`, `Map`, and similar containers whose element type is
+    `@Embedded` compile and run but *do not* participate in
+    automated index processing — indexes declared on the embedded
+    element type are not collected by the parent entity. Containers
+    whose element type uses `@Codec` will throw a type-mismatch
+    exception at mapping time. The documented workaround is a typed
+    subclass of the container with a parameterized codec, and — for
+    `@Embedded` element types — to declare the required indexes on
+    the parent entity using `@Indexes` / `@AllIndexes` with dotted
+    field paths.
 
-* you called more than one terminal operator on one `Filter.where("...")`
-* you called `not()` before defining the predicate
-* you combined an incomplete filter inside `Filter.and(...)` or `Filter.or(...)`
+`skip` is effectively `int`::
+    `Query.skip` accepts a `long` but the underlying driver only
+    honors an `int`. There is a `TODO` in `Query.java` recording the
+    gap; do not pass values beyond `Integer.MAX_VALUE`.
 
-=== JSON/BSON Conversion Errors
+No `aggregate` / `watch` surface::
+    Pipelines, change streams, and bulk writes are not exposed
+    through `ThrongClient`. Use the driver's `MongoClient` directly
+    for those operations.
 
-`DocumentParsingException` and `BSONParsingException` usually mean the utility helpers saw a BSON or JSON type outside their supported subset.
-Switch to the MongoDB driver's document APIs when your documents include specialized BSON nodes.
+SCRAM-SHA-1 only in the credential factory::
+    `MongoCredentialFactoryBean` hard-codes SCRAM-SHA-1. For
+    SCRAM-SHA-256, X.509, Kerberos, AWS IAM, or OIDC, construct the
+    `MongoCredential` directly and inject it into
+    `MongoClientSettingsFactoryBean`.
 
-=== Spring Bean Init Failures
+UUID representation is pinned::
+    `MongoClientSettingsFactoryBean` hard-codes
+    `UuidRepresentation.STANDARD`. There is no property to override
+    it. Applications reading legacy data encoded with a different
+    representation need to construct `MongoClientSettings` directly.
 
-Common causes:
+No connection-string parser::
+    The settings factory does not accept a
+    `mongodb://` / `mongodb+srv://` URI. Its inputs are typed
+    components.
 
-* `serverAddresses` was never supplied to `MongoClientSettingsFactoryBean`
-* `MongoCredentialFactoryBean` was given missing `user`, `password`, or `source`
-* `certResource` was supplied but `sslEnabled` was left `false`
-* `MongoWriteConcern` was expected to apply journaling
+Compile-time dependency on Spring::
+    `mongodb-utility`'s factory classes require `spring-beans`. The
+    dependency is `optional` in the POM, but the classes do not
+    compile without it.
 
-Checks:
+== Defaults Reference
 
-* verify `serverPattern` and `serverSpread` values for `MongoServerFactoryBean`
-* verify that TLS and trust material are both configured when SSL is required
-* inject a driver-built `WriteConcern` directly when you need exact journaling behavior
+[cols="2,1,3",options="header"]
+|===
+| Setting | Default | Where set
 
-[[mongodb-minimal-checklist, Minimal Checklist]]
+| `MongoServer.port`
+| `27017`
+| `MongoServer` field initializer.
+
+| `MongoServerFactoryBean` port when no `:port` is supplied
+| `27017`
+| `MongoServerFactoryBean.afterPropertiesSet`.
+
+| `MongoServerFactoryBean.isSingleton`
+| `true`
+| `MongoServerFactoryBean`.
+
+| `MongoCredentialFactoryBean.isSingleton`
+| `true`
+| `MongoCredentialFactoryBean`.
+
+| `MongoWriteConcern.isSingleton`
+| `false`
+| `MongoWriteConcern`.
+
+| `MongoWriteConcern.journaled`
+| `false`
+| `MongoWriteConcern` field initializer.
+
+| `MongoClientSettingsFactoryBean.isSingleton`
+| `true`
+| `MongoClientSettingsFactoryBean`.
+
+| `MongoClientSettingsFactoryBean.uuidRepresentation`
+| `STANDARD`
+| Hard-coded.
+
+| `MongoClientFactoryBean` lifecycle
+| create in `afterPropertiesSet`, close in `destroy`
+| `MongoClientFactoryBean`.
+
+| `@Id.value`
+| `_id`
+| `@Id` default.
+
+| `@Property.value`
+| Java field name (empty triggers fallback)
+| `@Property` default.
+
+| `@Indexed.value`
+| `ASCENDING`
+| `@Indexed` default.
+
+| `@Index.type`
+| `ASCENDING`
+| `@Index` default.
+
+| `@IndexOptions.background`
+| `false`
+| `@IndexOptions` default.
+
+| `@IndexOptions.unique`
+| `false`
+| `@IndexOptions` default.
+
+| `@IndexOptions.expireAfterSeconds`
+| `0` (disabled)
+| `@IndexOptions` default.
+
+| `@Collation.locale`
+| `simple`
+| `@Collation` default.
+
+| `@Collation.strength`
+| `TERTIARY`
+| `@Collation` default.
+
+| `@Polymorphic.key`
+| `""` → `java/object`
+| `@Polymorphic` default.
+
+| `Query.skip`
+| `0`
+| `Query` field initializer.
+
+| `Query.limit`
+| `0` (no limit)
+| `Query` field initializer.
+
+| `Query.batchSize`
+| `0` (driver default)
+| `Query` field initializer.
+|===
+
 == Minimal Checklist
 
-1. Add `mongodb-throng`, `mongodb-utility`, or both.
-2. Give every decoded `@Entity` and `@Embedded` type a public no-arg constructor.
-3. Mark one entity field with `@Id` and every persisted field with `@Property`.
-4. Register every entity and embedded class explicitly in `ThrongClient`.
-5. Use stored MongoDB field names in queries, updates, and compound indexes.
-6. Decide on `storeNulls`, `createIndexes`, and `includeCollation` explicitly.
-7. Close `MongoClient` yourself unless Spring owns it through `MongoClientFactoryBean`.
+Before shipping an integration:
 
-[[mongodb-verification, Verification Checklist]]
-== Verification Checklist
+1. Confirm the `MongoServerFactoryBean` produces a non-empty
+   `ServerAddress[]` — log the array at startup if needed.
+2. Pick a `MongoAcknowledgment` consistent with the write durability
+   your service requires, and set `journaled` only when the chosen
+   level is journable.
+3. Pass every `@Entity` and `@Embedded` class your service uses to
+   the `ThrongClient` constructor — unregistered classes fail at
+   first access.
+4. Set `createIndexes=true` for services that own the schema; set it
+   to `false` for readers that share a collection with an authoritative
+   writer.
+5. For each `@Entity`, confirm exactly one `@Id` and no
+   `@Polymorphic`; for each `@Embedded`, confirm no lifecycle
+   annotations.
+6. Verify the filter/update DSLs use BSON field names, not Java
+   field names — Throng does not translate.
+7. Close any `ThrongIterator` you iterate manually; `asList()` closes
+   internally.
+8. Close the surrounding Spring context on shutdown so the
+   `MongoClientFactoryBean.destroy` runs and drains the driver's
+   connection pool.
 
-* construct `ThrongClient` in a focused test so mapping failures surface immediately
-* insert, query, update, count, and delete at least one representative entity shape against a real MongoDB instance or test fixture
-* verify renamed property queries and compound index field names with the stored document shape
-* if you enable automatic index creation, confirm the expected indexes exist after startup
-* if you use custom codecs, cover both encode and decode paths in tests
-* if you use Spring factory beans, start and stop the application context and confirm `MongoClient` shutdown behavior
+== Summary
+
+`smallmind-mongodb` turns the two rote jobs of using the MongoDB
+Java driver — standing up a `MongoClient` and mapping Java classes
+to documents — into two small, orthogonal modules. `mongodb-utility`
+is a set of Spring `FactoryBean` implementations that produce
+`ServerAddress[]`, `MongoCredential`, `WriteConcern`,
+`MongoClientSettings`, and a managed `MongoClient`. `mongodb-throng`
+is an annotation-driven mapper whose `ThrongClient` vends typed
+CRUD over `@Entity` classes, with fluent DSLs for filters, updates,
+sorts, and projections, all composed over the driver's own
+`CodecRegistry`. Together they cover the path from XML configuration
+to typed database access without the driver's builder vocabulary
+showing up in calling code.

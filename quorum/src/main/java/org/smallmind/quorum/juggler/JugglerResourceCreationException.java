@@ -33,14 +33,17 @@
 package org.smallmind.quorum.juggler;
 
 /**
- * Indicates a failure while constructing a juggling resource.
+ * Signals a failure that occurred while constructing a {@link JugglingPin} or its underlying resource.
+ * <p>
+ * Thrown by {@link JugglingPinFactory#createJugglingPin} and propagated through
+ * {@link Juggler#initialize()} when one or more pins cannot be instantiated at startup.
  */
 public class JugglerResourceCreationException extends JugglerResourceException {
 
   /**
-   * Creates the exception with a cause.
+   * Creates the exception wrapping the underlying construction failure.
    *
-   * @param throwable underlying creation problem
+   * @param throwable the exception that prevented the resource from being created
    */
   public JugglerResourceCreationException (Throwable throwable) {
 

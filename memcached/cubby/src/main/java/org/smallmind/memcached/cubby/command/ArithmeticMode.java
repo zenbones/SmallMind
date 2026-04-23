@@ -35,16 +35,34 @@ package org.smallmind.memcached.cubby.command;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Enumerates arithmetic operations supported by memcached.
+ * Enumerates the two arithmetic directions supported by the memcached
+ * meta-arithmetic ({@code ma}) command.
+ *
+ * <p>Each constant carries the single-character protocol token that is
+ * embedded in the {@code M} flag of the {@code ma} command line.
+ * The {@link #flip()} method returns the complementary operation, which
+ * is used by {@link ArithmeticCommand} when a negative delta is supplied
+ * by the caller.</p>
  */
 public enum ArithmeticMode {
 
-  INCREMENT('I'), DECREMENT('D');
+  /**
+   * Adds the delta to the stored counter. Protocol token: {@code I}.
+   */
+  INCREMENT('I'),
+
+  /**
+   * Subtracts the delta from the stored counter. Protocol token: {@code D}.
+   */
+  DECREMENT('D');
 
   private final char token;
 
   /**
-   * @param token protocol token for the operation
+   * Constructs an {@code ArithmeticMode} constant with its protocol token.
+   *
+   * @param token the single character used in the {@code ma} command line
+   *              to indicate the direction of the arithmetic operation
    */
   ArithmeticMode (char token) {
 
@@ -52,7 +70,10 @@ public enum ArithmeticMode {
   }
 
   /**
-   * @return protocol token representing the operation
+   * Returns the single-character protocol token embedded in the {@code M} flag
+   * of the memcached meta-arithmetic command line.
+   *
+   * @return the protocol token representing this arithmetic direction
    */
   public char getToken () {
 
@@ -60,7 +81,10 @@ public enum ArithmeticMode {
   }
 
   /**
-   * @return the opposite arithmetic operation
+   * Returns the complementary arithmetic mode: {@code INCREMENT} becomes
+   * {@code DECREMENT} and vice versa.
+   *
+   * @return the opposite {@code ArithmeticMode}
    */
   public ArithmeticMode flip () {
 

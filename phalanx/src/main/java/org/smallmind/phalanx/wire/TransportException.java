@@ -35,12 +35,14 @@ package org.smallmind.phalanx.wire;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Base exception for transport-level errors while invoking or serving wire calls.
+ * Base checked exception for all errors that originate in the wire transport layer,
+ * including invocation failures, service definition problems, and timeout conditions.
+ * All specialised wire exceptions extend this class.
  */
 public class TransportException extends FormattedException {
 
   /**
-   * Creates an empty transport exception.
+   * Constructs a {@code TransportException} with no message or cause.
    */
   public TransportException () {
 
@@ -48,10 +50,10 @@ public class TransportException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs a {@code TransportException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the transport issue
-   * @param args    arguments applied to the format string
+   * @param message the format string describing the transport error
+   * @param args    the arguments referenced by the format string
    */
   public TransportException (String message, Object... args) {
 
@@ -59,11 +61,11 @@ public class TransportException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs a {@code TransportException} with a root cause and a formatted message.
    *
-   * @param throwable root cause
-   * @param message   format string describing the transport issue
-   * @param args      arguments applied to the format string
+   * @param throwable the underlying cause
+   * @param message   the format string describing the transport error
+   * @param args      the arguments referenced by the format string
    */
   public TransportException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +73,9 @@ public class TransportException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause only.
+   * Constructs a {@code TransportException} wrapping an existing throwable with no additional message.
    *
-   * @param throwable root cause
+   * @param throwable the underlying cause
    */
   public TransportException (Throwable throwable) {
 

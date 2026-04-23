@@ -33,14 +33,16 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Argument allowing repeated occurrences, each providing a single value.
+ * Argument definition for an option that may be specified more than once, with each occurrence contributing one value.
  */
 public class MultipleArgument extends Argument {
 
   private final String description;
 
   /**
-   * @param description hint describing the expected value
+   * Constructs a multiple argument with a human-readable description of the expected per-occurrence value.
+   *
+   * @param description hint text describing the value expected on each invocation of the option, used in help output
    */
   public MultipleArgument (String description) {
 
@@ -48,6 +50,8 @@ public class MultipleArgument extends Argument {
   }
 
   /**
+   * Returns {@link ArgumentType#MULTIPLE}.
+   *
    * @return {@link ArgumentType#MULTIPLE}
    */
   @Override
@@ -57,7 +61,9 @@ public class MultipleArgument extends Argument {
   }
 
   /**
-   * @return description string for help output
+   * Returns the hint text describing the value expected on each invocation of the option.
+   *
+   * @return description string for use in help output
    */
   public String getDescription () {
 

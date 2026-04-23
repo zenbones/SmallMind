@@ -37,16 +37,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
 /**
- * Hint for tools that process classes to indicate a method's return value should be wrapped or
+ * Hints to processing tools that the annotated method's return value should be wrapped or
  * transformed to the specified class.
  */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface As {
 
   /**
-   * @return wrapper/transform class that should be applied to the annotated method's return value
+   * @return wrapper/transform class to apply to the annotated method's return value
    */
   Class<?> value ();
 }

@@ -44,7 +44,9 @@ public class Updates {
   private final LinkedList<Bson> updateList = new LinkedList<>();
 
   /**
-   * @return new updates builder
+   * Creates a new, unconfigured update builder.
+   *
+   * @return a fresh {@link Updates} instance
    */
   public static Updates of () {
 
@@ -53,6 +55,10 @@ public class Updates {
 
   /**
    * Sets a field to the given value.
+   *
+   * @param fieldName field to update
+   * @param value     new value for the field
+   * @return this builder for chaining
    */
   public Updates set (String fieldName, Object value) {
 
@@ -62,7 +68,10 @@ public class Updates {
   }
 
   /**
-   * Removes the specified field.
+   * Removes the specified field from the document.
+   *
+   * @param fieldName field to remove
+   * @return this builder for chaining
    */
   public Updates unset (String fieldName) {
 
@@ -72,7 +81,11 @@ public class Updates {
   }
 
   /**
-   * Sets a field only when the document is inserted.
+   * Sets a field only when the document is inserted via an upsert.
+   *
+   * @param fieldName field to set on insert
+   * @param value     value to assign
+   * @return this builder for chaining
    */
   public Updates setOnInsert (String fieldName, Object value) {
 
@@ -82,7 +95,11 @@ public class Updates {
   }
 
   /**
-   * Increments a numeric field.
+   * Increments a numeric field by the given amount.
+   *
+   * @param fieldName field to increment
+   * @param number    amount to add
+   * @return this builder for chaining
    */
   public Updates inc (String fieldName, Number number) {
 
@@ -92,7 +109,11 @@ public class Updates {
   }
 
   /**
-   * Multiplies a numeric field.
+   * Multiplies a numeric field by the given factor.
+   *
+   * @param fieldName field to multiply
+   * @param number    multiplication factor
+   * @return this builder for chaining
    */
   public Updates mul (String fieldName, Number number) {
 
@@ -102,7 +123,11 @@ public class Updates {
   }
 
   /**
-   * Applies a max comparison update.
+   * Updates the field to the given value only if it is greater than the current value.
+   *
+   * @param fieldName field to update
+   * @param value     candidate maximum value
+   * @return this builder for chaining
    */
   public Updates max (String fieldName, Object value) {
 
@@ -112,7 +137,11 @@ public class Updates {
   }
 
   /**
-   * Applies a min comparison update.
+   * Updates the field to the given value only if it is less than the current value.
+   *
+   * @param fieldName field to update
+   * @param value     candidate minimum value
+   * @return this builder for chaining
    */
   public Updates min (String fieldName, Object value) {
 
@@ -122,7 +151,11 @@ public class Updates {
   }
 
   /**
-   * Pushes a value onto an array field.
+   * Appends a value to the end of an array field.
+   *
+   * @param fieldName array field to push to
+   * @param value     value to append
+   * @return this builder for chaining
    */
   public Updates push (String fieldName, Object value) {
 
@@ -132,7 +165,11 @@ public class Updates {
   }
 
   /**
-   * Adds a value to a set if it is not already present.
+   * Adds a value to an array field only if it is not already present.
+   *
+   * @param fieldName array field acting as a set
+   * @param value     value to add
+   * @return this builder for chaining
    */
   public Updates addToSet (String fieldName, Object value) {
 
@@ -142,7 +179,11 @@ public class Updates {
   }
 
   /**
-   * Removes matching elements from an array field.
+   * Removes all array elements equal to the given value.
+   *
+   * @param fieldName array field to pull from
+   * @param value     value to remove
+   * @return this builder for chaining
    */
   public Updates pull (String fieldName, Object value) {
 
@@ -152,7 +193,10 @@ public class Updates {
   }
 
   /**
-   * Pops the first element from an array field.
+   * Removes the first element from an array field.
+   *
+   * @param fieldName array field to modify
+   * @return this builder for chaining
    */
   public Updates popFirst (String fieldName) {
 
@@ -162,7 +206,10 @@ public class Updates {
   }
 
   /**
-   * Pops the last element from an array field.
+   * Removes the last element from an array field.
+   *
+   * @param fieldName array field to modify
+   * @return this builder for chaining
    */
   public Updates popLast (String fieldName) {
 
@@ -172,7 +219,11 @@ public class Updates {
   }
 
   /**
-   * Renames a field.
+   * Renames a field to the given new name.
+   *
+   * @param fieldName        current field name
+   * @param updatedFieldName new field name
+   * @return this builder for chaining
    */
   public Updates rename (String fieldName, String updatedFieldName) {
 

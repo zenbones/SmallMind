@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.mock;
 
 /**
- * In-memory router that exposes queues/topics used by the mock transport.
+ * In-memory router that exposes the shared queue and topics used by the mock transport for testing.
  */
 public class MockMessageRouter {
 
@@ -42,7 +42,9 @@ public class MockMessageRouter {
   private final MockTopic responseTopic = new MockTopic();
 
   /**
-   * @return queue used for talk requests.
+   * Returns the queue used to dispatch talk-mode invocation requests.
+   *
+   * @return talk request queue.
    */
   public MockQueue getTalkRequestQueue () {
 
@@ -50,7 +52,9 @@ public class MockMessageRouter {
   }
 
   /**
-   * @return topic used for whisper requests.
+   * Returns the topic used to dispatch whisper-mode invocation requests.
+   *
+   * @return whisper request topic.
    */
   public MockTopic getWhisperRequestTopic () {
 
@@ -58,7 +62,9 @@ public class MockMessageRouter {
   }
 
   /**
-   * @return topic used for responses.
+   * Returns the topic used to deliver invocation results back to callers.
+   *
+   * @return response topic.
    */
   public MockTopic getResponseTopic () {
 

@@ -37,30 +37,25 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Describes a cache vector, including namespace, key components, and optional classifier.
+ * Embedded annotation that fully describes a cache vector: its namespace, the ordered set of key components,
+ * and an optional classifier used to partition polymorphic entities.
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Vector {
 
   /**
-   * Namespace used as the base identifier for the cache entry.
-   *
-   * @return namespace string; defaults to the annotated method name for {@link CacheAs}
+   * Namespace prefix for the cache key; defaults to the annotated method name when used with {@link CacheAs}.
    */
   String namespace () default "";
 
   /**
-   * Ordered set of parameters or fields that make up the cache key.
-   *
-   * @return array of key descriptors
+   * Ordered key components that together form the unique cache key for this vector.
    */
   Key[] value ();
 
   /**
-   * Optional classifier appended to the cache key to disambiguate polymorphic entities.
-   *
-   * @return classifier configuration
+   * Optional classifier appended to the key to distinguish entities that share the same namespace and key values.
    */
   Classifier classifier () default @Classifier(value = "");
 }

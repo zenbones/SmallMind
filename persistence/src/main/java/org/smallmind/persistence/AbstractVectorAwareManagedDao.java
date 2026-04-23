@@ -37,21 +37,21 @@ import org.smallmind.persistence.cache.VectorAwareDao;
 import org.smallmind.persistence.cache.VectoredDao;
 
 /**
- * Managed DAO variant that is aware of a cache-backed {@link VectoredDao}. Subclasses
- * decide at runtime whether caching should be enabled.
+ * {@link AbstractManagedDao} extension that integrates with a cache-backed {@link VectoredDao}.
+ * Subclasses control whether caching is active by implementing {@link #isCacheEnabled()}.
  *
- * @param <I> identifier type of the durable
- * @param <D> durable type managed by the DAO
+ * @param <I> the durable identifier type
+ * @param <D> the durable entity type managed by this DAO
  */
 public abstract class AbstractVectorAwareManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements VectorAwareDao<I, D> {
 
   private final VectoredDao<I, D> vectoredDao;
 
   /**
-   * Constructs a managed DAO with optional cache support.
+   * Constructs the DAO with a metric source label and an optional cache delegate.
    *
-   * @param metricSource the metric source name for this DAO
-   * @param vectoredDao  the cache-enabled delegate used when caching is turned on
+   * @param metricSource the label used to attribute metrics for this DAO
+   * @param vectoredDao  the cache-backed delegate returned when caching is enabled
    */
   public AbstractVectorAwareManagedDao (String metricSource, VectoredDao<I, D> vectoredDao) {
 
@@ -61,16 +61,17 @@ public abstract class AbstractVectorAwareManagedDao<I extends Serializable & Com
   }
 
   /**
-   * Indicates whether cache access should be used for DAO operations.
+   * Determines whether the cache delegate should be used for DAO operations.
    *
-   * @return {@code true} when cache lookups should be attempted
+   * @return {@code true} when caching is active
    */
   public abstract boolean isCacheEnabled ();
 
   /**
-   * Returns the cache-aware delegate when caching is enabled.
+   * Returns the {@link VectoredDao} when {@link #isCacheEnabled()} is {@code true},
+   * or {@code null} when caching is disabled.
    *
-   * @return the configured {@link VectoredDao} or {@code null} when caching is disabled
+   * @return the cache delegate, or {@code null}
    */
   @Override
   public VectoredDao<I, D> getVectoredDao () {

@@ -35,13 +35,15 @@ package org.smallmind.persistence.database.mysql;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception used to signal failures interacting with the simulated MySQL sequence table.
+ * Runtime exception thrown when an unrecoverable failure occurs while reading or updating the simulated MySQL sequence table.
  */
 public class SimulatedSequenceDisasterException extends FormattedRuntimeException {
 
   /**
-   * @param message formatted message
-   * @param args    message arguments
+   * Creates an exception with a formatted message and no cause.
+   *
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public SimulatedSequenceDisasterException (String message, Object... args) {
 
@@ -49,9 +51,11 @@ public class SimulatedSequenceDisasterException extends FormattedRuntimeExceptio
   }
 
   /**
-   * @param throwable root cause
-   * @param message   formatted message
-   * @param args      message arguments
+   * Creates an exception with an underlying cause and a formatted message.
+   *
+   * @param throwable the root cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
    */
   public SimulatedSequenceDisasterException (Throwable throwable, String message, Object... args) {
 

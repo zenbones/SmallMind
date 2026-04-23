@@ -33,14 +33,22 @@
 package org.smallmind.claxon.registry;
 
 /**
- * {@link Clock} implementation that delegates to the JVM system time utilities.
+ * {@link Clock} implementation that delegates directly to the JVM system time facilities.
+ * Wall time is sourced from {@link System#currentTimeMillis()} and monotonic time from
+ * {@link System#nanoTime()}. A single shared instance is available via {@link #instance()};
+ * the constructor is not private, allowing subclassing or direct instantiation where needed.
  */
 public class SystemClock implements Clock {
 
+  /**
+   * Shared singleton instance of the system clock.
+   */
   private static final SystemClock SYSTEM_CLOCK = new SystemClock();
 
   /**
-   * @return singleton instance of the system clock
+   * Returns the shared singleton instance of {@code SystemClock}.
+   *
+   * @return the singleton {@link SystemClock}
    */
   public static SystemClock instance () {
 
@@ -48,7 +56,10 @@ public class SystemClock implements Clock {
   }
 
   /**
-   * @return current wall time in milliseconds from {@link System#currentTimeMillis()}
+   * Returns the current wall-clock time in milliseconds since the Unix epoch, as reported
+   * by {@link System#currentTimeMillis()}.
+   *
+   * @return current wall time in milliseconds
    */
   @Override
   public long wallTime () {
@@ -57,7 +68,11 @@ public class SystemClock implements Clock {
   }
 
   /**
-   * @return monotonic time in nanoseconds from {@link System#nanoTime()}
+   * Returns the current value of the JVM high-resolution monotonic timer in nanoseconds,
+   * as reported by {@link System#nanoTime()}. The value is suitable for measuring elapsed
+   * time but has no absolute relationship to wall-clock time.
+   *
+   * @return current monotonic time in nanoseconds
    */
   @Override
   public long monotonicTime () {

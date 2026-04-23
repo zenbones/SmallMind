@@ -39,16 +39,21 @@ import org.smallmind.quorum.namespace.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 /**
- * Translates between internal names and LDAP distinguished names.
+ * {@link NameTranslator} that maps between the {@code java:} namespace's internal path components
+ * and LDAP distinguished names using the {@code cn=} (common name) attribute type.
+ * <p>
+ * Every internal path component {@code foo} is translated to an LDAP node {@code cn=foo}, and
+ * the resulting components are written in reverse order (most specific first) when rendered as
+ * a string, matching the LDAP convention for distinguished names.
  */
 public class LdapNameTranslator extends NameTranslator {
 
   private static final String LDAP_NODE_PREFIX = "cn=";
 
   /**
-   * Creates the translator with the provided context creator.
+   * Creates a translator backed by the supplied context creator.
    *
-   * @param contextCreator creator for LDAP contexts
+   * @param contextCreator the factory used to open initial LDAP directory contexts
    */
   public LdapNameTranslator (ContextCreator contextCreator) {
 
@@ -56,11 +61,15 @@ public class LdapNameTranslator extends NameTranslator {
   }
 
   /**
-   * Converts an internal name into an external LDAP {@link JavaName} using common-name prefixes.
+   * Converts an internal {@link Name} into an LDAP-style {@link JavaName} by prefixing each
+   * component with {@code cn=}.
+   * <p>
+   * The components are added in the same order as the internal name; reversal happens only when
+   * the name is rendered to a string via {@link #fromExternalNameToExternalString}.
    *
-   * @param internalName internal name to convert
-   * @return external name
-   * @throws InvalidNameException if conversion fails
+   * @param internalName the internal name whose components are to be translated
+   * @return a {@link JavaName} whose components are {@code cn=<component>} for each internal component
+   * @throws InvalidNameException if the {@link JavaName} constructor or {@code add} rejects a component
    */
   public JavaName fromInternalNameToExternalName (Name internalName)
     throws InvalidNameException {
@@ -76,10 +85,13 @@ public class LdapNameTranslator extends NameTranslator {
   }
 
   /**
-   * Converts an external LDAP name to a distinguished name string.
+   * Renders an LDAP-style {@link JavaName} as a comma-separated distinguished name string.
+   * <p>
+   * Components are written in reverse order (index {@code size-1} down to {@code 0}), which
+   * yields the standard LDAP DN format where the most specific component appears first.
    *
-   * @param externalName external name
-   * @return DN string
+   * @param externalName the {@link JavaName} whose LDAP components are to be serialised
+   * @return a comma-separated DN string with components in most-specific-first order
    */
   public String fromExternalNameToExternalString (JavaName externalName) {
 
@@ -97,11 +109,17 @@ public class LdapNameTranslator extends NameTranslator {
   }
 
   /**
-   * Converts an absolute distinguished name string to an internal path string.
+   * Converts a fully qualified LDAP distinguished name — one that ends with the configured root DN
+   * — into the equivalent internal {@code java:}-rooted path string.
+   * <p>
+   * The root DN is stripped from the end of {@code externalName} before the remaining components
+   * are translated. Throws if {@code externalName} equals the root exactly (no sub-path) or does
+   * not end with the root.
    *
-   * @param externalName absolute DN
-   * @return internal path string
-   * @throws InvalidNameException if conversion fails
+   * @param externalName the absolute LDAP DN to convert, which must end with the configured root DN
+   * @return an internal path string beginning with {@code java:}
+   * @throws InvalidNameException if {@code externalName} equals the root DN, does not end with it,
+   *                              or contains a component that lacks an {@code =} separator
    */
   public String fromAbsoluteExternalStringToInternalString (String externalName)
     throws InvalidNameException {
@@ -110,11 +128,14 @@ public class LdapNameTranslator extends NameTranslator {
   }
 
   /**
-   * Converts a distinguished name string to an internal path string.
+   * Converts a relative LDAP distinguished name into the equivalent internal path string.
+   * <p>
+   * Unlike {@link #fromAbsoluteExternalStringToInternalString}, no root DN is expected or stripped;
+   * each component is decoded using its {@code =} separator and joined with {@code /}.
    *
-   * @param externalName DN string
-   * @return internal path string
-   * @throws InvalidNameException if conversion fails
+   * @param externalName the relative LDAP DN to convert
+   * @return an internal path string without a {@code java:} prefix
+   * @throws InvalidNameException if any component of {@code externalName} lacks an {@code =} separator
    */
   public String fromExternalStringToInternalString (String externalName)
     throws InvalidNameException {
@@ -123,12 +144,17 @@ public class LdapNameTranslator extends NameTranslator {
   }
 
   /**
-   * Helper to convert DNs into internal paths, optionally enforcing presence of the root.
+   * Shared implementation for both absolute and relative DN-to-internal-string conversion.
+   * <p>
+   * When {@code absolute} is {@code true} the method expects {@code externalName} to end with the
+   * configured root DN, prepends {@code java:} to the result, and adjusts the insert position
+   * accordingly. Components are split on commas and decoded by extracting the value after the first
+   * {@code =} character in each component.
    *
-   * @param externalName DN string
-   * @param absolute     whether the DN must contain the configured root
-   * @return internal path string
-   * @throws InvalidNameException if the DN is invalid
+   * @param externalName the LDAP DN string to convert
+   * @param absolute     {@code true} to require and strip the root DN suffix and prepend {@code java:}
+   * @return the internal path string
+   * @throws InvalidNameException if the string does not conform to the expected LDAP DN format
    */
   private String getInternalString (String externalName, boolean absolute)
     throws InvalidNameException {

@@ -50,7 +50,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
- * Installs Singularity-based single-jar applications into the local Maven repository, including optional signature files.
+ * Mojo goal {@code install-singularity} that places the single-jar Singularity artifact produced by
+ * {@link GenerateSingularityMojo} into the local Maven repository. A sibling {@code .asc} signature, if present, is
+ * attached via {@link AscArtifactMetadata} so that it is installed together with the jar.
  */
 @Mojo(name = "install-singularity", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class InstallSingularityMojo extends AbstractMojo {
@@ -67,9 +69,10 @@ public class InstallSingularityMojo extends AbstractMojo {
   ArtifactInstaller artifactInstaller;
 
   /**
-   * Installs the generated Singularity jar into the local repository unless skipping is requested.
+   * Resolves the Singularity jar in the build directory, attaches the optional signature, and installs the artifact
+   * into the local repository.
    *
-   * @throws MojoExecutionException if installation fails
+   * @throws MojoExecutionException if installation fails; the cause is the original {@link ArtifactInstallationException}
    */
   public void execute ()
     throws MojoExecutionException {

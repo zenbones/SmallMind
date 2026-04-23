@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.context;
 import java.io.Serializable;
 
 /**
- * Marker for thread-associated contextual data objects.
+ * Marker interface for objects that can be stored in and retrieved from the thread-local context stack managed by {@link ContextFactory}.
  */
 public interface Context extends Serializable {
 

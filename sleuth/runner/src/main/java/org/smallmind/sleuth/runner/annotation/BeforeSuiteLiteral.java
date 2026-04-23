@@ -35,7 +35,13 @@ package org.smallmind.sleuth.runner.annotation;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Runtime literal implementation of {@link BeforeSuite}.
+ * Concrete {@link BeforeSuite} annotation instance for programmatic construction at runtime.
+ * <p>
+ * Used by {@link AnnotationTranslator} implementations to bridge foreign suite-setup annotations
+ * — such as TestNG's {@code @BeforeClass} — onto the Sleuth lifecycle model.
+ *
+ * @see BeforeSuite
+ * @see AnnotationTranslator
  */
 public class BeforeSuiteLiteral extends AnnotationLiteral<BeforeSuite> implements BeforeSuite {
 

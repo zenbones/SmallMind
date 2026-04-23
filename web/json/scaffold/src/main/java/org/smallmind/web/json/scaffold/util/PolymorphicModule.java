@@ -37,13 +37,13 @@ import tools.jackson.databind.JacksonModule;
 import tools.jackson.module.jakarta.xmlbind.PackageVersion;
 
 /**
- * Jackson module that installs {@link PolymorphicValueInstantiator} to ensure proxies resolve to
- * their underlying polymorphic subclasses during deserialization.
+ * Jackson module that installs {@link PolymorphicValueInstantiator} so that proxy classes are
+ * resolved to their underlying polymorphic subclasses during deserialization.
  */
 public class PolymorphicModule extends JacksonModule {
 
   /**
-   * @return module name for registration
+   * @return module name used for registration
    */
   @Override
   public String getModuleName () {
@@ -61,7 +61,8 @@ public class PolymorphicModule extends JacksonModule {
   }
 
   /**
-   * Registers value instantiators that swap proxies for actual polymorphic subclasses.
+   * Registers value instantiators that substitute the real polymorphic subclass for its proxy during
+   * deserialization.
    *
    * @param context Jackson setup context
    */

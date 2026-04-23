@@ -40,15 +40,23 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * JAXB/Jackson adapter for serializing and deserializing {@link Stint}.
+ * JAXB/Jackson {@link XmlAdapter} that converts between a {@link Stint} and a JSON
+ * {@link JsonNode}. The JSON representation is an object with two fields:
+ * <ul>
+ *   <li>{@code time} &ndash; the numeric duration as a {@code long}</li>
+ *   <li>{@code timeUnit} &ndash; the {@link TimeUnit} name as a {@code String}</li>
+ * </ul>
+ * A {@code null} input on either side of the conversion produces a {@code null} output.
  */
 public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
 
   /**
-   * Serializes a stint to a JSON object with time and timeUnit fields.
+   * Serializes a {@link Stint} to a JSON {@link ObjectNode} containing {@code time} and
+   * {@code timeUnit} fields.
    *
-   * @param stint stint to serialize
-   * @return JSON node or {@code null} when input is null
+   * @param stint the {@link Stint} to serialize; may be {@code null}
+   * @return a JSON {@link ObjectNode} representing the stint, or {@code null} if {@code stint}
+   * is {@code null}
    */
   @Override
   public JsonNode marshal (Stint stint) {
@@ -68,10 +76,11 @@ public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
   }
 
   /**
-   * Deserializes a JSON node to a stint.
+   * Deserializes a JSON {@link JsonNode} to a {@link Stint} by reading the {@code time}
+   * and {@code timeUnit} fields.
    *
-   * @param node JSON node containing time and timeUnit
-   * @return constructed stint or {@code null} when node is null
+   * @param node the JSON node to deserialize; may be {@code null}
+   * @return the reconstructed {@link Stint}, or {@code null} if {@code node} is {@code null}
    */
   @Override
   public Stint unmarshal (JsonNode node) {

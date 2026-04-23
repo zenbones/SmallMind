@@ -33,19 +33,30 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Represents a key/value pair attached to meter readings.
+ * Represents an immutable key/value pair that is attached to meter readings to provide
+ * dimensional metadata. Tags are commonly used by monitoring backends to filter, group, and
+ * aggregate metrics (e.g., {@code env=production}, {@code service=auth}). Both the key and
+ * the value must be non-null and non-empty; the constructor enforces this invariant.
  */
 public class Tag {
 
+  /**
+   * The key component of this tag; never {@code null} or empty.
+   */
   private final String key;
+
+  /**
+   * The value component of this tag; never {@code null} or empty.
+   */
   private final String value;
 
   /**
-   * Creates a tag ensuring the key and value are non-empty.
+   * Constructs a tag with the specified key and value, verifying that neither is {@code null}
+   * nor empty.
    *
-   * @param key   tag key
-   * @param value tag value
-   * @throws IllegalArgumentException if either argument is null or empty
+   * @param key   the tag key; must be non-null and non-empty
+   * @param value the tag value; must be non-null and non-empty
+   * @throws IllegalArgumentException if either {@code key} or {@code value} is {@code null} or empty
    */
   public Tag (String key, String value) {
 
@@ -57,13 +68,20 @@ public class Tag {
     this.value = value;
   }
 
+  /**
+   * Returns the key component of this tag.
+   *
+   * @return the tag key; never {@code null} or empty
+   */
   public String getKey () {
 
     return key;
   }
 
   /**
-   * @return the tag value
+   * Returns the value component of this tag.
+   *
+   * @return the tag value; never {@code null} or empty
    */
   public String getValue () {
 
@@ -71,9 +89,9 @@ public class Tag {
   }
 
   /**
-   * Formats the tag as key=value.
+   * Returns a string representation of this tag in {@code key=value} format.
    *
-   * @return string representation
+   * @return the tag formatted as {@code key=value}
    */
   @Override
   public String toString () {
@@ -82,9 +100,9 @@ public class Tag {
   }
 
   /**
-   * Computes a hash using both key and value.
+   * Returns a hash code derived from both the key and the value.
    *
-   * @return hash code
+   * @return hash code based on {@code key} and {@code value}
    */
   @Override
   public int hashCode () {
@@ -93,10 +111,12 @@ public class Tag {
   }
 
   /**
-   * Compares tags by key and value.
+   * Compares this tag to another object for equality. Two tags are equal if and only if they
+   * are both {@link Tag} instances with identical keys and values.
    *
-   * @param obj object to compare
-   * @return {@code true} when keys and values match
+   * @param obj the object to compare with this tag
+   * @return {@code true} if {@code obj} is a {@link Tag} with the same key and value;
+   * {@code false} otherwise
    */
   @Override
   public boolean equals (Object obj) {

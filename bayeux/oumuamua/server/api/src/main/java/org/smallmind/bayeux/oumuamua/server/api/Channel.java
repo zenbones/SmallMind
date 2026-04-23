@@ -37,7 +37,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Represents a server side channel with listener callbacks and subscription semantics.
+ * Server-side Bayeux channel that manages subscriptions, listeners, and message delivery to its subscriber set.
  *
  * @param <V> concrete {@link Value} implementation used to represent message payloads
  */
@@ -47,34 +47,38 @@ public interface Channel<V extends Value<V>> extends Attributed {
   String DEEP_WILD = "**";
 
   /**
-   * Marker for channel listeners that can opt into persistence.
+   * Base listener type for channel events; implementors may elect to survive server restarts.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface Listener<V extends Value<V>> {
 
     /**
-     * Indicates whether the listener is kept across server restarts.
+     * Returns whether this listener should be retained when the server restarts.
      *
-     * @return {@code true} when persistent
+     * @return {@code true} if the listener survives restart
      */
     boolean isPersistent ();
   }
 
   /**
-   * Listener that reacts to subscription lifecycle events.
+   * Notified when sessions subscribe to or unsubscribe from the channel.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface SessionListener<V extends Value<V>> extends Listener<V> {
 
     /**
-     * Called when a session subscribes to the channel.
+     * Called immediately after a session successfully subscribes.
      *
-     * @param session the subscribing session
+     * @param session the session that subscribed
      */
     void onSubscribed (Session<V> session);
 
     /**
-     * Called when a session unsubscribes from the channel.
+     * Called immediately after a session unsubscribes.
      *
-     * @param session the unsubscribing session
+     * @param session the session that unsubscribed
      */
     void onUnsubscribed (Session<V> session);
   }
@@ -82,54 +86,58 @@ public interface Channel<V extends Value<V>> extends Attributed {
   // Messages are frozen before this call, guaranteeing that all sessions in this delivery stream, but not others, see any changes generated here
 
   /**
-   * Listener that can react to packet delivery events.
+   * Intercepts packet delivery to channel subscribers; messages are frozen before this call, so
+   * mutations are visible only within the current delivery stream.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
     /**
-     * Indicates whether the listener is kept across server restarts.
+     * Returns whether this listener should be retained when the server restarts.
      *
-     * @return {@code true} when persistent
+     * @return {@code true} if the listener survives restart
      */
     boolean isPersistent ();
 
     // For published messages delivered to receivers
 
     /**
-     * Called when a packet is being delivered to channel subscribers.
+     * Called when a publish packet is about to be delivered to subscribers; may return a
+     * replacement packet.
      *
-     * @param sender the session that published the packet
-     * @param packet the packet being delivered
-     * @return a possibly modified packet to distribute
+     * @param sender session that originally published the packet
+     * @param packet frozen packet being distributed
+     * @return packet to continue delivering, possibly a replacement
      */
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   /**
-   * Registers a listener for channel activity.
+   * Registers a listener to receive channel events.
    *
-   * @param listener the listener to add
+   * @param listener listener to add
    */
   void addListener (Listener<V> listener);
 
   /**
-   * Removes a listener from the channel.
+   * Deregisters a previously added listener.
    *
-   * @param listener the listener to remove
+   * @param listener listener to remove
    */
   void removeListener (Listener<V> listener);
 
   /**
-   * Returns the channel route.
+   * Returns the route that identifies this channel's path.
    *
-   * @return the route definition
+   * @return route for this channel
    */
   Route getRoute ();
 
   /**
-   * Indicates whether the route contains a single-level wildcard.
+   * Returns whether this channel's route ends with a single-level wildcard ({@code *}).
    *
-   * @return {@code true} when the route is wild
+   * @return {@code true} if the route is wild
    */
   default boolean isWild () {
 
@@ -137,9 +145,9 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Indicates whether the route contains a multi-level wildcard.
+   * Returns whether this channel's route ends with a deep wildcard ({@code **}).
    *
-   * @return {@code true} when the route is deep wild
+   * @return {@code true} if the route is deep wild
    */
   default boolean isDeepWild () {
 
@@ -147,7 +155,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Indicates whether the channel is a meta channel.
+   * Returns whether this is a meta channel ({@code /meta/...}).
    *
    * @return {@code true} for meta channels
    */
@@ -157,7 +165,7 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Indicates whether the channel is a service channel.
+   * Returns whether this is a service channel ({@code /service/...}).
    *
    * @return {@code true} for service channels
    */
@@ -167,9 +175,9 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Indicates whether the channel can receive published data.
+   * Returns whether user messages can be published and delivered on this channel.
    *
-   * @return {@code true} if deliverable
+   * @return {@code true} when the channel accepts user publications
    */
   default boolean isDeliverable () {
 
@@ -177,83 +185,83 @@ public interface Channel<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Indicates whether the channel persists across disconnects.
+   * Returns whether this channel is marked persistent and should not be removed when empty.
    *
-   * @return {@code true} when persistent
+   * @return {@code true} if persistent
    */
   boolean isPersistent ();
 
   /**
-   * Sets whether this channel persists across disconnects.
+   * Controls whether the channel is kept alive when it has no subscribers.
    *
-   * @param persistent flag indicating persistence
+   * @param persistent {@code true} to prevent automatic removal when empty
    */
   void setPersistent (boolean persistent);
 
   /**
-   * Indicates whether messages sent to this channel are reflected back to the sender.
+   * Returns whether published messages are echoed back to the publishing session.
    *
-   * @return {@code true} when reflecting
+   * @return {@code true} if the sender receives its own messages
    */
   boolean isReflecting ();
 
   /**
-   * Enables or disables reflection to the sender.
+   * Controls whether published messages are echoed back to the publishing session.
    *
-   * @param reflecting {@code true} to reflect
+   * @param reflecting {@code true} to echo messages to the sender
    */
   void setReflecting (boolean reflecting);
 
   /**
-   * Indicates whether the channel streams messages without batching.
+   * Returns whether the channel delivers each message individually without batching.
    *
-   * @return {@code true} when streaming
+   * @return {@code true} if streaming delivery is active
    */
   boolean isStreaming ();
 
   /**
-   * Enables or disables streaming for this channel.
+   * Controls whether the channel delivers messages individually (streaming) or batched.
    *
-   * @param streaming {@code true} for streaming behavior
+   * @param streaming {@code true} for per-message streaming delivery
    */
   void setStreaming (boolean streaming);
 
   /**
-   * Adds a session subscription to the channel.
+   * Subscribes a session to receive deliveries on this channel.
    *
-   * @param session the subscribing session
-   * @return {@code true} if the session was added
+   * @param session session to subscribe
+   * @return {@code true} if the session was newly added; {@code false} if already subscribed
    */
   boolean subscribe (Session<V> session);
 
   /**
-   * Removes a session subscription from the channel.
+   * Removes a session's subscription from this channel.
    *
-   * @param session the unsubscribing session
+   * @param session session to unsubscribe
    */
   void unsubscribe (Session<V> session);
 
   /**
-   * Determines whether the channel can be removed due to idleness.
+   * Evaluates whether this channel is eligible for automatic removal given the current time.
    *
-   * @param now current time in milliseconds
-   * @return {@code true} if removable
+   * @param now current wall-clock time in milliseconds
+   * @return {@code true} if the channel can be removed (e.g., non-persistent and empty)
    */
   boolean isRemovable (long now);
 
   /**
-   * Delivers a packet to channel subscribers.
+   * Pushes a packet to the sessions in the provided id set, invoking packet listeners along the way.
    *
-   * @param sender       the session sending the packet
-   * @param packet       the packet to deliver
-   * @param sessionIdSet a set of session identifiers that should receive the packet
+   * @param sender       session originating the packet
+   * @param packet       packet to deliver
+   * @param sessionIdSet identifiers of sessions that should receive the packet
    */
   void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet);
 
   /**
-   * Publishes data to the channel, creating a packet for distribution.
+   * Wraps the given data in a delivery packet and distributes it to all subscribers.
    *
-   * @param data payload to publish
+   * @param data JSON object to publish as the message payload
    */
   void publish (ObjectValue<V> data);
 }

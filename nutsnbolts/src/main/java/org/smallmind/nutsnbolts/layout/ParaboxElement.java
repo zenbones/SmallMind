@@ -33,10 +33,11 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Base wrapper around a component or nested box used by {@link ParaboxLayout}. Provides cached
- * access to sizing measurements through an optional {@link LayoutTailor}.
+ * Abstract base that wraps a layout part (either a native component or a nested {@link Box}) together
+ * with its {@link Constraint}, and provides tailor-cached access to minimum, preferred, and maximum
+ * measurements for use during measurement and layout passes.
  *
- * @param <P> the underlying part type
+ * @param <P> the type of the wrapped part
  */
 public abstract class ParaboxElement<P> {
 
@@ -44,10 +45,10 @@ public abstract class ParaboxElement<P> {
   private final Constraint constraint;
 
   /**
-   * Creates a new element wrapper.
+   * Constructs an element wrapping the given part with the specified sizing constraint.
    *
-   * @param part       the wrapped component or box
-   * @param constraint sizing and alignment constraint
+   * @param part       the wrapped component or nested box
+   * @param constraint the grow/shrink constraint governing this element's sizing
    */
   public ParaboxElement (P part, Constraint constraint) {
 
@@ -56,55 +57,64 @@ public abstract class ParaboxElement<P> {
   }
 
   /**
-   * @return {@code true} if this element represents a native platform component
+   * Returns whether this element wraps a native platform component rather than a nested box.
+   *
+   * @return {@code true} for native components; {@code false} for nested boxes
    */
   public abstract boolean isNativeComponent ();
 
   /**
+   * Returns whether this element requires single-axis ({@link Dimensionality#LINE}) or
+   * two-axis ({@link Dimensionality#PLANE}) layout coordination.
+   *
    * @return the dimensionality of the wrapped part
    */
   public abstract Dimensionality getDimensionality ();
 
   /**
-   * Returns the raw minimum measurement of the part along the axis.
+   * Returns the intrinsic minimum measurement of the wrapped part along the given axis,
+   * without applying constraint-based adjustments.
    *
    * @param bias   the axis of measurement
-   * @param tailor optional layout tailor for recursive measurement
-   * @return the minimum size
+   * @param tailor the layout tailor for recursive measurement; may be {@code null}
+   * @return the part's raw minimum size
    */
   public abstract double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Returns the raw preferred measurement of the part along the axis.
+   * Returns the intrinsic preferred measurement of the wrapped part along the given axis,
+   * without applying constraint-based adjustments.
    *
    * @param bias   the axis of measurement
-   * @param tailor optional layout tailor for recursive measurement
-   * @return the preferred size
+   * @param tailor the layout tailor for recursive measurement; may be {@code null}
+   * @return the part's raw preferred size
    */
   public abstract double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Returns the raw maximum measurement of the part along the axis.
+   * Returns the intrinsic maximum measurement of the wrapped part along the given axis,
+   * without applying constraint-based adjustments.
    *
    * @param bias   the axis of measurement
-   * @param tailor optional layout tailor for recursive measurement
-   * @return the maximum size
+   * @param tailor the layout tailor for recursive measurement; may be {@code null}
+   * @return the part's raw maximum size
    */
   public abstract double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor);
 
   /**
-   * Returns the baseline position for the part given a specific measurement.
+   * Returns the baseline offset of the wrapped part for a given allocated size along the axis,
+   * used for {@link Alignment#BASELINE} calculations.
    *
    * @param bias        the axis of measurement
-   * @param measurement the allocated size along the axis
-   * @return the baseline offset
+   * @param measurement the size allocated to the part along the axis
+   * @return the distance from the leading edge of the part to its text baseline
    */
   public abstract double getBaseline (Bias bias, double measurement);
 
   /**
-   * Returns the wrapped part.
+   * Returns the wrapped component or nested box.
    *
-   * @return the part
+   * @return the part managed by this element
    */
   public P getPart () {
 
@@ -112,9 +122,9 @@ public abstract class ParaboxElement<P> {
   }
 
   /**
-   * Returns the constraint governing this element.
+   * Returns the {@link Constraint} that governs how this element grows or shrinks during layout.
    *
-   * @return the constraint
+   * @return this element's constraint
    */
   public Constraint getConstraint () {
 
@@ -122,11 +132,13 @@ public abstract class ParaboxElement<P> {
   }
 
   /**
-   * Returns the minimum measurement honoring constraint behavior and caching through the tailor.
+   * Returns the effective minimum measurement for this element, applying the constraint's shrink behavior:
+   * if the element may shrink, returns the part's true minimum; otherwise returns the preferred size.
+   * Results are cached through the tailor when one is provided.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor cache (may be {@code null})
-   * @return the minimum size
+   * @param tailor the layout tailor for caching; {@code null} disables caching
+   * @return the effective minimum size along the axis
    */
   public double getMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
@@ -146,11 +158,12 @@ public abstract class ParaboxElement<P> {
   }
 
   /**
-   * Returns the preferred measurement, caching via the tailor when provided.
+   * Returns the preferred measurement of this element, caching the result through the tailor
+   * when one is provided.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor cache (may be {@code null})
-   * @return the preferred size
+   * @param tailor the layout tailor for caching; {@code null} disables caching
+   * @return the preferred size along the axis
    */
   public double getPreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
@@ -170,11 +183,13 @@ public abstract class ParaboxElement<P> {
   }
 
   /**
-   * Returns the maximum measurement honoring constraint behavior and caching through the tailor.
+   * Returns the effective maximum measurement for this element, applying the constraint's grow behavior:
+   * if the element may grow, returns the part's true maximum; otherwise returns the preferred size.
+   * Results are cached through the tailor when one is provided.
    *
    * @param bias   the axis of measurement
-   * @param tailor the layout tailor cache (may be {@code null})
-   * @return the maximum size
+   * @param tailor the layout tailor for caching; {@code null} disables caching
+   * @return the effective maximum size along the axis
    */
   public double getMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 

@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty.option;
 
 /**
- * Marker option indicating that Spring-specific request context support should be installed.
+ * Marker option whose presence causes a {@link org.smallmind.web.jetty.JettyRequestContextListener} to be registered, enabling Spring request-context support for the enclosing Jetty context.
  */
 public class SpringSupportOption {
 

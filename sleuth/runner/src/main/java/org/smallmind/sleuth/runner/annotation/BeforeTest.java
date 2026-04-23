@@ -38,7 +38,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method to be executed before each test method.
+ * Marks a method to be executed immediately before each individual {@link Test}-annotated method.
+ * <p>
+ * One invocation of each annotated method occurs before every test dispatch, giving the test a
+ * fresh precondition. Intended for per-test setup logic such as creating object instances,
+ * opening transactions, or seeding test data. The annotated method must accept no arguments; its
+ * return value is ignored. If the method throws, the error is captured as a culprit and the
+ * corresponding test is skipped rather than executed.
+ *
+ * @see AfterTest
+ * @see BeforeSuite
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

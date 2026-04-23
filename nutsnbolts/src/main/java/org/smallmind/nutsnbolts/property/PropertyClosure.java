@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.property;
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
 /**
- * Encapsulates the delimiters used for property expansion and optional handling of encrypted values.
- * Supports locating the next property prologue within an expression string.
+ * Holds the prefix and suffix delimiters used to detect property placeholders in an expression,
+ * along with an optional {@link EncryptedVariation} for handling encrypted values.
  */
 public class PropertyClosure {
 
@@ -45,9 +45,9 @@ public class PropertyClosure {
   private final String suffix;
 
   /**
-   * Creates a closure using default delimiters {@code ${} } and no encrypted variation.
+   * Constructs a closure using the default delimiters {@code ${}} and {@code }} with no encrypted variation.
    *
-   * @throws PropertyExpanderException if delimiters are invalid
+   * @throws PropertyExpanderException if the default delimiters are invalid
    */
   public PropertyClosure ()
     throws PropertyExpanderException {
@@ -56,11 +56,11 @@ public class PropertyClosure {
   }
 
   /**
-   * Creates a closure with custom delimiters and no encrypted variation.
+   * Constructs a closure with caller-supplied delimiters and no encrypted variation.
    *
-   * @param prefix the prefix marking the start of a property
-   * @param suffix the suffix marking the end of a property
-   * @throws PropertyExpanderException if delimiters are invalid
+   * @param prefix the non-blank string that marks the start of a property placeholder
+   * @param suffix the non-blank string that marks the end of a property placeholder
+   * @throws PropertyExpanderException if either delimiter is blank or they share a character
    */
   public PropertyClosure (String prefix, String suffix)
     throws PropertyExpanderException {
@@ -69,10 +69,10 @@ public class PropertyClosure {
   }
 
   /**
-   * Creates a closure with default delimiters and an encrypted variation using the provided decryptor.
+   * Constructs a closure with default delimiters and an encrypted variation using the supplied decryptor.
    *
-   * @param decryptor decryptor used for encrypted values
-   * @throws PropertyExpanderException if delimiters are invalid
+   * @param decryptor the decryptor to use for encrypted property values
+   * @throws PropertyExpanderException if the default delimiters are invalid
    */
   public PropertyClosure (Decryptor decryptor)
     throws PropertyExpanderException {
@@ -81,13 +81,13 @@ public class PropertyClosure {
   }
 
   /**
-   * Creates a closure with default property delimiters and a custom encrypted prefix.
+   * Constructs a closure with caller-supplied property delimiters, a custom encrypted prefix, and a decryptor.
    *
-   * @param decryptor       decryptor used for encrypted values
-   * @param encryptedPrefix prefix denoting encrypted property values
-   * @param prefix          property prefix delimiter
-   * @param suffix          property suffix delimiter
-   * @throws PropertyExpanderException if delimiters are invalid
+   * @param decryptor       the decryptor to use for encrypted property values
+   * @param encryptedPrefix the prefix that marks encrypted placeholders within expressions
+   * @param prefix          the non-blank string marking the start of any property placeholder
+   * @param suffix          the non-blank string marking the end of any property placeholder
+   * @throws PropertyExpanderException if any delimiter is invalid or shares characters with the suffix
    */
   public PropertyClosure (Decryptor decryptor, String encryptedPrefix, String prefix, String suffix)
     throws PropertyExpanderException {
@@ -96,12 +96,12 @@ public class PropertyClosure {
   }
 
   /**
-   * Internal constructor for fully-specified closure and encrypted variation data.
+   * Primary internal constructor; validates delimiter constraints and stores all configuration.
    *
-   * @param encryptedVariation optional encrypted variation configuration
-   * @param prefix             property prefix delimiter
-   * @param suffix             property suffix delimiter
-   * @throws PropertyExpanderException if delimiters are invalid or overlap
+   * @param encryptedVariation optional encrypted-placeholder configuration; may be {@code null}
+   * @param prefix             the non-blank placeholder start delimiter
+   * @param suffix             the non-blank placeholder end delimiter
+   * @throws PropertyExpanderException if any delimiter is null, blank, or shares characters with the suffix
    */
   private PropertyClosure (EncryptedVariation encryptedVariation, String prefix, String suffix)
     throws PropertyExpanderException {
@@ -131,7 +131,9 @@ public class PropertyClosure {
   }
 
   /**
-   * @return the property suffix delimiter
+   * Returns the suffix delimiter that marks the end of a property placeholder.
+   *
+   * @return the configured suffix string
    */
   public String getSuffix () {
 
@@ -139,11 +141,12 @@ public class PropertyClosure {
   }
 
   /**
-   * Finds the next property prologue (either encrypted or plain) starting at {@code parsePos}.
+   * Scans the expression for the next property placeholder starting at the given position and returns
+   * a {@link PropertyPrologue} describing the prefix type, position, and applicable decryptor.
    *
-   * @param expansionBuilder the expression being parsed
-   * @param parsePos         the index to begin searching
-   * @return a {@link PropertyPrologue} describing the next property occurrence
+   * @param expansionBuilder the current expression being expanded
+   * @param parsePos         the index within the builder at which to begin the search
+   * @return a descriptor for the next placeholder found, with a negative position if none exists
    */
   public PropertyPrologue findPrologue (StringBuilder expansionBuilder, int parsePos) {
 

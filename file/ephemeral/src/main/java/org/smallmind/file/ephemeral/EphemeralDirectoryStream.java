@@ -49,7 +49,10 @@ import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 
 /**
- * {@link SecureDirectoryStream} implementation over the ephemeral file-system heap.
+ * {@link SecureDirectoryStream} implementation that iterates over entries in an ephemeral
+ * heap directory. All mutating and navigation operations are guarded against use after
+ * {@link #close()} by throwing {@link ClosedDirectoryStreamException}. Relative paths
+ * supplied to the secure-stream methods are resolved against the stream's own path.
  */
 public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
@@ -60,12 +63,12 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   private boolean closed = false;
 
   /**
-   * Creates a directory stream for the specified path and directory node.
+   * Creates a directory stream for the specified heap directory node.
    *
-   * @param provider      the provider to delegate new operations to
-   * @param streamPath    the path backing this stream
-   * @param directoryNode the heap node for the directory
-   * @param filter        optional filter to apply when iterating
+   * @param provider      the file-system provider used to delegate new channel and stream operations
+   * @param streamPath    the absolute path that this stream represents
+   * @param directoryNode the heap node backing the directory
+   * @param filter        an optional filter applied when iterating entries; may be {@code null}
    */
   public EphemeralDirectoryStream (EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
 
@@ -76,7 +79,8 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Closes this directory stream. Subsequent operations on the stream will throw
+   * {@link ClosedDirectoryStreamException}.
    */
   @Override
   public synchronized void close () {
@@ -85,7 +89,10 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an iterator over the entries of this directory, applying the configured filter.
+   *
+   * @return an iterator of child {@link Path} objects
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized Iterator<Path> iterator () {
@@ -99,7 +106,15 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Opens a new directory stream for a sub-directory. A relative path is resolved against
+   * this stream's own path before delegation.
+   *
+   * @param path    the sub-directory path (absolute or relative)
+   * @param options link options (currently unused)
+   * @return a new {@link SecureDirectoryStream} for the resolved path
+   * @throws NoSuchFileException            if the resolved path does not exist
+   * @throws NotDirectoryException          if the resolved path is not a directory
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path path, LinkOption... options)
@@ -114,7 +129,15 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Opens a seekable byte channel for a file entry. A relative path is resolved against
+   * this stream's own path before delegation.
+   *
+   * @param path    the file path (absolute or relative)
+   * @param options the open options controlling read/write semantics
+   * @param attrs   optional file attributes to set on creation
+   * @return the opened {@link SeekableByteChannel}
+   * @throws IOException                    if the channel cannot be opened
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
@@ -129,7 +152,12 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Deletes the file at the given path. A relative path is resolved against this stream's
+   * own path before delegation.
+   *
+   * @param path the file path to delete (absolute or relative)
+   * @throws IOException                    if the file cannot be deleted
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized void deleteFile (Path path)
@@ -143,7 +171,12 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Deletes the directory at the given path. A relative path is resolved against this
+   * stream's own path before delegation.
+   *
+   * @param path the directory path to delete (absolute or relative)
+   * @throws IOException                    if the directory cannot be deleted
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized void deleteDirectory (Path path)
@@ -157,7 +190,14 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Moves the entry at {@code src} to {@code targetpath} within the {@code target} stream.
+   * Relative source and target paths are resolved against their respective stream paths.
+   *
+   * @param src        the source path (absolute or relative to this stream)
+   * @param target     the destination directory stream
+   * @param targetpath the destination path within the target stream (absolute or relative)
+   * @throws IOException                    if the move cannot be performed
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath)
@@ -171,7 +211,13 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a file-attribute view for the directory itself. This implementation always
+   * returns {@code null} because no view is associated with the stream's own directory entry.
+   *
+   * @param <V>  the view type
+   * @param type the class of the desired view
+   * @return always {@code null}
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Class<V> type) {
@@ -185,7 +231,15 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a file-attribute view for the entry at the given path, delegating to the provider.
+   * A relative path is resolved against this stream's own path before delegation.
+   *
+   * @param <V>     the view type
+   * @param path    the entry path (absolute or relative)
+   * @param type    the class of the desired view
+   * @param options link options passed through to the provider
+   * @return the requested view, or {@code null} when the view type is unsupported
+   * @throws ClosedDirectoryStreamException if this stream has been closed
    */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {

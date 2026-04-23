@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty;
 
 /**
- * Encapsulates SSL configuration for Jetty, including keystore, truststore, and connector settings.
+ * Encapsulates the keystore, truststore, port, and behavioral flags needed to configure an HTTPS connector in Jetty.
  */
 public class SSLInfo {
 
@@ -44,7 +44,7 @@ public class SSLInfo {
   private int port = 443;
 
   /**
-   * Retrieves the HTTPS port number Jetty should bind to.
+   * Returns the port number on which Jetty listens for HTTPS connections.
    *
    * @return configured HTTPS port
    */
@@ -54,9 +54,9 @@ public class SSLInfo {
   }
 
   /**
-   * Sets the HTTPS port number Jetty should bind to.
+   * Sets the port number on which Jetty should listen for HTTPS connections.
    *
-   * @param port port to expose for secure connections
+   * @param port the HTTPS port
    */
   public void setPort (int port) {
 
@@ -64,9 +64,9 @@ public class SSLInfo {
   }
 
   /**
-   * Returns the SSL store containing the server's private key and certificate.
+   * Returns the store containing the server's private key and certificate chain.
    *
-   * @return keystore configuration
+   * @return the keystore configuration
    */
   public SSLStore getKeySSLStore () {
 
@@ -74,9 +74,9 @@ public class SSLInfo {
   }
 
   /**
-   * Sets the SSL store that contains the server's key material.
+   * Sets the store that provides the server's private key and certificate chain.
    *
-   * @param keySSLStore keystore configuration
+   * @param keySSLStore the keystore configuration
    */
   public void setKeySSLStore (SSLStore keySSLStore) {
 
@@ -84,9 +84,9 @@ public class SSLInfo {
   }
 
   /**
-   * Returns the SSL store containing trusted certificate authorities.
+   * Returns the store containing trusted certificate authorities used to verify peers.
    *
-   * @return truststore configuration
+   * @return the truststore configuration
    */
   public SSLStore getTrustSSLStore () {
 
@@ -94,9 +94,9 @@ public class SSLInfo {
   }
 
   /**
-   * Sets the SSL store used to validate client or upstream certificates.
+   * Sets the store that contains trusted certificate authorities.
    *
-   * @param trustSSLStore truststore configuration
+   * @param trustSSLStore the truststore configuration
    */
   public void setTrustSSLStore (SSLStore trustSSLStore) {
 
@@ -104,9 +104,9 @@ public class SSLInfo {
   }
 
   /**
-   * Indicates whether Jetty should require client certificate authentication.
+   * Returns whether Jetty requires clients to present a certificate during the SSL handshake.
    *
-   * @return {@code true} if client certificates are required
+   * @return {@code true} if client authentication is required
    */
   public boolean isRequireClientAuth () {
 
@@ -114,9 +114,9 @@ public class SSLInfo {
   }
 
   /**
-   * Configures whether client certificates must be presented during SSL handshake.
+   * Configures whether Jetty demands client certificate authentication.
    *
-   * @param requireClientAuth {@code true} to enforce client authentication
+   * @param requireClientAuth {@code true} to enforce mutual TLS
    */
   public void setRequireClientAuth (boolean requireClientAuth) {
 
@@ -124,9 +124,9 @@ public class SSLInfo {
   }
 
   /**
-   * Indicates whether Jetty should operate in proxy mode.
+   * Returns whether Jetty operates in proxy mode, which may alter SSL handling when behind another proxy.
    *
-   * @return {@code true} if proxy-specific SSL handling should be applied
+   * @return {@code true} if proxy mode is active
    */
   public boolean isProxyMode () {
 
@@ -134,9 +134,9 @@ public class SSLInfo {
   }
 
   /**
-   * Configures proxy mode, which may alter SSL behavior when Jetty sits behind another proxy.
+   * Configures whether Jetty should operate in proxy mode.
    *
-   * @param proxyMode {@code true} to enable proxy mode
+   * @param proxyMode {@code true} to enable proxy-aware SSL behavior
    */
   public void setProxyMode (boolean proxyMode) {
 

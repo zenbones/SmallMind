@@ -33,20 +33,32 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Composite key for caching measurements by part, axis, and {@link TapeMeasure} type.
+ * Composite hash-map key that uniquely identifies a cached measurement for a specific layout part,
+ * axis, and measurement category within a {@link LayoutTailor}.
  *
- * @param part        layout component being measured
- * @param bias        axis along which the measurement applies
- * @param tapeMeasure measurement type (minimum/preferred)
+ * @param part        the layout component or box whose measurement is keyed
+ * @param bias        the axis to which the measurement applies
+ * @param tapeMeasure the category of measurement (minimum, preferred, or maximum)
  */
 public record Sizing(Object part, Bias bias, TapeMeasure tapeMeasure) {
 
+  /**
+   * Returns a hash code derived from the combination of part identity, axis, and measurement category.
+   *
+   * @return the combined hash code
+   */
   @Override
   public int hashCode () {
 
     return part.hashCode() ^ bias.hashCode() ^ tapeMeasure.hashCode();
   }
 
+  /**
+   * Returns {@code true} if the given object is a {@code Sizing} with the same part, bias, and tape measure.
+   *
+   * @param obj the object to compare
+   * @return {@code true} if the three key fields are equal; {@code false} otherwise
+   */
   @Override
   public boolean equals (Object obj) {
 

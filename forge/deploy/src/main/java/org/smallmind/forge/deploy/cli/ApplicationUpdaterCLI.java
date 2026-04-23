@@ -44,15 +44,21 @@ import org.smallmind.nutsnbolts.command.OptionSet;
 import org.smallmind.nutsnbolts.command.template.Template;
 
 /**
- * Command line entry point for invoking {@link ApplicationUpdater}.
+ * Command-line entry point for {@link ApplicationUpdater}. Parses options covering the install
+ * directory, target OS, Nexus credentials, artifact coordinates, decorator class names, and
+ * environment variables, then delegates to {@link ApplicationUpdater#update}.
  */
 public class ApplicationUpdaterCLI {
 
   /**
-   * Parse command line arguments, build a decorator chain, and launch the update process.
+   * Parse CLI options and invoke the deployment pipeline.
    *
-   * @param args CLI arguments matching {@link Template} metadata
-   * @throws Exception if argument parsing or update execution fails
+   * <p>Decorator classes are instantiated by name via reflection and must provide a public
+   * no-arg constructor. When required options are missing or malformed, the usage template is
+   * printed to standard output and the method returns without launching the updater.
+   *
+   * @param args command-line arguments as defined by the {@link Template} annotation on this class
+   * @throws Exception if reflection-based decorator instantiation fails or the updater throws
    */
   public static void main (String... args)
     throws Exception {

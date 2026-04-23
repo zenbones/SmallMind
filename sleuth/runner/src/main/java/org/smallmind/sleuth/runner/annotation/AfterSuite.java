@@ -39,6 +39,15 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a method to be executed once after all tests in a suite have completed.
+ * <p>
+ * Exactly one invocation of each annotated method occurs per suite instance, after the last
+ * {@link Test}-annotated method finishes. Intended for suite-wide teardown such as releasing
+ * shared connections or resetting global state. The annotated method must accept no arguments;
+ * its return value is ignored. If a prior lifecycle or test failure produced a culprit, the
+ * method is still scheduled but its outcome is reported as skipped in the event stream.
+ *
+ * @see BeforeSuite
+ * @see AfterTest
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

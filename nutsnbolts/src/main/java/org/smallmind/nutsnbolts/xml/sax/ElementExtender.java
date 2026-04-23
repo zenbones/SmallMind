@@ -36,43 +36,43 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * Extension point for handling SAX element events with custom logic.
+ * Interface for objects that handle SAX events for a specific XML element within an {@link org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser} parse.
  */
 public interface ElementExtender extends SAXExtender {
 
   /**
-   * Injects the document extender managing the parse.
+   * Injects the {@link DocumentExtender} that owns the current parse.
    *
-   * @param documentExtender owning document extender
+   * @param documentExtender the document extender managing this parse
    */
   void setDocumentExtender (DocumentExtender documentExtender);
 
   /**
-   * Sets the parent extender in the element stack.
+   * Sets the parent extender on the element stack.
    *
-   * @param parent parent extender
+   * @param parent the parent {@link SAXExtender} for the element being processed
    */
   void setParent (SAXExtender parent);
 
   /**
-   * Callback invoked at the start of the element.
+   * Called at the opening tag of the element.
    *
-   * @param namespaceURI namespace URI
-   * @param localName    local name
-   * @param qName        qualified name
-   * @param atts         element attributes
+   * @param namespaceURI the element namespace URI
+   * @param localName    the element local name
+   * @param qName        the qualified element name
+   * @param atts         the element attributes
    * @throws SAXException if processing fails
    */
   void startElement (String namespaceURI, String localName, String qName, Attributes atts)
     throws SAXException;
 
   /**
-   * Callback invoked at the end of the element with accumulated character content.
+   * Called at the closing tag of the element with the complete accumulated character content.
    *
-   * @param namespaceURI namespace URI
-   * @param localName    local name
-   * @param qName        qualified name
-   * @param content      aggregated character content for the element
+   * @param namespaceURI the element namespace URI
+   * @param localName    the element local name
+   * @param qName        the qualified element name
+   * @param content      the aggregated character content of the element
    * @throws SAXException if processing fails
    */
   void endElement (String namespaceURI, String localName, String qName, StringBuilder content)

@@ -45,7 +45,9 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
   private boolean journaled;
 
   /**
-   * @param acknowledgment write concern level to use
+   * Sets the write concern acknowledgment level to use.
+   *
+   * @param acknowledgment the desired acknowledgment level
    */
   public void setAcknowledgment (MongoAcknowledgment acknowledgment) {
 
@@ -53,7 +55,9 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
   }
 
   /**
-   * @param journaled whether journaling is requested when supported
+   * Sets whether journaling should be requested when the acknowledgment level supports it.
+   *
+   * @param journaled {@code true} to request journal acknowledgment
    */
   public void setJournaled (boolean journaled) {
 
@@ -61,7 +65,9 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code false}; each caller receives a fresh write concern instance.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean isSingleton () {
@@ -70,7 +76,9 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code WriteConcern.class}.
+   *
+   * @return {@code WriteConcern.class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -80,6 +88,8 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
 
   /**
    * Builds the {@link WriteConcern} based on the configured acknowledgment and journaling flag.
+   *
+   * @return the constructed write concern
    */
   @Override
   public WriteConcern getObject () {

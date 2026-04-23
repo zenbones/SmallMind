@@ -47,7 +47,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint requiring a string to contain at least one non-whitespace character.
+ * Bean Validation constraint that requires an annotated string to contain at least one non-whitespace character.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NotBlank {
 
   /**
-   * Allows multiple {@link NotBlank} annotations on the same element.
+   * Container annotation that allows multiple {@link NotBlank} constraints on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
@@ -64,23 +64,23 @@ public @interface NotBlank {
   @interface List {
 
     /**
-     * @return array of {@link NotBlank} constraints
+     * @return the contained {@link NotBlank} constraints
      */
     NotBlank[] value ();
   }
 
   /**
-   * @return message used when the value is blank
+   * @return the constraint violation message
    */
   String message () default "must be not be blank";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return custom payloads for Bean Validation clients
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 }

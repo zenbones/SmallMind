@@ -33,14 +33,18 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Conversation describing a request/response interaction with an optional timeout override.
+ * {@link Conversation} implementation for request/response calls that expect a reply.
+ *
+ * <p>Carries a timeout value in seconds. A positive value overrides the service-level default;
+ * zero or a negative value defers to that default. Use the no-argument constructor when the
+ * service default is acceptable.</p>
  */
 public class TwoWayConversation implements Conversation<Long> {
 
   Long timeout;
 
   /**
-   * Creates a two-way conversation with no custom timeout.
+   * Creates a two-way conversation that defers to the service-level default timeout.
    */
   public TwoWayConversation () {
 
@@ -48,9 +52,10 @@ public class TwoWayConversation implements Conversation<Long> {
   }
 
   /**
-   * Creates a two-way conversation with the supplied timeout.
+   * Creates a two-way conversation with an explicit timeout.
    *
-   * @param timeout timeout in seconds to apply when greater than zero
+   * @param timeout the timeout in seconds; a positive value overrides the service default,
+   *                zero or negative defers to the service default
    */
   public TwoWayConversation (Long timeout) {
 
@@ -58,7 +63,9 @@ public class TwoWayConversation implements Conversation<Long> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link ConversationType#IN_OUT}, indicating that a response is expected.
+   *
+   * @return {@link ConversationType#IN_OUT}
    */
   @Override
   public ConversationType getConversationType () {
@@ -66,10 +73,13 @@ public class TwoWayConversation implements Conversation<Long> {
     return ConversationType.IN_OUT;
   }
 
-  // Any positive value (> 0) will override the default service timeout seconds
-
   /**
-   * {@inheritDoc}
+   * Returns the timeout in seconds for this conversation.
+   *
+   * <p>A positive value overrides the service-level default; zero or a negative value
+   * indicates that the service default applies.</p>
+   *
+   * @return the timeout in seconds; never {@code null}
    */
   @Override
   public Long getTimeout () {

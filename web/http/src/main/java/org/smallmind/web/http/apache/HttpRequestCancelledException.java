@@ -35,13 +35,15 @@ package org.smallmind.web.http.apache;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Indicates that an asynchronous HTTP request was cancelled before completion.
+ * Signals that an asynchronous HTTP request was cancelled before it could complete.
  */
 public class HttpRequestCancelledException extends FormattedException {
 
   /**
-   * @param message error description
-   * @param args    arguments for formatting the message
+   * Constructs the exception with a formatted message.
+   *
+   * @param message printf-style message template
+   * @param args    arguments for the message template
    */
   public HttpRequestCancelledException (String message, Object... args) {
 

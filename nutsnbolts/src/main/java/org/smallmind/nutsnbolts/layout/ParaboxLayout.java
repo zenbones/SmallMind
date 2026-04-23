@@ -36,8 +36,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Coordinates horizontal and vertical {@link Box} instances to lay out components with platform-specific
- * perimeter insets. Provides measurement calculations and factories for creating serial or parallel boxes.
+ * Central controller that pairs a horizontal {@link Box} with a vertical {@link Box} to produce
+ * two-axis layout for all components in a {@link ParaboxContainer}, respecting the container's
+ * platform perimeter insets.
  */
 public class ParaboxLayout {
 
@@ -48,9 +49,9 @@ public class ParaboxLayout {
   private Box<?> verticalBox;
 
   /**
-   * Creates a layout using the container's frame perimeter.
+   * Creates a layout that uses the perimeter provided by the container's platform.
    *
-   * @param container the platform container to manage
+   * @param container the platform container whose components will be laid out
    */
   public ParaboxLayout (ParaboxContainer container) {
 
@@ -58,10 +59,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Creates a layout with an explicit perimeter.
+   * Creates a layout with an explicitly specified perimeter.
    *
-   * @param perimeter frame perimeter to respect
-   * @param container the platform container to manage
+   * @param perimeter the insets to reserve around the laid-out area
+   * @param container the platform container whose components will be laid out
    */
   public ParaboxLayout (Perimeter perimeter, ParaboxContainer container) {
 
@@ -70,7 +71,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * @return the container hosting laid out components
+   * Returns the {@link ParaboxContainer} that hosts the components being laid out.
+   *
+   * @return the owning container
    */
   public ParaboxContainer getContainer () {
 
@@ -78,7 +81,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * @return the horizontal box, if set
+   * Returns the box responsible for horizontal sizing and positioning, or {@code null} if not yet set.
+   *
+   * @return the horizontal box
    */
   public Box<?> getHorizontalBox () {
 
@@ -86,10 +91,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Sets the horizontal box used for layout.
+   * Sets the box used for horizontal sizing and positioning of components.
    *
-   * @param horizontalBox the box managing horizontal sizing and positioning
-   * @return this layout for chaining
+   * @param horizontalBox the box governing horizontal layout
+   * @return this layout for method chaining
    */
   public ParaboxLayout setHorizontalBox (Box<?> horizontalBox) {
 
@@ -99,7 +104,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * @return the vertical box, if set
+   * Returns the box responsible for vertical sizing and positioning, or {@code null} if not yet set.
+   *
+   * @return the vertical box
    */
   public Box<?> getVerticalBox () {
 
@@ -107,10 +114,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Sets the vertical box used for layout.
+   * Sets the box used for vertical sizing and positioning of components.
    *
-   * @param verticalBox the box managing vertical sizing and positioning
-   * @return this layout for chaining
+   * @param verticalBox the box governing vertical layout
+   * @return this layout for method chaining
    */
   public ParaboxLayout setVerticalBox (Box<?> verticalBox) {
 
@@ -120,7 +127,7 @@ public class ParaboxLayout {
   }
 
   /**
-   * Removes all components from both horizontal and vertical boxes.
+   * Removes all components from both the horizontal and vertical boxes.
    */
   public void removeAll () {
 
@@ -129,9 +136,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Removes a component from both horizontal and vertical boxes.
+   * Removes the specified component from both the horizontal and vertical boxes.
    *
-   * @param object the component to remove
+   * @param object the platform component to remove
    */
   public void remove (Object object) {
 
@@ -140,10 +147,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the minimum width including perimeter requirements.
+   * Calculates the minimum total width, including horizontal perimeter insets.
    *
-   * @return the minimum width
-   * @throws LayoutException if the horizontal box has not been set
+   * @return the minimum width required by this layout
+   * @throws LayoutException if no horizontal box has been set
    */
   public double calculateMinimumWidth () {
 
@@ -155,10 +162,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the minimum height including perimeter requirements.
+   * Calculates the minimum total height, including vertical perimeter insets.
    *
-   * @return the minimum height
-   * @throws LayoutException if the vertical box has not been set
+   * @return the minimum height required by this layout
+   * @throws LayoutException if no vertical box has been set
    */
   public double calculateMinimumHeight () {
 
@@ -170,9 +177,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the minimum size along both axes.
+   * Calculates the minimum width and height as a {@link Pair}.
    *
-   * @return width/height pair
+   * @return the minimum width/height pair
    */
   public Pair calculateMinimumSize () {
 
@@ -180,10 +187,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the preferred width including perimeter requirements.
+   * Calculates the preferred total width, including horizontal perimeter insets.
    *
-   * @return the preferred width
-   * @throws LayoutException if the horizontal box has not been set
+   * @return the preferred width for this layout
+   * @throws LayoutException if no horizontal box has been set
    */
   public double calculatePreferredWidth () {
 
@@ -195,10 +202,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the preferred height including perimeter requirements.
+   * Calculates the preferred total height, including vertical perimeter insets.
    *
-   * @return the preferred height
-   * @throws LayoutException if the vertical box has not been set
+   * @return the preferred height for this layout
+   * @throws LayoutException if no vertical box has been set
    */
   public double calculatePreferredHeight () {
 
@@ -210,9 +217,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the preferred size along both axes.
+   * Calculates the preferred width and height as a {@link Pair}.
    *
-   * @return width/height pair
+   * @return the preferred width/height pair
    */
   public Pair calculatePreferredSize () {
 
@@ -220,10 +227,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the maximum width including perimeter requirements.
+   * Calculates the maximum total width, including horizontal perimeter insets.
    *
-   * @return the maximum width
-   * @throws LayoutException if the horizontal box has not been set
+   * @return the maximum width this layout can occupy
+   * @throws LayoutException if no horizontal box has been set
    */
   public double calculateMaximumWidth () {
 
@@ -235,10 +242,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the maximum height including perimeter requirements.
+   * Calculates the maximum total height, including vertical perimeter insets.
    *
-   * @return the maximum height
-   * @throws LayoutException if the vertical box has not been set
+   * @return the maximum height this layout can occupy
+   * @throws LayoutException if no vertical box has been set
    */
   public double calculateMaximumHeight () {
 
@@ -250,9 +257,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Calculates the maximum size along both axes.
+   * Calculates the maximum width and height as a {@link Pair}.
    *
-   * @return width/height pair
+   * @return the maximum width/height pair
    */
   public Pair calculateMaximumSize () {
 
@@ -270,11 +277,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Performs layout for the provided components using a horizontal and vertical box.
+   * Performs the layout pass for the given component array within the specified container dimensions.
    *
-   * @param width      the available width
-   * @param height     the available height
-   * @param components components to lay out
+   * @param width      the total available width of the container
+   * @param height     the total available height of the container
+   * @param components the platform components being laid out
    */
   public void doLayout (double width, double height, Object... components) {
 
@@ -282,12 +289,13 @@ public class ParaboxLayout {
   }
 
   /**
-   * Performs layout for the provided components list using a horizontal and vertical box.
+   * Performs the full two-axis layout pass for all components in the list within the specified dimensions,
+   * running the horizontal box then the vertical box and verifying all components were placed.
    *
-   * @param width         the available width
-   * @param height        the available height
-   * @param componentList the components to lay out
-   * @throws LayoutException if either horizontal or vertical box is unset or components are misconfigured
+   * @param width         the total available width of the container
+   * @param height        the total available height of the container
+   * @param componentList the complete list of platform components being laid out
+   * @throws LayoutException if the horizontal or vertical box is unset, or if component placement is invalid
    */
   public void doLayout (double width, double height, List<?> componentList) {
 
@@ -307,9 +315,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a parallel box with default alignment.
+   * Creates a {@link ParallelBox} with default leading alignment.
    *
-   * @return a new parallel box
+   * @return a new parallel box bound to this layout
    */
   public ParallelBox parallelBox () {
 
@@ -317,10 +325,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a parallel box with the given alignment.
+   * Creates a {@link ParallelBox} with the specified alignment.
    *
-   * @param alignment alignment to apply
-   * @return a new parallel box
+   * @param alignment the alignment used to position elements within the box
+   * @return a new parallel box bound to this layout
    */
   public ParallelBox parallelBox (Alignment alignment) {
 
@@ -328,9 +336,9 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with default settings.
+   * Creates a {@link SerialBox} with an unrelated gap and leading justification.
    *
-   * @return a new serial box
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox () {
 
@@ -338,10 +346,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box configured for greediness.
+   * Creates a {@link SerialBox} with an unrelated gap, leading justification, and the specified greediness.
    *
-   * @param greedy whether to greedily consume space
-   * @return a new serial box
+   * @param greedy {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (boolean greedy) {
 
@@ -349,10 +357,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a gap.
+   * Creates a {@link SerialBox} using the specified predefined gap type.
    *
-   * @param gap the gap type between elements
-   * @return a new serial box
+   * @param gap the gap type to use between elements
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Gap gap) {
 
@@ -360,11 +368,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a gap and greediness flag.
+   * Creates a {@link SerialBox} using the specified predefined gap type and greediness.
    *
-   * @param gap    the gap type between elements
-   * @param greedy whether to greedily consume space
-   * @return a new serial box
+   * @param gap    the gap type to use between elements
+   * @param greedy {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Gap gap, boolean greedy) {
 
@@ -372,10 +380,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a fixed gap.
+   * Creates a {@link SerialBox} with a fixed numeric gap between elements.
    *
-   * @param gap the fixed gap value
-   * @return a new serial box
+   * @param gap the fixed spacing between consecutive elements
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (double gap) {
 
@@ -383,11 +391,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a fixed gap and greediness flag.
+   * Creates a {@link SerialBox} with a fixed numeric gap and the specified greediness.
    *
-   * @param gap    the fixed gap value
-   * @param greedy whether to greedily consume space
-   * @return a new serial box
+   * @param gap    the fixed spacing between consecutive elements
+   * @param greedy {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (double gap, boolean greedy) {
 
@@ -395,10 +403,10 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with justification.
+   * Creates a {@link SerialBox} with an unrelated gap and the specified justification.
    *
-   * @param justification space distribution strategy
-   * @return a new serial box
+   * @param justification the strategy for distributing surplus space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Justification justification) {
 
@@ -406,11 +414,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with justification and greediness flag.
+   * Creates a {@link SerialBox} with an unrelated gap, the specified justification, and greediness.
    *
-   * @param justification space distribution strategy
-   * @param greedy        whether to greedily consume space
-   * @return a new serial box
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Justification justification, boolean greedy) {
 
@@ -418,11 +426,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with gap and justification.
+   * Creates a {@link SerialBox} with a predefined gap type and justification.
    *
-   * @param gap           the gap type between elements
-   * @param justification space distribution strategy
-   * @return a new serial box
+   * @param gap           the gap type to use between elements
+   * @param justification the strategy for distributing surplus space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Gap gap, Justification justification) {
 
@@ -430,12 +438,12 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with gap, justification, and greediness flag.
+   * Creates a {@link SerialBox} with a predefined gap type, justification, and greediness.
    *
-   * @param gap           the gap type between elements
-   * @param justification space distribution strategy
-   * @param greedy        whether to greedily consume space
-   * @return a new serial box
+   * @param gap           the gap type to use between elements
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (Gap gap, Justification justification, boolean greedy) {
 
@@ -443,11 +451,11 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a fixed gap and justification.
+   * Creates a {@link SerialBox} with a fixed numeric gap and justification.
    *
-   * @param gap           the fixed gap value
-   * @param justification space distribution strategy
-   * @return a new serial box
+   * @param gap           the fixed spacing between consecutive elements
+   * @param justification the strategy for distributing surplus space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (double gap, Justification justification) {
 
@@ -455,12 +463,12 @@ public class ParaboxLayout {
   }
 
   /**
-   * Factory for creating a serial box with a fixed gap, justification, and greediness flag.
+   * Creates a {@link SerialBox} with a fixed numeric gap, justification, and greediness.
    *
-   * @param gap           the fixed gap value
-   * @param justification space distribution strategy
-   * @param greedy        whether to greedily consume space
-   * @return a new serial box
+   * @param gap           the fixed spacing between consecutive elements
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space
+   * @return a new serial box bound to this layout
    */
   public SerialBox serialBox (double gap, Justification justification, boolean greedy) {
 

@@ -35,18 +35,32 @@ package org.smallmind.file.jailed;
 import java.nio.file.Path;
 
 /**
- * Base translator that maps between jailed paths and native paths relative to a root.
+ * Abstract base class for {@link JailedPathTranslator} implementations that constrains
+ * access to a subtree of the native file system defined by a root path.
+ *
+ * <p>This class provides reusable {@link #wrapPath(Path, JailedFileSystem, Path)} and
+ * {@link #unwrapPath(Path, Path)} helpers that perform the segment-level translation
+ * between the native path space and the jailed path space. Concrete subclasses supply
+ * the specific root path (either statically or derived at call time from a context).
+ *
+ * @see RootedPathTranslator
+ * @see ContextSensitiveRootedPathTranslator
  */
 public abstract class AbstractJailedPathTranslator implements JailedPathTranslator {
 
   /**
-   * Wraps a native path in a jailed path relative to the configured root.
+   * Wraps a native path in a {@link JailedPath} by stripping the jail root prefix.
    *
-   * @param rootPath         the root path that bounds the jail
-   * @param jailedFileSystem the jailed file system to create paths for
-   * @param nativePath       the native path to wrap
-   * @return the resulting jailed path
-   * @throws SecurityException if the native path escapes the jail root
+   * <p>If {@code nativePath} is absolute it must begin with {@code rootPath}; any path
+   * that would escape the jail causes a {@link SecurityException}. If it is relative, its
+   * segments are preserved as a relative jailed path.
+   *
+   * @param rootPath         the native root path that defines the jail boundary
+   * @param jailedFileSystem the {@link JailedFileSystem} for which the resulting path is created
+   * @param nativePath       the native path to translate into the jailed path space
+   * @return a {@link JailedPath} representing the same location relative to the jail root
+   * @throws SecurityException if {@code nativePath} is absolute but does not start with
+   *                           {@code rootPath}, indicating an attempted escape from the jail
    */
   public Path wrapPath (Path rootPath, JailedFileSystem jailedFileSystem, Path nativePath) {
 
@@ -76,11 +90,15 @@ public abstract class AbstractJailedPathTranslator implements JailedPathTranslat
   }
 
   /**
-   * Converts a jailed path back into its native path representation.
+   * Resolves a jailed path back to its absolute native path by appending the jailed
+   * path's segments to the jail root.
    *
-   * @param rootPath   the jail root
-   * @param jailedPath the jailed path to unwrap
-   * @return the resolved native path
+   * <p>This method rebuilds the path segment-by-segment using the native file system's
+   * separator to ensure cross-platform correctness.
+   *
+   * @param rootPath   the native root path that defines the jail boundary
+   * @param jailedPath the jailed path to translate back to the native file system
+   * @return the absolute native {@link Path} that corresponds to {@code jailedPath}
    */
   public Path unwrapPath (Path rootPath, Path jailedPath) {
 

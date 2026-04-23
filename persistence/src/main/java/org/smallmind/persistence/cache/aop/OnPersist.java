@@ -33,12 +33,12 @@
 package org.smallmind.persistence.cache.aop;
 
 /**
- * Cache update strategy describing how a durable should affect a vector upon persistence.
+ * Enumerates the actions that {@link CachedWithAspect} can apply to a cache vector when a durable is persisted.
  */
 public enum OnPersist {
 
   /**
-   * Insert or upsert the durable into the target vector.
+   * Add the durable to the target vector, replacing any existing entry with the same key.
    */
   INSERT,
   /**

@@ -36,7 +36,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 
 /**
- * Encapsulates a date and {@link TimeOperation} for reusable comparisons against instants.
+ * Pairs a reference {@link ZonedDateTime} with a {@link TimeOperation} to support reusable temporal comparisons
+ * against arbitrary {@link java.time.Instant} values.
  */
 public class TimeArithmetic {
 
@@ -44,10 +45,10 @@ public class TimeArithmetic {
   private final TimeOperation operation;
 
   /**
-   * Constructs a comparison helper for a specific date and operation.
+   * Creates a {@code TimeArithmetic} bound to the given reference date and comparison operation.
    *
-   * @param date      reference date-time
-   * @param operation comparison operation to apply
+   * @param date      the reference date-time against which instants will be compared
+   * @param operation the comparison operation to apply
    */
   public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
 
@@ -56,7 +57,9 @@ public class TimeArithmetic {
   }
 
   /**
-   * @return reference date-time
+   * Returns the reference date-time used in comparisons.
+   *
+   * @return the reference {@link ZonedDateTime}
    */
   public ZonedDateTime getDate () {
 
@@ -64,7 +67,9 @@ public class TimeArithmetic {
   }
 
   /**
-   * @return comparison operation
+   * Returns the comparison operation applied by {@link #accept(Instant)}.
+   *
+   * @return the configured {@link TimeOperation}
    */
   public TimeOperation getOperation () {
 
@@ -72,10 +77,10 @@ public class TimeArithmetic {
   }
 
   /**
-   * Evaluates the configured operation against the supplied instant.
+   * Evaluates the configured {@link TimeOperation} by comparing the reference date against the given instant.
    *
-   * @param instant instant to compare with the reference date
-   * @return {@code true} if the operation accepts the instant
+   * @param instant the instant to compare with the reference date
+   * @return {@code true} if the configured operation is satisfied for the given instant
    */
   public boolean accept (Instant instant) {
 

@@ -41,8 +41,10 @@ public class IndexedElement {
   private final IndexType indexType;
 
   /**
-   * @param field     the field path being indexed
-   * @param indexType the direction or index type
+   * Constructs an indexed element for the given field and index type.
+   *
+   * @param field     the field path to index
+   * @param indexType the direction or index type to apply
    */
   public IndexedElement (String field, IndexType indexType) {
 
@@ -62,6 +64,8 @@ public class IndexedElement {
   }
 
   /**
+   * Returns the field path designated for indexing.
+   *
    * @return the indexed field path
    */
   public String getField () {
@@ -70,7 +74,9 @@ public class IndexedElement {
   }
 
   /**
-   * @return the index type applied to the field
+   * Returns the index type applied to the field.
+   *
+   * @return the index type
    */
   public IndexType getIndexType () {
 

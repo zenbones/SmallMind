@@ -33,18 +33,34 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Defines the routing style for a request voice.
+ * Determines how a request is addressed and routed on the wire. The mode governs
+ * which instances receive the message and whether any reply is expected, aligning
+ * with the {@link Whisper}, standard ({@link InOut}/{@link InOnly}), and {@link Shout}
+ * dispatch semantics respectively.
  */
 public enum VocalMode {
 
-  WHISPER("whisper"), TALK("talk"), SHOUT("shout");
+  /**
+   * Directed delivery to a single named service instance; reply expected.
+   */
+  WHISPER("whisper"),
+
+  /**
+   * Normal load-balanced delivery to one instance of the target service.
+   */
+  TALK("talk"),
+
+  /**
+   * Broadcast delivery to all active instances of the target service; no reply expected.
+   */
+  SHOUT("shout");
 
   private final String name;
 
   /**
-   * Creates a vocal mode with a human-readable name.
+   * Associates the lowercase wire-protocol name with this mode constant.
    *
-   * @param name display name
+   * @param name the string token used in protocol messages to identify this mode
    */
   VocalMode (String name) {
 
@@ -52,9 +68,9 @@ public enum VocalMode {
   }
 
   /**
-   * Returns the human-readable name of the mode.
+   * Returns the lowercase token used in wire-protocol messages to identify this vocal mode.
    *
-   * @return mode name
+   * @return the mode's protocol name
    */
   public String getName () {
 

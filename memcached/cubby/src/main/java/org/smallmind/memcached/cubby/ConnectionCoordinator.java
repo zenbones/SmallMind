@@ -44,7 +44,26 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Coordinates a set of connections to memcached hosts, handling lifecycle and routing updates.
+ * Manages the full lifecycle of one logical set of connections to a memcached cluster.
+ *
+ * <p>{@code ConnectionCoordinator} owns a {@link ServerPool} and maintains one
+ * {@link CubbyConnection} per host. It is responsible for:</p>
+ * <ul>
+ *   <li>Starting and stopping individual host connections.</li>
+ *   <li>Installing and refreshing the routing table in the configured
+ *       {@link org.smallmind.memcached.cubby.locator.KeyLocator} as hosts join or leave.</li>
+ *   <li>Launching the {@link ServerDefibrillator} daemon thread that probes offline hosts and
+ *       triggers reconnection.</li>
+ *   <li>Routing outbound {@link Command} objects to the correct connection based on key
+ *       affinity.</li>
+ * </ul>
+ *
+ * <p>All routing and connection-map mutations are protected by a {@link ReentrantReadWriteLock}.
+ * Lifecycle transitions ({@link #start()} and {@link #stop()}) are additionally synchronized
+ * and guarded by an {@link AtomicReference} holding a {@link ComponentStatus}.</p>
+ *
+ * <p>A {@link ConnectionMultiplexer} typically owns one or more {@code ConnectionCoordinator}
+ * instances, distributing load across them.</p>
  */
 public class ConnectionCoordinator {
 
@@ -56,10 +75,10 @@ public class ConnectionCoordinator {
   private ServerDefibrillator serverDefibrillator;
 
   /**
-   * Builds a coordinator for the provided hosts and configuration.
+   * Constructs a coordinator for the given hosts using the supplied configuration.
    *
-   * @param configuration  runtime configuration including routing and connection settings
-   * @param memcachedHosts target hosts to manage
+   * @param configuration  runtime settings covering routing, codec and connection parameters
+   * @param memcachedHosts the hosts this coordinator will manage
    */
   public ConnectionCoordinator (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
@@ -69,11 +88,13 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Starts the coordinator by constructing connections and launching the defibrillator monitor.
+   * Starts the coordinator: installs the initial routing table, launches the
+   * {@link ServerDefibrillator} daemon, and opens a {@link NIOCubbyConnection} to each host.
+   * This method is idempotent — subsequent calls while already started are silently ignored.
    *
-   * @throws InterruptedException    if interrupted while connecting
-   * @throws IOException             if sockets cannot be opened
-   * @throws CubbyOperationException if initialization fails
+   * @throws InterruptedException    if the calling thread is interrupted while opening connections
+   * @throws IOException             if a socket cannot be opened to one of the hosts
+   * @throws CubbyOperationException if connection initialization fails
    */
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
@@ -104,10 +125,12 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Stops the coordinator, shutting down health monitoring and active connections.
+   * Stops the coordinator: signals the {@link ServerDefibrillator} to terminate and closes all
+   * active connections. This method is idempotent — subsequent calls while already stopped are
+   * silently ignored.
    *
-   * @throws InterruptedException if interrupted while closing
-   * @throws IOException          if a connection cannot be closed
+   * @throws InterruptedException if the calling thread is interrupted while awaiting shutdown
+   * @throws IOException          if closing a connection fails
    */
   public synchronized void stop ()
     throws InterruptedException, IOException {
@@ -135,14 +158,16 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Sends a command over the connection mapped to its key.
+   * Routes a command to the connection for the host determined by the key locator and sends it.
    *
-   * @param command        command to dispatch
-   * @param timeoutSeconds optional timeout in seconds; {@code null} uses configured default
-   * @return response returned by the server
-   * @throws InterruptedException    if interrupted while waiting
+   * @param command        the command to dispatch
+   * @param timeoutSeconds optional timeout override in seconds; {@code null} defers to the
+   *                       configured default
+   * @return the server's parsed response
+   * @throws InterruptedException    if the calling thread is interrupted while waiting for a reply
    * @throws IOException             if network communication fails
-   * @throws CubbyOperationException if routing fails or the server reports an error
+   * @throws CubbyOperationException if the coordinator is not started, routing fails, or the
+   *                                 server returns an error
    */
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
@@ -151,12 +176,13 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Resolves the connection associated with the supplied command key.
+   * Resolves the {@link CubbyConnection} responsible for the key embedded in the command.
    *
-   * @param command command whose key determines routing
-   * @return an active connection for the key
-   * @throws IOException             if routing table access fails
-   * @throws CubbyOperationException if the coordinator is stopped or a connection is missing
+   * @param command the command whose key determines host selection
+   * @return the active connection for the target host
+   * @throws IOException             if the key locator encounters an I/O error
+   * @throws CubbyOperationException if the coordinator is stopped or no connection exists for
+   *                                 the resolved host
    */
   private CubbyConnection getConnection (Command command)
     throws IOException, CubbyOperationException {
@@ -183,9 +209,10 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Marks the host as inactive and triggers routing table recalculation.
+   * Marks a host as inactive and refreshes the routing table to exclude it from future requests.
+   * Called by a {@link CubbyConnection} when it detects that its host has become unreachable.
    *
-   * @param memcachedHost host to mark disconnected
+   * @param memcachedHost the host that has gone offline
    */
   public void disconnect (MemcachedHost memcachedHost) {
 
@@ -208,11 +235,12 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Reconnects a host, rebuilding its connection and re-enabling routing.
+   * Rebuilds the connection to a host that has been confirmed reachable by the
+   * {@link ServerDefibrillator}, marks it active, and refreshes the routing table to include it.
    *
-   * @param memcachedHost host to reconnect
-   * @throws InterruptedException    if interrupted while reconnecting
-   * @throws IOException             if network I/O fails
+   * @param memcachedHost the host to reconnect
+   * @throws InterruptedException    if the calling thread is interrupted while opening the connection
+   * @throws IOException             if a network error occurs during connection setup
    * @throws CubbyOperationException if connection construction fails
    */
   public void reconnect (MemcachedHost memcachedHost)
@@ -238,12 +266,13 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Builds a new connection to the host, replacing any existing connection.
+   * Creates a new {@link NIOCubbyConnection} for the given host, stops any prior connection
+   * registered under the same name, and starts the new connection's I/O loop in a daemon thread.
    *
-   * @param memcachedHost host to connect to
-   * @throws InterruptedException    if interrupted while opening
+   * @param memcachedHost the host for which to build a connection
+   * @throws InterruptedException    if interrupted while opening the connection
    * @throws IOException             if socket creation fails
-   * @throws CubbyOperationException if initialization fails
+   * @throws CubbyOperationException if connection initialization fails
    */
   private void constructConnection (MemcachedHost memcachedHost)
     throws InterruptedException, IOException, CubbyOperationException {

@@ -33,12 +33,14 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Contract for elements that can supply a stable byte representation for hashing into a {@link BloomFilter}.
+ * Implemented by types that can supply a stable byte representation for hashing into a {@link BloomFilter}.
  */
 public interface BloomFilterElement {
 
   /**
-   * @return byte content used to compute bloom filter hashes
+   * Returns the byte content of this element used to compute its bloom filter hash positions.
+   *
+   * @return the byte representation of this element
    */
   byte[] getBytes ();
 }

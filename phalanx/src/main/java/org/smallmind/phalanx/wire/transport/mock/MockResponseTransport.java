@@ -49,7 +49,10 @@ import org.smallmind.phalanx.wire.transport.WiredService;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * In-memory response transport that consumes mock requests and publishes results.
+ * In-memory response transport for use in tests that do not require a real message broker.
+ * Listens on the shared talk request queue and whisper request topic provided by
+ * {@link MockMessageRouter}, dispatches each invocation through {@link WireInvocationCircuit},
+ * and publishes {@link org.smallmind.phalanx.wire.signal.ResultSignal}s back to the response topic.
  */
 public class MockResponseTransport implements ResponseTransport, ResponseTransmitter {
 
@@ -60,8 +63,12 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   private final String instanceId = UUID.randomUUID().toString();
 
   /**
-   * @param messageRouter router providing request/response channels.
-   * @param signalCodec   codec for serialization.
+   * Constructs the response transport and registers listeners on the talk request queue and
+   * the whisper request topic so that inbound invocations are immediately dispatched through
+   * the invocation circuit.
+   *
+   * @param messageRouter shared router providing the talk queue, whisper topic, and response topic
+   * @param signalCodec   codec used to deserialize invocation signals and serialize result signals
    */
   public MockResponseTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec) {
 
@@ -71,7 +78,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     messageRouter.getTalkRequestQueue().addListener(new MockMessageListener() {
 
       /**
-       * Accepts all talk-mode requests.
+       * Accepts all talk-mode requests regardless of their properties.
+       *
+       * @param properties metadata of the candidate message (not evaluated)
+       * @return always {@code true}
        */
       @Override
       public boolean match (MockMessageProperties properties) {
@@ -80,7 +90,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
       }
 
       /**
-       * Decodes and routes talk-mode invocations to the service circuit.
+       * Decodes the {@link InvocationSignal} from {@code message} and dispatches it to the
+       * invocation circuit.  Any error is logged and swallowed.
+       *
+       * @param message the talk-mode request message to process
        */
       @Override
       public void handle (MockMessage message) {
@@ -96,7 +109,11 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
     messageRouter.getWhisperRequestTopic().addListener(new MockMessageListener() {
 
       /**
-       * Accepts whisper requests targeted to this instance id.
+       * Accepts whisper-mode requests whose {@code INSTANCE_ID} header matches this transport's
+       * instance ID.
+       *
+       * @param properties metadata of the candidate message
+       * @return {@code true} if the message is targeted at this transport instance
        */
       @Override
       public boolean match (MockMessageProperties properties) {
@@ -105,7 +122,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
       }
 
       /**
-       * Decodes and routes whisper-mode invocations to the service circuit.
+       * Decodes the {@link InvocationSignal} from {@code message} and dispatches it to the
+       * invocation circuit.  Any error is logged and swallowed.
+       *
+       * @param message the whisper-mode request message to process
        */
       @Override
       public void handle (MockMessage message) {
@@ -120,7 +140,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * @return unique id used for whisper routing.
+   * Returns the unique instance identifier assigned to this transport at creation time.
+   * Callers use this value to address whisper-mode requests directly to this node.
+   *
+   * @return instance ID string
    */
   @Override
   public String getInstanceId () {
@@ -129,13 +152,15 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * Registers a service with the invocation circuit.
+   * Registers a service implementation with the invocation circuit so its methods can be
+   * resolved and invoked when invocation signals arrive.
    *
-   * @param serviceInterface interface of the service being registered.
-   * @param targetService    service implementation metadata.
-   * @return this responder's instance id.
-   * @throws NoSuchMethodException      if a method is missing on the target.
-   * @throws ServiceDefinitionException if registration fails.
+   * @param serviceInterface the interface declaring the remotely callable methods
+   * @param targetService    the concrete service instance and its associated metadata
+   * @return this transport's instance ID; callers must supply this value when directing
+   * whisper-mode requests to this specific node
+   * @throws NoSuchMethodException      if a declared method cannot be located on the target
+   * @throws ServiceDefinitionException if the service registration is malformed or conflicts
    */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
@@ -147,7 +172,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * @return current transport state.
+   * Returns the current lifecycle state of this transport.
+   *
+   * @return one of {@link TransportState#PLAYING}, {@link TransportState#PAUSED},
+   * or {@link TransportState#CLOSED}
    */
   @Override
   public TransportState getState () {
@@ -156,7 +184,8 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * Resumes handling of talk requests.
+   * Resumes talk-request delivery if the transport is currently {@link TransportState#PAUSED}.
+   * Does nothing when the transport is in any other state.
    */
   @Override
   public void play () {
@@ -169,7 +198,8 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * Pauses handling of talk requests.
+   * Suspends talk-request delivery if the transport is currently {@link TransportState#PLAYING}.
+   * Does nothing when the transport is in any other state.
    */
   @Override
   public void pause () {
@@ -182,14 +212,17 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * Publishes a response message to the mock response topic.
+   * Encodes a {@link org.smallmind.phalanx.wire.signal.ResultSignal} and publishes it to the
+   * mock response topic so the originating request transport can complete its pending callback.
    *
-   * @param callerId      caller to deliver the result to.
-   * @param correlationId correlation id from the request.
-   * @param error         whether the payload is an error.
-   * @param nativeType    native type information.
-   * @param result        payload to return.
-   * @throws Exception if encoding fails.
+   * @param callerId      identifier of the originating caller; set as the {@code CALLER_ID} header
+   *                      so the response listener on that transport can match the message
+   * @param correlationId correlation ID from the originating request; set as the message
+   *                      correlation ID for pairing with the pending callback
+   * @param error         {@code true} when the result payload represents a service-side error
+   * @param nativeType    Java type name of the result payload, used by the caller for deserialization
+   * @param result        the return value or error object to encode in the signal
+   * @throws Exception if signal encoding fails
    */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
@@ -207,9 +240,10 @@ public class MockResponseTransport implements ResponseTransport, ResponseTransmi
   }
 
   /**
-   * Closes the transport by marking it closed. No additional resources to release.
+   * Transitions the transport to the {@link TransportState#CLOSED} state.  No additional
+   * resources need to be released.
    *
-   * @throws Exception never thrown.
+   * @throws Exception never thrown
    */
   @Override
   public void close ()

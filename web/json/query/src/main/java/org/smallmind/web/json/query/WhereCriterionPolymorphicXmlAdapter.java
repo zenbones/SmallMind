@@ -35,7 +35,7 @@ package org.smallmind.web.json.query;
 import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;
 
 /**
- * JAXB adapter enabling polymorphic marshalling/unmarshalling of {@link WhereCriterion} subtypes.
+ * JAXB adapter that enables polymorphic marshalling and unmarshalling of {@link WhereCriterion} subtypes.
  */
 public class WhereCriterionPolymorphicXmlAdapter extends PolymorphicXmlAdapter<WhereCriterion> {
 

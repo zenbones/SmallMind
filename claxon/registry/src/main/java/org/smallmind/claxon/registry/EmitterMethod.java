@@ -33,16 +33,24 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Identifies how an emitter obtains measurements from the registry.
+ * Describes the data-flow direction used by an {@link Emitter} to obtain metric readings
+ * from the registry.
+ *
+ * <p>The registry's collection thread calls {@link Emitter#record} on every bound emitter
+ * regardless of this value; the constant is provided so that higher-level tooling or
+ * adapter code can make routing decisions based on the emitter's preferred model.
  */
 public enum EmitterMethod {
 
   /**
-   * The registry pushes data to the emitter on each collection interval.
+   * The registry actively pushes readings to the emitter on each collection interval.
+   * Suitable for fire-and-forget transports such as UDP-based StatsD or HTTP ingest APIs.
    */
   PUSH,
+
   /**
-   * The emitter pulls data from the registry on demand.
+   * The emitter exposes readings for an external system to retrieve on demand.
+   * Suitable for scrape-based systems such as Prometheus.
    */
   PULL
 }

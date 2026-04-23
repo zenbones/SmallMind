@@ -35,12 +35,16 @@ package org.smallmind.quorum.pool;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Indicates a problem while working with a component pool.
+ * Checked exception thrown when a component pool operation fails.
+ * <p>
+ * Common causes include: the pool has already been closed, a component factory throws during
+ * creation, a caller times out waiting for an available component, or the pool is interrupted
+ * while blocking.
  */
 public class ComponentPoolException extends FormattedException {
 
   /**
-   * Creates the exception without additional context.
+   * Creates an exception with no message or cause.
    */
   public ComponentPoolException () {
 
@@ -48,10 +52,10 @@ public class ComponentPoolException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Creates an exception with a {@link java.util.Formatter}-style message and no cause.
    *
-   * @param message message template
-   * @param args    template parameters
+   * @param message format string for the exception message
+   * @param args    arguments referenced by the format string
    */
   public ComponentPoolException (String message, Object... args) {
 
@@ -59,11 +63,11 @@ public class ComponentPoolException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Creates an exception with both a cause and a {@link java.util.Formatter}-style message.
    *
-   * @param throwable underlying problem
-   * @param message   message template
-   * @param args      template parameters
+   * @param throwable the underlying exception that caused this failure
+   * @param message   format string for the exception message
+   * @param args      arguments referenced by the format string
    */
   public ComponentPoolException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +75,9 @@ public class ComponentPoolException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause.
+   * Creates an exception wrapping an underlying cause, with no additional message.
    *
-   * @param throwable underlying problem
+   * @param throwable the underlying exception that caused this failure
    */
   public ComponentPoolException (Throwable throwable) {
 

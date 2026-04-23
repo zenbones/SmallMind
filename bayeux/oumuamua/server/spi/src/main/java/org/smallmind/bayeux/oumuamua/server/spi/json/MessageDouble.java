@@ -36,16 +36,17 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Copy-on-write wrapper around a {@link Message}, allowing merged updates without modifying the original.
+ * Immutability shim that presents a {@link Message} through a {@link MergingObjectValue}, isolating
+ * consumers from accidental mutation of the original message while still supporting overlay writes.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} subtype carried by this message
  */
 public class MessageDouble<V extends Value<V>> extends MergingObjectValue<V> implements Message<V> {
 
   /**
-   * Wraps an existing message for merging behavior.
+   * Wraps {@code message} as the read-through backing object.
    *
-   * @param message source message to wrap
+   * @param message the original message to protect from mutation; its fields are accessible but never altered
    */
   public MessageDouble (Message<V> message) {
 

@@ -33,17 +33,43 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Standard message property keys used across wire transports.
+ * Enumeration of well-known message-header property keys shared across all wire transport implementations.
+ *
+ * <p>Each constant carries a stable string key suitable for use in transport message headers or metadata maps.</p>
  */
 public enum WireProperty {
 
-  CALLER_ID("callerId"), CONTENT_TYPE("contentType"), CLOCK("clock"), SERVICE_GROUP("serviceGroup"), INSTANCE_ID("instanceId");
+  /**
+   * Identifies the originating caller of a wire message.
+   */
+  CALLER_ID("callerId"),
+
+  /**
+   * Declares the content-type (e.g. MIME type) of the message payload.
+   */
+  CONTENT_TYPE("contentType"),
+
+  /**
+   * Carries a timestamp or logical clock value associated with the message.
+   */
+  CLOCK("clock"),
+
+  /**
+   * Identifies the service group to which the message is addressed.
+   */
+  SERVICE_GROUP("serviceGroup"),
+
+  /**
+   * Carries the specific service instance identifier targeted by the message.
+   */
+  INSTANCE_ID("instanceId");
+
   private final String key;
 
   /**
-   * Associates an enum constant with its property key.
+   * Constructs the constant and binds it to its string property key.
    *
-   * @param key property name
+   * @param key the transport-level property name for this constant
    */
   WireProperty (String key) {
 
@@ -51,9 +77,9 @@ public enum WireProperty {
   }
 
   /**
-   * Returns the property key.
+   * Returns the string property key for use in message headers or metadata.
    *
-   * @return property name
+   * @return the property key string
    */
   public String getKey () {
 

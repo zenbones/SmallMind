@@ -37,16 +37,16 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Bean Validation validator that enforces {@link WhereConstraint} rules against a {@link WherePermissible}.
+ * Bean Validation {@link ConstraintValidator} that enforces {@link WhereConstraint} permit rules against a {@link WherePermissible} value.
  */
 public class WhereValidator implements ConstraintValidator<WhereConstraint, WherePermissible> {
 
   private WhereConstraint constraintAnnotation;
 
   /**
-   * Stores the constraint annotation for later use when validating.
+   * Stores the constraint annotation for use during subsequent validation calls.
    *
-   * @param constraintAnnotation the applied annotation
+   * @param constraintAnnotation the applied constraint annotation
    */
   @Override
   public void initialize (WhereConstraint constraintAnnotation) {
@@ -55,11 +55,11 @@ public class WhereValidator implements ConstraintValidator<WhereConstraint, Wher
   }
 
   /**
-   * Validates the provided {@link WherePermissible} by building permit rules from the annotation and invoking {@link WherePermissible#validate(WherePermit...)}.
+   * Builds permit objects from the annotation attributes and delegates to {@link WherePermissible#validate(WherePermit...)} to enforce the rules.
    *
-   * @param permissible the value to validate
-   * @param context     constraint context used to report violations
-   * @return {@code true} if validation passes; {@code false} if a {@link WhereValidationException} is raised
+   * @param permissible the where/sort value to validate
+   * @param context     constraint context used to report a custom violation message on failure
+   * @return {@code true} if all rules pass; {@code false} if a {@link WhereValidationException} is raised
    */
   @Override
   public boolean isValid (WherePermissible permissible, ConstraintValidatorContext context) {

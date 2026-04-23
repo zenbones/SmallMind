@@ -37,7 +37,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that produces {@link MongoCredential} instances from configured username/password/source.
+ * Spring factory bean that produces {@link MongoCredential} instances from configured username, password, and source.
  */
 public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean<MongoCredential> {
 
@@ -47,7 +47,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   private String source;
 
   /**
-   * @param user username used for authentication
+   * Sets the username used for SCRAM-SHA-1 authentication.
+   *
+   * @param user the authentication username
    */
   public void setUser (String user) {
 
@@ -55,7 +57,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   }
 
   /**
-   * @param password authentication password
+   * Sets the password used for SCRAM-SHA-1 authentication.
+   *
+   * @param password the authentication password
    */
   public void setPassword (String password) {
 
@@ -63,7 +67,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   }
 
   /**
-   * @param source authentication database
+   * Sets the name of the authentication source database.
+   *
+   * @param source the database against which the credential is authenticated
    */
   public void setSource (String source) {
 
@@ -71,7 +77,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true}; the constructed credential is a shared singleton.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {
@@ -80,7 +88,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code MongoCredential.class}.
+   *
+   * @return {@code MongoCredential.class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -89,7 +99,9 @@ public class MongoCredentialFactoryBean implements InitializingBean, FactoryBean
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the constructed {@link MongoCredential}.
+   *
+   * @return the credential built during {@code afterPropertiesSet}
    */
   @Override
   public MongoCredential getObject () {

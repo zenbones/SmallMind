@@ -36,23 +36,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Declares a validation constraint annotation to be emitted on a generated field or class.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
 public @interface Constraint {
 
   /**
-   * Declares the validation constraint annotation type that should be applied to the generated field.
-   *
-   * @return the annotation class representing the constraint to add
+   * @return the validation constraint annotation class to apply
    */
   // validation constraint annotation class
   Class<?> value ();
 
   /**
-   * Supplies the raw argument string that will be appended inside the constraint annotation.
-   * The string is emitted verbatim and should match the target annotation signature.
-   *
-   * @return arguments for the constraint annotation, or an empty string when none are required
+   * @return raw argument string to place inside the constraint annotation, or empty when the annotation takes no arguments
    */
   // arguments to the validation constraint annotation
   String arguments () default "";

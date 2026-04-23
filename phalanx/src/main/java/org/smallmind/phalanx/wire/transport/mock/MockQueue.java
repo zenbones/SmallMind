@@ -38,7 +38,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Simple in-memory queue that distributes messages round-robin to registered listeners.
+ * In-memory message queue for the mock transport.  A background daemon thread continuously
+ * drains the queue and distributes messages to registered {@link MockMessageListener}s in
+ * round-robin order.  Dispatch can be temporarily suspended via {@link #pause()} and resumed
+ * via {@link #play()} without stopping the underlying thread.
  */
 public class MockQueue {
 
@@ -50,7 +53,7 @@ public class MockQueue {
   private int listenerIndex = 0;
 
   /**
-   * Starts the worker thread that drives message dispatch.
+   * Constructs the queue and starts the background daemon thread that drives message dispatch.
    */
   public MockQueue () {
 
@@ -61,9 +64,9 @@ public class MockQueue {
   }
 
   /**
-   * Registers a listener to receive messages.
+   * Registers a listener to receive messages dispatched by this queue.
    *
-   * @param listener listener to add.
+   * @param listener the listener to add
    */
   public void addListener (MockMessageListener listener) {
 
@@ -73,9 +76,9 @@ public class MockQueue {
   }
 
   /**
-   * Unregisters a listener.
+   * Unregisters a previously added listener so it no longer receives messages.
    *
-   * @param listener listener to remove.
+   * @param listener the listener to remove
    */
   public void removeListener (MockMessageListener listener) {
 
@@ -85,7 +88,7 @@ public class MockQueue {
   }
 
   /**
-   * Resumes message dispatch.
+   * Resumes message dispatch after a previous call to {@link #pause()}.
    */
   public void play () {
 
@@ -93,7 +96,8 @@ public class MockQueue {
   }
 
   /**
-   * Temporarily pauses message dispatch without clearing the queue.
+   * Temporarily suspends message dispatch without clearing the queue or stopping the worker
+   * thread.  Queued messages accumulate until {@link #play()} is called.
    */
   public void pause () {
 
@@ -101,9 +105,9 @@ public class MockQueue {
   }
 
   /**
-   * Enqueues a message for delivery.
+   * Enqueues a message for delivery to the next registered listener.
    *
-   * @param message message to enqueue.
+   * @param message the message to enqueue
    */
   public void send (MockMessage message) {
 
@@ -111,12 +115,13 @@ public class MockQueue {
   }
 
   /**
-   * Worker that drains the queue and dispatches messages to listeners.
+   * Background daemon worker that polls the message queue and dispatches each message to the
+   * next listener in round-robin order.
    */
   private class QueueWorker implements Runnable {
 
     /**
-     * Stops the worker loop.
+     * Signals the poll loop to exit on its next iteration.
      */
     public void close () {
 
@@ -124,7 +129,8 @@ public class MockQueue {
     }
 
     /**
-     * Drains the queue and dispatches messages while active.
+     * Continuously drains the queue and dispatches messages to listeners in round-robin order
+     * while the queue is active.  Sleeps 100 ms when the queue is empty or paused.
      */
     @Override
     public void run () {

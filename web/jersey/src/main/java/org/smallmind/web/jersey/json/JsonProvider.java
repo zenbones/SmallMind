@@ -49,7 +49,8 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Message body reader/writer that delegates JSON serialization and deserialization to {@link JsonCodec}.
+ * High-priority JAX-RS message body reader/writer that handles {@code application/json} and {@code text/json} media
+ * types by delegating to {@link JsonCodec}.
  */
 @Priority(1)
 @Consumes({MediaType.APPLICATION_JSON, "text/json"})
@@ -59,8 +60,12 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   private static final ThreadLocal<ByteArrayOutputStream> WRITE_BUFFER_LOCAL = new ThreadLocal<>();
 
   /**
-   * Indicates that any type can be read as JSON.
+   * Reports that this provider can read any type as JSON.
    *
+   * @param type        the Java class of the object to deserialize
+   * @param genericType the generic type of the object to deserialize
+   * @param annotations annotations on the resource method or parameter
+   * @param mediaType   the media type of the entity
    * @return always {@code true}
    */
   @Override
@@ -70,9 +75,17 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   }
 
   /**
-   * Deserializes the entity stream into the requested type.
+   * Deserializes the entity stream into an instance of the requested type using {@link JsonCodec}.
    *
-   * @throws IOException if the payload cannot be read or parsed
+   * @param type         the Java class to deserialize into
+   * @param genericType  the generic type to deserialize into
+   * @param annotations  annotations on the resource method or parameter
+   * @param mediaType    the media type of the entity
+   * @param httpHeaders  the HTTP message headers
+   * @param entityStream the entity input stream
+   * @return the deserialized object
+   * @throws IOException             if the stream cannot be read
+   * @throws WebApplicationException if deserialization fails
    */
   @Override
   public Object readFrom (Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
@@ -82,8 +95,12 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   }
 
   /**
-   * Indicates that any type can be written as JSON.
+   * Reports that this provider can write any type as JSON.
    *
+   * @param type        the Java class of the object to serialize
+   * @param genericType the generic type of the object to serialize
+   * @param annotations annotations on the resource method or parameter
+   * @param mediaType   the media type of the entity
    * @return always {@code true}
    */
   @Override
@@ -93,8 +110,15 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   }
 
   /**
-   * Serializes the object to a thread-local buffer and reports its size.
+   * Serializes the object into a thread-local buffer and returns the byte count, so the content length can be set
+   * before the stream is written.
    *
+   * @param o           the object to serialize
+   * @param type        the Java class of the object
+   * @param genericType the generic type of the object
+   * @param annotations annotations on the resource method or parameter
+   * @param mediaType   the media type of the entity
+   * @return the number of bytes in the serialized representation
    * @throws WebApplicationException if serialization fails
    */
   @Override
@@ -113,9 +137,16 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   }
 
   /**
-   * Writes the previously buffered JSON to the response output stream.
+   * Writes the previously buffered JSON bytes to the response entity stream, serializing first if the buffer is absent.
    *
-   * @throws IOException             if the entity stream cannot be written
+   * @param o            the object to serialize
+   * @param type         the Java class of the object
+   * @param genericType  the generic type of the object
+   * @param annotations  annotations on the resource method or parameter
+   * @param mediaType    the media type of the entity
+   * @param httpHeaders  the mutable HTTP message headers
+   * @param entityStream the entity output stream
+   * @throws IOException             if the stream cannot be written
    * @throws WebApplicationException if serialization fails
    */
   @Override

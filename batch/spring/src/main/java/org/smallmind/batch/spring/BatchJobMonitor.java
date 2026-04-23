@@ -39,7 +39,8 @@ import org.springframework.batch.core.launch.NoSuchJobException;
 import org.springframework.batch.core.repository.JobRepository;
 
 /**
- * Utility for polling a Spring Batch job execution until a desired {@link ExitStatus} is observed.
+ * Polls a Spring Batch job execution until it reaches one of the caller-supplied
+ * {@link ExitStatus} values or a timeout expires.
  */
 public class BatchJobMonitor {
 
@@ -47,10 +48,10 @@ public class BatchJobMonitor {
   private final Long jobId;
 
   /**
-   * Creates a monitor for a specific job id.
+   * Creates a monitor targeting a specific job execution.
    *
-   * @param jobRepository repository used to query job executions
-   * @param jobId         the job id to monitor
+   * @param jobRepository Spring Batch repository used to fetch execution state
+   * @param jobId         the execution id to monitor
    */
   public BatchJobMonitor (JobRepository jobRepository, Long jobId) {
 
@@ -59,14 +60,17 @@ public class BatchJobMonitor {
   }
 
   /**
-   * Waits for the job to reach any of the supplied exit statuses within the timeout.
+   * Waits for the monitored execution to match any of the given exit statuses.
+   * <p>
+   * Polls at an interval of at most one-tenth of the total timeout, with a minimum of one
+   * second. Returns {@code true} immediately if {@code exitStatuses} is empty or {@code null}.
    *
    * @param timeout      the maximum time to wait
-   * @param timeUnit     the time unit for the timeout value
-   * @param exitStatuses acceptable terminal statuses; if none are provided the method returns immediately
-   * @return {@code true} if an acceptable exit status was reached before timing out, otherwise {@code false}
-   * @throws NoSuchJobException   if the job execution cannot be found
-   * @throws InterruptedException if the monitoring thread is interrupted while waiting
+   * @param timeUnit     the unit for {@code timeout}
+   * @param exitStatuses acceptable terminal statuses; varargs, may be empty
+   * @return {@code true} if a matching status was observed before the deadline, {@code false} otherwise
+   * @throws NoSuchJobException   if the execution identified by the stored job id no longer exists
+   * @throws InterruptedException if the monitoring thread is interrupted while sleeping
    */
   public boolean await (long timeout, TimeUnit timeUnit, ExitStatus... exitStatuses)
     throws NoSuchJobException, InterruptedException {

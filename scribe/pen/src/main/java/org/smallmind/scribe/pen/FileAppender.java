@@ -42,7 +42,8 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 
 /**
- * Appender that writes formatted log output to a file with optional rollover and cleanup policies.
+ * Appender that writes formatted log output to a file, with optional {@link Rollover} and {@link Cleanup}
+ * policies for managing log rotation and pruning of old archived files.
  */
 public class FileAppender extends AbstractFormattedAppender {
 
@@ -55,7 +56,8 @@ public class FileAppender extends AbstractFormattedAppender {
   private long lastModified = 0;
 
   /**
-   * Constructs a file appender without configuration.
+   * Constructs a file appender with no log path, formatter, rollover policy, or error handler; the log path
+   * must be supplied via {@link #setLogPath(Path)} or {@link #setLogFile(String)} before use.
    */
   public FileAppender () {
 
@@ -63,10 +65,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender targeting the given file path string.
+   * Constructs a file appender that writes to the file at the given path string, creating parent
+   * directories if they do not exist.
    *
-   * @param logFile path string to the log file
-   * @throws IOException if the file cannot be opened
+   * @param logFile path string identifying the log file
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile)
     throws IOException {
@@ -75,10 +78,10 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender targeting the given file path.
+   * Constructs a file appender that writes to the given path, creating parent directories if they do not exist.
    *
-   * @param logPath path to the log file
-   * @throws IOException if the file cannot be opened
+   * @param logPath path identifying the log file
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath)
     throws IOException {
@@ -87,11 +90,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover support.
+   * Constructs a file appender with a rollover policy that rotates the log file when triggered.
    *
-   * @param logFile  path string to the log file
-   * @param rollover rollover policy
-   * @throws IOException if the file cannot be opened
+   * @param logFile  path string identifying the log file
+   * @param rollover policy that determines when and how the log file is rotated
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Rollover rollover)
     throws IOException {
@@ -100,11 +103,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover support.
+   * Constructs a file appender with a rollover policy that rotates the log file when triggered.
    *
-   * @param logPath  path to the log file
-   * @param rollover rollover policy
-   * @throws IOException if the file cannot be opened
+   * @param logPath  path identifying the log file
+   * @param rollover policy that determines when and how the log file is rotated
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Rollover rollover)
     throws IOException {
@@ -113,11 +116,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup support.
+   * Constructs a file appender with a cleanup policy that prunes archived log files after rollover.
    *
-   * @param logFile path string to the log file
-   * @param cleanup cleanup policy
-   * @throws IOException if the file cannot be opened
+   * @param logFile path string identifying the log file
+   * @param cleanup policy that removes old archived log files after each rollover
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Cleanup cleanup)
     throws IOException {
@@ -126,11 +129,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup support.
+   * Constructs a file appender with a cleanup policy that prunes archived log files after rollover.
    *
-   * @param logPath path to the log file
-   * @param cleanup cleanup policy
-   * @throws IOException if the file cannot be opened
+   * @param logPath path identifying the log file
+   * @param cleanup policy that removes old archived log files after each rollover
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Cleanup cleanup)
     throws IOException {
@@ -139,11 +142,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with a formatter.
+   * Constructs a file appender that applies the given formatter before writing to the log file.
    *
-   * @param logFile   path string to the log file
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logFile   path string identifying the log file
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Formatter formatter)
     throws IOException {
@@ -152,11 +155,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with a formatter.
+   * Constructs a file appender that applies the given formatter before writing to the log file.
    *
-   * @param logPath   path to the log file
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logPath   path identifying the log file
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Formatter formatter)
     throws IOException {
@@ -165,12 +168,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover and formatter.
+   * Constructs a file appender with a rollover policy and a formatter.
    *
-   * @param logFile   path string to the log file
-   * @param rollover  rollover policy
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logFile   path string identifying the log file
+   * @param rollover  policy that determines when and how the log file is rotated
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Rollover rollover, Formatter formatter)
     throws IOException {
@@ -179,12 +182,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover and formatter.
+   * Constructs a file appender with a rollover policy and a formatter.
    *
-   * @param logPath   path to the log file
-   * @param rollover  rollover policy
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logPath   path identifying the log file
+   * @param rollover  policy that determines when and how the log file is rotated
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Rollover rollover, Formatter formatter)
     throws IOException {
@@ -193,12 +196,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup and formatter.
+   * Constructs a file appender with a cleanup policy and a formatter.
    *
-   * @param logFile   path string to the log file
-   * @param cleanup   cleanup policy
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logFile   path string identifying the log file
+   * @param cleanup   policy that removes old archived log files after each rollover
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Cleanup cleanup, Formatter formatter)
     throws IOException {
@@ -207,12 +210,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup and formatter.
+   * Constructs a file appender with a cleanup policy and a formatter.
    *
-   * @param logPath   path to the log file
-   * @param cleanup   cleanup policy
-   * @param formatter formatter to apply
-   * @throws IOException if the file cannot be opened
+   * @param logPath   path identifying the log file
+   * @param cleanup   policy that removes old archived log files after each rollover
+   * @param formatter the formatter used to convert log records to strings
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Cleanup cleanup, Formatter formatter)
     throws IOException {
@@ -221,12 +224,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with formatter and error handler.
+   * Constructs a file appender with a formatter and an error handler.
    *
-   * @param logFile      path string to the log file
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logFile      path string identifying the log file
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -235,12 +238,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with formatter and error handler.
+   * Constructs a file appender with a formatter and an error handler.
    *
-   * @param logPath      path to the log file
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logPath      path identifying the log file
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -249,13 +252,13 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover, formatter, and error handler.
+   * Constructs a file appender with a rollover policy, a formatter, and an error handler.
    *
-   * @param logFile      path string to the log file
-   * @param rollover     rollover policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logFile      path string identifying the log file
+   * @param rollover     policy that determines when and how the log file is rotated
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Rollover rollover, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -264,13 +267,13 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover, formatter, and error handler.
+   * Constructs a file appender with a rollover policy, a formatter, and an error handler.
    *
-   * @param logPath      path to the log file
-   * @param rollover     rollover policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logPath      path identifying the log file
+   * @param rollover     policy that determines when and how the log file is rotated
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Rollover rollover, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -279,13 +282,13 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup, formatter, and error handler.
+   * Constructs a file appender with a cleanup policy, a formatter, and an error handler.
    *
-   * @param logFile      path string to the log file
-   * @param cleanup      cleanup policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logFile      path string identifying the log file
+   * @param cleanup      policy that removes old archived log files after each rollover
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -294,13 +297,13 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with cleanup, formatter, and error handler.
+   * Constructs a file appender with a cleanup policy, a formatter, and an error handler.
    *
-   * @param logPath      path to the log file
-   * @param cleanup      cleanup policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logPath      path identifying the log file
+   * @param cleanup      policy that removes old archived log files after each rollover
+   * @param formatter    the formatter used to convert log records to strings
+   * @param errorHandler the handler invoked when output or formatting fails
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -309,14 +312,15 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover, cleanup, formatter, and error handler.
+   * Constructs a file appender with the full complement of rollover policy, cleanup policy,
+   * formatter, and error handler.
    *
-   * @param logFile      path string to the log file
-   * @param rollover     rollover policy
-   * @param cleanup      cleanup policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logFile      path string identifying the log file
+   * @param rollover     policy that determines when and how the log file is rotated, or {@code null} for none
+   * @param cleanup      policy that removes old archived log files after each rollover, or {@code null} for none
+   * @param formatter    the formatter used to convert log records to strings, or {@code null} for no formatting
+   * @param errorHandler the handler invoked when output or formatting fails, or {@code null} to discard errors
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public FileAppender (String logFile, Rollover rollover, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -325,14 +329,15 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Constructs a file appender with rollover, cleanup, formatter, and error handler.
+   * Constructs a file appender with the full complement of rollover policy, cleanup policy,
+   * formatter, and error handler.
    *
-   * @param logPath      path to the log file
-   * @param rollover     rollover policy
-   * @param cleanup      cleanup policy
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to use on failures
-   * @throws IOException if the file cannot be opened
+   * @param logPath      path identifying the log file
+   * @param rollover     policy that determines when and how the log file is rotated, or {@code null} for none
+   * @param cleanup      policy that removes old archived log files after each rollover, or {@code null} for none
+   * @param formatter    the formatter used to convert log records to strings, or {@code null} for no formatting
+   * @param errorHandler the handler invoked when output or formatting fails, or {@code null} to discard errors
+   * @throws IOException if the path is a directory or the output stream cannot be opened
    */
   public FileAppender (Path logPath, Rollover rollover, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
@@ -346,9 +351,9 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Returns the configured rollover policy.
+   * Returns the rollover policy currently assigned to this appender.
    *
-   * @return rollover policy, or {@code null} if none
+   * @return the active rollover policy, or {@code null} if no rollover policy is configured
    */
   public Rollover getRollover () {
 
@@ -356,9 +361,9 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Sets the rollover policy used to rotate log files.
+   * Sets the rollover policy used to rotate the log file when size or age thresholds are met.
    *
-   * @param rollover rollover policy
+   * @param rollover the rollover policy to apply, or {@code null} to disable rollover
    */
   public void setRollover (Rollover rollover) {
 
@@ -366,9 +371,9 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Retrieves the cleanup policy applied after rollovers.
+   * Returns the cleanup policy currently assigned to this appender.
    *
-   * @return cleanup policy, or {@code null} if none
+   * @return the active cleanup policy, or {@code null} if no cleanup policy is configured
    */
   public Cleanup getCleanup () {
 
@@ -376,9 +381,9 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Sets the cleanup policy used to prune old log files.
+   * Sets the cleanup policy used to prune old archived log files after each rollover.
    *
-   * @param cleanup cleanup policy
+   * @param cleanup the cleanup policy to apply, or {@code null} to disable cleanup
    */
   public void setCleanup (Cleanup cleanup) {
 
@@ -386,9 +391,9 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Returns the current log file path.
+   * Returns the path of the current active log file.
    *
-   * @return path to the log file
+   * @return the active log file path
    */
   public Path getLogPath () {
 
@@ -396,10 +401,12 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Sets the target log file path, creating parent directories and opening the stream.
+   * Sets the target log file path, creating any missing parent directories and opening a new
+   * append-mode output stream to the file.
    *
-   * @param logPath path to the log file (must not be a directory)
-   * @throws IOException if the path is invalid or cannot be opened
+   * @param logPath path to the log file; must not refer to an existing directory
+   * @throws IOException if the path is a directory, parent directories cannot be created,
+   *                     or the output stream cannot be opened
    */
   public void setLogPath (Path logPath)
     throws IOException {
@@ -421,10 +428,10 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Sets the log file path using a string value.
+   * Sets the target log file path from a string, creating parent directories and opening the output stream.
    *
-   * @param logFile path string to the log file
-   * @throws IOException if the path cannot be resolved or opened
+   * @param logFile path string identifying the log file; must not refer to an existing directory
+   * @throws IOException if the path cannot be resolved, is a directory, or the output stream cannot be opened
    */
   public void setLogFile (String logFile)
     throws IOException {
@@ -433,9 +440,10 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Opens the output stream to the current log path and initializes size tracking.
+   * Opens an append-mode output stream to the current log path and resets the internal
+   * file-size counter and last-modified timestamp.
    *
-   * @throws IOException if the stream cannot be created
+   * @throws IOException if the output stream cannot be created or the file attributes cannot be read
    */
   private void openStream ()
     throws IOException {
@@ -446,10 +454,15 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Writes formatted output to the log file, performing rollover and cleanup when necessary.
+   * Writes formatted UTF-8 text to the log file. If the rollover policy determines that the
+   * file should be rotated before writing, the current file is renamed to an archive path, a new
+   * file is opened, and the cleanup policy (if present) is invoked. This method is synchronized
+   * so that concurrent callers do not interleave their output or trigger simultaneous rollovers.
    *
-   * @param formattedOutput text to write
-   * @throws LoggerException if writing fails or the appender is closed
+   * @param formattedOutput the fully formatted text to append to the log file; must not be {@code null}
+   * @throws LoggerException if this appender has already been closed, if the rollover or file-move
+   *                         operations fail, if a new output stream cannot be opened, if the cleanup
+   *                         policy raises an {@link java.io.IOException}, or if the write itself fails
    */
   public synchronized void handleOutput (String formattedOutput)
     throws LoggerException {
@@ -503,9 +516,11 @@ public class FileAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Closes the output stream and prevents further writes.
+   * Closes the underlying output stream and marks this appender as closed, preventing any further
+   * writes. Subsequent calls to {@link #handleOutput} will throw a {@link LoggerException}. If the
+   * appender is already closed, this method does nothing.
    *
-   * @throws LoggerException if closing the stream fails
+   * @throws LoggerException if the output stream cannot be closed cleanly
    */
   public synchronized void close ()
     throws LoggerException {

@@ -33,15 +33,17 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Represents a part that requires layout along two axes simultaneously.
+ * Marks a layout part that must be placed using coordinates from both axes simultaneously,
+ * receiving a combined position and size once the {@link LayoutTailor} has resolved both the
+ * horizontal and vertical constraints.
  */
 public interface PlanarPart {
 
   /**
-   * Applies layout using the provided location and size pairs.
+   * Applies the final two-dimensional bounds to this part.
    *
-   * @param location the x/y position pair
-   * @param size     the width/height pair
+   * @param location a {@link Pair} containing the x-coordinate (first) and y-coordinate (second)
+   * @param size     a {@link Pair} containing the width (first) and height (second)
    */
   void applyLayout (Pair location, Pair size);
 }

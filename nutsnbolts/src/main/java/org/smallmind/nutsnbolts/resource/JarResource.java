@@ -39,12 +39,15 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * {@link Resource} backed by an entry inside a jar file (path format {@code /path/to.jar!/entry/name}).
+ * A {@link Resource} backed by a named entry inside a JAR file, specified with the path
+ * format {@code /path/to/archive.jar!/entry/name}.
  */
 public class JarResource extends AbstractResource {
 
   /**
-   * @param path jar path including {@code !} entry separator
+   * Constructs a {@code JarResource} for the given jar-entry path.
+   *
+   * @param path combined path containing the jar file location and entry name separated by {@code !}
    */
   public JarResource (String path) {
 
@@ -52,7 +55,9 @@ public class JarResource extends AbstractResource {
   }
 
   /**
-   * @return {@code jar}
+   * Returns the scheme identifier for this resource type.
+   *
+   * @return the string {@code "jar"}
    */
   @Override
   public String getScheme () {
@@ -61,10 +66,10 @@ public class JarResource extends AbstractResource {
   }
 
   /**
-   * Opens the jar entry for reading.
+   * Opens the specified entry within the JAR archive for reading.
    *
-   * @return input stream for the jar entry, or {@code null} if the entry is not found
-   * @throws ResourceException if the jar cannot be opened
+   * @return an input stream for the JAR entry, or {@code null} if no matching entry is found
+   * @throws ResourceException if the JAR file cannot be opened due to an I/O error
    */
   @Override
   public InputStream getInputStream ()

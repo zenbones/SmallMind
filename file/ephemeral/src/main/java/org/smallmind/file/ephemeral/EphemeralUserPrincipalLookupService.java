@@ -37,12 +37,18 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 
 /**
- * Lookup service that returns ephemeral user and group principals.
+ * {@link UserPrincipalLookupService} implementation for the ephemeral file system. Each
+ * lookup creates a new in-memory principal object without consulting any external user or
+ * group database.
  */
 public class EphemeralUserPrincipalLookupService extends UserPrincipalLookupService {
 
   /**
-   * {@inheritDoc}
+   * Returns an {@link EphemeralUserPrincipal} for the given user name. No validation of
+   * the name is performed.
+   *
+   * @param name the user name to look up; must not be {@code null}
+   * @return a new {@link EphemeralUserPrincipal} with the given name; never {@code null}
    */
   @Override
   public UserPrincipal lookupPrincipalByName (String name) {
@@ -51,7 +57,11 @@ public class EphemeralUserPrincipalLookupService extends UserPrincipalLookupServ
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an {@link EphemeralGroupPrincipal} for the given group name. No validation of
+   * the name is performed.
+   *
+   * @param group the group name to look up; must not be {@code null}
+   * @return a new {@link EphemeralGroupPrincipal} with the given name; never {@code null}
    */
   @Override
   public GroupPrincipal lookupPrincipalByGroupName (String group) {

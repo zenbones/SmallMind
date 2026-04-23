@@ -38,9 +38,10 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Functional interface used to consume responses produced while processing messages.
+ * Callback that receives each response packet paired with its originating session,
+ * produced by {@link Connection#process} for every inbound Bayeux message batch.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
  */
 @FunctionalInterface
 public interface ResponseConsumer<V extends Value<V>> extends BiConsumer<Session<V>, Packet<V>> {

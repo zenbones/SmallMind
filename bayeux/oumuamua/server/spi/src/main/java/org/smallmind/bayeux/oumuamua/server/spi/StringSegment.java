@@ -36,7 +36,8 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
 
 /**
- * Concrete {@link Segment} backed by a string literal.
+ * {@link Segment} implementation backed by a plain string literal, with shared singleton
+ * instances for the single-level ({@code *}) and deep ({@code **}) Bayeux wildcards.
  */
 public class StringSegment extends Segment {
 
@@ -45,9 +46,10 @@ public class StringSegment extends Segment {
   private final String name;
 
   /**
-   * Creates a segment with the provided text.
+   * Constructs a segment wrapping the given text.
    *
-   * @param name segment text
+   * @param name segment text; must not be null
+   * @throws NullPointerException if {@code name} is null
    */
   public StringSegment (String name) {
 
@@ -60,7 +62,9 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * @return shared instance representing a single-level wildcard
+   * Returns the shared single-level wildcard segment ({@code *}).
+   *
+   * @return singleton {@code StringSegment} whose text equals {@link Channel#WILD}
    */
   public static StringSegment wild () {
 
@@ -68,7 +72,9 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * @return shared instance representing a deep wildcard
+   * Returns the shared deep wildcard segment ({@code **}).
+   *
+   * @return singleton {@code StringSegment} whose text equals {@link Channel#DEEP_WILD}
    */
   public static StringSegment deepWild () {
 
@@ -76,10 +82,10 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * Compares the segment to a character sequence for equality.
+   * Tests whether this segment's text equals {@code charSequence} character-for-character.
    *
-   * @param charSequence sequence to match
-   * @return {@code true} if identical
+   * @param charSequence sequence to compare; null or different length always returns {@code false}
+   * @return {@code true} if every character matches
    */
   @Override
   public boolean matches (CharSequence charSequence) {
@@ -100,7 +106,9 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * @return the literal value of the segment
+   * Returns the segment text as a plain string.
+   *
+   * @return the literal string backing this segment
    */
   @Override
   public String toString () {
@@ -109,7 +117,9 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * @return length of the segment
+   * Returns the number of characters in the segment text.
+   *
+   * @return character count of the backing string
    */
   @Override
   public int length () {
@@ -118,10 +128,11 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * Retrieves a character by index.
+   * Returns the character at the given index within the segment text.
    *
-   * @param index character index
-   * @return character at the index
+   * @param index zero-based character position
+   * @return character at that position
+   * @throws StringIndexOutOfBoundsException if {@code index} is out of range
    */
   @Override
   public char charAt (int index) {
@@ -130,11 +141,12 @@ public class StringSegment extends Segment {
   }
 
   /**
-   * Returns a subsequence of the segment text.
+   * Returns the sub-sequence of the segment text between {@code start} and {@code end}.
    *
-   * @param start start offset
-   * @param end   end offset
-   * @return subsequence text
+   * @param start start index, inclusive
+   * @param end   end index, exclusive
+   * @return the requested substring
+   * @throws StringIndexOutOfBoundsException if the indices are out of range
    */
   @Override
   public CharSequence subSequence (int start, int end) {

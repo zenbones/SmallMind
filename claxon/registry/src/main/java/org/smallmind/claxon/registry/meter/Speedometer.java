@@ -40,18 +40,36 @@ import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Meter that combines min/max value tracking with event counts and rates.
+ * A {@link Meter} that combines min/max value tracking with event-count and rate
+ * measurement over a configurable sliding window.
+ *
+ * <p>Each call to {@link #update(long)} records the supplied value in a {@link Bounded}
+ * aggregate (to track the running minimum and maximum) and increments the event count
+ * in a {@link Paced} aggregate by {@code 1}. The value itself is not forwarded to
+ * {@link Paced}; only the occurrence of the event is counted.</p>
+ *
+ * <p>On {@link #record()}, up to four named {@link Quantity} values are returned:
+ * {@code "minimum"} and {@code "maximum"} (omitted when no values have been observed),
+ * {@code "count"} (typed as {@link QuantityType#COUNT}), and {@code "rate"}.</p>
  */
 public class Speedometer implements Meter {
 
+  /**
+   * Aggregate that tracks the minimum and maximum values seen since creation.
+   */
   private final Bounded bounded;
+
+  /**
+   * Aggregate that tracks total event count and per-window rate.
+   */
   private final Paced paced;
 
   /**
-   * Creates a speedometer using the given clock and window.
+   * Creates a new {@code Speedometer} with the given clock and sliding-window duration.
    *
-   * @param clock       clock providing monotonic time
-   * @param windowStint window duration for rate calculations
+   * @param clock       the clock providing monotonic time for rate calculations
+   * @param windowStint the duration of the sliding window over which count and rate
+   *                    are computed; must be a positive duration
    */
   public Speedometer (Clock clock, Stint windowStint) {
 
@@ -60,9 +78,14 @@ public class Speedometer implements Meter {
   }
 
   /**
-   * Updates the min/max with the provided value and increments the count.
+   * Records {@code value} in the min/max aggregate and increments the event count by one.
    *
-   * @param value value to incorporate
+   * <p>Note that the magnitude of {@code value} does not affect the count or rate
+   * calculations — only the fact that an event occurred is recorded in the {@link Paced}
+   * aggregate.</p>
+   *
+   * @param value the measurement whose minimum and maximum are tracked; the value itself
+   *              is not used for count or rate purposes
    */
   @Override
   public void update (long value) {
@@ -72,9 +95,18 @@ public class Speedometer implements Meter {
   }
 
   /**
-   * Returns min, max (when available), count, and rate quantities.
+   * Returns the current minimum, maximum, event count, and event rate as
+   * {@link Quantity} instances.
    *
-   * @return array of speed-related quantities
+   * <p>The {@code "minimum"} quantity is included only when at least one value has been
+   * observed (bounded minimum is less than {@link Long#MAX_VALUE}). The {@code "maximum"}
+   * quantity is included only when at least one value has been observed (bounded maximum
+   * is greater than {@link Long#MIN_VALUE}). The {@code "count"} and {@code "rate"}
+   * quantities are always present.</p>
+   *
+   * @return an array of between 2 and 4 {@link Quantity} values in the order
+   * {@code minimum} (conditional), {@code maximum} (conditional),
+   * {@code count}, {@code rate}
    */
   @Override
   public Quantity[] record () {

@@ -33,9 +33,22 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * States for a response transport lifecycle.
+ * Enumerates the lifecycle states of a {@link ResponseTransport}.
  */
 public enum TransportState {
 
-  PLAYING, PAUSED, CLOSED
+  /**
+   * The transport is active and consuming inbound requests.
+   */
+  PLAYING,
+
+  /**
+   * The transport is temporarily suspended; request consumption is halted.
+   */
+  PAUSED,
+
+  /**
+   * The transport has been shut down and its resources released.
+   */
+  CLOSED
 }

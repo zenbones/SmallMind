@@ -35,16 +35,17 @@ package org.smallmind.nutsnbolts.resource;
 import java.util.Arrays;
 
 /**
- * Immutable wrapper around a set of schemes supported by a {@link ResourceGenerator}.
+ * Immutable value object wrapping an array of scheme names that a {@link ResourceGenerator}
+ * is capable of handling, used as a map key in {@link ResourceParser}.
  */
 public class ResourceSchemes {
 
   private final String[] schemes;
 
   /**
-   * Creates a wrapper for the supplied scheme names.
+   * Constructs a {@code ResourceSchemes} instance holding the given scheme names.
    *
-   * @param schemes array of supported scheme identifiers
+   * @param schemes array of scheme identifiers supported by a generator
    */
   public ResourceSchemes (String[] schemes) {
 
@@ -52,10 +53,10 @@ public class ResourceSchemes {
   }
 
   /**
-   * Checks whether this collection contains the provided scheme.
+   * Tests whether the given scheme name is present in this collection.
    *
-   * @param scheme scheme name to look for
-   * @return {@code true} if the scheme is supported; otherwise {@code false}
+   * @param scheme the scheme name to search for
+   * @return {@code true} if this collection contains {@code scheme}; {@code false} otherwise
    */
   public boolean containsScheme (String scheme) {
 
@@ -69,9 +70,9 @@ public class ResourceSchemes {
   }
 
   /**
-   * Computes a hash code based on the underlying scheme array.
+   * Returns a hash code derived from the underlying scheme array for use in maps and sets.
    *
-   * @return hash code for use in maps/sets
+   * @return hash code based on array contents
    */
   public int hashCode () {
 
@@ -79,10 +80,10 @@ public class ResourceSchemes {
   }
 
   /**
-   * Compares the underlying scheme array for equality.
+   * Compares this instance to another object for equality based on the scheme array contents.
    *
-   * @param obj object to compare
-   * @return {@code true} if the other object holds the same scheme array; otherwise {@code false}
+   * @param obj the object to compare against this instance
+   * @return {@code true} if {@code obj} is a {@code String[]} with the same scheme names in the same order; {@code false} otherwise
    */
   public boolean equals (Object obj) {
 

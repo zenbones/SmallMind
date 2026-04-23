@@ -33,7 +33,8 @@
 package org.smallmind.web.grizzly.option;
 
 /**
- * Marker option indicating that Spring request context support should be enabled for the application.
+ * Marker option whose presence instructs the Grizzly bootstrap to register a Spring request context listener for the
+ * application.
  */
 public class SpringSupportOption {
 

@@ -35,15 +35,15 @@ package org.smallmind.nutsnbolts.spring;
 import org.springframework.beans.BeansException;
 
 /**
- * Runtime wrapper for {@link BeansException} supporting formatted messages.
+ * An unchecked {@link BeansException} that wraps arbitrary failures and supports {@link java.util.Formatter}-style messages.
  */
 public class RuntimeBeansException extends BeansException {
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Creates an exception with a {@link java.util.Formatter}-style detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a format string
+   * @param args    arguments interpolated into the format string
    */
   public RuntimeBeansException (String message, Object... args) {
 
@@ -51,11 +51,11 @@ public class RuntimeBeansException extends BeansException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Creates an exception with an underlying cause and a {@link java.util.Formatter}-style detail message.
    *
-   * @param throwable the underlying cause
-   * @param message   a {@link java.util.Formatter}-style message
-   * @param args      values interpolated into the message
+   * @param throwable the cause of this exception
+   * @param message   a format string
+   * @param args      arguments interpolated into the format string
    */
   public RuntimeBeansException (Throwable throwable, String message, Object... args) {
 
@@ -63,9 +63,9 @@ public class RuntimeBeansException extends BeansException {
   }
 
   /**
-   * Creates an exception with a cause and its message.
+   * Creates an exception wrapping the given cause, using the cause's own message as the detail message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the cause of this exception
    */
   public RuntimeBeansException (Throwable throwable) {
 

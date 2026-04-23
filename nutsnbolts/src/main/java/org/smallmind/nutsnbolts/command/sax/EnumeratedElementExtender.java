@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 /**
- * Builds an {@link EnumeratedArgument} from nested {@code <value>} elements while parsing the command template.
+ * SAX element extender for the {@code <enumerated>} element that accumulates allowed values from nested {@code <value>} elements and produces an {@link EnumeratedArgument}.
  */
 public class EnumeratedElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
@@ -47,6 +47,8 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
   private EnumeratedArgument enumeratedArgument;
 
   /**
+   * Returns the compiled argument as an {@link Argument} reference.
+   *
    * @return compiled {@link EnumeratedArgument}
    */
   @Override
@@ -56,7 +58,9 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
   }
 
   /**
-   * @return enumerated argument built from collected values
+   * Returns the strongly typed enumerated argument assembled from nested value elements.
+   *
+   * @return {@link EnumeratedArgument} containing the collected allowed values
    */
   public EnumeratedArgument getEnumeratedArgument () {
 
@@ -64,7 +68,12 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
   }
 
   /**
-   * Finalizes the enumerated argument at the end of the element.
+   * Constructs the {@link EnumeratedArgument} from all values collected by child extenders.
+   *
+   * @param namespaceURI   namespace URI of the closing element
+   * @param localName      local name of the closing element
+   * @param qName          qualified name of the closing element
+   * @param contentBuilder text content accumulated within the element
    */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
@@ -76,7 +85,9 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
   }
 
   /**
-   * Collects each nested {@link ValueElementExtender} contribution.
+   * Appends the string value produced by each completed {@link ValueElementExtender} child to the internal list.
+   *
+   * @param elementExtender completed child extender; only processed when it is a {@link ValueElementExtender}
    */
   @Override
   public void completedChildElement (ElementExtender elementExtender) {

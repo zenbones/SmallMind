@@ -36,14 +36,17 @@ import java.nio.file.attribute.GroupPrincipal;
 import javax.security.auth.Subject;
 
 /**
- * Simple in-memory {@link GroupPrincipal} implementation used by the ephemeral file system.
+ * Lightweight in-memory {@link GroupPrincipal} used by the ephemeral file system. Instances
+ * are produced by {@link EphemeralUserPrincipalLookupService#lookupPrincipalByGroupName(String)}.
  */
 public class EphemeralGroupPrincipal implements GroupPrincipal {
 
   private final String name;
 
   /**
-   * @param name the group name
+   * Creates a group principal with the given name.
+   *
+   * @param name the group name; must not be {@code null}
    */
   public EphemeralGroupPrincipal (String name) {
 
@@ -51,7 +54,9 @@ public class EphemeralGroupPrincipal implements GroupPrincipal {
   }
 
   /**
-   * @return the group name
+   * Returns the name of this group principal.
+   *
+   * @return the group name; never {@code null}
    */
   @Override
   public String getName () {
@@ -60,7 +65,10 @@ public class EphemeralGroupPrincipal implements GroupPrincipal {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the default {@link GroupPrincipal} implication logic.
+   *
+   * @param subject the subject to test
+   * @return {@code true} if the subject is implied by this principal
    */
   @Override
   public boolean implies (Subject subject) {

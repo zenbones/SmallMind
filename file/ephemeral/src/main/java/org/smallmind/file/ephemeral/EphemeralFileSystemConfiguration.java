@@ -33,7 +33,19 @@
 package org.smallmind.file.ephemeral;
 
 /**
- * Configuration holder for the ephemeral file system, optionally derived from system properties.
+ * Immutable configuration for an {@link EphemeralFileSystem}. Holds the logical storage
+ * capacity, the allocation block size, and the set of path prefixes ("roots") that will be
+ * served from the ephemeral heap rather than delegated to the native file system.
+ *
+ * <p>The no-argument constructor reads values from the following system properties:
+ * <ul>
+ *   <li>{@code org.smallmind.file.ephemeral.configuration.capacity} – defaults to
+ *       {@link Long#MAX_VALUE}</li>
+ *   <li>{@code org.smallmind.file.ephemeral.configuration.blockSize} – defaults to
+ *       {@code 1024}</li>
+ *   <li>{@code org.smallmind.file.ephemeral.configuration.roots} – comma-separated list,
+ *       optionally bracketed; defaults to {@code "/"}</li>
+ * </ul>
  */
 public class EphemeralFileSystemConfiguration {
 
@@ -45,7 +57,8 @@ public class EphemeralFileSystemConfiguration {
   private final int blockSize;
 
   /**
-   * Builds a configuration using the values provided by system properties or sensible defaults.
+   * Builds a configuration by reading values from system properties, falling back to sensible
+   * defaults when a property is absent.
    */
   public EphemeralFileSystemConfiguration () {
 
@@ -53,12 +66,16 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * Builds a configuration with explicit values.
+   * Builds a configuration with explicitly supplied values.
    *
-   * @param capacity  the total capacity to expose
-   * @param blockSize the allocation unit size
-   * @param roots     the permitted root paths (must start with '/')
-   * @throws IllegalArgumentException if supplied values are invalid
+   * @param capacity  the total storage capacity to report, in bytes; must be positive
+   * @param blockSize the allocation unit size in bytes used when creating new file nodes;
+   *                  must be positive
+   * @param roots     one or more root path prefixes that will be served from the ephemeral
+   *                  heap; each entry must start with {@code "/"}
+   * @throws IllegalArgumentException if {@code capacity} or {@code blockSize} are not positive,
+   *                                  if {@code roots} is {@code null} or empty, or if any root
+   *                                  does not start with {@code "/"}
    */
   public EphemeralFileSystemConfiguration (long capacity, int blockSize, String... roots) {
 
@@ -81,7 +98,10 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return the capacity derived from the {@value CAPACITY_PROPERTY} property or {@link Long#MAX_VALUE}
+   * Reads the capacity from the {@code org.smallmind.file.ephemeral.configuration.capacity}
+   * system property, or returns {@link Long#MAX_VALUE} when the property is absent.
+   *
+   * @return the configured capacity, or {@link Long#MAX_VALUE} by default
    */
   private static long deriveCapacity () {
 
@@ -97,7 +117,10 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return the block size derived from the {@value BLOCK_SIZ_PROPERTY} property or {@code 1024}
+   * Reads the block size from the {@code org.smallmind.file.ephemeral.configuration.blockSize}
+   * system property, or returns {@code 1024} when the property is absent.
+   *
+   * @return the configured block size, or {@code 1024} by default
    */
   private static int deriveBlockSize () {
 
@@ -113,7 +136,13 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return the root list derived from {@value ROOTS_PROPERTY} or a single {@code "/"} entry
+   * Reads the root list from the {@code org.smallmind.file.ephemeral.configuration.roots}
+   * system property. The value may be a bare comma-separated list or a bracketed list
+   * ({@code [a,b,c]}). Each entry is stripped of whitespace and prefixed with {@code "/"} if
+   * it does not already start with one. When the property is absent a single root of
+   * {@code "/"} is returned.
+   *
+   * @return the resolved array of root path strings; never empty
    */
   private static String[] deriveRoots () {
 
@@ -147,7 +176,9 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return configured roots
+   * Returns the configured root path prefixes.
+   *
+   * @return the array of root strings; never {@code null} or empty
    */
   public String[] getRoots () {
 
@@ -155,7 +186,9 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return configured capacity
+   * Returns the configured storage capacity.
+   *
+   * @return capacity in bytes
    */
   public long getCapacity () {
 
@@ -163,7 +196,9 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * @return configured block size
+   * Returns the configured allocation block size.
+   *
+   * @return block size in bytes
    */
   public int getBlockSize () {
 
@@ -171,11 +206,13 @@ public class EphemeralFileSystemConfiguration {
   }
 
   /**
-   * Indicates whether the provided path segments belong to a declared root.
+   * Tests whether the path assembled from the given segments belongs to one of the configured
+   * roots. The segments are compared character-by-character against each root prefix; the
+   * first matching root causes the method to return {@code true}.
    *
-   * @param first the first path segment
-   * @param more  optional additional segments
-   * @return {@code true} if the supplied segments start with one of the configured roots
+   * @param first the first segment of the path to test
+   * @param more  optional additional segments of the path
+   * @return {@code true} if the assembled path starts with at least one configured root
    */
   public boolean isOurs (String first, String... more) {
 

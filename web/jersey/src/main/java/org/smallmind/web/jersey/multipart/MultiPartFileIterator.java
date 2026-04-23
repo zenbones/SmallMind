@@ -40,17 +40,18 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 /**
- * Iterator that yields {@link MultiPartFile} instances from a {@link FormDataMultiPart} request.
+ * Iterator over the {@code file} fields of a {@link FormDataMultiPart} request, yielding a {@link MultiPartFile}
+ * for each part.
  */
 public class MultiPartFileIterator implements Iterator<MultiPartFile> {
 
   private final Iterator<FormDataBodyPart> bodyPartIter;
 
   /**
-   * Creates an iterator for the multipart form, expecting parts named {@code file}.
+   * Constructs an iterator over all parts named {@code file} in the given multipart form.
    *
-   * @param formDataMultiPart multipart form payload
-   * @throws IllegalArgumentException if no file fields are present
+   * @param formDataMultiPart the multipart form payload containing the file fields
+   * @throws IllegalArgumentException if no field named {@code file} is present in the form
    */
   public MultiPartFileIterator (FormDataMultiPart formDataMultiPart) {
 
@@ -64,9 +65,9 @@ public class MultiPartFileIterator implements Iterator<MultiPartFile> {
   }
 
   /**
-   * Indicates whether more file parts remain.
+   * Returns {@code true} if there are more file parts to iterate over.
    *
-   * @return {@code true} if additional parts are available
+   * @return {@code true} if another file part is available
    */
   @Override
   public boolean hasNext () {
@@ -75,9 +76,10 @@ public class MultiPartFileIterator implements Iterator<MultiPartFile> {
   }
 
   /**
-   * Returns the next multipart file, inferring content type when missing.
+   * Returns the next {@link MultiPartFile}, inferring the content type from the filename extension when the part
+   * carries no media type.
    *
-   * @return next multipart file
+   * @return the next multipart file
    */
   @Override
   public MultiPartFile next () {
@@ -88,10 +90,11 @@ public class MultiPartFileIterator implements Iterator<MultiPartFile> {
   }
 
   /**
-   * Resolves content type from the body part or infers it from the filename when absent.
+   * Resolves the content type for a body part, falling back to extension-based inference and then
+   * {@code application/octet-stream} when no media type is available.
    *
-   * @param bodyPart multipart body part
-   * @return MIME type string
+   * @param bodyPart the multipart body part whose content type is needed
+   * @return the resolved MIME type string
    */
   private String getContentType (BodyPart bodyPart) {
 

@@ -33,12 +33,17 @@
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
 /**
- * Spring reference for a JMS queue destination.
+ * Spring bean reference that identifies a JMS queue destination by logical name and JNDI path.
+ *
+ * <p>Extends {@link DestinationReference} to carry selector and durability settings in addition
+ * to the name and path inherited from {@link ManagedObjectReference}.
  */
 public class QueueReference extends DestinationReference {
 
   /**
-   * {@inheritDoc}
+   * Returns {@link DestinationType#QUEUE} to indicate that this reference describes a queue.
+   *
+   * @return {@link DestinationType#QUEUE}
    */
   @Override
   public DestinationType getDestinationType () {

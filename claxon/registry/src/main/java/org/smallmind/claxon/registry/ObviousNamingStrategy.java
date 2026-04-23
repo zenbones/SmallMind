@@ -37,23 +37,39 @@ import java.util.Set;
 import org.smallmind.nutsnbolts.util.DotNotation;
 
 /**
- * Naming strategy that returns the fully qualified class name when it matches a whitelist.
+ * A {@link NamingStrategy} that uses the fully qualified class name as the meter name,
+ * but only for callers whose class name matches at least one pattern in a configurable
+ * whitelist of {@link DotNotation} expressions.
+ *
+ * <p>Callers that do not match any whitelist pattern receive {@code null} from
+ * {@link #from(Class)}, causing the registry to substitute a {@link NoOpMeter}.
+ * Inner-class separators ({@code $}) are normalised to dots in the returned name.
+ *
+ * <p>When the whitelist is empty or {@code null}, {@link #from(Class)} always returns
+ * {@code null}, effectively disabling all meter registration through this strategy.
+ *
+ * @see ImpliedNamingStrategy
  */
 public class ObviousNamingStrategy implements NamingStrategy {
 
+  /**
+   * The set of {@link DotNotation} patterns that identify permitted caller classes.
+   */
   private Set<DotNotation> whiteListSet = new HashSet<>();
 
   /**
-   * Creates a strategy with an empty whitelist.
+   * Creates a strategy with an empty whitelist. No callers are permitted until
+   * {@link #setWhiteListSet(Set)} is called.
    */
   public ObviousNamingStrategy () {
 
   }
 
   /**
-   * Creates a strategy using the provided whitelist.
+   * Creates a strategy pre-loaded with the given whitelist of permitted caller patterns.
    *
-   * @param whiteListSet allowed caller patterns
+   * @param whiteListSet the initial set of {@link DotNotation} patterns that identify
+   *                     permitted caller classes
    */
   public ObviousNamingStrategy (Set<DotNotation> whiteListSet) {
 
@@ -61,10 +77,11 @@ public class ObviousNamingStrategy implements NamingStrategy {
   }
 
   /**
-   * Replaces the whitelist of allowed caller patterns.
+   * Replaces the whitelist of permitted caller patterns.
    *
-   * @param whiteListSet new whitelist
-   * @return this strategy for chaining
+   * @param whiteListSet the new set of {@link DotNotation} patterns; must not be
+   *                     {@code null} if any caller is to be permitted
+   * @return this strategy instance to support fluent chaining
    */
   public ObviousNamingStrategy setWhiteListSet (Set<DotNotation> whiteListSet) {
 
@@ -74,10 +91,16 @@ public class ObviousNamingStrategy implements NamingStrategy {
   }
 
   /**
-   * Returns the caller class name when the whitelist includes a matching pattern.
+   * Returns the fully qualified name of {@code caller} (with {@code $} replaced by
+   * {@code .}) when the caller's class name matches at least one pattern in the whitelist,
+   * or {@code null} when no pattern matches.
    *
-   * @param caller class requesting a meter name
-   * @return fully qualified class name or {@code null} if not permitted
+   * <p>Pattern matching is performed using {@link DotNotation#calculateValue}; a positive
+   * score indicates a match.
+   *
+   * @param caller the class for which a meter name is requested
+   * @return the normalised fully qualified class name if permitted, or {@code null} if
+   * the caller does not match any whitelist pattern
    */
   @Override
   public String from (Class<?> caller) {

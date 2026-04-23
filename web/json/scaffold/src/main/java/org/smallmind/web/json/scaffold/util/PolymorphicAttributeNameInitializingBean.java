@@ -35,16 +35,17 @@ package org.smallmind.web.json.scaffold.util;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring initializer that configures the global polymorphic attribute name during application startup.
+ * Spring {@link InitializingBean} that pushes the configured polymorphic attribute name into
+ * {@link PolymorphicAttributeManager} during application context initialization.
  */
 public class PolymorphicAttributeNameInitializingBean implements InitializingBean {
 
   public String polymorphicAttributeName;
 
   /**
-   * Sets the polymorphic attribute name to apply at initialization time.
+   * Sets the polymorphic attribute name to apply when this bean initializes.
    *
-   * @param polymorphicAttributeName attribute name
+   * @param polymorphicAttributeName desired attribute name
    */
   public void setPolymorphicAttributeName (String polymorphicAttributeName) {
 
@@ -52,7 +53,7 @@ public class PolymorphicAttributeNameInitializingBean implements InitializingBea
   }
 
   /**
-   * Applies the configured attribute name to the global manager.
+   * Applies the configured attribute name to the global {@link PolymorphicAttributeManager}.
    *
    * @throws Exception if the manager rejects the configuration
    */

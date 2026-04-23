@@ -36,12 +36,22 @@ import java.io.IOException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 /**
- * Encodes keys using Base64 to ensure protocol-safe characters.
+ * {@link KeyTranslator} implementation that unconditionally Base64-encodes every cache key.
+ *
+ * <p>Base64 encoding guarantees that the resulting string contains only printable ASCII
+ * characters with no whitespace or control characters, satisfying the memcached key restrictions.
+ * Note that Base64 encoding increases the string length by approximately a third; for keys that
+ * may be long, consider wrapping this translator with a {@link LargeKeyHashingTranslator} to
+ * ensure the 250-byte limit is respected.</p>
  */
 public class DefaultKeyTranslator implements KeyTranslator {
 
   /**
-   * {@inheritDoc}
+   * Base64-encodes the supplied key and returns the result.
+   *
+   * @param key the original application-level cache key
+   * @return the Base64-encoded representation of {@code key}
+   * @throws IOException if the Base64 encoding operation encounters an I/O error
    */
   @Override
   public String encode (String key)

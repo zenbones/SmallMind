@@ -48,7 +48,8 @@ public class CodecUtility {
    *
    * @param parentClass   entity class declaring the field
    * @param fieldAccessor reflection accessor for the field
-   * @return the concrete class for the field
+   * @return the concrete class for the field; when the field type is not a type variable, the field's declared type is
+   * returned directly without inspecting type arguments
    * @throws ThrongRuntimeException if the type parameter cannot be resolved
    */
   public static Class<?> getReifiedType (Class<?> parentClass, FieldAccessor fieldAccessor) {

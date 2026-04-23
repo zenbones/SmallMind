@@ -37,16 +37,17 @@ import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a JUL {@link Formatter} to the scribe {@link org.smallmind.scribe.pen.Formatter} interface.
+ * Scribe {@link org.smallmind.scribe.pen.Formatter} that delegates to a JUL {@link Formatter},
+ * prepending any header and appending any footer that the native formatter supplies.
  */
 public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
 
   private final Formatter formatter;
 
   /**
-   * Creates an adapter around the provided JUL formatter.
+   * Builds a scribe formatter that delegates rendering to the given native JUL formatter.
    *
-   * @param formatter the native formatter
+   * @param formatter the JUL formatter to wrap
    */
   public JDKFormatterAdapter (Formatter formatter) {
 
@@ -54,9 +55,9 @@ public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
   }
 
   /**
-   * Exposes the underlying JUL formatter.
+   * Returns the native JUL {@link Formatter} that this adapter wraps.
    *
-   * @return the wrapped formatter
+   * @return the wrapped JUL formatter
    */
   public java.util.logging.Formatter getNativeFormatter () {
 
@@ -64,10 +65,11 @@ public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
   }
 
   /**
-   * Formats a record by delegating to the JUL formatter, including header and footer.
+   * Formats the record by asking the JUL formatter for its optional header, the formatted record body,
+   * and its optional footer, concatenating all non-null parts into a single string.
    *
-   * @param record record to format
-   * @return the formatted string
+   * @param record the scribe record to format; its native log entry must be a {@link LogRecord}
+   * @return the concatenated header, body, and footer produced by the JUL formatter
    */
   public String format (Record<?> record) {
 

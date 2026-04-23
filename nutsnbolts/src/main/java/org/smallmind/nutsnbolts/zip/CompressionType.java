@@ -50,8 +50,7 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.WrappedException;
 
 /**
- * Supports compressing and extracting archives in either JAR or ZIP formats.
- * Provides helpers for iterating entries, building archives, and exploding archives to disk.
+ * Enum of supported archive formats (JAR and ZIP) that provides helpers for creating, reading, compressing, and extracting archives.
  */
 public enum CompressionType {
 
@@ -104,7 +103,9 @@ public enum CompressionType {
   }
 
   /**
-   * @return standard file extension (without dot) for the archive type
+   * Returns the conventional file extension for this archive type, without a leading dot.
+   *
+   * @return the file extension (e.g., {@code "jar"} or {@code "zip"})
    */
   public String getExtension () {
 
@@ -112,39 +113,39 @@ public enum CompressionType {
   }
 
   /**
-   * Builds an input stream capable of reading this archive type.
+   * Wraps the supplied stream in an archive input stream appropriate for this format.
    *
-   * @param inputStream raw input stream
-   * @return {@link ZipInputStream} specialized for the archive type
+   * @param inputStream the raw input stream containing the archive data
+   * @return a {@link ZipInputStream} (or {@link java.util.jar.JarInputStream} for JAR) over the input
    * @throws IOException if the stream cannot be created
    */
   public abstract ZipInputStream getInputStream (InputStream inputStream)
     throws IOException;
 
   /**
-   * Builds an output stream capable of writing this archive type.
+   * Wraps the supplied stream in an archive output stream appropriate for this format.
    *
-   * @param outputStream destination stream
-   * @param manifest     optional manifest (ignored for ZIP)
-   * @return {@link ZipOutputStream} specialized for the archive type
+   * @param outputStream the destination stream
+   * @param manifest     the manifest to embed in the archive; used only for JAR, ignored for ZIP
+   * @return a {@link ZipOutputStream} (or {@link java.util.jar.JarOutputStream} for JAR) over the output
    * @throws IOException if the stream cannot be created
    */
   public abstract ZipOutputStream getOutputStream (OutputStream outputStream, Manifest manifest)
     throws IOException;
 
   /**
-   * Creates an archive entry instance for the given path.
+   * Creates an archive entry with the given name appropriate for this format.
    *
-   * @param name entry name within the archive
-   * @return archive entry appropriate to the type
+   * @param name the entry name within the archive
+   * @return a new {@link ZipEntry} (or {@link java.util.jar.JarEntry} for JAR)
    */
   public abstract ZipEntry getEntry (String name);
 
   /**
-   * Iterates the entries in an archive file, invoking the consumer for each entry encountered.
+   * Iterates all entries in the archive file, invoking the consumer for each one.
    *
-   * @param compressedFile archive to inspect
-   * @param entryConsumer  callback receiving each entry
+   * @param compressedFile the archive file to walk
+   * @param entryConsumer  the callback invoked for each archive entry
    * @throws IOException if the archive cannot be read
    */
   public void walk (Path compressedFile, ZipEntryConsumer entryConsumer)
@@ -161,11 +162,11 @@ public enum CompressionType {
   }
 
   /**
-   * Compresses the contents of a directory into a new archive file.
+   * Compresses all regular files in a directory tree into a new archive file at the given path.
    *
-   * @param sourceDir  directory whose contents will be archived
-   * @param outputFile archive file to create
-   * @throws IOException if reading or writing fails
+   * @param sourceDir  the root directory whose contents will be archived
+   * @param outputFile the path of the archive file to create or overwrite
+   * @throws IOException if reading the source directory or writing the archive fails
    */
   public void compress (Path sourceDir, Path outputFile)
     throws IOException {
@@ -174,12 +175,12 @@ public enum CompressionType {
   }
 
   /**
-   * Compresses a directory into a new archive file with an optional manifest.
+   * Compresses all regular files in a directory tree into a new archive file, embedding the supplied manifest.
    *
-   * @param sourceDir  directory whose contents will be archived
-   * @param outputFile archive file to create
-   * @param manifest   manifest to embed (JAR only)
-   * @throws IOException if reading or writing fails
+   * @param sourceDir  the root directory whose contents will be archived
+   * @param outputFile the path of the archive file to create or overwrite
+   * @param manifest   the manifest to embed in the archive; used only for JAR, ignored for ZIP
+   * @throws IOException if reading the source directory or writing the archive fails
    */
   public void compress (Path sourceDir, Path outputFile, Manifest manifest)
     throws IOException {
@@ -188,11 +189,11 @@ public enum CompressionType {
   }
 
   /**
-   * Compresses a directory into an archive written to the provided stream.
+   * Compresses all regular files in a directory tree and writes the archive to the supplied stream.
    *
-   * @param sourceDir    directory whose contents will be archived
-   * @param outputStream destination stream
-   * @throws IOException if reading or writing fails
+   * @param sourceDir    the root directory whose contents will be archived
+   * @param outputStream the stream to which the archive is written
+   * @throws IOException if reading the source directory or writing the archive fails
    */
   public void compress (Path sourceDir, OutputStream outputStream)
     throws IOException {
@@ -201,12 +202,12 @@ public enum CompressionType {
   }
 
   /**
-   * Compresses a directory into an archive written to the provided stream, including an optional manifest.
+   * Compresses all regular files in a directory tree and writes the archive to the supplied stream, embedding the given manifest.
    *
-   * @param sourceDir    directory whose contents will be archived
-   * @param outputStream destination stream
-   * @param manifest     manifest to embed (JAR only)
-   * @throws IOException if reading or writing fails
+   * @param sourceDir    the root directory whose contents will be archived
+   * @param outputStream the stream to which the archive is written
+   * @param manifest     the manifest to embed in the archive; used only for JAR, ignored for ZIP
+   * @throws IOException if reading the source directory or writing the archive fails
    */
   public void compress (Path sourceDir, OutputStream outputStream, Manifest manifest)
     throws IOException {
@@ -215,13 +216,13 @@ public enum CompressionType {
   }
 
   /**
-   * Internal compression helper allowing exclusion of a single path (to prevent archiving the output file itself).
+   * Core compression implementation that walks the source directory and writes each regular file (except the optionally excluded path) into the archive stream.
    *
-   * @param sourceDir    directory whose contents will be archived
-   * @param outputStream destination stream
-   * @param ignoredPath  optional path to skip while walking the source tree
-   * @param manifest     manifest to embed (JAR only)
-   * @throws IOException if reading or writing fails
+   * @param sourceDir    the root directory whose contents will be archived
+   * @param outputStream the stream to which the archive is written
+   * @param ignoredPath  a path to exclude from the archive (typically the output file itself); may be {@code null}
+   * @param manifest     the manifest to embed in the archive; used only for JAR, ignored for ZIP
+   * @throws IOException if reading the source directory or writing the archive fails
    */
   private void compress (Path sourceDir, OutputStream outputStream, Path ignoredPath, Manifest manifest)
     throws IOException {
@@ -258,11 +259,11 @@ public enum CompressionType {
   }
 
   /**
-   * Extracts an archive to the supplied output directory.
+   * Extracts all entries from an archive file into the specified output directory.
    *
-   * @param compressedFile archive to explode
-   * @param outputDir      destination directory
-   * @throws IOException if extraction fails
+   * @param compressedFile the archive file to extract
+   * @param outputDir      the destination directory for extracted files
+   * @throws IOException if the archive cannot be read or files cannot be written
    */
   public void explode (Path compressedFile, Path outputDir)
     throws IOException {
@@ -271,12 +272,12 @@ public enum CompressionType {
   }
 
   /**
-   * Extracts an archive to the supplied output directory, invoking a consumer for each entry.
+   * Extracts all entries from an archive file into the specified output directory, invoking the consumer for each entry.
    *
-   * @param compressedFile archive to explode
-   * @param outputDir      destination directory
-   * @param entryConsumer  optional callback receiving each entry
-   * @throws IOException if extraction fails
+   * @param compressedFile the archive file to extract
+   * @param outputDir      the destination directory for extracted files
+   * @param entryConsumer  an optional callback invoked for each entry; may be {@code null}
+   * @throws IOException if the archive cannot be read or files cannot be written
    */
   public void explode (Path compressedFile, Path outputDir, ZipEntryConsumer entryConsumer)
     throws IOException {
@@ -285,11 +286,11 @@ public enum CompressionType {
   }
 
   /**
-   * Extracts an archive from a stream to the supplied output directory.
+   * Extracts all entries from an archive stream into the specified output directory.
    *
-   * @param inputStream archive stream
-   * @param outputDir   destination directory
-   * @throws IOException if extraction fails
+   * @param inputStream the stream containing the archive data
+   * @param outputDir   the destination directory for extracted files
+   * @throws IOException if the archive cannot be read or files cannot be written
    */
   public void explode (InputStream inputStream, Path outputDir)
     throws IOException {
@@ -298,12 +299,12 @@ public enum CompressionType {
   }
 
   /**
-   * Extracts an archive from a stream to the supplied output directory, invoking a consumer for each entry.
+   * Extracts all entries from an archive stream into the specified output directory, invoking the consumer for each entry.
    *
-   * @param inputStream   archive stream
-   * @param outputDir     destination directory
-   * @param entryConsumer optional callback receiving each entry
-   * @throws IOException if extraction fails
+   * @param inputStream   the stream containing the archive data
+   * @param outputDir     the destination directory for extracted files
+   * @param entryConsumer an optional callback invoked for each entry; may be {@code null}
+   * @throws IOException if the archive cannot be read or files cannot be written
    */
   public void explode (InputStream inputStream, Path outputDir, ZipEntryConsumer entryConsumer)
     throws IOException {

@@ -35,12 +35,12 @@ package org.smallmind.persistence;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Indicates that an operation failed because the caller is not authorized to perform it.
+ * Thrown when a persistence operation is rejected because the caller lacks the required authorization.
  */
 public class AuthorizationException extends FormattedRuntimeException {
 
   /**
-   * Creates an authorization exception with no message.
+   * Creates an {@code AuthorizationException} with no detail message.
    */
   public AuthorizationException () {
 
@@ -48,10 +48,10 @@ public class AuthorizationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an authorization exception with a formatted message.
+   * Creates an {@code AuthorizationException} with a {@link String#format}-style message.
    *
-   * @param message the message template
-   * @param args    arguments referenced by the format specifiers in the message
+   * @param message format string for the detail message
+   * @param args    arguments substituted into {@code message}
    */
   public AuthorizationException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class AuthorizationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an authorization exception with a cause and formatted message.
+   * Creates an {@code AuthorizationException} with a cause and a {@link String#format}-style message.
    *
    * @param throwable the underlying cause
-   * @param message   the message template
-   * @param args      arguments referenced by the format specifiers in the message
+   * @param message   format string for the detail message
+   * @param args      arguments substituted into {@code message}
    */
   public AuthorizationException (Throwable throwable, String message, Object... args) {
 
@@ -71,7 +71,7 @@ public class AuthorizationException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an authorization exception with a cause.
+   * Creates an {@code AuthorizationException} wrapping an existing throwable.
    *
    * @param throwable the underlying cause
    */

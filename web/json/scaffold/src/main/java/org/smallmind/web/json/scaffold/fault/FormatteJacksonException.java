@@ -35,14 +35,14 @@ package org.smallmind.web.json.scaffold.fault;
 import tools.jackson.core.JacksonException;
 
 /**
- * Convenience {@link JacksonException} that formats its message with the supplied arguments.
+ * {@link JacksonException} subclass whose message is produced by formatting a template with supplied arguments.
  */
 public class FormatteJacksonException extends JacksonException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception whose message is the result of formatting the template with the given arguments.
    *
-   * @param message message template (may be {@code null})
+   * @param message format template, or {@code null} to produce a {@code null} message
    * @param args    format arguments
    */
   public FormatteJacksonException (String message, Object... args) {

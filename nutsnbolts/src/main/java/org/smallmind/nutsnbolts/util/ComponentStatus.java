@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Lifecycle status values with a numeric priority for ordering.
+ * Enumeration of component lifecycle states, each carrying a numeric priority for relative ordering.
  */
 public enum ComponentStatus {
 
@@ -42,7 +42,9 @@ public enum ComponentStatus {
   private final int priority;
 
   /**
-   * @param priority priority value used for ordering
+   * Associates the constant with its numeric priority.
+   *
+   * @param priority the numeric priority used for ordering this status relative to others
    */
   ComponentStatus (int priority) {
 
@@ -50,7 +52,9 @@ public enum ComponentStatus {
   }
 
   /**
-   * @return priority value
+   * Returns the numeric priority associated with this status.
+   *
+   * @return the priority value
    */
   public int getPriority () {
 
@@ -58,10 +62,10 @@ public enum ComponentStatus {
   }
 
   /**
-   * Tests whether this status is one of the provided values.
+   * Tests whether this status equals any of the provided candidate statuses.
    *
-   * @param matchingStatuses statuses to compare against
-   * @return {@code true} if this status is contained in the list
+   * @param matchingStatuses the statuses to compare against
+   * @return {@code true} if this status matches at least one of the supplied values
    */
   public boolean in (ComponentStatus... matchingStatuses) {
 

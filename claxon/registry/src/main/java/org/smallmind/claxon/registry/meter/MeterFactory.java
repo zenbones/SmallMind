@@ -35,18 +35,33 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 
 /**
- * Adapter that builds meters by first constructing a builder and then invoking it.
+ * A {@link MeterBuilder} adapter that delegates meter construction to a
+ * {@link BuilderConstructor}, allowing a fresh {@link MeterBuilder} to be created
+ * for each meter that is built.
  *
- * @param <M> meter type
+ * <p>This indirection is useful when the same logical meter type must be registered
+ * multiple times with independent builder state. Rather than sharing a single
+ * pre-configured builder instance, a {@code MeterFactory} calls
+ * {@link BuilderConstructor#construct()} each time {@link #build(Clock)} is invoked,
+ * producing a brand-new builder whose defaults can then be applied before the meter
+ * is constructed.</p>
+ *
+ * @param <M> the concrete {@link Meter} type produced by this factory
  */
 public class MeterFactory<M extends Meter> implements MeterBuilder<M> {
 
+  /**
+   * The supplier used to obtain a fresh {@link MeterBuilder} on every
+   * {@link #build(Clock)} invocation.
+   */
   private final BuilderConstructor<M> factory;
 
   /**
-   * Creates a factory that will delegate to the provided builder constructor.
+   * Creates a {@code MeterFactory} that will delegate to the provided
+   * {@link BuilderConstructor}.
    *
-   * @param factory constructor producing meter builders
+   * @param factory the constructor that produces a new {@link MeterBuilder} each time
+   *                {@link #build(Clock)} is called; must not be {@code null}
    */
   public MeterFactory (BuilderConstructor<M> factory) {
 
@@ -54,11 +69,12 @@ public class MeterFactory<M extends Meter> implements MeterBuilder<M> {
   }
 
   /**
-   * Convenience method to create a factory.
+   * Convenience factory method that wraps a {@link BuilderConstructor} in a
+   * {@code MeterFactory} without requiring explicit type parameters at the call site.
    *
-   * @param factory constructor producing meter builders
-   * @param <M>     meter type
-   * @return new meter factory
+   * @param factory the constructor that produces new {@link MeterBuilder} instances
+   * @param <M>     the concrete {@link Meter} type
+   * @return a new {@code MeterFactory} backed by {@code factory}
    */
   public static <M extends Meter> MeterFactory<M> instance (BuilderConstructor<M> factory) {
 
@@ -66,10 +82,12 @@ public class MeterFactory<M extends Meter> implements MeterBuilder<M> {
   }
 
   /**
-   * Builds a meter by constructing a builder then delegating to it.
+   * Builds a meter by first obtaining a fresh {@link MeterBuilder} from the
+   * {@link BuilderConstructor} and then invoking {@link MeterBuilder#build(Clock)}
+   * on it with the supplied clock.
    *
-   * @param clock clock provided by the registry
-   * @return built meter
+   * @param clock the registry clock forwarded to the newly constructed builder
+   * @return a fully initialised meter of type {@code M}
    */
   @Override
   public M build (Clock clock) {

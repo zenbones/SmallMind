@@ -33,10 +33,14 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Utility for converting between base-10 longs and a custom base-34 encoding with a per-group mix constant.
+ * Utility for encoding non-negative {@code long} values into a custom base-34 alphabet and decoding them back,
+ * using a group-specific additive constant to obscure the encoded values.
  */
 public class MartianBase34 {
 
+  /**
+   * Encoding groups, each carrying a distinct additive mix constant used to offset encoded values.
+   */
   public enum Group {
 
     FIRST(648913), SECOND(247123), THIRD(7294612383675L);
@@ -44,7 +48,9 @@ public class MartianBase34 {
     private final long mixConstant;
 
     /**
-     * @param mixConstant additive constant applied to obscure values per group
+     * Associates the group constant with its additive mix value.
+     *
+     * @param mixConstant the additive constant applied before encoding to obscure the value
      */
     Group (long mixConstant) {
 
@@ -52,7 +58,9 @@ public class MartianBase34 {
     }
 
     /**
-     * @return group-specific mix constant
+     * Returns the additive mix constant for this group.
+     *
+     * @return the mix constant
      */
     public long getMixConstant () {
 
@@ -60,6 +68,9 @@ public class MartianBase34 {
     }
   }
 
+  /**
+   * The 34-character alphabet used for encoding, ordered to map digit values 0–33 to their character representation.
+   */
   public static final String NUMEROLOGY = "QYEN0MT2PLCW1UF9X8DBZK3A6SR4HVG7J5";
 
   private static long getMaxMartian (int digits) {
@@ -68,12 +79,13 @@ public class MartianBase34 {
   }
 
   /**
-   * Converts a base-10 number into Martian base-34 using the minimal digits up to 13.
+   * Encodes a non-negative base-10 value into the shortest Martian base-34 string (up to 13 digits)
+   * that can represent it, applying the given group's mix constant.
    *
-   * @param base10 decimal value; must be non-negative
-   * @param group  group whose mix constant is applied
-   * @return encoded base-34 string
-   * @throws IllegalArgumentException if the value is negative or cannot be represented in 13 digits
+   * @param base10 the non-negative decimal value to encode
+   * @param group  the encoding group whose mix constant is applied
+   * @return the base-34 encoded string using the minimum required number of digits
+   * @throws IllegalArgumentException if {@code base10} is negative or exceeds the maximum representable value
    */
   public static String base10To34 (long base10, Group group) {
 
@@ -91,13 +103,14 @@ public class MartianBase34 {
   }
 
   /**
-   * Converts a base-10 number into Martian base-34 using a fixed number of digits.
+   * Encodes a non-negative base-10 value into a Martian base-34 string of exactly the specified number of digits,
+   * padding with leading zero-character digits as needed and applying the given group's mix constant.
    *
-   * @param base10 decimal value; must be in range [0, 34^digits)
-   * @param digits number of output digits (padding with leading zero character as needed)
-   * @param group  group whose mix constant is applied
-   * @return encoded base-34 string of the requested length
-   * @throws IllegalArgumentException if the value is out of range
+   * @param base10 the non-negative decimal value to encode; must be in the range [0, 34^digits)
+   * @param digits the exact number of base-34 output digits to produce
+   * @param group  the encoding group whose mix constant is applied
+   * @return the base-34 encoded string of the requested length
+   * @throws IllegalArgumentException if {@code base10} is out of the range [0, 34^digits)
    */
   public static String base10To34 (long base10, int digits, Group group) {
 
@@ -127,12 +140,13 @@ public class MartianBase34 {
   }
 
   /**
-   * Decodes a Martian base-34 string back into a base-10 number using the group's mix constant.
+   * Decodes a Martian base-34 encoded string back into the original base-10 {@code long} value,
+   * reversing the mix constant that was applied during encoding.
    *
-   * @param base34 encoded string
-   * @param group  group whose mix constant was applied
-   * @return decoded decimal value
-   * @throws IllegalArgumentException if the string contains invalid characters
+   * @param base34 the base-34 encoded string to decode
+   * @param group  the encoding group whose mix constant was used during encoding
+   * @return the decoded non-negative decimal value
+   * @throws IllegalArgumentException if the string contains characters not in the base-34 alphabet
    */
   public static long base34To10 (String base34, Group group) {
 

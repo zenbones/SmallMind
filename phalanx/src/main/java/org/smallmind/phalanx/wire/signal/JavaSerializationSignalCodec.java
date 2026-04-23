@@ -40,12 +40,15 @@ import java.io.ObjectOutputStream;
 import jakarta.ws.rs.core.MediaType;
 
 /**
- * {@link SignalCodec} implementation that uses built-in Java serialization.
+ * {@link SignalCodec} implementation that serializes and deserializes signals using standard
+ * Java object serialization, producing {@code application/octet-stream} payloads.
  */
 public class JavaSerializationSignalCodec implements SignalCodec {
 
   /**
-   * {@inheritDoc}
+   * Returns {@code application/octet-stream} as the content type for Java-serialized payloads.
+   *
+   * @return the MIME type string {@code application/octet-stream}
    */
   @Override
   public String getContentType () {
@@ -54,7 +57,11 @@ public class JavaSerializationSignalCodec implements SignalCodec {
   }
 
   /**
-   * Serializes the signal using {@link ObjectOutputStream}.
+   * Serializes {@code signal} to a byte array using {@link ObjectOutputStream}.
+   *
+   * @param signal the signal to encode
+   * @return serialized byte array representing the signal
+   * @throws IOException if an I/O error occurs during serialization
    */
   @Override
   public byte[] encode (Signal signal)
@@ -69,7 +76,16 @@ public class JavaSerializationSignalCodec implements SignalCodec {
   }
 
   /**
-   * Deserializes the signal using {@link ObjectInputStream}.
+   * Deserializes a signal from the specified region of {@code buffer} using {@link ObjectInputStream}.
+   *
+   * @param buffer      byte array containing the serialized signal
+   * @param offset      starting offset within {@code buffer}
+   * @param len         number of bytes to read
+   * @param signalClass the expected signal type
+   * @param <S>         the signal type parameter
+   * @return the deserialized signal cast to {@code signalClass}
+   * @throws IOException            if an I/O error occurs during deserialization
+   * @throws ClassNotFoundException if the class of the serialized object cannot be found
    */
   @Override
   public <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
@@ -82,7 +98,13 @@ public class JavaSerializationSignalCodec implements SignalCodec {
   }
 
   /**
-   * Performs a type-safe cast of the decoded value.
+   * Returns {@code value} cast to {@code clazz}; no conversion is performed because
+   * Java deserialization already produces the correct runtime type.
+   *
+   * @param value the decoded value to cast
+   * @param clazz the target type
+   * @param <T>   the target type parameter
+   * @return {@code value} cast to {@code T}
    */
   @Override
   public <T> T extractObject (Object value, Class<T> clazz) {

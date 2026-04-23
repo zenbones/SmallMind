@@ -39,16 +39,15 @@ import java.lang.annotation.Target;
 import org.smallmind.persistence.Durable;
 
 /**
- * Marks a field to be injected with a repository/DAO managing the specified durable type.
+ * Field annotation that designates the target field for automatic ORM DAO injection by {@link RepositoryAspect}.
+ * The injected DAO must be registered in {@code OrmDaoManager} for the specified durable type.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Repository {
 
   /**
-   * The durable type managed by the injected repository.
-   *
-   * @return the durable class
+   * The {@link Durable} entity class whose registered ORM DAO should be injected into the annotated field.
    */
   Class<Durable> value ();
 }

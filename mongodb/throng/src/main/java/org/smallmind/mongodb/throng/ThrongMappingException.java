@@ -35,15 +35,16 @@ package org.smallmind.mongodb.throng;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Checked exception thrown when Throng entity metadata or codec configuration is invalid.
+ * Checked exception raised during Throng entity registration when annotations are invalid, codecs cannot be resolved,
+ * or the entity model violates mapping constraints.
  */
 public class ThrongMappingException extends FormattedException {
 
   /**
-   * Creates a new mapping exception with a formatted message.
+   * Constructs the exception with a printf-style formatted message.
    *
-   * @param message message template
-   * @param args    arguments applied to the template
+   * @param message format string for the error message
+   * @param args    arguments substituted into the format string
    */
   public ThrongMappingException (String message, Object... args) {
 

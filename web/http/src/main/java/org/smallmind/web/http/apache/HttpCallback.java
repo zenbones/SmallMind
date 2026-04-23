@@ -38,41 +38,41 @@ import java.util.concurrent.TimeoutException;
 import org.apache.hc.core5.concurrent.FutureCallback;
 
 /**
- * Base {@link FutureCallback} that provides blocking await semantics and defers completion handling to subclasses. The
- * latch ensures callers can wait for completion while allowing async callbacks to signal results or failures.
+ * Abstract {@link FutureCallback} that adds blocking await semantics and delegates completion, failure, and
+ * cancellation handling to subclasses.
  *
- * @param <V> result type returned by the HTTP operation
+ * @param <V> result type produced by the HTTP operation
  */
 public abstract class HttpCallback<V> implements FutureCallback<V> {
 
   private final CountDownLatch executedLatch = new CountDownLatch(1);
 
   /**
-   * Invoked when the operation completes successfully.
+   * Called when the asynchronous operation completes successfully.
    *
-   * @param v completed value
+   * @param v the completed result value
    */
   public abstract void onCompleted (V v);
 
   /**
-   * Invoked when the operation fails with an exception.
+   * Called when the asynchronous operation fails.
    *
-   * @param exception failure cause
+   * @param exception the exception that caused the failure
    */
   public abstract void onFailed (Exception exception);
 
   /**
-   * Invoked when the operation is cancelled prior to completion.
+   * Called when the asynchronous operation is cancelled before completing.
    */
   public abstract void onCancelled ();
 
   /**
-   * Blocks until the callback executes or a timeout elapses.
+   * Blocks the calling thread until the callback finishes executing or the timeout expires.
    *
    * @param timeout  maximum time to wait
-   * @param timeUnit unit for the timeout
-   * @throws InterruptedException if the waiting thread is interrupted
-   * @throws TimeoutException     if the callback does not complete before the timeout
+   * @param timeUnit unit of the timeout value
+   * @throws InterruptedException if the thread is interrupted while waiting
+   * @throws TimeoutException     if the timeout elapses before the callback completes
    */
   public void await (long timeout, TimeUnit timeUnit)
     throws InterruptedException, TimeoutException {
@@ -83,9 +83,9 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
   }
 
   /**
-   * Signals successful completion to {@link #onCompleted(Object)} and releases any waiters.
+   * Forwards the result to {@link #onCompleted(Object)} and releases any threads blocked in {@link #await}.
    *
-   * @param v completed value
+   * @param v the completed result value
    */
   @Override
   public void completed (V v) {
@@ -98,9 +98,9 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
   }
 
   /**
-   * Signals failure to {@link #onFailed(Exception)} and releases any waiters.
+   * Forwards the failure to {@link #onFailed(Exception)} and releases any threads blocked in {@link #await}.
    *
-   * @param e failure cause
+   * @param e the exception that caused the failure
    */
   @Override
   public void failed (Exception e) {
@@ -113,7 +113,7 @@ public abstract class HttpCallback<V> implements FutureCallback<V> {
   }
 
   /**
-   * Signals cancellation to {@link #onCancelled()} and releases any waiters.
+   * Notifies {@link #onCancelled()} and releases any threads blocked in {@link #await}.
    */
   @Override
   public void cancelled () {

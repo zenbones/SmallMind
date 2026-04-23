@@ -39,16 +39,18 @@ import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * Wraps a scribe {@link Appender} as a Log4j2 {@link org.apache.logging.log4j.core.Appender}.
+ * Log4j2 {@link org.apache.logging.log4j.core.Appender} that wraps a scribe {@link Appender},
+ * reporting a permanently started lifecycle state and delegating {@link #append} calls to the
+ * underlying scribe appender when it is active.
  */
 public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appender {
 
   private final Appender appender;
 
   /**
-   * Creates a wrapper that delegates Log4j2 appender calls to the provided scribe appender.
+   * Constructs a Log4j2 appender that delegates publishing to the given scribe appender.
    *
-   * @param appender appender to wrap
+   * @param appender the scribe appender to wrap
    */
   public Log4JAppenderWrapper (Appender appender) {
 
@@ -56,9 +58,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Returns the wrapped scribe appender.
+   * Returns the scribe appender that this wrapper delegates to.
    *
-   * @return the underlying appender
+   * @return the wrapped scribe appender
    */
   protected Appender getInnerAppender () {
 
@@ -66,9 +68,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Returns the name of the wrapped appender.
+   * Returns the name of the underlying scribe appender.
    *
-   * @return appender name
+   * @return the appender name
    */
   @Override
   public String getName () {
@@ -77,9 +79,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Indicates whether the adapter ignores exceptions (it does not).
+   * Returns {@code false} so that exceptions thrown during appending propagate to the caller.
    *
-   * @return {@code false} to let exceptions propagate
+   * @return {@code false} always
    */
   @Override
   public boolean ignoreExceptions () {
@@ -88,9 +90,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Returns a started state since the wrapped appender is managed externally.
+   * Returns {@link State#STARTED} because the lifecycle of the wrapped appender is managed externally.
    *
-   * @return {@link State#STARTED}
+   * @return {@link State#STARTED} always
    */
   @Override
   public State getState () {
@@ -99,7 +101,7 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * No-op initialization.
+   * No-op; initialization is handled by the underlying scribe appender.
    */
   @Override
   public void initialize () {
@@ -107,7 +109,7 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * No-op start; lifecycle is managed by the wrapped appender.
+   * No-op; the start lifecycle is managed by the underlying scribe appender.
    */
   @Override
   public void start () {
@@ -115,7 +117,7 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * No-op stop; lifecycle is managed by the wrapped appender.
+   * No-op; the stop lifecycle is managed by the underlying scribe appender.
    */
   @Override
   public void stop () {
@@ -123,9 +125,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Indicates that this adapter is considered started.
+   * Returns {@code true} because this wrapper always reports itself as started.
    *
-   * @return {@code true}
+   * @return {@code true} always
    */
   @Override
   public boolean isStarted () {
@@ -134,9 +136,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Indicates that this adapter is never considered stopped.
+   * Returns {@code false} because this wrapper never reports itself as stopped.
    *
-   * @return {@code false}
+   * @return {@code false} always
    */
   @Override
   public boolean isStopped () {
@@ -145,9 +147,10 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Publishes a log event to the wrapped appender when active.
+   * Extracts the scribe {@link org.smallmind.scribe.pen.Record} from the Log4j2 event via the
+   * {@link RecordWrapper} interface and publishes it to the underlying scribe appender if active.
    *
-   * @param logEvent native Log4j2 event carrying the scribe record wrapper
+   * @param logEvent the Log4j2 event to publish; must implement {@link RecordWrapper}
    */
   @Override
   public void append (LogEvent logEvent) {
@@ -158,10 +161,10 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Unsupported in this adapter; handlers are set on the wrapped appender.
+   * Not supported; error handling is managed through the scribe appender's own error handler.
    *
    * @return never returns normally
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   @Override
   public ErrorHandler getHandler () {
@@ -170,9 +173,10 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Installs a Log4j2 error handler by wrapping it in a scribe adapter.
+   * Wraps the given Log4j2 error handler in a {@link Log4JErrorHandlerAdapter} and installs it on the
+   * underlying scribe appender.
    *
-   * @param errorHandler Log4j2 error handler to use
+   * @param errorHandler the Log4j2 error handler to install
    */
   @Override
   public void setHandler (ErrorHandler errorHandler) {
@@ -181,10 +185,10 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Unsupported in this adapter; layout is configured on the wrapped appender.
+   * Not supported; layout configuration is managed through the scribe appender's own formatter.
    *
    * @return never returns normally
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   @Override
   public Layout<?> getLayout () {
@@ -193,9 +197,9 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Computes the hash code based on the wrapped appender.
+   * Returns the hash code of the underlying scribe appender.
    *
-   * @return hash code
+   * @return hash code delegated to the wrapped appender
    */
   @Override
   public int hashCode () {
@@ -204,10 +208,11 @@ public class Log4JAppenderWrapper implements org.apache.logging.log4j.core.Appen
   }
 
   /**
-   * Compares this wrapper to another object based on the underlying appender.
+   * Compares this wrapper for equality by comparing the underlying scribe appender; unwraps the other
+   * object if it is also a {@link Log4JAppenderWrapper}.
    *
-   * @param obj object to compare against
-   * @return {@code true} if the wrapped appenders are equal
+   * @param obj the object to compare against
+   * @return {@code true} if both wrappers delegate to the same appender, or the appender equals {@code obj} directly
    */
   @Override
   public boolean equals (Object obj) {

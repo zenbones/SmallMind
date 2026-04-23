@@ -35,22 +35,29 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Base exception for errors encountered while executing memcached operations.
+ * Checked exception thrown when a Cubby memcached operation cannot be completed successfully.
+ *
+ * <p>Extends {@link FormattedException} to support printf-style formatted messages, making it
+ * straightforward to include diagnostic context such as the failing host name or key in the
+ * exception message without manual string concatenation.</p>
+ *
+ * <p>Common scenarios that produce this exception include: the client not yet started or already
+ * stopped, no available connection for a key's target host, and server-side error responses.</p>
  */
 public class CubbyOperationException extends FormattedException {
 
   /**
-   * Creates the exception without a message or cause.
+   * Constructs an exception with no detail message or cause.
    */
   public CubbyOperationException () {
 
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message message format string
-   * @param args    arguments applied to the format string
+   * @param message a format string (as accepted by {@link FormattedException})
+   * @param args    arguments substituted into the format string
    */
   public CubbyOperationException (String message, Object... args) {
 
@@ -58,11 +65,11 @@ public class CubbyOperationException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs an exception with a cause and a formatted detail message.
    *
-   * @param throwable underlying cause
-   * @param message   message format string
-   * @param args      arguments applied to the format string
+   * @param throwable the underlying cause of this exception
+   * @param message   a format string (as accepted by {@link FormattedException})
+   * @param args      arguments substituted into the format string
    */
   public CubbyOperationException (Throwable throwable, String message, Object... args) {
 
@@ -70,9 +77,9 @@ public class CubbyOperationException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause.
+   * Constructs an exception that wraps another throwable without adding a new message.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying cause of this exception
    */
   public CubbyOperationException (Throwable throwable) {
 

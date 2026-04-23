@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * ANSI escape codes for text colors (including bright variants) plus reset/default.
+ * Enumeration of ANSI terminal escape codes for standard and bright foreground text colors, plus reset and default.
  */
 public enum AnsiColor {
 
@@ -59,7 +59,9 @@ public enum AnsiColor {
   private final String code;
 
   /**
-   * @param code ANSI escape sequence
+   * Associates the constant with its ANSI escape sequence.
+   *
+   * @param code the ANSI escape sequence string for this color
    */
   AnsiColor (String code) {
 
@@ -67,6 +69,8 @@ public enum AnsiColor {
   }
 
   /**
+   * Returns the ANSI escape sequence string that applies this color when written to a terminal.
+   *
    * @return the ANSI escape sequence for this color
    */
   public String getCode () {

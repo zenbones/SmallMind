@@ -35,21 +35,26 @@ package org.smallmind.phalanx.wire.transport.jms;
 import jakarta.jms.Destination;
 
 /**
- * Provides destination details for obtaining JMS sessions, producers, and consumers.
+ * Contract implemented by objects that supply the JMS destination and optional message selector
+ * needed by a {@link ConnectionManager} to create sessions, producers, and consumers.
+ *
+ * <p>Implementations ({@link QueueOperator}, {@link TopicOperator}, {@link RequestListener},
+ * {@link ResponseListener}) serve as keys in the connection manager's session and producer caches.
  */
 public interface SessionEmployer {
 
   /**
-   * Destination (queue or topic) associated with this employer.
+   * Returns the JMS {@link Destination} (queue or topic) associated with this employer.
    *
-   * @return JMS destination
+   * @return destination used for session, producer, and consumer creation
    */
   Destination getDestination ();
 
   /**
-   * Optional message selector to use when creating consumers.
+   * Returns the JMS message-selector expression to use when creating a consumer for this employer,
+   * or {@code null} if no filtering is required.
    *
-   * @return JMS selector string or {@code null}
+   * @return selector string, or {@code null} for no selector
    */
   String getMessageSelector ();
 }

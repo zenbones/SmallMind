@@ -35,7 +35,8 @@ package org.smallmind.phalanx.wire.signal;
 import java.io.Serializable;
 
 /**
- * Marker interface for signals exchanged between wire endpoints.
+ * Marker interface for all messages exchanged over the phalanx wire layer; implementations
+ * must be serializable so they can be encoded and decoded by a {@link SignalCodec}.
  */
 public interface Signal extends Serializable {
 

@@ -38,20 +38,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a Spring-managed SOAP service bean for automatic installation. The annotation provides the SOAP endpoint path
- * and the Grizzly context path under which the service should be exposed.
+ * Marks a Spring-managed class as a SOAP service and declares the endpoint path and Grizzly context under which it
+ * should be automatically installed.
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServicePath {
 
   /**
-   * @return SOAP service path relative to the application's SOAP root
+   * Returns the SOAP endpoint path relative to the application's SOAP root.
+   *
+   * @return service path fragment
    */
   String value ();
 
   /**
-   * @return Grizzly web application context that should host the service
+   * Returns the Grizzly web application context path that should host this service.
+   *
+   * @return target context path
    */
   String contextPath ();
 }

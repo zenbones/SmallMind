@@ -42,18 +42,40 @@ import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 /**
- * Tracks weakly referenced measured objects and updates meters while removing entries when the objects are collected.
+ * Maintains a set of weakly referenced domain objects and keeps their associated
+ * {@link Meter} readings current across collection intervals.
+ *
+ * <p>Each tracked object is held via a {@link WeakReference} so that the tracker does not
+ * prevent garbage collection. A {@link ReferenceQueue} is used to detect when an object
+ * has been collected; the corresponding meter is then unregistered from the
+ * {@link ClaxonRegistry} on the next call to {@link #sweepAndUpdate()}.
+ *
+ * <p>For every object that is still reachable, {@link #sweepAndUpdate()} applies the
+ * registered measurement function and pushes the result into the backing meter via
+ * {@link ClaxonRegistry#register}.
  */
 public class MeasurableTracker {
 
+  /**
+   * Maps each weak reference to the metadata needed to update or unregister its meter.
+   */
   private final ConcurrentHashMap<Reference<?>, Measurable> measurableMap = new ConcurrentHashMap<>();
+
+  /**
+   * Queue into which the JVM enqueues weak references after their referents are collected.
+   */
   private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+
+  /**
+   * Registry used to register and unregister meters on behalf of tracked objects.
+   */
   private final ClaxonRegistry registry;
 
   /**
-   * Creates a tracker tied to a registry.
+   * Creates a tracker that delegates meter registration and unregistration to the
+   * given registry.
    *
-   * @param registry registry used to register and unregister meters for tracked objects
+   * @param registry the {@link ClaxonRegistry} that manages meter instances for tracked objects
    */
   public MeasurableTracker (ClaxonRegistry registry) {
 
@@ -61,15 +83,16 @@ public class MeasurableTracker {
   }
 
   /**
-   * Starts tracking a measured object with a builder and measurement function.
+   * Begins tracking {@code measured} by registering a weak reference to it and
+   * associating the reference with the metadata needed to update and unregister its meter.
    *
-   * @param caller      calling class for naming
-   * @param builder     meter builder to construct the meter
-   * @param measured    object being tracked
-   * @param measurement function to compute a measurement from the object
-   * @param tags        tags associated with the meter
-   * @param <T>         measured type
-   * @return the measured object for fluent usage
+   * @param caller      the class that is requesting the meter, used for name derivation
+   * @param builder     the builder used to construct the backing {@link Meter}
+   * @param measured    the domain object to track; held via a {@link WeakReference}
+   * @param measurement a function that derives a {@code long} measurement from {@code measured}
+   * @param tags        tags that identify the meter in the registry
+   * @param <T>         the type of the domain object
+   * @return {@code measured}, unchanged, to support fluent assignment patterns
    */
   public <T> T track (Class<?> caller, MeterBuilder<? extends Meter> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
@@ -79,7 +102,16 @@ public class MeasurableTracker {
   }
 
   /**
-   * Removes meters whose measured objects have been collected and updates remaining meters with fresh measurements.
+   * Performs a single maintenance pass over all tracked objects:
+   * <ol>
+   *   <li>Drains the {@link ReferenceQueue}, unregistering the meter for each
+   *       garbage-collected object.</li>
+   *   <li>For every object that is still reachable, computes a fresh measurement and
+   *       pushes it into the object's meter via {@link ClaxonRegistry#register}.</li>
+   * </ol>
+   *
+   * <p>This method is called by the registry's background collection worker on each
+   * collection interval.
    */
   public void sweepAndUpdate () {
 
@@ -104,20 +136,42 @@ public class MeasurableTracker {
     }
   }
 
+  /**
+   * Captures all metadata needed to update and eventually unregister a meter on behalf
+   * of a single tracked domain object.
+   */
   private static class Measurable {
 
+    /**
+     * Builder used to construct or look up the meter for this object.
+     */
     private final MeterBuilder<? extends Meter> builder;
+
+    /**
+     * Tags associated with the meter registration.
+     */
     private final Tag[] tags;
+
+    /**
+     * Measurement function that extracts a {@code long} value from the tracked object.
+     * The generic wildcard is erased to {@code Object} so that a single field can hold
+     * functions over arbitrary domain types.
+     */
     private final Function<Object, Long> measurement;
+
+    /**
+     * Class that originally requested the meter, used for name derivation.
+     */
     private final Class<?> caller;
 
     /**
-     * Captures measurement metadata for a tracked object.
+     * Constructs a {@code Measurable} capturing the caller, builder, measurement function,
+     * and tags for a tracked domain object.
      *
-     * @param caller      calling class for naming
-     * @param builder     meter builder to create meters
-     * @param measurement measurement function applied to the tracked object
-     * @param tags        tags associated with the meter
+     * @param caller      the class requesting the meter
+     * @param builder     the meter builder
+     * @param measurement a function that extracts a {@code long} measurement from the tracked object
+     * @param tags        the tags associated with the meter
      */
     public Measurable (Class<?> caller, MeterBuilder<? extends Meter> builder, Function<?, Long> measurement, Tag... tags) {
 
@@ -128,7 +182,10 @@ public class MeasurableTracker {
     }
 
     /**
-     * @return the calling class used for meter naming
+     * Returns the class that originally requested the meter, used for name derivation
+     * by the configured {@link NamingStrategy}.
+     *
+     * @return the requesting caller class
      */
     public Class<?> getCaller () {
 
@@ -136,7 +193,9 @@ public class MeasurableTracker {
     }
 
     /**
-     * @return tags associated with the tracked meter
+     * Returns the tags associated with the meter registration for the tracked object.
+     *
+     * @return the meter's tag array
      */
     public Tag[] getTags () {
 
@@ -144,7 +203,10 @@ public class MeasurableTracker {
     }
 
     /**
-     * @return builder used to create the meter
+     * Returns the {@link MeterBuilder} used to construct or look up the meter for the
+     * tracked object.
+     *
+     * @return the meter builder
      */
     public MeterBuilder<? extends Meter> getBuilder () {
 
@@ -152,7 +214,10 @@ public class MeasurableTracker {
     }
 
     /**
-     * @return function used to compute measurements
+     * Returns the measurement function that derives a {@code long} value from the
+     * tracked domain object on each collection interval.
+     *
+     * @return the measurement function, typed as {@code Function<Object, Long>}
      */
     public Function<Object, Long> getMeasurement () {
 

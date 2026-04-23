@@ -41,18 +41,18 @@ import java.security.SignatureException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 /**
- * Marker for symmetric signing algorithms that can generate and verify MACs.
+ * Contract for symmetric signing algorithms that can produce and verify message authentication codes (MACs).
  */
 public interface SymmetricSigningAlgorithm extends SecurityAlgorithm {
 
   /**
-   * Produces a MAC over the provided data using the given key.
+   * Produces a MAC over the provided data using the given secret key.
    *
-   * @param key  the secret key
-   * @param data the data to sign
-   * @return the MAC bytes
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid for the algorithm
+   * @param key  the secret key used to compute the MAC
+   * @param data the data to authenticate
+   * @return the raw MAC bytes
+   * @throws NoSuchAlgorithmException if the MAC algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the key is not valid for this algorithm
    */
   default byte[] sign (Key key, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
@@ -61,16 +61,17 @@ public interface SymmetricSigningAlgorithm extends SecurityAlgorithm {
   }
 
   /**
-   * Verifies a JWT-like three-part structure using this algorithm.
+   * Verifies the MAC of a three-part dot-separated token (e.g., a JWT) using the given secret key.
    *
-   * @param key     the secret key
-   * @param parts   the token sections (header, payload, signature)
-   * @param urlSafe whether the signature is URL-safe Base64 encoded
-   * @return {@code true} if the signature is valid
-   * @throws IOException              if the signature cannot be decoded
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid for the algorithm
-   * @throws SignatureException       if verification fails
+   * @param key     the secret key used to verify the MAC
+   * @param parts   the three token sections where {@code parts[0]} and {@code parts[1]} are the signed material
+   *                and {@code parts[2]} is the Base64-encoded MAC
+   * @param urlSafe {@code true} if the MAC portion uses URL-safe Base64 encoding
+   * @return {@code true} if the MAC is valid, {@code false} otherwise
+   * @throws IOException              if the MAC cannot be decoded from its Base64 representation
+   * @throws NoSuchAlgorithmException if the MAC algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the key is not valid for this algorithm
+   * @throws SignatureException       if the verification operation fails
    */
   default boolean verify (Key key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {

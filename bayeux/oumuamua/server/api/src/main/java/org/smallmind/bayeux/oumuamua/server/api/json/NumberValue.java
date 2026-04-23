@@ -33,12 +33,15 @@
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
 /**
- * Numeric JSON value wrapper.
+ * JSON numeric value within the Bayeux value hierarchy, carrying an integer, long, or double
+ * depending on the precision of the underlying representation.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
  */
 public interface NumberValue<V extends Value<V>> extends Value<V> {
 
   /**
-   * Identifies this value as numeric.
+   * Returns {@link ValueType#NUMBER}, identifying this value as a JSON number.
    *
    * @return {@link ValueType#NUMBER}
    */
@@ -48,27 +51,37 @@ public interface NumberValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * @return the numeric type representation
+   * Returns the precision category of the number held by this value.
+   *
+   * @return {@link NumberType#INTEGER}, {@link NumberType#LONG}, or {@link NumberType#DOUBLE}
    */
   NumberType getNumberType ();
 
   /**
-   * @return the boxed number value
+   * Returns the value as a boxed {@link Number} without narrowing conversion.
+   *
+   * @return boxed numeric value in its natural type
    */
   Number asNumber ();
 
   /**
-   * @return value coerced to int
+   * Returns the value narrowed to a primitive {@code int}, truncating if necessary.
+   *
+   * @return int representation of the stored number
    */
   int asInt ();
 
   /**
-   * @return value coerced to long
+   * Returns the value widened or narrowed to a primitive {@code long}.
+   *
+   * @return long representation of the stored number
    */
   long asLong ();
 
   /**
-   * @return value coerced to double
+   * Returns the value widened or narrowed to a primitive {@code double}.
+   *
+   * @return double representation of the stored number
    */
   double asDouble ();
 }

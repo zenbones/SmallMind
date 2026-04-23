@@ -48,8 +48,7 @@ import org.smallmind.web.json.scaffold.fault.ResourceInvocationException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Client filter that inspects JSON error responses and rethrows them as application exceptions.
- * When the remote fault wraps a Java exception, the original exception is deserialized and thrown.
+ * JAX-RS client filter that converts JSON error responses within a configurable HTTP status range into thrown exceptions.
  */
 public class FaultTranslatingClientResponseFilter implements ClientResponseFilter {
 
@@ -57,7 +56,7 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
   private final int upperBound;
 
   /**
-   * Creates a filter that handles HTTP statuses in the 400-599 range.
+   * Creates a filter that translates responses with HTTP status codes in the range [400, 600).
    */
   public FaultTranslatingClientResponseFilter () {
 
@@ -65,10 +64,10 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
   }
 
   /**
-   * Creates a filter using custom status bounds.
+   * Creates a filter that translates responses within the specified HTTP status range.
    *
-   * @param lowerBound inclusive lower HTTP status bound
-   * @param upperBound exclusive upper HTTP status bound
+   * @param lowerBound inclusive lower bound of the HTTP status range to intercept
+   * @param upperBound exclusive upper bound of the HTTP status range to intercept
    */
   public FaultTranslatingClientResponseFilter (int lowerBound, int upperBound) {
 
@@ -77,12 +76,12 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
   }
 
   /**
-   * Translates fault responses into exceptions. If the payload contains a serialized Java exception it is rethrown,
-   * otherwise a {@link FaultWrappingException} is thrown.
+   * Reads a JSON {@link Fault} from error responses and rethrows it as a Java exception, deserializing the original
+   * throwable when the fault carries a native Java object, or wrapping it in a {@link FaultWrappingException} otherwise.
    *
-   * @param requestContext  client request context
-   * @param responseContext client response context
-   * @throws IOException if the entity stream cannot be read or deserialization fails
+   * @param requestContext  the outgoing client request context
+   * @param responseContext the incoming client response context
+   * @throws IOException if the response entity stream cannot be read or deserialized
    */
   @Override
   public void filter (ClientRequestContext requestContext, ClientResponseContext responseContext)

@@ -36,7 +36,7 @@ import java.lang.reflect.Proxy;
 import org.smallmind.scribe.pen.Level;
 
 /**
- * Factory for creating dynamic proxies to JSON-backed Jersey resources.
+ * Creates dynamic proxies that forward interface method calls as JSON-over-HTTP requests to a Jersey endpoint.
  */
 public class JsonEntityResourceProxyFactory {
 
@@ -44,12 +44,12 @@ public class JsonEntityResourceProxyFactory {
    * Generates a proxy using {@link Level#OFF} for debug logging.
    *
    * @param target            base target endpoint
-   * @param versionPrefix     prefix before version in the URI
-   * @param serviceVersion    service version number
-   * @param serviceName       name of the service
-   * @param resourceInterface interface implemented by the proxy
-   * @param headerInjectors   optional header injectors
-   * @return configured proxy instance
+   * @param versionPrefix     path segment placed before the version number
+   * @param serviceVersion    numeric service version
+   * @param serviceName       service name segment of the URL path
+   * @param resourceInterface interface the proxy will implement
+   * @param headerInjectors   zero or more header injectors applied per invocation
+   * @return proxy implementing {@code resourceInterface}
    */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeaderInjector... headerInjectors) {
 
@@ -57,16 +57,16 @@ public class JsonEntityResourceProxyFactory {
   }
 
   /**
-   * Generates a proxy that posts {@link org.smallmind.web.jersey.aop.Envelope}-wrapped JSON requests to the target.
+   * Generates a proxy that wraps invocations as envelope-encoded JSON POST requests and registers it in {@link JsonEntityResourceProxyManager}.
    *
    * @param target            base target endpoint
-   * @param versionPrefix     prefix before version in the URI
-   * @param serviceVersion    service version number
-   * @param serviceName       name of the service
-   * @param resourceInterface interface implemented by the proxy
-   * @param level             log level for request debugging
-   * @param headerInjectors   optional header injectors
-   * @return configured proxy instance
+   * @param versionPrefix     path segment placed before the version number
+   * @param serviceVersion    numeric service version
+   * @param serviceName       service name segment of the URL path
+   * @param resourceInterface interface the proxy will implement
+   * @param level             log level used for request/response tracing
+   * @param headerInjectors   zero or more header injectors applied per invocation
+   * @return proxy implementing {@code resourceInterface}
    */
   public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeaderInjector... headerInjectors) {
 

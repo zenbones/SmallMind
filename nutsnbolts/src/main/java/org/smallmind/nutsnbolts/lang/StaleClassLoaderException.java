@@ -33,13 +33,13 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Signals that a class loaded by a {@link GatingClassLoader} is stale because its underlying
- * resource has changed since the grace period expired.
+ * Signals that a class managed by a gating class loader has become stale because its underlying
+ * resource changed after the grace period elapsed.
  */
 public class StaleClassLoaderException extends ClassNotFoundException {
 
   /**
-   * Creates the exception without a message.
+   * Constructs the exception with no detail message.
    */
   public StaleClassLoaderException () {
 
@@ -47,10 +47,10 @@ public class StaleClassLoaderException extends ClassNotFoundException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a formatted detail message.
    *
-   * @param message the format string, or {@code null}
-   * @param args    arguments applied to the format string
+   * @param message the format string for the detail message, or {@code null}
+   * @param args    arguments substituted into the format string
    */
   public StaleClassLoaderException (String message, Object... args) {
 
@@ -58,11 +58,11 @@ public class StaleClassLoaderException extends ClassNotFoundException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs the exception with a cause and a formatted detail message.
    *
    * @param throwable the underlying cause
-   * @param message   the format string, or {@code null}
-   * @param args      arguments applied to the format string
+   * @param message   the format string for the detail message, or {@code null}
+   * @param args      arguments substituted into the format string
    */
   public StaleClassLoaderException (Throwable throwable, String message, Object... args) {
 
@@ -70,7 +70,7 @@ public class StaleClassLoaderException extends ClassNotFoundException {
   }
 
   /**
-   * Creates the exception with the supplied cause.
+   * Constructs the exception with a cause and no detail message.
    *
    * @param throwable the underlying cause
    */

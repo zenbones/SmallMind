@@ -36,9 +36,10 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Wrapper used by backbones to tag packets with the originating node.
+ * Carrier that pairs a deserialized {@link Packet} with the name of the cluster node that
+ * originally published it, allowing recipients to skip local re-delivery.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
  */
 public class DebonedPacket<V extends Value<V>> {
 
@@ -46,10 +47,10 @@ public class DebonedPacket<V extends Value<V>> {
   private final String nodeName;
 
   /**
-   * Creates the wrapper.
+   * Combines a source node name with its associated packet.
    *
-   * @param nodeName identifier of the sending node
-   * @param packet   packet being propagated
+   * @param nodeName unique identifier of the cluster node that serialized the packet
+   * @param packet   the deserialized packet received from the backbone
    */
   public DebonedPacket (String nodeName, Packet<V> packet) {
 
@@ -58,7 +59,9 @@ public class DebonedPacket<V extends Value<V>> {
   }
 
   /**
-   * @return the wrapped packet
+   * Returns the packet received from the backbone.
+   *
+   * @return deserialized packet ready for local delivery
    */
   public Packet<V> getPacket () {
 
@@ -66,7 +69,9 @@ public class DebonedPacket<V extends Value<V>> {
   }
 
   /**
-   * @return name of the node that created the packet
+   * Returns the identifier of the cluster node that originally published this packet.
+   *
+   * @return source node name; used to suppress self-delivery of echoed messages
    */
   public String getNodeName () {
 

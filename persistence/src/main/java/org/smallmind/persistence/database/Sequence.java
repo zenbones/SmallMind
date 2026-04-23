@@ -33,13 +33,13 @@
 package org.smallmind.persistence.database;
 
 /**
- * Base abstraction for sequence number generators that can be registered with the
- * {@link SequenceManager}.
+ * Abstract base for sequence number generators that produce monotonically increasing {@code long} values.
+ * Concrete implementations are registered globally via {@link SequenceManager}.
  */
 public abstract class Sequence {
 
   /**
-   * Registers this sequence instance as the active generator in the {@link SequenceManager}.
+   * Registers this instance as the active provider in the {@link SequenceManager}.
    */
   public void register () {
 
@@ -47,7 +47,7 @@ public abstract class Sequence {
   }
 
   /**
-   * Returns the next long value for the named sequence.
+   * Returns the next value for the named sequence.
    *
    * @param name logical sequence name
    * @return next generated value

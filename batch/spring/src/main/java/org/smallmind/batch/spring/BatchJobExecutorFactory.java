@@ -39,8 +39,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
 /**
- * Spring {@link FactoryBean} that creates a {@link TaskExecutorAdapter} backed by a scheduled thread pool for batch
- * job execution.
+ * Spring {@link FactoryBean} that vends a {@link TaskExecutorAdapter} backed by a scheduled
+ * thread pool, intended for use as the task executor in a Spring Batch job launcher.
+ * <p>
+ * The pool size is controlled by {@link #setConcurrencyLimit}; it defaults to {@code 1} and is
+ * always clamped to at least {@code 1} to prevent an empty pool.
  */
 public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<TaskExecutorAdapter> {
 
@@ -48,9 +51,11 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
   private int concurrencyLimit = 1;
 
   /**
-   * Sets the concurrency limit used when creating the underlying thread pool.
+   * Sets the number of threads in the backing scheduled thread pool.
+   * <p>
+   * Values less than {@code 1} are silently clamped to {@code 1}.
    *
-   * @param concurrencyLimit The configured concurrency limit.
+   * @param concurrencyLimit desired pool size
    */
   public void setConcurrencyLimit (int concurrencyLimit) {
 
@@ -76,7 +81,8 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
   }
 
   /**
-   * Initializes this factory by creating the {@link TaskExecutorAdapter} instance.
+   * Creates the {@link TaskExecutorAdapter} wrapping a fixed-size scheduled thread pool.
+   * Called by the Spring container after all properties have been set.
    */
   @Override
   public void afterPropertiesSet () {

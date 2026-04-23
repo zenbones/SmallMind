@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
- * Stores metadata for a {@link MockMessage}, mimicking AMQP-like properties.
+ * Mutable metadata container for a {@link MockMessage}, providing AMQP-style properties for the mock transport.
  */
 public class MockMessageProperties {
 
@@ -48,7 +48,7 @@ public class MockMessageProperties {
   private byte[] correlationId;
 
   /**
-   * Adds or replaces a header value.
+   * Adds or replaces a header entry by key.
    *
    * @param key   header name.
    * @param value header value.
@@ -59,10 +59,10 @@ public class MockMessageProperties {
   }
 
   /**
-   * Retrieves the value for the specified header.
+   * Retrieves a header value by key.
    *
    * @param key header name.
-   * @return header value or {@code null} if missing.
+   * @return header value, or {@code null} if the header is absent.
    */
   public synchronized Object getHeader (String key) {
 
@@ -70,7 +70,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @return message timestamp.
+   * Returns the message creation timestamp.
+   *
+   * @return message timestamp, or {@code null} if not set.
    */
   public synchronized LocalDateTime getTimestamp () {
 
@@ -78,7 +80,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @param timestamp timestamp to assign.
+   * Sets the message creation timestamp.
+   *
+   * @param timestamp message creation time.
    */
   public synchronized void setTimestamp (LocalDateTime timestamp) {
 
@@ -86,7 +90,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @return content type associated with the payload.
+   * Returns the MIME content type of the payload.
+   *
+   * @return content type string, or {@code null} if not set.
    */
   public synchronized String getContentType () {
 
@@ -94,6 +100,8 @@ public class MockMessageProperties {
   }
 
   /**
+   * Sets the MIME content type of the payload.
+   *
    * @param contentType payload content type.
    */
   public synchronized void setContentType (String contentType) {
@@ -102,7 +110,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @return expiration value.
+   * Returns the expiration value for the message.
+   *
+   * @return expiration string, or {@code null} if not set.
    */
   public synchronized String getExpiration () {
 
@@ -110,7 +120,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @param expiration expiration value to set.
+   * Sets the expiration value for the message.
+   *
+   * @param expiration expiration string.
    */
   public synchronized void setExpiration (String expiration) {
 
@@ -118,7 +130,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @return message id.
+   * Returns the unique message identifier.
+   *
+   * @return message id, or {@code null} if not set.
    */
   public synchronized String getMessageId () {
 
@@ -126,7 +140,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @param messageId message id to set.
+   * Sets the unique message identifier.
+   *
+   * @param messageId message id.
    */
   public synchronized void setMessageId (String messageId) {
 
@@ -134,7 +150,9 @@ public class MockMessageProperties {
   }
 
   /**
-   * @return correlation id as bytes.
+   * Returns the correlation id bytes linking this message to a request.
+   *
+   * @return correlation id bytes, or {@code null} if not set.
    */
   public synchronized byte[] getCorrelationId () {
 
@@ -142,6 +160,8 @@ public class MockMessageProperties {
   }
 
   /**
+   * Sets the correlation id bytes linking this message to a request.
+   *
    * @param correlationId correlation id bytes.
    */
   public synchronized void setCorrelationId (byte[] correlationId) {

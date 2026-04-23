@@ -37,15 +37,38 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 
 /**
- * Collects GC statistics for young and old collectors when available.
+ * Collects and exposes garbage-collection statistics for the young and old (tenured) heap
+ * generations by inspecting the JVM's {@link GarbageCollectorMXBean} instances at
+ * construction time.
+ *
+ * <p>Known collector names for each generation are matched against the names returned by
+ * {@link GarbageCollectorMXBean#getName()} to classify collectors as either young or old.
+ * Collectors that are not recognised are ignored. When no collector is found for a generation
+ * the {@code GarbageStatistics.NO_GARBAGE_STATISTICS} sentinel is used, which always returns
+ * zero for both count and time.
+ *
+ * <p>Recognised young-generation collectors: PS Scavenge, ParNew, G1 Young Generation,
+ * Shenandoah Pauses.
+ * <p>Recognised old-generation collectors: PS MarkSweep, ConcurrentMarkSweep, G1 Old
+ * Generation, Shenandoah Cycles, ZGC.
  */
 public class GarbageFacts {
 
+  /**
+   * Statistics for the young-generation garbage collector, or the no-op sentinel when none
+   * was identified.
+   */
   private final GarbageStatistics youngGarbageStatistics;
+
+  /**
+   * Statistics for the old-generation garbage collector, or the no-op sentinel when none was
+   * identified.
+   */
   private final GarbageStatistics oldGarbageStatistics;
 
   /**
-   * Initializes GC statistics by inspecting available MXBeans.
+   * Inspects all available {@link GarbageCollectorMXBean} instances and initialises statistics
+   * adapters for the young and old generations.
    */
   public GarbageFacts () {
 
@@ -64,17 +87,26 @@ public class GarbageFacts {
     oldGarbageStatistics = (oldGarbageCollectorMXBean) == null ? GarbageStatistics.NO_GARBAGE_STATISTICS : GarbageStatistics.from(oldGarbageCollectorMXBean);
   }
 
+  /**
+   * Internal abstraction over a {@link GarbageCollectorMXBean} that provides default
+   * zero-returning implementations for environments where a given collector is unavailable.
+   */
   private interface GarbageStatistics {
 
+    /**
+     * Sentinel instance that always returns zero for both collection count and time; used when
+     * no matching collector is found for a generation.
+     */
     GarbageStatistics NO_GARBAGE_STATISTICS = new GarbageStatistics() {
 
     };
 
     /**
-     * Builds a statistics adapter from an MXBean.
+     * Creates a {@link GarbageStatistics} adapter that delegates directly to the supplied
+     * {@link GarbageCollectorMXBean}.
      *
-     * @param mxBean GC MXBean
-     * @return statistics adapter
+     * @param mxBean the GC MXBean to wrap; must not be {@code null}
+     * @return a {@link GarbageStatistics} that reads live values from {@code mxBean}
      */
     static GarbageStatistics from (GarbageCollectorMXBean mxBean) {
 
@@ -95,7 +127,9 @@ public class GarbageFacts {
     }
 
     /**
-     * @return collection count (default 0)
+     * Returns the total number of collections performed by this collector.
+     *
+     * @return collection count, or {@code 0} when no collector is available
      */
     default long getCollectionCount () {
 
@@ -103,7 +137,9 @@ public class GarbageFacts {
     }
 
     /**
-     * @return collection time in milliseconds (default 0)
+     * Returns the approximate total elapsed time spent in collection by this collector.
+     *
+     * @return collection time in milliseconds, or {@code 0} when no collector is available
      */
     default long getCollectionTime () {
 
@@ -112,7 +148,9 @@ public class GarbageFacts {
   }
 
   /**
-   * @return collection time for the young generation GC in milliseconds
+   * Returns the total elapsed time spent in young-generation garbage collection.
+   *
+   * @return young-generation collection time in milliseconds, or {@code 0} when unavailable
    */
   public long getYoungCollectionTime () {
 
@@ -120,7 +158,9 @@ public class GarbageFacts {
   }
 
   /**
-   * @return collection count for the young generation GC
+   * Returns the total number of young-generation garbage collections performed.
+   *
+   * @return young-generation collection count, or {@code 0} when unavailable
    */
   public long getYoungCollectionCount () {
 
@@ -128,7 +168,9 @@ public class GarbageFacts {
   }
 
   /**
-   * @return collection time for the old generation GC in milliseconds
+   * Returns the total elapsed time spent in old-generation garbage collection.
+   *
+   * @return old-generation collection time in milliseconds, or {@code 0} when unavailable
    */
   public long getOldCollectionTime () {
 
@@ -136,7 +178,9 @@ public class GarbageFacts {
   }
 
   /**
-   * @return collection count for the old generation GC
+   * Returns the total number of old-generation garbage collections performed.
+   *
+   * @return old-generation collection count, or {@code 0} when unavailable
    */
   public long getOldCollectionCount () {
 

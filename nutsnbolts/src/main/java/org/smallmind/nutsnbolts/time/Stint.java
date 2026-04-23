@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.time;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Represents a non-negative duration measured in a specific {@link TimeUnit}.
+ * Immutable value type pairing a non-negative duration with its {@link TimeUnit}.
  */
 public class Stint {
 
@@ -45,11 +45,11 @@ public class Stint {
   private final long time;
 
   /**
-   * Creates a new duration.
+   * Creates a new {@code Stint} with the given duration and unit.
    *
-   * @param time     duration value; must be non-negative
-   * @param timeUnit unit of the duration; must not be {@code null}
-   * @throws IllegalArgumentException if the time is negative or the unit is {@code null}
+   * @param time     non-negative duration value
+   * @param timeUnit the unit of the duration; must not be {@code null}
+   * @throws IllegalArgumentException if {@code time} is negative or {@code timeUnit} is {@code null}
    */
   public Stint (long time, TimeUnit timeUnit) {
 
@@ -62,9 +62,9 @@ public class Stint {
   }
 
   /**
-   * Returns a shared representation of a zero-length duration.
+   * Returns a shared zero-length {@code Stint} expressed in seconds.
    *
-   * @return zero stint instance
+   * @return the shared zero-duration instance
    */
   public static Stint none () {
 
@@ -72,11 +72,11 @@ public class Stint {
   }
 
   /**
-   * Factory method mirroring the constructor.
+   * Creates a new {@code Stint}; equivalent to calling the constructor directly.
    *
-   * @param time     duration value; must be non-negative
-   * @param timeUnit unit of the duration; must not be {@code null}
-   * @return newly created stint
+   * @param time     non-negative duration value
+   * @param timeUnit the unit of the duration; must not be {@code null}
+   * @return a new {@code Stint} with the specified time and unit
    */
   public static Stint of (long time, TimeUnit timeUnit) {
 
@@ -84,7 +84,9 @@ public class Stint {
   }
 
   /**
-   * @return numeric duration value
+   * Returns the numeric duration value.
+   *
+   * @return the duration expressed in {@link #getTimeUnit()}
    */
   public long getTime () {
 
@@ -92,7 +94,9 @@ public class Stint {
   }
 
   /**
-   * @return unit associated with the duration value
+   * Returns the unit in which the duration value is expressed.
+   *
+   * @return the {@link TimeUnit} for this stint
    */
   public TimeUnit getTimeUnit () {
 
@@ -100,9 +104,9 @@ public class Stint {
   }
 
   /**
-   * Converts the duration into milliseconds.
+   * Converts this duration to milliseconds.
    *
-   * @return duration expressed in milliseconds
+   * @return the duration expressed in milliseconds
    */
   public long toMilliseconds () {
 

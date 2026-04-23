@@ -35,7 +35,8 @@ package org.smallmind.persistence.orm.aop;
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
 /**
- * Thrown when a transactional session is improperly claimed by a non-transactional boundary.
+ * Error raised by {@link TransactionalState} when a session that is already part of an active transaction
+ * is illegally claimed by a non-transactional boundary.
  */
 public class StolenTransactionError extends FormattedError {
 
@@ -59,9 +60,9 @@ public class StolenTransactionError extends FormattedError {
   }
 
   /**
-   * Creates a stolen-transaction error with a cause and formatted message.
+   * Creates a stolen-transaction error with an underlying cause and a formatted message.
    *
-   * @param throwable the cause
+   * @param throwable the underlying cause
    * @param message   the message template
    * @param args      arguments referenced by the format specifiers in the message
    */
@@ -71,9 +72,9 @@ public class StolenTransactionError extends FormattedError {
   }
 
   /**
-   * Creates a stolen-transaction error with a cause.
+   * Creates a stolen-transaction error with an underlying cause and no message.
    *
-   * @param throwable the cause
+   * @param throwable the underlying cause
    */
   public StolenTransactionError (Throwable throwable) {
 

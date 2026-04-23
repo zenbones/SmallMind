@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Present-value {@link Option}.
+ * Present-value implementation of {@link Option} that always carries a (possibly {@code null}) wrapped value.
  *
  * @param <T> element type
  */
@@ -42,9 +42,9 @@ public class Some<T> implements Option<T> {
   private final T value;
 
   /**
-   * Creates an option containing the supplied value.
+   * Constructs a present option wrapping the given value.
    *
-   * @param value value to wrap; may be {@code null} if desired
+   * @param value value to wrap; may be {@code null}
    */
   protected Some (T value) {
 
@@ -52,7 +52,7 @@ public class Some<T> implements Option<T> {
   }
 
   /**
-   * Always present.
+   * Always returns {@code false} because this option holds a value.
    *
    * @return {@code false}
    */
@@ -62,9 +62,9 @@ public class Some<T> implements Option<T> {
   }
 
   /**
-   * Returns the contained value (may be {@code null}).
+   * Returns the wrapped value.
    *
-   * @return wrapped value
+   * @return the value supplied at construction time, which may be {@code null}
    */
   public T get () {
 

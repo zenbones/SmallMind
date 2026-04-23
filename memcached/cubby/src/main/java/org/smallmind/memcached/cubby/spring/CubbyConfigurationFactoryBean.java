@@ -41,7 +41,15 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring FactoryBean that constructs a {@link CubbyConfiguration} from optional overrides.
+ * Spring {@link FactoryBean} that assembles a {@link CubbyConfiguration} from a named preset
+ * and a set of optional property overrides.
+ *
+ * <p>The baseline configuration is selected via {@link #setInitial(CubbyConfigurations)}, which
+ * defaults to {@link CubbyConfigurations#DEFAULT}. Any non-null property injected through the
+ * setter methods overrides the corresponding field on the preset configuration after
+ * {@link #afterPropertiesSet()} is called.</p>
+ *
+ * <p>This bean is always singleton-scoped.</p>
  */
 public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfiguration>, InitializingBean {
 
@@ -57,18 +65,33 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   private Long resuscitationSeconds;
   private Integer connectionsPerHost;
 
+  /**
+   * Reports that this factory bean always returns the same singleton instance.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the concrete type produced by this factory.
+   *
+   * @return {@link CubbyConfiguration}{@code .class}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return CubbyConfiguration.class;
   }
 
+  /**
+   * Returns the assembled {@link CubbyConfiguration}.
+   *
+   * @return the configuration built during {@link #afterPropertiesSet()}
+   */
   @Override
   public CubbyConfiguration getObject () {
 
@@ -76,9 +99,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Selects a baseline configuration preset.
+   * Selects the named preset used as the baseline for the assembled configuration.
    *
-   * @param initial preset value
+   * @param initial the preset to start from; defaults to {@link CubbyConfigurations#DEFAULT}
    */
   public void setInitial (CubbyConfigurations initial) {
 
@@ -86,9 +109,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Sets a custom codec.
+   * Overrides the codec used to serialise and deserialise cached values.
    *
-   * @param codec codec to use
+   * @param codec the codec implementation to apply
    */
   public void setCodec (CubbyCodec codec) {
 
@@ -96,9 +119,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Sets a custom key locator.
+   * Overrides the strategy used to select which server holds a given key.
    *
-   * @param keyLocator locator implementation
+   * @param keyLocator the key-locator implementation to apply
    */
   public void setKeyLocator (KeyLocator keyLocator) {
 
@@ -106,9 +129,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Sets a custom key translator.
+   * Overrides the strategy used to translate cache keys into memcached-safe strings.
    *
-   * @param keyTranslator translator implementation
+   * @param keyTranslator the key-translator implementation to apply
    */
   public void setKeyTranslator (KeyTranslator keyTranslator) {
 
@@ -116,9 +139,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Supplies authentication credentials for SASL.
+   * Supplies SASL authentication credentials used when connecting to secured servers.
    *
-   * @param authentication username/password credentials
+   * @param authentication the username/password credentials to apply
    */
   public void setAuthentication (Authentication authentication) {
 
@@ -126,7 +149,7 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Overrides the default request timeout.
+   * Overrides the maximum time a client operation will wait for a server response.
    *
    * @param defaultRequestTimeoutMilliseconds timeout in milliseconds
    */
@@ -136,7 +159,7 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Overrides the connection timeout.
+   * Overrides the maximum time to wait when establishing a new TCP connection.
    *
    * @param connectionTimeoutMilliseconds timeout in milliseconds
    */
@@ -146,9 +169,9 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Overrides the keep-alive heartbeat interval.
+   * Overrides the interval between keep-alive NOOP commands sent to idle connections.
    *
-   * @param keepAliveSeconds heartbeat interval in seconds
+   * @param keepAliveSeconds interval in seconds
    */
   public void setKeepAliveSeconds (Long keepAliveSeconds) {
 
@@ -156,7 +179,7 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Overrides the resuscitation delay used when reconnecting hosts.
+   * Overrides the delay before attempting to reconnect a host after a connection failure.
    *
    * @param resuscitationSeconds delay in seconds
    */
@@ -166,15 +189,19 @@ public class CubbyConfigurationFactoryBean implements FactoryBean<CubbyConfigura
   }
 
   /**
-   * Overrides number of connections to open per host.
+   * Overrides the number of concurrent TCP connections maintained per memcached host.
    *
-   * @param connectionsPerHost connections per host
+   * @param connectionsPerHost the desired connection-pool size per host
    */
   public void setConnectionsPerHost (Integer connectionsPerHost) {
 
     this.connectionsPerHost = connectionsPerHost;
   }
 
+  /**
+   * Assembles the {@link CubbyConfiguration} by applying all non-null property overrides to the
+   * configuration obtained from the selected {@link CubbyConfigurations} preset.
+   */
   @Override
   public void afterPropertiesSet () {
 

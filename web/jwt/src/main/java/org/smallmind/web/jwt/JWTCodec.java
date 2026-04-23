@@ -38,17 +38,17 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.smallmind.web.jwt.jose4j.JWTConsumer;
 
 /**
- * Utility methods for encoding and decoding JWTs using provided keys.
+ * Static utility class for encoding objects as signed JWTs and decoding or deciphering JWT strings back to typed claim objects.
  */
 public class JWTCodec {
 
   /**
-   * Encodes claims into a compact JWT using the provided key master.
+   * Serializes the given claims object and signs it as a compact JWT without embedding a key id.
    *
-   * @param claims    the claim object to serialize as the JWT payload
-   * @param keyMaster the signing key provider
-   * @return the signed JWT string
-   * @throws Exception if serialization or signing fails
+   * @param claims    the object to serialize as the JWT payload
+   * @param keyMaster the provider of the signing key and algorithm
+   * @return the signed compact JWT string
+   * @throws Exception if JSON serialization or JWT signing fails
    */
   public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
@@ -57,13 +57,13 @@ public class JWTCodec {
   }
 
   /**
-   * Encodes claims into a compact JWT using the provided key master and an optional key id.
+   * Serializes the given claims object, signs it as a compact JWT, and optionally embeds a key identifier in the header.
    *
-   * @param claims    the claim object to serialize as the JWT payload
-   * @param keyMaster the signing key provider
-   * @param keyId     an optional key identifier to embed in the JWT header
-   * @return the signed JWT string
-   * @throws Exception if serialization or signing fails
+   * @param claims    the object to serialize as the JWT payload
+   * @param keyMaster the provider of the signing key and algorithm
+   * @param keyId     optional key identifier written to the JWT {@code kid} header; {@code null} omits the header
+   * @return the signed compact JWT string
+   * @throws Exception if JSON serialization or JWT signing fails
    */
   public static String encode (Object claims, JWTKeyMaster keyMaster, String keyId)
     throws Exception {
@@ -83,14 +83,14 @@ public class JWTCodec {
   }
 
   /**
-   * Decodes and verifies a JWT using the supplied key master.
+   * Verifies the signature of a compact JWT and deserializes its payload into the specified type.
    *
-   * @param jwtToken    the compact JWT value
-   * @param keyMaster   the verification key provider
-   * @param claimsClass the target class for the payload
-   * @param <T>         the claim type
-   * @return the deserialized claim object
-   * @throws Exception if verification or deserialization fails
+   * @param jwtToken    the compact JWT string to decode
+   * @param keyMaster   the provider of the verification key
+   * @param claimsClass the target type for the deserialized payload
+   * @param <T>         the claims type
+   * @return the deserialized claims object
+   * @throws Exception if signature verification or deserialization fails
    */
   public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
     throws Exception {
@@ -99,13 +99,13 @@ public class JWTCodec {
   }
 
   /**
-   * Deciphers a JWT without verifying its signature.
+   * Deserializes the payload of a compact JWT without verifying its signature.
    *
-   * @param jwtToken    the compact JWT value
-   * @param claimsClass the target class for the payload
-   * @param <T>         the claim type
-   * @return the deserialized claim object
-   * @throws Exception if parsing or deserialization fails
+   * @param jwtToken    the compact JWT string to parse
+   * @param claimsClass the target type for the deserialized payload
+   * @param <T>         the claims type
+   * @return the deserialized claims object
+   * @throws Exception if JWT parsing or deserialization fails
    */
   public static <T> T decipher (String jwtToken, Class<T> claimsClass)
     throws Exception {

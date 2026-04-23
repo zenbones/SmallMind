@@ -37,12 +37,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Signals to processing tools that the annotated getter's value is nullified or overridden by the
+ * named nullifier on a related bean field.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-/**
- * Hint for processing tools that the annotated getter is nullified/overridden by the named overlay
- * nullifier on a related bean field.
- */
 public @interface NullifiedBy {
 
   /**

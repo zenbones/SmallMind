@@ -36,8 +36,8 @@ import org.smallmind.nutsnbolts.resource.ClasspathResource;
 import org.smallmind.nutsnbolts.resource.Resource;
 
 /**
- * Resolves SmallMind schema URIs to classpath resources under {@code org/smallmind/...}.
- * Supports a singleton accessor for reuse across XML utilities.
+ * {@link ProtocolResolver} that maps SmallMind schema URIs ({@code http://www.smallmind.org/schema/...}) to classpath resources under {@code org/smallmind/...}.
+ * Exposes a lazily created singleton for convenient reuse across XML utilities.
  */
 public class SmallMindProtocolResolver implements ProtocolResolver {
 
@@ -45,9 +45,9 @@ public class SmallMindProtocolResolver implements ProtocolResolver {
   private static SmallMindProtocolResolver PROTOCOL_RESOLVER;
 
   /**
-   * Returns a lazily created singleton instance.
+   * Returns the shared singleton instance, creating it on first call.
    *
-   * @return shared resolver
+   * @return the singleton {@link SmallMindProtocolResolver}
    */
   public synchronized static SmallMindProtocolResolver getInstance () {
 
@@ -58,10 +58,10 @@ public class SmallMindProtocolResolver implements ProtocolResolver {
   }
 
   /**
-   * Resolves schema URLs pointing at {@code http://www.smallmind.org/schema/...} into classpath resources.
+   * Resolves a system identifier that begins with {@code http://www.smallmind.org/schema/} to a classpath resource.
    *
-   * @param systemId system identifier from the XML parser
-   * @return classpath-backed resource or {@code null} if the protocol is not recognized
+   * @param systemId the system identifier supplied by the XML parser
+   * @return a {@link org.smallmind.nutsnbolts.resource.ClasspathResource} for the schema, or {@code null} if the URI does not use the SmallMind protocol
    * @throws ProtocolResolutionException never thrown by this implementation
    */
   public Resource resolve (String systemId)

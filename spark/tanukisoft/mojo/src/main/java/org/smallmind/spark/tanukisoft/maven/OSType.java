@@ -33,7 +33,9 @@
 package org.smallmind.spark.tanukisoft.maven;
 
 /**
- * Enumerates supported operating system distributions for the Tanuki wrapper along with their executable and library names.
+ * Enumerates every (operating system, CPU architecture, word size) combination for which Tanuki ships a Java Service
+ * Wrapper binary. Each constant carries the platform's executable filename, the platform-specific native library
+ * name, and the {@link OSStyle} that decides whether Windows or Unix scripts are generated.
  */
 public enum OSType {
 
@@ -62,9 +64,11 @@ public enum OSType {
   private final String library;
 
   /**
-   * @param osStyle    wrapper style (Windows vs Unix)
-   * @param executable platform-specific wrapper executable
-   * @param library    platform-specific native library
+   * Associates a platform with its wrapper binaries.
+   *
+   * @param osStyle    the broad script style (Windows vs Unix) used for this platform
+   * @param executable the wrapper executable filename distributed for this platform
+   * @param library    the platform-specific native library filename distributed for this platform
    */
   OSType (OSStyle osStyle, String executable, String library) {
 
@@ -74,7 +78,9 @@ public enum OSType {
   }
 
   /**
-   * @return the wrapper style associated with this OS
+   * Returns the style that selects script templates for this platform.
+   *
+   * @return the {@link OSStyle} associated with this platform
    */
   public OSStyle getOsStyle () {
 
@@ -82,7 +88,9 @@ public enum OSType {
   }
 
   /**
-   * @return filename of the wrapper executable for this OS
+   * Returns the platform-specific wrapper executable filename.
+   *
+   * @return the wrapper executable filename
    */
   public String getExecutable () {
 
@@ -90,7 +98,9 @@ public enum OSType {
   }
 
   /**
-   * @return filename of the native library for this OS
+   * Returns the platform-specific native library filename.
+   *
+   * @return the native library filename
    */
   public String getLibrary () {
 

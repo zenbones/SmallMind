@@ -39,14 +39,19 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.DeclarePrecedence;
 
 /**
- * Aspect that establishes and completes transactional boundaries around annotated types and methods.
+ * AspectJ aspect that opens, commits, and rolls back transactional boundaries around join points
+ * marked with {@link Transactional} at either the type or member level.
+ * Aspect precedence is declared to run after {@code LazyFieldAspect}.
  */
 @Aspect
 @DeclarePrecedence("org.smallmind.nutsnbolts.inject.LazyFieldAspect, org.smallmind.persistence.orm.aop.TransactionalAspect")
 public class TransactionalAspect {
 
   /**
-   * Starts a transactional boundary for any execution within a @Transactional class (unless overridden on the method).
+   * Opens a transactional boundary before executing any method or constructor within a
+   * {@code @Transactional} class that is not itself annotated with {@code @Transactional}.
+   *
+   * @param transactional the class-level annotation providing boundary configuration
    */
   @Before(value = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
   public void beforeTransactionalClass (Transactional transactional) {
@@ -55,7 +60,10 @@ public class TransactionalAspect {
   }
 
   /**
-   * Starts a transactional boundary for an explicitly annotated constructor or method.
+   * Opens a transactional boundary before executing an explicitly {@code @Transactional}-annotated
+   * method or constructor.
+   *
+   * @param transactional the member-level annotation providing boundary configuration
    */
   @Before(value = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", argNames = "transactional")
   public void beforeTransactionalMethod (Transactional transactional) {
@@ -64,7 +72,10 @@ public class TransactionalAspect {
   }
 
   /**
-   * Commits the boundary after successful execution within a @Transactional class.
+   * Commits the transactional boundary after a successful return from a method or constructor within
+   * a {@code @Transactional} class.
+   *
+   * @param transactional the class-level annotation (unused at commit time, bound for pointcut matching)
    */
   @AfterReturning(pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
   public void afterReturnFromTransactionalClass (Transactional transactional) {
@@ -73,7 +84,9 @@ public class TransactionalAspect {
   }
 
   /**
-   * Commits the boundary after successful execution of an explicitly annotated member.
+   * Commits the transactional boundary after a successful return from an explicitly annotated member.
+   *
+   * @param transactional the member-level annotation (unused at commit time, bound for pointcut matching)
    */
   @AfterReturning(pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", argNames = "transactional")
   public void afterReturnFromTransactionalMethod (Transactional transactional) {
@@ -82,7 +95,11 @@ public class TransactionalAspect {
   }
 
   /**
-   * Ends the boundary after an exception from a @Transactional class, rolling back if configured.
+   * Ends the transactional boundary after an exception from a method or constructor within a
+   * {@code @Transactional} class, rolling back or committing according to {@code rollbackOnException}.
+   *
+   * @param transactional the class-level annotation whose {@code rollbackOnException} flag controls rollback behavior
+   * @param throwable     the exception that propagated out of the boundary
    */
   @AfterThrowing(pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..)))  && !@annotation(Transactional)", throwing = "throwable", argNames = "transactional, throwable")
   public void afterThrowFromTransactionalClass (Transactional transactional, Throwable throwable) {
@@ -95,7 +112,11 @@ public class TransactionalAspect {
   }
 
   /**
-   * Ends the boundary after an exception from an explicitly annotated member, rolling back if configured.
+   * Ends the transactional boundary after an exception from an explicitly annotated member,
+   * rolling back or committing according to {@code rollbackOnException}.
+   *
+   * @param transactional the member-level annotation whose {@code rollbackOnException} flag controls rollback behavior
+   * @param throwable     the exception that propagated out of the boundary
    */
   @AfterThrowing(pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", throwing = "throwable", argNames = "transactional, throwable")
   public void afterThrowFromTransactionalMethod (Transactional transactional, Throwable throwable) {

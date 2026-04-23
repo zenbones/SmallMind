@@ -86,7 +86,7 @@ public class ArtifactTag {
    * Returns the last-modified time of the artifact file recorded when this tag was constructed.
    *
    * @return epoch-millisecond timestamp as returned by {@link File#lastModified()}, or {@code 0}
-   *         if the artifact had no associated local file at construction time
+   * if the artifact had no associated local file at construction time
    */
   public long getLastModTime () {
 
@@ -117,7 +117,7 @@ public class ArtifactTag {
    *
    * @param obj the object to compare against
    * @return {@code true} if {@code obj} is an {@code ArtifactTag} wrapping an equal artifact and,
-   *         for snapshots, recording the same file modification time; {@code false} otherwise
+   * for snapshots, recording the same file modification time; {@code false} otherwise
    */
   @Override
   public boolean equals (Object obj) {

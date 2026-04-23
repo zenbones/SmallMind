@@ -33,12 +33,14 @@
 package org.smallmind.javafx.extras.instrument;
 
 /**
- * Represents velocity averages across multiple rolling windows.
+ * Immutable snapshot of velocity averages sampled at a point in time. Values are collected from
+ * a meter and cover four rolling windows of different widths, allowing charts to plot both long-
+ * and short-term velocity trends simultaneously.
  *
- * @param avgVelocity    lifetime average velocity
- * @param avgVelocity_1  one-minute rolling average velocity
- * @param avgVelocity_5  five-minute rolling average velocity
- * @param avgVelocity_15 fifteen-minute rolling average velocity
+ * @param avgVelocity    lifetime (inception-to-now) average velocity
+ * @param avgVelocity_1  exponentially-weighted one-minute rolling average velocity
+ * @param avgVelocity_5  exponentially-weighted five-minute rolling average velocity
+ * @param avgVelocity_15 exponentially-weighted fifteen-minute rolling average velocity
  */
 public record Blur(double avgVelocity, double avgVelocity_1, double avgVelocity_5, double avgVelocity_15) {
 

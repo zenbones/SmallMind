@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.http;
 
 /**
- * Standard HTTP verbs supported by the lightweight transmitter utilities.
+ * Enumeration of HTTP request methods used by {@link HttpTransmitter} and {@link HttpPipe}.
  */
 public enum HttpMethod {
 

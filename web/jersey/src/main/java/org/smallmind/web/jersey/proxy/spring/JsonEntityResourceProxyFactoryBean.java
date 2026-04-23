@@ -41,7 +41,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring FactoryBean that produces a JSON resource proxy for a given interface.
+ * Spring {@link FactoryBean} that creates and exposes a JSON entity resource proxy for a configured service interface.
  */
 public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, InitializingBean {
 
@@ -55,7 +55,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   private int serviceVersion;
 
   /**
-   * Sets the target endpoint to which requests will be sent.
+   * Sets the base HTTP target to which the proxy will send requests.
    *
    * @param target base {@link JsonTarget}
    */
@@ -65,9 +65,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Sets optional header injectors used for each invocation.
+   * Sets header injectors that will be applied on every proxy invocation.
    *
-   * @param headerInjectors injectors to apply
+   * @param headerInjectors array of injectors
    */
   public void setHeaderInjectors (JsonHeaderInjector[] headerInjectors) {
 
@@ -75,9 +75,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Identifies the resource interface implemented by the proxy.
+   * Sets the interface that the generated proxy will implement.
    *
-   * @param resourceInterface interface class
+   * @param resourceInterface service interface class
    */
   public void setResourceInterface (Class<?> resourceInterface) {
 
@@ -85,9 +85,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Sets the logical service name portion of the URL.
+   * Sets the service name used in URL path construction.
    *
-   * @param serviceName service name
+   * @param serviceName service name segment
    */
   public void setServiceName (String serviceName) {
 
@@ -95,9 +95,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Sets the prefix used ahead of the numeric version.
+   * Sets the string prefixed to the version number in the URL path (defaults to {@code "v"}).
    *
-   * @param versionPrefix path prefix before the version number
+   * @param versionPrefix version path prefix
    */
   public void setVersionPrefix (String versionPrefix) {
 
@@ -105,7 +105,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Sets the numeric service version.
+   * Sets the numeric API version included in the URL path.
    *
    * @param serviceVersion version number
    */
@@ -115,9 +115,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Sets the debug log level to use for requests.
+   * Sets the log level used for request/response debug tracing.
    *
-   * @param level log level
+   * @param level desired log level
    */
   public void setLevel (Level level) {
 
@@ -125,9 +125,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Builds the proxy once all properties are configured.
+   * Constructs the proxy once all required properties have been injected.
    *
-   * @throws Exception if proxy creation fails
+   * @throws Exception if proxy generation fails
    */
   @Override
   public void afterPropertiesSet ()
@@ -137,7 +137,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Indicates the factory always returns a singleton instance.
+   * Indicates that this factory always returns the same proxy instance.
    *
    * @return {@code true}
    */
@@ -148,9 +148,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Returns the proxy type.
+   * Returns the type of object produced by this factory.
    *
-   * @return Proxy class
+   * @return {@link Proxy} class
    */
   @Override
   public Class<?> getObjectType () {
@@ -159,10 +159,10 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   }
 
   /**
-   * Returns the created proxy.
+   * Returns the constructed proxy.
    *
-   * @return proxy instance
-   * @throws Exception if creation failed
+   * @return proxy singleton
+   * @throws Exception if the proxy was not successfully created
    */
   @Override
   public Proxy getObject ()

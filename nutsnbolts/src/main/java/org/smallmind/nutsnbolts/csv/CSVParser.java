@@ -38,7 +38,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 /**
- * Streaming CSV parser that delegates each parsed row to a {@link CSVLineHandler}.
+ * Configurable, event-driven CSV parser that reads a stream line-by-line and delegates each parsed record to a {@link CSVLineHandler}.
  */
 public class CSVParser {
 
@@ -47,7 +47,9 @@ public class CSVParser {
   private boolean trimFields = false;
 
   /**
-   * @return handler invoked for each parsed line
+   * Returns the handler currently registered to receive parsed records.
+   *
+   * @return the active {@link CSVLineHandler}, or {@code null} if none has been set
    */
   public synchronized CSVLineHandler getLineHandler () {
 
@@ -55,9 +57,9 @@ public class CSVParser {
   }
 
   /**
-   * Sets the handler invoked for each parsed line.
+   * Sets the handler that will receive document lifecycle and per-record callbacks during parsing.
    *
-   * @param lineHandler consumer for parsed rows
+   * @param lineHandler handler to invoke for each parsed record
    */
   public synchronized void setLineHandler (CSVLineHandler lineHandler) {
 
@@ -65,7 +67,9 @@ public class CSVParser {
   }
 
   /**
-   * @return {@code true} when the first line should be treated as a header and skipped
+   * Returns whether the first line of the input will be treated as a header row and skipped.
+   *
+   * @return {@code true} if the header row is skipped
    */
   public synchronized boolean isSkipHeader () {
 
@@ -73,9 +77,9 @@ public class CSVParser {
   }
 
   /**
-   * Indicates whether to skip the first line of the input.
+   * Configures whether to skip the first line of the input as a header row.
    *
-   * @param skipHeader {@code true} to ignore the header row
+   * @param skipHeader {@code true} to consume and discard the header row before processing records
    */
   public synchronized void setSkipHeader (boolean skipHeader) {
 
@@ -83,7 +87,9 @@ public class CSVParser {
   }
 
   /**
-   * @return {@code true} when parsed fields should be trimmed
+   * Returns whether leading and trailing whitespace is stripped from each field value.
+   *
+   * @return {@code true} if field trimming is enabled
    */
   public synchronized boolean isTrimFields () {
 
@@ -91,9 +97,9 @@ public class CSVParser {
   }
 
   /**
-   * Configures whether surrounding whitespace is removed from fields.
+   * Configures whether surrounding whitespace is stripped from each parsed field value.
    *
-   * @param trimFields {@code true} to trim field values
+   * @param trimFields {@code true} to trim whitespace from field values
    */
   public synchronized void setTrimFields (boolean trimFields) {
 
@@ -101,11 +107,11 @@ public class CSVParser {
   }
 
   /**
-   * Parses CSV from an input stream using the current settings.
+   * Parses CSV data from the given input stream, delegating each record to the registered {@link CSVLineHandler}.
    *
-   * @param inputStream stream of CSV data
-   * @throws IOException       if reading fails
-   * @throws CSVParseException if parsing fails
+   * @param inputStream source of CSV bytes
+   * @throws IOException       if a read error occurs on the stream
+   * @throws CSVParseException if the CSV structure is invalid or the handler rejects a record
    */
   public synchronized void parse (InputStream inputStream)
     throws IOException, CSVParseException {
@@ -114,11 +120,11 @@ public class CSVParser {
   }
 
   /**
-   * Parses CSV from a reader using the current settings.
+   * Parses CSV data from the given reader, delegating each record to the registered {@link CSVLineHandler}.
    *
-   * @param reader source of CSV data
-   * @throws IOException       if reading fails
-   * @throws CSVParseException if parsing fails
+   * @param reader source of CSV character data
+   * @throws IOException       if a read error occurs
+   * @throws CSVParseException if the CSV structure is invalid or the handler rejects a record
    */
   public synchronized void parse (Reader reader)
     throws IOException, CSVParseException {

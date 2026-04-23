@@ -33,7 +33,8 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Time boundaries used by {@link TimestampRolloverRule}.
+ * Calendar boundary at which a time-based rollover should occur, used by {@code TimestampRolloverRule} to determine
+ * when the active log file should be rotated.
  */
 public enum TimestampQuantifier {
 

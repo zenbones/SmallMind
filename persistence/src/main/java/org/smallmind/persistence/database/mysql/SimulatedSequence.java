@@ -44,8 +44,9 @@ import org.smallmind.persistence.database.SequenceManager;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Sequence implementation that simulates database sequences for MySQL by maintaining a row per
- * sequence name in a table and using {@code LAST_INSERT_ID} to obtain atomic increments.
+ * MySQL {@link Sequence} implementation that simulates native sequences by storing per-name counters
+ * in a dedicated table and using {@code LAST_INSERT_ID} to perform atomic increments.
+ * Supports block allocation ({@code incrementBy > 1}) to reduce database round-trips.
  */
 public class SimulatedSequence extends Sequence {
 
@@ -55,9 +56,11 @@ public class SimulatedSequence extends Sequence {
   private final int incrementBy;
 
   /**
+   * Constructs a simulated sequence backed by the given data source and table.
+   *
    * @param dataSource  data source used to execute sequence update statements
-   * @param tableName   table that holds sequence names and next values
-   * @param incrementBy step size to reserve per update (supports allocation blocks > 1)
+   * @param tableName   table that holds sequence names and their current values
+   * @param incrementBy number of values to reserve per database update; use 1 for no block allocation
    */
   public SimulatedSequence (DataSource dataSource, String tableName, int incrementBy) {
 
@@ -67,7 +70,7 @@ public class SimulatedSequence extends Sequence {
   }
 
   /**
-   * Registers this sequence implementation with the {@link SequenceManager}.
+   * Registers this instance as the active provider in the {@link SequenceManager}.
    */
   public void register () {
 
@@ -75,7 +78,10 @@ public class SimulatedSequence extends Sequence {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the next value for the named sequence, allocating a block from the database when the local cache is exhausted.
+   *
+   * @param name logical sequence name
+   * @return next sequence value
    */
   @Override
   public long nextLong (String name) {
@@ -84,10 +90,10 @@ public class SimulatedSequence extends Sequence {
   }
 
   /**
-   * Retrieves or initializes the sequence data for the given name.
+   * Returns the {@link SequenceData} for the given name, creating and inserting a new row if none exists.
    *
-   * @param name sequence identifier
-   * @return data holder used to allocate sequence values
+   * @param name logical sequence name
+   * @return the sequence data holder for the given name
    */
   private SequenceData getSequenceData (String name) {
 
@@ -104,6 +110,9 @@ public class SimulatedSequence extends Sequence {
     return sequenceData;
   }
 
+  /**
+   * Per-name holder that manages block allocation and caching of sequence values obtained from the database.
+   */
   private class SequenceData {
 
     private final AtomicLong atomicBoundary;
@@ -113,9 +122,9 @@ public class SimulatedSequence extends Sequence {
     private final String updateSql;
 
     /**
-     * Initializes the sequence row for the given name and primes the local boundary cache.
+     * Creates the sequence row if absent and primes the local value cache with the current database boundary.
      *
-     * @param name sequence name
+     * @param name logical sequence name
      */
     public SequenceData (String name) {
 
@@ -129,9 +138,10 @@ public class SimulatedSequence extends Sequence {
     }
 
     /**
-     * Returns the next sequence value, optionally using a cached block of values when incrementing by more than one.
+     * Returns the next sequence value, drawing from the locally cached block when possible and refreshing
+     * the block from the database when the cache is exhausted.
      *
-     * @return next sequence value
+     * @return next sequence value; never zero
      */
     public long nextLong () {
 
@@ -167,7 +177,7 @@ public class SimulatedSequence extends Sequence {
     }
 
     /**
-     * Executes an insert to ensure a row exists for the sequence name.
+     * Issues an {@code INSERT IGNORE} to ensure a row exists in the sequence table for this name.
      *
      * @throws SimulatedSequenceDisasterException if the insert fails
      */
@@ -182,11 +192,11 @@ public class SimulatedSequence extends Sequence {
     }
 
     /**
-     * Issues an update against the backing table to atomically advance the sequence and returns the
-     * new boundary value using {@code LAST_INSERT_ID()}.
+     * Atomically advances the sequence counter in the database by {@code incrementBy} and returns the
+     * new upper boundary via {@code LAST_INSERT_ID()}.
      *
-     * @return newly allocated upper boundary for the sequence
-     * @throws SimulatedSequenceDisasterException if SQL execution fails or no key is returned
+     * @return the new upper boundary value allocated by this update
+     * @throws SimulatedSequenceDisasterException if the SQL update fails, returns no generated key, or any other error occurs
      */
     private long getLastInsertId () {
 

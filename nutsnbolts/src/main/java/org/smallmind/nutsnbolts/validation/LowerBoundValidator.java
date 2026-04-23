@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
 /**
- * Validator implementing the {@link LowerBound} constraint by comparing two numeric bean properties.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link LowerBound} constraint that compares two numeric bean properties via reflection.
  */
 public class LowerBoundValidator implements ConstraintValidator<LowerBound, Object> {
 
@@ -49,9 +49,9 @@ public class LowerBoundValidator implements ConstraintValidator<LowerBound, Obje
   private LowerBound constraintAnnotation;
 
   /**
-   * Saves the annotation to access configured property names and offsets.
+   * Stores the constraint annotation so that the configured property names and offset are available during validation.
    *
-   * @param constraintAnnotation annotation instance
+   * @param constraintAnnotation the annotation instance driving this validation
    */
   @Override
   public void initialize (LowerBound constraintAnnotation) {
@@ -60,11 +60,12 @@ public class LowerBoundValidator implements ConstraintValidator<LowerBound, Obje
   }
 
   /**
-   * Validates that the first property is greater than or equal to the second property plus the configured offset.
+   * Validates that the {@link LowerBound#first()} property is greater than or equal to the {@link LowerBound#second()} property plus the configured offset.
+   * A {@code null} bean is considered valid; when either property is {@code null} the result depends on {@link LowerBound#notNull()}.
    *
-   * @param value   bean instance; {@code null} is considered valid
-   * @param context validation context (unused)
-   * @return {@code true} if the constraint holds, or both values are null when {@code notNull} is false
+   * @param value   the bean instance to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the lower-bound relationship is satisfied
    */
   @Override
   public boolean isValid (Object value, ConstraintValidatorContext context) {

@@ -37,7 +37,7 @@ import jakarta.mail.Authenticator;
 import jakarta.mail.Session;
 
 /**
- * Supported mail transport protocols and factory for preconfigured {@link Session}s.
+ * Enumeration of supported mail transport protocols that provides a factory method for creating pre-configured Jakarta Mail {@link Session} instances.
  */
 public enum Protocol {
 
@@ -55,12 +55,12 @@ public enum Protocol {
   }
 
   /**
-   * Creates a Jakarta Mail {@link Session} configured for this protocol.
+   * Creates a Jakarta Mail {@link Session} pre-configured with the host, port, TLS settings, and authentication appropriate for this protocol.
    *
-   * @param host           mail server host
-   * @param port           mail server port
-   * @param authentication authentication strategy and credentials
-   * @return configured mail session
+   * @param host           mail server host name or IP address
+   * @param port           mail server port number
+   * @param authentication authentication strategy and credentials to apply to the session
+   * @return a ready-to-use Jakarta Mail {@link Session}
    */
   public Session getSession (String host, int port, Authentication authentication) {
 

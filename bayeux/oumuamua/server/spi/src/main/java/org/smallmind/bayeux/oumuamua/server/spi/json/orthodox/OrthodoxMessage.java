@@ -32,18 +32,20 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.json.orthodox;
 
+import java.util.HashMap;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 
 /**
- * Concrete {@link Message} implementation for the orthodox codec.
+ * Mutable {@link Message} implementation for the orthodox codec backed by a {@link HashMap}-based
+ * object value, created exclusively by {@link OrthodoxCodec#create()}.
  */
 public class OrthodoxMessage extends OrthodoxObjectValue implements Message<OrthodoxValue> {
 
   /**
-   * Creates an empty message.
+   * Constructs an empty message associated with the given factory.
    *
-   * @param codec   owning codec (unused but retained for symmetry)
-   * @param factory value factory
+   * @param codec   the {@link OrthodoxCodec} that issued this message (retained for API symmetry)
+   * @param factory the {@link OrthodoxValueFactory} used to create nested values
    */
   public OrthodoxMessage (OrthodoxCodec codec, OrthodoxValueFactory factory) {
 

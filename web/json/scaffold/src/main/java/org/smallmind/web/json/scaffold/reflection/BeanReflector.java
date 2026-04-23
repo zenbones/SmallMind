@@ -42,18 +42,18 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Reflection helper that can traverse dotted method/field paths, invoke getters/setters/methods,
- * and apply array subscripts on intermediate values.
+ * Reflective utility that traverses dotted bean/method path chains, invokes getters, setters,
+ * and arbitrary methods, and applies array subscripts on intermediate or final values.
  */
 public class BeanReflector {
 
   /**
-   * Resolves a value by traversing a path of getters/methods on the supplied target.
+   * Resolves the value at the end of a getter chain on the target object.
    *
    * @param target      root object to traverse
-   * @param methodChain dotted path containing optional method arguments and array subscripts
-   * @return the resolved value (with subscripts applied) at the end of the chain
-   * @throws BeanAccessException if reflection fails or the chain is invalid
+   * @param methodChain dotted path expression with optional subscripts
+   * @return resolved value after applying all subscripts
+   * @throws BeanAccessException if any reflective step fails or the chain is invalid
    */
   public static Object get (Object target, String methodChain)
     throws BeanAccessException {
@@ -68,13 +68,13 @@ public class BeanReflector {
   }
 
   /**
-   * Sets a value on the target by traversing a path and invoking the final setter or field.
+   * Assigns a value via a setter chain on the target object.
    *
    * @param target      root object to traverse
-   * @param methodChain dotted path whose final component is set
+   * @param methodChain dotted path expression whose final component is the property to set
    * @param value       value to assign
-   * @return null (the API mirrors the invocation utilities)
-   * @throws BeanAccessException if reflection fails or the chain is invalid
+   * @return {@code null} (mirrors invocation utilities)
+   * @throws BeanAccessException if any reflective step fails or the chain is invalid
    */
   public static Object set (Object target, String methodChain, Object value)
     throws BeanAccessException {
@@ -89,13 +89,13 @@ public class BeanReflector {
   }
 
   /**
-   * Invokes the final component in a chain as a method, applying subscripts to the result if needed.
+   * Invokes the terminal method in a chain and applies any subscripts to the result.
    *
    * @param target      root object to traverse
-   * @param methodChain dotted path ending with the method to invoke
+   * @param methodChain dotted path expression ending with the method to invoke
    * @param values      arguments for the terminal method
-   * @return the method result with subscripts applied (if any)
-   * @throws BeanAccessException if reflection fails or the chain is invalid
+   * @return method return value with subscripts applied
+   * @throws BeanAccessException if any reflective step fails or the chain is invalid
    */
   public static Object apply (Object target, String methodChain, Object... values)
     throws BeanAccessException {
@@ -110,11 +110,11 @@ public class BeanReflector {
   }
 
   /**
-   * Walks through all path components except the last, invoking getters or methods as needed.
+   * Walks all but the last path component, invoking getters or methods at each step.
    *
    * @param target     root object
    * @param components parsed path components
-   * @return the object that owns the final path component
+   * @return object that owns the final path component
    * @throws BeanAccessException if any intermediate lookup fails
    */
   private static Object traverse (Object target, PathComponent[] components)
@@ -130,11 +130,11 @@ public class BeanReflector {
   }
 
   /**
-   * Executes either a getter or an explicit method on the target component, applying subscripts when present.
+   * Executes either a getter or an explicit method call on the target, applying subscripts to the result.
    *
    * @param target    object to operate on
-   * @param component parsed path component
-   * @return resolved value
+   * @param component parsed path component describing the operation
+   * @return resolved value with subscripts applied
    * @throws BeanAccessException if invocation fails
    */
   private static Object executeGetterOrMethod (Object target, PathComponent component)
@@ -150,12 +150,12 @@ public class BeanReflector {
   }
 
   /**
-   * Invokes a bean-style getter (getX/isX) or accesses a public field when available.
+   * Reads a property from the target using a bean getter ({@code getX}/{@code isX}) or a public field.
    *
    * @param target object to read from
    * @param name   property or field name
    * @return value read from the target
-   * @throws BeanAccessException if no accessor exists or invocation fails
+   * @throws BeanAccessException if no accessor is found or invocation fails
    */
   private static Object executeGetter (Object target, String name)
     throws BeanAccessException {
@@ -208,14 +208,15 @@ public class BeanReflector {
   }
 
   /**
-   * Invokes a bean-style setter or assigns to a public field, optionally applying array subscripts.
+   * Writes a property on the target using a bean setter ({@code setX}) or a public field, optionally
+   * applying subscripts before assignment.
    *
    * @param target     object to update
    * @param name       property or field name
-   * @param subscripts optional array indices to dereference before assignment
+   * @param subscripts optional array indices to dereference before the final assignment
    * @param value      value to set
-   * @return null (setter semantics)
-   * @throws BeanAccessException if no setter/field is found or invocation fails
+   * @return {@code null} (setter semantics)
+   * @throws BeanAccessException if no setter or field is found or invocation fails
    */
   private static Object executeSetter (Object target, String name, int[] subscripts, Object value)
     throws BeanAccessException {
@@ -274,13 +275,13 @@ public class BeanReflector {
   }
 
   /**
-   * Applies the provided value to an indexed element of the current property value.
+   * Reads the current property value and sets the element identified by the subscripts to the new value.
    *
    * @param target     object owning the property
    * @param name       property name
    * @param subscripts indices pointing to the element to replace
-   * @param value      new value to insert
-   * @return the original property value after modification
+   * @param value      replacement value
+   * @return the original (outer) property value after the nested element has been updated
    * @throws BeanAccessException if indexing or assignment fails
    */
   private static Object applyIndexedValue (Object target, String name, int[] subscripts, Object value)
@@ -306,13 +307,13 @@ public class BeanReflector {
   }
 
   /**
-   * Invokes a named method on the target with supplied arguments converted to parameter types.
+   * Invokes a named method on the target, converting each argument to the corresponding parameter type.
    *
    * @param target    object on which to invoke the method
    * @param name      method name
-   * @param arguments arguments to convert and pass (may be {@code null})
+   * @param arguments arguments to pass (may be {@code null} for zero-argument methods)
    * @return method return value
-   * @throws BeanAccessException if the method cannot be found or invocation fails
+   * @throws BeanAccessException if no matching method is found or invocation fails
    */
   private static Object executeMethod (Object target, String name, Object[] arguments)
     throws BeanAccessException {
@@ -356,12 +357,12 @@ public class BeanReflector {
   }
 
   /**
-   * Applies a series of array subscripts to a value, returning the nested element.
+   * Applies each subscript in sequence to the value, dereferencing array elements at every step.
    *
-   * @param value      initial value (array or nested arrays)
-   * @param subscripts indices to apply in order
-   * @return the resolved element
-   * @throws BeanAccessException if indexing fails or attempts to index into non-arrays/nulls
+   * @param value      starting value (may be an array or nested arrays)
+   * @param subscripts zero-based indices to apply in order
+   * @return the element reached after all subscripts have been applied
+   * @throws BeanAccessException if any subscript targets a null value or a non-array type
    */
   private static Object applySubscripts (Object value, int[] subscripts)
     throws BeanAccessException {
@@ -388,10 +389,10 @@ public class BeanReflector {
   }
 
   /**
-   * Converts a zero-based index into a human-readable ordinal string.
+   * Converts a zero-based index to a human-readable ordinal string.
    *
    * @param index zero-based index
-   * @return ordinal string (e.g., 0 -> "1st")
+   * @return ordinal label such as "1st", "2nd", "3rd", or "Nth"
    */
   private static String indexToNth (int index) {
 

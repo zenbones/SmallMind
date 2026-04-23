@@ -44,8 +44,9 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.PutLogEventsResponse
 import software.amazon.awssdk.services.cloudwatchlogs.model.RejectedLogEventsInfo;
 
 /**
- * Appender that publishes formatted records to AWS CloudWatch Logs.
- * This appender must be singleton per JVM per stream because sequence tokens are serialized.
+ * Appender that publishes formatted log records to an AWS CloudWatch Logs stream using the AWS SDK.
+ * Sequence-token ordering is enforced by synchronizing all {@code PutLogEvents} calls; therefore this
+ * appender must be used as a singleton per JVM per log stream so that tokens remain serialized.
  */
 public class AWSAppender extends AbstractAppender {
 
@@ -56,13 +57,18 @@ public class AWSAppender extends AbstractAppender {
   private String sequenceToken;
 
   /**
-   * Creates an AWS CloudWatch Logs appender.
+   * Constructs an appender that publishes to the specified CloudWatch Logs group and stream.
+   * If {@code streamName} is {@code null}, a new stream with a Snowflake-generated hex name is created
+   * automatically. The constructor verifies that the target stream exists and is unique within the group,
+   * and seeds the internal sequence token from the stream descriptor. A {@link LoggerRuntimeException}
+   * is thrown immediately if the stream does not exist or is not unique.
    *
-   * @param formatter    formatter to render records
-   * @param errorHandler handler to use on failures
-   * @param client       CloudWatch Logs client
-   * @param groupName    log group name
-   * @param streamName   log stream name (auto-generated if {@code null})
+   * @param formatter    the formatter used to convert log records to strings before publishing
+   * @param errorHandler the handler invoked when publishing fails, or {@code null} to discard errors
+   * @param client       a fully configured {@link CloudWatchLogsClient} used for all API calls
+   * @param groupName    the name of the CloudWatch Logs log group
+   * @param streamName   the name of the log stream within the group, or {@code null} to auto-create one
+   * @throws LoggerRuntimeException if the target stream does not exist or the stream name is not unique
    */
   public AWSAppender (Formatter formatter, ErrorHandler errorHandler, CloudWatchLogsClient client, String groupName, String streamName) {
 
@@ -90,12 +96,15 @@ public class AWSAppender extends AbstractAppender {
   }
 
   /**
-   * Formats and submits a record to AWS CloudWatch Logs. Invocation is synchronized to
-   * maintain sequence token ordering required by the service. This appender must be a singleton
-   * per JVM instance and the {@code streamName} must be unique so that sequence tokens remain serialized.
+   * Formats the record and submits it to CloudWatch Logs as a single {@code PutLogEvents} request.
+   * The method is synchronized to preserve the sequence token ordering that the service requires;
+   * on a successful response the internal token is advanced to the next value returned by the API.
+   * If the service rejects the event (expired, too old, or too new), a {@link LoggerRuntimeException}
+   * is thrown describing the rejection reason.
    *
-   * @param record log record to publish
-   * @throws Exception if formatting fails or the CloudWatch Logs API returns an error
+   * @param record the log record to format and publish
+   * @throws Exception if the formatter raises an exception, if the CloudWatch Logs API call fails,
+   *                   or if the submitted event is rejected by the service
    */
   @Override
   public synchronized void handleOutput (Record<?> record)

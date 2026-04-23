@@ -36,7 +36,8 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Represents a bundle of Bayeux messages grouped for delivery on a route.
+ * Immutable carrier for one or more Bayeux messages addressed to a single route, classified
+ * by its role in the request/response/delivery lifecycle.
  *
  * @param <V> concrete {@link Value} implementation used to represent message payloads
  */
@@ -48,12 +49,12 @@ public class Packet<V extends Value<V>> {
   private final String senderId;
 
   /**
-   * Creates a packet containing a single message.
+   * Creates a single-message packet.
    *
-   * @param packetType the type of packet being sent
-   * @param senderId   the session identifier of the sender
-   * @param route      the target route
-   * @param message    the message to include
+   * @param packetType role this packet plays in the Bayeux exchange
+   * @param senderId   session id of the originator, or {@code null} for server-originated packets
+   * @param route      channel route the packet is addressed to
+   * @param message    single message carried by this packet
    */
   public Packet (PacketType packetType, String senderId, Route route, Message<V> message) {
 
@@ -61,12 +62,12 @@ public class Packet<V extends Value<V>> {
   }
 
   /**
-   * Creates a packet with multiple messages.
+   * Creates a multi-message packet.
    *
-   * @param packetType the type of packet being sent
-   * @param senderId   the session identifier of the sender
-   * @param route      the target route
-   * @param message    the messages to include
+   * @param packetType role this packet plays in the Bayeux exchange
+   * @param senderId   session id of the originator, or {@code null} for server-originated packets
+   * @param route      channel route the packet is addressed to
+   * @param message    messages carried by this packet
    */
   public Packet (PacketType packetType, String senderId, Route route, Message<V>[] message) {
 
@@ -77,7 +78,9 @@ public class Packet<V extends Value<V>> {
   }
 
   /**
-   * @return the packet classification
+   * Returns the role this packet plays in the Bayeux exchange.
+   *
+   * @return {@link PacketType#REQUEST}, {@link PacketType#RESPONSE}, or {@link PacketType#DELIVERY}
    */
   public PacketType getPacketType () {
 
@@ -85,7 +88,9 @@ public class Packet<V extends Value<V>> {
   }
 
   /**
-   * @return the identifier of the sender session, or {@code null} if not associated
+   * Returns the session id of the originating client, or {@code null} for server-originated packets.
+   *
+   * @return sender session id, possibly {@code null}
    */
   public String getSenderId () {
 
@@ -93,7 +98,9 @@ public class Packet<V extends Value<V>> {
   }
 
   /**
-   * @return the route the packet targets
+   * Returns the route this packet is addressed to.
+   *
+   * @return target channel route
    */
   public Route getRoute () {
 
@@ -101,7 +108,9 @@ public class Packet<V extends Value<V>> {
   }
 
   /**
-   * @return messages contained in this packet
+   * Returns all messages carried by this packet.
+   *
+   * @return array of one or more messages
    */
   public Message<V>[] getMessages () {
 

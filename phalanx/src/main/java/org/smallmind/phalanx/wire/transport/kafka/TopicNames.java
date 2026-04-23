@@ -32,20 +32,27 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+/**
+ * Derives Kafka topic names for the four wire-protocol conversation patterns.
+ *
+ * <ul>
+ *   <li><b>shout</b> — broadcasts a request to every instance of a service group</li>
+ *   <li><b>talk</b>  — load-balances delivery within a service group (one consumer per message)</li>
+ *   <li><b>whisper</b> — targets a specific service instance directly</li>
+ *   <li><b>response</b> — routes results back to the originating caller</li>
+ * </ul>
+ * <p>
+ * All generated names share a caller-supplied prefix to scope them within the broker namespace.
+ */
 public class TopicNames {
 
-  /**
-   * Creates topic names for the wire protocol using a common prefix.
-   *
-   * @param prefix prefix applied to every topic name segment.
-   */
-  // prefix = "wire"
   private final String prefix;
 
   /**
-   * Creates a new helper for composing topic names.
+   * Constructs a {@code TopicNames} instance that prefixes every generated name with
+   * {@code prefix}.
    *
-   * @param prefix the shared prefix that identifies the system on the broker.
+   * @param prefix shared namespace prefix applied to all generated topic names (e.g. {@code "wire"})
    */
   public TopicNames (String prefix) {
 
@@ -53,10 +60,11 @@ public class TopicNames {
   }
 
   /**
-   * Builds the shout topic for the supplied service group.
+   * Returns the shout topic name for the given service group.  Messages published here are
+   * consumed by every running instance of the group.
    *
-   * @param serviceGroup the logical service grouping key.
-   * @return the shout topic name.
+   * @param serviceGroup logical service group identifier
+   * @return topic name in the form {@code <prefix>-shout-<serviceGroup>}
    */
   public String getShoutTopicName (String serviceGroup) {
 
@@ -64,10 +72,11 @@ public class TopicNames {
   }
 
   /**
-   * Builds the talk topic for the supplied service group.
+   * Returns the talk topic name for the given service group.  Messages published here are
+   * load-balanced across group instances so that exactly one instance processes each message.
    *
-   * @param serviceGroup the logical service grouping key.
-   * @return the talk topic name.
+   * @param serviceGroup logical service group identifier
+   * @return topic name in the form {@code <prefix>-talk-<serviceGroup>}
    */
   public String getTalkTopicName (String serviceGroup) {
 
@@ -75,11 +84,12 @@ public class TopicNames {
   }
 
   /**
-   * Builds the whisper topic for the supplied service group and target instance.
+   * Returns the whisper topic name that uniquely identifies a single service instance.
+   * Only that instance subscribes to this topic.
    *
-   * @param serviceGroup the logical service grouping key.
-   * @param instanceId   the specific service instance identifier.
-   * @return the whisper topic name.
+   * @param serviceGroup logical service group identifier
+   * @param instanceId   unique identifier of the target service instance
+   * @return topic name in the form {@code <prefix>-whisper-<serviceGroup>-<instanceId>}
    */
   public String getWhisperTopicName (String serviceGroup, String instanceId) {
 
@@ -87,10 +97,12 @@ public class TopicNames {
   }
 
   /**
-   * Builds the response topic for the calling instance.
+   * Returns the response topic name for the given caller.  The response transport publishes
+   * {@link org.smallmind.phalanx.wire.signal.ResultSignal}s here, and the corresponding request
+   * transport consumes from it.
    *
-   * @param instanceId the caller's unique identifier.
-   * @return the response topic name.
+   * @param instanceId unique identifier of the calling client (its caller ID)
+   * @return topic name in the form {@code <prefix>-response-<instanceId>}
    */
   public String getResponseTopicName (String instanceId) {
 

@@ -37,19 +37,28 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Builder for {@link Speedometer} meters.
+ * Fluent {@link MeterBuilder} implementation for constructing {@link Speedometer} meters.
+ *
+ * <p>The only configurable parameter is the sliding-window resolution used for count
+ * and rate calculations. The default resolution is one second.</p>
  */
 public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
+  /**
+   * Default sliding-window resolution of one second used when none is explicitly configured.
+   */
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
+  /**
+   * Duration of the sliding window for count and rate calculations; defaults to {@link #ONE_SECOND_STINT}.
+   */
   private Stint resolutionStint = ONE_SECOND_STINT;
 
   /**
-   * Sets the window resolution for rate calculations.
+   * Sets the sliding-window duration used for count and rate calculations.
    *
-   * @param resolutionStint window duration
-   * @return this builder
+   * @param resolutionStint the window duration; must be a positive duration
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
 
@@ -59,10 +68,10 @@ public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
   }
 
   /**
-   * Builds a speedometer with the configured window.
+   * Builds a {@link Speedometer} meter using the configured sliding-window resolution.
    *
-   * @param clock registry clock
-   * @return configured speedometer
+   * @param clock the registry clock forwarded to the {@link Speedometer} for rate tracking
+   * @return a fully configured {@link Speedometer} instance
    */
   @Override
   public Speedometer build (Clock clock) {

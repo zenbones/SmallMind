@@ -35,14 +35,14 @@ package org.smallmind.web.jwt;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals that a supplied key uses an algorithm that cannot be mapped to a JWT signing strategy.
+ * Thrown when a key's algorithm cannot be mapped to any supported JWT signing strategy.
  */
 public class UnknownAlgorithmException extends FormattedException {
 
   /**
-   * Constructs the exception with a formatted message.
+   * Constructs the exception with a printf-style message.
    *
-   * @param message the format string describing the issue
+   * @param message format string describing the unrecognized algorithm
    * @param args    arguments referenced by the format specifiers in the message
    */
   public UnknownAlgorithmException (String message, Object... args) {

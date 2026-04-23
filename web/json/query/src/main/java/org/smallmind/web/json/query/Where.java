@@ -41,7 +41,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 
 /**
- * Root container for a where clause consisting of a single top-level conjunction.
+ * Root container for a where clause, holding a single top-level {@link WhereConjunction}.
  */
 @XmlRootElement(name = "where", namespace = "http://org.smallmind/web/json/query")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -59,7 +59,7 @@ public class Where implements WherePermissible<Where> {
   /**
    * Creates a where clause with the given root conjunction.
    *
-   * @param rootConjunction conjunction forming the root of the predicate tree
+   * @param rootConjunction top-level conjunction forming the root of the predicate tree
    */
   public Where (WhereConjunction rootConjunction) {
 
@@ -69,7 +69,7 @@ public class Where implements WherePermissible<Where> {
   /**
    * Convenience factory for a where clause.
    *
-   * @param rootConjunction conjunction forming the root of the predicate tree
+   * @param rootConjunction top-level conjunction forming the root of the predicate tree
    * @return configured where clause
    */
   public static Where instance (WhereConjunction rootConjunction) {
@@ -78,10 +78,10 @@ public class Where implements WherePermissible<Where> {
   }
 
   /**
-   * Gathers all target field permissions implied by this where clause.
+   * Traverses the predicate tree and collects a {@link TargetWherePermit} for every referenced field.
    *
-   * @return set of target permits encountered in the predicate tree
-   * @throws Exception if traversal fails
+   * @return set of target permits found in this where clause
+   * @throws Exception if tree traversal fails
    */
   @Override
   @XmlTransient
@@ -121,7 +121,7 @@ public class Where implements WherePermissible<Where> {
   /**
    * Sets the root conjunction of this where clause.
    *
-   * @param rootConjunction root conjunction
+   * @param rootConjunction top-level conjunction
    */
   public void setRootConjunction (WhereConjunction rootConjunction) {
 

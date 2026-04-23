@@ -35,7 +35,11 @@ package org.smallmind.mongodb.utility;
 import com.mongodb.WriteConcern;
 
 /**
- * Enumerates write concern levels with an indicator for whether journaling can be enabled.
+ * Enumerates write concern acknowledgment levels and records whether journaling may be requested at each level.
+ *
+ * <p>{@link #ZERO} maps to an unacknowledged write and does not support journaling. {@link #ONE},
+ * {@link #TWO}, {@link #THREE}, and {@link #MAJORITY} map to the corresponding driver {@link WriteConcern}
+ * variants and each permit journaled writes.
  */
 public enum MongoAcknowledgment {
 
@@ -45,8 +49,10 @@ public enum MongoAcknowledgment {
   private final boolean journable;
 
   /**
-   * @param writeConcern driver write concern corresponding to the enumeration
-   * @param journable    whether journaling can accompany this concern
+   * Initialises a constant with its corresponding driver write concern and journaling capability.
+   *
+   * @param writeConcern the driver {@link WriteConcern} that corresponds to this acknowledgment level
+   * @param journable    {@code true} if journaling may be requested at this level
    */
   MongoAcknowledgment (WriteConcern writeConcern, boolean journable) {
 
@@ -55,7 +61,9 @@ public enum MongoAcknowledgment {
   }
 
   /**
-   * @return the driver write concern value
+   * Returns the driver write concern value associated with this acknowledgment level.
+   *
+   * @return the corresponding {@link WriteConcern}
    */
   public WriteConcern getWriteConcern () {
 
@@ -63,7 +71,9 @@ public enum MongoAcknowledgment {
   }
 
   /**
-   * @return true if journal acknowledgement may be requested
+   * Indicates whether journaled writes are supported at this acknowledgment level.
+   *
+   * @return {@code true} if journal acknowledgment may be requested
    */
   public boolean isJournable () {
 

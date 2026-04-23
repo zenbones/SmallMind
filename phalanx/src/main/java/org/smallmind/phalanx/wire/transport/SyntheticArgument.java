@@ -33,7 +33,9 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Represents an argument definition supplied programmatically rather than via annotation.
+ * Describes a method argument defined in code rather than discovered through reflection annotations,
+ * used when constructing {@link org.smallmind.phalanx.wire.Methodology} entries for synthetic methods
+ * such as {@code equals}.
  */
 public class SyntheticArgument {
 
@@ -41,10 +43,10 @@ public class SyntheticArgument {
   private final String name;
 
   /**
-   * Creates a synthetic argument declaration.
+   * Constructs a synthetic argument with the given name and type.
    *
-   * @param name          logical argument name
-   * @param parameterType parameter type
+   * @param name          logical parameter name used in wire argument maps
+   * @param parameterType declared type of the parameter
    */
   public SyntheticArgument (String name, Class<?> parameterType) {
 
@@ -53,9 +55,9 @@ public class SyntheticArgument {
   }
 
   /**
-   * Returns the argument name.
+   * Returns the logical parameter name.
    *
-   * @return name of the parameter
+   * @return parameter name
    */
   public String getName () {
 
@@ -63,9 +65,9 @@ public class SyntheticArgument {
   }
 
   /**
-   * Returns the parameter type.
+   * Returns the declared type of this parameter.
    *
-   * @return class of the parameter
+   * @return parameter type
    */
   public Class<?> getParameterType () {
 

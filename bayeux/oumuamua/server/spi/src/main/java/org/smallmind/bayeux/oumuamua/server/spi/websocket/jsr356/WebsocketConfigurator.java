@@ -39,16 +39,18 @@ import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
 
 /**
- * Delegating configurator that forwards websocket negotiation callbacks to an internal configurator.
+ * {@link ServerEndpointConfig.Configurator} decorator that forwards every negotiation callback to a
+ * wrapped delegate, providing a seam for future interception without coupling callers to a concrete
+ * configurator type.
  */
 public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
 
   private final ServerEndpointConfig.Configurator internal;
 
   /**
-   * Wraps an existing configurator.
+   * Constructs a decorator around the supplied delegate.
    *
-   * @param internal delegate configurator
+   * @param internal the {@link ServerEndpointConfig.Configurator} to which all calls are forwarded
    */
   public WebsocketConfigurator (ServerEndpointConfig.Configurator internal) {
 
@@ -56,7 +58,11 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
   }
 
   /**
-   * Delegates subprotocol negotiation.
+   * Delegates subprotocol selection to the wrapped configurator.
+   *
+   * @param supported subprotocols the server endpoint declares support for
+   * @param requested subprotocols the client offered during the upgrade handshake
+   * @return the subprotocol chosen by the delegate, or an empty string if none is acceptable
    */
   @Override
   public String getNegotiatedSubprotocol (List<String> supported, List<String> requested) {
@@ -65,7 +71,11 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
   }
 
   /**
-   * Delegates extension negotiation.
+   * Delegates websocket extension negotiation to the wrapped configurator.
+   *
+   * @param installed extensions installed and available on the server
+   * @param requested extensions the client requested during the upgrade handshake
+   * @return the list of extensions the delegate chooses to enable for the session
    */
   @Override
   public List<Extension> getNegotiatedExtensions (List<Extension> installed, List<Extension> requested) {
@@ -74,7 +84,10 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
   }
 
   /**
-   * Delegates origin checking.
+   * Delegates origin validation to the wrapped configurator.
+   *
+   * @param originHeaderValue value of the HTTP {@code Origin} header sent by the client
+   * @return {@code true} if the delegate permits the connection from the given origin
    */
   @Override
   public boolean checkOrigin (String originHeaderValue) {
@@ -83,7 +96,12 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
   }
 
   /**
-   * Delegates handshake modification.
+   * Delegates HTTP upgrade handshake modification to the wrapped configurator, allowing it to
+   * inspect request headers and mutate response headers before the handshake completes.
+   *
+   * @param serverEndpointConfig the endpoint configuration for the session being opened
+   * @param request              the incoming HTTP upgrade request
+   * @param response             the outgoing HTTP upgrade response to modify
    */
   @Override
   public void modifyHandshake (ServerEndpointConfig serverEndpointConfig, HandshakeRequest request, HandshakeResponse response) {
@@ -92,7 +110,13 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
   }
 
   /**
-   * Delegates endpoint instance creation.
+   * Delegates endpoint instance creation to the wrapped configurator and casts the result to the
+   * requested type.
+   *
+   * @param <T>           the endpoint type
+   * @param endpointClass the class of endpoint to instantiate
+   * @return a new endpoint instance of type {@code T} produced by the delegate
+   * @throws InstantiationException if the delegate cannot construct the endpoint instance
    */
   @Override
   public <T> T getEndpointInstance (Class<T> endpointClass)

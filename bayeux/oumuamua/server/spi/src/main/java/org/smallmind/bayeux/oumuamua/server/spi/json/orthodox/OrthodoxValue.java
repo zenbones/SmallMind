@@ -38,16 +38,17 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 /**
- * Base class for orthodox value implementations, wiring in the shared factory.
+ * Abstract base for all orthodox {@link Value} implementations, holding the owning
+ * {@link OrthodoxValueFactory} and providing a {@link #toString()} that delegates to {@link #encode}.
  */
 public abstract class OrthodoxValue implements Value<OrthodoxValue> {
 
   private final OrthodoxValueFactory factory;
 
   /**
-   * Associates the value with its factory.
+   * Stores the factory reference shared by all values in the same codec session.
    *
-   * @param factory owning factory
+   * @param factory the {@link OrthodoxValueFactory} that created and owns this value
    */
   protected OrthodoxValue (OrthodoxValueFactory factory) {
 
@@ -55,7 +56,9 @@ public abstract class OrthodoxValue implements Value<OrthodoxValue> {
   }
 
   /**
-   * @return the factory that created this value
+   * Returns the {@link OrthodoxValueFactory} that owns this value.
+   *
+   * @return value factory used for constructing sibling values
    */
   @Override
   public ValueFactory<OrthodoxValue> getFactory () {
@@ -64,9 +67,11 @@ public abstract class OrthodoxValue implements Value<OrthodoxValue> {
   }
 
   /**
-   * Encodes the value to a string for debugging.
+   * Returns a JSON string representation of this value by delegating to {@link #encode}.
+   * Wraps any {@link IOException} in a {@link RuntimeException} since {@code toString} cannot throw.
    *
-   * @return encoded representation
+   * @return JSON-encoded string suitable for debugging
+   * @throws RuntimeException wrapping an {@link IOException} if encoding unexpectedly fails
    */
   @Override
   public String toString () {

@@ -40,7 +40,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring FactoryBean that constructs {@link JsonTarget} instances from simple properties.
+ * Spring {@link FactoryBean} that assembles a {@link JsonTarget} from injected protocol, host, port, and context properties.
  */
 public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
 
@@ -51,9 +51,9 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   private int port;
 
   /**
-   * Sets the HTTP protocol to use.
+   * Sets the HTTP protocol.
    *
-   * @param protocol protocol enum
+   * @param protocol protocol to use
    */
   public void setProtocol (HttpProtocol protocol) {
 
@@ -71,7 +71,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Sets the target port.
+   * Sets the port number.
    *
    * @param port port number
    */
@@ -81,7 +81,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Sets an optional context path.
+   * Sets the optional context path prefix appended to the host URI.
    *
    * @param context context path
    */
@@ -91,7 +91,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Indicates this FactoryBean produces a singleton.
+   * Indicates this factory returns a singleton.
    *
    * @return {@code true}
    */
@@ -102,7 +102,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Returns the object type this factory creates.
+   * Returns the type produced by this factory.
    *
    * @return {@link JsonTarget} class
    */
@@ -113,9 +113,9 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Builds the {@link JsonTarget} once properties are set.
+   * Builds the {@link JsonTarget} once all properties are set.
    *
-   * @throws URISyntaxException if the URI cannot be built
+   * @throws URISyntaxException if the configured values produce an invalid URI
    */
   @Override
   public void afterPropertiesSet ()
@@ -125,9 +125,9 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Returns the created target instance.
+   * Returns the constructed {@link JsonTarget}.
    *
-   * @return JsonTarget singleton
+   * @return target singleton
    */
   @Override
   public JsonTarget getObject () {

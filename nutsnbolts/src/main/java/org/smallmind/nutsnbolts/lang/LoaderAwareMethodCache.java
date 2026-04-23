@@ -39,10 +39,10 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Cache keyed by {@link Method}, segmented by the defining class's {@link ClassLoader}. Segments are
- * cleaned up automatically when the associated loader is collected.
+ * Thread-safe cache keyed by {@link Method} and segmented by the defining class's {@link ClassLoader},
+ * automatically expunging stale segments when their associated loader is garbage collected.
  *
- * @param <T> value type stored for each method
+ * @param <T> the type of value stored for each method
  */
 public class LoaderAwareMethodCache<T> {
 
@@ -50,9 +50,9 @@ public class LoaderAwareMethodCache<T> {
   private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<Method, T>> loaderMap = new ConcurrentHashMap<>();
 
   /**
-   * Retrieves a cached value for the given method in its class loader segment.
+   * Returns the cached value for the given method, or {@code null} if no entry exists.
    *
-   * @param method the method key
+   * @param method the method whose cached value is requested
    * @return the cached value, or {@code null} if absent
    */
   public T get (Method method) {
@@ -61,11 +61,11 @@ public class LoaderAwareMethodCache<T> {
   }
 
   /**
-   * Adds or replaces a value for the supplied method within its loader segment.
+   * Stores a value for the given method, replacing any previously cached value.
    *
-   * @param method the method key
-   * @param value  the value to store
-   * @return the prior value associated with the method, or {@code null} if none
+   * @param method the method to use as the cache key
+   * @param value  the value to associate with the method
+   * @return the previous value associated with the method, or {@code null} if none existed
    */
   public T put (Method method, T value) {
 
@@ -75,11 +75,11 @@ public class LoaderAwareMethodCache<T> {
   }
 
   /**
-   * Adds a value for the supplied method only if one is not already present.
+   * Stores a value for the given method only if no value is already present.
    *
-   * @param method the method key
-   * @param value  the value to store if absent
-   * @return the existing value if present; otherwise {@code null}
+   * @param method the method to use as the cache key
+   * @param value  the value to store if the method is not already cached
+   * @return the existing value if one was already present, or {@code null} if the new value was stored
    */
   public T putIfAbsent (Method method, T value) {
 
@@ -89,10 +89,11 @@ public class LoaderAwareMethodCache<T> {
   }
 
   /**
-   * Retrieves the map corresponding to the method's defining class loader, creating it if absent.
+   * Returns the method-to-value map for the class loader that defined the given method, creating an
+   * empty map and registering it if one does not yet exist.
    *
-   * @param method the method whose loader determines the segment
-   * @return a concurrent map for the loader
+   * @param method the method whose declaring class's loader identifies the segment
+   * @return the concurrent map for that loader segment
    */
   private ConcurrentHashMap<Method, T> getMethodMap (Method method) {
 
@@ -112,7 +113,8 @@ public class LoaderAwareMethodCache<T> {
   }
 
   /**
-   * Removes loader segments whose associated class loaders have been collected.
+   * Polls the reference queue and removes any loader segments whose class loaders have been
+   * garbage collected.
    */
   private void clearExpiredReferences () {
 
@@ -126,16 +128,17 @@ public class LoaderAwareMethodCache<T> {
   }
 
   /**
-   * Phantom reference keyed by loader identity to support cleanup when loaders are collected.
+   * Phantom reference that serves as the map key for a class loader segment, enabling automatic
+   * removal of the segment once the loader is garbage collected.
    */
   private class LoaderKey extends PhantomReference<ClassLoader> {
 
     private final int identityHashCode;
 
     /**
-     * Creates a key that tracks the supplied loader for cleanup.
+     * Constructs a key that tracks the given class loader via the enclosing cache's reference queue.
      *
-     * @param classLoader the loader to monitor
+     * @param classLoader the class loader to monitor for collection
      */
     public LoaderKey (ClassLoader classLoader) {
 
@@ -145,7 +148,7 @@ public class LoaderAwareMethodCache<T> {
     }
 
     /**
-     * Uses the loader's identity hash code for stable hashing.
+     * Returns the identity hash code of the tracked class loader captured at construction time.
      *
      * @return the identity hash code of the tracked loader
      */
@@ -156,10 +159,10 @@ public class LoaderAwareMethodCache<T> {
     }
 
     /**
-     * Compares loader keys by stored identity hash code.
+     * Returns {@code true} if the other object is a {@code LoaderKey} with the same identity hash code.
      *
-     * @param obj the object to compare
-     * @return {@code true} when the identity hash codes match
+     * @param obj the object to compare with this key
+     * @return {@code true} if {@code obj} is a {@code LoaderKey} whose identity hash code matches
      */
     @Override
     public boolean equals (Object obj) {

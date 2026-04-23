@@ -35,14 +35,17 @@ package org.smallmind.scribe.pen;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Template that targets a single, specific logger name with highest priority.
+ * A {@link Template} that matches exactly one logger by name with the highest possible priority
+ * ({@code Integer.MAX_VALUE}), ensuring it overrides any less-specific template for that logger.
+ * An {@link java.util.concurrent.atomic.AtomicReference} guards single-initialization of the target name.
  */
 public class PersonalizedTemplate extends Template {
 
   private final AtomicReference<String> loggerNameRef = new AtomicReference<String>();
 
   /**
-   * Creates an uninitialized personalized template; set the logger name before use.
+   * Constructs an uninitialized template; {@link #setLoggerName(String)} must be called exactly
+   * once before this template is used.
    */
   public PersonalizedTemplate () {
 
@@ -50,9 +53,9 @@ public class PersonalizedTemplate extends Template {
   }
 
   /**
-   * Creates a template bound to a specific logger name.
+   * Constructs a template bound to the given logger name.
    *
-   * @param loggerName logger name to match exactly
+   * @param loggerName the exact logger name this template will match
    */
   public PersonalizedTemplate (String loggerName) {
 
@@ -62,12 +65,12 @@ public class PersonalizedTemplate extends Template {
   }
 
   /**
-   * Creates a template with level, context behavior, and bound logger name.
+   * Constructs a template with an explicit log level, context-fill behavior, and bound logger name.
    *
-   * @param level                 default level
-   * @param autoFillLoggerContext whether to auto-fill logger context
-   * @param loggerName            logger name to match exactly
-   * @throws LoggerException if initialization fails
+   * @param level                 the default {@link Level} for the matched logger
+   * @param autoFillLoggerContext {@code true} to automatically capture the caller's context on each record
+   * @param loggerName            the exact logger name this template will match
+   * @throws LoggerException if internal initialization fails
    */
   public PersonalizedTemplate (Level level, boolean autoFillLoggerContext, String loggerName)
     throws LoggerException {
@@ -78,15 +81,16 @@ public class PersonalizedTemplate extends Template {
   }
 
   /**
-   * Creates a template with filters, appenders, enhancers, level, context behavior, and bound logger name.
+   * Constructs a fully specified template with filters, appenders, enhancers, level, context behavior,
+   * and the bound logger name.
    *
-   * @param filters               filters to apply
-   * @param appenders             appenders to attach
-   * @param enhancers             enhancers to apply
-   * @param level                 default level
-   * @param autoFillLoggerContext whether to auto-fill logger context
-   * @param loggerName            logger name to match exactly
-   * @throws LoggerException if initialization fails
+   * @param filters               filters applied before a record is forwarded to appenders
+   * @param appenders             appenders that receive matching records
+   * @param enhancers             enhancers that decorate records before they are appended
+   * @param level                 the default {@link Level} for the matched logger
+   * @param autoFillLoggerContext {@code true} to automatically capture the caller's context on each record
+   * @param loggerName            the exact logger name this template will match
+   * @throws LoggerException if internal initialization fails
    */
   public PersonalizedTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String loggerName)
     throws LoggerException {
@@ -97,10 +101,10 @@ public class PersonalizedTemplate extends Template {
   }
 
   /**
-   * Sets the logger name to match, only if not previously initialized.
+   * Binds this template to the given logger name; may only be called once.
    *
-   * @param loggerName logger name to bind to this template
-   * @throws LoggerRuntimeException if already initialized
+   * @param loggerName the exact logger name to match
+   * @throws LoggerRuntimeException if this template has already been bound to a logger name
    */
   public void setLoggerName (String loggerName) {
 
@@ -110,11 +114,12 @@ public class PersonalizedTemplate extends Template {
   }
 
   /**
-   * Matches the provided logger name against the configured name.
+   * Returns {@code Integer.MAX_VALUE} when {@code loggerName} exactly equals the configured name,
+   * giving this template the highest possible priority, or {@link Template#NO_MATCH} for any other name.
    *
-   * @param loggerName logger name to evaluate
-   * @return {@code Integer.MAX_VALUE} for an exact match, otherwise {@link Template#NO_MATCH}
-   * @throws LoggerRuntimeException if the template was never initialized with a logger name
+   * @param loggerName the logger name to evaluate
+   * @return {@code Integer.MAX_VALUE} on an exact match; {@link Template#NO_MATCH} otherwise
+   * @throws LoggerRuntimeException if this template was never initialized with a logger name
    */
   public int matchLogger (String loggerName) {
 

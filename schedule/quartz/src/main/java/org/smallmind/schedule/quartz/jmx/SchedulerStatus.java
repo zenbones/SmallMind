@@ -33,8 +33,15 @@
 package org.smallmind.schedule.quartz.jmx;
 
 /**
- * Enumerates high-level states that a Quartz {@code Scheduler} may report
- * for monitoring purposes.
+ * Represents the observable operational states of a Quartz {@code Scheduler}
+ * as reported through the {@link SchedulerMXBean} management interface.
+ *
+ * <ul>
+ *   <li>{@link #STARTED} — the scheduler is running and triggers are firing</li>
+ *   <li>{@link #STANDBY} — the scheduler is paused; triggers are not fired</li>
+ *   <li>{@link #SHUTDOWN} — the scheduler has been stopped and cannot be restarted</li>
+ *   <li>{@link #UNKNOWN} — the scheduler state could not be mapped to a known value</li>
+ * </ul>
  */
 public enum SchedulerStatus {
 

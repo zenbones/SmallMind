@@ -33,7 +33,9 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Voice implementation representing a targeted whisper request to a specific service instance.
+ * {@link Voice} implementation that delivers a request to a specific service instance
+ * within a named group using the {@link VocalMode#WHISPER} delivery mode.
+ * Always uses a {@link TwoWayConversation} and supports an optional response timeout.
  */
 public class Whispering implements Voice<String, String> {
 
@@ -42,10 +44,10 @@ public class Whispering implements Voice<String, String> {
   private final String instanceId;
 
   /**
-   * Creates a whisper with no custom timeout.
+   * Constructs a {@code Whispering} voice with no custom timeout (uses the transport default).
    *
-   * @param serviceGroup destination service group
-   * @param instanceId   specific instance identifier
+   * @param serviceGroup the name of the service group containing the target instance
+   * @param instanceId   the identifier of the specific service instance to address
    */
   public Whispering (String serviceGroup, String instanceId) {
 
@@ -53,11 +55,11 @@ public class Whispering implements Voice<String, String> {
   }
 
   /**
-   * Creates a whisper with an optional timeout.
+   * Constructs a {@code Whispering} voice with an explicit response timeout.
    *
-   * @param serviceGroup destination service group
-   * @param instanceId   specific instance identifier
-   * @param timeout      timeout in seconds for the two-way conversation
+   * @param serviceGroup the name of the service group containing the target instance
+   * @param instanceId   the identifier of the specific service instance to address
+   * @param timeout      maximum time in seconds to wait for a response; {@code 0} uses the transport default
    */
   public Whispering (String serviceGroup, String instanceId, Long timeout) {
 
@@ -68,7 +70,9 @@ public class Whispering implements Voice<String, String> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link VocalMode#WHISPER}, identifying this voice as an instance-targeted request.
+   *
+   * @return {@link VocalMode#WHISPER}
    */
   @Override
   public VocalMode getMode () {
@@ -77,9 +81,9 @@ public class Whispering implements Voice<String, String> {
   }
 
   /**
-   * Returns the two-way conversation associated with this whisper.
+   * Returns the two-way conversation that governs timeout and response handling for this whisper.
    *
-   * @return conversation including timeout behavior
+   * @return the {@link TwoWayConversation} associated with this invocation
    */
   public Conversation<?> getConversation () {
 
@@ -87,7 +91,9 @@ public class Whispering implements Voice<String, String> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name of the service group that contains the target instance.
+   *
+   * @return the target service group name
    */
   @Override
   public String getServiceGroup () {
@@ -96,7 +102,9 @@ public class Whispering implements Voice<String, String> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the identifier of the specific service instance this whisper is addressed to.
+   *
+   * @return the target instance id
    */
   @Override
   public String getInstanceId () {

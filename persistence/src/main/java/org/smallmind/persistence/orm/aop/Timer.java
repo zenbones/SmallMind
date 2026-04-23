@@ -38,7 +38,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method to be timed by the {@link TimerAspect}.
+ * Method-level annotation that, when combined with a {@link Timed} class annotation, causes
+ * {@link TimerAspect} to measure and record the execution duration of the annotated method.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

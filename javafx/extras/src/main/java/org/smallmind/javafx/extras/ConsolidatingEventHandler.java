@@ -43,10 +43,13 @@ import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Consolidates rapid {@link EventHandler#handle(Event)} invocations into a single dispatch after a quiet period.
- * This allows filtering high-frequency events while still processing the most recent occurrence.
+ * A debouncing wrapper around an {@link EventHandler} that consolidates rapid bursts of events
+ * into a single dispatch after a configurable quiet period. Each new event received within the
+ * quiet window supersedes the previous one so only the most recent event is forwarded. Dispatch
+ * always occurs on the JavaFX application thread. A shared daemon thread polls for expired
+ * entries every 50 ms.
  *
- * @param <T> the event type handled
+ * @param <T> the type of event handled
  */
 public class ConsolidatingEventHandler<T extends Event> implements EventHandler<T>, Comparable<ConsolidatingEventHandler<?>> {
 
@@ -65,10 +68,13 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Creates an event handler that delays and consolidates event notifications.
+   * Creates an event handler that delays delivery by {@code consolidationTimeMillis} and discards
+   * intermediate events, ultimately forwarding only the last received event to {@code innerEventHandler}.
    *
-   * @param consolidationTimeMillis the quiet period in milliseconds used to coalesce events
-   * @param innerEventHandler       the handler that will receive the consolidated event
+   * @param consolidationTimeMillis the quiet-period length in milliseconds; events received within
+   *                                this window after the first are suppressed
+   * @param innerEventHandler       the delegate that receives the consolidated event;
+   *                                must not be {@code null}
    */
   public ConsolidatingEventHandler (long consolidationTimeMillis, EventHandler<T> innerEventHandler) {
 
@@ -77,7 +83,9 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * @return the wrapped event handler to invoke after consolidation
+   * Returns the delegate handler that ultimately receives consolidated event dispatches.
+   *
+   * @return the inner handler; never {@code null}
    */
   private EventHandler<T> getInnerEventHandler () {
 
@@ -85,7 +93,10 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * @return the current generation counter used to identify the latest queued event
+   * Returns the current generation counter. Incremented each time {@link #handle} is called; the
+   * worker thread uses it to detect stale queue entries.
+   *
+   * @return the current generation number
    */
   private synchronized int getGeneration () {
 
@@ -93,9 +104,10 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Enqueues the event for delivery after the consolidation window, replacing any previously queued event.
+   * Queues the event for deferred delivery, superseding any previously queued event for this
+   * handler. Safe to call from any thread.
    *
-   * @param event the event that occurred
+   * @param event the event to queue; must not be {@code null}
    */
   @Override
   public synchronized void handle (T event) {
@@ -104,10 +116,11 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Compares handlers by identity for ordering in the consolidation map.
+   * Compares this handler to another by identity hash code to produce a consistent ordering
+   * within the shared skip-list map.
    *
-   * @param handler the handler to compare to
-   * @return comparison result based on instance hash codes
+   * @param handler the handler to compare against; must not be {@code null}
+   * @return a negative, zero, or positive integer based on hash code difference
    */
   @Override
   public int compareTo (ConsolidatingEventHandler<?> handler) {
@@ -116,12 +129,15 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Drains expired events and dispatches the latest generation on the JavaFX thread.
+   * Background worker that drains expired entries from the pending-event map and dispatches
+   * the latest generation for each handler on the JavaFX application thread.
    */
   private static class ConsolidationWorker implements Runnable {
 
     /**
-     * Polls periodically for expired events until stopped and dispatches them.
+     * Polls every 50 ms for events whose quiet window has elapsed. For each expired entry whose
+     * generation matches the handler's current generation, the event is dispatched synchronously
+     * on the JavaFX application thread.
      */
     @Override
     public void run () {
@@ -162,9 +178,10 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Key used to order pending events by expiration and handler identity.
+   * Ordering key used to schedule and retrieve pending event dispatches in the shared skip-list
+   * map. Keys are ordered first by expiration time, then by handler identity.
    *
-   * @param <U> the event type
+   * @param <U> the event type of the associated handler
    */
   private static class ConsolidatingKey<U extends Event> implements Comparable<ConsolidatingKey<U>> {
 
@@ -173,7 +190,8 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     private final int generation;
 
     /**
-     * Creates a sentinel key for head map searches.
+     * Creates a sentinel key with an expiration of zero, used as the exclusive upper bound
+     * argument when querying the map for entries whose quiet window has elapsed.
      */
     private ConsolidatingKey () {
 
@@ -181,11 +199,11 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
 
     /**
-     * Constructs a key representing a scheduled event notification.
+     * Creates a key representing a scheduled event dispatch.
      *
      * @param handler                 the handler that will receive the event
-     * @param generation              the generation of the queued event
-     * @param consolidationTimeMillis the delay before dispatching
+     * @param generation              monotonically increasing identifier for this dispatch
+     * @param consolidationTimeMillis the delay in milliseconds before the event may be dispatched
      */
     private ConsolidatingKey (ConsolidatingEventHandler<U> handler, int generation, long consolidationTimeMillis) {
 
@@ -196,7 +214,9 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
 
     /**
-     * @return the handler to dispatch to
+     * Returns the handler associated with this scheduled event dispatch.
+     *
+     * @return the owning handler, or {@code null} for a sentinel key
      */
     private ConsolidatingEventHandler<?> getEventHandler () {
 
@@ -204,7 +224,10 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
 
     /**
-     * @return the generation identifier
+     * Returns the generation number that identifies this particular event within the handler's
+     * dispatch sequence.
+     *
+     * @return the generation counter value
      */
     private int getGeneration () {
 
@@ -212,7 +235,9 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
 
     /**
-     * @return expiration time in milliseconds
+     * Returns the wall-clock time in milliseconds at which this entry becomes eligible for dispatch.
+     *
+     * @return expiration epoch time in milliseconds
      */
     private long getExpiration () {
 
@@ -220,10 +245,11 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     }
 
     /**
-     * Orders keys by expiration time then handler identity to ensure consistent ordering.
+     * Orders keys by expiration time ascending. When expiration times are equal, sentinel keys
+     * (null handler) sort before live keys, and live keys are ordered by handler identity.
      *
-     * @param key another key
-     * @return comparison result
+     * @param key the key to compare against; must not be {@code null}
+     * @return a negative, zero, or positive integer
      */
     @Override
     public int compareTo (ConsolidatingKey key) {

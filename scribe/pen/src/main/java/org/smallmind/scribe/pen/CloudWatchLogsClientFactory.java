@@ -41,7 +41,10 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
 /**
- * Spring factory bean for constructing an AWS CloudWatch Logs client with static credentials.
+ * Spring {@link FactoryBean} that builds and vends a singleton {@link CloudWatchLogsClient}
+ * authenticated with static AWS credentials and targeting the configured region. The client is
+ * constructed once during {@link #afterPropertiesSet()} and returned by every subsequent call to
+ * {@link #getObject()}.
  */
 public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsClient>, InitializingBean {
 
@@ -51,9 +54,9 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   private String awsSecretKey;
 
   /**
-   * Sets the AWS access key.
+   * Sets the AWS access key ID used to authenticate API requests.
    *
-   * @param awsAccessKey access key id
+   * @param awsAccessKey the AWS access key ID (the public part of the credential pair)
    */
   public void setAwsAccessKey (String awsAccessKey) {
 
@@ -61,9 +64,9 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Sets the AWS secret key.
+   * Sets the AWS secret access key used to sign API requests.
    *
-   * @param awsSecretKey secret access key
+   * @param awsSecretKey the AWS secret access key (the private part of the credential pair)
    */
   public void setAwsSecretKey (String awsSecretKey) {
 
@@ -71,9 +74,9 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Sets the AWS region.
+   * Sets the AWS region to which CloudWatch Logs API calls will be directed.
    *
-   * @param region AWS region
+   * @param region the target AWS region (e.g. {@code Region.US_EAST_1})
    */
   public void setRegion (Region region) {
 
@@ -81,7 +84,8 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Indicates the factory produces a singleton instance.
+   * Declares that this factory manages a singleton; the same {@link CloudWatchLogsClient} instance
+   * is returned on every call to {@link #getObject()}.
    *
    * @return always {@code true}
    */
@@ -92,9 +96,10 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Returns the type of object produced by this factory.
+   * Returns the type of object produced by this factory, used by the Spring container for
+   * type-based autowiring.
    *
-   * @return {@link CloudWatchLogsClient} class
+   * @return {@link CloudWatchLogsClient}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -103,9 +108,9 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Provides the created {@link CloudWatchLogsClient} instance.
+   * Returns the {@link CloudWatchLogsClient} instance built by {@link #afterPropertiesSet()}.
    *
-   * @return configured client
+   * @return the fully configured, ready-to-use CloudWatch Logs client
    */
   @Override
   public CloudWatchLogsClient getObject () {
@@ -114,9 +119,10 @@ public class CloudWatchLogsClientFactory implements FactoryBean<CloudWatchLogsCl
   }
 
   /**
-   * Builds the CloudWatch Logs client after required properties are set.
+   * Constructs the {@link CloudWatchLogsClient} using the configured access key, secret key, and
+   * region. Called automatically by the Spring container once all bean properties have been injected.
    *
-   * @throws Exception if client construction fails
+   * @throws Exception if the client cannot be built (e.g. invalid credentials or region)
    */
   @Override
   public void afterPropertiesSet ()

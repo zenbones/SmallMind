@@ -40,16 +40,17 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Simple list-backed array value implementation for the orthodox codec.
+ * Linked-list-backed {@link ArrayValue} implementation for the orthodox codec, providing ordered
+ * positional access and mutation with simple O(n) index traversal.
  */
 public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<OrthodoxValue> {
 
   private final LinkedList<Value<OrthodoxValue>> valueList = new LinkedList<>();
 
   /**
-   * Creates an empty array value.
+   * Constructs an empty array associated with the given factory.
    *
-   * @param factory owning factory
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
    */
   protected OrthodoxArrayValue (OrthodoxValueFactory factory) {
 
@@ -57,7 +58,9 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * @return number of elements in the array
+   * Returns the number of elements currently held in the array.
+   *
+   * @return element count
    */
   @Override
   public int size () {
@@ -66,7 +69,9 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * @return {@code true} if the array has no values
+   * Reports whether the array contains no elements.
+   *
+   * @return {@code true} when the array is empty
    */
   @Override
   public boolean isEmpty () {
@@ -75,10 +80,11 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Retrieves a value at the provided index.
+   * Returns the value at the specified zero-based index.
    *
-   * @param index index to read
-   * @return value at the index
+   * @param index zero-based position to retrieve
+   * @return value at {@code index}
+   * @throws IndexOutOfBoundsException if {@code index} is out of range
    */
   @Override
   public Value<OrthodoxValue> get (int index) {
@@ -87,10 +93,10 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Appends a value.
+   * Appends {@code value} at the end of the array.
    *
-   * @param value value to add
-   * @return this array
+   * @param value value to append
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> add (U value) {
@@ -101,11 +107,12 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Replaces a value at the given index.
+   * Replaces the element at {@code index} with {@code value}.
    *
-   * @param index index to set
-   * @param value value to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param value replacement value
+   * @return this array for chaining
+   * @throws IndexOutOfBoundsException if {@code index} is out of range
    */
   @Override
   public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> set (int index, U value) {
@@ -116,11 +123,12 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Inserts a value at the specified index.
+   * Inserts {@code value} at {@code index}, shifting all subsequent elements one position right.
    *
-   * @param index insertion point
+   * @param index zero-based insertion point
    * @param value value to insert
-   * @return this array
+   * @return this array for chaining
+   * @throws IndexOutOfBoundsException if {@code index} is out of range
    */
   @Override
   public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> insert (int index, U value) {
@@ -131,10 +139,11 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Removes a value at the index.
+   * Removes and returns the element at {@code index}, shifting subsequent elements left.
    *
-   * @param index index to remove
-   * @return removed value
+   * @param index zero-based position to remove
+   * @return the value that occupied {@code index}
+   * @throws IndexOutOfBoundsException if {@code index} is out of range
    */
   @Override
   public Value<OrthodoxValue> remove (int index) {
@@ -143,10 +152,10 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Appends all values from the provided collection.
+   * Appends every element of {@code values} in iteration order.
    *
-   * @param values values to add
-   * @return this array
+   * @param values collection of values to append
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<OrthodoxValue>> ArrayValue<OrthodoxValue> addAll (Collection<U> values) {
@@ -157,9 +166,9 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Clears the array.
+   * Removes all elements from the array, leaving it empty.
    *
-   * @return this array
+   * @return this array for chaining
    */
   @Override
   public ArrayValue<OrthodoxValue> removeAll () {
@@ -170,10 +179,10 @@ public class OrthodoxArrayValue extends OrthodoxValue implements ArrayValue<Orth
   }
 
   /**
-   * Encodes the array to JSON.
+   * Writes the JSON array representation of all non-null elements to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

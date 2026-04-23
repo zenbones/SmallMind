@@ -38,14 +38,14 @@ import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
 /**
- * Translates field references into JPA Criteria {@link Path} objects.
+ * A {@link WhereFieldTransformer} that resolves field references to JPA Criteria {@link Path} objects.
  */
 public class JPAWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
   /**
-   * Creates a transformer using the provided transform function.
+   * Constructs a transformer delegating field resolution to the given transform function.
    *
-   * @param transform function that produces a {@link JPAWherePath} from entity/name
+   * @param transform function that converts an entity alias and field name into a {@link JPAWherePath}
    */
   public JPAWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> transform) {
 

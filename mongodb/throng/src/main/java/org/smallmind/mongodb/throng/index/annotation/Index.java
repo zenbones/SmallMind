@@ -38,20 +38,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.smallmind.mongodb.throng.index.IndexType;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
 /**
  * Declares a single field and index type used within a compound index definition.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
 public @interface Index {
 
   /**
-   * @return field path to include in the index
+   * The dot-notation field path to include in this compound index key.
+   *
+   * @return the field path
    */
   String value ();
 
   /**
-   * @return index type applied to the field
+   * The index type (direction or special type) to apply to this field.
+   *
+   * @return the index type
    */
   IndexType type () default IndexType.ASCENDING;
 }

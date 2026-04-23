@@ -38,12 +38,14 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Validator backing the {@link NotZero} constraint for numeric values.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link NotZero} constraint that rejects numeric values equal to zero.
  */
 public class NotZeroValidator implements ConstraintValidator<NotZero, Number> {
 
   /**
-   * No-op initializer; present for interface compliance.
+   * No-op initializer provided for interface compliance.
+   *
+   * @param constraintAnnotation the annotation instance driving this validation (unused)
    */
   @Override
   public void initialize (NotZero constraintAnnotation) {
@@ -51,11 +53,11 @@ public class NotZeroValidator implements ConstraintValidator<NotZero, Number> {
   }
 
   /**
-   * Checks that the number is non-zero; {@code null} is treated as valid.
+   * Returns {@code true} if the value is {@code null} or not equal to zero.
    *
-   * @param value   candidate number
-   * @param context validation context (unused)
-   * @return {@code true} when the value is null or non-zero
+   * @param value   the candidate number to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or non-zero
    */
   @Override
   public boolean isValid (Number value, ConstraintValidatorContext context) {

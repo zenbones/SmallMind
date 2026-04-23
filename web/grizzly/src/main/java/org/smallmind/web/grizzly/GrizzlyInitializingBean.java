@@ -77,8 +77,9 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
- * Spring lifecycle bean that bootstraps a Grizzly HTTP/HTTPS server and deploys servlet, JAX-WS, JAX-RS, Spring and
- * WebSocket components configured via {@link WebApplicationOption} and the various installer beans.
+ * Spring lifecycle bean that creates and manages an embedded Grizzly HTTP/HTTPS server, deploying servlets, filters,
+ * listeners, JAX-RS, JAX-WS, Spring request context, and WebSocket endpoints as declared by the configured
+ * {@link WebApplicationOption} array and collected installer beans.
  */
 public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent> {
 
@@ -100,7 +101,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private boolean debug = false;
 
   /**
-   * @param ioStrategy custom Grizzly IO strategy to apply to the listeners; {@code null} keeps the default
+   * Sets the Grizzly IO strategy applied to all network listeners.
+   *
+   * @param ioStrategy IO strategy to use, or {@code null} to keep the Grizzly default
    */
   public void setIoStrategy (IOStrategy ioStrategy) {
 
@@ -108,7 +111,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param threadPoolProbe optional probe for observing worker thread pools
+   * Sets a probe for monitoring the worker thread pool.
+   *
+   * @param threadPoolProbe probe to attach to the worker pool configuration
    */
   public void setThreadPoolProbe (ThreadPoolProbe threadPoolProbe) {
 
@@ -116,7 +121,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param host host name or address Grizzly should bind to; {@code null} binds on all interfaces
+   * Sets the host name or address that Grizzly should bind to.
+   *
+   * @param host hostname or IP address, or {@code null} to bind on all interfaces
    */
   public void setHost (String host) {
 
@@ -124,7 +131,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param port HTTP listener port when insecure connections are allowed
+   * Sets the HTTP listener port used when insecure connections are enabled.
+   *
+   * @param port HTTP port number
    */
   public void setPort (int port) {
 
@@ -132,7 +141,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param maxHttpHeaderSize maximum allowed HTTP header size; {@code null} retains Grizzly default
+   * Sets the maximum allowed size of HTTP headers.
+   *
+   * @param maxHttpHeaderSize maximum header size in bytes, or {@code null} to retain the Grizzly default
    */
   public void setMaxHttpHeaderSize (Integer maxHttpHeaderSize) {
 
@@ -140,7 +151,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param initialWorkerPoolSize lower bound for the worker pool
+   * Sets the initial (core) size of the worker thread pool.
+   *
+   * @param initialWorkerPoolSize minimum number of worker threads
    */
   public void setInitialWorkerPoolSize (Integer initialWorkerPoolSize) {
 
@@ -148,7 +161,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param maximumWorkerPoolSize upper bound for the worker pool
+   * Sets the maximum size of the worker thread pool.
+   *
+   * @param maximumWorkerPoolSize upper bound for the number of worker threads
    */
   public void setMaximumWorkerPoolSize (Integer maximumWorkerPoolSize) {
 
@@ -156,7 +171,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param sslInfo SSL/TLS configuration for secure listeners; {@code null} disables HTTPS
+   * Sets the SSL/TLS configuration used to create a secure listener.
+   *
+   * @param sslInfo SSL configuration, or {@code null} to disable HTTPS
    */
   public void setSslInfo (SSLInfo sslInfo) {
 
@@ -164,7 +181,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param resourceConfig Jersey resource configuration used for REST deployment
+   * Sets the Jersey resource configuration used for JAX-RS deployment.
+   *
+   * @param resourceConfig Jersey resource configuration
    */
   public void setResourceConfig (ResourceConfig resourceConfig) {
 
@@ -172,7 +191,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param addOns additional Grizzly add-ons to apply to every listener
+   * Sets additional Grizzly add-ons to register on every network listener.
+   *
+   * @param addOns add-ons to apply
    */
   public void setAddOns (AddOn[] addOns) {
 
@@ -180,7 +201,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param webApplicationOptions per-context configuration objects describing what should be deployed
+   * Sets the per-context configuration objects describing the applications to deploy.
+   *
+   * @param webApplicationOptions one entry per web application context
    */
   public void setWebApplicationOptions (WebApplicationOption[] webApplicationOptions) {
 
@@ -188,7 +211,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param allowInsecure whether an HTTP listener should be started alongside HTTPS
+   * Controls whether a plain HTTP listener is started alongside HTTPS.
+   *
+   * @param allowInsecure {@code true} to start an HTTP listener
    */
   public void setAllowInsecure (boolean allowInsecure) {
 
@@ -196,7 +221,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param suppressConnectionClosedException true to silence broken pipe style exceptions in the request filter
+   * Controls whether broken-pipe style {@code ConnectionClosedException} noise is suppressed in the request filter.
+   *
+   * @param suppressConnectionClosedException {@code true} to suppress the exception
    */
   public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
@@ -204,7 +231,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * @param debug enables verbose SOAP logging when true
+   * Enables verbose SOAP message logging when set to {@code true}.
+   *
+   * @param debug {@code true} to turn on SOAP HTTP adapter logging
    */
   public void setDebug (boolean debug) {
 
@@ -212,9 +241,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Validates context paths and seeds a {@link GrizzlyWebAppState} for each declared application option.
+   * Validates context paths and creates a {@link GrizzlyWebAppState} for each declared web application option.
    *
-   * @throws GrizzlyInitializationException if context paths are missing or duplicated
+   * @throws GrizzlyInitializationException if any context path is null, empty, or duplicated
    */
   @Override
   public void afterPropertiesSet () {
@@ -229,11 +258,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Locates the {@link GrizzlyWebAppState} matching the supplied context path.
+   * Returns the {@link GrizzlyWebAppState} for the given context path.
    *
-   * @param context servlet context path
-   * @return the registered state for the context
-   * @throws GrizzlyInitializationException when the path is missing or was never registered
+   * @param context servlet context path to look up
+   * @return deployment state registered for that path
+   * @throws GrizzlyInitializationException if the path is null, empty, or was never registered
    */
   @Override
   public synchronized GrizzlyWebAppState webAppStateFor (String context) {
@@ -254,11 +283,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Starts the Grizzly server once the Spring context is refreshed, wiring HTTP/HTTPS listeners, REST, SOAP, Spring
-   * listeners, filters, servlets and WebSocket endpoints according to the configured options.
+   * Starts the Grizzly server once the Spring context is fully refreshed, wiring all configured listeners, static
+   * handlers, SOAP services, WebSocket containers, Spring listeners, servlet filters, and servlets.
    *
-   * @param event Spring refreshed event trigger
-   * @throws GrizzlyInitializationException on any startup/configuration failure
+   * @param event Spring context-refreshed event
+   * @throws GrizzlyInitializationException on any configuration or startup failure
    */
   @Override
   public synchronized void onApplicationEvent (ContextRefreshedEvent event) {
@@ -434,10 +463,10 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Normalizes a servlet path to ensure leading slash and remove trailing slash where appropriate.
+   * Normalizes a path segment to have a leading slash and no trailing slash.
    *
-   * @param path raw path fragment which may be {@code null}
-   * @return normalized path or {@code null} if input is {@code null}
+   * @param path raw path fragment, possibly {@code null}
+   * @return normalized path, or {@code null} when the input is {@code null}
    */
   private String normalizePath (String path) {
 
@@ -458,11 +487,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Concatenates a base context path with an extension path while handling default root representations.
+   * Appends an extension path to a context path, handling null, empty, and root-only values correctly.
    *
-   * @param contextPath   the servlet context path
-   * @param extensionPath an additional path fragment to append
-   * @return the normalized combined path
+   * @param contextPath   base servlet context path
+   * @param extensionPath path fragment to append
+   * @return combined path
    */
   private String combinePaths (String contextPath, String extensionPath) {
 
@@ -470,9 +499,9 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Captures the Spring {@link ApplicationContext} in a globally accessible wrapper for later lookup.
+   * Registers the active Spring {@link ApplicationContext} in a globally accessible wrapper.
    *
-   * @param applicationContext active Spring context
+   * @param applicationContext current Spring application context
    */
   @Override
   public void setApplicationContext (ApplicationContext applicationContext) {
@@ -481,7 +510,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Stops deployed WebSocket containers and shuts down the Grizzly server.
+   * Stops all WebSocket containers and shuts down the Grizzly server.
    */
   @Override
   public synchronized void destroy () {
@@ -503,10 +532,10 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Applies optional IO, header size, worker pool and monitoring configuration to the supplied listener.
+   * Applies optional header size, IO strategy, worker pool bounds, and monitoring probes to a network listener.
    *
-   * @param networkListener the listener to configure
-   * @return the same listener instance for chaining
+   * @param networkListener listener to configure
+   * @return the same listener instance
    */
   private NetworkListener configureNetworkListener (NetworkListener networkListener) {
 
@@ -535,12 +564,12 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
-   * Builds an HTTPS {@link NetworkListener} according to the supplied SSL configuration.
+   * Creates a secure {@link NetworkListener} configured with the key and trust stores from the given SSL info.
    *
-   * @param sslInfo SSL configuration including keystore and truststore
-   * @return a secure listener instance
-   * @throws IOException       if key material cannot be read
-   * @throws ResourceException if secure stores cannot supply credential bytes
+   * @param sslInfo SSL configuration specifying port, keystores, and client-auth requirements
+   * @return configured HTTPS listener
+   * @throws IOException       if key material cannot be read from the secure stores
+   * @throws ResourceException if the secure stores cannot supply the credential bytes
    */
   private NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
     throws IOException, ResourceException {

@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.validation;
 import jakarta.validation.ValidationException;
 
 /**
- * Validation exception that supports {@link String#format(String, Object...)} style messages.
+ * {@link ValidationException} subclass whose constructors accept {@link String#format(String, Object...)} style message patterns.
  */
 public class FormattedValidationException extends ValidationException {
 
@@ -47,10 +47,10 @@ public class FormattedValidationException extends ValidationException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception whose detail message is produced by formatting the pattern with the supplied arguments.
    *
-   * @param message message pattern, may be {@code null}
-   * @param args    arguments for the pattern
+   * @param message the {@link String#format} pattern; may be {@code null}
+   * @param args    the arguments to substitute into the pattern
    */
   public FormattedValidationException (String message, Object... args) {
 
@@ -58,11 +58,11 @@ public class FormattedValidationException extends ValidationException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Creates an exception with a formatted detail message and an underlying cause.
    *
-   * @param cause   underlying cause
-   * @param message message pattern, may be {@code null}
-   * @param args    arguments for the pattern
+   * @param cause   the underlying cause
+   * @param message the {@link String#format} pattern; may be {@code null}
+   * @param args    the arguments to substitute into the pattern
    */
   public FormattedValidationException (Throwable cause, String message, Object... args) {
 
@@ -70,9 +70,9 @@ public class FormattedValidationException extends ValidationException {
   }
 
   /**
-   * Creates an exception that wraps a cause.
+   * Creates an exception that wraps the supplied cause without an additional message.
    *
-   * @param cause underlying cause
+   * @param cause the underlying cause
    */
   public FormattedValidationException (Throwable cause) {
 

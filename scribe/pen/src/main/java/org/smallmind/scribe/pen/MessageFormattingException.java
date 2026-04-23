@@ -35,14 +35,15 @@ package org.smallmind.scribe.pen;
 import java.util.IllegalFormatException;
 
 /**
- * Unchecked exception thrown when log message formatting fails.
+ * An unchecked exception thrown when a log message cannot be formatted, typically because the
+ * format string is incompatible with the supplied arguments.
  */
 public class MessageFormattingException extends RuntimeException {
 
   /**
-   * Creates an exception with a descriptive message.
+   * Constructs an exception with a message describing the formatting failure.
    *
-   * @param message explanation of the formatting failure
+   * @param message a description of why formatting failed
    */
   public MessageFormattingException (String message) {
 
@@ -50,10 +51,10 @@ public class MessageFormattingException extends RuntimeException {
   }
 
   /**
-   * Creates an exception wrapping the underlying {@link IllegalFormatException}.
+   * Constructs an exception that wraps an {@link IllegalFormatException} as the root cause.
    *
-   * @param illegalFormatException root cause
-   * @param message                explanation of the formatting failure
+   * @param illegalFormatException the underlying format exception that caused the failure
+   * @param message                a description of why formatting failed
    */
   public MessageFormattingException (IllegalFormatException illegalFormatException, String message) {
 

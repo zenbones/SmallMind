@@ -37,24 +37,28 @@ import jakarta.jms.Destination;
 import org.smallmind.phalanx.wire.TransportException;
 
 /**
- * Factory abstraction for creating JMS connections and resolving destinations.
+ * Factory that produces JMS {@link Connection} instances and provides the {@link Destination}
+ * associated with a particular channel (request queue, request topic, or response topic).
+ *
+ * <p>Each {@link ConnectionManager} holds one {@code ManagedObjectFactory} and delegates
+ * connection creation and destination resolution to it.
  */
 public interface ManagedObjectFactory {
 
   /**
-   * Creates a new JMS connection.
+   * Creates and returns a new JMS {@link Connection}.
    *
-   * @return JMS connection
-   * @throws TransportException if creation fails
+   * @return a freshly created JMS connection
+   * @throws TransportException if the underlying provider or JNDI lookup fails
    */
   Connection createConnection ()
     throws TransportException;
 
   /**
-   * Returns the destination associated with this factory.
+   * Returns the JMS {@link Destination} (queue or topic) managed by this factory.
    *
-   * @return JMS destination
-   * @throws TransportException if resolution fails
+   * @return destination associated with this factory
+   * @throws TransportException if the destination cannot be resolved
    */
   Destination getDestination ()
     throws TransportException;

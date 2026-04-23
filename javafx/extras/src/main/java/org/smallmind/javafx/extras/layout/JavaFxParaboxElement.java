@@ -40,16 +40,18 @@ import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 
 /**
- * {@link ComponentParaboxElement} implementation for JavaFX {@link Node} instances, supplying measurement and layout
- * information to the parabox layout engine.
+ * JavaFX-specific {@link ComponentParaboxElement} that adapts a JavaFX {@link Node} for use
+ * within the generic parabox layout engine. It delegates size queries to the node's own
+ * min/pref/max APIs and applies computed positions and sizes via {@link Node#resizeRelocate}.
  */
 public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
 
   /**
-   * Wraps a JavaFX node with the specified constraint for use in a {@link ParaboxLayout}.
+   * Wraps {@code node} with the given layout constraint so it can participate in a
+   * {@link ParaboxLayout}.
    *
-   * @param node       the JavaFX node to wrap
-   * @param constraint the constraint describing how the node should be sized and positioned
+   * @param node       the JavaFX node to manage; must not be {@code null}
+   * @param constraint the sizing and positioning constraint for the node; must not be {@code null}
    */
   public JavaFxParaboxElement (Node node, Constraint constraint) {
 
@@ -57,10 +59,10 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   }
 
   /**
-   * Returns the minimum size along the given axis by querying the underlying node.
+   * Returns the minimum size of the wrapped node along the requested axis.
    *
-   * @param bias the axis being measured
-   * @return the minimum size reported by the node
+   * @param bias {@link Bias#HORIZONTAL} for width, {@link Bias#VERTICAL} for height
+   * @return the minimum size in pixels as reported by the node
    */
   @Override
   public double getComponentMinimumMeasurement (Bias bias) {
@@ -72,10 +74,10 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   }
 
   /**
-   * Returns the preferred size along the given axis by querying the underlying node.
+   * Returns the preferred size of the wrapped node along the requested axis.
    *
-   * @param bias the axis being measured
-   * @return the preferred size reported by the node
+   * @param bias {@link Bias#HORIZONTAL} for width, {@link Bias#VERTICAL} for height
+   * @return the preferred size in pixels as reported by the node
    */
   @Override
   public double getComponentPreferredMeasurement (Bias bias) {
@@ -87,10 +89,10 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   }
 
   /**
-   * Returns the maximum size along the given axis by querying the underlying node.
+   * Returns the maximum size of the wrapped node along the requested axis.
    *
-   * @param bias the axis being measured
-   * @return the maximum size reported by the node
+   * @param bias {@link Bias#HORIZONTAL} for width, {@link Bias#VERTICAL} for height
+   * @return the maximum size in pixels as reported by the node
    */
   @Override
   public double getComponentMaximumMeasurement (Bias bias) {
@@ -102,11 +104,13 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   }
 
   /**
-   * Calculates the baseline for the node based on the supplied axis and measurement.
+   * Returns the baseline for the node relative to the supplied axis and measurement. For vertical
+   * bias this is the node's own baseline offset; for horizontal bias it is the node's preferred height,
+   * which the layout engine uses to align baselines across a parallel group.
    *
-   * @param bias        the axis being measured
-   * @param measurement the measurement supplied by the layout
-   * @return the baseline offset for vertical bias, or preferred height for horizontal bias
+   * @param bias        the axis for which the baseline is requested
+   * @param measurement the size allocated to the node on that axis (may be used by subclasses)
+   * @return baseline offset in pixels
    */
   @Override
   public double getBaseline (Bias bias, double measurement) {
@@ -115,10 +119,11 @@ public class JavaFxParaboxElement extends ComponentParaboxElement<Node> {
   }
 
   /**
-   * Applies the computed location and size to the underlying node.
+   * Applies the computed layout position and size to the wrapped node by calling
+   * {@link Node#resizeRelocate}.
    *
-   * @param location the top-left coordinate
-   * @param size     the width and height to apply
+   * @param location the top-left coordinate as a {@link Pair} of (x, y) values
+   * @param size     the allocated width and height as a {@link Pair} of (width, height) values
    */
   @Override
   public void applyLayout (Pair location, Pair size) {

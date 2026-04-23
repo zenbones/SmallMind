@@ -41,21 +41,23 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Parses property annotations into one or more {@link PropertyBox} entries, expanding idioms as necessary.
+ * Parses a property annotation into one or more {@link PropertyBox} entries, expanding any declared
+ * {@link Idiom}s into individual purpose/visibility combinations.
  */
 public class PropertyParser implements Iterable<PropertyBox> {
 
   private final LinkedList<PropertyBox> entryList = new LinkedList<>();
 
   /**
-   * Builds a parser for a property annotation, generating entries per idiom/purpose.
+   * Builds property boxes from the given annotation mirror, creating one entry per idiom/purpose combination,
+   * or a single default entry when no idioms are declared.
    *
-   * @param processingEnvironment     current processing environment
-   * @param usefulTypeMirrors         cached type mirrors for common annotations
-   * @param propertyAnnotationMirror  property annotation to parse
-   * @param type                      resolved property type
-   * @param nullifierAnnotationMirror optional nullifier annotation mirror
-   * @param virtual                   whether the property is virtual
+   * @param processingEnvironment     the current annotation processing environment
+   * @param usefulTypeMirrors         cached type mirrors for commonly referenced annotation types
+   * @param propertyAnnotationMirror  the annotation mirror of the property annotation to parse
+   * @param type                      the resolved type mirror of the property
+   * @param nullifierAnnotationMirror the annotation mirror of an associated nullifier annotation, or {@code null}
+   * @param virtual                   {@code true} if the property is virtual and not backed by an entity field
    */
   public PropertyParser (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror propertyAnnotationMirror, TypeMirror type, AnnotationMirror nullifierAnnotationMirror, boolean virtual) {
 
@@ -81,7 +83,7 @@ public class PropertyParser implements Iterable<PropertyBox> {
   }
 
   /**
-   * @return iterator over parsed property entries
+   * @return an iterator over the parsed {@link PropertyBox} entries
    */
   @Override
   public Iterator<PropertyBox> iterator () {

@@ -44,16 +44,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helpers for resolving generic type arguments at runtime.
+ * Static helpers for resolving generic type parameters at runtime by walking inheritance hierarchies
+ * and implemented interface declarations.
  */
 public class GenericUtility {
 
   /**
-   * Attempts to reify a concrete class bound for the supplied type variable within an inheritance chain.
+   * Walks the superclass chain of {@code objectClass} attempting to resolve {@code typeVariable} to a
+   * concrete class by matching it against the actual type arguments supplied by each subclass.
    *
-   * @param objectClass  the concrete class being inspected
-   * @param typeVariable the type variable to resolve
-   * @return the resolved class or {@code null} if it cannot be determined
+   * @param objectClass  the starting class whose hierarchy should be searched
+   * @param typeVariable the type variable to resolve to a concrete class
+   * @return the concrete {@link Class} bound to the variable, or {@code null} if it cannot be determined
    */
   public static Class<?> findTypeArgument (Class<?> objectClass, TypeVariable<?> typeVariable) {
 
@@ -91,13 +93,14 @@ public class GenericUtility {
   }
 
   /**
-   * Resolves the raw classes for the generic type parameters of a subclass relative to a base class.
+   * Resolves the concrete {@link Class} objects bound to each type parameter of {@code baseClass}
+   * by the concrete {@code childClass} by walking the parameterized type chain between them.
    *
-   * @param baseClass  the base class declaring the type parameters
-   * @param childClass the subclass providing concrete arguments
-   * @return a list of resolved classes in parameter order
-   * @throws TypeInferenceException       if the classes are not related
-   * @throws UnexpectedGenericDeclaration if a parameter cannot be resolved to a concrete class
+   * @param baseClass  the generic class or interface whose type parameters should be resolved
+   * @param childClass the concrete subclass that supplies actual type arguments
+   * @return a list of resolved classes in the same order as the type parameters of {@code baseClass}
+   * @throws TypeInferenceException       if {@code childClass} does not extend {@code baseClass}
+   * @throws UnexpectedGenericDeclaration if a type argument cannot be resolved to a concrete class
    */
   public static List<Class<?>> getTypeArgumentsOfSubclass (Class<?> baseClass, Class<?> childClass) {
 
@@ -155,13 +158,14 @@ public class GenericUtility {
   }
 
   /**
-   * Resolves the raw classes for the generic type parameters of an implemented interface.
+   * Resolves the concrete {@link Class} objects bound to each type parameter of {@code targetInterface}
+   * by searching the interface declarations of {@code objectClass} and its superclasses.
    *
-   * @param objectClass     the implementing class
-   * @param targetInterface the interface whose parameters should be resolved
-   * @return a list of resolved classes in parameter order
-   * @throws TypeInferenceException       if the interface is not implemented
-   * @throws UnexpectedGenericDeclaration if a parameter cannot be resolved to a concrete class
+   * @param objectClass     the class that implements the target interface, directly or transitively
+   * @param targetInterface the generic interface whose type parameters should be resolved
+   * @return a list of resolved classes in parameter order, or an empty list if the interface is implemented without parameters
+   * @throws TypeInferenceException       if {@code objectClass} does not implement {@code targetInterface}
+   * @throws UnexpectedGenericDeclaration if a type argument cannot be resolved to a concrete class
    */
   public static List<Class<?>> getTypeArgumentsOfImplementation (Class<?> objectClass, Class<?> targetInterface) {
 
@@ -204,10 +208,12 @@ public class GenericUtility {
   }
 
   /**
-   * Attempts to convert a {@link Type} into a concrete {@link Class}.
+   * Attempts to extract a concrete {@link Class} from the given {@link Type}, handling raw classes,
+   * parameterized types, and generic array types.
    *
-   * @param type the type to inspect
-   * @return the corresponding class or {@code null} if it cannot be determined
+   * @param type the type to convert
+   * @return the raw {@link Class} for {@code type}, or {@code null} if it cannot be determined
+   * (e.g. for unresolved type variables or wildcard types)
    */
   public static Class<?> getClass (Type type) {
 

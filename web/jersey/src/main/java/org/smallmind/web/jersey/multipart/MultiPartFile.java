@@ -37,7 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Represents a multipart file upload with convenience accessors.
+ * Value object representing a single file from a multipart form upload, providing access to its name, content type,
+ * and data stream.
  */
 public class MultiPartFile {
 
@@ -46,11 +47,11 @@ public class MultiPartFile {
   private final String contentType;
 
   /**
-   * Creates a new multipart file wrapper.
+   * Constructs a multipart file wrapper with the given metadata and data stream.
    *
-   * @param fileName    original filename
-   * @param contentType MIME content type
-   * @param inputStream stream containing the file content
+   * @param fileName    the original filename from the content-disposition header
+   * @param contentType the MIME type of the file
+   * @param inputStream the stream containing the file data
    */
   public MultiPartFile (String fileName, String contentType, InputStream inputStream) {
 
@@ -60,9 +61,9 @@ public class MultiPartFile {
   }
 
   /**
-   * Returns the uploaded filename.
+   * Returns the original filename supplied in the content-disposition header.
    *
-   * @return file name
+   * @return the file name
    */
   public String getFileName () {
 
@@ -70,9 +71,9 @@ public class MultiPartFile {
   }
 
   /**
-   * Returns the MIME type associated with the upload.
+   * Returns the MIME content type of the uploaded file.
    *
-   * @return content type
+   * @return the content type string
    */
   public String getContentType () {
 
@@ -80,9 +81,9 @@ public class MultiPartFile {
   }
 
   /**
-   * Provides raw access to the underlying input stream.
+   * Returns the raw input stream for reading file data.
    *
-   * @return input stream for the file content
+   * @return the file data input stream
    */
   public InputStream getInputStream () {
 
@@ -90,10 +91,10 @@ public class MultiPartFile {
   }
 
   /**
-   * Reads the full content into memory as a byte array.
+   * Reads the entire file content from the input stream into a byte array.
    *
-   * @return file contents
-   * @throws MultiPartFileException if reading fails
+   * @return all bytes in the file
+   * @throws MultiPartFileException if an I/O error occurs while reading the stream
    */
   public byte[] readAllBytes () {
 

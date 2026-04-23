@@ -38,7 +38,9 @@ import java.time.ZoneId;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Formats records into an XML representation with configurable elements and CDATA handling.
+ * Formatter that serializes log records to an XML document fragment. The set of elements included,
+ * the indentation depth, the newline delimiter, and whether message and parameter values are wrapped
+ * in CDATA sections are all configurable via fluent setters.
  */
 public class XMLFormatter implements Formatter {
 
@@ -49,20 +51,22 @@ public class XMLFormatter implements Formatter {
   private int indent = 3;
 
   /**
-   * Creates an XML formatter with default timestamp, newline, indent, and record elements.
+   * Constructs an XML formatter with default settings: the default {@link DateFormatTimestamp},
+   * the platform line separator, an indent of three spaces per level, CDATA disabled, and all
+   * {@link RecordElement} values included.
    */
   public XMLFormatter () {
 
   }
 
   /**
-   * Constructs an XML formatter with all options specified.
+   * Constructs an XML formatter with all formatting options explicitly specified.
    *
-   * @param timestamp      timestamp provider
-   * @param newLine        newline delimiter
-   * @param indent         indent spaces per level
-   * @param cdata          true to wrap message fields in CDATA
-   * @param recordElements elements to include
+   * @param timestamp      the timestamp provider used for the {@code <date>} element
+   * @param newLine        the newline string appended after each XML line (e.g. {@code "\n"})
+   * @param indent         number of spaces per indentation level
+   * @param cdata          {@code true} to wrap message and parameter values in {@code <![CDATA[...]]>} sections
+   * @param recordElements the subset of {@link RecordElement} values to include in the output, in order
    */
   public XMLFormatter (Timestamp timestamp, String newLine, int indent, boolean cdata, RecordElement... recordElements) {
 
@@ -74,11 +78,14 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Finds the number of repeated stack frames compared to the previous trace.
+   * Searches the previous throwable's stack trace for the given frame and returns the number of
+   * remaining frames at and after the match, supporting the "... N more" abbreviation for chained
+   * exceptions.
    *
-   * @param singleElement  current stack frame
-   * @param prevStackTrace previous stack trace to compare
-   * @return count of remaining repeated elements or -1 if none
+   * @param singleElement  the frame from the current throwable's stack trace to search for
+   * @param prevStackTrace the stack trace of the enclosing (previously rendered) throwable
+   * @return the number of frames in {@code prevStackTrace} at and after the matching position,
+   * or {@code -1} if no matching frame is found
    */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
@@ -92,10 +99,10 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Selects the record elements to include when formatting.
+   * Replaces the set of record elements that will be included in formatted output.
    *
-   * @param recordElements elements to output
-   * @return this formatter
+   * @param recordElements the ordered array of {@link RecordElement} values to render
+   * @return this formatter, for method chaining
    */
   public XMLFormatter setRecordElements (RecordElement[] recordElements) {
 
@@ -105,10 +112,10 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Sets the timestamp provider.
+   * Sets the timestamp provider used to render the {@code <date>} element.
    *
-   * @param timestamp provider
-   * @return this formatter
+   * @param timestamp the timestamp provider to use
+   * @return this formatter, for method chaining
    */
   public XMLFormatter setTimestamp (Timestamp timestamp) {
 
@@ -118,10 +125,10 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Sets the newline delimiter.
+   * Sets the newline string that is appended after each XML line in the output.
    *
-   * @param newLine newline string
-   * @return this formatter
+   * @param newLine the newline delimiter (e.g. {@code "\n"} or {@code "\r\n"})
+   * @return this formatter, for method chaining
    */
   public XMLFormatter setNewLine (String newLine) {
 
@@ -131,10 +138,11 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Enables or disables CDATA wrapping for message/parameter content.
+   * Controls whether message text and parameter values are wrapped in {@code <![CDATA[...]]>} sections,
+   * which prevents special XML characters in log output from invalidating the document structure.
    *
-   * @param cdata whether to use CDATA
-   * @return this formatter
+   * @param cdata {@code true} to enable CDATA wrapping; {@code false} to emit values as plain text
+   * @return this formatter, for method chaining
    */
   public XMLFormatter setCdata (boolean cdata) {
 
@@ -144,10 +152,10 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Sets the indent size in spaces.
+   * Sets the number of spaces used per indentation level in the XML output.
    *
-   * @param indent indent size
-   * @return this formatter
+   * @param indent the number of spaces per indentation level; zero produces no indentation
+   * @return this formatter, for method chaining
    */
   public XMLFormatter setIndent (int indent) {
 
@@ -157,10 +165,12 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Formats the supplied record into XML.
+   * Serializes the given log record to an XML fragment rooted at a {@code <log-record>} element,
+   * containing only the child elements specified by the configured {@link RecordElement} set. The
+   * closing tag is followed by the platform line separator.
    *
-   * @param record record to format
-   * @return XML string
+   * @param record the log record to serialize
+   * @return an XML string representing the record, terminated by the platform line separator
    */
   public String format (Record<?> record) {
 
@@ -220,12 +230,13 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Adds thread details to the XML output.
+   * Appends a {@code <thread>} element containing {@code <name>} and {@code <id>} child elements
+   * to the buffer, but only when at least one of those values is present.
    *
-   * @param formatBuilder buffer to append to
-   * @param threadName    thread name, may be {@code null}
-   * @param threadId      thread id, or non-positive if unavailable
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param threadName    the thread name to include, or {@code null} if unavailable
+   * @param threadId      the thread identifier to include, or a non-positive value if unavailable
+   * @param level         the current indentation level
    */
   private void appendThreadInfo (StringBuilder formatBuilder, String threadName, long threadId, int level) {
 
@@ -238,11 +249,13 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Adds logger context information to the XML output.
+   * Appends a {@code <context>} element containing class, method, native-flag, line-number, and
+   * file-name child elements to the buffer. The element is omitted when the context is {@code null}
+   * or not populated.
    *
-   * @param formatBuilder buffer to append to
-   * @param loggerContext logger context details
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param loggerContext the logger context to render, or {@code null}
+   * @param level         the current indentation level
    */
   private void appendLoggerContext (StringBuilder formatBuilder, LoggerContext loggerContext, int level) {
 
@@ -258,11 +271,12 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Adds parameters as child elements to the XML output.
+   * Appends a {@code <parameters>} element whose children are one element per key-value parameter
+   * pair. The entire block is omitted when the parameters array is empty.
    *
-   * @param formatBuilder buffer to append to
-   * @param parameters    parameters to include
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param parameters    the array of parameters to render; must not be {@code null}
+   * @param level         the current indentation level
    */
   private void appendParameters (StringBuilder formatBuilder, Parameter[] parameters, int level) {
 
@@ -280,11 +294,13 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Renders a throwable stack trace, honoring CDATA preferences.
+   * Appends a {@code <stack-trace>} element containing the full exception chain, including
+   * "... N more" abbreviations for shared frames between chained exceptions. The element is
+   * optionally wrapped in a CDATA section. Nothing is appended when {@code throwable} is {@code null}.
    *
-   * @param formatBuilder buffer to append to
-   * @param throwable     throwable to render, may be {@code null}
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param throwable     the exception whose stack trace should be rendered, or {@code null}
+   * @param level         the current indentation level
    */
   private void appendStackTrace (StringBuilder formatBuilder, Throwable throwable, int level) {
 
@@ -335,13 +351,15 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Appends an individual XML element if a value is present.
+   * Appends a single {@code <tagName>value</tagName>} element to the buffer, preceded by
+   * indentation and followed by the configured newline. The element is suppressed entirely when
+   * {@code value} is {@code null}.
    *
-   * @param formatBuilder buffer to append to
-   * @param tagName       element name
-   * @param value         element value, may be {@code null}
-   * @param includeCDATA  whether to wrap value in CDATA
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param tagName       the XML element name
+   * @param value         the element text content, or {@code null} to suppress the element
+   * @param includeCDATA  {@code true} to wrap the value in a {@code <![CDATA[...]]>} section
+   * @param level         the current indentation level
    */
   private void appendElement (StringBuilder formatBuilder, String tagName, String value, boolean includeCDATA, int level) {
 
@@ -369,11 +387,12 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Appends a full line with indentation and newline.
+   * Appends the given content to the buffer, preceded by the appropriate indentation and followed
+   * by the configured newline delimiter.
    *
-   * @param formatBuilder buffer to append to
-   * @param content       content to append
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param content       the text to append
+   * @param level         the current indentation level
    */
   private void appendLine (StringBuilder formatBuilder, String content, int level) {
 
@@ -383,11 +402,13 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Appends the final line, using the system line separator.
+   * Appends the given content preceded by indentation and followed by the platform line separator
+   * (rather than the configured newline). Used for the closing {@code </log-record>} tag so that
+   * sequential records remain separated by a consistent system-specific newline.
    *
-   * @param formatBuilder buffer to append to
-   * @param content       content to append
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param content       the text to append
+   * @param level         the current indentation level
    */
   private void appendFinalLine (StringBuilder formatBuilder, String content, int level) {
 
@@ -397,10 +418,11 @@ public class XMLFormatter implements Formatter {
   }
 
   /**
-   * Appends indentation spaces for the given level.
+   * Appends the correct number of leading spaces for the given indentation level to the buffer.
+   * The number of spaces is {@code level * indent} where {@code indent} is the configured spaces-per-level.
    *
-   * @param formatBuilder buffer to append to
-   * @param level         indent level
+   * @param formatBuilder the buffer being built
+   * @param level         the indentation level; level zero produces no leading spaces
    */
   private void appendIndent (StringBuilder formatBuilder, int level) {
 

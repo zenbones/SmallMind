@@ -43,8 +43,9 @@ import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
 /**
- * Logging blueprint that adapts the scribe API to Java Util Logging.
- * Provides logger adapters and error record handling for JUL integration.
+ * {@link LoggingBlueprint} that bridges scribe to Java Util Logging; registers the
+ * {@code "java.util.logging."} package prefix at class-load time and manufactures
+ * {@link JDKLoggerAdapter} instances backed by named JUL loggers.
  */
 public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
 
@@ -54,10 +55,10 @@ public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
   }
 
   /**
-   * Creates a logger adapter backed by a JUL logger.
+   * Returns a new {@link JDKLoggerAdapter} wrapping the JUL logger retrieved by the given name.
    *
    * @param name the logger name
-   * @return a {@link LoggerAdapter} that delegates to JUL
+   * @return a fresh adapter backed by the named JUL logger
    */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
@@ -66,13 +67,14 @@ public class JDKLoggingBlueprint extends LoggingBlueprint<LogRecord> {
   }
 
   /**
-   * Builds a JUL record representing an error condition.
+   * Constructs a FATAL-level {@link JDKRecordSubverter} for error reporting, filling the logger context
+   * with caller information before returning the wrapped scribe record.
    *
-   * @param loggerName the logger name
-   * @param throwable  throwable to attach
-   * @param message    message template
-   * @param args       message arguments
-   * @return the constructed record
+   * @param loggerName the name of the logger from which the error originates
+   * @param throwable  the throwable to attach to the record
+   * @param message    message template describing the error condition
+   * @param args       arguments substituted into the message template
+   * @return a fully populated scribe record ready for delivery to appenders
    */
   @Override
   public Record<LogRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {

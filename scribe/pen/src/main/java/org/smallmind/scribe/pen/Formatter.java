@@ -33,16 +33,17 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Formats a record into a string representation.
+ * Strategy that converts a {@link Record} into a human-readable or machine-parseable string for output by a
+ * {@link FormattedAppender}.
  */
 public interface Formatter {
 
   /**
-   * Formats the supplied record.
+   * Converts the supplied log record into its string representation.
    *
-   * @param record record to format
-   * @return formatted representation
-   * @throws Exception if formatting fails
+   * @param record the log record to format
+   * @return the formatted string representation of the record
+   * @throws Exception if an error occurs during formatting
    */
   String format (Record<?> record)
     throws Exception;

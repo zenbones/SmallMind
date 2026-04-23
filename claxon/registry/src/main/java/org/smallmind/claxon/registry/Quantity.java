@@ -33,19 +33,35 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Represents a single measured value (e.g., count, rate, percentile) optionally classified by type.
+ * Represents a single named, typed numeric measurement produced by a meter. Quantities are
+ * the fundamental data unit passed from meters to emitters. Each quantity carries a logical
+ * {@code name} that identifies the measurement within its meter (e.g., {@code "count"},
+ * {@code "mean"}, {@code "p99"}), a {@code value} holding the numeric reading, and an
+ * optional {@link QuantityType} that allows emitters to apply type-specific handling.
  */
 public class Quantity {
 
+  /**
+   * Classification that allows emitters to apply type-specific processing.
+   */
   private final QuantityType type;
+
+  /**
+   * Logical name identifying this measurement within its meter.
+   */
   private final String name;
+
+  /**
+   * The numeric value of the measurement.
+   */
   private final double value;
 
   /**
-   * Builds a quantity without a specific {@link QuantityType}.
+   * Constructs a quantity without a specific type classification, using
+   * {@link QuantityType#NONE} as the default type.
    *
-   * @param name  logical name for the measurement
-   * @param value numeric value captured
+   * @param name  logical name identifying this measurement within its meter
+   * @param value the numeric value of the measurement
    */
   public Quantity (String name, double value) {
 
@@ -53,11 +69,11 @@ public class Quantity {
   }
 
   /**
-   * Builds a quantity with an explicit type classification.
+   * Constructs a quantity with an explicit type classification.
    *
-   * @param name  logical name for the measurement
-   * @param value numeric value captured
-   * @param type  type classification for the measurement
+   * @param name  logical name identifying this measurement within its meter
+   * @param value the numeric value of the measurement
+   * @param type  {@link QuantityType} classification enabling type-specific emitter handling
    */
   public Quantity (String name, double value, QuantityType type) {
 
@@ -67,7 +83,9 @@ public class Quantity {
   }
 
   /**
-   * @return logical name of the measurement
+   * Returns the logical name of this measurement.
+   *
+   * @return the measurement name (e.g., {@code "count"}, {@code "mean"})
    */
   public String getName () {
 
@@ -75,7 +93,9 @@ public class Quantity {
   }
 
   /**
-   * @return numeric value of the measurement
+   * Returns the numeric value of this measurement.
+   *
+   * @return the measured value
    */
   public double getValue () {
 
@@ -83,7 +103,9 @@ public class Quantity {
   }
 
   /**
-   * @return classification for the measurement
+   * Returns the type classification of this measurement.
+   *
+   * @return the {@link QuantityType} indicating how this measurement should be interpreted
    */
   public QuantityType getType () {
 

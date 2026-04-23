@@ -46,8 +46,24 @@ import org.smallmind.memcached.utility.ProxyCASResponse;
 import org.smallmind.memcached.utility.ProxyMemcachedClient;
 
 /**
- * Memcached client backed by the Cubby NIO implementation. This class coordinates routing to hosts,
- * serialization via the configured codec and exposes a ProxyMemcachedClient-compatible API.
+ * Primary entry point for interacting with a memcached cluster using the Cubby NIO implementation.
+ *
+ * <p>{@code CubbyMemcachedClient} implements {@link ProxyMemcachedClient} and delegates all
+ * network I/O to an internal {@link ConnectionMultiplexer} that distributes load across one or
+ * more {@link ConnectionCoordinator} instances. Values are serialized and deserialized using the
+ * {@link org.smallmind.memcached.cubby.codec.CubbyCodec} configured in the supplied
+ * {@link CubbyConfiguration}.</p>
+ *
+ * <p>Typical usage:</p>
+ * <pre>{@code
+ * CubbyMemcachedClient client = new CubbyMemcachedClient(
+ *     CubbyConfiguration.OPTIMAL,
+ *     new MemcachedHost("primary", "cache1.example.com", 11211));
+ * client.start();
+ * client.set("key", 300, myObject);
+ * MyObject value = client.get("key");
+ * client.stop();
+ * }</pre>
  */
 public class CubbyMemcachedClient implements ProxyMemcachedClient {
 
@@ -55,10 +71,10 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   private final CubbyConfiguration configuration;
 
   /**
-   * Creates a new client bound to the supplied configuration and hosts.
+   * Creates a new client for the specified hosts using the given configuration.
    *
-   * @param configuration  runtime configuration including codec, timeouts and routing strategy
-   * @param memcachedHosts the hosts that make up the memcached cluster
+   * @param configuration  runtime configuration covering codec, routing, timeouts, and auth
+   * @param memcachedHosts one or more hosts that form the memcached cluster
    */
   public CubbyMemcachedClient (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
@@ -68,11 +84,12 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Opens the NIO connections to each configured host.
+   * Opens NIO connections to each configured host and starts the background health-monitor thread.
+   * Must be called before any cache operations.
    *
-   * @throws InterruptedException    if interrupted while connecting
-   * @throws IOException             if a socket cannot be opened
-   * @throws CubbyOperationException if the client fails to initialize
+   * @throws InterruptedException    if the calling thread is interrupted while waiting for connections
+   * @throws IOException             if a socket cannot be opened to one of the hosts
+   * @throws CubbyOperationException if the multiplexer fails to initialize
    */
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
@@ -81,10 +98,11 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Shuts down all open connections.
+   * Closes all open connections and stops the background health-monitor thread.
+   * After this call the client must not be used for further cache operations.
    *
-   * @throws InterruptedException if interrupted while closing connections
-   * @throws IOException          if a socket closure fails
+   * @throws InterruptedException if the calling thread is interrupted while waiting for shutdown
+   * @throws IOException          if closing a socket fails
    */
   public synchronized void stop ()
     throws InterruptedException, IOException {
@@ -93,9 +111,9 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Returns the configured default timeout.
+   * Returns the default per-request timeout as configured in {@link CubbyConfiguration}.
    *
-   * @return timeout in milliseconds
+   * @return the default request timeout in milliseconds; {@code 0} means no timeout
    */
   @Override
   public long getDefaultTimeout () {
@@ -104,7 +122,8 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Unsupported clear operation; memcached servers handle flush themselves.
+   * Not supported. Memcached servers manage their own flush lifecycle; there is no
+   * client-side clear operation in this implementation.
    *
    * @throws UnsupportedOperationException always
    */
@@ -115,10 +134,11 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Stops the client and releases resources.
+   * Shuts down the client by delegating to {@link #stop()}. Implements the
+   * {@link ProxyMemcachedClient#shutdown()} contract.
    *
-   * @throws InterruptedException if interrupted while closing
-   * @throws IOException          if closing the connection fails
+   * @throws InterruptedException if interrupted while awaiting shutdown
+   * @throws IOException          if closing a connection fails
    */
   @Override
   public void shutdown ()
@@ -128,12 +148,13 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Wraps a value and CAS token in a ProxyCASResponse implementation.
+   * Wraps an already-decoded value and its CAS token in a {@link CASValue} for use as a
+   * {@link ProxyCASResponse}.
    *
-   * @param cas   the compare-and-swap token returned by memcached
-   * @param value the decoded value
-   * @param <T>   the value type
-   * @return CAS wrapper carrying both the token and value
+   * @param cas   the compare-and-swap token returned by the server
+   * @param value the decoded cache value
+   * @param <T>   the type of the cached value
+   * @return a new {@link CASValue} carrying both the token and value
    */
   @Override
   public <T> ProxyCASResponse<T> createCASResponse (long cas, T value) {
@@ -142,15 +163,16 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Fetches multiple keys, issuing sequential get requests.
+   * Retrieves multiple keys from the cache by issuing individual {@link #get(String)} requests
+   * for each key in the supplied collection.
    *
-   * @param keys keys to retrieve
-   * @param <T>  expected value type
-   * @return map of key to decoded value (missing keys map to {@code null})
-   * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting for responses
-   * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if deserialization cannot load a class
+   * @param keys the cache keys to retrieve
+   * @param <T>  the expected value type shared by all keys
+   * @return a map from key to decoded value; keys not found in the cache map to {@code null}
+   * @throws IOException             if network I/O fails for any key
+   * @throws InterruptedException    if interrupted while waiting for a response
+   * @throws CubbyOperationException if the server rejects a request
+   * @throws ClassNotFoundException  if the class of a deserialized value cannot be found
    */
   @Override
   public <T> Map<String, T> get (Collection<String> keys)
@@ -166,14 +188,16 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Sends a raw command to the cluster honoring the supplied timeout.
+   * Sends a raw {@link Command} to the cluster using the optionally specified timeout.
+   * This lower-level method is available for callers that construct commands directly.
    *
-   * @param command        command to transmit
-   * @param timeoutSeconds optional timeout in seconds; {@code null} uses configuration defaults
-   * @return parsed response from the server
-   * @throws InterruptedException    if interrupted while waiting
+   * @param command        the command to transmit to the server
+   * @param timeoutSeconds optional timeout override in seconds; {@code null} defers to the
+   *                       configured default
+   * @return the parsed {@link Response} from the server
+   * @throws InterruptedException    if interrupted while awaiting completion
    * @throws IOException             if network communication fails
-   * @throws CubbyOperationException if the server replies with an error or routing fails
+   * @throws CubbyOperationException if routing fails or the server responds with an error
    */
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {
@@ -182,15 +206,15 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Retrieves a value from memcached.
+   * Retrieves the value stored under the given key.
    *
-   * @param key cache key to fetch
-   * @param <T> expected value type
-   * @return decoded value or {@code null} if not found
+   * @param key the cache key to look up
+   * @param <T> the expected type of the stored value
+   * @return the deserialized value, or {@code null} if the key does not exist in the cache
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if deserialization cannot load a class
+   * @throws ClassNotFoundException  if the class of the deserialized value cannot be found
    */
   public <T> T get (String key)
     throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
@@ -203,15 +227,16 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Retrieves a value and its CAS token.
+   * Retrieves the value stored under the given key together with its CAS token.
    *
-   * @param key cache key to fetch
-   * @param <T> expected value type
-   * @return CAS wrapper or {@code null} if not found
+   * @param key the cache key to look up
+   * @param <T> the expected type of the stored value
+   * @return a {@link CASValue} holding the decoded value and CAS token, or {@code null} if the
+   * key does not exist in the cache
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if deserialization cannot load a class
+   * @throws ClassNotFoundException  if the class of the deserialized value cannot be found
    */
   public <T> CASValue<T> casGet (String key)
     throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
@@ -224,15 +249,15 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Stores a value under the provided key.
+   * Stores a value in the cache under the given key, unconditionally overwriting any existing entry.
    *
-   * @param key        cache key to set
-   * @param expiration expiration in seconds
-   * @param value      value to encode and store
-   * @param <T>        value type
-   * @return {@code true} if the operation succeeded
+   * @param key        the cache key under which the value is stored
+   * @param expiration the time-to-live in seconds; {@code 0} means no expiration
+   * @param value      the value to serialize and store
+   * @param <T>        the type of the value being stored
+   * @return {@code true} if the server acknowledged the store; {@code false} otherwise
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
    */
   public <T> boolean set (String key, int expiration, T value)
@@ -245,16 +270,18 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Performs a CAS set, storing the value only if the supplied token matches.
+   * Stores a value in the cache only if the supplied CAS token matches the server's current token
+   * for that key, implementing an optimistic-locking update.
    *
-   * @param key        cache key to set
-   * @param expiration expiration in seconds
-   * @param value      value to encode and store
-   * @param cas        compare-and-swap token to validate
-   * @param <T>        value type
-   * @return {@code true} if the operation succeeded
+   * @param key        the cache key to update
+   * @param expiration the time-to-live in seconds; {@code 0} means no expiration
+   * @param value      the value to serialize and store
+   * @param cas        the compare-and-swap token obtained from a prior {@link #casGet} call
+   * @param <T>        the type of the value being stored
+   * @return {@code true} if the token matched and the value was stored; {@code false} if the token
+   * was stale (another writer modified the entry)
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
    */
   public <T> boolean casSet (String key, int expiration, T value, long cas)
@@ -267,12 +294,12 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Deletes the value associated with the key.
+   * Removes the entry associated with the given key from the cache.
    *
-   * @param key cache key to remove
-   * @return {@code true} if deletion succeeded
+   * @param key the cache key to delete
+   * @return {@code true} if the server confirmed the deletion; {@code false} if the key was not found
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
    */
   public boolean delete (String key)
@@ -285,13 +312,14 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Performs a CAS delete, removing the value only if the token matches.
+   * Removes the entry associated with the given key only if the supplied CAS token matches,
+   * providing an optimistic-locking delete.
    *
-   * @param key cache key to remove
-   * @param cas compare-and-swap token to validate
-   * @return {@code true} if deletion succeeded
+   * @param key the cache key to delete
+   * @param cas the compare-and-swap token that must match the server's current token
+   * @return {@code true} if the token matched and the entry was deleted; {@code false} otherwise
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
    */
   public boolean casDelete (String key, long cas)
@@ -304,15 +332,16 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Updates a key's expiration without fetching the value.
+   * Refreshes the expiration of the given key without returning its value. This is equivalent to
+   * a memcached {@code touch} command.
    *
-   * @param key        cache key to touch
-   * @param expiration new expiration in seconds
-   * @return {@code true} if the touch succeeded
+   * @param key        the cache key whose expiration is to be updated
+   * @param expiration the new time-to-live in seconds; {@code 0} means no expiration
+   * @return {@code true} if the key existed and its expiration was updated; {@code false} if not found
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if a response body cannot be deserialized
+   * @throws ClassNotFoundException  if a response payload cannot be deserialized
    */
   public boolean touch (String key, int expiration)
     throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
@@ -324,16 +353,17 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Retrieves a value and updates its expiration.
+   * Retrieves the value associated with the given key and simultaneously updates its expiration,
+   * equivalent to a memcached {@code gat} (get-and-touch) command.
    *
-   * @param key        cache key to fetch
-   * @param expiration new expiration in seconds
-   * @param <T>        expected value type
-   * @return decoded value or {@code null} if not found
+   * @param key        the cache key to fetch
+   * @param expiration the new time-to-live in seconds; {@code 0} means no expiration
+   * @param <T>        the expected type of the stored value
+   * @return the deserialized value, or {@code null} if the key does not exist in the cache
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if deserialization cannot load a class
+   * @throws ClassNotFoundException  if the class of the deserialized value cannot be found
    */
   public <T> T getAndTouch (String key, int expiration)
     throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {
@@ -346,16 +376,18 @@ public class CubbyMemcachedClient implements ProxyMemcachedClient {
   }
 
   /**
-   * Retrieves a value with CAS token and updates its expiration.
+   * Retrieves the value and CAS token for the given key while simultaneously updating its
+   * expiration, equivalent to a memcached {@code gats} command.
    *
-   * @param key        cache key to fetch
-   * @param expiration new expiration in seconds
-   * @param <T>        expected value type
-   * @return CAS wrapper or {@code null} if not found
+   * @param key        the cache key to fetch
+   * @param expiration the new time-to-live in seconds; {@code 0} means no expiration
+   * @param <T>        the expected type of the stored value
+   * @return a {@link CASValue} holding the decoded value and CAS token, or {@code null} if the
+   * key does not exist in the cache
    * @throws IOException             if network I/O fails
-   * @throws InterruptedException    if interrupted while waiting
+   * @throws InterruptedException    if interrupted while waiting for the server response
    * @throws CubbyOperationException if the server rejects the request
-   * @throws ClassNotFoundException  if deserialization cannot load a class
+   * @throws ClassNotFoundException  if the class of the deserialized value cannot be found
    */
   public <T> CASValue<T> casGetAndTouch (String key, int expiration)
     throws IOException, InterruptedException, CubbyOperationException, ClassNotFoundException {

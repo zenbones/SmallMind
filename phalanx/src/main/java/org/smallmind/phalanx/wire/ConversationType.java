@@ -33,9 +33,19 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Enumerates whether a conversation expects a response or is fire-and-forget.
+ * Classifies the exchange pattern of a wire conversation, controlling whether the sender
+ * waits for a reply. The value is derived from the method's {@link InOut} or {@link InOnly}
+ * annotation and drives timeout, reply-queue, and error-propagation behaviour.
  */
 public enum ConversationType {
 
-  IN_OUT, IN_ONLY
+  /**
+   * Request/response exchange: the caller blocks until a reply is received or the timeout elapses.
+   */
+  IN_OUT,
+
+  /**
+   * Fire-and-forget exchange: the caller sends the message and does not wait for a reply.
+   */
+  IN_ONLY
 }

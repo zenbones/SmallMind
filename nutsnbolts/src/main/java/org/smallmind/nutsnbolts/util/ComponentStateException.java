@@ -35,22 +35,22 @@ package org.smallmind.nutsnbolts.util;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals an invalid or unexpected component lifecycle state.
+ * Thrown to signal that a component operation was attempted in an invalid or unexpected lifecycle state.
  */
 public class ComponentStateException extends FormattedException {
 
   /**
-   * Creates an exception without a detail message.
+   * Constructs an exception with no detail message.
    */
   public ComponentStateException () {
 
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message message pattern describing the state problem
-   * @param args    optional arguments to format into the message
+   * @param message the message pattern describing the state violation
+   * @param args    optional arguments formatted into the message
    */
   public ComponentStateException (String message, Object... args) {
 
@@ -58,11 +58,11 @@ public class ComponentStateException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and a formatted detail message.
+   * Constructs an exception with a cause and a formatted detail message.
    *
-   * @param throwable underlying cause
-   * @param message   message pattern describing the state problem
-   * @param args      optional arguments to format into the message
+   * @param throwable the underlying cause
+   * @param message   the message pattern describing the state violation
+   * @param args      optional arguments formatted into the message
    */
   public ComponentStateException (Throwable throwable, String message, Object... args) {
 
@@ -70,9 +70,9 @@ public class ComponentStateException extends FormattedException {
   }
 
   /**
-   * Creates an exception with the supplied cause.
+   * Constructs an exception wrapping the given cause.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying cause
    */
   public ComponentStateException (Throwable throwable) {
 

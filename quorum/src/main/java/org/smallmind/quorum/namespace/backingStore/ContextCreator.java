@@ -36,16 +36,20 @@ import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 
 /**
- * Factory responsible for creating initial {@link DirContext} instances for a backing store.
+ * Abstract factory that creates the initial {@link DirContext} used to connect to a naming backing store.
+ * <p>
+ * Subclasses implement {@link #getInitialContext()} for a specific backing store technology (for example,
+ * LDAP) using the {@link NamingConnectionDetails} provided at construction time. The resulting context
+ * is passed to {@link NameTranslator} implementations so that names can be resolved against the store.
  */
 public abstract class ContextCreator {
 
   private final NamingConnectionDetails connectionDetails;
 
   /**
-   * Constructs the creator with connection details.
+   * Constructs a creator that will use the supplied connection details when opening contexts.
    *
-   * @param connectionDetails backing store connection parameters
+   * @param connectionDetails host, port, credentials, and root namespace for the backing store
    */
   public ContextCreator (NamingConnectionDetails connectionDetails) {
 
@@ -53,9 +57,9 @@ public abstract class ContextCreator {
   }
 
   /**
-   * Returns the connection details.
+   * Returns the connection details held by this creator.
    *
-   * @return connection details
+   * @return the {@link NamingConnectionDetails} supplied at construction time; never {@code null}
    */
   public NamingConnectionDetails getConnectionDetails () {
 
@@ -63,10 +67,13 @@ public abstract class ContextCreator {
   }
 
   /**
-   * Builds the initial directory context for the backing store.
+   * Opens and returns a new initial directory context for the configured backing store.
+   * <p>
+   * Each call may create a new physical connection; callers are responsible for closing the returned
+   * context when it is no longer needed.
    *
-   * @return directory context
-   * @throws NamingException if creation fails
+   * @return a live {@link DirContext} bound to the backing store
+   * @throws NamingException if the backing store cannot be reached or authentication fails
    */
   public abstract DirContext getInitialContext ()
     throws NamingException;

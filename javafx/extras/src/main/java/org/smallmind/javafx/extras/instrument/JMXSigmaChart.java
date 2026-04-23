@@ -45,7 +45,11 @@ import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 
 /**
- * {@link SigmaChart} that polls a JMX MBean for dispersion metrics and plots the values.
+ * A {@link SigmaChart} that automatically polls a JMX MBean every 15 seconds for latency
+ * percentile metrics and plots them as a stacked area. The MBean must expose the attributes
+ * {@code Median}, {@code 75thPercentile}, {@code 95thPercentile}, {@code 98thPercentile},
+ * {@code 99thPercentile}, and {@code 999thPercentile}. On any polling error the chart pauses and
+ * a {@link JavaErrorDialog} is shown on the JavaFX thread.
  */
 public class JMXSigmaChart extends SigmaChart {
 
@@ -68,11 +72,12 @@ public class JMXSigmaChart extends SigmaChart {
   private final ScheduledFuture<?> future;
 
   /**
-   * Constructs the chart and begins polling the specified MBean for percentile metrics.
+   * Creates the chart and schedules recurring data collection beginning one second after
+   * construction, repeating every 15 seconds.
    *
-   * @param spanInMilliseconds    the time span to display
-   * @param mBeanServerConnection the MBean server connection used for polling
-   * @param objectName            the object name of the MBean exposing dispersion attributes
+   * @param spanInMilliseconds    width of the visible time window in milliseconds; must be positive
+   * @param mBeanServerConnection the JMX connection used to query the MBean; must not be {@code null}
+   * @param objectName            identifies the MBean exposing the percentile attributes; must not be {@code null}
    */
   public JMXSigmaChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
@@ -96,8 +101,9 @@ public class JMXSigmaChart extends SigmaChart {
   }
 
   /**
-   * Retrieves dispersion data from the MBean and adds it to the chart. On error, polling is paused and a
-   * {@link JavaErrorDialog} is displayed on the JavaFX thread.
+   * Fetches the six percentile attributes from the MBean and adds a {@link Dispersion} data point
+   * to the chart. If the chart is paused the call is a no-op. On any JMX error the chart is paused
+   * and a {@link JavaErrorDialog} is shown on the JavaFX thread.
    */
   private void collectData () {
 
@@ -123,7 +129,8 @@ public class JMXSigmaChart extends SigmaChart {
   }
 
   /**
-   * Cancels polling and stops the chart's time axis.
+   * Cancels the scheduled polling task and delegates to {@link SigmaChart#stop()} to release the
+   * time-axis executor. Should be called when the chart is no longer needed.
    */
   @Override
   public void stop () {

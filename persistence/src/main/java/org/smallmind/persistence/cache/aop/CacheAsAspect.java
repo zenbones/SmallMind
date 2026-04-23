@@ -56,9 +56,8 @@ import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.aop.Timed;
 
 /**
- * Aspect that intercepts methods annotated with {@link CacheAs} to populate and consult a vector cache.
- * The advice coordinates with {@link org.smallmind.persistence.orm.ORMDao} instances to either serve cached
- * durable objects or persist fresh results, while tracking metrics when enabled.
+ * AspectJ aspect that intercepts {@link CacheAs}-annotated methods to serve results from a vector cache
+ * or populate the cache from the underlying DAO, with optional metrics recording.
  */
 @Aspect
 public class CacheAsAspect {
@@ -66,14 +65,13 @@ public class CacheAsAspect {
   private static final Random RANDOM = new SecureRandom();
 
   /**
-   * Wraps execution of a {@link CacheAs}-annotated method, consulting an attached {@link VectoredDao}
-   * for cached entries or persisting a new vector when missing.
+   * Around advice that serves cached results or delegates to the DAO and populates the cache.
    *
-   * @param thisJoinPoint the intercepted invocation
-   * @param cacheAs       the cache configuration declared on the method
-   * @param ormDao        the DAO supplying persistence and vector access
-   * @return the durable instance or iterable returned by the intercepted method, potentially retrieved from cache
-   * @throws Throwable propagated from the underlying method or validation failures
+   * @param thisJoinPoint the intercepted method invocation
+   * @param cacheAs       the {@link CacheAs} annotation present on the method
+   * @param ormDao        the DAO that owns the intercepted method
+   * @return the cached or freshly fetched durable or iterable
+   * @throws Throwable if the annotation is misconfigured, the method throws, or vector operations fail
    */
   @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, ORMDao ormDao)
@@ -213,10 +211,10 @@ public class CacheAsAspect {
   }
 
   /**
-   * Calculates the effective time-to-live in seconds for a cache entry, including stochastic jitter when configured.
+   * Computes the effective TTL in seconds from the annotation, adding random jitter when a stochastic range is set.
    *
-   * @param cacheAs the annotation supplying base duration and optional randomness
-   * @return computed TTL in seconds; zero indicates the cache domain default
+   * @param cacheAs the annotation supplying the base duration and optional stochastic range
+   * @return TTL in seconds, or zero to delegate to the cache domain default
    */
   private int getTimeToLiveSeconds (CacheAs cacheAs) {
 

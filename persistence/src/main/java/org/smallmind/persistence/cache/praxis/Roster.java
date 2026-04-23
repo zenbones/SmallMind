@@ -36,23 +36,24 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * Serializable list-like structure used as the backing store for cached vectors.
+ * Serializable {@link List} extension that serves as the backing store for cached vectors.
+ * Implementations are required to support efficient head-insertion and tail-removal operations.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public interface Roster<T> extends Serializable, List<T> {
 
   /**
    * Inserts an element at the beginning of the roster.
    *
-   * @param element element to add
+   * @param element the element to add
    */
   void addFirst (T element);
 
   /**
    * Removes and returns the last element in the roster.
    *
-   * @return removed element
+   * @return the removed element
    */
   T removeLast ();
 }

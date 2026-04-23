@@ -37,7 +37,7 @@ import org.smallmind.web.jersey.cors.CorsFilter;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 /**
- * Spring-friendly Jersey extension that configures the {@link CorsFilter} with allowed and exposed headers.
+ * Spring-injectable Jersey extension that registers a {@link CorsFilter} with configurable allowed and exposed headers.
  */
 public class CorsExtension extends PrioritizedResourceConfigExtension {
 
@@ -45,9 +45,9 @@ public class CorsExtension extends PrioritizedResourceConfigExtension {
   private String[] exposedHeaders;
 
   /**
-   * Sets the headers that clients are allowed to send.
+   * Sets the request headers that clients are permitted to send.
    *
-   * @param allowedHeaders array of header names
+   * @param allowedHeaders array of header names to allow
    */
   public void setAllowedHeaders (String[] allowedHeaders) {
 
@@ -55,9 +55,9 @@ public class CorsExtension extends PrioritizedResourceConfigExtension {
   }
 
   /**
-   * Sets the headers that should be exposed to clients.
+   * Sets the response headers that should be exposed to clients.
    *
-   * @param exposedHeaders array of header names
+   * @param exposedHeaders array of header names to expose
    */
   public void setExposedHeaders (String[] exposedHeaders) {
 
@@ -65,9 +65,9 @@ public class CorsExtension extends PrioritizedResourceConfigExtension {
   }
 
   /**
-   * Registers the configured {@link CorsFilter} with the provided resource configuration.
+   * Registers a {@link CorsFilter} built from the configured header arrays with the Jersey resource configuration.
    *
-   * @param resourceConfig Jersey resource configuration
+   * @param resourceConfig the Jersey resource configuration to extend
    */
   @Override
   public void apply (ResourceConfig resourceConfig) {
@@ -76,10 +76,10 @@ public class CorsExtension extends PrioritizedResourceConfigExtension {
   }
 
   /**
-   * Joins header names into a comma-separated list.
+   * Joins an array of header names into a single comma-separated string.
    *
-   * @param headers headers to join
-   * @return comma-separated header string or {@code null} when none provided
+   * @param headers array of header names to join
+   * @return comma-separated string of header names, or {@code null} if the array is null or empty
    */
   private String concatenateHeaders (String[] headers) {
 

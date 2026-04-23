@@ -35,12 +35,14 @@ package org.smallmind.nutsnbolts.io;
 import java.util.EventObject;
 
 /**
- * Event emitted when a proxied {@link java.io.Closeable} is closed.
+ * Event fired by {@link CloseableProxyFactory} proxies after the wrapped {@link java.io.Closeable} is closed.
  */
 public class CloseEvent extends EventObject {
 
   /**
-   * @param source closeable that triggered the event
+   * Constructs a close event for the given source object.
+   *
+   * @param source the closeable instance that was closed
    */
   public CloseEvent (Object source) {
 

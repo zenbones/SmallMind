@@ -40,16 +40,16 @@ import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
 /**
- * Logging blueprint for the built-in indigenous logging implementation.
- * Provides adapters and error record construction compatible with the scribe core APIs.
+ * {@link LoggingBlueprint} implementation for the pure-scribe indigenous backend that manufactures
+ * {@link IndigenousLoggerAdapter} instances and constructs FATAL-level error records with fully populated context.
  */
 public class IndigenousLoggingBlueprint extends LoggingBlueprint<IndigenousRecord> {
 
   /**
-   * Creates a logger adapter for the specified logger name.
+   * Returns a new {@link IndigenousLoggerAdapter} for the specified name.
    *
    * @param name the logger name
-   * @return an adapter that emits indigenous records
+   * @return a fresh adapter that emits {@link IndigenousRecord} instances
    */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
@@ -58,13 +58,14 @@ public class IndigenousLoggingBlueprint extends LoggingBlueprint<IndigenousRecor
   }
 
   /**
-   * Builds an error {@link Record} for the indigenous logger, enriching it with context.
+   * Constructs a FATAL-level {@link IndigenousRecord} for error reporting, filling the logger context
+   * with caller information before returning the record.
    *
-   * @param loggerName the originating logger name
-   * @param throwable  the throwable to attach
-   * @param message    formatted message string
-   * @param args       substitution arguments
-   * @return a fully constructed record suitable for downstream appenders
+   * @param loggerName the name of the logger from which the error originates
+   * @param throwable  the throwable to attach to the record
+   * @param message    message template describing the error condition
+   * @param args       arguments substituted into the message template
+   * @return a fully populated record ready for delivery to appenders
    */
   @Override
   public Record<IndigenousRecord> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {

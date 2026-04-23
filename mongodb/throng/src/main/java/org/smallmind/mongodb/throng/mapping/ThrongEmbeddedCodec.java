@@ -46,7 +46,9 @@ import org.bson.codecs.EncoderContext;
 public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
 
   /**
-   * @param throngProperties property metadata describing the embedded type
+   * Constructs the codec from the given property metadata.
+   *
+   * @param throngProperties property metadata describing the fields and codecs of the embedded type
    */
   public ThrongEmbeddedCodec (ThrongProperties<T> throngProperties) {
 
@@ -54,7 +56,12 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * Decodes an embedded document or {@code null} value.
+   * Decodes a BSON document into the embedded type, reading surrounding document boundaries,
+   * or returns {@code null} when the current BSON value is null.
+   *
+   * @param reader         BSON reader positioned at the value
+   * @param decoderContext decoder context
+   * @return decoded embedded instance, or {@code null}
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -76,7 +83,12 @@ public class ThrongEmbeddedCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * Encodes the embedded value as a document, optionally writing {@code null} when configured.
+   * Encodes the embedded value wrapped in a BSON document; writes {@code null} when the value is absent
+   * and null storage is enabled.
+   *
+   * @param writer         destination BSON writer
+   * @param value          embedded instance to encode
+   * @param encoderContext encoder context
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {

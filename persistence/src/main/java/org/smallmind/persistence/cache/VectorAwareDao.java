@@ -36,11 +36,17 @@ import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
 /**
- * Exposes access to the underlying {@link VectoredDao} for vector operations.
+ * Mixin interface for DAOs that delegate vector cache operations to an associated
+ * {@link VectoredDao}.
+ *
+ * @param <I> durable identifier type
+ * @param <D> durable type
  */
 public interface VectorAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
   /**
+   * Returns the {@link VectoredDao} responsible for vector cache operations.
+   *
    * @return vectored DAO implementation
    */
   VectoredDao<I, D> getVectoredDao ();

@@ -41,12 +41,15 @@ import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 /**
- * Factory for constructing orthodox JSON value implementations.
+ * {@link ValueFactory} that instantiates the full suite of orthodox value implementations,
+ * serving as the single creation point for all {@link OrthodoxValue} subtypes within a codec session.
  */
 public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
 
   /**
-   * @return new object value
+   * Allocates and returns a new, empty {@link OrthodoxObjectValue}.
+   *
+   * @return new mutable object value backed by a {@link java.util.HashMap}
    */
   @Override
   public ObjectValue<OrthodoxValue> objectValue () {
@@ -55,7 +58,9 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * @return new array value
+   * Allocates and returns a new, empty {@link OrthodoxArrayValue}.
+   *
+   * @return new mutable array value backed by a {@link java.util.LinkedList}
    */
   @Override
   public ArrayValue<OrthodoxValue> arrayValue () {
@@ -64,10 +69,10 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * Creates a string value.
+   * Creates an {@link OrthodoxTextValue} wrapping {@code text}.
    *
-   * @param text text to wrap
-   * @return new string value
+   * @param text the string to wrap; encoded with JSON escaping when serialized
+   * @return new immutable string value
    */
   @Override
   public StringValue<OrthodoxValue> textValue (String text) {
@@ -76,10 +81,10 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * Creates an integer value.
+   * Creates an {@link OrthodoxIntegerValue} wrapping {@code i}.
    *
-   * @param i integer to wrap
-   * @return new number value
+   * @param i the primitive int to wrap
+   * @return new immutable integer number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#INTEGER}
    */
   @Override
   public NumberValue<OrthodoxValue> numberValue (int i) {
@@ -88,10 +93,10 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * Creates a long value.
+   * Creates an {@link OrthodoxLongValue} wrapping {@code l}.
    *
-   * @param l long to wrap
-   * @return new number value
+   * @param l the primitive long to wrap
+   * @return new immutable long number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#LONG}
    */
   @Override
   public NumberValue<OrthodoxValue> numberValue (long l) {
@@ -100,10 +105,10 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * Creates a double value.
+   * Creates an {@link OrthodoxDoubleValue} wrapping {@code d}.
    *
-   * @param d double to wrap
-   * @return new number value
+   * @param d the primitive double to wrap
+   * @return new immutable double number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#DOUBLE}
    */
   @Override
   public NumberValue<OrthodoxValue> numberValue (double d) {
@@ -112,10 +117,10 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * Creates a boolean value.
+   * Creates an {@link OrthodoxBooleanValue} wrapping {@code bool}.
    *
-   * @param bool boolean to wrap
-   * @return new boolean value
+   * @param bool the primitive boolean to wrap
+   * @return new immutable boolean value encoding as {@code true} or {@code false}
    */
   @Override
   public BooleanValue<OrthodoxValue> booleanValue (boolean bool) {
@@ -124,7 +129,9 @@ public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
   }
 
   /**
-   * @return the null value instance
+   * Creates an {@link OrthodoxNullValue} encoding the JSON literal {@code null}.
+   *
+   * @return new null value instance
    */
   @Override
   public NullValue<OrthodoxValue> nullValue () {

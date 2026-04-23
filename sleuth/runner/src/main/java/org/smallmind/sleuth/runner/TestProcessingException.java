@@ -35,13 +35,22 @@ package org.smallmind.sleuth.runner;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Indicates errors while preparing or invoking tests (e.g., missing constructors or reflection failures).
+ * Runtime exception indicating an error while preparing or invoking test infrastructure.
+ * <p>
+ * Thrown by {@link SuiteRunner} when a test class lacks the required no-argument constructor or
+ * when instantiation fails via reflection. The formatted-message constructor mirrors the
+ * printf-style API of {@link FormattedRuntimeException}; the cause-wrapping constructor is
+ * provided for reflection exceptions that already carry a meaningful message.
+ *
+ * @see SuiteRunner
  */
 public class TestProcessingException extends FormattedRuntimeException {
 
   /**
-   * @param message formatted error message
-   * @param args    message parameters
+   * Constructs an exception with a formatted message.
+   *
+   * @param message printf-style format string; must not be {@code null}
+   * @param args    format arguments substituted into {@code message}
    */
   public TestProcessingException (String message, Object... args) {
 
@@ -49,13 +58,12 @@ public class TestProcessingException extends FormattedRuntimeException {
   }
 
   /**
-   * Wraps a caught exception.
+   * Constructs an exception wrapping a caught throwable.
    *
-   * @param throwable underlying cause
+   * @param throwable underlying cause to wrap; must not be {@code null}
    */
   public TestProcessingException (Throwable throwable) {
 
     super(throwable);
   }
 }
-

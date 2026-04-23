@@ -44,15 +44,24 @@ import org.smallmind.claxon.registry.PullEmitter;
 import org.smallmind.claxon.registry.UnknownEmitterException;
 
 /**
- * JAX-RS resource that exposes pull emitters over HTTP.
+ * JAX-RS resource that exposes pull-style Claxon emitters over HTTP.
+ *
+ * <p>Each emitter registered under a given name in the {@link ClaxonRegistry} can be
+ * retrieved by issuing an HTTP GET to {@code /org/smallmind/claxon/emitter/{name}}. Only
+ * emitters whose collection method is {@link EmitterMethod#PULL} are eligible; attempts to
+ * access push emitters via this endpoint result in an {@link InvalidEmitterException}.
  */
 @Path("/org/smallmind/claxon/emitter")
 public class EmitterResource {
 
+  /**
+   * Registry used to look up registered emitters by name.
+   */
   private ClaxonRegistry registry;
 
   /**
-   * Default constructor for dependency injection frameworks.
+   * No-argument constructor for use by dependency-injection frameworks and JAX-RS runtimes
+   * that require a public no-arg constructor.
    */
   public EmitterResource () {
 
@@ -61,7 +70,7 @@ public class EmitterResource {
   /**
    * Creates a resource bound to the given registry.
    *
-   * @param registry registry to query for emitters
+   * @param registry the {@link ClaxonRegistry} to query when resolving emitter names
    */
   public EmitterResource (ClaxonRegistry registry) {
 
@@ -69,9 +78,9 @@ public class EmitterResource {
   }
 
   /**
-   * Sets the registry used to resolve emitters.
+   * Sets the registry used to resolve emitters by name.
    *
-   * @param registry registry reference
+   * @param registry the {@link ClaxonRegistry} to use; must not be {@code null} at request time
    */
   public void setRegistry (ClaxonRegistry registry) {
 
@@ -79,12 +88,17 @@ public class EmitterResource {
   }
 
   /**
-   * Fetches the output of a pull emitter by name.
+   * Fetches the current output of a named pull emitter.
    *
-   * @param name emitter name
-   * @return HTTP response containing the emitter payload
-   * @throws UnknownEmitterException when the emitter is not registered
-   * @throws InvalidEmitterException when the emitter is not a pull emitter
+   * <p>The emitter identified by {@code name} is looked up in the configured registry. If
+   * found and of type {@link EmitterMethod#PULL}, its {@link PullEmitter#emit()} method is
+   * invoked and the result is returned as an HTTP 200 response body.
+   *
+   * @param name the name of the registered emitter to invoke
+   * @return an HTTP {@link Response} whose entity is the value produced by the emitter
+   * @throws UnknownEmitterException if no emitter with the given name is registered
+   * @throws InvalidEmitterException if the emitter exists but its collection method is not
+   *                                 {@link EmitterMethod#PULL}
    */
   @GET
   @Path("/{name}")

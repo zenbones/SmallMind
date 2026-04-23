@@ -43,17 +43,17 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.Counter;
 
 /**
- * Parses arguments according to a {@link Template}, supporting GNU-style long options and single-character flags.
+ * Parses raw command line arguments against a {@link Template}, supporting GNU-style long options ({@code --name}) and single-character flags ({@code -f}).
  */
 public class CommandLineParser {
 
   /**
-   * Parses a command line using the supplied template.
+   * Parses a command line using the supplied template, rejecting any non-option arguments.
    *
-   * @param template template describing valid options and arguments
-   * @param args     raw command line arguments
-   * @return populated {@link OptionSet}
-   * @throws CommandLineException if parsing fails or required options are missing
+   * @param template template describing the valid options and their argument types
+   * @param args     raw command line argument tokens
+   * @return populated {@link OptionSet} reflecting all parsed options and their values
+   * @throws CommandLineException if an unknown option is encountered, a required option is absent, or a dependent option is used without its parent
    */
   public static OptionSet parseCommands (Template template, String[] args)
     throws CommandLineException {
@@ -62,13 +62,13 @@ public class CommandLineParser {
   }
 
   /**
-   * Parses a command line with an option to allow undeclared trailing arguments.
+   * Parses a command line using the supplied template, optionally collecting non-option tokens as undeclared trailing arguments.
    *
-   * @param template        template describing valid options and arguments
-   * @param args            raw command line arguments
-   * @param allowUndeclared when {@code true}, non-option arguments are preserved rather than rejected
-   * @return populated {@link OptionSet}
-   * @throws CommandLineException if parsing fails or required options are missing
+   * @param template        template describing the valid options and their argument types
+   * @param args            raw command line argument tokens
+   * @param allowUndeclared when {@code true}, tokens that do not start with {@code -} or {@code --} are stored as remaining arguments instead of causing an error
+   * @return populated {@link OptionSet} reflecting all parsed options and their values
+   * @throws CommandLineException if an unknown option is encountered, a required option is absent, or a dependent option is used without its parent
    */
   public static OptionSet parseCommands (Template template, String[] args, boolean allowUndeclared)
     throws CommandLineException {
@@ -216,7 +216,10 @@ public class CommandLineParser {
   }
 
   /**
-   * Formats an option for error messages, preferring long names over flags.
+   * Returns a human-readable representation of an option for use in error messages, preferring the long name over the single-character flag.
+   *
+   * @param option option to format
+   * @return string of the form {@code --name} or {@code -f}
    */
   private static String getOptionName (Option option) {
 
@@ -224,7 +227,13 @@ public class CommandLineParser {
   }
 
   /**
-   * Collects a variable-length list of arguments until the next token begins with a dash.
+   * Collects a variable-length sequence of argument values, stopping before the next token that begins with a dash.
+   *
+   * @param currentString already-consumed partial token, or {@code null} to read the next argument
+   * @param argCounter    mutable index into {@code args}
+   * @param args          full argument array
+   * @return array of collected argument values
+   * @throws CommandLineException if a required argument is missing or contains an unterminated quoted string
    */
   private static String[] obtainArguments (String currentString, Counter argCounter, String[] args)
     throws CommandLineException {
@@ -243,7 +252,13 @@ public class CommandLineParser {
   }
 
   /**
-   * Obtains a single argument, respecting quoted values that may span multiple tokens.
+   * Reads a single argument value, stitching together multiple tokens when the value is delimited by single or double quotes.
+   *
+   * @param currentString already-consumed partial token to use as the argument, or {@code null} to advance {@code argCounter} and read the next token
+   * @param argCounter    mutable index into {@code args}
+   * @param args          full argument array
+   * @return the argument value as a string, including any surrounding quote characters
+   * @throws CommandLineException if no argument is available or a quoted argument is not terminated
    */
   private static String obtainArgument (String currentString, Counter argCounter, String[] args)
     throws CommandLineException {
@@ -278,7 +293,11 @@ public class CommandLineParser {
   }
 
   /**
-   * Finds an unused option matching a flag, removing it from the unused set.
+   * Finds an option in the unused set whose flag matches the given character, removing it from the set when found.
+   *
+   * @param unusedSet set of options not yet encountered during parsing
+   * @param flag      flag character to match
+   * @return matching {@link Option}, or {@code null} if not found
    */
   private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, Character flag) {
 
@@ -294,7 +313,11 @@ public class CommandLineParser {
   }
 
   /**
-   * Finds an unused option matching a long name, removing it from the unused set.
+   * Finds an option in the unused set whose long name matches the given string, removing it from the set when found.
+   *
+   * @param unusedSet set of options not yet encountered during parsing
+   * @param name      long option name to match
+   * @return matching {@link Option}, or {@code null} if not found
    */
   private static Option findUnusedOptionByName (HashSet<Option> unusedSet, String name) {
 
@@ -310,7 +333,11 @@ public class CommandLineParser {
   }
 
   /**
-   * Looks for an already-used option by flag, without modifying the set.
+   * Searches the used set for an option whose flag matches the given character without modifying the set.
+   *
+   * @param usedSet set of options already encountered during parsing
+   * @param flag    flag character to match
+   * @return matching {@link Option}, or {@code null} if not found
    */
   private static Option findUsedOptionByFlag (HashSet<Option> usedSet, Character flag) {
 
@@ -325,7 +352,11 @@ public class CommandLineParser {
   }
 
   /**
-   * Looks for an already-used option by long name, without modifying the set.
+   * Searches the used set for an option whose long name matches the given string without modifying the set.
+   *
+   * @param usedSet set of options already encountered during parsing
+   * @param name    long option name to match
+   * @return matching {@link Option}, or {@code null} if not found
    */
   private static Option findUsedOptionByName (HashSet<Option> usedSet, String name) {
 

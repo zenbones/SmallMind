@@ -33,12 +33,14 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Appender that writes formatted output to standard out.
+ * Appender that writes formatted log output directly to {@code System.out}, synchronizing each write
+ * to prevent interleaved output from concurrent threads.
  */
 public class ConsoleAppender extends AbstractFormattedAppender {
 
   /**
-   * Creates a console appender with no formatter or error handler.
+   * Constructs a console appender with no formatter or error handler; the record is written
+   * as-is and errors are silently discarded.
    */
   public ConsoleAppender () {
 
@@ -46,9 +48,9 @@ public class ConsoleAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Creates a console appender with a formatter.
+   * Constructs a console appender that applies the given formatter before writing to {@code System.out}.
    *
-   * @param formatter formatter to apply to records
+   * @param formatter the formatter used to convert log records to strings, or {@code null} for no formatting
    */
   public ConsoleAppender (Formatter formatter) {
 
@@ -56,10 +58,10 @@ public class ConsoleAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Creates a console appender with formatter and error handler.
+   * Constructs a console appender with a formatter and an error handler.
    *
-   * @param formatter    formatter to apply to records
-   * @param errorHandler handler to invoke on failures
+   * @param formatter    the formatter used to convert log records to strings, or {@code null} for no formatting
+   * @param errorHandler the handler invoked when output or formatting fails, or {@code null} to discard errors
    */
   public ConsoleAppender (Formatter formatter, ErrorHandler errorHandler) {
 
@@ -67,10 +69,10 @@ public class ConsoleAppender extends AbstractFormattedAppender {
   }
 
   /**
-   * Writes the formatted output to standard out.
+   * Writes the formatted text to {@code System.out}. This method is synchronized so that concurrent
+   * callers do not interleave their output.
    *
-   * @param formattedOutput text to emit
-   * @throws RuntimeException if console output fails
+   * @param formattedOutput the fully formatted text to print; must not be {@code null}
    */
   public synchronized void handleOutput (String formattedOutput) {
 

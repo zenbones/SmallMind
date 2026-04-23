@@ -35,7 +35,7 @@ package org.smallmind.web.json.doppelganger;
 import java.util.HashMap;
 
 /**
- * Holds the set of properties belonging to a particular purpose/direction, split into real and virtual fields.
+ * Holds the set of properties for a single purpose/direction, split into real (entity-backed) and virtual maps.
  */
 public class PropertyLexicon {
 
@@ -43,10 +43,10 @@ public class PropertyLexicon {
   private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
 
   /**
-   * Adds a property keyed by its logical name, routing to the real or virtual map.
+   * Adds a property entry, routing it to the real map or the virtual map based on its {@link PropertyInformation#isVirtual()} flag.
    *
-   * @param key                 logical property name
-   * @param propertyInformation property metadata
+   * @param key                 the logical property name
+   * @param propertyInformation the metadata for the property
    */
   public void put (String key, PropertyInformation propertyInformation) {
 
@@ -60,7 +60,7 @@ public class PropertyLexicon {
   }
 
   /**
-   * @return {@code true} if at least one real property exists
+   * @return {@code true} if at least one real property has been registered
    */
   public boolean isReal () {
 
@@ -68,7 +68,7 @@ public class PropertyLexicon {
   }
 
   /**
-   * @return {@code true} if at least one virtual property exists
+   * @return {@code true} if at least one virtual property has been registered
    */
   public boolean isVirtual () {
 
@@ -76,9 +76,9 @@ public class PropertyLexicon {
   }
 
   /**
-   * Checks whether any property carries comment text.
+   * Returns whether any property in either map carries a non-empty comment.
    *
-   * @return {@code true} if comments are present
+   * @return {@code true} if at least one property has comment text
    */
   public boolean hasComment () {
 
@@ -103,9 +103,9 @@ public class PropertyLexicon {
   }
 
   /**
-   * Checks whether any property uses an {@code @As} override.
+   * Returns whether any property in either map has a non-null {@code @As} type override.
    *
-   * @return {@code true} if such overrides are present
+   * @return {@code true} if at least one property specifies an {@code @As} override
    */
   public boolean hasAs () {
 
@@ -130,9 +130,9 @@ public class PropertyLexicon {
   }
 
   /**
-   * Checks whether any real property has a nullifier message.
+   * Returns whether any real property has a non-null nullifier message.
    *
-   * @return {@code true} if a nullifier exists
+   * @return {@code true} if at least one real property specifies a nullifier message
    */
   public boolean hasNullifier () {
 
@@ -149,10 +149,10 @@ public class PropertyLexicon {
   }
 
   /**
-   * Determines whether the lexicon already contains the supplied key in either map.
+   * Returns whether a property with the given key exists in either the real or virtual map.
    *
-   * @param key property key to test
-   * @return {@code true} if present
+   * @param key the property name to test
+   * @return {@code true} if the key is present in either map
    */
   public boolean containsKey (String key) {
 
@@ -160,7 +160,7 @@ public class PropertyLexicon {
   }
 
   /**
-   * @return map of real properties keyed by name
+   * @return the map of real (entity-backed) properties keyed by logical name
    */
   public HashMap<String, PropertyInformation> getRealMap () {
 
@@ -168,7 +168,7 @@ public class PropertyLexicon {
   }
 
   /**
-   * @return map of virtual properties keyed by name
+   * @return the map of virtual properties keyed by logical name
    */
   public HashMap<String, PropertyInformation> getVirtualMap () {
 

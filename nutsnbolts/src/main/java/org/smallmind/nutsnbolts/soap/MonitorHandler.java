@@ -41,7 +41,7 @@ import jakarta.xml.ws.handler.soap.SOAPMessageContext;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * SOAP handler that prints messages to a {@link PrintStream} for monitoring purposes.
+ * A JAX-WS {@link SOAPHandler} that writes SOAP messages to a {@link PrintStream} for diagnostic monitoring.
  */
 public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
 
@@ -49,7 +49,7 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   private final MessageDirection messageDirection;
 
   /**
-   * Creates a handler that logs both inbound and outbound messages to {@link System#out}.
+   * Creates a handler that writes both inbound and outbound messages to {@link System#out}.
    */
   public MonitorHandler () {
 
@@ -57,9 +57,9 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * Creates a handler that logs both inbound and outbound messages to the given stream.
+   * Creates a handler that writes both inbound and outbound messages to the given stream.
    *
-   * @param printStream destination for SOAP messages
+   * @param printStream the destination stream for logged messages
    */
   public MonitorHandler (PrintStream printStream) {
 
@@ -67,9 +67,9 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * Creates a handler that logs messages in the chosen direction to {@link System#out}.
+   * Creates a handler that writes messages in the specified direction to {@link System#out}.
    *
-   * @param messageDirection which messages to log
+   * @param messageDirection which message directions to log
    */
   public MonitorHandler (MessageDirection messageDirection) {
 
@@ -77,10 +77,10 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * Creates a handler that logs messages in the chosen direction to the given stream.
+   * Creates a handler that writes messages in the specified direction to the given stream.
    *
-   * @param printStream      destination for SOAP messages
-   * @param messageDirection which messages to log
+   * @param printStream      the destination stream for logged messages
+   * @param messageDirection which message directions to log
    */
   public MonitorHandler (PrintStream printStream, MessageDirection messageDirection) {
 
@@ -89,7 +89,9 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because this handler does not declare any understood headers.
+   *
+   * @return {@code null}
    */
   public Set<QName> getHeaders () {
 
@@ -97,11 +99,11 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * Logs SOAP messages according to the configured direction.
+   * Writes the current SOAP message to the configured stream if the message direction matches the configured filter.
    *
-   * @param context the SOAP message context
-   * @return {@code true} to continue processing
-   * @throws RuntimeException wrapping any exceptions encountered while writing the message
+   * @param context the current SOAP message context
+   * @return {@code true} to continue handler chain processing
+   * @throws RuntimeException wrapping any I/O exception encountered while serializing the message
    */
   public boolean handleMessage (SOAPMessageContext context) {
 
@@ -134,11 +136,11 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * Logs SOAP fault messages.
+   * Writes the SOAP fault message to the configured stream.
    *
-   * @param context the SOAP message context
-   * @return {@code true} to continue processing
-   * @throws RuntimeException wrapping any exceptions encountered while writing the fault
+   * @param context the current SOAP message context containing the fault
+   * @return {@code true} to continue handler chain processing
+   * @throws RuntimeException wrapping any I/O exception encountered while serializing the fault
    */
   public boolean handleFault (SOAPMessageContext context) {
 
@@ -153,7 +155,9 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
   }
 
   /**
-   * {@inheritDoc}
+   * Performs no cleanup action when the handler chain is closed.
+   *
+   * @param context the message context at close time
    */
   public void close (MessageContext context) {
 

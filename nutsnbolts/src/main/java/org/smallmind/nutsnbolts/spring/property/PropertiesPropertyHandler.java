@@ -37,20 +37,27 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Iterates over entries in a {@link Properties} object as {@link PropertiesPropertyEntry} instances.
+ * A {@link PropertyHandler} that iterates over a {@link Properties} object, yielding each entry as a {@link PropertiesPropertyEntry}.
  */
 public class PropertiesPropertyHandler implements PropertyHandler<PropertiesPropertyEntry> {
 
   private final Properties properties;
 
   /**
-   * @param properties properties source
+   * Creates a handler backed by the given {@link Properties} object.
+   *
+   * @param properties the properties source to iterate
    */
   public PropertiesPropertyHandler (Properties properties) {
 
     this.properties = properties;
   }
 
+  /**
+   * Returns an iterator over the entries of the backing {@link Properties} object.
+   *
+   * @return an iterator producing {@link PropertiesPropertyEntry} instances
+   */
   @Override
   public Iterator<PropertiesPropertyEntry> iterator () {
 
@@ -58,32 +65,49 @@ public class PropertiesPropertyHandler implements PropertyHandler<PropertiesProp
   }
 
   /**
-   * Iterator wrapping underlying map entries of a {@link Properties} instance.
+   * Wraps the underlying {@link Properties} entry set iterator to produce {@link PropertiesPropertyEntry} values.
    */
   private static class PropertiesPropertyEntryIterator implements Iterator<PropertiesPropertyEntry> {
 
     private final Iterator<Map.Entry<Object, Object>> mapEntryIter;
 
     /**
-     * @param properties source properties
+     * Creates an iterator over the entry set of the given properties.
+     *
+     * @param properties the source properties to iterate
      */
     private PropertiesPropertyEntryIterator (Properties properties) {
 
       mapEntryIter = properties.entrySet().iterator();
     }
 
+    /**
+     * Returns {@code true} if another property entry is available.
+     *
+     * @return {@code true} if the underlying entry set iterator has more entries
+     */
     @Override
     public boolean hasNext () {
 
       return mapEntryIter.hasNext();
     }
 
+    /**
+     * Returns the next property entry wrapped as a {@link PropertiesPropertyEntry}.
+     *
+     * @return the next {@link PropertiesPropertyEntry}
+     */
     @Override
     public PropertiesPropertyEntry next () {
 
       return new PropertiesPropertyEntry(mapEntryIter.next());
     }
 
+    /**
+     * Removal is not supported by this iterator.
+     *
+     * @throws UnsupportedOperationException always
+     */
     @Override
     public void remove () {
 

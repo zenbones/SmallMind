@@ -35,19 +35,27 @@ package org.smallmind.quorum.pool.complex.event;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
- * Event carrying the lease duration for a component that was returned to the pool.
+ * Event fired each time a component is returned to the pool when lease-time reporting is
+ * enabled.
+ * <p>
+ * Delivered to {@link ComponentPoolEventListener#reportLeaseTime} when
+ * {@link org.smallmind.quorum.pool.complex.ComplexPoolConfig#isReportLeaseTimeNanos()} is
+ * {@code true} and a component's {@link org.smallmind.quorum.pool.complex.ComponentPin#free()}
+ * is called. Carries the originating pool and the exact nanosecond lease duration, allowing
+ * listeners such as the JMX monitor to emit metrics or notifications.
  *
- * @param <C> component type managed by the pool
+ * @param <C> the type of component managed by the originating pool
  */
 public class LeaseTimeReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
   private final long leaseTimeNanos;
 
   /**
-   * Creates the event with the originating pool and lease duration.
+   * Creates a lease-time event for the given pool.
    *
-   * @param componentPool  pool reporting the lease
-   * @param leaseTimeNanos lease duration in nanoseconds
+   * @param componentPool  the pool from which the component was returned
+   * @param leaseTimeNanos the duration in nanoseconds for which the component was held by
+   *                       a caller
    */
   public LeaseTimeReportingComponentPoolEvent (ComponentPool<C> componentPool, long leaseTimeNanos) {
 
@@ -59,7 +67,9 @@ public class LeaseTimeReportingComponentPoolEvent<C> extends ComponentPoolEvent<
   /**
    * Returns the lease duration in nanoseconds.
    *
-   * @return lease time
+   * @return the lease time from {@link org.smallmind.quorum.pool.complex.ComponentPin#serve()}
+   * to {@link org.smallmind.quorum.pool.complex.ComponentPin#free()}, measured with
+   * {@link System#nanoTime()}
    */
   public long getLeaseTimeNanos () {
 

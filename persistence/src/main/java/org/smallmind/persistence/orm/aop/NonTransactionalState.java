@@ -37,15 +37,18 @@ import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 
 /**
- * Thread-local tracker for non-transactional session boundaries, coordinating with transactional state
- * to prevent session stealing and ensure proper closure.
+ * Thread-local registry for non-transactional session boundary stacks, coordinating with
+ * {@link TransactionalState} to prevent session-stealing and to ensure sessions are closed in
+ * the correct order when boundaries unwind.
  */
 public class NonTransactionalState {
 
   private static final ThreadLocal<LinkedList<BoundarySet<ProxySession<?, ?>>>> SESSION_SET_STACK_LOCAL = new ThreadLocal<>();
 
   /**
-   * @return true when any non-transactional session is active in the current thread
+   * Returns {@code true} when any non-transactional session is active on the current thread.
+   *
+   * @return {@code true} if a non-transactional session exists for any source key
    */
   public static boolean isInSession () {
 
@@ -53,10 +56,10 @@ public class NonTransactionalState {
   }
 
   /**
-   * Determines whether a non-transactional session for the given source key is active.
+   * Returns {@code true} when a non-transactional session for the given source key is active on the current thread.
    *
-   * @param sessionSourceKey the session key to check; {@code null} checks the default
-   * @return true when active
+   * @param sessionSourceKey the source key to check; {@code null} checks the unnamed default source
+   * @return {@code true} if a matching session is active
    */
   public static boolean isInSession (String sessionSourceKey) {
 
@@ -64,10 +67,11 @@ public class NonTransactionalState {
   }
 
   /**
-   * Returns the current session for the given source key, preferring any active transactional session.
+   * Returns the current session for the given source key, delegating to the active transactional session first
+   * if one exists.
    *
-   * @param sessionSourceKey session key to find; {@code null} finds the default
-   * @return the matching session or {@code null} if none
+   * @param sessionSourceKey the source key to find; {@code null} finds the unnamed default source
+   * @return the matching {@link ProxySession}, or {@code null} if no session is active for that key
    */
   public static ProxySession<?, ?> currentSession (String sessionSourceKey) {
 
@@ -99,10 +103,11 @@ public class NonTransactionalState {
   }
 
   /**
-   * Checks whether the provided session is present in any active non-transactional boundary for the current thread.
+   * Returns {@code true} if the given session appears in any non-transactional boundary currently on the stack
+   * for the current thread.
    *
-   * @param proxySession session to search for
-   * @return {@code true} if the session is in scope
+   * @param proxySession the session to search for
+   * @return {@code true} if the session is present in any active non-transactional boundary
    */
   protected static boolean containsSession (ProxySession<?, ?> proxySession) {
 
@@ -120,10 +125,11 @@ public class NonTransactionalState {
   }
 
   /**
-   * Finds the active non-transactional boundary that allows the given session.
+   * Returns the innermost non-transactional boundary set that permits the given session, or {@code null}
+   * if no active boundary allows it.
    *
-   * @param proxySession session to locate
-   * @return the boundary set or {@code null} if none
+   * @param proxySession the session to locate
+   * @return the matching {@link BoundarySet}, or {@code null} if none
    */
   public static BoundarySet<ProxySession<?, ?>> obtainBoundary (ProxySession<?, ?> proxySession) {
 
@@ -142,9 +148,9 @@ public class NonTransactionalState {
   }
 
   /**
-   * Begins a new non-transactional boundary for the provided annotation configuration.
+   * Pushes a new non-transactional boundary onto the current thread's stack, initialized from the given annotation.
    *
-   * @param nonTransactional the annotation describing the boundary
+   * @param nonTransactional the annotation whose {@code dataSources} and {@code implicit} attributes configure the boundary
    */
   protected static void startBoundary (NonTransactional nonTransactional) {
 
@@ -158,10 +164,11 @@ public class NonTransactionalState {
   }
 
   /**
-   * Ends the most recent non-transactional boundary, closing any sessions and handling errors appropriately.
+   * Pops the most recent non-transactional boundary from the stack, closing all sessions it contains
+   * and cleaning up thread-local state when the stack becomes empty.
    *
-   * @param throwable any throwable propagated from the boundary body
-   * @throws SessionError when boundary closure fails or ordering is violated
+   * @param throwable the throwable that propagated from the boundary body, or {@code null} on normal return
+   * @throws SessionError if the boundary stack is empty, if a session cannot be closed, or if ordering constraints are violated
    */
   protected static void endBoundary (Throwable throwable)
     throws SessionError {

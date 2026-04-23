@@ -36,16 +36,33 @@ import java.net.URI;
 import java.nio.file.Path;
 
 /**
- * URI helpers for the jailed file system provider.
+ * Utility class providing URI validation and conversion helpers for the jailed file
+ * system provider.
+ *
+ * <p>The jailed file system uses a URI of the form {@code <scheme>:///} to identify the
+ * single file-system instance managed by a {@link JailedFileSystemProvider}. Individual
+ * paths within the jail are represented as {@code <scheme>://<path>}.
+ *
+ * <p>This class is not instantiable; all methods are static.
  */
 public class JailedURIUtility {
 
   /**
-   * Validates the supplied URI for compatibility with the jailed provider.
+   * Validates that the supplied {@link URI} is well-formed for use with the jailed file
+   * system provider identified by {@code scheme}.
    *
-   * @param scheme expected scheme
-   * @param uri    URI to validate
-   * @throws IllegalArgumentException if unsupported components are present
+   * <p>A valid file-system URI must satisfy all of the following conditions:
+   * <ul>
+   *   <li>Its scheme matches {@code scheme} (case-insensitive).</li>
+   *   <li>It has no authority component.</li>
+   *   <li>It has a path component equal to {@code "/"}.</li>
+   *   <li>It has no query component.</li>
+   *   <li>It has no fragment component.</li>
+   * </ul>
+   *
+   * @param scheme the expected URI scheme (e.g., {@code "jailed"})
+   * @param uri    the {@link URI} to validate
+   * @throws IllegalArgumentException if any of the above conditions are not met
    */
   public static void checkUri (String scheme, URI uri) {
 
@@ -65,12 +82,19 @@ public class JailedURIUtility {
   }
 
   /**
-   * Converts a provider URI into a jailed path.
+   * Converts a provider URI into a {@link JailedPath} within the supplied
+   * {@link JailedFileSystem}.
    *
-   * @param jailedFileSystem the file system handling the URI
-   * @param uri              the URI to convert
-   * @return the resulting jailed path
-   * @throws IllegalArgumentException if the URI is invalid for this provider
+   * <p>The URI must be absolute, hierarchical, use the scheme of the given file system's
+   * provider, and must not contain an authority, fragment, or query component. The URI's
+   * path component is used directly as the jailed path string.
+   *
+   * @param jailedFileSystem the {@link JailedFileSystem} that will own the resulting path
+   * @param uri              the absolute, hierarchical {@link URI} to convert
+   * @return a {@link JailedPath} whose string value equals the path component of {@code uri}
+   * @throws IllegalArgumentException if the URI is relative, opaque, uses an incompatible
+   *                                  scheme, or contains an authority, fragment, or query
+   *                                  component
    */
   public static Path fromUri (JailedFileSystem jailedFileSystem, URI uri) {
 

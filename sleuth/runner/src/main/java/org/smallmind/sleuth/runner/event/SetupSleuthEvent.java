@@ -35,13 +35,24 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when test setup is starting.
+ * Event fired when suite-level or test-level setup is about to begin.
+ * <p>
+ * Emitted before executing {@link org.smallmind.sleuth.runner.annotation.BeforeSuite} or
+ * {@link org.smallmind.sleuth.runner.annotation.BeforeTest} lifecycle methods to allow
+ * listeners to mark the beginning of the setup phase in reports. The Surefire integration
+ * maps this event to a {@code testSetStarting} notification.
+ *
+ * @see StartSleuthEvent
+ * @see org.smallmind.sleuth.runner.annotation.BeforeSuite
+ * @see org.smallmind.sleuth.runner.annotation.BeforeTest
  */
 public class SetupSleuthEvent extends SleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
+   * Constructs a setup event attributed to the given class and method.
+   *
+   * @param className  fully qualified name of the class whose setup is starting; must not be {@code null}
+   * @param methodName name of the lifecycle setup method about to run; must not be {@code null}
    */
   public SetupSleuthEvent (String className, String methodName) {
 
@@ -49,6 +60,8 @@ public class SetupSleuthEvent extends SleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#SETUP}.
+   *
    * @return {@link SleuthEventType#SETUP}
    */
   @Override
@@ -58,7 +71,9 @@ public class SetupSleuthEvent extends SleuthEvent {
   }
 
   /**
-   * @return bright magenta to indicate setup
+   * Returns bright magenta, used to visually distinguish setup events from test outcome events.
+   *
+   * @return {@link AnsiColor#BRIGHT_MAGENTA}
    */
   @Override
   public AnsiColor getColor () {

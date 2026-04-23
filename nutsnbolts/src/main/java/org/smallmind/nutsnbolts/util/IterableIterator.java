@@ -35,16 +35,18 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Iterator;
 
 /**
- * Adapter that makes an {@link Iterator} also implement {@link Iterable}.
+ * Adapter that exposes an existing {@link Iterator} as both an {@link Iterator} and an {@link Iterable}.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
 
   private final Iterator<T> internalIterator;
 
   /**
-   * @param internalIterator iterator to wrap; must not be {@code null}
+   * Constructs an adapter wrapping the given iterator.
+   *
+   * @param internalIterator the iterator to wrap; must not be {@code null}
    */
   public IterableIterator (Iterator<T> internalIterator) {
 
@@ -52,7 +54,9 @@ public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Delegates to the wrapped iterator.
+   * Delegates to the wrapped iterator's {@link Iterator#hasNext()} method.
+   *
+   * @return {@code true} if there are more elements
    */
   public boolean hasNext () {
 
@@ -60,7 +64,9 @@ public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Delegates to the wrapped iterator.
+   * Delegates to the wrapped iterator's {@link Iterator#next()} method.
+   *
+   * @return the next element
    */
   public T next () {
 
@@ -68,7 +74,7 @@ public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Removal is not supported by this adapter.
+   * Always throws {@link UnsupportedOperationException} because this adapter does not support removal.
    *
    * @throws UnsupportedOperationException always
    */
@@ -78,7 +84,9 @@ public class IterableIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * @return the wrapped iterator itself
+   * Returns the wrapped iterator, enabling use of this adapter in enhanced for-loops.
+   *
+   * @return the underlying iterator
    */
   public Iterator<T> iterator () {
 

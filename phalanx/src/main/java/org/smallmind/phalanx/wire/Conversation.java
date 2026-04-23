@@ -33,23 +33,32 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Describes the interaction pattern and timeout behavior for a request.
+ * Defines the exchange pattern and optional timeout for a single wire request.
  *
- * @param <T> timeout type (e.g., seconds as {@link Long})
+ * <p>Implementations distinguish between fire-and-forget ({@link ConversationType#IN_ONLY})
+ * and request/response ({@link ConversationType#IN_OUT}) exchanges. The timeout type parameter
+ * reflects whether a deadline is meaningful: use {@link Void} for one-way conversations and
+ * {@link Long} for timed two-way conversations.</p>
+ *
+ * @param <T> the timeout value type; {@link Void} for one-way, {@link Long} for two-way
  */
 public interface Conversation<T> {
 
   /**
-   * Conversation mode indicating whether a response is expected.
+   * Returns the exchange pattern for this conversation.
    *
-   * @return conversation type
+   * @return {@link ConversationType#IN_ONLY} for fire-and-forget calls, or
+   * {@link ConversationType#IN_OUT} for request/response calls
    */
   ConversationType getConversationType ();
 
   /**
-   * Timeout associated with the conversation, or {@code null} when not applicable.
+   * Returns the timeout associated with this conversation.
    *
-   * @return timeout value
+   * <p>Returns {@code null} for one-way conversations. For two-way conversations, a positive
+   * value overrides the service-level default; zero or a negative value defers to that default.</p>
+   *
+   * @return the timeout value, or {@code null} if no timeout applies
    */
   T getTimeout ();
 }

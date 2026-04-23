@@ -38,7 +38,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method to be executed after each individual test method.
+ * Marks a method to be executed after each individual {@link Test}-annotated method.
+ * <p>
+ * One invocation occurs immediately following each test dispatch, including after tests that were
+ * skipped. Intended for per-test teardown logic such as clearing thread-local state, rolling back
+ * transactions, or releasing resources acquired by the paired {@link BeforeTest} method. The
+ * annotated method must accept no arguments; its return value is ignored. Errors thrown here are
+ * captured as a culprit and reported via an {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent}.
+ *
+ * @see BeforeTest
+ * @see AfterSuite
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

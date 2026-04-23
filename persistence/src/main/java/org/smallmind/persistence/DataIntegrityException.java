@@ -35,12 +35,12 @@ package org.smallmind.persistence;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Signals that persistent data has been corrupted or violates integrity constraints.
+ * Thrown when persistent data is found to be corrupted or to violate expected integrity constraints.
  */
 public class DataIntegrityException extends FormattedRuntimeException {
 
   /**
-   * Creates a data integrity exception with no message.
+   * Creates a {@code DataIntegrityException} with no detail message.
    */
   public DataIntegrityException () {
 
@@ -48,10 +48,10 @@ public class DataIntegrityException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates a data integrity exception with a formatted message.
+   * Creates a {@code DataIntegrityException} with a {@link String#format}-style message.
    *
-   * @param message the message template
-   * @param args    arguments referenced by the format specifiers in the message
+   * @param message format string for the detail message
+   * @param args    arguments substituted into {@code message}
    */
   public DataIntegrityException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class DataIntegrityException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates a data integrity exception with a cause and formatted message.
+   * Creates a {@code DataIntegrityException} with a cause and a {@link String#format}-style message.
    *
    * @param throwable the underlying cause
-   * @param message   the message template
-   * @param args      arguments referenced by the format specifiers in the message
+   * @param message   format string for the detail message
+   * @param args      arguments substituted into {@code message}
    */
   public DataIntegrityException (Throwable throwable, String message, Object... args) {
 
@@ -71,7 +71,7 @@ public class DataIntegrityException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates a data integrity exception with a cause.
+   * Creates a {@code DataIntegrityException} wrapping an existing throwable.
    *
    * @param throwable the underlying cause
    */

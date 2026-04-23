@@ -39,16 +39,17 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Helpers for working with server transports.
+ * Static helpers for querying transport capabilities across all protocols registered with a server.
  */
 public class TransportUtility {
 
   /**
-   * Aggregates all transport names supported by the server's protocols.
+   * Collects the deduplicated union of transport names advertised by every protocol registered
+   * with {@code server}, suitable for inclusion in a handshake response.
    *
-   * @param server server to inspect
+   * @param server the server whose registered protocols are queried
    * @param <V>    value type
-   * @return array of distinct transport names
+   * @return array of distinct transport name strings across all protocols; order is unspecified
    */
   public static <V extends Value<V>> String[] accumulateSupportedTransportNames (Server<V> server) {
 

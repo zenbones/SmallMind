@@ -37,21 +37,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-// Only usable in @Embedded classes
 /**
  * Declares that an embedded class participates in a polymorphic hierarchy, listing allowed subtypes and the discriminator key.
+ * Only applicable to {@code @Embedded} classes.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface Polymorphic {
 
   /**
-   * @return list of permissible subtype classes
+   * The concrete subtype classes permitted in the polymorphic hierarchy; an empty array disables polymorphism.
+   *
+   * @return the permissible subtype classes
    */
   Class[] value () default {};
 
   /**
-   * @return discriminator key used to store the subtype name
+   * The BSON field name used to record the discriminator value; defaults to {@code "java/object"} when empty.
+   *
+   * @return the discriminator key
    */
   String key () default "";
 }

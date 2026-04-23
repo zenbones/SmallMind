@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
 /**
- * Base type for any evaluatable element within a where clause tree.
+ * Base type for all nodes in a where clause tree, encompassing both conjunctions and leaf field comparisons.
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
@@ -46,9 +46,9 @@ import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 public abstract class WhereCriterion {
 
   /**
-   * Returns the discriminator describing the specific criterion kind.
+   * Returns the type discriminator identifying the concrete subclass of this criterion.
    *
-   * @return criterion type enumeration
+   * @return criterion type
    */
   public abstract CriterionType getCriterionType ();
 }

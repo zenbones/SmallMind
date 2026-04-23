@@ -41,7 +41,18 @@ import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Encapsulates the memcached delete operation with optional CAS protection.
+ * Command that implements the memcached meta-delete ({@code md}) operation,
+ * removing a key from the cache with optional CAS protection.
+ *
+ * <p>When a CAS token is supplied the server only removes the item if its
+ * current version matches the token, providing optimistic-concurrency safety.
+ * An optional opaque correlation token may be attached so that pipelined
+ * responses can be matched back to their originating requests.</p>
+ *
+ * <p>Both {@code HD} (deleted or already absent) and {@code NF} (not found)
+ * response codes are treated as successful outcomes by {@link #process(Response)},
+ * because deleting a key that no longer exists is an idempotent no-op.
+ * Only {@code EX} (CAS mismatch) yields a failure result.</p>
  */
 public class DeleteCommand extends Command {
 
@@ -59,10 +70,10 @@ public class DeleteCommand extends Command {
   }
 
   /**
-   * Sets the key to delete.
+   * Sets the cache key to be deleted.
    *
-   * @param key cache key
-   * @return this command for chaining
+   * @param key the key to remove from the cache
+   * @return this command instance, for method chaining
    */
   public DeleteCommand setKey (String key) {
 
@@ -72,10 +83,11 @@ public class DeleteCommand extends Command {
   }
 
   /**
-   * Adds a CAS token to guard deletion.
+   * Supplies a CAS token so the delete is performed only when the server-side
+   * version of the item matches the token.
    *
-   * @param cas compare-and-swap token
-   * @return this command for chaining
+   * @param cas the compare-and-swap token obtained from a previous read
+   * @return this command instance, for method chaining
    */
   public DeleteCommand setCas (Long cas) {
 
@@ -85,10 +97,11 @@ public class DeleteCommand extends Command {
   }
 
   /**
-   * Sets an opaque token echoed back by the server.
+   * Attaches an opaque correlation token that the server echoes back verbatim
+   * in its response, allowing callers to correlate pipelined replies.
    *
-   * @param opaqueToken token value
-   * @return this command for chaining
+   * @param opaqueToken an arbitrary string token to include in the request
+   * @return this command instance, for method chaining
    */
   public DeleteCommand setOpaqueToken (String opaqueToken) {
 
@@ -99,6 +112,10 @@ public class DeleteCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Builds the {@code md} meta-delete command line. When a CAS token has
+   * been configured the {@code C} and {@code c} flags are appended so the
+   * server performs a conditional delete.</p>
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -118,6 +135,14 @@ public class DeleteCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>{@code EX} indicates a CAS mismatch and returns a failure result.
+   * {@code HD} (deleted) and {@code NF} (not found) both return a success
+   * result, since the end state — the key being absent — is achieved in
+   * both cases.</p>
+   *
+   * @throws UnexpectedResponseException if the response code is none of
+   *                                     {@code EX}, {@code HD}, or {@code NF}
    */
   @Override
   public Result process (Response response)

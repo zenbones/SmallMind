@@ -44,7 +44,9 @@ import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 /**
- * Invokes target service methods based on incoming function descriptors and manages context propagation.
+ * Resolves and invokes service methods on a target implementation object based on inbound
+ * {@link Function} descriptors, propagating {@link WireContext} instances onto the
+ * {@link ContextFactory} stack for the duration of each call.
  */
 public class MethodInvoker {
 
@@ -55,12 +57,13 @@ public class MethodInvoker {
   private final Object targetObject;
 
   /**
-   * Builds an invoker for the specified service implementation and interface.
+   * Builds the method map from the service interface and registers synthetic entries for
+   * {@code toString}, {@code hashCode}, and {@code equals} on the implementation class.
    *
-   * @param targetObject     service implementation instance
-   * @param serviceInterface interface exposing wire methods
-   * @throws NoSuchMethodException      if object methods cannot be reflected
-   * @throws ServiceDefinitionException if method annotations are invalid
+   * @param targetObject     service implementation instance to invoke
+   * @param serviceInterface interface whose methods are exposed over the wire
+   * @throws NoSuchMethodException      if a required {@code Object} method cannot be reflected
+   * @throws ServiceDefinitionException if the interface contains invalid wire method annotations
    */
   public MethodInvoker (Object targetObject, Class<?> serviceInterface)
     throws NoSuchMethodException, ServiceDefinitionException {
@@ -90,10 +93,11 @@ public class MethodInvoker {
   }
 
   /**
-   * Attempts to complete a partial function (missing signature or result) by matching name and available metadata.
+   * Finds a registered function that matches the given partial descriptor by name, and optionally
+   * by signature and result type when those fields are non-null.
    *
-   * @param partialFunction function with potentially incomplete details
-   * @return full function definition or {@code null} if not found
+   * @param partialFunction function descriptor that may omit signature or result type
+   * @return the matching {@link Function} from the method map, or {@code null} if no match is found
    */
   public Function match (Function partialFunction) {
 
@@ -110,11 +114,11 @@ public class MethodInvoker {
   }
 
   /**
-   * Retrieves the methodology associated with the given function descriptor.
+   * Returns the {@link Methodology} registered for the given function descriptor.
    *
-   * @param function function descriptor
-   * @return methodology mapping argument names to positions
-   * @throws MissingInvocationException if the function is unknown
+   * @param function function descriptor whose methodology is needed
+   * @return the corresponding {@link Methodology}
+   * @throws MissingInvocationException if no method matching {@code function} was found in the service interface
    */
   public Methodology getMethodology (Function function)
     throws MissingInvocationException {
@@ -129,13 +133,15 @@ public class MethodInvoker {
   }
 
   /**
-   * Invokes the target service method using the supplied arguments and manages pushing/popping wire contexts.
+   * Pushes the supplied wire contexts onto the {@link ContextFactory} stack, invokes the
+   * corresponding method on the target object, then pops the contexts in a {@code finally} block.
    *
-   * @param contexts  contexts to push onto the {@link ContextFactory}
-   * @param function  function descriptor to execute
-   * @param arguments arguments aligned with the function signature
-   * @return result of the invocation
-   * @throws Exception if invocation fails or the target method throws an exception
+   * @param contexts  wire contexts to push for the duration of the call; may be {@code null} or empty
+   * @param function  descriptor identifying which method to invoke
+   * @param arguments argument values aligned with the method signature
+   * @return the return value of the invoked method
+   * @throws MissingInvocationException if {@code function} is not present in the service interface
+   * @throws Exception                  if the target method throws a checked exception, or reflection fails
    */
   public Object remoteInvocation (WireContext[] contexts, Function function, Object... arguments)
     throws Exception {

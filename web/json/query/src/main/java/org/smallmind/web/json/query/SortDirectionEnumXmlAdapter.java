@@ -35,15 +35,15 @@ package org.smallmind.web.json.query;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
 /**
- * Marshals {@link SortDirection} enums to lowercase strings for XML representation.
+ * JAXB adapter that marshals {@link SortDirection} constants to their lowercase string names.
  */
 public class SortDirectionEnumXmlAdapter extends EnumXmlAdapter<SortDirection> {
 
   /**
-   * Converts a {@link SortDirection} to its lowercase string form.
+   * Converts a {@link SortDirection} value to its lowercase string representation.
    *
-   * @param enumeration sort direction
-   * @return lowercase enum name
+   * @param enumeration sort direction to marshal
+   * @return lowercase name of the enum constant
    */
   @Override
   public String marshal (SortDirection enumeration) {

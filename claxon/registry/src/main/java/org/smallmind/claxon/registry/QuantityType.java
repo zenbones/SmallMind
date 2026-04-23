@@ -33,16 +33,23 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Classifies quantities to aid emitters in interpreting values.
+ * Classifies a {@link Quantity} to allow emitters to apply type-specific handling when
+ * forwarding measurements to a monitoring backend. For example, a backend that distinguishes
+ * between gauges and counters can inspect the type of each quantity and map it to the
+ * appropriate backend metric type.
  */
 public enum QuantityType {
 
   /**
-   * Quantity has no special type.
+   * The quantity has no special type classification. Emitters should treat it as a generic
+   * numeric measurement (i.e., a gauge-like value).
    */
   NONE,
+
   /**
-   * Quantity represents a count.
+   * The quantity represents a monotonically increasing count. Emitters that support
+   * counter semantics (e.g., Prometheus counters, StatsD counters) should map quantities
+   * of this type accordingly.
    */
   COUNT
 }

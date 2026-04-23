@@ -36,19 +36,19 @@ import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 /**
- * Strategy for constructing a {@link Voice} from invocation details.
+ * Strategy that constructs a typed {@link Voice} from invocation arguments and optional transport contexts.
  *
- * @param <V> voice type produced
+ * @param <V> the concrete {@link Voice} subtype this vocalizer produces
  */
 public interface Vocalizer<V extends Voice> {
 
   /**
-   * Builds a voice from the provided arguments and contexts.
+   * Constructs a voice encapsulating routing and conversation metadata for an invocation.
    *
-   * @param argumentMap  map of argument names to values
-   * @param wireContexts optional wire contexts for the invocation
-   * @return voice describing routing and conversation
-   * @throws MissingInstanceIdException when required instance identifiers cannot be determined
+   * @param argumentMap  named invocation arguments keyed by parameter name
+   * @param wireContexts zero or more transport-level contexts to attach to the voice
+   * @return a fully initialised voice for the invocation
+   * @throws MissingInstanceIdException if a required instance identifier cannot be resolved from the provided arguments or contexts
    */
   V getVoice (HashMap<String, Object> argumentMap, WireContext... wireContexts)
     throws MissingInstanceIdException;

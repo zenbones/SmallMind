@@ -38,7 +38,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Fuse that ignites when a component has been processing longer than the configured maximum.
+ * A {@link DeconstructionFuse} that fires when a component has been processing (checked out
+ * by a caller) longer than {@link ComplexPoolConfig#getMaxProcessingTimeSeconds()}.
+ * <p>
+ * Unlike the idle and lease fuses, the processing fuse is <em>prejudicial</em>: it
+ * force-terminates a component even while it is held by a caller.
+ * <p>
+ * A generation counter prevents stale ignitions. Each call to {@link #serve()} increments
+ * both the global generation and the {@code generationServed} snapshot. Each call to
+ * {@link #free()} increments only the global generation. When the background timer fires,
+ * {@link #ignite()} compares the two: if they match, the component is still on the same
+ * serve cycle and ignition proceeds; if they differ, the component was returned and
+ * re-acquired between registration and firing, so the ignition is silently skipped.
+ * <p>
+ * When existential awareness is enabled and a valid stack trace is available, the trace is
+ * logged as a warning to aid diagnosis of the hung caller.
  */
 public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
 
@@ -47,11 +61,13 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
   private final AtomicInteger generationServed = new AtomicInteger(0);
 
   /**
-   * Creates the fuse for the specified pool and coordinator.
+   * Creates the fuse for processing-timeout tracking.
    *
-   * @param componentPool             owning pool
-   * @param deconstructionQueue       queue for scheduling ignition
-   * @param deconstructionCoordinator coordinator invoked on ignition
+   * @param componentPool             the pool whose configuration supplies the processing
+   *                                  timeout
+   * @param deconstructionQueue       the queue that will fire this fuse when the deadline
+   *                                  elapses
+   * @param deconstructionCoordinator the coordinator that acts when this fuse ignites
    */
   protected MaxProcessingTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
@@ -61,7 +77,10 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Processing timeout is prejudicial because the component is hung.
+   * Returns {@code true} because a processing-timeout ignition should force-terminate the
+   * component even if it is still held by a caller.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isPrejudicial () {
@@ -70,7 +89,10 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Cancels any pending ignition by advancing generation and aborting.
+   * Called when the component is returned to the free queue.
+   * <p>
+   * Advances the generation counter so that any pending ignition from the previous serve
+   * cycle will be silently discarded, then cancels the scheduled ignition.
    */
   @Override
   public synchronized void free () {
@@ -80,7 +102,10 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Schedules ignition based on the maximum processing time.
+   * Called when the component is handed to a caller.
+   * <p>
+   * Advances the generation counter and snapshots the new value in {@code generationServed},
+   * then schedules ignition at {@code now + maxProcessingTimeSeconds}.
    */
   @Override
   public void serve () {
@@ -90,7 +115,11 @@ public class MaxProcessingTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Ignites only if the same generation was served, logging stack traces when available.
+   * Fires the fuse only when the generation recorded at schedule time matches the current
+   * generation, confirming that the component is still on the same uninterrupted serve cycle.
+   * <p>
+   * When a valid existential stack trace is available, it is logged at {@code WARN} level
+   * to identify the thread that is holding the component.
    */
   @Override
   public synchronized void ignite () {

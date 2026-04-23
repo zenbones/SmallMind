@@ -33,18 +33,32 @@
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 /**
- * Advice reconnect options enumerated by the Bayeux protocol.
+ * Enumerates the valid values for the Bayeux {@code advice.reconnect} field, directing clients
+ * on how to recover from a connection event.
  */
 public enum Reconnect {
 
-  RETRY("retry"), HANDSHAKE("handshake"), NONE("none");
+  /**
+   * Client should re-establish the connection using a normal connect request.
+   */
+  RETRY("retry"),
+
+  /**
+   * Client must start over with a full handshake before reconnecting.
+   */
+  HANDSHAKE("handshake"),
+
+  /**
+   * Client should not attempt to reconnect; the server has ended the session.
+   */
+  NONE("none");
 
   private final String code;
 
   /**
-   * Associates the enum value with its wire code.
+   * Binds the constant to its Bayeux wire representation.
    *
-   * @param code reconnect code string
+   * @param code the exact string value placed in the {@code advice.reconnect} field
    */
   Reconnect (String code) {
 
@@ -52,7 +66,9 @@ public enum Reconnect {
   }
 
   /**
-   * @return reconnect code used in advice
+   * Returns the Bayeux wire string for this reconnect strategy.
+   *
+   * @return the reconnect code as it appears in the {@code advice} object sent to clients
    */
   public String getCode () {
 

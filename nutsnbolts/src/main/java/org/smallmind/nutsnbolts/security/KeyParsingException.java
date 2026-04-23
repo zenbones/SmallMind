@@ -35,15 +35,15 @@ package org.smallmind.nutsnbolts.security;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Indicates that a key string could not be parsed into the expected form.
+ * Thrown when a key string cannot be parsed into the expected cryptographic structure.
  */
 public class KeyParsingException extends FormattedException {
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a {@link String#format}-style detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a format string following {@link java.util.Formatter} conventions
+   * @param args    arguments substituted into the format string
    */
   public KeyParsingException (String message, Object... args) {
 

@@ -42,11 +42,9 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 
 /**
- * Base class for programmatic annotation literals similar to CDI's {@code AnnotationLiteral}.
- * Subclasses declare their annotation type via a generic parameter and can implement annotation
- * methods directly while inheriting the default {@link Annotation} contract implementations.
+ * Abstract base class for programmatic annotation instances, modeled after CDI's {@code AnnotationLiteral}, that resolves its annotation type reflectively and implements the full {@link Annotation} contract.
  *
- * @param <A> the annotation type represented by the literal
+ * @param <A> the annotation type this literal represents
  */
 public abstract class AnnotationLiteral<A extends Annotation> implements Annotation, Serializable {
 
@@ -55,7 +53,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   private final Class<A> annotationType;
 
   /**
-   * Determines and stores the annotation type from the concrete subclass' generic signature.
+   * Resolves and stores the annotation type by inspecting the concrete subclass's generic superclass signature.
    */
   protected AnnotationLiteral () {
 
@@ -63,7 +61,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the annotation type represented by this literal.
+   *
+   * @return the annotation interface class
    */
   public Class<? extends Annotation> annotationType () {
 
@@ -71,11 +71,11 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * Walks the inheritance hierarchy to discover the concrete annotation type parameter.
+   * Walks the class hierarchy starting from {@code definedClazz} to find the actual type argument bound to {@code A}.
    *
-   * @param definedClazz the subclass from which to start discovery
-   * @return the resolved annotation type
-   * @throws RuntimeException if the annotation type cannot be determined
+   * @param definedClazz the class from which to begin searching for the generic type argument
+   * @return the resolved annotation type class
+   * @throws RuntimeException if the hierarchy does not supply a single, concrete type argument
    */
   private Class<A> getAnnotationType (Class<?> definedClazz) {
 
@@ -106,9 +106,10 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * {@inheritDoc}
-   * <p>
-   * Compares annotation members for equality according to the {@link Annotation} contract.
+   * Compares this annotation literal to another object for equality by comparing each annotation member value according to the {@link Annotation} contract.
+   *
+   * @param obj the object to compare to this literal
+   * @return {@code true} if {@code obj} is an {@link Annotation} of the same type with equal member values
    */
   @Override
   public boolean equals (Object obj) {
@@ -200,12 +201,12 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * Invokes an annotation member method using privileged access when necessary.
+   * Invokes an annotation member method on the supplied instance, making it accessible via a privileged action if required.
    *
-   * @param instance the annotation instance
-   * @param method   the method to invoke
-   * @return the returned value
-   * @throws RuntimeException if the method cannot be invoked
+   * @param instance the annotation instance on which to invoke the method
+   * @param method   the annotation member method to call
+   * @return the value returned by the method
+   * @throws RuntimeException if the method invocation fails
    */
   private Object callMethod (Object instance, Method method) {
 
@@ -225,7 +226,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * {@inheritDoc}
+   * Computes a hash code consistent with the {@link Annotation} contract by combining the 127-multiplied hash of each member name XOR'd with the hash of its value.
+   *
+   * @return the hash code for this annotation literal
    */
   @Override
   public int hashCode () {
@@ -273,7 +276,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a string representation of this annotation literal in the standard {@code @TypeName(member=value, ...)} format.
+   *
+   * @return a human-readable string describing this annotation literal
    */
   @Override
   public String toString () {
@@ -296,16 +301,19 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     return sb.toString();
   }
 
+  /**
+   * A {@link PrivilegedAction} that sets the accessibility flag on a reflective {@link AccessibleObject}.
+   */
   protected static class PrivilegedActionForAccessibleObject implements PrivilegedAction<Object> {
 
     AccessibleObject object;
     boolean flag;
 
     /**
-     * Adjusts accessibility on an {@link AccessibleObject} under a privileged action.
+     * Creates an action that will set the accessibility of {@code object} to {@code flag} when run.
      *
-     * @param object the reflective object to modify
-     * @param flag   whether the object should be accessible
+     * @param object the reflective object whose accessibility is to be modified
+     * @param flag   {@code true} to make the object accessible; {@code false} to restore normal access
      */
     private PrivilegedActionForAccessibleObject (AccessibleObject object, boolean flag) {
 
@@ -314,7 +322,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     }
 
     /**
-     * {@inheritDoc}
+     * Applies the configured accessibility flag to the held object and returns {@code null}.
+     *
+     * @return {@code null}
      */
     public Object run () {
 

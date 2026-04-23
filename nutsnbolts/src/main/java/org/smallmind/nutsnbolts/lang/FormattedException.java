@@ -33,12 +33,12 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * {@link Exception} variant that formats its message using {@link String#format(String, Object...)}.
+ * A checked {@link Exception} whose detail message is constructed via {@link String#format(String, Object...)}, allowing printf-style message formatting at the call site.
  */
 public class FormattedException extends Exception {
 
   /**
-   * Creates an exception without a detail message.
+   * Creates an exception with no detail message.
    */
   public FormattedException () {
 
@@ -46,10 +46,10 @@ public class FormattedException extends Exception {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception whose detail message is produced by formatting {@code message} with the supplied arguments.
    *
-   * @param message the format string, or {@code null}
-   * @param args    arguments applied to the format string
+   * @param message the format string passed to {@link String#format}, or {@code null} for a {@code null} message
+   * @param args    the arguments referenced by the format specifiers in {@code message}
    */
   public FormattedException (String message, Object... args) {
 
@@ -57,11 +57,11 @@ public class FormattedException extends Exception {
   }
 
   /**
-   * Creates an exception with a cause and a formatted message.
+   * Creates an exception with a cause and a formatted detail message.
    *
-   * @param throwable the underlying cause
-   * @param message   the format string, or {@code null}
-   * @param args      arguments applied to the format string
+   * @param throwable the cause of this exception
+   * @param message   the format string passed to {@link String#format}, or {@code null} for a {@code null} message
+   * @param args      the arguments referenced by the format specifiers in {@code message}
    */
   public FormattedException (Throwable throwable, String message, Object... args) {
 
@@ -69,9 +69,9 @@ public class FormattedException extends Exception {
   }
 
   /**
-   * Creates an exception with the supplied cause.
+   * Creates an exception wrapping the supplied cause with no additional message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the cause of this exception
    */
   public FormattedException (Throwable throwable) {
 

@@ -38,17 +38,18 @@ import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
 /**
- * Numeric value representing a double precision number in the orthodox codec.
+ * Immutable {@link NumberValue} wrapping a IEEE 754 double-precision floating-point scalar for the
+ * orthodox codec; reports {@link NumberType#DOUBLE} and truncates when coerced to integer types.
  */
 public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
   private final double value;
 
   /**
-   * Creates a double value.
+   * Constructs a double value associated with the given factory.
    *
-   * @param factory owning factory
-   * @param value   numeric value
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param value   the double-precision number to wrap
    */
   protected OrthodoxDoubleValue (OrthodoxValueFactory factory, double value) {
 
@@ -58,6 +59,8 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
+   * Identifies the numeric subtype of this value.
+   *
    * @return {@link NumberType#DOUBLE}
    */
   @Override
@@ -67,7 +70,9 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
-   * @return boxed number
+   * Returns the value boxed as a {@link Double}.
+   *
+   * @return boxed {@code Double} representation
    */
   @Override
   public Number asNumber () {
@@ -76,7 +81,9 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
-   * @return value coerced to int
+   * Returns the value narrowed to a primitive int by truncation toward zero.
+   *
+   * @return integer part of the double, truncated
    */
   @Override
   public int asInt () {
@@ -85,7 +92,9 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
-   * @return value coerced to long
+   * Returns the value narrowed to a primitive long by truncation toward zero.
+   *
+   * @return integer part of the double as a long, truncated
    */
   @Override
   public long asLong () {
@@ -94,7 +103,9 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
-   * @return primitive double
+   * Returns the raw wrapped double value.
+   *
+   * @return the primitive double as stored at construction
    */
   @Override
   public double asDouble () {
@@ -103,10 +114,10 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
   }
 
   /**
-   * Encodes the numeric literal.
+   * Writes the JSON numeric literal representation of the double to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

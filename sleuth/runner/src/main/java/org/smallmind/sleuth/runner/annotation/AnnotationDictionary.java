@@ -35,9 +35,19 @@ package org.smallmind.sleuth.runner.annotation;
 import java.lang.reflect.Method;
 
 /**
- * Captures the set of Sleuth annotations discovered on a test class.
+ * Holds the complete set of Sleuth lifecycle and test metadata discovered on a single test class.
  * <p>
- * Provides access to lifecycle and test method methodologies for execution.
+ * An {@link AnnotationProcessor} populates one {@code AnnotationDictionary} per class by delegating
+ * to each registered {@link AnnotationTranslator}. Callers then retrieve the class-level {@link Suite}
+ * descriptor and the ordered collections of lifecycle and test methods, each wrapped in an
+ * {@link AnnotationMethodology} instance that provides invocation support.
+ * <p>
+ * A dictionary is considered <em>implemented</em> — via {@link #isImplemented()} — when at least one
+ * Sleuth annotation element is present: a class-level {@link Suite}, or one or more lifecycle or test
+ * methods. An empty dictionary indicates that no supported annotations were found.
+ *
+ * @see AnnotationProcessor
+ * @see AnnotationMethodology
  */
 public class AnnotationDictionary {
 
@@ -50,7 +60,10 @@ public class AnnotationDictionary {
   private Suite suite;
 
   /**
-   * @return resolved {@link Suite} annotation or a default when absent
+   * Returns the {@link Suite} annotation for the class, substituting a default instance when none
+   * was explicitly declared.
+   *
+   * @return declared suite annotation, or a default {@link SuiteLiteral} when absent; never {@code null}
    */
   public Suite getSuite () {
 
@@ -58,9 +71,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Records the {@link Suite} annotation for the class.
+   * Records the class-level {@link Suite} annotation.
    *
-   * @param suite suite annotation
+   * @param suite suite annotation to associate with the class; must not be {@code null}
    */
   public void setSuite (Suite suite) {
 
@@ -68,7 +81,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return lifecycle methodology for {@link BeforeSuite} methods or {@code null}
+   * Returns the ordered collection of {@link BeforeSuite}-annotated methods.
+   *
+   * @return before-suite methodology, or {@code null} when no such methods are present
    */
   public AnnotationMethodology<BeforeSuite> getBeforeSuiteMethodology () {
 
@@ -76,10 +91,10 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Adds a {@link BeforeSuite} method to the methodology.
+   * Registers a {@link BeforeSuite}-annotated method, creating the methodology on first call.
    *
-   * @param method      reflected method
-   * @param beforeSuite annotation instance
+   * @param method      reflected method carrying the annotation; must not be {@code null}
+   * @param beforeSuite associated annotation instance; must not be {@code null}
    */
   public void addBeforeSuiteMethod (Method method, BeforeSuite beforeSuite) {
 
@@ -90,7 +105,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return lifecycle methodology for {@link AfterSuite} methods or {@code null}
+   * Returns the ordered collection of {@link AfterSuite}-annotated methods.
+   *
+   * @return after-suite methodology, or {@code null} when no such methods are present
    */
   public AnnotationMethodology<AfterSuite> getAfterSuiteMethodology () {
 
@@ -98,10 +115,10 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Adds an {@link AfterSuite} method to the methodology.
+   * Registers an {@link AfterSuite}-annotated method, creating the methodology on first call.
    *
-   * @param method     reflected method
-   * @param afterSuite annotation instance
+   * @param method     reflected method carrying the annotation; must not be {@code null}
+   * @param afterSuite associated annotation instance; must not be {@code null}
    */
   public void addAfterSuiteMethod (Method method, AfterSuite afterSuite) {
 
@@ -112,7 +129,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return lifecycle methodology for {@link BeforeTest} methods or {@code null}
+   * Returns the ordered collection of {@link BeforeTest}-annotated methods.
+   *
+   * @return before-test methodology, or {@code null} when no such methods are present
    */
   public AnnotationMethodology<BeforeTest> getBeforeTestMethodology () {
 
@@ -120,10 +139,10 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Adds a {@link BeforeTest} method to the methodology.
+   * Registers a {@link BeforeTest}-annotated method, creating the methodology on first call.
    *
-   * @param method     reflected method
-   * @param beforeTest annotation instance
+   * @param method     reflected method carrying the annotation; must not be {@code null}
+   * @param beforeTest associated annotation instance; must not be {@code null}
    */
   public void addBeforeTestMethod (Method method, BeforeTest beforeTest) {
 
@@ -134,7 +153,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return lifecycle methodology for {@link AfterTest} methods or {@code null}
+   * Returns the ordered collection of {@link AfterTest}-annotated methods.
+   *
+   * @return after-test methodology, or {@code null} when no such methods are present
    */
   public AnnotationMethodology<AfterTest> getAfterTestMethodology () {
 
@@ -142,10 +163,10 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Adds an {@link AfterTest} method to the methodology.
+   * Registers an {@link AfterTest}-annotated method, creating the methodology on first call.
    *
-   * @param method    reflected method
-   * @param afterTest annotation instance
+   * @param method    reflected method carrying the annotation; must not be {@code null}
+   * @param afterTest associated annotation instance; must not be {@code null}
    */
   public void addAfterTestMethod (Method method, AfterTest afterTest) {
 
@@ -156,7 +177,9 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return methodology for {@link Test} methods or {@code null}
+   * Returns the ordered collection of {@link Test}-annotated methods.
+   *
+   * @return test methodology, or {@code null} when no test methods are present
    */
   public AnnotationMethodology<Test> getTestMethodology () {
 
@@ -164,10 +187,10 @@ public class AnnotationDictionary {
   }
 
   /**
-   * Adds a {@link Test} method to the methodology.
+   * Registers a {@link Test}-annotated method, creating the methodology on first call.
    *
-   * @param method reflected method
-   * @param test   annotation instance
+   * @param method reflected method carrying the annotation; must not be {@code null}
+   * @param test   associated annotation instance; must not be {@code null}
    */
   public void addTestMethod (Method method, Test test) {
 
@@ -178,7 +201,12 @@ public class AnnotationDictionary {
   }
 
   /**
-   * @return {@code true} when at least one Sleuth annotation is present on the class
+   * Returns {@code true} when at least one supported annotation element is present on the class.
+   * <p>
+   * An un-implemented dictionary indicates that no registered translator found any supported
+   * annotations, and the class should be excluded from execution.
+   *
+   * @return {@code true} if this dictionary contains any lifecycle or test annotation data
    */
   public boolean isImplemented () {
 

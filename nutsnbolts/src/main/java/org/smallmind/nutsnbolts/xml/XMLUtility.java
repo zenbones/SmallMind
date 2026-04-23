@@ -40,15 +40,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * DOM helper utilities for serializing nodes and encoding text for XML.
+ * Utility class providing helpers for serializing DOM nodes to XML strings and escaping text content for XML embedding.
  */
 public class XMLUtility {
 
   /**
-   * Serializes a DOM node without indentation.
+   * Serializes a DOM node to an XML string without indentation.
    *
-   * @param node node to render
-   * @return XML string for the node
+   * @param node the node to serialize
+   * @return the XML string representation of the node
    */
   public static String toString (Node node) {
 
@@ -56,11 +56,11 @@ public class XMLUtility {
   }
 
   /**
-   * Serializes a DOM node with optional indentation.
+   * Serializes a DOM node to an XML string with optional pretty-print indentation.
    *
-   * @param node   node to render
-   * @param indent whether to indent child elements and add newlines
-   * @return XML string for the node
+   * @param node   the node to serialize
+   * @param indent {@code true} to add hierarchical indentation and newlines
+   * @return the XML string representation of the node
    */
   public static String toString (Node node, boolean indent) {
 
@@ -141,10 +141,10 @@ public class XMLUtility {
   }
 
   /**
-   * Creates an indentation string for the requested level.
+   * Builds an indentation string of three spaces per nesting level.
    *
-   * @param level depth within the document
-   * @return spaces representing the indent
+   * @param level the current nesting depth
+   * @return a string of {@code level * 3} space characters
    */
   private static String setIndent (int level) {
 
@@ -158,10 +158,10 @@ public class XMLUtility {
   }
 
   /**
-   * Escapes the characters {@code &}, {@code <}, and {@code >} in a text value for safe XML embedding.
+   * Escapes {@code &}, {@code <}, and {@code >} in a raw string so that it can be safely embedded as XML text content.
    *
-   * @param unencodedValue raw value
-   * @return encoded string safe for XML content
+   * @param unencodedValue the raw string to escape
+   * @return the escaped string with XML entity references substituted for reserved characters
    */
   public static String encode (String unencodedValue) {
 

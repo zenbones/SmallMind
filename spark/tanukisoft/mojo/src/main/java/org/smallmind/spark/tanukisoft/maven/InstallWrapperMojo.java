@@ -49,7 +49,9 @@ import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
 /**
- * Installs the packaged Tanuki wrapper application artifact into the local Maven repository.
+ * Mojo goal {@code install-wrapper} that places the aggregated Tanuki wrapper archive produced by
+ * {@link GenerateWrapperMojo} into the local Maven repository, using an {@code app} (or {@code classifier-app})
+ * classifier so that it coexists with the primary project artifact.
  */
 @Mojo(name = "install-wrapper", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class InstallWrapperMojo extends AbstractMojo {
@@ -72,9 +74,11 @@ public class InstallWrapperMojo extends AbstractMojo {
   private ArtifactInstaller artifactInstaller;
 
   /**
-   * Installs the assembled wrapper archive unless skipped.
+   * Resolves the archive filename from the configuration, creates a classified artifact for it, and hands it to the
+   * Maven installer.
    *
-   * @throws MojoExecutionException if installation fails or configuration is invalid
+   * @throws MojoExecutionException if the {@code compression} value is not a known {@link CompressionType}, or if
+   *                                the installer reports an {@link ArtifactInstallationException}
    */
   public void execute ()
     throws MojoExecutionException {

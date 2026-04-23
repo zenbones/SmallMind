@@ -40,7 +40,7 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Parsed representation of a {@link Polymorphic} declaration.
+ * Parsed representation of a {@link Polymorphic} annotation, holding the resolved subclass list and discriminator placement flag.
  */
 public class PolymorphicInformation {
 
@@ -48,10 +48,10 @@ public class PolymorphicInformation {
   private final boolean useAttribute;
 
   /**
-   * Extracts polymorphic subclass list and discriminator placement from the annotation.
+   * Extracts the subclass list and attribute flag from a {@link Polymorphic} annotation mirror.
    *
-   * @param processingEnvironment       current processing environment
-   * @param polymorphicAnnotationMirror polymorphic annotation to parse
+   * @param processingEnvironment       the current annotation processing environment
+   * @param polymorphicAnnotationMirror the annotation mirror of the {@link Polymorphic} annotation
    */
   public PolymorphicInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror polymorphicAnnotationMirror) {
 
@@ -60,7 +60,7 @@ public class PolymorphicInformation {
   }
 
   /**
-   * @return subclasses in the polymorphic hierarchy
+   * @return the list of type elements representing the declared polymorphic subclasses
    */
   public List<TypeElement> getSubClassList () {
 
@@ -68,7 +68,7 @@ public class PolymorphicInformation {
   }
 
   /**
-   * @return {@code true} if the discriminator should be emitted as an XML attribute
+   * @return {@code true} if the polymorphic discriminator should be emitted as an XML attribute
    */
   public boolean isUseAttribute () {
 

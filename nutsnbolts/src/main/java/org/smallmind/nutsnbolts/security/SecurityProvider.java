@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * Known security providers used by the library.
+ * Enumeration of the security providers recognized by the library, including a sentinel for the JVM default.
  */
 public enum SecurityProvider {
 
@@ -42,7 +42,9 @@ public enum SecurityProvider {
   private final String providerName;
 
   /**
-   * @param providerName the registered provider name, or {@code null} for default
+   * Constructs an enum constant with the given provider name.
+   *
+   * @param providerName the registered JCA provider name, or {@code null} when the JVM default should be used
    */
   SecurityProvider (String providerName) {
 
@@ -50,7 +52,9 @@ public enum SecurityProvider {
   }
 
   /**
-   * @return the provider name understood by JCA/JCE APIs
+   * Returns the provider name string understood by JCA/JCE APIs, or {@code null} for the JVM default.
+   *
+   * @return the provider name, or {@code null} for {@link #DEFAULT}
    */
   public String getProviderName () {
 

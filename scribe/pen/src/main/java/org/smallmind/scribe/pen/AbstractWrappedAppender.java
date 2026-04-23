@@ -35,17 +35,18 @@ package org.smallmind.scribe.pen;
 import java.util.List;
 
 /**
- * Base decorator for appenders that delegates all operations to an internal appender.
- * Subclasses can augment publishing by invoking {@link #publishToWrappedAppender(Record)}.
+ * Decorator base class that forwards every {@link Appender} operation to a contained delegate
+ * appender, giving subclasses a hook to intercept or augment publishing via
+ * {@link #publishToWrappedAppender(Record)}.
  */
 public abstract class AbstractWrappedAppender implements Appender {
 
   private final Appender internalAppender;
 
   /**
-   * Wraps the provided appender.
+   * Constructs a wrapper around the given appender, delegating all operations to it.
    *
-   * @param internalAppender appender to delegate to
+   * @param internalAppender the appender to wrap; must not be {@code null}
    */
   public AbstractWrappedAppender (Appender internalAppender) {
 
@@ -55,7 +56,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   /**
    * Returns the name of the wrapped appender.
    *
-   * @return configured appender name, or {@code null} if none
+   * @return appender name, or {@code null} if none has been set on the delegate
    */
   @Override
   public String getName () {
@@ -66,7 +67,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   /**
    * Sets the name on the wrapped appender.
    *
-   * @param name new appender name, may be {@code null}
+   * @param name new appender name; may be {@code null}
    */
   @Override
   public void setName (String name) {
@@ -75,7 +76,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Clears all filters on the wrapped appender.
+   * Removes all filters from the wrapped appender's filter chain.
    */
   @Override
   public void clearFilters () {
@@ -84,9 +85,9 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Replaces any existing filters with the supplied filter on the wrapped appender.
+   * Replaces the wrapped appender's entire filter chain with the single supplied filter.
    *
-   * @param filter filter that must approve records before output
+   * @param filter the sole filter that records must satisfy; must not be {@code null}
    */
   @Override
   public synchronized void setFilter (Filter filter) {
@@ -95,9 +96,9 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Adds an additional filter to the wrapped appender.
+   * Appends a filter to the wrapped appender's filter chain.
    *
-   * @param filter filter to append to the evaluation chain
+   * @param filter additional filter to add to the evaluation chain
    */
   @Override
   public void addFilter (Filter filter) {
@@ -106,9 +107,9 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Retrieves filters currently configured on the wrapped appender.
+   * Returns a snapshot of the filters installed on the wrapped appender.
    *
-   * @return array of filters in evaluation order
+   * @return array of filters in their evaluation order; never {@code null}
    */
   @Override
   public Filter[] getFilters () {
@@ -117,9 +118,9 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Replaces filters on the wrapped appender with the given list.
+   * Replaces the wrapped appender's filter chain with the supplied list.
    *
-   * @param filterList filters to evaluate in order
+   * @param filterList ordered list of filters to install; must not be {@code null}
    */
   @Override
   public void setFilters (List<Filter> filterList) {
@@ -130,7 +131,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   /**
    * Returns the error handler configured on the wrapped appender.
    *
-   * @return error handler, or {@code null} if none
+   * @return the delegate's error handler, or {@code null} if none is set
    */
   @Override
   public ErrorHandler getErrorHandler () {
@@ -141,7 +142,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   /**
    * Sets the error handler on the wrapped appender.
    *
-   * @param errorHandler handler to receive failures
+   * @param errorHandler handler to receive output failures from the delegate; may be {@code null}
    */
   @Override
   public void setErrorHandler (ErrorHandler errorHandler) {
@@ -150,9 +151,9 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Indicates whether the wrapped appender is currently active.
+   * Indicates whether the wrapped appender is currently enabled and accepting records.
    *
-   * @return {@code true} if active, otherwise {@code false}
+   * @return {@code true} if the delegate is active; {@code false} if it is disabled
    */
   @Override
   public boolean isActive () {
@@ -163,7 +164,7 @@ public abstract class AbstractWrappedAppender implements Appender {
   /**
    * Enables or disables the wrapped appender.
    *
-   * @param active {@code true} to allow publishing, {@code false} to ignore records
+   * @param active {@code true} to enable publishing on the delegate; {@code false} to disable it
    */
   @Override
   public void setActive (boolean active) {
@@ -172,10 +173,10 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Closes the wrapped appender.
+   * Closes the wrapped appender and releases its resources.
    *
-   * @throws InterruptedException if interrupted while closing
-   * @throws LoggerException      if closing fails
+   * @throws InterruptedException if the closing operation is interrupted
+   * @throws LoggerException      if an error occurs while closing the delegate
    */
   @Override
   public void close ()
@@ -185,10 +186,10 @@ public abstract class AbstractWrappedAppender implements Appender {
   }
 
   /**
-   * Publishes a record to the wrapped appender.
+   * Forwards the record directly to the wrapped appender's {@link Appender#publish(Record)} method,
+   * bypassing any overrides in this decorator.
    *
-   * @param record record to forward
-   * @throws RuntimeException if the wrapped appender throws an unchecked exception
+   * @param record the log record to forward to the delegate
    */
   public void publishToWrappedAppender (Record<?> record) {
 

@@ -113,7 +113,7 @@ public class MavenCoordinate {
    * Returns the Maven groupId.
    *
    * @return groupId, or {@code null} if this coordinate was created with the no-argument constructor
-   *         and {@link #setGroupId} has not yet been called
+   * and {@link #setGroupId} has not yet been called
    */
   public String getGroupId () {
 
@@ -239,7 +239,7 @@ public class MavenCoordinate {
    *
    * @param obj the object to compare against
    * @return {@code true} if {@code obj} is a {@code MavenCoordinate} whose groupId, artifactId,
-   *         classifier, extension, and version all equal the corresponding fields of this instance
+   * classifier, extension, and version all equal the corresponding fields of this instance
    */
   @Override
   public boolean equals (Object obj) {

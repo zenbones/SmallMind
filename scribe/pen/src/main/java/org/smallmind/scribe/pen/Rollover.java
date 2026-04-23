@@ -35,7 +35,8 @@ package org.smallmind.scribe.pen;
 import java.time.LocalDateTime;
 
 /**
- * Aggregates rollover rules and timestamp formatting for naming rolled log files.
+ * Aggregates one or more {@link RolloverRule} instances and a {@link Timestamp} provider to determine
+ * when a log file should be rotated and how the rolled file should be named.
  */
 public class Rollover {
 
@@ -44,16 +45,16 @@ public class Rollover {
   private char separator = '-';
 
   /**
-   * Creates a rollover configuration with default timestamp and separator.
+   * Constructs a rollover configuration with the default {@link DateFormatTimestamp} and a {@code '-'} separator.
    */
   public Rollover () {
 
   }
 
   /**
-   * Creates a rollover configuration with the given rules.
+   * Constructs a rollover configuration with the default timestamp, default separator, and the given rules.
    *
-   * @param rules rollover rules to apply
+   * @param rules the rollover rules to evaluate on each log write
    */
   public Rollover (RolloverRule... rules) {
 
@@ -61,10 +62,10 @@ public class Rollover {
   }
 
   /**
-   * Creates a rollover configuration with a timestamp provider and rules.
+   * Constructs a rollover configuration with an explicit timestamp provider and rules.
    *
-   * @param timestamp timestamp provider
-   * @param rules     rollover rules to apply
+   * @param timestamp the {@link Timestamp} used to format the suffix of rolled file names
+   * @param rules     the rollover rules to evaluate on each log write
    */
   public Rollover (Timestamp timestamp, RolloverRule... rules) {
 
@@ -73,11 +74,11 @@ public class Rollover {
   }
 
   /**
-   * Creates a rollover configuration with timestamp provider, separator, and rules.
+   * Constructs a fully specified rollover configuration with a timestamp provider, name separator, and rules.
    *
-   * @param timestamp timestamp provider
-   * @param separator separator used in rolled file names
-   * @param rules     rollover rules to apply
+   * @param timestamp the {@link Timestamp} used to format the suffix of rolled file names
+   * @param separator the character inserted between the base file name, timestamp, and index segments
+   * @param rules     the rollover rules to evaluate on each log write
    */
   public Rollover (Timestamp timestamp, char separator, RolloverRule... rules) {
 
@@ -87,9 +88,9 @@ public class Rollover {
   }
 
   /**
-   * Sets the timestamp formatter used when naming rolled files.
+   * Replaces the timestamp provider used when generating rolled file name suffixes.
    *
-   * @param timestamp timestamp provider
+   * @param timestamp the new {@link Timestamp} implementation to use
    */
   public void setTimestamp (Timestamp timestamp) {
 
@@ -97,9 +98,9 @@ public class Rollover {
   }
 
   /**
-   * Retrieves the separator used between name segments when rolling files.
+   * Returns the separator character placed between the base file name, timestamp, and optional index.
    *
-   * @return separator character
+   * @return the current separator character
    */
   public char getSeparator () {
 
@@ -107,9 +108,10 @@ public class Rollover {
   }
 
   /**
-   * Sets the separator inserted between base name, timestamp, and index.
+   * Sets the separator character inserted between the base file name, timestamp, and optional index
+   * when constructing rolled file names.
    *
-   * @param separator separator character
+   * @param separator the new separator character
    */
   public void setSeparator (char separator) {
 
@@ -117,10 +119,10 @@ public class Rollover {
   }
 
   /**
-   * Formats the supplied date into a suffix for rolled file names.
+   * Formats the given date into a timestamp suffix for use in a rolled file name.
    *
-   * @param date date to format
-   * @return formatted timestamp suffix
+   * @param date the date to format
+   * @return the formatted timestamp string produced by the configured {@link Timestamp}
    */
   public String getTimestampSuffix (LocalDateTime date) {
 
@@ -128,9 +130,9 @@ public class Rollover {
   }
 
   /**
-   * Sets the rollover rules evaluated for each log write.
+   * Replaces the set of rollover rules evaluated on each log write.
    *
-   * @param rules rules to install
+   * @param rules the new rollover rules to use
    */
   public void setRules (RolloverRule[] rules) {
 
@@ -138,12 +140,13 @@ public class Rollover {
   }
 
   /**
-   * Evaluates whether any configured rule triggers rollover.
+   * Returns {@code true} if any configured rule determines that the file should be rolled over,
+   * short-circuiting evaluation after the first triggered rule.
    *
-   * @param fileSize         current file size
-   * @param lastModified     last modification time
-   * @param bytesToBeWritten pending bytes
-   * @return {@code true} if rollover should occur
+   * @param fileSize         the current size of the log file in bytes
+   * @param lastModified     the last modification time of the log file in milliseconds since epoch
+   * @param bytesToBeWritten the number of bytes about to be written to the file
+   * @return {@code true} if at least one rule triggers rollover; {@code false} otherwise
    */
   public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 

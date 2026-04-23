@@ -39,12 +39,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * A cache segmented by {@link ClassLoader} identity so entries are scoped to the loader
- * that produced the key. Loader segments are discarded automatically when the associated
- * {@link ClassLoader} is collected.
+ * A concurrent cache partitioned by {@link ClassLoader} identity, so that entries are automatically evicted when their associated loader is garbage-collected.
  *
- * @param <K> key type stored in the cache
- * @param <V> value type stored in the cache
+ * @param <K> the type of keys stored in the cache
+ * @param <V> the type of values stored in the cache
  */
 public class ClassLoaderAwareCache<K, V> {
 
@@ -53,10 +51,10 @@ public class ClassLoaderAwareCache<K, V> {
   private final Function<K, ClassLoader> loaderExtractor;
 
   /**
-   * Creates a classloader-aware cache using the given extractor to derive the class loader
-   * associated with each key. Keys resolving to {@code null} fall back to the system class loader.
+   * Creates a cache that uses the supplied function to determine which {@link ClassLoader} segment each key belongs to.
+   * Keys for which the extractor returns {@code null} are placed in the system class loader segment.
    *
-   * @param loaderExtractor function that extracts a {@link ClassLoader} from a key
+   * @param loaderExtractor a function that maps a cache key to its associated {@link ClassLoader}
    */
   public ClassLoaderAwareCache (Function<K, ClassLoader> loaderExtractor) {
 
@@ -64,10 +62,10 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Retrieves a value associated with the supplied key within that key's class loader segment.
+   * Returns the cached value for the given key within the key's class loader segment, or {@code null} if absent.
    *
    * @param key the cache key
-   * @return the cached value, or {@code null} if absent
+   * @return the cached value, or {@code null} if no mapping exists
    */
   public V get (K key) {
 
@@ -75,11 +73,11 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Inserts or replaces a value within the class loader segment for the given key.
+   * Associates the given value with the key in the key's class loader segment, replacing any existing mapping.
    *
    * @param key   the cache key
-   * @param value the value to store
-   * @return the previous value associated with the key, or {@code null} if none
+   * @param value the value to associate with the key
+   * @return the previous value associated with the key, or {@code null} if there was no prior mapping
    */
   public V put (K key, V value) {
 
@@ -89,11 +87,11 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Inserts a value only if the key is not already present in the class loader segment.
+   * Associates the given value with the key in the key's class loader segment only if no mapping currently exists.
    *
    * @param key   the cache key
-   * @param value the value to store
-   * @return the existing value if present; otherwise {@code null}
+   * @param value the value to store if no mapping is present
+   * @return the existing value if one was already present, or {@code null} if the new value was stored
    */
   public V putIfAbsent (K key, V value) {
 
@@ -103,11 +101,10 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Returns the map corresponding to the class loader derived from the provided key,
-   * creating it lazily if absent.
+   * Returns the inner map for the class loader segment associated with the given key, creating it lazily if needed.
    *
-   * @param key the key used to locate the class loader segment
-   * @return a concurrent map scoped to the key's class loader
+   * @param key the key whose class loader segment is required
+   * @return the concurrent map for the segment corresponding to the key's class loader
    */
   private synchronized ConcurrentHashMap<K, V> getMap (K key) {
 
@@ -128,7 +125,7 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Removes cache segments whose associated class loaders have been garbage collected.
+   * Polls the reference queue and removes any cache segments whose associated class loaders have been garbage-collected.
    */
   private void clearExpiredReferences () {
 
@@ -142,16 +139,16 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Phantom reference keyed by class loader identity hash to support eviction when loaders are collected.
+   * A phantom reference to a {@link ClassLoader} that also serves as the map key, allowing the cache segment to be removed once the loader is garbage-collected.
    */
   private class LoaderKey extends PhantomReference<ClassLoader> {
 
     private final int identityHashCode;
 
     /**
-     * Creates a phantom reference entry for the given class loader.
+     * Creates a {@code LoaderKey} that tracks {@code classLoader} via a phantom reference registered on the enclosing cache's reference queue.
      *
-     * @param classLoader the loader to track for eviction
+     * @param classLoader the class loader to track
      */
     public LoaderKey (ClassLoader classLoader) {
 
@@ -161,9 +158,9 @@ public class ClassLoaderAwareCache<K, V> {
     }
 
     /**
-     * Uses the identity hash code of the tracked loader to remain stable after collection.
+     * Returns the identity hash code captured at construction time, remaining stable even after the referent is collected.
      *
-     * @return the identity hash code of the original loader
+     * @return the identity hash code of the original class loader
      */
     @Override
     public int hashCode () {
@@ -172,10 +169,10 @@ public class ClassLoaderAwareCache<K, V> {
     }
 
     /**
-     * Compares loader keys by stored identity hash.
+     * Returns {@code true} when {@code obj} is a {@code LoaderKey} with the same identity hash code.
      *
      * @param obj the object to compare
-     * @return {@code true} when the other key has the same identity hash
+     * @return {@code true} if the other key has an equal identity hash code
      */
     @Override
     public boolean equals (Object obj) {

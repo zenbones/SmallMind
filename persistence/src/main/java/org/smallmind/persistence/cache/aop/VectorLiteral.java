@@ -35,7 +35,7 @@ package org.smallmind.persistence.cache.aop;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Programmatic implementation of {@link Vector} for constructing vector metadata at runtime.
+ * Programmatic {@link Vector} implementation that can be constructed in code rather than as an annotation literal.
  */
 public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
 
@@ -44,10 +44,10 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   private final Classifier classifier;
 
   /**
-   * Creates a vector literal without a classifier.
+   * Creates a vector with a namespace and key set, using an empty classifier.
    *
-   * @param namespace namespace used in the cache key
-   * @param keys      key definitions that compose the vector
+   * @param namespace namespace prefix for the cache key
+   * @param keys      ordered key descriptors that form the vector
    */
   public VectorLiteral (String namespace, Key[] keys) {
 
@@ -55,11 +55,11 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   /**
-   * Creates a vector literal with explicit classifier.
+   * Creates a vector with a namespace, key set, and explicit classifier.
    *
-   * @param namespace  namespace used in the cache key
-   * @param keys       key definitions that compose the vector
-   * @param classifier classifier appended to the key
+   * @param namespace  namespace prefix for the cache key
+   * @param keys       ordered key descriptors that form the vector
+   * @param classifier classifier appended to the cache key
    */
   public VectorLiteral (String namespace, Key[] keys, Classifier classifier) {
 
@@ -69,7 +69,9 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   /**
-   * @return namespace used in the cache key
+   * Returns the namespace prefix used in the cache key.
+   *
+   * @return namespace string
    */
   @Override
   public String namespace () {
@@ -78,7 +80,9 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   /**
-   * @return key definitions that compose the vector
+   * Returns the ordered key descriptors that form the vector.
+   *
+   * @return array of {@link Key} components
    */
   @Override
   public Key[] value () {
@@ -87,7 +91,9 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   /**
-   * @return classifier appended to the key
+   * Returns the classifier appended to the cache key.
+   *
+   * @return classifier configuration
    */
   @Override
   public Classifier classifier () {

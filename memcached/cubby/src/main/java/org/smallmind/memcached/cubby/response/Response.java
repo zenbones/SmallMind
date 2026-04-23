@@ -33,7 +33,14 @@
 package org.smallmind.memcached.cubby.response;
 
 /**
- * Represents a parsed memcached response including status code, flags, CAS token and value payload.
+ * Represents a fully parsed memcached server response in the Cubby protocol.
+ *
+ * <p>A {@code Response} carries the {@link ResponseCode} that classifies the result along with
+ * optional metadata fields returned by the server: an opaque client token, a value payload with
+ * its length, a CAS token, a server-reported object size, and three boolean flags ({@code won},
+ * {@code alsoWon}, {@code stale}) used by the meta-protocol for cache-stampede protection.</p>
+ *
+ * <p>Instances are created and populated by {@link ResponseParser}.</p>
  */
 public class Response {
 
@@ -48,9 +55,9 @@ public class Response {
   private byte[] value;
 
   /**
-   * Creates a response with the given status code.
+   * Creates a response bearing the given status code.
    *
-   * @param code response status
+   * @param code the status code returned by the server
    */
   public Response (ResponseCode code) {
 
@@ -58,7 +65,9 @@ public class Response {
   }
 
   /**
-   * @return response status code
+   * Returns the status code of this response.
+   *
+   * @return the {@link ResponseCode} classifying the server outcome
    */
   public ResponseCode getCode () {
 
@@ -66,7 +75,9 @@ public class Response {
   }
 
   /**
-   * @return opaque token echoed by the server
+   * Returns the opaque client token echoed back by the server, if present.
+   *
+   * @return the token string, or {@code null} when the server did not echo one
    */
   public String getToken () {
 
@@ -74,7 +85,9 @@ public class Response {
   }
 
   /**
-   * @param token opaque token echoed by the server
+   * Sets the opaque client token echoed back by the server.
+   *
+   * @param token the token string included in the response
    */
   public void setToken (String token) {
 
@@ -82,7 +95,9 @@ public class Response {
   }
 
   /**
-   * @return length of the value payload, or -1 if absent
+   * Returns the byte-length of the value payload announced in the response header.
+   *
+   * @return the value length in bytes, or {@code -1} if no value is expected
    */
   public int getValueLength () {
 
@@ -90,7 +105,9 @@ public class Response {
   }
 
   /**
-   * @param valueLength length of the value payload
+   * Sets the byte-length of the value payload announced in the response header.
+   *
+   * @param valueLength the length in bytes of the forthcoming value
    */
   public void setValueLength (int valueLength) {
 
@@ -98,7 +115,9 @@ public class Response {
   }
 
   /**
-   * @return value bytes, or {@code null} when no value was returned
+   * Returns the raw value bytes returned by the server.
+   *
+   * @return the value bytes, or {@code null} when the response carries no value
    */
   public byte[] getValue () {
 
@@ -106,7 +125,9 @@ public class Response {
   }
 
   /**
-   * @param value value payload
+   * Sets the raw value bytes read from the server.
+   *
+   * @param value the value payload bytes
    */
   public void setValue (byte[] value) {
 
@@ -114,7 +135,9 @@ public class Response {
   }
 
   /**
-   * @return CAS token returned by the server
+   * Returns the CAS (compare-and-swap) token associated with the cached item.
+   *
+   * @return the CAS token, or {@code 0} if the server did not supply one
    */
   public long getCas () {
 
@@ -122,7 +145,9 @@ public class Response {
   }
 
   /**
-   * @param cas CAS token returned by the server
+   * Sets the CAS token returned by the server for the cached item.
+   *
+   * @param cas the compare-and-swap token
    */
   public void setCas (long cas) {
 
@@ -130,7 +155,9 @@ public class Response {
   }
 
   /**
-   * @return size of the object on the server, when provided
+   * Returns the server-reported size of the stored object, when provided.
+   *
+   * @return the stored object size in bytes, or {@code -1} if not supplied
    */
   public int getSize () {
 
@@ -138,7 +165,9 @@ public class Response {
   }
 
   /**
-   * @param size size of the object on the server
+   * Sets the server-reported size of the stored object.
+   *
+   * @param size the object size in bytes as reported by the server
    */
   public void setSize (int size) {
 
@@ -146,7 +175,9 @@ public class Response {
   }
 
   /**
-   * @return {@code true} if the server indicates ownership of the record
+   * Indicates whether this client has won ownership of a miss-leader lease.
+   *
+   * @return {@code true} if the server granted this client a cache-miss lease
    */
   public boolean isWon () {
 
@@ -154,7 +185,9 @@ public class Response {
   }
 
   /**
-   * @param won ownership flag
+   * Sets the flag indicating that this client won a cache-miss lease.
+   *
+   * @param won {@code true} if a lease was granted by the server
    */
   public void setWon (boolean won) {
 
@@ -162,7 +195,9 @@ public class Response {
   }
 
   /**
-   * @return {@code true} if another server also claims the record
+   * Indicates whether another client also holds a lease for the same key.
+   *
+   * @return {@code true} if a concurrent lease holder exists
    */
   public boolean isAlsoWon () {
 
@@ -170,7 +205,9 @@ public class Response {
   }
 
   /**
-   * @param alsoWon flag indicating multiple winners
+   * Sets the flag indicating multiple concurrent lease holders for the same key.
+   *
+   * @param alsoWon {@code true} if another client also holds a lease
    */
   public void setAlsoWon (boolean alsoWon) {
 
@@ -178,7 +215,9 @@ public class Response {
   }
 
   /**
-   * @return {@code true} if the value is marked as stale
+   * Indicates whether the returned value is marked as stale by the server.
+   *
+   * @return {@code true} if the value is stale and a background refresh is expected
    */
   public boolean isStale () {
 
@@ -186,7 +225,9 @@ public class Response {
   }
 
   /**
-   * @param stale stale indicator
+   * Sets the stale indicator on this response.
+   *
+   * @param stale {@code true} if the server flagged the value as stale
    */
   public void setStale (boolean stale) {
 

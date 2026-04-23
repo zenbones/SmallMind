@@ -39,16 +39,18 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.layout.Bias;
 
 /**
- * A simple wrapper that adds fixed insets around its managed children and reports size hints that include the padding.
+ * A {@link Region} that wraps its managed children with fixed padding. All size hints reported
+ * to the layout system include the padding on the relevant axis. During layout each child is
+ * relocated and resized to fill the area remaining after the insets are applied.
  */
 public class InsetsPane extends Region {
 
   private final Insets insets;
 
   /**
-   * Creates a pane that applies the specified insets.
+   * Creates a pane that applies the given insets around its children.
    *
-   * @param insets padding to apply around children
+   * @param insets the padding to apply; must not be {@code null}
    */
   public InsetsPane (Insets insets) {
 
@@ -56,10 +58,10 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * Creates a pane with the specified insets and a preconfigured child.
+   * Creates a pane that applies the given insets and immediately adds {@code node} as a managed child.
    *
-   * @param insets padding to apply around children
-   * @param node   the child node to manage
+   * @param insets the padding to apply; must not be {@code null}
+   * @param node   the initial child to add; must not be {@code null}
    */
   public InsetsPane (Insets insets, Node node) {
 
@@ -69,7 +71,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the minimum width required to contain the children and padding
+   * Returns the minimum width of the pane: the largest minimum width among all managed children
+   * plus the horizontal insets.
+   *
+   * @param v ignored (height hint)
+   * @return minimum width in pixels
    */
   @Override
   protected double computeMinWidth (double v) {
@@ -78,7 +84,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the minimum height required to contain the children and padding
+   * Returns the minimum height of the pane: the largest minimum height among all managed children
+   * plus the vertical insets.
+   *
+   * @param v ignored (width hint)
+   * @return minimum height in pixels
    */
   @Override
   protected double computeMinHeight (double v) {
@@ -87,7 +97,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the preferred width required to contain the children and padding
+   * Returns the preferred width of the pane: the largest preferred width among all managed children
+   * plus the horizontal insets.
+   *
+   * @param v ignored (height hint)
+   * @return preferred width in pixels
    */
   @Override
   protected double computePrefWidth (double v) {
@@ -96,7 +110,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the preferred height required to contain the children and padding
+   * Returns the preferred height of the pane: the largest preferred height among all managed
+   * children plus the vertical insets.
+   *
+   * @param v ignored (width hint)
+   * @return preferred height in pixels
    */
   @Override
   protected double computePrefHeight (double v) {
@@ -105,7 +123,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the maximum width required to contain the children and padding
+   * Returns the maximum width of the pane: the largest maximum width among all managed children
+   * plus the horizontal insets.
+   *
+   * @param v ignored (height hint)
+   * @return maximum width in pixels
    */
   @Override
   protected double computeMaxWidth (double v) {
@@ -114,7 +136,11 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * @return the maximum height required to contain the children and padding
+   * Returns the maximum height of the pane: the largest maximum height among all managed children
+   * plus the vertical insets.
+   *
+   * @param v ignored (width hint)
+   * @return maximum height in pixels
    */
   @Override
   protected double computeMaxHeight (double v) {
@@ -123,11 +149,13 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * Computes the requested measurement along the given axis for all managed children and adds the relevant insets.
+   * Computes a size measurement along the given axis for all managed children and adds the
+   * relevant padding.
    *
-   * @param cut  which measurement to request (minimum, preferred, maximum)
+   * @param cut  which measurement variant to request ({@link Cut#MINIMUM}, {@link Cut#PREFERRED},
+   *             or {@link Cut#MAXIMUM})
    * @param bias the axis being measured
-   * @return the computed measurement plus padding
+   * @return the computed size including padding, in pixels
    */
   private double computeMeasurement (Cut cut, Bias bias) {
 
@@ -146,12 +174,14 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * Returns a particular measurement for the supplied child node.
+   * Returns the requested measurement for a single child node along the given axis.
    *
-   * @param node the child node
-   * @param cut  which measurement to request
+   * @param node the child node to measure
+   * @param cut  which measurement variant to request
    * @param bias the axis being measured
-   * @return the node's measurement
+   * @return the requested size in pixels
+   * @throws org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException if an unexpected {@link Cut}
+   *                                                                  or {@link Bias} value is encountered
    */
   private double getChildMeasurement (Node node, Cut cut, Bias bias) {
 
@@ -189,10 +219,12 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * Calculates the padding size along the specified axis.
+   * Returns the total padding amount along the given axis.
    *
-   * @param bias the axis being measured
-   * @return the total inset on that axis
+   * @param bias the axis for which to sum insets
+   * @return left + right insets for {@link Bias#HORIZONTAL}, or top + bottom for {@link Bias#VERTICAL}
+   * @throws org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException if an unexpected {@link Bias}
+   *                                                                  value is encountered
    */
   private double getGutter (Bias bias) {
 
@@ -207,7 +239,7 @@ public class InsetsPane extends Region {
   }
 
   /**
-   * Positions children inside the padded area.
+   * Resizes and relocates each managed child to fill the area within the insets.
    */
   @Override
   protected void layoutChildren () {

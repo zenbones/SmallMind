@@ -33,14 +33,17 @@
 package org.smallmind.phalanx.wire.transport.jms;
 
 /**
- * Abstraction over JMS acknowledge modes to allow pluggable implementations.
+ * Strategy interface for JMS session acknowledge modes.
+ *
+ * <p>Implementations map a logical acknowledge strategy to the integer constant
+ * expected by {@link jakarta.jms.Connection#createSession(boolean, int)}.
  */
 public interface AcknowledgeMode {
 
   /**
-   * Returns the JMS-specific acknowledge mode value.
+   * Returns the JMS acknowledge-mode constant for this strategy.
    *
-   * @return JMS acknowledge constant
+   * @return integer value corresponding to a {@link jakarta.jms.Session} acknowledge-mode constant
    */
   int getJmsValue ();
 }

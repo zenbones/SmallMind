@@ -46,17 +46,22 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
 /**
- * {@link URLConnection} implementation that can stream nested jar entries referenced by the {@code singularity:} protocol.
- * The connection is effectively stateless; the actual content retrieval happens when {@link #getInputStream()} is called.
+ * {@link URLConnection} implementation that reads an entry from a nested jar addressed by a {@code singularity:} URL.
+ * <p>Two URL shapes are supported:
+ * <ul>
+ *   <li>{@code singularity:<outer>@/<entry>} for an entry that lives directly in the outer jar.</li>
+ *   <li>{@code singularity:<outer>@/<inner-jar>!/<entry>} for an entry nested inside a jar bundled under
+ *       {@code META-INF/singularity/lib/}; nested jars are memoized in a soft-reference cache to amortize inflation.</li>
+ * </ul>
  */
 public class SingularityJarURLConnection extends URLConnection {
 
   private static final ConcurrentHashMap<String, SoftReference<CachedJarFile>> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
 
   /**
-   * Creates a connection bound to the supplied {@code singularity:} URL.
+   * Binds this connection to a {@code singularity:} URL without performing any I/O.
    *
-   * @param url the nested-jar URL being resolved
+   * @param url the URL whose content will be streamed on demand
    */
   public SingularityJarURLConnection (URL url) {
 
@@ -64,7 +69,7 @@ public class SingularityJarURLConnection extends URLConnection {
   }
 
   /**
-   * No-op connect implementation because the stream is opened lazily via {@link #getInputStream()}.
+   * No-op; {@code singularity} connections defer all I/O until {@link #getInputStream()} is invoked.
    */
   @Override
   public void connect () {
@@ -72,10 +77,13 @@ public class SingularityJarURLConnection extends URLConnection {
   }
 
   /**
-   * Streams the entry referenced by this {@code singularity:} URL, optionally using a cached nested jar for repeated access.
+   * Opens a stream over the entry addressed by this connection's URL, consulting the shared cache when the entry
+   * lives inside a nested jar.
    *
-   * @return an {@link InputStream} over the referenced entry
-   * @throws IOException if the URL cannot be parsed, the nested jar cannot be opened, or the entry does not exist
+   * @return a readable {@link InputStream} positioned at the start of the requested entry
+   * @throws MalformedURLException if the URL path does not contain the required {@code @/} separator
+   * @throws FileNotFoundException if the outer or inner entry is absent from the enclosing jar
+   * @throws IOException           if the jar cannot be opened or the entry cannot be read
    */
   @Override
   public InputStream getInputStream ()
@@ -131,9 +139,9 @@ public class SingularityJarURLConnection extends URLConnection {
   }
 
   /**
-   * Returns zero because the length cannot be efficiently determined without loading the entry.
+   * Reports that the content length is indeterminate without opening the entry.
    *
-   * @return always {@code 0}
+   * @return always {@code 0}; callers should stream the content to determine its true size
    */
   @Override
   public int getContentLength () {

@@ -35,15 +35,15 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Base checked exception for errors encountered within the Oumuamua server stack.
+ * Root checked exception for all errors originating within the Oumuamua Bayeux server stack.
  */
 public class OumuamuaException extends FormattedException {
 
   /**
-   * Creates an exception with a formatted message.
+   * Constructs the exception with a {@link String#format}-style detail message.
    *
-   * @param message message template describing the error
-   * @param args    optional arguments substituted into the message
+   * @param message format string describing the error
+   * @param args    arguments substituted into the format string
    */
   public OumuamuaException (String message, Object... args) {
 
@@ -51,11 +51,11 @@ public class OumuamuaException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Constructs the exception with an underlying cause and a {@link String#format}-style detail message.
    *
-   * @param throwable the underlying cause
-   * @param message   message template describing the error
-   * @param args      optional arguments substituted into the message
+   * @param throwable cause of this exception
+   * @param message   format string describing the error
+   * @param args      arguments substituted into the format string
    */
   public OumuamuaException (Throwable throwable, String message, Object... args) {
 
@@ -63,9 +63,9 @@ public class OumuamuaException extends FormattedException {
   }
 
   /**
-   * Creates an exception that simply wraps another throwable.
+   * Constructs the exception by wrapping another throwable, using its message as the detail.
    *
-   * @param throwable the underlying cause
+   * @param throwable cause to wrap
    */
   public OumuamuaException (Throwable throwable) {
 

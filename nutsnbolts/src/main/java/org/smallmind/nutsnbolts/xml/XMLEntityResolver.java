@@ -40,8 +40,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
- * SAX {@link EntityResolver} that delegates URI handling to a {@link ProtocolResolver} and streams resolved resources.
- * Provides a singleton configured with {@link SmallMindProtocolResolver} for convenience.
+ * SAX {@link EntityResolver} that delegates entity resolution to a {@link ProtocolResolver} and returns the result as an {@link InputSource}.
+ * A lazily created singleton backed by {@link SmallMindProtocolResolver} is available for convenient reuse.
  */
 public class XMLEntityResolver implements EntityResolver {
 
@@ -50,9 +50,9 @@ public class XMLEntityResolver implements EntityResolver {
   private final ProtocolResolver protocolResolver;
 
   /**
-   * Creates a resolver that delegates to the supplied protocol resolver.
+   * Creates an entity resolver backed by the supplied protocol resolver.
    *
-   * @param protocolResolver protocol resolver used to resolve system identifiers
+   * @param protocolResolver the resolver used to locate resources by system identifier
    */
   public XMLEntityResolver (ProtocolResolver protocolResolver) {
 
@@ -60,9 +60,9 @@ public class XMLEntityResolver implements EntityResolver {
   }
 
   /**
-   * Returns a lazily created singleton configured with {@link SmallMindProtocolResolver}.
+   * Returns the shared singleton instance configured with {@link SmallMindProtocolResolver}, creating it on first call.
    *
-   * @return shared {@link XMLEntityResolver}
+   * @return the singleton {@link XMLEntityResolver}
    */
   public synchronized static XMLEntityResolver getInstance () {
 
@@ -74,13 +74,13 @@ public class XMLEntityResolver implements EntityResolver {
   }
 
   /**
-   * Attempts to resolve an external entity using the configured protocol resolver.
+   * Resolves an external entity by delegating to the configured {@link ProtocolResolver} and wrapping the result in an {@link InputSource}.
    *
-   * @param publicId public identifier, unused
-   * @param systemId system identifier to resolve
-   * @return an {@link InputSource} for the resolved resource, or {@code null} to fall back to default resolution
+   * @param publicId the public identifier of the external entity (unused)
+   * @param systemId the system identifier of the external entity to resolve
+   * @return an {@link InputSource} backed by the resolved resource, or {@code null} to fall back to default parser resolution
    * @throws SAXException if resolution fails
-   * @throws IOException  if the resolved resource cannot be opened
+   * @throws IOException  if the resolved resource stream cannot be opened
    */
   public InputSource resolveEntity (String publicId, String systemId)
     throws SAXException, IOException {

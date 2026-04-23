@@ -38,8 +38,8 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Captures metadata for a single property appearing in a generated view, including constraints,
- * naming overrides, adapters, and nullifier comments.
+ * Captures all metadata for a single property to be emitted in a generated view, including its type,
+ * constraints, JAXB adapter, element name, comment, and nullifier message.
  */
 public class PropertyInformation {
 
@@ -54,14 +54,14 @@ public class PropertyInformation {
   private final String nullifierMessage;
 
   /**
-   * Extracts property metadata from a {@link View}, {@link Virtual}, or {@link Real} annotation.
+   * Extracts property metadata from a {@link View}, {@link Virtual}, or {@link Real} annotation mirror.
    *
-   * @param propertyAnnotationMirror the annotation describing the property
-   * @param constraintList           constraints to apply
-   * @param idiomRequired            whether the idiom marks the property as required
-   * @param type                     resolved property type
-   * @param nullifierMessage         optional nullifier message string
-   * @param virtual                  whether the property is virtual (not backed by a real field)
+   * @param propertyAnnotationMirror the annotation mirror of the property annotation
+   * @param constraintList           constraints to apply to this property in the generated view
+   * @param idiomRequired            whether the containing idiom marks this property as required
+   * @param type                     the resolved type mirror for the property
+   * @param nullifierMessage         the nullifier message extracted from a nullifier annotation, or {@code null}
+   * @param virtual                  {@code true} if the property is virtual and not backed by an entity field
    */
   public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, boolean idiomRequired, TypeMirror type, String nullifierMessage, boolean virtual) {
 
@@ -78,7 +78,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return {@code true} when the property is virtual (not present on the entity)
+   * @return {@code true} if this property is virtual and has no corresponding field on the entity
    */
   public boolean isVirtual () {
 
@@ -86,7 +86,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return adapter type to apply on the generated view property, or {@code null} if none was specified
+   * @return the JAXB adapter type to apply on the generated property, or {@code null} if none was specified
    */
   public TypeMirror getAdapter () {
 
@@ -94,7 +94,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return override target class for {@link org.smallmind.web.json.scaffold.util.As}, or {@code null}
+   * @return the {@code @As} override type for tool hints, or {@code null} if none was specified
    */
   public TypeMirror getAs () {
 
@@ -102,7 +102,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return the resolved type of the property
+   * @return the resolved type of this property
    */
   public TypeMirror getType () {
 
@@ -110,7 +110,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return custom element name override for serialization, or empty when defaulting to field name
+   * @return the XML element name override for this property, or empty to default to the field name
    */
   public String getName () {
 
@@ -118,7 +118,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return comment text to apply to the generated property, or empty when none
+   * @return the comment text to attach to the generated property, or empty when none
    */
   public String getComment () {
 
@@ -126,7 +126,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return nullifier message set on the property (may be {@code null})
+   * @return the nullifier message to apply via {@code @NullifiedBy}, or {@code null} if none
    */
   public String getNullifierMessage () {
 
@@ -134,7 +134,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return constraints applied to this property
+   * @return the constraints to apply to this property in the generated view
    */
   public Iterable<ConstraintInformation> constraints () {
 
@@ -142,7 +142,7 @@ public class PropertyInformation {
   }
 
   /**
-   * @return {@code true} if the property is required in the current idiom
+   * @return {@code true} if this property is required in the current idiom
    */
   public boolean isRequired () {
 

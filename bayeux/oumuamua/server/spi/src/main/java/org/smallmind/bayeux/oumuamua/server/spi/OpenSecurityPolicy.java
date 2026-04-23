@@ -40,16 +40,19 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Security policy that permits all operations.
+ * Open {@link SecurityPolicy} that unconditionally allows every Bayeux operation;
+ * intended for development or deployments where access control is handled externally.
+ *
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
  */
 public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V> {
 
   /**
-   * Always permits handshake requests.
+   * Approves all handshake requests without restriction.
    *
-   * @param session the requesting session
-   * @param message handshake message
-   * @return {@code null} to indicate no rejection
+   * @param session the session attempting to handshake
+   * @param message the {@code /meta/handshake} message
+   * @return {@code null}, indicating no rejection
    */
   @Override
   public SecurityRejection canHandshake (Session<V> session, Message<V> message) {
@@ -58,12 +61,12 @@ public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V>
   }
 
   /**
-   * Always permits channel creation.
+   * Approves all channel creation attempts without restriction.
    *
-   * @param session the requesting session
-   * @param path    path to create
-   * @param message create message
-   * @return {@code null} to indicate no rejection
+   * @param session the session requesting channel creation
+   * @param path    the path of the channel to be created
+   * @param message the message that triggered the creation
+   * @return {@code null}, indicating no rejection
    */
   @Override
   public SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
@@ -72,12 +75,12 @@ public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V>
   }
 
   /**
-   * Always permits channel subscription.
+   * Approves all subscription requests without restriction.
    *
-   * @param session the requesting session
-   * @param channel target channel
-   * @param message subscribe message
-   * @return {@code null} to indicate no rejection
+   * @param session the session requesting the subscription
+   * @param channel the channel being subscribed to
+   * @param message the {@code /meta/subscribe} message
+   * @return {@code null}, indicating no rejection
    */
   @Override
   public SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
@@ -86,12 +89,12 @@ public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V>
   }
 
   /**
-   * Always permits publishing to any channel.
+   * Approves all publish attempts without restriction.
    *
-   * @param session the requesting session
-   * @param channel target channel
-   * @param message publish message
-   * @return {@code null} to indicate no rejection
+   * @param session the session publishing the message
+   * @param channel the target channel
+   * @param message the message being published
+   * @return {@code null}, indicating no rejection
    */
   @Override
   public SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {

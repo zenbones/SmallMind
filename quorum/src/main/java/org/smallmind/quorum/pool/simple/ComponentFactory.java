@@ -33,17 +33,22 @@
 package org.smallmind.quorum.pool.simple;
 
 /**
- * Factory interface used by the simple pool to create pooled components.
+ * Strategy for creating new {@link PooledComponent} instances on behalf of a {@link ComponentPool}.
+ * <p>
+ * The pool calls {@link #createComponent()} whenever it needs a fresh instance — either because
+ * the pool is empty and has not yet reached its capacity cap, or when it has been configured as
+ * unbounded.
  *
- * @param <T> component type
+ * @param <T> the type of {@link PooledComponent} produced by this factory
  */
 public interface ComponentFactory<T extends PooledComponent> {
 
   /**
-   * Builds a new pooled component instance.
+   * Creates and returns a new pooled component instance.
    *
-   * @return new component
-   * @throws Exception if creation fails
+   * @return a freshly constructed component ready for use
+   * @throws Exception if the component cannot be created for any reason; the caller will wrap
+   *                   this in a {@link org.smallmind.quorum.pool.ComponentPoolException}
    */
   T createComponent ()
     throws Exception;

@@ -38,34 +38,70 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a test suite and its dependency metadata.
+ * Identifies a class as a Sleuth test suite and declares its scheduling constraints.
+ * <p>
+ * Apply this annotation at the class level to participate in Sleuth test discovery. The
+ * {@link #groups()} attribute controls group-filter inclusion. The {@link #priority()} attribute
+ * controls cross-suite ordering. The {@link #dependsOn()} attribute introduces hard prerequisites:
+ * if any named suite fails, this suite is marked skipped and its culprit is propagated. The
+ * {@link #executeAfter()} attribute imposes soft ordering without failure propagation.
+ *
+ * @see Test
+ * @see SuiteLiteral
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Suite {
 
   /**
-   * @return groups the suite belongs to; empty array means all groups
+   * Groups that this suite belongs to.
+   * <p>
+   * When the runner filters by group, only suites whose {@code groups} array intersects the
+   * requested set are executed. An empty array means the suite belongs to no named group and
+   * will be excluded when any group filter is active.
+   *
+   * @return group names for this suite; never {@code null}
    */
   String[] groups ();
 
   /**
-   * @return priority used to order suite execution; higher numbers run later
+   * Relative execution priority among all suites.
+   * <p>
+   * Lower values are scheduled first. Suites sharing the same priority may execute concurrently
+   * subject to the thread-pool limit for the {@link org.smallmind.sleuth.runner.TestTier#SUITE}
+   * tier.
+   *
+   * @return priority value; defaults to {@code 0}
    */
   int priority () default 0;
 
   /**
-   * @return suites that must complete before this one executes, without implying dependency failure propagation
+   * Names of suites that must finish execution before this suite may start.
+   * <p>
+   * Unlike {@link #dependsOn()}, completion — regardless of outcome — is sufficient to unblock
+   * this suite. No culprit is inherited from a named suite's failure.
+   *
+   * @return suite names imposing a soft ordering constraint; defaults to empty
    */
   String[] executeAfter () default {};
 
   /**
-   * @return suites that must succeed before this one executes
+   * Names of suites that must succeed before this suite may start.
+   * <p>
+   * If any named suite produced a failure or error, this suite is skipped and the culprit from
+   * the failed prerequisite is propagated into its result.
+   *
+   * @return suite names that are hard prerequisites; defaults to empty
    */
   String[] dependsOn () default {};
 
   /**
-   * @return whether the suite is enabled
+   * Whether this suite participates in any run.
+   * <p>
+   * When {@code false}, the suite is unconditionally excluded regardless of group filtering
+   * or dependency configuration.
+   *
+   * @return {@code true} if the suite should execute; defaults to {@code true}
    */
   boolean enabled () default true;
 }

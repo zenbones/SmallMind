@@ -39,10 +39,23 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
- * Thread-safe queue that releases dependency nodes only when their prerequisites are complete.
+ * Thread-safe execution queue that dispatches dependency nodes only after all their prerequisites
+ * have been marked complete.
+ * <p>
+ * The queue is seeded with a topologically sorted list produced by {@link DependencyAnalysis}. At
+ * each call to {@link #poll()}, the list is scanned for any node whose {@code dependsOn},
+ * {@code executeAfter}, and {@code priorityOn} prerequisites are all in the completed set. When
+ * one is found it is removed from the list and returned. If no eligible node exists the calling
+ * thread blocks on {@link Object#wait()} until {@link #complete(Dependency)} wakes it. When the
+ * list is empty {@code null} is returned, signalling end of queue.
+ * <p>
+ * This class is thread-safe; both {@link #poll()} and {@link #complete(Dependency)} are
+ * {@code synchronized}.
  *
- * @param <A> annotation type describing the dependency
- * @param <T> payload type represented by the dependency node
+ * @param <A> annotation type describing each dependency node
+ * @param <T> payload type carried by each dependency node
+ * @see DependencyAnalysis
+ * @see Dependency
  */
 public class DependencyQueue<A extends Annotation, T> {
 
@@ -52,9 +65,11 @@ public class DependencyQueue<A extends Annotation, T> {
   private final int size;
 
   /**
-   * Creates a queue seeded with the ordered dependency list.
+   * Creates a queue from a topologically ordered dependency list.
+   * <p>
+   * All nodes are indexed by name so that culprit propagation can look them up in O(1) time.
    *
-   * @param dependencyList topologically sorted dependencies
+   * @param dependencyList topologically sorted list of dependencies; must not be {@code null}
    */
   public DependencyQueue (LinkedList<Dependency<A, T>> dependencyList) {
 
@@ -67,7 +82,7 @@ public class DependencyQueue<A extends Annotation, T> {
   }
 
   /**
-   * @return total number of dependencies in the queue
+   * @return the total number of nodes in the queue, including those not yet dispatched
    */
   public int size () {
 
@@ -75,9 +90,15 @@ public class DependencyQueue<A extends Annotation, T> {
   }
 
   /**
-   * Retrieves the next executable dependency, blocking until one becomes available or the queue empties.
+   * Retrieves and removes the next node whose prerequisites are all complete, blocking if none
+   * is currently eligible.
+   * <p>
+   * The internal list is scanned on each wakeup until an eligible node is found or the list
+   * becomes empty. Culprit propagation from failed hard prerequisites occurs inside the
+   * eligibility check.
    *
-   * @return the next dependency ready for execution, or {@code null} when the queue is empty
+   * @return the next eligible dependency, or {@code null} when all nodes have been dispatched
+   * @throws RuntimeException wrapping {@link InterruptedException} if the waiting thread is interrupted
    */
   public synchronized Dependency<A, T> poll () {
 
@@ -107,9 +128,9 @@ public class DependencyQueue<A extends Annotation, T> {
   }
 
   /**
-   * Marks a dependency as complete and notifies waiting threads.
+   * Records a node as complete and wakes all threads waiting in {@link #poll()}.
    *
-   * @param dependency dependency that has finished executing
+   * @param dependency node that has finished executing; must not be {@code null}
    */
   public synchronized void complete (Dependency<A, T> dependency) {
 
@@ -118,10 +139,14 @@ public class DependencyQueue<A extends Annotation, T> {
   }
 
   /**
-   * Determines whether all prerequisites for a dependency have been completed.
+   * Determines whether all prerequisites for a node have been satisfied.
+   * <p>
+   * All three prerequisite arrays — {@code dependsOn}, {@code executeAfter}, and
+   * {@code priorityOn} — must be fully present in the completed set. For {@code dependsOn},
+   * the culprit from any failed prerequisite is propagated to the candidate node.
    *
-   * @param dependency dependency to evaluate
-   * @return {@code true} if the dependency can execute
+   * @param dependency node to evaluate; must not be {@code null}
+   * @return {@code true} if the node may now be dispatched
    */
   private boolean isComplete (Dependency<A, T> dependency) {
 

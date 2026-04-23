@@ -36,7 +36,7 @@ import java.util.Map;
 import jakarta.servlet.Servlet;
 
 /**
- * Describes a servlet to be deployed into a Jetty context, including mapping, init parameters, and load order.
+ * Describes a servlet to be deployed into a Jetty context, including its URL mapping, init parameters, load order, and async support setting.
  */
 public class ServletInstaller extends JettyInstaller {
 
@@ -49,7 +49,7 @@ public class ServletInstaller extends JettyInstaller {
   private Boolean asyncSupported;
 
   /**
-   * Identifies this installer as targeting servlets.
+   * Returns the installer type for this class.
    *
    * @return {@link JettyInstallerType#SERVLET}
    */
@@ -60,9 +60,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the servlet display name.
+   * Returns the display name registered for this servlet in Jetty.
    *
-   * @return display name for the servlet
+   * @return servlet display name, or {@code null} if unset
    */
   public String getDisplayName () {
 
@@ -70,9 +70,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets a human-readable display name for the servlet.
+   * Sets the display name for this servlet.
    *
-   * @param displayName the display name
+   * @param displayName human-readable name shown in Jetty
    */
   public void setDisplayName (String displayName) {
 
@@ -80,11 +80,11 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Instantiates or returns the provided servlet instance.
+   * Returns the servlet instance, instantiating {@code servletClass} if no instance was supplied directly.
    *
-   * @return the servlet to register
+   * @return the {@link Servlet} to register
    * @throws InstantiationException if the servlet class cannot be instantiated
-   * @throws IllegalAccessException if the servlet class or constructor is not accessible
+   * @throws IllegalAccessException if the servlet class or its no-arg constructor is inaccessible
    */
   public Servlet getServlet ()
     throws InstantiationException, IllegalAccessException {
@@ -93,7 +93,7 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies a concrete servlet instance.
+   * Sets a concrete servlet instance to register.
    *
    * @param servlet the servlet instance
    */
@@ -103,9 +103,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies the servlet class used when no instance is directly provided.
+   * Sets the servlet class to instantiate when no instance is provided directly.
    *
-   * @param servletClass the servlet implementation class
+   * @param servletClass implementation class for the servlet
    */
   public void setServletClass (Class<? extends Servlet> servletClass) {
 
@@ -113,9 +113,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves initialization parameters applied to the servlet.
+   * Returns the initialization parameters applied to this servlet.
    *
-   * @return map of initialization parameters or {@code null} if none
+   * @return map of init parameters, or {@code null} if none configured
    */
   public Map<String, String> getInitParameters () {
 
@@ -123,9 +123,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets initialization parameters for the servlet.
+   * Sets the initialization parameters passed to the servlet during startup.
    *
-   * @param initParameters initialization parameters to apply
+   * @param initParameters parameters to initialize the servlet with
    */
   public void setInitParameters (Map<String, String> initParameters) {
 
@@ -133,9 +133,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the URL pattern to which the servlet will be bound.
+   * Returns the URL pattern to which this servlet is mapped.
    *
-   * @return the URL pattern or {@code null} to use {@code /*} by default
+   * @return URL pattern, or {@code null} to default to {@code /*}
    */
   public String getUrlPattern () {
 
@@ -143,7 +143,7 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets the URL pattern that routes requests to the servlet.
+   * Sets the URL pattern that routes requests to this servlet.
    *
    * @param urlPattern the servlet mapping pattern
    */
@@ -153,9 +153,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the configured load-on-startup order value.
+   * Returns the load-on-startup order value for this servlet.
    *
-   * @return the load-on-startup value or {@code null} to leave unset
+   * @return load order, or {@code null} if not configured
    */
   public Integer getLoadOnStartup () {
 
@@ -163,9 +163,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets the load-on-startup order for the servlet.
+   * Sets the load-on-startup order for this servlet; lower values cause earlier loading.
    *
-   * @param loadOnStartup order value; lower values load earlier
+   * @param loadOnStartup the startup order value
    */
   public void setLoadOnStartup (Integer loadOnStartup) {
 
@@ -173,9 +173,9 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Indicates whether the servlet supports asynchronous processing.
+   * Returns whether this servlet supports asynchronous processing.
    *
-   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unspecified
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unset
    */
   public Boolean getAsyncSupported () {
 
@@ -183,7 +183,7 @@ public class ServletInstaller extends JettyInstaller {
   }
 
   /**
-   * Configures whether the servlet supports asynchronous processing.
+   * Configures whether this servlet supports asynchronous processing.
    *
    * @param asyncSupported {@code true} to enable async support, {@code false} to disable, {@code null} to leave unset
    */

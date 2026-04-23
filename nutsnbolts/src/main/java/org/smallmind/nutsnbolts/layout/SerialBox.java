@@ -39,8 +39,9 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 // Lays out items one after another, in the Bias direction, with growth/shrink values also in the bias direction
 
 /**
- * Box that lays out elements sequentially along the specified {@link Bias}, honoring grow/shrink constraints
- * and optional gaps and justification settings.
+ * A {@link Box} that arranges its elements sequentially along the layout axis, separating them with a
+ * configurable gap and distributing surplus or deficit space according to each element's grow/shrink
+ * constraint and the box's {@link Justification} policy.
  */
 public class SerialBox extends Box<SerialBox> {
 
@@ -49,9 +50,9 @@ public class SerialBox extends Box<SerialBox> {
   private boolean greedy;
 
   /**
-   * Creates a serial box with default unrelated gap and leading justification.
+   * Creates a serial box with the platform's unrelated gap and leading justification.
    *
-   * @param layout the owning layout
+   * @param layout the owning {@link ParaboxLayout}
    */
   protected SerialBox (ParaboxLayout layout) {
 
@@ -59,10 +60,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with default gap and a greediness flag.
+   * Creates a serial box with the platform's unrelated gap, leading justification, and the specified greediness.
    *
-   * @param layout the owning layout
-   * @param greedy whether the box may grow indefinitely
+   * @param layout the owning {@link ParaboxLayout}
+   * @param greedy {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, boolean greedy) {
 
@@ -70,10 +71,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with the given gap.
+   * Creates a serial box with the specified predefined gap type and leading justification.
    *
-   * @param layout the owning layout
-   * @param gap    the gap type between elements
+   * @param layout the owning {@link ParaboxLayout}
+   * @param gap    the predefined gap type used to space elements
    */
   protected SerialBox (ParaboxLayout layout, Gap gap) {
 
@@ -81,11 +82,11 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a gap and greediness flag.
+   * Creates a serial box with the specified predefined gap type, leading justification, and greediness.
    *
-   * @param layout the owning layout
-   * @param gap    the gap type between elements
-   * @param greedy whether the box may grow indefinitely
+   * @param layout the owning {@link ParaboxLayout}
+   * @param gap    the predefined gap type used to space elements
+   * @param greedy {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, Gap gap, boolean greedy) {
 
@@ -93,10 +94,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a fixed gap.
+   * Creates a serial box with a fixed numeric gap and leading justification.
    *
-   * @param layout the owning layout
-   * @param gap    the fixed gap value
+   * @param layout the owning {@link ParaboxLayout}
+   * @param gap    the fixed spacing between consecutive elements
    */
   protected SerialBox (ParaboxLayout layout, double gap) {
 
@@ -104,11 +105,11 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a fixed gap and greediness flag.
+   * Creates a serial box with a fixed numeric gap, leading justification, and the specified greediness.
    *
-   * @param layout the owning layout
-   * @param gap    the fixed gap value
-   * @param greedy whether the box may grow indefinitely
+   * @param layout the owning {@link ParaboxLayout}
+   * @param gap    the fixed spacing between consecutive elements
+   * @param greedy {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, double gap, boolean greedy) {
 
@@ -116,10 +117,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with justification and default gap.
+   * Creates a serial box with the platform's unrelated gap and the specified justification.
    *
-   * @param layout        the owning layout
-   * @param justification justification used when distributing extra space
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param justification the strategy for distributing surplus space
    */
   protected SerialBox (ParaboxLayout layout, Justification justification) {
 
@@ -127,11 +128,11 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with justification, default gap, and greediness flag.
+   * Creates a serial box with the platform's unrelated gap, the specified justification, and greediness.
    *
-   * @param layout        the owning layout
-   * @param justification justification used when distributing extra space
-   * @param greedy        whether the box may grow indefinitely
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, Justification justification, boolean greedy) {
 
@@ -139,11 +140,11 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a gap type and justification.
+   * Creates a serial box with a predefined gap type and the specified justification.
    *
-   * @param layout        the owning layout
-   * @param gap           the gap type between elements
-   * @param justification justification used when distributing extra space
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param gap           the predefined gap type used to space elements
+   * @param justification the strategy for distributing surplus space
    */
   protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification) {
 
@@ -151,12 +152,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a gap type, justification, and greediness flag.
+   * Creates a serial box with a predefined gap type, the specified justification, and greediness.
    *
-   * @param layout        the owning layout
-   * @param gap           the gap type between elements
-   * @param justification justification used when distributing extra space
-   * @param greedy        whether the box may grow indefinitely
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param gap           the predefined gap type used to space elements
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification, boolean greedy) {
 
@@ -164,11 +165,11 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a fixed gap and justification.
+   * Creates a serial box with a fixed numeric gap and the specified justification.
    *
-   * @param layout        the owning layout
-   * @param gap           the fixed gap value
-   * @param justification justification used when distributing extra space
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param gap           the fixed spacing between consecutive elements
+   * @param justification the strategy for distributing surplus space
    */
   protected SerialBox (ParaboxLayout layout, double gap, Justification justification) {
 
@@ -176,12 +177,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Creates a serial box with a fixed gap, justification, and greediness flag.
+   * Creates a serial box with a fixed numeric gap, the specified justification, and greediness.
    *
-   * @param layout        the owning layout
-   * @param gap           the fixed gap value
-   * @param justification justification used when distributing extra space
-   * @param greedy        whether the box may grow indefinitely
+   * @param layout        the owning {@link ParaboxLayout}
+   * @param gap           the fixed spacing between consecutive elements
+   * @param justification the strategy for distributing surplus space
+   * @param greedy        {@code true} to allow the box to consume all remaining space along the axis
    */
   protected SerialBox (ParaboxLayout layout, double gap, Justification justification, boolean greedy) {
 
@@ -193,7 +194,9 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * @return the gap between elements
+   * Returns the fixed spacing inserted between consecutive elements.
+   *
+   * @return the gap value in platform units
    */
   public double getGap () {
 
@@ -201,10 +204,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Sets the gap using a predefined gap type.
+   * Sets the gap using a predefined gap type resolved against the platform.
    *
-   * @param gap the gap type
-   * @return this box for chaining
+   * @param gap the predefined gap type to resolve and apply
+   * @return this box for method chaining
    */
   public SerialBox setGap (Gap gap) {
 
@@ -212,10 +215,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Sets the fixed gap value.
+   * Sets the fixed spacing inserted between consecutive elements.
    *
-   * @param gap the fixed gap
-   * @return this box for chaining
+   * @param gap the spacing value in platform units
+   * @return this box for method chaining
    */
   public SerialBox setGap (double gap) {
 
@@ -225,7 +228,9 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * @return the justification used when distributing extra space
+   * Returns the justification strategy applied when the total preferred size is less than the available space.
+   *
+   * @return the current justification
    */
   public Justification getJustification () {
 
@@ -233,10 +238,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Sets the justification strategy.
+   * Sets the justification strategy for distributing surplus space.
    *
-   * @param justification the justification to use
-   * @return this box for chaining
+   * @param justification the justification to apply
+   * @return this box for method chaining
    */
   public SerialBox setJustification (Justification justification) {
 
@@ -246,7 +251,9 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * @return whether this box may grow without bound
+   * Returns whether this box reports an effectively unlimited maximum measurement, consuming all available space.
+   *
+   * @return {@code true} if this box is greedy
    */
   public boolean isGreedy () {
 
@@ -254,10 +261,10 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Sets whether this box may grow without bound.
+   * Sets whether this box reports an effectively unlimited maximum measurement.
    *
-   * @param greedy {@code true} to allow unbounded growth
-   * @return this box for chaining
+   * @param greedy {@code true} to make the box consume all available space
+   * @return this box for method chaining
    */
   public SerialBox setGreedy (boolean greedy) {
 
@@ -267,7 +274,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the minimum size this box requires along the given axis, summing each element's minimum
+   * measurement and the gaps between them.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the total minimum size along the axis
    */
   @Override
   public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -276,7 +288,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the preferred size this box requests along the given axis, summing each element's preferred
+   * measurement and the gaps between them.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the total preferred size along the axis
    */
   @Override
   public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
@@ -285,7 +302,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the maximum size this box can occupy along the given axis; returns {@link Integer#MAX_VALUE}
+   * if this box is greedy, otherwise sums each element's maximum measurement and the gaps between them.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the total maximum size along the axis
    */
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -294,12 +316,12 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Computes the aggregate measurement of all children along the specified axis, including gaps.
+   * Sums the specified measurement type for all elements plus the inter-element gaps.
    *
    * @param bias        the axis of measurement
-   * @param tapeMeasure which measurement to compute
-   * @param tailor      layout tailor for caching
-   * @return the total measurement
+   * @param tapeMeasure the category of measurement to retrieve from each element
+   * @param tailor      the layout tailor for recursive caching; may be {@code null}
+   * @return the aggregate measurement including all gaps
    */
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {
 
@@ -322,7 +344,13 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Lays out elements sequentially along the given axis, shrinking, stretching, or justifying them based
+   * on how the container measurement compares to the aggregate minimum, preferred, and maximum measurements.
+   *
+   * @param bias                 the axis along which to position elements
+   * @param containerPosition    the starting offset along the axis
+   * @param containerMeasurement the total space available along the axis
+   * @param tailor               the {@link LayoutTailor} coordinating the full layout pass
    */
   @Override
   public synchronized void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor) {
@@ -466,13 +494,14 @@ public class SerialBox extends Box<SerialBox> {
   }
 
   /**
-   * Applies layouts to each element using precomputed tentative measurements and justification direction.
+   * Places each element along the axis using precomputed tentative measurements, either advancing forward
+   * from the starting position or retreating backward from an end position.
    *
-   * @param bias                  the axis of layout
-   * @param top                   the starting position along the axis
-   * @param forward               {@code true} to lay out forward, {@code false} to lay out in reverse
-   * @param tentativeMeasurements the measurement allocated to each element
-   * @param tailor                layout tailor coordinating multi-axis layout
+   * @param bias                  the axis along which elements are placed
+   * @param top                   the starting (forward) or ending (reverse) offset along the axis
+   * @param forward               {@code true} to iterate elements in order from {@code top}; {@code false} to iterate in reverse
+   * @param tentativeMeasurements the computed size to assign to each element, indexed by element order
+   * @param tailor                the {@link LayoutTailor} coordinating the full layout pass
    */
   private void applyLayouts (Bias bias, double top, Boolean forward, double[] tentativeMeasurements, LayoutTailor tailor) {
 

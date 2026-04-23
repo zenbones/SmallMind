@@ -35,18 +35,29 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 
 /**
- * Factory abstraction for creating meters using a registry-provided clock.
+ * Factory abstraction responsible for constructing {@link Meter} instances on behalf
+ * of the Claxon registry.
  *
- * @param <M> meter type
+ * <p>Implementations receive a registry-supplied {@link Clock} at construction time so
+ * that time-sensitive meters (such as {@link Tachometer} or {@link Trace}) can be
+ * initialised with the same clock as the rest of the registry. Implementations that
+ * do not require a clock (such as {@link GaugeBuilder} or {@link TallyBuilder}) are
+ * free to ignore the parameter.</p>
+ *
+ * <p>This interface is marked {@code @FunctionalInterface} so that simple,
+ * clock-agnostic builders can be expressed as lambda expressions or method references.</p>
+ *
+ * @param <M> the concrete {@link Meter} type produced by this builder
  */
 @FunctionalInterface
 public interface MeterBuilder<M extends Meter> {
 
   /**
-   * Builds a meter using the supplied clock.
+   * Builds and returns a new {@link Meter} instance of type {@code M}.
    *
-   * @param clock clock to use for time-sensitive meters
-   * @return constructed meter
+   * @param clock the registry clock to be used by time-sensitive meters; may be
+   *              ignored by implementations that do not require a clock
+   * @return a fully initialised {@link Meter} ready to receive updates
    */
   M build (Clock clock);
 }

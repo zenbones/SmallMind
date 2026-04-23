@@ -42,23 +42,25 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
 
 /**
- * Durable vector that stores direct references to durables in an {@link IntrinsicRoster}, suitable for thread-safe in-memory caches.
+ * {@link DurableVector} for intrinsic (in-process) caches that stores direct object references to
+ * durable instances in an {@link IntrinsicRoster}. No key resolution is required on access.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private final IntrinsicRoster<D> roster;
 
   /**
-   * Creates an intrinsic vector backed by the provided roster.
+   * Creates a reference-based intrinsic vector backed by the provided roster.
+   * Excess elements beyond {@code maxSize} are removed from the tail immediately.
    *
-   * @param roster            roster containing durables
-   * @param comparator        comparator used for ordering; {@code null} for natural order
-   * @param maxSize           maximum number of elements to retain
-   * @param timeToLiveSeconds TTL for the vector
-   * @param ordered           whether the vector should maintain sorted order
+   * @param roster            the roster containing the initial durable references
+   * @param comparator        comparator for ordered vectors; {@code null} uses natural ordering
+   * @param maxSize           maximum number of elements to retain; zero or negative means unbounded
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @param ordered           {@code true} to maintain elements in sorted order
    */
   public ByReferenceIntrinsicVector (IntrinsicRoster<D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
@@ -73,7 +75,9 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   }
 
   /**
-   * @return backing roster for this vector
+   * Returns the backing {@link IntrinsicRoster} for this vector.
+   *
+   * @return the roster of durable references
    */
   @Override
   public IntrinsicRoster<D> getRoster () {
@@ -82,9 +86,9 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   }
 
   /**
-   * Creates a copy of this vector with a cloned roster.
+   * Creates a deep copy of this vector with a cloned roster.
    *
-   * @return copied vector
+   * @return a new vector with the same configuration and a copy of the roster contents
    */
   public DurableVector<I, D> copy () {
 
@@ -92,7 +96,9 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   }
 
   /**
-   * @return unmodifiable view of the current roster without prefetching
+   * Returns an unmodifiable view of the current roster without any prefetching.
+   *
+   * @return an unmodifiable list backed by the current roster
    */
   public synchronized List<D> asBestEffortLazyList () {
 
@@ -100,7 +106,9 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   }
 
   /**
-   * @return iterator over an unmodifiable snapshot of the roster
+   * Returns an iterator over an unmodifiable view of the current roster.
+   *
+   * @return an iterator over the roster elements
    */
   public synchronized Iterator<D> iterator () {
 

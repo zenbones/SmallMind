@@ -33,9 +33,28 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Cardinality of an option's arguments.
+ * Enumerates the argument cardinalities that a command line option may declare.
  */
 public enum ArgumentType {
 
-  NONE, SINGLE, LIST, MULTIPLE, ENUMERATED
+  /**
+   * The option accepts no value.
+   */
+  NONE,
+  /**
+   * The option accepts exactly one value.
+   */
+  SINGLE,
+  /**
+   * The option accepts a variable-length sequence of values in a single invocation.
+   */
+  LIST,
+  /**
+   * The option may be repeated, each occurrence supplying one value.
+   */
+  MULTIPLE,
+  /**
+   * The option accepts exactly one value, which must be drawn from a predefined set.
+   */
+  ENUMERATED
 }

@@ -37,19 +37,28 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Builder for {@link Tachometer} meters.
+ * Fluent {@link MeterBuilder} implementation for constructing {@link Tachometer} meters.
+ *
+ * <p>The only configurable parameter is the sliding-window resolution used for count
+ * and rate calculations. The default resolution is one second.</p>
  */
 public class TachometerBuilder implements MeterBuilder<Tachometer> {
 
+  /**
+   * Default sliding-window resolution of one second used when none is explicitly configured.
+   */
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
 
+  /**
+   * Duration of the sliding window for count and rate calculations; defaults to {@link #ONE_SECOND_STINT}.
+   */
   private Stint resolutionStint = ONE_SECOND_STINT;
 
   /**
-   * Sets the window resolution for the tachometer.
+   * Sets the sliding-window duration used for count and rate calculations.
    *
-   * @param resolutionStint window duration
-   * @return this builder
+   * @param resolutionStint the window duration; must be a positive duration
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Tachometer> resolution (Stint resolutionStint) {
 
@@ -59,10 +68,10 @@ public class TachometerBuilder implements MeterBuilder<Tachometer> {
   }
 
   /**
-   * Builds a tachometer with the configured window.
+   * Builds a {@link Tachometer} meter using the configured sliding-window resolution.
    *
-   * @param clock registry clock
-   * @return configured tachometer
+   * @param clock the registry clock forwarded to the {@link Tachometer} for rate tracking
+   * @return a fully configured {@link Tachometer} instance
    */
   @Override
   public Tachometer build (Clock clock) {

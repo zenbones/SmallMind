@@ -33,13 +33,15 @@
 package org.smallmind.web.grizzly;
 
 /**
- * Contract for retrieving {@link GrizzlyWebAppState} instances by context path.
+ * Resolves a {@link GrizzlyWebAppState} by servlet context path.
  */
 public interface GrizzlyWebAppStateLocator {
 
   /**
+   * Looks up the deployment state for the given context path.
+   *
    * @param context servlet context path to resolve
-   * @return the associated {@link GrizzlyWebAppState}
+   * @return the {@link GrizzlyWebAppState} registered for that path
    */
   GrizzlyWebAppState webAppStateFor (String context);
 }

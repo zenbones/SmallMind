@@ -35,16 +35,26 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Base event type that carries elapsed execution time.
+ * Intermediate base class for {@link SleuthEvent} subtypes that record elapsed execution time.
+ * <p>
+ * Elapsed time is measured from immediately before the test or lifecycle method is invoked to
+ * immediately after it completes or throws. All outcome events ({@link SuccessSleuthEvent},
+ * {@link FailureSleuthEvent}, {@link ErrorSleuthEvent}, {@link SkippedSleuthEvent},
+ * {@link MootSleuthEvent}, {@link FatalSleuthEvent}) extend this class.
+ *
+ * @see ThrowableSleuthEvent
+ * @see MessageSleuthEvent
  */
 public abstract class TimedSleuthEvent extends SleuthEvent {
 
   private final long elapsed;
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
+   * Constructs a timed event with the given identity and elapsed duration.
+   *
+   * @param className  fully qualified name of the class that produced the event; must not be {@code null}
+   * @param methodName name of the method that produced the event; may be {@code null} for suite-level events
+   * @param elapsed    wall-clock time in milliseconds from method invocation to completion or throw
    */
   public TimedSleuthEvent (String className, String methodName, long elapsed) {
 
@@ -54,7 +64,9 @@ public abstract class TimedSleuthEvent extends SleuthEvent {
   }
 
   /**
-   * @return elapsed time in milliseconds
+   * Returns the wall-clock duration of the test or lifecycle method invocation.
+   *
+   * @return elapsed time in milliseconds; non-negative
    */
   public long getElapsed () {
 
@@ -62,7 +74,9 @@ public abstract class TimedSleuthEvent extends SleuthEvent {
   }
 
   /**
-   * @return colored string representation including the elapsed time
+   * Returns a human-readable, ANSI-colored string showing the event type, class, method, and elapsed time.
+   *
+   * @return formatted event description; never {@code null}
    */
   @Override
   public String toString () {

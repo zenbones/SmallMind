@@ -1,12 +1,22 @@
 package org.smallmind.license.stencil;
 
 /**
- * Static stencil that formats notices using JavaDoc-style comment delimiters and prefixes.
+ * Pre-configured {@link StaticStencil} that wraps notice text in a standard JavaDoc comment block.
+ *
+ * <p>The stencil produces the following layout:
+ * <pre>
+ * /*
+ *  * &lt;notice line 1&gt;
+ *  * &lt;notice line 2&gt;
+ *  *&#47;
+ * </pre>
+ * Blank lines inside the notice are rendered as {@code " *"} to preserve the decorated style.
+ * No additional blank lines are inserted before or after the block.
  */
 public class JavaDocStencil extends StaticStencil {
 
   /**
-   * JavaDoc stencils do not skip any lines when searching for an existing notice.
+   * Returns {@code null}; JavaDoc stencils do not skip any leading file lines.
    *
    * @return always {@code null}
    */
@@ -17,7 +27,7 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * Returns the starting delimiter for a JavaDoc comment.
+   * Returns the JavaDoc opening delimiter.
    *
    * @return {@code "/*"}
    */
@@ -28,7 +38,7 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * Returns the closing delimiter for a JavaDoc comment.
+   * Returns the JavaDoc closing delimiter.
    *
    * @return {@code " *\/"}
    */
@@ -39,7 +49,7 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * Returns the prefix applied to each JavaDoc line.
+   * Returns the prefix prepended to each non-blank notice line.
    *
    * @return {@code " * "}
    */
@@ -50,7 +60,7 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * Returns the prefix written for blank JavaDoc lines.
+   * Returns the string written in place of blank notice lines to preserve the decorated style.
    *
    * @return {@code " *"}
    */
@@ -61,9 +71,9 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * JavaDoc stencils do not add blank lines before the notice content.
+   * Returns zero; no blank lines are written before the JavaDoc block.
    *
-   * @return always {@code 0}
+   * @return {@code 0}
    */
   @Override
   public int getBlankLinesBefore () {
@@ -72,9 +82,9 @@ public class JavaDocStencil extends StaticStencil {
   }
 
   /**
-   * JavaDoc stencils do not add blank lines after the notice content.
+   * Returns zero; no blank lines are written after the JavaDoc block.
    *
-   * @return always {@code 0}
+   * @return {@code 0}
    */
   @Override
   public int getBlankLinesAfter () {

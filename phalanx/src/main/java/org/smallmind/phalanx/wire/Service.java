@@ -33,21 +33,26 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Describes a wire-exposed service with name and version metadata.
+ * Identifies a service exposed on the wire by its logical name and API version.
+ *
+ * <p>The name and version together form the addressing key that the transport layer uses to
+ * route invocations to the correct service implementation. Both values must be stable across
+ * deployments, and the version allows multiple generations of the same service to coexist
+ * on the wire simultaneously.</p>
  */
 public interface Service {
 
   /**
-   * Returns the logical service name advertised on the wire.
+   * Returns the logical name under which this service is registered on the wire.
    *
-   * @return service name
+   * @return a non-null, non-empty service name
    */
   String getServiceName ();
 
   /**
-   * Returns the protocol or API version for the service.
+   * Returns the API version of this service.
    *
-   * @return version number
+   * @return a positive integer version number
    */
   int getVersion ();
 }

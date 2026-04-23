@@ -41,16 +41,21 @@ import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.transport.jms.ManagedObjectFactory;
 
 /**
- * JNDI-backed {@link ManagedObjectFactory} that resolves JMS connections and destinations via environment lookups.
+ * {@link ManagedObjectFactory} implementation that resolves JMS connections and destinations
+ * through JNDI context lookups.
+ *
+ * <p>A borrowed {@link Context} is obtained from the pool in {@link JmsConnectionDetails},
+ * used for the lookup, and then closed immediately to return it to the pool.
  */
 public class JndiManagedObjectFactory implements ManagedObjectFactory {
 
   private final JmsConnectionDetails messageConnectionDetails;
 
   /**
-   * Creates the factory using the supplied connection details and context pool.
+   * Constructs the factory from the supplied JNDI connection details.
    *
-   * @param jmsConnectionDetails JNDI connection parameters and pooling
+   * @param jmsConnectionDetails JNDI configuration including context pool, connection-factory
+   *                             name, destination name, username, and password
    */
   public JndiManagedObjectFactory (JmsConnectionDetails jmsConnectionDetails) {
 
@@ -58,7 +63,11 @@ public class JndiManagedObjectFactory implements ManagedObjectFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the {@link QueueConnectionFactory} via JNDI and creates a new connection
+   * authenticated with the configured username and password.
+   *
+   * @return a new JMS {@link Connection}
+   * @throws TransportException if the JNDI lookup or connection creation fails
    */
   @Override
   public Connection createConnection ()
@@ -83,7 +92,10 @@ public class JndiManagedObjectFactory implements ManagedObjectFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the configured destination name via JNDI and returns it as a JMS {@link Queue}.
+   *
+   * @return the resolved JMS {@link Queue}
+   * @throws TransportException if the JNDI lookup fails
    */
   @Override
   public Destination getDestination ()

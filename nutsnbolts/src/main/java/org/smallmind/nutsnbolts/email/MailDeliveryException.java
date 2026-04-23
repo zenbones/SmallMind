@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.email;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception thrown when a message cannot be sent.
+ * Checked exception thrown by {@link Postman} when a mail message cannot be constructed or delivered.
  */
 public class MailDeliveryException extends FormattedException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public MailDeliveryException () {
 
@@ -48,10 +48,10 @@ public class MailDeliveryException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message message pattern
-   * @param args    pattern arguments
+   * @param message message pattern using {@code String.format} conventions
+   * @param args    arguments for the message pattern
    */
   public MailDeliveryException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class MailDeliveryException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Constructs an exception with an underlying cause and a formatted detail message.
    *
    * @param throwable underlying cause
-   * @param message   message pattern
-   * @param args      pattern arguments
+   * @param message   message pattern using {@code String.format} conventions
+   * @param args      arguments for the message pattern
    */
   public MailDeliveryException (Throwable throwable, String message, Object... args) {
 
@@ -71,7 +71,7 @@ public class MailDeliveryException extends FormattedException {
   }
 
   /**
-   * Creates an exception wrapping another throwable.
+   * Constructs an exception wrapping an underlying cause with no additional message.
    *
    * @param throwable underlying cause
    */

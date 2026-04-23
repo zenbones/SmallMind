@@ -33,7 +33,8 @@
 package org.smallmind.nutsnbolts.time;
 
 /**
- * Utilities for working with numeric calendar components without bringing in full {@code java.util.Calendar} logic.
+ * Utility methods for computing calendar fields such as days per month, day-of-week, and enum conversions
+ * from raw integer components.
  */
 public class CalendarUtility {
 
@@ -42,10 +43,10 @@ public class CalendarUtility {
   private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
   /**
-   * Converts a 1-based month index to the {@link Month} enum.
+   * Returns the {@link Month} enum constant corresponding to a 1-based month number.
    *
-   * @param month 1-based month value (1 = January)
-   * @return matching {@link Month}
+   * @param month 1-based month number, where 1 is January and 12 is December
+   * @return the matching {@link Month} constant
    */
   public static Month getMonth (int month) {
 
@@ -53,10 +54,10 @@ public class CalendarUtility {
   }
 
   /**
-   * Converts a 1-based day-of-week index to the {@link Day} enum.
+   * Returns the {@link Day} enum constant corresponding to a 1-based day-of-week number.
    *
-   * @param dayOfWeek 1-based day-of-week value (1 = Sunday)
-   * @return matching {@link Day}
+   * @param dayOfWeek 1-based day-of-week number, where 1 is Sunday and 7 is Saturday
+   * @return the matching {@link Day} constant
    */
   public static Day getDay (int dayOfWeek) {
 
@@ -64,10 +65,10 @@ public class CalendarUtility {
   }
 
   /**
-   * Calculates the number of days in the provided year using a simple leap-year rule.
+   * Returns the number of days in the given year, treating any year evenly divisible by 4 as a leap year.
    *
-   * @param year four-digit year
-   * @return 366 for leap years divisible by 4; otherwise 365
+   * @param year the four-digit year to evaluate
+   * @return 366 for years divisible by 4, or 365 otherwise
    */
   public static int getDaysInYear (int year) {
 
@@ -75,11 +76,11 @@ public class CalendarUtility {
   }
 
   /**
-   * Returns the number of days in a given month for the provided year.
+   * Returns the number of days in the specified month and year, accounting for February in leap years.
    *
-   * @param year  four-digit year
-   * @param month 1-based month value (1 = January)
-   * @return number of days in the month (accounts for leap-year February)
+   * @param year  the four-digit year
+   * @param month 1-based month number, where 1 is January and 12 is December
+   * @return the number of days in that month
    */
   public static int getDaysInMonth (int year, int month) {
 
@@ -93,12 +94,12 @@ public class CalendarUtility {
   }
 
   /**
-   * Computes the 1-based day-of-week for a given date using Zeller's congruence variant.
+   * Computes the day of the week for a given calendar date using a Zeller's congruence variant.
    *
-   * @param year  four-digit year
-   * @param month 1-based month value (1 = January)
+   * @param year  the four-digit year
+   * @param month 1-based month number, where 1 is January and 12 is December
    * @param day   1-based day of month
-   * @return day of week where 1 = Sunday through 7 = Saturday
+   * @return 1-based day-of-week number where 1 is Sunday and 7 is Saturday
    */
   public static int getDayOfWeek (int year, int month, int day) {
 

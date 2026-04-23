@@ -33,15 +33,17 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Indicates invalid or incomplete metadata while defining a wire service.
+ * Thrown when a wire service interface or one of its methods carries invalid, missing, or
+ * conflicting metadata — for example, a missing service-group extractor, absent {@link Argument}
+ * annotations, or an {@link InOnly} method that declares a non-void return type or a throws clause.
  */
 public class ServiceDefinitionException extends TransportException {
 
   /**
-   * Creates the exception with a formatted description.
+   * Constructs a {@code ServiceDefinitionException} with a {@link String#format}-style message.
    *
-   * @param message format string describing the definition issue
-   * @param args    arguments applied to the format string
+   * @param message the format string describing the definition problem
+   * @param args    the arguments referenced by the format string
    */
   public ServiceDefinitionException (String message, Object... args) {
 

@@ -36,7 +36,11 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
 /**
- * JSON/XML adapter for {@link TimeUnit} enums.
+ * JSON/XML adapter that converts between a {@link TimeUnit} enum constant and its
+ * string representation. Extends the generic {@link EnumXmlAdapter} parameterized to
+ * {@link TimeUnit}, inheriting all marshalling and unmarshalling logic from the base class.
+ * This adapter is used wherever a {@link TimeUnit} field must participate in JSON or JAXB
+ * serialization, such as in {@link TraceProperties}.
  */
 public class TimeUnitEnumXmlAdapter extends EnumXmlAdapter<TimeUnit> {
 

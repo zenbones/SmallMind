@@ -46,8 +46,8 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Container filter that associates {@link ResourceMethod} metadata with the current request and applies optional
- * {@link XmlJavaTypeAdapter} marshaling to responses.
+ * Jersey container filter that registers the {@link JsonEntity} type before request processing and marshals the
+ * response entity through any declared {@link XmlJavaTypeAdapter} on completion.
  */
 public class ResourceMethodFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
@@ -57,9 +57,10 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
   ResourceInfo resourceInfo;
 
   /**
-   * Captures the JsonEntity type from the {@link ResourceMethod} annotation before request processing.
+   * Stores the {@link JsonEntity} class declared by any {@link ResourceMethod} annotation on the matched resource
+   * method so it is available for parameter resolution during the request.
    *
-   * @param requestContext incoming request context
+   * @param requestContext the incoming container request context
    */
   @Override
   public void filter (ContainerRequestContext requestContext) {
@@ -72,12 +73,12 @@ public class ResourceMethodFilter implements ContainerRequestFilter, ContainerRe
   }
 
   /**
-   * Marshals the response entity using any {@link XmlJavaTypeAdapter} declared on the resource method
-   * and clears thread-local entity state.
+   * Applies any {@link XmlJavaTypeAdapter} declared on the resource method to the outgoing response entity, then
+   * clears all thread-local entity state.
    *
-   * @param requestContext  request context
-   * @param responseContext response context to potentially modify
-   * @throws IOException if an adapter cannot be instantiated or marshaling fails
+   * @param requestContext  the container request context
+   * @param responseContext the container response context whose entity may be replaced
+   * @throws IOException if the adapter cannot be instantiated or the marshal operation fails
    */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)

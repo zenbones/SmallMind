@@ -36,9 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Holds application-scoped data in an {@link InheritableThreadLocal} map keyed by a
- * {@link PerApplicationDataManager} type. Allows threads to share application-level context
- * safely across child threads.
+ * Manages application-scoped data attached to threads via an {@link InheritableThreadLocal} map,
+ * keyed by {@link PerApplicationDataManager} implementation class, so child threads automatically
+ * inherit their parent's application context.
  */
 public class PerApplicationContext {
 
@@ -47,8 +47,8 @@ public class PerApplicationContext {
   private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
 
   /**
-   * Initializes the context, creating the per-application map if one has not already been attached
-   * to the current thread.
+   * Constructs a context, reusing any map already attached to the current thread or creating and
+   * attaching a new one if none exists.
    */
   public PerApplicationContext () {
 
@@ -58,11 +58,11 @@ public class PerApplicationContext {
   }
 
   /**
-   * Stores per-application data under the manager type for the current thread.
+   * Stores a data object under the given manager type in the current thread's per-application map.
    *
-   * @param clazz the manager key
-   * @param data  the data to associate with the manager
-   * @throws MissingPerApplicationContextException if the context has not been initialized on this thread
+   * @param clazz the manager class used as the map key
+   * @param data  the data object to associate with that manager
+   * @throws MissingPerApplicationContextException if no per-application context has been initialized on the current thread
    */
   public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
 
@@ -77,14 +77,15 @@ public class PerApplicationContext {
   }
 
   /**
-   * Retrieves per-application data for the given manager type.
+   * Retrieves the data object stored under the given manager type from the current thread's
+   * per-application map, cast to the requested type.
    *
-   * @param clazz the manager key
-   * @param type  the expected data type
-   * @param <K>   the generic type of the returned object
-   * @return the data associated with the manager, or {@code null} if none
-   * @throws MissingPerApplicationContextException if the context has not been initialized on this thread
-   * @throws ClassCastException                    if the stored value cannot be cast to the expected type
+   * @param clazz the manager class used as the map key
+   * @param type  the class to which the stored value will be cast
+   * @param <K>   the expected return type
+   * @return the data associated with the manager, or {@code null} if no value has been stored
+   * @throws MissingPerApplicationContextException if no per-application context has been initialized on the current thread
+   * @throws ClassCastException                    if the stored value cannot be cast to {@code type}
    */
   public static <K> K getPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Class<K> type) {
 
@@ -99,9 +100,10 @@ public class PerApplicationContext {
   }
 
   /**
-   * Captures the currently attached per-application context map for later reuse in another thread.
+   * Captures the current thread's per-application map into a {@link ContextCarrier} that can be
+   * used to propagate the same context to another thread.
    *
-   * @return a carrier containing the current thread's per-application map, or {@code null} map if none is attached
+   * @return a carrier holding the current per-application map, which may be {@code null} if no context is attached
    */
   public static ContextCarrier generateCarrier () {
 
@@ -109,10 +111,11 @@ public class PerApplicationContext {
   }
 
   /**
-   * Wraps a {@link ThreadFactory} so each created thread receives the current per-application context.
+   * Wraps the given {@link ThreadFactory} so that every thread it creates inherits the current
+   * thread's per-application context map.
    *
-   * @param threadFactory the delegate factory used to create threads
-   * @return a factory that propagates the current per-application context map to produced threads
+   * @param threadFactory the delegate factory whose threads should receive the current context
+   * @return a wrapping factory that propagates the per-application context to new threads
    */
   public static ThreadFactory wrapThreadFactory (ThreadFactory threadFactory) {
 
@@ -120,7 +123,8 @@ public class PerApplicationContext {
   }
 
   /**
-   * Attaches the current per-application map to the thread, making it available to child threads.
+   * Installs this instance's per-application map onto the current thread so it is available for
+   * lookup and inherited by any child threads.
    */
   public void prepareThread () {
 
@@ -128,7 +132,7 @@ public class PerApplicationContext {
   }
 
   /**
-   * Captures and re-attaches a per-application context map to another thread.
+   * Immutable snapshot of a per-application context map that can be applied to another thread.
    */
   public static class ContextCarrier {
 
@@ -140,7 +144,7 @@ public class PerApplicationContext {
     }
 
     /**
-     * Attaches the captured per-application map to the current thread.
+     * Installs the captured per-application map onto the current thread.
      */
     public void prepareThread () {
 
@@ -149,7 +153,8 @@ public class PerApplicationContext {
   }
 
   /**
-   * {@link ThreadFactory} wrapper that propagates a captured per-application context map to each new thread.
+   * {@link ThreadFactory} decorator that installs a captured per-application context map onto
+   * each thread before its task begins executing.
    */
   public static class WrappingThreadFactory implements ThreadFactory {
 
@@ -157,10 +162,10 @@ public class PerApplicationContext {
     private final ThreadFactory threadFactory;
 
     /**
-     * Creates a thread factory wrapper bound to the provided per-application context map.
+     * Constructs a wrapping factory bound to the given context map and delegate factory.
      *
-     * @param perApplicationMap the context map to attach to threads created by the delegate
-     * @param threadFactory     the delegate factory used to create threads
+     * @param perApplicationMap the context map to install on each new thread
+     * @param threadFactory     the delegate factory used to construct the threads
      */
     public WrappingThreadFactory (ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap, ThreadFactory threadFactory) {
 
@@ -169,10 +174,11 @@ public class PerApplicationContext {
     }
 
     /**
-     * Creates a thread that attaches the captured per-application context before running the delegate task.
+     * Creates a new thread via the delegate factory that installs the captured per-application
+     * context map before executing the given task.
      *
-     * @param runnable the task to execute
-     * @return a new thread created by the delegate factory with context propagation applied
+     * @param runnable the task the new thread will run
+     * @return a thread that applies the per-application context before running {@code runnable}
      */
     @Override
     public Thread newThread (Runnable runnable) {

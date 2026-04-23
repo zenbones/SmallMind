@@ -42,7 +42,8 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 import tools.jackson.databind.node.ArrayNode;
 
 /**
- * Structured payload conveying a code, template, and argument list for rendering user-facing fault messages.
+ * Structured payload conveying a numeric code, a message template, and a JSON argument array for
+ * rendering user-facing fault messages.
  */
 @XmlRootElement(name = "information", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -60,11 +61,11 @@ public class FaultInformation implements Serializable {
   }
 
   /**
-   * Creates a fault information payload with the provided template and arguments.
+   * Creates a fault information payload with the given code, template, and arguments.
    *
-   * @param code      fault code identifier
-   * @param template  message template
-   * @param arguments template arguments
+   * @param code      numeric fault code identifier
+   * @param template  message template string
+   * @param arguments template arguments serialized as a JSON array
    */
   public FaultInformation (int code, String template, Object... arguments) {
 
@@ -112,10 +113,10 @@ public class FaultInformation implements Serializable {
   }
 
   /**
-   * Converts the argument list into strongly-typed objects based on the supplied class array.
+   * Converts the full argument list to strongly-typed objects using the supplied class array.
    *
-   * @param classes target classes for conversion
-   * @return converted arguments
+   * @param classes target class for each argument position
+   * @return array of converted arguments
    * @throws IllegalArgumentException if the number of classes does not match the number of arguments
    */
   @XmlTransient
@@ -135,12 +136,12 @@ public class FaultInformation implements Serializable {
   }
 
   /**
-   * Converts the argument at the specified index into the requested type.
+   * Converts the argument at the specified position to the requested type.
    *
-   * @param index argument position
-   * @param clazz target class
+   * @param index zero-based argument position
+   * @param clazz target type
    * @param <T>   target type
-   * @return converted argument
+   * @return converted argument value
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   @XmlTransient
@@ -154,7 +155,7 @@ public class FaultInformation implements Serializable {
   }
 
   /**
-   * @return raw arguments as a JSON array
+   * @return raw JSON array of arguments
    */
   @XmlElement(name = "arguments")
   public ArrayNode getArguments () {
@@ -163,7 +164,7 @@ public class FaultInformation implements Serializable {
   }
 
   /**
-   * Sets the raw argument array.
+   * Sets the raw JSON argument array.
    *
    * @param arguments JSON array of arguments
    */

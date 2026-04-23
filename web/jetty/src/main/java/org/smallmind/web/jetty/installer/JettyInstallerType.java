@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty.installer;
 
 /**
- * Enumerates the kinds of installers that can be contributed to a Jetty context.
+ * Enumerates the kinds of web components that can be installed into a Jetty context.
  */
 public enum JettyInstallerType {
 

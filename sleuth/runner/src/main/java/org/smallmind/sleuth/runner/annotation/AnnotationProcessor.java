@@ -35,7 +35,18 @@ package org.smallmind.sleuth.runner.annotation;
 import java.util.HashMap;
 
 /**
- * Applies one or more {@link AnnotationTranslator}s to build {@link AnnotationDictionary} instances for test classes.
+ * Applies a prioritised chain of {@link AnnotationTranslator}s to build an {@link AnnotationDictionary}
+ * for each test class, caching results for repeated lookups.
+ * <p>
+ * The processor tries each registered translator in order. The first translator that returns an
+ * {@link AnnotationDictionary#isImplemented() implemented} dictionary wins and its result is cached
+ * for the class. Subsequent calls for the same class return the cached dictionary without re-scanning.
+ * <p>
+ * This class is thread-safe; {@link #process(Class)} is {@code synchronized}.
+ *
+ * @see AnnotationTranslator
+ * @see NativeAnnotationTranslator
+ * @see TestNGAnnotationTranslator
  */
 public class AnnotationProcessor {
 
@@ -43,7 +54,10 @@ public class AnnotationProcessor {
   private final HashMap<Class<?>, AnnotationDictionary> dictionaryMap = new HashMap<>();
 
   /**
-   * @param annotationTranslators translators that understand different annotation dialects
+   * Constructs a processor backed by the supplied translators, tried in declaration order.
+   *
+   * @param annotationTranslators one or more translators that understand different annotation dialects;
+   *                              must not be {@code null} or contain {@code null} elements
    */
   public AnnotationProcessor (AnnotationTranslator... annotationTranslators) {
 
@@ -51,10 +65,15 @@ public class AnnotationProcessor {
   }
 
   /**
-   * Processes the given class with all translators, caching the resulting dictionary.
+   * Returns the annotation dictionary for the given class, computing and caching it on the first call.
+   * <p>
+   * Each registered translator is tried in order; the first one to produce an implemented dictionary
+   * is used and the result is cached. If no translator recognises the class, {@code null} is returned
+   * and nothing is cached.
    *
-   * @param clazz class to analyze
-   * @return populated annotation dictionary or {@code null} if no supported annotations are present
+   * @param clazz class to analyse; never {@code null}
+   * @return implemented annotation dictionary for the class, or {@code null} if no supported
+   * annotations are present
    */
   public synchronized AnnotationDictionary process (Class<?> clazz) {
 

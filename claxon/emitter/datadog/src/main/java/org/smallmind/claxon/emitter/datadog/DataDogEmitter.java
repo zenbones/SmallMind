@@ -40,15 +40,29 @@ import org.smallmind.claxon.registry.QuantityType;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Push emitter that forwards metrics to Datadog via the StatsD client.
+ * Push emitter that forwards Claxon metrics to Datadog via a non-blocking StatsD client.
+ *
+ * <p>Quantities of type {@link QuantityType#COUNT} can optionally be sent as StatsD counters
+ * (via {@link StatsDClient#count}); all other quantities are sent as gauges. Tags are
+ * translated from the Claxon {@code key=value} format to the Datadog {@code key:value} format
+ * expected by the StatsD protocol.
  */
 public class DataDogEmitter extends PushEmitter {
 
+  /**
+   * The underlying non-blocking StatsD client used to transmit metrics to the Datadog agent.
+   */
   private final StatsDClient statsdClient;
+
+  /**
+   * When {@code true}, quantities whose type is {@link QuantityType#COUNT} are emitted as
+   * StatsD counters rather than gauges.
+   */
   private final boolean countAsCount;
 
   /**
-   * Creates a Datadog emitter with localhost defaults and count-as-count enabled.
+   * Creates a Datadog emitter with default connection settings: no prefix, {@code localhost},
+   * port {@code 8125}, and count-as-count behaviour enabled.
    */
   public DataDogEmitter () {
 
@@ -56,13 +70,15 @@ public class DataDogEmitter extends PushEmitter {
   }
 
   /**
-   * Creates a Datadog emitter with custom connection and tagging options.
+   * Creates a Datadog emitter with fully configurable connection parameters and constant tags.
    *
-   * @param prefix       metric name prefix (may be null)
-   * @param hostName     statsd host
-   * @param port         statsd port
-   * @param countAsCount whether quantities of type COUNT are sent as counters instead of gauges
-   * @param constantTags tags applied to every emission
+   * @param prefix       optional metric name prefix prepended to every metric; may be
+   *                     {@code null}
+   * @param hostName     hostname of the Datadog StatsD agent
+   * @param port         UDP port of the Datadog StatsD agent
+   * @param countAsCount {@code true} to send {@link QuantityType#COUNT} quantities as StatsD
+   *                     counters; {@code false} to send them as gauges
+   * @param constantTags tags attached to every metric emission; may be {@code null} or empty
    */
   public DataDogEmitter (String prefix, String hostName, int port, boolean countAsCount, Tag... constantTags) {
 
@@ -72,11 +88,18 @@ public class DataDogEmitter extends PushEmitter {
   }
 
   /**
-   * Sends each quantity as either a counter or gauge with translated tags.
+   * Sends each quantity to Datadog as either a counter or a gauge, with per-call tags attached.
    *
-   * @param meterName  meter name
-   * @param tags       associated tags
-   * @param quantities measurements to emit
+   * <p>The metric name submitted to Datadog is formed by joining {@code meterName} and
+   * {@code quantity.getName()} with a period. If {@link #countAsCount} is {@code true} and
+   * the quantity's type is {@link QuantityType#COUNT}, {@link StatsDClient#count} is used;
+   * otherwise {@link StatsDClient#gauge} is used.
+   *
+   * @param meterName  the base name of the meter; combined with each quantity name to form
+   *                   the Datadog metric name
+   * @param tags       per-emission tags translated to Datadog {@code key:value} format; may
+   *                   be {@code null} or empty
+   * @param quantities the measured values to emit; must not be {@code null}
    */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {
@@ -92,6 +115,13 @@ public class DataDogEmitter extends PushEmitter {
     }
   }
 
+  /**
+   * Converts an array of Claxon {@link Tag} objects into the {@code key:value} string array
+   * format expected by the Datadog StatsD client.
+   *
+   * @param tags the tags to translate; may be {@code null} or empty
+   * @return a {@code String[]} in Datadog format, or {@code null} when the input is empty
+   */
   private String[] translateTags (Tag... tags) {
 
     String[] translatedtags = null;

@@ -33,9 +33,72 @@
 package org.smallmind.sleuth.runner.event;
 
 /**
- * Enumeration of all Sleuth event types.
+ * Discriminator enum that identifies the concrete type of a {@link SleuthEvent}.
+ * <p>
+ * Each constant corresponds to exactly one concrete event class and one well-defined phase of
+ * test execution. {@link SleuthEventListener} implementations can switch on this value to dispatch
+ * to type-specific handlers without relying on {@code instanceof} checks.
+ *
+ * @see SleuthEvent#getType()
+ * @see SleuthEventListener
  */
 public enum SleuthEventType {
 
-  SETUP, START, SUCCESS, FAILURE, ERROR, SKIPPED, MOOT, FATAL, CANCELLED
+  /**
+   * Indicates that a suite or test setup phase is starting.
+   * Carried by {@link SetupSleuthEvent}.
+   */
+  SETUP,
+
+  /**
+   * Indicates that a test method or lifecycle hook has begun execution.
+   * Carried by {@link StartSleuthEvent}.
+   */
+  START,
+
+  /**
+   * Indicates that a test method completed without throwing any exception.
+   * Carried by {@link SuccessSleuthEvent}.
+   */
+  SUCCESS,
+
+  /**
+   * Indicates that a test method threw an {@link AssertionError}, distinguishing an explicit
+   * assertion failure from an unexpected runtime exception.
+   * Carried by {@link FailureSleuthEvent}.
+   */
+  FAILURE,
+
+  /**
+   * Indicates that a test method threw an exception other than {@link AssertionError}.
+   * Carried by {@link ErrorSleuthEvent}.
+   */
+  ERROR,
+
+  /**
+   * Indicates that a test was bypassed without execution because a prior failure, error,
+   * or unmet dependency made running it unsafe or pointless.
+   * Carried by {@link SkippedSleuthEvent}.
+   */
+  SKIPPED,
+
+  /**
+   * Indicates that a test was considered moot — typically because a precondition or
+   * assumption was not satisfied — without constituting a pass or a failure.
+   * Carried by {@link MootSleuthEvent}.
+   */
+  MOOT,
+
+  /**
+   * Indicates an unrecoverable internal error that halts the runner entirely.
+   * Carried by {@link FatalSleuthEvent}.
+   */
+  FATAL,
+
+  /**
+   * Indicates that suite execution was explicitly cancelled via
+   * {@link org.smallmind.sleuth.runner.SleuthRunner#cancel()}.
+   * Carried by {@link CancelledSleuthEvent}.
+   */
+  CANCELLED
 }

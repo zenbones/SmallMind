@@ -37,7 +37,8 @@ import java.util.LinkedList;
 import java.util.regex.Pattern;
 
 /**
- * File filter that accepts directories or files matching one of the configured extensions.
+ * {@link java.io.FileFilter} that passes directories unconditionally and accepts files whose names match
+ * any of the registered file extensions.
  */
 public final class ExtensionFileFilter implements java.io.FileFilter {
 
@@ -46,7 +47,7 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   private String description;
 
   /**
-   * Creates a filter with no description and no extensions.
+   * Creates a filter with an empty description and no accepted extensions.
    */
   public ExtensionFileFilter () {
 
@@ -54,10 +55,10 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * Creates a filter with a description and initial extensions.
+   * Creates a filter with the given description and an initial set of accepted extensions.
    *
-   * @param description description used by {@link #getDescription()}
-   * @param extensions  extensions without the dot (e.g., "txt")
+   * @param description human-readable description returned by {@link #getDescription()}
+   * @param extensions  file extensions to accept, each without a leading dot (e.g., {@code "txt"})
    */
   public ExtensionFileFilter (String description, String... extensions) {
 
@@ -74,9 +75,9 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * Adds an accepted extension.
+   * Registers an additional file extension with this filter.
    *
-   * @param extension extension without the dot
+   * @param extension the extension to add, without a leading dot (e.g., {@code "xml"})
    */
   public void addExtension (String extension) {
 
@@ -88,7 +89,9 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * @return first configured extension, or {@code null} if none
+   * Returns the first registered extension.
+   *
+   * @return the first extension, or {@code null} if no extensions have been added
    */
   public String getExtension () {
 
@@ -96,7 +99,10 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * Accepts directories and files whose names match any configured extension.
+   * Returns {@code true} for directories and for files whose name matches any registered extension pattern.
+   *
+   * @param file the file or directory to test
+   * @return {@code true} if the file should be included
    */
   public boolean accept (File file) {
 
@@ -116,7 +122,9 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * @return description including the extensions pattern list
+   * Returns a human-readable description that includes the configured description text and the accepted extensions.
+   *
+   * @return description string in the form {@code "description (*.ext1 *.ext2)"}
    */
   public String getDescription () {
 
@@ -143,9 +151,9 @@ public final class ExtensionFileFilter implements java.io.FileFilter {
   }
 
   /**
-   * Sets a user-facing description to be prefixed to the extensions list.
+   * Replaces the human-readable description shown by {@link #getDescription()}.
    *
-   * @param description description text
+   * @param description new description text
    */
   public void setDescription (String description) {
 

@@ -39,7 +39,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 /**
- * Creates RabbitMQ connections using a preconfigured {@link ConnectionFactory}.
+ * Thin wrapper around a RabbitMQ {@link ConnectionFactory} that opens new connections to a fixed list of broker addresses.
  */
 public class RabbitMQConnector {
 
@@ -47,8 +47,10 @@ public class RabbitMQConnector {
   private final Address[] addresses;
 
   /**
-   * @param connectionFactory factory preloaded with connection settings.
-   * @param addresses         target broker addresses for the connection.
+   * Creates a connector that opens connections via the given factory to the specified addresses.
+   *
+   * @param connectionFactory factory preloaded with authentication and connection settings.
+   * @param addresses         target broker addresses; at least one must be reachable.
    */
   public RabbitMQConnector (ConnectionFactory connectionFactory, Address... addresses) {
 
@@ -57,9 +59,9 @@ public class RabbitMQConnector {
   }
 
   /**
-   * Opens a new RabbitMQ connection.
+   * Opens and returns a new connection to the broker cluster.
    *
-   * @return an open connection to the cluster.
+   * @return open AMQP connection.
    * @throws IOException      if the connection cannot be established.
    * @throws TimeoutException if the connection attempt times out.
    */

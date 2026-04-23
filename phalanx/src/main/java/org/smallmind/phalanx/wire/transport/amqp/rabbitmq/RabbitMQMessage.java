@@ -35,7 +35,7 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 import com.rabbitmq.client.AMQP;
 
 /**
- * Wrapper for AMQP message properties and payload.
+ * Immutable wrapper pairing AMQP message properties with a raw payload for use within the RabbitMQ transport.
  */
 public class RabbitMQMessage {
 
@@ -43,8 +43,10 @@ public class RabbitMQMessage {
   private final byte[] body;
 
   /**
+   * Creates a message from an existing properties object and body.
+   *
    * @param properties AMQP properties associated with the message.
-   * @param body       message payload bytes.
+   * @param body       raw message payload bytes.
    */
   public RabbitMQMessage (AMQP.BasicProperties properties, byte[] body) {
 
@@ -53,7 +55,9 @@ public class RabbitMQMessage {
   }
 
   /**
-   * @return AMQP properties for the message.
+   * Returns the AMQP properties for this message.
+   *
+   * @return AMQP basic properties.
    */
   public AMQP.BasicProperties getProperties () {
 
@@ -61,7 +65,9 @@ public class RabbitMQMessage {
   }
 
   /**
-   * @return raw message payload.
+   * Returns the raw message payload.
+   *
+   * @return payload bytes.
    */
   public byte[] getBody () {
 

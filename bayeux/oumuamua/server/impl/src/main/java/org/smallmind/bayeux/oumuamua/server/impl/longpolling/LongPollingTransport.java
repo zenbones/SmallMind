@@ -41,18 +41,19 @@ import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
 /**
- * Long-polling transport implementation for servlet environments.
+ * {@link Transport} implementation for HTTP long-polling in servlet environments, owned by
+ * a {@link ServletProtocol} and identified by the {@code long-polling} transport name.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used by the server's JSON codec
  */
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
 
   /**
-   * Creates a long-polling transport bound to its protocol.
+   * Constructs the transport and binds it to the supplied protocol.
    *
-   * @param servletProtocol owning protocol
+   * @param servletProtocol the {@link ServletProtocol} that owns this transport
    */
   public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
@@ -60,7 +61,9 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   /**
-   * @return owning protocol
+   * Returns the {@link ServletProtocol} that created and owns this transport.
+   *
+   * @return the owning servlet protocol
    */
   @Override
   public Protocol<V> getProtocol () {
@@ -69,7 +72,9 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   /**
-   * @return transport name
+   * Returns the canonical Bayeux transport name for long-polling.
+   *
+   * @return the {@code long-polling} transport name
    */
   @Override
   public String getName () {
@@ -78,9 +83,9 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   /**
-   * Long-poll transport is remote (not local).
+   * Indicates that long-polling operates over a remote network connection, not in-process.
    *
-   * @return {@code false}
+   * @return {@code false} always
    */
   @Override
   public boolean isLocal () {
@@ -89,10 +94,10 @@ public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed
   }
 
   /**
-   * Initializes the transport in the servlet context.
+   * Performs transport initialization within the servlet lifecycle; currently a no-op.
    *
-   * @param server        owning server
-   * @param servletConfig servlet configuration
+   * @param server        the hosting {@link Server}
+   * @param servletConfig the servlet configuration available at startup
    */
   @Override
   public void init (Server<?> server, ServletConfig servletConfig) {

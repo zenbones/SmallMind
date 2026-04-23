@@ -33,7 +33,9 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Defines how child elements should align within their available space.
+ * Specifies how elements are aligned within the space available perpendicular to the layout axis.
+ * {@code LEADING} and {@code TRAILING} respect the platform orientation's flow direction,
+ * while {@code FIRST} and {@code LAST} are axis-absolute. {@code BASELINE} aligns elements to a shared text baseline.
  */
 public enum Alignment {
 

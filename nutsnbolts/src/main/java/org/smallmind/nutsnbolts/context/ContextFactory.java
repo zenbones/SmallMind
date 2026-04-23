@@ -41,7 +41,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Manages thread-local stacks of {@link Context} instances, supporting inheritance across child threads.
+ * Static utility that maintains per-type, per-thread stacks of {@link Context} instances using an inheritable thread-local map, allowing child threads to inherit a snapshot of the parent's context.
  */
 public class ContextFactory {
 
@@ -67,10 +67,10 @@ public class ContextFactory {
   };
 
   /**
-   * Pushes a series of contexts into the current thread's stack for the specified type.
+   * Pushes each element of the supplied array onto the current thread's context stack for the given type, preserving the provided order.
    *
-   * @param contextClass context class key
-   * @param contexts     contexts to import in order
+   * @param contextClass context class key identifying the stack to populate
+   * @param contexts     contexts to push; ignored when {@code null} or empty
    * @param <C>          context type
    */
   public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
@@ -90,11 +90,11 @@ public class ContextFactory {
   }
 
   /**
-   * Exports and clears the context stack for the specified type, returning the contexts in push order.
+   * Removes all contexts for the given type from the current thread's stack and returns them as an array ordered from bottom to top (oldest first).
    *
-   * @param contextClass context class key
+   * @param contextClass context class key identifying the stack to drain
    * @param <C>          context type
-   * @return array of contexts from bottom to top
+   * @return array of contexts in bottom-to-top order; never {@code null}
    */
   public static <C extends Context> C[] exportContextTrace (Class<C> contextClass) {
 
@@ -117,9 +117,9 @@ public class ContextFactory {
   }
 
   /**
-   * Removes all contexts for the specified type from the current thread.
+   * Clears the context stack for the given type on the current thread without returning the removed elements.
    *
-   * @param contextClass context class key
+   * @param contextClass context class key identifying the stack to clear
    * @param <C>          context type
    */
   public static <C extends Context> void clearContextTrace (Class<C> contextClass) {
@@ -132,11 +132,11 @@ public class ContextFactory {
   }
 
   /**
-   * Determines whether any context is present for the given type.
+   * Returns {@code true} if at least one context of the given type is present on the current thread's stack.
    *
-   * @param contextClass context class key
+   * @param contextClass context class key to check
    * @param <C>          context type
-   * @return {@code true} if a context is available
+   * @return {@code true} if a context of the specified type is available
    */
   public static <C extends Context> boolean exists (Class<C> contextClass) {
 
@@ -146,12 +146,12 @@ public class ContextFactory {
   }
 
   /**
-   * Retrieves the current context for the given type without removing it.
+   * Returns the top context for the given type on the current thread's stack without removing it.
    *
-   * @param contextClass context class key
+   * @param contextClass context class key identifying the stack to peek
    * @param <C>          context type
-   * @return top of the stack or {@code null} if none
-   * @throws ContextException if resolution fails
+   * @return the topmost context, or {@code null} if the stack is empty or not yet created
+   * @throws ContextException if an unexpected error occurs during lookup
    */
   public static <C extends Context> C getContext (Class<C> contextClass)
     throws ContextException {
@@ -168,10 +168,11 @@ public class ContextFactory {
   }
 
   /**
-   * Filters the available contexts for the supplied method using {@link ExpectedContexts} and returns all matches.
+   * Collects all currently active contexts on the current thread, validating any {@link ExpectedContexts} declared on the method.
    *
-   * @param method method being invoked
-   * @return contexts matching {@link Context} type
+   * @param method method whose {@link ExpectedContexts} annotation is consulted
+   * @return all active contexts matching the base {@link Context} type
+   * @throws ContextException if any context type declared in {@link ExpectedContexts} is not present
    */
   public static Context[] filterContextsOn (Method method) {
 
@@ -179,12 +180,12 @@ public class ContextFactory {
   }
 
   /**
-   * Filters the available contexts for the supplied method using {@link ExpectedContexts} and the provided type filters.
+   * Collects all currently active contexts on the current thread that are assignment-compatible with at least one of the supplied filter types, validating any {@link ExpectedContexts} declared on the method.
    *
-   * @param method        method being invoked
-   * @param filterClasses context supertypes to include
-   * @return contexts matching the filter types
-   * @throws ContextException if required contexts are missing
+   * @param method        method whose {@link ExpectedContexts} annotation is consulted for required context types
+   * @param filterClasses one or more context supertypes; only contexts whose class is assignable to a filter class are included
+   * @return array of matching active contexts; never {@code null}
+   * @throws ContextException if a context type declared in {@link ExpectedContexts} is not currently active
    */
   public static Context[] filterContextsOn (Method method, Class... filterClasses)
     throws ContextException {
@@ -224,9 +225,9 @@ public class ContextFactory {
   }
 
   /**
-   * Pushes a context onto the stack keyed by its concrete class.
+   * Pushes a context onto the stack for its concrete class on the current thread.
    *
-   * @param context context to push
+   * @param context context instance to push; the stack key is {@code context.getClass()}
    * @param <C>     context type
    */
   public static <C extends Context> void pushContext (C context) {
@@ -241,11 +242,11 @@ public class ContextFactory {
   }
 
   /**
-   * Pops the current context for the supplied type.
+   * Removes and returns the topmost context for the given type from the current thread's stack.
    *
-   * @param contextClass context class key
+   * @param contextClass context class key identifying the stack to pop
    * @param <C>          context type
-   * @return removed context or {@code null} if none
+   * @return the removed context, or {@code null} if the stack is empty or absent
    */
   public static <C extends Context> C popContext (Class<C> contextClass) {
 
@@ -261,10 +262,10 @@ public class ContextFactory {
   }
 
   /**
-   * Removes a specific context instance from its stack if present.
+   * Removes the first occurrence of the given context instance from the stack for its concrete class on the current thread.
    *
-   * @param context context to remove
-   * @return removed context or {@code null} if it was not found
+   * @param context the specific context instance to remove
+   * @return the removed context if it was found, or {@code null} if it was not present
    */
   public static Context removeContext (Context context) {
 
@@ -281,9 +282,11 @@ public class ContextFactory {
   }
 
   /**
-   * @param contextClass context class key
+   * Returns the number of contexts currently on the stack for the given type on the current thread.
+   *
+   * @param contextClass context class key identifying the stack to measure
    * @param <C>          context type
-   * @return number of contexts currently on the stack for the type
+   * @return stack depth, or {@code 0} if no stack exists for the type
    */
   public static <C extends Context> int sizeFor (Class<C> contextClass) {
 

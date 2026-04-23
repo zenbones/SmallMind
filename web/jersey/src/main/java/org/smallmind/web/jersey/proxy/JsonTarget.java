@@ -51,7 +51,7 @@ import org.smallmind.web.http.apache.SimpleCallback;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Fluent HTTP client wrapper that posts JSON payloads to a configured host and converts responses.
+ * Fluent client wrapper that sends JSON HTTP requests to a fixed host and deserializes the responses.
  */
 public class JsonTarget {
 
@@ -62,10 +62,10 @@ public class JsonTarget {
   private String path;
 
   /**
-   * Creates a target for the given host URI.
+   * Constructs a target that resolves the host from the given URI string.
    *
-   * @param host URI string including scheme and host
-   * @throws URISyntaxException if the host cannot be parsed
+   * @param host full URI string (scheme + host, e.g. {@code "https://api.example.com"})
+   * @throws URISyntaxException if the URI cannot be parsed
    */
   public JsonTarget (String host)
     throws URISyntaxException {
@@ -73,12 +73,6 @@ public class JsonTarget {
     httpHost = HttpHost.create(host);
   }
 
-  /**
-   * Internal constructor used for path derivation.
-   *
-   * @param httpHost resolved host
-   * @param path     request path
-   */
   private JsonTarget (HttpHost httpHost, String path) {
 
     this.httpHost = httpHost;
@@ -86,11 +80,11 @@ public class JsonTarget {
   }
 
   /**
-   * Produces a new JsonTarget with the supplied path.
+   * Returns a new {@link JsonTarget} for the same host but with the given path.
    *
-   * @param path request path
-   * @return new target pointing to the derived path
-   * @throws URISyntaxException if the combined URI is invalid
+   * @param path request path (must begin with {@code /})
+   * @return new target bound to the specified path
+   * @throws URISyntaxException if the resulting URI is invalid
    */
   public JsonTarget path (String path)
     throws URISyntaxException {
@@ -99,11 +93,11 @@ public class JsonTarget {
   }
 
   /**
-   * Adds an HTTP header to subsequent requests.
+   * Appends an HTTP header that will be sent with each subsequent request.
    *
    * @param key   header name
    * @param value header value
-   * @return this for chaining
+   * @return this instance for chaining
    */
   public JsonTarget header (String key, String value) {
 
@@ -116,11 +110,11 @@ public class JsonTarget {
   }
 
   /**
-   * Adds a query parameter to the request URL.
+   * Appends a query parameter to the request URL.
    *
    * @param key   parameter name
    * @param value parameter value
-   * @return this for chaining
+   * @return this instance for chaining
    */
   public JsonTarget query (String key, String value) {
 
@@ -133,10 +127,10 @@ public class JsonTarget {
   }
 
   /**
-   * Sets the debug log level for request/response tracing.
+   * Sets the log level used for request and response debug output.
    *
-   * @param level log level
-   * @return this for chaining
+   * @param level desired log level
+   * @return this instance for chaining
    */
   public JsonTarget debug (Level level) {
 
@@ -146,11 +140,12 @@ public class JsonTarget {
   }
 
   /**
-   * Issues a GET request and converts the response body to the requested type.
+   * Executes a GET request and deserializes the response body to the given type.
    *
-   * @param responseClass expected response type
-   * @return deserialized response or {@code null} when no body is returned
-   * @throws Exception if the request fails or conversion fails
+   * @param responseClass expected return type
+   * @param <T>           response type
+   * @return deserialized response, or {@code null} if the response body is empty
+   * @throws Exception if the request fails or the response cannot be deserialized
    */
   public <T> T get (Class<T> responseClass)
     throws Exception {
@@ -166,12 +161,13 @@ public class JsonTarget {
   }
 
   /**
-   * Issues a PUT request with a JSON body and converts the response.
+   * Executes a PUT request with the supplied JSON body and deserializes the response.
    *
-   * @param jsonBody      serialized request body
-   * @param responseClass expected response type
-   * @return deserialized response or {@code null} when no body is returned
-   * @throws Exception if the request fails or conversion fails
+   * @param jsonBody      request body to send
+   * @param responseClass expected return type
+   * @param <T>           response type
+   * @return deserialized response, or {@code null} if the response body is empty
+   * @throws Exception if the request fails or the response cannot be deserialized
    */
   public <T> T put (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
@@ -187,12 +183,13 @@ public class JsonTarget {
   }
 
   /**
-   * Issues a POST request with a JSON body and converts the response.
+   * Executes a POST request with the supplied JSON body and deserializes the response.
    *
-   * @param jsonBody      serialized request body
-   * @param responseClass expected response type
-   * @return deserialized response or {@code null} when no body is returned
-   * @throws Exception if the request fails or conversion fails
+   * @param jsonBody      request body to send
+   * @param responseClass expected return type
+   * @param <T>           response type
+   * @return deserialized response, or {@code null} if the response body is empty
+   * @throws Exception if the request fails or the response cannot be deserialized
    */
   public <T> T post (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
@@ -208,12 +205,13 @@ public class JsonTarget {
   }
 
   /**
-   * Issues a PATCH request with a JSON body and converts the response.
+   * Executes a PATCH request with the supplied JSON body and deserializes the response.
    *
-   * @param jsonBody      serialized request body
-   * @param responseClass expected response type
-   * @return deserialized response or {@code null} when no body is returned
-   * @throws Exception if the request fails or conversion fails
+   * @param jsonBody      request body to send
+   * @param responseClass expected return type
+   * @param <T>           response type
+   * @return deserialized response, or {@code null} if the response body is empty
+   * @throws Exception if the request fails or the response cannot be deserialized
    */
   public <T> T patch (JsonBody jsonBody, Class<T> responseClass)
     throws Exception {
@@ -229,11 +227,12 @@ public class JsonTarget {
   }
 
   /**
-   * Issues a DELETE request and converts the response.
+   * Executes a DELETE request and deserializes the response body to the given type.
    *
-   * @param responseClass expected response type
-   * @return deserialized response or {@code null} when no body is returned
-   * @throws Exception if the request fails or conversion fails
+   * @param responseClass expected return type
+   * @param <T>           response type
+   * @return deserialized response, or {@code null} if the response body is empty
+   * @throws Exception if the request fails or the response cannot be deserialized
    */
   public <T> T delete (Class<T> responseClass)
     throws Exception {
@@ -248,14 +247,6 @@ public class JsonTarget {
     return convertEntity(callback.getResponse(), responseClass);
   }
 
-  /**
-   * Converts a HTTP response into the requested type, throwing {@link WebApplicationException} on error responses.
-   *
-   * @param response      HTTP response from the client
-   * @param responseClass class to deserialize into
-   * @return converted entity or {@code null} if the response has no body and is successful
-   * @throws WebApplicationException for non-success responses without bodies
-   */
   private <T> T convertEntity (SimpleHttpResponse response, Class<T> responseClass) {
 
     SimpleBody body;
@@ -275,14 +266,6 @@ public class JsonTarget {
     return JsonCodec.convert(bodyContent, responseClass);
   }
 
-  /**
-   * Builds an HTTP request with headers, query parameters, and optional JSON body.
-   *
-   * @param httpMethod HTTP method to use
-   * @param jsonBody   optional JSON body
-   * @return configured {@link SimpleHttpRequest}
-   * @throws UnknownSwitchCaseException if an unsupported method is provided
-   */
   private SimpleHttpRequest createHttpRequest (HttpMethod httpMethod, JsonBody jsonBody) {
 
     SimpleHttpRequest httpRequest;
@@ -336,28 +319,15 @@ public class JsonTarget {
     return httpRequest;
   }
 
-  /**
-   * Formats response debug output for logging.
-   */
   private static class ResponseDebugCollector {
 
     private final SimpleHttpResponse response;
 
-    /**
-     * Creates a collector for the provided response.
-     *
-     * @param response response to format
-     */
     private ResponseDebugCollector (SimpleHttpResponse response) {
 
       this.response = response;
     }
 
-    /**
-     * Returns the response details including status, headers, and body.
-     *
-     * @return formatted response debug text
-     */
     @Override
     public String toString () {
 
@@ -375,28 +345,15 @@ public class JsonTarget {
     }
   }
 
-  /**
-   * Formats request debug output for logging.
-   */
   private static class RequestDebugCollector {
 
     private final SimpleHttpRequest httpRequest;
 
-    /**
-     * Creates a collector for the provided request.
-     *
-     * @param httpRequest request to format
-     */
     private RequestDebugCollector (SimpleHttpRequest httpRequest) {
 
       this.httpRequest = httpRequest;
     }
 
-    /**
-     * Returns the request URI, headers, and body if present.
-     *
-     * @return formatted request debug text
-     */
     @Override
     public String toString () {
 

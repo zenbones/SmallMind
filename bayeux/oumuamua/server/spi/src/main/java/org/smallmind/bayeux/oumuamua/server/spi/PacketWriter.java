@@ -35,16 +35,17 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import java.io.Writer;
 
 /**
- * Simple {@link Writer} that appends all output to a provided {@link StringBuilder}.
+ * In-memory {@link Writer} that accumulates all written characters into a caller-supplied
+ * {@link StringBuilder}; used to serialize Bayeux packets without intermediate I/O overhead.
  */
 public class PacketWriter extends Writer {
 
   private final StringBuilder builder;
 
   /**
-   * Creates a writer that appends to the supplied builder.
+   * Wraps the given builder so all subsequent writes are appended to it.
    *
-   * @param builder destination builder
+   * @param builder destination buffer that will receive all written data
    */
   public PacketWriter (StringBuilder builder) {
 
@@ -52,9 +53,9 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * Writes a single character to the builder.
+   * Appends a single character to the buffer.
    *
-   * @param c character to write
+   * @param c character value to append, cast to {@code char}
    */
   public void write (int c) {
 
@@ -62,11 +63,13 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * Writes a range of characters from an array.
+   * Appends a range of characters from a char array to the buffer.
    *
-   * @param cbuf source buffer
-   * @param off  offset in the buffer
+   * @param cbuf source character array
+   * @param off  index of the first character to write
    * @param len  number of characters to write
+   * @throws NullPointerException      if {@code cbuf} is null
+   * @throws IndexOutOfBoundsException if {@code off} or {@code len} are out of range
    */
   public void write (char cbuf[], int off, int len) {
 
@@ -82,9 +85,10 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * Writes a complete string.
+   * Appends an entire string to the buffer.
    *
-   * @param str string to write
+   * @param str the string to append
+   * @throws NullPointerException if {@code str} is null
    */
   public void write (String str) {
 
@@ -96,11 +100,12 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * Writes a substring.
+   * Appends a substring to the buffer.
    *
    * @param str source string
-   * @param off starting offset
-   * @param len number of characters
+   * @param off index of the first character within {@code str} to write
+   * @param len number of characters to write
+   * @throws NullPointerException if {@code str} is null
    */
   public void write (String str, int off, int len) {
 
@@ -112,7 +117,7 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * No-op flush because data is kept in memory.
+   * No-op; all data resides in-memory and requires no flushing.
    */
   @Override
   public void flush () {
@@ -120,7 +125,7 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * No-op close because there are no external resources.
+   * No-op; no external resources are held by this writer.
    */
   @Override
   public void close () {
@@ -128,7 +133,9 @@ public class PacketWriter extends Writer {
   }
 
   /**
-   * @return string representation of buffered data
+   * Returns the accumulated content as a string.
+   *
+   * @return current contents of the underlying {@link StringBuilder}
    */
   public String toString () {
 

@@ -49,7 +49,9 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * In-memory request transport used for testing without a broker.
+ * In-memory request transport for use in tests that do not require a real message broker.
+ * Serializes invocation signals via {@link MockMessageRouter} queues and topics, and completes
+ * pending requests when matching response messages arrive on the response topic.
  */
 public class MockRequestTransport extends AbstractRequestTransport {
 
@@ -58,9 +60,12 @@ public class MockRequestTransport extends AbstractRequestTransport {
   private final String callerId = UUID.randomUUID().toString();
 
   /**
-   * @param messageRouter         shared router providing queues/topics.
-   * @param signalCodec           codec for serialization.
-   * @param defaultTimeoutSeconds default time to wait for responses.
+   * Constructs the request transport and registers a listener on the shared response topic so
+   * that incoming result signals are matched to this caller and delivered to waiting requests.
+   *
+   * @param messageRouter         shared router that provides request queues/topics and the response topic
+   * @param signalCodec           codec used to serialize invocation signals and deserialize result signals
+   * @param defaultTimeoutSeconds seconds a caller waits for a response when no explicit timeout is set
    */
   public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, long defaultTimeoutSeconds) {
 
@@ -72,7 +77,10 @@ public class MockRequestTransport extends AbstractRequestTransport {
     messageRouter.getResponseTopic().addListener(new MockMessageListener() {
 
       /**
-       * Accepts responses addressed to this transport's caller id.
+       * Accepts messages whose {@code CALLER_ID} header equals this transport's caller ID.
+       *
+       * @param properties metadata of the candidate response message
+       * @return {@code true} if the message is addressed to this transport instance
        */
       @Override
       public boolean match (MockMessageProperties properties) {
@@ -81,7 +89,10 @@ public class MockRequestTransport extends AbstractRequestTransport {
       }
 
       /**
-       * Decodes the result signal and completes the waiting callback.
+       * Decodes the {@link ResultSignal} from the message bytes and completes the corresponding
+       * pending callback.  Any decoding error is logged and swallowed.
+       *
+       * @param message the response message whose bytes encode a {@link ResultSignal}
        */
       @Override
       public void handle (MockMessage message) {
@@ -96,7 +107,10 @@ public class MockRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * @return id used to correlate responses to this transport.
+   * Returns the unique caller identifier assigned to this transport instance.
+   * The mock response transport uses this value to route result messages back to this client.
+   *
+   * @return caller ID string
    */
   @Override
   public String getCallerId () {
@@ -105,14 +119,17 @@ public class MockRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Sends an invocation into the mock router and waits for a correlated response if required.
+   * Encodes the invocation as an {@link InvocationSignal}, sends the message to the appropriate
+   * mock channel (whisper topic or talk queue) via the router, and — for two-way conversations —
+   * blocks until the correlated response arrives or the timeout expires.
    *
-   * @param voice     invocation metadata.
-   * @param route     route to the target method.
-   * @param arguments invocation arguments.
-   * @param contexts  optional contexts.
-   * @return decoded result for two-way conversations, or {@code null} for IN_ONLY.
-   * @throws Throwable if encoding/decoding fails.
+   * @param voice     describes the conversation type and target service group or instance
+   * @param route     identifies the target service, method name, and version
+   * @param arguments named method arguments to encode in the invocation signal
+   * @param contexts  optional wire contexts forwarded with the invocation
+   * @return the decoded result object for two-way calls, or {@code null} for
+   * {@link org.smallmind.phalanx.wire.ConversationType#IN_ONLY} calls
+   * @throws Throwable if signal encoding or decoding fails, or the response times out
    */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
@@ -145,7 +162,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * No-op close for the mock transport.
+   * No-op implementation; the mock transport holds no closeable resources.
    */
   @Override
   public void close () {

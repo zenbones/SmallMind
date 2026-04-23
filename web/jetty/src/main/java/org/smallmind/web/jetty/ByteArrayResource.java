@@ -39,18 +39,16 @@ import java.nio.file.Path;
 import org.eclipse.jetty.util.resource.Resource;
 
 /**
- * Jetty {@link Resource} implementation backed by an in-memory byte array.
- * This is primarily used to feed keystore and truststore content to Jetty
- * without touching the filesystem.
+ * Jetty {@link Resource} implementation backed by an in-memory byte array, used to supply keystore and truststore content without touching the filesystem.
  */
 public class ByteArrayResource extends Resource {
 
   private final byte[] bytes;
 
   /**
-   * Constructs a resource that reads from the supplied byte buffer.
+   * Constructs a resource that reads from the given byte array.
    *
-   * @param bytes the bytes that will be exposed by this resource
+   * @param bytes the raw bytes exposed by this resource
    */
   public ByteArrayResource (byte[] bytes) {
 
@@ -58,9 +56,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Always indicates that the byte content can be read.
+   * Reports that this resource is always readable.
    *
-   * @return {@code true} because the underlying byte array is always readable
+   * @return {@code true}
    */
   @Override
   public boolean isReadable () {
@@ -69,10 +67,10 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * This resource is not considered contained in another resource because it is memory-only.
+   * Reports that this in-memory resource is never contained within another resource.
    *
-   * @param resource ignored container candidate
-   * @return {@code false} because containment is not supported
+   * @param resource the candidate container, ignored
+   * @return {@code false}
    */
   @Override
   public boolean isContainedIn (Resource resource) {
@@ -81,9 +79,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Always reports that the resource exists because the byte array is present.
+   * Reports that this resource always exists because the byte array is present.
    *
-   * @return {@code true} to indicate availability
+   * @return {@code true}
    */
   @Override
   public boolean exists () {
@@ -92,9 +90,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Indicates that this resource is not a directory.
+   * Reports that this resource is not a directory.
    *
-   * @return {@code false} because the resource is byte content, not a directory
+   * @return {@code false}
    */
   @Override
   public boolean isDirectory () {
@@ -103,9 +101,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * This resource has no filesystem representation.
+   * Returns no filesystem path because this resource is held in memory.
    *
-   * @return {@code null} because there is no path to expose
+   * @return {@code null}
    */
   @Override
   public Path getPath () {
@@ -114,9 +112,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * This resource has no concrete URI because it is held in memory.
+   * Returns no URI because this resource has no addressable location.
    *
-   * @return {@code null} to denote a missing URI
+   * @return {@code null}
    */
   @Override
   public URI getURI () {
@@ -125,9 +123,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Returns no name because the resource is anonymous byte content.
+   * Returns no name because this resource is anonymous byte content.
    *
-   * @return {@code null} as no stable name is available
+   * @return {@code null}
    */
   @Override
   public String getName () {
@@ -136,9 +134,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Returns no filename because the resource is not backed by a file.
+   * Returns no filename because this resource is not backed by a file.
    *
-   * @return {@code null} since no filename is applicable
+   * @return {@code null}
    */
   @Override
   public String getFileName () {
@@ -147,10 +145,10 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Resolution of sub-resources is not supported for in-memory content.
+   * Sub-resource resolution is not supported for in-memory content.
    *
    * @param subUriPath the sub-path being requested
-   * @return {@code null} because hierarchical lookup is not available
+   * @return {@code null}
    */
   @Override
   public Resource resolve (String subUriPath) {
@@ -159,9 +157,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Provides the size of the underlying byte buffer.
+   * Returns the length of the underlying byte array.
    *
-   * @return the length of the supplied byte array
+   * @return number of bytes in the buffer
    */
   @Override
   public long length () {
@@ -170,9 +168,9 @@ public class ByteArrayResource extends Resource {
   }
 
   /**
-   * Opens a stream for reading the stored bytes.
+   * Opens a stream for reading the stored bytes from the beginning.
    *
-   * @return an input stream positioned at the beginning of the buffer
+   * @return a {@link ByteArrayInputStream} wrapping the stored bytes
    */
   @Override
   public InputStream newInputStream () {

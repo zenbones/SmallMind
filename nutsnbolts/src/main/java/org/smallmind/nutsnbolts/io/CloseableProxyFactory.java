@@ -38,19 +38,19 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 /**
- * Creates dynamic proxies for {@link Closeable} objects that emit {@link CloseEvent}s on close.
+ * Produces JDK dynamic proxies for {@link Closeable} types that notify a {@link CloseListener} after each close call.
  */
 public class CloseableProxyFactory {
 
   /**
-   * Wraps a closeable instance with a proxy that forwards all calls and notifies the listener after close.
+   * Returns a proxy that forwards all method calls to {@code instance} and invokes {@code listener} after each {@code close()}.
    *
-   * @param clazz    interface implemented by the closeable
-   * @param instance instance to wrap
-   * @param listener listener invoked after {@code close()} completes
-   * @param <C>      closeable type
-   * @return proxied closeable
-   * @throws NoSuchMethodException if the close method cannot be found
+   * @param clazz    the interface type to proxy; must be implemented by {@code instance}
+   * @param instance the actual closeable to delegate calls to
+   * @param listener the listener to notify after the close method returns
+   * @param <C>      the closeable interface type
+   * @return a dynamic proxy implementing {@code clazz}
+   * @throws NoSuchMethodException if the {@code close} method cannot be resolved on {@code instance}
    */
   public static <C extends Closeable> C createProxy (Class<C> clazz, C instance, CloseListener listener)
     throws NoSuchMethodException {
@@ -65,9 +65,11 @@ public class CloseableProxyFactory {
     private final CloseListener listener;
 
     /**
-     * @param closeable wrapped instance
-     * @param listener  notified after successful close
-     * @throws NoSuchMethodException if close cannot be resolved
+     * Constructs the handler, resolving the {@code close} method for later comparison.
+     *
+     * @param closeable the wrapped closeable instance
+     * @param listener  the listener to invoke after close returns
+     * @throws NoSuchMethodException if the {@code close} method cannot be found on {@code closeable}
      */
     public CloseableInvocationHandler (Closeable closeable, CloseListener listener)
       throws NoSuchMethodException {
@@ -79,7 +81,14 @@ public class CloseableProxyFactory {
     }
 
     /**
-     * Forwards invocation to the wrapped instance and triggers the listener after close.
+     * Delegates the method call to the wrapped instance and, if the called method is {@code close},
+     * fires the registered {@link CloseListener}.
+     *
+     * @param proxy  the proxy instance
+     * @param method the method that was invoked
+     * @param args   the arguments passed to the method
+     * @return the value returned by the underlying method
+     * @throws Throwable if the underlying method throws
      */
     @Override
     public Object invoke (Object proxy, Method method, Object[] args)

@@ -39,8 +39,8 @@ import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
 /**
- * Marks a Jersey resource method that is invoked through a proxied JsonEntity envelope.
- * The annotation supplies the entity implementation and whether validation should occur.
+ * Marks a Jersey resource method as accepting its arguments through a proxied {@link JsonEntity} body, optionally
+ * enabling bean validation.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -48,16 +48,16 @@ import jakarta.ws.rs.NameBinding;
 public @interface ResourceMethod {
 
   /**
-   * Concrete {@link JsonEntity} implementation expected in the request body.
+   * Concrete {@link JsonEntity} implementation class expected in the request body.
    *
-   * @return entity class
+   * @return entity class to deserialize
    */
   Class<? extends JsonEntity> value () default JsonEntity.class;
 
   /**
-   * Indicates whether bean validation should be applied to parameters and return values.
+   * Whether bean validation should be applied to method parameters and return values.
    *
-   * @return {@code true} to trigger validation
+   * @return {@code true} to enable validation
    */
   boolean validate () default false;
 }

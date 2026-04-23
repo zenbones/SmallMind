@@ -43,7 +43,25 @@ import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
 /**
- * JNDI URL context factory that builds {@link JavaContext} instances backed by configurable stores.
+ * JNDI {@link ObjectFactory} registered for the {@code java:} URL scheme that constructs
+ * {@link JavaContext} instances configured from the JNDI environment.
+ * <p>
+ * The factory is invoked by the JNDI framework when an initial context with a {@code java:} URL
+ * is requested. It reads the following environment keys from the supplied {@code environment}:
+ * <ul>
+ *   <li>{@link JavaContext#CONTEXT_STORE} — the short backing-store identifier (e.g., {@code ldap});
+ *       used to locate the concrete {@link ContextCreator} and {@link NameTranslator} classes by
+ *       convention: {@code <package>.<store>.<Store>ContextCreator} and
+ *       {@code <package>.<store>.<Store>NameTranslator}.</li>
+ *   <li>{@link JavaContext#CONNECTION_DETAILS} — a {@link NamingConnectionDetails} instance passed
+ *       to the {@link ContextCreator} constructor.</li>
+ *   <li>{@link JavaContext#CONTEXT_MODIFIABLE} — {@code "true"} to allow mutations; defaults to
+ *       read-only.</li>
+ *   <li>{@link JavaContext#POOLED_CONNECTION} — {@code "true"} to return pooled child contexts;
+ *       defaults to unpooled.</li>
+ * </ul>
+ * When {@code obj} is non-null the factory returns {@code null} immediately, deferring to the
+ * existing object.
  */
 public class javaURLContextFactory implements ObjectFactory {
 
@@ -51,15 +69,21 @@ public class javaURLContextFactory implements ObjectFactory {
   private static final Class[] NAME_TRANSLATOR_SIGNATURE = new Class[] {ContextCreator.class};
 
   /**
-   * Creates a {@link JavaContext} when no existing object is supplied, instantiating the correct
-   * {@link ContextCreator} and {@link NameTranslator} based on environment configuration.
+   * Creates and returns a new {@link JavaContext} when {@code obj} is {@code null}, or returns
+   * {@code null} when an existing object is provided.
+   * <p>
+   * The {@link ContextCreator} and {@link NameTranslator} implementations are located by convention
+   * using the {@code CONTEXT_STORE} environment key: the class names are constructed as
+   * {@code <parentPackage>.<store>.<Store>ContextCreator} and
+   * {@code <parentPackage>.<store>.<Store>NameTranslator}. Both are instantiated via reflection
+   * using their single-argument constructors.
    *
-   * @param obj         possibly existing object (ignored when {@code null})
-   * @param name        JNDI name (unused)
-   * @param nameCtx     context (unused)
-   * @param environment environment containing connection details and store configuration
-   * @return a new {@link JavaContext} or {@code null} if {@code obj} is non-null
-   * @throws Exception if any reflective construction fails
+   * @param obj         an existing object to re-use; when non-null the factory returns {@code null}
+   * @param name        the JNDI name of the object (not used by this factory)
+   * @param nameCtx     the context in which {@code name} is bound (not used by this factory)
+   * @param environment the JNDI environment containing the keys listed in the class description
+   * @return a new {@link JavaContext} if {@code obj} is {@code null}, otherwise {@code null}
+   * @throws Exception if any reflective class lookup, constructor resolution, or instantiation fails
    */
   public Object getObjectInstance (Object obj, Name name, Context nameCtx, Hashtable environment)
     throws Exception {

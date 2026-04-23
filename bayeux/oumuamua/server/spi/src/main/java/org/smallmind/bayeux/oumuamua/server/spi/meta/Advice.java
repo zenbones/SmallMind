@@ -33,18 +33,32 @@
 package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 /**
- * Enumerates standard Bayeux advice fields.
+ * Enumerates the standard field names used within a Bayeux {@code advice} object, each carrying
+ * the exact JSON key string expected by conforming clients.
  */
 public enum Advice {
 
-  INTERVAL("interval"), RECONNECT("reconnect"), TIMEOUT("timeout");
+  /**
+   * Milliseconds the client should wait before reconnecting; maps to the {@code "interval"} field.
+   */
+  INTERVAL("interval"),
+
+  /**
+   * Reconnect strategy the client should follow; maps to the {@code "reconnect"} field.
+   */
+  RECONNECT("reconnect"),
+
+  /**
+   * Long-poll timeout the client should honor; maps to the {@code "timeout"} field.
+   */
+  TIMEOUT("timeout");
 
   private final String field;
 
   /**
-   * Associates an advice entry with its JSON field name.
+   * Binds the constant to its Bayeux advice JSON field name.
    *
-   * @param field field name
+   * @param field the exact JSON field name used in the advice object on the wire
    */
   Advice (String field) {
 
@@ -52,7 +66,9 @@ public enum Advice {
   }
 
   /**
-   * @return JSON field name for the advice entry
+   * Returns the JSON field name for use when constructing or reading an advice object.
+   *
+   * @return the Bayeux-specified JSON field name for this advice entry
    */
   public String getField () {
 

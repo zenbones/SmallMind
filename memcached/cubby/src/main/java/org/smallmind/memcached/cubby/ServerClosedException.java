@@ -35,7 +35,9 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 /**
- * Signals that the remote memcached server closed the connection unexpectedly.
+ * Signals that the remote memcached server closed the connection unexpectedly while
+ * the client was reading or writing. The connection should be treated as dead and
+ * either discarded or replaced.
  */
 public class ServerClosedException extends FormattedIOException {
 

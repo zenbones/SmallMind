@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Discriminator for operand kinds supported in where clauses.
+ * Identifies the concrete type of a {@link WhereOperand} held within a where clause field criterion.
  */
 public enum OperandType {
 

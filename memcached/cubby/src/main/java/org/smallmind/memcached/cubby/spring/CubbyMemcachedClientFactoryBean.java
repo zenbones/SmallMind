@@ -46,7 +46,20 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring FactoryBean that builds and manages the lifecycle of a {@link CubbyMemcachedClient}.
+ * Spring {@link FactoryBean} that constructs, starts, and manages the lifecycle of a
+ * {@link CubbyMemcachedClient}.
+ *
+ * <p>When the Spring context is refreshed ({@link #afterPropertiesSet()}) the factory converts
+ * the injected server map into an array of {@link MemcachedHost} descriptors, creates a
+ * {@link CubbyMemcachedClient}, and calls {@link CubbyMemcachedClient#start()} to open
+ * connections. When the context is closed ({@link #destroy()}) the factory calls
+ * {@link CubbyMemcachedClient#stop()} to cleanly shut down all connections.</p>
+ *
+ * <p>Client creation can be suppressed entirely by setting {@code enabled} to {@code false},
+ * in which case {@link #getObject()} returns {@code null}. This is useful for environments
+ * where no memcached cluster is available (e.g. local development).</p>
+ *
+ * <p>This bean is always singleton-scoped.</p>
  */
 public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcachedClient>, InitializingBean, DisposableBean {
 
@@ -56,9 +69,12 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   private boolean enabled = true;
 
   /**
-   * Enables or disables client creation.
+   * Controls whether the client is actually created during context initialisation.
    *
-   * @param enabled whether the client should start
+   * <p>When set to {@code false} no connections are opened and {@link #getObject()} returns
+   * {@code null}.</p>
+   *
+   * @param enabled {@code true} to create the client (default); {@code false} to suppress it
    */
   public void setEnabled (boolean enabled) {
 
@@ -66,9 +82,9 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   }
 
   /**
-   * Supplies the configuration to use when creating the client.
+   * Sets the {@link CubbyConfiguration} used when constructing the client.
    *
-   * @param configuration client configuration
+   * @param configuration the client configuration
    */
   public void setConfiguration (CubbyConfiguration configuration) {
 
@@ -76,33 +92,60 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
   }
 
   /**
-   * Defines the memcached servers to connect to.
+   * Sets the map of named memcached servers to connect to.
    *
-   * @param servers map of logical name to server definition
+   * <p>The map key is a logical server name (used for logging and consistent-hash routing)
+   * and the value describes the host and port.</p>
+   *
+   * @param servers map of logical server name to {@link MemcachedServer} descriptor
    */
   public void setServers (Map<String, MemcachedServer> servers) {
 
     this.servers = servers;
   }
 
+  /**
+   * Reports that this factory bean always returns the same singleton instance.
+   *
+   * @return {@code true}
+   */
   @Override
   public boolean isSingleton () {
 
     return true;
   }
 
+  /**
+   * Returns the concrete type produced by this factory.
+   *
+   * @return {@link CubbyMemcachedClient}{@code .class}
+   */
   @Override
   public Class<?> getObjectType () {
 
     return CubbyMemcachedClient.class;
   }
 
+  /**
+   * Returns the running {@link CubbyMemcachedClient}, or {@code null} if the client was not
+   * created (disabled or no servers configured).
+   *
+   * @return the memcached client, or {@code null}
+   */
   @Override
   public CubbyMemcachedClient getObject () {
 
     return memcachedClient;
   }
 
+  /**
+   * Builds and starts the {@link CubbyMemcachedClient} if the factory is enabled and at least
+   * one server has been configured.
+   *
+   * @throws IOException             if a network error occurs while establishing connections
+   * @throws InterruptedException    if the calling thread is interrupted during startup
+   * @throws CubbyOperationException if the client encounters a protocol-level error during startup
+   */
   @Override
   public void afterPropertiesSet ()
     throws IOException, InterruptedException, CubbyOperationException {
@@ -125,6 +168,13 @@ public class CubbyMemcachedClientFactoryBean implements FactoryBean<CubbyMemcach
     }
   }
 
+  /**
+   * Stops the {@link CubbyMemcachedClient} and releases all associated resources when the
+   * Spring context is closed.
+   *
+   * @throws IOException          if a network error occurs while closing connections
+   * @throws InterruptedException if the calling thread is interrupted during shutdown
+   */
   @Override
   public void destroy ()
     throws IOException, InterruptedException {

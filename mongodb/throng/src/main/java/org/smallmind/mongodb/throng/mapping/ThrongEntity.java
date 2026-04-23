@@ -114,7 +114,9 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   }
 
   /**
-   * @return MongoDB collection name for the entity
+   * Returns the MongoDB collection name for this entity.
+   *
+   * @return the collection name
    */
   public String getCollection () {
 
@@ -122,7 +124,9 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   }
 
   /**
-   * @return property representing the id field
+   * Returns the property descriptor for the entity's id field.
+   *
+   * @return the id property descriptor
    */
   public ThrongProperty getIdProperty () {
 
@@ -130,7 +134,9 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
   }
 
   /**
-   * @return lifecycle handler for the entity
+   * Returns the lifecycle handler for this entity; the handler is always present but may have no registered callbacks.
+   *
+   * @return the lifecycle handler
    */
   public ThrongLifecycle<T> getLifecycle () {
 

@@ -42,10 +42,11 @@ import org.smallmind.nutsnbolts.reflection.type.TypeInference;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 /**
- * Base {@link ManagedDao} implementation that captures generic id and durable types at
- * construction time and supplies helpers for id conversion and metric identification.
+ * Skeletal {@link ManagedDao} implementation that resolves identifier and durable types from
+ * generic parameters at construction time and provides built-in id parsing for all primitive
+ * types, their wrappers, enums, and {@link Identifier} implementations.
  *
- * @param <I> the identifier type handled by the DAO
+ * @param <I> the identifier type handled by this DAO
  * @param <D> the managed durable entity type
  */
 public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ManagedDao<I, D> {
@@ -56,9 +57,9 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   private final String metricSource;
 
   /**
-   * Creates a managed DAO base instance and records type information from the subclass.
+   * Initializes type inference by reading the generic parameters declared on the subclass.
    *
-   * @param metricSource a name used to attribute metrics emitted by this DAO
+   * @param metricSource a label used to attribute metrics emitted by this DAO
    */
   public AbstractManagedDao (String metricSource) {
 
@@ -77,9 +78,9 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   }
 
   /**
-   * Provides the metric source name specified for this DAO.
+   * Returns the metric source label provided at construction time.
    *
-   * @return the metric source identifier
+   * @return the metric source name
    */
   public String getMetricSource () {
 
@@ -87,9 +88,9 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   }
 
   /**
-   * Retrieves the durable class captured from the subclass' generic parameters.
+   * Returns the durable class inferred from the subclass's generic type parameters.
    *
-   * @return the managed durable type
+   * @return the managed durable class
    */
   public Class<D> getManagedClass () {
 
@@ -97,9 +98,9 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   }
 
   /**
-   * Retrieves the identifier class captured from the subclass' generic parameters.
+   * Returns the identifier class inferred from the subclass's generic type parameters.
    *
-   * @return the managed identifier type
+   * @return the managed identifier class
    */
   public Class<I> getIdClass () {
 
@@ -107,10 +108,10 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   }
 
   /**
-   * Extracts the identifier from a durable instance.
+   * Returns the identifier of the given durable by delegating to {@link Durable#getId()}.
    *
-   * @param durable the durable whose id should be returned
-   * @return the durable id, which may be {@code null} for transient instances
+   * @param durable the durable to inspect
+   * @return the durable's identifier, or {@code null} for transient instances
    */
   public I getId (D durable) {
 
@@ -118,13 +119,14 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   }
 
   /**
-   * Converts a string representation to the appropriate identifier type. Primitive types,
-   * their boxed equivalents, enums and {@link Identifier} implementations are supported
-   * out of the box. Override when custom parsing is required.
+   * Parses a string into an identifier value. Handles all primitive types and their wrappers,
+   * enums, and types that implement {@link Identifier} via a static {@code fromString(String)}
+   * method. Override this method when custom parsing logic is required.
    *
-   * @param value the string containing the identifier
-   * @return the parsed identifier value
-   * @throws ORMInitializationException if the identifier cannot be parsed or no conversion strategy exists
+   * @param value the string representation of the identifier
+   * @return the parsed identifier
+   * @throws ORMInitializationException if no conversion strategy exists for the identifier type,
+   *                                    or if the {@code fromString} method is missing or non-static
    */
   public I getIdFromString (String value) {
 

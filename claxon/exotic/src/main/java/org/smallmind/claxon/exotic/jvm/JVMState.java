@@ -33,101 +33,181 @@
 package org.smallmind.claxon.exotic.jvm;
 
 /**
- * Static facade for accessing JVM and OS metrics used by profile features.
+ * Static facade that aggregates JVM and OS runtime metrics from the helper classes
+ * {@link MemoryPools}, {@link OSFacts}, {@link GarbageFacts}, and
+ * {@link CompilationAndHeapFacts}.
+ *
+ * <p>All helper instances are created once as class-level constants when this class is first
+ * loaded. Static accessor methods delegate directly to those instances, providing a single
+ * consistent entry point for all JVM profiling data consumed by {@link ProfileFeature}.
  */
 public class JVMState {
 
+  /**
+   * Singleton {@link MemoryPools} used to query eden, survivor, and tenured memory usage.
+   */
   private static final MemoryPools MEMORY_POOLS = new MemoryPools();
+
+  /**
+   * Singleton {@link OSFacts} used to query OS-level metrics such as CPU count and memory
+   * sizes.
+   */
   private static final OSFacts OS_FACTS = new OSFacts();
+
+  /**
+   * Singleton {@link GarbageFacts} used to query young and old GC collection counts and
+   * times.
+   */
   private static final GarbageFacts GARBAGE_FACTS = new GarbageFacts();
+
+  /**
+   * Singleton {@link CompilationAndHeapFacts} used to query JIT compilation time and heap
+   * memory usage.
+   */
   private static final CompilationAndHeapFacts COMPILATION_AND_HEAP_FACTS = new CompilationAndHeapFacts();
 
   /**
-   * @return total physical memory size
+   * Returns the total physical memory size of the host operating system.
+   *
+   * @return total physical memory in bytes, or {@code -1} if unsupported on this platform
    */
   public static long getTotalMemorySize () {
 
     return OS_FACTS.getTotalMemorySize();
   }
 
+  /**
+   * Returns the amount of free (unused) physical memory on the host operating system.
+   *
+   * @return free physical memory in bytes, or {@code -1} if unsupported on this platform
+   */
   public static long getFreeMemorySize () {
 
     return OS_FACTS.getFreeMemorySize();
   }
 
   /**
-   * @return maximum heap memory
+   * Returns the maximum amount of heap memory that the JVM will attempt to use.
+   *
+   * @return maximum heap size in bytes as reported by {@link java.lang.management.MemoryUsage#getMax()}
    */
   public static long getHeapMemoryMax () {
 
     return COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getMax();
   }
 
+  /**
+   * Returns the amount of heap memory currently in use by the JVM.
+   *
+   * @return used heap memory in bytes as reported by {@link java.lang.management.MemoryUsage#getUsed()}
+   */
   public static long getHeapMemoryUsed () {
 
     return COMPILATION_AND_HEAP_FACTS.getHeapMemoryUsage().getUsed();
   }
 
   /**
-   * @return process CPU time in nanoseconds
+   * Returns the CPU time used by the JVM process.
+   *
+   * @return process CPU time in nanoseconds, or {@code -1} if unsupported on this platform
    */
   public static long getProcessCPUTime () {
 
     return OS_FACTS.getProcessCpuTime();
   }
 
+  /**
+   * Returns the approximate total elapsed time spent in JIT compilation since JVM startup.
+   *
+   * @return JIT compilation time in milliseconds
+   */
   public static long getCompilationTime () {
 
     return COMPILATION_AND_HEAP_FACTS.getCompilationTime();
   }
 
   /**
-   * @return young generation GC count
+   * Returns the total number of young-generation garbage collections performed.
+   *
+   * @return young-generation GC count, or {@code 0} if no young-generation collector was
+   * identified
    */
   public static long getYoungCollectionCount () {
 
     return GARBAGE_FACTS.getYoungCollectionCount();
   }
 
+  /**
+   * Returns the total elapsed time spent in young-generation garbage collection.
+   *
+   * @return young-generation GC time in milliseconds, or {@code 0} if no young-generation
+   * collector was identified
+   */
   public static long getYoungCollectionTime () {
 
     return GARBAGE_FACTS.getYoungCollectionTime();
   }
 
   /**
-   * @return old generation GC count
+   * Returns the total number of old-generation garbage collections performed.
+   *
+   * @return old-generation GC count, or {@code 0} if no old-generation collector was
+   * identified
    */
   public static long getOldCollectionCount () {
 
     return GARBAGE_FACTS.getOldCollectionCount();
   }
 
+  /**
+   * Returns the total elapsed time spent in old-generation garbage collection.
+   *
+   * @return old-generation GC time in milliseconds, or {@code 0} if no old-generation
+   * collector was identified
+   */
   public static long getOldCollectionTime () {
 
     return GARBAGE_FACTS.getOldCollectionTime();
   }
 
   /**
-   * @return eden space used memory
+   * Returns the amount of memory currently used in the eden space memory pool.
+   *
+   * @return eden space used memory in bytes, or {@code 0} if the eden pool is unavailable
    */
   public static long getEdenMemoryUsed () {
 
     return MEMORY_POOLS.getEdenMemoryUsage().getUsed();
   }
 
+  /**
+   * Returns the amount of memory currently used in the survivor space memory pool.
+   *
+   * @return survivor space used memory in bytes, or {@code 0} if the survivor pool is
+   * unavailable
+   */
   public static long getSurvivorMemoryUsed () {
 
     return MEMORY_POOLS.getSurvivorMemoryUsage().getUsed();
   }
 
   /**
-   * @return tenured space max memory
+   * Returns the maximum capacity of the tenured (old) generation memory pool.
+   *
+   * @return tenured space maximum memory in bytes, or {@code 0} if the tenured pool is
+   * unavailable
    */
   public static long getTenuredMemoryMax () {
 
     return MEMORY_POOLS.getTenuredMemoryUsage().getMax();
   }
 
+  /**
+   * Returns the amount of memory currently used in the tenured (old) generation memory pool.
+   *
+   * @return tenured space used memory in bytes, or {@code 0} if the tenured pool is
+   * unavailable
+   */
   public static long getTenuredMemoryUsed () {
 
     return MEMORY_POOLS.getTenuredMemoryUsage().getUsed();

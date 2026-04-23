@@ -37,16 +37,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Resolves the Maven command name used by the current operating system.
+ * Resolves the path to the Maven executable by invoking the platform-appropriate system
+ * search command ({@code where.exe} on Windows, {@code where} on Linux). Returns {@code null}
+ * when Maven cannot be found on the PATH.
  */
 public class MavenCommandLocator {
 
   /**
-   * Locate Maven on Windows using {@code where.exe} and the {@code mvn.cmd} launcher.
+   * Locate the Maven command on Windows using {@code where.exe mvn.cmd}.
    *
-   * @param commandDir the working directory used while running the lookup command
-   * @return the resolved Maven command path, or {@code null} if none can be found
-   * @throws IOException if the lookup command cannot be executed
+   * @param commandDir working directory for the probe command
+   * @return full path to {@code mvn.cmd}, or {@code null} if Maven is not found on the PATH
+   * @throws IOException if {@code where.exe} cannot be executed
    */
   public static String inWindows (Path commandDir)
     throws IOException {
@@ -64,11 +66,11 @@ public class MavenCommandLocator {
   }
 
   /**
-   * Locate Maven on Linux using {@code where} and the {@code mvn} launcher.
+   * Locate the Maven command on Linux using {@code where mvn}.
    *
-   * @param commandDir the working directory used while running the lookup command
-   * @return the resolved Maven command path, or {@code null} if none can be found
-   * @throws IOException if the lookup command cannot be executed
+   * @param commandDir working directory for the probe command
+   * @return full path to {@code mvn}, or {@code null} if Maven is not found on the PATH
+   * @throws IOException if {@code where} cannot be executed
    */
   public static String inLinux (Path commandDir)
     throws IOException {

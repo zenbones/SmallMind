@@ -33,19 +33,19 @@
 package org.smallmind.web.json.query;
 
 /**
- * Base class for components that convert where field references into concrete path representations.
+ * Base class for resolving where field references into platform-specific path representations.
  *
- * @param <R> root type
- * @param <T> path representation type
+ * @param <R> root type (e.g., a JPA or QueryDSL entity root)
+ * @param <T> path type (e.g., a criteria path or QueryDSL path)
  */
 public abstract class WhereFieldTransformer<R, T> {
 
   private final WhereFieldTransform<R, T> transform;
 
   /**
-   * Creates a transformer that delegates to the provided transform function.
+   * Creates a transformer that delegates field resolution to the given transform function.
    *
-   * @param transform strategy that produces a {@link WherePath} from entity/name
+   * @param transform strategy used to convert entity/name pairs into {@link WherePath} instances
    */
   public WhereFieldTransformer (WhereFieldTransform<R, T> transform) {
 
@@ -53,11 +53,11 @@ public abstract class WhereFieldTransformer<R, T> {
   }
 
   /**
-   * Produces a concrete path for the given field reference.
+   * Resolves the named field within the given entity to a concrete {@link WherePath}.
    *
-   * @param entity entity alias
+   * @param entity entity alias, may be {@code null}
    * @param name   field name
-   * @return generated {@link WherePath}
+   * @return resolved path for use in query construction
    */
   public synchronized WherePath<R, T> transform (String entity, String name) {
 

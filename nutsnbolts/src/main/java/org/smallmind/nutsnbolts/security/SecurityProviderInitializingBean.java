@@ -37,14 +37,16 @@ import java.security.Security;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring bean that registers security providers on initialization.
+ * Spring {@link InitializingBean} that registers one or more {@link Provider} instances with the JVM security subsystem at application startup.
  */
 public class SecurityProviderInitializingBean implements InitializingBean {
 
   private Provider[] providers;
 
   /**
-   * @param providers providers to register with {@link Security}
+   * Sets the array of security providers to be registered at initialization.
+   *
+   * @param providers the {@link Provider} instances to register with {@link Security#addProvider(Provider)}
    */
   public void setProviders (Provider[] providers) {
 
@@ -52,7 +54,7 @@ public class SecurityProviderInitializingBean implements InitializingBean {
   }
 
   /**
-   * Registers the configured providers with the JVM security system.
+   * Registers all configured security providers with the JVM by calling {@link Security#addProvider(Provider)} for each.
    *
    * @throws Exception if provider registration fails
    */

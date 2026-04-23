@@ -38,8 +38,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Coordinates multiple {@link DeconstructionFuse} instances attached to a {@link ComponentPin},
- * handling ignition and abort logic.
+ * Manages the set of {@link DeconstructionFuse} instances attached to a single
+ * {@link ComponentPin} and arbitrates which fuse wins when multiple fuses are active.
+ * <p>
+ * At construction time the coordinator inspects the pool configuration and creates the
+ * applicable fuses:
+ * <ul>
+ *   <li>{@link MaxLeaseTimeDeconstructionFuse} when {@code maxLeaseTimeSeconds > 0};</li>
+ *   <li>{@link MaxIdleTimeDeconstructionFuse} when {@code maxIdleTimeSeconds > 0};</li>
+ *   <li>{@link MaxProcessingTimeDeconstructionFuse} when {@code maxProcessingTimeSeconds > 0}.</li>
+ * </ul>
+ * When a fuse fires ({@link #ignite(DeconstructionFuse, boolean)}), the coordinator:
+ * <ol>
+ *   <li>Uses an {@link AtomicBoolean} to guarantee at most one ignition is acted upon.</li>
+ *   <li>Cancels all other fuses via their individual {@link DeconstructionFuse#abort()}.</li>
+ *   <li>Calls {@link ComponentPin#kaboom(boolean)} to remove the pin from the pool.</li>
+ * </ol>
+ * The {@link #free()} and {@link #serve()} calls are forwarded to all fuses so each can
+ * update its own scheduling in response to the pin's state change.
  */
 public class DeconstructionCoordinator {
 
@@ -48,11 +64,12 @@ public class DeconstructionCoordinator {
   private final AtomicBoolean terminated = new AtomicBoolean(false);
 
   /**
-   * Builds fuses based on configuration and attaches them to the pin.
+   * Constructs a coordinator for {@code componentPin} and creates the applicable fuses
+   * based on the pool's configuration.
    *
-   * @param componentPool       owning pool
-   * @param deconstructionQueue queue managing fuse scheduling
-   * @param componentPin        pin whose lifecycle is being guarded
+   * @param componentPool       the pool whose configuration determines which fuses to create
+   * @param deconstructionQueue the shared queue that schedules fuse ignitions
+   * @param componentPin        the pin whose lifecycle the fuses guard
    */
   public DeconstructionCoordinator (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, ComponentPin<?> componentPin) {
 
@@ -72,9 +89,10 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Returns the existential stack trace from the pin.
+   * Returns the existential stack trace held by the associated {@link ComponentPin}, providing
+   * context about where the component was acquired.
    *
-   * @return stack trace elements or {@code null} if not tracked
+   * @return the stack trace of the acquiring thread, or {@code null} if not tracked
    */
   public StackTraceElement[] getExistentialStackTrace () {
 
@@ -82,7 +100,10 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Frees all fuses, typically on component return.
+   * Notifies all fuses that the component has been placed on the free queue.
+   * <p>
+   * Fuses that track idle time will schedule ignition; fuses that track processing time
+   * will cancel any pending ignition.
    */
   public void free () {
 
@@ -92,7 +113,10 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Serves all fuses, typically when the component is borrowed.
+   * Notifies all fuses that the component has been handed to a caller.
+   * <p>
+   * Fuses that track processing time will schedule ignition; fuses that track idle time
+   * will cancel any pending ignition.
    */
   public void serve () {
 
@@ -102,7 +126,11 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Aborts all fuses without igniting termination.
+   * Cancels all fuses without triggering pin removal.
+   * <p>
+   * Called by {@link ComponentPin#fizzle()} when the pool manager terminates the pin
+   * through its normal path and needs to prevent a concurrent fuse from also trying to
+   * remove it. Operates at most once via the {@code terminated} flag.
    */
   public void abort () {
 
@@ -112,10 +140,15 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Called when a fuse ignites to terminate the component and cancel other fuses.
+   * Called by a {@link DeconstructionFuse} when its timer expires.
+   * <p>
+   * Uses an {@link AtomicBoolean} so that only the first fuse to call this method wins.
+   * Cancels all other fuses, logs the igniting fuse's class name, and calls
+   * {@link ComponentPin#kaboom(boolean)} to remove the pin from the pool.
    *
-   * @param ignitionFuse  fuse that triggered ignition
-   * @param withPrejudice whether termination should be forced
+   * @param ignitionFuse  the fuse that triggered this ignition
+   * @param withPrejudice {@code true} if the fuse is prejudicial and the pin should be
+   *                      force-removed even while processing
    */
   public void ignite (DeconstructionFuse ignitionFuse, boolean withPrejudice) {
 
@@ -127,9 +160,10 @@ public class DeconstructionCoordinator {
   }
 
   /**
-   * Cancels all fuses except the one that triggered ignition.
+   * Aborts every fuse in the list except {@code ignitionFuse}.
    *
-   * @param ignitionFuse fuse that ignited, or {@code null} if none
+   * @param ignitionFuse the fuse that fired, which should not be aborted; {@code null} to
+   *                     abort all fuses
    */
   private void shutdown (DeconstructionFuse ignitionFuse) {
 

@@ -35,14 +35,31 @@ package org.smallmind.sleuth.runner.event;
 import java.util.EventListener;
 
 /**
- * Listener for Sleuth events emitted during execution.
+ * Observer interface for Sleuth test-execution events.
+ * <p>
+ * Implementations are registered with
+ * {@link org.smallmind.sleuth.runner.SleuthRunner#addListener(SleuthEventListener)} and receive
+ * every {@link SleuthEvent} fired during a run — including lifecycle events such as
+ * {@link SetupSleuthEvent} and {@link CancelledSleuthEvent} as well as per-test outcome events
+ * ({@link SuccessSleuthEvent}, {@link FailureSleuthEvent}, {@link ErrorSleuthEvent},
+ * {@link SkippedSleuthEvent}, {@link MootSleuthEvent}, {@link FatalSleuthEvent}).
+ * <p>
+ * {@link #handle(SleuthEvent)} is invoked on the runner thread that fired the event; implementations
+ * must be thread-safe when tests execute concurrently.
+ *
+ * @see SleuthEvent
+ * @see org.smallmind.sleuth.runner.SleuthRunner
  */
 public interface SleuthEventListener extends EventListener {
 
   /**
-   * Handles the supplied Sleuth event.
+   * Called when the Sleuth runner fires an event during test execution.
+   * <p>
+   * The supplied event can be narrowed to a concrete subtype using {@link SleuthEvent#getType()}
+   * as a discriminator. Implementations should not throw unchecked exceptions; any exception
+   * will propagate back to the calling runner thread.
    *
-   * @param event event to handle
+   * @param event the event that was fired; never {@code null}
    */
   void handle (SleuthEvent event);
 }

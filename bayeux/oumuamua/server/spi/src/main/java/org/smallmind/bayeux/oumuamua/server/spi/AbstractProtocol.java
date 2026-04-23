@@ -39,18 +39,19 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Base {@link Protocol} implementation that dispatches lifecycle events to registered listeners.
+ * Skeletal {@link Protocol} implementation that maintains a listener registry and fans out
+ * receipt, publish, and delivery events to all registered {@link ProtocolListener} instances.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
  */
 public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
   /**
-   * Notifies protocol listeners of received messages.
+   * Fans out a receipt event to every registered {@link ProtocolListener}.
    *
-   * @param incomingMessages messages received from a client
+   * @param incomingMessages array of messages just received from a client
    */
   public void onReceipt (Message<V>[] incomingMessages) {
 
@@ -62,10 +63,10 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
   }
 
   /**
-   * Notifies listeners when a message is published.
+   * Fans out a publish event to every registered {@link ProtocolListener}.
    *
-   * @param originatingMessage message supplied by the client
-   * @param outgoingMessage    message produced for delivery
+   * @param originatingMessage the raw message submitted by the client
+   * @param outgoingMessage    the processed message prepared for delivery
    */
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 
@@ -77,9 +78,9 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
   }
 
   /**
-   * Notifies listeners when a packet is delivered.
+   * Fans out a delivery event to every registered {@link ProtocolListener}.
    *
-   * @param outgoingPacket the packet to be delivered
+   * @param outgoingPacket the packet about to be delivered to a client
    */
   public void onDelivery (Packet<V> outgoingPacket) {
 
@@ -91,9 +92,9 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
   }
 
   /**
-   * Adds a listener to the protocol.
+   * Registers a listener to receive protocol lifecycle events.
    *
-   * @param listener listener to add
+   * @param listener listener to register
    */
   @Override
   public void addListener (Listener<V> listener) {
@@ -102,9 +103,9 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
   }
 
   /**
-   * Removes a listener from the protocol.
+   * Deregisters a previously registered listener.
    *
-   * @param listener listener to remove
+   * @param listener listener to remove; no-op if not currently registered
    */
   @Override
   public void removeListener (Listener<V> listener) {

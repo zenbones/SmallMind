@@ -35,14 +35,15 @@ package org.smallmind.scribe.pen;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 /**
- * Default {@link ErrorHandler} that writes errors through a backup appender (console/XML by default).
+ * An {@link ErrorHandler} that routes logging failures through a configurable backup {@link Appender},
+ * defaulting to a {@link ConsoleAppender} with {@link XMLFormatter} when no appender is provided.
  */
 public class DefaultErrorHandler implements ErrorHandler {
 
   private Appender appender;
 
   /**
-   * Creates a handler that logs errors to console using {@link XMLFormatter}.
+   * Constructs a handler that sends error records to the console formatted as XML.
    */
   public DefaultErrorHandler () {
 
@@ -50,9 +51,9 @@ public class DefaultErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Creates a handler that logs errors to the provided backup appender.
+   * Constructs a handler that sends error records to the given backup appender.
    *
-   * @param appender backup appender to use
+   * @param appender the backup appender to use for error reporting
    */
   public DefaultErrorHandler (Appender appender) {
 
@@ -60,9 +61,9 @@ public class DefaultErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Sets the backup appender used for error reporting.
+   * Replaces the backup appender used to publish error records.
    *
-   * @param appender backup appender
+   * @param appender the new backup appender
    */
   public void setBackupAppender (Appender appender) {
 
@@ -70,12 +71,12 @@ public class DefaultErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Logs an error using the backup appender by creating a new record from the given details.
+   * Creates an error-level log record from the provided details and publishes it through the backup appender.
    *
-   * @param loggerName   name of the logger that failed
-   * @param throwable    exception encountered, may be {@code null}
-   * @param errorMessage error message template
-   * @param args         optional template arguments
+   * @param loggerName   the name of the logger that experienced the failure
+   * @param throwable    the exception associated with the failure, or {@code null} if none
+   * @param errorMessage the message template describing the error
+   * @param args         optional arguments to be substituted into the message template
    */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
@@ -84,12 +85,14 @@ public class DefaultErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Logs an error related to an existing record and republishes that record via the backup appender.
+   * Reports an error associated with a specific log record by forwarding to
+   * {@link #process(String, Throwable, String, Object...)} and then republishing the original record
+   * through the backup appender so it is not silently lost.
    *
-   * @param record       the record associated with the failure
-   * @param throwable    exception encountered, may be {@code null}
-   * @param errorMessage error message template
-   * @param args         optional template arguments
+   * @param record       the log record that triggered the error
+   * @param throwable    the exception associated with the failure, or {@code null} if none
+   * @param errorMessage the message template describing the error
+   * @param args         optional arguments to be substituted into the message template
    */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {

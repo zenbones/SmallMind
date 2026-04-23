@@ -38,7 +38,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Simple in-memory topic that delivers messages to all listeners matching the message headers.
+ * In-memory publish/subscribe topic for the mock transport.  A background daemon thread
+ * continuously drains the message queue and delivers each message to every registered
+ * {@link MockMessageListener} whose {@link MockMessageListener#match} method returns {@code true}
+ * for that message's properties.
  */
 public class MockTopic {
 
@@ -48,7 +51,8 @@ public class MockTopic {
   private final ArrayList<MockMessageListener> listenerList = new ArrayList<>();
 
   /**
-   * Starts the worker thread that dispatches messages to listeners.
+   * Constructs the topic and starts the background daemon thread that dispatches messages to
+   * matching listeners.
    */
   public MockTopic () {
 
@@ -59,9 +63,9 @@ public class MockTopic {
   }
 
   /**
-   * Registers a listener that will be evaluated for every published message.
+   * Registers a listener to be evaluated against every message published to this topic.
    *
-   * @param listener listener to add.
+   * @param listener the listener to add
    */
   public void addListener (MockMessageListener listener) {
 
@@ -71,9 +75,9 @@ public class MockTopic {
   }
 
   /**
-   * Removes a listener from the topic.
+   * Unregisters a previously added listener so it no longer receives messages from this topic.
    *
-   * @param listener listener to remove.
+   * @param listener the listener to remove
    */
   public void removeListener (MockMessageListener listener) {
 
@@ -83,9 +87,10 @@ public class MockTopic {
   }
 
   /**
-   * Publishes a message to the topic for fan-out delivery.
+   * Publishes a message to the topic.  The background worker subsequently delivers it to every
+   * registered listener whose {@link MockMessageListener#match} returns {@code true}.
    *
-   * @param message message to broadcast.
+   * @param message the message to publish
    */
   public void send (MockMessage message) {
 
@@ -93,12 +98,13 @@ public class MockTopic {
   }
 
   /**
-   * Worker that drains the topic queue and delivers messages to matching listeners.
+   * Background daemon worker that drains the topic queue and delivers each message to every
+   * matching {@link MockMessageListener}.
    */
   private class QueueWorker implements Runnable {
 
     /**
-     * Stops the worker loop.
+     * Signals the poll loop to exit on its next iteration.
      */
     public void close () {
 
@@ -106,7 +112,9 @@ public class MockTopic {
     }
 
     /**
-     * Drains the queue and dispatches to each matching listener.
+     * Continuously drains the topic queue and delivers each message to every registered listener
+     * for which {@link MockMessageListener#match} returns {@code true}.  Sleeps 100 ms when the
+     * queue is empty.
      */
     @Override
     public void run () {

@@ -38,14 +38,16 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
- * Adapts a {@link ByteBuffer} to an {@link InputStream} reading from the buffer's current position.
+ * Wraps a {@link ByteBuffer} as an {@link InputStream}, reading sequentially from the buffer's current position.
  */
 public class ByteBufferInputStream extends InputStream {
 
   private final ByteBuffer buffer;
 
   /**
-   * @param buffer buffer to read; consumed from current position up to its limit
+   * Constructs a stream backed by the given buffer.
+   *
+   * @param buffer the buffer to read from; data is consumed from its current position up to its limit
    */
   public ByteBufferInputStream (ByteBuffer buffer) {
 
@@ -53,9 +55,10 @@ public class ByteBufferInputStream extends InputStream {
   }
 
   /**
-   * Reads a single byte or -1 when the buffer is exhausted.
+   * Reads the next byte from the buffer as an unsigned value, or {@code -1} when exhausted.
    *
-   * @throws IOException never thrown; declared for signature compatibility
+   * @return the next byte in the range 0–255, or {@code -1} if no bytes remain
+   * @throws IOException not thrown; declared for interface compatibility
    */
   @Override
   public int read ()
@@ -65,11 +68,14 @@ public class ByteBufferInputStream extends InputStream {
   }
 
   /**
-   * Reads up to {@code len} bytes into the array starting at {@code off}.
+   * Reads up to {@code len} bytes from the buffer into the destination array.
    *
-   * @return number of bytes read or -1 if no bytes remain
-   * @throws IOException               never thrown; declared for signature compatibility
-   * @throws IndexOutOfBoundsException if the offset/length are invalid
+   * @param b   destination array
+   * @param off starting index in {@code b}
+   * @param len maximum number of bytes to transfer
+   * @return number of bytes actually read, or {@code -1} if no bytes remain in the buffer
+   * @throws IOException               not thrown; declared for interface compatibility
+   * @throws IndexOutOfBoundsException if the offset or length are out of range for {@code b}
    */
   @Override
   public int read (byte[] b, int off, int len)

@@ -33,7 +33,20 @@
 package org.smallmind.memcached.cubby.command;
 
 /**
- * Container for processed command results including value, success flag and CAS token.
+ * Immutable value object returned by {@link Command#process(org.smallmind.memcached.cubby.response.Response)}
+ * that captures the normalized outcome of a single memcached operation.
+ *
+ * <p>Every completed command — regardless of type — produces a {@code Result}
+ * containing three pieces of information:</p>
+ * <ul>
+ *   <li><b>value</b> — the raw bytes returned by the server, or {@code null}
+ *       when the operation does not carry a payload (e.g., set, delete, touch,
+ *       or a cache miss).</li>
+ *   <li><b>successful</b> — whether the operation achieved its intended effect
+ *       (key found and returned, item stored, item deleted, etc.).</li>
+ *   <li><b>cas</b> — the CAS (compare-and-swap) version token supplied by the
+ *       server, or {@code 0} when the server did not include one.</li>
+ * </ul>
  */
 public class Result {
 
@@ -42,11 +55,15 @@ public class Result {
   private final long cas;
 
   /**
-   * Creates a result wrapper.
+   * Constructs a {@code Result} with all three outcome fields.
    *
-   * @param value      raw value bytes (may be {@code null})
-   * @param successful whether the operation succeeded
-   * @param cas        CAS token associated with the result
+   * @param value      the raw value bytes returned by the server, or
+   *                   {@code null} when no value was returned
+   * @param successful {@code true} if the operation achieved its intended
+   *                   effect; {@code false} on a miss, CAS mismatch, or
+   *                   other non-fatal failure
+   * @param cas        the CAS token accompanying the response; {@code 0}
+   *                   when the server did not supply one
    */
   public Result (byte[] value, boolean successful, long cas) {
 
@@ -56,7 +73,9 @@ public class Result {
   }
 
   /**
-   * @return raw value bytes or {@code null} when absent
+   * Returns the raw value bytes retrieved from the server.
+   *
+   * @return the value payload, or {@code null} if the server returned no value
    */
   public byte[] getValue () {
 
@@ -64,7 +83,10 @@ public class Result {
   }
 
   /**
-   * @return {@code true} when the command succeeded
+   * Indicates whether the command achieved its intended effect.
+   *
+   * @return {@code true} if the operation succeeded; {@code false} on a
+   * cache miss, CAS mismatch, or similar non-fatal outcome
    */
   public boolean isSuccessful () {
 
@@ -72,7 +94,11 @@ public class Result {
   }
 
   /**
-   * @return CAS token supplied by the server (zero when unavailable)
+   * Returns the CAS (compare-and-swap) version token included in the server
+   * response. This value can be passed to a subsequent conditional write to
+   * ensure the item has not been modified since it was read.
+   *
+   * @return the CAS token, or {@code 0} if the server did not provide one
    */
   public long getCas () {
 

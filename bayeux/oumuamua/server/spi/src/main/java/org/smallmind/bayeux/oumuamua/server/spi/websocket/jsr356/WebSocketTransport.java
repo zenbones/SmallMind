@@ -48,9 +48,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.servlet.FormattedServletException;
 
 /**
- * JSR-356 websocket transport implementation.
+ * {@link Transport} that registers a JSR-356 {@link jakarta.websocket.Endpoint} with the servlet
+ * container on startup and exposes configuration parameters to endpoint instances via servlet
+ * context attributes.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
  */
 public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
@@ -60,10 +62,11 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   private final WebsocketConfiguration websocketConfiguration;
 
   /**
-   * Creates the transport for a given protocol and configuration.
+   * Constructs the transport bound to its owning protocol and the supplied configuration.
    *
-   * @param websocketProtocol      owning protocol
-   * @param websocketConfiguration configuration parameters
+   * @param websocketProtocol      the {@link WebsocketProtocol} that owns this transport
+   * @param websocketConfiguration configuration parameters used at endpoint registration time and
+   *                               exposed to connected sessions
    */
   public WebSocketTransport (WebsocketProtocol<V> websocketProtocol, WebsocketConfiguration websocketConfiguration) {
 
@@ -72,7 +75,9 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return owning protocol
+   * Returns the {@link WebsocketProtocol} that owns this transport.
+   *
+   * @return owning protocol instance
    */
   @Override
   public Protocol<V> getProtocol () {
@@ -81,7 +86,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return transport name
+   * Returns the canonical transport name as defined by
+   * {@link org.smallmind.bayeux.oumuamua.server.spi.Transports#WEBSOCKET}.
+   *
+   * @return transport name string
    */
   @Override
   public String getName () {
@@ -90,7 +98,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return whether this transport is local-only
+   * Indicates whether this transport is restricted to local (same-JVM) use, as determined by
+   * {@link org.smallmind.bayeux.oumuamua.server.spi.Transports#WEBSOCKET}.
+   *
+   * @return {@code true} if the transport is local-only, {@code false} if it accepts remote clients
    */
   @Override
   public boolean isLocal () {
@@ -99,7 +110,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return configured idle timeout
+   * Returns the configured maximum idle session timeout, forwarded from
+   * {@link WebsocketConfiguration#getMaxIdleTimeoutMilliseconds()}.
+   *
+   * @return idle timeout in milliseconds, or {@code -1} to use the container default
    */
   public long getMaxIdleTimeoutMilliseconds () {
 
@@ -107,7 +121,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return configured async send timeout
+   * Returns the configured asynchronous send timeout, forwarded from
+   * {@link WebsocketConfiguration#getAsyncSendTimeoutMilliseconds()}.
+   *
+   * @return async send timeout in milliseconds; {@code 0} means no timeout
    */
   public long getAsyncSendTimeoutMilliseconds () {
 
@@ -115,7 +132,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * @return configured maximum text buffer size
+   * Returns the configured maximum incoming text message buffer size, forwarded from
+   * {@link WebsocketConfiguration#getMaximumTextMessageBufferSize()}.
+   *
+   * @return buffer size in characters, or {@code -1} to use the container default
    */
   public int getMaximumTextMessageBufferSize () {
 
@@ -123,11 +143,13 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * Registers the websocket endpoint with the servlet container.
+   * Registers the configured {@link jakarta.websocket.Endpoint} with the JSR-356
+   * {@link ServerContainer} found in the servlet context, injecting the {@link Server} and this
+   * transport as user properties so that endpoint instances can retrieve them.
    *
-   * @param server        owning server
-   * @param servletConfig servlet configuration
-   * @throws ServletException if endpoint deployment fails
+   * @param server        the Oumuamua {@link Server} instance to expose to endpoint sessions
+   * @param servletConfig the servlet configuration providing access to the JSR-356 container
+   * @throws ServletException wrapping any {@link DeploymentException} thrown during registration
    */
   @Override
   public void init (Server<?> server, ServletConfig servletConfig)
@@ -152,10 +174,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * Ensures the configured URL begins with '/' and strips wildcards.
+   * Prepends a leading {@code /} if absent and strips a trailing {@code /*} wildcard from the URL.
    *
-   * @param url configured URL
-   * @return normalized URL path
+   * @param url the raw URL path from configuration
+   * @return the normalised path ready for JSR-356 endpoint registration
    */
   private String normalizeURL (String url) {
 
@@ -163,10 +185,10 @@ public class WebSocketTransport<V extends Value<V>> extends AbstractAttributed i
   }
 
   /**
-   * Removes trailing wildcard tokens.
+   * Removes a trailing {@code /*} wildcard segment from the URL if present.
    *
-   * @param url URL to adjust
-   * @return cleaned URL
+   * @param url the URL path to strip
+   * @return the URL without its trailing {@code /*}, or the original string if no wildcard is present
    */
   private String stripWildcard (String url) {
 

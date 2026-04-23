@@ -36,22 +36,42 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Utility for translating glob expressions into equivalent regular expressions.
+ * Utility class that translates glob expressions into equivalent compiled regular expressions.
+ * This class is not intended to be instantiated.
+ *
+ * <p>Supported glob constructs:
+ * <ul>
+ *   <li>{@code *} — matches any sequence of characters that does not contain the path
+ *       separator</li>
+ *   <li>{@code **} — matches any sequence of characters including path separators</li>
+ *   <li>{@code ?} — matches exactly one character that is not the path separator</li>
+ *   <li>{@code [abc]}, {@code [a-z]}, {@code [!abc]} — character classes</li>
+ *   <li>{@code {a,b,c}} — alternation groups</li>
+ *   <li>{@code \} — escape character</li>
+ * </ul>
  */
 public class Glob {
 
+  /**
+   * Internal parser state used when converting a glob expression character by character.
+   */
   private enum State {NORMAL, ESCAPED, BRACKETED, RANGED, GROUPED}
 
   private static final String GLOBAL_META = "\\*?[{";
   private static final String REGEX_META = ".^$+{[]|()";
 
   /**
-   * Converts a glob expression into a compiled {@link Pattern}.
+   * Converts a glob expression into a compiled {@link Pattern} anchored at both ends
+   * ({@code ^…$}). The supplied separator character is used to prevent wildcard tokens from
+   * matching path boundaries where the glob specification requires it.
    *
-   * @param separator   the path separator that must not be matched by single-segment tokens
-   * @param globPattern the glob expression to translate
-   * @return a regex pattern equivalent to the supplied glob
-   * @throws PatternSyntaxException if the glob is malformed
+   * @param separator   the path separator character (e.g., {@code '/'}) that single-segment
+   *                    wildcards ({@code *} and {@code ?}) must not match
+   * @param globPattern the glob expression to translate; must not be {@code null}
+   * @return a compiled {@link Pattern} equivalent to the supplied glob expression
+   * @throws PatternSyntaxException if the glob expression is syntactically invalid (e.g.,
+   *                                an unterminated character class, group, or escape sequence,
+   *                                or an explicit separator within a character class)
    */
   public static Pattern toRegexPattern (char separator, String globPattern) {
 

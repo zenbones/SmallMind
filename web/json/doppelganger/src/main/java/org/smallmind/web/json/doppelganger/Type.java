@@ -37,7 +37,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Describes the type (including generic parameters) of a property to be generated.
+ * Specifies the raw class and optional generic type parameters of a property to be generated.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
@@ -50,7 +50,7 @@ public @interface Type {
   Class<?> value ();
 
   /**
-   * @return any generic parameter classes in declaration order
+   * @return generic parameter classes in declaration order, if any
    */
   // the classes of the generic parameterization for the generated property
   Class[] parameters () default {};

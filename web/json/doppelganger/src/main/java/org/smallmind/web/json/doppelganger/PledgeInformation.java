@@ -37,7 +37,7 @@ import javax.lang.model.element.AnnotationMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Parsed representation of a {@link Pledge} declaration.
+ * Parsed representation of a {@link Pledge} annotation, holding the guaranteed visibility and purpose list.
  */
 public class PledgeInformation {
 
@@ -45,9 +45,9 @@ public class PledgeInformation {
   private final Visibility visibility;
 
   /**
-   * Extracts pledge visibility and purposes from the annotation.
+   * Extracts the visibility and purpose list from a {@link Pledge} annotation mirror.
    *
-   * @param pledgeAnnotationMirror pledge annotation to parse
+   * @param pledgeAnnotationMirror the annotation mirror of the {@link Pledge} to parse
    */
   public PledgeInformation (AnnotationMirror pledgeAnnotationMirror) {
 
@@ -56,7 +56,7 @@ public class PledgeInformation {
   }
 
   /**
-   * @return visibility enforced by the pledge
+   * @return the visibility for which view generation is guaranteed by this pledge
    */
   public Visibility getVisibility () {
 
@@ -64,7 +64,7 @@ public class PledgeInformation {
   }
 
   /**
-   * @return purposes that must be generated
+   * @return the purpose identifiers that must have generated views
    */
   public List<String> getPurposeList () {
 

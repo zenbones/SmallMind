@@ -44,17 +44,17 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * JAXB adapter that marshals/unmarshals polymorphic types by storing a dedicated attribute pointing
- * to the concrete subclass name defined by {@link XmlRootElement#name()}.
+ * JAXB adapter that marshals and unmarshals polymorphic types by injecting a dedicated attribute
+ * whose value is the concrete subclass key from {@link XmlRootElement#name()}.
  *
- * @param <T> polymorphic base type
+ * @param <T> polymorphic base type handled by this adapter
  */
 public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<ObjectNode, T> {
 
   private final Class<?> baseClass;
 
   /**
-   * Resolves the polymorphic base class from the generic type parameter.
+   * Resolves the polymorphic base class from the generic type argument of this adapter.
    */
   public AttributedPolymorphicXmlAdapter () {
 
@@ -62,7 +62,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
   }
 
   /**
-   * @return default attribute name used to hold the polymorphic type key
+   * @return the default attribute name used to store the polymorphic type key in JSON objects
    */
   public static String getDefaultPolymorphicAttributeName () {
 
@@ -70,11 +70,11 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
   }
 
   /**
-   * Deserializes an object node into the appropriate subclass instance based on the polymorphic attribute.
+   * Deserializes the object node into the appropriate subclass by reading the polymorphic attribute.
    *
-   * @param objectNode serialized JSON node
+   * @param objectNode JSON node containing the serialized subclass payload and polymorphic attribute
    * @return instantiated subclass
-   * @throws JAXBProcessingException if the polymorphic attribute is missing or cannot be resolved
+   * @throws JAXBProcessingException if the polymorphic attribute is absent or the key cannot be resolved
    */
   @Override
   public T unmarshal (ObjectNode objectNode) {
@@ -118,10 +118,11 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
   }
 
   /**
-   * Serializes a subclass instance and injects the polymorphic attribute used during unmarshalling.
+   * Serializes the subclass instance into a JSON object and injects the polymorphic attribute.
    *
-   * @param value object to serialize
-   * @return JSON node carrying the payload and polymorphic attribute
+   * @param value subclass instance to serialize
+   * @return JSON object carrying the payload and the polymorphic type attribute
+   * @throws JAXBProcessingException if the value is the base class itself or lacks {@link XmlRootElement}
    */
   @Override
   public ObjectNode marshal (T value) {

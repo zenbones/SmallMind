@@ -39,7 +39,9 @@ import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 /**
- * Basic file attributes held for ephemeral heap nodes.
+ * {@link BasicFileAttributes} implementation that tracks timestamps and type information for
+ * nodes held in the ephemeral heap. The file key is an immutable, globally unique hex-encoded
+ * identifier generated via {@link SnowflakeId} at construction time.
  */
 public class EphemeralBasicFileAttributes implements BasicFileAttributes {
 
@@ -54,9 +56,12 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   private FileTime creationTime;
 
   /**
-   * Initializes attributes based on the provided heap node type and current time.
+   * Initialises attributes for the given heap node. All three timestamps are set to the
+   * current wall-clock time. The {@code regularFile} and {@code directory} flags are derived
+   * from the node's {@link HeapNodeType}; symbolic links and "other" types are always
+   * {@code false}.
    *
-   * @param heapNode the node whose attributes are being tracked
+   * @param heapNode the heap node whose attributes are being tracked; must not be {@code null}
    */
   public EphemeralBasicFileAttributes (HeapNode heapNode) {
 
@@ -73,7 +78,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the time at which the file was last modified.
+   *
+   * @return the last-modified {@link FileTime}; never {@code null}
    */
   @Override
   public FileTime lastModifiedTime () {
@@ -82,9 +89,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * Updates the recorded last modified time.
+   * Updates the recorded last-modified time.
    *
-   * @param lastModifiedTime the new timestamp
+   * @param lastModifiedTime the new timestamp; must not be {@code null}
    */
   public void setLastModifiedTime (FileTime lastModifiedTime) {
 
@@ -92,7 +99,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the time at which the file was last accessed.
+   *
+   * @return the last-access {@link FileTime}; never {@code null}
    */
   @Override
   public FileTime lastAccessTime () {
@@ -101,9 +110,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * Updates the recorded last access time.
+   * Updates the recorded last-access time.
    *
-   * @param lastAccessTime the new timestamp
+   * @param lastAccessTime the new timestamp; must not be {@code null}
    */
   public void setLastAccessTime (FileTime lastAccessTime) {
 
@@ -111,7 +120,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the creation time of the file.
+   *
+   * @return the creation {@link FileTime}; never {@code null}
    */
   @Override
   public FileTime creationTime () {
@@ -122,7 +133,7 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   /**
    * Updates the recorded creation time.
    *
-   * @param creationTime the new timestamp
+   * @param creationTime the new timestamp; must not be {@code null}
    */
   public void setCreationTime (FileTime creationTime) {
 
@@ -130,7 +141,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether the heap node represents a regular file.
+   *
+   * @return {@code true} if the node is of type {@link HeapNodeType#FILE}
    */
   @Override
   public boolean isRegularFile () {
@@ -139,7 +152,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether the heap node represents a directory.
+   *
+   * @return {@code true} if the node is of type {@link HeapNodeType#DIRECTORY}
    */
   @Override
   public boolean isDirectory () {
@@ -148,7 +163,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether the heap node represents a symbolic link.
+   *
+   * @return always {@code false}; symbolic links are not supported
    */
   @Override
   public boolean isSymbolicLink () {
@@ -157,7 +174,10 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether the heap node represents a file type other than a regular file,
+   * directory, or symbolic link.
+   *
+   * @return always {@code false}
    */
   @Override
   public boolean isOther () {
@@ -166,7 +186,9 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the size of the file in bytes as reported by the underlying heap node.
+   *
+   * @return the file size in bytes
    */
   @Override
   public long size () {
@@ -175,7 +197,10 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a unique, immutable object that identifies the file. The key is a hex-encoded
+   * Snowflake identifier assigned at construction time.
+   *
+   * @return a non-{@code null} hex string that is unique across all attribute instances
    */
   @Override
   public Object fileKey () {

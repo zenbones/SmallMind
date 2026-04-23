@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Locale;
 
 /**
- * Helpers for working with {@link Locale} instances.
+ * Utility methods for looking up {@link Locale} instances by ISO country codes.
  */
 public class LocaleUtility {
 
@@ -53,10 +53,10 @@ public class LocaleUtility {
   }
 
   /**
-   * Looks up a locale by 3-letter ISO country code.
+   * Returns the {@link Locale} associated with the given ISO 3166-1 alpha-3 country code.
    *
-   * @param countryISO3Code ISO 3166-1 alpha-3 country code
-   * @return matching locale or {@code null} if none is registered
+   * @param countryISO3Code the three-letter ISO 3166-1 alpha-3 country code to look up
+   * @return the matching locale, or {@code null} if no locale is registered for the code
    */
   public static Locale forCountryISO3Code (String countryISO3Code) {
 

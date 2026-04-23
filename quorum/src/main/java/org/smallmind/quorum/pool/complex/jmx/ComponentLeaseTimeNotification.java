@@ -36,19 +36,35 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
 
 /**
- * JMX notification reporting the lease time of a component.
+ * JMX notification emitted by {@link ComponentPoolMonitor} each time a component is returned
+ * to the pool and lease-time reporting is enabled.
+ * <p>
+ * Each instance carries the lease duration in nanoseconds and is assigned a globally unique,
+ * monotonically increasing sequence number. The notification type is {@link #TYPE}
+ * ({@value #TYPE}), which can be used in {@link javax.management.NotificationFilter}
+ * implementations to select only lease-time notifications.
  */
 public class ComponentLeaseTimeNotification extends Notification {
 
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
+
+  /**
+   * Notification type string identifying lease-time notifications.
+   */
   public static final String TYPE = "LEASE_TIME";
+
   private final long leaseTimeNanos;
 
   /**
-   * Creates the notification with the lease duration.
+   * Creates the notification with the given source and lease duration.
+   * <p>
+   * The sequence number is auto-incremented from a class-level counter; the timestamp is
+   * set to the current wall-clock time.
    *
-   * @param source         MBean source
-   * @param leaseTimeNanos lease duration in nanoseconds
+   * @param source         the MBean object that is the source of this notification (typically
+   *                       the {@link javax.management.ObjectName} of the
+   *                       {@link ComponentPoolMonitor})
+   * @param leaseTimeNanos the duration in nanoseconds for which the component was leased
    */
   public ComponentLeaseTimeNotification (Object source, long leaseTimeNanos) {
 
@@ -58,9 +74,9 @@ public class ComponentLeaseTimeNotification extends Notification {
   }
 
   /**
-   * Returns the lease duration in nanoseconds.
+   * Returns the lease duration in nanoseconds carried by this notification.
    *
-   * @return lease time
+   * @return the lease time in nanoseconds
    */
   public long getLeaseTimeNanos () {
 

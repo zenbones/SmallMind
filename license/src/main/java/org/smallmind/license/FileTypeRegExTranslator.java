@@ -1,17 +1,23 @@
 package org.smallmind.license;
 
 /**
- * Utility for translating file type patterns containing wildcards into equivalent regular expressions that can be
- * applied to file names.
+ * Translates glob-style file name patterns into Java regular expressions suitable for use with
+ * {@link java.util.regex.Pattern}.
+ *
+ * <p>The translation handles a small, fixed set of special characters: {@code $} and {@code .}
+ * are escaped to their literal equivalents, {@code *} becomes {@code .*}, and {@code ?} becomes
+ * {@code .?}. Every other character is copied verbatim, so the resulting string can be passed
+ * directly to {@link java.util.regex.Pattern#compile(String)}.
  */
 public class FileTypeRegExTranslator {
 
   /**
-   * Converts a glob-like file pattern into a Java regular expression, escaping regex meta characters and translating
-   * wildcard symbols to their regex equivalents.
+   * Converts a glob-style file name pattern into an equivalent regular expression string.
    *
-   * @param pattern the file type pattern containing characters such as {@code *} and {@code ?}
-   * @return the translated pattern that can be compiled as a {@link java.util.regex.Pattern}
+   * @param pattern a file name pattern optionally containing {@code *} and {@code ?} wildcards;
+   *                must not be {@code null}
+   * @return a regular expression string that can be compiled via
+   * {@link java.util.regex.Pattern#compile(String)}; never {@code null}
    */
   public static String translate (String pattern) {
 

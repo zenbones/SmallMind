@@ -36,7 +36,8 @@ import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 import org.smallmind.scribe.pen.Level;
 
 /**
- * JAXB adapter for the {@link Level} enum.
+ * JAXB adapter that marshals and unmarshals the Scribe {@link Level} enum to and from its string name in XML,
+ * delegating all conversion logic to the generic {@link EnumXmlAdapter} base class.
  */
 public class LevelEnumXmlAdapter extends EnumXmlAdapter<Level> {
 

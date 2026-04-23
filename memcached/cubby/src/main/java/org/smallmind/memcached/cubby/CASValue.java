@@ -38,9 +38,16 @@ import org.smallmind.memcached.cubby.command.Result;
 import org.smallmind.memcached.utility.ProxyCASResponse;
 
 /**
- * Holder for a value and its associated CAS token returned by memcached.
+ * An immutable holder that pairs a deserialized cache value with its memcached CAS token.
  *
- * @param <T> value type
+ * <p>{@code CASValue} is returned by {@link CubbyMemcachedClient#casGet casGet} and
+ * {@link CubbyMemcachedClient#casGetAndTouch casGetAndTouch}. The embedded CAS token must be
+ * supplied to a subsequent {@link CubbyMemcachedClient#casSet casSet} or
+ * {@link CubbyMemcachedClient#casDelete casDelete} call to perform an optimistic-locking
+ * update. If the server value has been modified since the token was issued the operation
+ * will fail.</p>
+ *
+ * @param <T> the type of the cached value
  */
 public class CASValue<T> implements ProxyCASResponse<T> {
 
@@ -48,12 +55,12 @@ public class CASValue<T> implements ProxyCASResponse<T> {
   private final long cas;
 
   /**
-   * Constructs a CASValue by decoding a raw memcached result.
+   * Constructs a {@code CASValue} by deserializing the payload contained in a raw command result.
    *
-   * @param result command result containing serialized bytes and CAS token
-   * @param codec  codec used to deserialize the payload
-   * @throws IOException            if deserialization fails due to I/O
-   * @throws ClassNotFoundException if the value class cannot be resolved
+   * @param result the command result carrying the serialized bytes and the CAS token
+   * @param codec  the codec used to deserialize the payload into the target type
+   * @throws IOException            if an I/O error occurs during deserialization
+   * @throws ClassNotFoundException if the class of the deserialized object cannot be found
    */
   public CASValue (Result result, CubbyCodec codec)
     throws IOException, ClassNotFoundException {
@@ -62,10 +69,10 @@ public class CASValue<T> implements ProxyCASResponse<T> {
   }
 
   /**
-   * Constructs a CASValue with an already decoded value.
+   * Constructs a {@code CASValue} from an already-decoded value and its associated CAS token.
    *
-   * @param cas   compare-and-swap token from memcached
-   * @param value decoded value
+   * @param cas   the compare-and-swap token returned by the memcached server
+   * @param value the decoded cache value
    */
   public CASValue (long cas, T value) {
 
@@ -74,7 +81,9 @@ public class CASValue<T> implements ProxyCASResponse<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the CAS token associated with this value.
+   *
+   * @return the compare-and-swap token, as assigned by the memcached server
    */
   @Override
   public long getCas () {
@@ -83,7 +92,9 @@ public class CASValue<T> implements ProxyCASResponse<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the deserialized cache value.
+   *
+   * @return the cached value; may be {@code null} if the server stored a null
    */
   @Override
   public T getValue () {

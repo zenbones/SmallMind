@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * Supported asymmetric key algorithms and their JCA names.
+ * Enumeration of supported asymmetric key algorithms together with their JCA algorithm names.
  */
 public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
@@ -42,7 +42,9 @@ public enum AsymmetricAlgorithm implements SecurityAlgorithm {
   private final String algorithmName;
 
   /**
-   * @param algorithmName the JCA algorithm name
+   * Constructs an enum constant with the given JCA algorithm name.
+   *
+   * @param algorithmName the JCA algorithm name used to create cryptographic primitives
    */
   AsymmetricAlgorithm (String algorithmName) {
 
@@ -50,7 +52,9 @@ public enum AsymmetricAlgorithm implements SecurityAlgorithm {
   }
 
   /**
-   * @return the JCA name used to create crypto primitives
+   * Returns the JCA algorithm name used when instantiating key pairs and related primitives.
+   *
+   * @return the JCA algorithm name string
    */
   public String getAlgorithmName () {
 

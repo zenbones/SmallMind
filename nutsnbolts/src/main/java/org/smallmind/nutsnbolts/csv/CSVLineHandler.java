@@ -33,26 +33,26 @@
 package org.smallmind.nutsnbolts.csv;
 
 /**
- * Callback interface for streaming CSV parsing events.
+ * SAX-style callback interface for event-driven CSV parsing; implementations receive document start/end notifications and one call per parsed record.
  */
 public interface CSVLineHandler {
 
   /**
-   * Invoked before the first row is read.
+   * Called once before any records are processed, allowing implementations to initialize state.
    */
   void startDocument ();
 
   /**
-   * Processes a parsed record.
+   * Called once for each parsed record with the field values for that row.
    *
-   * @param fields fields for the current row
-   * @throws CSVParseException if the row cannot be consumed
+   * @param fields array of field values for the current record
+   * @throws CSVParseException if the record cannot be processed
    */
   void handleFields (String[] fields)
     throws CSVParseException;
 
   /**
-   * Invoked after the last row has been processed.
+   * Called once after all records have been processed, allowing implementations to finalize state.
    */
   void endDocument ();
 }

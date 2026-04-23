@@ -42,9 +42,10 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring initialization hook that installs configured {@link CronTrigger}
- * and {@link JobDetail} pairs into a Quartz {@link Scheduler}. Existing jobs
- * or triggers are compared and updated only when definitions differ.
+ * Spring {@link InitializingBean} that synchronizes a set of
+ * {@link JobDetail}/{@link CronTrigger} pairs with a Quartz {@link Scheduler}
+ * during context startup. Jobs and triggers are added if absent, or replaced
+ * when their definitions have changed since last registration.
  */
 public class CronJobInitializingBean implements InitializingBean {
 
@@ -52,7 +53,7 @@ public class CronJobInitializingBean implements InitializingBean {
   private Scheduler scheduler;
 
   /**
-   * Construct with an empty job map ready to receive configured entries.
+   * Creates an instance with an empty job map.
    */
   public CronJobInitializingBean () {
 
@@ -60,9 +61,9 @@ public class CronJobInitializingBean implements InitializingBean {
   }
 
   /**
-   * Inject the target scheduler that will host the jobs.
+   * Sets the scheduler into which jobs and triggers will be installed.
    *
-   * @param scheduler scheduler instance to configure
+   * @param scheduler target Quartz scheduler
    */
   public void setScheduler (Scheduler scheduler) {
 
@@ -70,9 +71,10 @@ public class CronJobInitializingBean implements InitializingBean {
   }
 
   /**
-   * Provide the jobs and associated cron triggers to install.
+   * Supplies the job definitions and their associated triggers to register.
+   * All entries are merged into the internal map.
    *
-   * @param jobMap mapping of {@link JobDetail} to one or more {@link CronTrigger}s
+   * @param jobMap map of {@link JobDetail} to one or more {@link CronTrigger}s
    */
   public void setJobMap (Map<JobDetail, List<CronTrigger>> jobMap) {
 
@@ -80,9 +82,11 @@ public class CronJobInitializingBean implements InitializingBean {
   }
 
   /**
-   * Install or update configured jobs and triggers once Spring finishes
-   * property injection. Differences in job configuration or cron expressions
-   * trigger replacement of existing definitions.
+   * Iterates the configured job map and registers each job and trigger with
+   * the scheduler. A missing job is added; a changed job is replaced. A
+   * missing trigger is scheduled; a trigger whose cron expression has changed
+   * is rescheduled. Errors for individual entries are logged and do not abort
+   * processing of remaining entries.
    */
   public void afterPropertiesSet () {
 
@@ -111,13 +115,14 @@ public class CronJobInitializingBean implements InitializingBean {
   }
 
   /**
-   * Compare two {@link JobDetail} instances for configuration equivalence,
-   * including durability, recovery, concurrency, persistence, and job data
-   * content.
+   * Performs a field-by-field comparison of two {@link JobDetail} instances
+   * to determine whether the desired definition differs from what is currently
+   * installed in the scheduler. Compares durability, recovery, concurrency,
+   * persistence flags, and the full job data map.
    *
-   * @param jobDetail          desired job definition
-   * @param installedJobDetail job currently installed in the scheduler
-   * @return {@code true} when the definitions match, {@code false} otherwise
+   * @param jobDetail          the desired job definition
+   * @param installedJobDetail the definition currently held by the scheduler
+   * @return {@code true} if all compared fields are equal, {@code false} on any difference
    */
   private boolean isSame (JobDetail jobDetail, JobDetail installedJobDetail) {
 

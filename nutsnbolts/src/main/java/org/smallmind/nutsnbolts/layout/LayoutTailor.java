@@ -40,8 +40,8 @@ import java.util.Map;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Coordinates measurement caching and two-dimensional layout application across horizontal and vertical boxes.
- * Ensures components are constrained along both axes and prevents reuse of the same box/component in multiple parents.
+ * Coordinates a single layout pass by caching element measurements, tracking partial axis solutions,
+ * and enforcing that every component appears in exactly one horizontal and one vertical box.
  */
 public class LayoutTailor {
 
@@ -50,9 +50,10 @@ public class LayoutTailor {
   private final HashSet<Object> completedSet = new HashSet<Object>();
 
   /**
-   * Initializes the tailor with the set of components expected to be laid out.
+   * Initializes the tailor by pre-registering all components that are expected to receive layout constraints,
+   * allowing {@link #cleanup()} to detect any that were never placed.
    *
-   * @param componentList the components participating in layout
+   * @param componentList the complete list of platform components participating in this layout pass
    */
   public LayoutTailor (List<?> componentList) {
 
@@ -62,12 +63,13 @@ public class LayoutTailor {
   }
 
   /**
-   * Stores a measurement for a part on a given axis and tape measure type.
+   * Caches a measurement for the given part, axis, and measurement type so that repeated
+   * queries for the same combination avoid redundant computation.
    *
-   * @param part        the part being measured
-   * @param bias        the axis of measurement
-   * @param tapeMeasure the measurement type
-   * @param measurement the measured value
+   * @param part        the layout part whose measurement is being stored
+   * @param bias        the axis to which the measurement applies
+   * @param tapeMeasure the category of measurement (minimum, preferred, or maximum)
+   * @param measurement the computed measurement value to cache
    */
   public void store (Object part, Bias bias, TapeMeasure tapeMeasure, double measurement) {
 
@@ -75,12 +77,12 @@ public class LayoutTailor {
   }
 
   /**
-   * Looks up a previously stored measurement for a part.
+   * Retrieves a previously cached measurement for the given part, axis, and measurement type.
    *
-   * @param part        the part being measured
-   * @param bias        the axis of measurement
-   * @param tapeMeasure the measurement type
-   * @return the cached measurement or {@code null} if not stored
+   * @param part        the layout part whose measurement is requested
+   * @param bias        the axis of the requested measurement
+   * @param tapeMeasure the category of measurement (minimum, preferred, or maximum)
+   * @return the cached measurement, or {@code null} if no value has been stored for this combination
    */
   public Double lookup (Object part, Bias bias, TapeMeasure tapeMeasure) {
 
@@ -88,14 +90,17 @@ public class LayoutTailor {
   }
 
   /**
-   * Applies layout to an element, coordinating between linear and planar parts. Enforces that planar parts
-   * receive constraints along both axes before final layout is applied.
+   * Records the resolved position and size for an element along one axis, and for planar elements
+   * invokes the final two-axis placement once both the horizontal and vertical constraints are known.
+   * Linear elements are placed immediately; planar elements must be visited by both a horizontal and
+   * a vertical box before placement occurs.
    *
-   * @param bias        the axis being laid out
-   * @param position    the position along that axis
-   * @param measurement the measurement along that axis
-   * @param element     the element to lay out
-   * @throws LayoutException if elements are reused improperly or missing constraints
+   * @param bias        the axis being resolved in this call
+   * @param position    the starting offset along the axis
+   * @param measurement the allocated size along the axis
+   * @param element     the element to place
+   * @throws LayoutException if a box or component is placed in more than one parent along the same axis,
+   *                         or if a box element is reused across multiple parent boxes
    */
   public void applyLayout (Bias bias, double position, double measurement, ParaboxElement<?> element) {
 
@@ -142,10 +147,10 @@ public class LayoutTailor {
   }
 
   /**
-   * Verifies that all components have been fully constrained and laid out, throwing when any are missing
-   * a corresponding horizontal or vertical placement.
+   * Verifies that every pre-registered component received constraints along both axes during the layout pass,
+   * throwing a {@link LayoutException} describing the first component found to be incompletely placed.
    *
-   * @throws LayoutException if any component is missing required constraints
+   * @throws LayoutException if any component was never added to any box, or was added to only one axis's box
    */
   public void cleanup () {
 

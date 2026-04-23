@@ -63,21 +63,40 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Tooling that consumes {@code mvn dependency:analyze} output to remove unused dependencies,
- * add used but undeclared dependencies, and fix scopes, rewriting affected {@code pom.xml} files.
+ * Runs {@code mvn dependency:analyze} on each module in a Maven project tree and rewrites the
+ * affected {@code pom.xml} files to remove unused declared dependencies, add used-but-undeclared
+ * dependencies, and narrow over-scoped dependencies to {@code test} scope. Hidden directories
+ * (any path segment starting with {@code '.'}) and the project root itself are skipped.
  */
 public class DependencyReducer {
 
   /**
-   * States used while parsing the output of {@code mvn dependency:analyze}.
+   * Parse states used while consuming sections of {@code mvn dependency:analyze} output.
    */
-  private enum ParseState {IGNORED, USED_UNDECLARED, UNUSED_DECLARED, NON_TEST_SCOPED_TEST_ONLY}
+  private enum ParseState {
+    /**
+     * Lines in this state are outside any recognized section and are discarded.
+     */
+    IGNORED,
+    /**
+     * Lines in this state list dependencies used in compiled sources but absent from the pom.
+     */
+    USED_UNDECLARED,
+    /**
+     * Lines in this state list dependencies declared in the pom but absent from compiled sources.
+     */
+    UNUSED_DECLARED,
+    /**
+     * Lines in this state list dependencies declared with a broader scope than test-only usage requires.
+     */
+    NON_TEST_SCOPED_TEST_ONLY
+  }
 
   /**
-   * Entry point that accepts the root of a Maven project tree to process.
+   * Command-line entry point.
    *
-   * @param args command line arguments; the first argument must be the project root path
-   * @throws IOException if file traversal or process execution fails
+   * @param args command-line arguments; {@code args[0]} must be the root path of the Maven project to process
+   * @throws IOException if file traversal or Maven execution fails
    */
   static void main (String... args)
     throws IOException {
@@ -86,10 +105,13 @@ public class DependencyReducer {
   }
 
   /**
-   * Walk the project tree, running {@code mvn dependency:analyze} for each module and applying the results.
+   * Recursively visit every Maven module under {@code projectPath}, run {@code mvn dependency:analyze},
+   * and rewrite any {@code pom.xml} files that require corrections.
    *
-   * @param projectPath the root path to inspect
-   * @throws IOException if file traversal or process execution fails
+   * <p>Directories whose path contains a dot-prefixed segment and the project root itself are skipped.
+   *
+   * @param projectPath root of the Maven project tree to process
+   * @throws IOException if directory traversal, Maven process execution, or pom rewriting fails
    */
   public static void walkProject (Path projectPath)
     throws IOException {
@@ -154,11 +176,14 @@ public class DependencyReducer {
   }
 
   /**
-   * Locate the Maven executable appropriate for the current operating system.
+   * Locate the Maven executable for the current operating system.
    *
-   * @param commandDir the working directory used while probing for Maven
-   * @return the resolved Maven command path, or {@code null} if none can be found
-   * @throws IOException if the lookup command cannot be executed
+   * <p>Delegates to {@link MavenCommandLocator#inWindows} on Windows or
+   * {@link MavenCommandLocator#inLinux} on all other platforms.
+   *
+   * @param commandDir working directory passed to the locator command
+   * @return the absolute path to the Maven executable, or {@code null} if Maven is not on the PATH
+   * @throws IOException if the operating-system probe command cannot be executed
    */
   private static String findMavenCommand (Path commandDir)
     throws IOException {
@@ -173,10 +198,10 @@ public class DependencyReducer {
   }
 
   /**
-   * Determine whether the path includes any hidden (dot-prefixed) elements.
+   * Test whether any segment of {@code path} begins with a dot, indicating a hidden or internal directory.
    *
-   * @param path the path to test
-   * @return {@code true} when any segment begins with '.', otherwise {@code false}
+   * @param path the path to inspect
+   * @return {@code true} if any name component starts with {@code '.'}, otherwise {@code false}
    */
   private static boolean dottedPath (Path path) {
 
@@ -191,16 +216,17 @@ public class DependencyReducer {
   }
 
   /**
-   * Rewrite a pom to reflect dependency analysis: remove unused, add missing, and adjust scopes.
+   * Parse the pom at {@code pomPath}, apply the supplied dependency adjustments, and write the
+   * result back only if changes were made.
    *
-   * @param pomPath                   path to the pom file
-   * @param usedUndeclaredList        dependencies detected as used but undeclared
-   * @param unusedDeclaredList        dependencies declared but unused
-   * @param nonTestScopedTestOnlyList dependencies that should be marked as test scope
-   * @throws IOException                  if the pom cannot be read or written
-   * @throws SAXException                 if XML parsing fails
-   * @throws ParserConfigurationException if a document builder cannot be created
-   * @throws TransformerException         if the updated document cannot be written
+   * @param pomPath                   path to the {@code pom.xml} to update
+   * @param usedUndeclaredList        dependencies found in compiled sources but missing from the pom
+   * @param unusedDeclaredList        dependencies declared in the pom but absent from compiled sources
+   * @param nonTestScopedTestOnlyList dependencies that should be narrowed to {@code test} scope
+   * @throws IOException                  if the file cannot be read or written
+   * @throws SAXException                 if the XML cannot be parsed
+   * @throws ParserConfigurationException if a DOM builder cannot be created
+   * @throws TransformerException         if the updated document cannot be serialized
    */
   private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
@@ -254,13 +280,16 @@ public class DependencyReducer {
   }
 
   /**
-   * Apply dependency adjustments to a single dependencies node.
+   * Apply the three categories of dependency corrections to a {@code <dependencies>} DOM node.
    *
-   * @param parentNode                the dependencies node being modified
-   * @param usedUndeclaredList        dependencies detected as used but undeclared
-   * @param unusedDeclaredList        dependencies declared but unused
-   * @param nonTestScopedTestOnlyList dependencies that should be marked as test scope
-   * @return a replacement node reflecting the adjustments, or {@code null} if no changes are needed
+   * <p>Unused declared dependencies are removed, used undeclared ones are added, and
+   * over-scoped dependencies have their scope changed to {@code test}. The resulting list is sorted.
+   *
+   * @param parentNode                the {@code <dependencies>} node to adjust
+   * @param usedUndeclaredList        dependencies to add
+   * @param unusedDeclaredList        dependencies to remove
+   * @param nonTestScopedTestOnlyList dependencies whose scope should be narrowed to {@code test}
+   * @return a replacement node with all adjustments applied, or {@code null} if no changes were needed
    */
   private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList) {
 
@@ -339,11 +368,14 @@ public class DependencyReducer {
   }
 
   /**
-   * Create a dependency element from a parsed reference.
+   * Build a minimal {@code <dependency>} DOM element from a parsed reference.
    *
-   * @param document            the owning document
-   * @param dependencyReference the reference describing the dependency
-   * @return a populated dependency element
+   * <p>The generated element contains only {@code <groupId>}, {@code <artifactId>}, and
+   * {@code <scope>} children; no {@code <version>} is emitted.
+   *
+   * @param document            the DOM document that will own the new element
+   * @param dependencyReference the parsed reference providing groupId, artifactId, and scope
+   * @return a new {@code <dependency>} element populated with the reference values
    */
   private static Element createDependencyElement (Document document, DependencyReference dependencyReference) {
 

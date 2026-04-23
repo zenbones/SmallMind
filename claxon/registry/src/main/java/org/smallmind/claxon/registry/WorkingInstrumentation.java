@@ -40,23 +40,50 @@ import org.smallmind.nutsnbolts.util.SansResultExecutable;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
 /**
- * Active instrumentation that registers meters with the registry and records updates or timings.
+ * Active {@link Instrumentation} implementation that registers meters with a
+ * {@link ClaxonRegistry} and records measurement updates or execution timings. Unlike
+ * {@link UnpluggedInstrumentation}, every method in this class interacts with the registry
+ * to ensure that metrics are captured and forwarded to the configured emitters.
+ *
+ * <p>The time unit used when reporting elapsed durations defaults to
+ * {@link TimeUnit#MILLISECONDS} and can be changed via {@link #as(TimeUnit)}.
  */
 public class WorkingInstrumentation implements Instrumentation {
 
+  /**
+   * Registry used to look up or create meters for this instrumentation.
+   */
   private final ClaxonRegistry registry;
+
+  /**
+   * Builder that describes the type and configuration of the meter to register.
+   */
   private final MeterBuilder<? extends Meter> builder;
+
+  /**
+   * Tags attached to every meter created by this instrumentation.
+   */
   private final Tag[] tags;
+
+  /**
+   * The class on whose behalf metrics are being recorded.
+   */
   private final Class<?> caller;
+
+  /**
+   * Time unit applied when converting nanosecond durations before updating a meter.
+   * Defaults to {@link TimeUnit#MILLISECONDS}.
+   */
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
   /**
-   * Creates an instrumentation tied to a registry, caller, meter builder, and tags.
+   * Constructs a working instrumentation bound to the given registry, caller, meter builder,
+   * and tags.
    *
-   * @param registry registry used to register meters
-   * @param caller   class requesting metrics
-   * @param builder  builder that constructs meters
-   * @param tags     tags to attach to the meter
+   * @param registry registry used to register and retrieve meters
+   * @param caller   the class on whose behalf metrics are recorded; used as part of the meter key
+   * @param builder  builder that describes how to construct the meter if it does not yet exist
+   * @param tags     dimensional tags attached to the meter; may be empty but must not be {@code null}
    */
   public WorkingInstrumentation (ClaxonRegistry registry, Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 
@@ -67,10 +94,12 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Uses a custom time unit for subsequent updates.
+   * Returns a new view of this instrumentation that reports elapsed durations in the
+   * specified time unit. The change affects all subsequent calls to {@link #update(long)},
+   * {@link #on(SansResultExecutable)}, and {@link #on(WithResultExecutable)}.
    *
-   * @param timeUnit desired time unit for updates
-   * @return this instrumentation for chaining
+   * @param timeUnit the desired time unit for elapsed-duration reporting
+   * @return this instrumentation instance with the updated time unit
    */
   @Override
   public WorkingInstrumentation as (TimeUnit timeUnit) {
@@ -81,12 +110,15 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Registers a meter for the measured object and schedules updates via the supplied measurement function.
+   * Registers a meter for the measured object and arranges for the registry to periodically
+   * sample it using the supplied measurement function. If {@code measurement} is {@code null},
+   * the measured object is returned as-is without any tracking being established.
    *
-   * @param measured    object to measure
-   * @param measurement function converting the object into a long value
-   * @param <T>         measured type
-   * @return the measured object
+   * @param measured    the object whose state should be periodically measured
+   * @param measurement a function that extracts a {@code long} sample value from the object;
+   *                    {@code null} disables tracking
+   * @param <T>         the type of the measured object
+   * @return the {@code measured} object, unmodified
    */
   @Override
   public <T> T track (T measured, Function<T, Long> measurement) {
@@ -95,9 +127,10 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Records a value using the current time unit.
+   * Records a raw value directly to the meter registered for this instrumentation. The value
+   * is passed to the meter without any time-unit conversion.
    *
-   * @param value value to record
+   * @param value the raw value to record
    */
   @Override
   public void update (long value) {
@@ -106,10 +139,11 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Records a value while converting from the provided time unit to the configured one.
+   * Records a value expressed in the given time unit, converting it to the time unit
+   * configured on this instrumentation before passing it to the meter.
    *
-   * @param value         value to record
-   * @param valueTimeUnit time unit associated with the value
+   * @param value         the value to record
+   * @param valueTimeUnit the time unit in which {@code value} is expressed
    */
   @Override
   public void update (long value, TimeUnit valueTimeUnit) {
@@ -118,10 +152,12 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Executes code while recording the execution duration.
+   * Executes the supplied code and records the elapsed duration to the meter. The duration
+   * is measured using the registry's configured {@link Clock} and converted to the
+   * instrumentation's time unit before being recorded.
    *
-   * @param sansResultExecutable executable to run
-   * @throws Throwable propagated from the executable
+   * @param sansResultExecutable the executable to time; must not be {@code null}
+   * @throws Throwable any exception propagated from {@link SansResultExecutable#execute()}
    */
   @Override
   public void on (SansResultExecutable sansResultExecutable)
@@ -139,12 +175,15 @@ public class WorkingInstrumentation implements Instrumentation {
   }
 
   /**
-   * Executes code while recording the execution duration and returning the result.
+   * Executes the supplied code, records the elapsed duration to the meter, and returns the
+   * result. The duration is measured using the registry's configured {@link Clock} and
+   * converted to the instrumentation's time unit before being recorded. If the executable is
+   * {@code null}, {@code null} is returned immediately without registering or updating any meter.
    *
-   * @param withResultExecutable executable to run
-   * @param <T>                  result type
-   * @return the executable result or {@code null} when the executable is absent
-   * @throws Throwable propagated from the executable
+   * @param withResultExecutable the executable to time; may be {@code null}
+   * @param <T>                  the return type of the executable
+   * @return the value returned by the executable, or {@code null} if the executable is {@code null}
+   * @throws Throwable any exception propagated from {@link WithResultExecutable#execute()}
    */
   @Override
   public <T> T on (WithResultExecutable<T> withResultExecutable)

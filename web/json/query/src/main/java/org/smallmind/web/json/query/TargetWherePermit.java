@@ -33,12 +33,12 @@
 package org.smallmind.web.json.query;
 
 /**
- * Represents a requested field encountered in a where clause (the target being validated).
+ * {@link WherePermit} representing a field actually referenced in a where or sort clause, used during validation matching.
  */
 public class TargetWherePermit extends WherePermit {
 
   /**
-   * Creates a target permit scoped to an entity.
+   * Creates a target permit scoped to the given entity.
    *
    * @param entity entity alias
    * @param name   field name
@@ -49,7 +49,7 @@ public class TargetWherePermit extends WherePermit {
   }
 
   /**
-   * Creates a target permit in the default entity context.
+   * Creates a target permit for the default entity context.
    *
    * @param name field name
    */
@@ -63,7 +63,7 @@ public class TargetWherePermit extends WherePermit {
    *
    * @param entity entity alias
    * @param name   field name
-   * @return target permit
+   * @return new target permit
    */
   public static TargetWherePermit instance (String entity, String name) {
 
@@ -71,7 +71,9 @@ public class TargetWherePermit extends WherePermit {
   }
 
   /**
-   * @return {@link PermitType#ALLOWED} to denote a target field
+   * Returns the permit type identifying this as an allowed (target) field.
+   *
+   * @return {@link PermitType#ALLOWED}
    */
   @Override
   public PermitType getType () {

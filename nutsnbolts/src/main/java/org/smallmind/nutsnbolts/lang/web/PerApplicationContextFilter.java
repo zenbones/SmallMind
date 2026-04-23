@@ -42,8 +42,8 @@ import jakarta.servlet.ServletResponse;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 
 /**
- * Servlet {@link Filter} that initializes and propagates a {@link PerApplicationContext} into
- * each request thread. Optionally suppresses noisy connection-closed exceptions.
+ * Servlet filter that binds a shared {@link PerApplicationContext} to each request thread and optionally suppresses
+ * "Connection is closed" {@link IOException}s thrown during filter chain execution.
  */
 public class PerApplicationContextFilter implements Filter {
 
@@ -51,16 +51,17 @@ public class PerApplicationContextFilter implements Filter {
   private boolean suppressConnectionClosedException;
 
   /**
-   * Creates a filter with default behavior (connection closed exceptions are propagated).
+   * Constructs a filter that does not suppress connection-closed {@link IOException}s.
    */
   public PerApplicationContextFilter () {
 
   }
 
   /**
-   * Creates a filter with control over connection-closed exception suppression.
+   * Constructs a filter with explicit control over connection-closed {@link IOException} suppression.
    *
-   * @param suppressConnectionClosedException {@code true} to swallow "Connection is closed" IOExceptions
+   * @param suppressConnectionClosedException {@code true} to silently discard {@link IOException}s whose message is
+   *                                          {@code "Connection is closed"}
    */
   public PerApplicationContextFilter (boolean suppressConnectionClosedException) {
 
@@ -68,10 +69,11 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
-   * Configures suppression of "Connection is closed" IOExceptions thrown from the filter chain.
+   * Sets whether {@link IOException}s with the message {@code "Connection is closed"} are suppressed, and returns
+   * this filter instance to support method chaining.
    *
-   * @param suppressConnectionClosedException whether to suppress the exception
-   * @return this filter for chaining
+   * @param suppressConnectionClosedException {@code true} to suppress connection-closed exceptions
+   * @return this filter instance
    */
   public PerApplicationContextFilter setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
@@ -81,9 +83,10 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
-   * Initializes the filter, ensuring a {@link PerApplicationContext} is present on the servlet context.
+   * Retrieves or creates the shared {@link PerApplicationContext} from the servlet context attribute keyed by
+   * {@link PerApplicationContext}'s class name.
    *
-   * @param filterConfig the filter configuration supplied by the container
+   * @param filterConfig the filter configuration supplied by the servlet container
    */
   @Override
   public void init (FilterConfig filterConfig) {
@@ -94,14 +97,14 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
-   * Prepares the per-application context for the current thread and delegates the request.
-   * Optionally suppresses benign connection-closed IOExceptions from downstream filters.
+   * Prepares the per-application context on the current thread, then invokes the rest of the filter chain,
+   * optionally swallowing connection-closed {@link IOException}s.
    *
-   * @param request  the incoming request
-   * @param response the outgoing response
-   * @param chain    the filter chain
-   * @throws IOException      if an I/O error occurs and suppression is disabled
-   * @throws ServletException if a downstream filter or servlet fails
+   * @param request  the current servlet request
+   * @param response the current servlet response
+   * @param chain    the remaining filter chain to invoke
+   * @throws IOException      if an I/O error occurs and suppression of connection-closed exceptions is not enabled
+   * @throws ServletException if a servlet error is thrown by the filter chain
    */
   @Override
   public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
@@ -118,7 +121,7 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op destroy callback; this filter holds no resources that require release.
    */
   @Override
   public void destroy () {

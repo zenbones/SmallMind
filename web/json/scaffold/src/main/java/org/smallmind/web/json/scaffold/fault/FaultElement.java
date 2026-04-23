@@ -40,7 +40,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * Represents a single stack trace element within a {@link Fault}.
+ * Serializable representation of a single stack trace frame within a {@link Fault}.
  */
 @XmlRootElement(name = "element", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -59,10 +59,10 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Creates an element with a declaring type and function name (no source info).
+   * Creates an element with a class and method name but no source location.
    *
    * @param declaringType fully qualified class name
-   * @param functionName  method/function name
+   * @param functionName  method name
    */
   public FaultElement (String declaringType, String functionName) {
 
@@ -73,12 +73,12 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Creates an element with full source information.
+   * Creates an element with full source location information.
    *
    * @param declaringType fully qualified class name
-   * @param functionName  method/function name
-   * @param fileName      source file
-   * @param lineNumber    source line (or -1 if unavailable)
+   * @param functionName  method name
+   * @param fileName      source file name
+   * @param lineNumber    source line number, or -1 if unavailable
    */
   public FaultElement (String declaringType, String functionName, String fileName, int lineNumber) {
 
@@ -91,7 +91,7 @@ public class FaultElement implements Serializable {
   /**
    * Builds a fault element from a standard {@link StackTraceElement}.
    *
-   * @param stackTraceElement source stack trace element
+   * @param stackTraceElement JVM stack trace element to copy
    */
   public FaultElement (StackTraceElement stackTraceElement) {
 
@@ -102,7 +102,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * @return declaring class name
+   * @return fully qualified declaring class name
    */
   @XmlElement(name = "type", required = true)
   public String getDeclaringType () {
@@ -111,9 +111,9 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Sets the declaring class name.
+   * Sets the fully qualified declaring class name.
    *
-   * @param declaringType fully qualified class name
+   * @param declaringType class name
    */
   public void setDeclaringType (String declaringType) {
 
@@ -121,7 +121,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * @return method/function name
+   * @return method name
    */
   @XmlElement(name = "function", required = true)
   public String getFunctionName () {
@@ -130,7 +130,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Sets the method/function name.
+   * Sets the method name.
    *
    * @param functionName method name
    */
@@ -140,7 +140,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * @return source file name (may be {@code null})
+   * @return source file name, or {@code null} if unavailable
    */
   @XmlElement(name = "file", required = true)
   public String getFileName () {
@@ -159,7 +159,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * @return source line number or -1 if unknown
+   * @return source line number, or -1 if unknown
    */
   @XmlElement(name = "line", required = true)
   public int getLineNumber () {
@@ -170,7 +170,7 @@ public class FaultElement implements Serializable {
   /**
    * Sets the source line number.
    *
-   * @param lineNumber line number (or -1 if unknown)
+   * @param lineNumber line number, or -1 if unknown
    */
   public void setLineNumber (int lineNumber) {
 
@@ -178,9 +178,9 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Renders a human-readable stack trace element string.
+   * Renders a human-readable stack trace frame string.
    *
-   * @return formatted element text
+   * @return formatted frame text
    */
   public String toString () {
 
@@ -199,7 +199,7 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Computes a hash based on stack trace element attributes.
+   * Computes a hash code based on all element attributes.
    *
    * @return hash code
    */
@@ -209,10 +209,10 @@ public class FaultElement implements Serializable {
   }
 
   /**
-   * Compares for equality against another {@link FaultElement}.
+   * Compares this element to another object for equality across all attributes.
    *
    * @param obj candidate object
-   * @return {@code true} if all element attributes match
+   * @return {@code true} if all attributes match
    */
   public boolean equals (Object obj) {
 

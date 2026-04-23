@@ -38,18 +38,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as a request/response interaction, optionally supplying a timeout override.
+ * Marks a service method as request/response: the caller blocks until the remote
+ * implementation returns a result or the timeout elapses. This is the counterpart
+ * to {@link InOnly} for methods that must return a value or propagate exceptions.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface InOut {
 
-  // Any positive value (> 0) will override the default service timeout seconds
-
   /**
-   * Timeout in seconds to apply to the conversation when greater than zero.
+   * Per-method timeout in seconds; any value greater than zero overrides the service-level
+   * default. A value of zero or less means the service default applies.
    *
-   * @return custom timeout duration
+   * @return positive override timeout in seconds, or a non-positive value to use the default
    */
   long timeoutSeconds ();
 }

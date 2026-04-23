@@ -37,16 +37,17 @@ import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a Log4j2 {@link org.apache.logging.log4j.core.Filter} to the scribe {@link Filter} interface.
+ * Scribe {@link Filter} that wraps a Log4j2 {@link org.apache.logging.log4j.core.Filter}, treating
+ * any result other than {@link org.apache.logging.log4j.core.Filter.Result#DENY} as a pass.
  */
 public class Log4JFilterAdapter implements Filter {
 
   private final org.apache.logging.log4j.core.Filter filter;
 
   /**
-   * Creates an adapter around the provided Log4j2 filter.
+   * Builds an adapter that delegates filtering decisions to the given native Log4j2 filter.
    *
-   * @param filter the native filter
+   * @param filter the Log4j2 filter to wrap
    */
   public Log4JFilterAdapter (org.apache.logging.log4j.core.Filter filter) {
 
@@ -54,9 +55,9 @@ public class Log4JFilterAdapter implements Filter {
   }
 
   /**
-   * Returns the wrapped Log4j2 filter.
+   * Returns the native Log4j2 filter that this adapter wraps.
    *
-   * @return the native filter
+   * @return the wrapped Log4j2 filter
    */
   protected org.apache.logging.log4j.core.Filter getNativeFilter () {
 
@@ -64,10 +65,11 @@ public class Log4JFilterAdapter implements Filter {
   }
 
   /**
-   * Determines whether the supplied record should be logged by delegating to the Log4j2 filter.
+   * Returns {@code true} if the Log4j2 filter does not return {@link org.apache.logging.log4j.core.Filter.Result#DENY}
+   * for the event obtained by casting the record's native log entry to a {@link LogEvent}.
    *
-   * @param record candidate record
-   * @return {@code true} if logging should proceed
+   * @param record the candidate scribe record to evaluate
+   * @return {@code true} if the Log4j2 filter permits the record to be logged
    */
   public boolean willLog (Record<?> record) {
 
@@ -75,9 +77,9 @@ public class Log4JFilterAdapter implements Filter {
   }
 
   /**
-   * Computes the hash code based on the wrapped filter.
+   * Returns the hash code of the wrapped native Log4j2 filter.
    *
-   * @return the filter hash code
+   * @return hash code delegated to the native filter
    */
   public int hashCode () {
 
@@ -85,10 +87,11 @@ public class Log4JFilterAdapter implements Filter {
   }
 
   /**
-   * Compares this adapter to another object based on the underlying filter.
+   * Compares this adapter for equality by comparing the underlying native filter; unwraps the other
+   * object if it is also a {@link Log4JFilterAdapter}.
    *
-   * @param obj object to compare against
-   * @return {@code true} if the wrapped filters are equal
+   * @param obj the object to compare against
+   * @return {@code true} if both adapters wrap the same native filter, or the native filter equals {@code obj}
    */
   public boolean equals (Object obj) {
 

@@ -37,13 +37,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a static method to be invoked before an entity is loaded from BSON.
+ * The annotated method must be declared {@code static} and accept a single {@code BsonDocument} parameter.
+ * Only applicable to {@code @Entity} classes.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-// public method (BsonDocument bsonDocument) {}
-// Only usable in @Entity classes
-/**
- * Marks a static method to be invoked before an entity is loaded from BSON. Signature must accept a {@code BsonDocument}.
- */
 public @interface PreLoad {
 
 }

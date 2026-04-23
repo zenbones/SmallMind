@@ -38,29 +38,60 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a test method and its dependency metadata.
+ * Marks a method as an individual test case within a Sleuth suite.
+ * <p>
+ * Methods annotated with {@code @Test} are discovered by {@link NativeAnnotationTranslator},
+ * wrapped in a {@link org.smallmind.sleuth.runner.TestRunner}, and scheduled according to their
+ * {@link #priority()}, {@link #executeAfter()}, and {@link #dependsOn()} constraints. The
+ * annotated method must accept no arguments; its return value is ignored. An {@link AssertionError}
+ * thrown by the method is reported as a
+ * {@link org.smallmind.sleuth.runner.event.SleuthEventType#FAILURE}; any other exception is
+ * reported as an {@link org.smallmind.sleuth.runner.event.SleuthEventType#ERROR}.
+ *
+ * @see Suite
+ * @see TestLiteral
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Test {
 
   /**
-   * @return execution priority within the suite; higher numbers run later
+   * Relative execution priority among tests in the same suite.
+   * <p>
+   * Lower values are scheduled before higher values. Tests with the same priority may execute
+   * concurrently subject to the thread-pool limit for the
+   * {@link org.smallmind.sleuth.runner.TestTier#TEST} tier.
+   *
+   * @return priority value; defaults to {@code 0}
    */
   int priority () default 0;
 
   /**
-   * @return methods that should complete before this test executes, without propagating failure
+   * Names of methods in the same suite that must finish execution before this test may start.
+   * <p>
+   * Unlike {@link #dependsOn()}, a named method's outcome does not affect whether this test runs;
+   * only completion ordering is imposed.
+   *
+   * @return method names imposing a soft ordering constraint; defaults to empty
    */
   String[] executeAfter () default {};
 
   /**
-   * @return methods that must succeed before this test executes
+   * Names of methods in the same suite that must succeed before this test may start.
+   * <p>
+   * If any named method produced a failure or error, this test is skipped and the culprit from
+   * the failed prerequisite is propagated into its result.
+   *
+   * @return method names that are hard prerequisites; defaults to empty
    */
   String[] dependsOn () default {};
 
   /**
-   * @return whether the test is enabled
+   * Whether this test participates in any run.
+   * <p>
+   * When {@code false}, the test is unconditionally excluded regardless of suite configuration.
+   *
+   * @return {@code true} if the test should execute; defaults to {@code true}
    */
   boolean enabled () default true;
 }

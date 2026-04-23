@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * {@link Iterable} that yields at most one element.
+ * Iterable that wraps a single element and yields it exactly once, or yields nothing if the element is {@code null}.
  *
  * @param <T> element type
  */
@@ -45,7 +45,9 @@ public class SingleItemIterable<T> implements Iterable<T> {
   private final T item;
 
   /**
-   * @param item element to expose; if {@code null}, iteration is empty
+   * Constructs an iterable that will yield the given item once, or nothing if {@code item} is {@code null}.
+   *
+   * @param item the single element to expose through iteration
    */
   public SingleItemIterable (T item) {
 
@@ -53,7 +55,9 @@ public class SingleItemIterable<T> implements Iterable<T> {
   }
 
   /**
-   * @return iterator that will yield the single item at most once
+   * Returns a new iterator that will yield the single item at most once.
+   *
+   * @return a fresh iterator over the single item
    */
   public Iterator<T> iterator () {
 
@@ -65,7 +69,7 @@ public class SingleItemIterable<T> implements Iterable<T> {
     private boolean taken;
 
     /**
-     * Constructs an iterator marking the item consumed when the element is {@code null}.
+     * Constructs the iterator, pre-marking the item consumed when it is {@code null}.
      */
     public SingleItemIterator () {
 
@@ -73,7 +77,9 @@ public class SingleItemIterable<T> implements Iterable<T> {
     }
 
     /**
-     * @return {@code true} until the single item has been consumed
+     * Returns {@code true} if the single item has not yet been consumed.
+     *
+     * @return {@code true} until the item has been returned by {@link #next()}
      */
     public synchronized boolean hasNext () {
 
@@ -81,7 +87,10 @@ public class SingleItemIterable<T> implements Iterable<T> {
     }
 
     /**
-     * Returns the single item, throwing {@link NoSuchElementException} if already consumed.
+     * Returns the single item and marks it consumed; subsequent calls throw {@link NoSuchElementException}.
+     *
+     * @return the single item
+     * @throws NoSuchElementException if the item has already been consumed
      */
     public synchronized T next () {
 
@@ -95,7 +104,7 @@ public class SingleItemIterable<T> implements Iterable<T> {
     }
 
     /**
-     * Removal is not supported for this iterator.
+     * Always throws {@link UnsupportedOperationException}; removal is not supported.
      *
      * @throws UnsupportedOperationException always
      */

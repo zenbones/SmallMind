@@ -38,16 +38,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Enables timing for all methods within the annotated type, unless disabled.
+ * Type-level annotation that enables method timing via {@link TimerAspect} for all methods on the
+ * annotated class that are also marked with {@link Timer}.
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Timed {
 
   /**
-   * Whether timing is enabled.
-   *
-   * @return {@code true} to enable timing
+   * Set to {@code false} to disable timing even when {@link Timer} is present on individual methods.
    */
   boolean value () default true;
 }

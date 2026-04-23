@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Describes the logical element type associated with operands and fields.
+ * Classifies the logical data category of a where operand or query field.
  */
 public enum ElementType {
 

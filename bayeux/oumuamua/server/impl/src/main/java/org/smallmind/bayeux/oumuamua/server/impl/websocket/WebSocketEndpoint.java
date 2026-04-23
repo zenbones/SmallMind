@@ -54,9 +54,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtoc
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * JSR-356 endpoint bridging websocket connections into Oumuamua sessions.
+ * JSR-356 {@link Endpoint} that bridges an incoming WebSocket connection into an Oumuamua
+ * session, dispatching inbound text frames through the server and flushing outbound packets
+ * back over the same socket.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used by the server's JSON codec
  */
 public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements MessageHandler.Whole<String>, OumuamuaConnection<V> {
 
@@ -65,10 +67,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   private WebSocketTransport<V> websocketTransport;
 
   /**
-   * Initializes the endpoint when a websocket is opened.
+   * Completes endpoint setup when the WebSocket handshake succeeds: captures the server and
+   * transport from user properties, applies idle-timeout and buffer-size settings, and
+   * registers this instance as the whole-message handler.
    *
-   * @param websocketSession websocket session
-   * @param config           endpoint configuration
+   * @param websocketSession the newly established WebSocket session
+   * @param config           endpoint configuration carrying server and transport attributes
    */
   @Override
   public void onOpen (jakarta.websocket.Session websocketSession, EndpointConfig config) {
@@ -89,7 +93,9 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * @return connection identifier derived from the websocket session
+   * Returns the connection identifier sourced from the underlying WebSocket session.
+   *
+   * @return the WebSocket session identifier
    */
   @Override
   public String getId () {
@@ -98,7 +104,9 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * @return backing websocket transport
+   * Returns the {@link WebSocketTransport} that accepted this connection.
+   *
+   * @return the owning WebSocket transport
    */
   @Override
   public Transport<V> getTransport () {
@@ -107,9 +115,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * Sends a packet over the websocket session.
+   * Encodes and sends a packet over the open WebSocket session, using asynchronous send
+   * with a configured timeout when one is set, or synchronous send otherwise. Notifies the
+   * protocol of each successful delivery. Silently logs transport-level errors rather than
+   * propagating them.
    *
-   * @param packet packet to deliver
+   * @param packet the {@link Packet} to encode and transmit
    */
   @Override
   public synchronized void deliver (Packet<V> packet) {
@@ -135,9 +146,12 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * Handles inbound text messages from the websocket client.
+   * Receives a raw text frame from the WebSocket client, decodes it into Bayeux messages on
+   * the server's executor, and dispatches each message through the session or responds
+   * directly when no session exists. Triggers cleanup if the session transitions to
+   * {@link SessionState#DISCONNECTED} after dispatch.
    *
-   * @param content message payload
+   * @param content the raw JSON text frame from the client
    */
   @Override
   public void onMessage (String content) {
@@ -171,10 +185,10 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * Handles websocket errors by logging the failure.
+   * Logs a WebSocket-level error at the error severity level.
    *
-   * @param wsSession websocket session
-   * @param failure   failure encountered
+   * @param wsSession the session on which the error occurred
+   * @param failure   the error raised by the WebSocket container
    */
   @Override
   public synchronized void onError (Session wsSession, Throwable failure) {
@@ -183,7 +197,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
   }
 
   /**
-   * Closes the websocket session if still open.
+   * Closes the underlying WebSocket session if it is still open, logging any
+   * {@link IOException} that occurs during closure.
    */
   @Override
   public synchronized void onCleanup () {

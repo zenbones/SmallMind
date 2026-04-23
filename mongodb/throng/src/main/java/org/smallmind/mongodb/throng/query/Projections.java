@@ -44,7 +44,9 @@ public class Projections {
   private final LinkedList<Bson> projectionList = new LinkedList<>();
 
   /**
-   * @return new projection builder
+   * Creates a new, unconfigured projection builder.
+   *
+   * @return a fresh {@link Projections} instance
    */
   public static Projections with () {
 

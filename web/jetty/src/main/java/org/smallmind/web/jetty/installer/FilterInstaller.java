@@ -36,7 +36,7 @@ import java.util.Map;
 import jakarta.servlet.Filter;
 
 /**
- * Describes a servlet {@link Filter} to be installed into a Jetty context, including init parameters and URL mapping.
+ * Describes a servlet {@link Filter} to be registered with a Jetty context, including its URL mapping, init parameters, and async support setting.
  */
 public class FilterInstaller extends JettyInstaller {
 
@@ -49,7 +49,7 @@ public class FilterInstaller extends JettyInstaller {
   private boolean matchAfter = false;
 
   /**
-   * Identifies this installer as targeting filters.
+   * Returns the installer type for this class.
    *
    * @return {@link JettyInstallerType#FILTER}
    */
@@ -60,9 +60,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the display name that will appear in Jetty for the filter.
+   * Returns the display name registered for this filter in Jetty.
    *
-   * @return filter display name
+   * @return filter display name, or {@code null} if unset
    */
   public String getDisplayName () {
 
@@ -70,7 +70,7 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets the display name for the filter.
+   * Sets the display name for this filter.
    *
    * @param displayName human-readable name shown in Jetty
    */
@@ -80,11 +80,11 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Instantiates or returns the provided filter instance.
+   * Returns the filter instance, instantiating {@code filterClass} if no instance was supplied directly.
    *
-   * @return the filter to register
+   * @return the {@link Filter} to register
    * @throws InstantiationException if the filter class cannot be instantiated
-   * @throws IllegalAccessException if the filter class or its nullary constructor is not accessible
+   * @throws IllegalAccessException if the filter class or its no-arg constructor is inaccessible
    */
   public Filter getFilter ()
     throws InstantiationException, IllegalAccessException {
@@ -93,7 +93,7 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies a concrete filter instance to register.
+   * Sets a concrete filter instance to register.
    *
    * @param filter the filter instance
    */
@@ -103,9 +103,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies the filter class to instantiate if an instance is not provided directly.
+   * Sets the filter class to instantiate when no instance is provided directly.
    *
-   * @param filterClass the filter implementation class
+   * @param filterClass implementation class for the filter
    */
   public void setFilterClass (Class<? extends Filter> filterClass) {
 
@@ -113,9 +113,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves initialization parameters that will be applied to the filter.
+   * Returns the initialization parameters applied to this filter.
    *
-   * @return map of initialization parameters or {@code null} if none
+   * @return map of init parameters, or {@code null} if none configured
    */
   public Map<String, String> getInitParameters () {
 
@@ -123,9 +123,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets initialization parameters for the filter.
+   * Sets the initialization parameters passed to the filter during startup.
    *
-   * @param initParameters parameters to be passed to the filter
+   * @param initParameters parameters to initialize the filter with
    */
   public void setInitParameters (Map<String, String> initParameters) {
 
@@ -133,9 +133,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Indicates whether this filter should be inserted after existing mappings.
+   * Returns whether this filter should be appended after existing filter mappings.
    *
-   * @return {@code true} if the filter should be matched after current filters
+   * @return {@code true} if the filter mapping is inserted after current entries
    */
   public boolean isMatchAfter () {
 
@@ -143,9 +143,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Configures whether this filter is matched after other filters for the same pattern.
+   * Controls whether this filter is inserted after existing mappings for the same URL pattern.
    *
-   * @param matchAfter {@code true} to append after existing filters
+   * @param matchAfter {@code true} to append after existing filter entries
    */
   public void setMatchAfter (boolean matchAfter) {
 
@@ -153,9 +153,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the URL pattern that determines where the filter applies.
+   * Returns the URL pattern to which this filter is mapped.
    *
-   * @return the URL pattern or {@code null} to default to {@code /*}
+   * @return URL pattern, or {@code null} to default to {@code /*}
    */
   public String getUrlPattern () {
 
@@ -163,9 +163,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets the URL pattern to which the filter will be mapped.
+   * Sets the URL pattern to which this filter will be mapped.
    *
-   * @param urlPattern the URL pattern or {@code null} to use the default
+   * @param urlPattern the URL pattern, or {@code null} to use the default
    */
   public void setUrlPattern (String urlPattern) {
 
@@ -173,9 +173,9 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Indicates whether the filter supports asynchronous dispatch.
+   * Returns whether this filter supports asynchronous dispatch.
    *
-   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} to leave default
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unset
    */
   public Boolean getAsyncSupported () {
 
@@ -183,7 +183,7 @@ public class FilterInstaller extends JettyInstaller {
   }
 
   /**
-   * Configures whether the filter supports asynchronous dispatch.
+   * Configures whether this filter supports asynchronous dispatch.
    *
    * @param asyncSupported {@code true} to enable async support, {@code false} to disable, {@code null} to leave unset
    */

@@ -33,23 +33,24 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Filter that permits records at or above a configured level.
+ * A {@link Filter} that allows only log records whose level is at or above a configured threshold,
+ * blocking all records that fall below it.
  */
 public class LevelFilter implements Filter {
 
   private Level level = Level.TRACE;
 
   /**
-   * Creates a filter with the lowest threshold (TRACE).
+   * Constructs a filter with the minimum possible threshold ({@link Level#TRACE}), passing all records.
    */
   public LevelFilter () {
 
   }
 
   /**
-   * Creates a filter with the specified threshold.
+   * Constructs a filter that passes only records at or above the given level.
    *
-   * @param level minimum level to allow
+   * @param level the minimum {@link Level} a record must have to be allowed through
    */
   public LevelFilter (Level level) {
 
@@ -57,9 +58,9 @@ public class LevelFilter implements Filter {
   }
 
   /**
-   * Sets the minimum level to allow.
+   * Replaces the current level threshold with the one provided.
    *
-   * @param level threshold level
+   * @param level the new minimum {@link Level} required for a record to pass
    */
   public void setLevel (Level level) {
 
@@ -67,10 +68,10 @@ public class LevelFilter implements Filter {
   }
 
   /**
-   * Evaluates whether the record meets the configured level threshold.
+   * Returns {@code true} if the record's level is at least as severe as the configured threshold.
    *
-   * @param record record to evaluate
-   * @return {@code true} if the record's level is at least the threshold
+   * @param record the log record to evaluate
+   * @return {@code true} if the record should be logged; {@code false} if it should be suppressed
    */
   public boolean willLog (Record<?> record) {
 

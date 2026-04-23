@@ -36,9 +36,10 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 /**
- * {@link ListIterator} implementation that traverses an {@link IntrinsicRoster} while respecting concurrent modifications.
+ * {@link ListIterator} that traverses an {@link IntrinsicRoster} using direct node links, acquiring
+ * the roster's write lock only when mutating operations ({@link #remove()}, {@link #add(Object)}) are called.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class IntrinsicRosterIterator<T> implements ListIterator<T> {
 
@@ -51,10 +52,10 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   /**
    * Constructs an iterator positioned between the supplied nodes.
    *
-   * @param concurrentList backing roster
-   * @param prev           node immediately before the iterator
-   * @param next           node immediately after the iterator
-   * @param index          initial index position
+   * @param concurrentList the backing roster
+   * @param prev           the node immediately before the iterator's current position, or {@code null} when at the head
+   * @param next           the node immediately after the iterator's current position, or {@code null} when at the tail
+   * @param index          the initial value returned by {@link #nextIndex()}
    */
   public IntrinsicRosterIterator (IntrinsicRoster<T> concurrentList, IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> next, int index) {
 
@@ -65,7 +66,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * @return {@code true} when another element is available forward
+   * Returns {@code true} when a subsequent call to {@link #next()} would succeed.
+   *
+   * @return {@code true} if there is a next element
    */
   public boolean hasNext () {
 
@@ -73,9 +76,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * Returns the next element in the roster.
+   * Returns the next element and advances the iterator position.
    *
-   * @return next element
+   * @return the next element
    * @throws NoSuchElementException when no further elements exist
    */
   public T next () {
@@ -96,7 +99,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * @return {@code true} when another element is available backward
+   * Returns {@code true} when a subsequent call to {@link #previous()} would succeed.
+   *
+   * @return {@code true} if there is a previous element
    */
   public boolean hasPrevious () {
 
@@ -104,9 +109,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * Returns the previous element in the roster.
+   * Returns the previous element and moves the iterator position backward.
    *
-   * @return previous element
+   * @return the previous element
    * @throws NoSuchElementException when no previous element exists
    */
   public T previous () {
@@ -127,7 +132,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * @return index of the element that would be returned by {@link #next()}
+   * Returns the index of the element that would be returned by a subsequent call to {@link #next()}.
+   *
+   * @return the next index
    */
   public int nextIndex () {
 
@@ -135,7 +142,9 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * @return index of the element that would be returned by {@link #previous()}
+   * Returns the index of the element that would be returned by a subsequent call to {@link #previous()}.
+   *
+   * @return the previous index
    */
   public int previousIndex () {
 
@@ -143,9 +152,10 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * Replaces the last returned element with the supplied value.
+   * Replaces the element last returned by {@link #next()} or {@link #previous()}.
    *
-   * @param obj replacement value
+   * @param obj the replacement value
+   * @throws IllegalStateException when neither {@link #next()} nor {@link #previous()} has been called
    */
   public void set (T obj) {
 
@@ -157,7 +167,10 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * Removes the last returned element from the roster.
+   * Removes the element last returned by {@link #next()} or {@link #previous()} from the backing roster.
+   *
+   * @throws IllegalStateException when neither {@link #next()} nor {@link #previous()} has been called,
+   *                               or when {@link #remove()} or {@link #add(Object)} was already called
    */
   public void remove () {
 
@@ -176,9 +189,11 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
   }
 
   /**
-   * Inserts a new element adjacent to the last returned element.
+   * Inserts a new element into the roster adjacent to the last returned element.
    *
-   * @param t element to add
+   * @param t the element to insert
+   * @throws IllegalStateException when neither {@link #next()} nor {@link #previous()} has been called,
+   *                               or when {@link #remove()} or {@link #add(Object)} was already called
    */
   public void add (T t) {
 

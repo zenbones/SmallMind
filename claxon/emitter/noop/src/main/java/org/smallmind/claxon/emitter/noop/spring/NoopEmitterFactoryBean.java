@@ -37,14 +37,25 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean producing a singleton {@link NoopEmitter}.
+ * Spring {@link FactoryBean} that produces a singleton {@link NoopEmitter}.
+ *
+ * <p>This factory bean is provided as a convenience for Spring-managed contexts that require a
+ * fully wired emitter bean but do not want any actual metric emission to occur. There are no
+ * configurable properties; the emitter is instantiated unconditionally during
+ * {@link #afterPropertiesSet()}.
  */
 public class NoopEmitterFactoryBean implements FactoryBean<NoopEmitter>, InitializingBean {
 
+  /**
+   * The singleton {@link NoopEmitter} produced by this factory; populated during
+   * {@link #afterPropertiesSet()}.
+   */
   private NoopEmitter emitter;
 
   /**
-   * @return always true, emitter is a singleton
+   * Indicates that this factory always returns the same emitter instance.
+   *
+   * @return {@code true} because the produced {@link NoopEmitter} is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -53,7 +64,9 @@ public class NoopEmitterFactoryBean implements FactoryBean<NoopEmitter>, Initial
   }
 
   /**
-   * @return produced object type ({@link NoopEmitter})
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link NoopEmitter}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -62,7 +75,9 @@ public class NoopEmitterFactoryBean implements FactoryBean<NoopEmitter>, Initial
   }
 
   /**
-   * @return the created emitter
+   * Returns the singleton {@link NoopEmitter} built during {@link #afterPropertiesSet()}.
+   *
+   * @return the {@link NoopEmitter} instance
    */
   @Override
   public NoopEmitter getObject () {
@@ -71,7 +86,8 @@ public class NoopEmitterFactoryBean implements FactoryBean<NoopEmitter>, Initial
   }
 
   /**
-   * Instantiates the no-op emitter after properties are set.
+   * Instantiates the {@link NoopEmitter} after Spring has finished processing bean
+   * definitions.
    */
   @Override
   public void afterPropertiesSet () {

@@ -38,17 +38,17 @@ import java.security.CodeSource;
 import java.security.cert.Certificate;
 
 /**
- * {@link ClasspathClassGate} that associates a {@link CodeSource} spanning the provided classpath
- * entries for use in secure class loading.
+ * {@link ClasspathClassGate} that constructs a {@link CodeSource} from the provided classpath
+ * entries, enabling policy-based permission evaluation during secure class loading.
  */
 public class SecureClasspathClassGate extends ClasspathClassGate {
 
   private final CodeSource codeSource;
 
   /**
-   * Builds a gate using the JVM class path and a corresponding code source.
+   * Constructs a gate from the JVM's {@code java.class.path} system property.
    *
-   * @throws MalformedURLException if the generated code source URL is invalid
+   * @throws MalformedURLException if the derived code source URL is malformed
    */
   public SecureClasspathClassGate ()
     throws MalformedURLException {
@@ -57,10 +57,10 @@ public class SecureClasspathClassGate extends ClasspathClassGate {
   }
 
   /**
-   * Builds a gate from a class path string using the platform path separator.
+   * Constructs a gate by splitting the given class path string on the platform path separator.
    *
-   * @param classPath the class path to secure
-   * @throws MalformedURLException if the generated code source URL is invalid
+   * @param classPath the class path string to parse
+   * @throws MalformedURLException if the derived code source URL is malformed
    */
   public SecureClasspathClassGate (String classPath)
     throws MalformedURLException {
@@ -69,10 +69,11 @@ public class SecureClasspathClassGate extends ClasspathClassGate {
   }
 
   /**
-   * Builds a gate from explicit path components and prepares a code source that references them.
+   * Constructs a gate from an explicit array of path components and builds a {@link CodeSource}
+   * URL that spans all of them.
    *
-   * @param pathComponents the class path components
-   * @throws MalformedURLException if the generated code source URL is invalid
+   * @param pathComponents the individual classpath entries
+   * @throws MalformedURLException if the assembled code source URL is malformed
    */
   public SecureClasspathClassGate (String... pathComponents)
     throws MalformedURLException {
@@ -93,7 +94,9 @@ public class SecureClasspathClassGate extends ClasspathClassGate {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the {@link CodeSource} constructed from the classpath entries provided at creation.
+   *
+   * @return the code source associated with this gate
    */
   @Override
   public CodeSource getCodeSource () {

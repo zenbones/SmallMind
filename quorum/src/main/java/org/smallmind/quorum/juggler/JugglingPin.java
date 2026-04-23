@@ -35,62 +35,74 @@ package org.smallmind.quorum.juggler;
 import java.lang.reflect.Method;
 
 /**
- * Represents a handle to a resource that can be started, stopped, closed, and recovered.
+ * Handle to a provider-backed resource managed by a {@link Juggler}.
+ * <p>
+ * Each pin wraps one resource instance and exposes a uniform lifecycle —
+ * start, stop, close — plus the ability to obtain the resource for use and
+ * to attempt recovery after a failure. The optional {@code method} and
+ * {@code args} parameters on lifecycle methods allow the {@link Juggler} to
+ * invoke application-specific hooks on the resource without requiring the pin
+ * to know the hook's signature in advance.
  *
- * @param <R> resource type
+ * @param <R> the type of resource wrapped by this pin
  */
 public interface JugglingPin<R> {
 
   /**
-   * Starts the underlying resource optionally invoking a lifecycle method.
+   * Starts the underlying resource, optionally invoking {@code method} on it.
    *
-   * @param method lifecycle method reference, or {@code null} to skip invocation
-   * @param args   arguments to pass into the lifecycle method
-   * @throws JugglerResourceException if start-up fails
+   * @param method a reflective reference to the lifecycle method to call on the resource,
+   *               or {@code null} to skip any extra invocation
+   * @param args   arguments to pass to {@code method}; ignored when {@code method} is {@code null}
+   * @throws JugglerResourceException if the resource cannot be started or the lifecycle call fails
    */
   void start (Method method, Object... args)
     throws JugglerResourceException;
 
   /**
-   * Stops the underlying resource optionally invoking a lifecycle method.
+   * Stops the underlying resource, optionally invoking {@code method} on it.
    *
-   * @param method lifecycle method reference, or {@code null} to skip invocation
-   * @param args   arguments to pass into the lifecycle method
-   * @throws JugglerResourceException if stop fails
+   * @param method a reflective reference to the lifecycle method to call on the resource,
+   *               or {@code null} to skip any extra invocation
+   * @param args   arguments to pass to {@code method}; ignored when {@code method} is {@code null}
+   * @throws JugglerResourceException if the resource cannot be stopped or the lifecycle call fails
    */
   void stop (Method method, Object... args)
     throws JugglerResourceException;
 
   /**
-   * Closes the underlying resource optionally invoking a lifecycle method.
+   * Closes the underlying resource and releases all associated state, optionally invoking {@code method} first.
    *
-   * @param method lifecycle method reference, or {@code null} to skip invocation
-   * @param args   arguments to pass into the lifecycle method
-   * @throws JugglerResourceException if close fails
+   * @param method a reflective reference to the lifecycle method to call before closing,
+   *               or {@code null} to skip any extra invocation
+   * @param args   arguments to pass to {@code method}; ignored when {@code method} is {@code null}
+   * @throws JugglerResourceException if the resource cannot be closed or the lifecycle call fails
    */
   void close (Method method, Object... args)
     throws JugglerResourceException;
 
   /**
-   * Obtains the resource for use.
+   * Obtains the resource for active use.
    *
-   * @return the resource instance
-   * @throws JugglerResourceException if the resource cannot be obtained
+   * @return the live resource instance
+   * @throws JugglerResourceException if the resource is unavailable or fails to be obtained
    */
   R obtain ()
     throws JugglerResourceException;
 
   /**
-   * Attempts to recover the resource after failure.
+   * Attempts to recover the resource after it has been blacklisted due to a failure.
    *
-   * @return {@code true} if recovery succeeded, {@code false} otherwise
+   * @return {@code true} if the resource is healthy and ready to return to service;
+   * {@code false} if it remains unusable
    */
   boolean recover ();
 
   /**
-   * Provides a human-readable description of the resource or provider.
+   * Returns a human-readable label identifying this pin and its underlying provider,
+   * used in log messages and diagnostics.
    *
-   * @return description text
+   * @return description string; never {@code null}
    */
   String describe ();
 }

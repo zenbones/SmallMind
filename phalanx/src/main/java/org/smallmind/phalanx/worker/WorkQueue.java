@@ -35,30 +35,34 @@ package org.smallmind.phalanx.worker;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Contract for queue implementations that accept work items and allow timed retrieval.
+ * Abstraction over a queue that supports timed enqueue and timed dequeue operations for work items.
  *
- * @param <E> type of work items stored in the queue
+ * <p>Concrete implementations determine the queuing strategy (blocking, transferring, etc.).
+ * Both operations accept a caller-controlled timeout so that workers and producers can yield
+ * periodically without blocking indefinitely.</p>
+ *
+ * @param <E> the type of work items stored in this queue
  */
 public interface WorkQueue<E> {
 
   /**
-   * Attempts to enqueue the supplied work item within the provided timeout window.
+   * Attempts to insert the given work item into the queue, waiting up to the specified timeout if necessary.
    *
    * @param e       the work item to enqueue
-   * @param timeout maximum time to wait before giving up
-   * @param unit    unit for the timeout argument
-   * @return {@code true} if the work was accepted, {@code false} if timed out before enqueueing
+   * @param timeout the maximum time to wait for the item to be accepted
+   * @param unit    the time unit of the {@code timeout} argument
+   * @return {@code true} if the item was successfully enqueued; {@code false} if the timeout elapsed first
    * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   boolean offer (E e, long timeout, TimeUnit unit)
     throws InterruptedException;
 
   /**
-   * Attempts to retrieve a work item, waiting up to the supplied timeout.
+   * Retrieves and removes a work item from the queue, waiting up to the specified timeout if the queue is empty.
    *
-   * @param timeout maximum time to wait before returning
-   * @param unit    unit for the timeout argument
-   * @return the dequeued work item, or {@code null} if the timeout elapsed before one was available
+   * @param timeout the maximum time to wait for an item to become available
+   * @param unit    the time unit of the {@code timeout} argument
+   * @return the retrieved work item, or {@code null} if the timeout elapsed before an item was available
    * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   E poll (long timeout, TimeUnit unit)

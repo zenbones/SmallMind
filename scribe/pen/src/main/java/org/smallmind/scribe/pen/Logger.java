@@ -38,17 +38,19 @@ import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 /**
- * Primary logging façade for emitting scribe records at various levels.
- * Instances delegate to a {@link LoggerAdapter} created by the active {@link org.smallmind.scribe.pen.adapter.LoggingBlueprint}.
+ * Primary user-facing logging API for the Scribe framework, providing per-level convenience methods
+ * (trace, debug, info, warn, error, fatal) and generic {@code log} overloads. All operations are
+ * delegated to a {@link LoggerAdapter} obtained from the active
+ * {@link org.smallmind.scribe.pen.adapter.LoggingBlueprint}.
  */
 public class Logger {
 
   private final LoggerAdapter loggerAdapter;
 
   /**
-   * Constructs a logger using the canonical name of the supplied class.
+   * Constructs a logger whose name is the canonical name of the supplied class.
    *
-   * @param loggableClass class whose name identifies the logger
+   * @param loggableClass class whose canonical name is used as the logger name; must not be {@code null}
    */
   public Logger (Class loggableClass) {
 
@@ -56,9 +58,9 @@ public class Logger {
   }
 
   /**
-   * Constructs a logger with the given name.
+   * Constructs a logger with the given name, obtaining its adapter from the active logging blueprint.
    *
-   * @param name the logger name
+   * @param name the logger name; must not be {@code null}
    */
   public Logger (String name) {
 
@@ -66,9 +68,9 @@ public class Logger {
   }
 
   /**
-   * Convenience constant for an unknown logger name.
+   * Returns the conventional placeholder string used when a logger name cannot be determined.
    *
-   * @return the string {@code "unknown"}
+   * @return the literal string {@code "unknown"}
    */
   public static String unknown () {
 
@@ -76,9 +78,9 @@ public class Logger {
   }
 
   /**
-   * Returns the logger name.
+   * Returns the name that identifies this logger.
    *
-   * @return logger name
+   * @return logger name; never {@code null}
    */
   public String getName () {
 
@@ -86,9 +88,9 @@ public class Logger {
   }
 
   /**
-   * Returns the template currently associated with this logger.
+   * Returns the {@link Template} currently associated with this logger by {@link LoggerManager}.
    *
-   * @return active {@link Template}
+   * @return the active template, or {@code null} if no template has been matched to this logger
    */
   public Template getTemplate () {
 
@@ -96,10 +98,10 @@ public class Logger {
   }
 
   /**
-   * Adds or replaces a contextual parameter.
+   * Stores or replaces a named contextual parameter that will be attached to subsequent log records.
    *
-   * @param key   parameter key
-   * @param value serializable value to attach
+   * @param key   parameter name; must not be {@code null}
+   * @param value serializable value to associate with the key; may be {@code null}
    */
   public void putParameter (String key, Serializable value) {
 
@@ -107,9 +109,9 @@ public class Logger {
   }
 
   /**
-   * Removes a contextual parameter.
+   * Removes the contextual parameter with the given key.
    *
-   * @param key parameter key to remove
+   * @param key parameter name to remove; no-op if the key is not present
    */
   public void removeParameter (String key) {
 
@@ -117,7 +119,7 @@ public class Logger {
   }
 
   /**
-   * Clears all contextual parameters.
+   * Removes all contextual parameters from this logger.
    */
   public void clearParameters () {
 
@@ -125,9 +127,9 @@ public class Logger {
   }
 
   /**
-   * Returns the current contextual parameters.
+   * Returns all contextual parameters currently stored on this logger.
    *
-   * @return array of parameters, possibly empty
+   * @return array of parameters; never {@code null} but may be empty
    */
   public Parameter[] getParameters () {
 
@@ -135,9 +137,9 @@ public class Logger {
   }
 
   /**
-   * Indicates whether logger context is automatically populated.
+   * Indicates whether this logger automatically populates context data on each record.
    *
-   * @return {@code true} when context auto-fill is enabled
+   * @return {@code true} if context auto-fill is enabled; {@code false} otherwise
    */
   public boolean getAutoFillLoggerContext () {
 
@@ -145,9 +147,9 @@ public class Logger {
   }
 
   /**
-   * Enables or disables automatic population of logger context data.
+   * Enables or disables automatic population of context data on each record produced by this logger.
    *
-   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   * @param autoFillLoggerContext {@code true} to enable context auto-fill; {@code false} to disable it
    */
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
 
@@ -155,9 +157,9 @@ public class Logger {
   }
 
   /**
-   * Adds multiple filters to this logger.
+   * Adds multiple filters to this logger's filter chain in array order.
    *
-   * @param filters filters to add
+   * @param filters filters to add; must not be {@code null}
    */
   public void addFilters (Filter[] filters) {
 
@@ -167,9 +169,9 @@ public class Logger {
   }
 
   /**
-   * Adds a single filter to this logger.
+   * Appends a single filter to this logger's filter chain.
    *
-   * @param filter filter to add
+   * @param filter filter to add; must not be {@code null}
    */
   public void addFilter (Filter filter) {
 
@@ -177,7 +179,7 @@ public class Logger {
   }
 
   /**
-   * Removes all configured filters.
+   * Removes all filters from this logger's filter chain.
    */
   public void clearFilters () {
 
@@ -185,9 +187,9 @@ public class Logger {
   }
 
   /**
-   * Adds multiple appenders to this logger.
+   * Registers multiple appenders on this logger in array order.
    *
-   * @param appenders appenders to register
+   * @param appenders appenders to register; must not be {@code null}
    */
   public void addAppenders (Appender[] appenders) {
 
@@ -197,9 +199,9 @@ public class Logger {
   }
 
   /**
-   * Adds a single appender to this logger.
+   * Registers a single appender on this logger.
    *
-   * @param appender appender to register
+   * @param appender appender to register; must not be {@code null}
    */
   public void addAppender (Appender appender) {
 
@@ -207,7 +209,7 @@ public class Logger {
   }
 
   /**
-   * Removes all configured appenders.
+   * Removes all appenders from this logger.
    */
   public void clearAppenders () {
 
@@ -215,9 +217,9 @@ public class Logger {
   }
 
   /**
-   * Adds an enhancer that mutates records prior to publishing.
+   * Adds an enhancer that may mutate each record before it is published to appenders.
    *
-   * @param enhancer enhancer to add
+   * @param enhancer enhancer to add; must not be {@code null}
    */
   public void addEnhancer (Enhancer enhancer) {
 
@@ -225,7 +227,7 @@ public class Logger {
   }
 
   /**
-   * Removes all configured enhancers.
+   * Removes all enhancers from this logger.
    */
   public void clearEnhancers () {
 
@@ -233,9 +235,9 @@ public class Logger {
   }
 
   /**
-   * Returns the current level threshold.
+   * Returns the level threshold currently set on this logger.
    *
-   * @return active level
+   * @return active level; never {@code null}
    */
   public Level getLevel () {
 
@@ -243,10 +245,10 @@ public class Logger {
   }
 
   /**
-   * Sets the level threshold for this logger.
+   * Sets the level threshold below which records are not published.
    *
-   * @param level new level; must not be {@code null}
-   * @throws IllegalArgumentException if the level is {@code null}
+   * @param level new threshold level; must not be {@code null}
+   * @throws IllegalArgumentException if {@code level} is {@code null}
    */
   public void setLevel (Level level) {
 
@@ -258,9 +260,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at TRACE level.
+   * Publishes a record at {@link Level#TRACE} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void trace (Throwable throwable) {
 
@@ -268,10 +270,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at TRACE level.
+   * Publishes a record at {@link Level#TRACE} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void trace (String message, Object... args) {
 
@@ -279,11 +281,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at TRACE level.
+   * Publishes a record at {@link Level#TRACE} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void trace (Throwable throwable, String message, Object... args) {
 
@@ -291,9 +293,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at TRACE level.
+   * Publishes a record at {@link Level#TRACE} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void trace (Object object) {
 
@@ -301,9 +303,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at TRACE level.
+   * Publishes a record at {@link Level#TRACE} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void trace (Supplier<String> supplier) {
 
@@ -311,10 +314,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at TRACE level.
+   * Publishes a record at {@link Level#TRACE} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void trace (Throwable throwable, Object object) {
 
@@ -322,10 +325,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at TRACE level.
+   * Publishes a record at {@link Level#TRACE} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void trace (Throwable throwable, Supplier<String> supplier) {
 
@@ -333,9 +336,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void debug (Throwable throwable) {
 
@@ -343,10 +346,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void debug (String message, Object... args) {
 
@@ -354,11 +357,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void debug (Throwable throwable, String message, Object... args) {
 
@@ -366,9 +369,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void debug (Object object) {
 
@@ -376,9 +379,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void debug (Supplier<String> supplier) {
 
@@ -386,10 +390,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void debug (Throwable throwable, Object object) {
 
@@ -397,10 +401,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at DEBUG level.
+   * Publishes a record at {@link Level#DEBUG} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void debug (Throwable throwable, Supplier<String> supplier) {
 
@@ -408,9 +412,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at INFO level.
+   * Publishes a record at {@link Level#INFO} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void info (Throwable throwable) {
 
@@ -418,10 +422,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at INFO level.
+   * Publishes a record at {@link Level#INFO} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void info (String message, Object... args) {
 
@@ -429,11 +433,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at INFO level.
+   * Publishes a record at {@link Level#INFO} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void info (Throwable throwable, String message, Object... args) {
 
@@ -441,9 +445,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at INFO level.
+   * Publishes a record at {@link Level#INFO} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void info (Object object) {
 
@@ -451,9 +455,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at INFO level.
+   * Publishes a record at {@link Level#INFO} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void info (Supplier<String> supplier) {
 
@@ -461,10 +466,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at INFO level.
+   * Publishes a record at {@link Level#INFO} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void info (Throwable throwable, Object object) {
 
@@ -472,10 +477,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at INFO level.
+   * Publishes a record at {@link Level#INFO} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void info (Throwable throwable, Supplier<String> supplier) {
 
@@ -483,9 +488,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at WARN level.
+   * Publishes a record at {@link Level#WARN} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void warn (Throwable throwable) {
 
@@ -493,10 +498,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at WARN level.
+   * Publishes a record at {@link Level#WARN} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void warn (String message, Object... args) {
 
@@ -504,11 +509,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at WARN level.
+   * Publishes a record at {@link Level#WARN} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void warn (Throwable throwable, String message, Object... args) {
 
@@ -516,9 +521,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at WARN level.
+   * Publishes a record at {@link Level#WARN} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void warn (Object object) {
 
@@ -526,9 +531,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at WARN level.
+   * Publishes a record at {@link Level#WARN} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void warn (Supplier<String> supplier) {
 
@@ -536,10 +542,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at WARN level.
+   * Publishes a record at {@link Level#WARN} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void warn (Throwable throwable, Object object) {
 
@@ -547,10 +553,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at WARN level.
+   * Publishes a record at {@link Level#WARN} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void warn (Throwable throwable, Supplier<String> supplier) {
 
@@ -558,9 +564,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at ERROR level.
+   * Publishes a record at {@link Level#ERROR} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void error (Throwable throwable) {
 
@@ -568,10 +574,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at ERROR level.
+   * Publishes a record at {@link Level#ERROR} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void error (String message, Object... args) {
 
@@ -579,11 +585,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at ERROR level.
+   * Publishes a record at {@link Level#ERROR} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void error (Throwable throwable, String message, Object... args) {
 
@@ -591,9 +597,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at ERROR level.
+   * Publishes a record at {@link Level#ERROR} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void error (Object object) {
 
@@ -601,9 +607,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at ERROR level.
+   * Publishes a record at {@link Level#ERROR} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void error (Supplier<String> supplier) {
 
@@ -611,10 +618,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at ERROR level.
+   * Publishes a record at {@link Level#ERROR} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void error (Throwable throwable, Object object) {
 
@@ -622,10 +629,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at ERROR level.
+   * Publishes a record at {@link Level#ERROR} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void error (Throwable throwable, Supplier<String> supplier) {
 
@@ -633,9 +640,9 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at FATAL level.
+   * Publishes a record at {@link Level#FATAL} carrying only the given throwable.
    *
-   * @param throwable throwable to attach
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void fatal (Throwable throwable) {
 
@@ -643,10 +650,10 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at FATAL level.
+   * Publishes a record at {@link Level#FATAL} with a formatted message and no throwable.
    *
-   * @param message message template
-   * @param args    message arguments
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void fatal (String message, Object... args) {
 
@@ -654,11 +661,11 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at FATAL level.
+   * Publishes a record at {@link Level#FATAL} with both a formatted message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void fatal (Throwable throwable, String message, Object... args) {
 
@@ -666,9 +673,9 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at FATAL level.
+   * Publishes a record at {@link Level#FATAL} using the string representation of the given object.
    *
-   * @param object object to log
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void fatal (Object object) {
 
@@ -676,9 +683,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at FATAL level.
+   * Publishes a record at {@link Level#FATAL} with a lazily evaluated message, avoiding string
+   * construction when the level is not enabled.
    *
-   * @param supplier supplier that produces the message
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void fatal (Supplier<String> supplier) {
 
@@ -686,10 +694,10 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at FATAL level.
+   * Publishes a record at {@link Level#FATAL} carrying an object message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void fatal (Throwable throwable, Object object) {
 
@@ -697,10 +705,10 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at FATAL level.
+   * Publishes a record at {@link Level#FATAL} with a lazily evaluated message and a throwable.
    *
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void fatal (Throwable throwable, Supplier<String> supplier) {
 
@@ -708,10 +716,11 @@ public class Logger {
   }
 
   /**
-   * Logs a throwable at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record carrying only a throwable at the given level, falling back to this logger's
+   * current level when {@code level} is {@code null}.
    *
-   * @param level     level to log at; falls back to current level when {@code null}
-   * @param throwable throwable to attach
+   * @param level     level at which to publish; uses the current logger level when {@code null}
+   * @param throwable throwable to attach to the record; must not be {@code null}
    */
   public void log (Level level, Throwable throwable) {
 
@@ -719,11 +728,12 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record with a formatted message and no throwable at the given level, falling back to
+   * this logger's current level when {@code level} is {@code null}.
    *
-   * @param level   level to log at; falls back to current level when {@code null}
-   * @param message message template
-   * @param args    message arguments
+   * @param level   level at which to publish; uses the current logger level when {@code null}
+   * @param message {@link String#format}-style message template; must not be {@code null}
+   * @param args    arguments substituted into the template
    */
   public void log (Level level, String message, Object... args) {
 
@@ -731,12 +741,13 @@ public class Logger {
   }
 
   /**
-   * Logs a formatted message with a throwable at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record with a formatted message and a throwable at the given level, falling back to
+   * this logger's current level when {@code level} is {@code null}.
    *
-   * @param level     level to log at; falls back to current level when {@code null}
-   * @param throwable throwable to attach
-   * @param message   message template
-   * @param args      message arguments
+   * @param level     level at which to publish; uses the current logger level when {@code null}
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param message   {@link String#format}-style message template; must not be {@code null}
+   * @param args      arguments substituted into the template
    */
   public void log (Level level, Throwable throwable, String message, Object... args) {
 
@@ -744,10 +755,11 @@ public class Logger {
   }
 
   /**
-   * Logs an object's string representation at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record using the string representation of an object at the given level, falling back
+   * to this logger's current level when {@code level} is {@code null}.
    *
-   * @param level  level to log at; falls back to current level when {@code null}
-   * @param object object to log
+   * @param level  level at which to publish; uses the current logger level when {@code null}
+   * @param object object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void log (Level level, Object object) {
 
@@ -755,10 +767,11 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record with a lazily evaluated message at the given level, falling back to this
+   * logger's current level when {@code level} is {@code null}.
    *
-   * @param level    level to log at; falls back to current level when {@code null}
-   * @param supplier supplier that produces the message
+   * @param level    level at which to publish; uses the current logger level when {@code null}
+   * @param supplier supplier that produces the log message; must not be {@code null}
    */
   public void log (Level level, Supplier<String> supplier) {
 
@@ -766,11 +779,12 @@ public class Logger {
   }
 
   /**
-   * Logs an object with a throwable at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record carrying an object message and a throwable at the given level, falling back
+   * to this logger's current level when {@code level} is {@code null}.
    *
-   * @param level     level to log at; falls back to current level when {@code null}
-   * @param throwable throwable to attach
-   * @param object    object to log
+   * @param level     level at which to publish; uses the current logger level when {@code null}
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param object    object whose {@code toString()} value becomes the log message; may be {@code null}
    */
   public void log (Level level, Throwable throwable, Object object) {
 
@@ -778,11 +792,12 @@ public class Logger {
   }
 
   /**
-   * Logs a lazily supplied message with a throwable at the specified level, or the logger's default level if {@code null}.
+   * Publishes a record with a lazily evaluated message and a throwable at the given level, falling
+   * back to this logger's current level when {@code level} is {@code null}.
    *
-   * @param level     level to log at; falls back to current level when {@code null}
-   * @param throwable throwable to attach
-   * @param supplier  supplier that produces the message
+   * @param level     level at which to publish; uses the current logger level when {@code null}
+   * @param throwable throwable to attach to the record; must not be {@code null}
+   * @param supplier  supplier that produces the log message; must not be {@code null}
    */
   public void log (Level level, Throwable throwable, Supplier<String> supplier) {
 

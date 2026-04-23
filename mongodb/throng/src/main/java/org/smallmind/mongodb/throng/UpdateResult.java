@@ -35,16 +35,17 @@ package org.smallmind.mongodb.throng;
 import org.bson.BsonValue;
 
 /**
- * Wrapper around the MongoDB driver's {@link com.mongodb.client.result.UpdateResult} with a convenience helper.
+ * Wraps the MongoDB driver's {@link com.mongodb.client.result.UpdateResult} and adds a helper that combines
+ * the modified-document count with any upsert insertion.
  */
 public class UpdateResult {
 
   private final com.mongodb.client.result.UpdateResult updateResult;
 
   /**
-   * Creates a wrapper around the supplied driver result.
+   * Constructs a wrapper around the given driver update result.
    *
-   * @param updateResult underlying update result
+   * @param updateResult the driver update result to wrap
    */
   public UpdateResult (com.mongodb.client.result.UpdateResult updateResult) {
 
@@ -52,7 +53,9 @@ public class UpdateResult {
   }
 
   /**
-   * @return an {@link UpdateResult} representing an unacknowledged write
+   * Returns an {@link UpdateResult} representing an unacknowledged write operation.
+   *
+   * @return an unacknowledged result instance
    */
   public static UpdateResult unacknowledged () {
 
@@ -60,7 +63,9 @@ public class UpdateResult {
   }
 
   /**
-   * @return whether the write was acknowledged by the server
+   * Indicates whether the server acknowledged the write.
+   *
+   * @return {@code true} if the write was acknowledged, {@code false} otherwise
    */
   public boolean wasAcknowledged () {
 
@@ -68,7 +73,9 @@ public class UpdateResult {
   }
 
   /**
-   * @return the number of documents matched by the filter
+   * Returns the number of documents that matched the update filter.
+   *
+   * @return count of matched documents
    */
   public long getMatchedCount () {
 
@@ -76,7 +83,9 @@ public class UpdateResult {
   }
 
   /**
-   * @return the number of documents modified
+   * Returns the number of documents that were actually modified.
+   *
+   * @return count of modified documents
    */
   public long getModifiedCount () {
 
@@ -84,7 +93,9 @@ public class UpdateResult {
   }
 
   /**
-   * @return the identifier of an upserted document, if any
+   * Returns the identifier assigned to a document that was inserted by an upsert, or {@code null} when no upsert occurred.
+   *
+   * @return the upserted document id, or {@code null}
    */
   public BsonValue getUpsertedId () {
 
@@ -92,7 +103,10 @@ public class UpdateResult {
   }
 
   /**
-   * @return the total number of modified documents plus one if an upsert occurred
+   * Returns the number of documents modified plus one if an upsert insertion occurred, providing a single
+   * count of all affected documents.
+   *
+   * @return combined count of modified and upserted documents
    */
   public long getModifiedPlusInsertedCount () {
 

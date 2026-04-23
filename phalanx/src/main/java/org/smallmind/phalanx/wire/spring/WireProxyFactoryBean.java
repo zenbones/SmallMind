@@ -39,7 +39,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that creates a wire client proxy for a service interface.
+ * Spring {@link FactoryBean} that builds and exposes a wire client proxy for a configured service interface
+ * by delegating to {@link WireProxyFactory#generateProxy}.
  */
 public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy> {
 
@@ -53,7 +54,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   private int version;
 
   /**
-   * @param serviceInterface interface the proxy should implement.
+   * Sets the service interface that the generated proxy must implement.
+   *
+   * @param serviceInterface interface class for the target service
    */
   public void setServiceInterface (Class<?> serviceInterface) {
 
@@ -61,7 +64,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param requestTransport transport used for outbound calls.
+   * Sets the request transport used to submit outbound invocations.
+   *
+   * @param requestTransport transport for outbound calls
    */
   public void setRequestTransport (RequestTransport requestTransport) {
 
@@ -69,7 +74,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param serviceName logical service name.
+   * Sets the logical service name embedded in each outbound request.
+   *
+   * @param serviceName logical name of the remote service
    */
   public void setServiceName (String serviceName) {
 
@@ -77,7 +84,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param version service version.
+   * Sets the service version embedded in each outbound request.
+   *
+   * @param version service version number
    */
   public void setVersion (int version) {
 
@@ -85,7 +94,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param serviceGroupExtractor extractor resolving service group per invocation.
+   * Sets the extractor that resolves the service group at invocation time.
+   *
+   * @param serviceGroupExtractor extractor for the service group, or {@code null} for the default group
    */
   public void setServiceGroupExtractor (ParameterExtractor<String> serviceGroupExtractor) {
 
@@ -93,7 +104,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param instanceIdExtractor extractor resolving instance id for whispers.
+   * Sets the extractor that resolves the target instance id for whisper (point-to-point) calls.
+   *
+   * @param instanceIdExtractor extractor for the instance id, or {@code null} for broadcast calls
    */
   public void setInstanceIdExtractor (ParameterExtractor<String> instanceIdExtractor) {
 
@@ -101,7 +114,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @param timeoutExtractor extractor resolving per-call timeout.
+   * Sets the extractor that resolves a per-call timeout in milliseconds.
+   *
+   * @param timeoutExtractor extractor for the call timeout, or {@code null} to use the transport default
    */
   public void setTimeoutExtractor (ParameterExtractor<Long> timeoutExtractor) {
 
@@ -109,9 +124,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * Builds the proxy once all properties are set.
+   * Generates the wire proxy after all required properties have been set.
    *
-   * @throws Exception if proxy creation fails.
+   * @throws Exception if proxy creation fails
    */
   @Override
   public void afterPropertiesSet ()
@@ -121,7 +136,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @return the created proxy.
+   * Returns the generated wire proxy instance.
+   *
+   * @return proxy implementing the configured service interface
    */
   @Override
   public Proxy getObject () {
@@ -130,7 +147,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @return the service interface type.
+   * Returns the type of object produced by this factory.
+   *
+   * @return the configured service interface class
    */
   @Override
   public Class<?> getObjectType () {
@@ -139,7 +158,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   }
 
   /**
-   * @return always true; proxy is a singleton.
+   * Indicates that this factory always returns the same proxy instance.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {

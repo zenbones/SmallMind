@@ -35,14 +35,18 @@ package org.smallmind.quorum.juggler;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Base exception for errors interacting with juggling resources.
+ * Base checked exception for all errors that arise while operating on juggling resources.
+ * <p>
+ * Subclasses narrow the failure category: {@link JugglerResourceCreationException} for
+ * construction-time failures and {@link NoAvailableJugglerResourceException} for exhaustion.
+ * Callers that do not need to distinguish these categories may catch this type directly.
  */
 public class JugglerResourceException extends FormattedException {
 
   /**
-   * Creates the exception with a cause.
+   * Creates an exception wrapping an underlying cause, with no additional message.
    *
-   * @param throwable originating problem
+   * @param throwable the originating exception
    */
   public JugglerResourceException (Throwable throwable) {
 
@@ -50,10 +54,10 @@ public class JugglerResourceException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Creates an exception with a {@link java.util.Formatter}-style message and no cause.
    *
-   * @param message message template
-   * @param args    template arguments
+   * @param message format string for the exception message
+   * @param args    arguments referenced by the format string
    */
   public JugglerResourceException (String message, Object... args) {
 
@@ -61,11 +65,11 @@ public class JugglerResourceException extends FormattedException {
   }
 
   /**
-   * Creates the exception with both a cause and formatted message.
+   * Creates an exception with both a cause and a {@link java.util.Formatter}-style message.
    *
-   * @param throwable originating problem
-   * @param message   message template
-   * @param args      template arguments
+   * @param throwable the originating exception
+   * @param message   format string for the exception message
+   * @param args      arguments referenced by the format string
    */
   public JugglerResourceException (Throwable throwable, String message, Object... args) {
 

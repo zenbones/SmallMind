@@ -40,14 +40,14 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
 /**
- * Translates field references into QueryDSL {@link Path} instances suitable for predicate construction.
+ * Concrete {@link WhereFieldTransformer} that resolves field references into QueryDSL {@link Path} instances.
  */
 public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
 
   /**
-   * Builds a transformer that appends field names to the given durable root path.
+   * Creates a transformer that appends field names directly to a fixed durable root path.
    *
-   * @param path durable root path
+   * @param path durable root path used for all field lookups
    */
   public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path) {
 
@@ -55,10 +55,10 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
   }
 
   /**
-   * Builds a transformer that first transforms the field name before appending it to the durable root.
+   * Creates a transformer that applies a name operator before appending the field to the durable root path.
    *
-   * @param path         durable root path
-   * @param nameOperator function to transform the field name
+   * @param path         durable root path used for all field lookups
+   * @param nameOperator function applied to each field name before path construction
    */
   public QueryDslWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
 
@@ -71,10 +71,10 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
   }
 
   /**
-   * Builds a transformer using custom functions to derive both the target path and the final field name.
+   * Creates a transformer that derives both the durable root path and the field name from separate bi-functions.
    *
-   * @param pathFunction function that produces a durable path from entity/name
-   * @param nameFunction function that produces a possibly transformed name from entity/name
+   * @param pathFunction function producing the durable root path from entity and name
+   * @param nameFunction function producing the transformed field name from entity and name
    */
   public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
 
@@ -88,9 +88,9 @@ public class QueryDslWhereFieldTransformer extends WhereFieldTransformer<Path<?>
   }
 
   /**
-   * Builds a transformer from a path function that already returns the final QueryDSL path.
+   * Creates a transformer from a bi-function that produces the final QueryDSL path directly.
    *
-   * @param pathFunction function producing the path for an entity/name pair
+   * @param pathFunction function producing the full path from entity and name
    */
   public QueryDslWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
 

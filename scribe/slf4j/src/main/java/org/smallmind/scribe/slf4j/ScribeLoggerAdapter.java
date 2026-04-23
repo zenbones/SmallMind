@@ -40,8 +40,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
 
 /**
- * SLF4J {@link org.slf4j.Logger} implementation that delegates to a scribe {@link Logger}.
- * This adapter translates SLF4J-style formatting and levels into the scribe API.
+ * SLF4J {@link org.slf4j.Logger} adapter backed by a scribe {@link Logger}; extends
+ * {@link MarkerIgnoringBase} so that all {@code Marker}-bearing overloads are silently discarded,
+ * and implements {@link LocationAwareLogger} so that bridging frameworks can supply caller
+ * location information. SLF4J {@code {}} placeholders in format strings are rewritten to
+ * {@code %s} before the call is forwarded to the scribe pipeline.
  */
 public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationAwareLogger {
 
@@ -50,9 +53,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   private final Logger logger;
 
   /**
-   * Constructs an adapter around the provided scribe logger.
+   * Constructs an adapter that delegates all log calls to the given scribe logger.
    *
-   * @param logger the underlying scribe logger to delegate to
+   * @param logger the scribe logger that will handle every forwarded event
    */
   public ScribeLoggerAdapter (Logger logger) {
 
@@ -60,9 +63,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Returns the logger name.
+   * Returns the name of the underlying scribe logger.
    *
-   * @return the name of the underlying logger
+   * @return the logger name
    */
   public String getName () {
 
@@ -70,21 +73,15 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Indicates whether TRACE level logging is enabled.
+   * Reports whether TRACE-level events will pass the effective level threshold.
    *
-   * @return {@code true} if TRACE messages should be emitted
+   * @return {@code true} if the effective level is TRACE or finer
    */
   public boolean isTraceEnabled () {
 
     return logger.getLevel().noGreater(Level.TRACE);
   }
 
-  /**
-   * Translates SLF4J brace-style message formats into {@link java.util.Formatter} style.
-   *
-   * @param format the SLF4J format string
-   * @return a format string using {@code %s} placeholders
-   */
   private String translateFormat (String format) {
 
     StringBuilder formatBuilder = new StringBuilder();
@@ -129,9 +126,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a TRACE message.
+   * Emits a TRACE-level event with the given literal message.
    *
-   * @param msg the message to log
+   * @param msg the message string to log
    */
   public void trace (String msg) {
 
@@ -139,10 +136,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a TRACE message with a single argument.
+   * Emits a TRACE-level event, translating the SLF4J {@code {}} placeholder in {@code format}
+   * to {@code %s} before interpolating {@code arg1}.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
    */
   public void trace (String format, Object arg1) {
 
@@ -150,11 +148,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a TRACE message with two arguments.
+   * Emits a TRACE-level event with two interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   first argument to interpolate
-   * @param arg2   second argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
+   * @param arg2   argument substituted for the second {@code {}} placeholder
    */
   public void trace (String format, Object arg1, Object arg2) {
 
@@ -162,10 +160,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a TRACE message with an argument array.
+   * Emits a TRACE-level event with an array of interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param args   arguments to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param args   arguments substituted for each {@code {}} placeholder in order
    */
   public void trace (String format, Object[] args) {
 
@@ -173,10 +171,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a TRACE message with an associated throwable.
+   * Emits a TRACE-level event with an attached throwable.
    *
-   * @param msg       the message to log
-   * @param throwable throwable to attach
+   * @param msg       the message string to log
+   * @param throwable exception or error to attach to the event
    */
   public void trace (String msg, Throwable throwable) {
 
@@ -184,9 +182,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Indicates whether DEBUG level logging is enabled.
+   * Reports whether DEBUG-level events will pass the effective level threshold.
    *
-   * @return {@code true} if DEBUG messages should be emitted
+   * @return {@code true} if the effective level is DEBUG or finer
    */
   public boolean isDebugEnabled () {
 
@@ -194,9 +192,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a DEBUG message.
+   * Emits a DEBUG-level event with the given literal message.
    *
-   * @param msg the message to log
+   * @param msg the message string to log
    */
   public void debug (String msg) {
 
@@ -204,10 +202,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a DEBUG message with a single argument.
+   * Emits a DEBUG-level event with one interpolated argument.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
    */
   public void debug (String format, Object arg1) {
 
@@ -215,11 +213,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a DEBUG message with two arguments.
+   * Emits a DEBUG-level event with two interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   first argument to interpolate
-   * @param arg2   second argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
+   * @param arg2   argument substituted for the second {@code {}} placeholder
    */
   public void debug (String format, Object arg1, Object arg2) {
 
@@ -227,10 +225,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a DEBUG message with an argument array.
+   * Emits a DEBUG-level event with an array of interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param args   arguments to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param args   arguments substituted for each {@code {}} placeholder in order
    */
   public void debug (String format, Object[] args) {
 
@@ -238,10 +236,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a DEBUG message with an associated throwable.
+   * Emits a DEBUG-level event with an attached throwable.
    *
-   * @param msg       the message to log
-   * @param throwable throwable to attach
+   * @param msg       the message string to log
+   * @param throwable exception or error to attach to the event
    */
   public void debug (String msg, Throwable throwable) {
 
@@ -249,9 +247,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an INFO message.
+   * Emits an INFO-level event with the given literal message.
    *
-   * @param msg the message to log
+   * @param msg the message string to log
    */
   public void info (String msg) {
 
@@ -259,10 +257,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an INFO message with a single argument.
+   * Emits an INFO-level event with one interpolated argument.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
    */
   public void info (String format, Object arg1) {
 
@@ -270,11 +268,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an INFO message with two arguments.
+   * Emits an INFO-level event with two interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   first argument to interpolate
-   * @param arg2   second argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
+   * @param arg2   argument substituted for the second {@code {}} placeholder
    */
   public void info (String format, Object arg1, Object arg2) {
 
@@ -282,10 +280,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an INFO message with an argument array.
+   * Emits an INFO-level event with an array of interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param args   arguments to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param args   arguments substituted for each {@code {}} placeholder in order
    */
   public void info (String format, Object[] args) {
 
@@ -293,10 +291,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an INFO message with an associated throwable.
+   * Emits an INFO-level event with an attached throwable.
    *
-   * @param msg       the message to log
-   * @param throwable throwable to attach
+   * @param msg       the message string to log
+   * @param throwable exception or error to attach to the event
    */
   public void info (String msg, Throwable throwable) {
 
@@ -304,9 +302,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Indicates whether WARN level logging is enabled.
+   * Reports whether WARN-level events will pass the effective level threshold.
    *
-   * @return {@code true} if WARN messages should be emitted
+   * @return {@code true} if the effective level is WARN or finer
    */
   public boolean isWarnEnabled () {
 
@@ -314,9 +312,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a WARN message.
+   * Emits a WARN-level event with the given literal message.
    *
-   * @param msg the message to log
+   * @param msg the message string to log
    */
   public void warn (String msg) {
 
@@ -324,10 +322,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a WARN message with a single argument.
+   * Emits a WARN-level event with one interpolated argument.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
    */
   public void warn (String format, Object arg1) {
 
@@ -335,11 +333,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a WARN message with two arguments.
+   * Emits a WARN-level event with two interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   first argument to interpolate
-   * @param arg2   second argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
+   * @param arg2   argument substituted for the second {@code {}} placeholder
    */
   public void warn (String format, Object arg1, Object arg2) {
 
@@ -347,10 +345,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a WARN message with an argument array.
+   * Emits a WARN-level event with an array of interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param args   arguments to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param args   arguments substituted for each {@code {}} placeholder in order
    */
   public void warn (String format, Object[] args) {
 
@@ -358,10 +356,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a WARN message with an associated throwable.
+   * Emits a WARN-level event with an attached throwable.
    *
-   * @param msg       the message to log
-   * @param throwable throwable to attach
+   * @param msg       the message string to log
+   * @param throwable exception or error to attach to the event
    */
   public void warn (String msg, Throwable throwable) {
 
@@ -369,9 +367,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Indicates whether ERROR level logging is enabled.
+   * Reports whether ERROR-level events will pass the effective level threshold.
    *
-   * @return {@code true} if ERROR messages should be emitted
+   * @return {@code true} if the effective level is ERROR or finer
    */
   public boolean isErrorEnabled () {
 
@@ -379,9 +377,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an ERROR message.
+   * Emits an ERROR-level event with the given literal message.
    *
-   * @param msg the message to log
+   * @param msg the message string to log
    */
   public void error (String msg) {
 
@@ -389,10 +387,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an ERROR message with a single argument.
+   * Emits an ERROR-level event with one interpolated argument.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
    */
   public void error (String format, Object arg1) {
 
@@ -400,11 +398,11 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an ERROR message with two arguments.
+   * Emits an ERROR-level event with two interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param arg1   first argument to interpolate
-   * @param arg2   second argument to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param arg1   argument substituted for the first {@code {}} placeholder
+   * @param arg2   argument substituted for the second {@code {}} placeholder
    */
   public void error (String format, Object arg1, Object arg2) {
 
@@ -412,10 +410,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an ERROR message with an argument array.
+   * Emits an ERROR-level event with an array of interpolated arguments.
    *
-   * @param format SLF4J-style format string
-   * @param args   arguments to interpolate
+   * @param format SLF4J brace-delimited format string
+   * @param args   arguments substituted for each {@code {}} placeholder in order
    */
   public void error (String format, Object[] args) {
 
@@ -423,10 +421,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs an ERROR message with an associated throwable.
+   * Emits an ERROR-level event with an attached throwable.
    *
-   * @param msg       the message to log
-   * @param throwable throwable to attach
+   * @param msg       the message string to log
+   * @param throwable exception or error to attach to the event
    */
   public void error (String msg, Throwable throwable) {
 
@@ -434,9 +432,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Indicates whether INFO level logging is enabled.
+   * Reports whether INFO-level events will pass the effective level threshold.
    *
-   * @return {@code true} if INFO messages should be emitted
+   * @return {@code true} if the effective level is INFO or finer
    */
   public boolean isInfoEnabled () {
 
@@ -444,13 +442,14 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a message through the location-aware SLF4J API without an argument array.
+   * Delegates to the six-argument {@link LocationAwareLogger} overload with a {@code null}
+   * argument array; provided for callers that have no format arguments.
    *
-   * @param marker    unused marker
-   * @param fqcn      fully qualified class name of the caller
-   * @param level     SLF4J level constant
-   * @param msg       message to log
-   * @param throwable throwable to attach
+   * @param marker    ignored (marker support is not implemented)
+   * @param fqcn      fully-qualified class name of the calling class, used for location resolution
+   * @param level     SLF4J integer level constant (e.g. {@link LocationAwareLogger#INFO_INT})
+   * @param msg       the message to log
+   * @param throwable exception or error to attach, or {@code null}
    */
   public void log (Marker marker, String fqcn, int level, String msg, Throwable throwable) {
 
@@ -458,15 +457,16 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
   }
 
   /**
-   * Logs a message through the location-aware SLF4J API.
+   * Translates the SLF4J integer level constant to a scribe {@link Level} and forwards the event.
+   * This method is called by bridging frameworks (e.g. jcl-over-slf4j) that supply caller location.
    *
-   * @param marker    unused marker
-   * @param fqcn      fully qualified class name of the caller
-   * @param level     SLF4J level constant
-   * @param msg       message to log
-   * @param objects   optional arguments to interpolate
-   * @param throwable throwable to attach
-   * @throws UnknownSwitchCaseException if the level cannot be translated
+   * @param marker    ignored (marker support is not implemented)
+   * @param fqcn      fully-qualified class name of the calling class, used for location resolution
+   * @param level     SLF4J integer level constant (e.g. {@link LocationAwareLogger#INFO_INT})
+   * @param msg       the message to log
+   * @param objects   arguments substituted into the message, or {@code null}
+   * @param throwable exception or error to attach, or {@code null}
+   * @throws UnknownSwitchCaseException if {@code level} does not map to a known scribe level
    */
   public void log (Marker marker, String fqcn, int level, String msg, Object[] objects, Throwable throwable) {
 

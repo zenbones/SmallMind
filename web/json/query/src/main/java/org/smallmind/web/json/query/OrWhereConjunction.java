@@ -37,23 +37,23 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Logical OR grouping of multiple {@link WhereCriterion} elements.
+ * A where conjunction that logically ORs all of its child criteria.
  */
 @XmlRootElement(name = "or", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class OrWhereConjunction extends WhereConjunction {
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * Constructs an empty OR conjunction.
    */
   public OrWhereConjunction () {
 
   }
 
   /**
-   * Creates an OR conjunction containing the supplied criteria.
+   * Constructs an OR conjunction pre-populated with the given criteria.
    *
-   * @param criteria nested criteria to combine with OR
+   * @param criteria child criteria to combine with OR
    */
   public OrWhereConjunction (WhereCriterion... criteria) {
 
@@ -61,10 +61,10 @@ public class OrWhereConjunction extends WhereConjunction {
   }
 
   /**
-   * Convenience factory for an OR conjunction.
+   * Factory method that creates an OR conjunction containing the supplied criteria.
    *
-   * @param criteria nested criteria to combine with OR
-   * @return configured OR conjunction
+   * @param criteria child criteria to combine with OR
+   * @return new OR conjunction
    */
   public static OrWhereConjunction instance (WhereCriterion... criteria) {
 
@@ -72,7 +72,7 @@ public class OrWhereConjunction extends WhereConjunction {
   }
 
   /**
-   * Identifies this conjunction as an OR operation.
+   * Returns the conjunction type for this node.
    *
    * @return {@link ConjunctionType#OR}
    */

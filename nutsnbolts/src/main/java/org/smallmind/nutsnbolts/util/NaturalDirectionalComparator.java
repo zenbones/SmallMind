@@ -35,14 +35,16 @@ package org.smallmind.nutsnbolts.util;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Comparator that delegates to {@link Comparable#compareTo(Object)} and applies the requested direction.
+ * Directional comparator that delegates ordering to {@link Comparable#compareTo(Object)} and applies the requested sort direction.
  *
- * @param <T> comparable type
+ * @param <T> comparable element type
  */
 public class NaturalDirectionalComparator<T extends Comparable<T>> extends DirectionalComparator<T> {
 
   /**
-   * @param direction whether to compare ascending or descending
+   * Constructs a comparator that sorts in the specified direction.
+   *
+   * @param direction the sort direction to apply
    */
   public NaturalDirectionalComparator (Direction direction) {
 
@@ -50,11 +52,11 @@ public class NaturalDirectionalComparator<T extends Comparable<T>> extends Direc
   }
 
   /**
-   * Compares the two values, reversing the result when ASCENDING is requested to maintain consistency with the enum naming.
+   * Compares two values according to their natural order, negating the result for ascending direction.
    *
    * @param t1 first value
    * @param t2 second value
-   * @return comparison result per {@link java.util.Comparator} contract
+   * @return a negative integer, zero, or positive integer per the {@link java.util.Comparator} contract
    */
   public int compare (T t1, T t2) {
 

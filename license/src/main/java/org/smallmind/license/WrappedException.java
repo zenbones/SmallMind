@@ -1,14 +1,18 @@
 package org.smallmind.license;
 
 /**
- * Runtime wrapper used to tunnel checked exceptions through lambda boundaries and recover the original type later.
+ * Unchecked wrapper used to smuggle checked exceptions through lambda expressions and stream
+ * operations that do not permit declared checked types.
+ *
+ * <p>Throw a {@code WrappedException} inside the lambda, catch it outside, and call
+ * {@link #convert(Class)} to recover the original typed cause.
  */
 public class WrappedException extends RuntimeException {
 
   /**
-   * Wraps the supplied exception for deferred handling.
+   * Wraps the given checked exception for deferred, typed recovery.
    *
-   * @param exception the exception to wrap
+   * @param exception the checked exception to wrap; must not be {@code null}
    */
   public WrappedException (Exception exception) {
 
@@ -16,11 +20,15 @@ public class WrappedException extends RuntimeException {
   }
 
   /**
-   * Converts the wrapped exception back to the desired checked type.
+   * Casts the wrapped cause to the specified exception type and returns it.
    *
-   * @param exceptionClass the checked exception class to cast to
-   * @param <E>            the checked exception type
-   * @return the wrapped exception cast to the requested type
+   * <p>The caller is responsible for ensuring that the wrapped exception is actually an instance
+   * of {@code exceptionClass}; a {@link ClassCastException} is thrown otherwise.
+   *
+   * @param exceptionClass the target checked exception class; must not be {@code null}
+   * @param <E>            the target exception type
+   * @return the wrapped cause cast to {@code E}; never {@code null}
+   * @throws ClassCastException if the wrapped cause is not an instance of {@code exceptionClass}
    */
   public <E extends Exception> E convert (Class<E> exceptionClass) {
 

@@ -38,10 +38,11 @@ import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Bridges Apache Commons Logging to the SmallMind scribe logger implementation.
- * This wrapper delegates all log level checks and log statements to a {@link Logger}
- * obtained from {@link LoggerManager}, allowing Commons Logging clients to emit log
- * events through the scribe pipeline.
+ * Implements the Apache Commons Logging {@link Log} interface by delegating all calls to a
+ * scribe {@link Logger}, allowing libraries that depend on Commons Logging to emit events
+ * through the scribe pipeline without any additional configuration.
+ * Registers {@code "org.apache.commons.logging."} as a logging package prefix so that
+ * call-site context is resolved correctly past the Commons Logging frames.
  */
 public class CommonsLogWrapper implements Log {
 
@@ -53,9 +54,11 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Creates a wrapper that delegates Commons Logging operations for the given logger name.
+   * Constructs a wrapper bound to the given logger name.
+   * The underlying scribe {@link Logger} is resolved lazily on each log call via
+   * {@link LoggerManager#getLogger(String)}.
    *
-   * @param name the logger name to resolve via {@link LoggerManager}
+   * @param name the logger name passed to {@link LoggerManager} on every delegation
    */
   public CommonsLogWrapper (String name) {
 
@@ -63,9 +66,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Resolves the scribe {@link Logger} instance for this wrapper.
+   * Looks up the scribe logger for this wrapper's name on every call so that template
+   * re-association is always reflected without caching a stale reference.
    *
-   * @return the logger associated with the configured name
+   * @return the current {@link Logger} for {@link #name}
    */
   private Logger getLogger () {
 
@@ -73,9 +77,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether DEBUG level logging is enabled.
+   * Reports whether DEBUG-level events will pass the effective level threshold.
    *
-   * @return {@code true} if debug events should be emitted
+   * @return {@code true} if the effective level is DEBUG or finer
    */
   public boolean isDebugEnabled () {
 
@@ -83,9 +87,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether ERROR level logging is enabled.
+   * Reports whether ERROR-level events will pass the effective level threshold.
    *
-   * @return {@code true} if error events should be emitted
+   * @return {@code true} if the effective level is ERROR or finer
    */
   public boolean isErrorEnabled () {
 
@@ -93,9 +97,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether FATAL level logging is enabled.
+   * Reports whether FATAL-level events will pass the effective level threshold.
    *
-   * @return {@code true} if fatal events should be emitted
+   * @return {@code true} if the effective level is FATAL or finer
    */
   public boolean isFatalEnabled () {
 
@@ -103,9 +107,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether INFO level logging is enabled.
+   * Reports whether INFO-level events will pass the effective level threshold.
    *
-   * @return {@code true} if info events should be emitted
+   * @return {@code true} if the effective level is INFO or finer
    */
   public boolean isInfoEnabled () {
 
@@ -113,9 +117,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether TRACE level logging is enabled.
+   * Reports whether TRACE-level events will pass the effective level threshold.
    *
-   * @return {@code true} if trace events should be emitted
+   * @return {@code true} if the effective level is TRACE or finer
    */
   public boolean isTraceEnabled () {
 
@@ -123,9 +127,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Indicates whether WARN level logging is enabled.
+   * Reports whether WARN-level events will pass the effective level threshold.
    *
-   * @return {@code true} if warn events should be emitted
+   * @return {@code true} if the effective level is WARN or finer
    */
   public boolean isWarnEnabled () {
 
@@ -133,9 +137,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a TRACE level message.
+   * Emits a TRACE-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void trace (Object o) {
 
@@ -143,10 +147,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a TRACE level message with an associated failure.
+   * Emits a TRACE-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void trace (Object o, Throwable throwable) {
 
@@ -154,9 +158,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a DEBUG level message.
+   * Emits a DEBUG-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void debug (Object o) {
 
@@ -164,10 +168,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a DEBUG level message with an associated failure.
+   * Emits a DEBUG-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void debug (Object o, Throwable throwable) {
 
@@ -175,9 +179,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs an INFO level message.
+   * Emits an INFO-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void info (Object o) {
 
@@ -185,10 +189,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs an INFO level message with an associated failure.
+   * Emits an INFO-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void info (Object o, Throwable throwable) {
 
@@ -196,9 +200,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a WARN level message.
+   * Emits a WARN-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void warn (Object o) {
 
@@ -206,10 +210,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a WARN level message with an associated failure.
+   * Emits a WARN-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void warn (Object o, Throwable throwable) {
 
@@ -217,9 +221,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs an ERROR level message.
+   * Emits an ERROR-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void error (Object o) {
 
@@ -227,10 +231,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs an ERROR level message with an associated failure.
+   * Emits an ERROR-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void error (Object o, Throwable throwable) {
 
@@ -238,9 +242,9 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a FATAL level message.
+   * Emits a FATAL-level event with the given message object.
    *
-   * @param o message payload to log
+   * @param o object whose {@code toString()} provides the log message
    */
   public void fatal (Object o) {
 
@@ -248,10 +252,10 @@ public class CommonsLogWrapper implements Log {
   }
 
   /**
-   * Logs a FATAL level message with an associated failure.
+   * Emits a FATAL-level event with the given message object and attached throwable.
    *
-   * @param o         message payload to log
-   * @param throwable exception or error to attach
+   * @param o         object whose {@code toString()} provides the log message
+   * @param throwable exception or error to attach to the event
    */
   public void fatal (Object o, Throwable throwable) {
 

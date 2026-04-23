@@ -48,9 +48,16 @@ import org.smallmind.sleuth.runner.event.StartSleuthEvent;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 /**
- * Maintains an ordered collection of methods annotated with a specific lifecycle annotation and provides invocation support.
+ * Maintains an ordered, deduplicated collection of methods sharing a lifecycle annotation and
+ * provides reflective invocation with integrated Sleuth event emission.
+ * <p>
+ * Methods are registered in hierarchy order (base class first) via {@link #add}. Duplicate
+ * registrations — identified by method name and parameter signature — are silently ignored, so
+ * overridden lifecycle methods appear only once. At invocation time each method is called in
+ * registration order; if a prior culprit exists the method is skipped and a
+ * {@link SkippedSleuthEvent} is emitted instead.
  *
- * @param <A> annotation type represented by this methodology
+ * @param <A> annotation type shared by all methods in this collection
  */
 public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
 
@@ -58,10 +65,14 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   private final LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
 
   /**
-   * Adds a method/annotation pair if it has not already been registered.
+   * Adds a method/annotation pair to the collection if the method's signature has not already
+   * been registered.
+   * <p>
+   * Deduplication is based on method name and declared parameter types, so an overriding method
+   * in a subclass does not result in a second entry when the superclass version was added first.
    *
-   * @param method     reflected method
-   * @param annotation associated annotation
+   * @param method     reflected method to register; must not be {@code null}
+   * @param annotation annotation instance associated with the method; must not be {@code null}
    */
   public void add (Method method, A annotation) {
 
@@ -71,13 +82,20 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   }
 
   /**
-   * Executes each annotated method in order, emitting Sleuth events and capturing any resulting culprit.
+   * Invokes each registered method in order, emitting Sleuth events and updating the culprit.
+   * <p>
+   * For each method, a {@link StartSleuthEvent} is always emitted first. If {@code culprit} is
+   * non-null the method is not called and a {@link SkippedSleuthEvent} is emitted. Otherwise
+   * the method is invoked reflectively; a {@link SuccessSleuthEvent} is emitted on success or
+   * an {@link ErrorSleuthEvent} on any exception, and the culprit is set accordingly. The updated
+   * culprit — possibly set by an earlier method in this call — is returned.
    *
-   * @param sleuthRunner runner used for event dispatch
-   * @param culprit      prior culprit that should cause remaining methods to be skipped; may be {@code null}
-   * @param clazz        declaring class
-   * @param instance     instance to invoke methods on
-   * @return updated culprit after invocation
+   * @param sleuthRunner runner used to dispatch events to registered listeners; must not be {@code null}
+   * @param culprit      existing failure context that suppresses further invocations; {@code null} if none
+   * @param clazz        declaring class used for event class-name fields; must not be {@code null}
+   * @param instance     object instance on which to invoke the methods; must not be {@code null}
+   * @return updated culprit after all methods have been processed; may be the original value or a
+   * newly created one if a method threw
    */
   public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance) {
 
@@ -107,7 +125,9 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   }
 
   /**
-   * @return iterator over the registered method/annotation pairs
+   * Returns an iterator over the registered method/annotation pairs in registration order.
+   *
+   * @return iterator; never {@code null}
    */
   @Override
   public Iterator<Pair<Method, A>> iterator () {
@@ -116,7 +136,9 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   }
 
   /**
-   * Uniquely identifies a method by name and parameter signature.
+   * Composite key that uniquely identifies a method by name and declared parameter types.
+   * <p>
+   * Used internally to deduplicate lifecycle methods when scanning class hierarchies.
    */
   private static class MethodKey {
 
@@ -124,8 +146,10 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     private final Class[] parameters;
 
     /**
-     * @param name       method name
-     * @param parameters parameter types
+     * Constructs a key for the given method signature.
+     *
+     * @param name       method name; must not be {@code null}
+     * @param parameters declared parameter types; must not be {@code null}
      */
     public MethodKey (String name, Class[] parameters) {
 
@@ -133,13 +157,16 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
       this.parameters = parameters;
     }
 
+    /**
+     * @return method name component of this key
+     */
     public String getName () {
 
       return name;
     }
 
     /**
-     * @return parameter types associated with the method
+     * @return declared parameter types component of this key
      */
     public Class[] getParameters () {
 
@@ -147,7 +174,7 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
     }
 
     /**
-     * @return hash combining method name and parameter types
+     * @return hash combining method name and parameter types for use in hash-based collections
      */
     @Override
     public int hashCode () {
@@ -155,6 +182,12 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
       return (31 * name.hashCode()) + Arrays.hashCode(parameters);
     }
 
+    /**
+     * Two keys are equal when both their name and parameter types match.
+     *
+     * @param obj object to compare; may be {@code null}
+     * @return {@code true} if the names and parameter types are identical
+     */
     @Override
     public boolean equals (Object obj) {
 

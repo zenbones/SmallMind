@@ -35,15 +35,15 @@ package org.smallmind.mongodb.throng.json;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception thrown when JSON cannot be translated to or from BSON representations.
+ * Thrown when a JSON-to-BSON or BSON-to-JSON conversion fails due to an unrecognised value type.
  */
 public class BSONParsingException extends FormattedRuntimeException {
 
   /**
-   * Creates a new parsing exception with a formatted message.
+   * Constructs the exception with a printf-style formatted message.
    *
-   * @param message message template
-   * @param args    arguments applied to the template
+   * @param message format string for the error message
+   * @param args    arguments substituted into the format string
    */
   public BSONParsingException (String message, Object... args) {
 

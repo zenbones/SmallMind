@@ -35,7 +35,8 @@ package org.smallmind.web.json.scaffold.fault;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * Marker for exceptions that can supply additional structured information beyond the message/stack trace.
+ * Implemented by exceptions that can supply structured supplemental information beyond the standard
+ * message and stack trace.
  */
 public interface Informed {
 

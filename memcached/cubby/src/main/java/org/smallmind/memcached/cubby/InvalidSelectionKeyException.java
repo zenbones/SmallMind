@@ -35,7 +35,9 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 /**
- * Raised when a selector key used by the NIO client is no longer valid.
+ * Raised when a {@link java.nio.channels.SelectionKey} used by the NIO-based memcached
+ * client is in an invalid state. This can occur when the underlying channel has been
+ * closed or the key has been cancelled before an I/O operation could be dispatched.
  */
 public class InvalidSelectionKeyException extends FormattedIOException {
 

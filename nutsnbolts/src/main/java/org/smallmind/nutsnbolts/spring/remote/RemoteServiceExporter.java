@@ -39,7 +39,7 @@ import java.rmi.registry.Registry;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Binds a remote service into an RMI registry and provides an explicit unbind hook.
+ * Registers a {@link Remote} service under a given name in an RMI registry during Spring initialization and provides an explicit unbind operation.
  */
 public class RemoteServiceExporter implements InitializingBean {
 
@@ -48,7 +48,9 @@ public class RemoteServiceExporter implements InitializingBean {
   private String name;
 
   /**
-   * @param registry the registry to bind into
+   * Sets the RMI registry into which the service will be bound.
+   *
+   * @param registry the target RMI registry
    */
   public void setRegistry (Registry registry) {
 
@@ -56,7 +58,9 @@ public class RemoteServiceExporter implements InitializingBean {
   }
 
   /**
-   * @param service the remote service implementation
+   * Sets the remote service implementation to export.
+   *
+   * @param service the {@link Remote} object to register
    */
   public void setService (Remote service) {
 
@@ -64,13 +68,20 @@ public class RemoteServiceExporter implements InitializingBean {
   }
 
   /**
-   * @param name the registry name under which to bind
+   * Sets the registry name under which the service will be bound.
+   *
+   * @param name the binding name in the registry
    */
   public void setName (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Binds (or rebinds) the configured service in the registry under the configured name.
+   *
+   * @throws RemoteException if the registry cannot be contacted or the binding fails
+   */
   @Override
   public void afterPropertiesSet ()
     throws RemoteException {
@@ -79,10 +90,10 @@ public class RemoteServiceExporter implements InitializingBean {
   }
 
   /**
-   * Unbinds the service from the registry.
+   * Removes the service binding from the RMI registry.
    *
-   * @throws RemoteException   if unbinding fails
-   * @throws NotBoundException if no binding exists
+   * @throws RemoteException   if the registry cannot be contacted
+   * @throws NotBoundException if the configured name is not currently bound
    */
   public void unbind ()
     throws RemoteException, NotBoundException {

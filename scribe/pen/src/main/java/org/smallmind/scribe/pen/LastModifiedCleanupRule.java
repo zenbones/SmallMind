@@ -38,7 +38,8 @@ import java.nio.file.Path;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Cleanup rule that removes files older than a configured duration.
+ * A {@link CleanupRule} that deletes any rolled log file whose last-modified time is older than
+ * a configured {@link Stint} duration, evaluated against the time the rule instance was created.
  */
 public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupRule> {
 
@@ -47,16 +48,16 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   private long durationAsMilliseconds;
 
   /**
-   * Creates an unconfigured rule. Set the {@link Stint} before use.
+   * Constructs an unconfigured rule; {@link #setStint(Stint)} must be called before this rule is used.
    */
   public LastModifiedCleanupRule () {
 
   }
 
   /**
-   * Creates a rule that deletes files older than the given duration.
+   * Constructs a rule that retains only files modified within the given duration.
    *
-   * @param stint maximum age to retain
+   * @param stint the maximum age a file may have before it is eligible for deletion
    */
   public LastModifiedCleanupRule (Stint stint) {
 
@@ -66,7 +67,7 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   /**
    * Returns the configured age threshold.
    *
-   * @return stint representing maximum file age
+   * @return the {@link Stint} representing the maximum file age before deletion
    */
   public Stint getStint () {
 
@@ -74,9 +75,9 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   }
 
   /**
-   * Sets the age threshold for deletion.
+   * Sets the maximum file age and precomputes its millisecond equivalent for efficient evaluation.
    *
-   * @param stint duration to retain files
+   * @param stint the maximum age a file may have; files older than this duration will be deleted
    */
   public void setStint (Stint stint) {
 
@@ -86,9 +87,9 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   }
 
   /**
-   * Creates a copy of this rule with the same stint.
+   * Returns a new {@code LastModifiedCleanupRule} with the same stint, for use in a single vacuum pass.
    *
-   * @return duplicated rule
+   * @return a fresh copy of this rule
    */
   @Override
   public LastModifiedCleanupRule copy () {
@@ -97,11 +98,12 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   }
 
   /**
-   * Determines whether the file exceeds the configured age threshold.
+   * Returns {@code true} if the file at {@code possiblePath} was last modified more than
+   * the configured stint duration before the time this rule instance was created.
    *
-   * @param possiblePath path to evaluate
-   * @return {@code true} if the file is older than the stint duration
-   * @throws IOException if file metadata cannot be read
+   * @param possiblePath the rolled log file to evaluate
+   * @return {@code true} if the file's age exceeds the configured stint; {@code false} otherwise
+   * @throws IOException if the file's last-modified time cannot be read
    */
   @Override
   public boolean willCleanup (Path possiblePath)
@@ -111,7 +113,8 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   }
 
   /**
-   * No-op finish implementation for compatibility.
+   * No-op implementation; this rule performs all deletions eagerly in {@link #willCleanup} and
+   * has nothing to finalize.
    */
   @Override
   public void finish () {

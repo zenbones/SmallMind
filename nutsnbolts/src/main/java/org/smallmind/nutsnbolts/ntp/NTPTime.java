@@ -41,17 +41,18 @@ import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
 /**
- * Lightweight NTP client that computes the clock offset against one of a set of configured NTP hosts.
+ * Queries a set of configured NTP servers and returns the computed clock offset between the local
+ * system clock and the selected server.
  */
 public final class NTPTime {
 
   private final String[] hostNames;
 
   /**
-   * Creates an NTP time helper using the provided host names. At least one host is required.
+   * Constructs an instance that will randomly select from the supplied NTP host names.
    *
-   * @param hostNames array of NTP host names to query
-   * @throws IllegalArgumentException if no host names are provided
+   * @param hostNames one or more NTP server host names to query; must not be null or empty
+   * @throws IllegalArgumentException if {@code hostNames} is null or contains no entries
    */
   public NTPTime (String[] hostNames) {
 
@@ -63,12 +64,12 @@ public final class NTPTime {
   }
 
   /**
-   * Queries a random NTP host from the configured list and returns the computed clock offset
-   * relative to the local system clock.
+   * Opens a UDP connection to a randomly chosen host from the configured list, sends an NTP request,
+   * and returns the computed clock offset between the local system clock and the server.
    *
-   * @param timeoutMillis socket timeout in milliseconds for the NTP request
-   * @return the offset in milliseconds; positive indicates server time is ahead of local time
-   * @throws IOException if the NTP query fails
+   * @param timeoutMillis the socket timeout in milliseconds to apply to the NTP request
+   * @return the clock offset in milliseconds; positive means the server clock is ahead of local time
+   * @throws IOException if the NTP request fails or the host cannot be resolved
    */
   public long getOffset (int timeoutMillis)
     throws IOException {

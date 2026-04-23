@@ -40,13 +40,19 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Builds and validates a dependency graph for annotated elements.
+ * Builds and validates the dependency graph for a set of annotated work units, then produces a
+ * topologically sorted {@link DependencyQueue} ready for concurrent execution.
  * <p>
- * Dependencies are ordered by priority and explicit parent/child relationships and are converted into
- * a {@link DependencyQueue} suitable for concurrent execution while respecting dependencies.
+ * Nodes are added via {@link #add}. Priority tiers are computed automatically: before sorting,
+ * every node in a lower-priority tier is wired as a parent of every node in the next tier,
+ * ensuring higher-priority work always completes first. Within a tier, {@link Dependency#getDependsOn()}
+ * and {@link Dependency#getExecuteAfter()} express finer-grained ordering. Topological ordering is
+ * performed by an iterative depth-first search that detects cycles and missing nodes.
  *
- * @param <A> annotation type describing a dependency
- * @param <T> payload type represented by the dependency node
+ * @param <A> annotation type used to describe each dependency node
+ * @param <T> payload type carried by each dependency node
+ * @see Dependency
+ * @see DependencyQueue
  */
 public class DependencyAnalysis<A extends Annotation, T> {
 
@@ -55,7 +61,10 @@ public class DependencyAnalysis<A extends Annotation, T> {
   private final Class<A> annotationClass;
 
   /**
-   * @param annotationClass annotation type used when reporting dependency errors
+   * Constructs an analysis for the given annotation type.
+   *
+   * @param annotationClass annotation type used in error messages when dependency problems are detected;
+   *                        must not be {@code null}
    */
   public DependencyAnalysis (Class<A> annotationClass) {
 
@@ -63,9 +72,14 @@ public class DependencyAnalysis<A extends Annotation, T> {
   }
 
   /**
-   * Adds a dependency node to the graph, linking children to parents and recording priority.
+   * Adds a dependency node to the graph, merging it with any existing placeholder of the same name.
+   * <p>
+   * If the node names hard prerequisites in {@link Dependency#getDependsOn()}, those prerequisite nodes
+   * are created as placeholders in the graph if not already present, and parent-child edges are
+   * established so the sort can traverse them. Duplicate names cause the placeholder to be aligned
+   * with the incoming node's details via {@link Dependency#align(Dependency)}.
    *
-   * @param dependency dependency node to add or merge
+   * @param dependency node to register; must not be {@code null} and must have a unique, non-null name
    */
   public void add (Dependency<A, T> dependency) {
 
@@ -97,10 +111,17 @@ public class DependencyAnalysis<A extends Annotation, T> {
   }
 
   /**
-   * Performs dependency analysis and returns an executable queue.
+   * Resolves priority tiers, performs topological sorting, and returns an executable queue.
+   * <p>
+   * When multiple priority values are present, all nodes in each tier are wired as parents of every
+   * node in the subsequent tier, enforcing the tier ordering on top of any explicit
+   * {@code dependsOn}/{@code executeAfter} relationships. Sorting uses an iterative DFS; cycles
+   * are detected via the temporary marker and missing nodes are identified when an incomplete
+   * placeholder has no details after the full graph is built.
    *
-   * @return a queue ordered for execution that respects dependency constraints
-   * @throws TestDependencyException when missing or cyclic dependencies are detected
+   * @return a {@link DependencyQueue} containing all nodes in execution order; never {@code null}
+   * @throws TestDependencyException if a cycle is detected in the dependency graph or a named
+   *                                 prerequisite does not correspond to any registered node
    */
   public DependencyQueue<A, T> calculate () {
 
@@ -149,11 +170,18 @@ public class DependencyAnalysis<A extends Annotation, T> {
   }
 
   /**
-   * Depth-first traversal used to detect cycles and build a topologically sorted list.
+   * Performs a single depth-first traversal step for topological sorting.
+   * <p>
+   * Children are visited recursively before the node itself is appended to the front of the sorted
+   * list (reverse post-order). The temporary marker detects back-edges (cycles); the permanent
+   * marker prevents nodes from being re-visited.
    *
-   * @param dependency     current node
-   * @param dependencyList ordered dependency list being built
-   * @param completedSet   names of nodes already finalized and removed from the map
+   * @param dependency     node currently being visited; must not be {@code null}
+   * @param dependencyList accumulates nodes in execution order; must not be {@code null}
+   * @param completedSet   collects names of nodes fully processed in this pass for removal from
+   *                       the graph; must not be {@code null}
+   * @throws TestDependencyException if a cycle is detected ({@code dependency} is already on the
+   *                                 stack) or {@code dependency} is an un-aligned placeholder
    */
   private void visit (Dependency<A, T> dependency, LinkedList<Dependency<A, T>> dependencyList, HashSet<String> completedSet) {
 

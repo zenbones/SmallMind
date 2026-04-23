@@ -33,16 +33,20 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Base class for emitters that are polled for readings rather than pushed to.
+ * Abstract base class for {@link Emitter} implementations that operate in a pull-based
+ * model. Rather than receiving pushed measurements from the registry, a pull emitter
+ * exposes an {@link #emit()} method that is called by an external consumer (such as a
+ * monitoring endpoint or scrape target) to retrieve the current metric payload on demand.
  *
- * @param <T> the type returned when emitting
+ * @param <T> the type of the payload produced when {@link #emit()} is invoked
  */
 public abstract class PullEmitter<T> implements Emitter {
 
   /**
-   * Pull emitters always identify themselves as {@link EmitterMethod#PULL}.
+   * Identifies this emitter as operating in the pull model, always returning
+   * {@link EmitterMethod#PULL}.
    *
-   * @return the pull method indicator
+   * @return {@link EmitterMethod#PULL}
    */
   @Override
   public EmitterMethod getEmitterMethod () {
@@ -51,9 +55,12 @@ public abstract class PullEmitter<T> implements Emitter {
   }
 
   /**
-   * Produces the payload to be emitted when the registry is polled.
+   * Produces the current metric payload when the emitter is polled by an external consumer.
+   * Implementations should collect and format the relevant metric data and return it as the
+   * parameterized type {@code T}.
    *
-   * @return payload specific to the emitter implementation
+   * @return the current metric payload; the exact type and structure are determined by the
+   * concrete implementation
    */
   public abstract T emit ();
 }

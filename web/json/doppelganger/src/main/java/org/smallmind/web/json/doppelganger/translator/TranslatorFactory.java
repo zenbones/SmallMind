@@ -46,7 +46,8 @@ import org.smallmind.web.json.doppelganger.UsefulTypeMirrors;
 import org.smallmind.web.json.doppelganger.VisibilityTracker;
 
 /**
- * Factory that selects the appropriate {@link Translator} implementation for a property type.
+ * Selects the appropriate {@link Translator} implementation for a property type based on its structure
+ * and whether a generated view exists for it.
  */
 public class TranslatorFactory {
 
@@ -56,17 +57,18 @@ public class TranslatorFactory {
   private static final NoopTranslator NOOP_TRANSLATOR = new NoopTranslator();
 
   /**
-   * Chooses a translator based on whether the property type is visible as a generated view and its structure
-   * (array, list, or plain class). Falls back to {@link NoopTranslator} when no conversion is required.
+   * Returns the translator appropriate for the given type: {@link ArrayTranslator} for arrays,
+   * {@link ListTranslator} for single-argument lists, {@link ClassTranslator} for plain classes,
+   * or {@link NoopTranslator} when no view conversion is needed.
    *
-   * @param processingEnvironment current processing environment
-   * @param usefulTypeMirrors     cached type mirrors
-   * @param visibilityTracker     visibility tracker for generated views
-   * @param classTracker          tracker for polymorphic/hierarchy classes
-   * @param purpose               idiom purpose
-   * @param direction             view direction
-   * @param typeMirror            property type
-   * @return translator capable of emitting the proper conversion code
+   * @param processingEnvironment the current annotation processing environment
+   * @param usefulTypeMirrors     cached type mirrors used to check list assignability
+   * @param visibilityTracker     tracker that determines whether a type has a generated view
+   * @param classTracker          tracker for polymorphic and hierarchy class relationships
+   * @param purpose               the idiom purpose
+   * @param direction             the view direction
+   * @param typeMirror            the property type to select a translator for
+   * @return the appropriate translator for the given type
    */
   public static Translator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 

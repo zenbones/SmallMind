@@ -36,13 +36,19 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 
 /**
- * Binary comparison operations between a {@link ZonedDateTime} and an {@link Instant}.
+ * Enumeration of binary temporal comparison operations that test a reference {@link ZonedDateTime} relative
+ * to a candidate {@link Instant}.
  */
 public enum TimeOperation {
 
   BEFORE {
     /**
-     * @return {@code true} when {@code date} is strictly after the provided instant
+     * Returns {@code true} when the reference date is strictly after the candidate instant,
+     * meaning the instant falls before the reference date.
+     *
+     * @param date    the reference date-time
+     * @param instant the candidate instant to test
+     * @return {@code true} if {@code instant} is before {@code date}
      */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
@@ -51,7 +57,12 @@ public enum TimeOperation {
     }
   }, BEFORE_OR_ON {
     /**
-     * @return {@code true} when {@code date} is after or equal to the provided instant
+     * Returns {@code true} when the reference date is after or equal to the candidate instant,
+     * meaning the instant falls on or before the reference date.
+     *
+     * @param date    the reference date-time
+     * @param instant the candidate instant to test
+     * @return {@code true} if {@code instant} is on or before {@code date}
      */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
@@ -62,7 +73,12 @@ public enum TimeOperation {
     }
   }, ON_OR_AFTER {
     /**
-     * @return {@code true} when {@code date} is before or equal to the provided instant
+     * Returns {@code true} when the reference date is before or equal to the candidate instant,
+     * meaning the instant falls on or after the reference date.
+     *
+     * @param date    the reference date-time
+     * @param instant the candidate instant to test
+     * @return {@code true} if {@code instant} is on or after {@code date}
      */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
@@ -73,7 +89,12 @@ public enum TimeOperation {
     }
   }, AFTER {
     /**
-     * @return {@code true} when {@code date} is strictly before the provided instant
+     * Returns {@code true} when the reference date is strictly before the candidate instant,
+     * meaning the instant falls after the reference date.
+     *
+     * @param date    the reference date-time
+     * @param instant the candidate instant to test
+     * @return {@code true} if {@code instant} is after {@code date}
      */
     @Override
     public boolean accept (ZonedDateTime date, Instant instant) {
@@ -83,11 +104,11 @@ public enum TimeOperation {
   };
 
   /**
-   * Evaluates the comparison represented by this operation.
+   * Evaluates this temporal comparison between a reference date-time and a candidate instant.
    *
-   * @param date    reference date-time
-   * @param instant instant to compare against
-   * @return result of the comparison
+   * @param date    the reference date-time
+   * @param instant the candidate instant to compare against the reference
+   * @return {@code true} if the comparison represented by this constant is satisfied
    */
   public abstract boolean accept (ZonedDateTime date, Instant instant);
 }

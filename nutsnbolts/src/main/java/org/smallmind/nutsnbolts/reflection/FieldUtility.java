@@ -41,7 +41,8 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 
 /**
- * Utilities for discovering bean-like fields and their accessors, with simple caching.
+ * Static helpers that discover and cache {@link FieldAccessor} descriptors for the non-static,
+ * non-transient, non-synthetic fields of a class and its superclasses.
  */
 public class FieldUtility {
 
@@ -49,11 +50,11 @@ public class FieldUtility {
   private static final ConcurrentHashMap<Class<?>, FieldAccessor[]> FIELD_ACCESSOR_MAP = new ConcurrentHashMap<>();
 
   /**
-   * Retrieves a cached accessor for the named field on the given class.
+   * Returns the cached {@link FieldAccessor} for the field with the given name on the supplied class.
    *
    * @param clazz the class to inspect
-   * @param name  the field name
-   * @return the accessor or {@code null} if no matching field exists
+   * @param name  the exact field name to look up
+   * @return the matching accessor, or {@code null} if no such field exists
    */
   public static FieldAccessor getFieldAccessor (Class<?> clazz, String name) {
 
@@ -68,11 +69,12 @@ public class FieldUtility {
   }
 
   /**
-   * Returns all mutable, non-static, non-transient field accessors for the given class and its superclasses.
-   * Accessors are cached and returned in alpha-numeric order.
+   * Returns all non-static, non-transient, non-synthetic field accessors for the given class and every
+   * superclass up to but not including {@link Object}, sorted alpha-numerically by field name.
+   * Results are cached for subsequent calls.
    *
-   * @param clazz the class to inspect
-   * @return an array of accessors for discovered fields
+   * @param clazz the class whose fields should be discovered
+   * @return a sorted, cached array of {@link FieldAccessor} objects for the discovered fields
    */
   public static FieldAccessor[] getFieldAccessors (final Class<?> clazz) {
 
@@ -107,11 +109,11 @@ public class FieldUtility {
   }
 
   /**
-   * Attempts to locate a getter method for the supplied field on the provided class.
+   * Attempts to find either a {@code getXxx} or {@code isXxx} public non-static method for the field.
    *
-   * @param clazz the class owning the field
-   * @param field the field being accessed
-   * @return the getter method or {@code null} if none is found
+   * @param clazz the class to search for getter methods
+   * @param field the field for which a getter is sought
+   * @return the getter {@link Method}, or {@code null} if neither convention yields a match
    */
   private static Method locateGetter (Class<?> clazz, Field field) {
 
@@ -133,11 +135,11 @@ public class FieldUtility {
   }
 
   /**
-   * Attempts to locate a setter method for the supplied field on the provided class.
+   * Attempts to find a {@code setXxx} public non-static method for the field that accepts the field's type.
    *
-   * @param clazz the class owning the field
-   * @param field the field being accessed
-   * @return the setter method or {@code null} if none is found
+   * @param clazz the class to search for setter methods
+   * @param field the field for which a setter is sought
+   * @return the setter {@link Method}, or {@code null} if none is found
    */
   private static Method locateSetter (Class<?> clazz, Field field) {
 

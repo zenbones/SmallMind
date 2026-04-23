@@ -38,7 +38,9 @@ import java.time.ZoneId;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Implements a single conversion token for {@link PatternFormatter}, handling padding, precision, and multi-line options.
+ * Pattern rule that renders one conversion token from a {@link PatternFormatter} pattern, applying
+ * optional fixed-width padding (left or right), dot-notation precision truncation, and multi-line
+ * prefix handling for stack-trace ({@code %s}) and parameter ({@code %p}) fields.
  */
 public class ConversionPatternRule implements PatternRule {
 
@@ -57,16 +59,18 @@ public class ConversionPatternRule implements PatternRule {
   private final int precision;
 
   /**
-   * Creates a rule from the parsed pattern components.
+   * Constructs a rule by parsing the raw string components captured by the {@link PatternFormatter}
+   * regex. Each argument corresponds to a named capture group; {@code null} values are replaced with
+   * appropriate defaults before delegating to the fully-typed constructor.
    *
-   * @param header           optional header text
-   * @param paddingString    padding flag (+/-) or {@code null}
-   * @param widthString      width specifier or {@code null}
-   * @param precisionString  precision specifier or {@code null}
-   * @param firstLineString  flag for multi-line prefixing of first line
-   * @param multiLinePrefix  prefix to apply to multi-line fields
-   * @param conversionString conversion character as string
-   * @param footer           optional footer text
+   * @param header           optional header text emitted before the field value, or {@code null}
+   * @param paddingString    {@code "+"} for right-padding, {@code "-"} for left-padding, or {@code null} for no padding
+   * @param widthString      decimal string specifying the fixed field width, or {@code null} for unrestricted
+   * @param precisionString  decimal string specifying the precision (dot segments or max parameter lines), or {@code null}
+   * @param firstLineString  {@code "-"} to suppress the multi-line prefix on the first line; any other value or {@code null} to include it
+   * @param multiLinePrefix  text inserted before each line of a multi-line field, or {@code null} for the default newline-tab
+   * @param conversionString single-character string identifying the conversion (e.g. {@code "d"}, {@code "m"})
+   * @param footer           optional footer text emitted after the field value, or {@code null}
    */
   public ConversionPatternRule (String header, String paddingString, String widthString, String precisionString, String firstLineString, String multiLinePrefix, String conversionString, String footer) {
 
@@ -74,16 +78,19 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Creates a rule with explicit padding, width, precision, and conversion token.
+   * Constructs a fully-typed rule with explicit formatting options. Header, multi-line prefix, and
+   * footer strings are passed through {@link #stripSlashes(String)} to resolve escape sequences.
    *
-   * @param header          optional header text
-   * @param padding         padding direction
-   * @param width           fixed width or -1 if unrestricted
-   * @param precision       precision for dot-separated fields or -1 if unrestricted
-   * @param prefixFirstLine whether to prefix the first line for multi-line fields
-   * @param multiLinePrefix prefix to apply to multi-line output
-   * @param conversion      conversion character to render
-   * @param footer          optional footer text
+   * @param header          optional header text emitted before the field value, or {@code null}
+   * @param padding         direction in which to pad the value when it is shorter than {@code width}
+   * @param width           fixed field width for padding and truncation, or {@code -1} for unrestricted
+   * @param precision       maximum dot-notation segments (for {@code n}, {@code C}) or max parameter lines
+   *                        (for {@code p}), or {@code -1} for unrestricted
+   * @param prefixFirstLine {@code true} to apply {@code multiLinePrefix} before the first output line
+   *                        of a multi-line field
+   * @param multiLinePrefix text prepended to each line of a multi-line field
+   * @param conversion      the conversion character that identifies which record field to render
+   * @param footer          optional footer text emitted after the field value, or {@code null}
    */
   public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multiLinePrefix, char conversion, String footer) {
 
@@ -98,11 +105,13 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Finds the number of repeated elements between the current and previous stack traces.
+   * Searches the previous stack trace for the given element and returns how many frames remain
+   * at and after the match, enabling the "... N more" abbreviation in chained exception output.
    *
-   * @param singleElement  element from the current stack trace
-   * @param prevStackTrace previous stack trace to compare
-   * @return count of remaining repeated elements, or -1 if none
+   * @param singleElement  the frame from the current throwable's stack trace to search for
+   * @param prevStackTrace the stack trace of the enclosing (previously rendered) throwable
+   * @return the number of frames in {@code prevStackTrace} at and after the matching position,
+   * or {@code -1} if no matching frame is found
    */
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
@@ -116,9 +125,9 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Returns the header text for this rule.
+   * Returns the header text that is prepended to the converted field value when the value is non-{@code null}.
    *
-   * @return header text, possibly {@code null}
+   * @return the header text, or {@code null} if no header was configured
    */
   public String getHeader () {
 
@@ -126,9 +135,9 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Returns the footer text for this rule.
+   * Returns the footer text that is appended to the converted field value when the value is non-{@code null}.
    *
-   * @return footer text, possibly {@code null}
+   * @return the footer text, or {@code null} if no footer was configured
    */
   public String getFooter () {
 
@@ -136,10 +145,13 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Unescapes common slash-escaped sequences within the provided string.
+   * Resolves backslash escape sequences in the given string, converting {@code \r}, {@code \t},
+   * {@code \f}, and {@code \n} to their corresponding control characters (where {@code \n} becomes
+   * the platform line separator). Unrecognized escape sequences have their backslash removed and the
+   * following character is kept as-is. A trailing lone backslash is preserved literally.
    *
-   * @param slashedString string containing escape sequences
-   * @return unescaped string, or {@code null} if input was {@code null}
+   * @param slashedString the raw string that may contain backslash escape sequences, or {@code null}
+   * @return the unescaped string, or {@code null} if the input was {@code null}
    */
   private String stripSlashes (String slashedString) {
 
@@ -188,11 +200,14 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Renders the requested conversion value from the record using the provided timestamp.
+   * Renders the field identified by this rule's conversion character, applying width, padding,
+   * precision, and multi-line prefix rules as configured. Returns {@code null} when the requested
+   * field is absent from the record (e.g. no logger context, no thrown exception, no parameters),
+   * signalling to {@link PatternFormatter} that the header and footer should also be suppressed.
    *
-   * @param record    record to format
-   * @param timestamp timestamp renderer used for date conversions
-   * @return formatted value or {@code null} when no value is available
+   * @param record    the log record from which field values are extracted
+   * @param timestamp the timestamp provider used to render the {@code d} (date) conversion
+   * @return the formatted field value, or {@code null} if the field is unavailable for this record
    */
   public String convert (Record<?> record, Timestamp timestamp) {
 
@@ -340,10 +355,14 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Trims a dot-delimited field to the configured precision.
+   * Truncates a dot-delimited value to at most the last {@code precision} segments. For example, with
+   * {@code precision=2} and the input {@code "com.example.myapp.MyClass"}, the result is
+   * {@code "myapp.MyClass"}. If the value has fewer than {@code precision} segments, or if precision
+   * is not configured ({@code <= 0}), the original value is returned unchanged.
    *
-   * @param field dot-delimited value
-   * @return field truncated to the last {@code precision} segments, or original value when precision is unset
+   * @param field the dot-delimited string to truncate, or {@code null}
+   * @return the truncated string, or the original value when precision is unrestricted or there are
+   * not enough segments to truncate; {@code null} if the input was {@code null}
    */
   private String trimToDotPrecision (String field) {
 
@@ -374,10 +393,13 @@ public class ConversionPatternRule implements PatternRule {
   }
 
   /**
-   * Applies width and padding rules to the provided field.
+   * Applies the configured width and padding rules to the given field value. If the value is shorter
+   * than the width, it is padded on the right (RIGHT padding) or left (LEFT padding); if padding is
+   * NONE, short values are returned as-is. If the value is longer than a positive width, it is
+   * truncated to exactly {@code width} characters.
    *
-   * @param field value to pad or trim
-   * @return adjusted value respecting width and padding settings
+   * @param field the string to adjust, or {@code null}
+   * @return the padded or truncated string, or {@code null} if the input was {@code null}
    */
   private String trimToWidthAndPad (String field) {
 

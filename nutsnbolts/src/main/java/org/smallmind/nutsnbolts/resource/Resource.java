@@ -35,37 +35,39 @@ package org.smallmind.nutsnbolts.resource;
 import java.io.InputStream;
 
 /**
- * A uniform abstraction over addressable content that can be resolved to a readable {@link InputStream}.
- * Implementations typically wrap different backing stores (filesystem, classpath, jar, URL, etc.).
+ * Uniform abstraction over addressable content that can be resolved to a readable
+ * {@link InputStream}, decoupling callers from the underlying backing store (filesystem,
+ * classpath, JAR entry, URL, etc.).
  */
 public interface Resource {
 
   /**
-   * Returns the unique identifier for this resource, usually of the form {@code scheme:path}.
+   * Returns the fully qualified identifier for this resource, typically in {@code scheme:path} form.
    *
-   * @return identifier string suitable for logging or comparison
+   * @return identifier string suitable for logging, caching, or equality comparisons
    */
   String getIdentifier ();
 
   /**
-   * Returns the scheme portion of the resource identifier (e.g. {@code file}, {@code classpath}).
+   * Returns the scheme component of the resource identifier that indicates the backing store type.
    *
-   * @return scheme name used to locate the resource
+   * @return scheme name, such as {@code file}, {@code classpath}, {@code jar}, or {@code url}
    */
   String getScheme ();
 
   /**
-   * Returns the raw path portion of the resource identifier.
+   * Returns the path component of the resource identifier as supplied at creation time.
    *
-   * @return path string supplied when the resource was created
+   * @return raw path string without the scheme prefix
    */
   String getPath ();
 
   /**
    * Opens the underlying content for reading.
    *
-   * @return an input stream positioned at the start of the resource content; may be {@code null} if the content cannot be found
-   * @throws ResourceException if the resource cannot be opened or resolved
+   * @return an input stream positioned at the beginning of the resource content, or {@code null}
+   * if the backing store cannot locate the content
+   * @throws ResourceException if the resource cannot be opened or resolved due to an error
    */
   InputStream getInputStream ()
     throws ResourceException;

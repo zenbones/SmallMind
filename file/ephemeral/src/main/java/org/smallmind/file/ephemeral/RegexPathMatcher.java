@@ -37,14 +37,21 @@ import java.nio.file.PathMatcher;
 import java.util.regex.Pattern;
 
 /**
- * Path matcher backed by a compiled regular expression.
+ * {@link PathMatcher} implementation that tests paths against a compiled regular expression.
+ * Instances are created by {@link EphemeralFileSystem#getPathMatcher(String)} for both the
+ * {@code "glob"} and {@code "regex"} syntaxes.
  */
 public class RegexPathMatcher implements PathMatcher {
 
+  /**
+   * The compiled regular expression used to match path strings.
+   */
   Pattern pattern;
 
   /**
-   * @param pattern the regular expression used for matching
+   * Creates a matcher backed by the given compiled regular expression.
+   *
+   * @param pattern the pre-compiled pattern to use for matching; must not be {@code null}
    */
   public RegexPathMatcher (Pattern pattern) {
 
@@ -52,7 +59,10 @@ public class RegexPathMatcher implements PathMatcher {
   }
 
   /**
-   * {@inheritDoc}
+   * Tests whether the string representation of {@code path} matches the regular expression.
+   *
+   * @param path the path to test; must not be {@code null}
+   * @return {@code true} if the path string matches the pattern
    */
   @Override
   public boolean matches (Path path) {

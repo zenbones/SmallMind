@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.spring;
 import org.springframework.core.PriorityOrdered;
 
 /**
- * Configuration holder for property source locations with ordering support.
+ * Holds an ordered list of property resource locations that can be contributed to a {@link PropertyPlaceholderConfigurer}.
  */
 public class PropertyConfiguration implements PriorityOrdered {
 
@@ -43,7 +43,9 @@ public class PropertyConfiguration implements PriorityOrdered {
   private int order;
 
   /**
-   * {@inheritDoc}
+   * Returns the priority order used to sequence this configuration relative to others.
+   *
+   * @return the ordering value
    */
   @Override
   public int getOrder () {
@@ -52,9 +54,9 @@ public class PropertyConfiguration implements PriorityOrdered {
   }
 
   /**
-   * Sets the ordering value used by Spring.
+   * Sets the priority order used to sequence this configuration relative to others.
    *
-   * @param order the priority order
+   * @param order the ordering value
    */
   public void setOrder (int order) {
 
@@ -62,7 +64,9 @@ public class PropertyConfiguration implements PriorityOrdered {
   }
 
   /**
-   * @return the property resource locations
+   * Returns the property resource locations declared by this configuration.
+   *
+   * @return array of resource location strings
    */
   public String[] getLocations () {
 
@@ -70,7 +74,9 @@ public class PropertyConfiguration implements PriorityOrdered {
   }
 
   /**
-   * @param locations property resource locations to load
+   * Sets the property resource locations that this configuration contributes.
+   *
+   * @param locations array of resource location strings to load
    */
   public void setLocations (String[] locations) {
 

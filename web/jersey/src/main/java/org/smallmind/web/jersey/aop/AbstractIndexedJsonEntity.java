@@ -39,8 +39,8 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Base JsonEntity implementation that resolves parameters by their index within a backing argument array.
- * Subclasses typically expose ordered method arguments for AOP interception and binding.
+ * Abstract {@link JsonEntity} that resolves parameters by treating the key as a zero-based index into a backing array
+ * of invocation arguments.
  */
 public abstract class AbstractIndexedJsonEntity implements JsonEntity {
 
@@ -49,16 +49,16 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
   private Object[] arguments;
 
   /**
-   * Constructs an entity with no backing arguments. Parameter lookup will return {@code null}.
+   * Constructs an entity with no backing argument array.
    */
   public AbstractIndexedJsonEntity () {
 
   }
 
   /**
-   * Constructs an entity with the supplied ordered arguments.
+   * Constructs an entity backed by the supplied invocation argument array.
    *
-   * @param arguments the argument array in invocation order; may be {@code null} if not available
+   * @param arguments ordered array of method invocation arguments
    */
   public AbstractIndexedJsonEntity (Object[] arguments) {
 
@@ -66,9 +66,9 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Retrieves the backing argument array.
+   * Returns the backing invocation argument array.
    *
-   * @return the ordered invocation arguments, or {@code null} if not set
+   * @return the argument array, or {@code null} if not set
    */
   public Object[] getArguments () {
 
@@ -76,9 +76,9 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Updates the stored invocation arguments.
+   * Replaces the backing invocation argument array.
    *
-   * @param arguments the ordered invocation arguments to use for parameter extraction
+   * @param arguments ordered array of method invocation arguments
    */
   public void setArguments (Object[] arguments) {
 
@@ -86,15 +86,15 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
   }
 
   /**
-   * Resolves a parameter by parsing the supplied key as a zero-based index into the argument array and converting
-   * the value to the requested type, applying any {@link XmlJavaTypeAdapter} present on the parameter.
+   * Returns the argument at the position indicated by the numeric key, converting it to the requested type and
+   * applying any {@link XmlJavaTypeAdapter} declared on the parameter.
    *
-   * @param key                  the string index of the desired argument
-   * @param clazz                the target type to convert to
-   * @param parameterAnnotations annotations present on the parameter being resolved
-   * @return the converted argument value, or {@code null} if the index is out of bounds
-   * @throws ParameterProcessingException if the key cannot be parsed, the index is negative, adapter construction fails,
-   *                                      or conversion fails
+   * @param key                  string representation of the zero-based argument index
+   * @param clazz                target type to convert the argument to
+   * @param parameterAnnotations annotations present on the consuming parameter
+   * @param <T>                  desired return type
+   * @return the converted argument value, or {@code null} if the index is beyond the array length
+   * @throws ParameterProcessingException if the key is not a valid integer, the index is negative, or conversion fails
    */
   @Override
   public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {

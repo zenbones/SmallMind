@@ -33,24 +33,37 @@
 package org.smallmind.forge.deploy;
 
 /**
- * Nexus repository types supported by the deploy tooling.
+ * Nexus repository types understood by the deploy tooling. The code associated with each
+ * constant corresponds to the repository identifier used in Nexus URL parameters.
  */
 public enum Repository {
 
-  SNAPSHOTS("snapshots"), RELEASES("releases");
+  /**
+   * Nexus snapshots repository, used for development and integration builds.
+   */
+  SNAPSHOTS("snapshots"),
+  /**
+   * Nexus releases repository, used for stable, promoted artifacts.
+   */
+  RELEASES("releases");
 
   private final String code;
 
+  /**
+   * Initialise the enum constant with its Nexus URL code.
+   *
+   * @param code repository identifier as it appears in Nexus URL parameters
+   */
   Repository (String code) {
 
     this.code = code;
   }
 
   /**
-   * Resolve a repository enum from the code string used in Nexus URLs.
+   * Look up a repository by its Nexus URL code.
    *
-   * @param code the repository code (e.g. {@code snapshots} or {@code releases})
-   * @return the matching repository, or {@code null} if no match is found
+   * @param code repository identifier, e.g. {@code snapshots} or {@code releases}
+   * @return the matching constant, or {@code null} if no constant carries that code
    */
   public static Repository fromCode (String code) {
 
@@ -65,7 +78,9 @@ public enum Repository {
   }
 
   /**
-   * @return the code representation used in Nexus requests
+   * Returns the repository identifier used in Nexus URL parameters.
+   *
+   * @return repository code, e.g. {@code releases} or {@code snapshots}
    */
   public String getCode () {
 

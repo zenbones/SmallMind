@@ -37,13 +37,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a no-arg instance method to run after an entity has been loaded from BSON.
+ * Only applicable to {@code @Entity} classes.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-// public method () {}
-// Only usable in @Entity classes
-/**
- * Marks an instance method to run after an entity has been loaded from BSON.
- */
 public @interface PostLoad {
 
 }

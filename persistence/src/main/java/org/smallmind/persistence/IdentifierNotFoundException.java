@@ -35,12 +35,12 @@ package org.smallmind.persistence;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Thrown when a requested durable identifier cannot be located in the persistence store.
+ * Thrown when a lookup by identifier finds no matching record in the persistence store.
  */
 public class IdentifierNotFoundException extends FormattedRuntimeException {
 
   /**
-   * Creates an exception indicating a missing identifier with no message.
+   * Creates an {@code IdentifierNotFoundException} with no detail message.
    */
   public IdentifierNotFoundException () {
 
@@ -48,10 +48,10 @@ public class IdentifierNotFoundException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception indicating a missing identifier with a formatted message.
+   * Creates an {@code IdentifierNotFoundException} with a {@link String#format}-style message.
    *
-   * @param message the message template
-   * @param args    arguments referenced by the format specifiers in the message
+   * @param message format string for the detail message
+   * @param args    arguments substituted into {@code message}
    */
   public IdentifierNotFoundException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class IdentifierNotFoundException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception indicating a missing identifier with a cause and formatted message.
+   * Creates an {@code IdentifierNotFoundException} with a cause and a {@link String#format}-style message.
    *
    * @param throwable the underlying cause
-   * @param message   the message template
-   * @param args      arguments referenced by the format specifiers in the message
+   * @param message   format string for the detail message
+   * @param args      arguments substituted into {@code message}
    */
   public IdentifierNotFoundException (Throwable throwable, String message, Object... args) {
 
@@ -71,7 +71,7 @@ public class IdentifierNotFoundException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception indicating a missing identifier with a cause.
+   * Creates an {@code IdentifierNotFoundException} wrapping an existing throwable.
    *
    * @param throwable the underlying cause
    */

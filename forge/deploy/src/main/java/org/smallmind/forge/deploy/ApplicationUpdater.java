@@ -46,30 +46,46 @@ import org.smallmind.nutsnbolts.io.FileUtility;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
 /**
- * Drives end-to-end application updates: downloads the artifact, replaces the existing installation,
- * applies decorators, and re-installs the service wrapper.
+ * Orchestrates the full application deployment lifecycle: downloads a versioned artifact from
+ * Nexus, stops and removes the currently installed service, expands the new archive, applies
+ * registered {@link Decorator} hooks, sets file ownership and execute permissions, and
+ * re-registers the service. Progress is reported to standard output at each stage.
  */
 public class ApplicationUpdater {
 
   /**
-   * Download and deploy an application archive from Nexus, optionally running decoration steps and service lifecycle commands.
+   * Perform a complete in-place application deployment.
    *
-   * @param operatingSystem the target operating system
-   * @param appUser         the system user that should own the installation
-   * @param installPath     the root installation directory
-   * @param progressBar     whether to display download progress
-   * @param nexusHost       the Nexus host name
-   * @param nexusUser       the Nexus user name
-   * @param nexusPassword   the Nexus password
-   * @param repository      the repository to download from
-   * @param groupId         the artifact group id
-   * @param artifactId      the artifact id
-   * @param version         the artifact version
-   * @param classifier      the artifact classifier, or {@code null}
-   * @param extension       the artifact extension
-   * @param envVars         environment variables to pass to decorators
-   * @param decorators      optional decorators to run after extraction
-   * @throws Exception if downloading, extracting, decorating, permission changes, or process execution fails
+   * <p>Steps executed in order:
+   * <ol>
+   *   <li>Download the artifact archive from Nexus to {@code installPath}.</li>
+   *   <li>Stop and unregister the currently installed service, if present.</li>
+   *   <li>Delete the existing installation directory, or create {@code installPath} if absent.</li>
+   *   <li>Expand the downloaded archive under {@code installPath}.</li>
+   *   <li>Create the {@code log} subdirectory.</li>
+   *   <li>Invoke each supplied {@link Decorator} in order.</li>
+   *   <li>Recursively assign file and directory ownership to {@code appUser}.</li>
+   *   <li>Mark all files in the {@code bin} subdirectory as executable.</li>
+   *   <li>Register the new installation as a system service.</li>
+   * </ol>
+   *
+   * @param operatingSystem determines executable-bit semantics and the control-script filename extension
+   * @param appUser         OS account that will own every file and directory in the new installation
+   * @param installPath     root directory under which the archive is expanded
+   * @param progressBar     {@code true} to render a live ASCII progress bar during download
+   * @param nexusHost       Nexus server hostname, without scheme or port
+   * @param nexusUser       username for Nexus basic authentication
+   * @param nexusPassword   password for Nexus basic authentication
+   * @param repository      Nexus repository to query — {@link Repository#RELEASES} or {@link Repository#SNAPSHOTS}
+   * @param groupId         Maven {@code groupId} of the artifact
+   * @param artifactId      Maven {@code artifactId}; doubles as the installation directory name and service-script stem
+   * @param version         explicit version to deploy, or the meta-versions {@code LATEST} or {@code RELEASE}
+   * @param classifier      Maven classifier, or {@code null} for the primary artifact
+   * @param extension       artifact packaging extension (e.g. {@code zip})
+   * @param envVars         environment variable declarations forwarded verbatim to every {@link Decorator}
+   * @param decorators      post-extraction decoration hooks; may be {@code null} or empty
+   * @throws Exception if the download fails, the archive cannot be expanded, a decorator fails,
+   *                   ownership or execute permissions cannot be applied, or the service wrapper command fails
    */
   public static void update (OperatingSystem operatingSystem, String appUser, Path installPath, boolean progressBar, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String[] envVars, Decorator... decorators)
     throws Exception {

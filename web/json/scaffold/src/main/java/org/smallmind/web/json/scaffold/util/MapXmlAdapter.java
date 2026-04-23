@@ -36,7 +36,8 @@ import java.util.Map;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * Base JAXB adapter for serializing/deserializing {@link Map} instances as arrays of {@link MapKeyValue}.
+ * Abstract JAXB adapter that converts {@link Map} instances to and from arrays of {@link MapKeyValue}
+ * pairs for serialization.
  *
  * @param <M> concrete map type
  * @param <K> key type
@@ -45,25 +46,25 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<MapKeyValue<K, V>[], M> {
 
   /**
-   * @return an empty mutable map of the desired type
+   * @return an empty mutable map of the target type
    */
   public abstract M getEmptyMap ();
 
   /**
-   * @return class used for converting keys
+   * @return class used to convert keys when unmarshalling
    */
   public abstract Class<K> getKeyClass ();
 
   /**
-   * @return class used for converting values
+   * @return class used to convert values when unmarshalling
    */
   public abstract Class<V> getValueClass ();
 
   /**
-   * Converts an array of key/value pairs into a map instance.
+   * Converts an array of key/value pairs back into a populated map.
    *
-   * @param array serialized map entries
-   * @return populated map or {@code null} if the array is {@code null}
+   * @param array serialized map entries, or {@code null}
+   * @return populated map, or {@code null} if the array is {@code null}
    */
   @Override
   public M unmarshal (MapKeyValue<K, V>[] array) {
@@ -83,10 +84,10 @@ public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapte
   }
 
   /**
-   * Serializes a map into an array of key/value pairs.
+   * Converts a map into an array of key/value pairs for serialization.
    *
-   * @param map map to serialize
-   * @return serialized array or {@code null} if the map is {@code null}
+   * @param map map to serialize, or {@code null}
+   * @return array of entries, or {@code null} if the map is {@code null}
    */
   @Override
   public MapKeyValue<K, V>[] marshal (M map) {

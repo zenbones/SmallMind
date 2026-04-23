@@ -59,16 +59,16 @@ import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 
 /**
- * Convenience methods for hashing, signing, encryption, and key serialization.
+ * Convenience methods for message digesting, symmetric and asymmetric signing/verification, cipher-based encryption and decryption, and key serialization.
  */
 public class EncryptionUtility {
 
   /**
-   * Outputs text as a block of lines with a defined width.
+   * Reformats a single-line string into a block of fixed-width lines separated by newline characters.
    *
-   * @param singleLine the single line input string
-   * @param blockWidth the width of the output text block
-   * @return the text block
+   * @param singleLine the input string to reformat (whitespace is removed before splitting)
+   * @param blockWidth the maximum number of characters per output line; values less than 1 are treated as 1
+   * @return a multi-line string with at most {@code blockWidth} characters per line
    */
   public static String convertToBlock (String singleLine, int blockWidth) {
 
@@ -93,12 +93,12 @@ public class EncryptionUtility {
   }
 
   /**
-   * Computes a digest for the supplied bytes.
+   * Computes a message digest over the supplied bytes using the specified hash algorithm.
    *
-   * @param algorithm  the hash algorithm
-   * @param toBeHashed the data to hash
-   * @return the digest
-   * @throws NoSuchAlgorithmException if the digest algorithm is unavailable
+   * @param algorithm  the hash algorithm to use
+   * @param toBeHashed the data to digest
+   * @return the raw digest bytes
+   * @throws NoSuchAlgorithmException if the digest algorithm is not available in the current security environment
    */
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
     throws NoSuchAlgorithmException {
@@ -107,14 +107,14 @@ public class EncryptionUtility {
   }
 
   /**
-   * Produces a MAC using a symmetric signing algorithm.
+   * Computes a message authentication code (MAC) over the provided data using the given symmetric algorithm and key.
    *
-   * @param algorithm the MAC algorithm
-   * @param secretKey the key to use
-   * @param data      the data to sign
-   * @return the MAC bytes
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid
+   * @param algorithm the MAC algorithm to use
+   * @param secretKey the secret key to initialize the MAC with
+   * @param data      the data to authenticate
+   * @return the raw MAC bytes
+   * @throws NoSuchAlgorithmException if the MAC algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the key is not valid for this algorithm
    */
   public static byte[] sign (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
@@ -127,15 +127,15 @@ public class EncryptionUtility {
   }
 
   /**
-   * Verifies a MAC produced by {@link #sign(SymmetricSigningAlgorithm, Key, byte[])}.
+   * Verifies a MAC produced by {@link #sign(SymmetricSigningAlgorithm, Key, byte[])} by recomputing it and performing a constant-time comparison.
    *
-   * @param algorithm  the MAC algorithm
-   * @param secretKey  the key to use
-   * @param data       the original data
-   * @param signedData the expected MAC
-   * @return {@code true} if the MACs match
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid
+   * @param algorithm  the MAC algorithm to use
+   * @param secretKey  the secret key to initialize the MAC with
+   * @param data       the original data that was authenticated
+   * @param signedData the expected MAC bytes to compare against
+   * @return {@code true} if the recomputed MAC matches {@code signedData}
+   * @throws NoSuchAlgorithmException if the MAC algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the key is not valid for this algorithm
    */
   public static boolean verify (SymmetricSigningAlgorithm algorithm, Key secretKey, byte[] data, byte[] signedData)
     throws NoSuchAlgorithmException, InvalidKeyException {
@@ -148,15 +148,15 @@ public class EncryptionUtility {
   }
 
   /**
-   * Signs data using an asymmetric algorithm.
+   * Signs data using an asymmetric algorithm and the given private key.
    *
-   * @param algorithm  the signature algorithm
-   * @param privateKey the private key
-   * @param data       data to sign
-   * @return the signature
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid
-   * @throws SignatureException       if signing fails
+   * @param algorithm  the signature algorithm to use
+   * @param privateKey the private key used to generate the signature
+   * @param data       the data to sign
+   * @return the raw signature bytes
+   * @throws NoSuchAlgorithmException if the signature algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the private key is not valid for this algorithm
+   * @throws SignatureException       if the signing operation fails
    */
   public static byte[] sign (AsymmetricSigningAlgorithm algorithm, PrivateKey privateKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -170,16 +170,16 @@ public class EncryptionUtility {
   }
 
   /**
-   * Verifies a signature produced by {@link #sign(AsymmetricSigningAlgorithm, PrivateKey, byte[])}.
+   * Verifies a signature produced by {@link #sign(AsymmetricSigningAlgorithm, PrivateKey, byte[])} using the corresponding public key.
    *
-   * @param algorithm  the signature algorithm
-   * @param publicKey  the public key
-   * @param data       original data
-   * @param signedData the signature to verify
-   * @return {@code true} if verification succeeds
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeyException      if the key is invalid
-   * @throws SignatureException       if verification fails
+   * @param algorithm  the signature algorithm to use
+   * @param publicKey  the public key used to verify the signature
+   * @param data       the original data that was signed
+   * @param signedData the signature bytes to verify
+   * @return {@code true} if the signature is valid
+   * @throws NoSuchAlgorithmException if the signature algorithm is not available in the current security environment
+   * @throws InvalidKeyException      if the public key is not valid for this algorithm
+   * @throws SignatureException       if the verification operation fails
    */
   public static boolean verify (AsymmetricSigningAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
     throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -193,11 +193,11 @@ public class EncryptionUtility {
   }
 
   /**
-   * Generates a symmetric key for the given algorithm.
+   * Generates a new symmetric secret key for the given algorithm using the default key size.
    *
-   * @param algorithm the symmetric algorithm
-   * @return a newly generated key
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @param algorithm the symmetric algorithm for which to generate a key
+   * @return a freshly generated {@link javax.crypto.SecretKey}
+   * @throws NoSuchAlgorithmException if the algorithm is not available in the current security environment
    */
   public static Key generateKey (SymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
@@ -209,11 +209,11 @@ public class EncryptionUtility {
   }
 
   /**
-   * Generates an asymmetric key pair for the given algorithm.
+   * Generates a new asymmetric key pair for the given algorithm using the default key size.
    *
-   * @param algorithm the asymmetric algorithm
-   * @return a newly generated key pair
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
+   * @param algorithm the asymmetric algorithm for which to generate a key pair
+   * @return a freshly generated {@link KeyPair}
+   * @throws NoSuchAlgorithmException if the algorithm is not available in the current security environment
    */
   public static KeyPair generateKeyPair (AsymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
@@ -225,11 +225,11 @@ public class EncryptionUtility {
   }
 
   /**
-   * Serializes a key using {@link java.security.KeyRep} for later reconstruction.
+   * Serializes a {@link Key} to a byte array using {@link java.security.KeyRep} so that it can be reconstructed later.
    *
-   * @param key the key to serialize
-   * @return the serialized bytes
-   * @throws IOException if serialization fails
+   * @param key the key to serialize (public, private, or secret)
+   * @return a byte array containing the serialized key representation
+   * @throws IOException if object serialization fails
    */
   public static byte[] serializeKey (Key key)
     throws IOException {
@@ -251,12 +251,12 @@ public class EncryptionUtility {
   }
 
   /**
-   * Reconstructs a key from the bytes produced by {@link #serializeKey(Key)}.
+   * Reconstructs a {@link Key} from the byte array produced by {@link #serializeKey(Key)}.
    *
-   * @param keyBytes serialized key bytes
+   * @param keyBytes the serialized key bytes previously returned by {@link #serializeKey(Key)}
    * @return the deserialized key
-   * @throws IOException            if deserialization fails
-   * @throws ClassNotFoundException if the key type cannot be resolved
+   * @throws IOException            if object deserialization fails
+   * @throws ClassNotFoundException if the class of the serialized key cannot be found on the classpath
    */
   public static Key deserializeKey (byte[] keyBytes)
     throws IOException, ClassNotFoundException {
@@ -275,16 +275,16 @@ public class EncryptionUtility {
   }
 
   /**
-   * Encrypts data with the supplied key using the key's algorithm.
+   * Encrypts plaintext using the key's own algorithm name to select the cipher.
    *
-   * @param key           the key to use
-   * @param toBeEncrypted the plaintext
-   * @return ciphertext
-   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
-   * @throws NoSuchPaddingException    if the padding scheme is unavailable
-   * @throws InvalidKeyException       if the key is invalid
-   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
-   * @throws BadPaddingException       if padding is incorrect
+   * @param key           the key used to encrypt
+   * @param toBeEncrypted the plaintext bytes to encrypt
+   * @return the ciphertext bytes
+   * @throws NoSuchAlgorithmException  if the cipher algorithm is not available in the current security environment
+   * @throws NoSuchPaddingException    if the padding scheme is not available
+   * @throws InvalidKeyException       if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException if the plaintext length is not valid for the cipher's block size
+   * @throws BadPaddingException       if padding removal fails during encryption
    */
   public static byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -293,17 +293,17 @@ public class EncryptionUtility {
   }
 
   /**
-   * Encrypts data with a specific algorithm override.
+   * Encrypts plaintext using an explicitly named cipher algorithm, falling back to the key's own algorithm when the name is {@code null}.
    *
-   * @param key               the key to use
-   * @param specificAlgorithm optional algorithm name; defaults to the key's algorithm when {@code null}
-   * @param toBeEncrypted     the plaintext
-   * @return ciphertext
-   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
-   * @throws NoSuchPaddingException    if the padding scheme is unavailable
-   * @throws InvalidKeyException       if the key is invalid
-   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
-   * @throws BadPaddingException       if padding is incorrect
+   * @param key               the key used to encrypt
+   * @param specificAlgorithm the cipher algorithm name to use, or {@code null} to use {@link Key#getAlgorithm()}
+   * @param toBeEncrypted     the plaintext bytes to encrypt
+   * @return the ciphertext bytes
+   * @throws NoSuchAlgorithmException  if the cipher algorithm is not available in the current security environment
+   * @throws NoSuchPaddingException    if the padding scheme is not available
+   * @throws InvalidKeyException       if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException if the plaintext length is not valid for the cipher's block size
+   * @throws BadPaddingException       if padding removal fails during encryption
    */
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -320,18 +320,18 @@ public class EncryptionUtility {
   }
 
   /**
-   * Encrypts data with algorithm parameters (e.g., IV).
+   * Encrypts plaintext using algorithm parameters (e.g., an IV for CBC mode) and the key's own algorithm name.
    *
-   * @param key                    the key to use
-   * @param toBeEncrypted          the plaintext
-   * @param algorithmParameterSpec additional algorithm parameters
-   * @return ciphertext
-   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
-   * @throws InvalidAlgorithmParameterException if the parameters are invalid
-   * @throws NoSuchPaddingException             if the padding scheme is unavailable
-   * @throws InvalidKeyException                if the key is invalid
-   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
-   * @throws BadPaddingException                if padding is incorrect
+   * @param key                    the key used to encrypt
+   * @param toBeEncrypted          the plaintext bytes to encrypt
+   * @param algorithmParameterSpec additional parameters such as an initialization vector
+   * @return the ciphertext bytes
+   * @throws NoSuchAlgorithmException           if the cipher algorithm is not available in the current security environment
+   * @throws InvalidAlgorithmParameterException if the algorithm parameters are not valid for the cipher
+   * @throws NoSuchPaddingException             if the padding scheme is not available
+   * @throws InvalidKeyException                if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException          if the plaintext length is not valid for the cipher's block size
+   * @throws BadPaddingException                if padding removal fails during encryption
    */
   public static byte[] encrypt (Key key, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -340,19 +340,19 @@ public class EncryptionUtility {
   }
 
   /**
-   * Encrypts data with algorithm parameters and an explicit cipher name.
+   * Encrypts plaintext using algorithm parameters and an explicitly named cipher, falling back to the key's own algorithm when the name is {@code null}.
    *
-   * @param key                    the key to use
-   * @param specificAlgorithm      optional algorithm name; defaults to the key's algorithm when {@code null}
-   * @param toBeEncrypted          the plaintext
-   * @param algorithmParameterSpec additional algorithm parameters
-   * @return ciphertext
-   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
-   * @throws InvalidAlgorithmParameterException if the parameters are invalid
-   * @throws NoSuchPaddingException             if the padding scheme is unavailable
-   * @throws InvalidKeyException                if the key is invalid
-   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
-   * @throws BadPaddingException                if padding is incorrect
+   * @param key                    the key used to encrypt
+   * @param specificAlgorithm      the cipher algorithm name to use, or {@code null} to use {@link Key#getAlgorithm()}
+   * @param toBeEncrypted          the plaintext bytes to encrypt
+   * @param algorithmParameterSpec additional parameters such as an initialization vector
+   * @return the ciphertext bytes
+   * @throws NoSuchAlgorithmException           if the cipher algorithm is not available in the current security environment
+   * @throws InvalidAlgorithmParameterException if the algorithm parameters are not valid for the cipher
+   * @throws NoSuchPaddingException             if the padding scheme is not available
+   * @throws InvalidKeyException                if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException          if the plaintext length is not valid for the cipher's block size
+   * @throws BadPaddingException                if padding removal fails during encryption
    */
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -369,16 +369,16 @@ public class EncryptionUtility {
   }
 
   /**
-   * Decrypts data using the key's algorithm.
+   * Decrypts ciphertext using the key's own algorithm name to select the cipher.
    *
-   * @param key           the key to use
-   * @param toBeDecrypted the ciphertext
-   * @return plaintext
-   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
-   * @throws NoSuchPaddingException    if the padding scheme is unavailable
-   * @throws InvalidKeyException       if the key is invalid
-   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
-   * @throws BadPaddingException       if padding is incorrect
+   * @param key           the key used to decrypt
+   * @param toBeDecrypted the ciphertext bytes to decrypt
+   * @return the decrypted plaintext bytes
+   * @throws NoSuchAlgorithmException  if the cipher algorithm is not available in the current security environment
+   * @throws NoSuchPaddingException    if the padding scheme is not available
+   * @throws InvalidKeyException       if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException if the ciphertext length is not valid for the cipher's block size
+   * @throws BadPaddingException       if padding removal fails during decryption
    */
   public static byte[] decrypt (Key key, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -387,17 +387,17 @@ public class EncryptionUtility {
   }
 
   /**
-   * Decrypts data using an explicit algorithm name.
+   * Decrypts ciphertext using an explicitly named cipher algorithm, falling back to the key's own algorithm when the name is {@code null}.
    *
-   * @param key               the key to use
-   * @param specificAlgorithm optional algorithm name; defaults to the key's algorithm when {@code null}
-   * @param toBeDecrypted     the ciphertext
-   * @return plaintext
-   * @throws NoSuchAlgorithmException  if the algorithm is unavailable
-   * @throws NoSuchPaddingException    if the padding scheme is unavailable
-   * @throws InvalidKeyException       if the key is invalid
-   * @throws IllegalBlockSizeException if the data size is invalid for the cipher
-   * @throws BadPaddingException       if padding is incorrect
+   * @param key               the key used to decrypt
+   * @param specificAlgorithm the cipher algorithm name to use, or {@code null} to use {@link Key#getAlgorithm()}
+   * @param toBeDecrypted     the ciphertext bytes to decrypt
+   * @return the decrypted plaintext bytes
+   * @throws NoSuchAlgorithmException  if the cipher algorithm is not available in the current security environment
+   * @throws NoSuchPaddingException    if the padding scheme is not available
+   * @throws InvalidKeyException       if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException if the ciphertext length is not valid for the cipher's block size
+   * @throws BadPaddingException       if padding removal fails during decryption
    */
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -411,18 +411,18 @@ public class EncryptionUtility {
   }
 
   /**
-   * Decrypts data using algorithm parameters (e.g., IV).
+   * Decrypts ciphertext using algorithm parameters (e.g., an IV for CBC mode) and the key's own algorithm name.
    *
-   * @param key                    the key to use
-   * @param toBeDecrypted          the ciphertext
-   * @param algorithmParameterSpec additional algorithm parameters
-   * @return plaintext
-   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
-   * @throws InvalidAlgorithmParameterException if the parameters are invalid
-   * @throws NoSuchPaddingException             if the padding scheme is unavailable
-   * @throws InvalidKeyException                if the key is invalid
-   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
-   * @throws BadPaddingException                if padding is incorrect
+   * @param key                    the key used to decrypt
+   * @param toBeDecrypted          the ciphertext bytes to decrypt
+   * @param algorithmParameterSpec additional parameters such as an initialization vector
+   * @return the decrypted plaintext bytes
+   * @throws NoSuchAlgorithmException           if the cipher algorithm is not available in the current security environment
+   * @throws InvalidAlgorithmParameterException if the algorithm parameters are not valid for the cipher
+   * @throws NoSuchPaddingException             if the padding scheme is not available
+   * @throws InvalidKeyException                if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException          if the ciphertext length is not valid for the cipher's block size
+   * @throws BadPaddingException                if padding removal fails during decryption
    */
   public static byte[] decrypt (Key key, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -431,19 +431,19 @@ public class EncryptionUtility {
   }
 
   /**
-   * Decrypts data using algorithm parameters and an explicit cipher name.
+   * Decrypts ciphertext using algorithm parameters and an explicitly named cipher, falling back to the key's own algorithm when the name is {@code null}.
    *
-   * @param key                    the key to use
-   * @param specificAlgorithm      optional algorithm name; defaults to the key's algorithm when {@code null}
-   * @param toBeDecrypted          the ciphertext
-   * @param algorithmParameterSpec additional algorithm parameters
-   * @return plaintext
-   * @throws NoSuchAlgorithmException           if the algorithm is unavailable
-   * @throws InvalidAlgorithmParameterException if the parameters are invalid
-   * @throws NoSuchPaddingException             if the padding scheme is unavailable
-   * @throws InvalidKeyException                if the key is invalid
-   * @throws IllegalBlockSizeException          if the data size is invalid for the cipher
-   * @throws BadPaddingException                if padding is incorrect
+   * @param key                    the key used to decrypt
+   * @param specificAlgorithm      the cipher algorithm name to use, or {@code null} to use {@link Key#getAlgorithm()}
+   * @param toBeDecrypted          the ciphertext bytes to decrypt
+   * @param algorithmParameterSpec additional parameters such as an initialization vector
+   * @return the decrypted plaintext bytes
+   * @throws NoSuchAlgorithmException           if the cipher algorithm is not available in the current security environment
+   * @throws InvalidAlgorithmParameterException if the algorithm parameters are not valid for the cipher
+   * @throws NoSuchPaddingException             if the padding scheme is not available
+   * @throws InvalidKeyException                if the key is not valid for the cipher
+   * @throws IllegalBlockSizeException          if the ciphertext length is not valid for the cipher's block size
+   * @throws BadPaddingException                if padding removal fails during decryption
    */
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

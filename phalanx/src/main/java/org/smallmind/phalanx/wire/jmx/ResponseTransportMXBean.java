@@ -35,29 +35,31 @@ package org.smallmind.phalanx.wire.jmx;
 import org.smallmind.phalanx.wire.transport.TransportState;
 
 /**
- * JMX view of a response transport allowing state inspection and control.
+ * JMX management interface for a {@link org.smallmind.phalanx.wire.transport.ResponseTransport},
+ * exposing the minimal set of operations needed to monitor and control message consumption at runtime.
  */
 public interface ResponseTransportMXBean {
 
   /**
-   * Returns the current state of the transport.
+   * Returns the current lifecycle state of the transport.
    *
-   * @return transport state
+   * @return {@link TransportState#PLAYING} if consuming, {@link TransportState#PAUSED} if suspended,
+   * or {@link TransportState#CLOSED} if shut down
    */
   TransportState getState ();
 
   /**
-   * Starts processing requests.
+   * Resumes request consumption after a pause.
    *
-   * @throws Exception if the transport cannot start
+   * @throws Exception if the transport cannot transition to {@link TransportState#PLAYING}
    */
   void play ()
     throws Exception;
 
   /**
-   * Pauses request processing.
+   * Suspends request consumption without closing the transport or losing its registration.
    *
-   * @throws Exception if the transport cannot pause
+   * @throws Exception if the transport cannot transition to {@link TransportState#PAUSED}
    */
   void pause ()
     throws Exception;

@@ -47,19 +47,20 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.JsonNodeType;
 
 /**
- * Jackson-based deserializer that converts JSON payloads into Bayeux message/value structures.
+ * Jackson-backed {@link JsonDeserializer} that parses JSON byte buffers and strings into Bayeux
+ * {@link Message} arrays and recursively converts {@link JsonNode} trees into the {@link Value} hierarchy.
  *
- * @param <V> concrete value type produced
+ * @param <V> the concrete {@link Value} subtype produced during deserialization
  */
 public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
   /**
-   * Deserializes a byte buffer into messages.
+   * Parses a byte buffer into Bayeux messages by first converting it to a {@link JsonNode} tree.
    *
-   * @param codec  codec providing factories
-   * @param buffer encoded payload
-   * @return array of messages
-   * @throws IOException if parsing fails
+   * @param codec  codec supplying the message factory used to construct each message
+   * @param buffer JSON-encoded payload bytes
+   * @return array of decoded messages
+   * @throws IOException if the bytes cannot be parsed or do not represent an object or array
    */
   @Override
   public Message<V>[] read (Codec<V> codec, byte[] buffer)
@@ -69,12 +70,12 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   }
 
   /**
-   * Deserializes string data into messages.
+   * Parses a JSON string into Bayeux messages by first converting it to a {@link JsonNode} tree.
    *
-   * @param codec codec providing factories
-   * @param data  encoded payload
-   * @return array of messages
-   * @throws IOException if parsing fails
+   * @param codec codec supplying the message factory used to construct each message
+   * @param data  JSON-encoded string
+   * @return array of decoded messages
+   * @throws IOException if the string cannot be parsed or does not represent an object or array
    */
   @Override
   public Message<V>[] read (Codec<V> codec, String data)
@@ -84,12 +85,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   }
 
   /**
-   * Deserializes the supplied JSON node into message structures.
+   * Constructs messages from an already-parsed {@link JsonNode}, handling both a top-level object
+   * (single message) and a top-level array (multiple messages).
    *
-   * @param codec codec providing factories
-   * @param node  parsed JSON tree
-   * @return array of messages
-   * @throws IOException if parsing fails or JSON is not object/array
+   * @param codec codec used to create each message via {@link Codec#create()}
+   * @param node  parsed Jackson node representing the incoming payload
+   * @return array of one or more messages populated from the node's fields
+   * @throws IOException if any array element is not an object, or if the root node type is unsupported
    */
   private Message<V>[] read (Codec<V> codec, JsonNode node)
     throws IOException {
@@ -130,12 +132,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   }
 
   /**
-   * Converts an arbitrary object into a {@link Value} via JSON serialization.
+   * Converts {@code object} to a {@link Value} by serializing it to a {@link JsonNode} tree first,
+   * then walking the tree with {@link #walk}.
    *
-   * @param factory value factory
-   * @param object  object to convert
-   * @return value representing the object
-   * @throws IOException if conversion fails
+   * @param factory factory used to instantiate value nodes
+   * @param object  arbitrary object to convert; must be Jackson-serializable
+   * @return value tree representing {@code object}
+   * @throws IOException if Jackson cannot serialize the object or the resulting node has an unsupported type
    */
   @Override
   public Value<V> convert (ValueFactory<V> factory, Object object)
@@ -145,12 +148,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   }
 
   /**
-   * Recursively walks a JSON node to construct a {@link Value} hierarchy.
+   * Recursively converts a {@link JsonNode} into a {@link Value} node using the appropriate
+   * {@code factory} method for each JSON type (object, array, string, number, boolean, null).
    *
-   * @param factory value factory
-   * @param node    JSON node to convert
-   * @return value representation
-   * @throws IOException if encountering unknown node types
+   * @param factory factory used to create each value node
+   * @param node    Jackson node to convert
+   * @return the equivalent {@link Value} representation
+   * @throws IOException if {@code node} has an unknown or unsupported type, or an unsupported numeric subtype
    */
   private Value<V> walk (ValueFactory<V> factory, JsonNode node)
     throws IOException {

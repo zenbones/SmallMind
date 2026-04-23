@@ -39,16 +39,17 @@ import org.smallmind.scribe.pen.Formatter;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a Log4j2 {@link Layout} to the scribe {@link Formatter} interface.
+ * Scribe {@link Formatter} that delegates to a Log4j2 {@link Layout}, prepending any header bytes
+ * and appending any footer bytes that the layout produces, and decoding all output as UTF-8.
  */
 public class Log4JFormatterAdapter implements Formatter {
 
   private final Layout<LogEvent> layout;
 
   /**
-   * Creates an adapter around the provided Log4j2 layout.
+   * Builds a scribe formatter that delegates rendering to the given native Log4j2 layout.
    *
-   * @param layout the native layout
+   * @param layout the Log4j2 layout to wrap
    */
   public Log4JFormatterAdapter (Layout<LogEvent> layout) {
 
@@ -56,10 +57,11 @@ public class Log4JFormatterAdapter implements Formatter {
   }
 
   /**
-   * Formats a record by delegating to the Log4j2 layout, including header and footer.
+   * Formats the record by converting the layout's optional header bytes, the event body bytes,
+   * and the optional footer bytes to UTF-8 strings and concatenating them.
    *
-   * @param record record to format
-   * @return the formatted string
+   * @param record the scribe record to format; its native log entry must be a {@link LogEvent}
+   * @return the concatenated UTF-8 header, body, and footer produced by the Log4j2 layout
    */
   public String format (Record<?> record) {
 

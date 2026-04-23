@@ -42,27 +42,31 @@ import org.smallmind.web.json.scaffold.fault.NativeLanguage;
 import org.smallmind.web.json.scaffold.fault.NativeObject;
 
 /**
- * Base callback for awaiting or processing transmission results.
+ * Abstract base class for objects that hold or await a transmission result, providing shared
+ * error-handling logic that decodes and rethrows remote faults.
  */
 public abstract class TransmissionCallback {
 
   /**
-   * Retrieves the result, potentially blocking until available or timeout.
+   * Returns the decoded result of the remote invocation, blocking if necessary until the result
+   * is available or the timeout expires.
    *
-   * @param signalCodec    codec used to decode results
-   * @param timeoutSeconds maximum time to wait
-   * @return decoded result object
-   * @throws Throwable if waiting fails or the remote side reports an error
+   * @param signalCodec    codec used to decode the result payload
+   * @param timeoutSeconds maximum time in seconds to wait; interpretation is implementation-specific
+   * @return the decoded return value of the remote invocation
+   * @throws Throwable if waiting fails, the timeout is exceeded, or the remote side reports an error
    */
   public abstract Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable;
 
   /**
-   * Processes an error-bearing result signal and rethrows the underlying cause when possible.
+   * Inspects {@code resultSignal} for an error flag and, when present, deserializes and rethrows
+   * the original Java exception if it is serializable, or throws a {@link FaultWrappingException}
+   * for non-Java or non-serializable faults.
    *
-   * @param signalCodec  codec used to decode the fault
-   * @param resultSignal signal containing the error payload
-   * @throws Throwable the decoded throwable or a {@link FaultWrappingException}
+   * @param signalCodec  codec used to deserialize the fault payload
+   * @param resultSignal signal whose error flag and payload are examined
+   * @throws Throwable the deserialized original exception, or a {@link FaultWrappingException} wrapping the fault
    */
   public void handleError (SignalCodec signalCodec, ResultSignal resultSignal)
     throws Throwable {

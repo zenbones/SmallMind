@@ -36,7 +36,9 @@ import jakarta.websocket.Endpoint;
 import jakarta.websocket.Extension;
 
 /**
- * Configuration holder for the JSR-356 websocket transport.
+ * Value object that aggregates all configuration parameters required to register and tune the
+ * JSR-356 {@link WebSocketTransport} endpoint, including the endpoint class, mount URL,
+ * subprotocol, extensions, and timeout/buffer size overrides.
  */
 public class WebsocketConfiguration {
 
@@ -53,10 +55,13 @@ public class WebsocketConfiguration {
   private int maximumTextMessageBufferSize = -1;
 
   /**
-   * Creates a configuration with the mandatory endpoint class and base URL.
+   * Creates a configuration with the two mandatory parameters; all optional properties default to
+   * their commented values declared on the fields.
    *
-   * @param endpointClass websocket endpoint implementation
-   * @param oumuamuaUrl   base URL for the Oumuamua endpoint
+   * @param endpointClass the {@link Endpoint} subclass to register with the servlet container
+   * @param oumuamuaUrl   the URL path under which the Oumuamua Bayeux endpoint will be mounted;
+   *                      leading slashes and trailing {@code /*} wildcards are normalised at
+   *                      registration time
    */
   public WebsocketConfiguration (Class<? extends Endpoint> endpointClass, String oumuamuaUrl) {
 
@@ -65,7 +70,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return endpoint class to register
+   * Returns the {@link Endpoint} subclass that will be registered with the JSR-356 container.
+   *
+   * @return endpoint implementation class
    */
   public Class<? extends Endpoint> getEndpointClass () {
 
@@ -73,7 +80,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return configured Oumuamua URL
+   * Returns the raw URL path configured for the Oumuamua endpoint before normalisation.
+   *
+   * @return URL path string as provided to the constructor
    */
   public String getOumuamuaUrl () {
 
@@ -81,7 +90,10 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return configured websocket extensions
+   * Returns the websocket extensions to advertise during endpoint registration, or {@code null}
+   * if none have been configured.
+   *
+   * @return array of {@link Extension} instances, or {@code null}
    */
   public Extension[] getExtensions () {
 
@@ -89,9 +101,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Sets extensions to register with the endpoint.
+   * Sets the websocket extensions to register with the endpoint.
    *
-   * @param extensions websocket extensions
+   * @param extensions array of {@link Extension} instances to advertise; {@code null} means none
    */
   public void setExtensions (Extension[] extensions) {
 
@@ -99,7 +111,10 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return negotiated subprotocol
+   * Returns the subprotocol name to include in the endpoint configuration, or {@code null} if none
+   * has been set.
+   *
+   * @return subprotocol string, or {@code null}
    */
   public String getSubProtocol () {
 
@@ -107,9 +122,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Sets the subprotocol to request.
+   * Sets the subprotocol name to negotiate with the client.
    *
-   * @param subProtocol subprotocol name
+   * @param subProtocol subprotocol identifier string, or {@code null} to omit subprotocol negotiation
    */
   public void setSubProtocol (String subProtocol) {
 
@@ -117,7 +132,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return maximum idle timeout in milliseconds (-1 for default)
+   * Returns the maximum time a session may remain idle before the container closes it.
+   *
+   * @return idle timeout in milliseconds, or {@code -1} to use the container default
    */
   public long getMaxIdleTimeoutMilliseconds () {
 
@@ -125,9 +142,10 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Sets the maximum idle timeout.
+   * Overrides the container's default idle session timeout.
    *
-   * @param maxIdleTimeoutMilliseconds timeout in milliseconds
+   * @param maxIdleTimeoutMilliseconds idle timeout in milliseconds; use {@code -1} to keep the
+   *                                   container default
    */
   public void setMaxIdleTimeoutMilliseconds (long maxIdleTimeoutMilliseconds) {
 
@@ -135,7 +153,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return async send timeout in milliseconds
+   * Returns the timeout applied to asynchronous message sends.
+   *
+   * @return async send timeout in milliseconds; {@code 0} means no timeout
    */
   public long getAsyncSendTimeoutMilliseconds () {
 
@@ -143,9 +163,9 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Sets the async send timeout.
+   * Sets the timeout applied to asynchronous message sends.
    *
-   * @param asyncSendTimeoutMilliseconds timeout in milliseconds
+   * @param asyncSendTimeoutMilliseconds timeout in milliseconds; {@code 0} disables the timeout
    */
   public void setAsyncSendTimeoutMilliseconds (long asyncSendTimeoutMilliseconds) {
 
@@ -153,7 +173,10 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * @return maximum text message buffer size (-1 for default)
+   * Returns the maximum number of characters the container will buffer for a single incoming text
+   * message before failing the connection.
+   *
+   * @return buffer size in characters, or {@code -1} to use the container default
    */
   public int getMaximumTextMessageBufferSize () {
 
@@ -161,9 +184,10 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Sets the maximum text message buffer size.
+   * Overrides the container's default incoming text message buffer size.
    *
-   * @param maximumTextMessageBufferSize buffer size in characters
+   * @param maximumTextMessageBufferSize buffer size in characters; use {@code -1} to keep the
+   *                                     container default
    */
   public void setMaximumTextMessageBufferSize (int maximumTextMessageBufferSize) {
 

@@ -33,10 +33,11 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Simple immutable pair of doubles used to represent two-dimensional values.
+ * An immutable pair of {@code double} values used throughout the layout system to represent
+ * two-dimensional quantities such as positions, sizes, or ascent/descent measurements.
  *
- * @param first  first value (e.g., width)
- * @param second second value (e.g., height)
+ * @param first  the first value of the pair (e.g., x-coordinate or width)
+ * @param second the second value of the pair (e.g., y-coordinate or height)
  */
 public record Pair(double first, double second) {
 

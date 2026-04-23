@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.util;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Thrown when parsing or translating dot-notation patterns fails.
+ * Thrown to indicate that a dot-notation pattern is malformed or cannot be parsed.
  */
 public class DotNotationException extends FormattedException {
 
   /**
-   * Constructs an empty exception.
+   * Constructs an exception with no detail message.
    */
   public DotNotationException () {
 
@@ -48,8 +48,10 @@ public class DotNotationException extends FormattedException {
   }
 
   /**
-   * @param message formatted error message
-   * @param args    message arguments
+   * Constructs an exception with a formatted detail message.
+   *
+   * @param message the message pattern describing the parse failure
+   * @param args    optional arguments formatted into the message
    */
   public DotNotationException (String message, Object... args) {
 
@@ -57,9 +59,11 @@ public class DotNotationException extends FormattedException {
   }
 
   /**
-   * @param throwable underlying cause
-   * @param message   formatted error message
-   * @param args      message arguments
+   * Constructs an exception with a cause and a formatted detail message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message pattern describing the parse failure
+   * @param args      optional arguments formatted into the message
    */
   public DotNotationException (Throwable throwable, String message, Object... args) {
 
@@ -67,7 +71,9 @@ public class DotNotationException extends FormattedException {
   }
 
   /**
-   * @param throwable underlying cause
+   * Constructs an exception wrapping the given cause.
+   *
+   * @param throwable the underlying cause
    */
   public DotNotationException (Throwable throwable) {
 

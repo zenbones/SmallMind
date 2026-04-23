@@ -33,9 +33,10 @@
 package org.smallmind.nutsnbolts.reflection;
 
 /**
- * Marker for types that can produce a strongly typed copy of themselves during proxying.
+ * Marker interface for types that participate in proxy differentiation, allowing a generated proxy
+ * to be cast back to the concrete subtype it wraps.
  *
- * @param <D> the concrete differentiable subtype
+ * @param <D> the self-referential concrete type that implements this interface
  */
 public interface Differentiable<D extends Differentiable<D>> {
 

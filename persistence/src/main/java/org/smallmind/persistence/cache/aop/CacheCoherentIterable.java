@@ -39,9 +39,10 @@ import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 
 /**
- * Iterable wrapper that persists each durable element into the cache before returning it.
+ * Lazy {@link Iterable} wrapper that passes each element through a {@link VectoredDao} as it is consumed,
+ * ensuring every durable is recorded in the cache without forcing eager materialisation.
  *
- * @param <I> identifier type of the durable
+ * @param <I> serializable and comparable identifier type of the durable
  * @param <D> durable entity type
  */
 public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Iterable<D> {
@@ -51,11 +52,11 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
   private final Class<D> durableClass;
 
   /**
-   * Creates an iterable that ensures every iterated element is cached.
+   * Wraps an existing iterable with cache-coherent traversal.
    *
-   * @param durableIterable source iterable of durables
-   * @param durableClass    class of the managed durable
-   * @param vectoredDao     cache-aware DAO that will persist elements
+   * @param durableIterable source iterable of durable entities
+   * @param durableClass    runtime class of the managed durable type
+   * @param vectoredDao     cache-aware DAO used to persist each element
    */
   public CacheCoherentIterable (Iterable<D> durableIterable, Class<D> durableClass, VectoredDao<I, D> vectoredDao) {
 
@@ -65,7 +66,9 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
   }
 
   /**
-   * @return an iterator that caches elements on access
+   * Returns an iterator that persists each element into the cache as it is retrieved.
+   *
+   * @return cache-coherent iterator over the wrapped durables
    */
   @Override
   public Iterator<D> iterator () {
@@ -74,14 +77,16 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
   }
 
   /**
-   * Iterator that routes elements through the {@link VectoredDao} to enforce cache coherence.
+   * Iterator that routes every call to {@link #next()} through the {@link VectoredDao} to enforce cache coherence.
    */
   private class CacheCoherentIterator implements Iterator<D> {
 
     private final Iterator<D> durableIter;
 
     /**
-     * @param durableIter underlying iterator of durable elements
+     * Constructs the iterator over the supplied underlying iterator.
+     *
+     * @param durableIter source iterator of raw durable elements
      */
     public CacheCoherentIterator (Iterator<D> durableIter) {
 
@@ -89,10 +94,9 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
     }
 
     /**
-     * @return {@code true} when additional cached elements are available
-     */
-    /**
-     * @return {@code true} when additional cached elements are available
+     * Returns {@code true} if the underlying source has more elements.
+     *
+     * @return {@code true} when at least one more element is available
      */
     @Override
     public boolean hasNext () {
@@ -101,9 +105,9 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
     }
 
     /**
-     * Returns the next durable, persisting it into the cache before handing it off.
+     * Returns the next durable after persisting it into the vector cache.
      *
-     * @return cached durable instance
+     * @return the cache-coherent durable instance
      */
     @Override
     public D next () {
@@ -112,7 +116,7 @@ public class CacheCoherentIterable<I extends Serializable & Comparable<I>, D ext
     }
 
     /**
-     * Removes the current element from the underlying iterator.
+     * Delegates removal to the underlying iterator.
      */
     @Override
     public void remove () {

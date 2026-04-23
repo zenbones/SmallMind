@@ -36,15 +36,15 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * {@link X509TrustManager} implementation that blindly trusts all certificates.
- * Intended solely for development and testing where certificate validation is disabled.
+ * {@link X509TrustManager} that accepts all certificates without validation, intended only for development
+ * and testing where certificate checking must be suppressed.
  */
 public class NaiveTrustManager implements X509TrustManager {
 
   /**
-   * Accepts any presented client certificates without validation.
+   * Performs no validation, unconditionally accepting any client certificate chain.
    *
-   * @param cert     the client certificate chain
+   * @param cert     the client certificate chain to check
    * @param authType the key exchange algorithm used
    */
   public void checkClientTrusted (X509Certificate[] cert, String authType) {
@@ -52,9 +52,9 @@ public class NaiveTrustManager implements X509TrustManager {
   }
 
   /**
-   * Accepts any presented server certificates without validation.
+   * Performs no validation, unconditionally accepting any server certificate chain.
    *
-   * @param cert     the server certificate chain
+   * @param cert     the server certificate chain to check
    * @param authType the key exchange algorithm used
    */
   public void checkServerTrusted (X509Certificate[] cert, String authType) {
@@ -62,9 +62,9 @@ public class NaiveTrustManager implements X509TrustManager {
   }
 
   /**
-   * Returns an empty array indicating no specific trusted issuers.
+   * Returns an empty array to indicate that no certificate authorities are specifically trusted.
    *
-   * @return an empty certificate array
+   * @return an empty {@link X509Certificate} array
    */
   public X509Certificate[] getAcceptedIssuers () {
 

@@ -36,7 +36,7 @@ import java.security.Key;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * HMAC-based symmetric signing algorithms.
+ * Enumeration of HMAC-based symmetric signing algorithms supported by the library.
  */
 public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
 
@@ -45,7 +45,9 @@ public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
   private final String algorithmName;
 
   /**
-   * @param algorithmName the JCA MAC algorithm name
+   * Constructs an enum constant with the given JCA MAC algorithm name.
+   *
+   * @param algorithmName the JCA name passed to {@link javax.crypto.Mac#getInstance(String)}
    */
   HMACSigningAlgorithm (String algorithmName) {
 
@@ -53,7 +55,9 @@ public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
   }
 
   /**
-   * @return the JCA algorithm name used with {@link javax.crypto.Mac}
+   * Returns the JCA algorithm name used when instantiating {@link javax.crypto.Mac}.
+   *
+   * @return the JCA MAC algorithm name string
    */
   public String getAlgorithmName () {
 
@@ -61,10 +65,10 @@ public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
   }
 
   /**
-   * Constructs a key suitable for the chosen HMAC algorithm from a raw secret.
+   * Wraps the supplied raw bytes in a {@link javax.crypto.spec.SecretKeySpec} suitable for this HMAC algorithm.
    *
-   * @param secret the raw key bytes
-   * @return a {@link Key} for HMAC operations
+   * @param secret the raw secret key bytes
+   * @return a {@link Key} ready for use with {@link javax.crypto.Mac}
    */
   public Key generateKey (byte[] secret) {
 

@@ -38,16 +38,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.bayeux.oumuamua.server.api.Attributed;
 
 /**
- * Thread-safe {@link Attributed} implementation backed by a concurrent map.
+ * Synchronized {@link Attributed} base implementation backed by a {@link ConcurrentHashMap},
+ * providing thread-safe attribute storage for Bayeux sessions and channels.
  */
 public class AbstractAttributed implements Attributed {
 
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
 
   /**
-   * Returns a snapshot of the stored attribute names.
+   * Returns a defensive snapshot of all currently stored attribute names.
    *
-   * @return copy of the attribute name set
+   * @return new {@link HashSet} containing the attribute names at the time of the call
    */
   @Override
   public synchronized Set<String> getAttributeNames () {
@@ -56,10 +57,10 @@ public class AbstractAttributed implements Attributed {
   }
 
   /**
-   * Looks up an attribute by name.
+   * Retrieves the value bound to the given name.
    *
-   * @param name attribute key
-   * @return stored value or {@code null}
+   * @param name key of the attribute to retrieve
+   * @return the associated value, or {@code null} if no mapping exists
    */
   @Override
   public synchronized Object getAttribute (String name) {
@@ -68,10 +69,10 @@ public class AbstractAttributed implements Attributed {
   }
 
   /**
-   * Associates a value with the provided name.
+   * Binds a value to the given name, replacing any existing mapping.
    *
-   * @param name  attribute key
-   * @param value value to store
+   * @param name  key under which the value is stored
+   * @param value value to associate with the name
    */
   @Override
   public synchronized void setAttribute (String name, Object value) {
@@ -80,10 +81,10 @@ public class AbstractAttributed implements Attributed {
   }
 
   /**
-   * Removes a named attribute.
+   * Removes the attribute bound to the given name.
    *
-   * @param name attribute key
-   * @return previous value or {@code null}
+   * @param name key of the attribute to remove
+   * @return the value that was associated with the name, or {@code null} if none existed
    */
   @Override
   public synchronized Object removeAttribute (String name) {

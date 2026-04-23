@@ -37,21 +37,21 @@ import java.util.HashMap;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
 /**
- * Utility functions for converting between arrays of view types and entity types using
- * reflection-based factory/instance methods defined on the participating classes.
+ * Static helpers for converting arrays between view and entity types using reflective
+ * factory and instance methods defined on the participating classes.
  */
 public class ArrayMutator {
 
   /**
-   * Converts an array of view objects into an array of entity objects by invoking a {@code factory()} method
-   * on each view element.
+   * Converts an array of view objects to entity objects by calling a {@code factory()} method on
+   * each view element.
    *
    * @param entityClass target entity component class
    * @param viewArray   source array of view objects
    * @param <T>         view type
    * @param <U>         entity type
-   * @return converted array or {@code null} if the input array is {@code null}
-   * @throws PropertyException if reflection or invocation fails during conversion
+   * @return converted array, or {@code null} if the input is {@code null}
+   * @throws PropertyException if any reflective lookup or invocation fails
    */
   public static <T, U> U[] toEntityType (Class<U> entityClass, T[] viewArray)
     throws PropertyException {
@@ -81,16 +81,16 @@ public class ArrayMutator {
   }
 
   /**
-   * Converts an array of entities into an array of view objects by invoking a static
-   * {@code instance(entity)} method on the view class.
+   * Converts an array of entity objects to view objects by calling a static {@code instance(entity)}
+   * method on the view class.
    *
-   * @param entityClass entity component class expected by the view
-   * @param viewClass   view component class exposing an {@code instance} factory
+   * @param entityClass entity component class accepted by the view factory method
+   * @param viewClass   view component class exposing the static {@code instance} method
    * @param entityArray source array of entity objects
    * @param <T>         entity type
    * @param <U>         view type
-   * @return converted array or {@code null} if the input array is {@code null}
-   * @throws PropertyException if reflection or invocation fails during conversion
+   * @return converted array, or {@code null} if the input is {@code null}
+   * @throws PropertyException if any reflective lookup or invocation fails
    */
   public static <T, U> U[] toViewType (Class<? extends T> entityClass, Class<U> viewClass, T[] entityArray)
     throws PropertyException {

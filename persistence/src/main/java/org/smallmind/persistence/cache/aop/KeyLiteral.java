@@ -35,7 +35,7 @@ package org.smallmind.persistence.cache.aop;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Concrete {@link Key} implementation that can be instantiated programmatically.
+ * Programmatic {@link Key} implementation that can be constructed in code rather than as an annotation literal.
  */
 public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
 
@@ -45,9 +45,9 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   private final boolean nullable;
 
   /**
-   * Creates a key literal using the default alias and flags.
+   * Creates a key with the given field/parameter name and all other attributes at their defaults.
    *
-   * @param value parameter or field name for the key component
+   * @param value parameter or bean-property name for the key component
    */
   public KeyLiteral (String value) {
 
@@ -55,10 +55,10 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * Creates a key literal with a custom alias.
+   * Creates a key with a field/parameter name and an explicit alias.
    *
-   * @param value parameter or field name for the key component
-   * @param alias alternate label used in the cache key
+   * @param value parameter or bean-property name for the key component
+   * @param alias label embedded in the cache key segment
    */
   public KeyLiteral (String value, String alias) {
 
@@ -66,11 +66,11 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * Creates a key literal, optionally marking the component as constant.
+   * Creates a key with a name, alias, and constant flag.
    *
-   * @param value    parameter or field name for the key component
-   * @param alias    alternate label used in the cache key
-   * @param constant {@code true} when the value should be treated as a literal constant
+   * @param value    parameter or bean-property name, or a literal string when {@code constant} is {@code true}
+   * @param alias    label embedded in the cache key segment
+   * @param constant {@code true} to treat {@code value} as a literal constant
    */
   public KeyLiteral (String value, String alias, boolean constant) {
 
@@ -78,12 +78,12 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * Creates a key literal with full control over flags and alias.
+   * Creates a key with full control over all attributes.
    *
-   * @param value    parameter or field name for the key component
-   * @param alias    alternate label used in the cache key
-   * @param constant {@code true} when the value should be treated as a constant
-   * @param nullable {@code true} if a null value is permitted
+   * @param value    parameter or bean-property name, or a literal string when {@code constant} is {@code true}
+   * @param alias    label embedded in the cache key segment
+   * @param constant {@code true} to treat {@code value} as a literal constant
+   * @param nullable {@code true} to allow a {@code null} value for this key component
    */
   public KeyLiteral (String value, String alias, boolean constant, boolean nullable) {
 
@@ -94,7 +94,9 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * @return parameter or field name for the key component
+   * Returns the parameter or field name, or the literal constant, depending on {@link #constant()}.
+   *
+   * @return key component source
    */
   @Override
   public String value () {
@@ -103,7 +105,9 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * @return alternate label used in the cache key
+   * Returns the optional label embedded in the cache key segment.
+   *
+   * @return alias string, or empty when none was specified
    */
   @Override
   public String alias () {
@@ -112,7 +116,9 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * @return {@code true} when the value should be treated as a constant
+   * Returns whether {@link #value()} is a literal constant rather than a parameter or field name.
+   *
+   * @return {@code true} when the component is a constant
    */
   @Override
   public boolean constant () {
@@ -121,7 +127,9 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   /**
-   * @return {@code true} if the component is allowed to be null
+   * Returns whether a {@code null} value is permitted for this key component.
+   *
+   * @return {@code true} if null is allowed
    */
   @Override
   public boolean nullable () {

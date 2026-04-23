@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Versions of Snowflake-inspired identifiers.
+ * Enumeration of generation strategies for Snowflake-style identifiers, each identified by a one-byte version code.
  */
 public enum SnowflakeVersion {
 
@@ -42,7 +42,9 @@ public enum SnowflakeVersion {
   private final byte code;
 
   /**
-   * @param code version code stored in the id
+   * Assigns the version's code byte.
+   *
+   * @param code the byte value stored in the identifier to identify this version
    */
   SnowflakeVersion (byte code) {
 
@@ -50,7 +52,9 @@ public enum SnowflakeVersion {
   }
 
   /**
-   * @return version code byte
+   * Returns the byte value that represents this version in a Snowflake identifier.
+   *
+   * @return the version code byte
    */
   public byte getCode () {
 

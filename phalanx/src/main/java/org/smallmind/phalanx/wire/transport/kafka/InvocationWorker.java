@@ -45,7 +45,10 @@ import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
 /**
- * Worker that decodes invocation signals consumed from Kafka and forwards them through the invocation circuit.
+ * Work-queue consumer that deserializes inbound Kafka records into {@link InvocationSignal}s
+ * and dispatches each one through the {@link WireInvocationCircuit}.  Each invocation is wrapped
+ * in a speedometer instrument tagged by operation, service, method name, and version to support
+ * throughput monitoring.
  */
 public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
 
@@ -54,12 +57,12 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
   private final SignalCodec signalCodec;
 
   /**
-   * Creates a worker capable of handling a single Kafka record at a time.
+   * Constructs a worker bound to the given work queue and shared infrastructure.
    *
-   * @param workQueue           queue providing Kafka records to process.
-   * @param responseTransmitter transport used to publish responses.
-   * @param invocationCircuit   circuit responsible for invoking the target service.
-   * @param signalCodec         codec used to encode and decode signals.
+   * @param workQueue           queue from which Kafka records are drained
+   * @param responseTransmitter transmitter used to publish results back to the originating caller
+   * @param invocationCircuit   circuit that resolves and invokes the target service method
+   * @param signalCodec         codec used to deserialize record bytes into an {@link InvocationSignal}
    */
   public InvocationWorker (WorkQueue<ConsumerRecord<Long, byte[]>> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
@@ -71,10 +74,12 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
   }
 
   /**
-   * Decodes the invocation signal contained in the record and invokes the target method.
+   * Decodes an {@link InvocationSignal} from {@code record} and delegates execution to the
+   * invocation circuit.  The entire operation is measured by a speedometer instrument tagged
+   * with the route's service name, method name, and version.
    *
-   * @param record the Kafka record containing an invocation message.
-   * @throws Throwable if the downstream invocation or decoding fails.
+   * @param record the Kafka record whose value bytes encode an {@link InvocationSignal}
+   * @throws Throwable if signal decoding fails or the invocation circuit raises an error
    */
   @Override
   public void engageWork (final ConsumerRecord<Long, byte[]> record)
@@ -88,7 +93,8 @@ public class InvocationWorker extends Worker<ConsumerRecord<Long, byte[]>> {
   }
 
   /**
-   * Closes any resources owned by the worker. No-op because resources are managed externally.
+   * No-op implementation; all resources referenced by this worker are owned and closed
+   * externally by the enclosing transport.
    */
   @Override
   public void close () {

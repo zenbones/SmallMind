@@ -39,44 +39,48 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 
 /**
- * Multiset-like collection supporting multiplicity for elements.
+ * A multiset (bag) collection that tracks how many times each element has been added.
  *
- * @param <E> element type
+ * @param <E> the type of elements held in this bag
  */
 public interface Bag<E> extends Collection<E> {
 
   /**
-   * Adds an element with the given multiplicity.
+   * Adds the specified number of occurrences of an element to this bag.
    *
-   * @param e        element to add
-   * @param multiple number of occurrences to add
-   * @return {@code true} if the bag changed
+   * @param e        the element to add
+   * @param multiple the number of occurrences to add
+   * @return {@code true} if the bag changed as a result of the call
    */
   boolean add (E e, int multiple);
 
   /**
-   * Removes up to the specified multiplicity of the element.
+   * Removes the specified number of occurrences of an element from this bag.
    *
-   * @param e        element to remove
-   * @param multiple number of occurrences to remove
-   * @return {@code true} if the bag changed
+   * @param e        the element to remove
+   * @param multiple the number of occurrences to remove
+   * @return {@code true} if the bag changed as a result of the call
    */
   boolean remove (E e, int multiple);
 
   /**
-   * @return set of distinct elements contained in the bag
+   * Returns the set of distinct elements currently held in this bag.
+   *
+   * @return the set of unique elements
    */
   Set<E> keySet ();
 
   /**
-   * @return set of entries mapping element to multiplicity
+   * Returns the set of entries mapping each distinct element to its occurrence count.
+   *
+   * @return entries of element-to-count pairs
    */
   Set<Map.Entry<E, Integer>> entrySet ();
 
   /**
-   * Creates a spliterator reporting the {@link Spliterator#DISTINCT} characteristic over the bag's elements.
+   * Returns a spliterator over the distinct elements of this bag, reporting the {@link Spliterator#DISTINCT} characteristic.
    *
-   * @return spliterator traversing unique elements
+   * @return a spliterator over the unique elements in this bag
    */
   @Override
   default Spliterator<E> spliterator () {

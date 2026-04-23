@@ -33,9 +33,11 @@
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
 /**
- * Doubly linked node used by {@link IntrinsicRoster} to store elements and their neighbors.
+ * A doubly linked node used internally by {@link IntrinsicRoster} to hold an element and its neighbors.
+ * Element access and mutation are synchronized to allow safe concurrent use of the node itself,
+ * while structural changes (link rewiring) are governed by the enclosing roster's lock.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class IntrinsicRosterNode<T> {
 
@@ -44,11 +46,11 @@ public class IntrinsicRosterNode<T> {
   private T obj;
 
   /**
-   * Creates a node containing the supplied element with links to adjacent nodes.
+   * Creates a node containing the supplied element, linked to the given predecessor and successor.
    *
-   * @param obj  stored element
-   * @param prev previous node
-   * @param next next node
+   * @param obj  the element to store
+   * @param prev the previous node in the list, or {@code null} when this is the head
+   * @param next the next node in the list, or {@code null} when this is the tail
    */
   public IntrinsicRosterNode (T obj, IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> next) {
 
@@ -58,7 +60,9 @@ public class IntrinsicRosterNode<T> {
   }
 
   /**
-   * @return stored element
+   * Returns the element stored in this node.
+   *
+   * @return the stored element
    */
   public synchronized T getObj () {
 
@@ -66,9 +70,9 @@ public class IntrinsicRosterNode<T> {
   }
 
   /**
-   * Updates the stored element.
+   * Replaces the element stored in this node.
    *
-   * @param obj new element
+   * @param obj the new element
    */
   public synchronized void setObj (T obj) {
 
@@ -76,10 +80,10 @@ public class IntrinsicRosterNode<T> {
   }
 
   /**
-   * Compares the stored element with the supplied object.
+   * Tests whether the stored element equals the supplied object, treating identity as equality.
    *
-   * @param something object to compare
-   * @return {@code true} when the element matches
+   * @param something the object to compare against the stored element
+   * @return {@code true} when the objects are the same instance or are equal by {@link Object#equals}
    */
   public synchronized boolean objEquals (Object something) {
 
@@ -87,7 +91,9 @@ public class IntrinsicRosterNode<T> {
   }
 
   /**
-   * @return previous node in the list
+   * Returns the previous node in the list.
+   *
+   * @return the predecessor node, or {@code null} when this is the head
    */
   public IntrinsicRosterNode<T> getPrev () {
 
@@ -97,7 +103,7 @@ public class IntrinsicRosterNode<T> {
   /**
    * Sets the previous node reference.
    *
-   * @param prev previous node
+   * @param prev the new predecessor node
    */
   public void setPrev (IntrinsicRosterNode<T> prev) {
 
@@ -105,7 +111,9 @@ public class IntrinsicRosterNode<T> {
   }
 
   /**
-   * @return next node in the list
+   * Returns the next node in the list.
+   *
+   * @return the successor node, or {@code null} when this is the tail
    */
   public IntrinsicRosterNode<T> getNext () {
 
@@ -115,7 +123,7 @@ public class IntrinsicRosterNode<T> {
   /**
    * Sets the next node reference.
    *
-   * @param next next node
+   * @param next the new successor node
    */
   public void setNext (IntrinsicRosterNode<T> next) {
 

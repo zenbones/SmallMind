@@ -33,14 +33,15 @@
 package org.smallmind.persistence.orm.aop;
 
 /**
- * Indicates that one or more transactional operations failed, but processing may continue to unwind boundaries.
+ * Non-terminal {@link TransactionError} raised when a commit or rollback fails mid-boundary,
+ * allowing the aspect to continue unwinding remaining transactions before rethrowing.
  */
 public class IncompleteTransactionError extends TransactionError {
 
   /**
-   * Creates an error wrapping the underlying transactional failure.
+   * Creates an error wrapping the transactional failure that interrupted boundary processing.
    *
-   * @param throwable the cause
+   * @param throwable the cause of the incomplete transaction
    */
   public IncompleteTransactionError (Throwable throwable) {
 
@@ -48,7 +49,9 @@ public class IncompleteTransactionError extends TransactionError {
   }
 
   /**
-   * @return false to signal the boundary logic to continue processing
+   * Returns {@code false} so that boundary logic continues processing remaining transactions.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean isTerminal () {

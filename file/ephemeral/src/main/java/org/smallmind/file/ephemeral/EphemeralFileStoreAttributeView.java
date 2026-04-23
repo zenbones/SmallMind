@@ -35,12 +35,17 @@ package org.smallmind.file.ephemeral;
 import java.nio.file.attribute.FileStoreAttributeView;
 
 /**
- * File-store level attributes for the ephemeral store.
+ * {@link FileStoreAttributeView} implementation for the ephemeral file store. The view
+ * is identified by the name {@code "ephemeral"} and currently carries no additional
+ * attributes beyond those accessible via reflection in
+ * {@link EphemeralFileStore#getAttribute(String)}.
  */
 public class EphemeralFileStoreAttributeView implements FileStoreAttributeView {
 
   /**
-   * {@inheritDoc}
+   * Returns the name of this attribute view.
+   *
+   * @return {@code "ephemeral"}
    */
   @Override
   public String name () {

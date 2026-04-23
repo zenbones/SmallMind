@@ -42,8 +42,8 @@ import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 import org.smallmind.web.grizzly.tyrus.TyrusGrizzlyServerContainer;
 
 /**
- * Holds per-context deployment state for the Grizzly server, including collected installer beans and the backing
- * {@link WebappContext}.
+ * Accumulates all deployment artifacts — installers, the servlet context, and the WebSocket container — for a single
+ * Grizzly web application context.
  */
 public class GrizzlyWebAppState {
 
@@ -56,7 +56,9 @@ public class GrizzlyWebAppState {
   private TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer;
 
   /**
-   * @param webAppContext the servlet context representing the application
+   * Creates the state holder for the given servlet context.
+   *
+   * @param webAppContext Grizzly servlet context for this application
    */
   public GrizzlyWebAppState (WebappContext webAppContext) {
 
@@ -64,7 +66,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return the underlying Grizzly {@link WebappContext}
+   * Returns the Grizzly servlet context for this application.
+   *
+   * @return the underlying {@link WebappContext}
    */
   public WebappContext getWebAppContext () {
 
@@ -72,9 +76,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * Registers WebSocket extensions to apply to endpoints in this context.
+   * Adds a WebSocket extension installer to be applied when deploying endpoints.
    *
-   * @param webSocketExtensionInstaller installer describing extensions for an endpoint
+   * @param webSocketExtensionInstaller installer carrying extensions for a specific endpoint
    */
   public void addWebSocketExtensionInstaller (WebSocketExtensionInstaller webSocketExtensionInstaller) {
 
@@ -82,7 +86,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return collected WebSocket extension installers
+   * Returns all registered WebSocket extension installers.
+   *
+   * @return list of WebSocket extension installers
    */
   public LinkedList<WebSocketExtensionInstaller> getWebSocketExtensionInstallerList () {
 
@@ -90,9 +96,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * Registers a SOAP service to expose under this context.
+   * Adds a SOAP web-service installer to be registered under this context.
    *
-   * @param webServiceInstaller installer describing the service instance and path
+   * @param webServiceInstaller installer describing the service and its path
    */
   public void addWebServiceInstaller (WebServiceInstaller webServiceInstaller) {
 
@@ -100,7 +106,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return collected SOAP service installers
+   * Returns all registered SOAP service installers.
+   *
+   * @return list of web-service installers
    */
   public LinkedList<WebServiceInstaller> getWebServiceInstallerList () {
 
@@ -108,9 +116,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * Registers a servlet context listener to install.
+   * Adds a servlet context listener installer to be registered under this context.
    *
-   * @param listenerInstaller listener installer
+   * @param listenerInstaller installer wrapping the listener to install
    */
   public void addListenerInstaller (ListenerInstaller listenerInstaller) {
 
@@ -118,7 +126,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return collected listener installers
+   * Returns all registered listener installers.
+   *
+   * @return list of listener installers
    */
   public LinkedList<ListenerInstaller> getListenerInstallerList () {
 
@@ -126,9 +136,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * Registers a servlet filter to install.
+   * Adds a servlet filter installer to be registered under this context.
    *
-   * @param filterInstaller filter installer
+   * @param filterInstaller installer describing the filter and its mapping
    */
   public void addFilterInstaller (FilterInstaller filterInstaller) {
 
@@ -136,7 +146,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return collected filter installers
+   * Returns all registered filter installers.
+   *
+   * @return list of filter installers
    */
   public LinkedList<FilterInstaller> getFilterInstallerList () {
 
@@ -144,9 +156,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * Registers a servlet to install.
+   * Adds a servlet installer to be registered under this context.
    *
-   * @param servletInstaller servlet installer
+   * @param servletInstaller installer describing the servlet and its mapping
    */
   public void addServletInstaller (ServletInstaller servletInstaller) {
 
@@ -154,7 +166,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return collected servlet installers
+   * Returns all registered servlet installers.
+   *
+   * @return list of servlet installers
    */
   public LinkedList<ServletInstaller> getServletInstallerList () {
 
@@ -162,7 +176,9 @@ public class GrizzlyWebAppState {
   }
 
   /**
-   * @return the WebSocket server container associated with this context
+   * Returns the Tyrus WebSocket server container associated with this context.
+   *
+   * @return the WebSocket server container, or {@code null} if WebSocket support is not configured
    */
   public TyrusGrizzlyServerContainer getTyrusGrizzlyServerContainer () {
 
@@ -170,6 +186,8 @@ public class GrizzlyWebAppState {
   }
 
   /**
+   * Sets the Tyrus WebSocket server container for this context.
+   *
    * @param tyrusGrizzlyServerContainer initialized WebSocket container to store
    */
   public void setTyrusGrizzlyServerContainer (TyrusGrizzlyServerContainer tyrusGrizzlyServerContainer) {

@@ -40,9 +40,21 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 
 /**
- * Wraps a {@link ComponentInstance} and tracks lease timing, deconstruction, and termination state.
+ * Internal handle that pairs a {@link ComponentInstance} with the pool's tracking metadata.
+ * <p>
+ * Each pin wraps exactly one {@link ComponentInstance} and records:
+ * <ul>
+ *   <li>a lease-start timestamp (set on every {@link #serve()} call) used to measure lease
+ *       duration when the component is returned;</li>
+ *   <li>an optional {@link DeconstructionCoordinator} that fires when any configured timeout
+ *       (idle, lease, or processing) expires;</li>
+ *   <li>a terminated flag that prevents double-removal and guards against concurrent
+ *       deconstruction races.</li>
+ * </ul>
+ * Instances are held in {@link ComponentPinManager}'s backing map and free queue, and are
+ * never exposed directly to pool callers.
  *
- * @param <C> component type managed
+ * @param <C> the type of component managed by the wrapped {@link ComponentInstance}
  */
 public class ComponentPin<C> {
 
@@ -53,11 +65,13 @@ public class ComponentPin<C> {
   private long leaseStartNanos;
 
   /**
-   * Creates a pin for the given component instance and sets up deconstruction if required.
+   * Creates a pin wrapping {@code componentInstance} and, when the pool's configuration
+   * requires deconstruction, initialises a {@link DeconstructionCoordinator} and calls
+   * {@link DeconstructionCoordinator#free()} to start idle-timeout tracking.
    *
-   * @param componentPool       owning pool
-   * @param deconstructionQueue queue used for deconstruction scheduling
-   * @param componentInstance   underlying component instance
+   * @param componentPool       the pool that owns this pin
+   * @param deconstructionQueue the shared queue used to schedule fuse ignitions
+   * @param componentInstance   the component instance being wrapped
    */
   protected ComponentPin (ComponentPool<C> componentPool, DeconstructionQueue deconstructionQueue, ComponentInstance<C> componentInstance) {
 
@@ -71,9 +85,9 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Returns the underlying component instance.
+   * Returns the {@link ComponentInstance} wrapped by this pin.
    *
-   * @return component instance
+   * @return the component instance
    */
   protected ComponentInstance<C> getComponentInstance () {
 
@@ -81,10 +95,14 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Serves the wrapped component, scheduling deconstruction and recording lease start.
+   * Hands the component to a caller, recording the lease start timestamp and notifying the
+   * deconstruction coordinator that the component is now being served.
+   * <p>
+   * The lease-start timestamp is captured in the {@code finally} block so it is always set
+   * even if {@link ComponentInstance#serve()} throws.
    *
-   * @return the component
-   * @throws Exception if the component cannot be served
+   * @return the underlying component value returned by {@link ComponentInstance#serve()}
+   * @throws Exception if {@link ComponentInstance#serve()} throws
    */
   protected C serve ()
     throws Exception {
@@ -102,7 +120,11 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Releases the component back to the pool, updating metrics and resetting deconstruction timers.
+   * Called when a component is returned to the pool.
+   * <p>
+   * Computes the lease duration from the stored start time, updates Claxon metrics,
+   * optionally fires the lease-time reporting event, and resets the deconstruction coordinator
+   * to idle-timeout tracking mode.
    */
   protected void free () {
 
@@ -120,9 +142,10 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Indicates whether this pin has been terminated.
+   * Returns {@code true} if this pin has been permanently removed from service, either by
+   * a deconstruction fuse igniting or by the pool manager terminating it.
    *
-   * @return {@code true} if terminated
+   * @return {@code true} after the first call to {@link #fizzle()} or {@link #kaboom(boolean)}
    */
   protected boolean isTerminated () {
 
@@ -130,7 +153,12 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Marks the pin as terminated and aborts any deconstruction scheduling.
+   * Marks this pin as terminated and aborts any pending deconstruction fuses without
+   * removing the pin from the pool's backing structures.
+   * <p>
+   * This is the "quiet" termination path: the caller ({@link ComponentPinManager}) is
+   * responsible for closing the instance and updating bookkeeping. Called at most once;
+   * subsequent calls are no-ops.
    */
   protected void fizzle () {
 
@@ -142,9 +170,15 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Requests removal of the pin from the pool, optionally with prejudice (forced termination).
+   * Requests that the owning pool remove this pin from service, called by a deconstruction
+   * fuse when its timer fires.
+   * <p>
+   * Guards against double-removal via the {@code terminated} flag. Called at most once;
+   * subsequent calls are no-ops.
    *
-   * @param withPrejudice whether the removal should be forced
+   * @param withPrejudice {@code true} if the removal should be treated as forced termination
+   *                      (e.g. a processing-timeout fuse), {@code false} for graceful removal
+   *                      (e.g. idle or lease fuses)
    */
   protected void kaboom (boolean withPrejudice) {
 
@@ -154,9 +188,10 @@ public class ComponentPin<C> {
   }
 
   /**
-   * Returns a stack trace identifying where the component was leased, if tracked.
+   * Returns the existential stack trace captured when this component was last served, if
+   * existential awareness is enabled in the pool configuration.
    *
-   * @return stack trace elements or {@code null} if not tracked
+   * @return the stack trace of the acquiring thread, or {@code null} if not tracked
    */
   public StackTraceElement[] getExistentialStackTrace () {
 

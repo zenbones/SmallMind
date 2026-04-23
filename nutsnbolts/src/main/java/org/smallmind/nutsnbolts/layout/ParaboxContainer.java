@@ -33,39 +33,40 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Abstraction for platform-specific containers that can host components laid out by {@link ParaboxLayout}.
+ * Platform-specific bridge that connects a {@link ParaboxLayout} to the native container holding
+ * the laid-out components, and supplies the {@link ParaboxPlatform} that provides metric data.
  *
- * @param <C> the component type used by the platform
+ * @param <C> the platform component type managed by this container
  */
 public interface ParaboxContainer<C> {
 
   /**
-   * Returns the platform abstraction providing gap and metric data.
+   * Returns the platform abstraction that provides gap sizes, perimeter insets, and orientation.
    *
-   * @return the platform
+   * @return the {@link ParaboxPlatform} backing this container
    */
   ParaboxPlatform getPlatform ();
 
   /**
-   * Wraps a platform component in a {@link ParaboxElement} using the provided constraint.
+   * Constructs a {@link ParaboxElement} that wraps the given native component with the specified constraint.
    *
-   * @param component  the platform component
-   * @param constraint sizing and alignment constraint
-   * @return a new element wrapper
+   * @param component  the native platform component to wrap
+   * @param constraint the grow/shrink constraint governing the component's sizing
+   * @return a new element wrapping the component
    */
   ParaboxElement<C> constructElement (C component, Constraint constraint);
 
   /**
-   * Adds a component to the native container.
+   * Adds the given component to the underlying native container.
    *
-   * @param component the component to add
+   * @param component the platform component to register with the native container
    */
   void nativelyAddComponent (C component);
 
   /**
-   * Removes a component from the native container.
+   * Removes the given component from the underlying native container.
    *
-   * @param component the component to remove
+   * @param component the platform component to deregister from the native container
    */
   void nativelyRemoveComponent (C component);
 }

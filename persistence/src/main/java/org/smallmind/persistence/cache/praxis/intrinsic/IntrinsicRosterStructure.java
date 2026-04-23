@@ -33,10 +33,11 @@
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
 /**
- * Mutable structure that tracks the head, tail, and size metadata for {@link IntrinsicRoster} instances.
- * Structures may chain to a parent to keep sublists synchronized with the original roster.
+ * Mutable metadata record that tracks the head node, tail node, and element count for an
+ * {@link IntrinsicRoster} or one of its sublist views. Child structures optionally chain to a
+ * parent so that boundary and size changes propagate from sublist to parent roster.
  *
- * @param <T> element type stored in the roster
+ * @param <T> the element type stored in the roster
  */
 public class IntrinsicRosterStructure<T> {
 
@@ -46,7 +47,7 @@ public class IntrinsicRosterStructure<T> {
   int size;
 
   /**
-   * Creates an empty roster structure with no parent.
+   * Creates an empty root structure with no parent.
    */
   public IntrinsicRosterStructure () {
 
@@ -54,12 +55,12 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Creates a roster structure with explicitly supplied state and optional parent linkage.
+   * Creates a structure with explicit state, optionally linked to a parent for change propagation.
    *
-   * @param parent parent structure to keep synchronized
-   * @param head   head node of the roster
-   * @param tail   tail node of the roster
-   * @param size   current element count
+   * @param parent the parent structure to notify when boundaries or size change; may be {@code null}
+   * @param head   the head node of this view
+   * @param tail   the tail node of this view
+   * @param size   the current number of elements in this view
    */
   public IntrinsicRosterStructure (IntrinsicRosterStructure<T> parent, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail, int size) {
 
@@ -70,7 +71,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * @return head node of the roster
+   * Returns the head node of this roster view.
+   *
+   * @return the head node, or {@code null} when the roster is empty
    */
   public IntrinsicRosterNode<T> getHead () {
 
@@ -78,9 +81,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Updates the head node, propagating to the parent when necessary.
+   * Sets the head node, propagating the change to the parent when the old head was also the parent's head.
    *
-   * @param head new head node
+   * @param head the new head node
    */
   public void setHead (IntrinsicRosterNode<T> head) {
 
@@ -92,10 +95,10 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Tests whether the supplied node is the current head.
+   * Returns {@code true} when the given node is currently the head of this view.
    *
-   * @param node node to test
-   * @return {@code true} when the node is the head
+   * @param node the node to test
+   * @return {@code true} when {@code node} is the head
    */
   public boolean isHead (IntrinsicRosterNode<T> node) {
 
@@ -103,7 +106,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * @return tail node of the roster
+   * Returns the tail node of this roster view.
+   *
+   * @return the tail node, or {@code null} when the roster is empty
    */
   public IntrinsicRosterNode<T> getTail () {
 
@@ -111,9 +116,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Updates the tail node, propagating to the parent when necessary.
+   * Sets the tail node, propagating the change to the parent when the old tail was also the parent's tail.
    *
-   * @param tail new tail node
+   * @param tail the new tail node
    */
   public void setTail (IntrinsicRosterNode<T> tail) {
 
@@ -125,10 +130,10 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Tests whether the supplied node is the current tail.
+   * Returns {@code true} when the given node is currently the tail of this view.
    *
-   * @param node node to test
-   * @return {@code true} when the node is the tail
+   * @param node the node to test
+   * @return {@code true} when {@code node} is the tail
    */
   public boolean isTail (IntrinsicRosterNode<T> node) {
 
@@ -136,11 +141,13 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Removes a node from the structure, adjusting head and tail references.
+   * Adjusts head and tail boundaries after a node is removed, propagating to the parent as needed.
+   * When the size drops to zero both boundaries are set to the neighboring nodes. Otherwise, only the
+   * boundary that pointed to the removed node is updated.
    *
-   * @param prev    previous node
-   * @param current node being removed
-   * @param next    next node
+   * @param prev    the predecessor of the removed node
+   * @param current the node being removed
+   * @param next    the successor of the removed node
    */
   public void evaporate (IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> current, IntrinsicRosterNode<T> next) {
 
@@ -159,9 +166,10 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Initializes the structure as a circular list containing a single element.
+   * Initializes this structure with a single self-referencing node, used when inserting into an empty roster.
+   * Changes are propagated to the parent via {@link #reconstitute} when a parent exists.
    *
-   * @param element element to insert
+   * @param element the element for the new node
    */
   public void ouroboros (T element) {
 
@@ -183,11 +191,12 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Reconstitutes head and tail links when inserting into an existing structure, cascading to the parent if present.
+   * Updates head and tail references after a new node is inserted, cascading to the parent when present.
+   * A {@code null} head means this structure had no head before insertion; the same applies to the tail.
    *
-   * @param added newly added node
-   * @param head  head prior to insertion
-   * @param tail  tail prior to insertion
+   * @param added the newly inserted node
+   * @param head  the head value before insertion (used to detect an empty-before-insertion state)
+   * @param tail  the tail value before insertion (used to detect an empty-before-insertion state)
    */
   public void reconstitute (IntrinsicRosterNode<T> added, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail) {
 
@@ -206,7 +215,8 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Clears the roster, severing links and resetting sizes in this structure and its parent.
+   * Removes all elements from this view by severing the span of nodes it owns, then propagates
+   * the size reduction to the parent.
    */
   public void clear () {
 
@@ -226,7 +236,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * @return current roster size
+   * Returns the current element count for this view.
+   *
+   * @return the size
    */
   public int getSize () {
 
@@ -234,9 +246,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Adds to the tracked size and propagates the change to the parent.
+   * Increases the element count by {@code delta} and propagates the change to the parent.
    *
-   * @param delta number of elements added
+   * @param delta the number of elements added
    */
   public void addSize (int delta) {
 
@@ -248,9 +260,9 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Subtracts from the tracked size and propagates the change to the parent.
+   * Decreases the element count by {@code delta} and propagates the change to the parent.
    *
-   * @param delta number of elements removed
+   * @param delta the number of elements removed
    */
   public void subtractSize (int delta) {
 
@@ -262,7 +274,7 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Increments the size and propagates the change to the parent.
+   * Increments the element count by one and propagates the change to the parent.
    */
   public void incSize () {
 
@@ -274,7 +286,7 @@ public class IntrinsicRosterStructure<T> {
   }
 
   /**
-   * Decrements the size and propagates the change to the parent.
+   * Decrements the element count by one and propagates the change to the parent.
    */
   public void decSize () {
 

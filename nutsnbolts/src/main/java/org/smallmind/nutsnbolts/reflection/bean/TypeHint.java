@@ -38,14 +38,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Provides an explicit class for a method parameter when reflection alone cannot infer it.
+ * Parameter annotation that supplies an explicit {@link Class} when the reflectively determined parameter
+ * type is insufficient for correct bean method resolution or invocation.
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TypeHint {
 
   /**
-   * @return the concrete class the parameter should be treated as
+   * Specifies the concrete class to use in place of the reflectively determined parameter type.
+   *
+   * @return the class that the annotated parameter should be treated as during method lookup
    */
   Class value ();
 }

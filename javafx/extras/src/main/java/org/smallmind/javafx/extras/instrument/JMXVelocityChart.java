@@ -45,7 +45,11 @@ import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
 
 /**
- * {@link VelocityChart} that polls a JMX MBean for velocity metrics and plots the values.
+ * A {@link VelocityChart} that automatically polls a JMX MBean every 15 seconds for velocity
+ * metrics and plots them as a line chart. The MBean must expose the attributes
+ * {@code AverageVelocity}, {@code OneMinuteAvgVelocity}, {@code FiveMinuteAvgVelocity}, and
+ * {@code FifteenMinuteAvgVelocity}. On any polling error the chart pauses and a
+ * {@link JavaErrorDialog} is shown on the JavaFX thread.
  */
 public class JMXVelocityChart extends VelocityChart {
 
@@ -67,11 +71,12 @@ public class JMXVelocityChart extends VelocityChart {
   private final ScheduledFuture<?> future;
 
   /**
-   * Constructs the chart and begins polling the specified MBean for velocity attributes.
+   * Creates the chart and schedules recurring data collection beginning one second after
+   * construction, repeating every 15 seconds.
    *
-   * @param spanInMilliseconds    the time span to display
-   * @param mBeanServerConnection the MBean server connection used for polling
-   * @param objectName            the object name of the MBean exposing the velocity attributes
+   * @param spanInMilliseconds    width of the visible time window in milliseconds; must be positive
+   * @param mBeanServerConnection the JMX connection used to query the MBean; must not be {@code null}
+   * @param objectName            identifies the MBean exposing the velocity attributes; must not be {@code null}
    */
   public JMXVelocityChart (long spanInMilliseconds, MBeanServerConnection mBeanServerConnection, ObjectName objectName) {
 
@@ -95,8 +100,9 @@ public class JMXVelocityChart extends VelocityChart {
   }
 
   /**
-   * Retrieves the latest velocity measurements from the MBean and adds them to the chart. If an error occurs, polling
-   * is paused and a {@link JavaErrorDialog} is shown on the JavaFX thread.
+   * Fetches the velocity attributes from the MBean and adds a {@link Blur} data point to the chart.
+   * If the chart is paused the call is a no-op. On any JMX error the chart is paused and a
+   * {@link JavaErrorDialog} is shown on the JavaFX thread.
    */
   private void collectData () {
 
@@ -122,7 +128,8 @@ public class JMXVelocityChart extends VelocityChart {
   }
 
   /**
-   * Cancels polling and stops the chart's time axis.
+   * Cancels the scheduled polling task and delegates to {@link VelocityChart#stop()} to release
+   * the time-axis executor. Should be called when the chart is no longer needed.
    */
   @Override
   public void stop () {

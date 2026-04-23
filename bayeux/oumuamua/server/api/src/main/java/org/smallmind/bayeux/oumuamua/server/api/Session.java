@@ -36,140 +36,162 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Represents a connected Bayeux client with lifecycle state and message queues.
+ * Live Bayeux client session tracking connection state, transport preferences, and the inbound
+ * packet queue used for long-poll delivery.
  *
  * @param <V> concrete {@link Value} implementation used for message payloads
  */
 public interface Session<V extends Value<V>> extends Attributed {
 
   /**
-   * Marker for session listeners.
+   * Base marker type for session-level event listeners.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface Listener<V extends Value<V>> {
 
   }
 
   /**
-   * Listener for packet processing within a session.
+   * Intercepts packets at the session boundary; messages are frozen when delivered from the channel
+   * so that mutations here are visible only to this session's delivery stream, not to others.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   // Messages are frozen when delivered from the channel to the session, guaranteeing changes generated here are seen only in the sending session
   interface PacketListener<V extends Value<V>> extends Listener<V> {
 
     /**
-     * Called when a meta response is delivered to this session.
+     * Called when a meta-channel response packet is about to be sent to this session; may return
+     * a replacement packet.
      *
-     * @param sender the session that produced the packet
-     * @param packet the packet being delivered
-     * @return the packet to forward to the client
+     * @param sender session whose meta command produced the response
+     * @param packet response packet frozen for this session
+     * @return packet to forward to the client transport
      */
     // For responses from META commands delivered to the sender
     Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
     /**
-     * Called when a published packet is delivered to the session.
+     * Called when a channel delivery packet is about to be sent to this session; may return
+     * a replacement packet.
      *
-     * @param sender the session that published
-     * @param packet the packet being delivered
-     * @return the packet to forward to the client
+     * @param sender session that originally published the message
+     * @param packet delivery packet frozen for this session
+     * @return packet to forward to the client transport
      */
     // For published messages delivered to receivers
     Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   /**
-   * Adds a listener for session events.
+   * Registers a session-level event listener.
    *
    * @param listener listener to add
    */
   void addListener (Listener<V> listener);
 
   /**
-   * Removes a listener from the session.
+   * Deregisters a session-level event listener.
    *
    * @param listener listener to remove
    */
   void removeListener (Listener<V> listener);
 
   /**
-   * @return unique identifier for the session
+   * Returns the unique identifier assigned to this session during handshake.
+   *
+   * @return session id string
    */
   String getId ();
 
   /**
-   * @return {@code true} if the session is local to this server node
+   * Returns whether this session was created by a server-side component rather than a remote client.
+   *
+   * @return {@code true} for local (server-side) sessions
    */
   boolean isLocal ();
 
   /**
-   * @return {@code true} if the session uses long polling
+   * Returns whether this session is currently using long polling for message delivery.
+   *
+   * @return {@code true} if long polling is active
    */
   boolean isLongPolling ();
 
   /**
-   * Toggles long polling usage.
+   * Sets whether this session should use long polling for message delivery.
    *
-   * @param longPolling {@code true} to use long polling
+   * @param longPolling {@code true} to enable long polling
    */
   void setLongPolling (boolean longPolling);
 
   /**
-   * @return maximum queue size for long poll responses
+   * Returns the maximum number of packets that may accumulate in the long-poll queue before
+   * older entries are dropped.
+   *
+   * @return maximum long-poll queue capacity
    */
   int getMaxLongPollQueueSize ();
 
   /**
-   * @return current session state
+   * Returns the current lifecycle state of the session.
+   *
+   * @return current {@link SessionState}
    */
   SessionState getState ();
 
   /**
-   * Marks the handshake as complete.
+   * Advances the session state to {@link SessionState#HANDSHOOK} after a successful handshake.
    */
   void completeHandshake ();
 
   /**
-   * Marks the connection as established.
+   * Advances the session state to {@link SessionState#CONNECTED} after a successful connect.
    */
   void completeConnection ();
 
   /**
-   * Marks the session as disconnected.
+   * Advances the session state to {@link SessionState#DISCONNECTED} upon disconnect.
    */
   void completeDisconnect ();
 
   /**
-   * Intercepts a response packet destined for the session.
+   * Passes a response packet through the session's {@link PacketListener} chain and returns
+   * the final packet.
    *
-   * @param sender the originating session
-   * @param packet the response packet
-   * @return the processed packet
+   * @param sender session that generated the response
+   * @param packet outbound response packet
+   * @return packet after all listeners have processed it
    */
   Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   /**
-   * Dispatches a packet to the session's transport.
+   * Hands a packet directly to the session's underlying transport for immediate sending.
    *
-   * @param packet the packet to dispatch
+   * @param packet packet to dispatch
    */
   void dispatch (Packet<V> packet);
 
   /**
-   * Polls for a packet to deliver to the client.
+   * Blocks until a packet is available for delivery or the timeout elapses; used by long-poll
+   * transports to retrieve queued messages.
    *
-   * @param timeout duration to wait
-   * @param unit    unit of the timeout
-   * @return the next packet or {@code null} on timeout
-   * @throws InterruptedException if interrupted while waiting
+   * @param timeout maximum time to wait
+   * @param unit    time unit of the timeout
+   * @return next queued packet, or {@code null} if the timeout elapsed before one arrived
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   Packet<V> poll (long timeout, TimeUnit unit)
     throws InterruptedException;
 
   /**
-   * Delivers a packet originating from a channel to this session.
+   * Delivers a channel publication packet to this session, passing it through session packet
+   * listeners before queuing or dispatching it.
    *
-   * @param fromChannel the channel delivering the message
-   * @param sender      the publishing session
-   * @param packet      the packet being delivered
+   * @param fromChannel channel that is delivering the packet
+   * @param sender      session that originally published the message
+   * @param packet      delivery packet addressed to this session
    */
   void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet);
 }

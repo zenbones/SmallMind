@@ -39,7 +39,9 @@ import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
 /**
- * Base implementation for request transports that manages synchronous and asynchronous callbacks.
+ * Abstract base implementation of {@link RequestTransport} that manages in-flight callback correlation
+ * for both asynchronous and already-completed (synchronous) result signals, applying a configurable
+ * default timeout when no per-call timeout is present in the conversation.
  */
 public abstract class AbstractRequestTransport implements RequestTransport {
 
@@ -47,9 +49,9 @@ public abstract class AbstractRequestTransport implements RequestTransport {
   private final long defaultTimeoutSeconds;
 
   /**
-   * Constructs the transport with a default timeout applied when none is supplied in the conversation.
+   * Constructs the transport with the given fallback timeout.
    *
-   * @param defaultTimeoutSeconds fallback timeout in seconds for request/response calls
+   * @param defaultTimeoutSeconds timeout in seconds used when the conversation carries no explicit timeout
    */
   public AbstractRequestTransport (long defaultTimeoutSeconds) {
 
@@ -59,15 +61,16 @@ public abstract class AbstractRequestTransport implements RequestTransport {
   }
 
   /**
-   * Retrieves a result for a request, optionally blocking for completion based on the conversation type.
+   * Acquires the result for an outbound request, blocking asynchronously until the response arrives
+   * or the timeout expires; returns immediately for in-only (fire-and-forget) calls.
    *
    * @param signalCodec codec used to decode the result payload
-   * @param route       destination route of the request
-   * @param voice       voice describing the conversation
-   * @param messageId   correlation id for the request
-   * @param inOnly      whether the request is fire-and-forget
-   * @return decoded result object or {@code null} for in-only calls
-   * @throws Throwable if result retrieval fails or the remote side raises an error
+   * @param route       route identifying the target service and function, used in timeout messages
+   * @param voice       voice that carries the conversation style and optional per-call timeout
+   * @param messageId   correlation id that links this call to its response
+   * @param inOnly      {@code true} if no response is expected; skips waiting and returns {@code null}
+   * @return the decoded return value of the remote invocation, or {@code null} for in-only calls
+   * @throws Throwable if the wait times out, the callback is interrupted, or the remote side reports an error
    */
   public Object acquireResult (SignalCodec signalCodec, Route route, Voice<?, ?> voice, String messageId, boolean inOnly)
     throws Throwable {
@@ -97,10 +100,13 @@ public abstract class AbstractRequestTransport implements RequestTransport {
   }
 
   /**
-   * Completes a pending callback by providing the received result signal.
+   * Delivers an inbound result signal to the callback registered for the given correlation id.
+   * If the callback has not yet been registered (result arrived before the caller had a chance to
+   * register), a {@link SynchronousTransmissionCallback} is stored so the caller can read it immediately
+   * on registration.
    *
-   * @param correlationId correlation id of the original request
-   * @param resultSignal  signal received from the remote side
+   * @param correlationId correlation id that identifies the original request
+   * @param resultSignal  result signal received from the remote service
    */
   public void completeCallback (String correlationId, ResultSignal resultSignal) {
 

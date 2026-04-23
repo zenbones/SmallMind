@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.io;
 import java.util.ArrayList;
 
 /**
- * Mutable bookmark used by {@link ByteArrayIOStream} to track position across segmented byte arrays.
- * Supports arithmetic on positions and conversion to/from absolute offsets.
+ * Mutable cursor into a segmented byte-array buffer, tracking a segment index and byte offset
+ * and supporting positional arithmetic used by {@link ByteArrayIOStream}.
  */
 public class ByteArrayIOBookmark {
 
@@ -45,7 +45,7 @@ public class ByteArrayIOBookmark {
   private int byteIndex;
 
   /**
-   * Creates a bookmark at position 0 for the given segment allocation size.
+   * Creates a bookmark positioned at offset zero for the given segment size.
    *
    * @param allocation number of bytes per segment
    */
@@ -55,10 +55,10 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Creates a bookmark at a specific absolute position.
+   * Creates a bookmark at the given absolute byte position within the segmented buffer.
    *
    * @param allocation number of bytes per segment
-   * @param position   absolute offset into the segmented buffer
+   * @param position   absolute offset to initialize the bookmark at
    */
   public ByteArrayIOBookmark (int allocation, long position) {
 
@@ -69,9 +69,9 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Copy constructor.
+   * Creates a bookmark whose initial position matches an existing bookmark.
    *
-   * @param bookmark bookmark to clone
+   * @param bookmark the bookmark to copy the position from
    */
   public ByteArrayIOBookmark (ByteArrayIOBookmark bookmark) {
 
@@ -82,7 +82,9 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * @return allocation (segment size) in bytes
+   * Returns the segment size that this bookmark was constructed with.
+   *
+   * @return number of bytes per segment
    */
   public int getAllocation () {
 
@@ -90,6 +92,8 @@ public class ByteArrayIOBookmark {
   }
 
   /**
+   * Returns the zero-based index of the segment the bookmark currently points into.
+   *
    * @return current segment index
    */
   public int segmentIndex () {
@@ -98,7 +102,9 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * @return offset within the current segment
+   * Returns the byte offset within the current segment.
+   *
+   * @return byte offset within the current segment (0 inclusive to allocation exclusive)
    */
   public int byteIndex () {
 
@@ -106,7 +112,9 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * @return absolute position computed from segment and byte offsets
+   * Computes the absolute byte position represented by this bookmark.
+   *
+   * @return {@code segmentIndex * allocation + byteIndex}
    */
   public long position () {
 
@@ -114,9 +122,9 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Moves the bookmark to an absolute position.
+   * Moves this bookmark to the given absolute byte position.
    *
-   * @param position absolute offset into the segmented buffer
+   * @param position new absolute position within the segmented buffer
    */
   public void position (long position) {
 
@@ -125,7 +133,7 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Resets position to the start of the buffer.
+   * Sets this bookmark back to position zero (segment 0, byte 0).
    */
   public void rewind () {
 
@@ -134,10 +142,10 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Resets this bookmark to another bookmark's position, if provided.
+   * Copies the position from another bookmark into this one, if the source is non-null.
    *
-   * @param bookmark source bookmark (may be {@code null})
-   * @return this bookmark for chaining
+   * @param bookmark source bookmark whose position is copied; a {@code null} value is a no-op
+   * @return this bookmark for method chaining
    */
   public ByteArrayIOBookmark reset (ByteArrayIOBookmark bookmark) {
 
@@ -150,12 +158,12 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Increments the bookmark by one byte, respecting the upper limit bookmark.
+   * Advances this bookmark forward by one byte, wrapping to the next segment when the current one is exhausted.
    *
-   * @param limitBookmark bookmark representing end-of-stream
-   * @param segmentList   backing segment list for bounds checks
-   * @return this bookmark after increment
-   * @throws IllegalStateException if increment moves past end-of-stream
+   * @param limitBookmark bookmark representing the end of written data
+   * @param segmentList   the list of backing segments used for bounds checking
+   * @return this bookmark for method chaining
+   * @throws IllegalStateException if advancing would move beyond the limit
    */
   public ByteArrayIOBookmark inc (ByteArrayIOBookmark limitBookmark, ArrayList<byte[]> segmentList) {
 
@@ -174,12 +182,12 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Advances the bookmark by {@code n} bytes, validating against the limit.
+   * Advances this bookmark forward by {@code n} bytes in a single operation, validating against the limit.
    *
-   * @param limitBookmark bookmark representing end-of-stream
-   * @param n             number of bytes to skip (non-negative)
-   * @return this bookmark after skipping
-   * @throws IllegalArgumentException if the resulting position exceeds the limit
+   * @param limitBookmark bookmark representing the end of written data
+   * @param n             number of bytes to advance (must be non-negative)
+   * @return this bookmark for method chaining
+   * @throws IllegalArgumentException if the new position would exceed the limit
    */
   public ByteArrayIOBookmark skip (ByteArrayIOBookmark limitBookmark, long n) {
 
@@ -197,12 +205,12 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Produces a new bookmark offset by {@code delta}, enforcing bounds between zero and the limit.
+   * Creates a new bookmark at a position relative to this one, enforcing bounds between zero and the limit.
    *
-   * @param limitBookmark bookmark representing end-of-stream
-   * @param delta         signed offset
-   * @return new bookmark at the adjusted position
-   * @throws IllegalArgumentException if the result is out of bounds
+   * @param limitBookmark bookmark representing the end of written data
+   * @param delta         signed offset to apply to the current position
+   * @return a new bookmark at the resulting position
+   * @throws IllegalArgumentException if the result would be negative or exceed the limit
    */
   public ByteArrayIOBookmark offset (ByteArrayIOBookmark limitBookmark, long delta) {
 
@@ -217,10 +225,10 @@ public class ByteArrayIOBookmark {
   }
 
   /**
-   * Compares two bookmarks by segment and byte index.
+   * Returns {@code true} when {@code obj} is a {@link ByteArrayIOBookmark} at the same segment index and byte offset.
    *
-   * @param obj other object
-   * @return {@code true} if both refer to the same position
+   * @param obj the object to compare with
+   * @return {@code true} if both bookmarks represent the same logical position
    */
   @Override
   public boolean equals (Object obj) {

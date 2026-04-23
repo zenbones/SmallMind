@@ -33,7 +33,9 @@
 package org.smallmind.nutsnbolts.retry;
 
 /**
- * Runnable wrapper that executes a {@link RetryCall} and captures any thrown errors.
+ * {@link Runnable} adapter used by {@link Retry} to execute a {@link RetryCall} on a
+ * dedicated thread, capturing any thrown error so the outcome can be inspected after
+ * the thread completes.
  */
 public class RetryWorker implements Runnable {
 
@@ -41,7 +43,9 @@ public class RetryWorker implements Runnable {
   private Throwable throwable;
 
   /**
-   * @param retryCall the operation to execute
+   * Constructs a {@code RetryWorker} that will delegate to the given call.
+   *
+   * @param retryCall the operation to attempt each time this worker is run
    */
   public RetryWorker (RetryCall retryCall) {
 
@@ -49,7 +53,7 @@ public class RetryWorker implements Runnable {
   }
 
   /**
-   * Clears the previously captured throwable before another attempt.
+   * Clears the throwable captured from the previous attempt, preparing this worker for reuse.
    */
   public void reset () {
 
@@ -57,9 +61,9 @@ public class RetryWorker implements Runnable {
   }
 
   /**
-   * Indicates whether the last execution completed successfully.
+   * Returns whether the most recent execution attempt completed without throwing.
    *
-   * @return {@code true} when no throwable was captured
+   * @return {@code true} if no throwable was captured during the last {@link #run()} call; {@code false} otherwise
    */
   public boolean isSuccess () {
 
@@ -67,7 +71,8 @@ public class RetryWorker implements Runnable {
   }
 
   /**
-   * Executes the retry call, capturing any thrown {@link Throwable} for later inspection.
+   * Invokes the wrapped {@link RetryCall}, capturing any {@link Throwable} it throws so
+   * that {@link Retry} can determine whether a further attempt is needed.
    */
   @Override
   public void run () {

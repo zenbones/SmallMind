@@ -38,30 +38,26 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Describes a duration used for cache entry expiration.
+ * Embedded annotation that specifies the time-to-live for a cache entry, with optional randomised jitter
+ * to prevent cache-expiry stampedes.
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Time {
 
   /**
-   * Number of units comprising the duration.
-   *
-   * @return base length before any stochastic adjustment
+   * Base duration in {@link #unit()} units; zero defers to the cache domain default.
    */
   long value ();
 
   /**
-   * Randomized amount applied to the base duration to avoid stampeding.
-   *
-   * @return stochastic range in the same {@link #unit()} as the base value
+   * Upper bound of a random amount added to {@link #value()} to spread out expiry times.
+   * Expressed in the same {@link #unit()} as the base value; zero disables jitter.
    */
   int stochastic () default 0;
 
   /**
-   * Unit for both {@link #value()} and {@link #stochastic()}.
-   *
-   * @return time unit of the configured duration
+   * Time unit that applies to both {@link #value()} and {@link #stochastic()}.
    */
   TimeUnit unit () default TimeUnit.SECONDS;
 }

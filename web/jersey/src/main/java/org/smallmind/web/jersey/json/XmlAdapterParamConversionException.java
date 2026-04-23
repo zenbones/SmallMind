@@ -35,14 +35,15 @@ package org.smallmind.web.jersey.json;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception thrown when an {@link jakarta.xml.bind.annotation.adapters.XmlAdapter} fails to convert a request parameter.
+ * Runtime exception thrown when an {@link jakarta.xml.bind.annotation.adapters.XmlAdapter} fails during JAX-RS
+ * parameter conversion.
  */
 public class XmlAdapterParamConversionException extends FormattedRuntimeException {
 
   /**
-   * Wraps the underlying conversion failure.
+   * Constructs the exception, chaining the underlying conversion failure.
    *
-   * @param throwable cause of the failure
+   * @param throwable the cause of the conversion failure
    */
   public XmlAdapterParamConversionException (Throwable throwable) {
 

@@ -35,15 +35,28 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted for unexpected errors thrown by a test.
+ * Event fired when a test method throws an exception other than {@link AssertionError}.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.TestRunner} when the exception unwrapped from
+ * a {@link java.lang.reflect.InvocationTargetException} is not an {@link AssertionError}, or
+ * when any other unexpected exception escapes the method call. Explicit assertion failures are
+ * reported as {@link FailureSleuthEvent} instead.
+ * <p>
+ * If the runner's {@code stopOnError} flag is set, {@link org.smallmind.sleuth.runner.SleuthRunner#cancel()}
+ * is called before this event is fired.
+ *
+ * @see FailureSleuthEvent
+ * @see org.smallmind.sleuth.runner.TestRunner
  */
 public class ErrorSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param throwable  underlying error
+   * Constructs an error event for the given test and cause.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test method that errored; must not be {@code null}
+   * @param elapsed    wall-clock duration of the test method invocation in milliseconds; non-negative
+   * @param throwable  the unexpected exception that caused the error; must not be {@code null}
    */
   public ErrorSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
@@ -51,6 +64,8 @@ public class ErrorSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#ERROR}.
+   *
    * @return {@link SleuthEventType#ERROR}
    */
   @Override
@@ -60,7 +75,9 @@ public class ErrorSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
-   * @return bright red to indicate error
+   * Returns bright red, used to make unexpected errors visually prominent on the console.
+   *
+   * @return {@link AnsiColor#BRIGHT_RED}
    */
   @Override
   public AnsiColor getColor () {

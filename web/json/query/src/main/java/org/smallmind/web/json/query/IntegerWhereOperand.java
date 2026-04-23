@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Integer literal operand.
+ * A where operand that holds a single integer literal value.
  */
 @XmlRootElement(name = "integer", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   private Integer value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public IntegerWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided integer value.
+   * Constructs an operand wrapping the given integer.
    *
    * @param value integer literal
    */
@@ -64,10 +64,10 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
-   * Convenience factory for an integer operand.
+   * Factory method that wraps an integer in an {@code IntegerWhereOperand}.
    *
    * @param value integer literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static IntegerWhereOperand instance (Integer value) {
 
@@ -75,6 +75,8 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
+   * Returns the element type for integer operands.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#INTEGER}
    */
   @Override
@@ -95,9 +99,9 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
-   * Returns the integer value.
+   * Returns the stored integer value.
    *
-   * @return integer literal or {@code null}
+   * @return integer literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
-   * Returns the serialized integer value.
+   * Returns the integer value used during serialization.
    *
-   * @return integer literal or {@code null}
+   * @return integer literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Integer getValue () {
@@ -118,7 +122,7 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   }
 
   /**
-   * Sets the integer value.
+   * Sets the integer value for this operand.
    *
    * @param value integer literal
    */

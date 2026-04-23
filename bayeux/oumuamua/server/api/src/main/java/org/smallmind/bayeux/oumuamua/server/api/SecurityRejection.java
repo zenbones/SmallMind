@@ -33,9 +33,8 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Describes a decision to reject an operation for security reasons.
- * A {@code null} reference from {@link SecurityPolicy} allows the operation; a non-{@code null}
- * {@code SecurityRejection} rejects it.
+ * Value returned by {@link SecurityPolicy} to signal whether an operation is permitted;
+ * {@link #noReason()} signals allow, while {@link #reason(String)} signals deny with an explanation.
  */
 public class SecurityRejection {
 
@@ -43,9 +42,9 @@ public class SecurityRejection {
   private final String reason;
 
   /**
-   * Creates a rejection with a textual reason.
+   * Constructs a rejection, optionally with a human-readable explanation.
    *
-   * @param reason explanation for the rejection; may be {@code null} to reject without reason text
+   * @param reason denial explanation, or {@code null} to represent the allow sentinel
    */
   private SecurityRejection (String reason) {
 
@@ -53,9 +52,9 @@ public class SecurityRejection {
   }
 
   /**
-   * Produces a rejection without a textual reason.
+   * Returns the shared sentinel instance that indicates the operation is permitted.
    *
-   * @return an instance without a rejection reason
+   * @return allow sentinel with no rejection reason
    */
   public static SecurityRejection noReason () {
 
@@ -63,10 +62,10 @@ public class SecurityRejection {
   }
 
   /**
-   * Produces a rejection describing why the action is denied.
+   * Creates a denial result carrying the given explanation.
    *
-   * @param reason explanation for the denial
-   * @return a new rejection instance
+   * @param reason human-readable explanation to surface to the client
+   * @return new rejection instance bearing the reason
    */
   public static SecurityRejection reason (String reason) {
 
@@ -74,9 +73,9 @@ public class SecurityRejection {
   }
 
   /**
-   * Indicates whether a reason exists.
+   * Returns whether this rejection carries an explanation string.
    *
-   * @return {@code true} if a rejection reason has been set
+   * @return {@code true} if a reason string is present
    */
   public boolean hasReason () {
 
@@ -84,7 +83,9 @@ public class SecurityRejection {
   }
 
   /**
-   * @return the rejection reason, or {@code null} if none
+   * Returns the denial explanation, or {@code null} when this is the allow sentinel.
+   *
+   * @return reason string, or {@code null}
    */
   public String getReason () {
 

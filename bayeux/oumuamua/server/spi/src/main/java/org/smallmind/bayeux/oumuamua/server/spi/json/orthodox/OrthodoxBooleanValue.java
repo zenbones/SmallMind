@@ -37,17 +37,17 @@ import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 
 /**
- * Boolean value implementation for the orthodox codec.
+ * Immutable {@link BooleanValue} implementation for the orthodox codec, wrapping a primitive boolean.
  */
 public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<OrthodoxValue> {
 
   private final boolean value;
 
   /**
-   * Creates a boolean value.
+   * Constructs a boolean value associated with the given factory.
    *
-   * @param factory owning factory
-   * @param value   primitive value
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param value   the primitive boolean to wrap
    */
   protected OrthodoxBooleanValue (OrthodoxValueFactory factory, boolean value) {
 
@@ -57,7 +57,9 @@ public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<
   }
 
   /**
-   * @return primitive boolean
+   * Returns the wrapped primitive boolean.
+   *
+   * @return {@code true} or {@code false} as stored at construction
    */
   @Override
   public boolean asBoolean () {
@@ -66,10 +68,10 @@ public class OrthodoxBooleanValue extends OrthodoxValue implements BooleanValue<
   }
 
   /**
-   * Encodes the boolean literal.
+   * Writes the JSON literal {@code true} or {@code false} to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

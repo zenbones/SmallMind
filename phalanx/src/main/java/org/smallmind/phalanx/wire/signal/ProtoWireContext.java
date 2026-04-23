@@ -33,7 +33,9 @@
 package org.smallmind.phalanx.wire.signal;
 
 /**
- * Wire context used when the concrete type is unknown, carrying raw JSON payload and the original tag.
+ * Placeholder {@link WireContext} used when the concrete context class for a given tag is not
+ * registered with {@link org.smallmind.phalanx.wire.WireContextManager}; preserves the raw
+ * payload and type tag so the context can be re-serialized faithfully without data loss.
  */
 public class ProtoWireContext extends WireContext {
 
@@ -41,10 +43,10 @@ public class ProtoWireContext extends WireContext {
   private final String skin;
 
   /**
-   * Creates a proto context with a tag and raw content.
+   * Creates a proto context holding an unrecognized tag and its raw payload.
    *
-   * @param skin name identifying the context type
-   * @param guts payload to be deserialized later
+   * @param skin the tag string that identifies the original context type
+   * @param guts the raw, untyped payload (typically a {@code JsonNode})
    */
   public ProtoWireContext (String skin, Object guts) {
 
@@ -53,9 +55,9 @@ public class ProtoWireContext extends WireContext {
   }
 
   /**
-   * Returns the raw payload.
+   * Returns the raw payload that could not be deserialized to a known context type.
    *
-   * @return untyped context contents
+   * @return the untyped context payload
    */
   public Object getGuts () {
 
@@ -63,9 +65,9 @@ public class ProtoWireContext extends WireContext {
   }
 
   /**
-   * Returns the tag used to identify the context type.
+   * Returns the tag string that identifies the original context type.
    *
-   * @return context name
+   * @return the context type tag
    */
   public String getSkin () {
 

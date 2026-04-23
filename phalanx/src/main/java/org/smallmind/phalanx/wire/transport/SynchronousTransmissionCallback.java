@@ -37,16 +37,18 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
 /**
- * Callback for cases where the result signal is already available at invocation time.
+ * {@link TransmissionCallback} implementation for results that arrive before the caller registers
+ * its callback; holds the already-completed {@link ResultSignal} and returns it immediately without
+ * blocking.
  */
 public class SynchronousTransmissionCallback extends TransmissionCallback {
 
   private final ResultSignal resultSignal;
 
   /**
-   * Wraps a pre-existing result signal.
+   * Constructs a callback that wraps an already-available result signal.
    *
-   * @param resultSignal the completed result
+   * @param resultSignal the completed result signal to return on the next {@link #getResult} call
    */
   public SynchronousTransmissionCallback (ResultSignal resultSignal) {
 
@@ -54,7 +56,12 @@ public class SynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the result immediately from the pre-stored signal without waiting.
+   *
+   * @param signalCodec   codec used to decode the result payload
+   * @param timoueSeconds ignored; no waiting occurs
+   * @return the decoded return value of the remote invocation
+   * @throws Throwable if the result signal carries an error or decoding fails
    */
   @Override
   public synchronized Object getResult (SignalCodec signalCodec, long timoueSeconds)

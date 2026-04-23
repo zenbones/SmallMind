@@ -33,19 +33,20 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * {@link ParaboxElement} wrapper for platform components. Validates that each bias reports
- * non-decreasing minimum, preferred, and maximum measurements.
+ * Abstract {@link ParaboxElement} for native platform components that require placement along both axes,
+ * validating at construction that min &le; preferred &le; max holds for every {@link Bias}.
  *
- * @param <C> the component type
+ * @param <C> the platform component type
  */
 public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> implements PlanarPart {
 
   /**
-   * Creates the wrapper, ensuring measurement consistency across all axes.
+   * Wraps the given component and validates that its minimum, preferred, and maximum measurements are
+   * non-decreasing for each axis.
    *
-   * @param component  the component being wrapped
-   * @param constraint the constraint governing the component
-   * @throws LayoutException if minimum &gt; preferred or preferred &gt; maximum for any bias
+   * @param component  the native platform component to wrap
+   * @param constraint the grow/shrink constraint governing the component's sizing
+   * @throws LayoutException if minimum exceeds preferred, or preferred exceeds maximum, along any axis
    */
   public ComponentParaboxElement (C component, Constraint constraint) {
 
@@ -67,31 +68,33 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   }
 
   /**
-   * Returns the minimum measurement of the component along the given axis.
+   * Returns the intrinsic minimum measurement of the wrapped component along the given axis.
    *
    * @param bias the axis of measurement
-   * @return the minimum size
+   * @return the component's minimum size
    */
   public abstract double getComponentMinimumMeasurement (Bias bias);
 
   /**
-   * Returns the preferred measurement of the component along the given axis.
+   * Returns the intrinsic preferred measurement of the wrapped component along the given axis.
    *
    * @param bias the axis of measurement
-   * @return the preferred size
+   * @return the component's preferred size
    */
   public abstract double getComponentPreferredMeasurement (Bias bias);
 
   /**
-   * Returns the maximum measurement of the component along the given axis.
+   * Returns the intrinsic maximum measurement of the wrapped component along the given axis.
    *
    * @param bias the axis of measurement
-   * @return the maximum size
+   * @return the component's maximum size
    */
   public abstract double getComponentMaximumMeasurement (Bias bias);
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true} because this element wraps a native platform component.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isNativeComponent () {
@@ -100,7 +103,9 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link Dimensionality#PLANE} because native components are positioned along both axes.
+   *
+   * @return {@link Dimensionality#PLANE}
    */
   @Override
   public Dimensionality getDimensionality () {
@@ -109,7 +114,11 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the component's minimum measurement along the given axis, ignoring the tailor.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor unused; native component sizes come directly from the component
+   * @return the component's minimum size
    */
   @Override
   public double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -118,7 +127,11 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the component's preferred measurement along the given axis, ignoring the tailor.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor unused; native component sizes come directly from the component
+   * @return the component's preferred size
    */
   @Override
   public double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor) {
@@ -127,7 +140,11 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the component's maximum measurement along the given axis, ignoring the tailor.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor unused; native component sizes come directly from the component
+   * @return the component's maximum size
    */
   @Override
   public double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor) {

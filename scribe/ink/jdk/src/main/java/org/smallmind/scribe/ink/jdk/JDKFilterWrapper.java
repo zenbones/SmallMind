@@ -37,16 +37,17 @@ import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * Wraps a scribe {@link Filter} so it can be installed as a JUL {@link java.util.logging.Filter}.
+ * JUL {@link java.util.logging.Filter} that wraps a scribe {@link Filter}, enabling scribe filters
+ * to be installed on a JUL {@link java.util.logging.Logger} via {@link java.util.logging.Logger#setFilter}.
  */
 public class JDKFilterWrapper implements java.util.logging.Filter {
 
   private final Filter filter;
 
   /**
-   * Creates a wrapper around the given scribe filter.
+   * Builds a JUL filter that delegates all decisions to the given scribe filter.
    *
-   * @param filter the filter to wrap
+   * @param filter the scribe filter to wrap
    */
   public JDKFilterWrapper (Filter filter) {
 
@@ -54,9 +55,9 @@ public class JDKFilterWrapper implements java.util.logging.Filter {
   }
 
   /**
-   * Returns the wrapped scribe filter.
+   * Returns the scribe filter that this wrapper delegates to.
    *
-   * @return the underlying filter
+   * @return the wrapped scribe filter
    */
   public Filter getInnerFilter () {
 
@@ -64,10 +65,11 @@ public class JDKFilterWrapper implements java.util.logging.Filter {
   }
 
   /**
-   * Applies the wrapped filter to the supplied JUL record.
+   * Extracts the scribe {@link org.smallmind.scribe.pen.Record} from the JUL record via
+   * {@link RecordWrapper} and delegates the logging decision to the wrapped scribe filter.
    *
-   * @param record JUL record carrying the scribe record wrapper
-   * @return {@code true} if logging should proceed
+   * @param record the JUL record to evaluate; must implement {@link RecordWrapper}
+   * @return {@code true} if the scribe filter permits the record to be logged
    */
   public boolean isLoggable (LogRecord record) {
 
@@ -75,9 +77,9 @@ public class JDKFilterWrapper implements java.util.logging.Filter {
   }
 
   /**
-   * Delegates hash code computation to the wrapped filter.
+   * Returns the hash code of the wrapped scribe filter.
    *
-   * @return the hash code of the underlying filter
+   * @return hash code delegated to the wrapped filter
    */
   public int hashCode () {
 
@@ -85,10 +87,11 @@ public class JDKFilterWrapper implements java.util.logging.Filter {
   }
 
   /**
-   * Compares this wrapper to another object based on the wrapped filter.
+   * Compares this wrapper for equality by comparing the underlying scribe filter; unwraps the other
+   * object if it is also a {@link JDKFilterWrapper}.
    *
-   * @param obj object to compare against
-   * @return {@code true} if the wrapped filters are equal
+   * @param obj the object to compare against
+   * @return {@code true} if both wrappers delegate to the same scribe filter, or the filter equals {@code obj}
    */
   public boolean equals (Object obj) {
 

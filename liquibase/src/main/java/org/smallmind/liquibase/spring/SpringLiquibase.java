@@ -70,9 +70,32 @@ import org.smallmind.persistence.orm.aop.Transactional;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring-friendly Liquibase runner that executes a configurable goal after properties are set.
- * Supports previewing SQL, applying change sets, generating documentation, or deriving change logs
- * while registering custom data types and resolving resources from the file system or classpath.
+ * Spring {@link InitializingBean} that executes a configurable Liquibase operation during application
+ * context refresh.
+ *
+ * <p>Configure one instance per logical database in your Spring context. After all properties are
+ * injected, {@link #afterPropertiesSet()} performs two steps:</p>
+ * <ol>
+ *   <li>Register any custom {@link LiquibaseDataType} instances with Liquibase's
+ *       {@link DataTypeFactory}, replacing any existing registration for the same name.</li>
+ *   <li>Execute the configured {@link Goal} against each {@link ChangeLog} in order.</li>
+ * </ol>
+ *
+ * <p>Supported goals:</p>
+ * <ul>
+ *   <li>{@link Goal#NONE} — register data types only; no database interaction.</li>
+ *   <li>{@link Goal#PREVIEW} — write pending SQL to the configured output stream without
+ *       modifying the database.</li>
+ *   <li>{@link Goal#UPDATE} — apply all pending change sets to the database.</li>
+ *   <li>{@link Goal#DOCUMENT} — write HTML schema documentation to the output directory.</li>
+ *   <li>{@link Goal#GENERATE} — snapshot the live schema and write a Liquibase change log file
+ *       to the output directory; one file per distinct catalog.</li>
+ * </ul>
+ *
+ * <p>Resources (change log files) are resolved through the {@link ResourceAccessor} selected by
+ * {@link #setSource(Source)}: either a {@code DirectoryResourceAccessor} rooted at the user's
+ * home directory ({@link Source#FILE}) or a {@code ClassLoaderResourceAccessor}
+ * ({@link Source#CLASSPATH}).</p>
  */
 public class SpringLiquibase implements InitializingBean {
 
@@ -88,7 +111,10 @@ public class SpringLiquibase implements InitializingBean {
   private String outputDir;
 
   /**
-   * Constructs an instance using the current thread context class loader for resource resolution.
+   * Constructs an instance using the current thread's context class loader for resource resolution.
+   *
+   * <p>Equivalent to {@link #SpringLiquibase(ClassLoader)
+   * SpringLiquibase(Thread.currentThread().getContextClassLoader())}.</p>
    */
   public SpringLiquibase () {
 
@@ -96,7 +122,10 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param classLoader class loader used when resolving classpath-based change logs
+   * Constructs an instance using the supplied class loader for classpath resource resolution.
+   *
+   * @param classLoader class loader used when {@link #setSource(Source)} is called with
+   *                    {@link Source#CLASSPATH}; must not be {@code null}
    */
   public SpringLiquibase (ClassLoader classLoader) {
 
@@ -104,7 +133,10 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param dataSource JDBC data source that Liquibase will operate against
+   * Sets the JDBC data source that Liquibase will use to connect to the target database.
+   *
+   * @param dataSource a configured, non-null {@link DataSource}; a connection is obtained from it
+   *                   for each change log processed by {@link #afterPropertiesSet()}
    */
   public void setDataSource (DataSource dataSource) {
 
@@ -112,10 +144,20 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * Selects where change log resources are read from.
+   * Selects where change log resources are located and configures the corresponding
+   * Liquibase {@link ResourceAccessor}.
    *
-   * @param source indicates file system or classpath resolution
-   * @throws FileNotFoundException if the chosen accessor cannot be created
+   * <ul>
+   *   <li>{@link Source#FILE} — creates a {@code DirectoryResourceAccessor} rooted at
+   *       {@code System.getProperty("user.home")}.</li>
+   *   <li>{@link Source#CLASSPATH} — creates a {@code ClassLoaderResourceAccessor} using
+   *       the class loader supplied at construction time.</li>
+   * </ul>
+   *
+   * @param source the desired resource resolution strategy; must not be {@code null}
+   * @throws FileNotFoundException      if {@link Source#FILE} is chosen and the user's home
+   *                                    directory cannot be used as a resource root
+   * @throws UnknownSwitchCaseException if an unrecognised {@link Source} constant is passed
    */
   public void setSource (Source source)
     throws FileNotFoundException {
@@ -133,7 +175,10 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param goal action Liquibase should perform once properties are initialized
+   * Sets the Liquibase action to perform during {@link #afterPropertiesSet()}.
+   *
+   * @param goal the desired operation; must not be {@code null}
+   * @see Goal
    */
   public void setGoal (Goal goal) {
 
@@ -141,7 +186,13 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param previewStream destination for SQL preview output; defaults to {@link System#out} when null
+   * Sets the stream that receives generated SQL when the goal is {@link Goal#PREVIEW}.
+   *
+   * <p>If this property is not set (or set to {@code null}), preview output is written to
+   * {@link System#out}.</p>
+   *
+   * @param previewStream destination for SQL preview output; {@code null} falls back to
+   *                      {@link System#out}
    */
   public void setPreviewStream (OutputStream previewStream) {
 
@@ -149,7 +200,14 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param changeLogs ordered list of change logs to process
+   * Sets the ordered list of change logs to process.
+   *
+   * <p>Each change log is processed independently in array order. For {@link Goal#GENERATE},
+   * only one output file is written per distinct database catalog regardless of how many
+   * change logs share the same catalog.</p>
+   *
+   * @param changeLogs array of change logs to process; must not be {@code null} when the goal
+   *                   is not {@link Goal#NONE}
    */
   public void setChangeLogs (ChangeLog[] changeLogs) {
 
@@ -157,7 +215,14 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param dataTypes custom Liquibase data types to register before execution
+   * Sets custom Liquibase data types to register before any change logs are processed.
+   *
+   * <p>For each data type, any existing registration under the same name is removed before the
+   * new type is registered, ensuring the custom implementation takes precedence over built-in
+   * or previously registered types.</p>
+   *
+   * @param dataTypes array of custom data types to register; may be {@code null} to skip
+   *                  type registration
    */
   public void setDataTypes (LiquibaseDataType[] dataTypes) {
 
@@ -165,7 +230,13 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param contexts comma-delimited Liquibase contexts used for filtering change sets
+   * Sets the comma-delimited list of Liquibase contexts used to filter change sets.
+   *
+   * <p>Only change sets matching at least one of the supplied contexts (or change sets with no
+   * context restriction) will be included. Pass {@code null} or an empty string to disable
+   * context filtering.</p>
+   *
+   * @param contexts comma-delimited context names, or {@code null} to apply no context filter
    */
   public void setContexts (String contexts) {
 
@@ -173,7 +244,14 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
-   * @param outputDir directory for generated documentation or change logs; defaults to system temp directory when blank
+   * Sets the directory to which generated artifacts are written.
+   *
+   * <p>Used by {@link Goal#DOCUMENT} and {@link Goal#GENERATE}. When this property is
+   * {@code null} or empty, both goals fall back to the system temporary directory
+   * ({@code System.getProperty("java.io.tmpdir")}).</p>
+   *
+   * @param outputDir filesystem path of the output directory; {@code null} or empty causes
+   *                  the system temporary directory to be used
    */
   public void setOutputDir (String outputDir) {
 
@@ -183,7 +261,25 @@ public class SpringLiquibase implements InitializingBean {
   /**
    * Registers custom data types and executes the configured Liquibase goal against each change log.
    *
-   * @throws Exception if Liquibase operations fail or when an unsupported goal is encountered
+   * <p>Invoked automatically by the Spring container after all bean properties have been injected.
+   * The method is annotated {@link Transactional} so that {@link Goal#UPDATE} operations
+   * participate in an existing Spring-managed transaction when one is present.</p>
+   *
+   * <p>Processing order:</p>
+   * <ol>
+   *   <li>If {@code dataTypes} is non-null, each type is unregistered by name and then
+   *       re-registered with the Liquibase {@link DataTypeFactory}.</li>
+   *   <li>If the goal is {@link Goal#NONE}, processing stops here.</li>
+   *   <li>For each {@link ChangeLog}, a fresh JDBC connection is obtained from the data source,
+   *       wrapped in a Liquibase {@link JdbcConnection}, and the goal-specific Liquibase command
+   *       is executed within a {@link Scope} that carries the configured {@link ResourceAccessor}.</li>
+   * </ol>
+   *
+   * @throws Exception                  if Liquibase fails to execute a command, if a database
+   *                                    connection cannot be obtained, or if an I/O error occurs
+   *                                    while writing generated output
+   * @throws UnknownSwitchCaseException if the configured {@link Goal} is not handled by the
+   *                                    switch statement (indicates a programming error)
    */
   @Transactional
   public void afterPropertiesSet ()

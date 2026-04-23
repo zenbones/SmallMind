@@ -49,7 +49,10 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   private String serverSpread;
 
   /**
-   * @param serverPattern pattern describing hostnames (optionally with port) and containing '#' placeholders for spreads
+   * Sets the server pattern string used to generate host names, optionally containing {@code '#'} placeholders
+   * for spread expansion.
+   *
+   * @param serverPattern the pattern, e.g. {@code "mongo#.example.com:27017"} or a plain host name
    */
   public void setServerPattern (String serverPattern) {
 
@@ -57,7 +60,9 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   }
 
   /**
-   * @param serverSpread spread expression used to expand '#' placeholders in the server pattern
+   * Sets the spread expression whose values replace {@code '#'} placeholders in the server pattern.
+   *
+   * @param serverSpread the spread expression, e.g. {@code "1-3"} to expand into {@code 1}, {@code 2}, {@code 3}
    */
   public void setServerSpread (String serverSpread) {
 
@@ -65,7 +70,9 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true}; the built server address array is a shared singleton.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {
@@ -74,7 +81,9 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code ServerAddress[].class}.
+   *
+   * @return {@code ServerAddress[].class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -83,7 +92,9 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the array of configured server addresses.
+   *
+   * @return the server address array built during {@code afterPropertiesSet}
    */
   @Override
   public ServerAddress[] getObject () {
@@ -92,7 +103,7 @@ public class MongoServerFactoryBean implements InitializingBean, FactoryBean<Ser
   }
 
   /**
-   * Parses the configured pattern/spread to produce the array of server addresses.
+   * Parses the configured pattern and spread to produce the array of server addresses.
    *
    * @throws SpreadParserException if the spread expression cannot be parsed
    */

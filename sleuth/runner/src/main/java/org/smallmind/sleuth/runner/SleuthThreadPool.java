@@ -35,7 +35,16 @@ package org.smallmind.sleuth.runner;
 import java.util.concurrent.Semaphore;
 
 /**
- * Concurrency gate that limits parallel execution per {@link TestTier}.
+ * Concurrency gate that limits the number of simultaneously executing controllers per {@link TestTier}.
+ * <p>
+ * One fair {@link Semaphore} is maintained for each tier. When a controller is submitted, the caller
+ * blocks until a permit is available in the tier's semaphore. If the runner has been cancelled the
+ * controller's {@link TestController#complete()} is called instead of starting a thread, so that
+ * latches are correctly decremented without doing real work. The controller is responsible for calling
+ * {@link #release(TestTier)} — typically in its {@code complete()} method — to return the permit.
+ *
+ * @see TestTier
+ * @see TestController
  */
 public class SleuthThreadPool {
 
@@ -43,10 +52,12 @@ public class SleuthThreadPool {
   private final Semaphore[] semaphores;
 
   /**
-   * Creates semaphores for each test tier.
+   * Constructs a thread pool with one semaphore per {@link TestTier}, each initialised with
+   * {@code threadCount} permits.
    *
-   * @param sleuthRunner runner used to check cancellation
-   * @param threadCount  permits allowed per tier
+   * @param sleuthRunner runner consulted before starting each thread to detect cancellation;
+   *                     must not be {@code null}
+   * @param threadCount  number of concurrent slots per tier; must be positive
    */
   public SleuthThreadPool (SleuthRunner sleuthRunner, int threadCount) {
 
@@ -60,11 +71,17 @@ public class SleuthThreadPool {
   }
 
   /**
-   * Attempts to execute a controller in its tier, blocking until a slot is available.
+   * Acquires a permit for the given tier and either starts the controller on a new thread or
+   * calls {@link TestController#complete()} if execution has been cancelled.
+   * <p>
+   * The caller blocks until a slot is available in the tier's semaphore. If the thread is
+   * interrupted after the permit is acquired, the interrupt flag is restored and an
+   * {@link InterruptedException} is thrown.
    *
-   * @param testTier   tier controlling which semaphore to use
-   * @param controller runnable controller to execute
-   * @throws InterruptedException if interrupted while waiting for a permit
+   * @param testTier   tier whose semaphore governs this submission; must not be {@code null}
+   * @param controller work to execute; must not be {@code null}
+   * @throws InterruptedException if the calling thread is interrupted while waiting for a permit
+   *                              or after the new thread is started and reports interruption
    */
   public void execute (TestTier testTier, TestController controller)
     throws InterruptedException {
@@ -85,9 +102,10 @@ public class SleuthThreadPool {
   }
 
   /**
-   * Releases a permit for the given tier.
+   * Returns one permit to the semaphore for the given tier, potentially unblocking a caller
+   * waiting in {@link #execute}.
    *
-   * @param testTier tier to release
+   * @param testTier tier whose semaphore should be released; must not be {@code null}
    */
   public void release (TestTier testTier) {
 

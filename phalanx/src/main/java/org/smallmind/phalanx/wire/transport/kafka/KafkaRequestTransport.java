@@ -62,8 +62,15 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 
 /**
- * Kafka-backed implementation of {@link org.smallmind.phalanx.wire.transport.RequestTransport} that publishes invocation
- * messages and waits for correlated responses on a dedicated response topic.
+ * Kafka-backed request transport.  Serializes {@link InvocationSignal}s onto the appropriate
+ * per-service-group topic (shout, talk, or whisper) and awaits correlated
+ * {@link org.smallmind.phalanx.wire.signal.ResultSignal} responses on a caller-specific
+ * response topic.
+ *
+ * <p>A lazily-populated producer map holds one {@link Producer} per request topic.  Producers
+ * are created on first use and all are closed together during {@link #close()}.  A dedicated
+ * {@link KafkaMessageIngester} runs the response consumer threads and completes pending requests
+ * via the parent-class callback mechanism.
  */
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
@@ -79,16 +86,16 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   /**
-   * Builds a transport that sends requests to service group topics and awaits responses.
+   * Constructs the transport, verifies Kafka broker availability, and starts the response ingester.
    *
-   * @param nodeName                  identifier appended to client names for diagnostics.
-   * @param signalCodec               codec used to serialize/deserialize signals.
-   * @param concurrencyLimit          number of concurrent response consumers.
-   * @param defaultTimeoutSeconds     default timeout while awaiting responses.
-   * @param startupGracePeriodSeconds grace period while waiting for brokers to become available.
-   * @param servers                   Kafka bootstrap servers.
-   * @throws KafkaConnectionException if the connector cannot reach Kafka.
-   * @throws InterruptedException     if interrupted while waiting for connector startup.
+   * @param nodeName                  label appended to producer and consumer client IDs for tracing
+   * @param signalCodec               codec used to serialize {@link InvocationSignal}s and deserialize results
+   * @param concurrencyLimit          number of parallel response consumer threads
+   * @param defaultTimeoutSeconds     seconds a caller waits for a response when no explicit timeout is provided
+   * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
+   * @param servers                   Kafka bootstrap servers to connect to
+   * @throws KafkaConnectionException if no broker becomes reachable within the grace period
+   * @throws InterruptedException     if interrupted while the response ingester is starting
    */
   public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
@@ -105,9 +112,11 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Unique identifier used by downstream responders to target the caller-specific response topic.
+   * Returns the unique caller identifier assigned to this transport instance.
+   * The response transport uses this value to derive the response topic name when publishing
+   * results back to this client.
    *
-   * @return the transport caller id.
+   * @return caller ID string
    */
   @Override
   public String getCallerId () {
@@ -116,10 +125,12 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Retrieves or creates a producer for the given topic while respecting the closed state.
+   * Returns an existing producer for {@code topic}, creating one if none exists yet, or returns
+   * {@code null} if the transport has already been closed.  A read lock guards concurrent
+   * publishes against the write-locked {@link #close()} path.
    *
-   * @param topic topic name for which to acquire a producer.
-   * @return a producer ready to publish to the topic, or {@code null} if already closed.
+   * @param topic Kafka topic for which a producer is required
+   * @return the producer for the given topic, or {@code null} if the transport is closed
    */
   private Producer<Long, byte[]> getProducer (String topic) {
 
@@ -132,14 +143,18 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Serializes and publishes an invocation signal to the appropriate topic, waiting for a response unless IN_ONLY.
+   * Encodes the invocation as an {@link InvocationSignal}, selects the request topic based on
+   * the voice mode (shout, talk, or whisper), publishes the record asynchronously, and — for
+   * two-way conversations — blocks until the correlated response arrives or the timeout expires.
    *
-   * @param voice     invocation metadata describing conversation type and routing.
-   * @param route     route to the target service/method/version.
-   * @param arguments invocation arguments to encode.
-   * @param contexts  optional wire contexts to include.
-   * @return the decoded result for two-way conversations, or {@code null} for IN_ONLY calls.
-   * @throws Throwable if message publication fails or awaiting a response raises an error.
+   * @param voice     describes the conversation type and target service group or instance
+   * @param route     identifies the target service, method name, and version
+   * @param arguments named method arguments to encode in the invocation signal
+   * @param contexts  optional wire contexts forwarded with the invocation
+   * @return the decoded result object for two-way calls, or {@code null} for {@link ConversationType#IN_ONLY} calls
+   * @throws AlreadyClosedException if the transport has been closed before or during this call
+   * @throws Throwable              if signal encoding fails, the response times out, or the
+   *                                result signal encodes a service-side exception
    */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
@@ -175,9 +190,11 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Closes producers and shuts down the response ingester.
+   * Closes all cached producers under the write lock, then shuts down the response ingester.
+   * After this method returns, subsequent calls to {@link #transmit} will throw
+   * {@link AlreadyClosedException}.
    *
-   * @throws Exception if closing resources fails.
+   * @throws Exception if closing a producer or shutting down the ingester raises an error
    */
   @Override
   public void close ()

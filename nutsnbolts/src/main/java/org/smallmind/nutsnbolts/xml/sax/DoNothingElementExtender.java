@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.xml.sax;
 
 /**
- * Placeholder extender that performs no element processing.
+ * Concrete {@link ElementExtender} that intentionally performs no processing, serving as a placeholder when element content can be ignored.
  */
 public class DoNothingElementExtender extends AbstractElementExtender {
 

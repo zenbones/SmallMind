@@ -43,14 +43,22 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.scaffold.property.ArrayMutator;
 
 /**
- * Translator for array properties, delegating element-wise conversion to {@link ArrayMutator}.
+ * Translator for array-typed properties whose element type has a generated view representation.
  */
 public class ArrayTranslator implements Translator {
 
   private static final String ARRAY_MUTATOR_NAME = ArrayMutator.class.getCanonicalName();
 
   /**
-   * Generates code to convert an entity array into a view array using {@link ArrayMutator#toViewType(Class, Class, Object[])}.
+   * Emits a call to {@link ArrayMutator#toViewType(Class, Class, Object[])} that converts the entity array to a view array.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityInstanceName         variable name of the source entity instance
+   * @param entityFieldName            the logical field name on the entity
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
@@ -69,7 +77,14 @@ public class ArrayTranslator implements Translator {
   }
 
   /**
-   * Generates code to convert a view array back into an entity array using {@link ArrayMutator#toEntityType(Class, Object[])}.
+   * Emits a call to {@link ArrayMutator#toEntityType(Class, Object[])} that converts the view array back to an entity array.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @param viewFieldName              the name of the view field
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)

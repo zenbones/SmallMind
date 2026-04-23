@@ -35,16 +35,18 @@ package org.smallmind.scribe.pen;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Generates monotonically increasing sequence numbers for log records.
+ * Thread-safe source of monotonically increasing long sequence numbers used to establish a
+ * strict ordering among log records within a single JVM process.
  */
 public class SequenceGenerator {
 
   private static final AtomicLong count = new AtomicLong(0);
 
   /**
-   * Returns the next sequence number.
+   * Returns the next sequence number, incrementing the internal counter atomically so that no two
+   * callers ever receive the same value.
    *
-   * @return incremented sequence value
+   * @return the next strictly increasing sequence value, starting at {@code 1}
    */
   public static long next () {
 

@@ -33,65 +33,81 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Defines a channel route broken into path segments with matching helpers.
+ * Parsed representation of a Bayeux channel path, providing segment-level access and
+ * predicate methods for classifying the route.
  */
 public interface Route {
 
   /**
-   * @return the channel path string
+   * Returns the full channel path string for this route.
+   *
+   * @return channel path (e.g. {@code /foo/bar})
    */
   String getPath ();
 
   /**
-   * @return number of segments in the route
+   * Returns the number of path segments in this route.
+   *
+   * @return segment count, always at least one
    */
   int size ();
 
   /**
-   * @return the last valid segment index
+   * Returns the index of the last segment ({@code size() - 1}).
+   *
+   * @return zero-based index of the final segment
    */
   int lastIndex ();
 
   /**
-   * Retrieves a segment by index.
+   * Returns the segment at the specified position.
    *
-   * @param index position of the segment
-   * @return the segment at the given index
+   * @param index zero-based segment index
+   * @return segment at that position
    */
   Segment getSegment (int index);
 
   /**
-   * @return {@code true} if the route ends in a single-level wildcard
+   * Returns whether the final segment is a single-level wildcard ({@code *}).
+   *
+   * @return {@code true} if the route ends with {@code *}
    */
   boolean isWild ();
 
   /**
-   * @return {@code true} if the route ends in a deep wildcard
+   * Returns whether the final segment is a deep wildcard ({@code **}).
+   *
+   * @return {@code true} if the route ends with {@code **}
    */
   boolean isDeepWild ();
 
   /**
-   * @return {@code true} if the route references a meta channel
+   * Returns whether the route begins with {@code /meta/}.
+   *
+   * @return {@code true} for meta channels
    */
   boolean isMeta ();
 
   /**
-   * @return {@code true} if the route references a service channel
+   * Returns whether the route begins with {@code /service/}.
+   *
+   * @return {@code true} for service channels
    */
   boolean isService ();
 
   /**
-   * Evaluates whether the provided path segments match this route.
+   * Tests whether the given path segments match this route.
    *
-   * @param segments the segments to test
-   * @return {@code true} if they match
+   * @param segments path segments to evaluate against this route's pattern
+   * @return {@code true} if the segments satisfy the route's matching rules
    */
   boolean matches (String... segments);
 
   /**
-   * Indicates whether the route can accept user messages.
+   * Returns whether user messages can be published and delivered on this route.
+   * A route is deliverable when it is not wild, deep wild, meta, or service.
    *
-   * @return {@code true} when deliverable
+   * @return {@code true} if the route accepts user publications
    */
   default boolean isDeliverable () {
 

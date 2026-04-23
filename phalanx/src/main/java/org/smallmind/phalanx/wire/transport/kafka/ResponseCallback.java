@@ -43,16 +43,19 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Callback invoked for inbound invocation requests to trigger execution.
+ * Kafka {@link Consumer} callback supplied to the ingesters of {@link KafkaResponseTransport}.
+ * For each inbound invocation record, measures how long it waited in the topic, records that
+ * transit duration as a metric, and then submits the record to the transport's worker queue for
+ * execution.
  */
 public class ResponseCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
 
   private final KafkaResponseTransport transport;
 
   /**
-   * Creates a callback that forwards incoming requests to the response transport.
+   * Constructs a callback that forwards inbound invocation records to the given response transport.
    *
-   * @param transport response transport used to execute incoming requests.
+   * @param transport the response transport responsible for executing received invocation records
    */
   public ResponseCallback (KafkaResponseTransport transport) {
 
@@ -60,9 +63,12 @@ public class ResponseCallback implements Consumer<ConsumerRecord<Long, byte[]>> 
   }
 
   /**
-   * Logs transit timing and forwards the record to the response transport for execution.
+   * Computes the transit time of {@code record} (wall-clock time minus the record's Kafka
+   * timestamp), logs receipt at DEBUG level, records the duration as a metric, and delegates
+   * the record to the transport for queued execution.  Any error is logged and swallowed so the
+   * consumer poll loop continues.
    *
-   * @param record the Kafka record containing an invocation request.
+   * @param record inbound Kafka record encoding an invocation request
    */
   @Override
   public void accept (ConsumerRecord<Long, byte[]> record) {

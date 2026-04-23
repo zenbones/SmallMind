@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Expands comma-delimited alphabetic ranges (e.g. {@code a..c,z}) into arrays of characters.
+ * Expands comma-separated lowercase alphabetic ranges (e.g., {@code a..c,z}) into an ordered array of characters.
  */
 public class AlphaSpread {
 
@@ -45,11 +45,12 @@ public class AlphaSpread {
   private static final Pattern SPREAD_PATTERN = Pattern.compile("([a-z])\\.\\.([a-z])");
 
   /**
-   * Parses and expands the supplied alpha spread expression.
+   * Parses and expands the given alpha spread expression into a character array, supporting both single letters
+   * and inclusive range expressions separated by commas.
    *
-   * @param letters comma-separated list of single letters or ranges
-   * @return ordered array of characters represented by the spread
-   * @throws SpreadParserException if parsing fails or an element is empty/invalid
+   * @param letters comma-separated list of single lowercase letters or {@code start..end} range expressions
+   * @return ordered character array of all letters represented by the expression, or an empty array if the input is null or empty
+   * @throws SpreadParserException if any element is blank, unrecognized, or the input cannot be parsed
    */
   public static char[] calculate (String letters)
     throws SpreadParserException {

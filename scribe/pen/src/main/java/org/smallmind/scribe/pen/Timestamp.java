@@ -35,15 +35,16 @@ package org.smallmind.scribe.pen;
 import java.time.LocalDateTime;
 
 /**
- * Converts a {@link LocalDateTime} into a timestamp string for log output.
+ * Strategy that converts a {@link LocalDateTime} value into a formatted timestamp string for inclusion in log
+ * output, allowing different date/time formats to be plugged into pattern-based formatters.
  */
 public interface Timestamp {
 
   /**
-   * Formats the supplied date.
+   * Formats the supplied date-time value into a timestamp string.
    *
-   * @param date date to format
-   * @return timestamp string
+   * @param date the date-time to format; must not be {@code null}
+   * @return the formatted timestamp string
    */
   String getTimestamp (LocalDateTime date);
 }

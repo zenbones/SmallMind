@@ -36,7 +36,7 @@ import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
 /**
- * Enumerates supported mail server authentication mechanisms.
+ * Enumerates the mail server authentication mechanisms supported by {@link Authentication}, providing a factory method for the appropriate Jakarta Mail {@link Authenticator}.
  */
 public enum AuthType {
 
@@ -62,10 +62,10 @@ public enum AuthType {
   };
 
   /**
-   * Creates an {@link Authenticator} appropriate for the authentication strategy.
+   * Returns a Jakarta Mail {@link Authenticator} appropriate for this authentication strategy, or {@code null} when no authentication is required.
    *
-   * @param data credentials required by the strategy (username then password for {@link #LOGIN})
-   * @return authenticator or {@code null} if authentication is not needed
+   * @param data credentials consumed by the strategy; for {@link #LOGIN} this must be {@code [username, password]}
+   * @return configured {@link Authenticator}, or {@code null} for {@link #NONE}
    */
   public abstract Authenticator getAuthenticator (String... data);
 }

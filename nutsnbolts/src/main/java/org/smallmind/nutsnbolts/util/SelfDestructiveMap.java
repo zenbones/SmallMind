@@ -40,10 +40,10 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Concurrent map whose entries self-destruct after a timeout, invoking {@link SelfDestructive#destroy(Stint)} on removal.
+ * Thread-safe map whose entries are automatically removed after a configurable timeout, invoking {@link SelfDestructive#destroy(Stint)} on each expired value.
  *
- * @param <K> key type (comparable)
- * @param <S> value type implementing {@link SelfDestructive}
+ * @param <K> key type, must be {@link Comparable}
+ * @param <S> value type, must implement {@link SelfDestructive}
  */
 public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
@@ -54,9 +54,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   private final IgnitionWorker ignitionWorker;
 
   /**
-   * Creates a map with the given default timeout and a 1-second pulse for cleanup.
+   * Creates a map using the specified default timeout and a one-second background cleanup pulse.
    *
-   * @param defaultTimeoutStint timeout applied to entries without an explicit value
+   * @param defaultTimeoutStint timeout applied to entries that do not specify their own
    */
   public SelfDestructiveMap (Stint defaultTimeoutStint) {
 
@@ -64,10 +64,10 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Creates a map with custom default timeout and cleanup pulse interval.
+   * Creates a map with a custom default timeout and background cleanup pulse interval.
    *
-   * @param defaultTimeoutStint timeout applied to entries without an explicit value
-   * @param pulseTimeStint      interval between expiry scans
+   * @param defaultTimeoutStint timeout applied to entries that do not specify their own
+   * @param pulseTimeStint      how often the background worker checks for expired entries
    */
   public SelfDestructiveMap (Stint defaultTimeoutStint, Stint pulseTimeStint) {
 
@@ -82,10 +82,10 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Retrieves a value by key without affecting its timeout.
+   * Returns the value associated with the specified key, or {@code null} if the key is not present.
    *
-   * @param key lookup key
-   * @return mapped value or {@code null} if absent
+   * @param key the key to look up
+   * @return the mapped value, or {@code null} if absent
    */
   public S get (K key) {
 
@@ -93,11 +93,11 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Inserts a value if absent using the default timeout.
+   * Associates the value with the key only if the key is not already present, using the default timeout.
    *
-   * @param key   key to insert
-   * @param value value to insert
-   * @return existing value if present; otherwise {@code null}
+   * @param key   key with which the value is to be associated
+   * @param value value to store if the key is absent
+   * @return the existing value if the key was already present, or {@code null} if the value was inserted
    */
   public S putIfAbsent (K key, S value) {
 
@@ -105,12 +105,12 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Inserts a value if absent using the provided timeout.
+   * Associates the value with the key only if the key is not already present, using the supplied timeout.
    *
-   * @param key          key to insert
-   * @param value        value to insert
-   * @param timeoutStint optional timeout; if {@code null} uses default timeout
-   * @return existing value if present; otherwise {@code null}
+   * @param key          key with which the value is to be associated
+   * @param value        value to store if the key is absent
+   * @param timeoutStint per-entry timeout; if {@code null} the default timeout is used
+   * @return the existing value if the key was already present, or {@code null} if the value was inserted
    */
   public S putIfAbsent (K key, S value, Stint timeoutStint) {
 
@@ -124,9 +124,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Stops the background cleanup worker.
+   * Stops the background cleanup worker and blocks until it has fully terminated.
    *
-   * @throws InterruptedException if interrupted while waiting for shutdown
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the worker to stop
    */
   public void shutdown ()
     throws InterruptedException {
@@ -141,7 +141,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     private Thread runnableThread;
 
     /**
-     * Signals the worker to terminate and waits for completion.
+     * Signals this worker to stop and waits until it has exited.
+     *
+     * @throws InterruptedException if the calling thread is interrupted while waiting
      */
     public void shutdown ()
       throws InterruptedException {
@@ -156,7 +158,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     }
 
     /**
-     * Periodically scans for expired keys and destroys corresponding values.
+     * Continuously polls the expiry set at each pulse interval and invokes {@link SelfDestructive#destroy(Stint)} on any entries whose ignition time has passed.
      */
     @Override
     public void run () {

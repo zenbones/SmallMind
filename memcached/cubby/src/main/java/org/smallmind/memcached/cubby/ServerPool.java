@@ -38,16 +38,25 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Maintains a mapping of memcached hosts to their control metadata and supports quick lookups.
+ * An indexed collection of {@link HostControl} records, one per memcached node in the cluster.
+ *
+ * <p>{@code ServerPool} is the central registry consulted by
+ * {@link org.smallmind.memcached.cubby.locator.KeyLocator} implementations when building or
+ * refreshing consistent-hashing rings. It is also iterated by the {@link ServerDefibrillator} to
+ * find inactive hosts that require a reconnection attempt.</p>
+ *
+ * <p>Hosts are keyed by their {@linkplain MemcachedHost#getName() logical name}, which serves as
+ * the stable identifier across connection lifecycle events.</p>
  */
 public class ServerPool {
 
   private final HashMap<String, HostControl> hostMap = new HashMap<>();
 
   /**
-   * Builds a pool from the supplied host list.
+   * Constructs a pool pre-populated with a {@link HostControl} for each supplied host.
+   * Every host starts in the active state.
    *
-   * @param memcachedHosts hosts to track
+   * @param memcachedHosts the hosts that constitute the memcached cluster
    */
   public ServerPool (MemcachedHost... memcachedHosts) {
 
@@ -57,7 +66,9 @@ public class ServerPool {
   }
 
   /**
-   * @return number of hosts in the pool
+   * Returns the total number of hosts registered in the pool, regardless of their health state.
+   *
+   * @return the number of hosts in the pool
    */
   public int size () {
 
@@ -65,10 +76,10 @@ public class ServerPool {
   }
 
   /**
-   * Retrieves the control object for the named host.
+   * Retrieves the {@link HostControl} record for the named host.
    *
-   * @param name host name
-   * @return control metadata or {@code null} if missing
+   * @param name the logical name of the host to look up
+   * @return the corresponding {@link HostControl}, or {@code null} if the name is not registered
    */
   public HostControl get (String name) {
 
@@ -76,7 +87,9 @@ public class ServerPool {
   }
 
   /**
-   * @return set of host names in the pool
+   * Returns the set of logical host names registered in this pool.
+   *
+   * @return an unmodifiable view of the host name keys
    */
   public Set<String> keySet () {
 
@@ -84,7 +97,9 @@ public class ServerPool {
   }
 
   /**
-   * @return collection of control records
+   * Returns the collection of all {@link HostControl} records in the pool.
+   *
+   * @return the control records for all registered hosts
    */
   public Collection<HostControl> values () {
 
@@ -92,10 +107,19 @@ public class ServerPool {
   }
 
   /**
-   * Tests whether the pool exactly matches the supplied list of active hosts.
+   * Tests whether this pool represents exactly the same set of active hosts as the given list.
    *
-   * @param hostList hosts to compare against
-   * @return {@code true} if the pool and list represent the same active hosts
+   * <p>Returns {@code true} only when:
+   * <ul>
+   *   <li>the pool and the list contain the same number of entries, and</li>
+   *   <li>every host in the list has a corresponding {@link HostControl} in the pool that is
+   *       currently {@linkplain HostControl#isActive() active}.</li>
+   * </ul>
+   * This is used by the {@link org.smallmind.memcached.cubby.locator.KeyLocator} to detect
+   * whether the active topology has changed and the routing table requires rebuilding.</p>
+   *
+   * @param hostList the candidate host list to compare against the current pool state
+   * @return {@code true} if the pool exactly represents the supplied list of active hosts
    */
   public boolean representsHosts (List<MemcachedHost> hostList) {
 

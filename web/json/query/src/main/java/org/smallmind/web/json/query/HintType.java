@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Discriminates hint implementations.
+ * Identifies the concrete subtype of a {@link Hint} instance.
  */
 public enum HintType {
 

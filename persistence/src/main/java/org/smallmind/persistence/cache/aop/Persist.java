@@ -38,7 +38,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a DAO persist method so caching aspects can apply coherency logic.
+ * Marks a DAO method as a persist operation so {@link CachedWithAspect} can apply cache-update
+ * logic in addition to the standard {@code persist} pointcut.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

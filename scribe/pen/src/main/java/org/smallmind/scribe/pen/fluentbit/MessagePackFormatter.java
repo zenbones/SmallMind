@@ -47,7 +47,9 @@ import org.smallmind.scribe.pen.Timestamp;
 // TODO: The underlying org.msgpack.jackson.dataformat will be dependent on jackson 2.x for the foreseeable future
 
 /**
- * Serializes records into a MessagePack-friendly JSON structure for Fluent Bit.
+ * Converts a Scribe {@link Record} into a Jackson {@link com.fasterxml.jackson.databind.node.ObjectNode}
+ * that can be serialized to MessagePack for delivery to Fluent Bit, rendering only the {@link RecordElement}
+ * fields selected at construction time and using the supplied newline string in stack trace output.
  */
 public class MessagePackFormatter {
 
@@ -56,11 +58,12 @@ public class MessagePackFormatter {
   private final String newLine;
 
   /**
-   * Constructs a formatter with the requested record elements and newline style.
+   * Constructs a {@code MessagePackFormatter} that will include only the specified record fields and will
+   * use the given newline string between lines when rendering stack traces.
    *
-   * @param timestamp      timestamp provider
-   * @param recordElements fields to include
-   * @param newLine        newline delimiter to use in stack traces
+   * @param timestamp      the timestamp provider used to format the date field of each record
+   * @param recordElements the subset of {@link RecordElement} values to include in the output object
+   * @param newLine        the line separator inserted between stack trace lines
    */
   public MessagePackFormatter (Timestamp timestamp, RecordElement[] recordElements, String newLine) {
 
@@ -70,10 +73,11 @@ public class MessagePackFormatter {
   }
 
   /**
-   * Formats a record into a JSON object suitable for MessagePack encoding.
+   * Converts the supplied record into a JSON object node containing one field per selected
+   * {@link RecordElement}, ready to be serialized to MessagePack by the caller.
    *
-   * @param record record to format
-   * @return JSON node representing the record
+   * @param record the log record to format
+   * @return a non-null {@link ObjectNode} representing the record's selected fields
    */
   public ObjectNode format (Record<?> record) {
 

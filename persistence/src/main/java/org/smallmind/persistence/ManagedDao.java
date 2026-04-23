@@ -35,47 +35,47 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 
 /**
- * Exposes metadata and id conversion helpers for DAOs that manage {@link Durable} entities.
+ * Metadata and identifier-conversion contract for DAOs that manage typed {@link Durable} entities.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type
+ * @param <D> the durable entity type
  */
 public interface ManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
   /**
-   * Provides a name that identifies the source of metrics emitted by this DAO.
+   * Returns the label used to attribute metrics emitted by this DAO.
    *
    * @return the metric source name
    */
   String getMetricSource ();
 
   /**
-   * Returns the durable class managed by this DAO.
+   * Returns the class of the durable entity managed by this DAO.
    *
-   * @return the durable type
+   * @return the managed durable class
    */
   Class<D> getManagedClass ();
 
   /**
-   * Returns the identifier class used by the managed durable.
+   * Returns the class of the identifier used by the managed durable.
    *
-   * @return the identifier type
+   * @return the identifier class
    */
   Class<I> getIdClass ();
 
   /**
-   * Parses the supplied string into an identifier instance appropriate for this DAO.
+   * Parses a string representation into the identifier type appropriate for this DAO.
    *
-   * @param value the string representation of the id
-   * @return the parsed identifier value
+   * @param value the string to parse
+   * @return the parsed identifier
    */
   I getIdFromString (String value);
 
   /**
-   * Extracts the identifier from a durable instance.
+   * Returns the identifier of the given durable, or {@code null} when the instance is transient.
    *
    * @param durable the durable to inspect
-   * @return the identifier value, possibly {@code null} for transient objects
+   * @return the durable's identifier
    */
   I getId (D durable);
 }

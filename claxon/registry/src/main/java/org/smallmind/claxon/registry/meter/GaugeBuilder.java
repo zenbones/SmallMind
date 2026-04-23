@@ -35,15 +35,23 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 
 /**
- * Builds {@link Gauge} meters.
+ * {@link MeterBuilder} implementation that constructs {@link Gauge} meters.
+ *
+ * <p>{@code GaugeBuilder} requires no configuration beyond what is provided by the
+ * {@link MeterBuilder} contract. The supplied {@link Clock} is accepted for interface
+ * compliance but is not used, because {@link Gauge} aggregates are time-independent.</p>
  */
 public class GaugeBuilder implements MeterBuilder<Gauge> {
 
   /**
-   * Constructs a new gauge. Clock is unused but accepted for interface compliance.
+   * Constructs a new {@link Gauge} meter.
    *
-   * @param clock registry clock
-   * @return new gauge instance
+   * <p>The {@code clock} parameter is accepted to satisfy the {@link MeterBuilder}
+   * interface but is not forwarded to the {@link Gauge} because gauge aggregates
+   * do not require a clock.</p>
+   *
+   * @param clock the registry clock; accepted for interface compliance but unused
+   * @return a new {@link Gauge} instance
    */
   @Override
   public Gauge build (Clock clock) {

@@ -32,13 +32,14 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Timestamp implementation that formats dates using a {@link DateFormat}.
+ * A {@link Timestamp} implementation that produces formatted date-time strings using a
+ * {@link DateTimeFormatter}; the default instance uses an ISO-like pattern
+ * ({@code yyyy-MM-dd'T'HH:mm:ss.SSSZ}) and is accessible via {@link #getDefaultInstance()}.
  */
 public class DateFormatTimestamp implements Timestamp {
 
@@ -47,7 +48,7 @@ public class DateFormatTimestamp implements Timestamp {
   private DateTimeFormatter dateTimeFormatter;
 
   /**
-   * Constructs a timestamp using the default ISO-like pattern.
+   * Constructs a timestamp backed by the default ISO-like pattern {@code yyyy-MM-dd'T'HH:mm:ss.SSSZ}.
    */
   public DateFormatTimestamp () {
 
@@ -55,9 +56,9 @@ public class DateFormatTimestamp implements Timestamp {
   }
 
   /**
-   * Constructs a timestamp using the supplied {@link DateFormat}.
+   * Constructs a timestamp backed by the given {@link DateTimeFormatter}.
    *
-   * @param dateTimeFormatter formatter to use
+   * @param dateTimeFormatter the formatter to use when rendering timestamps
    */
   public DateFormatTimestamp (DateTimeFormatter dateTimeFormatter) {
 
@@ -65,9 +66,9 @@ public class DateFormatTimestamp implements Timestamp {
   }
 
   /**
-   * Returns the shared default timestamp instance.
+   * Returns the shared singleton instance backed by the default ISO-like pattern.
    *
-   * @return default {@link DateFormatTimestamp}
+   * @return the default {@link DateFormatTimestamp} instance
    */
   public static DateFormatTimestamp getDefaultInstance () {
 
@@ -75,9 +76,9 @@ public class DateFormatTimestamp implements Timestamp {
   }
 
   /**
-   * Retrieves the configured {@link DateFormat}.
+   * Returns the {@link DateTimeFormatter} currently used by this instance.
    *
-   * @return current date formatter
+   * @return the current date-time formatter
    */
   public DateTimeFormatter getDateTimeFormatter () {
 
@@ -85,9 +86,9 @@ public class DateFormatTimestamp implements Timestamp {
   }
 
   /**
-   * Sets the {@link DateFormat} used to render timestamps.
+   * Replaces the {@link DateTimeFormatter} used to render timestamps.
    *
-   * @param dateTimeFormatter formatter to use
+   * @param dateTimeFormatter the new formatter to use
    */
   public void setDateTimeFormatter (DateTimeFormatter dateTimeFormatter) {
 
@@ -95,11 +96,12 @@ public class DateFormatTimestamp implements Timestamp {
   }
 
   /**
-   * Formats the supplied date into a timestamp string.
+   * Formats {@code date} into a timestamp string by converting it to a zone-aware instant using the
+   * system default time zone and applying the configured {@link DateTimeFormatter}; synchronized to
+   * guard against formatters that are not thread-safe.
    *
-   * @param date date to format
-   * @return formatted timestamp
-   * @throws RuntimeException if the underlying {@link DateFormat} fails
+   * @param date the {@link LocalDateTime} to format
+   * @return the formatted timestamp string
    */
   public synchronized String getTimestamp (LocalDateTime date) {
 

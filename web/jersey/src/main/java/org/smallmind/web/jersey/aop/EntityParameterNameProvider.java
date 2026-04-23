@@ -40,16 +40,16 @@ import java.util.List;
 import jakarta.validation.ParameterNameProvider;
 
 /**
- * Parameter name provider that prefers {@link EntityParam} annotation values when present,
- * falling back to indexed argument names for validation messages.
+ * Jakarta Validation {@link ParameterNameProvider} that uses {@link EntityParam} annotation values as parameter
+ * names, falling back to positional names when the annotation is absent.
  */
 public class EntityParameterNameProvider implements ParameterNameProvider {
 
   /**
-   * Derives constructor parameter names based on {@link EntityParam} annotations.
+   * Returns parameter names for a constructor based on {@link EntityParam} annotations.
    *
-   * @param constructor the constructor being validated
-   * @return ordered list of parameter names
+   * @param constructor the constructor being introspected
+   * @return ordered list of resolved parameter names
    */
   @Override
   public List<String> getParameterNames (Constructor<?> constructor) {
@@ -58,10 +58,10 @@ public class EntityParameterNameProvider implements ParameterNameProvider {
   }
 
   /**
-   * Derives method parameter names based on {@link EntityParam} annotations.
+   * Returns parameter names for a method based on {@link EntityParam} annotations.
    *
-   * @param method the method being validated
-   * @return ordered list of parameter names
+   * @param method the method being introspected
+   * @return ordered list of resolved parameter names
    */
   @Override
   public List<String> getParameterNames (Method method) {
@@ -70,10 +70,11 @@ public class EntityParameterNameProvider implements ParameterNameProvider {
   }
 
   /**
-   * Resolves names from a two-dimensional annotation array, preferring {@link EntityParam} values when present.
+   * Builds the name list from a per-parameter annotation matrix, using the {@link EntityParam} value when present
+   * and a positional fallback otherwise.
    *
-   * @param parameterAnnotationsArray annotations for each parameter position
-   * @return list of resolved parameter names
+   * @param parameterAnnotationsArray two-dimensional array of annotations indexed by parameter position
+   * @return ordered list of parameter names
    */
   private List<String> getNames (Annotation[][] parameterAnnotationsArray) {
 

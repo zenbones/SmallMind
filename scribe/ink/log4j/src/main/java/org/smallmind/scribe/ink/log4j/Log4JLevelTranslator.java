@@ -36,16 +36,18 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
 
 /**
- * Utility for translating between scribe {@link Level} values and Log4j2 {@link org.apache.logging.log4j.Level}.
+ * Stateless utility class that converts between scribe {@link Level} values and Log4j2
+ * {@link org.apache.logging.log4j.Level} constants using a direct one-to-one mapping.
  */
 public class Log4JLevelTranslator {
 
   /**
-   * Converts a Log4j2 level into the corresponding scribe level.
+   * Translates a Log4j2 {@link org.apache.logging.log4j.Level} to its scribe {@link Level} equivalent
+   * using a direct one-to-one mapping.
    *
-   * @param level Log4j2 level value
-   * @return the matching scribe level, or {@code null} if none provided
-   * @throws UnknownSwitchCaseException if the level is not recognized
+   * @param level the Log4j2 level to translate; {@code null} returns {@code null}
+   * @return the corresponding scribe level, or {@code null} if {@code level} is {@code null}
+   * @throws UnknownSwitchCaseException if the Log4j2 level is not one of the known constants
    */
   public static Level getLevel (org.apache.logging.log4j.Level level) {
 
@@ -71,11 +73,12 @@ public class Log4JLevelTranslator {
   }
 
   /**
-   * Converts a scribe level into the corresponding Log4j2 level.
+   * Translates a scribe {@link Level} to its Log4j2 {@link org.apache.logging.log4j.Level} equivalent
+   * using a direct one-to-one mapping.
    *
-   * @param level scribe level value
-   * @return the matching Log4j2 level
-   * @throws UnknownSwitchCaseException if the level is not recognized
+   * @param level the scribe level to translate
+   * @return the corresponding Log4j2 level
+   * @throws UnknownSwitchCaseException if the scribe level is not a recognised switch case
    */
   public static org.apache.logging.log4j.Level getLog4JLevel (Level level) {
 

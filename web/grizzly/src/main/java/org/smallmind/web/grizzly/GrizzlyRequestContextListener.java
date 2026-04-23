@@ -44,19 +44,18 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 // Handles some exception cases the Spring's version of the same class would otherwise spew into the log
 
 /**
- * Servlet listener that mirrors Spring's {@link RequestContextListener} but avoids noisy failures caused by container
- * shutdown or non-HTTP requests. It initializes request and locale contexts at the start of a request and safely
- * clears them at completion.
+ * Servlet listener that binds and clears Spring request and locale context for each HTTP request, suppressing the
+ * log noise that Spring's own {@link RequestContextListener} produces during container shutdown.
  */
 public class GrizzlyRequestContextListener implements ServletRequestListener {
 
   private static final String REQUEST_ATTRIBUTES_ATTRIBUTE = RequestContextListener.class.getName() + ".REQUEST_ATTRIBUTES";
 
   /**
-   * Initializes Spring request/locale state for the active {@link HttpServletRequest}.
+   * Binds a {@link ServletRequestAttributes} and the request locale to the current thread.
    *
-   * @param requestEvent servlet lifecycle event wrapping the incoming request
-   * @throws IllegalArgumentException if the request is not HTTP
+   * @param requestEvent event carrying the incoming servlet request
+   * @throws IllegalArgumentException if the request is not an {@link HttpServletRequest}
    */
   @Override
   public void requestInitialized (ServletRequestEvent requestEvent) {
@@ -75,9 +74,10 @@ public class GrizzlyRequestContextListener implements ServletRequestListener {
   }
 
   /**
-   * Clears request scoped Spring state and completes {@link ServletRequestAttributes}, ignoring cleanup errors.
+   * Removes request-scoped Spring state from the current thread and signals request completion, ignoring cleanup
+   * errors.
    *
-   * @param requestEvent servlet lifecycle event wrapping the completed request
+   * @param requestEvent event carrying the completed servlet request
    */
   @Override
   public void requestDestroyed (ServletRequestEvent requestEvent) {

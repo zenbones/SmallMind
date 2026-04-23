@@ -37,19 +37,40 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a static tag to be attached to instrumented metrics.
+ * Declares a single static (compile-time constant) key/value tag to be attached to the
+ * metrics emitted by an {@link Instrumented} method or constructor.
+ *
+ * <p>This annotation has no {@link java.lang.annotation.ElementType} targets of its own
+ * (it is annotated with an empty {@code @Target({})}), meaning it is only valid as a
+ * nested annotation inside the {@link Instrumented#constants()} array.</p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * {@literal @}Instrumented(
+ *     parser  = MyParser.class,
+ *     constants = {
+ *         {@literal @}ConstantTag(key = "region", constant = "us-east-1")
+ *     }
+ * )
+ * public void handleRequest() { ... }
+ * </pre>
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConstantTag {
 
   /**
-   * @return tag key
+   * The tag key that identifies this dimension in the metrics backend.
+   *
+   * @return the tag key; must not be empty
    */
   String key ();
 
   /**
-   * @return constant tag value
+   * The static string value assigned to this tag for every invocation of the instrumented
+   * method or constructor.
+   *
+   * @return the constant tag value; must not be empty
    */
   String constant ();
 }

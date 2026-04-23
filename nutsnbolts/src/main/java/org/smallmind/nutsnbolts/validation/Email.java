@@ -46,7 +46,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint indicating a field or parameter must contain a valid email address.
+ * Bean Validation constraint that requires an annotated string value to be a valid email address.
  */
 @Documented
 @Retention(RUNTIME)
@@ -55,7 +55,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Email {
 
   /**
-   * Allows multiple {@link Email} annotations on the same element.
+   * Container annotation that allows multiple {@link Email} constraints on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
@@ -63,28 +63,28 @@ public @interface Email {
   @interface List {
 
     /**
-     * @return array of {@link Email} constraints
+     * @return the contained {@link Email} constraints
      */
     Email[] value ();
   }
 
   /**
-   * @return validation message when the value is not a valid email
+   * @return the constraint violation message
    */
   String message () default "must be an email address";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return custom payload objects for clients of the Bean Validation API
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 
   /**
-   * @return separator used when multiple emails are present in a single string; {@code '\0'} disables splitting
+   * @return the character used to split a string containing multiple email addresses; {@code '\0'} disables splitting
    */
   char separator () default '\0';
 }

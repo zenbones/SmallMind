@@ -44,17 +44,17 @@ import org.smallmind.scribe.pen.LoggerException;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * Wraps a scribe {@link Appender} as a JUL {@link Handler}, translating formatting, filtering,
- * and error handling interactions between the two APIs.
+ * JUL {@link Handler} that wraps a scribe {@link Appender}, bridging JUL's publish/flush/close lifecycle
+ * and filter, formatter, and error-manager accessors to their scribe equivalents.
  */
 public class JDKAppenderWrapper extends Handler {
 
   private final Appender appender;
 
   /**
-   * Creates a handler that delegates publishing to the provided scribe appender.
+   * Constructs a JUL {@link Handler} that delegates all publishing activity to the given scribe appender.
    *
-   * @param appender appender to wrap
+   * @param appender the scribe appender to wrap
    */
   public JDKAppenderWrapper (Appender appender) {
 
@@ -62,9 +62,9 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Returns the wrapped scribe appender.
+   * Returns the scribe appender that this handler delegates to.
    *
-   * @return the underlying appender
+   * @return the wrapped scribe appender
    */
   protected Appender getInnerAppender () {
 
@@ -72,10 +72,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Unsupported in this adapter; native encoding is not exposed.
+   * Not supported; character encoding is managed by the underlying scribe appender.
    *
    * @return never returns normally
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   public String getEncoding () {
 
@@ -83,10 +83,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Unsupported in this adapter; encoding cannot be set via JUL.
+   * Not supported; character encoding is managed by the underlying scribe appender.
    *
    * @param encoding ignored
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   public void setEncoding (String encoding)
     throws SecurityException {
@@ -95,10 +95,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Unsupported in this adapter; level is managed by the scribe appender.
+   * Not supported; level filtering is managed by the scribe layer, not the JUL handler.
    *
    * @return never returns normally
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   public Level getLevel () {
 
@@ -106,10 +106,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Unsupported in this adapter; level cannot be set via JUL.
+   * Not supported; level filtering is managed by the scribe layer, not the JUL handler.
    *
    * @param newLevel ignored
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   public void setLevel (Level newLevel)
     throws SecurityException {
@@ -118,10 +118,11 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Returns the native JUL formatter if the wrapped appender exposes one.
+   * Returns the native JUL {@link Formatter} from the wrapped appender if it is a {@link FormattedAppender}
+   * and its formatter is a {@link JDKFormatterAdapter}.
    *
-   * @return the JUL formatter or {@code null} if none configured
-   * @throws UnsupportedOperationException if the configured formatter is not a JUL adapter
+   * @return the native JUL formatter, or {@code null} if none is configured
+   * @throws UnsupportedOperationException if the appender's formatter is not a {@link JDKFormatterAdapter}
    */
   public Formatter getFormatter () {
 
@@ -142,10 +143,11 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Installs a JUL formatter on the wrapped {@link FormattedAppender}.
+   * Wraps the given JUL formatter in a {@link JDKFormatterAdapter} and installs it on the underlying
+   * {@link FormattedAppender}.
    *
-   * @param formatter JUL formatter to wrap
-   * @throws UnsupportedOperationException if the wrapped appender does not support formatting
+   * @param formatter the JUL formatter to install
+   * @throws UnsupportedOperationException if the wrapped appender does not implement {@link FormattedAppender}
    */
   public void setFormatter (Formatter formatter) {
 
@@ -157,10 +159,11 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Returns the native JUL filter from the wrapped appender if present.
+   * Returns the native JUL {@link Filter} from the first filter slot of the wrapped appender if it is a
+   * {@link JDKFilterAdapter}.
    *
-   * @return the JUL filter or {@code null} if none configured
-   * @throws UnsupportedOperationException if the configured filter is not a JUL adapter
+   * @return the native JUL filter, or {@code null} if no filters are configured
+   * @throws UnsupportedOperationException if the first filter is not a {@link JDKFilterAdapter}
    */
   public Filter getFilter () {
 
@@ -178,9 +181,9 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Sets a JUL filter by wrapping it for the scribe appender.
+   * Replaces the appender's current filters with a single {@link JDKFilterAdapter} wrapping the given JUL filter.
    *
-   * @param filter JUL filter to install
+   * @param filter the JUL filter to install on the underlying appender
    */
   public void setFilter (Filter filter) {
 
@@ -189,11 +192,12 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Evaluates whether the wrapped appender will log the supplied record.
+   * Checks every filter on the wrapped appender against the given JUL record by unwrapping each to its native
+   * JUL filter; returns {@code false} if any filter rejects the record.
    *
-   * @param record JUL record carrying the scribe wrapper
-   * @return {@code true} if all filters allow the record
-   * @throws UnsupportedOperationException if a non-JUL filter is encountered
+   * @param record the JUL record to evaluate
+   * @return {@code true} if all filters allow the record, {@code false} if any veto it
+   * @throws UnsupportedOperationException if a filter on the appender is not a {@link JDKFilterAdapter}
    */
   public boolean isLoggable (LogRecord record) {
 
@@ -209,10 +213,11 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Returns the native JUL error manager if configured on the appender.
+   * Returns the native JUL {@link ErrorManager} from the wrapped appender's error handler if it is a
+   * {@link JDKErrorHandlerAdapter}.
    *
-   * @return the JUL error manager or {@code null}
-   * @throws UnsupportedOperationException if the configured error handler is not a JUL adapter
+   * @return the native error manager, or {@code null} if none is configured
+   * @throws UnsupportedOperationException if the appender's error handler is not a {@link JDKErrorHandlerAdapter}
    */
   public ErrorManager getErrorManager () {
 
@@ -230,9 +235,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Sets the error manager by wrapping it in a scribe error handler adapter.
+   * Wraps the given JUL error manager in a {@link JDKErrorHandlerAdapter} and installs it on the
+   * underlying appender.
    *
-   * @param errorManager JUL error manager to use
+   * @param errorManager the JUL error manager to install
    */
   public void setErrorManager (ErrorManager errorManager) {
 
@@ -240,9 +246,10 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Publishes a record to the wrapped appender when it is active.
+   * Extracts the scribe {@link org.smallmind.scribe.pen.Record} from the JUL record via the
+   * {@link RecordWrapper} interface and publishes it to the underlying appender if the appender is active.
    *
-   * @param record JUL record containing the scribe record wrapper
+   * @param record the JUL record to publish; must implement {@link RecordWrapper}
    */
   public void publish (LogRecord record) {
 
@@ -252,17 +259,17 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Flush is a no-op for the wrapped appender.
+   * No-op flush; the underlying scribe appender manages its own buffering.
    */
   public void flush () {
 
   }
 
   /**
-   * Closes the wrapped appender, translating any checked exceptions to {@link SecurityException}
-   * as required by the JUL {@link Handler} contract.
+   * Closes the underlying scribe appender, wrapping any {@link LoggerException} or
+   * {@link InterruptedException} in a {@link SecurityException} to satisfy the JUL contract.
    *
-   * @throws SecurityException if closing the delegate fails or is interrupted
+   * @throws SecurityException if the underlying appender throws during close or the thread is interrupted
    */
   public void close ()
     throws SecurityException {
@@ -275,9 +282,9 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Computes the hash code of this wrapper based on the wrapped appender.
+   * Returns the hash code of the underlying scribe appender.
    *
-   * @return hash code
+   * @return hash code delegated to the wrapped appender
    */
   public int hashCode () {
 
@@ -285,10 +292,11 @@ public class JDKAppenderWrapper extends Handler {
   }
 
   /**
-   * Compares this wrapper to another object based on the underlying appender.
+   * Compares this wrapper for equality by comparing the underlying scribe appender; unwraps the other
+   * object if it is also a {@link JDKAppenderWrapper}.
    *
-   * @param obj object to compare against
-   * @return {@code true} if the wrapped appenders are equal
+   * @param obj the object to compare against
+   * @return {@code true} if both wrappers delegate to the same appender, or the appender equals {@code obj} directly
    */
   public boolean equals (Object obj) {
 

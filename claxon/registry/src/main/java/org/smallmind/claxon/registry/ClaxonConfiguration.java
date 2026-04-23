@@ -39,34 +39,65 @@ import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Encapsulates registry configuration defaults such as timing, tags, and naming strategies.
- * Instances can be built manually or populated via configuration to customize how the registry operates.
+ * Holds the configuration defaults for a {@link ClaxonRegistry}, including the time source,
+ * collection cadence, optional features, default tags, per-meter tags, and the strategy used
+ * to derive meter names from caller classes.
+ *
+ * <p>Instances may be constructed with all defaults via the no-argument constructor, or with
+ * selective overrides via the full constructor. Individual properties can also be changed at
+ * any time through the corresponding setter methods.
  */
 public class ClaxonConfiguration {
 
+  /**
+   * Time source used by meters for wall-clock and monotonic readings.
+   */
   private Clock clock = SystemClock.instance();
+
+  /**
+   * Interval between successive collection rounds.
+   */
   private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
+
+  /**
+   * Optional registry-level features that produce their own {@link Quantity} readings each collection round.
+   */
   private Feature[] features;
+
+  /**
+   * Tags applied to every meter reading emitted by the registry.
+   */
   private Tag[] registryTags = new Tag[0];
+
+  /**
+   * Per-meter tag overrides keyed by meter name; may be {@code null} when none are configured.
+   */
   private Map<String, Tag[]> meterTags;
+
+  /**
+   * Strategy used to derive a string name from a caller class when registering a meter.
+   */
   private NamingStrategy namingStrategy = new ImpliedNamingStrategy();
 
   /**
-   * Creates a configuration with default values.
+   * Creates a configuration with all properties set to their default values:
+   * {@link SystemClock}, a two-second collection stint, no features, no tags, and
+   * an {@link ImpliedNamingStrategy}.
    */
   public ClaxonConfiguration () {
 
   }
 
   /**
-   * Creates a configuration overriding selected defaults.
+   * Creates a configuration that selectively overrides defaults. Any parameter that is
+   * {@code null} leaves the corresponding default value in place.
    *
-   * @param clock           the clock to use for timing calculations, defaults to {@link SystemClock} when {@code null}
-   * @param collectionStint cadence for collection, defaults to two seconds when {@code null}
-   * @param features        optional registry features to enable
-   * @param registryTags    default tags applied to every meter
-   * @param meterTags       per-meter tags keyed by meter name
-   * @param namingStrategy  strategy to use when generating meter names, defaults to {@link ImpliedNamingStrategy}
+   * @param clock           time source for meter calculations; {@code null} retains {@link SystemClock}
+   * @param collectionStint interval between collection rounds; {@code null} retains the two-second default
+   * @param features        registry-level features to activate; {@code null} leaves features unset
+   * @param registryTags    tags to attach to every meter reading; {@code null} leaves an empty array
+   * @param meterTags       per-meter tag overrides keyed by meter name; {@code null} leaves the map unset
+   * @param namingStrategy  strategy for deriving meter names; {@code null} retains {@link ImpliedNamingStrategy}
    */
   public ClaxonConfiguration (Clock clock, Stint collectionStint, Feature[] features, Tag[] registryTags, Map<String, Tag[]> meterTags, NamingStrategy namingStrategy) {
 
@@ -91,7 +122,7 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Returns the clock used for timing calculations.
+   * Returns the time source used by meters for wall-clock and monotonic readings.
    *
    * @return the configured {@link Clock}
    */
@@ -101,9 +132,9 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Replaces the clock used for timing calculations.
+   * Replaces the time source used by meters for wall-clock and monotonic readings.
    *
-   * @param clock the new {@link Clock}
+   * @param clock the new {@link Clock} to use
    */
   public void setClock (Clock clock) {
 
@@ -111,9 +142,9 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Returns the collection cadence for periodic emitters.
+   * Returns the interval between successive metric collection rounds.
    *
-   * @return the configured {@link Stint}
+   * @return the configured collection {@link Stint}
    */
   public Stint getCollectionStint () {
 
@@ -121,9 +152,9 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Sets the collection cadence for periodic emitters.
+   * Sets the interval between successive metric collection rounds.
    *
-   * @param collectionStint the new {@link Stint}
+   * @param collectionStint the new collection {@link Stint}
    */
   public void setCollectionStint (Stint collectionStint) {
 
@@ -131,9 +162,10 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Returns any optional features configured for the registry.
+   * Returns the registry-level features that produce additional {@link Quantity} readings
+   * on each collection round, or {@code null} if none are configured.
    *
-   * @return feature array or {@code null}
+   * @return the configured {@link Feature} array, or {@code null}
    */
   public Feature[] getFeatures () {
 
@@ -141,9 +173,10 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Sets optional features to enable in the registry.
+   * Sets the registry-level features that produce additional {@link Quantity} readings
+   * on each collection round.
    *
-   * @param features the features to enable
+   * @param features the features to activate
    */
   public void setFeatures (Feature[] features) {
 
@@ -151,9 +184,10 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Returns tags applied to every meter registered with the registry.
+   * Returns the tags that are appended to every meter reading emitted by the registry.
+   * The array is never {@code null}; it may be empty.
    *
-   * @return array of default tags, possibly empty
+   * @return the registry-wide tag array
    */
   public Tag[] getRegistryTags () {
 
@@ -161,9 +195,9 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Sets tags applied to every meter registered with the registry.
+   * Sets the tags that are appended to every meter reading emitted by the registry.
    *
-   * @param registryTags default registry tags
+   * @param registryTags the new registry-wide tags
    */
   public void setRegistryTags (Tag[] registryTags) {
 
@@ -171,7 +205,8 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Returns the naming strategy used to derive meter identifiers.
+   * Returns the strategy used to derive a string name from a caller class when a meter
+   * is registered.
    *
    * @return the configured {@link NamingStrategy}
    */
@@ -181,9 +216,10 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Sets the naming strategy used to derive meter identifiers.
+   * Sets the strategy used to derive a string name from a caller class when a meter
+   * is registered.
    *
-   * @param namingStrategy the new strategy
+   * @param namingStrategy the new {@link NamingStrategy}
    */
   public void setNamingStrategy (NamingStrategy namingStrategy) {
 
@@ -191,9 +227,11 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Sets meter-specific tags keyed by meter name.
+   * Sets per-meter tag overrides. The map keys are meter names; the values are arrays of
+   * {@link Tag} instances that will be merged with the registry-wide tags and any
+   * instance-level tags when calculating the effective tag set for that meter.
    *
-   * @param meterTags per-meter tags
+   * @param meterTags map of meter name to tag array
    */
   public void setMeterTags (HashMap<String, Tag[]> meterTags) {
 
@@ -201,10 +239,11 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Looks up tags configured for a specific meter name.
+   * Returns the tags configured specifically for the named meter, or {@code null} when
+   * no per-meter tags are defined for that name.
    *
-   * @param name meter name
-   * @return tags for the meter or {@code null} when none are defined
+   * @param name meter name to look up
+   * @return the meter-specific {@link Tag} array, or {@code null}
    */
   public Tag[] forMeter (String name) {
 
@@ -212,11 +251,12 @@ public class ClaxonConfiguration {
   }
 
   /**
-   * Combines registry-level, meter-level, and instance-level tags for a particular meter.
+   * Builds the effective tag array for a named meter by merging, in order:
+   * registry-wide tags, per-meter tags, and any instance-specific tags supplied by the caller.
    *
-   * @param name         meter name
-   * @param instanceTags instance-specific tags provided by the caller
-   * @return merged tags array or {@code null} if no tags exist
+   * @param name         the meter name used to retrieve per-meter tags
+   * @param instanceTags instance-specific tags provided at the call site; may be empty or {@code null}
+   * @return a merged {@link Tag} array, or {@code null} when no tags exist at any level
    */
   public Tag[] calculateTags (String name, Tag... instanceTags) {
 

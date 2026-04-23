@@ -40,7 +40,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Priority queue that schedules {@link DeconstructionFuse} ignition based on time and registration order.
+ * Time-ordered, background-driven queue that fires {@link DeconstructionFuse} instances
+ * when their ignition times elapse.
+ * <p>
+ * Fuses are stored in a {@link ConcurrentSkipListMap} keyed by an {@link IgnitionKey} that
+ * sorts first by ignition time and then by fuse ordinal, guaranteeing a deterministic firing
+ * order when multiple fuses expire at the same millisecond. A single daemon
+ * {@link IgnitionWorker} thread wakes every second, removes all entries whose ignition time
+ * is in the past, and calls {@link DeconstructionFuse#ignite()} on each.
+ * <p>
+ * A global {@link AtomicInteger} issues monotonically increasing ordinals so that no two
+ * fuses registered across the entire pool share the same ordinal.
  */
 public class DeconstructionQueue {
 
@@ -50,7 +60,7 @@ public class DeconstructionQueue {
   private IgnitionWorker ignitionWorker;
 
   /**
-   * Starts the background worker that monitors fuses.
+   * Starts the background {@link IgnitionWorker} daemon thread that polls for expired fuses.
    */
   public void startup () {
 
@@ -62,9 +72,10 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Returns the next ordinal used to order fuses registered at the same time.
+   * Returns the next unique ordinal for a newly constructed {@link DeconstructionFuse}.
+   * Ordinals are strictly increasing across all fuses registered with this queue.
    *
-   * @return incrementing ordinal
+   * @return the next ordinal value
    */
   public int nextOrdinal () {
 
@@ -72,9 +83,9 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Adds a fuse to the queue for ignition.
+   * Registers a fuse for ignition at the time recorded in {@link DeconstructionFuse#getIgnitionTime()}.
    *
-   * @param deconstructionFuse fuse to schedule
+   * @param deconstructionFuse the fuse to schedule; its ignition time must already be set
    */
   public void add (DeconstructionFuse deconstructionFuse) {
 
@@ -82,9 +93,10 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Removes a fuse from the queue, cancelling its ignition.
+   * Removes a previously registered fuse, cancelling its scheduled ignition.
+   * Safe to call when the fuse is not currently in the queue.
    *
-   * @param deconstructionFuse fuse to remove
+   * @param deconstructionFuse the fuse to cancel
    */
   public void remove (DeconstructionFuse deconstructionFuse) {
 
@@ -92,9 +104,10 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Shuts down the background worker, waiting for exit.
+   * Signals the background worker to stop and waits for it to exit.
    *
-   * @throws InterruptedException if interrupted while waiting
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the
+   *                              worker to finish
    */
   public void shutdown ()
     throws InterruptedException {
@@ -103,7 +116,8 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Worker that periodically checks for expired fuses and ignites them.
+   * Background worker that polls the fuse map once per second and ignites any fuses whose
+   * ignition time is in the past.
    */
   private class IgnitionWorker implements Runnable {
 
@@ -111,9 +125,9 @@ public class DeconstructionQueue {
     private final CountDownLatch exitLatch = new CountDownLatch(1);
 
     /**
-     * Requests shutdown and waits for the worker to exit.
+     * Signals this worker to stop and blocks until it exits.
      *
-     * @throws InterruptedException if interrupted while waiting
+     * @throws InterruptedException if the calling thread is interrupted while waiting
      */
     public void shutdown ()
       throws InterruptedException {
@@ -123,7 +137,9 @@ public class DeconstructionQueue {
     }
 
     /**
-     * Runs the polling loop to fire due fuses.
+     * Polls the fuse map every second, removes all entries at or before the current time,
+     * and calls {@link DeconstructionFuse#ignite()} on each. Logs any exception thrown by
+     * a fuse's ignition logic so a single bad fuse cannot kill the worker.
      */
     @Override
     public void run () {
@@ -156,7 +172,11 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Sort key combining ignition time and ordinal to guarantee deterministic ordering.
+   * Composite sort key that orders fuses by ignition time, then by ordinal when two fuses
+   * share the same ignition time. Used as the key in the {@link ConcurrentSkipListMap}.
+   * <p>
+   * Equality is based solely on ordinal because each fuse has a unique ordinal; two keys with
+   * the same ordinal always represent the same fuse.
    */
   private static class IgnitionKey implements Comparable<IgnitionKey> {
 
@@ -174,18 +194,32 @@ public class DeconstructionQueue {
       this.ignitionTime = ignitionTime;
     }
 
+    /**
+     * Returns the ordinal component of this key.
+     *
+     * @return the fuse ordinal
+     */
     public int getOrdinal () {
 
       return ordinal;
     }
 
+    /**
+     * Returns the ignition time component of this key.
+     *
+     * @return the ignition timestamp in milliseconds
+     */
     public long getIgnitionTime () {
 
       return ignitionTime;
     }
 
     /**
-     * Orders keys first by ignition time then by ordinal.
+     * Orders by ignition time first, then by ordinal to break ties.
+     *
+     * @param key the key to compare against
+     * @return a negative integer, zero, or a positive integer as this key is less than,
+     * equal to, or greater than {@code key}
      */
     @Override
     public int compareTo (IgnitionKey key) {
@@ -201,7 +235,9 @@ public class DeconstructionQueue {
     }
 
     /**
-     * Hash code based on ordinal for map usage.
+     * Returns the ordinal as the hash code, consistent with {@link #equals(Object)}.
+     *
+     * @return the fuse ordinal
      */
     @Override
     public int hashCode () {
@@ -210,7 +246,11 @@ public class DeconstructionQueue {
     }
 
     /**
-     * Equality based on ordinal.
+     * Two keys are equal when they share the same ordinal, meaning they represent the
+     * same fuse regardless of ignition time.
+     *
+     * @param obj the object to compare
+     * @return {@code true} if {@code obj} is an {@code IgnitionKey} with the same ordinal
      */
     @Override
     public boolean equals (Object obj) {

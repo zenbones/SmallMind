@@ -40,7 +40,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
- * Cleanup rule that enforces a maximum number of rollover files by deleting the oldest.
+ * A {@link CleanupRule} that limits the number of retained rollover files to a configured maximum
+ * by collecting all candidates during iteration and then deleting the oldest ones in {@link #finish()}.
  */
 public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
 
@@ -48,9 +49,9 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   private int maximum;
 
   /**
-   * Creates a rule that retains up to {@code maximum} files.
+   * Constructs a rule that retains at most {@code maximum} rollover files.
    *
-   * @param maximum maximum files to retain
+   * @param maximum the maximum number of rolled files to keep
    */
   public FileCountCleanupRule (int maximum) {
 
@@ -58,9 +59,9 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Retrieves the maximum number of rollover files to retain.
+   * Returns the maximum number of rollover files this rule will retain.
    *
-   * @return configured retention count
+   * @return the configured retention count
    */
   public int getMaximum () {
 
@@ -68,9 +69,9 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Sets the maximum number of files to retain.
+   * Sets the maximum number of rollover files to retain.
    *
-   * @param maximum retain threshold
+   * @param maximum the new retention count
    */
   public void setMaximum (int maximum) {
 
@@ -78,9 +79,9 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Produces a copy of this rule with the same maximum retention.
+   * Returns a new {@code FileCountCleanupRule} with the same maximum, for use in a single vacuum pass.
    *
-   * @return duplicated rule
+   * @return a fresh copy of this rule
    */
   @Override
   public FileCountCleanupRule copy () {
@@ -89,10 +90,11 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Collects potential paths for later evaluation; never deletes during iteration.
+   * Adds the candidate path to the internal list for deferred evaluation; always returns {@code false}
+   * so that no file is deleted during the iteration phase — deletion is deferred to {@link #finish()}.
    *
-   * @param possiblePath candidate rollover file
-   * @return always {@code false} so cleanup occurs during {@link #finish()}
+   * @param possiblePath a rolled log file to consider for cleanup
+   * @return {@code false} unconditionally
    */
   @Override
   public boolean willCleanup (Path possiblePath) {
@@ -103,9 +105,10 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Deletes the oldest files until the retained count is within the maximum.
+   * Sorts all collected paths by last modification time and deletes the oldest files
+   * until the remaining count is at or below the configured maximum.
    *
-   * @throws IOException if deletion fails or modification times cannot be read
+   * @throws IOException if last-modified time cannot be read from a file or a deletion fails
    */
   @Override
   public void finish ()
@@ -128,7 +131,8 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
   }
 
   /**
-   * Comparator that orders files by last modified time.
+   * A {@link Comparator} that orders {@link Path} instances from oldest to newest by their
+   * last-modified timestamp, caching each timestamp to avoid repeated filesystem calls.
    */
   private static class ModificationTimeComparator implements Comparator<Path> {
 
@@ -136,9 +140,10 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
     private IOException ioException;
 
     /**
-     * Returns any I/O exception encountered while reading modification times.
+     * Returns the first {@link IOException} thrown while reading a file's last-modified time,
+     * or {@code null} if all reads succeeded.
      *
-     * @return stored exception or {@code null} if none
+     * @return the stored I/O exception, or {@code null}
      */
     public IOException getIoException () {
 
@@ -146,11 +151,11 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
     }
 
     /**
-     * Orders paths by last modified time to identify oldest files.
+     * Compares two paths by last-modified time so that older files sort before newer ones.
      *
-     * @param path1 first path
-     * @param path2 second path
-     * @return comparison of modification times
+     * @param path1 the first path to compare
+     * @param path2 the second path to compare
+     * @return a negative value if {@code path1} is older, zero if equal, positive if newer
      */
     @Override
     public int compare (Path path1, Path path2) {
@@ -159,10 +164,12 @@ public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
     }
 
     /**
-     * Returns the cached or computed last modified time for the path.
+     * Returns the last-modified time for {@code path} in milliseconds since epoch, reading it
+     * from the filesystem on the first access and caching it for subsequent calls; stores any
+     * {@link IOException} in {@link #ioException} and returns {@code 0L} on failure.
      *
-     * @param path path to inspect
-     * @return modification time in milliseconds
+     * @param path the path whose modification time is needed
+     * @return the modification time in milliseconds, or {@code 0L} if the time could not be read
      */
     private Long getModificationTime (Path path) {
 

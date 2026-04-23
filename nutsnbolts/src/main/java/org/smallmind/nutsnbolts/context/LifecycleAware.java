@@ -33,17 +33,17 @@
 package org.smallmind.nutsnbolts.context;
 
 /**
- * Callback hooks for objects that need notification around context push/pop operations.
+ * Optional callback interface for {@link Context} implementations that need notification immediately before being pushed onto or immediately after being popped from the {@link ContextFactory} stack.
  */
 public interface LifecycleAware {
 
   /**
-   * Invoked immediately before the context is pushed onto the stack.
+   * Called immediately before this context is pushed onto the thread-local stack.
    */
   void beforePush ();
 
   /**
-   * Invoked immediately after the context is popped from the stack.
+   * Called immediately after this context has been popped from the thread-local stack.
    */
   void afterPop ();
 }

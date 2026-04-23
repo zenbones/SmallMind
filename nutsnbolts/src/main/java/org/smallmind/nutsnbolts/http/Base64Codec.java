@@ -42,18 +42,18 @@ import java.nio.charset.StandardCharsets;
 import org.smallmind.nutsnbolts.io.ByteBufferInputStream;
 
 /**
- * Utility for Base64 encoding/decoding strings, byte arrays, {@link ByteBuffer}s, and streams.
- * Supports custom characters for 62/63, optional padding, and URL-safe alphabets.
+ * Provides Base64 encoding and decoding for strings, byte arrays, {@link ByteBuffer}s, and streams,
+ * supporting standard, URL-safe, and custom alphabets with optional padding.
  */
 public final class Base64Codec {
 
   private static final String BASE64_BIBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
   /**
-   * Encodes the UTF-8 bytes of a string using URL-safe Base64 without padding.
+   * Encodes the UTF-8 bytes of a string to URL-safe Base64 ({@code -} and {@code _}) without padding.
    *
-   * @param original text to encode
-   * @return Base64 string using '-' and '_'
+   * @param original the string to encode
+   * @return URL-safe Base64 string
    * @throws IOException if the input cannot be read
    */
   public static String urlSafeEncode (String original)
@@ -63,10 +63,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes bytes using URL-safe Base64 without padding.
+   * Encodes a byte array to URL-safe Base64 ({@code -} and {@code _}) without padding.
    *
-   * @param bytes data to encode
-   * @return Base64 string using '-' and '_'
+   * @param bytes the data to encode
+   * @return URL-safe Base64 string
    * @throws IOException if the input cannot be read
    */
   public static String urlSafeEncode (byte[] bytes)
@@ -76,10 +76,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes a {@link ByteBuffer} using URL-safe Base64 without padding.
+   * Encodes the remaining bytes of a {@link ByteBuffer} to URL-safe Base64 without padding.
    *
-   * @param buffer buffer to encode (consumed from current position)
-   * @return Base64 string using '-' and '_'
+   * @param buffer the buffer to encode; consumed from its current position to its limit
+   * @return URL-safe Base64 string
    * @throws IOException if the input cannot be read
    */
   public static String urlSafeEncode (ByteBuffer buffer)
@@ -89,11 +89,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes all bytes from a stream using URL-safe Base64 without padding.
+   * Reads all bytes from the stream and encodes them to URL-safe Base64 without padding.
    *
-   * @param inputStream stream to encode (fully consumed)
-   * @return Base64 string using '-' and '_'
-   * @throws IOException if reading fails
+   * @param inputStream the stream to fully consume and encode
+   * @return URL-safe Base64 string
+   * @throws IOException if reading from the stream fails
    */
   public static String urlSafeEncode (InputStream inputStream)
     throws IOException {
@@ -102,10 +102,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes the UTF-8 bytes of a string using standard Base64 with padding.
+   * Encodes the UTF-8 bytes of a string to standard Base64 with {@code =} padding.
    *
-   * @param original text to encode
-   * @return Base64 string using '+' and '/'
+   * @param original the string to encode
+   * @return standard Base64 string using {@code +} and {@code /}
    * @throws IOException if the input cannot be read
    */
   public static String encode (String original)
@@ -115,11 +115,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes the UTF-8 bytes of a string using standard Base64.
+   * Encodes the UTF-8 bytes of a string to standard Base64 with optional padding.
    *
-   * @param original       text to encode
-   * @param includePadding {@code true} to append '=' padding
-   * @return Base64 string using '+' and '/'
+   * @param original       the string to encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @return standard Base64 string using {@code +} and {@code /}
    * @throws IOException if the input cannot be read
    */
   public static String encode (String original, boolean includePadding)
@@ -129,12 +129,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes the UTF-8 bytes of a string using custom 62/63 characters with padding.
+   * Encodes the UTF-8 bytes of a string to Base64 using custom characters at positions 62 and 63, with padding.
    *
-   * @param original text to encode
-   * @param char62   replacement for index 62
-   * @param char63   replacement for index 63
-   * @return Base64 string using supplied alphabet
+   * @param original the string to encode
+   * @param char62   character to use for index 62 in place of {@code +}
+   * @param char63   character to use for index 63 in place of {@code /}
+   * @return Base64 string using the specified alphabet
    * @throws IOException if the input cannot be read
    */
   public static String encode (String original, char char62, char char63)
@@ -144,13 +144,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes the UTF-8 bytes of a string using custom alphabet and optional padding.
+   * Encodes the UTF-8 bytes of a string to Base64 using a custom alphabet and optional padding.
    *
-   * @param original       text to encode
-   * @param includePadding {@code true} to append '=' padding
-   * @param char62         replacement for index 62
-   * @param char63         replacement for index 63
-   * @return Base64 string using supplied alphabet
+   * @param original       the string to encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @param char62         character to use for index 62 in place of {@code +}
+   * @param char63         character to use for index 63 in place of {@code /}
+   * @return Base64 string using the specified alphabet
    * @throws IOException if the input cannot be read
    */
   public static String encode (String original, boolean includePadding, char char62, char char63)
@@ -160,11 +160,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes bytes using standard Base64 with padding.
+   * Encodes a byte array to standard Base64 with {@code =} padding.
    *
-   * @param bytes data to encode
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param bytes the data to encode
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (byte[] bytes)
     throws IOException {
@@ -173,12 +173,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes bytes using standard Base64.
+   * Encodes a byte array to standard Base64 with optional padding.
    *
-   * @param bytes          data to encode
-   * @param includePadding {@code true} to append '=' padding
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param bytes          the data to encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (byte[] bytes, boolean includePadding)
     throws IOException {
@@ -187,13 +187,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes bytes using custom 62/63 characters with padding.
+   * Encodes a byte array to Base64 using custom characters at positions 62 and 63, with padding.
    *
-   * @param bytes  data to encode
-   * @param char62 replacement for index 62
-   * @param char63 replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param bytes  the data to encode
+   * @param char62 character to use for index 62
+   * @param char63 character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (byte[] bytes, char char62, char char63)
     throws IOException {
@@ -202,14 +202,14 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes bytes using custom alphabet and optional padding.
+   * Encodes a byte array to Base64 using a custom alphabet and optional padding.
    *
-   * @param bytes          data to encode
-   * @param includePadding {@code true} to append '=' padding
-   * @param char62         replacement for index 62
-   * @param char63         replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param bytes          the data to encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @param char62         character to use for index 62
+   * @param char63         character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (byte[] bytes, boolean includePadding, char char62, char char63)
     throws IOException {
@@ -218,11 +218,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes a {@link ByteBuffer} using standard Base64 with padding.
+   * Encodes the remaining bytes of a {@link ByteBuffer} to standard Base64 with {@code =} padding.
    *
-   * @param buffer buffer to encode (consumed)
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param buffer the buffer to encode; consumed from its current position to its limit
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (ByteBuffer buffer)
     throws IOException {
@@ -231,12 +231,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes a {@link ByteBuffer} using standard Base64.
+   * Encodes the remaining bytes of a {@link ByteBuffer} to standard Base64 with optional padding.
    *
-   * @param buffer         buffer to encode (consumed)
-   * @param includePadding {@code true} to append '=' padding
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param buffer         the buffer to encode; consumed from its current position to its limit
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (ByteBuffer buffer, boolean includePadding)
     throws IOException {
@@ -245,13 +245,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes a {@link ByteBuffer} using custom 62/63 characters with padding.
+   * Encodes the remaining bytes of a {@link ByteBuffer} to Base64 with custom characters at positions 62 and 63, with padding.
    *
-   * @param buffer buffer to encode (consumed)
-   * @param char62 replacement for index 62
-   * @param char63 replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param buffer the buffer to encode; consumed from its current position to its limit
+   * @param char62 character to use for index 62
+   * @param char63 character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (ByteBuffer buffer, char char62, char char63)
     throws IOException {
@@ -260,14 +260,14 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes a {@link ByteBuffer} using custom alphabet and optional padding.
+   * Encodes the remaining bytes of a {@link ByteBuffer} to Base64 using a custom alphabet and optional padding.
    *
-   * @param buffer         buffer to encode (consumed)
-   * @param includePadding {@code true} to append '=' padding
-   * @param char62         replacement for index 62
-   * @param char63         replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param buffer         the buffer to encode; consumed from its current position to its limit
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @param char62         character to use for index 62
+   * @param char63         character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if an I/O error occurs internally
    */
   public static String encode (ByteBuffer buffer, boolean includePadding, char char62, char char63)
     throws IOException {
@@ -276,11 +276,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes all bytes from a stream using standard Base64 with padding.
+   * Reads all bytes from a stream and encodes them to standard Base64 with {@code =} padding.
    *
-   * @param inputStream stream to encode (fully consumed)
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param inputStream the stream to fully consume and encode
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if reading from the stream fails
    */
   public static String encode (InputStream inputStream)
     throws IOException {
@@ -289,12 +289,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes all bytes from a stream using standard Base64.
+   * Reads all bytes from a stream and encodes them to standard Base64 with optional padding.
    *
-   * @param inputStream    stream to encode (fully consumed)
-   * @param includePadding {@code true} to append '=' padding
-   * @return Base64 string using '+' and '/'
-   * @throws IOException if reading fails
+   * @param inputStream    the stream to fully consume and encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @return standard Base64 string using {@code +} and {@code /}
+   * @throws IOException if reading from the stream fails
    */
   public static String encode (InputStream inputStream, boolean includePadding)
     throws IOException {
@@ -303,13 +303,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes all bytes from a stream using custom characters with padding.
+   * Reads all bytes from a stream and encodes them to Base64 with custom characters at positions 62 and 63, with padding.
    *
-   * @param inputStream stream to encode (fully consumed)
-   * @param char62      replacement for index 62
-   * @param char63      replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param inputStream the stream to fully consume and encode
+   * @param char62      character to use for index 62
+   * @param char63      character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if reading from the stream fails
    */
   public static String encode (InputStream inputStream, char char62, char char63)
     throws IOException {
@@ -318,14 +318,14 @@ public final class Base64Codec {
   }
 
   /**
-   * Encodes all bytes from a stream using custom alphabet and optional padding.
+   * Reads all bytes from a stream and encodes them to Base64 using a custom alphabet and optional padding.
    *
-   * @param inputStream    stream to encode (fully consumed)
-   * @param includePadding {@code true} to append '=' padding
-   * @param char62         replacement for index 62
-   * @param char63         replacement for index 63
-   * @return Base64 string using supplied alphabet
-   * @throws IOException if reading fails
+   * @param inputStream    the stream to fully consume and encode
+   * @param includePadding {@code true} to append {@code =} padding characters
+   * @param char62         character to use for index 62
+   * @param char63         character to use for index 63
+   * @return Base64 string using the specified alphabet
+   * @throws IOException if reading from the stream fails
    */
   public static String encode (InputStream inputStream, boolean includePadding, char char62, char char63)
     throws IOException {
@@ -367,11 +367,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes a URL-safe Base64 string into bytes.
+   * Decodes a URL-safe Base64 string ({@code -} and {@code _}, no padding) back to raw bytes.
    *
-   * @param encoded Base64 text using '-' and '_'
-   * @return decoded bytes
-   * @throws IOException if the text is not valid Base64
+   * @param encoded the URL-safe Base64 string to decode
+   * @return decoded byte array
+   * @throws IOException if the string is not valid Base64
    */
   public static byte[] urlSafeDecode (String encoded)
     throws IOException {
@@ -380,10 +380,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes URL-safe Base64 bytes into the original bytes.
+   * Decodes URL-safe Base64 bytes ({@code -} and {@code _}, no padding) back to raw bytes.
    *
-   * @param bytes Base64 data using '-' and '_'
-   * @return decoded bytes
+   * @param bytes the URL-safe Base64-encoded byte array
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] urlSafeDecode (byte[] bytes)
@@ -393,10 +393,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes URL-safe Base64 from a stream.
+   * Reads and decodes URL-safe Base64 ({@code -} and {@code _}, no padding) from a stream.
    *
-   * @param inputStream Base64 stream using '-' and '_'
-   * @return decoded bytes
+   * @param inputStream the stream of URL-safe Base64 data to decode
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64 or reading fails
    */
   public static byte[] urlSafeDecode (InputStream inputStream)
@@ -406,11 +406,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes a standard Base64 string with padding.
+   * Decodes a standard Base64 string ({@code +} and {@code /} with {@code =} padding) to raw bytes.
    *
-   * @param encoded Base64 text using '+' and '/'
-   * @return decoded bytes
-   * @throws IOException if the text is not valid Base64
+   * @param encoded the Base64-encoded string
+   * @return decoded byte array
+   * @throws IOException if the string is not valid Base64
    */
   public static byte[] decode (String encoded)
     throws IOException {
@@ -419,12 +419,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes a standard Base64 string with optional strictness.
+   * Decodes a standard Base64 string with configurable strictness for truncated input.
    *
-   * @param encoded Base64 text using '+' and '/'
-   * @param strict  {@code true} to reject truncated input
-   * @return decoded bytes
-   * @throws IOException if the text is not valid Base64
+   * @param encoded the Base64-encoded string using {@code +} and {@code /}
+   * @param strict  {@code true} to throw when the input length is not a multiple of 4
+   * @return decoded byte array
+   * @throws IOException if the string is not valid Base64
    */
   public static byte[] decode (String encoded, boolean strict)
     throws IOException {
@@ -433,13 +433,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes a Base64 string using custom alphabet with padding.
+   * Decodes a Base64 string that uses custom characters at positions 62 and 63.
    *
-   * @param encoded Base64 text
-   * @param char62  expected character for index 62
-   * @param char63  expected character for index 63
-   * @return decoded bytes
-   * @throws IOException if the text is not valid Base64
+   * @param encoded the Base64-encoded string
+   * @param char62  character used for index 62 during encoding
+   * @param char63  character used for index 63 during encoding
+   * @return decoded byte array
+   * @throws IOException if the string is not valid Base64
    */
   public static byte[] decode (String encoded, char char62, char char63)
     throws IOException {
@@ -448,14 +448,14 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes a Base64 string using custom alphabet and optional strictness.
+   * Decodes a Base64 string that uses a custom alphabet, with configurable strictness.
    *
-   * @param encoded Base64 text
-   * @param strict  {@code true} to reject truncated input
-   * @param char62  expected character for index 62
-   * @param char63  expected character for index 63
-   * @return decoded bytes
-   * @throws IOException if the text is not valid Base64
+   * @param encoded the Base64-encoded string
+   * @param strict  {@code true} to throw when the input length is not a multiple of 4
+   * @param char62  character used for index 62 during encoding
+   * @param char63  character used for index 63 during encoding
+   * @return decoded byte array
+   * @throws IOException if the string is not valid Base64
    */
   public static byte[] decode (String encoded, boolean strict, char char62, char char63)
     throws IOException {
@@ -464,10 +464,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 bytes.
+   * Decodes a standard Base64-encoded byte array to raw bytes.
    *
-   * @param bytes Base64 data
-   * @return decoded bytes
+   * @param bytes the Base64-encoded data
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (byte[] bytes)
@@ -477,11 +477,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 bytes with optional strictness.
+   * Decodes a standard Base64-encoded byte array with configurable strictness.
    *
-   * @param bytes  Base64 data
-   * @param strict {@code true} to reject truncated input
-   * @return decoded bytes
+   * @param bytes  the Base64-encoded data
+   * @param strict {@code true} to throw when the input length is not a multiple of 4
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (byte[] bytes, boolean strict)
@@ -491,12 +491,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 bytes using custom alphabet with padding.
+   * Decodes a Base64-encoded byte array that uses custom characters at positions 62 and 63.
    *
-   * @param bytes  Base64 data
-   * @param char62 expected character for index 62
-   * @param char63 expected character for index 63
-   * @return decoded bytes
+   * @param bytes  the Base64-encoded data
+   * @param char62 character used for index 62 during encoding
+   * @param char63 character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (byte[] bytes, char char62, char char63)
@@ -506,13 +506,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 bytes using custom alphabet and optional strictness.
+   * Decodes a Base64-encoded byte array using a custom alphabet, with configurable strictness.
    *
-   * @param bytes  Base64 data
-   * @param strict {@code true} to reject truncated input
-   * @param char62 expected character for index 62
-   * @param char63 expected character for index 63
-   * @return decoded bytes
+   * @param bytes  the Base64-encoded data
+   * @param strict {@code true} to throw when the input length is not a multiple of 4
+   * @param char62 character used for index 62 during encoding
+   * @param char63 character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (byte[] bytes, boolean strict, char char62, char char63)
@@ -522,10 +522,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 from a buffer.
+   * Decodes standard Base64 from the remaining bytes of a {@link ByteBuffer}.
    *
-   * @param buffer Base64 data
-   * @return decoded bytes
+   * @param buffer the buffer containing Base64-encoded data
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (ByteBuffer buffer)
@@ -535,11 +535,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 from a buffer with optional strictness.
+   * Decodes standard Base64 from the remaining bytes of a {@link ByteBuffer} with configurable strictness.
    *
-   * @param buffer Base64 data
-   * @param strict {@code true} to reject truncated input
-   * @return decoded bytes
+   * @param buffer the buffer containing Base64-encoded data
+   * @param strict {@code true} to throw when the input length is not a multiple of 4
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (ByteBuffer buffer, boolean strict)
@@ -549,12 +549,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 from a buffer using custom alphabet with padding.
+   * Decodes Base64 from a {@link ByteBuffer} using custom characters at positions 62 and 63.
    *
-   * @param buffer Base64 data
-   * @param char62 expected character for index 62
-   * @param char63 expected character for index 63
-   * @return decoded bytes
+   * @param buffer the buffer containing Base64-encoded data
+   * @param char62 character used for index 62 during encoding
+   * @param char63 character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (ByteBuffer buffer, char char62, char char63)
@@ -564,13 +564,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 from a buffer using custom alphabet and optional strictness.
+   * Decodes Base64 from a {@link ByteBuffer} using a custom alphabet and configurable strictness.
    *
-   * @param buffer Base64 data
-   * @param strict {@code true} to reject truncated input
-   * @param char62 expected character for index 62
-   * @param char63 expected character for index 63
-   * @return decoded bytes
+   * @param buffer the buffer containing Base64-encoded data
+   * @param strict {@code true} to throw when the input length is not a multiple of 4
+   * @param char62 character used for index 62 during encoding
+   * @param char63 character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64
    */
   public static byte[] decode (ByteBuffer buffer, boolean strict, char char62, char char63)
@@ -580,10 +580,10 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 from a stream.
+   * Reads and decodes standard Base64 from a stream.
    *
-   * @param inputStream Base64 stream
-   * @return decoded bytes
+   * @param inputStream the stream of Base64-encoded data
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64 or reading fails
    */
   public static byte[] decode (InputStream inputStream)
@@ -593,11 +593,11 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes standard Base64 from a stream with optional strictness.
+   * Reads and decodes standard Base64 from a stream with configurable strictness.
    *
-   * @param inputStream Base64 stream
-   * @param strict      {@code true} to reject truncated input
-   * @return decoded bytes
+   * @param inputStream the stream of Base64-encoded data
+   * @param strict      {@code true} to throw when the input length is not a multiple of 4
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64 or reading fails
    */
   public static byte[] decode (InputStream inputStream, boolean strict)
@@ -607,12 +607,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 from a stream using custom alphabet with padding.
+   * Reads and decodes Base64 from a stream using custom characters at positions 62 and 63.
    *
-   * @param inputStream Base64 stream
-   * @param char62      expected character for index 62
-   * @param char63      expected character for index 63
-   * @return decoded bytes
+   * @param inputStream the stream of Base64-encoded data
+   * @param char62      character used for index 62 during encoding
+   * @param char63      character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64 or reading fails
    */
   public static byte[] decode (InputStream inputStream, char char62, char char63)
@@ -622,13 +622,13 @@ public final class Base64Codec {
   }
 
   /**
-   * Decodes Base64 from a stream using custom alphabet with optional strictness.
+   * Reads and decodes Base64 from a stream using a custom alphabet and configurable strictness.
    *
-   * @param inputStream Base64 stream
-   * @param strict      {@code true} to reject truncated input
-   * @param char62      expected character for index 62
-   * @param char63      expected character for index 63
-   * @return decoded bytes
+   * @param inputStream the stream of Base64-encoded data
+   * @param strict      {@code true} to throw when the input length is not a multiple of 4
+   * @param char62      character used for index 62 during encoding
+   * @param char63      character used for index 63 during encoding
+   * @return decoded byte array
    * @throws IOException if the data is not valid Base64 or reading fails
    */
   public static byte[] decode (InputStream inputStream, boolean strict, char char62, char char63)
@@ -668,13 +668,14 @@ public final class Base64Codec {
   }
 
   /**
-   * Fills a buffer with up to four Base64 characters, optionally rejecting short reads.
+   * Reads exactly four bytes into {@code buffer} from the stream, padding with {@code =} on EOF
+   * and optionally rejecting partial blocks.
    *
-   * @param inputStream source stream
-   * @param buffer      destination buffer (length 4)
-   * @param strict      {@code true} to reject partial blocks
-   * @return {@code true} if EOF encountered before filling the buffer
-   * @throws IOException if reading fails or strict mode detects truncation
+   * @param inputStream source stream to read from
+   * @param buffer      four-byte destination buffer
+   * @param strict      {@code true} to throw if a partial block (1–3 bytes) is found at end of input
+   * @return {@code true} if end-of-stream was reached during or before this read
+   * @throws IOException if reading fails or a partial block is detected in strict mode
    */
   private static boolean fillBuffer (InputStream inputStream, byte[] buffer, boolean strict)
     throws IOException {
@@ -698,12 +699,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Resolves the character for the given Base64 index, substituting padding and custom chars.
+   * Maps a six-bit Base64 index to its corresponding character in the configured alphabet.
    *
-   * @param index  6-bit index or 64 for padding
-   * @param char62 substitution for index 62
-   * @param char63 substitution for index 63
-   * @return encoded character
+   * @param index  value 0–63 or 64 to emit the padding character {@code =}
+   * @param char62 character representing index 62
+   * @param char63 character representing index 63
+   * @return the encoded Base64 character
    */
   private static char charAtBase64Bible (int index, char char62, char char63) {
 
@@ -724,12 +725,12 @@ public final class Base64Codec {
   }
 
   /**
-   * Resolves a Base64 index from an encoded character, honoring padding and custom alphabet.
+   * Finds the six-bit index for an encoded Base64 character in the configured alphabet.
    *
-   * @param singleChar encoded character
-   * @param char62     expected character for index 62
-   * @param char63     expected character for index 63
-   * @return decoded index or {@code -1} if not part of the alphabet
+   * @param singleChar the encoded byte to look up
+   * @param char62     character representing index 62 in this alphabet
+   * @param char63     character representing index 63 in this alphabet
+   * @return the decoded index (0–64 where 64 represents padding), or {@code -1} if not in the alphabet
    */
   private static int indexOfBase64Bible (byte singleChar, char char62, char char63) {
 

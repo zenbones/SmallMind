@@ -1,1559 +1,1241 @@
-[[quorum, Quorum]]
-= Quorum
+= Quorum: Collections, Caches, and Pools
+SmallMind Code Project
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:source-highlighter: rouge
+:icons: font
+:doctype: book
 
-[partintro]
-Quorum is Smallmind's library module for local coordination concerns that usually sit at awkward integration boundaries: rate limiting, provider failover, pooling, and `java:` namespace translation over JNDI.
+[abstract]
+== Abstract
 
-It exposes five distinct surfaces:
+*Quorum* is a Java concurrency and resource-management toolkit that provides
+four independent but conceptually related frameworks for managing shared
+resources in a multi-threaded application. It answers a family of closely
+related questions:
 
-* hierarchical token buckets in `org.smallmind.quorum.bucket`
-* provider failover and blacklisting in `org.smallmind.quorum.juggler`
-* a minimal synchronized object pool in `org.smallmind.quorum.pool.simple`
-* a lifecycle-aware, metrics-aware pool in `org.smallmind.quorum.pool.complex`
-* a `java:` namespace facade over backing directory stores, with LDAP support, in `org.smallmind.quorum.namespace`
+* *How do I throttle access to a resource?* -- `quorum.bucket` (token-bucket rate limiting).
+* *How do I spread load across a group of interchangeable resources and survive the failure of any of them?* -- `quorum.juggler` (load balancing + failover + blacklist).
+* *How do I reuse expensive-to-create resources safely?* -- `quorum.pool` (object pooling, simple and complex).
+* *How do I expose arbitrary directory-style storage behind the standard JNDI API?* -- `quorum.namespace` (custom `java:` URL context provider).
 
-Quorum follows the normal Smallmind rules:
+The common thread across all four is the careful, thread-safe orchestration
+of a *finite set of resources* across an *unbounded set of callers*.  Quorum's
+name is apt: every one of its frameworks is about deciding, at any given
+moment, which members of a group are available to serve the next request.
 
-* construction is explicit
-* lifecycle is caller-owned
-* integration points are narrow and visible
-* runtime policy stays in application code instead of hidden framework behavior
+== Why Quorum Exists
 
-Audience: application and library developers who need explicit coordination primitives without bringing in a larger framework or a remote control plane.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts. Keep related Smallmind modules on the same version unless you have a specific reason not to.
+Nearly every non-trivial server-side Java application eventually confronts
+the same set of problems:
 
-== Quick Navigation
+. A downstream service (database, LDAP directory, message broker, remote API)
+  is expensive to connect to, so connections must be reused.
+. That downstream service can fail, degrade, or be replaced by redundant
+  siblings, so clients must load-balance and fail over.
+. The application itself must protect that service (and itself) from
+  runaway traffic, so calls must be rate-limited.
+. Inside the JVM, standard JNDI lookups want to resolve `java:/...` URIs
+  against an arbitrary configuration store, and that store is often an
+  external directory whose naming conventions do not match the JNDI scheme.
 
-* <<quorum-reading-paths,Reading Paths>>
-* <<quorum-at-a-glance,At A Glance>>
-* <<quorum-choose,Choosing The Right Surface>>
-* <<quorum-install,Installation>>
-* <<quorum-quick-start,Quick Start>>
-* <<quorum-bucket,Token Buckets>>
-* <<quorum-juggler,Juggler>>
-* <<quorum-simple-pool,Simple Pool>>
-* <<quorum-complex-pool,Complex Pool>>
-* <<quorum-namespace,Java Namespace>>
-* <<quorum-namespace-pool,Pooled JavaContext Integration>>
-* <<quorum-events-metrics,Events, Metrics, And JMX>>
-* <<quorum-api-index,API Index>>
-* <<quorum-defaults,Defaults Reference>>
-* <<quorum-edge-cases,Behavioral Edge Cases>>
-* <<quorum-troubleshooting,Troubleshooting>>
-* <<quorum-verification,Verification Checklist>>
+Quorum addresses all four problems with idiomatic, production-grade Java:
 
-[[quorum-reading-paths, Reading Paths]]
-== Reading Paths
+* Thread-safe by default (synchronized methods, atomic counters,
+  `ReentrantReadWriteLock`, `ConcurrentSkipListMap`, `LinkedBlockingQueue`).
+* Instrumented for production -- complex pools publish Claxon metrics and
+  JMX notifications, jugglers log blacklist events, and everything emits
+  Scribe log lines at appropriate levels.
+* Pluggable by design -- every framework is organized around small strategy
+  interfaces (factories, selectors, quantifiers, translators) so that callers
+  can wire in domain-specific behavior without subclassing the core.
+* Lifecycle-aware -- pools have `startup`/`shutdown`/`deconstruct` phases,
+  jugglers have `initialize`/`startup`/`shutdown`/`deconstruct`, pooled
+  JNDI contexts distinguish logical close from forced close.
 
-If you are evaluating Quorum for the first time, this order gets to the right abstraction quickly:
+If you are building a long-running service that must remain healthy under
+load and in the face of partial failures, Quorum is the layer immediately
+beneath your business logic.
 
-1. <<quorum-at-a-glance,At A Glance>>
-2. <<quorum-choose,Choosing The Right Surface>>
-3. <<quorum-install,Installation>>
-4. <<quorum-quick-start,Quick Start>>
-5. the detailed section for the surface you actually need
+== Module Layout
 
-If you already know the module and need exact behavior fast, jump here:
+The package lives under `org.smallmind.quorum` and contains four
+subpackages, each independent from the others:
 
-* <<quorum-defaults,Defaults Reference>>
-* <<quorum-edge-cases,Behavioral Edge Cases>>
-* <<quorum-events-metrics,Events, Metrics, And JMX>>
-* <<quorum-troubleshooting,Troubleshooting>>
-
-If you are designing operational wiring, read these together:
-
-* <<quorum-juggler,Juggler>>
-* <<quorum-complex-pool,Complex Pool>>
-* <<quorum-namespace-pool,Pooled JavaContext Integration>>
-* <<quorum-events-metrics,Events, Metrics, And JMX>>
-
-[[quorum-at-a-glance, At A Glance]]
-== At A Glance
-
-[cols="2,2,4",options="header"]
+[cols="1,4"]
 |===
-|Problem |Start with |Important obligation
+| Subpackage | Purpose
 
-|Local admission control inside one JVM
-|`TokenBucket<T>`
-|You decide token cost, refill rate, and any child-bucket partitioning. Child buckets must be registered explicitly.
-
-|Several interchangeable providers where one may fail independently
-|`Juggler<P, R>`
-|You own the lifecycle: `initialize()`, optional `startup()`, then `shutdown()` and `deconstruct()`. Recovery behavior comes entirely from your `JugglingPin` implementation.
-
-|Simple reusable objects with deterministic teardown
-|`org.smallmind.quorum.pool.simple.ComponentPool<T>`
-|The caller must return each borrowed component with `returnComponent(...)` and eventually call `close()` on the pool.
-
-|Reusable resources that need validation, error reporting, lifecycle hooks, or retirement rules
-|`org.smallmind.quorum.pool.complex.ComponentPool<C>`
-|The served component is not returned automatically. Your `ComponentInstance<C>` or the served object must route close and error paths back into `returnInstance(...)` or `terminateInstance(...)`.
-
-|A `java:` naming facade over LDAP
-|`JavaContext` plus `javaURLContextFactory`
-|Root lookups must start with `java:` and you must provide JNDI environment entries describing the backing store.
-
-|Pooled LDAP-backed naming contexts
-|`PooledJavaContextComponentInstanceFactory` plus the complex pool
-|Calling `close()` on the borrowed `PooledJavaContext` returns it to the pool. `close(true)` is the destructive close used by pool teardown.
+| `bucket`    | Hierarchical, variable-cost token-bucket rate limiting.
+| `juggler`   | Load balancing across interchangeable providers with blacklisting and optional recovery.
+| `namespace` | Custom JNDI `DirContext` provider for the `java:` URL scheme, with pluggable backing stores (LDAP bundled) and pooling hooks.
+| `pool`      | Object pooling; `simple` for lightweight use, `complex` for production with timeouts, validation, JMX, and metrics.
 |===
 
-Quorum focuses on local JVM coordination primitives that stay explicit at construction time and easy to compose into application code.
-
-[[quorum-why-use, Why Use Quorum]]
-== Why Use Quorum
-
-Use Quorum when the hard part is coordinating integration edges inside the application boundary.
-
-Typical reasons to choose it:
-
-* you need rate limiting, failover, or pooling in library code without taking over the application's runtime model
-* you want behavior that stays visible in constructors and method calls
-* you need thin adapters over JNDI, metrics, and lifecycle rather than magic registration
-* you want Smallmind-style glue code that composes with other modules instead of displacing them
-
-It works best when the coordination problem lives inside one JVM or one application's integration boundary.
-
-[[quorum-choose, Choosing The Right Surface]]
-== Choosing The Right Surface
-
-[cols="2,2,4",options="header"]
-|===
-|If you need... |Use... |Why
-
-|A synchronous, in-memory token budget
-|`TokenBucket<T>`
-|It is local, deterministic, thread-safe, and has no background worker.
-
-|Randomized selection across interchangeable providers with quarantine and optional recovery
-|`Juggler<P, R>`
-|It rotates among pins, blacklists failures, and can re-enable them after `recover()` succeeds.
-
-|A small borrow/return pool where `terminate()` is enough cleanup
-|`pool.simple.ComponentPool<T>`
-|It is intentionally unsophisticated and easy to reason about.
-
-|Validation-on-create or validation-on-borrow, lifecycle hooks, time-based retirement, metrics, or JMX exposure
-|`pool.complex.ComponentPool<C>`
-|It models resource lifecycle explicitly through `ComponentInstanceFactory<C>` and `ComponentInstance<C>`.
-
-|Code written against `DirContext`, but with `java:` names instead of raw LDAP distinguished names
-|`JavaContext`
-|It translates between internal `java:` paths and backing-store names.
-
-|A ready-made complex-pool integration for LDAP contexts
-|`PooledJavaContextComponentInstanceFactory`
-|It turns pooled directory contexts into complex-pool components with close and abort callbacks already wired.
-|===
-
-[IMPORTANT]
-====
-If you are choosing between the simple and complex pools, the deciding question is not "do I want more features?" It is "who is responsible for returning or destroying a borrowed component?"
-
-The simple pool is explicit caller-managed borrow and return.
-The complex pool expects the component wrapper or component events to drive that lifecycle.
-====
-
-[[quorum-layout, Project Layout]]
-== Project Layout
-
-[cols="1,2,3",options="header"]
-|===
-|Path |Artifact |Notes
-
-|`quorum/`
-|`org.smallmind:smallmind-quorum`
-|Single jar containing bucket, juggler, pool, and namespace packages.
-|===
-
-[[quorum-install, Installation]]
-== Installation
-
-Add the module where you want the coordination logic to live.
+=== Maven Coordinates
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind-quorum</artifactId>
-  <version>${smallmind.version}</version>
+  <version>7.0.0-SNAPSHOT</version>
 </dependency>
 ----
 
-Implementation dependencies that matter operationally:
+=== Compile-Time Dependencies
 
-* `org.smallmind:claxon-registry`
-* `org.smallmind:scribe-pen`
-* `org.smallmind:smallmind-nutsnbolts`
+* `org.smallmind:smallmind-nutsnbolts` -- general utilities (`Stint`,
+  `FormattedException`, `WeakEventListenerList`, `PerApplicationContext`,
+  `Existential`).
+* `org.smallmind:scribe-pen` -- logging facade used for blacklist and
+  recovery events.
+* `org.smallmind:claxon-registry` -- metrics facade used by the complex
+  pool to publish pool activity.
 
-Practical implications:
+// ==========================================================================
+== The Pool Framework
+// ==========================================================================
 
-* the complex pool emits Claxon metrics directly
-* the juggler, complex-pool internals, and pooled namespace integration log through Scribe
-* namespace integration uses the JDK JNDI APIs and the built-in LDAP provider when `StorageType.LDAP` is selected
+=== Why It Exists
 
-[[quorum-lifecycle, Lifecycle Expectations]]
-== Lifecycle Expectations
+Creating resources such as database connections, RPC stubs, LDAP contexts,
+thread stacks, or cryptographic sessions is expensive -- in time, memory,
+and in some cases in handshake cost against a remote endpoint. At the same
+time, these resources are typically *safe to reuse* once the caller is
+done with them. A pool captures exactly that observation: maintain a
+small, bounded set of live resources, hand them out to callers one at a
+time, and take them back when the caller is finished.
 
-Each Quorum surface has a different lifecycle model.
+Quorum's pool framework ships with two implementations sharing a small
+common core:
 
-[cols="2,4",options="header"]
-|===
-|Surface |Lifecycle model
+* *Simple* -- a compact, fully-synchronized pool based on two `LinkedList`
+  instances. Ideal when the resource has a trivial lifecycle and you do
+  not need validation, timeouts, or monitoring.
+* *Complex* -- a production-grade pool with validation hooks, creation
+  timeouts, lifetime fuses (lease, idle, processing), event listeners,
+  JMX monitoring, Claxon metrics, and optional acquisition stack-trace
+  capture for leak diagnostics.
 
-|`TokenBucket`
-|No startup or shutdown. Construction fully defines behavior.
+When in doubt, start with *complex*. The cost is a few extra interfaces
+to implement; the payoff is visibility and safety when your production
+pool misbehaves.
 
-|`Juggler`
-|Call `initialize()` before use. Call `startup()` if pins need start logic or blacklist recovery. Later call `shutdown()` and then `deconstruct()`.
+=== Common Core
 
-|Simple pool
-|Borrow with `getComponent()`, return with `returnComponent(...)`, finish with `close()`.
+==== `Pool`
 
-|Complex pool
-|Call `startup()` before borrowing. The pool creates, validates, retires, and destroys `ComponentInstance<C>` wrappers. Call `shutdown()` to tear the pool down.
+The abstract base class for every pool implementation. Its only
+contribution is the `register()` method, which publishes the pool
+instance to the per-application `PoolManager` so that callers anywhere
+in the same `PerApplicationContext` can retrieve it without needing an
+injected reference.
 
-|`JavaContext`
-|Behaves like a translated `DirContext`. Close it when you are finished.
+==== `PoolManager`
 
-|`PooledJavaContext`
-|`close()` means "return to the pool". `close(true)` means "really close the underlying directory context".
-|===
-
-[[quorum-use-cases, API By Use Case]]
-== API By Use Case
-
-[cols="2,3,3",options="header"]
-|===
-|You need to... |Start with... |Related types
-
-|Throttle a global flow, optionally with partitions
-|`TokenBucket<T>`
-|`BucketQuantifier<T>`, `BucketSelector<T>`, `BucketKey<T>`, `BucketFactory<T>`
-
-|Select among equivalent providers and quarantine failures
-|`Juggler<P, R>`
-|`JugglingPin<R>`, `AbstractJugglingPin<R>`, `JugglingPinFactory<P, R>`, `NoAvailableJugglerResourceException`
-
-|Pool objects with manual borrow and return
-|`pool.simple.ComponentPool<T>`
-|`ComponentFactory<T>`, `PooledComponent`, `SimplePoolConfig`
-
-|Pool resources with validation, diagnostics, and retirement rules
-|`pool.complex.ComponentPool<C>`
-|`ComponentInstance<C>`, `ComponentInstanceFactory<C>`, `ComplexPoolConfig`, `ComponentPoolSurface`
-
-|Expose LDAP-like content as `java:` paths
-|`JavaContext`, `javaURLContextFactory`
-|`NamingConnectionDetails`, `StorageType`, `NameTranslator`, `JavaNameParser`
-
-|Pool `java:` contexts with built-in return and abort wiring
-|`PooledJavaContextComponentInstanceFactory`
-|`PooledJavaContext`, `JavaContextComponentInstance`
-|===
-
-[[quorum-quick-start, Quick Start]]
-== Quick Start
-
-=== Global Plus Per-Tenant Token Bucket
+An application-scoped registry (not JVM-wide). Holds a single `Pool`
+instance per `PerApplicationContext`. Static accessors:
 
 [source,java]
 ----
-import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.quorum.bucket.BucketKey;
-import org.smallmind.quorum.bucket.TokenBucket;
-
-final class Request {
-
-  private final String tenantId;
-
-  Request (String tenantId) {
-    this.tenantId = tenantId;
-  }
-
-  public String getTenantId () {
-    return tenantId;
-  }
-}
-
-enum TenantBucketKey implements BucketKey<Request> {
-  PREMIUM, STANDARD
-}
-
-TokenBucket<Request> requestBucket = new TokenBucket<>(
-    request -> 1.0D,
-    request -> "premium".equals(request.getTenantId()) ? TenantBucketKey.PREMIUM : TenantBucketKey.STANDARD,
-    200.0D,
-    200.0D,
-    Stint.of(1, TimeUnit.SECONDS)
-);
-
-requestBucket.add(
-    TenantBucketKey.PREMIUM,
-    () -> new TokenBucket<>(
-        request -> 1.0D,
-        request -> TenantBucketKey.PREMIUM,
-        50.0D,
-        50.0D,
-        Stint.of(1, TimeUnit.SECONDS)
-    )
-);
-
-boolean allowed = requestBucket.allowed(new Request("premium"));
+PoolManager.register(myPool);
+Pool pool = PoolManager.getPool();
 ----
 
-=== Provider Failover With Recovery
+==== `PoolConfig`
+
+Abstract configuration base, using atomic fields so that reconfiguration
+can happen *live* without stopping the pool. Two shared properties:
+
+[cols="1,1,4"]
+|===
+| Property | Default | Meaning
+
+| `maxPoolSize` | `10` | Cap on concurrently-held components; `0` means unbounded.
+| `acquireWaitTimeMillis` | `0` | How long a caller blocks when the pool is saturated; `0` means fail immediately.
+|===
+
+All setters are fluent and return the correct subclass type (via
+`getConfigurationClass()`), so subclass setters chain cleanly.
+
+==== `ComponentPoolException`
+
+Checked exception extending `FormattedException`. Thrown when acquisition
+fails: pool closed, factory raised an error, wait timer expired, thread
+interrupted, validation could not find a healthy instance.
+
+=== Simple Pool (`pool.simple`)
+
+==== Model
+
+The simple pool is the shortest path from "I want object pooling" to
+"I have object pooling". It tracks two lists of `PooledComponent`
+instances -- `freeList` and `usedList` -- behind a method-level
+`synchronized` guard.
+
+==== Contracts
 
 [source,java]
 ----
-import org.smallmind.quorum.juggler.AbstractJugglingPin;
-import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.JugglerResourceException;
-
-final class Endpoint {
-
-  ServiceHandle open () throws Exception {
-    return new ServiceHandle();
-  }
-
-  boolean ping () {
-    return true;
-  }
+public interface PooledComponent {
+  void terminate();               // Called when the pool discards the component.
 }
 
-final class ServiceHandle {
+public interface ComponentFactory<T extends PooledComponent> {
+  T createComponent() throws Exception;
 }
+----
 
-final class EndpointPin extends AbstractJugglingPin<ServiceHandle> {
+==== Lifecycle
 
-  private final Endpoint endpoint;
+. `new ComponentPool<>(factory, config)` -- sized per `SimplePoolConfig`.
+. `pool.register()` -- optional, publishes to `PoolManager`.
+. `pool.getComponent()` -- loops: return a free one; otherwise create
+  one if below `maxPoolSize`; otherwise wait up to
+  `acquireWaitTimeMillis`; otherwise throw `ComponentPoolException`.
+. `pool.returnComponent(c)` -- moves from used to free.
+. `pool.close()` -- waits for all borrowed components to come back,
+  terminates the free list, uses a `CountDownLatch` so concurrent
+  callers exit cleanly.
 
-  EndpointPin (Endpoint endpoint) {
-    this.endpoint = endpoint;
+==== Example: A Pool of JDBC Connections
+
+[source,java]
+----
+// 1. A PooledComponent that wraps a JDBC connection.
+public final class ConnectionHolder implements PooledComponent {
+
+  private final Connection connection;
+
+  public ConnectionHolder (String url) throws SQLException {
+    this.connection = DriverManager.getConnection(url);
   }
+
+  public Connection getConnection () { return connection; }
 
   @Override
-  public ServiceHandle obtain ()
-    throws JugglerResourceException {
-
+  public void terminate () {
     try {
-      return endpoint.open();
-    } catch (Exception exception) {
-      throw new JugglerResourceException(exception);
+      connection.close();
+    } catch (SQLException ignored) {
+      // Pool is discarding the holder; swallow the failure.
     }
   }
+}
 
-  @Override
-  public boolean recover () {
-    return endpoint.ping();
+// 2. A factory closing over the JDBC URL.
+ComponentFactory<ConnectionHolder> factory =
+  () -> new ConnectionHolder("jdbc:postgresql://db/app");
+
+// 3. A pool of up to 20 connections, willing to wait 5 seconds when full.
+SimplePoolConfig config = new SimplePoolConfig()
+  .setMaxPoolSize(20)
+  .setAcquireWaitTimeMillis(5000);
+
+ComponentPool<ConnectionHolder> pool = new ComponentPool<>(factory, config);
+pool.register();
+
+// 4. Use.
+ConnectionHolder holder = pool.getComponent();
+try {
+  try (PreparedStatement ps = holder.getConnection().prepareStatement("...")) {
+    // ...
+  }
+} finally {
+  pool.returnComponent(holder);
+}
+
+// 5. On shutdown.
+pool.close();
+----
+
+==== When to Use Simple
+
+* Short-running or batch programs where a few synchronized method calls
+  cost nothing in practice.
+* Test harnesses.
+* Resources whose health is trivially inferable from the absence of
+  exceptions.
+* Situations where you would rather avoid the interface surface area of
+  the complex pool.
+
+=== Complex Pool (`pool.complex`)
+
+==== Model
+
+The complex pool separates concerns that the simple pool conflates.
+A caller deals with the *component* (`C`); the pool deals with a
+*`ComponentInstance<C>`* wrapper that can validate itself, serve the
+underlying component, and close cleanly; and internally the pool
+attaches a *`ComponentPin<C>`* tracking record to each instance to
+carry lease timers, deconstruction fuses, and existential stack
+traces.
+
+The free list is a `LinkedBlockingQueue`; the used map is a
+`HashMap<ComponentInstance, ComponentPin>` guarded by a
+`ReentrantReadWriteLock`. A background daemon thread
+(`DeconstructionQueue`) polls once per second and ignites fuses that
+have reached their scheduled time.
+
+==== Contracts
+
+[source,java]
+----
+public interface ComponentInstance<C> extends Existential {
+  boolean validate();        // Called on create (if testOnCreate) and on acquire (if testOnAcquire).
+  C serve() throws Exception;
+  void close() throws Exception;
+}
+
+public interface ComponentInstanceFactory<C> {
+  ComponentInstance<C> createInstance (ComponentPool<C> pool) throws Exception;
+  void initialize() throws Exception;   // Once, before startup.
+  void startup() throws Exception;      // After the pre-warm phase.
+  void shutdown() throws Exception;     // Before deconstruction.
+  void deconstruct() throws Exception;  // Final cleanup.
+}
+----
+
+An `AbstractComponentInstanceFactory<C>` provides empty defaults for
+the four lifecycle methods so that most factories need only implement
+`createInstance`.
+
+==== `ComplexPoolConfig`
+
+Everything in `PoolConfig`, plus:
+
+[cols="1,1,4"]
+|===
+| Property | Default | Meaning
+
+| `initialPoolSize`          | `0`       | Pre-warm size at startup.
+| `minPoolSize`              | `0`       | Floor: when a component is terminated below this count, a replacement is created.
+| `testOnCreate`             | `false`   | Validate immediately after the factory hands back an instance.
+| `testOnAcquire`            | `false`   | Validate before returning an instance to the caller; skip invalid instances.
+| `creationTimeoutMillis`    | `0`       | Ceiling on how long `createInstance()` may take; `0` disables.
+| `maxLeaseTimeSeconds`      | `0`       | Absolute wall-clock lifetime from creation; component is gracefully retired at the deadline.
+| `maxIdleTimeSeconds`       | `0`       | How long an instance may sit on the free queue before being gracefully retired.
+| `maxProcessingTimeSeconds` | `0`       | How long a caller may hold an instance before it is *prejudicially* yanked back.
+| `reportLeaseTimeNanos`     | `false`   | Fire a `LeaseTimeReportingComponentPoolEvent` each time an instance is returned.
+| `existentiallyAware`       | `false`   | Capture a stack trace at each acquisition, retrievable for leak diagnostics.
+|===
+
+All fields are `AtomicInteger` / `AtomicLong` / `AtomicBoolean`; setters
+take effect on the next pool operation.
+
+==== Deconstruction Fuses
+
+The three timeout properties each install a subclass of
+`DeconstructionFuse` on every pin at creation. Fuses sit quietly until
+their ignition time, at which point they call `pin.kaboom(withPrejudice)`:
+
+[cols="1,1,4"]
+|===
+| Fuse | Prejudicial? | Trigger
+
+| `MaxLeaseTimeDeconstructionFuse`      | No  | Ignition set once at creation. No reset on serve/free.
+| `MaxIdleTimeDeconstructionFuse`       | No  | Ignition scheduled on `free`, cleared on `serve`.
+| `MaxProcessingTimeDeconstructionFuse` | Yes | Ignition scheduled on `serve`, cleared on `free`. Uses a generation counter to ignore stale ignitions and logs the existential stack trace when it fires.
+|===
+
+"Prejudicial" means the pool forcibly removes the pin even though the
+caller still holds its component. It is the mechanism by which a
+long-running request cannot permanently pin a pool slot.
+
+The `DeconstructionCoordinator` bundles all fuses attached to a given
+pin and ensures that only the first fuse to fire wins via an
+`AtomicBoolean`.
+
+==== Events and JMX
+
+Listeners registered via `addComponentPoolEventListener(...)` receive:
+
+* `ErrorReportingComponentPoolEvent<C>` -- a creation, validation, or
+  fuse-driven error occurred.
+* `LeaseTimeReportingComponentPoolEvent<C>` -- a component was just
+  returned; exposes `getLeaseTimeNanos()`.
+
+`ComponentPoolMonitor` implements the `ComponentPoolMonitorMXBean`
+interface. Registering one with the platform MBean server exposes every
+configuration property, the current free/processing/total sizes, and
+broadcasts typed `Notification` instances
+(`CreationErrorOccurredNotification`,
+`ComponentLeaseTimeNotification`) so that a standard JMX client can
+observe pool behavior live.
+
+==== Metrics (Claxon)
+
+If a Claxon registry is wired up, the complex pool emits the following,
+each tagged with the pool's name:
+
+[cols="1,3"]
+|===
+| Tag | Meaning
+
+| `processing` | Current checked-out count (tachometer).
+| `free`       | Current idle count (tachometer).
+| `timeout`    | Acquisition-wait timeouts (counter).
+| `released`   | Lease duration on return (speedometer).
+| `waited`     | Time spent blocked in `getComponent()` (speedometer).
+|===
+
+==== Example: A Complex Pool of Remote Service Stubs
+
+[source,java]
+----
+// 1. A ComponentInstance wrapping a remote stub.
+public final class RemoteServiceInstance implements ComponentInstance<RemoteService> {
+
+  private final RemoteService stub;
+  private StackTraceElement[] stackTrace;
+
+  public RemoteServiceInstance () throws Exception {
+    this.stub = RemoteServiceFactory.connect();
   }
 
   @Override
-  public String describe () {
-    return endpoint.toString();
+  public boolean validate () {
+    try { stub.ping(); return true; } catch (Exception e) { return false; }
+  }
+
+  @Override
+  public RemoteService serve () {
+    return stub;
+  }
+
+  @Override
+  public void close () throws Exception {
+    stub.disconnect();
+  }
+
+  @Override
+  public StackTraceElement[] getExistentialStackTrace () { return stackTrace; }
+
+  @Override
+  public void setExistentialStackTrace (StackTraceElement[] stackTrace) {
+    this.stackTrace = stackTrace;
   }
 }
 
-Endpoint primary = new Endpoint();
-Endpoint secondary = new Endpoint();
+// 2. A factory.
+final class RemoteServiceInstanceFactory
+  extends AbstractComponentInstanceFactory<RemoteService> {
 
-Juggler<Endpoint, ServiceHandle> juggler = new Juggler<>(
-    Endpoint.class,
-    ServiceHandle.class,
-    30,
-    (endpoint, resourceClass) -> new EndpointPin(endpoint),
-    primary,
-    secondary
-);
+  @Override
+  public ComponentInstance<RemoteService> createInstance (ComponentPool<RemoteService> pool)
+    throws Exception {
+    return new RemoteServiceInstance();
+  }
+}
+
+// 3. A production-grade configuration.
+ComplexPoolConfig config = new ComplexPoolConfig()
+  .setMaxPoolSize(50)
+  .setMinPoolSize(10)
+  .setInitialPoolSize(10)
+  .setAcquireWaitTimeMillis(10_000L)
+  .setTestOnCreate(true)
+  .setTestOnAcquire(true)
+  .setCreationTimeoutMillis(5_000L)
+  .setMaxLeaseTimeSeconds(300)
+  .setMaxIdleTimeSeconds(60)
+  .setMaxProcessingTimeSeconds(120)
+  .setExistentiallyAware(true)
+  .setReportLeaseTimeNanos(true);
+
+// 4. The pool.
+ComponentPool<RemoteService> pool = new ComponentPool<>(
+  "RemoteServicePool", new RemoteServiceInstanceFactory(), config);
+
+pool.addComponentPoolEventListener(new ComponentPoolEventListener() {
+
+  @Override
+  public void reportErrorOccurred (ErrorReportingComponentPoolEvent<?> event) {
+    log.error("Pool error", event.getException());
+  }
+
+  @Override
+  public void reportLeaseTime (LeaseTimeReportingComponentPoolEvent<?> event) {
+    metrics.observe(event.getLeaseTimeNanos());
+  }
+});
+
+// 5. Optional JMX registration.
+ManagementFactory.getPlatformMBeanServer().registerMBean(
+  new ComponentPoolMonitor(pool),
+  new ObjectName("com.example:type=ComponentPool,name=RemoteService"));
+
+// 6. Start, use, stop.
+pool.startup();
+try {
+  RemoteService service = pool.getComponent();
+  try {
+    service.doWork();
+  } finally {
+    pool.returnInstance(service);
+  }
+} finally {
+  pool.shutdown();
+}
+----
+
+==== Leak Diagnostics
+
+When `existentiallyAware` is `true`, `pool.getExistentialStackTraces()`
+returns an array of `StackTraceElement[]`, one per currently
+checked-out instance, each captured at the moment of acquisition. This
+is the single most useful tool in the framework when the pool looks
+"stuck": dump all stacks, and you immediately see which caller forgot
+to return a component.
+
+=== Choosing Simple vs. Complex
+
+[cols="1,2,2"]
+|===
+| Concern | Simple | Complex
+
+| Validation          | You roll your own.                     | `testOnCreate` + `testOnAcquire`.
+| Timeouts            | Only `acquireWaitTimeMillis`.          | Lease, idle, processing, creation.
+| Pre-warming         | None.                                  | `initialPoolSize`, `minPoolSize`.
+| Monitoring          | None.                                  | JMX notifications + Claxon metrics.
+| Leak detection      | None.                                  | Existential stack traces.
+| Events              | None.                                  | Per-error and per-lease listeners.
+| Thread model        | Method-level `synchronized`.           | Read/write lock + lock-free queues.
+| Typical use         | Tests, scripts, trivial resources.     | Servers, databases, remote endpoints.
+|===
+
+// ==========================================================================
+== The Juggler Framework
+// ==========================================================================
+
+=== Why It Exists
+
+A pool reuses *one* provider's resources. A juggler spreads *many*
+providers' resources across a stream of requests, automatically
+quarantines any provider that starts throwing, and optionally validates
+that a blacklisted provider has recovered before returning it to
+service.
+
+If you have three database replicas, four LDAP servers, five message
+brokers, or any other set of *interchangeable* resource producers, a
+juggler is the right abstraction.
+
+The metaphor in the name is literal: the juggler keeps N items in
+motion, alternating among them in a predictable pattern, and if one
+starts to fail, the juggler drops it rather than disrupting the rest.
+
+=== The Load-Balancing Algorithm
+
+A juggler holds two lists of pins -- `sourcePins` and `targetPins`. The
+rotation rule is:
+
+. On each `pickResource()`, choose a pin at random from `sourcePins`.
+. Move that pin from `sourcePins` to `targetPins`.
+. When `sourcePins` is empty, swap the list references.
+. If the chosen pin throws while yielding its resource, blacklist it
+  and try the next one.
+. If both lists are exhausted, throw
+  `NoAvailableJugglerResourceException` with each preceding failure
+  attached as a suppressed exception.
+
+This is "uniform random selection without replacement per rotation".
+Over any one rotation, every active pin is used exactly once; the
+per-rotation ordering is random, so adjacent rotations do not produce
+identical sequences.
+
+=== Anatomy
+
+==== `JugglingPin<R>`
+
+A pin wraps *one* provider instance and yields a resource of type `R`.
+
+[source,java]
+----
+public interface JugglingPin<R> {
+  void start (Method method, Object... args) throws JugglerResourceException;
+  void stop (Method method, Object... args) throws JugglerResourceException;
+  void close (Method method, Object... args) throws JugglerResourceException;
+  R obtain() throws JugglerResourceException;
+  boolean recover();
+  String describe();
+}
+----
+
+The `method`/`args` pair allows the caller to pass a reflective hook
+invoked on the underlying resource during each lifecycle stage -- for
+example, a `getConnection()` method to pre-warm a database connection.
+Almost all callers pass `null`, for which `AbstractJugglingPin` supplies
+zero-argument overloads:
+
+[source,java]
+----
+public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
+
+  public void start () throws JugglerResourceException         { start(null); }
+  public void stop () throws JugglerResourceException          { stop(null); }
+  public void close () throws JugglerResourceException         { close(null); }
+
+  // Default no-op implementations; override what you need.
+  public void start (Method method, Object... args) throws JugglerResourceException { }
+  public void stop (Method method, Object... args) throws JugglerResourceException { }
+  public void close (Method method, Object... args) throws JugglerResourceException { }
+}
+----
+
+==== `JugglingPinFactory<P, R>`
+
+Strategy for constructing a pin from a provider. The juggler calls this
+once per provider during `initialize()`:
+
+[source,java]
+----
+public interface JugglingPinFactory<P, R> {
+  JugglingPin<R> createJugglingPin (P provider, Class<R> resourceClass)
+    throws JugglerResourceCreationException;
+}
+----
+
+==== `BlackList<R>` and `BlacklistEntry<R>`
+
+The juggler itself implements `BlackList<R>`. A pin that detects an
+unrecoverable error may hold a reference to the juggler-as-blacklist
+and call `addToBlackList(new BlacklistEntry<>(this, cause))` to
+quarantine itself proactively, rather than waiting for the juggler to
+discover the failure during the next `pickResource()`.
+
+`BlacklistEntry<R>` is a record pairing the failed pin with the
+causing `Throwable`. The juggler stores entries in a
+`ConcurrentSkipListMap<Long, BlacklistEntry<R>>` keyed by
+`System.currentTimeMillis()` at failure time, which gives the recovery
+worker an ordered view of failures.
+
+==== Exceptions
+
+[cols="1,4"]
+|===
+| Type | Meaning
+
+| `JugglerResourceException`         | Base checked exception; extends `FormattedException`.
+| `JugglerResourceCreationException` | The factory could not instantiate a pin or its resource. Thrown from `initialize()`.
+| `NoAvailableJugglerResourceException` | All pins are blacklisted. The most recent failure is the primary cause; every earlier failure is attached as a suppressed exception so that a caller can see the entire failure chain at once.
+|===
+
+=== Lifecycle
+
+[cols="1,4"]
+|===
+| Phase | Semantics
+
+| `initialize()`  | Allocate pin lists, construct one pin per provider via the factory, shuffle them into random order.
+| `startup()`     | Call `start(...)` on every pin. A pin that throws is immediately blacklisted. If `recoveryCheckSeconds > 0`, launch the recovery worker daemon.
+| `pickResource()`| Normal operation: draw a pin, call `obtain()`, return the resource. Retry on failure.
+| `shutdown()`    | Call `stop(...)` on every pin. Signal the recovery worker to exit and wait for it.
+| `deconstruct()` | Call `close(...)` on every pin. Reset the juggler so that a subsequent `initialize()` starts fresh.
+|===
+
+Each lifecycle method has a no-argument overload and a
+`(Method, Object... args)` overload mirroring `JugglingPin`.
+
+=== Recovery
+
+When `recoveryCheckSeconds > 0`, a daemon worker thread
+(`ProviderRecoveryWorker`) wakes up at most every three seconds,
+scans the blacklist map for entries older than the configured
+recovery window, and calls `pin.recover()`. If recovery returns
+`true`, the pin is removed from the blacklist and appended to the
+`targetPins` list under the juggler lock; the next rotation cycle
+will include it once more. If recovery returns `false`, the pin stays
+blacklisted and will be re-checked on the next worker iteration.
+
+`recoveryCheckSeconds = 0` disables the worker entirely; blacklisted
+pins stay blacklisted for the lifetime of the juggler.
+
+=== Example: Load-Balanced Database Connection Pooling
+
+[source,java]
+----
+// Three ConnectionPoolDataSource replicas.
+ConnectionPoolDataSource ds1 = openReplica("db-1");
+ConnectionPoolDataSource ds2 = openReplica("db-2");
+ConnectionPoolDataSource ds3 = openReplica("db-3");
+
+JugglingPinFactory<ConnectionPoolDataSource, PooledConnection> factory =
+  new PooledConnectionJugglingPinFactory(); // application-supplied
+
+Juggler<ConnectionPoolDataSource, PooledConnection> juggler =
+  new Juggler<>(
+    ConnectionPoolDataSource.class,
+    PooledConnection.class,
+    30,              // check for recovery every 30s
+    factory,
+    ds1, ds2, ds3);
 
 juggler.initialize();
 juggler.startup();
 
 try {
-  ServiceHandle handle = juggler.pickResource();
-  // use the returned resource
-} finally {
-  juggler.shutdown();
-  juggler.deconstruct();
-}
-----
-
-=== Simple Pool
-
-[source,java]
-----
-import org.smallmind.quorum.pool.simple.ComponentFactory;
-import org.smallmind.quorum.pool.simple.PooledComponent;
-import org.smallmind.quorum.pool.simple.SimplePoolConfig;
-
-final class ReusableBuffer implements PooledComponent {
-
-  @Override
-  public void terminate () {
+  PooledConnection pooled = juggler.pickResource();
+  try (Connection conn = pooled.getConnection()) {
+    // ...
+  }
+} catch (NoAvailableJugglerResourceException e) {
+  log.error("All replicas unavailable", e);
+  for (Throwable t : e.getSuppressed()) {
+    log.error("  cascaded failure", t);
   }
 }
 
-ComponentFactory<ReusableBuffer> factory = ReusableBuffer::new;
-
-SimplePoolConfig poolConfig = new SimplePoolConfig()
-    .setMaxPoolSize(16)
-    .setAcquireWaitTimeMillis(500);
-
-org.smallmind.quorum.pool.simple.ComponentPool<ReusableBuffer> pool =
-    new org.smallmind.quorum.pool.simple.ComponentPool<>(factory, poolConfig);
-
-ReusableBuffer buffer = pool.getComponent();
-try {
-  // use the component
-} finally {
-  pool.returnComponent(buffer);
-}
-
-pool.close();
+juggler.shutdown();
+juggler.deconstruct();
 ----
 
-=== Complex Pool With Built-In `PooledJavaContext`
+=== Example: A Custom Pin for a Remote HTTP Service
 
 [source,java]
 ----
-import org.smallmind.quorum.namespace.PooledJavaContext;
-import org.smallmind.quorum.namespace.backingStore.StorageType;
-import org.smallmind.quorum.namespace.pool.PooledJavaContextComponentInstanceFactory;
-import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
-import org.smallmind.quorum.pool.complex.ComponentPool;
+public final class ApiPin extends AbstractJugglingPin<ApiClient> {
 
-ComplexPoolConfig poolConfig = new ComplexPoolConfig()
-    .setInitialPoolSize(2)
-    .setMinPoolSize(2)
-    .setMaxPoolSize(10)
-    .setAcquireWaitTimeMillis(1000)
-    .setTestOnCreate(true)
-    .setTestOnAcquire(true)
-    .setCreationTimeoutMillis(5000);
+  private final String baseUrl;
+  private ApiClient client;
 
-ComponentPool<PooledJavaContext> contextPool = new ComponentPool<>(
-    "directory",
-    new PooledJavaContextComponentInstanceFactory(
-        StorageType.LDAP,
-        "java:people",
-        "ldap.example.net",
-        636,
-        true,
-        "dc=example,dc=net",
-        "cn=admin,dc=example,dc=net",
-        "secret"
-    ),
-    poolConfig
-);
-
-contextPool.startup();
-
-try {
-  PooledJavaContext peopleContext = contextPool.getComponent();
-  try {
-    Object person = peopleContext.lookup("jane");
-  } finally {
-    peopleContext.close();
-  }
-} finally {
-  contextPool.shutdown();
-}
-----
-
-=== Plain `JavaContext` Root Lookup
-
-[source,java]
-----
-import java.util.Hashtable;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import org.smallmind.quorum.namespace.JavaContext;
-import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
-import org.smallmind.quorum.namespace.backingStore.StorageType;
-
-Hashtable<String, Object> environment = new Hashtable<>();
-environment.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
-environment.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(
-    "ldap.example.net",
-    636,
-    true,
-    "dc=example,dc=net",
-    "cn=admin,dc=example,dc=net",
-    "secret"
-));
-environment.put(JavaContext.CONTEXT_STORE, StorageType.LDAP.getBackingStore());
-environment.put(JavaContext.CONTEXT_MODIFIABLE, "false");
-
-InitialContext initialContext = new InitialContext(environment);
-try {
-  JavaContext peopleContext = (JavaContext)initialContext.lookup("java:people");
-  try {
-    Object jane = peopleContext.lookup("jane");
-  } finally {
-    peopleContext.close();
-  }
-} finally {
-  initialContext.close();
-}
-----
-
-[[quorum-bucket, Token Buckets]]
-== Token Buckets
-
-=== What `TokenBucket<T>` Does
-
-`TokenBucket<T>` is a hierarchical in-memory token bucket.
-
-For each `allowed(T input)` call it:
-
-1. refills capacity according to elapsed nanoseconds
-2. asks `BucketQuantifier<T>` how many tokens the input costs
-3. rejects immediately if this bucket lacks capacity
-4. optionally checks a selected child bucket
-5. deducts tokens from the current bucket only after the child path succeeds
-
-This gives two common shapes:
-
-* a flat bucket for global throttling
-* a parent bucket plus one or more child buckets for "global plus partition" throttling
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`BucketQuantifier<T>`
-|Maps an input to a token cost.
-
-|`BucketSelector<T>`
-|Maps an input to a child-bucket key.
-
-|`BucketKey<T>`
-|Marker interface for child-bucket identifiers.
-
-|`BucketFactory<T>`
-|Creates a child bucket when you register one with `add(...)`.
-
-|`TokenBucket<T>`
-|Tracks capacity, refill rate, and optional child buckets.
-|===
-
-=== Construction Rules
-
-The constructor takes five things:
-
-* a quantifier
-* a selector
-* a capacity limit
-* a refill quantity
-* a refill period as `Stint`
-
-Internally it computes:
-
-* `refillPerNanosecond = refillQuantity / refillRateInNanoseconds`
-
-Behavior that matters in practice:
-
-* capacity starts full
-* refill uses `double`, so fractional token rates are supported
-* refill is time-based, not call-count-based
-* capacity never grows above the configured limit
-
-=== Child Buckets Are Explicit
-
-Child buckets are registered with `add(BucketKey<T>, BucketFactory<T>)`.
-
-Important details:
-
-* child buckets are not created automatically during `allowed(...)`
-* if the selector returns a key with no registered child, the parent bucket alone decides the call
-* child buckets can themselves contain children because each child is another `TokenBucket<T>`
-
-=== Concurrency Model
-
-Both `add(...)` and `allowed(...)` are synchronized.
-
-That means:
-
-* one shared bucket instance is safe to use across threads
-* refill and deduction are atomic with respect to other callers
-* a child bucket can be shared safely because the private recursive `allowed(long, T)` path is also synchronized
-
-=== Design Guidance
-
-Use `TokenBucket` when:
-
-* the limit is local to one JVM
-* you want no background thread and no remote dependency
-* you can describe the decision as capacity plus refill math
-
-Do not use it when:
-
-* multiple JVMs must coordinate a shared budget
-* limit state must survive restart
-* you need adaptive or probabilistic admission rather than a token bucket
-
-[NOTE]
-====
-The constructor currently prints the computed refill rate to standard out through `System.out.println(...)`.
-Treat that as a known implementation quirk when deciding where bucket construction should happen.
-====
-
-[[quorum-juggler, Juggler]]
-== Juggler
-
-=== What `Juggler<P, R>` Does
-
-`Juggler<P, R>` manages a set of interchangeable providers by wrapping each one in a `JugglingPin<R>`.
-
-Its job is narrow:
-
-* build pins from providers
-* rotate among them in randomized cycles
-* blacklist pins whose `start(...)` or `obtain()` path fails
-* optionally restore blacklisted pins after `recover()` succeeds
-
-It is a failover primitive, not a full load balancer.
-It has no weights, topology model, or cross-node state.
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`Juggler<P, R>`
-|Coordinates pin lifecycle, selection, blacklisting, and recovery.
-
-|`JugglingPin<R>`
-|Contract for start, stop, close, obtain, recover, and description behavior.
-
-|`AbstractJugglingPin<R>`
-|Convenience base class with no-op lifecycle methods.
-
-|`JugglingPinFactory<P, R>`
-|Creates pins from providers.
-
-|`BlacklistEntry<R>`
-|Pairs a failed pin with the throwable that caused blacklisting.
-
-|`BlackList<R>`
-|Callback surface for adding pins to a blacklist.
-
-|`NoAvailableJugglerResourceException`
-|Thrown when no pin can supply a resource.
-|===
-
-=== Lifecycle
-
-The intended sequence is explicit:
-
-1. `initialize()` builds pin collections and randomizes the first circulation order
-2. `startup()` calls `start(...)` on each pin and optionally starts the recovery worker
-3. `pickResource()` obtains resources from healthy pins
-4. `shutdown()` calls `stop(...)` on each remaining pin and stops recovery
-5. `deconstruct()` calls `close(...)` on pins after shutdown
-
-Technical details worth knowing:
-
-* `pickResource()` is allowed after `initialize()` even if `startup()` was never called
-* `shutdown()` only does work from the `STARTED` state
-* `deconstruct()` only does work from the `STOPPED` state
-
-=== Blacklisting And Recovery
-
-Failures are handled differently depending on where they occur.
-
-When `startup()` calls `pin.start(...)`:
-
-* pins that throw `JugglerResourceException` are logged
-* those pins are removed from active circulation
-* a `BlacklistEntry<R>` is stored with the current time
-
-When `pickResource()` calls `pin.obtain()`:
-
-* any thrown exception blacklists the pin immediately
-* selection continues until a healthy pin responds or no pins remain
-* if no pins remain, `NoAvailableJugglerResourceException` is thrown with suppressed causes from prior failures
-
-Recovery is optional:
-
-* `recoveryCheckSeconds == 0` disables recovery entirely
-* otherwise a daemon thread polls every 3 seconds
-* a blacklisted pin becomes eligible for recheck after `recoveryCheckSeconds`
-* if `recover()` returns `true`, the pin re-enters service
-
-=== Design Guidance
-
-Use `Juggler` when:
-
-* providers are equivalent enough that any healthy one can serve the request
-* provider failure should reduce capacity rather than fail the whole subsystem immediately
-* the provider itself knows how to recover or be probed for health
-
-Do not use it when:
-
-* you need weighted routing or request sharding
-* you need per-request balancing policy
-* you need load-balancer features such as circuit-breaking windows, hedging, or distributed coordination
-
-[IMPORTANT]
-====
-The single-provider constructor does not clone the provider. It fills the backing array with the same provider object reference.
-Use it only when that is exactly what you want.
-====
-
-[[quorum-pool-base, Shared Pool Base]]
-== Shared Pool Base
-
-Both pool implementations build on `PoolConfig<P>` and `Pool`.
-
-Shared configuration defaults:
-
-* `maxPoolSize = 10`
-* `acquireWaitTimeMillis = 0`
-
-Shared utility surfaces:
-
-* `Pool.register()` stores the pool in `PoolManager`
-* `PoolManager` exposes only one pool per application context key
-
-The two pool implementations interpret `acquireWaitTimeMillis == 0` differently, so read the specific section before using the shared default blindly.
-
-[[quorum-simple-pool, Simple Pool]]
-== Simple Pool
-
-=== What It Is
-
-`org.smallmind.quorum.pool.simple.ComponentPool<T>` is a synchronized linked-list pool for `T extends PooledComponent`.
-
-Its model is intentionally direct:
-
-* borrow with `getComponent()`
-* return with `returnComponent(T)`
-* destroy with `PooledComponent.terminate()`
-* finish with `close()`
-
-There is no validation hook, no background retirement, no metrics API, and no event model.
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`PooledComponent`
-|Component contract with a single `terminate()` method.
-
-|`ComponentFactory<T>`
-|Creates new components when the pool can grow.
-
-|`SimplePoolConfig`
-|Concrete configuration class over `PoolConfig<P>`.
-
-|`ComponentPool<T>`
-|Synchronized borrow/return pool.
-|===
-
-=== Borrow And Return Semantics
-
-`getComponent()` behaves as follows:
-
-* if a free component exists, return it
-* otherwise, if growth is allowed, create a new component
-* otherwise, wait according to `acquireWaitTimeMillis`
-
-`returnComponent(T)` behaves as follows:
-
-* remove the component from the used list
-* if the retained size is still below `maxPoolSize`, put it back on the free list
-* otherwise, call `terminate()` immediately
-
-`close()` behaves as follows:
-
-* mark the pool closed
-* wake waiting borrowers
-* wait for all borrowed components to be returned
-* terminate all free components
-
-=== Wait Behavior
-
-The simple pool treats `acquireWaitTimeMillis` this way:
-
-* `0` means wait indefinitely when the pool is full
-* `> 0` means wait up to that duration and then throw `ComponentPoolException`
-
-This is easy to overlook because the complex pool does not use the same convention.
-
-=== Design Guidance
-
-Use the simple pool when:
-
-* the resource has cheap, deterministic validation or does not need validation at all
-* a single `terminate()` hook is enough teardown
-* the caller can be trusted to always return what it borrows
-
-Do not use it when:
-
-* resources need health checks on create or acquire
-* you need time-based retirement
-* you need lease diagnostics or JMX visibility
-* the served component must terminate itself on error
-
-[NOTE]
-====
-`maxPoolSize == 0` creates an unusual mode: the pool can create without a growth limit, but returned components are never retained because the free-list retention check can never succeed. In practice that means "create on demand, terminate on return," not a reusable cache.
-====
-
-[[quorum-complex-pool, Complex Pool]]
-== Complex Pool
-
-=== What It Is
-
-`org.smallmind.quorum.pool.complex.ComponentPool<C>` is a lifecycle-aware pool built around `ComponentInstance<C>` wrappers.
-
-The pool itself does not know how to validate, serve, or destroy `C`.
-That logic lives in:
-
-* `ComponentInstanceFactory<C>` for creation and factory lifecycle
-* `ComponentInstance<C>` for validation, serving, existential tracking, and destruction
-
-This is the main conceptual difference from the simple pool.
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`ComponentInstanceFactory<C>`
-|Creates pooled instances and exposes optional initialize/startup/shutdown/deconstruct hooks.
-
-|`AbstractComponentInstanceFactory<C>`
-|Convenience base class with no-op lifecycle methods.
-
-|`ComponentInstance<C>`
-|Per-instance contract for `validate()`, `serve()`, and `close()`.
-
-|`ComplexPoolConfig`
-|Configuration for sizing, validation, timeouts, diagnostics, and retirement rules.
-
-|`ComponentPool<C>`
-|User-facing pool abstraction.
-
-|`ComponentPoolSurface`
-|Management surface mirrored by the JMX monitor.
-
-|`ComponentPoolEventListener`
-|Listener for error and lease-time events.
-|===
-
-=== Lifecycle And Ownership
-
-`ComponentPool.startup()` does three things in order:
-
-1. `componentInstanceFactory.initialize()`
-2. create `max(initialPoolSize, minPoolSize)` instances and queue them as free
-3. `componentInstanceFactory.startup()`
-
-`ComponentPool.shutdown()` does this in order:
-
-1. `componentInstanceFactory.shutdown()`
-2. terminate every managed component, including currently borrowed ones
-3. `componentInstanceFactory.deconstruct()`
-
-That last point matters: unlike the simple pool, complex-pool shutdown is not "wait politely for borrowers." It is pool teardown.
-
-=== Borrowing Model
-
-`getComponent()` returns the value from `ComponentInstance<C>.serve()`.
-
-That means the pool does not automatically know how the caller will finish with the borrowed component.
-One of these must be true:
-
-* the served component's `close()` or similar success path eventually calls `componentPool.returnInstance(thisComponentInstance)`
-* the served component's error path eventually calls `componentPool.terminateInstance(thisComponentInstance)`
-* some listener or callback around the served component performs those operations
-
-If none of that is wired, borrowed instances never re-enter the pool.
-
-[IMPORTANT]
-====
-If your first instinct is to call `ComponentPool.getComponent()` and later hand the same `C` back to the pool, you are using the wrong abstraction.
-
-The complex pool is instance-centric, not raw-value borrow/return centric.
-====
-
-=== Capacity And Acquire Semantics
-
-On each borrow attempt the pool:
-
-1. tries an already-free component
-2. validates it on acquire if `testOnAcquire` is enabled
-3. creates a new component on demand if capacity allows
-4. otherwise waits up to `acquireWaitTimeMillis`
-5. throws `ComponentPoolException` if the wait expires
-
-Important details:
-
-* `maxPoolSize == 0` means unbounded growth
-* `acquireWaitTimeMillis == 0` means do not wait at all when the pool is saturated; fail immediately
-* startup only pre-creates `max(initialPoolSize, minPoolSize)`
-* later growth happens lazily on borrow
-
-=== Validation, Creation Timeout, And Replacement
-
-`ComplexPoolConfig` gives you three important validation controls:
-
-* `testOnCreate`: validate immediately after creation
-* `testOnAcquire`: validate before serving a free instance
-* `creationTimeoutMillis`: bound instance creation by delegating to a worker thread
-
-Replacement behavior is intentionally conservative:
-
-* terminating an instance does not automatically restore the previous pool size
-* replacement is guaranteed only as needed to satisfy `minPoolSize`
-* otherwise the pool grows back on a later borrow if demand requires it
-
-=== Deconstruction Fuses
-
-When one or more fuse settings are enabled, each `ComponentPin<C>` gets a `DeconstructionCoordinator` with one or more fuses.
-
-[cols="2,4",options="header"]
-|===
-|Setting |Behavior
-
-|`maxLeaseTimeSeconds`
-|Absolute lifetime from instance creation. The timer does not reset on return.
-
-|`maxIdleTimeSeconds`
-|Runs only while the component is free. Borrowing cancels the idle fuse and returning reschedules it.
-
-|`maxProcessingTimeSeconds`
-|Runs only while the component is borrowed. Ignition is treated as prejudicial and can log the existential stack trace when enabled.
-|===
-
-=== Existential Tracking And Diagnostics
-
-If `existentiallyAware` is enabled, the pool expects `ComponentInstance<C>.serve()` to record `Thread.currentThread().getStackTrace()` or equivalent state.
-
-The built-in namespace integration and the persistence module both follow that pattern.
-`ComponentPool.getExistentialStackTraces()` exposes stack traces for currently borrowed instances.
-
-=== A Minimal Custom Pattern
-
-The built-in namespace integration is the best concrete example because it already wires close and abort callbacks correctly.
-If you are building your own `ComponentInstance<C>`, the pattern usually looks like this:
-
-[source,java]
-----
-final class LeaseHandle implements AutoCloseable {
-
-  private final Runnable returnAction;
-  private final Runnable abortAction;
-
-  LeaseHandle (Runnable returnAction, Runnable abortAction) {
-    this.returnAction = returnAction;
-    this.abortAction = abortAction;
-  }
-
-  public void markBroken () {
-    abortAction.run();
+  public ApiPin (String baseUrl) {
+    this.baseUrl = baseUrl;
   }
 
   @Override
-  public void close () {
-    returnAction.run();
+  public void start (Method method, Object... args) throws JugglerResourceException {
+    try {
+      client = new ApiClient(baseUrl);
+    } catch (Exception e) {
+      throw new JugglerResourceException(e);
+    }
   }
+
+  @Override
+  public ApiClient obtain () throws JugglerResourceException {
+    try {
+      client.healthCheck();
+      return client;
+    } catch (Exception e) {
+      throw new JugglerResourceException(e, "health check failed at %s", baseUrl);
+    }
+  }
+
+  @Override
+  public boolean recover () {
+    try { client.healthCheck(); return true; } catch (Exception e) { return false; }
+  }
+
+  @Override
+  public void close (Method method, Object... args) throws JugglerResourceException {
+    client.close();
+  }
+
+  @Override
+  public String describe () {
+    return "ApiPin[" + baseUrl + "]";
+  }
+}
+
+public final class ApiPinFactory implements JugglingPinFactory<String, ApiClient> {
+
+  @Override
+  public JugglingPin<ApiClient> createJugglingPin (String url, Class<ApiClient> resourceClass) {
+    return new ApiPin(url);
+  }
+}
+
+Juggler<String, ApiClient> juggler = new Juggler<>(
+  String.class, ApiClient.class, 60, new ApiPinFactory(),
+  "https://api-1.example.com",
+  "https://api-2.example.com",
+  "https://api-3.example.com");
+
+juggler.initialize();
+juggler.startup();
+----
+
+=== Threading and Performance Notes
+
+* Every public method of `Juggler` is `synchronized`; `pickResource()`
+  is therefore effectively a critical section. If you expect very high
+  request rates, keep `obtain()` fast (a pin should *not* block on
+  network I/O; it should return a prepared resource).
+* The recovery worker is the only thread that modifies the blacklist
+  without holding the juggler lock, and it does so through a
+  concurrent map; promotion of a recovered pin back to the list *does*
+  take the juggler lock.
+* The daemon worker is always a daemon thread, so it will not keep a
+  JVM alive past `shutdown()`; the `abort()` path uses a
+  `CountDownLatch` to signal and await clean exit.
+
+// ==========================================================================
+== The Bucket Framework
+// ==========================================================================
+
+=== Why It Exists
+
+Rate limiting is the act of deciding, at call time, whether a request
+should be admitted or rejected based on how many requests have come
+before it and how fast they are arriving. A naive counter-per-second
+approach is unfair (an "edge effect" where a client can double its
+burst rate by straddling the second boundary) and rigid (there is no
+notion of allowing a brief spike above the long-term rate).
+
+The *token-bucket algorithm* solves both problems with a single
+metaphor. A bucket holds up to `limit` tokens. Tokens refill at a
+constant rate, up to the capacity ceiling. Each request consumes one
+token (or more, depending on its size). A request is admitted if and
+only if there are enough tokens to cover its cost. The long-term
+admission rate matches the refill rate; bursts are admitted up to the
+bucket's capacity; tokens spent now are not reissued until the refill
+period recharges them.
+
+Quorum's implementation adds two refinements on top of the textbook
+algorithm:
+
+* *Variable cost* -- an input can cost any non-negative number of
+  tokens, not just one. This lets you rate-limit by message size,
+  query complexity, or any other resource-meaningful metric.
+* *Hierarchy* -- a bucket can own child buckets, each indexed by a
+  key. A request must pass *both* the parent bucket and the applicable
+  child bucket. This is how you enforce a global limit and a
+  per-user/per-tenant limit in one pass.
+
+=== Components
+
+==== `TokenBucket<T>`
+
+The main type. Thread-safe via method-level `synchronized`.
+Construction:
+
+[source,java]
+----
+public TokenBucket (
+  BucketQuantifier<T> quantifier,  // how many tokens does this input cost?
+  BucketSelector<T> selector,      // which child bucket should this input also consult?
+  double limit,                    // maximum token capacity (also the starting balance).
+  double refillQuantity,           // number of tokens added each refillRate.
+  Stint refillRate)                // duration of one refill period.
+----
+
+Operation:
+
+* `boolean allowed(T input)` -- refills based on elapsed time, then
+  checks token cost against the available balance and, if sufficient,
+  recursively defers to the child bucket identified by
+  `selector.selection(input)`. On success, tokens are deducted; on
+  failure, the balance is unchanged and `false` is returned.
+* `void add(BucketKey<T> key, BucketFactory<T> factory)` -- registers
+  a child bucket. The factory is invoked lazily; if `key` is already
+  registered, the call is a no-op.
+
+==== `BucketQuantifier<T>`
+
+[source,java]
+----
+public interface BucketQuantifier<T> {
+  double quantity (T input);
 }
 ----
 
-The matching `ComponentInstance<LeaseHandle>` supplies those callbacks so success returns the instance to the pool and failure terminates it.
-That is the design center of the complex pool.
+The strategy that maps an input to its token cost. A return of `0.0`
+is free; a value greater than or equal to `limit` can never be
+admitted.
 
-[[quorum-namespace, Java Namespace]]
-== Java Namespace
+==== `BucketSelector<T>`
 
-=== What `JavaContext` Does
+[source,java]
+----
+public interface BucketSelector<T> {
+  BucketKey<T> selection (T input);
+}
+----
 
-`JavaContext` is a `DirContext` facade that translates internal `java:` paths into backing-store names.
+Picks the child bucket key that also governs the input. Returning
+`null` means "no child applies" -- the input is judged by the parent
+alone.
 
-With LDAP, this lets you write code against names such as:
+==== `BucketKey<T>`
 
-* `java:people`
-* `java:people/admin`
-* `engineering/backend` after you already hold a child context
+A marker interface; implementations must override `equals()` and
+`hashCode()` because the key is stored in a `HashMap`.
 
-instead of constructing distinguished names manually throughout the calling code.
+==== `BucketFactory<T>`
 
-=== Core Types
+A lazy factory for child buckets:
 
-[cols="2,4",options="header"]
+[source,java]
+----
+public interface BucketFactory<T> {
+  TokenBucket<T> create();
+}
+----
+
+=== Example: Global Rate Limiting
+
+[source,java]
+----
+// 100 requests per second, no burst beyond the steady rate.
+TokenBucket<Request> bucket = new TokenBucket<>(
+  request -> 1.0,                 // every request costs one token
+  request -> null,                // no child bucket
+  100.0,                          // capacity
+  100.0,                          // refill amount
+  new Stint(1, TimeUnit.SECONDS));// per refill period
+
+if (bucket.allowed(incoming)) {
+  handle(incoming);
+} else {
+  reject(incoming, "too many requests");
+}
+----
+
+=== Example: Bursty, Size-Weighted Rate Limiting
+
+[source,java]
+----
+// 1 MB/s sustained throughput, but tolerate bursts up to 10 MB.
+TokenBucket<Payload> bucket = new TokenBucket<>(
+  payload -> (double)payload.sizeInBytes(),
+  payload -> null,
+  10_000_000.0,                        // 10 MB capacity -> burst
+  1_000_000.0,                         // 1 MB added per...
+  new Stint(1, TimeUnit.SECONDS));     // ...one second
+----
+
+=== Example: Global Cap Plus Per-Tenant Cap
+
+[source,java]
+----
+record TenantKey(String tenantId) implements BucketKey<Request> { }
+
+// Parent: 1000 rps across all tenants.
+TokenBucket<Request> parent = new TokenBucket<>(
+  req -> 1.0,
+  req -> new TenantKey(req.tenantId()),
+  1000.0, 1000.0, new Stint(1, TimeUnit.SECONDS));
+
+// For every tenant, register a 100 rps child.
+for (String tenantId : tenants) {
+  parent.add(new TenantKey(tenantId),
+    () -> new TokenBucket<>(
+      req -> 1.0,
+      req -> null,
+      100.0, 100.0, new Stint(1, TimeUnit.SECONDS)));
+}
+
+// At call time: an input has to pass both levels.
+if (parent.allowed(request)) {
+  handle(request);
+}
+----
+
+=== Notes
+
+* The bucket uses `System.nanoTime()` for all refill calculations, so
+  wall-clock changes do not perturb it.
+* Each call to `allowed()` takes one `System.nanoTime()` reading and
+  reuses it for the entire hierarchy so that parent and child see a
+  consistent clock.
+* Children are created lazily through the factory; an unused key does
+  not cost a bucket instance.
+* There is no background thread: refills are computed on demand.
+* Because `allowed()` is `synchronized`, contention on a very hot
+  bucket can become measurable. Prefer a shallow hierarchy and
+  selectors that return `null` when no child is needed.
+
+// ==========================================================================
+== The Namespace Framework
+// ==========================================================================
+
+=== Why It Exists
+
+Enterprise Java uses JNDI (Java Naming and Directory Interface) as the
+standard lookup mechanism for bound objects: a data source, an EJB,
+a configuration value. Applications do `new InitialContext().lookup("java:/...")`
+and expect to get back an object. But JNDI does not tell you *where*
+the bindings actually live; that is the job of a *context factory*.
+
+Most backing stores that administrators actually want -- LDAP, Active
+Directory, a custom database -- do not use the `java:/foo/bar/baz`
+naming convention natively. LDAP, for example, uses distinguished names
+like `cn=baz,cn=bar,cn=foo,dc=example,dc=com`. Something has to
+translate between the two.
+
+`quorum.namespace` is that something. It provides:
+
+* A custom `ObjectFactory` (`javaURLContextFactory`) registered for the
+  `java:` URL scheme.
+* A `DirContext` implementation (`JavaContext`) that translates names
+  on every operation before delegating to a backing-store context.
+* An extensible backing-store SPI (`ContextCreator`, `NameTranslator`)
+  with an LDAP implementation out of the box.
+* A pooled variant (`PooledJavaContext`) that fires lifecycle events
+  so that a `ComponentPool` can reuse and recycle JNDI contexts.
+
+=== How JNDI Finds Us
+
+Register the package as a URL context factory prefix:
+
+[source,java]
+----
+Hashtable<String, Object> env = new Hashtable<>();
+env.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
+env.put(JavaContext.CONTEXT_STORE,        "ldap");
+env.put(JavaContext.CONNECTION_DETAILS,   new NamingConnectionDetails(
+  "ldap.example.com", 389, false,
+  "dc=example,dc=com",
+  "cn=admin,dc=example,dc=com", "secret"));
+env.put(JavaContext.CONTEXT_MODIFIABLE,   "true");
+env.put(JavaContext.POOLED_CONNECTION,    "true");
+
+InitialContext root = new InitialContext(env);
+----
+
+When the application calls `root.lookup("java:/comp/env/jdbc/myds")`,
+JNDI finds `javaURLContextFactory` by the `java:` prefix, calls
+`getObjectInstance(null, ...)`, which in turn locates the backing-store
+classes by naming convention:
+
+[cols="1,3"]
 |===
-|Type |Role
+| Key | Looked up as
 
-|`JavaContext`
-|Translated `DirContext` facade.
-
-|`PooledJavaContext`
-|`JavaContext` variant that emits close and abort events for pooling.
-
-|`javaURLContextFactory`
-|JNDI object factory used when resolving `java:` names.
-
-|`NamingConnectionDetails`
-|Connection settings for the backing store.
-
-|`StorageType`
-|Built-in backing-store enum. Today that means `LDAP` only.
-
-|`NameTranslator`
-|Translates between internal names and backing-store names.
-
-|`LdapContextCreator`, `LdapNameTranslator`
-|Built-in LDAP implementations.
-|===
-
-=== Required Environment Entries
-
-To create a top-level `JavaContext` through JNDI you normally provide:
-
-* `Context.URL_PKG_PREFIXES = org.smallmind.quorum.namespace`
-* `JavaContext.CONNECTION_DETAILS = new NamingConnectionDetails(...)`
-* `JavaContext.CONTEXT_STORE = StorageType.LDAP.getBackingStore()`
-* optionally `JavaContext.CONTEXT_MODIFIABLE = "true"`
-* optionally `JavaContext.POOLED_CONNECTION = "true"`
-
-Using `StorageType.LDAP.getBackingStore()` is safer than spelling the backing-store string yourself, because `javaURLContextFactory` reflects over that value.
-
-=== Name Translation Rules For LDAP
-
-For `StorageType.LDAP` the built-in translation model is straightforward:
-
-* internal path segments become `cn=<segment>` components
-* the root `java:` segment is required for top-level lookup
-* absolute LDAP names are translated back into `java:` paths by removing the configured root namespace
-
-Example with root namespace `dc=example,dc=net`:
-
-[cols="2,4",options="header"]
-|===
-|Internal form |LDAP form
-
-|`java:people/admin`
-|relative lookup under the root namespace as `cn=admin,cn=people`
-
-|`cn=admin,cn=people,dc=example,dc=net`
-|reported back by `getNameInNamespace()` as `java:people/admin`
-|===
-
-=== Read-Only And Modifiable Modes
-
-`JavaContext` checks the string value of `JavaContext.CONTEXT_MODIFIABLE`.
-Only the exact string `"true"` enables mutations.
-
-If modifiability is not enabled, these operations throw `OperationNotSupportedException`:
-
-* `bind`
-* `rebind`
-* `unbind`
-* `rename`
-* `destroySubcontext`
-* `createSubcontext`
-* `modifyAttributes`
-* `addToEnvironment`
-* `removeFromEnvironment`
-
-Read operations remain available.
-
-=== Practical Use
-
-Use `JavaContext` when:
-
-* you already have JNDI-oriented code or APIs
-* you want a `java:` namespace boundary over LDAP
-* you need namespace translation without taking on a broader directory abstraction
-
-Avoid it when:
-
-* raw LDAP distinguished names are already your true API
-* you do not want JNDI in the calling code at all
-
-[[quorum-namespace-pool, Pooled JavaContext Integration]]
-== Pooled JavaContext Integration
-
-=== What It Adds
-
-`PooledJavaContext` extends `JavaContext` with an event model that distinguishes:
-
-* normal close, which means "return this instance to the pool"
-* communication failure, which means "terminate this instance and report the error"
-
-That makes it a natural fit for the complex pool.
-
-=== `PooledJavaContext`
-
-`PooledJavaContext` wraps most public `JavaContext` operations and catches `CommunicationException`.
-When one occurs it fires `contextAborted(...)` before rethrowing the exception.
-
-Its close behavior is intentionally different from ordinary JNDI:
-
-* `close()` delegates to `close(false)`
-* `close(false)` fires a `contextClosed(...)` event
-* `close(true)` actually closes the underlying `DirContext`
-
-That distinction is what lets the complex pool reuse the same underlying directory context across borrows.
-
-=== `JavaContextComponentInstance`
-
-`JavaContextComponentInstance` is the built-in `ComponentInstance<PooledJavaContext>` bridge.
-It does four important things:
-
-* validates with `lookup("")`
-* captures a borrower stack trace when existential tracking is enabled
-* returns the instance to the pool on `contextClosed(...)`
-* terminates the instance and reports an error on `contextAborted(...)`
-
-This class is the clearest example of how the complex pool expects a served component to manage its own return and failure paths.
-
-=== `PooledJavaContextComponentInstanceFactory`
-
-This factory packages the namespace and complex-pool pieces together.
-It builds a JNDI environment with:
-
-* `Context.URL_PKG_PREFIXES = org.smallmind.quorum.namespace`
-* `JavaContext.CONNECTION_DETAILS = new NamingConnectionDetails(...)`
-* `JavaContext.CONTEXT_STORE = storageType.getBackingStore()`
-* `JavaContext.CONTEXT_MODIFIABLE = "true"`
-* `JavaContext.POOLED_CONNECTION = "true"`
-
-Then it:
-
-1. creates an `InitialContext`
-2. looks up the requested `contextPath`
-3. casts the result to `PooledJavaContext`
-4. wraps it in `JavaContextComponentInstance`
-
-[NOTE]
-====
-The built-in pooled factory always enables `JavaContext.CONTEXT_MODIFIABLE = "true"`.
-If you need pooled but read-only contexts, write your own `ComponentInstanceFactory<PooledJavaContext>`.
-====
-
-=== Shallow Pooling Behavior
-
-Pooling does not propagate arbitrarily deep through the namespace API.
-A pooled wrapper is shallow.
-
-Important consequences from the current implementation:
-
-* the top-level lookup that created the pooled context can return `PooledJavaContext`
-* nested `lookup(...)` calls from a `PooledJavaContext` return plain `JavaContext` wrappers when they resolve subcontexts
-* `lookupLink(...)`, enumeration conversion, and `createSubcontext(...)` also return plain `JavaContext` wrappers
-
-That is usually fine for directory navigation, but it matters if you expected every nested context to carry pool-return semantics.
-
-[[quorum-events-metrics, Events, Metrics, And JMX]]
-== Events, Metrics, And JMX
-
-=== Complex-Pool Events
-
-`ComponentPool<C>` can publish two event types through `ComponentPoolEventListener`:
-
-* `reportErrorOccurred(ErrorReportingComponentPoolEvent<?>)`
-* `reportLeaseTime(LeaseTimeReportingComponentPoolEvent<?>)`
-
-Those events come from explicit pool behavior:
-
-* error reporting is triggered by integrations such as `JavaContextComponentInstance`
-* lease-time reporting is triggered when `reportLeaseTimeNanos` is enabled and a component is returned
-
-=== Claxon Metrics
-
-The complex pool emits several Claxon metrics.
-The exact meter wiring lives in the pool classes, but the user-visible tags are stable enough to plan around.
-
-[cols="2,4",options="header"]
-|===
-|Tag/value shape |Meaning
-
-|`pool=<poolName>, size=Free`
-|Current free-count update.
-
-|`pool=<poolName>, size=Processing`
-|Current borrowed-count update.
-
-|`pool=<poolName>, event=Timeout`
-|Acquire timed out.
-
-|`pool=<poolName>, event=Released`
-|A component was returned; the recorded value is lease duration.
-
-|`pool=<poolName>, event=Waited`
-|Acquisition path instrumentation around `getComponent()`.
+| `CONTEXT_STORE = "ldap"` | `org.smallmind.quorum.namespace.backingStore.ldap.LdapContextCreator`
+|                          | `org.smallmind.quorum.namespace.backingStore.ldap.LdapNameTranslator`
 |===
 
-=== JMX Monitor
+Both classes are instantiated reflectively with single-argument
+constructors taking a `NamingConnectionDetails`.
 
-`ComponentPoolMonitor` is both:
+=== Name Translation
 
-* a `ComponentPoolSurface` implementation
-* an MXBean through `ComponentPoolMonitorMXBean`
+A `JavaName` is a list of components parsed from a slash-delimited
+string. `JavaNameParser` treats the leading `java:` token as one
+component and the remaining `/`-delimited tokens as the rest:
 
-It exposes the main pool configuration and current counts, and it emits JMX notifications for:
+ "java:/comp/env/jdbc"   ==>  ["java:", "comp", "env", "jdbc"]
 
-* `CreationErrorOccurredNotification.TYPE = ERROR_OCCURRED`
-* `ComponentLeaseTimeNotification.TYPE = LEASE_TIME`
+`LdapNameTranslator` converts such a name into an LDAP DN with the
+components in *reverse* order (most specific first) and `cn=` prefix on
+each:
 
-Useful management operations include:
+ ["comp", "env", "jdbc"]  ==>  "cn=jdbc,cn=env,cn=comp"
 
-* `startup()`
-* `shutdown()`
-* getters and setters for validation, pool sizing, and timeout fields
+and concatenates the configured root DN from
+`NamingConnectionDetails.getRootNamespace()` on lookup.
 
-[NOTE]
-====
-The public setter name for maximum processing time is `setMaxProcessingTimeTimeSeconds(...)`.
-The duplicated word is part of the current public surface.
-====
+Every `JavaContext` operation flows through the translator, so the
+caller sees a `java:`-style namespace but the backing store sees its
+native format. Enumerations go through `JavaNamingEnumeration`, which
+translates each element on-the-fly; bound `DirContext` values are
+transparently wrapped in another `JavaContext` so that recursive
+lookups keep the illusion intact.
 
-=== Logging
+=== Read-Only vs. Modifiable
 
-Operational logging in Quorum goes through Scribe.
-The most relevant sources are:
+By default `JavaContext` is read-only: `bind`, `rebind`, `unbind`,
+`modifyAttributes`, `createSubcontext`, `destroySubcontext`, and
+`rename` all throw `OperationNotSupportedException`. Setting the
+environment property `CONTEXT_MODIFIABLE = "true"` unlocks them.
 
-* juggler startup, pick, blacklist, and recovery paths
-* complex-pool creation and retirement failures
-* max-processing-time warnings that include existential stack traces when enabled
-* pooled namespace abort handling
+This matters because JNDI is often used as a configuration-delivery
+mechanism; keeping contexts read-only by default prevents accidental
+mutation of a shared directory.
 
-[[quorum-api-index, API Index]]
-== API Index
+=== Pooling
 
-=== Main User-Facing Types
+`PooledJavaContext` is a `JavaContext` that:
 
-[cols="2,4",options="header"]
+* Wraps every operation in a `try/catch` that catches
+  `CommunicationException` and fires a `contextAborted` event.
+* Overrides `close()` to fire `contextClosed` *without* physically
+  closing the underlying context. This is the "return to pool"
+  semantics.
+* Provides `close(boolean forced)` that either fires the event (for
+  `false`) or physically closes the context (for `true`).
+
+`JavaContextListener` subscribers receive:
+
+[source,java]
+----
+public interface JavaContextListener {
+  void contextClosed (JavaContextEvent event);
+  void contextAborted (JavaContextEvent event);
+}
+----
+
+`JavaContextComponentInstance` is the bridge between that event
+interface and the complex pool's `ComponentInstance<PooledJavaContext>`
+contract: on `contextClosed` it calls `pool.returnInstance(this)`; on
+`contextAborted` it calls `pool.terminateInstance(this)` and
+`pool.reportErrorOccurred(...)`.
+
+=== Example: JNDI Lookup Against LDAP
+
+[source,java]
+----
+Hashtable<String, Object> env = new Hashtable<>();
+env.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
+env.put(JavaContext.CONTEXT_STORE, "ldap");
+env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(
+  "ldap.corp", 636, true,
+  "dc=corp,dc=example,dc=com",
+  "cn=apps,dc=corp,dc=example,dc=com", "secret"));
+
+InitialContext ctx = new InitialContext(env);
+
+DataSource ds = (DataSource)ctx.lookup("java:/comp/env/jdbc/apps");
+
+SearchControls controls = new SearchControls();
+controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+NamingEnumeration<SearchResult> results = ctx.search(
+  new JavaName(null /* parser-provided */),
+  "(cn=*datasource*)", controls);
+----
+
+=== Example: A Pool of JNDI Contexts
+
+[source,java]
+----
+PooledJavaContextComponentInstanceFactory factory =
+  new PooledJavaContextComponentInstanceFactory(
+    StorageType.LDAP,
+    "java:/comp/env",        // path to look up once a context is opened
+    "ldap.corp", 636, true,
+    "dc=corp,dc=example,dc=com",
+    "cn=apps,dc=corp,dc=example,dc=com", "secret");
+
+ComplexPoolConfig config = new ComplexPoolConfig()
+  .setMaxPoolSize(20)
+  .setMinPoolSize(2)
+  .setTestOnAcquire(true);
+
+ComponentPool<PooledJavaContext> pool = new ComponentPool<>(
+  "JndiContextPool", factory, config);
+
+pool.startup();
+
+PooledJavaContext ctx = pool.getComponent();
+try {
+  DataSource ds = (DataSource)ctx.lookup("jdbc/apps");
+  // ...
+} finally {
+  ctx.close();            // logical close -> returned to pool
+}
+
+pool.shutdown();
+----
+
+A `CommunicationException` during the middle of that `lookup` fires
+`contextAborted`, which terminates the instance and triggers the pool
+to refill back to `minPoolSize` on the next acquisition.
+
+=== Extending: A New Backing Store
+
+To support a new backing store, implement two classes in
+`org.smallmind.quorum.namespace.backingStore.<yourStore>`:
+
+. `<YourStore>ContextCreator extends ContextCreator`, opening an
+  `InitialDirContext` against your service in `getInitialContext()`.
+. `<YourStore>NameTranslator extends NameTranslator`, translating
+  between the `java:/...` form and your service's native naming.
+
+Then add an entry to `StorageType` and pass your key through
+`JavaContext.CONTEXT_STORE`. The factory locates the classes by
+convention; no registration step is required.
+
+=== Threading
+
+`JavaContext` and `JavaName` instances are *not* thread-safe; each
+thread that needs JNDI access should hold its own context (typically
+via a pool). The listener list inside `PooledJavaContext` is protected
+by a `WeakEventListenerList`. The pool-side
+`JavaContextComponentInstance` uses an `AtomicBoolean` to make
+`close()` idempotent.
+
+// ==========================================================================
+== Putting It All Together
+// ==========================================================================
+
+The four subpackages are independent, but they compose naturally.
+
+=== Pattern: Pooled, Load-Balanced, Rate-Limited Database Access
+
+A common production wiring combines all four frameworks to protect a
+relational database cluster:
+
+. *Multiple replicas* -- each `ConnectionPoolDataSource` is wrapped in
+  a `JugglingPin`, and a `Juggler` spreads load across them with
+  failover.
+. *Pooled connections per replica* -- the pin hands its pool's
+  connections through to callers. Alternatively, a single `ComponentPool`
+  sits over the juggler, acquiring pooled connections for reuse.
+. *Rate limiting at the edge* -- a `TokenBucket` in front of the pool
+  enforces global and per-tenant request caps, so a runaway client
+  cannot drain the entire connection pool.
+. *JNDI-published configuration* -- `JavaContext` looks up the data
+  source definitions from a central LDAP directory, so the application
+  does not hard-code host names.
+
+Each layer is independently testable, observable (through Claxon and
+JMX), and swappable.
+
+=== Pattern: A Thin Rate-Limiter In Front of a Complex Pool
+
+When you just want to keep callers from drinking all the pool's
+resources at once:
+
+[source,java]
+----
+TokenBucket<Void> gate = new TokenBucket<>(
+  v -> 1.0, v -> null, 50.0, 50.0, new Stint(1, TimeUnit.SECONDS));
+
+ComponentPool<RemoteService> pool = /* ... as earlier ... */;
+
+public RemoteService acquire () throws Exception {
+  if (!gate.allowed(null)) {
+    throw new RejectedException("rate limit exceeded");
+  }
+  return pool.getComponent();
+}
+----
+
+The gate fails fast; the pool's `acquireWaitTimeMillis` protects only
+the callers that got past the gate.
+
+== Lifecycle Summary
+
+[cols="1,2,2"]
 |===
-|Type |Purpose
+| Framework | Startup | Shutdown
 
-|`TokenBucket<T>`
-|Hierarchical token bucket for local admission control.
-
-|`Juggler<P, R>`
-|Provider failover, blacklisting, and optional recovery.
-
-|`org.smallmind.quorum.pool.simple.ComponentPool<T>`
-|Manual borrow/return pool for `PooledComponent` values.
-
-|`org.smallmind.quorum.pool.complex.ComponentPool<C>`
-|Lifecycle-aware pool for `ComponentInstance<C>` wrappers.
-
-|`JavaContext`
-|Translated `DirContext` facade for `java:` paths.
-
-|`PooledJavaContext`
-|`JavaContext` variant with close and abort events for pooling.
-
-|`PooledJavaContextComponentInstanceFactory`
-|Ready-made complex-pool factory for pooled LDAP-backed contexts.
-|===
-
-=== Key Supporting Contracts
-
-[cols="2,4",options="header"]
-|===
-|Type |Purpose
-
-|`BucketQuantifier<T>`, `BucketSelector<T>`, `BucketKey<T>`, `BucketFactory<T>`
-|Customize token-bucket cost and hierarchy.
-
-|`JugglingPin<R>`, `AbstractJugglingPin<R>`, `JugglingPinFactory<P, R>`
-|Define juggler provider behavior.
-
-|`PooledComponent`, `ComponentFactory<T>`, `SimplePoolConfig`
-|Define simple-pool creation and teardown behavior.
-
-|`ComponentInstance<C>`, `ComponentInstanceFactory<C>`, `AbstractComponentInstanceFactory<C>`, `ComplexPoolConfig`
-|Define complex-pool lifecycle and validation behavior.
-
-|`ComponentPoolSurface`, `ComponentPoolEventListener`, `ComponentPoolMonitor`
-|Expose complex-pool management and events.
-
-|`NamingConnectionDetails`, `StorageType`, `NameTranslator`, `LdapContextCreator`, `LdapNameTranslator`, `javaURLContextFactory`
-|Define namespace backing-store integration.
-|===
-
-=== Exceptions And Result Types You Will See
-
-[cols="2,4",options="header"]
-|===
-|Type |Purpose
-
-|`NoAvailableJugglerResourceException`
-|No juggler pin could provide a resource.
-
-|`JugglerResourceException`, `JugglerResourceCreationException`
-|Pin interaction or pin creation failed.
-
-|`ComponentPoolException`
-|Simple or complex pool failure.
-
-|`ComponentCreationException`, `ComponentValidationException`
-|Complex-pool creation or validation failure.
-
-|`BlacklistEntry<R>`
-|Failure record for blacklisted juggler pins.
-|===
-
-[[quorum-defaults, Defaults Reference]]
-== Defaults Reference
-
-[cols="2,1,4",options="header"]
-|===
-|Area |Default |Notes
-
-|`PoolConfig.maxPoolSize`
-|`10`
-|Shared default for simple and complex pools.
-
-|`PoolConfig.acquireWaitTimeMillis`
-|`0`
-|Simple pool: wait indefinitely when full. Complex pool: fail immediately when full.
-
-|`SimplePoolConfig`
-|No extra defaults
-|Only inherits `PoolConfig`.
-
-|`ComplexPoolConfig.initialPoolSize`
-|`0`
-|No eager creation unless set or implied by `minPoolSize`.
-
-|`ComplexPoolConfig.minPoolSize`
-|`0`
-|No minimum retained size unless set.
-
-|`ComplexPoolConfig.creationTimeoutMillis`
-|`0`
-|Creation happens on the caller path with no timeout worker.
-
-|`ComplexPoolConfig.testOnCreate`
-|`false`
-|Creation does not validate unless enabled.
-
-|`ComplexPoolConfig.testOnAcquire`
-|`false`
-|Borrowing does not validate free instances unless enabled.
-
-|`ComplexPoolConfig.existentiallyAware`
-|`false`
-|Borrower stack traces are not captured unless enabled.
-
-|`ComplexPoolConfig.reportLeaseTimeNanos`
-|`false`
-|Lease-time events are not emitted unless enabled.
-
-|`ComplexPoolConfig.maxLeaseTimeSeconds`
-|`0`
-|No absolute lifetime fuse.
-
-|`ComplexPoolConfig.maxIdleTimeSeconds`
-|`0`
-|No idle-time fuse.
-
-|`ComplexPoolConfig.maxProcessingTimeSeconds`
-|`0`
-|No processing-time fuse.
-
-|`JavaContext.CONTEXT_MODIFIABLE`
-|disabled
-|Only the exact string `"true"` enables mutation.
-
-|`JavaContext.POOLED_CONNECTION`
-|disabled
-|Only the exact string `"true"` enables top-level pooled context wrapping.
-
-|`StorageType`
-|`LDAP`
-|Only built-in backing store today.
-|===
-
-[[quorum-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-[cols="2,4",options="header"]
-|===
-|Area |Behavior
-
-|`TokenBucket`
-|Construction prints the computed refill-per-nanosecond value to standard out.
-
-|`TokenBucket`
-|If the selector resolves to a child key that was never registered, the parent bucket alone decides the request.
-
-|`Juggler`
-|The single-provider constructor repeats the same provider object reference for each slot.
-
-|`Juggler`
-|Recovery checks are polled in 3-second intervals, so re-entry can happen later than `recoveryCheckSeconds` exactly.
-
-|`Juggler`
-|An empty provider list is not guarded explicitly; construct with at least one provider.
-
-|`PoolManager`
-|Only one pool is stored per application context key. A later registration overwrites an earlier one.
-
-|Simple pool
-|`acquireWaitTimeMillis == 0` means wait forever when the pool is full.
-
-|Simple pool
-|`maxPoolSize == 0` creates without bound but never retains returned components.
-
-|Complex pool
-|`acquireWaitTimeMillis == 0` means fail immediately when the pool is saturated.
-
-|Complex pool
-|`terminateInstance(...)` does not guarantee immediate replacement. The pool only guarantees replacement as needed to satisfy `minPoolSize` or on later demand.
-
-|Complex pool
-|`maxLeaseTimeSeconds` is absolute from instance creation, not from each borrow.
-
-|Complex pool
-|`shutdown()` terminates borrowed instances; it is not a graceful wait-for-return operation.
-
-|Complex pool
-|Returning a served component is never automatic unless your `ComponentInstance<C>` or integration callbacks wire it.
-
-|Namespace
-|Top-level lookups must begin with `java:` or translation fails with "No starting context from which to resolve (...)".
-
-|Namespace
-|Pooled namespace wrapping is shallow. Nested context lookups, `lookupLink(...)`, enumeration conversion, and `createSubcontext(...)` return plain `JavaContext` wrappers.
-
-|Pooled namespace factory
-|`PooledJavaContextComponentInstanceFactory` always enables `CONTEXT_MODIFIABLE = "true"`.
-
-|JMX monitor
-|The public setter name is `setMaxProcessingTimeTimeSeconds(...)`.
+| `bucket`    | `new TokenBucket(...)`; optional `add(key, factory)` calls. | Garbage collection; no resources to release.
+| `juggler`   | `initialize()`, `startup()`.                                | `shutdown()`, `deconstruct()`.
+| `pool.simple`  | `new ComponentPool(factory, config)`; optional `register()`. | `close()` (blocks until all borrowed components return).
+| `pool.complex` | `new ComponentPool(...)`, `startup()`; optional event/JMX registration. | `shutdown()` (runs factory shutdown, terminates pins, deconstructs factory).
+| `namespace` | Register `URL_PKG_PREFIXES`; open `InitialContext`. Pool via `PooledJavaContextComponentInstanceFactory` if desired. | Close the root context; shut down the pool.
 |===
 
-[[quorum-patterns, Common Integration Patterns]]
-== Common Integration Patterns
+== Further Reading in the Source
 
-=== Use Token Buckets At Clear Boundaries
-
-`TokenBucket` is easiest to reason about when it sits at a visible boundary:
-
-* HTTP admission
-* message consumption
-* calls into an expensive downstream system
-
-If you build multi-level bucket trees, keep the partition meaning obvious and register child buckets explicitly at startup.
-
-=== Use Juggler For Provider Health, Not Request Policy
-
-A good `Juggler` use case is "several equivalent providers, any of which may fail independently." If the real requirement is request-aware routing, put that policy above the juggler or use a different abstraction.
-
-=== Keep Complex-Pool Return Logic Inside The Served Component
-
-The pool should not force application code to hold a side reference to `ComponentInstance<C>`.
-Prefer one of these designs:
-
-* `close()` on the served component returns it to the pool
-* an error callback on the served component terminates it in the pool
-* an event listener attached by the `ComponentInstance<C>` does both
-
-That is the pattern used by Quorum's pooled namespace integration and by the persistence module's pooled SQL connections.
-
-=== Combine Juggler And Complex Pool Deliberately
-
-A useful composite design is:
-
-1. `Juggler` chooses a healthy provider
-2. a complex-pool factory creates instances against that provider
-3. the served component returns or terminates itself through pool callbacks
-
-This is a good fit when provider availability and component health are related but not identical.
-
-=== Use A Custom Factory When Namespace Defaults Are Too Opinionated
-
-The built-in pooled namespace factory is convenient, but it makes two policy decisions for you:
-
-* pooled contexts are modifiable
-* lifecycle is driven by `PooledJavaContext`
-
-If either choice is wrong for your environment, build your own `ComponentInstanceFactory<PooledJavaContext>` or `ComponentInstanceFactory<JavaContext>`.
-
-[[quorum-troubleshooting, Troubleshooting]]
-== Troubleshooting
-
-[cols="2,4",options="header"]
-|===
-|Symptom |Likely cause and response
-
-|`NamingException: No starting context from which to resolve (...)`
-|The root lookup did not start with `java:`. Create the root through `InitialContext` and begin with a `java:` path such as `java:people`.
-
-|`OperationNotSupportedException: This backing store is not modifiable`
-|`JavaContext.CONTEXT_MODIFIABLE` was not set to the exact string `"true"`. Enable it only if the backing store should accept writes.
-
-|`ComponentPoolException: Exceeded the maximum acquire wait time(...)`
-|The complex pool was saturated and no valid instance became available in time. Verify return/terminate wiring first, then review `maxPoolSize` and `acquireWaitTimeMillis`.
-
-|`ComponentPool(<factory>) is completely booked`
-|The simple pool hit its timed wait limit while full. Increase capacity, shorten hold time, or return components more reliably.
-
-|`NoAvailableJugglerResourceException`
-|All juggler pins failed or were blacklisted. Inspect suppressed causes and confirm `recover()` behavior if recovery is enabled.
-
-|`IllegalStateException: Juggler must be in the initialized or started state`
-|`pickResource()` was called before `initialize()`.
-
-|Borrowed components never seem to return to the complex pool
-|The served component or its wrapper is not calling `returnInstance(...)` or `terminateInstance(...)` through the owning `ComponentInstance<C>`.
-
-|Repeated `CommunicationException` from `PooledJavaContext`
-|The LDAP-backed context is broken. The pooled wrapper should abort and terminate itself. Check credentials, network reachability, TLS settings, and root namespace.
-
-|Unexpected output on standard out during bucket construction
-|This is current `TokenBucket` behavior. Construct buckets in a place where that output is acceptable or treat it as a known module quirk.
-
-|A pooled namespace child context does not return itself to the pool on `close()`
-|You are probably holding a nested `JavaContext`, not the original `PooledJavaContext`. Pool-return semantics are shallow.
-|===
-
-[[quorum-minimal-checklist, Minimal Checklist]]
-== Minimal Checklist
-
-* choose the smallest Quorum surface that actually solves the problem
-* document lifecycle ownership in the calling code
-* for the simple pool, verify whether `acquireWaitTimeMillis == 0` is acceptable
-* for the complex pool, write down exactly how a served component returns or terminates itself
-* if you enable complex-pool fuses, document whether you want absolute lifetime, idle retirement, processing timeout, or some combination
-* for namespace usage, decide deliberately whether mutation should be enabled
-* if you rely on diagnostics, decide how Claxon metrics, Scribe logs, and optional JMX notifications will be consumed
-
-[[quorum-verification, Verification Checklist]]
-== Verification Checklist
-
-There is currently no `quorum/src/test` tree in this repository, so focused verification matters.
-
-Recommended checks for a new integration:
-
-1. Token bucket: verify both allowed and denied requests around the configured limit.
-2. Token bucket: verify refill after elapsed time.
-3. Token bucket: verify parent-plus-child behavior for one registered and one unregistered child key.
-4. Juggler: force one pin to fail on `obtain()` and confirm blacklisting.
-5. Juggler: if recovery is enabled, confirm that `recover()` returning `true` brings the pin back into service.
-6. Simple pool: borrow to capacity and confirm wait behavior when full.
-7. Simple pool: confirm that `close()` blocks until borrowed components are returned.
-8. Complex pool: confirm `startup()` pre-creates `max(initialPoolSize, minPoolSize)` instances.
-9. Complex pool: exercise `testOnCreate` and `testOnAcquire` paths if enabled.
-10. Complex pool: verify acquire timeout or immediate-failure behavior at saturation.
-11. Complex pool: verify that normal completion returns the instance and error completion terminates it.
-12. Complex pool: if fuses are enabled, force one to ignite and confirm the intended retirement behavior.
-13. Namespace: verify `java:` name translation against a real LDAP hierarchy.
-14. Namespace: verify read-only and modifiable modes separately if both matter.
-15. Pooled namespace: confirm that the top-level borrowed context returns to the pool on `close()` and is destroyed on communication failure.
+* `pom.xml` -- the module's Maven coordinates and dependencies.
+* `bucket/TokenBucket.java` -- the entire rate-limiter in a single
+  file; read it for the clearest picture of the refill mathematics.
+* `juggler/Juggler.java` -- the rotation algorithm, the blacklist
+  handling, and the `ProviderRecoveryWorker` implementation.
+* `pool/complex/ComponentPinManager.java` -- the heart of the complex
+  pool; creation, validation, termination, and replacement logic.
+* `pool/complex/DeconstructionFuse.java` and its three subclasses --
+  the timeout semantics that distinguish complex pools from simple
+  ones.
+* `namespace/JavaContext.java` -- the custom `DirContext`; each
+  method is a thin wrapper that translates names and delegates.
+* `namespace/backingStore/ldap/LdapNameTranslator.java` -- the
+  canonical example of how to map a `java:/...` name onto a
+  backing-store DN, and the first place to look when adding support
+  for a new backing store.

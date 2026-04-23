@@ -35,15 +35,15 @@ package org.smallmind.nutsnbolts.http;
 import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 
 /**
- * Small helpers for rendering Java text or exceptions as HTML-friendly strings.
+ * Utility methods for converting Java strings and exceptions into HTML-safe representations.
  */
 public final class HTMLUtility {
 
   /**
-   * Converts newline characters to {@code <br>} tags, omitting carriage returns.
+   * Replaces newline characters with {@code <br>} tags while stripping carriage returns.
    *
-   * @param javaString input containing Java line breaks
-   * @return string safe for embedding in HTML
+   * @param javaString source string containing Java-style line endings
+   * @return equivalent string suitable for embedding in HTML
    */
   public static String convertLineBreaks (String javaString) {
 
@@ -62,10 +62,10 @@ public final class HTMLUtility {
   }
 
   /**
-   * Renders a {@link Throwable}'s stack trace with HTML line breaks.
+   * Returns the full stack trace of a {@link Throwable} as an HTML string with {@code <br>} line breaks.
    *
-   * @param throwable error to render
-   * @return stack trace text with {@code <br>} separators
+   * @param throwable the exception whose stack trace is to be rendered
+   * @return HTML-encoded stack trace string
    */
   public static String convertThrowable (Throwable throwable) {
 

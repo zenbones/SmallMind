@@ -35,17 +35,17 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Comparator;
 
 /**
- * Compares dot-delimited semantic version strings component by component as integers.
+ * Comparator that orders dot-delimited semantic version strings by comparing each numeric segment in sequence.
  */
 public class SemanticVersionComparator implements Comparator<String> {
 
   /**
-   * Treats {@code null} or empty strings as less than non-empty versions. Compares each dot-separated segment numerically;
-   * if one version has additional segments after a common prefix, it sorts after the shorter version.
+   * Compares two version strings segment by segment as integers, treating {@code null} or empty as less than any non-empty version;
+   * a version with more segments than another that is otherwise equal sorts after the shorter one.
    *
-   * @param version1 first version string
-   * @param version2 second version string
-   * @return comparison result per {@link Comparator} contract
+   * @param version1 first version string, or {@code null}
+   * @param version2 second version string, or {@code null}
+   * @return a negative integer, zero, or positive integer per the {@link Comparator} contract
    */
   @Override
   public int compare (String version1, String version2) {

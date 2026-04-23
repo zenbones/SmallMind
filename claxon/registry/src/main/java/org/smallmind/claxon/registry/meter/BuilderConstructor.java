@@ -33,17 +33,21 @@
 package org.smallmind.claxon.registry.meter;
 
 /**
- * Supplier that constructs a {@link MeterBuilder} instance.
+ * Functional interface that acts as a supplier of {@link MeterBuilder} instances.
  *
- * @param <M> meter type
+ * <p>Implementations are used by {@link MeterFactory} to defer construction of a
+ * {@link MeterBuilder} until it is actually needed, allowing builder state to be
+ * freshly initialized for each meter that is created.</p>
+ *
+ * @param <M> the concrete {@link Meter} type that the produced builder will construct
  */
 @FunctionalInterface
 public interface BuilderConstructor<M extends Meter> {
 
   /**
-   * Constructs a new meter builder.
+   * Constructs and returns a new {@link MeterBuilder} ready to build a meter of type {@code M}.
    *
-   * @return meter builder
+   * @return a freshly constructed {@link MeterBuilder} instance
    */
   MeterBuilder<M> construct ();
 }

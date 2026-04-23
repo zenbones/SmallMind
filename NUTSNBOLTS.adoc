@@ -1,1343 +1,1500 @@
-[[nutsnbolts, NutsnBolts]]
-= NutsnBolts
+= SmallMind NutsNBolts
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
 
-[partintro]
-NutsnBolts is Smallmind's shared utility module. It collects reusable glue-code families in one place: command parsing, property expansion, resource resolution, CSV, file-tree operations, archives, reflection helpers, security primitives, Spring property loading, time utilities, validation constraints, and XML support.
+== Overview
 
-The module stays library-safe. You adopt the packages you need, and startup, shutdown, dependency selection, and application behavior remain in caller code.
+The `smallmind-nutsnbolts` module is the foundational utility jar that every
+other module in the SmallMind repository builds on. It is a single artifact,
+`smallmind-nutsnbolts`, that collects twenty-eight small, focused subpackages
+of general-purpose Java infrastructure: command-line parsing, thread-bound
+context stacks, CSV and XML processing, cryptography, layout calculation,
+classloader control, property expansion, a resource abstraction, time
+conversions, bag and bloom-filter collections, retry, e-mail, NTP, SSL,
+servlet and SOAP helpers, and more.
 
-Audience: library authors and application developers who need explicit utility APIs without hidden runtime ownership.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related modules on the same version unless you intentionally need to split them.
+None of these subpackages is a framework in its own right. Each fills a gap
+in either the JDK or the Jakarta/Spring surface, and each is designed to be
+usable in isolation, without pulling in the others. The package is named
+"Nuts'n'Bolts" because that is what it is — small, durable, reusable parts
+that other modules bolt together. Most other SmallMind jars depend on
+`nutsnbolts` at compile time; very few things in this repository build
+without it.
+
+=== Why this package exists
+
+Every non-trivial Java service accumulates the same set of utility classes:
+a GNU-style command-line parser, a thread-local stack of "current caller"
+information, converters between `Date` / `Calendar` / `ZonedDateTime`, a
+Base64 codec that pre-dates `java.util.Base64`, a classloader that can
+exclude or gate specific paths, a property placeholder resolver with
+encryption, a tiny retry wrapper, a bag, a bloom filter, JAXB adapters for
+the `java.time` types that JAXB still does not marshal out of the box, a
+helper that computes SHA-256 without fifteen lines of
+`NoSuchAlgorithmException` handling, a classpath-aware FreeMarker loader,
+and roughly another two dozen pieces in that vein.
+
+`smallmind-nutsnbolts` is that set, written once, maintained in one place,
+and reused across every other SmallMind artifact. It exists so that:
+
+* An application can depend on a single jar to get all of the common
+  building blocks, instead of pulling in fragments of Apache Commons,
+  Guava, Spring, and Bouncy Castle solely to assemble a working baseline.
+* Every Jakarta, Spring, Bouncy Castle, FreeMarker, and Commons-Net
+  dependency is declared *optional*, so a consumer that does not use, for
+  example, the e-mail or NTP subpackage does not pay for the corresponding
+  jakarta.mail or commons-net transitive closure.
+* Other SmallMind modules — `smallmind-batch`, `smallmind-bayeux`,
+  `smallmind-liquibase`, `smallmind-file`, `smallmind-kafka`, the whole
+  `web` stack — have a shared vocabulary for resources, contexts,
+  properties, and I/O primitives.
+
+=== What this package is not
+
+* Not a competitor to Apache Commons, Guava, or Spring's utility surfaces.
+  Where those libraries provide what is needed, nutsnbolts does not
+  reimplement them. The subpackages here exist because the repository
+  needed a specific semantics that none of those libraries provide out of
+  the box, or because the repository needed to avoid the transitive
+  footprint.
+* Not a dependency-injection framework. The `inject` subpackage is a
+  single marker annotation plus an AspectJ-driven lazy-field helper, not a
+  container.
+* Not a web or HTTP framework. The `http` subpackage wraps
+  `HttpURLConnection` for simple request/response cases; full HTTP clients
+  live elsewhere.
+* Not a cryptography library. The `security` subpackage is a convenience
+  surface over JCE and Bouncy Castle; callers who need specific algorithm
+  modes or hardware-backed keys should go to those providers directly.
 
 == Quick Navigation
 
-* <<nutsnbolts-reading-paths,Reading Paths>>
-* <<nutsnbolts-at-a-glance,At A Glance>>
-* <<nutsnbolts-why-use,Why Use NutsnBolts>>
-* <<nutsnbolts-install,Installation>>
-* <<nutsnbolts-optional-deps,Optional Dependency Matrix>>
-* <<nutsnbolts-package-quick-starts,First Steps By Package>>
-* <<nutsnbolts-quick-start,Example Catalog>>
-* <<nutsnbolts-package-reference,Package Reference>>
-* <<nutsnbolts-api-index,API Index>>
-* <<nutsnbolts-runtime-notes,Runtime Notes>>
-* <<nutsnbolts-troubleshooting,Troubleshooting>>
-* <<nutsnbolts-verification,Verification Checklist>>
+* <<at-a-glance,At A Glance>>
+* <<reading-paths,Reading Paths>>
+* <<installation,Installation>>
+* <<conceptual-model,Conceptual Model>>
+* <<package-reference,Package Reference>>
+** <<pkg-command,command — GNU-style CLI parsing>>
+** <<pkg-context,context — thread-bound context stacks>>
+** <<pkg-resource,resource — uniform addressable content>>
+** <<pkg-property,property — placeholder expansion>>
+** <<pkg-io,io — streams, buffers, and path helpers>>
+** <<pkg-csv,csv — event-driven CSV parsing>>
+** <<pkg-xml-json,xml, json — XML utilities and JAXB adapters>>
+** <<pkg-zip,zip — unified ZIP/JAR handling>>
+** <<pkg-freemarker,freemarker — template source adapters>>
+** <<pkg-email,email — Jakarta Mail wrapper>>
+** <<pkg-http-net-ntp,http, net, ntp — network utilities>>
+** <<pkg-security-ssl,security, ssl — cryptography and TLS>>
+** <<pkg-time,time — date and time conversions>>
+** <<pkg-retry,retry — retry with back-off>>
+** <<pkg-validation,validation — Jakarta Bean Validation additions>>
+** <<pkg-lang-reflection-apt,lang, reflection, apt — classloaders and metaprogramming>>
+** <<pkg-layout,layout — platform-neutral layout engine>>
+** <<pkg-spring,spring — Spring integration>>
+** <<pkg-util,util — collections and comparators>>
+** <<pkg-inject,inject — @Service marker and lazy fields>>
+** <<pkg-servlet-soap,servlet, soap — servlet and SOAP helpers>>
+* <<behavioral-reference,Behavioral Reference>>
+* <<limitations-and-known-issues,Limitations and Known Issues>>
+* <<dependency-notes,Dependency Notes>>
 
-[[nutsnbolts-reading-paths, Reading Paths]]
-== Reading Paths
-
-If you are new to the module, read in this order:
-
-1. <<nutsnbolts-at-a-glance,At A Glance>>
-2. <<nutsnbolts-why-use,Why Use NutsnBolts>>
-3. <<nutsnbolts-install,Installation>>
-4. <<nutsnbolts-optional-deps,Optional Dependency Matrix>>
-5. <<nutsnbolts-package-quick-starts,First Steps By Package>>
-6. <<nutsnbolts-quick-start,Example Catalog>>
-7. <<nutsnbolts-package-reference,Package Reference>>
-
-If you already know the problem you are solving, jump directly to:
-
-* <<nutsnbolts-package-quick-starts,First Steps By Package>> for a package picker
-* <<nutsnbolts-quick-start,Example Catalog>> for working snippets
-* <<nutsnbolts-api-index,API Index>> for entry points
-* <<nutsnbolts-runtime-notes,Runtime Notes>> and <<nutsnbolts-troubleshooting,Troubleshooting>> for edge behavior
-
-[[nutsnbolts-at-a-glance, At A Glance]]
+[[at-a-glance]]
 == At A Glance
 
-[cols="1,2,3",options="header"]
+[cols="1,2,2",options="header"]
 |===
-|Family |Primary packages |Reach for it when
+| If you need …
+| Reach for …
+| Entry points
 
-|Command and configuration
-|`apt`, `command`, `command.template`, `command.sax`, `property`, `resource`, `spring`, `spring.property`
-|You need explicit command grammars, placeholder expansion, scheme-based resource loading, or Spring property wiring without a hidden configuration layer
+| Parse a GNU-style command line (`--name value`, `-f`, enumerated options)
+| `org.smallmind.nutsnbolts.command`
+| `CommandLineParser.parseCommands`, `Template`, `OptionSet`
 
-|Files, streams, and data formats
-|`csv`, `io`, `zip`, `freemarker`, `email`, `http`, `json`, `xml`, `xml.sax`
-|You need CSV, recursive file operations, archive handling, resource-backed templates, thin mail or HTTP helpers, or XML parsing and resolution support
+| A per-thread stack of "current caller" objects that inherits into child threads
+| `org.smallmind.nutsnbolts.context`
+| `ContextFactory.pushContext`, `getContext`, `popContext`
 
-|Runtime context and reflection
-|`context`, `lang`, `lang.web`, `inject`, `reflection`, `reflection.aop`, `reflection.bean`, `reflection.type`
-|You need thread-bound context, per-application data, bean-path reflection, runtime generic inspection, or AspectJ-oriented helpers
+| Uniform access to content behind `file:`, `classpath:`, `jar:`, or URL schemes
+| `org.smallmind.nutsnbolts.resource`
+| `Resource`, `ResourceParser`, `ResourceFactory` (Spring `FactoryBean`)
 
-|Security and TLS
-|`security`, `security.kms`, `security.password`, `security.spring`, `security.x509`, `ssl`
-|You need hash, sign, encrypt, password storage, key parsing, Spring key beans, or trust-store helpers
+| Resolve `${...}` placeholders against a map, system properties, and environment
+| `org.smallmind.nutsnbolts.property`
+| `PropertyExpander`, `PropertyClosure`
 
-|Time, validation, and general utilities
-|`time`, `validation`, `util`, `retry`, `net`, `ntp`
-|You need time conversion, Bean Validation constraints, IDs, spreads, comparators, simple retry logic, or address and clock helpers
+| An in-memory `InputStream`/`OutputStream` pair with independent read and write cursors
+| `org.smallmind.nutsnbolts.io`
+| `ByteArrayIOStream`, `CircularBufferIOStream`
 
-|Service and specialty seams
-|`servlet`, `soap`, `layout`, `spring.jmx`, `spring.remote`, `spring.web`
-|You need a small helper around servlet errors, SOAP monitoring, layout composition, or legacy Spring JMX, RMI, and web integration points
+| Event-driven CSV parsing with quoting and header skipping
+| `org.smallmind.nutsnbolts.csv`
+| `CSVParser`, `CSVLineHandler`
+
+| Marshal `LocalDateTime`, `ZonedDateTime`, `Currency`, enums with JAXB
+| `org.smallmind.nutsnbolts.json`
+| `LocalDateTimeXmlAdapter`, `ZonedDateTimeXmlAdapter`, `EnumXmlAdapter`
+
+| Compress, walk, or extract ZIP and JAR archives with one API
+| `org.smallmind.nutsnbolts.zip`
+| `CompressionType.JAR`, `CompressionType.ZIP`
+
+| Load FreeMarker templates from classpath, filesystem, or a `Resource`
+| `org.smallmind.nutsnbolts.freemarker`
+| `ClassPathTemplateLoader`, `FileSystemTemplateLoader`, `ResourceTemplateLoader`
+
+| Send mail over SMTP/SMTPS with optional FreeMarker interpolation and attachments
+| `org.smallmind.nutsnbolts.email`
+| `Postman`, `Mail`, `Authentication`, `Protocol`
+
+| Hash, sign, encrypt, or generate keys without JCE boilerplate
+| `org.smallmind.nutsnbolts.security`
+| `EncryptionUtility`, `HashAlgorithm`, `AsymmetricKeyGenerator`
+
+| Install keystores, trust managers, and (for tests) permissive TLS
+| `org.smallmind.nutsnbolts.ssl`
+| `KeyStoreUtility`, `TrustManagerUtility`, `NaiveTrustManager`
+
+| Convert `Date`, `Calendar`, epoch millis, and ISO-8601 to `ZonedDateTime`
+| `org.smallmind.nutsnbolts.time`
+| `TimeUtility`, `Stint`, `CalendarUtility`
+
+| Run an operation with N retries and optional exponential back-off
+| `org.smallmind.nutsnbolts.retry`
+| `Retry.execute`, `RetryCall`
+
+| Add `@Email`, `@NotBlank`, `@NotEmpty`, `@GreaterThan`, `@LowerBound` constraints
+| `org.smallmind.nutsnbolts.validation`
+| The annotation types and their matching `ConstraintValidator`s
+
+| Gate which classes a child classloader may resolve
+| `org.smallmind.nutsnbolts.lang`
+| `GatingClassLoader`, `ClassGate`, `ClasspathClassGate`
+
+| Measure, constrain, and position nested boxes in a GUI-agnostic way
+| `org.smallmind.nutsnbolts.layout`
+| `ParaboxLayout`, `SerialBox`, `ParallelBox`, `Constraint`
+
+| Common collections the JDK does not ship (bag, bloom filter, LRU map)
+| `org.smallmind.nutsnbolts.util`
+| `Bag` / `HashBag`, `BloomFilter`, `LRUMap`, `AlphaNumericComparator`
+
+| Use Spring with SmallMind `Resource`, extension loaders, and placeholder configs
+| `org.smallmind.nutsnbolts.spring`
+| `PropertyPlaceholderConfigurer`, `ResourceConverter`, `ExtensionLoader`
+
 |===
 
-[[nutsnbolts-why-use, Why Use NutsnBolts]]
-== Why Use NutsnBolts
+[[reading-paths]]
+== Reading Paths
 
-Use NutsnBolts when you want a small amount of reusable infrastructure without letting a utility library take ownership of your runtime.
+[cols="1,3",options="header"]
+|===
+| If you are …
+| Read, in this order
 
-What it does well:
+| … wiring a new service and want to know which subpackages are worth
+  adopting before you read any API
+| <<installation>> → <<conceptual-model>> → <<at-a-glance>> → pick two or
+  three rows of the table and jump into the matching sections.
 
-* keeps APIs explicit and composable instead of inventing a module-wide framework
-* makes optional integrations stay optional, especially around Spring, Jakarta APIs, FreeMarker, BouncyCastle, and SnakeYAML
-* gives you narrow adapters around common seams such as resource loading, placeholder expansion, archive handling, password storage, and XML parsing
-* keeps caller policy visible: retry counts, startup order, logging, transport behavior, key management, and container choice stay in your code
+| … already using this jar and need one specific API
+| <<at-a-glance>> → the matching section under
+  <<package-reference,Package Reference>>.
 
-It works best as a selective toolkit: pull in the packages that match your integration seam and leave the rest of the runtime model untouched.
+| … a library author considering adding a dependency on nutsnbolts
+| <<overview>> → <<installation>> → the *Optional dependency matrix*
+  subsection — most of the Jakarta/Spring/FreeMarker/Bouncy Castle
+  couplings are *optional*, and you probably want to keep them that way.
 
-[[nutsnbolts-install, Installation]]
+| … adopting cryptography, TLS, or e-mail features for the first time
+| <<pkg-security-ssl>> → <<pkg-email>> — these are the subpackages whose
+  optional dependencies and runtime providers matter most.
+
+| … debugging a classloader, bytecode, or annotation-processing problem
+| <<pkg-lang-reflection-apt>> — these utilities are niche but very useful
+  once you know they exist.
+|===
+
 == Installation
+
+Add the artifact to your Maven build. All third-party couplings are marked
+`optional` in the nutsnbolts POM, so the transitive surface is minimal:
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind-nutsnbolts</artifactId>
-  <version>${smallmind.version}</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
-Add only the optional dependencies required by the packages you actually use.
-Most integrations in this module are intentionally opt-in.
+=== Optional Dependency Matrix
 
-[[nutsnbolts-optional-deps, Optional Dependency Matrix]]
-== Optional Dependency Matrix
+The following dependencies are declared `<optional>true</optional>` in the
+nutsnbolts POM. A consumer that uses a specific subpackage must add the
+corresponding runtime dependency to its own build; a consumer that does not
+use it does not pay for the transitive closure.
 
-[cols="2,3",options="header"]
+[cols="2,3,3",options="header"]
 |===
-|Dependency |Primary feature areas
+| Subpackage | Required when you use … | Declare in your build
 
-|`commons-net`
-|`ntp` (`NTPTime`)
+| `email`
+| `Postman`, `Mail`, FreeMarker interpolation of bodies
+| `jakarta.mail:jakarta.mail-api` + a Jakarta Mail runtime
+  (e.g. `com.sun.mail:jakarta.mail`), `jakarta.activation:jakarta.activation-api`,
+  `org.freemarker:freemarker`
 
-|`jakarta.activation-api`, `jakarta.mail-api`
-|`email` (`Mail`, `Postman`, attachments, SMTP and SMTPS)
+| `freemarker`
+| Any `*TemplateLoader` or `*TemplateSource`
+| `org.freemarker:freemarker`
 
-|`jakarta.servlet-api`
-|`servlet`, `lang.web`, `spring.web`
+| `validation`
+| The `@Email`, `@NotBlank`, `@NotEmpty`, `@GreaterThan`, `@LowerBound` annotations
+| `jakarta.validation:jakarta.validation-api` + a runtime such as Hibernate Validator
 
-|`jakarta.validation-api`
-|`validation` annotations and validators
+| `servlet`
+| `FormattedServletException` and any servlet helpers
+| `jakarta.servlet:jakarta.servlet-api`
 
-|`jakarta.xml.bind-api`
-|`json` JAXB adapters
+| `soap`
+| `MonitorHandler` and the `jakarta.xml.soap` / `jakarta.xml.ws` integration points
+| `jakarta.xml.soap:jakarta.xml.soap-api`, `jakarta.xml.ws:jakarta.xml.ws-api`
 
-|`jakarta.xml.soap-api`, `jakarta.xml.ws-api`
-|`soap`
+| `json` (JAXB adapters)
+| `*XmlAdapter` classes
+| `jakarta.xml.bind:jakarta.xml.bind-api` + a JAXB runtime
+  (e.g. `org.glassfish.jaxb:jaxb-runtime`)
 
-|`bcpkix-jdk18on`, `bcprov-jdk18on`
-|Certificate and advanced crypto support in `security`, `security.password`, and `security.x509`
+| `spring`, `resource` (`ResourceFactory`)
+| `PropertyPlaceholderConfigurer`, `ResourceFactory`, `ResourceConverter`,
+  `ExtensionLoader`
+| `org.springframework:spring-beans`, `spring-context`, `spring-core`
 
-|`freemarker`
-|`freemarker`, `email` template interpolation
+| `security` / `x509`
+| `CertificateUtility`, any subpackage under `security/x509` or `security/kms`
+  that requires a Bouncy Castle provider
+| `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (and
+  register the provider — see <<pkg-security-ssl>>)
 
-|`asm`, `asm-util`
-|Proxy and bytecode support in reflection tooling
+| `reflection` (bytecode trace, ASMify)
+| `ClassInspector.trace`, `.asmify`, `ClassVerifier`
+| `org.ow2.asm:asm`, `org.ow2.asm:asm-util`
 
-|`spring-beans`, `spring-context`, `spring-core`, `spring-web`
-|`spring`, `spring.property`, `spring.remote`, `spring.jmx`, `spring.web`
+| `ntp`
+| `NTPTime`
+| `commons-net:commons-net`
 
-|`snakeyaml`
-|YAML flattening and property loading in `spring.property`
+| spring XML configuration under `src/main/resources/spring/org/smallmind/nutsnbolts/`
+| importing the shipped JMX, Realm, or RMI Spring snippets
+| `org.springframework:spring-context` (and SnakeYAML, if the consuming app loads
+  YAML property sources: `org.yaml:snakeyaml`)
 |===
 
-[[nutsnbolts-package-quick-starts, First Steps By Package]]
-== First Steps By Package
+[IMPORTANT]
+====
+The default `PropertyExpander` and the property-placeholder Spring integration
+are designed to tolerate missing encryption providers — encryption is only
+required when a placeholder is actually marked as encrypted. Similarly, JAXB
+adapters are declared as compile-optional so types that merely *reference* the
+adapter classes at runtime do not need a JAXB runtime on the classpath.
+====
 
-Use this section as a package picker. If you already know the package name, jump straight to its linked reference section.
+[[conceptual-model]]
+== Conceptual Model
 
-=== Command, Configuration, And Resource Selection
+A small number of cross-cutting concepts show up throughout the package.
+Understanding them first makes every subpackage easier to read.
 
-* <<nutsnbolts-pkg-apt,`apt`>>: compile-time helpers for annotation processors that need to inspect mirrors, defaults, and `TypeMirror` lists cleanly
-* <<nutsnbolts-pkg-command,`command`>>: runtime argument parsing from `String[]` into `OptionSet`
-* <<nutsnbolts-pkg-command-template,`command.template`>>: explicit grammar model built from `Template`, `Option`, and argument types
-* <<nutsnbolts-pkg-command-sax,`command.sax`>>: load a command grammar from a sidecar `.arguments.xml`
-* <<nutsnbolts-pkg-property,`property`>>: nested placeholder expansion with optional system and environment lookup and optional decryption
-* <<nutsnbolts-pkg-resource,`resource`>>: classpath, file, jar, and URL resource resolution through one `Resource` abstraction
-* <<nutsnbolts-pkg-spring,`spring`>>: explicit Spring property loading, placeholder resolution, extension loading, and property access
-* <<nutsnbolts-pkg-spring-property,`spring.property`>>: normalize `.properties` and YAML files into `PropertyEntry` streams
+*Resource*::
+    A uniform, read-only abstraction for addressable content. Every
+    `Resource` has an identifier in `scheme:path` form (`classpath:config.xml`,
+    `file:/etc/app.conf`, `jar:...`), and implementations in other SmallMind
+    modules typically consume this interface rather than raw `File` or `URL`.
+    See <<pkg-resource>>.
 
-=== Files, Streams, Data Formats, And Transport Helpers
+*Context stack*::
+    A per-type, per-thread stack of objects implementing the `Context`
+    marker. Pushing a context associates a value with the thread *and with
+    every child thread spawned later* (the context map is inheritable).
+    Pop balances push. This is how request identity, caller identity, and
+    transaction metadata are propagated through SmallMind services
+    without polluting method signatures. See <<pkg-context>>.
 
-* <<nutsnbolts-pkg-csv,`csv`>>: streaming CSV read, write, and callback parsing
-* <<nutsnbolts-pkg-io,`io`>>: recursive copy and delete, path filtering, circular buffers, and stream helpers
-* <<nutsnbolts-pkg-zip,`zip`>>: zip and jar compression, walking, and extraction
-* <<nutsnbolts-pkg-freemarker,`freemarker`>>: FreeMarker loaders that understand Smallmind resource schemes
-* <<nutsnbolts-pkg-email,`email`>>: `Mail` plus `Postman` for SMTP or SMTPS delivery and optional FreeMarker interpolation
-* <<nutsnbolts-pkg-http,`http`>>: thin `HttpURLConnection` helpers and codec utilities
-* <<nutsnbolts-pkg-json,`json`>>: JAXB-friendly adapters for binary data, dates, enums, and HTTP method values
-* <<nutsnbolts-pkg-xml,`xml`>>: DOM rendering plus classpath-aware protocol, entity, and URI resolution
-* <<nutsnbolts-pkg-xml-sax,`xml.sax`>>: pluggable SAX parsing built around document and element extenders
+*PropertyExpander*::
+    A configurable `${...}` placeholder engine that consults a map, system
+    properties, and environment variables in a declared order, with
+    optional decryption of values marked as encrypted. This engine backs
+    the Spring `PropertyPlaceholderConfigurer` in this package and is used
+    stand-alone by modules such as `ansible` and `spark` for template
+    interpolation. See <<pkg-property>>.
 
-=== Runtime Context, Reflection, And Integration Seams
+*Closeable, idempotent primitives*::
+    I/O helpers in this package are intentionally closable and safe to
+    close twice. `ByteArrayIOStream`, `CircularBufferIOStream`, and the
+    segmented buffers all treat `close` as a one-way latch, so
+    try-with-resources usage is the norm.
 
-* <<nutsnbolts-pkg-context,`context`>>: typed thread-local context stacks with export and import support
-* <<nutsnbolts-pkg-lang,`lang`>>: low-level runtime helpers such as `PerApplicationContext`, classloader tools, and formatted exceptions
-* <<nutsnbolts-pkg-lang-web,`lang.web`>>: servlet filter bridge for `PerApplicationContext`
-* <<nutsnbolts-pkg-inject,`inject`>>: AspectJ-based lazy field lookup for codebases that already weave aspects
-* <<nutsnbolts-pkg-reflection,`reflection`>>: field access, overlays, and reflection support types
-* <<nutsnbolts-pkg-reflection-aop,`reflection.aop`>>: advice-time parameter and dotted-path extraction
-* <<nutsnbolts-pkg-reflection-bean,`reflection.bean`>>: bean getter, setter, and method execution by dotted path
-* <<nutsnbolts-pkg-reflection-type,`reflection.type`>>: runtime generic-type discovery and primitive or default-value helpers
+*Optional over required dependencies*::
+    Every Jakarta, Spring, FreeMarker, and Bouncy Castle dependency is
+    *optional* in the POM. The subpackages that depend on them fail fast
+    at class-load time (via `NoClassDefFoundError`) when a consumer
+    exercises a code path whose optional dependency is missing. A
+    consumer that does not use that code path experiences nothing.
 
-=== Security, Time, Validation, And Specialty Utilities
-
-* <<nutsnbolts-pkg-security,`security`>>: hash, sign, encrypt, key generation, key serialization, and certificate helpers
-* <<nutsnbolts-pkg-security-kms,`security.kms`>>: `Decryptor` seam used by placeholder expansion
-* <<nutsnbolts-pkg-security-password,`security.password`>>: PBKDF2 and Argon2id password engines
-* <<nutsnbolts-pkg-security-spring,`security.spring`>>: Spring bean creation for configured asymmetric key material
-* <<nutsnbolts-pkg-security-x509,`security.x509`>>: RSA modulus and exponent extraction from key material
-* <<nutsnbolts-pkg-ssl,`ssl`>>: trust-manager loading and JKS construction from resources
-* <<nutsnbolts-pkg-net,`net`>>: deterministic `InetAddress` ordering
-* <<nutsnbolts-pkg-ntp,`ntp`>>: NTP offset lookup
-* <<nutsnbolts-pkg-servlet,`servlet`>>: formatted servlet exceptions
-* <<nutsnbolts-pkg-soap,`soap`>>: SOAP message monitoring
-* <<nutsnbolts-pkg-spring-jmx,`spring.jmx`>>: early JMX and RMI hostname initialization
-* <<nutsnbolts-pkg-spring-remote,`spring.remote`>>: explicit RMI registry and exporter helpers
-* <<nutsnbolts-pkg-spring-web,`spring.web`>>: early web-context listener for `PerApplicationContext`
-* <<nutsnbolts-pkg-retry,`retry`>>: simple retry helper with fixed or attempt-multiplied delay
-* <<nutsnbolts-pkg-time,`time`>>: `ZonedDateTime` conversion, durations, and time arithmetic helpers
-* <<nutsnbolts-pkg-validation,`validation`>>: Smallmind Bean Validation constraints such as `@NotBlank`, `@NotEmpty`, `@Email`, and `@LowerBound`
-* <<nutsnbolts-pkg-util,`util`>>: general toolbox including `Option`, `Spread`, `SnowflakeId`, `MutationUtility`, `LRUMap`, and comparators
-* <<nutsnbolts-pkg-layout,`layout`>>: programmatic serial or parallel layout composition for custom component systems
-
-[[nutsnbolts-quick-start, Example Catalog]]
-== Example Catalog
-
-These examples are intentionally small. They are meant to show how the APIs are supposed to be entered, not to provide a framework around them.
-
-=== Command Parsing With An Explicit Grammar
-
-[source,java]
-----
-import org.smallmind.nutsnbolts.command.CommandLineParser;
-import org.smallmind.nutsnbolts.command.OptionSet;
-import org.smallmind.nutsnbolts.command.template.NoneArgument;
-import org.smallmind.nutsnbolts.command.template.Option;
-import org.smallmind.nutsnbolts.command.template.SingleArgument;
-import org.smallmind.nutsnbolts.command.template.Template;
-
-Template template = new Template(
-    "example",
-    new Option("verbose", 'v', false, NoneArgument.instance()),
-    new Option("config", 'c', true, new SingleArgument("path"))
-);
-
-OptionSet optionSet = CommandLineParser.parseCommands(
-    template,
-    new String[] {"--config", "app.yml", "-v"}
-);
-
-boolean verbose = optionSet.containsOption("verbose");
-String configPath = optionSet.getArgument("config");
-----
-
-`command` parses; `command.template` declares the grammar. If you want to allow extra trailing arguments, call `parseCommands(template, args, true)` and read them back through `OptionSet.getRemaining()`.
-
-=== Nested Property Expansion
-
-[source,java]
-----
-import java.util.HashMap;
-import java.util.Map;
-import org.smallmind.nutsnbolts.property.PropertyExpander;
-
-PropertyExpander expander = new PropertyExpander();
-Map<String, Object> values = new HashMap<>();
-values.put("app.name", "smallmind");
-values.put("welcome", "hello ${app.name}");
-
-String expanded = expander.expand("${welcome}", values);
-----
-
-`property` supports nested placeholders and circular-reference detection. If you need encrypted values such as `!{secret.key}`, construct the expander with `new PropertyClosure(decryptor)`.
-
-=== Resolving Classpath Or File Resources
-
-[source,java]
-----
-import java.io.InputStream;
-import org.smallmind.nutsnbolts.resource.Resource;
-import org.smallmind.nutsnbolts.resource.ResourceParser;
-import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
-
-ResourceParser resourceParser = new ResourceParser(new ResourceTypeResourceGenerator());
-Resource resource = resourceParser.parseResource("classpath:/schema/example.xsd");
-
-try (InputStream inputStream = resource.getInputStream()) {
-  byte[] bytes = inputStream.readAllBytes();
-}
-----
-
-The built-in schemes come from `ResourceTypeResourceGenerator`. If no scheme is supplied, `resource` assumes `file:`.
-
-=== CSV Round Trip
-
-[source,java]
-----
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import org.smallmind.nutsnbolts.csv.CSVReader;
-import org.smallmind.nutsnbolts.csv.CSVWriter;
-
-ByteArrayOutputStream out = new ByteArrayOutputStream();
-try (CSVWriter writer = new CSVWriter(out, "id", "name")) {
-  writer.write("1", "Ada");
-}
-
-try (CSVReader reader = new CSVReader(new ByteArrayInputStream(out.toByteArray()), true)) {
-  String[] headers = reader.getHeaders();
-  String[] row = reader.readLine();
-}
-----
-
-`CSVReader` supports multiline quoted fields and optional headers. `CSVWriter` enforces a stable field count per row.
-
-=== Copying And Cleaning A Tree
-
-[source,java]
-----
-import java.nio.file.Path;
-import org.smallmind.nutsnbolts.io.FileUtility;
-
-FileUtility.copyBuilder(Path.of("source"), Path.of("target"))
-    .includeSourceDirectory(true)
-    .build();
-
-FileUtility.deleteBuilder(Path.of("target"))
-    .includeTargetDirectory(true)
-    .build();
-----
-
-The include flags matter. `includeSourceDirectory(true)` copies the source directory itself under the destination. `includeTargetDirectory(true)` deletes the root directory as well as its contents.
-
-=== Building And Exploding A Zip
-
-[source,java]
-----
-import java.nio.file.Path;
-import org.smallmind.nutsnbolts.zip.CompressionType;
-
-CompressionType.ZIP.compress(Path.of("build/output"), Path.of("build/output.zip"));
-CompressionType.ZIP.explode(Path.of("build/output.zip"), Path.of("build/unpacked"));
-----
-
-Use `CompressionType.JAR` instead when you want jar semantics and optional manifest support.
-
-=== Password Hashing
-
-[source,java]
-----
-import org.smallmind.nutsnbolts.security.password.PBKDF2PasswordEngine;
-import org.smallmind.nutsnbolts.security.password.PasswordEngine;
-
-PasswordEngine passwordEngine = new PBKDF2PasswordEngine();
-String stored = passwordEngine.encrypt("p@ssw0rd");
-boolean ok = passwordEngine.match("p@ssw0rd", stored);
-----
-
-The returned string is the stored credential. `security.password` is for password verification, not for general-purpose encryption.
-
-=== Sending Templated Mail
-
-[source,java]
-----
-import java.util.HashMap;
-import org.smallmind.nutsnbolts.email.Authentication;
-import org.smallmind.nutsnbolts.email.Mail;
-import org.smallmind.nutsnbolts.email.Postman;
-
-Postman postman = new Postman("smtp.example.net", 587, Authentication.NONE, true);
-Mail mail = new Mail(
-    "noreply@example.net",
-    "ops@example.net",
-    "Deployment notice",
-    "Build ${build} is live."
-);
-
-HashMap<String, Object> interpolationMap = new HashMap<>();
-interpolationMap.put("build", "2026.04.10.1");
-
-postman.send(mail, interpolationMap);
-----
-
-If `freemarker` is on the classpath, `Postman` can treat the message body as a template. SMTP credentials, TLS policy, and retry behavior remain caller-owned.
-
-=== Reading Nested Bean Properties By Path
-
-[source,java]
-----
-import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-
-String city = (String)BeanUtility.executeGet(order, "customer.address.city", false);
-BeanUtility.executeSet(order, "customer.address.city", "Oakland");
-----
-
-`reflection.bean` is useful when property names are runtime data, especially in mapping, admin, or expression-style code.
-
-=== Time Parsing, Spread Expansion, And Sortable IDs
-
-[source,java]
-----
-import java.time.ZonedDateTime;
-import org.smallmind.nutsnbolts.time.TimeUtility;
-import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.nutsnbolts.util.Spread;
-
-ZonedDateTime cutoff = TimeUtility.parse("2026-04-10T09:30:00-07:00");
-String correlationId = SnowflakeId.newInstance().generateDottedString();
-String[] shards = Spread.calculate("1..3,7");
-----
-
-`time` and `util` work well together in operational code: parse user input, expand concise ranges, and stamp events with sortable IDs.
-
-=== Spring Placeholder Loading
-
-[source,xml]
-----
-<bean class="org.smallmind.nutsnbolts.spring.PropertyPlaceholderConfigurer">
-  <property name="locations">
-    <list>
-      <value>classpath:/application.properties</value>
-      <value>file:/etc/myapp/override.yaml</value>
-    </list>
-  </property>
-  <property name="systemPropertyMode" value="OVERRIDE"/>
-  <property name="ignoreResourceNotFound" value="true"/>
-</bean>
-----
-
-This is the Spring integration point for `.properties` and YAML loading. It keeps the model explicit: you list resource locations, optionally add a decryptor, and choose how system properties or environment variables interact with file-backed values.
-
-[[nutsnbolts-package-reference, Package Reference]]
+[[package-reference]]
 == Package Reference
 
-This section is the decision guide for the module. It is organized around what each package is for, where to enter it, and what behavior matters in real integrations.
-
-[[nutsnbolts-package-subsection-index, Package Subsection Index]]
-=== Package Subsection Index
-
-Command, configuration, and resource packages:
-
-* <<nutsnbolts-pkg-apt,`apt`>>
-* <<nutsnbolts-pkg-command,`command`>>
-* <<nutsnbolts-pkg-command-template,`command.template`>>
-* <<nutsnbolts-pkg-command-sax,`command.sax`>>
-* <<nutsnbolts-pkg-property,`property`>>
-* <<nutsnbolts-pkg-resource,`resource`>>
-* <<nutsnbolts-pkg-spring,`spring`>>
-* <<nutsnbolts-pkg-spring-property,`spring.property`>>
-
-Files, streams, data formats, and transport helpers:
-
-* <<nutsnbolts-pkg-csv,`csv`>>
-* <<nutsnbolts-pkg-io,`io`>>
-* <<nutsnbolts-pkg-zip,`zip`>>
-* <<nutsnbolts-pkg-freemarker,`freemarker`>>
-* <<nutsnbolts-pkg-email,`email`>>
-* <<nutsnbolts-pkg-http,`http`>>
-* <<nutsnbolts-pkg-json,`json`>>
-* <<nutsnbolts-pkg-xml,`xml`>>
-* <<nutsnbolts-pkg-xml-sax,`xml.sax`>>
-
-Runtime context and reflection packages:
-
-* <<nutsnbolts-pkg-context,`context`>>
-* <<nutsnbolts-pkg-lang,`lang`>>
-* <<nutsnbolts-pkg-lang-web,`lang.web`>>
-* <<nutsnbolts-pkg-inject,`inject`>>
-* <<nutsnbolts-pkg-reflection,`reflection`>>
-* <<nutsnbolts-pkg-reflection-aop,`reflection.aop`>>
-* <<nutsnbolts-pkg-reflection-bean,`reflection.bean`>>
-* <<nutsnbolts-pkg-reflection-type,`reflection.type`>>
-
-Security, networking, Spring legacy seams, and specialty packages:
-
-* <<nutsnbolts-pkg-security,`security`>>
-* <<nutsnbolts-pkg-security-kms,`security.kms`>>
-* <<nutsnbolts-pkg-security-password,`security.password`>>
-* <<nutsnbolts-pkg-security-spring,`security.spring`>>
-* <<nutsnbolts-pkg-security-x509,`security.x509`>>
-* <<nutsnbolts-pkg-ssl,`ssl`>>
-* <<nutsnbolts-pkg-net,`net`>>
-* <<nutsnbolts-pkg-ntp,`ntp`>>
-* <<nutsnbolts-pkg-servlet,`servlet`>>
-* <<nutsnbolts-pkg-soap,`soap`>>
-* <<nutsnbolts-pkg-spring-jmx,`spring.jmx`>>
-* <<nutsnbolts-pkg-spring-remote,`spring.remote`>>
-* <<nutsnbolts-pkg-spring-web,`spring.web`>>
-* <<nutsnbolts-pkg-retry,`retry`>>
-* <<nutsnbolts-pkg-time,`time`>>
-* <<nutsnbolts-pkg-validation,`validation`>>
-* <<nutsnbolts-pkg-util,`util`>>
-* <<nutsnbolts-pkg-layout,`layout`>>
-
-=== Command, Configuration, And Resource Packages
-
-[[nutsnbolts-pkg-apt]]
-==== `apt`
-
-Use `apt` inside annotation processors. It exists to keep Smallmind processors from repeating the same annotation-mirror and default-value boilerplate.
-
-Start with: `AptUtility`.
-
-Know this:
-
-* it is compile-time support only; runtime code should not depend on it
-* it is useful for direct annotations, meta-annotations, defaulted values, and `TypeMirror` to `TypeElement` conversion
-* it stays deliberately thin and does not impose a code-generation model
-
-[[nutsnbolts-pkg-command]]
-==== `command`
-
-Use `command` when you want a declared command grammar instead of ad hoc string checks.
-
-Start with: `CommandLineParser.parseCommands(...)` and `OptionSet`.
-
-Know this:
-
-* GNU-style long options (`--name`) and single-character flags (`-n`) are both supported
-* repeated option use is only accepted when the option argument type is `MULTIPLE`
-* quoted values may span tokens and retain their surrounding quote characters
-
-[[nutsnbolts-pkg-command-template]]
-==== `command.template`
-
-`command.template` is where the grammar lives. It is the package you use to declare what options are legal before `command` ever parses anything.
-
-Start with: `Template`, `Option`, `SingleArgument`, `ListArgument`, `MultipleArgument`, `EnumeratedArgument`, and `NoneArgument.instance()`.
-
-Know this:
-
-* option names and flags must be unique within the whole template
-* child options are explicit dependencies; parsing fails if a child is supplied without its parent
-* `Template.toString()` renders a readable usage-style description of the option tree
-
-[[nutsnbolts-pkg-command-sax]]
-==== `command.sax`
-
-Use `command.sax` when the command grammar belongs in XML rather than in Java constructors.
-
-Start with: `Template.createTemplate(entryClass)` and the sidecar `.arguments.xml` file.
-
-Know this:
-
-* the XML file must live on the classpath under the entry class name with the suffix `.arguments.xml`
-* the loader uses `ExtensibleSAXParser` and `SmallMindProtocolResolver` under the hood
-* this is a declaration format, not a second parser; the resulting `Template` still feeds `CommandLineParser`
-
-[[nutsnbolts-pkg-property]]
-==== `property`
-
-Use `property` for nested placeholder expansion in strings or maps where you want caller-controlled lookup order.
-
-Start with: `PropertyExpander`, `PropertyClosure`, and `SystemPropertyMode`.
-
-Know this:
-
-* default placeholders are `${...}`
-* if you supply `new PropertyClosure(decryptor)`, encrypted placeholders with the default `!{...}` prefix are also supported
-* unresolved-key behavior is controlled by `ignoreUnresolvableProperties`, and circular references are detected explicitly
-
-[[nutsnbolts-pkg-resource]]
-==== `resource`
-
-Use `resource` when you want one abstraction over `classpath:`, `file:`, `jar:`, and `url:` inputs.
-
-Start with: `ResourceParser`, `Resource`, and `ResourceTypeResourceGenerator`.
-
-Know this:
-
-* the parser needs at least one registered `ResourceGenerator`; the built-in generator is `new ResourceTypeResourceGenerator()`
-* if the identifier has no scheme prefix, parsing falls back to `file`
-* the package is intentionally read-oriented; it normalizes access, not storage policy
-
-[[nutsnbolts-pkg-spring]]
-==== `spring`
-
-Use `spring` when you already have a Spring container and want explicit property loading or a few assembly helpers without moving to a convention-heavy model.
-
-Start with: `PropertyPlaceholderConfigurer` and `SpringPropertyAccessor`.
-
-Know this:
-
-* `PropertyPlaceholderConfigurer` accepts explicit resource locations and can also discover extra locations from `PropertyConfiguration` beans
-* placeholder resolution order is controlled by `SystemPropertyMode` plus `searchSystemEnvironment`
-* property loading and debug output are printed to standard out by the configurer
-
-[[nutsnbolts-pkg-spring-property]]
-==== `spring.property`
-
-Use `spring.property` when the job is just file-format handling for property sources.
-
-Start with: `PropertyFileType`, `PropertyHandler`, `PropertyEntry`, and `YamlPropertyHandler`.
-
-Know this:
-
-* `.properties` and YAML are both normalized into iterable property entries
-* YAML lists are flattened with numeric path segments such as `servers.0.host`
-* precedence, placeholder expansion, and decryption stay with `spring` and `property`, not this package
-
-=== Files, Streams, Data Formats, And Transport Helpers
-
-[[nutsnbolts-pkg-csv]]
-==== `csv`
-
-Use `csv` when you want a small streaming CSV reader or writer without bringing in a larger data-binding library.
-
-Start with: `CSVReader`, `CSVWriter`, or `CSVParser` plus `CSVLineHandler`.
-
-Know this:
-
-* `CSVReader` supports multiline quoted fields and optional header capture
-* `CSVWriter` enforces a fixed field count for each row written by one writer instance
-* malformed quoted input fails early instead of trying to guess intent
-
-[[nutsnbolts-pkg-io]]
-==== `io`
-
-`io` is the file-system and stream utility package.
-
-Start with: `FileUtility.copyBuilder(...)`, `FileUtility.deleteBuilder(...)`, and `CircularBufferIOStream`.
-
-Know this:
-
-* recursive copy and delete are explicit about whether the root directory itself is included
-* path filters are opt-in and caller-defined
-* the circular-buffer types are useful when you need an `InputStream` or `OutputStream` bridge between producer and consumer code
-
-[[nutsnbolts-pkg-zip]]
-==== `zip`
-
-Use `zip` when you need zip or jar creation and extraction with the same surface area.
-
-Start with: `CompressionType.ZIP` or `CompressionType.JAR`.
-
-Know this:
-
-* `compress(...)`, `explode(...)`, and `walk(...)` are the core operations
-* jar manifests matter only for `CompressionType.JAR`
-* the package is archive-oriented, not a virtual filesystem abstraction
-
-[[nutsnbolts-pkg-freemarker]]
-==== `freemarker`
-
-Use `freemarker` only if you already use FreeMarker and want template names to resolve through Smallmind resources.
-
-Start with: `ResourceTemplateLoader`.
-
-Know this:
-
-* template names can point at `classpath:`, `file:`, `jar:`, or `url:` resources
-* this is a loader integration, not a replacement configuration model for FreeMarker itself
-* it is a good fit when template lookup needs to follow the same rules as the rest of your resource loading
-
-[[nutsnbolts-pkg-email]]
-==== `email`
-
-Use `email` for explicit mail composition and delivery when Jakarta Mail is already acceptable in your stack.
-
-Start with: `Mail`, `Postman`, and `Authentication`.
-
-Know this:
-
-* `Postman` supports SMTP and SMTPS plus optional authentication
-* if FreeMarker is available, `send(mail, interpolationMap)` can interpolate the body as a template
-* session selection, retry policy, and delivery ownership remain with the caller
-
-[[nutsnbolts-pkg-http]]
-==== `http`
-
-Use `http` when you want a small amount of help around `HttpURLConnection`, not a full HTTP client library.
-
-Start with: `HttpTransmitter`, `HttpPipe`, `URLCodec`, and `Base64Codec`.
-
-Know this:
-
-* `HttpPipe` makes the connect, write, done-writing, read, and done-reading sequence explicit
-* the package does not provide pooling, retry orchestration, or higher-level request models
-* it is best used as thin transport glue in code that already wants JDK HTTP primitives
-
-[[nutsnbolts-pkg-json]]
-==== `json`
-
-Despite the name, `json` is mainly a collection of transport-friendly JAXB adapters and value helpers.
-
-Start with: `BinaryData` and the XML adapters such as `ZonedDateTimeXmlAdapter` and `TimestampXmlAdapter`.
-
-Know this:
-
-* the package is about serializable representations of values, not a general JSON parser or serializer
-* `BinaryData` wraps byte arrays with explicit encoding metadata
-* the adapters are useful when an external contract expects strings while your code prefers richer Java types
-
-[[nutsnbolts-pkg-xml]]
-==== `xml`
-
-Use `xml` for DOM rendering and XML resolution support that understands Smallmind resource schemes.
-
-Start with: `XMLUtility`, `SmallMindProtocolResolver`, `XMLEntityResolver`, and `XMLURIResolver`.
-
-Know this:
-
-* `XMLUtility.toString(...)` serializes DOM nodes and can optionally indent
-* `XMLUtility.encode(...)` escapes content characters for XML text
-* the resolver types are useful when schemas or entities should come from classpath or other resource-backed locations
-
-[[nutsnbolts-pkg-xml-sax]]
-==== `xml.sax`
-
-Use `xml.sax` when a SAX parse should be split across document and element-specific handlers instead of one monolithic class.
-
-Start with: `ExtensibleSAXParser`, `DocumentExtender`, and `ElementExtender`.
-
-Know this:
-
-* `DocumentExtender` decides which `ElementExtender` should handle each tag
-* validation is enabled by default in the helper `parse(...)` overloads unless you pass `false`
-* the package is especially useful when XML is a protocol or descriptor format with many reusable element types
-
-=== Runtime Context And Reflection Packages
-
-[[nutsnbolts-pkg-context]]
-==== `context`
-
-Use `context` when you need typed, nested context stacks bound to the current thread.
-
-Start with: `ContextFactory`, `Context`, and `ExpectedContexts`.
-
-Know this:
-
-* contexts are stored by concrete type and can be pushed, popped, exported, and re-imported
-* inheritance uses `InheritableThreadLocal`, so child threads see a copy of the parent stacks
-* `ExpectedContexts` can be used to enforce that a method executes with the required context types available
-
-[[nutsnbolts-pkg-lang]]
-==== `lang`
-
-`lang` is the low-level support package. It contains runtime helpers, error types, and a few specialized facilities that other packages build on.
-
-Start with: `PerApplicationContext` if you need app-scoped thread data, or formatted exception types if you need message formatting without extra boilerplate.
-
-Know this:
-
-* `PerApplicationContext` is separate from `ContextFactory`; it stores application-scoped data by manager type
-* `wrapThreadFactory(...)` and `ContextCarrier` let you propagate that data explicitly across threads
-* `GatingClassLoader` and related types are specialized tools; most consumers will never need them
-
-[[nutsnbolts-pkg-lang-web]]
-==== `lang.web`
-
-Use `lang.web` only when servlet request processing should begin with a prepared `PerApplicationContext`.
-
-Start with: `PerApplicationContextFilter`.
-
-Know this:
-
-* it is a bridge package for servlet environments
-* it matters only if you use `PerApplicationContext` and want request threads initialized consistently
-* it does not replace your application's own filter chain or request-scoped policy
-
-[[nutsnbolts-pkg-inject]]
-==== `inject`
-
-Use `inject` only if your build and runtime already support AspectJ weaving.
-
-Start with: `@LazyField` and `LazyFieldAspect`.
-
-Know this:
-
-* it is not a container-neutral injection framework on its own
-* it is a narrowly scoped lazy lookup mechanism for woven code
-* if you do not already weave AspectJ, this package is usually the wrong tool
-
-[[nutsnbolts-pkg-reflection]]
-==== `reflection`
-
-`reflection` is for direct reflective field work and overlay-style patching.
-
-Start with: `FieldUtility`, `Overlay`, and `ProxyUtility`.
-
-Know this:
-
-* `Overlay` copies non-null values from one object into another and can recurse into nested overlays
-* overlay nullification can be customized with `OverlayNullifier` validators
-* the package stays close to raw reflection rather than building a larger object-mapping framework
-
-[[nutsnbolts-pkg-reflection-aop]]
-==== `reflection.aop`
-
-Use `reflection.aop` inside advice that needs named or dotted parameter extraction.
-
-Start with: `AOPUtility.getParameterValue(...)`.
-
-Know this:
-
-* it is intended for AspectJ-oriented code paths
-* it helps with readable parameter extraction in advice without repeated reflection boilerplate
-* it is a helper package, not an AOP runtime on its own
-
-[[nutsnbolts-pkg-reflection-bean]]
-==== `reflection.bean`
-
-Use `reflection.bean` when getters, setters, or methods are identified at runtime.
-
-Start with: `BeanUtility.executeGet(...)`, `executeSet(...)`, and `execute(...)`.
-
-Know this:
-
-* dotted paths such as `customer.address.city` are supported
-* method lookup is cached and understands basic primitive-wrapper equivalence
-* null behavior during path traversal is explicit through the `nullable` flag on `executeGet(...)`
-
-[[nutsnbolts-pkg-reflection-type]]
-==== `reflection.type`
-
-Use `reflection.type` when you need to recover runtime generic information or work with primitive and wrapper defaults.
-
-Start with: `GenericUtility` and `TypeUtility`.
-
-Know this:
-
-* `GenericUtility` resolves type arguments across superclass and interface relationships where possible
-* `TypeUtility` covers common primitive-wrapper and default-value checks
-* the package is useful in reflective libraries, registries, and adapter layers
-
-=== Security, Network, Spring Legacy Seams, And Specialty Packages
-
-[[nutsnbolts-pkg-security]]
-==== `security`
-
-Use `security` for low-level cryptographic helpers where the caller still chooses policy.
-
-Start with: `EncryptionUtility`, the algorithm enums, `AsymmetricKeyGenerator`, and `AsymmetricKeySpec`.
-
-Know this:
-
-* hash, sign, verify, encrypt, decrypt, key generation, and key serialization are all exposed as thin helpers
-* provider choice, key storage, rotation, and algorithm policy are intentionally not hidden
-* `CertificateUtility` and related types help with certificate and key material handling without creating a larger security framework
-
-[[nutsnbolts-pkg-security-kms]]
-==== `security.kms`
-
-`security.kms` is the decryption seam for encrypted configuration values.
-
-Start with: `Decryptor`.
-
-Know this:
-
-* `property` and `spring` accept this abstraction for encrypted placeholders
-* the package is intentionally tiny because it exists to decouple decryptor implementation from configuration parsing
-* you supply the actual key-management or decryption implementation
-
-[[nutsnbolts-pkg-security-password]]
-==== `security.password`
-
-Use `security.password` for credential storage and verification.
-
-Start with: `PasswordEngine`, `PBKDF2PasswordEngine`, or `Argon2IDPasswordEngine`.
-
-Know this:
-
-* `PBKDF2PasswordEngine` works with JDK crypto primitives only
-* `Argon2IDPasswordEngine` depends on BouncyCastle classes and is therefore an optional path
-* both engines produce self-contained stored strings that include salt and derived output data
-
-[[nutsnbolts-pkg-security-spring]]
-==== `security.spring`
-
-Use `security.spring` when a Spring context needs to materialize asymmetric keys from configured text.
-
-Start with: `AsymmetricKeyFactoryBean`.
-
-Know this:
-
-* it is a Spring assembly helper, not a general key-management solution
-* it is useful when key text is already externalized and bean construction should stay explicit
-* if you are not using Spring, this package adds no value
-
-[[nutsnbolts-pkg-security-x509]]
-==== `security.x509`
-
-Use `security.x509` when you need the raw RSA factors rather than a higher-level key object.
-
-Start with: `X509KeyFactorUtility` and `RSAKeyFactors`.
-
-Know this:
-
-* it extracts modulus and exponent data from encoded key material
-* it is most useful for interoperability or diagnostics code
-* it is intentionally narrow and RSA-focused
-
-[[nutsnbolts-pkg-ssl]]
-==== `ssl`
-
-Use `ssl` for explicit trust-manager loading and keystore construction from resource-backed key and certificate inputs.
-
-Start with: `TrustManagerUtility.load(...)` and `KeyStoreUtility.construct(...)`.
-
-Know this:
-
-* `TrustManagerUtility` builds in-memory trust managers from certificate resources
-* `KeyStoreUtility.construct(...)` writes a JKS file to the user's home directory and fills in defaults when name, alias, or password are omitted
-* permissive helpers such as `NaiveTrustManager`, `NaiveHostNameVerifier`, and `NaiveSSLSocketFactory` belong only in controlled dev or test scenarios
-
-[[nutsnbolts-pkg-net]]
-==== `net`
-
-Use `net` when you need deterministic ordering of `InetAddress` values.
-
-Start with: `InetAddressComparator`.
-
-Know this:
-
-* IPv4 and IPv6 lengths are normalized by left-padding with zeros during comparison
-* the package is intentionally tiny and comparator-oriented
-* it is useful in admin, routing, and diagnostics code where stable ordering matters
-
-[[nutsnbolts-pkg-ntp]]
-==== `ntp`
-
-Use `ntp` when the job is to measure clock offset against one or more NTP servers.
-
-Start with: `NTPTime`.
-
-Know this:
-
-* it returns an offset; it does not modify the local system clock
-* it is a helper around NTP lookups, not a full time-synchronization service
-* `commons-net` is required for this package to be present at runtime
-
-[[nutsnbolts-pkg-servlet]]
-==== `servlet`
-
-`servlet` is a very small package.
-
-Start with: `FormattedServletException`.
-
-Know this:
-
-* it exists for servlet code that wants formatted exception messages in the Smallmind style
-* it does not introduce filters, dispatching, or web abstractions
-* if you are not in servlet code, you can ignore it entirely
-
-[[nutsnbolts-pkg-soap]]
-==== `soap`
-
-Use `soap` when you need to inspect JAX-WS traffic without inventing your own handler.
-
-Start with: `MonitorHandler`.
-
-Know this:
-
-* it can log inbound, outbound, and fault messages in a handler chain
-* it is a monitoring seam, not a SOAP client framework
-* it depends on the Jakarta SOAP and JAX-WS APIs
-
-[[nutsnbolts-pkg-spring-jmx]]
-==== `spring.jmx`
-
-Use `spring.jmx` when Spring startup must set `java.rmi.server.hostname` or similar RMI-facing host identity early.
-
-Start with: `JMXPropertyInitializingBean` and `RMIHost`.
-
-Know this:
-
-* this is about early property setup, not a general JMX abstraction
-* it is only relevant in Spring-based JMX or RMI deployment scenarios
-* it is safe to ignore in non-JMX applications
-
-[[nutsnbolts-pkg-spring-remote]]
-==== `spring.remote`
-
-Use `spring.remote` for explicit RMI registry creation and service export in Spring code.
-
-Start with: `RMIRegistryFactoryBean` and `RemoteServiceExporter`.
-
-Know this:
-
-* registry creation is explicit and local-only when lookup fails on the requested host
-* `RMIDaemonInitializingBean` literally launches `rmid`, so that executable must exist on `PATH`
-* this package is legacy-integration glue, not a broader remoting framework
-
-[[nutsnbolts-pkg-spring-web]]
-==== `spring.web`
-
-Use `spring.web` when `PerApplicationContext` must exist before the rest of Spring web initialization.
-
-Start with: `WebContextLoaderListener`.
-
-Know this:
-
-* it is a lifecycle bridge between servlet startup and Spring web startup
-* it matters only if the rest of your code depends on `PerApplicationContext`
-* it does not replace Spring's web stack; it extends its initialization order
-
-[[nutsnbolts-pkg-retry]]
-==== `retry`
-
-Use `retry` when boolean success or failure is enough and you do not want a resilience framework.
-
-Start with: `Retry.execute(...)` and `RetryCall`.
-
-Know this:
-
-* each attempt runs in a new thread
-* delay can stay fixed or grow by attempt count depending on the `exponential` flag
-* the package intentionally avoids policies such as circuit breaking, fallback orchestration, or metrics
-
-[[nutsnbolts-pkg-time]]
-==== `time`
-
-Use `time` for conversion, parsing, range values, and simple time arithmetic.
-
-Start with: `TimeUtility`, `Stint`, `TimeArithmetic`, and `CalendarUtility`.
-
-Know this:
-
-* `TimeUtility.parse(...)` accepts plain dates, local date-times, offset date-times, and zoned date-times
-* if a parsed value has no zone, the system default zone is assumed
-* `Stint` is the package's duration wrapper and shows up in cleanup and scheduling-adjacent code elsewhere in Smallmind
-
-[[nutsnbolts-pkg-validation]]
-==== `validation`
-
-Use `validation` when the standard Jakarta Validation set is missing a few constraints you repeatedly need.
-
-Start with: `@NotBlank`, `@NotEmpty`, `@NotZero`, `@Email`, `@GreaterThan`, `@LowerBound`, and `@Sanitized`.
-
-Know this:
-
-* most validators treat `null` as valid, so pair them with `@NotNull` when presence is mandatory
-* `LowerBound` is the cross-field constraint in the package
-* `Sanitized` is a narrow heuristic check, not a complete sanitization framework
-
-[[nutsnbolts-pkg-util]]
-==== `util`
-
-`util` is the general-purpose toolbox for the module.
-
-Start with: `Option`, `Spread`, `SnowflakeId`, `MutationUtility`, `StringUtility`, `LRUMap`, and the comparator types.
-
-Know this:
-
-* `Option<T>` is Smallmind's serializable presence wrapper, not `java.util.Optional`
-* `Spread.calculate(...)` expands concise numeric or alphabetic ranges such as `1..3,7` or `a..c,z`
-* `SnowflakeId` generates sortable 18-byte identifiers with hex, compact, and dotted-string encodings
-
-[[nutsnbolts-pkg-layout]]
-==== `layout`
-
-`layout` is a specialist package for programmatic layout composition in custom component systems.
-
-Start with: `ParaboxLayout`, `SerialBox`, `ParallelBox`, and `Constraint`.
-
-Know this:
-
-* it is intentionally specialized and safe to ignore unless you are integrating a component model
-* the package is about describing layout structure and measurement policy in code
-* it is not a GUI toolkit or a general application layout framework
-
-[[nutsnbolts-api-index, API Index]]
-== API Index
-
-This index is intentionally terse. Use the package reference above when you need the usage guidance or behavioral notes.
-
-[cols="2,3,4",options="header"]
-|===
-|Package |Start with |Purpose
-
-|`apt`
-|`AptUtility`
-|Compile-time annotation mirror and default-value extraction for annotation processors
-
-|`command`
-|`CommandLineParser`, `OptionSet`
-|Runtime parsing of arguments against an explicit grammar
-
-|`command.template`
-|`Template`, `Option`, argument types
-|Grammar declaration for `command`
-
-|`command.sax`
-|`Template.createTemplate(...)`
-|XML-backed grammar loading
-
-|`context`
-|`ContextFactory`, `ExpectedContexts`
-|Typed thread-local context stacks and context export or import
-
-|`csv`
-|`CSVReader`, `CSVWriter`, `CSVParser`
-|Streaming CSV read, write, and callback parsing
-
-|`email`
-|`Mail`, `Postman`
-|Explicit SMTP or SMTPS composition and delivery
-
-|`freemarker`
-|`ResourceTemplateLoader`
-|FreeMarker template loading through Smallmind resources
-
-|`http`
-|`HttpTransmitter`, `HttpPipe`
-|Thin JDK HTTP transport and codec helpers
-
-|`inject`
-|`@LazyField`, `LazyFieldAspect`
-|AspectJ-based lazy field lookup
-
-|`io`
-|`FileUtility`, `CircularBufferIOStream`
-|Recursive tree operations and stream bridge helpers
-
-|`json`
-|`BinaryData`, JAXB adapters
-|Transport-friendly binary, date, enum, and method adapters
-
-|`lang`
-|`PerApplicationContext`, formatted exception types
-|Low-level runtime support and app-scoped thread data
-
-|`lang.web`
-|`PerApplicationContextFilter`
-|Servlet bridge for `PerApplicationContext`
-
-|`layout`
-|`ParaboxLayout`, `SerialBox`, `ParallelBox`
-|Programmatic serial or parallel layout composition
-
-|`net`
-|`InetAddressComparator`
-|Stable ordering of IP addresses
-
-|`ntp`
-|`NTPTime`
-|Clock-offset lookup against configured NTP hosts
-
-|`property`
-|`PropertyExpander`, `PropertyClosure`
-|Nested placeholder expansion with optional decryption
-
-|`reflection`
-|`FieldUtility`, `Overlay`, `ProxyUtility`
-|Field reflection, overlays, and proxy support
-
-|`reflection.aop`
-|`AOPUtility`
-|Advice-time parameter extraction
-
-|`reflection.bean`
-|`BeanUtility`
-|Getter, setter, and method invocation by dotted path
-
-|`reflection.type`
-|`GenericUtility`, `TypeUtility`
-|Runtime generic-type discovery and primitive or default helpers
-
-|`resource`
-|`ResourceParser`, `Resource`, `ResourceTypeResourceGenerator`
-|Scheme-based resource lookup
-
-|`retry`
-|`Retry`
-|Small boolean-result retry loop
-
-|`security`
-|`EncryptionUtility`, algorithm enums, `AsymmetricKeySpec`
-|Hashing, signing, encryption, key generation, and key parsing
-
-|`security.kms`
-|`Decryptor`
-|Decryption seam for encrypted configuration values
-
-|`security.password`
-|`PasswordEngine`, `PBKDF2PasswordEngine`, `Argon2IDPasswordEngine`
-|Password hashing and verification
-
-|`security.spring`
-|`AsymmetricKeyFactoryBean`
-|Spring bean creation for asymmetric key material
-
-|`security.x509`
-|`X509KeyFactorUtility`, `RSAKeyFactors`
-|RSA modulus and exponent extraction
-
-|`servlet`
-|`FormattedServletException`
-|Formatted servlet exception type
-
-|`soap`
-|`MonitorHandler`
-|SOAP request, response, and fault monitoring
-
-|`spring`
-|`PropertyPlaceholderConfigurer`, `SpringPropertyAccessor`, `ExtensionLoader`
-|Explicit Spring property loading and related helpers
-
-|`spring.jmx`
-|`JMXPropertyInitializingBean`, `RMIHost`
-|Early JMX or RMI hostname initialization
-
-|`spring.property`
-|`PropertyFileType`, `PropertyEntry`, `YamlPropertyHandler`
-|`.properties` and YAML normalization
-
-|`spring.remote`
-|`RMIRegistryFactoryBean`, `RemoteServiceExporter`
-|Explicit RMI registry and service export support
-
-|`spring.web`
-|`WebContextLoaderListener`
-|Ensure `PerApplicationContext` exists before Spring web startup
-
-|`ssl`
-|`TrustManagerUtility`, `KeyStoreUtility`
-|Trust-manager loading and JKS construction
-
-|`time`
-|`TimeUtility`, `Stint`, `TimeArithmetic`
-|Date and time conversion, parsing, and duration helpers
-
-|`util`
-|`Option`, `Spread`, `SnowflakeId`, `MutationUtility`
-|General-purpose IDs, ranges, collections, comparators, and conversion helpers
-
-|`validation`
-|Constraint annotations and validators
-|Small Jakarta Validation additions used across Smallmind modules
-
-|`xml`
-|`XMLUtility`, `SmallMindProtocolResolver`, `XMLEntityResolver`, `XMLURIResolver`
-|DOM helpers and XML resource resolution support
-
-|`xml.sax`
-|`ExtensibleSAXParser`, `DocumentExtender`, `ElementExtender`
-|Pluggable SAX parsing model
-
-|`zip`
-|`CompressionType`
-|Zip or jar walking, compression, and extraction
-|===
-
-[[nutsnbolts-runtime-notes, Runtime Notes]]
-== Runtime Notes
-
-=== Threading And State
-
-* `ContextFactory` uses `InheritableThreadLocal`, so child threads inherit copies of current context stacks.
-* `PerApplicationContext` uses its own `InheritableThreadLocal` map and offers both `ContextCarrier` and `wrapThreadFactory(...)` for propagation.
-* `Retry.execute(...)` creates a new thread for each attempt and blocks until that thread finishes.
-* `CircularBuffer` and related stream bridge types are synchronized and interruption-aware; caller code still decides retry and shutdown behavior.
-
-=== Parsing, Expansion, And Data Format Details
-
-* `CommandLineParser` preserves the surrounding quote characters on quote-delimited arguments.
-* Only `MULTIPLE` arguments may repeat. Repeating a `NONE`, `SINGLE`, `LIST`, or `ENUMERATED` option is an error.
-* `PropertyExpander` supports nested placeholders and circular-reference detection. Unresolved-key behavior is entirely controlled by `ignoreUnresolvableProperties`.
-* `ResourceParser` assumes `file` when no scheme prefix is present, but only if a registered generator can handle that scheme.
-* `CSVReader` supports multiline quoted fields and throws `CSVParseException` if the stream ends before a quoted field closes.
-* `YamlPropertyHandler` flattens lists into numeric dot segments such as `servers.0.host`.
-
-=== Files, Archives, And Resource Behavior
-
-* `FileUtility` copy and delete operations are explicit about whether the root itself is included. That flag changes results in meaningful ways.
-* `CompressionType` exposes the same surface area for zip and jar handling, but manifest support only matters for jars.
-* `Resource` is a read abstraction. If you need write policy, choose it in caller code.
-
-=== Security And TLS Notes
-
-* `EncryptionUtility` is intentionally thin. Algorithm selection, provider selection, key storage, and rotation policy stay outside the module.
-* Password engines return self-contained stored values. Migration and rehash strategy remain caller-owned.
-* `KeyStoreUtility.construct(...)` writes a JKS file into the current user's home directory and fills in defaults when alias, name, or password are omitted.
-* Permissive SSL helpers in `ssl` are deliberately unsafe for production and belong only in controlled test or local-dev flows.
-
-=== Spring Notes
-
-* `PropertyPlaceholderConfigurer` can receive locations directly or gather them from `PropertyConfiguration` beans.
-* `.properties` and YAML are both supported through `spring.property`.
-* Missing-resource behavior is controlled by `ignoreResourceNotFound`.
-* `PropertyPlaceholderConfigurer` prints property-loading and optional debug banners to standard out.
-* `RMIDaemonInitializingBean` depends on the external `rmid` executable being available on `PATH`.
-
-[[nutsnbolts-troubleshooting, Troubleshooting]]
-== Troubleshooting
-
-=== `ResourceParser` Says No `ResourceFactory` Or Cannot Handle A Scheme
-
-Typical cause:
-
-* the parser was created without any registered generator
-* the scheme is not one of the built-in `classpath`, `file`, `jar`, or `url` schemes
-
-Fix:
-
-* use `new ResourceParser(new ResourceTypeResourceGenerator())` for the built-in schemes
-* register your own `ResourceGenerator` if you need another scheme
-
-=== Placeholder Expansion Fails On An Unresolved Key
-
-Typical cause:
-
-* the supplied map does not contain the key
-* the `SystemPropertyMode` is not what you expected
-* unresolved placeholders are configured to fail instead of being ignored
-
-Fix:
-
-* verify the source map and system properties or environment variables
-* check whether `OVERRIDE`, `FALLBACK`, or another `SystemPropertyMode` is correct for your use case
-* set `ignoreUnresolvableProperties` only if leaving unresolved content in place is acceptable
-
-=== `CSVReader` Fails With An Open Quoted Field
-
-Typical cause:
-
-* the CSV source has a multiline field that never closes its quote
-
-Fix:
-
-* repair the source data rather than trying to work around it
-* if the data is valid multiline CSV, ensure the full stream is being read and not truncated upstream
-
-=== Spring Property Loading Is Noisier Than Expected
-
-Typical cause:
-
-* `PropertyPlaceholderConfigurer` logs loading and optional debug information to standard out by design
-
-Fix:
-
-* treat that output as expected module behavior
-* avoid using the debug-key feature if you need quieter startup output
-
-=== `KeyStoreUtility` Wrote A File Somewhere Unexpected
-
-Typical cause:
-
-* omitted keystore name means the default path is `${user.home}/keystore.jks`
-
-Fix:
-
-* pass an explicit name when constructing the keystore
-* remember that omitted alias defaults to `mykeystore` and omitted password defaults to `changeit`
-
-[[nutsnbolts-verification, Verification Checklist]]
-== Verification Checklist
-
-Use the smallest realistic validation pass for the packages you adopt.
-
-1. Command parsing: parse valid and invalid templates, including required-option and parent-child failures.
-2. Property expansion: verify nested substitutions, encrypted placeholder handling if used, unresolved-key policy, and circular-reference detection.
-3. Resource loading: resolve one `classpath:` and one `file:` resource through the same `ResourceParser`.
-4. CSV: round-trip a small dataset and confirm malformed quoted input fails as expected.
-5. File and archive operations: copy, delete, compress, and explode a temporary tree with the exact include flags you intend to use.
-6. Password engine: encrypt and then match both success and failure cases.
-7. Spring property loading, if used: load both `.properties` and YAML and verify placeholder precedence.
-8. XML SAX, if used: parse one representative document through your `DocumentExtender` and element extender chain.
+Each subpackage below names its entry points, its reason for existing, and
+a realistic example. The examples use actual class and method names from
+the repository; they are deliberately short.
+
+[[pkg-command]]
+=== command — GNU-style CLI parsing
+
+*Package:* `org.smallmind.nutsnbolts.command`
+
+Parses `String[] args` against a `Template` of options, returning an
+`OptionSet` that callers query by option name or single-character flag.
+Supports long options (`--verbose`), short flags (`-v`), arguments of
+type `NONE`, `SINGLE`, `MULTIPLE`, `LIST`, and `ENUMERATED`, optional
+child-option dependencies, and an opt-in "undeclared trailing arguments"
+mode for positional tokens.
+
+*Why it exists.* Rolling a CLI parser by hand is a recurring source of
+bugs (unclosed quotes, missing argument validation, enumerated-value
+typos). This parser is small, has no transitive dependencies, and is
+configurable either programmatically via `Template`/`Option` objects or
+declaratively via the shipped XSD at
+`src/main/resources/xsd/org/smallmind/nutsnbolts/smallmind-command-1.0.xsd`.
+
+*Key types.*
+
+`CommandLineParser`::
+    Static entry point. `parseCommands(Template, String[])` rejects any
+    token that is not a declared option; the three-argument overload with
+    `allowUndeclared = true` collects unrecognised trailing tokens as
+    remaining arguments.
+
+`Template`::
+    Declares the set of valid `Option`s. Options can nest other options
+    as dependents; a dependent may only be used when its parent is present.
+
+`Option`, `Argument`, `ArgumentType`, `EnumeratedArgument`::
+    The declarative building blocks; `ArgumentType` is the enum of
+    `NONE`, `SINGLE`, `MULTIPLE`, `LIST`, `ENUMERATED`.
+
+`OptionSet`::
+    The parsed result. `containsOption(name)`, `getArgument(name)`,
+    `getArguments(name)`, `getRemaining()` for undeclared trailing
+    tokens.
+
+`CommandLineException`::
+    Thrown on unknown options, missing required options, or dependent
+    options used without their parent.
+
+*Example.*
+
+[source,java]
+----
+Template template = new Template("myapp",
+  new Option("verbose", 'v', false, NoneArgument.instance()),
+  new Option("input",   'i', true,  new SingleArgument("path")),          // <1>
+  new Option("level",   'l', false,
+    new EnumeratedArgument(new String[] {"low", "medium", "high"}))
+);
+
+OptionSet options = CommandLineParser.parseCommands(template, args);     // <2>
+
+boolean verbose = options.containsOption("verbose");
+String input    = options.getArgument("input");
+String level    = options.containsOption("level") ? options.getArgument("level") : "medium";
+----
+<1> The third argument to `Option` is the `required` flag. The parser
+    throws `CommandLineException` if a required option is absent.
+<2> `parseCommands` validates the entire array before returning. It never
+    partially applies options.
+
+[[pkg-context]]
+=== context — thread-bound context stacks
+
+*Package:* `org.smallmind.nutsnbolts.context`
+
+Maintains a per-type, per-thread stack of objects implementing the
+`Context` marker. The underlying map is an `InheritableThreadLocal`, so
+a child thread inherits a *snapshot* (a new `LinkedList` copy) of the
+parent's stack for every registered context type.
+
+*Why it exists.* Request identity, caller identity, and other
+"ambient" values must travel with a thread without appearing in every
+method signature. Java's plain `ThreadLocal` handles the single-value
+case but loses history; nested push/pop semantics are what most
+real services actually need. The `ExpectedContexts` annotation lets
+framework glue verify that required contexts are present at a given
+method boundary.
+
+*Key types.*
+
+`Context`::
+    Marker interface. Implementations must be identifiable by their
+    concrete class; the class is used as the map key.
+
+`ContextFactory`::
+    Static stack operations: `pushContext`, `popContext`,
+    `getContext`, `removeContext`, `exists`, `sizeFor`, plus
+    `importContextTrace` / `exportContextTrace` for serialising the
+    current thread's stack across an asynchronous boundary.
+
+`ExpectedContexts`::
+    Method-level annotation declaring which `Context` types must be
+    active when the method runs. `ContextFactory.filterContextsOn(method)`
+    validates and collects them.
+
+`LifecycleAware`::
+    Optional lifecycle hook (push/pop callbacks) for contexts that need
+    to perform setup or teardown around their stack lifetime.
+
+`ContextException`::
+    Unchecked, thrown when `ExpectedContexts` expectations are not met.
+
+*Example.*
+
+[source,java]
+----
+public record CallerContext(String userId, String tenantId) implements Context {}
+
+try {
+  ContextFactory.pushContext(new CallerContext("u-42", "t-7"));       // <1>
+  processRequest();
+} finally {
+  ContextFactory.popContext(CallerContext.class);                     // <2>
+}
+
+// Deep in the call stack — no parameter plumbing:
+CallerContext caller = ContextFactory.getContext(CallerContext.class);
+----
+<1> Push into this thread's stack for the concrete `CallerContext` key.
+<2> Always pop in a `finally`. Failing to pop is the single most common
+    bug; the context survives the method and pollutes subsequent work
+    on the same thread.
+
+[[pkg-resource]]
+=== resource — uniform addressable content
+
+*Package:* `org.smallmind.nutsnbolts.resource`
+
+A small interface — `Resource` — that exposes a scheme, a path, an
+identifier, and an `InputStream`, plus concrete implementations for
+`file:`, `classpath:`, `jar:`, and URL-backed resources, and a
+`ResourceParser` that constructs them from identifier strings of the
+form `scheme:path`.
+
+*Why it exists.* Configuration, templates, and data files come from
+multiple places: filesystem paths, classpath JAR entries, deployment
+overlays, remote URLs. Callers should not special-case each one. This
+abstraction keeps `Resource` usage uniform throughout the rest of the
+SmallMind codebase, and combined with `ResourceFactory` it integrates
+cleanly with Spring as a `FactoryBean<Resource>`.
+
+*Key types.*
+
+`Resource`::
+    The interface. `getIdentifier()`, `getScheme()`, `getPath()`, and
+    `getInputStream()`. The input stream may return `null` if the
+    backing store does not locate the content (rather than throwing),
+    and the scheme is suitable as a map key.
+
+`ResourceParser`, `ResourceGenerator`::
+    Parses `scheme:path` strings into `Resource` instances. A
+    `ResourceGenerator` knows which schemes it can produce; the parser
+    maps each scheme to exactly one generator.
+
+`ResourceFactory`::
+    A Spring `FactoryBean<Resource>` that reads a `name` property
+    (a resource identifier string) and vends the parsed `Resource`
+    as a singleton.
+
+`FileResource`, `ClasspathResource`, `JarResource`::
+    Concrete implementations. Instantiate directly when you know the
+    backing store; otherwise go through the parser.
+
+`ResourceException`::
+    Thrown when a resource cannot be opened or parsed.
+
+*Example.*
+
+[source,java]
+----
+ResourceParser parser = new ResourceParser(new ResourceTypeResourceGenerator());
+
+Resource cfg = parser.parseResource("classpath:config/app.yml");  // <1>
+try (InputStream in = cfg.getInputStream()) {
+  // ... load properties
+}
+----
+<1> Or `file:/etc/app/app.yml`, or `jar:...`. The rest of the code does
+    not change.
+
+[[pkg-property]]
+=== property — placeholder expansion
+
+*Package:* `org.smallmind.nutsnbolts.property`
+
+`PropertyExpander` resolves `${...}` (or a custom delimiter) placeholders
+in a string by consulting a caller-supplied map, system properties, and
+environment variables, in a declared order. It detects circular
+references, tolerates nested placeholders, and supports optional
+decryption of values via a pluggable `Decryptor` wrapped in a
+`PropertyClosure`.
+
+*Why it exists.* Externalised configuration often has placeholders. Some
+values are encrypted at rest; some must be resolved differently when a
+system property shadows a file value. A single expander with explicit
+resolution order, optional decryption, and strict-vs-tolerant behaviour
+is simpler to reason about than assembling one ad hoc per application.
+
+*Key types.*
+
+`PropertyExpander`::
+    Entry point. Construct with a `PropertyClosure`, a
+    `SystemPropertyMode` (`OVERRIDE` or `FALLBACK`), an
+    `ignoreUnresolvableProperties` flag, and a `searchSystemEnvironment`
+    flag. Call `expand(String)` or `expand(String, Map)`.
+
+`PropertyClosure`::
+    Delimiter configuration (default `${` / `}`) plus an optional
+    `Decryptor` that is invoked when a placeholder value carries an
+    encryption marker.
+
+`PropertyExpanderException`::
+    Unresolvable placeholder, unclosed prefix, or circular reference.
+
+`SystemPropertyMode`::
+    Enum with `OVERRIDE` (system properties take precedence over the
+    caller map) and `FALLBACK` (system properties are only consulted
+    when the caller map lacks the key).
+
+*Example.*
+
+[source,java]
+----
+PropertyExpander expander = new PropertyExpander(
+  new PropertyClosure(),                // default ${...} delimiter
+  false,                                // strict: throw on unresolved
+  SystemPropertyMode.FALLBACK,          // caller map wins
+  true                                  // also consult environment
+);
+
+Map<String, Object> ctx = Map.of("service", "api", "env", "prod");
+String url = expander.expand("https://${service}.${env}.example.com");  // <1>
+----
+<1> Placeholders are resolved left-to-right; nested placeholders such as
+    `${prefix.${region}}` are supported. Unknown keys throw because
+    `ignoreUnresolvableProperties` is `false`.
+
+[[pkg-io]]
+=== io — streams, buffers, and path helpers
+
+*Package:* `org.smallmind.nutsnbolts.io`
+
+Segmented in-memory streams and buffers that outperform
+`ByteArrayOutputStream` for large payloads, a circular buffer for
+bounded producer/consumer queues, and path utilities for recursive
+copy/configuration.
+
+*Why it exists.* `ByteArrayOutputStream` is a single contiguous byte
+array; writing a 100 MB payload means the backing array reallocates
+and copies many times. The segmented `ByteArrayIOBuffer` grows by
+appending fixed-size segments instead, avoiding quadratic
+reallocation. `ByteArrayIOStream` additionally lets the reader and
+the writer advance independently against the same buffer.
+
+*Key types.*
+
+`ByteArrayIOStream`::
+    A segmented in-memory stream with separate `ByteArrayInputStream`
+    and `ByteArrayOutputStream` views. Constructors allow choosing the
+    segment size (default 1 024 bytes) or reusing an existing
+    `ByteArrayIOBuffer`. `close()` is a one-way latch that poisons both
+    views.
+
+`ByteArrayIOBuffer`::
+    The underlying segmented buffer. Useful on its own when you need
+    reference sharing between two `ByteArrayIOStream` instances.
+
+`CircularBuffer`, `CircularBufferIOStream`::
+    Fixed-size ring buffer for bounded producer/consumer patterns, and
+    the stream view over it.
+
+`CloseListener`, `CloseEvent`, `CloseableProxyFactory`::
+    Callback mechanism to observe `close()` on resources whose
+    lifecycle is managed elsewhere.
+
+`PathUtility`, `CopyTreeConfigurationBuilder`::
+    Recursive tree copy, safe path manipulation, and configuration
+    objects for copy-with-exclusions.
+
+*Example.*
+
+[source,java]
+----
+try (ByteArrayIOStream pipe = new ByteArrayIOStream(8 * 1024)) {
+  OutputStream out = pipe.asOutputStream();                       // <1>
+  out.write("hello".getBytes(StandardCharsets.UTF_8));
+
+  InputStream in = pipe.asInputStream();                          // <2>
+  byte[] readBack = in.readAllBytes();
+}
+----
+<1> The output view and the input view share the underlying segmented
+    buffer; there is no copy.
+<2> The input view maintains its own read cursor and supports
+    mark/reset.
+
+[[pkg-csv]]
+=== csv — event-driven CSV parsing
+
+*Package:* `org.smallmind.nutsnbolts.csv`
+
+`CSVParser` reads a stream line-by-line, emits `startDocument`, one
+`handleLine(String[])` per record, and `endDocument` to a
+`CSVLineHandler`. The low-level `CSVReader` handles quoting, embedded
+delimiters, and escape characters. Optional flags for "skip header"
+and "trim fields".
+
+*Why it exists.* CSV is ubiquitous but error-prone (quoted fields
+containing commas, embedded newlines, escape characters). An
+event-driven handler model processes arbitrarily large files without
+materialising them in memory.
+
+*Example.*
+
+[source,java]
+----
+CSVParser parser = new CSVParser();
+parser.setSkipHeader(true);                                       // <1>
+parser.setTrimFields(true);
+parser.setLineHandler(new CSVLineHandler() {
+  @Override public void startDocument() {}
+  @Override public void handleFields(String[] fields) {
+    // fields[0], fields[1], ...
+  }
+  @Override public void endDocument() {}
+});
+
+parser.parse(Files.newInputStream(Paths.get("data.csv")));
+----
+<1> Skip the header row. Otherwise the first `handleLine` call delivers
+    the column titles.
+
+[[pkg-xml-json]]
+=== xml, json — XML utilities and JAXB adapters
+
+*Packages:* `org.smallmind.nutsnbolts.xml`, `org.smallmind.nutsnbolts.json`
+
+`xml` provides DOM serialisation, XML escaping, and pluggable
+`ProtocolResolver`s for custom URI schemes during SAX/DOM parsing
+(useful for resolving DTDs and XSDs without hitting the network).
+
+`json` provides JAXB `XmlAdapter`s for types that JAXB does not
+marshal out of the box: `LocalDateTime`, `ZonedDateTime`, `Currency`,
+`Timestamp`, enums (via a generic adapter pattern), and the
+`BinaryData` wrapper for encoded and encrypted byte payloads.
+
+*Why they exist.* Java's XML stack is low-level: serialising a DOM
+back to a string is a half-dozen lines every time, and XML External
+Entity (XXE) protection requires explicit entity resolvers. Meanwhile,
+JAXB's default marshaling does not cover `java.time` or
+`java.util.Currency`, so every schema ends up hand-rolling adapters.
+These two subpackages hold the shared implementations.
+
+*Example — DOM to string.*
+
+[source,java]
+----
+String xml = XMLUtility.toString(document, 3);                    // <1>
+----
+<1> Indents by 3 spaces per level. `XMLUtility.encode(String)` is the
+    quick-escape for embedding text in XML content.
+
+*Example — JAXB adapter on a field.*
+
+[source,java]
+----
+@XmlElement
+@XmlJavaTypeAdapter(ZonedDateTimeXmlAdapter.class)
+private ZonedDateTime createdAt;
+----
+
+[[pkg-zip]]
+=== zip — unified ZIP/JAR handling
+
+*Package:* `org.smallmind.nutsnbolts.zip`
+
+`CompressionType` is an enum with two constants (`JAR`, `ZIP`) and
+three methods each (`getInputStream`, `getOutputStream`, `getEntry`),
+plus compress/explode/walk helpers that work against either format.
+
+*Why it exists.* ZIP and JAR share a wire format but expose different
+Java types (`ZipOutputStream` vs `JarOutputStream`, `ZipEntry` vs
+`JarEntry`). Two enum constants with per-constant overrides give
+callers one API.
+
+*Example.*
+
+[source,java]
+----
+CompressionType.JAR.compress(
+  Paths.get("build/classes"),
+  Paths.get("build/artifact.jar")
+);
+
+CompressionType.ZIP.walk(Paths.get("bundle.zip"), entry -> {
+  // inspect or read each entry
+});
+----
+
+[[pkg-freemarker]]
+=== freemarker — template source adapters
+
+*Package:* `org.smallmind.nutsnbolts.freemarker`
+
+`ClassPathTemplateLoader`, `FileSystemTemplateLoader`, and
+`ResourceTemplateLoader` plug into FreeMarker's `TemplateLoader`
+contract so templates can come from the classpath, a filesystem
+path, or a SmallMind `Resource`.
+
+*Why it exists.* FreeMarker ships loaders, but they assume certain
+deployment layouts. A classpath loader that searches with the
+context classloader, respects JAR entries, and caches last-modified
+times is a routine need.
+
+[[pkg-email]]
+=== email — Jakarta Mail wrapper
+
+*Package:* `org.smallmind.nutsnbolts.email`
+
+`Postman` constructs Jakarta Mail `Session`s over SMTP or SMTPS, with
+or without authentication, and transmits `Mail` descriptors.
+FreeMarker bodies are supported out of the box: passing a
+non-`null` `HashMap<String, Object>` to
+`Postman.send(Mail, HashMap)` compiles the message body as a
+FreeMarker template and caches the compiled template by the
+SHA-256 of the source text.
+
+*Why it exists.* Jakarta Mail is a decade of verbose boilerplate
+per message. `Mail` is a mutable value object for addressing,
+subject, body (`String` or `Reader`), plaintext/HTML flag, and
+attachments; `Postman` turns it into a `MimeMessage` and sends it.
+
+*Key types.*
+
+`Postman`::
+    Configured with host, port, `Authentication`, and a "secure"
+    flag that selects SMTPS (STARTTLS). `send(Mail)` or
+    `send(Mail, HashMap<String, Object>)` for FreeMarker interpolation.
+
+`Mail`::
+    Addressing, subject, body, attachments. Multiple constructors
+    for common shapes; setters for everything else. `setHtml(true)`
+    emits `text/html`.
+
+`Authentication`, `AuthType`::
+    Authentication descriptor and the enum of supported strategies.
+    Use the shared `Authentication.NONE` constant or construct via the
+    no-argument constructor and populate `setType(AuthType)` /
+    `setData(String[])`.
+
+`Protocol`::
+    `SMTP` / `SMTPS`. Used internally by `Postman` to build the
+    `Session`.
+
+`MailDeliveryException`::
+    Wraps any construction or transport failure.
+
+*Example.*
+
+[source,java]
+----
+Authentication auth = new Authentication();
+auth.setType(AuthType.LOGIN);
+auth.setData(new String[] {"app@example.com", "secret"});
+
+Postman postman = new Postman(
+  "smtp.example.com", 587,
+  auth,
+  true                                                             // <1>
+);
+
+Mail mail = new Mail(
+  "app@example.com",
+  "alerts@example.com",
+  "Build ${buildId} failed on ${host}"                              // <2>
+);
+mail.setSubject("CI failure");
+
+HashMap<String, Object> model = new HashMap<>();                    // <3>
+model.put("buildId", "4217");
+model.put("host", "ci-3");
+postman.send(mail, model);
+----
+<1> STARTTLS/SMTPS.
+<2> Body is a FreeMarker template because the interpolation map in
+    `send` is non-null.
+<3> Compiled template is cached by SHA-256 of the body text; repeated
+    sends of the same template recompile only once.
+
+[[pkg-http-net-ntp]]
+=== http, net, ntp — network utilities
+
+*Packages:* `org.smallmind.nutsnbolts.http`,
+`org.smallmind.nutsnbolts.net`, `org.smallmind.nutsnbolts.ntp`
+
+`http` wraps `HttpURLConnection` for simple GET/PUT/POST/DELETE cases
+(`HttpTransmitter`, `HttpPipe`, `HttpMethod`) and provides the common
+codec utilities used during HTTP plumbing — `Base64Codec`,
+`URLCodec`, `HTMLUtility` for HTML entity escaping.
+
+`net` contains `InetAddressComparator`, which orders IP addresses by
+their byte representation rather than string-wise (lexicographic
+ordering puts `10.0.0.1` before `2.0.0.1`).
+
+`ntp` has one class, `NTPTime`, that queries NTP servers and returns
+the computed clock offset in milliseconds. Use it to detect local
+clock skew before making time-sensitive decisions.
+
+*Example — NTP offset.*
+
+[source,java]
+----
+NTPTime ntp = new NTPTime(new String[] {"pool.ntp.org", "time.google.com"});
+long offsetMillis = ntp.getOffset(5_000);                         // <1>
+----
+<1> Five-second timeout. Throws `IOException` on unreachable servers.
+
+[[pkg-security-ssl]]
+=== security, ssl — cryptography and TLS
+
+*Packages:* `org.smallmind.nutsnbolts.security`,
+`org.smallmind.nutsnbolts.ssl`
+
+`security` is a convenience layer over JCE with type-safe algorithm
+enums. `EncryptionUtility` provides static methods for hashing,
+symmetric and asymmetric signing/verification, symmetric encryption
+and decryption, key-pair generation, and serialisation via `KeyRep`.
+`AsymmetricKeyGenerator`, `CertificateUtility`, and the `x509` /
+`kms` subpackages handle higher-level key-management scenarios —
+these require Bouncy Castle on the classpath and, in some cases,
+the provider registered.
+
+`ssl` provides `KeyStoreUtility`, `TrustManagerUtility`, and a set of
+*test-only* permissive implementations — `NaiveTrustManager`,
+`NaiveHostNameVerifier`, `NaiveSSLSocketFactory` — for cases where TLS
+must be short-circuited in an isolated test environment.
+
+*Why they exist.* JCE boilerplate is noisy and easy to get subtly
+wrong (wrong cipher mode, missing padding, missing IV). Enum-driven
+algorithm selection (`HashAlgorithm.SHA_256`,
+`SymmetricSigningAlgorithm.*`, `AsymmetricSigningAlgorithm.*`)
+collapses the typo surface, and SHA-256 in one line instead of five
+is why this utility exists.
+
+*Key types.*
+
+`EncryptionUtility`::
+    Static: `hash`, `sign`, `verify`, `encrypt`, `decrypt`,
+    `generateKeyPair`, `serializeKey`, `deserializeKey`, and helpers
+    like `convertToBlock` for PEM-style line wrapping.
+
+`HashAlgorithm`::
+    Enum of supported message digests (`MD5`, `SHA_1`, `SHA_256`,
+    `SHA_512`).
+
+`SymmetricAlgorithm`, `AsymmetricAlgorithm`::
+    Enums for cipher selection.
+
+`SymmetricSigningAlgorithm`, `AsymmetricSigningAlgorithm`::
+    Interfaces that concrete algorithm enums implement.
+
+`HMACSigningAlgorithm`, `ECDSASigningAlgorithm`, `RSASigningAlgorithm`::
+    Enum implementations providing the signing algorithm constants.
+    `HMACSigningAlgorithm.HMAC_SHA_256` is the one callers reach for
+    most often.
+
+`AsymmetricKeyGenerator`::
+    Generates RSA/EC key pairs; `AsymmetricKeySpec` and
+    `AsymmetricKeyType` describe the requested shape.
+
+`CertificateUtility`::
+    X.509 certificate helpers (requires Bouncy Castle).
+
+`SecurityProviderInitializingBean`::
+    Spring `InitializingBean` that registers a
+    `SecurityProvider` with the JVM during context startup.
+
+`KeyStoreUtility`, `TrustManagerUtility`::
+    Build `KeyStore`, `KeyManagerFactory`, and `TrustManagerFactory`
+    instances from configured material.
+
+`NaiveTrustManager`, `NaiveHostNameVerifier`, `NaiveSSLSocketFactory`::
+    Skip certificate and hostname validation. Test-only.
+
+[IMPORTANT]
+====
+`Naive*` in the `ssl` subpackage name is not ornamental. These
+classes accept every certificate. Do not use them in production, and
+do not register them as the default `HostnameVerifier` or
+`SSLSocketFactory` in long-running JVMs.
+====
+
+*Example — SHA-256.*
+
+[source,java]
+----
+byte[] digest = EncryptionUtility.hash(
+  HashAlgorithm.SHA_256,
+  payload.getBytes(StandardCharsets.UTF_8)
+);
+----
+
+*Example — HMAC sign/verify.*
+
+[source,java]
+----
+byte[] mac = EncryptionUtility.sign(
+  HMACSigningAlgorithm.HMAC_SHA_256, sharedKey, message
+);
+
+boolean ok = EncryptionUtility.verify(
+  HMACSigningAlgorithm.HMAC_SHA_256, sharedKey, message, mac
+);
+----
+
+[[pkg-time]]
+=== time — date and time conversions
+
+*Package:* `org.smallmind.nutsnbolts.time`
+
+`TimeUtility` converts legacy types (`Date`, `Calendar`, epoch
+milliseconds) to `ZonedDateTime` and parses/formats ISO-8601 strings
+in all four common shapes (date-only, local, offset, zoned) using
+the corresponding `java.time.format.DateTimeFormatter`. `Stint` is a
+date-range value type. `Day` and `Month` are enums. `CalendarUtility`
+has `Calendar`-era arithmetic.
+
+*Why it exists.* Java's `Date` → `java.time` migration is only mostly
+done in real codebases. A single utility that turns any legacy value
+into a `ZonedDateTime` — and back — cuts down the conversion boilerplate
+dramatically.
+
+*Example.*
+
+[source,java]
+----
+ZonedDateTime now = TimeUtility.fromMilliseconds(System.currentTimeMillis());
+ZonedDateTime parsed = TimeUtility.parse("2026-04-21T12:00:00Z");
+String iso = TimeUtility.format(now);
+----
+
+[[pkg-retry]]
+=== retry — retry with back-off
+
+*Package:* `org.smallmind.nutsnbolts.retry`
+
+`Retry.execute(retryCall, retries, delay, exponential)` runs the
+supplied `RetryCall` on a fresh thread, joins it, and repeats up to
+`retries` additional attempts with either a flat delay or `delay *
+attemptNumber`. Returns `true` on success.
+
+*Why it exists.* The code path is short but error-prone. Encapsulating
+retry-with-back-off once avoids bespoke loops. Running each attempt
+on a dedicated thread keeps a pathological blocking `RetryCall` from
+spilling delay time onto the caller.
+
+*Example.*
+
+[source,java]
+----
+boolean ok = Retry.execute(
+  () -> { httpClient.ping("https://api.example.com/health"); },  // <1>
+  3,       // retries
+  1_000L,  // 1-second base delay
+  true     // exponential: 1s, 2s, 3s between attempts
+);
+----
+<1> `RetryCall` is a functional interface that may throw `Throwable`.
+
+[[pkg-validation]]
+=== validation — Jakarta Bean Validation additions
+
+*Package:* `org.smallmind.nutsnbolts.validation`
+
+Custom Jakarta Bean Validation constraints plus their
+`ConstraintValidator` implementations: `@Email` (regex),
+`@NotBlank`, `@NotEmpty`, `@GreaterThan`, `@LowerBound`. Paired with
+`FormattedValidationException` for error messages built from a
+format string and varargs.
+
+*Why it exists.* The standard Jakarta Validation annotations cover
+`@NotNull`, `@Size`, `@Min`/`@Max`, etc. — but a pragmatic set of
+additions (email, numeric lower bound, greater-than comparisons,
+blank/empty strings) is often welcome.
+
+*Example.*
+
+[source,java]
+----
+public record CreateUserRequest(
+  @Email String email,
+  @NotBlank String displayName,
+  @GreaterThan(0) int credits
+) {}
+----
+
+[[pkg-lang-reflection-apt]]
+=== lang, reflection, apt — classloaders and metaprogramming
+
+*Packages:* `org.smallmind.nutsnbolts.lang`,
+`org.smallmind.nutsnbolts.reflection`,
+`org.smallmind.nutsnbolts.apt`
+
+*`lang`* contains classloader infrastructure, exception helpers, and
+the `AnnotationLiteral` proxy factory for synthesising annotation
+instances at runtime:
+
+`GatingClassLoader`::
+    A `SecureClassLoader` that delegates class resolution through a
+    chain of `ClassGate`s. Gates decide which resources a given child
+    loader may see; a `ClasspathClassGate` accepts a list of
+    filesystem or JAR paths. Optional grace-period logic compares
+    last-modified timestamps to detect stale class definitions for
+    reloadable extensions.
+
+`ClassGate`, `ClasspathClassGate`, `ClassGateTicket`,
+`ClassStreamTicket`, `ClassVerifier`::
+    Gate SPI, the classpath-based default, and ASM-backed bytecode
+    verification helpers.
+
+`ClassLoaderAwareCache`::
+    A cache whose entries are scoped to the classloader of the key
+    type — entries vanish when the classloader is collected,
+    preventing classloader leaks.
+
+`AllPermissionsClassLoader`::
+    A trivial child loader that grants every permission; audit-only.
+
+`AnnotationLiteral`::
+    Runtime factory for synthetic annotation proxies — useful for
+    programmatic service discovery and metadata injection.
+
+`ArrayStackTraceAccumulator`, `WrappedException`,
+`UnknownSwitchCaseException`, `FormattedException`::
+    Exception helpers. `WrappedException` adapts a checked exception
+    into an unchecked one for propagation through functional APIs.
+
+*`reflection`* provides field introspection (`FieldAccessor`,
+`FieldUtility`), annotation filtering (`AnnotationFilter`), bytecode
+debugging via ASM (`ClassInspector.trace`, `.asmify`), and getter
+matching.
+
+*`apt`* exposes `AptUtility`, a small set of methods for reading
+`AnnotationMirror` values from the compile-time annotation-processor
+environment. Used by SmallMind's own annotation processors.
+
+*Example — gated classloader for a plugin.*
+
+[source,java]
+----
+ClassGate gate = new ClasspathClassGate("plugins/acme-extension.jar");
+
+GatingClassLoader loader = new GatingClassLoader(
+  Thread.currentThread().getContextClassLoader(),
+  0,                                                               // <1>
+  gate
+);
+
+Class<?> entry = loader.loadClass("com.acme.ExtensionEntry");
+// ... reflectively invoke an extension contract
+----
+<1> Grace period in seconds; a negative value disables staleness
+    checking entirely.
+
+[[pkg-layout]]
+=== layout — platform-neutral layout engine
+
+*Package:* `org.smallmind.nutsnbolts.layout`
+
+A three-pass (minimum / preferred / maximum) measurement layout engine
+with *serial* and *parallel* boxes, grow/shrink constraints,
+alignment, justification, gaps, and bias (which axis is the "main"
+one). Written without any specific GUI toolkit in mind — it operates
+over the generic `ParaboxElement<T>` wrapper that a concrete toolkit
+binds to its component type.
+
+*Why it exists.* Layout code in Swing/JavaFX/web is the same math each
+time: resolve minimum sizes bottom-up, spread surplus based on grow
+weights, resolve alignment on the cross axis. Factoring that math
+into a toolkit-agnostic engine lets SmallMind's `javafx` and desktop
+modules share a single implementation.
+
+*Key types.*
+
+`ParaboxLayout`::
+    The top-level layout coordinator. Constructed around a
+    `ParaboxContainer` adapter for the host GUI toolkit. Produces
+    `SerialBox` and `ParallelBox` instances via `serialBox(...)`
+    and `parallelBox(...)` factory methods and exposes the
+    horizontal and vertical root boxes via `setHorizontalBox` /
+    `setVerticalBox`.
+
+`Box<B>`::
+    Abstract base for child boxes. Subclasses implement
+    `doLayout`, `calculateMinimumMeasurement`,
+    `calculatePreferredMeasurement`,
+    `calculateMaximumMeasurement`.
+
+`SerialBox`, `ParallelBox`::
+    The two concrete box types. Serial arranges children along the
+    main axis; parallel stacks children on top of each other
+    against a shared cross axis.
+
+`ParaboxContainer`, `ParaboxPlatform`::
+    Adapters the host toolkit implements so the engine can ask it
+    for child measurements and apply computed positions.
+
+`ParaboxElement<T>`, `ComponentParaboxElement`, `BoxParaboxElement`::
+    Wraps a toolkit component or a nested `Box` as a child of a
+    layout box. Concrete toolkits subclass `ComponentParaboxElement`
+    to adapt their widget type.
+
+`Constraint`::
+    Captures the grow and shrink weights for a child. Shared
+    factories are `Constraint.immutable()` (rigid),
+    `Constraint.expand()` (grow only), `Constraint.contract()`
+    (shrink only), and `Constraint.stretch()` (both). Use
+    `Constraint.create()` for a mutable variant, or
+    `new Constraint(grow, shrink)` for explicit weights.
+
+`Bias`::
+    `HORIZONTAL` or `VERTICAL`. Drives which axis each calculation
+    runs on.
+
+`Alignment`, `Justification`, `Flow`, `Gap`, `Dimensionality`,
+`Perimeter`, `LayoutTailor`::
+    Supporting types.
+
+*Sketch.*
+
+[source,java]
+----
+ParaboxLayout layout = new ParaboxLayout(container);                  // <1>
+
+SerialBox horizontal = layout.serialBox()
+  .add(labelElement,  Constraint.immutable())
+  .add(inputElement,  Constraint.stretch())
+  .add(buttonElement, Constraint.immutable());
+
+SerialBox vertical = layout.serialBox()
+  .add(headerElement, Constraint.immutable())
+  .add(bodyElement,   Constraint.expand());
+
+layout.setHorizontalBox(horizontal);
+layout.setVerticalBox(vertical);
+----
+<1> `container` is a `ParaboxContainer` supplied by the host toolkit
+    (e.g. a Swing or JavaFX adapter).
+
+[[pkg-spring]]
+=== spring — Spring integration
+
+*Package:* `org.smallmind.nutsnbolts.spring`
+
+Spring-specific extensions built on the rest of this module.
+
+`PropertyPlaceholderConfigurer`::
+    A `BeanFactoryPostProcessor` that runs the nutsnbolts
+    `PropertyExpander` over Spring bean definitions during
+    context initialisation — the point of integration between this
+    module's placeholder engine and Spring's bean lifecycle.
+
+`PropertyConfiguration`, `PropertyPlaceholderStringValueResolver`::
+    Supporting types for the above.
+
+`ResourceConverter`::
+    A Spring `Converter` that turns a `String` identifier into a
+    nutsnbolts `Resource`. Enables `@Value("classpath:config.xml")`
+    style injection into `Resource`-typed bean properties.
+
+`ExtensionLoader<E>`::
+    Loads a Spring XML context from a working directory, optionally
+    installing a `GatingClassLoader` so the loaded extension sees a
+    restricted classpath. Used by services that support runtime
+    extension packs.
+
+`ExtensionInstance`::
+    Interface that an extension's "root bean" should implement so
+    the loader can report a coherent handle back to the host.
+
+Three Spring XML fragments ship alongside in
+`src/main/resources/spring/org/smallmind/nutsnbolts/`:
+`jmx.xml`, `realm.xml`, and `rmi.xml`. These are ready-to-import
+`<import resource="classpath:org/smallmind/nutsnbolts/jmx.xml"/>`
+snippets for common infrastructure.
+
+[[pkg-util]]
+=== util — collections and comparators
+
+*Package:* `org.smallmind.nutsnbolts.util`
+
+A toolkit of small, general-purpose utilities. The ones a consumer
+is most likely to reach for:
+
+`Bag<E>` / `HashBag<E>`::
+    A multiset collection with duplicate counting. Adds and removes
+    in multiples.
+
+`BloomFilter`::
+    Space-efficient probabilistic set (false positives possible, no
+    false negatives).
+
+`LRUMap<K,V>`::
+    `LinkedHashMap`-backed bounded cache with access-order eviction.
+
+`AlphaNumericComparator`::
+    Human-friendly sort order where `"item-10"` sorts after
+    `"item-2"` instead of between `"item-1"` and `"item-20"`.
+
+`SemanticVersionComparator`::
+    Sorts SemVer-style strings correctly.
+
+`SnowflakeId`, `SnowflakeVariant`, `SnowflakeVersion`::
+    Snowflake-style identifier generation.
+
+`Pair<L,R>`, `Tuple`, `Counter`, `Mutation`, `Option` / `Some` / `None`::
+    Value primitives and functional-programming helpers.
+
+`AnsiColor`::
+    Terminal color escape sequences.
+
+`Bytes`::
+    Byte-array helpers (hex conversion, padding, comparisons).
+
+`SelfDestructiveMap<K,V>`::
+    A map whose entries expire after a configurable TTL; uses
+    `SelfDestructiveKey` under the hood.
+
+`LocaleUtility`, `StringUtility`, `EnumUtility`, `ArrayUtility`::
+    Assorted helpers.
+
+*Example — LRU cache.*
+
+[source,java]
+----
+LRUMap<String, User> cache = new LRUMap<>(1_000);                 // <1>
+User user = cache.computeIfAbsent(userId, id -> repo.loadUser(id));
+----
+<1> Fixed capacity; oldest access is evicted when full.
+
+[[pkg-inject]]
+=== inject — `@Service` marker and lazy fields
+
+*Package:* `org.smallmind.nutsnbolts.inject`
+
+`@Service`::
+    A marker annotation for classes that participate in custom
+    service-discovery scans. SmallMind framework code (and
+    applications built on top of it) uses this marker to locate
+    components without pulling in a specific DI container.
+
+`@LazyField`, `LazyFieldAspect`, `LazyError`::
+    An AspectJ-driven mechanism to declare a field as lazily
+    initialised. The aspect intercepts the first read and
+    delegates to a supplier. Useful for breaking cyclic references
+    between beans whose initialisation order is hard to fix at
+    container level.
+
+[IMPORTANT]
+====
+`LazyFieldAspect` requires AspectJ weaving (load-time or
+compile-time). The nutsnbolts POM configures the
+`aspectj-maven-plugin` for its own build; consumers who want lazy
+fields in their own code must configure weaving separately.
+====
+
+[[pkg-servlet-soap]]
+=== servlet, soap — servlet and SOAP helpers
+
+*Packages:* `org.smallmind.nutsnbolts.servlet`,
+`org.smallmind.nutsnbolts.soap`
+
+`servlet` is deliberately minimal today: `FormattedServletException`
+is a `ServletException` whose constructor takes a
+`String.format`-style pattern plus varargs, saving a line every time
+you throw one.
+
+`soap` ships `MonitorHandler`, a
+`jakarta.xml.ws.handler.soap.SOAPHandler` that can be added to a
+web-service client or endpoint to observe requests and responses for
+logging or tracing. `MessageDirection` distinguishes inbound from
+outbound messages in handler callbacks.
+
+[[behavioral-reference]]
+== Behavioral Reference
+
+=== Close semantics
+
+`ByteArrayIOStream`, `CircularBufferIOStream`, and their paired
+input/output views treat `close()` as a one-way latch. Once closed:
+
+- `asInputStream()` and `asOutputStream()` still return the view
+  instances, but subsequent reads and writes throw `IOException`.
+- `close()` itself is idempotent; calling it more than once has no
+  additional effect.
+- Try-with-resources usage is the intended pattern.
+
+=== Context inheritance
+
+`ContextFactory` is backed by `InheritableThreadLocal`. When a new
+thread is created from a parent, `childValue` runs and *copies* each
+context type's stack into a fresh `LinkedList`. The child has an
+independent stack thereafter; push/pop in the child does not affect
+the parent.
+
+Any context that refers to mutable state (connection handles,
+transactions, open resources) is still *shared by reference* with the
+parent — inheritability copies the stacks, not the objects on them.
+
+=== PropertyExpander resolution order
+
+With `SystemPropertyMode.FALLBACK` (the default):
+
+1. Caller map (`expand(expansion, expansionMap)`).
+2. System properties (`System.getProperty`).
+3. Environment variables (`System.getenv`) if
+   `searchSystemEnvironment` is `true`.
+
+With `SystemPropertyMode.OVERRIDE`:
+
+1. System properties.
+2. Environment variables (if enabled).
+3. Caller map.
+
+Placeholders inside resolved values are expanded recursively; circular
+references throw `PropertyExpanderException` rather than looping.
+
+=== Retry scheduling
+
+`Retry.execute` runs the `RetryCall` on a *fresh thread* for each
+attempt. The calling thread sleeps between attempts via
+`Thread.sleep`, not via scheduled executors, so the method is
+appropriate for coarse retries, not for high-frequency polling.
+
+=== Email template caching
+
+`Postman` keeps a `HashMap<SHA256Key, Template>` of compiled FreeMarker
+templates, keyed by SHA-256 of the raw body text. Two distinct `Mail`
+messages with identical body text share the same compiled template.
+The cache has no eviction policy; templates live for the life of the
+`Postman` instance. For workloads that generate large numbers of
+unique bodies, prefer constructing a fresh `Postman` per campaign and
+discarding it afterwards.
+
+=== Resource `null` vs exception
+
+`Resource.getInputStream()` returns `null` when the backing store can
+be consulted but does not locate the content (the default convention
+across the shipped implementations). It throws `ResourceException`
+when the backing store itself errors (permission denied, malformed
+URL, failed URL connection). Callers should handle both.
+
+=== GatingClassLoader grace period
+
+`GatingClassLoader` can compare a class's last-modified timestamp
+against a `gracePeriodSeconds` tolerance to detect stale definitions
+for reloadable extensions. A grace period of `0` disables the check.
+Stale detection is not automatic reloading; the loader throws, and it
+is up to the host to drop and recreate the loader.
+
+=== Naive TLS implementations
+
+`NaiveTrustManager`, `NaiveHostNameVerifier`, and
+`NaiveSSLSocketFactory` accept every certificate and every hostname.
+They exist for controlled test environments (integration tests against
+a self-signed fixture). Registering them as JVM-wide defaults silently
+disables TLS validation for *every* connection in the process.
+
+[[limitations-and-known-issues]]
+== Limitations and Known Issues
+
+Broad scope, narrow depth::
+    This package is deliberately broad. Each subpackage solves its
+    specific problem and stops. Where a first-class library such as
+    Netty, OkHttp, Jackson, Guava, or Bouncy Castle covers the same
+    territory with more depth, the expectation is that consumers will
+    use that library directly for that surface, not attempt to extend
+    the corresponding nutsnbolts subpackage.
+
+Optional dependency failure modes::
+    A code path whose optional dependency is missing will fail with
+    `NoClassDefFoundError` or `ClassNotFoundException` on first use,
+    not at application startup. Read the
+    <<installation,Optional Dependency Matrix>> before wiring a new
+    subpackage into production.
+
+`Retry` blocks the caller::
+    `Retry.execute` runs each attempt on a fresh thread and joins on
+    it, but the calling thread is blocked for the full duration of
+    all attempts plus all back-off intervals. For high-concurrency
+    retry needs, wrap calls in your own executor.
+
+`Postman` template cache has no eviction::
+    See <<behavioral-reference,Email template caching>>.
+
+`ssl` naive trust classes are test-only::
+    They are shipped for convenience but must never be the default
+    in production JVMs. See <<pkg-security-ssl>>.
+
+`inject` is not a DI container::
+    `@Service` is a marker. `@LazyField` requires AspectJ weaving.
+    Neither substitutes for Spring, CDI, or Guice.
+
+`layout` is toolkit-agnostic by design::
+    It does not know about Swing, JavaFX, SWT, or any specific GUI
+    widget. Using it in a real application requires writing the
+    `ParaboxElement` adapter for your toolkit (the `smallmind-javafx`
+    module contains a JavaFX adapter as a reference).
+
+No JPMS `module-info`::
+    `smallmind-nutsnbolts` is published as a classpath jar. Consumers
+    in a fully modular (JPMS) deployment should expect to use the
+    automatic-module-name behaviour rather than an explicit module
+    descriptor.
+
+[[dependency-notes]]
+== Dependency Notes
+
+* `smallmind-nutsnbolts` sits at the bottom of the dependency graph in
+  this repository. Nearly every other SmallMind module depends on it;
+  it depends on nothing else in the repository.
+* The POM lists all Jakarta, Spring, FreeMarker, Commons-Net, Bouncy
+  Castle, ASM, and SnakeYAML dependencies as `optional`. A consumer
+  choosing a specific subpackage must add the corresponding runtime
+  dependency to its own build.
+* The build configures the `smallmind-license-maven-plugin` (for
+  dual AGPL/Apache licensing headers) and the `aspectj-maven-plugin`
+  (because `LazyFieldAspect` is an AspectJ aspect woven at compile
+  time for this jar). A consumer that uses `@LazyField` in its own
+  code must configure AspectJ weaving on its side; weaving is not
+  transitive through the dependency relationship.
+* The shipped Spring XML fragments (`jmx.xml`, `realm.xml`,
+  `rmi.xml`) and the command XSD
+  (`smallmind-command-1.0.xsd`) are published as classpath resources
+  under `org/smallmind/nutsnbolts/`. Consumers import them with
+  `classpath:` references.

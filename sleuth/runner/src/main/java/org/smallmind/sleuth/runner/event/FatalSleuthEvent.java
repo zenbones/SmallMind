@@ -35,15 +35,27 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when an unrecoverable error halts execution.
+ * Event fired when an unhandled exception escapes the {@link org.smallmind.sleuth.runner.SuiteRunner}
+ * and halts execution of the affected suite.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.SuiteRunner} in its outer {@code catch} block when
+ * an exception propagates out of the suite lifecycle (test instantiation, dependency analysis,
+ * or uncaught errors in the run loop). The Surefire integration captures the throwable and
+ * re-throws it as a {@code TestSetFailedException} after the run completes, causing Maven to
+ * report a build failure. If {@code stopOnError} is set, the runner is also cancelled.
+ *
+ * @see org.smallmind.sleuth.runner.SuiteRunner
+ * @see CancelledSleuthEvent
  */
 public class FatalSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param throwable  fatal throwable
+   * Constructs a fatal event for the suite runner that encountered the unhandled exception.
+   *
+   * @param className  fully qualified name of the runner class that caught the exception; must not be {@code null}
+   * @param methodName name of the method from which the exception escaped; must not be {@code null}
+   * @param elapsed    wall-clock time in milliseconds from suite start to the point the exception was caught; non-negative
+   * @param throwable  the unhandled exception that terminated the suite; must not be {@code null}
    */
   public FatalSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
@@ -51,6 +63,8 @@ public class FatalSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#FATAL}.
+   *
    * @return {@link SleuthEventType#FATAL}
    */
   @Override
@@ -60,7 +74,9 @@ public class FatalSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
-   * @return bright red to indicate fatality
+   * Returns bright red, emphasizing the severity of a fatal runner failure.
+   *
+   * @return {@link AnsiColor#BRIGHT_RED}
    */
   @Override
   public AnsiColor getColor () {

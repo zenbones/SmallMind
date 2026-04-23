@@ -33,16 +33,16 @@
 package org.smallmind.nutsnbolts.security.kms;
 
 /**
- * Abstraction for decrypting strings from an external key management system.
+ * Abstraction for decrypting string values, typically sourced from an external key management system.
  */
 public interface Decryptor {
 
   /**
-   * Decrypts the provided text.
+   * Decrypts the provided ciphertext and returns the corresponding plaintext.
    *
-   * @param encrypted ciphertext to decrypt
-   * @return decrypted plain text
-   * @throws Exception if decryption fails
+   * @param encrypted the ciphertext string to decrypt
+   * @return the decrypted plaintext string
+   * @throws Exception if decryption fails for any reason
    */
   String decrypt (String encrypted)
     throws Exception;

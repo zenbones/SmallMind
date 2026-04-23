@@ -39,20 +39,23 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 /**
- * Helper methods used by AspectJ advice to access method parameters reflectively.
+ * Utility methods for AspectJ advice that need to read named parameters, or nested property values,
+ * from a {@link JoinPoint}.
  */
 public class AOPUtility {
 
   /**
-   * Retrieves a method argument (or nested property) by name from a {@link JoinPoint}.
+   * Resolves a named parameter value from the given join point, supporting dotted-path navigation
+   * into nested objects via bean-style getters.
    *
-   * @param joinPoint     the join point being advised
-   * @param parameterName the parameter to resolve, optionally using dotted notation for nested getters
-   * @param nullable      whether a {@code null} value is acceptable
-   * @return the resolved argument or nested property value
-   * @throws BeanAccessException     if the parameter cannot be found or accessed
-   * @throws BeanInvocationException if a getter invocation fails
-   * @throws NullPointerException    if a nested value is {@code null} when {@code nullable} is false
+   * @param joinPoint     the AspectJ join point whose parameter list should be searched
+   * @param parameterName the parameter name to look up, optionally with dotted sub-property segments
+   *                      (e.g. {@code "address.city"})
+   * @param nullable      when {@code false}, a resolved {@code null} value causes a {@link NullPointerException}
+   * @return the resolved argument or nested property value, which may be {@code null} if {@code nullable} is {@code true}
+   * @throws BeanAccessException     if the named parameter is absent from the method signature or a getter is missing
+   * @throws BeanInvocationException if a getter along the property path throws an exception
+   * @throws NullPointerException    if {@code nullable} is {@code false} and the resolved value is {@code null}
    */
   public static Object getParameterValue (JoinPoint joinPoint, String parameterName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {

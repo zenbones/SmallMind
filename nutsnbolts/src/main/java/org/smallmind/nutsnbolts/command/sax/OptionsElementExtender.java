@@ -38,14 +38,16 @@ import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 /**
- * Aggregates {@link Option} definitions contained within an {@code <options>} element.
+ * SAX element extender for the {@code <options>} element that collects all {@link Option} instances produced by nested {@code <option>} elements.
  */
 public class OptionsElementExtender extends AbstractElementExtender {
 
   private final LinkedList<Option> optionList = new LinkedList<>();
 
   /**
-   * @return options collected from child elements
+   * Returns the ordered list of options parsed from child {@code <option>} elements.
+   *
+   * @return mutable list of {@link Option} objects in document order
    */
   public LinkedList<Option> getOptionList () {
 
@@ -53,7 +55,9 @@ public class OptionsElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Appends each parsed {@link OptionElementExtender} result to the list.
+   * Appends the {@link Option} produced by each completed {@link OptionElementExtender} child to the internal list.
+   *
+   * @param elementExtender completed child extender; only processed when it is an {@link OptionElementExtender}
    */
   @Override
   public void completedChildElement (ElementExtender elementExtender) {

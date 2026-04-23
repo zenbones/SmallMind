@@ -46,25 +46,27 @@ import org.smallmind.persistence.cache.praxis.ByKeyRoster;
 import org.smallmind.persistence.cache.praxis.Roster;
 
 /**
- * Durable vector for intrinsic caches where elements are referenced by durable keys.
- * Keys are resolved against the local cache or DAO when iterated.
+ * {@link DurableVector} for intrinsic (in-process) caches that stores element references as
+ * {@link DurableKey} values in an {@link IntrinsicRoster}. Keys are resolved against the local
+ * cache or DAO when the vector is iterated or accessed.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private final ByKeyRoster<I, D> roster;
 
   /**
-   * Builds a keyed vector from an iterable of durables.
+   * Builds a keyed intrinsic vector populated from the provided durables.
+   * When {@code maxSize} is positive, population stops after that many elements.
    *
-   * @param durableClass      durable class stored in the vector
-   * @param durables          iterable of durables used to seed the vector
-   * @param comparator        comparator used for ordering; {@code null} for natural order
-   * @param maxSize           maximum number of elements to retain
-   * @param timeToLiveSeconds TTL for the vector
-   * @param ordered           whether the vector should maintain sorted order
+   * @param durableClass      the class of the durables being stored
+   * @param durables          the initial elements
+   * @param comparator        comparator for ordered vectors; {@code null} uses natural ordering
+   * @param maxSize           maximum number of elements to retain; zero or negative means unbounded
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @param ordered           {@code true} to maintain elements in sorted order
    */
   public ByKeyIntrinsicVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
@@ -84,7 +86,13 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Internal constructor used when copying vectors.
+   * Internal copy constructor used by {@link #copy()}.
+   *
+   * @param roster            the roster to back the new vector
+   * @param comparator        comparator for ordering
+   * @param maxSize           maximum element count
+   * @param timeToLiveSeconds TTL in seconds
+   * @param ordered           whether to maintain sorted order
    */
   private ByKeyIntrinsicVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
@@ -94,7 +102,9 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * @return backing roster of keys
+   * Returns the backing key-based roster.
+   *
+   * @return the roster of keyed entries
    */
   public Roster<D> getRoster () {
 
@@ -102,9 +112,9 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Produces a deep copy of the vector and its roster.
+   * Produces a deep copy of this vector, duplicating the roster and all configuration.
    *
-   * @return copied vector
+   * @return a new vector with identical state
    */
   public DurableVector<I, D> copy () {
 
@@ -112,7 +122,9 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * @return unmodifiable list backed by a snapshot of the roster
+   * Returns an unmodifiable snapshot of the current roster contents without prefetching.
+   *
+   * @return an unmodifiable list of the current durables
    */
   public synchronized List<D> asBestEffortLazyList () {
 
@@ -120,9 +132,9 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * Hydrates elements and returns an unmodifiable list.
+   * Returns an unmodifiable list of durables hydrated via the vector cache or DAO.
    *
-   * @return prefetched unmodifiable list
+   * @return a prefetched unmodifiable list
    */
   public synchronized List<D> asBestEffortPreFetchedList () {
 
@@ -130,7 +142,9 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   /**
-   * @return iterator over an unmodifiable snapshot of the roster
+   * Returns an iterator over an unmodifiable snapshot of the current roster.
+   *
+   * @return an iterator over the current durables
    */
   public synchronized Iterator<D> iterator () {
 

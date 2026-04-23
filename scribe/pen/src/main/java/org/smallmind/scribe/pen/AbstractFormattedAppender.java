@@ -33,25 +33,26 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Base {@link AbstractAppender} that formats records to strings before output.
- * Subclasses implement {@link #handleOutput(String)} to emit the formatted text.
+ * Extension of {@link AbstractAppender} that converts log records to formatted strings before
+ * writing them to an output target. Subclasses implement {@link #handleOutput(String)} to emit
+ * the formatted text; this class bridges the record-based and string-based output contracts.
  */
 public abstract class AbstractFormattedAppender extends AbstractAppender implements FormattedAppender {
 
   private Formatter formatter;
 
   /**
-   * Constructs a formatted appender without formatter or error handler.
+   * Constructs a formatted appender with no formatter, no error handler, and no name.
    */
   public AbstractFormattedAppender () {
 
   }
 
   /**
-   * Constructs a formatted appender with a formatter and error handler.
+   * Constructs an unnamed formatted appender with the given formatter and error handler.
    *
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to invoke on failures
+   * @param formatter    formatter used to convert records to strings; may be set later via {@link #setFormatter}
+   * @param errorHandler handler invoked when output fails; may be {@code null}
    */
   public AbstractFormattedAppender (Formatter formatter, ErrorHandler errorHandler) {
 
@@ -61,11 +62,11 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
   }
 
   /**
-   * Constructs a formatted appender with name, formatter, and error handler.
+   * Constructs a named formatted appender with the given formatter and error handler.
    *
-   * @param name         appender name
-   * @param formatter    formatter to apply
-   * @param errorHandler handler to invoke on failures
+   * @param name         name used to identify this appender; may be {@code null}
+   * @param formatter    formatter used to convert records to strings; may be set later via {@link #setFormatter}
+   * @param errorHandler handler invoked when output fails; may be {@code null}
    */
   public AbstractFormattedAppender (String name, Formatter formatter, ErrorHandler errorHandler) {
 
@@ -75,9 +76,9 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
   }
 
   /**
-   * Retrieves the formatter used to render records.
+   * Returns the formatter that converts log records to output strings.
    *
-   * @return configured formatter, or {@code null} if none set
+   * @return the configured formatter, or {@code null} if none has been installed
    */
   public Formatter getFormatter () {
 
@@ -85,9 +86,10 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
   }
 
   /**
-   * Sets the formatter used to render records.
+   * Installs the formatter used to convert log records to output strings.
    *
-   * @param formatter formatter to install
+   * @param formatter formatter to use for all subsequent records; must not be {@code null} when
+   *                  records are being published
    */
   public void setFormatter (Formatter formatter) {
 
@@ -95,19 +97,21 @@ public abstract class AbstractFormattedAppender extends AbstractAppender impleme
   }
 
   /**
-   * Emits the formatted string to the concrete output target.
+   * Writes the pre-formatted string to the concrete output target.
    *
-   * @param output formatted record text
-   * @throws Exception if writing fails
+   * @param output the formatted representation of a log record
+   * @throws Exception if an I/O or encoding error occurs while writing
    */
   public abstract void handleOutput (String output)
     throws Exception;
 
   /**
-   * Formats the record to a string and delegates to the string output handler.
+   * Formats the record to a string via the configured {@link Formatter} and delegates to
+   * {@link #handleOutput(String)}; throws {@link LoggerException} if no formatter has been set.
    *
-   * @param record record to publish
-   * @throws Exception if formatting or output fails
+   * @param record the log record to format and emit
+   * @throws LoggerException if no formatter is installed on this appender
+   * @throws Exception       if formatting or the downstream string output handler fails
    */
   @Override
   public void handleOutput (Record<?> record)

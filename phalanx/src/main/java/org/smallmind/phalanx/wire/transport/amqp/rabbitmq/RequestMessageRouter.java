@@ -72,16 +72,18 @@ public class RequestMessageRouter extends MessageRouter {
   private final int ttlSeconds;
 
   /**
-   * @param connector                    connector for creating channels.
-   * @param ephemeralQueueContractor     contractor for ephemeral response queues.
-   * @param nameConfiguration            exchange/queue naming scheme.
-   * @param requestTransport             owning request transport for callback completion.
-   * @param signalCodec                  codec for serialization.
-   * @param callerId                     id of the caller; used for queue names and headers.
-   * @param index                        router index for consumer tags.
-   * @param ttlSeconds                   message TTL in seconds.
-   * @param autoAcknowledge              whether to auto-ack responses.
-   * @param publisherConfirmationHandler optional handler for publisher confirms, may be null.
+   * Creates a request message router that publishes invocations and consumes correlated responses.
+   *
+   * @param connector                    connector for creating AMQP channels.
+   * @param ephemeralQueueContractor     contractor for the ephemeral per-caller response queue.
+   * @param nameConfiguration            exchange and queue naming scheme.
+   * @param requestTransport             owning request transport used to complete pending callbacks.
+   * @param signalCodec                  codec for serializing and deserializing signals.
+   * @param callerId                     unique caller id used in queue names and message headers.
+   * @param index                        ordinal index of this router, used in consumer tags.
+   * @param ttlSeconds                   message time-to-live in seconds for published invocations.
+   * @param autoAcknowledge              whether to auto-ack response deliveries.
+   * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
    */
   public RequestMessageRouter (RabbitMQConnector connector, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 

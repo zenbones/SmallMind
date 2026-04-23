@@ -37,8 +37,8 @@ import java.util.List;
 import org.smallmind.persistence.Durable;
 
 /**
- * Groups the caches associated with a particular durable type, including instance, wide-instance,
- * and vector caches.
+ * Factory interface that provides the instance, wide-instance, and vector caches associated with a
+ * particular durable type, along with a metrics source identifier.
  *
  * @param <I> durable identifier type
  * @param <D> durable type
@@ -46,25 +46,33 @@ import org.smallmind.persistence.Durable;
 public interface CacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
   /**
-   * @return identifier used for metrics reporting
+   * Returns the identifier used to label metrics emitted by this domain.
+   *
+   * @return metrics source string
    */
   String getMetricSource ();
 
   /**
-   * @param managedClass durable class
-   * @return cache of individual durables keyed by id string
+   * Returns the cache that stores individual durable instances.
+   *
+   * @param managedClass durable class whose instance cache is required
+   * @return persistence cache of single durables keyed by id string
    */
   PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
 
   /**
-   * @param managedClass durable class
-   * @return cache of lists of durables (wide cache) keyed by vector key
+   * Returns the cache that stores wide (list) query results for a parent durable.
+   *
+   * @param managedClass durable class whose wide-instance cache is required
+   * @return persistence cache of durable lists keyed by wide durable key string
    */
   PersistenceCache<String, List<D>> getWideInstanceCache (Class<D> managedClass);
 
   /**
-   * @param managedClass durable class
-   * @return cache of durable vectors keyed by vector key
+   * Returns the cache that stores durable vectors.
+   *
+   * @param managedClass durable class whose vector cache is required
+   * @return persistence cache of {@link DurableVector} instances keyed by vector key string
    */
   PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

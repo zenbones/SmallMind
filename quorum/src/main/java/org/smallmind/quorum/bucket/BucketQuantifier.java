@@ -33,17 +33,25 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Strategy interface that converts inputs into token quantities for rate limiting.
+ * Strategy that translates an input value into the number of tokens it costs.
+ * <p>
+ * Implementations allow the token cost to vary per input — for example, weighting
+ * a request by its payload size or priority — rather than charging a fixed amount
+ * for every item that passes through a {@link TokenBucket}.
  *
- * @param <T> type of value being quantified
+ * @param <T> the type of value whose cost is being calculated
  */
 public interface BucketQuantifier<T> {
 
   /**
-   * Calculates how many tokens the supplied input should consume.
+   * Returns the token cost for {@code input}.
+   * <p>
+   * The returned value must be non-negative. A value of {@code 0} means the input
+   * is always free; a value larger than the bucket's capacity means the input can
+   * never be permitted.
    *
-   * @param input incoming value
-   * @return the number of tokens required to accept the input
+   * @param input the value whose token cost is to be calculated
+   * @return the number of tokens to deduct from the bucket for this input
    */
   double quantity (T input);
 }

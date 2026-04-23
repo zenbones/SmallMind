@@ -35,14 +35,31 @@ package org.smallmind.file.ephemeral.heap;
 import java.util.EventListener;
 
 /**
- * Listener notified of {@link HeapEvent}s emitted from the ephemeral file-system heap.
+ * Callback interface for objects that wish to be notified of changes within the
+ * ephemeral heap file-system tree.
+ *
+ * <p>Implementations are registered with a {@link HeapNode} via
+ * {@link HeapNode#registerListener(HeapEventListener)} and deregistered via
+ * {@link HeapNode#unregisterListener(HeapEventListener)}. When a node is created,
+ * deleted, or modified, the originating node calls {@link HeapNode#bubble(HeapEvent)},
+ * which invokes {@link #handle(HeapEvent)} on every registered listener and then
+ * propagates the event upward to the parent node.
+ *
+ * <p>Typical consumers translate received {@link HeapEvent}s into
+ * {@link java.nio.file.WatchEvent}s for delivery through the NIO
+ * {@link java.nio.file.WatchService} subsystem.
+ *
+ * @see HeapEvent
+ * @see HeapNode#registerListener(HeapEventListener)
+ * @see HeapNode#unregisterListener(HeapEventListener)
  */
 public interface HeapEventListener extends EventListener {
 
   /**
-   * Handles an event that bubbled up from a heap node.
+   * Invoked when a heap node change event has been bubbled to this listener.
    *
-   * @param heapEvent the emitted event describing the type of change and its path
+   * @param heapEvent the event describing the type of change and the affected path;
+   *                  never {@code null}
    */
   void handle (HeapEvent heapEvent);
 }

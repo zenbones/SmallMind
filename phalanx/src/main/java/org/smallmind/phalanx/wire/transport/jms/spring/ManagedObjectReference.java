@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
 /**
- * Base Spring bean for referencing managed JMS objects by name and JNDI path.
+ * Base Spring bean for referencing managed JMS objects by logical name and JNDI path.
  */
 public abstract class ManagedObjectReference {
 
@@ -41,7 +41,9 @@ public abstract class ManagedObjectReference {
   private String path;
 
   /**
-   * Logical name of the referenced object.
+   * Returns the logical name of the referenced JMS object.
+   *
+   * @return logical name.
    */
   public String getName () {
 
@@ -49,7 +51,9 @@ public abstract class ManagedObjectReference {
   }
 
   /**
-   * Sets the logical name of the referenced object.
+   * Sets the logical name of the referenced JMS object.
+   *
+   * @param name logical name.
    */
   public void setName (String name) {
 
@@ -57,7 +61,9 @@ public abstract class ManagedObjectReference {
   }
 
   /**
-   * JNDI path or lookup string.
+   * Returns the JNDI path used to look up the JMS object.
+   *
+   * @return JNDI lookup path.
    */
   public String getPath () {
 
@@ -65,7 +71,9 @@ public abstract class ManagedObjectReference {
   }
 
   /**
-   * Sets the JNDI path or lookup string.
+   * Sets the JNDI path used to look up the JMS object.
+   *
+   * @param path JNDI lookup path.
    */
   public void setPath (String path) {
 

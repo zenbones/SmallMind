@@ -36,7 +36,9 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 
 /**
- * Default {@link ResourceGenerator} that creates resources based on the built-in {@link ResourceType} enum values.
+ * Default {@link ResourceGenerator} that creates {@link Resource} instances for all schemes
+ * enumerated by {@link ResourceType}, using reflection to invoke each type's single-argument
+ * {@code String} constructor.
  */
 public class ResourceTypeResourceGenerator implements ResourceGenerator {
 
@@ -60,9 +62,10 @@ public class ResourceTypeResourceGenerator implements ResourceGenerator {
   }
 
   /**
-   * Returns the schemes supported by the built-in {@link ResourceType} values.
+   * Returns the {@link ResourceSchemes} representing all schemes handled by the
+   * built-in {@link ResourceType} constants.
    *
-   * @return supported scheme collection
+   * @return collection of supported scheme names
    */
   public ResourceSchemes getValidSchemes () {
 
@@ -70,12 +73,13 @@ public class ResourceTypeResourceGenerator implements ResourceGenerator {
   }
 
   /**
-   * Instantiates a {@link Resource} corresponding to the supplied scheme using reflection.
+   * Reflectively instantiates the {@link Resource} subclass registered for the given scheme.
    *
-   * @param scheme resource scheme requested
-   * @param path   raw path component
-   * @return newly constructed resource
-   * @throws ResourceException if instantiation fails or the scheme is unsupported
+   * @param scheme the scheme portion of the resource identifier used to select a {@link ResourceType}
+   * @param path   the raw path component passed to the resource's constructor
+   * @return a newly constructed {@link Resource} for the specified scheme and path
+   * @throws ResourceException if no {@link ResourceType} matches {@code scheme}, or if the
+   *                           constructor invocation fails
    */
   public Resource createResource (String scheme, String path)
     throws ResourceException {

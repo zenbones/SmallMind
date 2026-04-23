@@ -33,13 +33,20 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Standard gap sizes used by the layout system, resolved via a {@link ParaboxPlatform}.
+ * Predefined gap categories resolved to concrete pixel values by a {@link ParaboxPlatform},
+ * used to space elements within a {@link SerialBox}.
  */
 public enum Gap {
 
+  /**
+   * No gap; elements are placed immediately adjacent to one another.
+   */
   NONE {
     /**
-     * {@inheritDoc}
+     * Returns zero, indicating no space between elements.
+     *
+     * @param platform the platform (unused for this constant)
+     * @return {@code 0.0}
      */
     @Override
     public double getGap (ParaboxPlatform platform) {
@@ -47,9 +54,16 @@ public enum Gap {
       return 0.0D;
     }
   },
+
+  /**
+   * A standard gap for visually related elements.
+   */
   RELATED {
     /**
-     * {@inheritDoc}
+     * Returns the platform-defined gap for related elements.
+     *
+     * @param platform the platform that provides the related-gap metric
+     * @return the related-gap value
      */
     @Override
     public double getGap (ParaboxPlatform platform) {
@@ -57,9 +71,16 @@ public enum Gap {
       return platform.getRelatedGap();
     }
   },
+
+  /**
+   * A larger gap for visually unrelated elements.
+   */
   UNRELATED {
     /**
-     * {@inheritDoc}
+     * Returns the platform-defined gap for unrelated elements.
+     *
+     * @param platform the platform that provides the unrelated-gap metric
+     * @return the unrelated-gap value
      */
     @Override
     public double getGap (ParaboxPlatform platform) {
@@ -69,10 +90,10 @@ public enum Gap {
   };
 
   /**
-   * Returns the actual gap size for this gap type on the given platform.
+   * Resolves this gap constant to a concrete numeric value for the given platform.
    *
-   * @param platform platform abstraction that supplies gap sizes
-   * @return the gap value in platform units
+   * @param platform the platform abstraction supplying gap metrics
+   * @return the gap size in platform units
    */
   public abstract double getGap (ParaboxPlatform platform);
 }

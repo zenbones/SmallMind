@@ -33,9 +33,23 @@
 package org.smallmind.javafx.extras.layout;
 
 /**
- * Enumeration describing which dimensional hint should be calculated.
+ * Selects which dimensional measurement variant to request from a node during layout calculation.
+ * Used by {@link InsetsPane} when querying child size hints along a given axis.
  */
 public enum Cut {
 
-  MINIMUM, PREFERRED, MAXIMUM
+  /**
+   * The smallest size at which a node can be displayed without clipping its content.
+   */
+  MINIMUM,
+
+  /**
+   * The natural size a node prefers when no external constraints are applied.
+   */
+  PREFERRED,
+
+  /**
+   * The largest size a node is willing to grow to; may be {@link Double#MAX_VALUE} for unbounded nodes.
+   */
+  MAXIMUM
 }

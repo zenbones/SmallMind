@@ -33,14 +33,19 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Base class for emitters that receive pushed measurements from the registry.
+ * Abstract base class for {@link Emitter} implementations that operate in a push-based
+ * model. Rather than waiting to be polled, a push emitter receives metric measurements
+ * forwarded to it by the registry at the time of recording. Subclasses are expected to
+ * implement the {@link Emitter} interface to define how measurements are accepted and
+ * forwarded to the target monitoring backend.
  */
 public abstract class PushEmitter implements Emitter {
 
   /**
-   * Push emitters always identify themselves as {@link EmitterMethod#PUSH}.
+   * Identifies this emitter as operating in the push model, always returning
+   * {@link EmitterMethod#PUSH}.
    *
-   * @return the push method indicator
+   * @return {@link EmitterMethod#PUSH}
    */
   @Override
   public EmitterMethod getEmitterMethod () {

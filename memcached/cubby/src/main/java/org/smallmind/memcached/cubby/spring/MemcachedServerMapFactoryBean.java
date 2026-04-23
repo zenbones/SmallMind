@@ -41,7 +41,21 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring FactoryBean that parses server patterns into a map of named {@link MemcachedServer} instances.
+ * Spring {@link FactoryBean} that expands a server-pattern string and an optional spread
+ * specification into a {@link Map} of logical server names to {@link MemcachedServer} instances.
+ *
+ * <p>The pattern syntax supports two forms:</p>
+ * <ul>
+ *   <li><em>Single server</em> &ndash; a plain {@code host} or {@code host:port} string with no
+ *       {@code #} token. A single entry keyed as {@code "memcached"} is added.</li>
+ *   <li><em>Multiple servers via spread</em> &ndash; a pattern containing {@code #} as a
+ *       placeholder. The spread is expanded using {@link Spread#calculate(String)} and each
+ *       resulting designator replaces {@code #} in the pattern. The designator itself becomes
+ *       the map key.</li>
+ * </ul>
+ *
+ * <p>When no explicit port is included in the pattern the default memcached port {@code 11211}
+ * is used. This bean is always singleton-scoped.</p>
  */
 public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, MemcachedServer>>, InitializingBean {
 
@@ -50,9 +64,13 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   private String serverSpread;
 
   /**
-   * Sets the server pattern (supports # for spreads and optional host:port).
+   * Sets the server pattern used to derive hostnames (and optionally ports).
    *
-   * @param serverPattern pattern string
+   * <p>The pattern may contain a single {@code #} placeholder that is replaced by each value
+   * generated from the spread. A colon-separated port suffix is honoured both in single-server
+   * and multi-server patterns.</p>
+   *
+   * @param serverPattern the pattern string (e.g., {@code "cache#.example.com:11211"})
    */
   public void setServerPattern (String serverPattern) {
 
@@ -60,9 +78,12 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   }
 
   /**
-   * Sets the spread specification applied to # placeholders.
+   * Sets the spread specification applied to {@code #} placeholders in the pattern.
    *
-   * @param serverSpread spread value (e.g., 1-3)
+   * <p>The value is passed directly to {@link Spread#calculate(String)} and may use range
+   * notation such as {@code "1-3"} to generate the designators {@code 1}, {@code 2}, {@code 3}.</p>
+   *
+   * @param serverSpread the spread string (e.g., {@code "1-3"})
    */
   public void setServerSpread (String serverSpread) {
 
@@ -70,11 +91,12 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   }
 
   /**
-   * Parses the configured pattern and spread into a map of {@link MemcachedServer} instances.
+   * Parses the configured pattern and spread into a {@link Map} of {@link MemcachedServer} instances.
    *
-   * <p>Expands {@code #} tokens via the spread and defaults the port to 11211 when unspecified.</p>
+   * <p>This method is called automatically by the Spring container after all properties have been
+   * injected. If {@code serverPattern} is null or empty, the resulting map is empty.</p>
    *
-   * @throws SpreadParserException if the spread cannot be parsed
+   * @throws SpreadParserException if the spread specification is syntactically invalid
    */
   @Override
   public void afterPropertiesSet ()
@@ -106,9 +128,10 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   }
 
   /**
-   * Returns the built server map.
+   * Returns the map of logical server names to {@link MemcachedServer} instances assembled during
+   * {@link #afterPropertiesSet()}.
    *
-   * @return map of server name to {@link MemcachedServer}
+   * @return the server map; never {@code null} but may be empty
    */
   @Override
   public Map<String, MemcachedServer> getObject () {
@@ -117,9 +140,9 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   }
 
   /**
-   * Declares the object type produced by this factory.
+   * Returns the type of object produced by this factory.
    *
-   * @return {@link Map} class
+   * @return {@link Map}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -128,9 +151,9 @@ public class MemcachedServerMapFactoryBean implements FactoryBean<Map<String, Me
   }
 
   /**
-   * Indicates this factory bean is a singleton.
+   * Reports that this factory bean always returns the same singleton instance.
    *
-   * @return {@code true} always
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {

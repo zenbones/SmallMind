@@ -35,212 +35,226 @@ package org.smallmind.quorum.pool.complex;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
 /**
- * Management surface for controlling and querying a complex component pool.
+ * Management and introspection interface for a complex component pool.
+ * <p>
+ * Exposes the full set of operations needed to start, stop, query, and reconfigure a pool at
+ * runtime without requiring a dependency on the concrete {@link ComponentPool} class.
+ * Implemented by {@link org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor} so that
+ * pool state can be observed and tuned through JMX without restarting the pool.
  */
 public interface ComponentPoolSurface {
 
   /**
-   * Pool name for identification.
+   * Returns the unique name that identifies this pool in metrics, JMX, and log output.
    *
-   * @return pool name
+   * @return the pool name
    */
   String getPoolName ();
 
   /**
-   * Starts the pool.
+   * Starts the pool, initialising the factory and pre-populating components.
    *
-   * @throws ComponentPoolException if startup fails
+   * @throws ComponentPoolException if any part of the startup sequence fails
    */
   void startup ()
     throws ComponentPoolException;
 
   /**
-   * Shuts down the pool.
+   * Shuts down the pool, terminating all managed components and releasing factory resources.
    *
-   * @throws ComponentPoolException if shutdown fails
+   * @throws ComponentPoolException if any part of the shutdown sequence fails
    */
   void shutdown ()
     throws ComponentPoolException;
 
   /**
-   * Total size of the pool.
+   * Returns the total number of component instances managed by the pool (free + processing).
    *
-   * @return number of components
+   * @return the pool size
    */
   int getPoolSize ();
 
   /**
-   * Number of free components.
+   * Returns the number of component instances currently idle on the free queue.
    *
-   * @return free count
+   * @return the free-queue size
    */
   int getFreeSize ();
 
   /**
-   * Number of components currently processing.
+   * Returns the number of component instances currently checked out by callers.
    *
-   * @return processing count
+   * @return the processing count
    */
   int getProcessingSize ();
 
   /**
-   * Whether validation occurs upon creation.
+   * Returns whether newly created component instances are validated before entering service.
    *
-   * @return {@code true} if enabled
+   * @return {@code true} if validate-on-create is enabled
    */
   boolean isTestOnCreate ();
 
   /**
-   * Enables or disables validation on creation.
+   * Enables or disables validation of component instances immediately after creation.
    *
-   * @param testOnCreate {@code true} to validate on create
+   * @param testOnCreate {@code true} to validate each instance at creation time
    */
   void setTestOnCreate (boolean testOnCreate);
 
   /**
-   * Whether validation occurs upon acquire.
+   * Returns whether component instances are validated when taken from the free queue for
+   * a caller.
    *
-   * @return {@code true} if enabled
+   * @return {@code true} if validate-on-acquire is enabled
    */
   boolean isTestOnAcquire ();
 
   /**
-   * Enables or disables validation on acquire.
+   * Enables or disables validation of component instances at acquisition time.
    *
-   * @param testOnAcquire {@code true} to validate on acquire
+   * @param testOnAcquire {@code true} to validate before handing an instance to a caller
    */
   void setTestOnAcquire (boolean testOnAcquire);
 
   /**
-   * Whether lease time should be reported in nanoseconds.
+   * Returns whether the pool fires per-component lease-time events and emits Claxon metrics
+   * when a component is returned.
    *
-   * @return {@code true} if reporting is enabled
+   * @return {@code true} if lease-time reporting is enabled
    */
   boolean isReportLeaseTimeNanos ();
 
   /**
-   * Enables or disables lease time reporting.
+   * Enables or disables lease-time reporting.
    *
-   * @param reportLeaseTimeNanos {@code true} to enable reporting
+   * @param reportLeaseTimeNanos {@code true} to enable per-return lease-time events
    */
   void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos);
 
   /**
-   * Whether existential tracking is enabled.
+   * Returns whether the pool captures stack traces of the threads that acquire components,
+   * enabling diagnosis of leaked or long-held components.
    *
-   * @return {@code true} if existential tracking is on
+   * @return {@code true} if existential stack-trace capture is enabled
    */
   boolean isExistentiallyAware ();
 
   /**
-   * Enables or disables existential tracking.
+   * Enables or disables existential stack-trace capture.
    *
-   * @param existentiallyAware {@code true} to enable tracking
+   * @param existentiallyAware {@code true} to record the acquiring thread's stack trace
    */
   void setExistentiallyAware (boolean existentiallyAware);
 
   /**
-   * Timeout for creating new components (ms).
+   * Returns the maximum time in milliseconds the pool allows for constructing a single
+   * component instance. {@code 0} means no limit.
    *
-   * @return creation timeout in milliseconds
+   * @return the creation timeout in milliseconds
    */
   long getCreationTimeoutMillis ();
 
   /**
    * Sets the creation timeout in milliseconds.
    *
-   * @param creationTimeoutMillis timeout in milliseconds
+   * @param creationTimeoutMillis timeout; {@code 0} for no limit
    */
   void setCreationTimeoutMillis (long creationTimeoutMillis);
 
   /**
-   * Wait time for acquiring a component (ms).
+   * Returns the maximum time in milliseconds a caller may block waiting for a component
+   * when the pool is at capacity. {@code 0} means throw immediately.
    *
-   * @return acquire wait in milliseconds
+   * @return the acquire wait time in milliseconds
    */
   long getAcquireWaitTimeMillis ();
 
   /**
    * Sets the acquire wait time in milliseconds.
    *
-   * @param acquireWaitTimeMillis wait in milliseconds
+   * @param acquireWaitTimeMillis wait time; {@code 0} for immediate failure
    */
   void setAcquireWaitTimeMillis (long acquireWaitTimeMillis);
 
   /**
-   * Initial pool size.
+   * Returns the number of component instances pre-created at pool startup.
    *
-   * @return number of elements created on startup
+   * @return the initial pool size
    */
   int getInitialPoolSize ();
 
   /**
-   * Minimum pool size.
+   * Returns the minimum number of component instances the pool attempts to maintain.
    *
-   * @return minimum number of elements to maintain
+   * @return the minimum pool size; {@code 0} disables the floor
    */
   int getMinPoolSize ();
 
   /**
-   * Sets the minimum pool size.
+   * Sets the minimum pool size floor.
    *
-   * @param minPoolSize minimum size
+   * @param minPoolSize minimum instances to keep alive; must be non-negative
    */
   void setMinPoolSize (int minPoolSize);
 
   /**
-   * Maximum pool size (0 for unbounded).
+   * Returns the maximum number of component instances the pool will hold concurrently.
+   * {@code 0} means unbounded.
    *
-   * @return maximum size
+   * @return the maximum pool size
    */
   int getMaxPoolSize ();
 
   /**
-   * Sets the maximum pool size.
+   * Sets the maximum pool size cap.
    *
-   * @param maxPoolSize maximum size (0 for unbounded)
+   * @param maxPoolSize maximum instances; {@code 0} for unbounded
    */
   void setMaxPoolSize (int maxPoolSize);
 
   /**
-   * Maximum lease time in seconds.
+   * Returns the maximum wall-clock time in seconds a component may be held by a caller
+   * before a lease fuse ignites and triggers non-prejudicial reclamation.
    *
-   * @return lease timeout
+   * @return the maximum lease time in seconds; {@code 0} means no limit
    */
   int getMaxLeaseTimeSeconds ();
 
   /**
    * Sets the maximum lease time in seconds.
    *
-   * @param maxLeaseTimeSeconds lease timeout
+   * @param maxLeaseTimeSeconds lease limit; {@code 0} to disable
    */
   void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds);
 
   /**
-   * Maximum idle time in seconds.
+   * Returns the maximum time in seconds a component may sit idle before an idle fuse ignites
+   * and the component is retired.
    *
-   * @return idle timeout
+   * @return the maximum idle time in seconds; {@code 0} means no limit
    */
   int getMaxIdleTimeSeconds ();
 
   /**
    * Sets the maximum idle time in seconds.
    *
-   * @param maxIdleTimeSeconds idle timeout
+   * @param maxIdleTimeSeconds idle limit; {@code 0} to disable
    */
   void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
 
   /**
-   * Maximum processing time in seconds.
+   * Returns the maximum time in seconds a component may be actively processing (checked out)
+   * before a prejudicial processing-timeout fuse forcibly terminates it.
    *
-   * @return processing timeout
+   * @return the maximum processing time in seconds; {@code 0} means no limit
    */
   int getMaxProcessingTimeSeconds ();
 
   /**
    * Sets the maximum processing time in seconds.
    *
-   * @param maxProcessingTimeSeconds processing timeout
+   * @param maxProcessingTimeSeconds processing limit; {@code 0} to disable
    */
-  void setMaxProcessingTimeTimeSeconds (int maxProcessingTimeSeconds);
+  void setMaxProcessingTimeSeconds (int maxProcessingTimeSeconds);
 }

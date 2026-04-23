@@ -39,19 +39,40 @@ import org.smallmind.claxon.registry.Window;
 import org.smallmind.claxon.registry.aggregate.Pursued;
 
 /**
- * Meter that reports multiple exponentially weighted moving averages over configured windows.
+ * A {@link Meter} that reports multiple exponentially weighted moving averages (EWMAs),
+ * one for each configured {@link Window}.
+ *
+ * <p>Values submitted via {@link #update(long)} are forwarded to a {@link Pursued}
+ * aggregate, which maintains a separate EWMA for every window size. On each call to
+ * {@link #record()}, one {@link Quantity} per window is returned, named after the window
+ * and carrying the current moving-average value for that window's decay constant.</p>
+ *
+ * <p>This meter is well suited to smoothing noisy signals over different time horizons
+ * simultaneously — for example, reporting 1-minute, 5-minute, and 15-minute load averages
+ * in the style of Unix {@code uptime}.</p>
  */
 public class Trace implements Meter {
 
+  /**
+   * Aggregate that maintains one EWMA per configured window.
+   */
   private final Pursued pursued;
+
+  /**
+   * The window definitions provided at construction time; used to map the ordered
+   * EWMA values returned by {@link Pursued#getMovingAverages()} to named quantities.
+   */
   private final Window[] windows;
 
   /**
-   * Creates a trace meter using the provided windows.
+   * Creates a new {@code Trace} meter with one EWMA per supplied {@link Window}.
    *
-   * @param clock          clock providing monotonic time
-   * @param windowTimeUnit unit applied to each window
-   * @param windows        window definitions and names
+   * @param clock          the clock providing monotonic time for the EWMA decay calculations
+   * @param windowTimeUnit the {@link TimeUnit} applied to the numeric value of each
+   *                       {@link Window}; for example, {@link TimeUnit#MINUTES} interprets
+   *                       a window value of {@code 5} as a 5-minute window
+   * @param windows        one or more {@link Window} definitions specifying the name and
+   *                       numeric size of each moving-average window; must not be empty
    */
   public Trace (Clock clock, TimeUnit windowTimeUnit, Window... windows) {
 
@@ -68,9 +89,9 @@ public class Trace implements Meter {
   }
 
   /**
-   * Updates the moving averages with the provided value.
+   * Incorporates {@code value} into all configured EWMAs.
    *
-   * @param value value to include
+   * @param value the measurement to include in the moving averages
    */
   @Override
   public void update (long value) {
@@ -79,9 +100,16 @@ public class Trace implements Meter {
   }
 
   /**
-   * Returns quantities for each configured window using the current moving averages.
+   * Returns the current exponentially weighted moving average for each configured window
+   * as a named {@link Quantity}.
    *
-   * @return array of window quantities
+   * <p>The returned array has the same length and ordering as the {@link Window} array
+   * supplied at construction. Each quantity is named after its corresponding window
+   * (e.g., {@code "m1"}, {@code "m5"}, {@code "m15"}) and carries the EWMA value
+   * computed over that window's decay period.</p>
+   *
+   * @return an array of {@link Quantity} values, one per configured window, in
+   * construction order
    */
   @Override
   public Quantity[] record () {

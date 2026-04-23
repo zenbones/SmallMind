@@ -48,7 +48,21 @@ import org.smallmind.sleuth.runner.event.StartSleuthEvent;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 /**
- * Executes a single test method along with its per-test lifecycle hooks.
+ * Executes a single test method along with its per-test lifecycle hooks on the {@link TestTier#TEST} thread.
+ * <p>
+ * The runner runs before-test hooks, invokes the target test method, and runs after-test hooks,
+ * emitting Sleuth events at each stage. If a non-null culprit is present at the start (inherited
+ * from a suite-level failure or from the dependency queue), the test body is skipped and a
+ * {@link SkippedSleuthEvent} is emitted instead.
+ * <p>
+ * Assertion errors ({@link AssertionError}) are reported as
+ * {@link org.smallmind.sleuth.runner.event.SleuthEventType#FAILURE}; all other exceptions are
+ * reported as {@link org.smallmind.sleuth.runner.event.SleuthEventType#ERROR}. Either may trigger
+ * run cancellation if the corresponding stop flag is set. {@link #complete()} is always called in
+ * a {@code finally} block to ensure latches and semaphores are correctly released.
+ *
+ * @see SuiteRunner
+ * @see SleuthRunner
  */
 public class TestRunner implements TestController {
 
@@ -65,17 +79,19 @@ public class TestRunner implements TestController {
   private Culprit culprit;
 
   /**
-   * @param sleuthRunner              runner used for event dispatch and cancellation checks
-   * @param testCompletedLatch        latch decremented when the test finishes
-   * @param culprit                   prior failure that should cause this test to be skipped; may be {@code null}
-   * @param clazz                     test class
-   * @param instance                  instance of the test class
-   * @param testMethodDependency      dependency metadata for the test method
-   * @param testMethodDependencyQueue queue managing inter-test dependencies
-   * @param annotationProcessor       processor translating annotations into executable metadata
-   * @param threadPool                thread pool used to execute test tiers
-   * @param stopOnError               whether unexpected errors halt further execution
-   * @param stopOnFailure             whether assertion failures halt further execution
+   * Constructs a runner for one test method.
+   *
+   * @param sleuthRunner              central runner for event dispatch and cancellation; must not be {@code null}
+   * @param testCompletedLatch        latch decremented once this test finishes; must not be {@code null}
+   * @param culprit                   suite-level culprit that causes this test to be skipped; {@code null} if none
+   * @param clazz                     test class containing the method; must not be {@code null}
+   * @param instance                  instance of the test class on which methods are invoked; must not be {@code null}
+   * @param testMethodDependency      dependency node for this test method; must not be {@code null}
+   * @param testMethodDependencyQueue queue used to mark this test complete when it finishes; must not be {@code null}
+   * @param annotationProcessor       processor to resolve per-test lifecycle annotations; must not be {@code null}
+   * @param threadPool                pool used to release the test-tier semaphore; must not be {@code null}
+   * @param stopOnError               {@code true} to cancel the run on the first unexpected error
+   * @param stopOnFailure             {@code true} to cancel the run on the first assertion failure
    */
   public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
@@ -93,7 +109,16 @@ public class TestRunner implements TestController {
   }
 
   /**
-   * Executes before/after test hooks and the target test method, emitting Sleuth events for each stage.
+   * Runs before-test hooks, the test method, and after-test hooks, emitting events throughout.
+   * <p>
+   * The test identifier is updated so output can be attributed to this test. Before-test methods
+   * are invoked first; if any produce a culprit the test body is skipped. The test method is then
+   * invoked via reflection; on success a {@link SuccessSleuthEvent} is fired. An {@link AssertionError}
+   * fires a {@link FailureSleuthEvent}; any other exception fires an {@link ErrorSleuthEvent}. In
+   * both error cases the culprit is set so after-test hooks see it. After-test methods run regardless
+   * of test outcome. The final culprit is stored on the dependency node for downstream tests.
+   * <p>
+   * {@link #complete()} is always called in a {@code finally} block.
    */
   @Override
   public void run () {
@@ -154,7 +179,10 @@ public class TestRunner implements TestController {
   }
 
   /**
-   * Releases the semaphore slot, marks the dependency complete, and counts down the latch.
+   * Releases the test-tier semaphore permit, marks this test complete in the queue, and
+   * decrements the suite's test completion latch.
+   * <p>
+   * Always called from the {@code finally} block of {@link #run()}.
    */
   @Override
   public void complete () {

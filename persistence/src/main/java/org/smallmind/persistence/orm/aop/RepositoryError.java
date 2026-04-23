@@ -35,7 +35,7 @@ package org.smallmind.persistence.orm.aop;
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
 /**
- * Error raised when repository injection or lookup fails.
+ * Error thrown by {@link RepositoryAspect} when DAO injection fails due to a missing or type-incompatible registration.
  */
 public class RepositoryError extends FormattedError {
 

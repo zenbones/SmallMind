@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Byte literal operand.
+ * A where operand that holds a single byte literal value.
  */
 @XmlRootElement(name = "byte", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   private Byte value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public ByteWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided byte value.
+   * Constructs an operand wrapping the given byte.
    *
    * @param value byte literal
    */
@@ -64,10 +64,10 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
-   * Convenience factory for a byte operand.
+   * Factory method that wraps a byte in a {@code ByteWhereOperand}.
    *
    * @param value byte literal
-   * @return the operand instance
+   * @return new operand instance
    */
   public static ByteWhereOperand instance (Byte value) {
 
@@ -75,6 +75,8 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
+   * Returns the element type for byte operands.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#BYTE}
    */
   @Override
@@ -95,9 +99,9 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
-   * Returns the byte value.
+   * Returns the stored byte value.
    *
-   * @return byte literal or {@code null}
+   * @return byte literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
-   * Returns the serialized byte value.
+   * Returns the byte value used during serialization.
    *
-   * @return byte literal or {@code null}
+   * @return byte literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Byte getValue () {
@@ -118,7 +122,7 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   /**
-   * Sets the byte value.
+   * Sets the byte value for this operand.
    *
    * @param value byte literal
    */

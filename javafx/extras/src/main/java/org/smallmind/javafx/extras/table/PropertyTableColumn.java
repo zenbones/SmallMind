@@ -41,20 +41,24 @@ import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 /**
- * {@link TableColumn} configured to display and optionally convert a named JavaBean property from the row item.
+ * A {@link TableColumn} that reads its value from a named JavaBean property of the row model class
+ * and optionally formats the value using a {@link StringConverter}. Cell content is aligned
+ * according to a configurable {@link Pos}. The converter, if supplied, is applied whenever the
+ * cell is not in edit mode.
  *
- * @param <S> the table row type
- * @param <T> the property type
+ * @param <S> the type of the table row model
+ * @param <T> the type of the property value displayed in this column
  */
 public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
   private final String propertyName;
 
   /**
-   * Creates a column with the supplied header text and bean property name using default alignment.
+   * Creates a column with the given header text and property name, using no converter and
+   * {@link Pos#CENTER_LEFT} alignment.
    *
-   * @param text         the column header
-   * @param propertyName the name of the bean property to display
+   * @param text         the column header text; must not be {@code null}
+   * @param propertyName the name of the JavaBean property to display; must not be {@code null}
    */
   public PropertyTableColumn (String text, String propertyName) {
 
@@ -62,11 +66,12 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
   }
 
   /**
-   * Creates a column with a custom converter.
+   * Creates a column with the given header text, property name, and converter, using
+   * {@link Pos#CENTER_LEFT} alignment.
    *
-   * @param text         the column header
-   * @param propertyName the name of the bean property to display
-   * @param converter    converter used to render the property
+   * @param text         the column header text; must not be {@code null}
+   * @param propertyName the name of the JavaBean property to display; must not be {@code null}
+   * @param converter    the converter used to format the property value for display; may be {@code null}
    */
   public PropertyTableColumn (String text, String propertyName, StringConverter<T> converter) {
 
@@ -74,11 +79,12 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
   }
 
   /**
-   * Creates a column with a specific alignment.
+   * Creates a column with the given header text, property name, and cell alignment, using no
+   * converter.
    *
-   * @param text         the column header
-   * @param propertyName the name of the bean property to display
-   * @param position     desired alignment for the cell content
+   * @param text         the column header text; must not be {@code null}
+   * @param propertyName the name of the JavaBean property to display; must not be {@code null}
+   * @param position     the alignment to apply to each cell; must not be {@code null}
    */
   public PropertyTableColumn (String text, String propertyName, Pos position) {
 
@@ -86,13 +92,16 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
   }
 
   /**
-   * Creates a column with a converter and alignment, and sets a cell factory that applies the converter outside of
-   * editing mode. The column value is sourced from the provided bean property name.
+   * Creates a fully configured column. A custom cell factory is installed that applies
+   * {@code converter} when rendering non-empty, non-editing cells, and sets the cell alignment
+   * to {@code position}. Cell values are sourced from {@code propertyName} via a
+   * {@link PropertyValueFactory}.
    *
-   * @param text         the column header
-   * @param propertyName the name of the bean property to display
-   * @param converter    converter used to render the property (nullable)
-   * @param position     desired alignment for the cell content
+   * @param text         the column header text; must not be {@code null}
+   * @param propertyName the name of the JavaBean property to display; must not be {@code null}
+   * @param converter    the converter used to format the property value; {@code null} leaves
+   *                     text rendering to the default cell behaviour
+   * @param position     the alignment to apply to each cell; must not be {@code null}
    */
   public PropertyTableColumn (String text, String propertyName, final StringConverter<T> converter, final Pos position) {
 
@@ -126,7 +135,9 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
   }
 
   /**
-   * @return the bean property name used by the column
+   * Returns the name of the JavaBean property that supplies values to this column.
+   *
+   * @return the property name; never {@code null}
    */
   public String getPropertyName () {
 

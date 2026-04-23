@@ -39,17 +39,31 @@ import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Meter that tracks event counts and rates over a sliding window.
+ * A {@link Meter} that tracks the total number of events and the event rate over a
+ * configurable sliding window, without regard to the magnitude of individual values.
+ *
+ * <p>Each call to {@link #update(long)} is treated as a single event regardless of
+ * the supplied {@code value} — the value itself is ignored, and the underlying
+ * {@link Paced} aggregate is incremented by {@code 1}. This makes {@code Tachometer}
+ * suitable for measuring throughput (e.g., requests per second) where only occurrence
+ * matters, not magnitude.</p>
+ *
+ * <p>On {@link #record()}, two {@link Quantity} values are returned: {@code "count"}
+ * (typed as {@link QuantityType#COUNT}) and {@code "rate"}.</p>
  */
 public class Tachometer implements Meter {
 
+  /**
+   * Aggregate that tracks the total event count and per-window event rate.
+   */
   private final Paced paced;
 
   /**
-   * Creates a tachometer using the supplied clock and window.
+   * Creates a new {@code Tachometer} with the given clock and sliding-window duration.
    *
-   * @param clock       clock providing monotonic time
-   * @param windowStint window over which counts and rates are computed
+   * @param clock       the clock providing monotonic time for rate calculations
+   * @param windowStint the duration of the sliding window over which count and rate
+   *                    are computed; must be a positive duration
    */
   public Tachometer (Clock clock, Stint windowStint) {
 
@@ -57,9 +71,12 @@ public class Tachometer implements Meter {
   }
 
   /**
-   * Increments the count by one for each invocation.
+   * Records one event occurrence in the underlying {@link Paced} aggregate.
    *
-   * @param value ignored input; each call counts as one event
+   * <p>The supplied {@code value} is completely ignored; each invocation of this
+   * method contributes exactly {@code 1} to the event count.</p>
+   *
+   * @param value ignored; present only to satisfy the {@link Meter} contract
    */
   @Override
   public void update (long value) {
@@ -68,9 +85,16 @@ public class Tachometer implements Meter {
   }
 
   /**
-   * Returns count and rate quantities for the current window.
+   * Returns the current event count and event rate as {@link Quantity} instances.
    *
-   * @return count and rate measurements
+   * <p>The returned array always contains exactly two elements:
+   * <ol>
+   *   <li>{@code "count"} — total number of events recorded ({@link QuantityType#COUNT})</li>
+   *   <li>{@code "rate"} — events per unit time over the configured sliding window</li>
+   * </ol>
+   * </p>
+   *
+   * @return an array of exactly two {@link Quantity} values: {@code count} and {@code rate}
    */
   @Override
   public Quantity[] record () {

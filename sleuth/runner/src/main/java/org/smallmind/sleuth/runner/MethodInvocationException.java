@@ -35,7 +35,10 @@ package org.smallmind.sleuth.runner;
 import java.lang.reflect.Method;
 
 /**
- * Checked exception that wraps failures when invoking reflected test methods.
+ * Checked exception wrapping a failure that occurred while invoking a reflected test method.
+ * <p>
+ * Carries both the method reference and the elapsed execution time at the point of failure so that
+ * callers can emit accurate Sleuth events without needing to re-compute timing.
  */
 public class MethodInvocationException extends Exception {
 
@@ -43,9 +46,11 @@ public class MethodInvocationException extends Exception {
   private final long elapsed;
 
   /**
-   * @param method  method that was invoked
-   * @param elapsed elapsed execution time in milliseconds before the failure occurred
-   * @param cause   root cause of the invocation failure
+   * Constructs an invocation exception.
+   *
+   * @param method  reflected method that was being invoked when the failure occurred; must not be {@code null}
+   * @param elapsed elapsed execution time in milliseconds measured from invocation start to failure
+   * @param cause   root cause of the failure; must not be {@code null}
    */
   public MethodInvocationException (Method method, long elapsed, Throwable cause) {
 
@@ -56,7 +61,7 @@ public class MethodInvocationException extends Exception {
   }
 
   /**
-   * @return method that produced the error
+   * @return the method that was being invoked when the failure occurred; never {@code null}
    */
   public Method getMethod () {
 
@@ -64,7 +69,7 @@ public class MethodInvocationException extends Exception {
   }
 
   /**
-   * @return elapsed milliseconds at the time of failure
+   * @return elapsed execution time in milliseconds at the moment the failure was caught
    */
   public long getElapsed () {
 

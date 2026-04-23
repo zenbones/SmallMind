@@ -48,7 +48,12 @@ import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
 /**
- * Worker that processes incoming JMS invocation messages and delegates to the invocation circuit.
+ * Worker that dequeues incoming JMS {@link BytesMessage} payloads, decodes them as
+ * {@link InvocationSignal} objects, and dispatches them through the {@link WireInvocationCircuit}.
+ *
+ * <p>One worker instance is allocated per slot in the worker pool managed by
+ * {@link JmsResponseTransport}.  Each call to {@link #engageWork(Message)} handles exactly
+ * one request message.
  */
 public class InvocationWorker extends Worker<Message> {
 
@@ -59,13 +64,13 @@ public class InvocationWorker extends Worker<Message> {
   private final byte[] buffer;
 
   /**
-   * Creates a worker with the resources needed to decode and dispatch invocation messages.
+   * Constructs a worker that can decode and dispatch invocation messages.
    *
-   * @param workQueue            queue supplying JMS messages
-   * @param responseTransmitter  transmitter used to return results
-   * @param invocationCircuit    circuit that routes invocations to services
-   * @param signalCodec          codec used to decode invocation signals
-   * @param maximumMessageLength maximum length of message payloads
+   * @param workQueue            work queue from which this worker draws messages
+   * @param responseTransmitter  transmitter used to send results back to callers
+   * @param invocationCircuit    circuit that routes decoded invocations to registered services
+   * @param signalCodec          codec used to deserialise {@link InvocationSignal} payloads
+   * @param maximumMessageLength maximum byte length of any single inbound message payload
    */
   public InvocationWorker (WorkQueue<Message> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
@@ -79,7 +84,12 @@ public class InvocationWorker extends Worker<Message> {
   }
 
   /**
-   * Decodes the invocation signal from the message and executes it via the invocation circuit.
+   * Reads the byte payload from {@code message}, decodes an {@link InvocationSignal},
+   * and executes the invocation through the circuit.  Throws {@link TransportException}
+   * if the payload exceeds the configured maximum.
+   *
+   * @param message inbound JMS {@link BytesMessage} containing an encoded {@link InvocationSignal}
+   * @throws Throwable if decoding or invocation dispatch fails
    */
   @Override
   public void engageWork (final Message message)
@@ -101,7 +111,7 @@ public class InvocationWorker extends Worker<Message> {
   }
 
   /**
-   * No-op close for this worker.
+   * Performs no action; this worker holds no resources that require explicit release.
    */
   @Override
   public void close () {

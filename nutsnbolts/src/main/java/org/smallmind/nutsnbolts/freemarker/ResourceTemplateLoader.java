@@ -41,19 +41,18 @@ import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
 /**
- * FreeMarker {@link TemplateLoader} that resolves templates via the {@code Resource} abstraction.
- * Supports URLs, files, classpath, and other schemes recognized by {@link ResourceParser}.
+ * FreeMarker {@link TemplateLoader} that resolves template names through the {@link ResourceParser} abstraction, supporting URLs, classpath references, and any other resource scheme recognized by {@link ResourceTypeResourceGenerator}.
  */
 public class ResourceTemplateLoader implements TemplateLoader {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
 
   /**
-   * Resolves a template using the {@link ResourceParser}, allowing URLs, classpath, and other schemes.
+   * Parses the given name as a resource identifier and returns a {@link ResourceTemplateSource} wrapping the resulting {@link org.smallmind.nutsnbolts.resource.Resource}.
    *
-   * @param name template resource identifier
-   * @return template source when found
-   * @throws IOException if the name cannot be parsed or the resource cannot be accessed
+   * @param name the template resource identifier, interpreted by {@link ResourceParser}
+   * @return a {@link ResourceTemplateSource} for the resolved resource
+   * @throws IOException if the name cannot be parsed or the resource cannot be located
    */
   @Override
   public Object findTemplateSource (String name)
@@ -68,10 +67,10 @@ public class ResourceTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Resource abstraction does not expose modification time; returns {@code -1}.
+   * Returns {@code -1} because the resource abstraction does not expose last-modified timestamps.
    *
    * @param templateSource ignored
-   * @return {@code -1} to indicate unknown modification time
+   * @return {@code -1} always
    */
   @Override
   public long getLastModified (Object templateSource) {
@@ -80,12 +79,12 @@ public class ResourceTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Opens a reader for the supplied template source using the requested encoding.
+   * Opens and returns a character reader for the resource template using the specified encoding.
    *
-   * @param templateSource resource-backed template source
-   * @param encoding       character encoding to apply
-   * @return reader over the template content
-   * @throws IOException if the resource cannot be opened
+   * @param templateSource a {@link ResourceTemplateSource} previously returned by {@link #findTemplateSource}
+   * @param encoding       the character encoding to apply when reading the resource
+   * @return a reader over the template content
+   * @throws IOException if the resource cannot be opened or the encoding is unsupported
    */
   @Override
   public Reader getReader (Object templateSource, String encoding)
@@ -99,10 +98,10 @@ public class ResourceTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Closes the underlying resource stream if it was opened.
+   * Closes the input stream held by the given template source, if it was opened.
    *
-   * @param templateSource template source to close
-   * @throws IOException if closing fails
+   * @param templateSource a {@link ResourceTemplateSource} previously returned by {@link #findTemplateSource}
+   * @throws IOException if closing the stream fails
    */
   @Override
   public void closeTemplateSource (Object templateSource)

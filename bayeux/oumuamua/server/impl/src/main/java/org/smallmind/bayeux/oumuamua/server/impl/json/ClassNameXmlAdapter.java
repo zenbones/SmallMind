@@ -35,16 +35,17 @@ package org.smallmind.bayeux.oumuamua.server.impl.json;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * JAXB adapter that marshals an object's concrete class name.
+ * JAXB {@link XmlAdapter} that marshals any {@code Object} to the fully qualified name of
+ * its runtime class; unmarshalling is intentionally unsupported.
  */
 public class ClassNameXmlAdapter extends XmlAdapter<String, Object> {
 
   /**
-   * Unmarshalling is not supported for class names.
+   * Not supported; this adapter is marshal-only.
    *
-   * @param s string value
+   * @param s the serialized string value (unused)
    * @return never returns normally
-   * @throws UnsupportedOperationException always thrown
+   * @throws UnsupportedOperationException always
    */
   @Override
   public Object unmarshal (String s) {
@@ -53,10 +54,10 @@ public class ClassNameXmlAdapter extends XmlAdapter<String, Object> {
   }
 
   /**
-   * Returns the fully qualified class name of the supplied object.
+   * Serializes an object to the fully qualified name of its runtime class.
    *
-   * @param obj object to inspect
-   * @return class name or {@code null} when the object is {@code null}
+   * @param obj the object whose class name is to be returned
+   * @return the fully qualified class name, or {@code null} if {@code obj} is {@code null}
    */
   @Override
   public String marshal (Object obj) {

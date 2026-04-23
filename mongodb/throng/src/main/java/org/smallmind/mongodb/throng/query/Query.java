@@ -49,7 +49,9 @@ public class Query {
   private int batchSize = 0;
 
   /**
-   * @return new query builder
+   * Creates a new, unconfigured query builder.
+   *
+   * @return a fresh {@link Query} instance
    */
   public static Query with () {
 
@@ -57,7 +59,9 @@ public class Query {
   }
 
   /**
-   * @return query with an empty filter
+   * Creates a query pre-configured with an empty filter that matches all documents.
+   *
+   * @return a query with an empty filter applied
    */
   public static Query empty () {
 

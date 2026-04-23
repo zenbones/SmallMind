@@ -43,8 +43,18 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * {@link ComponentInstance} wrapper for {@link PooledJavaContext} that listens for context events and
- * returns or terminates itself accordingly.
+ * {@link ComponentInstance} adapter that links a {@link PooledJavaContext} to a
+ * {@link ComponentPool} by listening for context lifecycle events.
+ * <p>
+ * When the caller logically closes the context (non-forced), the {@link PooledJavaContext} fires
+ * a {@link org.smallmind.quorum.namespace.event.JavaContextEvent#contextClosed} event and this
+ * instance returns itself to the pool via {@link ComponentPool#returnInstance}. When the context
+ * detects a {@link javax.naming.CommunicationException} it fires an abort event and this instance
+ * calls {@link ComponentPool#terminateInstance} followed by
+ * {@link ComponentPool#reportErrorOccurred}.
+ * <p>
+ * {@link #close()} uses an {@link AtomicBoolean} guard to ensure the underlying context is
+ * physically closed and the pool is notified at most once even under concurrent calls.
  */
 public class JavaContextComponentInstance implements ComponentInstance<PooledJavaContext>, JavaContextListener {
 
@@ -54,11 +64,11 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /**
-   * Creates a component instance and registers for context lifecycle events.
+   * Creates the component instance and registers it as a listener on {@code pooledJavaContext}.
    *
-   * @param componentPool     owning pool
-   * @param pooledJavaContext pooled context to wrap
-   * @throws NamingException if listener registration fails
+   * @param componentPool     the pool that owns this instance and to which it reports lifecycle events
+   * @param pooledJavaContext the {@link PooledJavaContext} to wrap and monitor
+   * @throws NamingException if {@link PooledJavaContext#addJavaContextListener} throws
    */
   public JavaContextComponentInstance (ComponentPool<PooledJavaContext> componentPool, PooledJavaContext pooledJavaContext)
     throws NamingException {
@@ -70,7 +80,10 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the stack trace captured when this instance was last served, or {@code null} if
+   * existential awareness is disabled or the instance has not yet been served.
+   *
+   * @return the stack trace from the most recent {@link #serve()} call, or {@code null}
    */
   public StackTraceElement[] getExistentialStackTrace () {
 
@@ -78,9 +91,10 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * Validates the context by performing a trivial lookup.
+   * Validates this instance by performing a no-op lookup on the wrapped context.
    *
-   * @return {@code true} if the context responds successfully
+   * @return {@code true} if the backing context responds without throwing {@link NamingException};
+   * {@code false} if the context is no longer usable
    */
   public boolean validate () {
 
@@ -95,9 +109,10 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * Handles a normal context close by returning the instance to the pool.
+   * Called by the {@link PooledJavaContext} when the context is logically closed by the caller.
+   * Returns this instance to the owning pool; any exception from the pool is logged and swallowed.
    *
-   * @param javaContextEvent close event
+   * @param javaContextEvent the event describing the normal close
    */
   public void contextClosed (JavaContextEvent javaContextEvent) {
 
@@ -109,9 +124,12 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * Handles an aborted context by terminating the instance and reporting any errors.
+   * Called by the {@link PooledJavaContext} when a {@link javax.naming.CommunicationException} is
+   * detected. Terminates this instance in the pool and reports the error; if the termination itself
+   * throws, the communication exception is attached as the termination exception's cause before
+   * both are reported.
    *
-   * @param javaContextEvent abort event carrying the communication exception
+   * @param javaContextEvent the event carrying the originating {@link javax.naming.CommunicationException}
    */
   public void contextAborted (JavaContextEvent javaContextEvent) {
 
@@ -134,7 +152,13 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * {@inheritDoc} Records a stack trace when existential awareness is enabled.
+   * Returns the wrapped {@link PooledJavaContext} to the caller.
+   * <p>
+   * If the pool has existential awareness enabled, the current thread's stack trace is captured
+   * and stored so that long-running leases can be diagnosed.
+   *
+   * @return the {@link PooledJavaContext} managed by this instance
+   * @throws Exception never thrown by this implementation
    */
   public PooledJavaContext serve ()
     throws Exception {
@@ -147,7 +171,12 @@ public class JavaContextComponentInstance implements ComponentInstance<PooledJav
   }
 
   /**
-   * Closes the component, terminating it in the pool and forcing underlying context closure once.
+   * Forcibly terminates this instance in the pool and physically closes the wrapped context.
+   * <p>
+   * Guarded by an {@link AtomicBoolean} so that only the first call takes effect; subsequent
+   * calls are silently ignored.
+   *
+   * @throws Exception if {@link ComponentPool#terminateInstance} or the forced context close throws
    */
   public void close ()
     throws Exception {

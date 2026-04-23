@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Variants for Snowflake-inspired identifiers.
+ * Enumeration of layout variants for Snowflake-style identifiers, each identified by a one-byte code.
  */
 public enum SnowflakeVariant {
 
@@ -42,7 +42,9 @@ public enum SnowflakeVariant {
   private final byte code;
 
   /**
-   * @param code variant code stored in the id
+   * Assigns the variant's code byte.
+   *
+   * @param code the byte value stored in the identifier to identify this variant
    */
   SnowflakeVariant (byte code) {
 
@@ -50,7 +52,9 @@ public enum SnowflakeVariant {
   }
 
   /**
-   * @return variant code byte
+   * Returns the byte value that represents this variant in a Snowflake identifier.
+   *
+   * @return the variant code byte
    */
   public byte getCode () {
 

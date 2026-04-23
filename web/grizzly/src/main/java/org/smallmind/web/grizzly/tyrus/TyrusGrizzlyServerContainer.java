@@ -57,8 +57,8 @@ import org.glassfish.tyrus.spi.WebSocketEngine;
 import org.smallmind.web.grizzly.installer.WebSocketExtensionInstaller;
 
 /**
- * Grizzly-backed {@link TyrusServerContainer} that wires WebSocket support into the configured {@link NetworkListener}
- * and optionally serves WSADL for discovery.
+ * Grizzly-specific {@link TyrusServerContainer} that attaches Tyrus WebSocket support to a configured
+ * {@link NetworkListener} and optionally exposes a WSADL discovery handler.
  */
 public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
@@ -69,16 +69,16 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   private final String contextPath;
 
   /**
-   * Creates and configures the Tyrus WebSocket engine and attaches a {@link WebSocketAddOn} to the provided
-   * listener.
+   * Constructs the container, builds the Tyrus engine from the provided properties, registers a
+   * {@link WebSocketAddOn} on the listener, and optionally adds a WSADL handler to the server.
    *
-   * @param httpServer                   Grizzly HTTP server hosting the application
-   * @param networkListener              listener used to serve WebSocket connections
-   * @param webappContext                web application context for attribute registration
-   * @param properties                   optional container properties passed to Tyrus
-   * @param includeWsadlSupport          whether to expose WSADL discovery
-   * @param staticHttpHandler            optional static handler used to serve WSADL when enabled
-   * @param webSocketExtensionInstallers extension installers applied when merging endpoint configs
+   * @param httpServer                   Grizzly server that will host the WebSocket add-on and optional WSADL handler
+   * @param networkListener              listener to register the WebSocket add-on on
+   * @param webappContext                servlet context used for context path and attribute storage
+   * @param properties                   Tyrus engine properties, or {@code null} for defaults
+   * @param includeWsadlSupport          {@code true} to register the WSADL discovery handler
+   * @param staticHttpHandler            fallback handler for WSADL requests that are not for the descriptor document
+   * @param webSocketExtensionInstallers extension installers whose extensions are merged into matching endpoint configs
    */
   public TyrusGrizzlyServerContainer (HttpServer httpServer, NetworkListener networkListener, WebappContext webappContext, Map<String, Object> properties, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
@@ -131,10 +131,10 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * Starts the container at the configured context and port.
+   * Starts the WebSocket container at the configured context path and listener port.
    *
-   * @throws IOException         if underlying transport cannot start
-   * @throws DeploymentException if WebSocket deployment fails
+   * @throws IOException         if the transport cannot be started
+   * @throws DeploymentException if endpoint deployment fails
    */
   public void start ()
     throws IOException, DeploymentException {
@@ -143,7 +143,9 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * @return immutable map of container properties supplied at construction time
+   * Returns the container properties supplied at construction time.
+   *
+   * @return immutable view of the properties map, or the original map reference
    */
   @Override
   public Map<String, Object> getProperties () {
@@ -152,7 +154,9 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * @return active port of the attached {@link NetworkListener}, or -1 if unavailable
+   * Returns the port of the attached network listener.
+   *
+   * @return listener port, or {@code -1} if the listener is unavailable or not yet bound
    */
   @Override
   public int getPort () {
@@ -161,7 +165,9 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * @return the underlying Tyrus {@link WebSocketEngine}
+   * Returns the underlying Tyrus WebSocket engine.
+   *
+   * @return the {@link WebSocketEngine} instance
    */
   @Override
   public WebSocketEngine getWebSocketEngine () {
@@ -170,10 +176,10 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * Registers an annotated endpoint class against the current context path.
+   * Registers an annotated WebSocket endpoint class with the engine.
    *
-   * @param endpointClass endpoint to deploy
-   * @throws DeploymentException if deployment fails
+   * @param endpointClass annotated endpoint class to deploy
+   * @throws DeploymentException if the endpoint cannot be registered
    */
   @Override
   public void register (Class<?> endpointClass)
@@ -183,11 +189,11 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * Registers a {@link ServerEndpointConfig}, merging any configured {@link Extension extensions} from installers that
-   * target the same endpoint class and path.
+   * Registers a programmatic WebSocket endpoint configuration, first merging any additional extensions provided by
+   * matching installers.
    *
    * @param serverEndpointConfig endpoint configuration to deploy
-   * @throws DeploymentException if deployment fails
+   * @throws DeploymentException if the endpoint cannot be registered
    */
   @Override
   public void register (ServerEndpointConfig serverEndpointConfig)
@@ -197,10 +203,11 @@ public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
   }
 
   /**
-   * Merges installer-provided extensions with the supplied endpoint configuration, avoiding duplicates.
+   * Returns a potentially new {@link ServerEndpointConfig} with installer-provided extensions added, skipping any that
+   * duplicate existing extensions by class or name.
    *
-   * @param serverEndpointConfig original configuration
-   * @return configuration including additional extensions when applicable
+   * @param serverEndpointConfig original endpoint configuration
+   * @return updated configuration including additional extensions, or the original if none were added
    */
   private ServerEndpointConfig mergeExtensions (ServerEndpointConfig serverEndpointConfig) {
 

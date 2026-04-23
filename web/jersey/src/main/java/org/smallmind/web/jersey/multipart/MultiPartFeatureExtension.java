@@ -37,14 +37,14 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 /**
- * Registers Jersey's multipart feature with configurable priority.
+ * Jersey resource configuration extension that enables multipart request handling via {@link MultiPartFeature}.
  */
 public class MultiPartFeatureExtension extends PrioritizedResourceConfigExtension {
 
   /**
-   * Adds {@link MultiPartFeature} to the resource configuration.
+   * Registers {@link MultiPartFeature} and the multipart example package with the Jersey resource configuration.
    *
-   * @param resourceConfig Jersey resource configuration
+   * @param resourceConfig the Jersey resource configuration to extend
    */
   @Override
   public void apply (ResourceConfig resourceConfig) {

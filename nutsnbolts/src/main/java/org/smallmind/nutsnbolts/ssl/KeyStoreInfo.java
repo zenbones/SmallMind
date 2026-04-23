@@ -35,10 +35,7 @@ package org.smallmind.nutsnbolts.ssl;
 import java.nio.file.Path;
 
 /**
- * Encapsulates the details required to identify and access a Java key store.
- * <p>
- * Instances hold the keystore name, alias, password, and resolved file location so callers
- * can pass the information together when creating or loading keystores.
+ * Holds the name, alias, password, and filesystem path needed to identify and access a Java keystore.
  */
 public class KeyStoreInfo {
 
@@ -48,8 +45,7 @@ public class KeyStoreInfo {
   private String keystorePassword;
 
   /**
-   * Creates a keystore descriptor with only a file path. Other properties can be set later
-   * via the mutators or populated by helper utilities.
+   * Creates a keystore descriptor with only a filesystem path; all other properties may be set later via the mutators.
    *
    * @param keystorePath the path where the keystore resides or should be created
    */
@@ -59,12 +55,12 @@ public class KeyStoreInfo {
   }
 
   /**
-   * Creates a fully populated keystore descriptor.
+   * Creates a fully populated keystore descriptor with all properties set at construction time.
    *
    * @param keystoreName     the keystore file name
-   * @param keystoreAlias    the alias to assign when storing the key and certificate chain
+   * @param keystoreAlias    the alias under which the key and certificate chain are stored
    * @param keystorePassword the password protecting the keystore
-   * @param keystorePath     the resolved path of the keystore file
+   * @param keystorePath     the resolved filesystem path of the keystore file
    */
   public KeyStoreInfo (String keystoreName, String keystoreAlias, String keystorePassword, Path keystorePath) {
 
@@ -75,9 +71,9 @@ public class KeyStoreInfo {
   }
 
   /**
-   * Retrieves the keystore file name (without path).
+   * Returns the keystore file name, or {@code null} if not set.
    *
-   * @return the keystore name, or {@code null} if not set
+   * @return the keystore file name
    */
   public String getKeystoreName () {
 
@@ -87,7 +83,7 @@ public class KeyStoreInfo {
   /**
    * Sets the keystore file name.
    *
-   * @param keystoreName the file name to use
+   * @param keystoreName the file name to assign
    */
   public void setKeystoreName (String keystoreName) {
 
@@ -95,9 +91,9 @@ public class KeyStoreInfo {
   }
 
   /**
-   * Retrieves the alias used for the stored key and certificate chain.
+   * Returns the alias used for entries in the keystore, or {@code null} if not set.
    *
-   * @return the configured alias, or {@code null} if none has been set
+   * @return the keystore alias
    */
   public String getKeystoreAlias () {
 
@@ -107,7 +103,7 @@ public class KeyStoreInfo {
   /**
    * Sets the alias used for entries in the keystore.
    *
-   * @param keystoreAlias the alias to assign
+   * @param keystoreAlias the alias value to assign
    */
   public void setKeystoreAlias (String keystoreAlias) {
 
@@ -115,9 +111,9 @@ public class KeyStoreInfo {
   }
 
   /**
-   * Retrieves the password protecting the keystore.
+   * Returns the password protecting the keystore, or {@code null} if not set.
    *
-   * @return the keystore password, or {@code null} if not set
+   * @return the keystore password
    */
   public String getKeystorePassword () {
 
@@ -127,7 +123,7 @@ public class KeyStoreInfo {
   /**
    * Sets the password used to protect the keystore.
    *
-   * @param keystorePassword the password value to store
+   * @param keystorePassword the password to assign
    */
   public void setKeystorePassword (String keystorePassword) {
 
@@ -135,7 +131,7 @@ public class KeyStoreInfo {
   }
 
   /**
-   * Retrieves the resolved filesystem path of the keystore.
+   * Returns the resolved filesystem path of the keystore file.
    *
    * @return the keystore path
    */
@@ -147,7 +143,7 @@ public class KeyStoreInfo {
   /**
    * Sets the filesystem path of the keystore file.
    *
-   * @param keystorePath the path to the keystore on disk
+   * @param keystorePath the path to assign
    */
   public void setKeystorePath (Path keystorePath) {
 

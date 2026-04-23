@@ -35,14 +35,14 @@ package org.smallmind.web.jersey.multipart;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception representing errors while processing multipart file content.
+ * Unchecked exception thrown when reading or processing a multipart file upload fails.
  */
 public class MultiPartFileException extends FormattedRuntimeException {
 
   /**
-   * Wraps the underlying I/O error.
+   * Constructs the exception, chaining the underlying I/O failure.
    *
-   * @param throwable cause of the failure
+   * @param throwable the cause of the failure
    */
   public MultiPartFileException (Throwable throwable) {
 

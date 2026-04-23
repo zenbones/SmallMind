@@ -38,53 +38,59 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Abstraction for a Bayeux protocol implementation that owns one or more transports.
+ * Named Bayeux protocol variant that owns one or more {@link Transport} instances and exposes
+ * protocol-level event hooks for receipt, publish, and delivery.
  *
  * @param <V> concrete {@link Value} implementation used for JSON payloads
  */
 public interface Protocol<V extends Value<V>> {
 
   /**
-   * Marker for protocol listeners.
+   * Base marker type for protocol-level event listeners.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface Listener<V extends Value<V>> {
 
   }
 
   /**
-   * Listener for protocol-level events such as message receipt and delivery.
+   * Observes the three key moments in protocol message flow: initial receipt from a client,
+   * publication of a derived outbound message, and final delivery to transports.
+   *
+   * @param <V> concrete {@link Value} implementation
    */
   interface ProtocolListener<V extends Value<V>> extends Listener<V> {
 
     /**
-     * Invoked when incoming messages are received from a client.
+     * Called when a batch of messages arrives from a client before any processing.
      *
-     * @param incomingMessages the messages received in a batch
+     * @param incomingMessages raw messages received from the client
      */
     void onReceipt (Message<V>[] incomingMessages);
 
     /**
-     * Invoked when a published message is created from an incoming message.
+     * Called when a client publish message has been transformed into an outbound delivery message.
      *
-     * @param originatingMessage the message supplied by the client
-     * @param outgoingMessage    the message to be delivered to subscribers
+     * @param originatingMessage the publish message received from the client
+     * @param outgoingMessage    the delivery message constructed for subscribers
      */
     void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage);
 
     /**
-     * Invoked when an outgoing packet is delivered to transports.
+     * Called when a packet is being handed off to transports for sending.
      *
-     * @param outgoingPacket the packet being sent
+     * @param outgoingPacket packet being dispatched to one or more transports
      */
     void onDelivery (Packet<V> outgoingPacket);
   }
 
   /**
-   * Initializes the protocol and its transports using servlet configuration.
+   * Initializes all transports owned by this protocol.
    *
-   * @param server        the hosting server
-   * @param servletConfig the servlet configuration
-   * @throws ServletException if transport initialization fails
+   * @param server        hosting server passed to each transport
+   * @param servletConfig servlet configuration passed to each transport
+   * @throws ServletException if any transport fails to initialize
    */
   default void init (Server<V> server, ServletConfig servletConfig)
     throws ServletException {
@@ -95,42 +101,50 @@ public interface Protocol<V extends Value<V>> {
   }
 
   /**
-   * @return the protocol name used for registration
+   * Returns the name used to identify and negotiate this protocol.
+   *
+   * @return protocol name string
    */
   String getName ();
 
   /**
-   * @return {@code true} if the protocol operates using long polling
+   * Returns whether this protocol uses long polling as its connection model.
+   *
+   * @return {@code true} if long polling is used
    */
   boolean isLongPolling ();
 
   /**
-   * @return timeout in milliseconds for long poll connections
+   * Returns how long a long poll connection is held open before timing out.
+   *
+   * @return long poll timeout in milliseconds
    */
   long getLongPollTimeoutMilliseconds ();
 
   /**
-   * @return names of transports supported by this protocol
+   * Returns the names of all transports registered under this protocol.
+   *
+   * @return array of transport names
    */
   String[] getTransportNames ();
 
   /**
-   * Retrieves a transport by name.
+   * Looks up a transport by its registration name.
    *
-   * @param name the transport name
-   * @return the associated transport
+   * @param name transport name to look up
+   * @return the matching transport
    */
   Transport<V> getTransport (String name);
 
   /**
-   * Adds a protocol listener.
+   * Registers a listener for protocol-level events.
    *
-   * @param listener listener to register
+   * @param listener listener to add
    */
   void addListener (Listener<V> listener);
 
   /**
-   * Removes a previously registered listener.
+   * Deregisters a previously added protocol listener.
    *
    * @param listener listener to remove
    */

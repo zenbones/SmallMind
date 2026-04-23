@@ -50,8 +50,8 @@ import java.util.Set;
 */
 
 /**
- * {@link Policy} implementation that grants {@link AllPermission} only to whitelisted class loaders.
- * All other code sources receive a configurable base permission set.
+ * {@link Policy} that grants {@link AllPermission} only to explicitly whitelisted class loaders
+ * and applies a configurable minimal permission set to all other code.
  */
 public class SandboxSecurityPolicy extends Policy {
 
@@ -68,16 +68,24 @@ public class SandboxSecurityPolicy extends Policy {
     ALL_PERMISSION_COLLECTION.add(allPermission);
   }
 
+  /**
+   * Constructs a policy that whitelists the given compiled class loaders and assigns all other code
+   * the default empty base permission set.
+   *
+   * @param whiteListedCompiledClassLoaders loader instances that should receive {@link AllPermission}
+   */
   public SandboxSecurityPolicy (ClassLoader... whiteListedCompiledClassLoaders) {
 
     this(null, whiteListedCompiledClassLoaders);
   }
 
   /**
-   * Creates a policy that whitelists both compiled and runtime class loader identities.
+   * Constructs a policy that whitelists both statically known loader instances and loaders identified
+   * by class name at runtime, granting all permissions to matched loaders and the base set to all others.
    *
-   * @param whiteListedRuntimeClassLoaders  class names of runtime-generated loaders that should receive all permissions
-   * @param whiteListedCompiledClassLoaders loader instances that should receive all permissions
+   * @param whiteListedRuntimeClassLoaders  fully-qualified class names of dynamically generated loaders
+   *                                        that should receive {@link AllPermission}
+   * @param whiteListedCompiledClassLoaders loader instances that should receive {@link AllPermission}
    */
   public SandboxSecurityPolicy (String[] whiteListedRuntimeClassLoaders, ClassLoader... whiteListedCompiledClassLoaders) {
 
@@ -86,10 +94,11 @@ public class SandboxSecurityPolicy extends Policy {
   }
 
   /**
-   * Adds additional permissions to the base permission collection applied to non-whitelisted loaders.
+   * Adds the given permissions to the base collection that is granted to non-whitelisted class loaders,
+   * returning this policy to support a fluent configuration style.
    *
-   * @param permissions permissions to add; ignored when {@code null} or empty
-   * @return this policy instance for chaining
+   * @param permissions the permissions to add; a {@code null} or empty array is silently ignored
+   * @return this policy instance
    */
   public SandboxSecurityPolicy addPermissions (Permission... permissions) {
 
@@ -102,6 +111,13 @@ public class SandboxSecurityPolicy extends Policy {
     return this;
   }
 
+  /**
+   * Returns an empty permission collection for the given code source; domain-level evaluation is
+   * performed by {@link #getPermissions(ProtectionDomain)}.
+   *
+   * @param codesource the code source being evaluated
+   * @return an empty {@link Permissions} collection
+   */
   @Override
   public PermissionCollection getPermissions (CodeSource codesource) {
 
@@ -109,10 +125,11 @@ public class SandboxSecurityPolicy extends Policy {
   }
 
   /**
-   * Grants full permissions to whitelisted loaders and a shared base collection to all others.
+   * Returns {@link AllPermission} for domains whose loader is whitelisted, and the base permission
+   * collection for all other domains.
    *
    * @param domain the protection domain being evaluated
-   * @return the permission collection to apply
+   * @return the applicable permission collection
    */
   @Override
   public PermissionCollection getPermissions (ProtectionDomain domain) {

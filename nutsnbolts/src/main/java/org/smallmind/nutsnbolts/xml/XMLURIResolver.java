@@ -40,8 +40,8 @@ import javax.xml.transform.stream.StreamSource;
 import org.smallmind.nutsnbolts.resource.Resource;
 
 /**
- * JAXP {@link URIResolver} that uses a {@link ProtocolResolver} to locate external resources and expose them as {@link StreamSource}s.
- * A singleton configured with {@link SmallMindProtocolResolver} is provided for convenience.
+ * JAXP {@link URIResolver} that delegates URI resolution to a {@link ProtocolResolver} and returns the result as a {@link StreamSource}.
+ * A lazily created singleton backed by {@link SmallMindProtocolResolver} is available for convenient reuse.
  */
 public class XMLURIResolver implements URIResolver {
 
@@ -50,9 +50,9 @@ public class XMLURIResolver implements URIResolver {
   private final ProtocolResolver protocolResolver;
 
   /**
-   * Creates a resolver that delegates to the supplied protocol resolver.
+   * Creates a URI resolver backed by the supplied protocol resolver.
    *
-   * @param protocolResolver resolver used to locate URIs
+   * @param protocolResolver the resolver used to locate resources by URI
    */
   public XMLURIResolver (ProtocolResolver protocolResolver) {
 
@@ -60,9 +60,9 @@ public class XMLURIResolver implements URIResolver {
   }
 
   /**
-   * Returns a lazily constructed singleton backed by {@link SmallMindProtocolResolver}.
+   * Returns the shared singleton instance configured with {@link SmallMindProtocolResolver}, creating it on first call.
    *
-   * @return shared {@link XMLURIResolver}
+   * @return the singleton {@link XMLURIResolver}
    */
   public synchronized static XMLURIResolver getInstance () {
 
@@ -74,11 +74,11 @@ public class XMLURIResolver implements URIResolver {
   }
 
   /**
-   * Resolves a URI encountered during XSLT or other JAXP processing.
+   * Resolves a URI encountered during XSLT or other JAXP processing by delegating to the configured {@link ProtocolResolver}.
    *
-   * @param href     the href value to resolve
-   * @param baseHref base URI from the processor (ignored)
-   * @return a {@link Source} for the resolved resource, or {@code null} to fall back to default resolution
+   * @param href     the URI reference to resolve
+   * @param baseHref the base URI of the document containing the reference (ignored)
+   * @return a {@link Source} backed by the resolved resource, or {@code null} to fall back to default processor resolution
    * @throws TransformerException if resolution fails
    */
   public Source resolve (String href, String baseHref)

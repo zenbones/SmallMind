@@ -38,16 +38,16 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Validator backing the {@link GreaterThan} constraint for numeric types.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link GreaterThan} constraint that checks numeric values against a configured threshold.
  */
 public class GreaterThanValidator implements ConstraintValidator<GreaterThan, Number> {
 
   private GreaterThan constraintAnnotation;
 
   /**
-   * Captures the constraint annotation for later threshold access.
+   * Stores the constraint annotation so that the configured threshold is available during validation.
    *
-   * @param constraintAnnotation annotation instance
+   * @param constraintAnnotation the annotation instance driving this validation
    */
   @Override
   public void initialize (GreaterThan constraintAnnotation) {
@@ -56,11 +56,12 @@ public class GreaterThanValidator implements ConstraintValidator<GreaterThan, Nu
   }
 
   /**
-   * Checks whether the supplied number exceeds the configured threshold.
+   * Returns {@code true} if the value strictly exceeds the configured threshold.
+   * A {@code null} value is considered valid.
    *
-   * @param value   candidate number; {@code null} is considered valid
-   * @param context validation context (unused)
-   * @return {@code true} if the value is greater than the threshold
+   * @param value   the candidate number to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or greater than the threshold
    */
   @Override
   public boolean isValid (Number value, ConstraintValidatorContext context) {

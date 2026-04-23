@@ -35,54 +35,56 @@ package org.smallmind.scribe.pen;
 import java.io.Serializable;
 
 /**
- * Captures source-context information for a logging event.
+ * Serializable snapshot of the call-site location at which a logging event was created, including the class,
+ * method, file, and line number from the application's call stack.
  */
 public interface LoggerContext extends Serializable {
 
   /**
-   * Indicates whether the context fields have been populated.
+   * Returns whether the context fields have already been populated by a prior call to {@link #fillIn()}.
    *
-   * @return {@code true} if filled
+   * @return {@code true} if all available call-site fields have been resolved
    */
   boolean isFilled ();
 
   /**
-   * Populates the context fields, typically by inspecting the call stack.
+   * Resolves and stores the call-site fields by walking the current thread's stack; this method is typically called
+   * lazily the first time context information is needed.
    */
   void fillIn ();
 
   /**
-   * Returns the class name where logging originated.
+   * Returns the fully-qualified name of the class at the logging call site.
    *
-   * @return class name or {@code null}
+   * @return the class name, or {@code null} if it could not be determined
    */
   String getClassName ();
 
   /**
-   * Returns the method name where logging originated.
+   * Returns the name of the method at the logging call site.
    *
-   * @return method name or {@code null}
+   * @return the method name, or {@code null} if it could not be determined
    */
   String getMethodName ();
 
   /**
-   * Returns the file name where logging originated.
+   * Returns the source file name at the logging call site.
    *
-   * @return file name or {@code null}
+   * @return the file name, or {@code null} if it could not be determined
    */
   String getFileName ();
 
   /**
-   * Indicates whether the call originated from a native method.
+   * Returns whether the logging call site is located inside a native (JNI) method.
    *
-   * @return {@code true} if native
+   * @return {@code true} if the originating frame is a native method
    */
   boolean isNativeMethod ();
 
   /**
-   * Returns the source line number where logging originated.
+   * Returns the source line number at the logging call site.
    *
-   * @return line number, or -1 if unknown
+   * @return the line number, or {@code -1} if the information is not available
    */
   int getLineNumber ();
 }

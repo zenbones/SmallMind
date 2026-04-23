@@ -35,17 +35,18 @@ package org.smallmind.nutsnbolts.resource;
 import java.util.HashMap;
 
 /**
- * Parses resource identifiers into concrete {@link Resource} instances by delegating to registered {@link ResourceGenerator}s.
- * The scheme prefix (before the colon) selects the generator; if no scheme is present, {@code file} is assumed.
+ * Parses resource identifier strings into concrete {@link Resource} instances by selecting
+ * among registered {@link ResourceGenerator}s based on the scheme prefix; identifiers with
+ * no scheme are treated as {@code file} resources.
  */
 public class ResourceParser {
 
   private final HashMap<ResourceSchemes, ResourceGenerator> factoryMap;
 
   /**
-   * Creates a parser seeded with optional generators.
+   * Constructs a {@code ResourceParser} pre-loaded with zero or more generators.
    *
-   * @param factories initial factories to register; may be {@code null}
+   * @param factories generators to register at construction time; may be empty or {@code null}
    */
   public ResourceParser (ResourceGenerator... factories) {
 
@@ -59,9 +60,9 @@ public class ResourceParser {
   }
 
   /**
-   * Registers an additional {@link ResourceGenerator}.
+   * Registers a {@link ResourceGenerator} so that subsequent parse calls can use it.
    *
-   * @param factory factory able to resolve one or more schemes
+   * @param factory the generator to register, identified by its {@link ResourceGenerator#getValidSchemes() valid schemes}
    */
   public void addResourceFactory (ResourceGenerator factory) {
 
@@ -71,11 +72,14 @@ public class ResourceParser {
   }
 
   /**
-   * Parses a resource identifier into a concrete {@link Resource}.
+   * Parses the supplied identifier and delegates to the matching {@link ResourceGenerator} to
+   * produce a concrete {@link Resource}.
    *
-   * @param resourceIdentifier identifier string such as {@code file:/tmp/data.txt}
-   * @return a matching resource implementation
-   * @throws ResourceException if no generator can handle the scheme or instantiation fails
+   * @param resourceIdentifier the resource identifier to parse, such as {@code file:/tmp/data.txt}
+   *                           or {@code classpath:/META-INF/config.xml}
+   * @return the resolved {@link Resource} instance
+   * @throws ResourceException if no registered generator handles the identifier's scheme, or if
+   *                           instantiation of the resource fails
    */
   public Resource parseResource (String resourceIdentifier)
     throws ResourceException {

@@ -33,7 +33,8 @@
 package org.smallmind.persistence.cache;
 
 /**
- * Represents a single index value used to construct a {@link VectorKey}.
+ * Represents a single named index entry, including its field name, value, and optional alias, used
+ * when composing a {@link VectorKey}.
  */
 public class VectorIndex {
 
@@ -42,9 +43,11 @@ public class VectorIndex {
   private final Object indexValue;
 
   /**
-   * @param indexField field name extracted from the durable
-   * @param indexValue value of the field
-   * @param indexAlias optional alias used in the key
+   * Constructs an index entry with a field name, value, and alias.
+   *
+   * @param indexField field name on the durable that this index tracks
+   * @param indexValue current value of the indexed field
+   * @param indexAlias short alias substituted for the field name in the key; empty string means use the field name
    */
   public VectorIndex (String indexField, Object indexValue, String indexAlias) {
 
@@ -54,7 +57,9 @@ public class VectorIndex {
   }
 
   /**
-   * @return field name backing this index
+   * Returns the durable field name this index tracks.
+   *
+   * @return index field name
    */
   public String getIndexField () {
 
@@ -62,7 +67,9 @@ public class VectorIndex {
   }
 
   /**
-   * @return value of the index field
+   * Returns the value of the indexed field.
+   *
+   * @return index field value
    */
   public Object getIndexValue () {
 
@@ -70,7 +77,10 @@ public class VectorIndex {
   }
 
   /**
-   * @return alias to use in keys, or empty string
+   * Returns the alias used in place of the field name when building the key string, or an empty
+   * string if no alias was set.
+   *
+   * @return index alias, or empty string
    */
   public String getIndexAlias () {
 

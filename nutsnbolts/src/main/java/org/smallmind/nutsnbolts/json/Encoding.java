@@ -38,12 +38,21 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.HexCodec;
 
 /**
- * Encodes and decodes binary content so it can be represented as text for transport or storage.
+ * Text encoding strategies for converting binary payloads to and from a string representation suitable for transport or storage.
  */
 public enum Encoding {
 
+  /**
+   * Encodes bytes as a lowercase hexadecimal string.
+   */
   HEX {
-    /** {@inheritDoc} */
+    /**
+     * Encodes the supplied bytes as a hexadecimal string.
+     *
+     * @param bytes the bytes to encode
+     * @return the hexadecimal string representation
+     * @throws Exception if encoding fails
+     */
     @Override
     public String encode (byte[] bytes)
       throws Exception {
@@ -51,7 +60,13 @@ public enum Encoding {
       return HexCodec.hexEncode(bytes);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Decodes a hexadecimal string back into bytes.
+     *
+     * @param encoded the hexadecimal string to decode
+     * @return the decoded bytes
+     * @throws UnsupportedEncodingException if decoding fails
+     */
     @Override
     public byte[] decode (String encoded)
       throws UnsupportedEncodingException {
@@ -59,8 +74,18 @@ public enum Encoding {
       return HexCodec.hexDecode(encoded);
     }
   },
+
+  /**
+   * Encodes bytes using Base64.
+   */
   BASE_64 {
-    /** {@inheritDoc} */
+    /**
+     * Encodes the supplied bytes using Base64.
+     *
+     * @param bytes the bytes to encode
+     * @return the Base64 string representation
+     * @throws IOException if encoding fails
+     */
     @Override
     public String encode (byte[] bytes)
       throws IOException {
@@ -68,7 +93,13 @@ public enum Encoding {
       return Base64Codec.encode(bytes);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Decodes a Base64 string back into bytes.
+     *
+     * @param encoded the Base64 string to decode
+     * @return the decoded bytes
+     * @throws IOException if decoding fails
+     */
     @Override
     public byte[] decode (String encoded)
       throws IOException {
@@ -78,21 +109,21 @@ public enum Encoding {
   };
 
   /**
-   * Converts raw bytes to a textual representation.
+   * Converts raw bytes into a text string using this encoding strategy.
    *
    * @param bytes the bytes to encode
    * @return the encoded string
-   * @throws Exception if encoding fails
+   * @throws Exception if the encoding operation fails
    */
   public abstract String encode (byte[] bytes)
     throws Exception;
 
   /**
-   * Reconstructs the raw bytes from their textual representation.
+   * Reconstructs raw bytes from their encoded string representation.
    *
-   * @param encoded the encoded string
-   * @return the decoded bytes
-   * @throws Exception if decoding fails
+   * @param encoded the encoded string to decode
+   * @return the original bytes
+   * @throws Exception if the decoding operation fails
    */
   public abstract byte[] decode (String encoded)
     throws Exception;

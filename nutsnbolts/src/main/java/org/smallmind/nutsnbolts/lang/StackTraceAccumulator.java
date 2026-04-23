@@ -33,14 +33,15 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Collects stack trace text incrementally.
+ * Strategy interface for collecting stack trace output one line at a time during rendering by
+ * {@link StackTraceUtility}.
  */
 public interface StackTraceAccumulator {
 
   /**
-   * Appends a line or fragment of stack trace text.
+   * Receives one line of rendered stack trace text.
    *
-   * @param charSequence the text to add
+   * @param charSequence the line of text to accumulate
    */
   void append (CharSequence charSequence);
 }

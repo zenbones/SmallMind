@@ -38,14 +38,15 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
 
 /**
- * Validation exception that aggregates constraint violations into a readable message for JsonEntity-backed resources.
+ * Validation exception that converts a set of constraint violations into a human-readable message string.
  */
 public class EntityValidationException extends jakarta.validation.ValidationException {
 
   /**
-   * Builds an exception describing all constraint violations.
+   * Constructs the exception by formatting all violations in the supplied set.
    *
-   * @param constraintViolationSet violations collected during validation
+   * @param constraintViolationSet the violations found during validation
+   * @param <T>                    type of the validated object
    */
   public <T> EntityValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 
@@ -53,10 +54,11 @@ public class EntityValidationException extends jakarta.validation.ValidationExce
   }
 
   /**
-   * Formats constraint violations into a concise string array representation.
+   * Converts the violation set into a formatted string listing each property path and message.
    *
    * @param constraintViolationSet violations to format
-   * @return formatted message text
+   * @param <T>                    type of the validated object
+   * @return formatted string representation of all violations
    */
   private static <T> String convert (Set<ConstraintViolation<T>> constraintViolationSet) {
 
@@ -76,9 +78,9 @@ public class EntityValidationException extends jakarta.validation.ValidationExce
     private final String message;
 
     /**
-     * Captures key details from a constraint violation for rendering.
+     * Captures the property path and message from a single constraint violation.
      *
-     * @param constraintViolation the violation encountered
+     * @param constraintViolation the violation to record
      */
     public Violation (ConstraintViolation<?> constraintViolation) {
 
@@ -87,9 +89,9 @@ public class EntityValidationException extends jakarta.validation.ValidationExce
     }
 
     /**
-     * Returns a simple representation containing property path and message.
+     * Returns a formatted representation of the violation including property path and message.
      *
-     * @return formatted violation text
+     * @return violation description
      */
     @Override
     public String toString () {

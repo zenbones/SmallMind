@@ -39,7 +39,15 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that produces a {@link ByKeyExtrinsicCacheDao} backed by memcached caches.
+ * Spring {@link FactoryBean} that constructs a {@link ByKeyExtrinsicCacheDao} backed by a
+ * memcached {@link MemcachedCacheDomain}.
+ *
+ * <p>The DAO is created during {@link #afterPropertiesSet()} if a non-null
+ * {@link MemcachedCacheDomain} has been injected. If no domain is supplied the factory produces
+ * a {@code null} object, allowing optional memcached caching to be configured in Spring without
+ * causing context startup failures when the dependency is absent.</p>
+ *
+ * <p>This bean is always singleton-scoped.</p>
  */
 public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicCacheDao<?, ?>>, InitializingBean {
 
@@ -47,9 +55,9 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
   private MemcachedCacheDomain<?, ?> memcachedCacheDomain;
 
   /**
-   * Injects the memcached cache domain required to build the DAO.
+   * Injects the {@link MemcachedCacheDomain} used to back the DAO.
    *
-   * @param memcachedCacheDomain configured cache domain
+   * @param memcachedCacheDomain the configured memcached cache domain; may be {@code null}
    */
   public void setMemcachedCacheDomain (MemcachedCacheDomain<?, ?> memcachedCacheDomain) {
 
@@ -57,9 +65,9 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
   }
 
   /**
-   * Initializes the factory by constructing the DAO after dependencies are set.
+   * Constructs the {@link ByKeyExtrinsicCacheDao} from the injected domain, if present.
    *
-   * @throws IOException if the DAO cannot be created
+   * @throws IOException if the DAO cannot be initialised
    */
   @Override
   public void afterPropertiesSet ()
@@ -71,7 +79,10 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
   }
 
   /**
-   * @return the created DAO instance
+   * Returns the constructed {@link ByKeyExtrinsicCacheDao}, or {@code null} if no domain was
+   * supplied.
+   *
+   * @return the cache DAO, or {@code null}
    */
   @Override
   public ByKeyExtrinsicCacheDao<?, ?> getObject () {
@@ -80,7 +91,9 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
   }
 
   /**
-   * @return type exposed by the factory
+   * Returns the concrete type produced by this factory.
+   *
+   * @return {@link ByKeyExtrinsicCacheDao}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -89,7 +102,9 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicC
   }
 
   /**
-   * @return {@code true} because the factory always returns the same DAO
+   * Reports that this factory bean always returns the same singleton instance.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {

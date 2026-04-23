@@ -33,7 +33,12 @@
 package org.smallmind.memcached.utility;
 
 /**
- * In-memory implementation of {@link ProxyCASResponse}.
+ * In-memory implementation of {@link ProxyCASResponse} returned by {@link InMemoryMemcachedClient}.
+ *
+ * <p>Pairs a decoded cached value with the monotonically assigned CAS token managed by
+ * {@link InMemoryMemcachedClient}. Instances are immutable once constructed.</p>
+ *
+ * @param <T> the type of the cached value
  */
 public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
 
@@ -41,10 +46,10 @@ public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
   private final long cas;
 
   /**
-   * Constructs a CAS response wrapper.
+   * Constructs an in-memory CAS response pairing the given value with the given token.
    *
-   * @param cas   compare-and-swap token
-   * @param value decoded value
+   * @param cas   the compare-and-swap token issued by the in-memory store
+   * @param value the decoded cached value
    */
   public InMemoryCASResponse (long cas, T value) {
 
@@ -53,7 +58,9 @@ public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the cached value held by this response.
+   *
+   * @return the cached value; may be {@code null} if {@code null} was explicitly stored
    */
   public T getValue () {
 
@@ -61,7 +68,9 @@ public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the CAS token associated with this response.
+   *
+   * @return the compare-and-swap token
    */
   public long getCas () {
 

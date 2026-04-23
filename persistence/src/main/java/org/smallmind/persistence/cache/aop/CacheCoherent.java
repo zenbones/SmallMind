@@ -38,7 +38,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a DAO method whose returned durables should be synchronized with the cache via {@link CacheCoherentAspect}.
+ * Marks a DAO method whose returned durables must be persisted into the vector cache before being returned.
+ * Applied by {@link CacheCoherentAspect} to keep in-memory and stored cache representations aligned.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)

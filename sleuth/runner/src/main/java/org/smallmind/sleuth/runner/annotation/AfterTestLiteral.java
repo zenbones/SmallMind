@@ -35,7 +35,13 @@ package org.smallmind.sleuth.runner.annotation;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Runtime literal implementation of {@link AfterTest}.
+ * Concrete {@link AfterTest} annotation instance for programmatic construction at runtime.
+ * <p>
+ * Used by {@link AnnotationTranslator} implementations to bridge foreign per-test teardown
+ * annotations — such as TestNG's {@code @AfterMethod} — onto the Sleuth lifecycle model.
+ *
+ * @see AfterTest
+ * @see AnnotationTranslator
  */
 public class AfterTestLiteral extends AnnotationLiteral<AfterTest> implements AfterTest {
 

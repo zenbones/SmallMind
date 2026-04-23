@@ -36,18 +36,19 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Defines access control hooks for Bayeux handshake, channel creation, subscription, and publishing.
+ * Access-control extension point consulted at each security-sensitive step of the Bayeux lifecycle;
+ * all default implementations allow every operation.
  *
  * @param <V> concrete {@link Value} implementation used for message payloads
  */
 public interface SecurityPolicy<V extends Value<V>> {
 
   /**
-   * Checks whether a handshake request is permitted.
+   * Decides whether the given session may complete a handshake.
    *
-   * @param session the requesting session
-   * @param message the handshake message
-   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   * @param session session attempting to handshake
+   * @param message the {@code /meta/handshake} message
+   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
    */
   default SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
@@ -55,12 +56,12 @@ public interface SecurityPolicy<V extends Value<V>> {
   }
 
   /**
-   * Checks whether the client can create the requested channel path.
+   * Decides whether the given session may cause a new channel to be created at the specified path.
    *
-   * @param session the requesting session
-   * @param path    the channel path to create
-   * @param message the create message
-   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   * @param session session requesting channel creation
+   * @param path    channel path that would be created
+   * @param message the Bayeux message that triggered the creation attempt
+   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
    */
   default SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
@@ -68,12 +69,12 @@ public interface SecurityPolicy<V extends Value<V>> {
   }
 
   /**
-   * Checks whether the client can subscribe to the channel.
+   * Decides whether the given session may subscribe to the specified channel.
    *
-   * @param session the requesting session
-   * @param channel the channel being subscribed to
-   * @param message the subscribe message
-   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   * @param session session requesting the subscription
+   * @param channel channel being subscribed to
+   * @param message the {@code /meta/subscribe} message
+   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
    */
   default SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
@@ -81,12 +82,12 @@ public interface SecurityPolicy<V extends Value<V>> {
   }
 
   /**
-   * Checks whether the client can publish to the channel.
+   * Decides whether the given session may publish to the specified channel.
    *
-   * @param session the requesting session
-   * @param channel the channel being published to
+   * @param session session attempting to publish
+   * @param channel channel being published to
    * @param message the publish message
-   * @return a rejection with the reason, or {@link SecurityRejection#noReason()} when allowed
+   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
    */
   default SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 

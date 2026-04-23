@@ -40,7 +40,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Abstract logical conjunction that groups child {@link WhereCriterion} elements (e.g., AND/OR).
+ * Abstract logical group that combines child {@link WhereCriterion} elements using AND or OR semantics.
  */
 @XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public abstract class WhereConjunction extends WhereCriterion {
@@ -55,9 +55,9 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Builds a conjunction initialized with the provided criteria, omitting any {@code null} entries.
+   * Creates a conjunction pre-populated with the given criteria, silently ignoring any {@code null} entries.
    *
-   * @param criteria child criteria to combine
+   * @param criteria initial child criteria
    */
   public WhereConjunction (WhereCriterion... criteria) {
 
@@ -74,14 +74,14 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Returns the specific conjunction type (AND/OR).
+   * Returns the specific logical operator this conjunction applies to its children.
    *
-   * @return the conjunction type
+   * @return conjunction type (AND or OR)
    */
   public abstract ConjunctionType getConjunctionType ();
 
   /**
-   * Identifies this criterion as a conjunction.
+   * Identifies this criterion as a conjunction node.
    *
    * @return {@link CriterionType#CONJUNCTION}
    */
@@ -93,7 +93,7 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Indicates whether the conjunction currently contains any child criteria.
+   * Returns whether this conjunction currently has no child criteria.
    *
    * @return {@code true} if no child criteria are present
    */
@@ -104,7 +104,7 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Returns the number of child criteria contained in this conjunction.
+   * Returns the number of child criteria in this conjunction.
    *
    * @return child criterion count
    */
@@ -117,7 +117,7 @@ public abstract class WhereConjunction extends WhereCriterion {
   /**
    * Returns the child criteria as an array in insertion order.
    *
-   * @return array of child criteria (never {@code null})
+   * @return array of child criteria, never {@code null}
    */
   @XmlElement(name = "criteria")
   public synchronized WhereCriterion[] getCriteria () {
@@ -132,9 +132,9 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Replaces the child criteria with the provided array.
+   * Replaces all current child criteria with the provided array.
    *
-   * @param criteria new child criteria to set
+   * @param criteria replacement child criteria
    */
   public synchronized void setCriteria (WhereCriterion... criteria) {
 
@@ -142,9 +142,9 @@ public abstract class WhereConjunction extends WhereCriterion {
   }
 
   /**
-   * Adds another child criterion to this conjunction.
+   * Appends a single criterion to the end of this conjunction's child list.
    *
-   * @param criterion criterion to append
+   * @param criterion criterion to add
    */
   public synchronized void addCriterion (WhereCriterion criterion) {
 

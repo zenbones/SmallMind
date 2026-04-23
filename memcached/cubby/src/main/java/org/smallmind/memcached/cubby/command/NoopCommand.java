@@ -39,7 +39,17 @@ import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Issues a no-op command used for connection liveness checks.
+ * Command that implements the memcached meta-noop ({@code mn}) operation,
+ * used to verify that a connection to the server is alive and responsive.
+ *
+ * <p>The {@code mn} command carries no key or value payload and elicits an
+ * {@code MN} response from the server. The {@link #setKey(String)} method
+ * exists only so that the connection layer can route this command to a
+ * specific server node; the key is never transmitted on the wire.</p>
+ *
+ * <p>Because the wire representation is a fixed four-byte sequence
+ * ({@code "mn\r\n"}), it is pre-computed as a static constant and reused
+ * across all instances.</p>
  */
 public class NoopCommand extends Command {
 
@@ -57,10 +67,11 @@ public class NoopCommand extends Command {
   }
 
   /**
-   * Sets the arbitrary key used only for routing.
+   * Sets an arbitrary cache key used solely for routing this command to the
+   * correct server node. The key is not transmitted to the server.
    *
-   * @param key cache key
-   * @return this command for chaining
+   * @param key the routing key
+   * @return this command instance, for method chaining
    */
   public NoopCommand setKey (String key) {
 
@@ -71,6 +82,13 @@ public class NoopCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Returns the pre-computed, immutable {@code "mn\r\n"} byte sequence.
+   * The {@code keyTranslator} parameter is not used because the noop command
+   * has no key on the wire.</p>
+   *
+   * @param keyTranslator unused; present only to satisfy the {@link Command} contract
+   * @return the fixed {@code mn} command bytes
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator) {
@@ -80,6 +98,11 @@ public class NoopCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>The only valid response to a noop is {@code MN}. Any other response code
+   * indicates a protocol error.</p>
+   *
+   * @throws UnexpectedResponseException if the response code is not {@code MN}
    */
   @Override
   public Result process (Response response)

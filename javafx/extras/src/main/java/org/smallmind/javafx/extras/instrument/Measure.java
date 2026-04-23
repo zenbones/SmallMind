@@ -33,12 +33,14 @@
 package org.smallmind.javafx.extras.instrument;
 
 /**
- * Represents averaged rate measurements for a meter over multiple rolling windows.
+ * Immutable snapshot of throughput rate averages sampled at a point in time. Values are sourced
+ * from a meter and cover four rolling windows, allowing {@link GaugeChart} to compare long- and
+ * short-term rate trends on the same chart.
  *
- * @param avgRate    lifetime average rate
- * @param avgRate_1  one-minute rolling average rate
- * @param avgRate_5  five-minute rolling average rate
- * @param avgRate_15 fifteen-minute rolling average rate
+ * @param avgRate    lifetime (inception-to-now) average throughput rate
+ * @param avgRate_1  exponentially-weighted one-minute rolling average rate
+ * @param avgRate_5  exponentially-weighted five-minute rolling average rate
+ * @param avgRate_15 exponentially-weighted fifteen-minute rolling average rate
  */
 public record Measure(double avgRate, double avgRate_1, double avgRate_5, double avgRate_15) {
 

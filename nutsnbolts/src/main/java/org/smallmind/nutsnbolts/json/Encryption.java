@@ -43,15 +43,30 @@ import javax.crypto.spec.IvParameterSpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 /**
- * Encryption algorithms supported for securing {@link BinaryData} payloads.
+ * Symmetric encryption algorithms available for securing {@link BinaryData} payloads.
  */
 public enum Encryption {
 
+  /**
+   * AES encryption in CBC mode with PKCS5 padding using a fixed initialization vector.
+   */
   AES {
 
     private final byte[] iv = new byte[] {0x47, 0x6C, 0x75, 0x20, 0x4D, 0x6F, 0x62, 0x69, 0x6C, 0x65, 0x20, 0x47, 0x61, 0x6D, 0x65, 0x73};
 
-    /** {@inheritDoc} */
+    /**
+     * Encrypts the supplied bytes with AES/CBC/PKCS5Padding using the provided key.
+     *
+     * @param key           the AES key used for encryption
+     * @param toBeEncrypted the clear-text bytes to encrypt
+     * @return the ciphertext bytes
+     * @throws NoSuchAlgorithmException           if the AES algorithm is unavailable
+     * @throws InvalidAlgorithmParameterException if the IV parameter is invalid
+     * @throws NoSuchPaddingException             if PKCS5Padding is unavailable
+     * @throws InvalidKeyException                if the key is not valid for AES
+     * @throws IllegalBlockSizeException          if the input length is invalid
+     * @throws BadPaddingException                if a padding error occurs
+     */
     @Override
     public byte[] encrypt (Key key, byte[] toBeEncrypted)
       throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -59,7 +74,19 @@ public enum Encryption {
       return EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Decrypts bytes previously encrypted with {@link #encrypt(Key, byte[])} using AES/CBC/PKCS5Padding.
+     *
+     * @param key       the AES key used for decryption
+     * @param encrypted the ciphertext bytes to decrypt
+     * @return the decrypted clear-text bytes
+     * @throws NoSuchAlgorithmException           if the AES algorithm is unavailable
+     * @throws NoSuchPaddingException             if PKCS5Padding is unavailable
+     * @throws InvalidKeyException                if the key is not valid for AES
+     * @throws InvalidAlgorithmParameterException if the IV parameter is invalid
+     * @throws IllegalBlockSizeException          if the input length is invalid
+     * @throws BadPaddingException                if a padding error occurs during decryption
+     */
     @Override
     public byte[] decrypt (Key key, byte[] encrypted)
       throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
@@ -69,23 +96,23 @@ public enum Encryption {
   };
 
   /**
-   * Encrypts the provided bytes with the supplied key.
+   * Encrypts the provided bytes using this algorithm and the supplied key.
    *
    * @param key           the key required by the algorithm
-   * @param toBeEncrypted clear-text bytes to encrypt
-   * @return the encrypted payload
+   * @param toBeEncrypted the clear-text bytes to encrypt
+   * @return the resulting ciphertext bytes
    * @throws Exception if the algorithm, padding, key, or input are invalid
    */
   public abstract byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws Exception;
 
   /**
-   * Decrypts bytes produced by the matching {@link #encrypt(Key, byte[])} method.
+   * Decrypts bytes that were produced by the matching {@link #encrypt(Key, byte[])} call.
    *
-   * @param key       the key used to decrypt
-   * @param encrypted encrypted payload
-   * @return decrypted clear-text bytes
-   * @throws Exception if decryption fails or the key/algorithm are invalid
+   * @param key       the key used for decryption
+   * @param encrypted the ciphertext bytes to decrypt
+   * @return the decrypted clear-text bytes
+   * @throws Exception if decryption fails or the key or algorithm are invalid
    */
   public abstract byte[] decrypt (Key key, byte[] encrypted)
     throws Exception;

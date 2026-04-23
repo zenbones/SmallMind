@@ -39,16 +39,18 @@ import org.smallmind.scribe.pen.DateFormatTimestamp;
 import org.smallmind.scribe.pen.PatternFormatter;
 
 /**
- * Logging plan that writes to console using a pattern formatter.
+ * Concrete {@link LoggingPlan} that writes log records to the console using a {@link PatternFormatter}
+ * with a configurable timestamp format and a fixed pattern that includes date, level, caller context,
+ * thread, message, parameters, and stack trace.
  */
 public class ConsoleLoggingPlan extends LoggingPlan {
 
   private DateFormatTimestamp fullTimestamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 
   /**
-   * Overrides the timestamp format for the console pattern.
+   * Replaces the default ISO-8601 timestamp formatter used when rendering log records to the console.
    *
-   * @param fullTimestamp timestamp implementation to use in pattern formatting
+   * @param fullTimestamp the timestamp implementation to use in pattern formatting
    */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
@@ -56,9 +58,10 @@ public class ConsoleLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Builds the console appender configured with the current timestamp formatter and pattern.
+   * Constructs and returns a {@link ConsoleAppender} whose {@link PatternFormatter} uses the configured
+   * timestamp and the standard Scribe output pattern.
    *
-   * @return configured {@link ConsoleAppender}
+   * @return a fully configured {@link ConsoleAppender}
    */
   @Override
   public Appender getAppender () {

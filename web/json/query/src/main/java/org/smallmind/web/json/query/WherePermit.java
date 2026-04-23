@@ -35,7 +35,7 @@ package org.smallmind.web.json.query;
 import java.util.Objects;
 
 /**
- * Represents a permission rule (allowed, required, excluded, dependent) for a specific field, optionally scoped to an entity.
+ * Abstract base for a named field permission rule (allowed, required, excluded, or dependent), optionally scoped to an entity alias.
  */
 public abstract class WherePermit {
 
@@ -46,7 +46,7 @@ public abstract class WherePermit {
    * Creates a permit scoped to a specific entity.
    *
    * @param entity entity alias
-   * @param name   field name
+   * @param name   field name governed by this permit
    */
   public WherePermit (String entity, String name) {
 
@@ -58,7 +58,7 @@ public abstract class WherePermit {
   /**
    * Creates a permit for the default entity context.
    *
-   * @param name field name
+   * @param name field name governed by this permit
    */
   public WherePermit (String name) {
 
@@ -66,11 +66,11 @@ public abstract class WherePermit {
   }
 
   /**
-   * Factory for an allowed permit.
+   * Creates an {@link AllowedWherePermit} for the given entity and field.
    *
    * @param entity entity alias
    * @param name   field name
-   * @return permit instance
+   * @return allowed permit
    */
   public static AllowedWherePermit allowed (String entity, String name) {
 
@@ -78,11 +78,11 @@ public abstract class WherePermit {
   }
 
   /**
-   * Factory for a required permit.
+   * Creates a {@link RequiredWherePermit} for the given entity and field.
    *
    * @param entity entity alias
    * @param name   field name
-   * @return permit instance
+   * @return required permit
    */
   public static RequiredWherePermit required (String entity, String name) {
 
@@ -90,11 +90,11 @@ public abstract class WherePermit {
   }
 
   /**
-   * Factory for an excluded permit.
+   * Creates an {@link ExcludedWherePermit} for the given entity and field.
    *
    * @param entity entity alias
    * @param name   field name
-   * @return permit instance
+   * @return excluded permit
    */
   public static ExcludedWherePermit excluded (String entity, String name) {
 
@@ -102,12 +102,12 @@ public abstract class WherePermit {
   }
 
   /**
-   * Factory for a dependent permit requiring another field.
+   * Creates a {@link DependentWherePermit} linking a field to a required companion field.
    *
-   * @param entity      entity alias
-   * @param name        field name
-   * @param requirement the required target field
-   * @return permit instance
+   * @param entity      entity alias of the dependent field
+   * @param name        field name of the dependent field
+   * @param requirement the companion field that must also be present
+   * @return dependent permit
    */
   public static DependentWherePermit dependent (String entity, String name, TargetWherePermit requirement) {
 
@@ -115,12 +115,16 @@ public abstract class WherePermit {
   }
 
   /**
-   * @return the permit type discriminator
+   * Returns the permit type discriminator.
+   *
+   * @return permit type
    */
   public abstract PermitType getType ();
 
   /**
-   * @return entity alias or {@code null} for default entity
+   * Returns the entity alias, if any.
+   *
+   * @return entity alias, or {@code null} for the default entity
    */
   public String getEntity () {
 
@@ -128,7 +132,9 @@ public abstract class WherePermit {
   }
 
   /**
-   * @return field name governed by this permit
+   * Returns the field name governed by this permit.
+   *
+   * @return field name
    */
   public String getName () {
 

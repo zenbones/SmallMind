@@ -35,16 +35,16 @@ package org.smallmind.nutsnbolts.xml;
 import org.smallmind.nutsnbolts.resource.Resource;
 
 /**
- * Resolves protocol-specific system identifiers to {@link Resource} instances for XML parsing utilities.
+ * Strategy interface that maps a URI system identifier to a {@link Resource} for use by XML parsing utilities.
  */
 public interface ProtocolResolver {
 
   /**
    * Resolves the supplied system identifier to a resource.
    *
-   * @param systemId system identifier (URI) to resolve
-   * @return corresponding {@link Resource}, or {@code null} when the resolver cannot handle the identifier
-   * @throws ProtocolResolutionException if resolution fails
+   * @param systemId the system identifier (URI) to resolve
+   * @return the corresponding {@link Resource}, or {@code null} if this resolver does not handle the identifier
+   * @throws ProtocolResolutionException if resolution is attempted but fails
    */
   Resource resolve (String systemId)
     throws ProtocolResolutionException;

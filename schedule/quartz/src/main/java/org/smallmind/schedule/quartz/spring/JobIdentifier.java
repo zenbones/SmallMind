@@ -33,8 +33,9 @@
 package org.smallmind.schedule.quartz.spring;
 
 /**
- * Simple value object representing a Quartz job identifier composed of a
- * name and group.
+ * Value object holding the name and group that together uniquely identify a
+ * Quartz job. Used by {@link JobDeletionInitializingBean} to specify which
+ * jobs should be removed from the scheduler.
  */
 public class JobIdentifier {
 
@@ -42,7 +43,7 @@ public class JobIdentifier {
   private String group;
 
   /**
-   * Job name component.
+   * Returns the name component of the job key.
    *
    * @return job name
    */
@@ -52,7 +53,7 @@ public class JobIdentifier {
   }
 
   /**
-   * Set the job name.
+   * Sets the name component of the job key.
    *
    * @param name job name
    */
@@ -62,7 +63,7 @@ public class JobIdentifier {
   }
 
   /**
-   * Job group component.
+   * Returns the group component of the job key.
    *
    * @return job group
    */
@@ -72,7 +73,7 @@ public class JobIdentifier {
   }
 
   /**
-   * Set the job group.
+   * Sets the group component of the job key.
    *
    * @param group job group
    */

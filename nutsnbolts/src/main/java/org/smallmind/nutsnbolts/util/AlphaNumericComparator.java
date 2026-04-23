@@ -35,17 +35,17 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Comparator;
 
 /**
- * Comparator that orders values by an alphanumeric rule: digits sort before letters at the same position,
- * digits compare numerically, and letters compare case-insensitively.
+ * Comparator that orders values character-by-character, sorting digit positions before letter positions,
+ * comparing digits numerically, and comparing letters case-insensitively.
  *
- * @param <T> value type
+ * @param <T> the type of values being compared
  */
 public class AlphaNumericComparator<T> implements Comparator<T> {
 
   private final AlphaNumericConverter<T> alphaNumConverter;
 
   /**
-   * Uses the {@link DefaultAlphaNumericConverter}.
+   * Constructs a comparator using the {@link DefaultAlphaNumericConverter} to produce string representations.
    */
   public AlphaNumericComparator () {
 
@@ -53,7 +53,9 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
   }
 
   /**
-   * @param alphaNumConverter converter to obtain string representations for comparison
+   * Constructs a comparator using the provided converter to produce string representations.
+   *
+   * @param alphaNumConverter converter that transforms values to their string representation for comparison
    */
   public AlphaNumericComparator (AlphaNumericConverter<T> alphaNumConverter) {
 
@@ -61,11 +63,12 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
   }
 
   /**
-   * Compares two values using the configured alphanumeric semantics.
+   * Compares two values by converting them to strings and applying alphanumeric ordering rules,
+   * where null values sort before non-null values and empty strings sort before non-empty strings.
    *
-   * @param obj1 first value (nulls sort first)
-   * @param obj2 second value (nulls sort last relative to non-null)
-   * @return negative, zero, or positive per {@link Comparator} contract
+   * @param obj1 the first value to compare
+   * @param obj2 the second value to compare
+   * @return a negative integer, zero, or positive integer as the first value is less than, equal to, or greater than the second
    */
   public int compare (T obj1, T obj2) {
 

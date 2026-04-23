@@ -35,17 +35,21 @@ package org.smallmind.batch.spring;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
 /**
- * Convenience helpers for extracting typed values from {@link ChunkContext}.
+ * Static helpers for extracting typed parameter values from a Spring Batch {@link ChunkContext}.
  */
 public class TaskletUtility {
 
   /**
-   * Reads a boolean job parameter from the chunk context.
+   * Reads a string-valued job parameter and parses it as a boolean.
+   * <p>
+   * Returns {@code defaultValue} when the parameter is absent. Parsing delegates to
+   * {@link Boolean#parseBoolean}, so only the literal string {@code "true"} (case-insensitive)
+   * maps to {@code true}; all other values yield {@code false}.
    *
-   * @param chunkContext  the current chunk context
-   * @param parameterName the job parameter name
-   * @param defaultValue  value to return when the parameter is absent
-   * @return the parsed boolean value or the default when not present
+   * @param chunkContext  the active chunk context
+   * @param parameterName the job parameter to look up
+   * @param defaultValue  value returned when the parameter is not present
+   * @return the parsed boolean, or {@code defaultValue} if the parameter is absent
    */
   public static boolean asBoolean (ChunkContext chunkContext, String parameterName, boolean defaultValue) {
 

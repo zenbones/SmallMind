@@ -33,23 +33,23 @@
 package org.smallmind.web.jetty.installer;
 
 /**
- * Base class for describing elements that should be installed into a Jetty context.
+ * Base class for configuration descriptors that install web components into a Jetty context.
  */
 public abstract class JettyInstaller {
 
   private String contextPath;
 
   /**
-   * Identifies the type of installer.
+   * Returns the type of Jetty component this installer describes.
    *
-   * @return the installer type enumeration
+   * @return the installer type enumeration value
    */
   public abstract JettyInstallerType getOptionType ();
 
   /**
-   * Returns the context path with which this installer should be associated.
+   * Returns the context path with which this installer is associated.
    *
-   * @return context path string
+   * @return the target Jetty context path
    */
   public String getContextPath () {
 
@@ -57,7 +57,7 @@ public abstract class JettyInstaller {
   }
 
   /**
-   * Sets the context path with which this installer should be associated.
+   * Sets the context path that identifies which Jetty web application receives this installer.
    *
    * @param contextPath the target Jetty context path
    */

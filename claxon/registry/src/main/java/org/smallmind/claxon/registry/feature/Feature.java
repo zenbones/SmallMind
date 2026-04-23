@@ -36,24 +36,42 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Represents a periodically recorded metric source managed by the registry.
+ * Contract for a periodically sampled metric source managed by a {@link org.smallmind.claxon.registry.ClaxonRegistry}.
+ * A feature encapsulates a self-contained unit of measurable state that the registry will
+ * poll on a regular schedule. Each invocation of {@link #record()} should capture a
+ * consistent snapshot of the feature's current measurements and return them as an array of
+ * {@link Quantity} objects, which the registry then forwards to the configured emitters.
+ *
+ * <p>Implementations must be thread-safe because {@link #record()} may be invoked from a
+ * registry-managed background thread concurrently with other operations on the feature.
  */
 public interface Feature {
 
   /**
-   * @return logical name for the feature's meter
+   * Returns the logical name of the meter associated with this feature. The name is used by
+   * the registry to identify and group measurements from this feature within the metric
+   * namespace.
+   *
+   * @return the feature's meter name; must not be {@code null} or empty
    */
   String getName ();
 
   /**
-   * @return tags applied to all quantities emitted by this feature
+   * Returns the dimensional tags that should be applied to all {@link Quantity} values
+   * emitted by this feature. Tags allow emitters to attach metadata such as environment,
+   * region, or service name to the recorded measurements.
+   *
+   * @return array of {@link Tag} instances; may be empty but must not be {@code null}
    */
   Tag[] getTags ();
 
   /**
-   * Captures the current measurements for this feature.
+   * Captures and returns the current measurements for this feature as a snapshot. This
+   * method is invoked periodically by the registry on a background thread. Implementations
+   * should collect all relevant metric values and return them as {@link Quantity} objects.
    *
-   * @return measured quantities, possibly empty
+   * @return array of {@link Quantity} objects representing the current state of the feature;
+   * may be empty but must not be {@code null}
    */
   Quantity[] record ();
 }

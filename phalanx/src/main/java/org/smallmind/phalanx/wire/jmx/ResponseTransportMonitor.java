@@ -37,16 +37,18 @@ import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
 
 /**
- * Exposes a {@link ResponseTransport} via JMX, delegating control operations.
+ * {@link StandardMBean} adapter that surfaces a {@link ResponseTransport} as a JMX managed bean,
+ * allowing operators to inspect transport state and toggle request processing at runtime without
+ * redeployment.
  */
 public class ResponseTransportMonitor extends StandardMBean implements ResponseTransportMXBean {
 
   private final ResponseTransport responseTransport;
 
   /**
-   * Registers the monitor for the given response transport.
+   * Wraps the given transport for JMX exposure using the {@link ResponseTransportMXBean} interface.
    *
-   * @param responseTransport transport to monitor
+   * @param responseTransport the transport whose state and lifecycle operations will be delegated
    */
   public ResponseTransportMonitor (ResponseTransport responseTransport) {
 
@@ -56,7 +58,9 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the current lifecycle state of the underlying transport.
+   *
+   * @return one of {@link TransportState#PLAYING}, {@link TransportState#PAUSED}, or {@link TransportState#CLOSED}
    */
   @Override
   public TransportState getState () {
@@ -65,7 +69,9 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
   }
 
   /**
-   * {@inheritDoc}
+   * Resumes request processing on the underlying transport.
+   *
+   * @throws Exception if the transport cannot transition to the {@link TransportState#PLAYING} state
    */
   @Override
   public void play ()
@@ -75,7 +81,9 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
   }
 
   /**
-   * {@inheritDoc}
+   * Suspends request processing on the underlying transport without closing it.
+   *
+   * @throws Exception if the transport cannot transition to the {@link TransportState#PAUSED} state
    */
   @Override
   public void pause ()

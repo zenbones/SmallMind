@@ -35,15 +35,25 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when a test becomes moot due to unmet assumptions or prerequisites.
+ * Event fired when a test becomes moot because a precondition or assumption was not satisfied.
+ * <p>
+ * A moot test is neither a pass nor a failure: the test ran far enough to discover that its
+ * preconditions do not hold, but the test body was not executed. The attached throwable
+ * carries the signal (e.g., a violated assumption) that caused the moot state. Surefire maps
+ * this outcome to an assumption failure ({@code testAssumptionFailure}).
+ *
+ * @see SkippedSleuthEvent
+ * @see FailureSleuthEvent
  */
 public class MootSleuthEvent extends ThrowableSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param throwable  cause of the moot state
+   * Constructs a moot event for the given test.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test method rendered moot; must not be {@code null}
+   * @param elapsed    wall-clock time in milliseconds up to the point the moot condition was detected; non-negative
+   * @param throwable  the exception or signal that caused the test to be considered moot; must not be {@code null}
    */
   public MootSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
@@ -51,6 +61,8 @@ public class MootSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#MOOT}.
+   *
    * @return {@link SleuthEventType#MOOT}
    */
   @Override
@@ -60,7 +72,9 @@ public class MootSleuthEvent extends ThrowableSleuthEvent {
   }
 
   /**
-   * @return yellow to indicate a non-fatal skip
+   * Returns yellow, used to distinguish moot tests from hard failures and successes on the console.
+   *
+   * @return {@link AnsiColor#YELLOW}
    */
   @Override
   public AnsiColor getColor () {

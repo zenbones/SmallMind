@@ -33,17 +33,19 @@
 package org.smallmind.nutsnbolts.reflection.type;
 
 /**
- * Convenience methods for comparing {@link Class} objects, especially primitives and their wrappers.
+ * Static helpers for comparing and querying {@link Class} objects, with special handling for Java
+ * primitive types and their boxed wrapper counterparts.
  */
 public class TypeUtility {
 
   private static final Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
 
   /**
-   * Determines whether the supplied type is a primitive or primitive wrapper.
+   * Returns {@code true} if the given class is either a primitive type or one of the standard
+   * primitive wrapper classes ({@code Long}, {@code Boolean}, {@code Integer}, etc.).
    *
    * @param aClass the class to evaluate
-   * @return {@code true} if the class is a primitive or wrapper
+   * @return {@code true} if {@code aClass} is a primitive type or a primitive wrapper
    */
   public static boolean isEssentiallyPrimitive (Class<?> aClass) {
 
@@ -62,11 +64,13 @@ public class TypeUtility {
   }
 
   /**
-   * Compares two classes, considering primitive-wrapper equivalence.
+   * Returns {@code true} when {@code expectedClass} and {@code actualClass} are compatible, treating
+   * each primitive type and its wrapper as interchangeable and falling back to a standard assignability check.
    *
-   * @param expectedClass the expected class
-   * @param actualClass   the actual class
-   * @return {@code true} if the types are assignable or represent the same primitive/wrapper
+   * @param expectedClass the type required by the receiving side (e.g. a method parameter)
+   * @param actualClass   the type of the value being supplied
+   * @return {@code true} if the two types are the same primitive/wrapper pair, or {@code actualClass}
+   * is assignable to {@code expectedClass}
    */
   public static boolean isEssentiallyTheSameAs (Class<?> expectedClass, Class<?> actualClass) {
 
@@ -109,10 +113,12 @@ public class TypeUtility {
   }
 
   /**
-   * Provides the default value for the supplied primitive or wrapper type.
+   * Returns the language-defined default value for the given primitive or wrapper type, or {@code null}
+   * for all other reference types.
    *
-   * @param actualClass the class whose default should be returned
-   * @return zero-equivalent values for primitives/wrappers or {@code null} otherwise
+   * @param actualClass the class whose default value is needed
+   * @return {@code 0}, {@code false}, or {@code (char) 0} as appropriate for primitives and their
+   * wrappers, or {@code null} for non-primitive types
    */
   public static Object getDefaultValue (Class actualClass) {
 

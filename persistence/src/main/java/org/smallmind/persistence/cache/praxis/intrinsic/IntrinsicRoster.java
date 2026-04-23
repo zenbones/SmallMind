@@ -43,10 +43,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.persistence.cache.praxis.Roster;
 
 /**
- * Thread-safe roster implementation backed by a doubly linked list structure. Supports efficient
- * sub-list views that remain synchronized via shared {@link IntrinsicRosterStructure} metadata.
+ * Thread-safe {@link Roster} backed by a custom doubly linked list. Sublist views share the same
+ * underlying {@link IntrinsicRosterStructure} and lock, so structural changes in either the parent
+ * or the sublist are immediately visible to the other.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class IntrinsicRoster<T> implements Roster<T> {
 
@@ -55,7 +56,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   private final IntrinsicRosterStructure<T> structure;
 
   /**
-   * Creates an empty roster.
+   * Creates an empty roster with its own lock and structure.
    */
   public IntrinsicRoster () {
 
@@ -63,9 +64,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Creates a roster initialized with the contents of the provided collection.
+   * Creates a roster pre-populated with the elements from the provided collection.
    *
-   * @param c initial elements
+   * @param c the initial elements; must not be {@code null}
    */
   public IntrinsicRoster (Collection<? extends T> c) {
 
@@ -90,10 +91,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Internal constructor used to build shared roster views backed by the same structure and lock.
+   * Internal constructor used to create shared views (sublists) over the same lock and structure.
    *
-   * @param lock      shared read/write lock guarding structural changes
-   * @param structure shared structure defining the view bounds
+   * @param lock      the shared read/write lock
+   * @param structure the (possibly scoped) structure describing this view's bounds
    */
   private IntrinsicRoster (ReentrantReadWriteLock lock, IntrinsicRosterStructure<T> structure) {
 
@@ -102,7 +103,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return read/write lock guarding roster mutations
+   * Returns the read/write lock guarding all structural mutations of this roster.
+   *
+   * @return the lock
    */
   protected ReentrantReadWriteLock getLock () {
 
@@ -110,10 +113,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Retrieves the next node relative to the supplied node while honoring tail boundaries.
+   * Returns the node that follows {@code current} within the view bounds, or {@code null} when
+   * {@code current} is the tail of this view.
    *
-   * @param current node currently in view
-   * @return next node or {@code null} when at the tail
+   * @param current the node whose successor is requested
+   * @return the next node, or {@code null}
    */
   protected IntrinsicRosterNode<T> getNextInView (IntrinsicRosterNode<T> current) {
 
@@ -127,10 +131,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Retrieves the previous node relative to the supplied node while honoring head boundaries.
+   * Returns the node that precedes {@code current} within the view bounds, or {@code null} when
+   * {@code current} is the head of this view.
    *
-   * @param current node currently in view
-   * @return previous node or {@code null} when at the head
+   * @param current the node whose predecessor is requested
+   * @return the previous node, or {@code null}
    */
   protected IntrinsicRosterNode<T> getPrevInView (IntrinsicRosterNode<T> current) {
 
@@ -144,7 +149,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return number of elements in the roster
+   * Returns the number of elements in this roster.
+   *
+   * @return the element count
    */
   public int size () {
 
@@ -158,7 +165,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return {@code true} when the roster has no elements
+   * Returns {@code true} when this roster contains no elements.
+   *
+   * @return {@code true} if empty
    */
   public boolean isEmpty () {
 
@@ -172,9 +181,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Checks whether the roster contains an element equal to the supplied object.
+   * Returns {@code true} when the roster contains an element equal to the supplied object.
    *
-   * @param obj object to locate
+   * @param obj the object to find
    * @return {@code true} when found
    */
   public boolean contains (Object obj) {
@@ -197,7 +206,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return array containing roster elements in order
+   * Returns an array containing all elements in roster order.
+   *
+   * @return a new array of the roster elements
    */
   @Override
   public Object[] toArray () {
@@ -206,11 +217,13 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Copies roster elements into the provided array, allocating as needed.
+   * Copies roster elements into the provided array, allocating a larger array when needed.
+   * When the provided array is larger than the roster, the element immediately following the last
+   * roster entry is set to {@code null}.
    *
-   * @param a   destination array or {@code null} to allocate
-   * @param <U> element type
-   * @return populated array containing the roster elements
+   * @param a   the destination array, or {@code null} to allocate a fresh {@code Object[]}
+   * @param <U> the array component type
+   * @return the populated array
    */
   @Override
   public <U> U[] toArray (U[] a) {
@@ -240,10 +253,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Locates the node at the specified index, traversing from the nearest end.
+   * Locates the node at the given index by traversing from whichever end is closer.
    *
-   * @param index position to resolve
-   * @return node at the requested index
+   * @param index the zero-based position
+   * @return the node at that position
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   private IntrinsicRosterNode<T> getNode (int index) {
 
@@ -271,10 +285,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Retrieves the first element.
+   * Returns the first element without removing it.
    *
-   * @return head element
-   * @throws NoSuchElementException when roster is empty
+   * @return the head element
+   * @throws NoSuchElementException when the roster is empty
    */
   public T getFirst () {
 
@@ -291,10 +305,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Retrieves the last element.
+   * Returns the last element without removing it.
    *
-   * @return tail element
-   * @throws NoSuchElementException when roster is empty
+   * @return the tail element
+   * @throws NoSuchElementException when the roster is empty
    */
   public T getLast () {
 
@@ -313,8 +327,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Returns the element at the specified index.
    *
-   * @param index position to retrieve
-   * @return element at the index
+   * @param index the zero-based position
+   * @return the element at that index
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public T get (int index) {
 
@@ -328,11 +343,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Replaces the element at the specified index.
+   * Replaces the element at the given index with the supplied value and returns the previous element.
    *
-   * @param index   position to replace
-   * @param element new element
-   * @return previous element
+   * @param index   the zero-based position to update
+   * @param element the new element
+   * @return the element previously at the index
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public T set (int index, T element) {
 
@@ -352,10 +368,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Inserts a new element before the supplied node, updating head references and tracked size.
+   * Inserts a new node immediately before {@code next}, updating head references and incrementing the size.
    *
-   * @param next    node that will follow the inserted element
-   * @param element element to insert
+   * @param next    the node that will follow the newly inserted node
+   * @param element the element to insert
    */
   protected void add (IntrinsicRosterNode<T> next, T element) {
 
@@ -376,7 +392,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Inserts an element at the front of the roster.
    *
-   * @param element element to add
+   * @param element the element to prepend
    */
   public void addFirst (T element) {
 
@@ -395,7 +411,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Appends an element to the end of the roster.
    *
-   * @param element element to add
+   * @param element the element to append
    */
   public void addLast (T element) {
 
@@ -422,9 +438,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Adds an element to the end of the roster.
+   * Appends an element to the end of the roster.
    *
-   * @param element element to add
+   * @param element the element to add
    * @return always {@code true}
    */
   public boolean add (T element) {
@@ -435,10 +451,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Inserts an element at the specified index.
+   * Inserts an element at the specified index, shifting subsequent elements right.
    *
-   * @param index   insertion position
-   * @param element element to add
+   * @param index   the zero-based insertion position
+   * @param element the element to insert
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public void add (int index, T element) {
 
@@ -455,9 +472,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Unlinks the provided node from the roster and adjusts boundary pointers and size.
+   * Unlinks the specified node from the roster, updating boundary pointers and decrementing the size.
    *
-   * @param current node to remove
+   * @param current the node to remove
    */
   protected void removeNode (IntrinsicRosterNode<T> current) {
 
@@ -478,8 +495,8 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Removes and returns the first element.
    *
-   * @return removed element
-   * @throws NoSuchElementException when roster is empty
+   * @return the removed element
+   * @throws NoSuchElementException when the roster is empty
    */
   public T removeFirst () {
 
@@ -503,8 +520,8 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Removes and returns the last element.
    *
-   * @return removed element
-   * @throws NoSuchElementException when roster is empty
+   * @return the removed element
+   * @throws NoSuchElementException when the roster is empty
    */
   public T removeLast () {
 
@@ -528,7 +545,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Removes the first occurrence of the specified object.
    *
-   * @param o object to remove
+   * @param o the object to remove
    * @return {@code true} when an element was removed
    */
   public boolean remove (Object o) {
@@ -552,8 +569,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   /**
    * Removes and returns the element at the given index.
    *
-   * @param index index of the element to remove
-   * @return removed element
+   * @param index the zero-based position to remove
+   * @return the removed element
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public T remove (int index) {
 
@@ -571,10 +589,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Determines whether all elements of the provided collection are present.
+   * Returns {@code true} when the roster contains every element in the provided collection.
    *
-   * @param c collection to check
-   * @return {@code true} when every element exists in the roster
+   * @param c the collection whose elements are checked for containment
+   * @return {@code true} when all elements are found
    */
   public boolean containsAll (Collection<?> c) {
 
@@ -601,10 +619,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Appends all elements from the provided collection.
+   * Appends all elements from the provided collection to the end of this roster.
    *
-   * @param c elements to add
-   * @return {@code true} when the roster changes
+   * @param c the elements to add
+   * @return {@code true} when the collection is non-empty (the roster always changes)
    */
   public boolean addAll (Collection<? extends T> c) {
 
@@ -625,11 +643,12 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Inserts all elements from the collection starting at the given index.
+   * Inserts all elements from the provided collection at the specified index.
    *
-   * @param index insertion position
-   * @param c     elements to add
-   * @return {@code true} when the roster changes
+   * @param index the insertion position
+   * @param c     the elements to insert
+   * @return {@code true} when the collection is non-empty (the roster always changes)
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public boolean addAll (int index, Collection<? extends T> c) {
 
@@ -653,9 +672,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Removes all elements contained in the provided collection.
+   * Removes all elements that are contained in the provided collection.
    *
-   * @param c elements to remove
+   * @param c the elements to remove
    * @return {@code true} when the roster changes
    */
   public boolean removeAll (Collection<?> c) {
@@ -684,9 +703,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Retains only elements contained in the provided collection.
+   * Retains only those elements that are contained in the provided collection, removing all others.
    *
-   * @param c elements to retain
+   * @param c the elements to retain
    * @return {@code true} when the roster changes
    */
   public boolean retainAll (Collection<?> c) {
@@ -715,7 +734,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Removes all elements from the roster.
+   * Removes all elements from this roster.
    */
   public void clear () {
 
@@ -728,10 +747,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Finds the index of the first occurrence of the given object.
+   * Returns the index of the first occurrence of the given object, or {@code -1} when not found.
    *
-   * @param o object to locate
-   * @return index or {@code -1} when not found
+   * @param o the object to locate
+   * @return the zero-based index, or {@code -1}
    */
   public int indexOf (Object o) {
 
@@ -756,10 +775,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Finds the index of the last occurrence of the given object.
+   * Returns the index of the last occurrence of the given object, or {@code -1} when not found.
    *
-   * @param o object to locate
-   * @return index or {@code -1} when not found
+   * @param o the object to locate
+   * @return the zero-based index, or {@code -1}
    */
   public int lastIndexOf (Object o) {
 
@@ -784,7 +803,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return iterator over the roster elements
+   * Returns an iterator over the elements in this roster.
+   *
+   * @return an iterator starting at the head
    */
   public Iterator<T> iterator () {
 
@@ -792,7 +813,9 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * @return list iterator starting at the head of the roster
+   * Returns a list iterator positioned at the head of this roster.
+   *
+   * @return a list iterator starting at index 0
    */
   public ListIterator<T> listIterator () {
 
@@ -806,10 +829,11 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Returns a list iterator starting at the given index.
+   * Returns a list iterator starting at the specified index.
    *
-   * @param index starting position
-   * @return positioned list iterator
+   * @param index the starting position
+   * @return a positioned list iterator
+   * @throws IndexOutOfBoundsException when the index is out of range
    */
   public ListIterator<T> listIterator (int index) {
 
@@ -831,11 +855,13 @@ public class IntrinsicRoster<T> implements Roster<T> {
   }
 
   /**
-   * Creates a sublist view backed by the same underlying structure.
+   * Returns a view of the portion of this roster between {@code fromIndex} (inclusive) and
+   * {@code toIndex} (exclusive). The view shares the same lock and underlying structure.
    *
-   * @param fromIndex start index inclusive
-   * @param toIndex   end index exclusive
-   * @return roster representing the requested range
+   * @param fromIndex the start index, inclusive
+   * @param toIndex   the end index, exclusive
+   * @return a roster view over the specified range
+   * @throws IndexOutOfBoundsException when {@code fromIndex} is greater than {@code toIndex}
    */
   public List<T> subList (int fromIndex, int toIndex) {
 

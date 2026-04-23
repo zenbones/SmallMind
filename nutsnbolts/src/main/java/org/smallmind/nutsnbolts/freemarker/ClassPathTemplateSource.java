@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Represents a classpath-based FreeMarker template source and its underlying stream.
+ * Handle for a classpath-based FreeMarker template resource, lazily opened via {@link ClassLoader#getResourceAsStream} and used by {@link ClassPathTemplateLoader}.
  */
 public class ClassPathTemplateSource {
 
@@ -45,10 +45,10 @@ public class ClassPathTemplateSource {
   private final String name;
 
   /**
-   * Creates a template source for a classpath resource.
+   * Constructs a source for the named classpath resource, opening its stream immediately via the supplied class loader.
    *
-   * @param classLoader loader used to resolve the resource
-   * @param name        resource path within the classpath
+   * @param classLoader class loader used to locate and open the resource
+   * @param name        classpath-relative resource path
    */
   public ClassPathTemplateSource (ClassLoader classLoader, String name) {
 
@@ -59,7 +59,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * @return {@code true} if the resource exists
+   * Returns {@code true} if the resource was found on the classpath during construction.
+   *
+   * @return {@code true} if the input stream is non-null
    */
   public boolean exists () {
 
@@ -67,7 +69,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * @return class loader used to locate the resource
+   * Returns the class loader used to locate this resource.
+   *
+   * @return the class loader
    */
   public ClassLoader getClassLoader () {
 
@@ -75,7 +79,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * @return resource name/path
+   * Returns the classpath-relative resource name.
+   *
+   * @return the resource name as supplied to the constructor
    */
   public String getName () {
 
@@ -83,7 +89,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * @return input stream for reading the template; may be {@code null} if resource absent
+   * Returns the input stream for reading the template content, or {@code null} if the resource was not found.
+   *
+   * @return the resource input stream, or {@code null}
    */
   public synchronized InputStream getInputStream () {
 
@@ -91,9 +99,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * Closes the underlying input stream, if present.
+   * Closes the underlying input stream if it was successfully opened.
    *
-   * @throws IOException if closure fails
+   * @throws IOException if closing the stream fails
    */
   public synchronized void close ()
     throws IOException {
@@ -104,9 +112,9 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * Computes a hash combining class loader and resource name.
+   * Returns a hash code derived from the class loader and resource name, suitable for use as a map key.
    *
-   * @return hash code for map/set usage
+   * @return combined hash of class loader and name
    */
   @Override
   public int hashCode () {
@@ -115,10 +123,10 @@ public class ClassPathTemplateSource {
   }
 
   /**
-   * Considers two sources equal when both class loader and resource name match.
+   * Returns {@code true} when the other object is a {@link ClassPathTemplateSource} with the same class loader and resource name.
    *
-   * @param obj object to compare
-   * @return {@code true} when equivalent
+   * @param obj the object to compare with this source
+   * @return {@code true} if both sources refer to the same resource
    */
   @Override
   public boolean equals (Object obj) {

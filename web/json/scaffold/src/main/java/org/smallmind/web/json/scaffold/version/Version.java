@@ -36,24 +36,24 @@ import java.io.IOException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Represents a semantic version definition that knows how to serialize and deserialize
- * {@link Versioned} instances of a particular type.
+ * Contract for version enum constants that know how to serialize and deserialize the {@link Versioned}
+ * type they govern.
  *
- * @param <V> concrete version enum type implementing this contract
+ * @param <V> concrete version enum type that implements this interface
  */
 public interface Version<V extends Enum<V> & Version<V>> {
 
   /**
-   * @return the class of the {@link Versioned} type governed by this version enum
+   * @return class of the {@link Versioned} type associated with this version
    */
   Class<? extends Versioned<V>> getVersionedClass ();
 
   /**
-   * Deserializes a JSON representation of a {@link Versioned} object that matches this version.
+   * Deserializes a JSON string into the {@link Versioned} type for this version.
    *
    * @param json JSON payload
-   * @return deserialized object
-   * @throws IOException if parsing fails or the JSON cannot be bound to the target type
+   * @return deserialized instance
+   * @throws IOException if parsing or binding fails
    */
   default Versioned<V> fromJson (String json)
     throws IOException {
@@ -62,7 +62,7 @@ public interface Version<V extends Enum<V> & Version<V>> {
   }
 
   /**
-   * Serializes a {@link Versioned} object into JSON.
+   * Serializes a {@link Versioned} instance to a compact JSON string.
    *
    * @param versioned instance to serialize
    * @return JSON representation

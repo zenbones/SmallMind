@@ -37,18 +37,32 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean producing a singleton {@link Tag} from configured key/value properties.
+ * Spring {@link FactoryBean} that constructs a singleton {@link Tag} from an injected
+ * {@code key} and {@code value}. The {@link Tag} is assembled during
+ * {@link #afterPropertiesSet()} after Spring has populated both properties. The underlying
+ * {@link Tag} constructor enforces that neither key nor value may be {@code null} or empty.
  */
 public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
 
+  /**
+   * The {@link Tag} singleton produced by this factory bean.
+   */
   private Tag tag;
+
+  /**
+   * The key component of the tag key/value pair.
+   */
   private String key;
+
+  /**
+   * The value component of the tag key/value pair.
+   */
   private String value;
 
   /**
-   * Sets the tag key.
+   * Sets the key component of the tag.
    *
-   * @param key tag key
+   * @param key the tag key; must be non-null and non-empty
    */
   public void setKey (String key) {
 
@@ -56,9 +70,9 @@ public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
   }
 
   /**
-   * Sets the tag value.
+   * Sets the value component of the tag.
    *
-   * @param value tag value
+   * @param value the tag value; must be non-null and non-empty
    */
   public void setValue (String value) {
 
@@ -66,9 +80,9 @@ public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
   }
 
   /**
-   * Tags are singletons for a given factory bean configuration.
+   * Indicates that the produced {@link Tag} is a singleton within the Spring context.
    *
-   * @return always true
+   * @return {@code true} always
    */
   @Override
   public boolean isSingleton () {
@@ -77,7 +91,9 @@ public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
   }
 
   /**
-   * @return the produced object type ({@link Tag})
+   * Returns the type of object produced by this factory bean.
+   *
+   * @return {@link Tag}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -86,7 +102,10 @@ public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
   }
 
   /**
-   * @return the constructed tag
+   * Returns the {@link Tag} singleton constructed during {@link #afterPropertiesSet()}.
+   *
+   * @return the constructed {@link Tag}, or {@code null} if {@link #afterPropertiesSet()} has
+   * not yet run
    */
   @Override
   public Tag getObject () {
@@ -95,7 +114,10 @@ public class TagFactoryBean implements FactoryBean<Tag>, InitializingBean {
   }
 
   /**
-   * Builds the tag after Spring injects properties.
+   * Constructs the {@link Tag} from the configured {@link #key} and {@link #value}.
+   * Invoked automatically by the Spring container after all bean properties have been set.
+   *
+   * @throws IllegalArgumentException if either {@link #key} or {@link #value} is {@code null} or empty
    */
   @Override
   public void afterPropertiesSet () {

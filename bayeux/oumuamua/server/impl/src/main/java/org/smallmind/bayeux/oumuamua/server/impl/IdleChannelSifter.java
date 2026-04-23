@@ -41,9 +41,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Background task that periodically removes idle channels from the channel tree.
+ * Background {@link Runnable} that wakes on a fixed cycle, applies an {@link IdleChannelOperation}
+ * to the entire channel tree to prune expired channels, then compacts the tree by removing empty
+ * branches.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
@@ -55,12 +57,13 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
   private final long idleChannelCycleMinutes;
 
   /**
-   * Creates a sifter configured with scan cadence and logging.
+   * Constructs the sifter with the given scan schedule and removal callback.
    *
-   * @param idleChannelCycleMinutes frequency at which idle channels are checked
-   * @param idleChannelLogLevel     log level used for removal messages
-   * @param channelTree             channel tree to inspect
-   * @param channelCallback         callback invoked when a channel is removed
+   * @param idleChannelCycleMinutes how many minutes to wait between scans
+   * @param idleChannelLogLevel     log level at which channel removal events are recorded
+   * @param channelTree             the tree to walk on each scan cycle
+   * @param channelCallback         forwarded to {@link IdleChannelOperation} and invoked for each
+   *                                channel that is removed
    */
   public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
@@ -71,9 +74,10 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
   }
 
   /**
-   * Requests shutdown and waits for the worker thread to exit.
+   * Signals the worker loop to exit and blocks until the thread has fully stopped.
    *
-   * @throws InterruptedException if interrupted while waiting
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the worker
+   *                              to exit
    */
   public void stop ()
     throws InterruptedException {
@@ -83,7 +87,8 @@ public class IdleChannelSifter<V extends Value<V>> implements Runnable {
   }
 
   /**
-   * Periodically walks the tree to terminate idle channels until stopped.
+   * Worker loop: sleeps for the configured cycle duration, then walks the channel tree to prune
+   * expired channels and remove dead branches; repeats until {@link #stop()} is called.
    */
   @Override
   public void run () {

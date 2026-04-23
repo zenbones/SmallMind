@@ -36,7 +36,8 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.smallmind.nutsnbolts.reflection.MissingAnnotationException;
 
 /**
- * Manages thread-local JsonEntity deserialization and exposes helpers to resolve parameters for resource method invocation.
+ * Thread-local coordinator that deserializes the request body into a {@link JsonEntity} once per request and
+ * provides typed parameter extraction for {@link EntityParam}-annotated resource method arguments.
  */
 public class EntityTranslator {
 
@@ -44,9 +45,10 @@ public class EntityTranslator {
   private static final ThreadLocal<Class<? extends JsonEntity>> JSON_ENTITY_CLASS_LOCAL = new ThreadLocal<>();
 
   /**
-   * Stores the JsonEntity implementation to deserialize for the current request processing thread.
+   * Registers the concrete {@link JsonEntity} type to deserialize for the current request thread.
    *
-   * @param clazz concrete JsonEntity class
+   * @param clazz concrete {@link JsonEntity} implementation class
+   * @param <E>   entity type
    */
   public static <E extends JsonEntity> void storeEntityType (Class<E> clazz) {
 
@@ -54,16 +56,18 @@ public class EntityTranslator {
   }
 
   /**
-   * Resolves a parameter by reading the configured JsonEntity from the request, caching it per thread, and delegating
-   * to {@link JsonEntity#getParameter(String, Class, ParameterAnnotations)}.
+   * Lazily deserializes the request body into the registered {@link JsonEntity} type and delegates parameter lookup
+   * to it, caching the entity instance for the duration of the request.
    *
-   * @param containerRequest     Jersey container request containing the entity body
-   * @param key                  parameter identifier
+   * @param containerRequest     the current Jersey container request containing the entity body
+   * @param key                  parameter key to look up
    * @param clazz                expected parameter type
-   * @param parameterAnnotations annotations attached to the parameter
-   * @return converted parameter value
-   * @throws MissingAnnotationException   if no {@link ResourceMethod} annotation configured the JsonEntity type
-   * @throws ParameterProcessingException if the annotation specifies the interface instead of a concrete type
+   * @param parameterAnnotations annotations on the target parameter
+   * @param <T>                  desired return type
+   * @return the typed parameter value extracted from the entity
+   * @throws MissingAnnotationException   if no entity type was registered via {@link #storeEntityType}
+   * @throws ParameterProcessingException if the registered type is the raw {@link JsonEntity} interface rather than
+   *                                      a concrete implementation
    */
   public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 
@@ -92,7 +96,7 @@ public class EntityTranslator {
   }
 
   /**
-   * Clears any cached entity instance and type for the current request.
+   * Removes the thread-local entity instance and entity class, cleaning up after the current request completes.
    */
   public static void clearEntity () {
 

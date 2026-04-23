@@ -35,7 +35,8 @@ package org.smallmind.scribe.pen.spring.plan;
 import org.smallmind.scribe.pen.Level;
 
 /**
- * DTO representing a logger pattern and level within a logging plan.
+ * Data-transfer object that pairs a {@link Level} threshold with a class-name pattern string, used by
+ * {@link LoggingPlan} to register per-logger {@link org.smallmind.scribe.pen.ClassNameTemplate} instances.
  */
 public class Log {
 
@@ -43,17 +44,17 @@ public class Log {
   private String pattern;
 
   /**
-   * Creates an empty log mapping.
+   * Constructs a {@code Log} with no level or pattern set; both must be supplied before the instance is used.
    */
   public Log () {
 
   }
 
   /**
-   * Creates a log mapping with level and pattern.
+   * Constructs a {@code Log} with the given level threshold and class-name pattern.
    *
-   * @param level   log level to apply
-   * @param pattern logger name pattern
+   * @param level   the minimum {@link Level} that loggers matching this entry will emit
+   * @param pattern the class-name glob or prefix pattern identifying which loggers this entry applies to
    */
   public Log (Level level, String pattern) {
 
@@ -62,9 +63,9 @@ public class Log {
   }
 
   /**
-   * Returns the configured level.
+   * Returns the minimum level threshold configured for this log entry.
    *
-   * @return log level
+   * @return the {@link Level} associated with this entry
    */
   public Level getLevel () {
 
@@ -72,9 +73,9 @@ public class Log {
   }
 
   /**
-   * Sets the log level to apply.
+   * Sets the minimum level threshold that loggers matching the pattern of this entry will apply.
    *
-   * @param level log level
+   * @param level the {@link Level} to associate with this entry
    */
   public void setLevel (Level level) {
 
@@ -82,9 +83,9 @@ public class Log {
   }
 
   /**
-   * Returns the logger pattern.
+   * Returns the class-name pattern that identifies which loggers this entry governs.
    *
-   * @return pattern string
+   * @return the pattern string used to match logger names
    */
   public String getPattern () {
 
@@ -92,9 +93,9 @@ public class Log {
   }
 
   /**
-   * Sets the logger name pattern.
+   * Sets the class-name pattern that identifies which loggers this entry governs.
    *
-   * @param pattern pattern string
+   * @param pattern the pattern string used to match logger names
    */
   public void setPattern (String pattern) {
 

@@ -35,7 +35,8 @@ package org.smallmind.spark.singularity.maven;
 import org.apache.maven.artifact.Artifact;
 
 /**
- * Maven dependency descriptor used to exclude specific artifacts from the generated Singularity bundle.
+ * Simple (groupId, artifactId) pair configured inside the {@code generate-singularity} Mojo's POM configuration to
+ * identify a dependency that should be omitted from the produced Singularity bundle.
  */
 public class Exclusion {
 
@@ -43,7 +44,9 @@ public class Exclusion {
   private String artifactId;
 
   /**
-   * @return the groupId of the dependency to exclude
+   * Returns the configured groupId against which runtime artifacts are compared.
+   *
+   * @return the Maven groupId to exclude
    */
   public String getGroupId () {
 
@@ -51,7 +54,9 @@ public class Exclusion {
   }
 
   /**
-   * @param groupId groupId of the dependency to exclude
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param groupId the Maven groupId to exclude
    */
   public void setGroupId (String groupId) {
 
@@ -59,7 +64,9 @@ public class Exclusion {
   }
 
   /**
-   * @return the artifactId of the dependency to exclude
+   * Returns the configured artifactId against which runtime artifacts are compared.
+   *
+   * @return the Maven artifactId to exclude
    */
   public String getArtifactId () {
 
@@ -67,7 +74,9 @@ public class Exclusion {
   }
 
   /**
-   * @param artifactId artifactId of the dependency to exclude
+   * Setter invoked by Maven's configuration binder.
+   *
+   * @param artifactId the Maven artifactId to exclude
    */
   public void setArtifactId (String artifactId) {
 
@@ -75,10 +84,10 @@ public class Exclusion {
   }
 
   /**
-   * Checks whether the given artifact matches this exclusion.
+   * Evaluates whether a resolved artifact matches the configured coordinates.
    *
-   * @param artifact artifact to test
-   * @return {@code true} when the groupId and artifactId match
+   * @param artifact the artifact under consideration
+   * @return {@code true} if both groupId and artifactId match exactly
    */
   public boolean matchesArtifact (Artifact artifact) {
 

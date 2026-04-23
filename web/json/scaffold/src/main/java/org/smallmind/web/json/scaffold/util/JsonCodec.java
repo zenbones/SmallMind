@@ -49,8 +49,8 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * Centralized Jackson configuration and convenience helpers for reading/writing JSON and converting
- * between POJOs and tree representations.
+ * Centralized Jackson-backed facade providing static helpers for reading, writing, converting, and
+ * copying JSON trees and POJOs.
  */
 public class JsonCodec {
 
@@ -64,10 +64,10 @@ public class JsonCodec {
                                                       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
 
   /**
-   * Reads a JSON byte array into a {@link JsonNode}.
+   * Parses a JSON byte array into a {@link JsonNode}.
    *
    * @param bytes JSON payload
-   * @return parsed node
+   * @return parsed tree node
    * @throws IOException if parsing fails
    */
   public static JsonNode readAsJsonNode (byte[] bytes)
@@ -77,10 +77,10 @@ public class JsonCodec {
   }
 
   /**
-   * Reads a JSON string into a {@link JsonNode}.
+   * Parses a JSON string into a {@link JsonNode}.
    *
    * @param aString JSON payload
-   * @return parsed node
+   * @return parsed tree node
    */
   public static JsonNode readAsJsonNode (String aString) {
 
@@ -88,10 +88,10 @@ public class JsonCodec {
   }
 
   /**
-   * Reads JSON from an input stream into a {@link JsonNode}.
+   * Parses JSON from an input stream into a {@link JsonNode}.
    *
-   * @param inputStream stream containing JSON
-   * @return parsed node
+   * @param inputStream stream containing JSON data
+   * @return parsed tree node
    * @throws IOException if reading or parsing fails
    */
   public static JsonNode readAsJsonNode (InputStream inputStream)
@@ -107,7 +107,7 @@ public class JsonCodec {
    * @param clazz target class
    * @param <T>   target type
    * @return deserialized object
-   * @throws IOException if parsing fails
+   * @throws IOException if parsing or binding fails
    */
   public static <T> T read (byte[] bytes, Class<T> clazz)
     throws IOException {
@@ -116,15 +116,15 @@ public class JsonCodec {
   }
 
   /**
-   * Deserializes a subset of JSON bytes into the requested type.
+   * Deserializes a slice of JSON bytes into the requested type.
    *
-   * @param bytes  JSON payload
-   * @param offset offset to start reading
-   * @param len    length to read
+   * @param bytes  JSON payload buffer
+   * @param offset start offset within the buffer
+   * @param len    number of bytes to read
    * @param clazz  target class
    * @param <T>    target type
    * @return deserialized object
-   * @throws IOException if parsing fails
+   * @throws IOException if parsing or binding fails
    */
   public static <T> T read (byte[] bytes, int offset, int len, Class<T> clazz)
     throws IOException {
@@ -148,11 +148,11 @@ public class JsonCodec {
   /**
    * Deserializes JSON from an input stream into the requested type.
    *
-   * @param inputStream JSON stream
+   * @param inputStream JSON data stream
    * @param clazz       target class
    * @param <T>         target type
    * @return deserialized object
-   * @throws IOException if parsing fails
+   * @throws IOException if reading or binding fails
    */
   public static <T> T read (InputStream inputStream, Class<T> clazz)
     throws IOException {
@@ -161,13 +161,13 @@ public class JsonCodec {
   }
 
   /**
-   * Deserializes JSON using an existing {@link JsonParser}.
+   * Deserializes the current token from an existing {@link JsonParser} into the requested type.
    *
-   * @param parser parser positioned at the value
+   * @param parser parser positioned at the value to read
    * @param clazz  target class
    * @param <T>    target type
    * @return deserialized object
-   * @throws IOException if parsing fails
+   * @throws IOException if parsing or binding fails
    */
   public static <T> T read (JsonParser parser, Class<T> clazz)
     throws IOException {
@@ -176,12 +176,12 @@ public class JsonCodec {
   }
 
   /**
-   * Converts a JSON node into a POJO of the requested type.
+   * Converts a JSON tree node into a POJO of the requested type.
    *
-   * @param node  source node
+   * @param node  source tree node
    * @param clazz target class
    * @param <T>   target type
-   * @return converted value
+   * @return converted POJO
    */
   public static <T> T read (JsonNode node, Class<T> clazz) {
 
@@ -189,10 +189,10 @@ public class JsonCodec {
   }
 
   /**
-   * Converts a POJO into a Jackson tree node.
+   * Serializes a POJO into a Jackson tree node.
    *
    * @param obj source object
-   * @return JSON node representation
+   * @return JSON tree representation
    */
   public static JsonNode writeAsJsonNode (Object obj) {
 
@@ -200,10 +200,10 @@ public class JsonCodec {
   }
 
   /**
-   * Serializes a POJO to JSON bytes.
+   * Serializes a POJO to a JSON byte array.
    *
    * @param obj object to serialize
-   * @return byte representation
+   * @return JSON bytes
    */
   public static byte[] writeAsBytes (Object obj) {
 
@@ -214,7 +214,7 @@ public class JsonCodec {
    * Serializes a POJO to a compact JSON string.
    *
    * @param obj object to serialize
-   * @return JSON string
+   * @return compact JSON string
    */
   public static String writeAsString (Object obj) {
 
@@ -222,10 +222,10 @@ public class JsonCodec {
   }
 
   /**
-   * Serializes a POJO to a pretty-printed JSON string with sorted object fields.
+   * Serializes a POJO to a pretty-printed JSON string with object fields sorted alphanumerically.
    *
    * @param obj object to serialize
-   * @return formatted JSON string
+   * @return formatted, sorted JSON string
    */
   public static String writeAsPrettyPrintedString (Object obj) {
 
@@ -237,7 +237,7 @@ public class JsonCodec {
    *
    * @param outputStream destination stream
    * @param obj          object to serialize
-   * @throws IOException if writing or serialization fails
+   * @throws IOException if serialization or writing fails
    */
   public static void writeToStream (OutputStream outputStream, Object obj)
     throws IOException {
@@ -246,7 +246,7 @@ public class JsonCodec {
   }
 
   /**
-   * Converts an object to another type using Jackson's data binding.
+   * Converts an object to another type using Jackson's data-binding conversion.
    *
    * @param obj   source object
    * @param clazz target class
@@ -259,10 +259,10 @@ public class JsonCodec {
   }
 
   /**
-   * Deep-copies a JSON node, cloning object and array structures.
+   * Deep-copies a JSON node, recursively cloning object and array structures.
    *
    * @param node node to copy
-   * @return copied node (or {@code null} if input is null)
+   * @return independent copy of the node, or {@code null} if the input is {@code null}
    */
   public static JsonNode copy (JsonNode node) {
 
@@ -297,10 +297,10 @@ public class JsonCodec {
   }
 
   /**
-   * Recursively sorts object field names using an alphanumeric comparator.
+   * Recursively sorts the field names of object nodes using an alphanumeric comparator.
    *
    * @param node node to sort
-   * @return sorted node (new tree for objects, original for other types)
+   * @return a new object node with sorted fields, or the original node for non-object types
    */
   private static JsonNode sort (JsonNode node) {
 

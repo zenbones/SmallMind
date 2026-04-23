@@ -38,17 +38,20 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 
 /**
- * Connection contract specialized for the Oumuamua server, providing default session lifecycle hooks.
+ * Specialization of {@link Connection} that binds the generic session lifecycle hooks to the
+ * concrete {@link OumuamuaServer} and {@link OumuamuaSession} types through default methods,
+ * eliminating boilerplate in every transport-specific connection implementation.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
 
   /**
-   * Creates and registers a new session with the server for this connection.
+   * Creates a new {@link OumuamuaSession} for this connection and registers it in the server's
+   * session map.
    *
-   * @param server server creating the session
-   * @return newly created session
+   * @param server the owning server used to instantiate and register the session
+   * @return the newly created and registered session
    */
   @Override
   default Session<V> createSession (Server<V> server) {
@@ -61,9 +64,10 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   }
 
   /**
-   * Rebinds an existing session to this connection.
+   * Replaces the connection reference inside an existing session so that subsequent deliveries
+   * flow through this connection; used when a client reconnects and reuses its session id.
    *
-   * @param session session being hijacked
+   * @param session the existing session whose connection should be replaced by this one
    */
   @Override
   default void hijackSession (Session<V> session) {
@@ -72,10 +76,11 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   }
 
   /**
-   * Validates that the supplied session belongs to the same protocol and transport.
+   * Confirms that the session was created by the same protocol and transport combination as this
+   * connection, guarding against cross-transport session re-use.
    *
-   * @param session session to validate
-   * @return {@code true} if compatible
+   * @param session the session to validate against this connection's transport
+   * @return {@code true} if the session's protocol and transport names both match
    */
   @Override
   default boolean validateSession (Session<V> session) {
@@ -85,9 +90,9 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   }
 
   /**
-   * Updates the session's last-contact time.
+   * Refreshes the session's last-contact timestamp to prevent idle expiry.
    *
-   * @param session session to refresh
+   * @param session the session whose idle timer should be reset
    */
   @Override
   default void updateSession (Session<V> session) {
@@ -96,10 +101,11 @@ public interface OumuamuaConnection<V extends Value<V>> extends Connection<V> {
   }
 
   /**
-   * Removes the session from the server on disconnect.
+   * Removes the session from the server's registry and unsubscribes it from all channels when the
+   * underlying transport disconnects.
    *
-   * @param server  owning server
-   * @param session session that disconnected
+   * @param server  the owning server from which the session should be deregistered
+   * @param session the session that has disconnected
    */
   @Override
   default void onDisconnect (Server<V> server, Session<V> session) {

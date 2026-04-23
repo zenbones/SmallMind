@@ -33,18 +33,87 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Enumeration of built-in types with compact signature codes.
+ * Canonical set of primitive and common types recognized by the wire protocol, each
+ * identified by a single-character signature code used in compact type encoding. The codes
+ * are intentionally short to minimize on-wire overhead in method signatures.
  */
 public enum BuiltInType {
 
-  BOOLEAN("Z"), BYTE("B"), U_BYTE("Y"), SHORT("S"), U_SHORT("H"), INTEGER("I"), U_INTEGER("N"), LONG("L"), U_LONG("U"), FLOAT("F"), DOUBLE("D"), CHARACTER("C"), STRING("G"), DATE("T"), VOID("V"), FAULT("A"), OBJECT("O");
+  /**
+   * Signed boolean value; wire code {@code Z}.
+   */
+  BOOLEAN("Z"),
+  /**
+   * Signed 8-bit integer; wire code {@code B}.
+   */
+  BYTE("B"),
+  /**
+   * Unsigned 8-bit integer; wire code {@code Y}.
+   */
+  U_BYTE("Y"),
+  /**
+   * Signed 16-bit integer; wire code {@code S}.
+   */
+  SHORT("S"),
+  /**
+   * Unsigned 16-bit integer; wire code {@code H}.
+   */
+  U_SHORT("H"),
+  /**
+   * Signed 32-bit integer; wire code {@code I}.
+   */
+  INTEGER("I"),
+  /**
+   * Unsigned 32-bit integer; wire code {@code N}.
+   */
+  U_INTEGER("N"),
+  /**
+   * Signed 64-bit integer; wire code {@code L}.
+   */
+  LONG("L"),
+  /**
+   * Unsigned 64-bit integer; wire code {@code U}.
+   */
+  U_LONG("U"),
+  /**
+   * 32-bit IEEE 754 floating-point value; wire code {@code F}.
+   */
+  FLOAT("F"),
+  /**
+   * 64-bit IEEE 754 floating-point value; wire code {@code D}.
+   */
+  DOUBLE("D"),
+  /**
+   * Single Unicode character; wire code {@code C}.
+   */
+  CHARACTER("C"),
+  /**
+   * UTF-8 string; wire code {@code G}.
+   */
+  STRING("G"),
+  /**
+   * Date/time instant; wire code {@code T}.
+   */
+  DATE("T"),
+  /**
+   * Absent return value; wire code {@code V}.
+   */
+  VOID("V"),
+  /**
+   * Encoded fault/exception payload; wire code {@code A}.
+   */
+  FAULT("A"),
+  /**
+   * Opaque object whose concrete type is determined at runtime; wire code {@code O}.
+   */
+  OBJECT("O");
 
   private final String code;
 
   /**
-   * Associates the signature code for the type.
+   * Associates the single-character signature code with this type constant.
    *
-   * @param code signature code used in wire encoding
+   * @param code the wire-level type code; must be exactly one character
    */
   BuiltInType (String code) {
 
@@ -52,9 +121,9 @@ public enum BuiltInType {
   }
 
   /**
-   * Returns the encoded representation of the type.
+   * Returns the single-character code that identifies this type in a wire signature.
    *
-   * @return signature code
+   * @return the type's wire encoding code
    */
   public String getCode () {
 

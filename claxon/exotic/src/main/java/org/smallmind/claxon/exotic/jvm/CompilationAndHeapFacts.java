@@ -38,15 +38,30 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 
 /**
- * Provides access to JVM compilation time and heap memory usage.
+ * Thin wrapper around the JVM's {@link CompilationMXBean} and {@link MemoryMXBean} that
+ * provides convenient access to JIT compilation time and heap memory usage for use by
+ * profiling features.
+ *
+ * <p>Both MXBean references are obtained once at construction time from
+ * {@link ManagementFactory} and are reused for all subsequent calls.
  */
 public class CompilationAndHeapFacts {
 
+  /**
+   * The JVM compilation MXBean used to retrieve the accumulated JIT compilation time.
+   */
   private final CompilationMXBean compilationMXBean = ManagementFactory.getCompilationMXBean();
+
+  /**
+   * The JVM memory MXBean used to retrieve heap and non-heap memory usage statistics.
+   */
   private final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
   /**
-   * @return total compilation time in milliseconds
+   * Returns the approximate total elapsed time spent in JIT compilation since the JVM started.
+   *
+   * @return total JIT compilation time in milliseconds, as reported by
+   * {@link CompilationMXBean#getTotalCompilationTime()}
    */
   public long getCompilationTime () {
 
@@ -54,7 +69,10 @@ public class CompilationAndHeapFacts {
   }
 
   /**
-   * @return current heap memory usage
+   * Returns a snapshot of the current heap memory usage including initial, used, committed,
+   * and maximum values.
+   *
+   * @return the current {@link MemoryUsage} for the heap memory pool
    */
   public MemoryUsage getHeapMemoryUsage () {
 

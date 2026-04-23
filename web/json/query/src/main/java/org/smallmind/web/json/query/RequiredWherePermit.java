@@ -32,10 +32,13 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * {@link WherePermit} that mandates a field must appear in the where clause.
+ */
 public class RequiredWherePermit extends WherePermit {
 
   /**
-   * Creates a required permit scoped to an entity.
+   * Creates a required permit scoped to the given entity.
    *
    * @param entity entity alias
    * @param name   field name
@@ -46,7 +49,7 @@ public class RequiredWherePermit extends WherePermit {
   }
 
   /**
-   * Creates a required permit in the default entity context.
+   * Creates a required permit for the default entity context.
    *
    * @param name field name
    */
@@ -56,6 +59,8 @@ public class RequiredWherePermit extends WherePermit {
   }
 
   /**
+   * Returns the permit type identifying this as a required field rule.
+   *
    * @return {@link PermitType#REQUIRED}
    */
   @Override

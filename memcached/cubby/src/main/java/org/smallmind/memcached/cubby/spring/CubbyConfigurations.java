@@ -35,7 +35,17 @@ package org.smallmind.memcached.cubby.spring;
 import org.smallmind.memcached.cubby.CubbyConfiguration;
 
 /**
- * Named presets for Cubby configuration objects.
+ * Named presets that map Spring-friendly enum values to pre-built {@link CubbyConfiguration} instances.
+ *
+ * <p>This enum is used by {@link CubbyConfigurationFactoryBean} to allow Spring XML or annotation
+ * configuration to select a baseline configuration by name rather than by referencing the
+ * {@link CubbyConfiguration} constants directly. Individual properties can then be overridden
+ * on top of the chosen preset.</p>
+ *
+ * <ul>
+ *   <li>{@link #DEFAULT} &ndash; maps to {@link CubbyConfiguration#DEFAULT}.</li>
+ *   <li>{@link #OPTIMAL} &ndash; maps to {@link CubbyConfiguration#OPTIMAL}.</li>
+ * </ul>
  */
 public enum CubbyConfigurations {
 
@@ -44,7 +54,9 @@ public enum CubbyConfigurations {
   private final CubbyConfiguration configuration;
 
   /**
-   * @param configuration backing configuration instance
+   * Associates the enum constant with the backing {@link CubbyConfiguration} instance.
+   *
+   * @param configuration the pre-built configuration corresponding to this preset
    */
   CubbyConfigurations (CubbyConfiguration configuration) {
 
@@ -52,7 +64,9 @@ public enum CubbyConfigurations {
   }
 
   /**
-   * @return configuration associated with the preset
+   * Returns the {@link CubbyConfiguration} instance associated with this preset.
+   *
+   * @return the backing configuration
    */
   public CubbyConfiguration getConfiguration () {
 

@@ -40,12 +40,14 @@ import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerContext;
+import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.ParameterAdapter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
 /**
- * Logger adapter that emits {@link IndigenousRecord}s using indigenous appenders, filters, and enhancers.
+ * Pure-scribe {@link LoggerAdapter} that creates {@link IndigenousRecord} instances and routes them
+ * through registered filters, enhancers, and appenders without delegating to any external logging framework.
  */
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
@@ -57,9 +59,10 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   private boolean autoFillLoggerContext = false;
 
   /**
-   * Creates an adapter for a named logger.
+   * Builds an adapter for the named logger, initialising empty filter, appender, and enhancer queues
+   * and defaulting the level to {@link Level#INFO}.
    *
-   * @param name the logger name
+   * @param name the logger name used to identify this adapter
    */
   public IndigenousLoggerAdapter (String name) {
 
@@ -71,9 +74,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the logger name.
+   * Returns the name assigned to this logger adapter.
    *
-   * @return the configured name
+   * @return the logger name
    */
   @Override
   public String getName () {
@@ -82,9 +85,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Supplies the parameter adapter used to manage contextual values.
+   * Returns the shared {@link ParameterAdapter} used to supply MDC-style contextual parameters to records.
    *
-   * @return the shared {@link ParameterAdapter} instance
+   * @return the singleton {@link Parameters} instance
    */
   @Override
   public ParameterAdapter getParameterAdapter () {
@@ -93,9 +96,10 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Indicates whether logger context should be auto-populated prior to publishing.
+   * Returns whether this adapter automatically populates caller context (class name, method name)
+   * into the {@link LoggerContext} before evaluating filters.
    *
-   * @return {@code true} when context auto-fill is enabled
+   * @return {@code true} if auto-fill is enabled
    */
   @Override
   public boolean getAutoFillLoggerContext () {
@@ -104,9 +108,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Enables or disables automatic population of logger context data.
+   * Enables or disables automatic population of caller context into the {@link LoggerContext}.
    *
-   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   * @param autoFillLoggerContext {@code true} to capture class and method name automatically
    */
   @Override
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
@@ -115,9 +119,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds a filter that can veto log records.
+   * Appends a filter to the filter chain; all registered filters must allow a record before it is published.
    *
-   * @param filter filter to evaluate records with
+   * @param filter the filter to add
    */
   @Override
   public void addFilter (Filter filter) {
@@ -126,7 +130,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured filters.
+   * Removes all filters from this adapter so that no filter-based veto can block publishing.
    */
   @Override
   public void clearFilters () {
@@ -135,9 +139,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds an appender that will receive published records.
+   * Registers an appender that will receive records surviving the filter chain.
    *
-   * @param appender appender to register
+   * @param appender the appender to add
    */
   @Override
   public void addAppender (Appender appender) {
@@ -146,7 +150,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured appenders.
+   * Removes all registered appenders so that no records are published until new appenders are added.
    */
   @Override
   public void clearAppenders () {
@@ -155,9 +159,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds an enhancer invoked prior to publishing.
+   * Registers an enhancer that will mutate each record after filters pass and before appenders receive it.
    *
-   * @param enhancer enhancer to register
+   * @param enhancer the enhancer to add
    */
   @Override
   public void addEnhancer (Enhancer enhancer) {
@@ -166,7 +170,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured enhancers.
+   * Removes all registered enhancers so that records are published without any mutation step.
    */
   @Override
   public void clearEnhancers () {
@@ -175,7 +179,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the minimum level required to log messages.
+   * Returns the minimum severity level at or above which records are processed.
    *
    * @return the current threshold level
    */
@@ -186,9 +190,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Sets the minimum level required to log messages.
+   * Sets the minimum severity level; records below this threshold are silently discarded.
    *
-   * @param level the threshold level
+   * @param level the new threshold level
    */
   @Override
   public void setLevel (Level level) {
@@ -197,12 +201,12 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a formatted message if enabled at the supplied level.
+   * Logs a message using a format template if the supplied level meets the threshold and all filters allow it.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param message   message template to format
-   * @param args      substitution arguments
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param message   message template passed to {@link MessageTranslator}
+   * @param args      arguments substituted into the message template
    */
   @Override
   public void logMessage (Level level, Throwable throwable, String message, Object... args) {
@@ -218,11 +222,12 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs an arbitrary object if enabled at the supplied level.
+   * Logs the string representation of an arbitrary object if the supplied level meets the threshold
+   * and all filters allow the record.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param object    object whose {@code toString()} will be logged
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param object    object whose {@link Object#toString()} result is used as the message; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Object object) {
@@ -238,11 +243,12 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a lazily supplied message if enabled at the supplied level.
+   * Logs a lazily evaluated message if the supplied level meets the threshold and all filters allow the record;
+   * the supplier is not invoked when the level check fails.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param supplier  supplier that produces the message when logging proceeds
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param supplier  supplier invoked to produce the message string; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Supplier<String> supplier) {
@@ -258,10 +264,11 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Determines whether a record should be logged after evaluating context and filters.
+   * Attaches a freshly created {@link LoggerContext} to the record (auto-filling it when configured)
+   * and evaluates all registered filters, returning {@code false} if any filter vetoes the record.
    *
-   * @param record candidate record
-   * @return {@code true} if the record should be published
+   * @param record the candidate record to evaluate
+   * @return {@code true} if all filters allow the record to proceed to publishing
    */
   private boolean willLog (IndigenousRecord record) {
 
@@ -286,9 +293,10 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Finalizes and publishes a record through enhancers and appenders.
+   * Attaches current parameters to the record, runs every registered enhancer, then publishes
+   * the record to each active appender.
    *
-   * @param record record to publish
+   * @param record the record to enhance and publish
    */
   private void completeLogOperation (IndigenousRecord record) {
 

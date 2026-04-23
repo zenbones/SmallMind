@@ -48,7 +48,7 @@ import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WhereOperator;
 
 /**
- * Utility for translating JSON where/sort structures into Throng (MongoDB) filters and sorts.
+ * Translates JSON where/sort structures into Throng (MongoDB) {@link Filter} and sort expressions.
  */
 public class ThrongQueryUtility {
 
@@ -57,11 +57,11 @@ public class ThrongQueryUtility {
   private static final char WILDCARD_CHAR = '*';
 
   /**
-   * Applies a {@link Where} clause to the provided Throng filters without field transformation.
+   * Applies a {@link Where} clause to the given {@link Filters} without field name transformation.
    *
-   * @param filters filters to augment
+   * @param filters filters instance to augment
    * @param where   where clause to translate
-   * @return the same filters instance with additional constraints
+   * @return the same filters instance with appended constraints
    */
   public static Filters apply (Filters filters, Where where) {
 
@@ -69,12 +69,12 @@ public class ThrongQueryUtility {
   }
 
   /**
-   * Applies a {@link Where} clause to the provided Throng filters using an optional field transformer.
+   * Applies a {@link Where} clause to the given {@link Filters} using an optional field transformer.
    *
-   * @param filters          filters to augment
+   * @param filters          filters instance to augment
    * @param where            where clause to translate
-   * @param fieldTransformer transformer that maps entity/name pairs to backend field names (may be {@code null})
-   * @return the same filters instance with additional constraints
+   * @param fieldTransformer transformer mapping entity/name pairs to backend field names, or {@code null} to use field names as-is
+   * @return the same filters instance with appended constraints
    */
   public static Filters apply (Filters filters, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
@@ -86,7 +86,7 @@ public class ThrongQueryUtility {
   }
 
   /**
-   * Recursively walks conjunctions to build MongoDB filters.
+   * Recursively walks a conjunction node to build a Throng {@link Filter}.
    */
   private static Filter walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
@@ -137,9 +137,9 @@ public class ThrongQueryUtility {
   }
 
   /**
-   * Translates a single field criterion into a Throng filter.
+   * Translates a single {@link WhereField} criterion into a Throng {@link Filter}.
    *
-   * @throws QueryProcessingException if LIKE/UNLIKE are used with invalid patterns or operand types
+   * @throws QueryProcessingException if LIKE/UNLIKE is used with a non-string operand or an interior wildcard
    */
   private static Filter walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
@@ -240,17 +240,23 @@ public class ThrongQueryUtility {
     }
   }
 
+  /**
+   * Converts a {@link Sort} definition into a Throng sort expression without field name transformation.
+   *
+   * @param sort sort definition, or {@code null} for no sorting
+   * @return Throng sort specification
+   */
   public static org.smallmind.mongodb.throng.query.Sort apply (Sort sort) {
 
     return apply(sort, null);
   }
 
   /**
-   * Converts a {@link Sort} into a Throng sort expression using an optional field transformer.
+   * Converts a {@link Sort} definition into a Throng sort expression using an optional field transformer.
    *
-   * @param sort             sort definition (may be {@code null})
-   * @param fieldTransformer transformer that maps entity/name pairs to backend field names (may be {@code null})
-   * @return constructed Throng sort specification
+   * @param sort             sort definition, or {@code null} for no sorting
+   * @param fieldTransformer transformer mapping entity/name pairs to backend field names, or {@code null} to use field names as-is
+   * @return Throng sort specification
    */
   public static org.smallmind.mongodb.throng.query.Sort apply (Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 

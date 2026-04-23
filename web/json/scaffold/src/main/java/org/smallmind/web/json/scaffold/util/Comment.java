@@ -37,16 +37,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
 /**
- * Hint for consuming tools to display or surface descriptive comments for annotated types,
+ * Carries a descriptive comment for consuming tools to display or surface for annotated types,
  * methods, or fields.
  */
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Comment {
 
   /**
-   * @return comment text for tooling/display
+   * @return comment text for tooling or display
    */
   String value ();
 }

@@ -33,16 +33,24 @@
 package org.smallmind.quorum.juggler;
 
 /**
- * Callback interface allowing pins to be added to a blacklist when they fail.
+ * Sink that accepts failed {@link JugglingPin}s so they are quarantined from active service.
+ * <p>
+ * A pin's own code can hold a reference to the {@link BlackList} it belongs to and call
+ * {@link #addToBlackList(BlacklistEntry)} autonomously when it detects an unrecoverable
+ * error, without waiting for the {@link Juggler} to discover the failure through a
+ * subsequent {@link JugglingPin#obtain()} call.
  *
- * @param <R> resource type associated with the pins
+ * @param <R> the type of resource associated with the pins
  */
 public interface BlackList<R> {
 
   /**
-   * Adds a pin to the blacklist so it is no longer served.
+   * Moves the pin described by {@code blacklistEntry} out of active circulation.
+   * <p>
+   * After this call the pin will not be returned to callers until the optional recovery
+   * worker re-validates it and restores it to service.
    *
-   * @param blacklistEntry entry describing the pin and the cause for removal
+   * @param blacklistEntry a record holding the failed pin and the throwable that caused the failure
    */
   void addToBlackList (BlacklistEntry<R> blacklistEntry);
 }

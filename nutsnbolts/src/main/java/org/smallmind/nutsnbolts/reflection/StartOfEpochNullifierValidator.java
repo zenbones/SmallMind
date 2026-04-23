@@ -36,17 +36,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 /**
- * Validates whether a {@link LocalDateTime} value represents the Unix epoch instant and should be
- * treated as equivalent to {@code null}.
+ * {@link OverlayNullifierValidator} implementation that considers a {@link LocalDateTime} to be equivalent
+ * to {@code null} when it represents the Unix epoch instant in the zone configured on the annotation.
  */
 public class StartOfEpochNullifierValidator implements OverlayNullifierValidator<StartOfEpochNullifier, LocalDateTime> {
 
   private StartOfEpochNullifier constraintAnnotation;
 
   /**
-   * Initializes this validator with the constraint configuration declared on the target field.
+   * Retains the annotation instance so its {@code zoneId} element can be read during evaluation.
    *
-   * @param constraintAnnotation the annotation instance containing validator settings
+   * @param constraintAnnotation the {@link StartOfEpochNullifier} annotation placed on the target field
    */
   @Override
   public void initialize (StartOfEpochNullifier constraintAnnotation) {
@@ -55,11 +55,11 @@ public class StartOfEpochNullifierValidator implements OverlayNullifierValidator
   }
 
   /**
-   * Determines whether the supplied date-time resolves to epoch millisecond {@code 0} in the
-   * configured zone.
+   * Returns {@code true} when {@code date} converted to an instant in the configured zone has an
+   * epoch-millisecond value of exactly {@code 0}.
    *
-   * @param date the date-time value to evaluate
-   * @return {@code true} if the value maps to the start of the Unix epoch; otherwise {@code false}
+   * @param date the {@link LocalDateTime} value to evaluate; must not be {@code null}
+   * @return {@code true} if the date-time represents the Unix epoch start and should be treated as {@code null}
    */
   @Override
   public boolean equivalentToNull (LocalDateTime date) {

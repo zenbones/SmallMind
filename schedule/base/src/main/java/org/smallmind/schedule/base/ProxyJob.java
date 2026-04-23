@@ -36,91 +36,90 @@ import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 
 /**
- * Contract for jobs that are executed by a scheduler while exposing minimal
- * lifecycle and bookkeeping hooks. Implementations typically wrap the real
- * job logic with cross-cutting concerns such as logging, status tracking,
- * and error collection.
+ * Defines the contract for a schedulable unit of work. Beyond the execution
+ * method itself, the interface exposes the bookkeeping state — count, timing,
+ * status, and errors — that a host scheduler records and logs for each firing.
  */
 public interface ProxyJob {
 
   /**
-   * Indicates whether the job should execute. Schedulers call this before
-   * running {@link #proceed()} and can skip execution when disabled.
+   * Whether this job is eligible to execute. The scheduler evaluates this
+   * before every firing and silently skips execution when {@code false} is
+   * returned.
    *
-   * @return {@code true} if the job should run, {@code false} to skip
+   * @return {@code true} if execution should proceed
    */
   boolean isEnabled ();
 
   /**
-   * Signals whether the scheduler should log completion even when no work
-   * has been recorded via {@link #incCount()}. Implementations that
-   * consider zero-count executions noteworthy can return {@code true}.
+   * Whether a zero processed-item count should still produce a completion log
+   * entry. Implementations that consider empty-run diagnostics worthwhile
+   * should return {@code true}.
    *
-   * @return {@code true} to log when {@link #getCount()} is zero
+   * @return {@code true} to log completions even when {@link #getCount()} is zero
    */
   boolean logOnZeroCount ();
 
   /**
-   * Current execution status for the job, reflecting successes, failures,
-   * or interruptions.
+   * Outcome recorded for the most recent execution.
    *
-   * @return the most recent {@link SuccessOrFailure} value
+   * @return a {@link SuccessOrFailure} value reflecting current job state
    */
   SuccessOrFailure getJobStatus ();
 
   /**
-   * Number of work items processed during the current execution.
+   * Number of items processed during the current or most recent execution.
    *
-   * @return the recorded count
+   * @return the running item count
    */
   int getCount ();
 
   /**
-   * Increment the count of processed work items by one.
+   * Increment the processed-item count by one.
    */
   void incCount ();
 
   /**
-   * Start time of the current or last execution.
+   * Timestamp marking the start of the current or most recent execution.
    *
-   * @return the start {@link LocalDateTime}, or {@code null} if not yet executed
+   * @return start time as a {@link LocalDateTime}, or {@code null} if never executed
    */
   LocalDateTime getStartTime ();
 
   /**
-   * Stop time of the current or last execution.
+   * Timestamp marking the end of the current or most recent execution.
    *
-   * @return the stop {@link LocalDateTime}, or {@code null} if not yet executed
+   * @return stop time as a {@link LocalDateTime}, or {@code null} if never executed
    */
   LocalDateTime getStopTime ();
 
   /**
-   * Collection of errors encountered during execution. Implementations may
-   * return {@code null} when no errors have been recorded.
+   * Errors accumulated during the current or most recent execution.
    *
-   * @return an array of recorded {@link Throwable}s, or {@code null} when none
+   * @return array of recorded {@link Throwable}s, or {@code null} if no errors were recorded
    */
   Throwable[] getThrowables ();
 
   /**
-   * Record a throwable encountered during execution and optionally update
-   * job status to reflect failure.
+   * Record an error that occurred during execution.
    *
-   * @param throwable the error to record
+   * @param throwable the error to store
    */
   void setThrowable (Throwable throwable);
 
   /**
-   * Core execution logic for the job. Implementations perform their work
-   * here and should update counters, status, or throwables as appropriate.
+   * Execute the job's primary work. Implementations are responsible for
+   * advancing {@link #incCount()} and calling {@link #setThrowable(Throwable)}
+   * as appropriate.
    *
-   * @throws Exception if execution fails or must be aborted
+   * @throws Exception if execution fails and cannot continue
    */
   void proceed ()
     throws Exception;
 
   /**
-   * Cleanup hook invoked after execution completes, regardless of success.
+   * Release resources or perform any post-execution housekeeping. Called by
+   * the scheduler after {@link #proceed()} returns, whether or not it threw.
    *
    * @throws Exception if cleanup fails
    */

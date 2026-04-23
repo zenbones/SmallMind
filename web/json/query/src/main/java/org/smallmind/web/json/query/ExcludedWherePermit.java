@@ -32,13 +32,16 @@
  */
 package org.smallmind.web.json.query;
 
+/**
+ * A {@link WherePermit} that forbids a specific entity field from appearing in a query.
+ */
 public class ExcludedWherePermit extends WherePermit {
 
   /**
-   * Creates an excluded permit scoped to an entity.
+   * Constructs an excluded permit scoped to the given entity and field.
    *
    * @param entity entity alias
-   * @param name   field name
+   * @param name   forbidden field name
    */
   public ExcludedWherePermit (String entity, String name) {
 
@@ -46,9 +49,9 @@ public class ExcludedWherePermit extends WherePermit {
   }
 
   /**
-   * Creates an excluded permit in the default entity context.
+   * Constructs an excluded permit for the default entity context.
    *
-   * @param name field name
+   * @param name forbidden field name
    */
   public ExcludedWherePermit (String name) {
 
@@ -56,6 +59,8 @@ public class ExcludedWherePermit extends WherePermit {
   }
 
   /**
+   * Returns the permit category for this instance.
+   *
    * @return {@link PermitType#EXCLUDED}
    */
   @Override

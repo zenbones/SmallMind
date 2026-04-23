@@ -38,16 +38,23 @@ import javax.naming.NamingException;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 /**
- * Parses and unparses names using {@link JavaName} semantics and a backing {@link NameTranslator}.
+ * {@link NameParser} implementation for the {@code java:} namespace that converts slash-delimited
+ * strings into {@link JavaName} instances and converts them back to strings.
+ * <p>
+ * The first path component is treated specially: if it contains a colon (for example, {@code java:}),
+ * the scheme portion up to and including the colon is added as a separate component, and any
+ * characters that follow immediately on the same segment are added as an additional component.
+ * Subsequent components separated by {@code /} are added without modification.
  */
 public class JavaNameParser implements NameParser {
 
   private final NameTranslator nameTranslator;
 
   /**
-   * Constructs a parser using the provided translator.
+   * Creates a parser that produces {@link JavaName} instances using the given translator.
    *
-   * @param nameTranslator translator used to render names
+   * @param nameTranslator the translator attached to each produced {@link JavaName} so it can
+   *                       render itself in the backing-store's external format
    */
   public JavaNameParser (NameTranslator nameTranslator) {
 
@@ -55,11 +62,16 @@ public class JavaNameParser implements NameParser {
   }
 
   /**
-   * Parses a string into a {@link JavaName}, splitting on '/' and handling optional URL prefixes.
+   * Parses a slash-delimited name string into a {@link JavaName}.
+   * <p>
+   * An empty string produces an empty name. The first segment is examined for a colon; if one is
+   * found, the scheme (characters up to and including the colon) is added as the first component
+   * and any remaining characters on that segment are added as the second. All remaining
+   * slash-separated segments are added in order.
    *
-   * @param name string to parse
-   * @return parsed name
-   * @throws NamingException if parsing fails
+   * @param name the slash-delimited name string to parse
+   * @return a {@link JavaName} whose components reflect the structure of the input string
+   * @throws NamingException if {@link JavaName#add(String)} rejects a component
    */
   public Name parse (String name)
     throws NamingException {
@@ -94,10 +106,13 @@ public class JavaNameParser implements NameParser {
   }
 
   /**
-   * Converts a {@link Name} back into its string representation using '/' separators.
+   * Converts a {@link Name} back into a slash-delimited string.
+   * <p>
+   * An empty name produces an empty string. Components are joined with {@code /} separators in the
+   * order they appear in the name.
    *
-   * @param name name to convert
-   * @return string representation
+   * @param name the {@link Name} to convert
+   * @return the slash-delimited string representation of the name
    */
   public String unparse (Name name) {
 

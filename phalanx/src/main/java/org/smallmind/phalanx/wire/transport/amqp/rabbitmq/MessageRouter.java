@@ -58,10 +58,12 @@ public abstract class MessageRouter {
   private final String prefix;
 
   /**
-   * @param connector                    provider for AMQP connections.
-   * @param prefix                       prefix applied to exchange/queue names.
-   * @param nameConfiguration            configuration of exchange/queue suffixes.
-   * @param publisherConfirmationHandler handler for publisher confirms, or {@code null} if not used.
+   * Creates a router backed by the given connector with the specified naming scheme.
+   *
+   * @param connector                    provider for AMQP connections and channels.
+   * @param prefix                       prefix prepended to all exchange and queue names.
+   * @param nameConfiguration            suffix configuration for exchange and queue names.
+   * @param publisherConfirmationHandler handler for publisher confirms, or {@code null} to disable confirms.
    */
   public MessageRouter (RabbitMQConnector connector, String prefix, NameConfiguration nameConfiguration, PublisherConfirmationHandler publisherConfirmationHandler) {
 
@@ -71,9 +73,19 @@ public abstract class MessageRouter {
     this.publisherConfirmationHandler = publisherConfirmationHandler;
   }
 
+  /**
+   * Declares and binds the AMQP queues required by this router.
+   *
+   * @throws IOException if queue declaration or binding fails.
+   */
   public abstract void bindQueues ()
     throws IOException;
 
+  /**
+   * Installs AMQP consumers on the queues managed by this router.
+   *
+   * @throws IOException if consumer registration fails.
+   */
   public abstract void installConsumer ()
     throws IOException;
 
@@ -90,7 +102,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified request exchange name.
+   * Returns the fully qualified request exchange name (prefix + suffix).
+   *
+   * @return request exchange name.
    */
   public String getRequestExchangeName () {
 
@@ -98,7 +112,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified response exchange name.
+   * Returns the fully qualified response exchange name (prefix + suffix).
+   *
+   * @return response exchange name.
    */
   public String getResponseExchangeName () {
 
@@ -106,7 +122,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified response queue name.
+   * Returns the fully qualified response queue name (prefix + suffix).
+   *
+   * @return response queue name.
    */
   public String getResponseQueueName () {
 
@@ -114,7 +132,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified shout queue name.
+   * Returns the fully qualified shout queue name (prefix + suffix).
+   *
+   * @return shout queue name.
    */
   public String getShoutQueueName () {
 
@@ -122,7 +142,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified talk queue name.
+   * Returns the fully qualified talk queue name (prefix + suffix).
+   *
+   * @return talk queue name.
    */
   public String getTalkQueueName () {
 
@@ -130,7 +152,9 @@ public abstract class MessageRouter {
   }
 
   /**
-   * @return fully qualified whisper queue name.
+   * Returns the fully qualified whisper queue name (prefix + suffix).
+   *
+   * @return whisper queue name.
    */
   public String getWhisperQueueName () {
 
@@ -285,14 +309,19 @@ public abstract class MessageRouter {
     }
   }
 
+  /**
+   * Pairs an AMQP {@link Connection} with the {@link Channel} derived from it.
+   */
   private static class ConnectionAndChannel {
 
     private final Connection connection;
     private final Channel channel;
 
     /**
+     * Creates a pair from an existing connection and channel.
+     *
      * @param connection the owning AMQP connection.
-     * @param channel    channel created from the connection.
+     * @param channel    channel opened on the connection.
      */
     public ConnectionAndChannel (Connection connection, Channel channel) {
 
@@ -301,7 +330,9 @@ public abstract class MessageRouter {
     }
 
     /**
-     * @return the owning AMQP connection.
+     * Returns the owning AMQP connection.
+     *
+     * @return AMQP connection.
      */
     public Connection getConnection () {
 
@@ -309,7 +340,9 @@ public abstract class MessageRouter {
     }
 
     /**
-     * @return the channel created from the connection.
+     * Returns the channel opened on the connection.
+     *
+     * @return AMQP channel.
      */
     public Channel getChannel () {
 
@@ -317,7 +350,7 @@ public abstract class MessageRouter {
     }
 
     /**
-     * Closes the underlying connection (and channel with it).
+     * Closes the underlying connection, which also closes the channel.
      *
      * @throws IOException if the connection cannot be closed cleanly.
      */

@@ -47,7 +47,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint that requires a collection, array, map, or string to have at least one element/character.
+ * Bean Validation constraint that requires an annotated array, {@link java.util.Collection}, or {@link java.util.Map} to contain at least one element.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NotEmpty {
 
   /**
-   * Allows multiple {@link NotEmpty} annotations on the same element.
+   * Container annotation that allows multiple {@link NotEmpty} constraints on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
@@ -64,23 +64,23 @@ public @interface NotEmpty {
   @interface List {
 
     /**
-     * @return array of {@link NotEmpty} constraints
+     * @return the contained {@link NotEmpty} constraints
      */
     NotEmpty[] value ();
   }
 
   /**
-   * @return validation message used when the value is empty
+   * @return the constraint violation message
    */
   String message () default "must be not be empty";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return payload for clients of the Bean Validation API
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 }

@@ -35,21 +35,29 @@ package org.smallmind.quorum.pool.complex.event;
 import java.util.EventListener;
 
 /**
- * Listener for receiving component pool events.
+ * Listener interface for receiving operational events from a complex component pool.
+ * <p>
+ * Implementations are registered with
+ * {@link org.smallmind.quorum.pool.complex.ComponentPool#addComponentPoolEventListener} and
+ * notified synchronously on the thread that triggers the event. Implementations must be
+ * thread-safe and should not perform lengthy work inside these callbacks.
  */
 public interface ComponentPoolEventListener extends EventListener {
 
   /**
-   * Invoked when the pool encounters an error.
+   * Invoked when an error occurs within the pool — for example, when a component instance
+   * terminates unexpectedly due to a communication failure or an uncaught exception.
    *
-   * @param event error event details
+   * @param event the event carrying the pool source and the exception that caused the error
    */
   void reportErrorOccurred (ErrorReportingComponentPoolEvent<?> event);
 
   /**
-   * Invoked when a component lease time is reported.
+   * Invoked each time a component is returned to the pool and
+   * {@link org.smallmind.quorum.pool.complex.ComplexPoolConfig#isReportLeaseTimeNanos()} is
+   * enabled, delivering the duration for which the component was held.
    *
-   * @param event lease time event details
+   * @param event the event carrying the pool source and the lease duration in nanoseconds
    */
   void reportLeaseTime (LeaseTimeReportingComponentPoolEvent<?> event);
 }

@@ -37,7 +37,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Wrapper that exposes Maven dependency elements in a comparable form for sorting.
+ * Adapter that pairs a Maven dependency DOM node with its pre-extracted {@code groupId} and
+ * {@code artifactId}, enabling natural sort-order comparison without repeated DOM traversal.
  */
 public class DependencyWrapper implements Comparable<DependencyWrapper> {
 
@@ -48,9 +49,10 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   private final String artifactId;
 
   /**
-   * Construct a wrapper around a Maven dependency DOM node.
+   * Wrap a {@code <dependency>} DOM node and eagerly extract its coordinates for comparison.
    *
-   * @param dependencyNode the DOM element representing the dependency
+   * @param dependencyNode the DOM element to wrap; must contain {@code <groupId>} and
+   *                       {@code <artifactId>} child elements
    */
   public DependencyWrapper (Node dependencyNode) {
 
@@ -61,7 +63,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * @return the group id of the wrapped dependency
+   * Returns the {@code groupId} extracted from the wrapped dependency node.
+   *
+   * @return groupId text content
    */
   public String getGroupId () {
 
@@ -69,7 +73,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * @return the artifact id of the wrapped dependency
+   * Returns the {@code artifactId} extracted from the wrapped dependency node.
+   *
+   * @return artifactId text content
    */
   public String getArtifactId () {
 
@@ -77,7 +83,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * @return the underlying dependency DOM node
+   * Returns the underlying DOM node representing the {@code <dependency>} element.
+   *
+   * @return the wrapped dependency node
    */
   public Node getDependencyNode () {
 
@@ -85,7 +93,14 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Compare two dependencies by group id (dot-delimited) and then by artifact id (dash-delimited).
+   * Compare this wrapper to {@code otherWrapper} for sort-order purposes.
+   *
+   * <p>Ordering is first by {@code groupId} (dot-delimited segments, alphanumerically), then
+   * by {@code artifactId} (dash-delimited segments, alphanumerically) when the groupIds are equal.
+   *
+   * @param otherWrapper the wrapper to compare against
+   * @return a negative integer, zero, or a positive integer as this dependency orders before,
+   * at the same position as, or after {@code otherWrapper}
    */
   @Override
   public int compareTo (DependencyWrapper otherWrapper) {
@@ -102,12 +117,16 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Compare two delimited strings in a segment-aware alphanumeric fashion.
+   * Compare two strings by splitting each on {@code separator} and comparing corresponding
+   * segments with an alphanumeric comparator.
    *
-   * @param first     the first string
-   * @param second    the second string
-   * @param separator the separator regex used to split the strings into segments
-   * @return negative, zero, or positive if the first string is lexically less than, equal to, or greater than the second
+   * <p>When all shared segments are equal, the string with fewer segments sorts first.
+   *
+   * @param first     the left-hand string
+   * @param second    the right-hand string
+   * @param separator regex used to split each string into segments
+   * @return a negative integer, zero, or a positive integer as {@code first} orders before,
+   * at the same position as, or after {@code second}
    */
   private int subCompare (String first, String second, String separator) {
 

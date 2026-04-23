@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 
 /**
- * Basic {@link HttpCallback} implementation that captures the response or exception for later retrieval.
+ * Concrete {@link HttpCallback} that stores the HTTP response or the failure exception for retrieval after the call completes.
  */
 public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
 
@@ -44,10 +44,10 @@ public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
   private final AtomicReference<Exception> exceptionRef = new AtomicReference<>();
 
   /**
-   * Returns the HTTP response if available or rethrows any captured exception.
+   * Returns the captured HTTP response, or rethrows any exception recorded during the callback.
    *
-   * @return HTTP response from the async invocation
-   * @throws Exception if the call failed or was cancelled
+   * @return the {@link SimpleHttpResponse} received from the server
+   * @throws Exception if the request failed or was cancelled
    */
   public SimpleHttpResponse getResponse ()
     throws Exception {
@@ -62,9 +62,9 @@ public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
   }
 
   /**
-   * Stores the received response for later retrieval.
+   * Stores the successful HTTP response for later retrieval via {@link #getResponse()}.
    *
-   * @param response completed HTTP response
+   * @param response the response returned by the server
    */
   @Override
   public void onCompleted (SimpleHttpResponse response) {
@@ -73,9 +73,9 @@ public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
   }
 
   /**
-   * Records the thrown exception for retrieval in {@link #getResponse()}.
+   * Records the failure exception so {@link #getResponse()} can rethrow it.
    *
-   * @param exception failure cause
+   * @param exception the exception that caused the failure
    */
   @Override
   public void onFailed (Exception exception) {
@@ -84,7 +84,7 @@ public class SimpleCallback extends HttpCallback<SimpleHttpResponse> {
   }
 
   /**
-   * Records a {@link HttpRequestCancelledException} when the request is cancelled.
+   * Records an {@link HttpRequestCancelledException} so {@link #getResponse()} reports the cancellation as an error.
    */
   @Override
   public void onCancelled () {

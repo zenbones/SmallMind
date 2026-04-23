@@ -33,7 +33,10 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Voice representing a standard request directed at a service group.
+ * {@link Voice} implementation that sends a standard request to any available member of a
+ * named service group using the {@link VocalMode#TALK} delivery mode.
+ * Supports both one-way ({@link OneWayConversation}) and two-way ({@link TwoWayConversation})
+ * conversation semantics depending on the supplied {@link Conversation}.
  */
 public class Talking implements Voice<String, Void> {
 
@@ -41,10 +44,10 @@ public class Talking implements Voice<String, Void> {
   private final String serviceGroup;
 
   /**
-   * Creates a talking voice with the given conversation semantics.
+   * Constructs a {@code Talking} voice with the specified conversation and target service group.
    *
-   * @param conversation conversation definition describing timeout and request/response style
-   * @param serviceGroup destination service group
+   * @param conversation the conversation definition governing timeout and response expectations
+   * @param serviceGroup the name of the service group to address
    */
   public Talking (Conversation<?> conversation, String serviceGroup) {
 
@@ -53,7 +56,9 @@ public class Talking implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link VocalMode#TALK}, identifying this voice as a standard group-addressed request.
+   *
+   * @return {@link VocalMode#TALK}
    */
   @Override
   public VocalMode getMode () {
@@ -62,7 +67,9 @@ public class Talking implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the conversation definition that controls timeout and response handling for this request.
+   *
+   * @return the associated {@link Conversation}
    */
   @Override
   public Conversation getConversation () {
@@ -71,7 +78,9 @@ public class Talking implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name of the service group that receives this request.
+   *
+   * @return the target service group name
    */
   @Override
   public String getServiceGroup () {
@@ -80,7 +89,9 @@ public class Talking implements Voice<String, Void> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code null} because talk messages are routed to any group member, not a specific instance.
+   *
+   * @return {@code null} always
    */
   @Override
   public Void getInstanceId () {

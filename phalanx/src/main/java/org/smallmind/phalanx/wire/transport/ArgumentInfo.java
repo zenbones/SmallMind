@@ -33,7 +33,8 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Stores the parameter index and type for an invocation argument.
+ * Holds metadata for a single invocation argument: its zero-based position in the parameter list
+ * and its declared type.
  */
 public class ArgumentInfo {
 
@@ -41,10 +42,10 @@ public class ArgumentInfo {
   private final int index;
 
   /**
-   * Creates argument metadata with position and type.
+   * Constructs argument metadata for the given position and type.
    *
-   * @param index         zero-based position in the parameter list
-   * @param parameterType parameter type
+   * @param index         zero-based position of the argument in the method signature
+   * @param parameterType declared type of the argument
    */
   public ArgumentInfo (int index, Class<?> parameterType) {
 
@@ -53,9 +54,9 @@ public class ArgumentInfo {
   }
 
   /**
-   * Returns the zero-based index of the argument.
+   * Returns the zero-based position of this argument in the method signature.
    *
-   * @return argument position
+   * @return argument index
    */
   public int getIndex () {
 
@@ -63,9 +64,9 @@ public class ArgumentInfo {
   }
 
   /**
-   * Returns the parameter type.
+   * Returns the declared type of this argument.
    *
-   * @return argument class
+   * @return argument parameter type
    */
   public Class<?> getParameterType () {
 

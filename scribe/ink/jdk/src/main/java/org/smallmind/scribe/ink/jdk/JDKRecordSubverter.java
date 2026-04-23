@@ -40,8 +40,9 @@ import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * A JUL {@link LogRecord} that also implements the scribe {@link RecordWrapper} interface.
- * Subverts the JUL record to carry scribe metadata and contextual information.
+ * JUL {@link LogRecord} subclass that simultaneously implements the scribe {@link RecordWrapper}
+ * interface, allowing a single object to travel through both the JUL pipeline and scribe appenders
+ * while carrying scribe-specific level, context, and parameter metadata.
  */
 public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
@@ -50,14 +51,15 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
   private final Level level;
 
   /**
-   * Constructs a subverted JUL record with scribe metadata.
+   * Builds a JUL {@link LogRecord} whose level is translated from the scribe level, attaches the
+   * throwable and message arguments, and wraps itself in an inner {@link JDKRecord} for scribe use.
    *
-   * @param loggerName    originating logger name
-   * @param level         scribe level for the event
-   * @param loggerContext captured context, possibly {@code null}
-   * @param throwable     throwable to attach
-   * @param message       message template
-   * @param args          message arguments
+   * @param loggerName    the name of the originating logger
+   * @param level         the scribe severity level for this event
+   * @param loggerContext the captured caller context, or {@code null} if not available
+   * @param throwable     the throwable to attach to the record, or {@code null}
+   * @param message       the raw message template
+   * @param args          arguments substituted into the message template
    */
   public JDKRecordSubverter (String loggerName, Level level, LoggerContext loggerContext, Throwable throwable, String message, Object... args) {
 
@@ -74,9 +76,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
   }
 
   /**
-   * Returns the class name captured in the logger context, if available.
+   * Returns the source class name from the logger context, satisfying JUL's caller-location contract.
    *
-   * @return the source class name or {@code null}
+   * @return the caller class name from the context, or {@code null} if no context is present
    */
   public String getSourceClassName () {
 
@@ -88,9 +90,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
   }
 
   /**
-   * Returns the method name captured in the logger context, if available.
+   * Returns the source method name from the logger context, satisfying JUL's caller-location contract.
    *
-   * @return the source method name or {@code null}
+   * @return the caller method name from the context, or {@code null} if no context is present
    */
   public String getSourceMethodName () {
 
@@ -102,9 +104,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
   }
 
   /**
-   * Returns the scribe record wrapper for this JUL record.
+   * Returns the inner scribe {@link Record} view of this JUL record.
    *
-   * @return the wrapped record
+   * @return the inner {@link JDKRecord} that wraps this object
    */
   public Record<LogRecord> getRecord () {
 
@@ -112,7 +114,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
   }
 
   /**
-   * Scribe record view over the subverted JUL record.
+   * Scribe {@link org.smallmind.scribe.pen.Record} view over the enclosing {@link JDKRecordSubverter},
+   * exposing the JUL {@link LogRecord} as the native log entry and the scribe level and context as
+   * first-class properties.
    */
   private class JDKRecord extends ParameterAwareRecord<LogRecord> {
 
@@ -120,9 +124,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     private final String threadName;
 
     /**
-     * Creates a record view around the JUL record.
+     * Builds the scribe record view, capturing the current thread name at construction time.
      *
-     * @param logRecord JUL record to expose
+     * @param logRecord the JUL record that this object wraps
      */
     public JDKRecord (LogRecord logRecord) {
 
@@ -132,9 +136,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the underlying JUL record.
+     * Returns the JUL {@link LogRecord} that this scribe view wraps.
      *
-     * @return the native log record
+     * @return the native JUL log record
      */
     @Override
     public LogRecord getNativeLogEntry () {
@@ -143,7 +147,7 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the logger name from the JUL record.
+     * Returns the logger name stored in the underlying JUL record.
      *
      * @return the logger name
      */
@@ -154,9 +158,10 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the scribe level associated with the record.
+     * Returns the scribe severity level of the enclosing subverter, which may differ from the
+     * JUL level due to translation.
      *
-     * @return the level
+     * @return the scribe severity level
      */
     @Override
     public Level getLevel () {
@@ -165,9 +170,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the throwable attached to the JUL record.
+     * Returns the throwable attached to the underlying JUL record.
      *
-     * @return the throwable, or {@code null}
+     * @return the throwable, or {@code null} if none was set
      */
     @Override
     public Throwable getThrown () {
@@ -176,9 +181,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the raw message from the JUL record.
+     * Returns the raw (un-substituted) message string stored in the underlying JUL record.
      *
-     * @return the message text
+     * @return the message template text
      */
     @Override
     public String getMessage () {
@@ -187,9 +192,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the captured logger context.
+     * Returns the {@link LoggerContext} captured when the enclosing subverter was constructed.
      *
-     * @return context information, possibly {@code null}
+     * @return the logger context, or {@code null} if none was provided
      */
     @Override
     public LoggerContext getLoggerContext () {
@@ -198,9 +203,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the thread id recorded by JUL.
+     * Returns the thread id stored in the underlying JUL record.
      *
-     * @return the thread id
+     * @return the originating thread id
      */
     @Override
     public long getThreadID () {
@@ -209,9 +214,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the thread name recorded when the record was created.
+     * Returns the thread name captured from the running thread when this record view was constructed.
      *
-     * @return the thread name
+     * @return the originating thread name
      */
     @Override
     public String getThreadName () {
@@ -220,9 +225,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the sequence number assigned by JUL.
+     * Returns the sequence number assigned by the JUL framework to the underlying record.
      *
-     * @return the sequence number
+     * @return the JUL sequence number
      */
     @Override
     public long getSequenceNumber () {
@@ -231,9 +236,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     }
 
     /**
-     * Returns the timestamp of the record.
+     * Returns the creation timestamp stored in the underlying JUL record.
      *
-     * @return epoch milliseconds
+     * @return epoch milliseconds recorded by JUL at record creation
      */
     @Override
     public long getMillis () {

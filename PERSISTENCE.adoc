@@ -1,2672 +1,1512 @@
-[[persistence, Persistence]]
-= Persistence
+= SmallMind Persistence
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
 
-[partintro]
-Smallmind Persistence packages several persistence-related seams into one artifact without turning them into a framework:
+== Overview
 
-* durable identity and DAO contracts
-* vector cache contracts, keys, and cache-coherency aspects
-* JPA/Hibernate adapters and Querydsl extensions
-* a Throng bridge for MongoDB-backed durables
-* sequence helpers and explicit SQL pooling utilities
-* optional Spring scanners and factory beans
+The `smallmind-persistence` module is a layered persistence toolkit. It sits
+between an application's domain model and the underlying storage — a JDBC
+connection pool, a Hibernate or JPA entity manager, a Throng-based MongoDB
+client, a Memcached daemon — and supplies a set of small abstractions that let
+the same DAO code be backed by different stores and composed with a distributed
+cache.
 
-The module is designed for systems that want explicit Java glue code, caller-owned lifecycle, and narrow adoption surfaces.
-You can use one surface in isolation without adopting the rest.
+The module is published as a single artifact, `smallmind-persistence`, but
+its dependencies on ORM and cache implementations are declared `optional`. A
+consumer pulls in only the technologies it actually uses — Hibernate, JPA,
+QueryDSL, Throng (MongoDB), Memcached, Spring — and the unused parts stay
+dormant.
 
-Audience: developers wiring persistence, caching, JDBC pooling, or repository-style glue into applications or reusable libraries.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+It is organised into six top-level packages under `org.smallmind.persistence`:
 
-== Quick Navigation
+* `persistence` — the core `Durable` contract, the `Dao` hierarchy, natural
+  keys, and the shared exception types.
+* `persistence.cache` — the `PersistenceCache` contract, the vector model
+  (`DurableVector`, `VectorKey`, `VectoredDao`), cache domains, and the
+  Memcached backend.
+* `persistence.cache.aop` — AspectJ annotations (`@CacheAs`, `@CachedWith`,
+  `@CacheCoherent`) and the aspects that implement them.
+* `persistence.orm` — `ORMDao`, `ProxySession`, `ProxyTransaction`, the
+  `SessionManager`, and adapters for Hibernate (via JPA), JPA, Throng, and
+  QueryDSL.
+* `persistence.orm.aop` — AspectJ annotations (`@Transactional`,
+  `@NonTransactional`, `@Timed`) and the aspects and thread-local state that
+  enforce transactional boundaries.
+* `persistence.sql` / `persistence.sql.pool` — a `DriverManagerDataSource`,
+  a pooled `DataSource` built on `smallmind-quorum`'s component pool, and
+  Spring factory beans to wire everything up.
+* `persistence.database` — the `Sequence` abstraction, a static
+  `SequenceManager`, an `InMemorySequence`, and a MySQL-specific
+  `SimulatedSequence`.
 
-* <<persistence-reading-paths,Reading Paths>>
-* <<persistence-at-a-glance,At A Glance>>
-* <<persistence-choose-surface,Choose A Surface>>
-* <<persistence-why-use,Why Use Smallmind Persistence>>
-* <<persistence-vs-frameworks,Persistence Vs Higher-Level Repository Stacks>>
-* <<persistence-layout,Project Layout>>
-* <<persistence-installation,Installation>>
-* <<persistence-use-cases,API By Use Case>>
-* <<persistence-quick-start,Quick Start>>
-* <<persistence-durable-model,Core Durable Model>>
-* <<persistence-dao-contracts,DAO Contracts And Registries>>
-* <<persistence-cache-vectors,Cache And Vector Model>>
-* <<persistence-cache-automation,Cache Automation Annotations>>
-* <<persistence-sequences,Sequence Utilities>>
-* <<persistence-session-model,Session And Transaction Model>>
-* <<persistence-jpa,JPA Surface>>
-* <<persistence-querydsl,Querydsl JPA Surface>>
-* <<persistence-throng,Throng Surface>>
-* <<persistence-sql,SQL And Pooling Utilities>>
-* <<persistence-spring,Spring Wiring>>
-* <<persistence-lifecycle,Lifecycle And Resource Ownership>>
-* <<persistence-errors,Error Model>>
-* <<persistence-api-index,API Index>>
-* <<persistence-defaults,Defaults Reference>>
-* <<persistence-edge-cases,Behavioral Edge Cases>>
-* <<persistence-troubleshooting,Troubleshooting>>
-* <<persistence-minimal-checklist,Minimal Checklist>>
-* <<persistence-verification,Verification Checklist>>
+=== Why This Package Exists
 
-[[persistence-reading-paths, Reading Paths]]
-== Reading Paths
+The persistence ecosystem in Java is rich but uneven. Hibernate provides
+sessions, transactions, and first-level caching; JPA standardises the same
+ideas; MongoDB has its own driver; Memcached has its own client. An
+application that mixes these — a relational primary store, a document
+secondary store, an out-of-process cache in front of both — quickly
+accumulates glue code that is neither testable nor portable.
 
-First-time integration path:
+`smallmind-persistence` exists to name and standardise that glue:
 
-1. <<persistence-choose-surface,Choose A Surface>>
-2. <<persistence-why-use,Why Use Smallmind Persistence>>
-3. <<persistence-installation,Installation>>
-4. <<persistence-use-cases,API By Use Case>>
-5. <<persistence-quick-start,Quick Start>>
-6. <<persistence-session-model,Session And Transaction Model>>
-7. Read the one runtime surface you are actually using:
-8. <<persistence-jpa,JPA Surface>> for JPA or Hibernate
-9. <<persistence-querydsl,Querydsl JPA Surface>> for Querydsl-backed JPA
-10. <<persistence-throng,Throng Surface>> for MongoDB-backed durables
-11. <<persistence-sql,SQL And Pooling Utilities>> for JDBC and pooling
-12. <<persistence-spring,Spring Wiring>> if Spring assembles any part of the stack
+. *One DAO contract per durable, regardless of backing store.* `Durable<I>`
+  is the one interface every persisted object implements. `ORMDao` is the one
+  DAO base class the application writes. Behind it sits either `JPADao`
+  (relational), `ThrongDao` (MongoDB), or a future adapter — the application
+  code does not change.
+. *One transactional boundary mechanism across ORMs.* SmallMind's
+  `@Transactional` is not Spring's and not JPA's. It is an AspectJ annotation
+  whose aspect manages thread-local stacks of boundary sets, permitting
+  explicit control over which data sources a boundary covers, whether it is
+  rollback-only, and whether exceptions trigger rollback. It participates
+  with `@NonTransactional` to prevent session stealing and to enforce that
+  every session opened for a boundary is closed when that boundary unwinds.
+. *A cache model that is more than get/put.* A single `PersistenceCache<K,V>`
+  is only useful for toy examples. Real applications cache *query results*
+  that may become stale when any of several durables are persisted or
+  deleted. The `@CacheAs`/`@CachedWith` annotation pair expresses that
+  dependency graph at the DAO method level — the aspect then handles cache
+  population, invalidation, and fine-grained vector updates mechanically.
+. *Portable identifier parsing.* REST and RPC layers need to convert a
+  string back into a strongly-typed id. `AbstractManagedDao.getIdFromString`
+  handles primitives, wrappers, enums, `String`, and any custom `Identifier`
+  implementation with a static `fromString`, so upstream framework code
+  never writes type-specific parsing.
+. *Sequences that work on MySQL.* MySQL has no native `SEQUENCE`. The
+  `database.mysql.SimulatedSequence` simulates one via `LAST_INSERT_ID` on a
+  counter table, with optional block allocation to reduce round-trips. The
+  `SequenceManager` exposes it behind the same static `nextLong(name)` API
+  an Oracle-backed implementation would use.
 
-Reference and operations path:
+=== What It Is Not
 
-* <<persistence-durable-model,Core Durable Model>>
-* <<persistence-dao-contracts,DAO Contracts And Registries>>
-* <<persistence-cache-vectors,Cache And Vector Model>>
-* <<persistence-cache-automation,Cache Automation Annotations>>
-* <<persistence-api-index,API Index>>
-* <<persistence-defaults,Defaults Reference>>
-* <<persistence-edge-cases,Behavioral Edge Cases>>
-* <<persistence-troubleshooting,Troubleshooting>>
+* It is not a full ORM. Hibernate and JPA remain responsible for mapping,
+  lazy loading, and SQL generation. `ORMDao` is a thin wrapper over a
+  `ProxySession`, not a replacement for the entity manager.
+* It is not a transaction manager. `TransactionalState` manages the
+  *boundary stack*; the underlying commit and rollback are delegated to the
+  native `Transaction` inside the `ProxySession`.
+* It is not an auto-configuration framework. Wiring is explicit: a caller
+  declares a `ProxySession`, a `DataSource`, an optional cache, and the
+  DAOs that use them. The `*SeekingBeanFactoryPostProcessor` classes help
+  Spring XML discover annotated entity classes, but they do not replace the
+  XML itself.
+* It is not a caching framework in the sense of an on-heap cache. The
+  `PersistenceCache` interface models an out-of-process store (Memcached by
+  default). Hibernate's first-level cache and any second-level cache remain
+  orthogonal.
 
-[[persistence-at-a-glance, At A Glance]]
 == At A Glance
 
-=== Integration Model In 60 Seconds
-
-1. Depend on `org.smallmind:smallmind-persistence` and add only the optional third-party libraries required by the surface you actually use.
-2. Model identities explicitly with `Durable<I>` or one of the concrete base classes such as `JPADurable` or `ThrongDurable`.
-3. Implement small DAO subclasses and let `AbstractManagedDao` infer the managed durable and id types from generics.
-4. Keep session, transaction, cache, and data source ownership explicit; the module does not hide them behind container policy.
-5. Register DAOs, sessions, and data sources only when you need registry-driven features such as `@Repository`, `SessionManager`, `DataSourceManager`, or key-backed vector rehydration.
-6. Use `JPADao` for straightforward JPA-backed CRUD, criteria queries, and cache-aware persistence.
-7. Use `QJPADao` when you need Querydsl queries, scrolling, counts, or bulk update and delete helpers.
-8. Use vector caches only when you need explicit key construction, invalidation, and list-level coherency semantics.
-9. Treat AspectJ-based annotations such as `@Transactional`, `@CacheAs`, `@CacheCoherent`, `@CachedWith`, `@Repository`, and `@Timer` as an opt-in integration surface that requires weaving.
-10. Caller-owned lifecycle remains the rule: pools must be started and stopped, memcached clients stay external, `EntityManagerFactory` ownership stays visible, and the Throng bridge does not invent a transaction manager.
-
-[cols="2,3,3,4",options="header"]
+[cols="1,3",options="header"]
 |===
-|Surface |Primary Types |Optional Dependencies |What It Gives You
+| Problem | Section
 
-|Core durable and DAO model
-|`Durable`, `AbstractDurable`, `ManagedDao`, `DurableDao`, `WideDurableDao`
-|none beyond the base module
-|Identity contracts, generic DAO surfaces, natural-key helpers, and registry-aware DAO bases
+| I need a DAO contract that works across stores
+| <<core-durable,The Durable and DAO Core>>
 
-|Cache and vectors
-|`PersistenceCache`, `CacheDomain`, `VectoredDao`, `DurableVector`, `ByKeyExtrinsicCacheDao`
-|`memcached-utility` for memcached-backed caches, `claxon-registry` for timing metrics
-|Explicit instance caches, vector caches, wide caches, and annotation-driven coherency
+| I need to run code inside a transactional boundary
+| <<transactional-annotations,Transactional and NonTransactional>>
 
-|JPA and Hibernate
-|`JPADurable`, `JPAProxySession`, `JPADao`, `CurrencyUserType`, `H2Dialect`
-|`jakarta.persistence-api`, `hibernate-core`
-|Thin JPA DAO layer, per-thread session wrapper, criteria helpers, and a few Hibernate conveniences
+| I need to cache a finder method's result
+| <<cache-as,Using @CacheAs>>
 
-|Querydsl JPA
-|`QJPADao`, `JPAQueryDetails`
-|`querydsl-core`, `querydsl-jpa`, `querydsl-apt`, `jakarta.persistence-api`
-|Querydsl-based list, scroll, count, bulk update, and bulk delete operations
+| I need the cache to reflect persist/delete correctly
+| <<cached-with,Using @CachedWith>>
 
-|Throng bridge
-|`ThrongDurable`, `ThrongProxySession`, `ThrongDao`, `ThrongClientFactory`
-|`mongodb-throng`, `bson`, `mongodb-driver-core`, `mongodb-driver-sync`
-|Reuse of the durable and DAO model over MongoDB through Throng
+| I need to share a DAO result across callers without re-persisting
+| <<cache-coherent,Using @CacheCoherent>>
 
-|SQL and pooling
-|`DriverManagerDataSource`, `PooledDataSource`, `ContextualPooledDataSource`
-|`smallmind-quorum`
-|Explicit JDBC data sources, pooled connections, prepared statement caching, and contextual pool routing
+| I need a JDBC connection pool wired into Spring
+| <<sql-pool,Connection Pooling>>
 
-|Spring wiring
-|`EntitySeekingEntityManagerFactoryBean`, `AnnotationSeekingBeanFactoryPostProcessor`, `PooledDataSourceFactoryBean`
-|`spring-beans`, `spring-context`, `spring-core`, `spring-jcl`, `spring-orm`
-|Entity discovery, optional factory beans, and lifecycle handoff to the Spring container
+| I need MySQL-compatible sequence generation
+| <<sequences,Sequence Generation>>
+
+| I need to wire JPA or Throng into Spring
+| <<spring-wiring,Spring Wiring>>
 |===
 
-[[persistence-choose-surface, Choose A Surface]]
-== Choose A Surface
-
-[cols="2,4",options="header"]
-|===
-|If you need... |Use...
-
-|Only durable identity, DAO contracts, natural keys, and registry-aware bases
-|the core `org.smallmind.persistence.*` and `org.smallmind.persistence.orm.*` types
-
-|In-process cache consistency inside one JVM
-|`ByReferenceIntrinsicCacheDao` or `ByKeyIntrinsicCacheDao`
-
-|Distributed cache-backed vectors and instance caches
-|`MemcachedCacheDomain` plus `ByKeyExtrinsicCacheDao`
-
-|Caching of parent-child lists as a single value
-|`WideExtrinsicCacheDao`
-
-|Straightforward JPA CRUD with criteria helpers
-|`JPADao` plus `JPAProxySession`
-
-|Querydsl-based JPA queries, scrolling, or bulk updates
-|`QJPADao` plus `JPAQueryDetails`
-
-|MongoDB-backed durables without changing the surrounding DAO model
-|`ThrongDao` plus `ThrongProxySession`
-
-|A simple non-pooled JDBC data source
-|`DriverManagerDataSource`
-
-|Explicit pooled JDBC data sources
-|`PooledDataSource`, `PooledXADataSource`, or the related Spring factory beans
-
-|Declarative transaction, repository, timer, or cache annotations
-|the AOP annotations in `cache.aop` and `orm.aop`, with AspectJ weaving enabled
-|===
-
-[[persistence-why-use, Why Use Smallmind Persistence]]
-== Why Use Smallmind Persistence
-
-Use Smallmind Persistence when you want persistence glue to stay explicit.
-
-What this module does well:
-
-* keeps identifiers, DAO surfaces, caches, sessions, and data sources visible in signatures instead of hiding them behind generated repository contracts
-* lets you adopt only one surface, such as JPA DAO support or SQL pooling, without pulling in a larger framework vocabulary
-* keeps Spring support limited to assembly and lifecycle handoff rather than making Spring the only integration path
-* exposes cache key shape, transaction boundary rules, and ownership directly in constructors and annotations
-* stays thin over third-party APIs such as JPA, Hibernate, Querydsl, Throng, memcached, and Quorum
-
-This is a good fit for shared libraries, services with explicit runtime policy, and applications that want repeatable helper code without giving up control of lifecycle and failure behavior.
-
-[[persistence-vs-frameworks, Persistence Vs Higher-Level Repository Stacks]]
-== Persistence Vs Higher-Level Repository Stacks
-
-Smallmind Persistence is not trying to compete with full repository-generation or auto-configuration stacks on their own terms.
-
-Choose this module when you want:
-
-* constructor-visible collaborators
-* explicit session and transaction boundaries
-* cache keys and invalidation rules you can read directly from code
-* optional Spring usage instead of mandatory container ownership
-* one narrow abstraction per seam instead of a single umbrella persistence runtime
-
-Choose a higher-level stack when you specifically want:
-
-* generated repositories or derived-query conventions
-* classpath scanning as the default integration model
-* container-owned transaction policy
-* broader ORM opinionation than the repository actually needs
-
-The tradeoff is deliberate: more explicit wiring, more operational visibility, and less hidden policy.
-
-[[persistence-layout, Project Layout]]
-== Project Layout
-
-[cols="2,4",options="header"]
-|===
-|Package Area |Purpose
-
-|`org.smallmind.persistence`
-|Durable contracts, natural-key helpers, DAO interfaces, and generic managed DAO support
-
-|`org.smallmind.persistence.cache`
-|Cache abstractions, cache domains, cache keys, vectors, wide caches, and vector-aware DAO contracts
-
-|`org.smallmind.persistence.cache.aop`
-|Aspect-driven cache key calculation, cache lookup, coherency, invalidation, and timing annotations
-
-|`org.smallmind.persistence.cache.memcached`
-|Memcached-backed `PersistenceCache` and `CacheDomain` implementations
-
-|`org.smallmind.persistence.cache.memcached.spring`
-|Spring factory beans that construct memcached-backed cache domains and cache DAOs
-
-|`org.smallmind.persistence.cache.praxis`
-|Concrete vector and roster implementations for intrinsic and extrinsic cache strategies
-
-|`org.smallmind.persistence.database`
-|Sequence abstractions, `SequenceManager`, and the in-memory sequence implementation
-
-|`org.smallmind.persistence.database.mysql`
-|MySQL-style simulated sequences backed by a table and `LAST_INSERT_ID`
-
-|`org.smallmind.persistence.orm`
-|Session wrappers, transaction wrappers, DAO registries, mapping helpers, and common ORM error types
-
-|`org.smallmind.persistence.orm.aop`
-|Transactional, repository, timing, and boundary-management annotations and aspects
-
-|`org.smallmind.persistence.orm.jpa`
-|JPA durable bases, session wrapper, transaction wrapper, and criteria-based DAO implementation
-
-|`org.smallmind.persistence.orm.querydsl.jpa`
-|Querydsl-powered JPA DAO and query-detail abstractions
-
-|`org.smallmind.persistence.orm.hibernate`
-|Small Hibernate-specific helpers such as `CurrencyUserType` and the custom `H2Dialect`
-
-|`org.smallmind.persistence.orm.spring`
-|Shared Spring scanning support for discovering mapped classes from DAO beans
-
-|`org.smallmind.persistence.orm.spring.jpa`
-|Spring entity scanning and `EntityManagerFactory` construction around discovered JPA entities
-
-|`org.smallmind.persistence.orm.spring.throng`
-|Spring entity scanning and `ThrongClientFactory` construction around discovered Throng entities
-
-|`org.smallmind.persistence.orm.throng`
-|Throng-backed durable bases, session wrapper, transaction wrapper, and DAO implementation
-
-|`org.smallmind.persistence.sql`
-|Simple JDBC data source helpers and the keyed data source registry
-
-|`org.smallmind.persistence.sql.pool`
-|Explicit pooled data sources and pooled connection implementations
-
-|`org.smallmind.persistence.sql.pool.context`
-|Context-sensitive pooled data source routing and pool-name translation
-
-|`org.smallmind.persistence.sql.pool.spring`
-|Spring factory beans and property-driven pool initialization
-|===
-
-=== Optional Dependency Boundaries
-
-The module POM keeps most integrations optional.
-That matters operationally: if you use a feature, add its dependency explicitly in the consuming build instead of assuming the persistence module will force it onto your classpath.
-
-[cols="2,3",options="header"]
-|===
-|Feature |Dependencies Declared As Optional In `persistence/pom.xml`
-
-|JPA and Hibernate
-|`jakarta.persistence:jakarta.persistence-api`, `org.hibernate.orm:hibernate-core`
-
-|Querydsl JPA
-|`com.querydsl:querydsl-core`, `com.querydsl:querydsl-jpa`, `com.querydsl:querydsl-apt`
-
-|Memcached-backed caches
-|`org.smallmind:memcached-utility`
-
-|Throng and MongoDB
-|`org.smallmind:mongodb-throng`, `org.mongodb:bson`, `org.mongodb:mongodb-driver-core`, `org.mongodb:mongodb-driver-sync`
-
-|Pool implementations
-|`org.smallmind:smallmind-quorum`
-
-|Spring assembly
-|`org.springframework:spring-beans`, `spring-context`, `spring-core`, `spring-jcl`, `spring-orm`
-
-|Timing metrics
-|`org.smallmind:claxon-registry`
-|===
-
-[[persistence-installation, Installation]]
 == Installation
-
-=== Base Dependency
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind-persistence</artifactId>
-  <version>${smallmind.version}</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
-The module directly depends on:
+Every ORM, cache, and Spring dependency is declared `optional` in the module
+POM. A consumer must explicitly pull in the subset it uses.
 
-* `org.smallmind:scribe-pen`
-* `org.smallmind:smallmind-nutsnbolts`
-
-Everything else in the persistence module is layered as an optional integration boundary.
-
-=== Add Optional Dependencies By Feature
-
-[cols="2,4",options="header"]
+[cols="1,3",options="header"]
 |===
-|If you use... |Add...
+| You want to use... | Also declare
 
-|JPA durables, `JPAProxySession`, or `JPADao`
-|`jakarta.persistence:jakarta.persistence-api` and your provider, typically `org.hibernate.orm:hibernate-core`
+| JPA + Hibernate
+| `jakarta.persistence-api`, `hibernate-core`, `spring-orm`, `spring-beans`,
+  `spring-context`
 
-|`QJPADao`
-|`com.querydsl:querydsl-core`, `com.querydsl:querydsl-jpa`, and Querydsl annotation processing in the build
+| Throng (MongoDB)
+| `mongodb-driver-sync`, `mongodb-driver-core`, `bson`,
+  `mongodb-throng`, `spring-beans`
 
-|Memcached-backed vector or instance caches
-|`org.smallmind:memcached-utility`
+| QueryDSL against JPA
+| `querydsl-jpa`, `querydsl-core`, `querydsl-apt`
 
-|Timing from `@Timed`, `@Timer`, `@CacheAs`, or `@CacheCoherent`
-|`org.smallmind:claxon-registry`
+| Memcached as the cache backend
+| `memcached-utility` (and its spymemcached transitive)
 
-|Throng-backed durables and DAOs
-|`org.smallmind:mongodb-throng`, `org.mongodb:bson`, `org.mongodb:mongodb-driver-core`, `org.mongodb:mongodb-driver-sync`
-
-|Pooled JDBC data sources
-|`org.smallmind:smallmind-quorum`
-
-|Spring entity discovery or factory beans
-|the relevant Spring modules, especially `spring-beans`, `spring-context`, `spring-core`, `spring-jcl`, and `spring-orm`
+| The connection pool
+| `smallmind-quorum`, `spring-beans`
 |===
 
-[IMPORTANT]
-====
-Aspect-driven features are not passive annotations.
-If you use `@Transactional`, `@NonTransactional`, `@Repository`, `@Timer`, `@CacheAs`, `@CacheCoherent`, or `@CachedWith`, you need AspectJ weaving and the AspectJ runtime on the consuming classpath.
+The module is AspectJ-woven at build time. Consumers that declare
+`@Transactional`, `@NonTransactional`, `@CacheAs`, `@CachedWith`, or
+`@CacheCoherent` must themselves be woven — the pom's `aspectj-maven-plugin`
+configuration is the canonical reference.
 
-This repository's own build uses `dev.aspectj:aspectj-maven-plugin`.
-The module does not auto-enable weaving for your application.
-====
+Hibernate entities are bytecode-enhanced at build time by the
+`hibernate-enhance-maven-plugin`. Consumers that provide their own entity
+classes normally declare the same plugin in their own builds.
 
-[IMPORTANT]
-====
-If you use `QJPADao`, your build must generate Querydsl `Q*` types.
-The repository parent POM already configures `querydsl-apt` and `jakarta.persistence-api` as annotation processors, but external consumers must do the same in their own build.
-====
+[[core-durable]]
+== The Durable and DAO Core
 
-[NOTE]
-====
-The repository build also enables Hibernate bytecode enhancement with `enableLazyInitialization=true` and `enableDirtyTracking=true`.
-That is a repository build detail, not an automatic runtime behavior of the `smallmind-persistence` artifact by itself.
-If you need the same enhancement in your own project, configure the Hibernate enhancer in your own build.
-====
+=== Durable<I>
 
-=== Example Querydsl Annotation Processing
+`Durable<I extends Serializable & Comparable<I>>` is the one contract every
+persisted object implements. Its identifier is both `Serializable` (so it
+can survive a trip through a cache) and `Comparable<I>` (so roster-backed
+caches can keep a total order).
 
-[source,xml]
-----
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-compiler-plugin</artifactId>
-  <configuration>
-    <annotationProcessorPaths>
-      <path>
-        <groupId>com.querydsl</groupId>
-        <artifactId>querydsl-apt</artifactId>
-        <classifier>jakarta</classifier>
-      </path>
-      <path>
-        <groupId>jakarta.persistence</groupId>
-        <artifactId>jakarta.persistence-api</artifactId>
-      </path>
-    </annotationProcessorPaths>
-  </configuration>
-</plugin>
-----
+`AbstractDurable<I, D extends AbstractDurable<I, D>>` provides:
 
-[[persistence-use-cases, API By Use Case]]
-== API By Use Case
+* id-based `compareTo`, with nulls sorting before non-nulls;
+* id-based `equals`/`hashCode` when both sides have a non-null id, falling
+  back to identity semantics when one side is transient;
+* `mirrors(Durable)` — reflective, id-excluding deep equality with an
+  optional exclusion list, useful for change detection;
+* a thread-local-guarded `toString` that handles cyclic graphs.
 
-[cols="2,2,4",options="header"]
-|===
-|Need |Use |Notes
-
-|A persistent identity contract
-|`Durable`, `AbstractDurable`
-|Works across JPA, Throng, and non-ORM usages
-
-|Business-key comparison or natural-key lookups
-|`@NaturalKeys`, `NaturalKey`
-|Field order and type are part of the contract
-
-|Managed-class inference in DAO code
-|`AbstractManagedDao`
-|Infers id and durable types from generics
-
-|A registry-aware ORM DAO base
-|`ORMDao`
-|Combines `ProxySession` ownership with optional vector cache delegation
-
-|DAO lookup by managed class or class name
-|`OrmDaoManager`
-|Needed by `@Repository` injection and key-backed vector hydration
-
-|Session lookup by string key
-|`SessionManager`
-|Useful for named persistence stacks via `@SessionSource`
-
-|Data source lookup by string key
-|`DataSourceManager`
-|Works with ordinary or pooled `CommonDataSource` instances
-
-|Instance cache plus vector cache contracts
-|`PersistenceCache`, `CacheDomain`, `VectoredDao`
-|Cache key formats stay explicit
-
-|In-process vector caching
-|`ByReferenceIntrinsicCacheDao`, `ByKeyIntrinsicCacheDao`
-|Choose direct references or key-based indirection
-
-|Distributed vector caching
-|`ByKeyExtrinsicCacheDao`, `MemcachedCacheDomain`
-|Uses CAS-aware vector updates
-
-|Whole-list cache by parent id
-|`WideExtrinsicCacheDao`, `WideDurableDao`
-|Caches a list under one composite key
-
-|Cache-aside method annotation
-|`@CacheAs`
-|For managed durable or parameterized iterable returns only
-
-|Cache warming on DAO method returns
-|`@CacheCoherent`
-|SOFT-persists returned elements into the cache
-
-|Automatic vector update or invalidation on persist and delete
-|`@CachedWith`
-|Configured on the DAO class
-
-|JPA-backed CRUD
-|`JPAProxySession`, `JPADao`
-|Thin wrapper around `EntityManagerFactory` and `EntityManager`
-
-|Querydsl-backed JPA queries
-|`QJPADao`, `JPAQueryDetails`
-|Adds query builder, scroll, count, update, and delete helpers
-
-|Hibernate-specific helpers
-|`CurrencyUserType`, `H2Dialect`
-|Small, focused additions only
-
-|MongoDB-backed durables through Throng
-|`ThrongDurable`, `ThrongDao`, `ThrongProxySession`
-|Reuses the durable and DAO model over Throng
-
-|Global sequence values
-|`SequenceManager`, `InMemorySequence`, `SimulatedSequence`
-|JVM-local or table-backed sequence allocation
-
-|A simple driver-manager data source
-|`DriverManagerDataSource`
-|No pooling, no login-timeout support
-
-|Explicit JDBC pooling
-|`PooledDataSource`, `PooledXADataSource`
-|Manual startup and shutdown by default
-
-|Context-routed JDBC pools
-|`ContextualPooledDataSource`, `DynamicPooledDataSourceInitializingBean`
-|Selects a pool based on `PooledDataSourceContext`
-
-|Spring discovery of mapped entity classes
-|`AnnotationSeekingBeanFactoryPostProcessor`
-|Scans DAO beans, not the whole classpath
-
-|Spring materialization of an `EntityManagerFactory`
-|`EntitySeekingEntityManagerFactoryBean`
-|Builds from explicit settings plus discovered entity classes
-
-|Spring materialization of memcached cache objects
-|`MemcachedCacheDomainFactoryBean`, `MemcachedCacheDaoFactoryBean`, `MemcachedWideCacheDaoFactoryBean`
-|Thin bean-construction layer only
-|===
-
-[[persistence-quick-start, Quick Start]]
-== Quick Start
-
-=== 1) Define A Durable
+A typical domain class extends `AbstractDurable` (or a framework-specific
+subclass like `JPADurable`):
 
 [source,java]
 ----
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import org.smallmind.persistence.NaturalKeys;
-import org.smallmind.persistence.orm.jpa.TimestampedJPADurable;
-
 @Entity
-@NaturalKeys({"email"})
-public class Account extends TimestampedJPADurable<Long, Account> {
+@Table(name = "orders")
+public class Order extends JPADurable<Long> {
 
-  private String email;
-  private Long companyId;
-  private boolean active;
+  private String reference;
+  private Long customerId;
 
-  @Column(name = "email", nullable = false, unique = true)
-  public synchronized String getEmail () {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  public Long getId () { return super.getId(); }
+  public void setId (Long id) { super.setId(id); }
 
-    return email;
-  }
+  public String getReference () { return reference; }
+  public void setReference (String reference) { this.reference = reference; }
 
-  public synchronized Account setEmail (String email) {
-
-    this.email = email;
-
-    return this;
-  }
-
-  @Column(name = "company_id", nullable = false)
-  public synchronized Long getCompanyId () {
-
-    return companyId;
-  }
-
-  public synchronized Account setCompanyId (Long companyId) {
-
-    this.companyId = companyId;
-
-    return this;
-  }
-
-  @Column(name = "active", nullable = false)
-  public synchronized boolean isActive () {
-
-    return active;
-  }
-
-  public synchronized Account setActive (boolean active) {
-
-    this.active = active;
-
-    return this;
-  }
+  public Long getCustomerId () { return customerId; }
+  public void setCustomerId (Long customerId) { this.customerId = customerId; }
 }
 ----
 
-This gives you:
-
-* `id` through `JPADurable`
-* `created` and `lastUpdated` through `TimestampedJPADurable`
-* durable comparison, identity, `mirrors(...)`, and reflective `toString()` through `AbstractDurable`
-* a natural-key declaration for `NaturalKey<Account>`
-
-=== 2) Define A Focused DAO
-
-[source,java]
-----
-import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.jpa.JPADao;
-import org.smallmind.persistence.orm.jpa.JPAProxySession;
-
-public class AccountDao extends JPADao<Long, Account> {
-
-  public AccountDao (JPAProxySession proxySession) {
-
-    super(proxySession);
-  }
-
-  public AccountDao (JPAProxySession proxySession, VectoredDao<Long, Account> vectoredDao) {
-
-    super(proxySession, vectoredDao);
-  }
-}
-----
-
-The subclass is intentionally small.
-`AbstractManagedDao` infers that the managed durable type is `Account` and the id type is `Long`.
-
-=== 3) Create A Session And Execute Work
-
-[source,java]
-----
-import jakarta.persistence.EntityManagerFactory;
-import org.smallmind.persistence.orm.jpa.JPAProxySession;
-import org.smallmind.persistence.orm.jpa.JPAProxyTransaction;
-
-EntityManagerFactory entityManagerFactory = /* caller-owned */;
-
-JPAProxySession session = new JPAProxySession(
-  "mysql",
-  null,
-  entityManagerFactory,
-  false,
-  false
-);
-
-AccountDao accountDao = new AccountDao(session);
-
-JPAProxyTransaction transaction = session.beginTransaction();
-
-try {
-
-  Account account = new Account()
-    .setEmail("ops@example.org")
-    .setCompanyId(42L)
-    .setActive(true);
-
-  Account persisted = accountDao.persist(account);
-
-  transaction.commit();
-} catch (Throwable throwable) {
-  transaction.rollback();
-  throw throwable;
-}
-----
-
-In this example:
-
-* `boundaryEnforced=false` allows direct, manual use of the session without `@Transactional` or `@NonTransactional`
-* `cacheEnabled=false` means any configured `VectoredDao` would be ignored
-* `JPAProxyTransaction.commit()` flushes, commits, and then closes the thread-local `EntityManager`
-
-=== 4) Register Things Only When You Need Registry-Driven Features
-
-[source,java]
-----
-import org.smallmind.persistence.orm.SessionManager;
-
-SessionManager.register(null, session);
-accountDao.register();
-----
-
-Do this when you need:
-
-* `@Repository` injection into `@org.smallmind.nutsnbolts.inject.Service` classes
-* `SessionManager.getSession(...)`
-* `OrmDaoManager.get(...)`
-* key-backed vector implementations that must rehydrate cached durables through a registered DAO
-
-If you are wiring everything directly through constructors, you do not need the registries.
-
-=== 5) Add Cache-Backed Vectors Later
-
-[source,java]
-----
-import org.smallmind.memcached.utility.ProxyMemcachedClient;
-import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
-import org.smallmind.persistence.cache.praxis.extrinsic.ByKeyExtrinsicCacheDao;
-import org.smallmind.persistence.orm.jpa.JPAProxySession;
-
-ProxyMemcachedClient memcachedClient = /* caller-owned */;
-
-MemcachedCacheDomain<Long, Account> cacheDomain =
-  new MemcachedCacheDomain<>(memcachedClient, "account", 300);
-
-ByKeyExtrinsicCacheDao<Long, Account> cacheDao =
-  new ByKeyExtrinsicCacheDao<>(cacheDomain);
-
-JPAProxySession cachedSession = new JPAProxySession(
-  "mysql",
-  null,
-  entityManagerFactory,
-  false,
-  true
-);
-
-AccountDao cachedAccountDao = new AccountDao(cachedSession, cacheDao);
-----
-
-Two details matter:
-
-* the DAO receives a `VectoredDao`
-* the session has `cacheEnabled=true`
-
-If either of those is missing, cache delegation is not active.
-
-=== 6) Move To Woven Boundaries When You Want Declarative Transactions
-
-[source,java]
-----
-import org.smallmind.nutsnbolts.inject.Service;
-import org.smallmind.persistence.orm.aop.Repository;
-import org.smallmind.persistence.orm.aop.Transactional;
-
-@Service
-public class AccountService {
-
-  @Repository(Account.class)
-  private AccountDao accountDao;
-
-  @Transactional
-  public Account activate (Long id) {
-
-    Account account = accountDao.get(id);
-    account.setActive(true);
-
-    return accountDao.persist(account);
-  }
-}
-----
-
-This style requires:
-
-* AspectJ weaving
-* a registered DAO in `OrmDaoManager`
-* a session arrangement that makes `SessionManager` and boundary lookup meaningful
-* `boundaryEnforced=true` if you want out-of-boundary access to fail early
-
-[[persistence-durable-model, Core Durable Model]]
-== Core Durable Model
-
-=== Base Contracts
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`Durable<I>`
-|A serializable object with a comparable identifier and `Comparable<Durable<I>>`
-
-|`AbstractDurable<I, D>`
-|Common identity, comparison, mirror-comparison, and reflective `toString()` behavior
-
-|`Identifier`
-|Marker interface used by `AbstractManagedDao.getIdFromString(...)` to support custom id parsing via a static `fromString(String)` method
-
-|`@NaturalKeys`
-|Declares one or more field names that make up a business key
-
-|`NaturalKey<D>`
-|Extracts or validates a natural key from a durable instance or explicit values
-|===
-
-=== `AbstractDurable` Semantics
-
-`AbstractDurable` is not a placeholder.
-Its behavior is part of the runtime contract:
-
-* `equals(...)` uses durable ids only when both sides have non-null ids; otherwise it falls back to ordinary object identity
-* `hashCode()` follows the same rule and falls back to `Object.hashCode()` for transient instances
-* `compareTo(...)` treats `null` ids as less than non-null ids
-* when both ids are present, `compareTo(...)` calls `durable.getId().compareTo(getId())`, so the natural ordering is descending by id rather than ascending
-* `mirrors(...)` compares all fields except `id` by default
-* `toString()` uses reflection and guards against recursive object graphs with a thread-local in-use set
-
-[IMPORTANT]
-====
-Transient instances with `null` ids do not compare equal just because their field values match.
-That is intentional and becomes visible in sets, maps, and vector de-duplication.
-====
-
-=== JPA And Throng Durable Bases
-
-[cols="2,4",options="header"]
-|===
-|Type |Behavior
-
-|`JPADurable<I, D>`
-|`@MappedSuperclass` with `@Access(PROPERTY)` and an `id` property declared as `@Id`, `@GeneratedValue(strategy = IDENTITY)`, `@Column(name="id", unique=true, nullable=false, updatable=false)`
-
-|`TimestampedJPADurable<I, D>`
-|Adds `created` and `lastUpdated` using Hibernate `@CreationTimestamp` and `@UpdateTimestamp`; `mirrors(...)` ignores `id`, `created`, and `lastUpdated`
-
-|`ThrongDurable<I, D>`
-|Uses Throng `@Id` mapping and removes `overlayClass` from the BSON document in `@PostPersist`
-
-|`TimestampedThrongDurable<I, D>`
-|Adds `created` and `lastUpdated` properties, indexes `lastUpdated` descending, and populates timestamps in `@PrePersist`
-|===
+=== The DAO Hierarchy
+
+The DAO contracts form a layered stack. Each layer adds exactly one concern.
+
+`Dao<I, P>`::
+    Minimum contract: `get` and `delete`. Never implemented directly.
+
+`DurableDao<I, D>`::
+    Adds CRUD for `Durable`: `get`, `persist`, `delete`, `list` (full,
+    bounded, or keyset-paged), and bulk `list(Collection<I>)`. The id
+    pagination variant `list(I greaterThan, int fetchSize)` is exclusive
+    on the lower bound and ordered ascending.
+
+`ManagedDao<I, D>`::
+    Adds metadata: `getMetricSource`, `getManagedClass`, `getIdClass`,
+    `getIdFromString`. `AbstractManagedDao` infers the id and durable
+    classes from the subclass's generic parameters at runtime.
+    `getIdFromString` handles primitives, primitive wrappers, `String`,
+    enums, and any `Identifier` subtype with a static `fromString`.
+
+`VectorAwareDao<I, D>`::
+    Mixin declaring `getVectoredDao()`. `AbstractVectorAwareManagedDao`
+    implements it, returning the delegate only when `isCacheEnabled()` is
+    true, so cache can be toggled per session or globally.
+
+`CacheDao<I, D> extends VectoredDao<I, D>`::
+    Adds direct access to instance and vector caches. `AbstractCacheDao`
+    delegates to a `CacheDomain` for the actual `PersistenceCache`
+    instances.
+
+`ORMDao<I, D, F, N> extends AbstractVectorAwareManagedDao<I, D>`::
+    The base every application-visible DAO extends. Holds a
+    `ProxySession<F, N>`, registers itself with `OrmDaoManager` via
+    `register()`, and delegates `get`/`persist`/`delete` to framework
+    subclasses (`JPADao`, `ThrongDao`, etc.).
 
 === Natural Keys
 
-`NaturalKey` exists for business-key use cases where the database id is not the only identity you care about.
+`@NaturalKeys({"customerId", "orderDate"})` on a `Durable` class names the
+fields that together form its business key. `NaturalKey<D>` extracts those
+values reflectively — once per class, cached in `ConcurrentHashMap` — and
+implements `equals`/`hashCode` from them. Applications use natural keys
+when the cache key must survive surrogate-id reassignment (for example, a
+cache populated before an id generator has run).
+
+=== Exceptions
+
+All persistence exceptions extend `PersistenceException`, which extends
+`FormattedRuntimeException` from `smallmind-nutsnbolts`. They all accept a
+`printf`-style message template and arguments.
+
+* `DataIntegrityException` — persisted data violates a domain invariant.
+* `AuthorizationException` — the caller lacks authorization for the op.
+* `IdentifierNotFoundException` — a looked-up id has no matching record.
+* `CacheOperationException` — an underlying cache operation failed.
+* `ORMInitializationException` — no session or DAO is registered for a key.
+* `ORMOperationException` — a framework-level persist/fetch/delete failed.
+* `SessionEnforcementException` — a session was opened outside any active
+  boundary and the session is marked `boundaryEnforced`.
+
+[[transactional-annotations]]
+== @Transactional And @NonTransactional
+
+=== Why There Are Two Annotations, Not One
+
+A service method either needs a transaction or it does not. In most
+frameworks, the absence of `@Transactional` is taken to mean "no transaction".
+SmallMind treats both states as *explicit*:
+
+* `@Transactional` opens a transactional boundary. Any
+  `ProxySession.getNativeSession()` called inside the boundary joins the
+  active transaction for its data source.
+* `@NonTransactional` opens a non-transactional session boundary. A session
+  is opened on first use, kept open for the duration of the boundary body,
+  and closed when the boundary unwinds. No commit is issued.
+
+Why make absence-of-transaction explicit? Because a `ProxySession` that has
+`boundaryEnforced=true` will *refuse* to open a session outside any
+boundary, throwing `SessionEnforcementException`. This guarantees that
+every query either runs inside a transaction (consistent reads, commits on
+success) or inside a `@NonTransactional` boundary (read-only, closed on
+return). It prevents accidental leaks of `EntityManager` instances and
+accidental auto-commit behaviour.
+
+=== @Transactional
 
 [source,java]
 ----
-NaturalKey<Account> naturalKey = new NaturalKey<>(account);
+@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Transactional {
+
+  String[] dataSources () default {};
+  boolean implicit () default true;
+  boolean rollbackOnly () default false;
+  boolean rollbackOnException () default true;
+}
 ----
 
-Operational details:
-
-* `@NaturalKeys` is required if you construct a `NaturalKey` from a class or instance
-* field names are resolved reflectively and may come from superclasses
-* field order matters
-* the constructor `new NaturalKey(Class<D>, Object...)` validates both field order and field types
-* `NaturalKey.getNonKeyFields(...)` computes the complement of the natural-key field set
-
-[[persistence-dao-contracts, DAO Contracts And Registries]]
-== DAO Contracts And Registries
-
-=== DAO Interfaces
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`Dao<I, P>`
-|Minimal get and delete contract using an explicit persistent class
-
-|`DurableDao<I, D>`
-|CRUD plus list helpers for durable entities
-
-|`WideDurableDao<W, I, D>`
-|Contract for parent-child collections keyed by a parent identifier and context
-
-|`ManagedDao<I, D>`
-|Adds managed-class and id-class introspection plus id conversion helpers
-
-|`RelationalDao<I, D, F, N>`
-|Associates a durable DAO with a `ProxySession` and the underlying native session types
-|===
-
-=== `AbstractManagedDao`
-
-`AbstractManagedDao` is the common base for type inference and id parsing.
-
-It gives you:
-
-* `getManagedClass()`
-* `getIdClass()`
-* `getMetricSource()`
-* `getId(D durable)`
-* `getIdFromString(String value)`
-
-The default `getIdFromString(...)` supports:
-
-* `String`
-* enums
-* primitives and their boxed counterparts
-* `Identifier` implementations that expose a static `fromString(String)` method
-
-If your id type does not match one of those categories, override `getIdFromString(...)`.
-
-=== `ORMDao`
-
-`ORMDao` connects a `ProxySession` to a durable DAO and optionally delegates cache-aware work to a `VectoredDao`.
-
-Important behaviors:
-
-* `register()` stores the DAO in `OrmDaoManager`
-* `isCacheEnabled()` delegates to the underlying `ProxySession`
-* `get(I id)`, `persist(D durable)`, and `delete(D durable)` are convenience methods over the managed durable class
-* cache-aware `get(...)`, `persist(...)`, and `delete(...)` behavior depends on the concrete DAO implementation and whether the session enables caching
-
-=== Registries
-
-[cols="2,4",options="header"]
-|===
-|Registry |Behavior
-
-|`OrmDaoManager`
-|Application-scoped map of durable class to `ORMDao`; supports lookup by class, simple class name, or fully qualified class name
-
-|`SessionManager`
-|Application-scoped map of `sessionSourceKey` to `ProxySession`; `getSession(...)` throws `ORMInitializationException` when the key is missing
-
-|`DataSourceManager`
-|Application-scoped map of string key to `CommonDataSource`; `getDataSource(...)` throws `ORMInitializationException` when the key is missing
-|===
-
-[NOTE]
-====
-`ManagedDaoSupport.findDurableClass(...)` is the helper used by the Spring scanners.
-It infers the durable type from the DAO generic signature rather than from classpath scanning.
-====
-
-=== `UpdateMode`
-
-`UpdateMode` is currently a two-value contract:
-
-* `SOFT`: cache only if the durable is absent
-* `HARD`: overwrite the cache entry
-
-Intrinsic caches ignore the distinction because they already operate on in-process state.
-Extrinsic caches use it to choose between `putIfAbsent(...)` and unconditional `set(...)`.
-
-[[persistence-cache-vectors, Cache And Vector Model]]
-== Cache And Vector Model
-
-=== Core Cache Abstractions
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`PersistenceCache<K, V>`
-|Simple cache contract with get, bulk get, set, put-if-absent, remove, and a default TTL
-
-|`CASSupportingPersistenceCache<K, V>`
-|Extends the cache contract with CAS operations for optimistic updates
-
-|`CacheDomain<I, D>`
-|Groups three caches for one durable type: instance cache, wide-instance cache, and vector cache
-
-|`VectoredDao<I, D>`
-|Cache-aware DAO contract for cached instances and vectors
-
-|`DurableVector<I, D>`
-|Cached vector of durables with ordering, max-size, and TTL semantics
-|===
-
-=== Cache Key Shapes
-
-[cols="2,3,4",options="header"]
-|===
-|Key Type |Format |What It Identifies
-
-|`DurableKey`
-|`SimpleClassName=id`
-|One durable instance
-
-|`VectorKey`
-|`ElementClass:namespace[aliasOrField=value,...]{classification}`
-|A cached vector produced by `@CacheAs` or `@CachedWith`
-
-|`WideDurableKey`
-|`context.Parent[Child]=parentId`
-|A cached list of child durables under one parent and context
-|===
-
-=== `DurableVector` Semantics
-
-All vector implementations share these rules:
-
-* they record creation time when constructed
-* `isAlive()` returns `true` when `timeToLiveSeconds <= 0` or the vector age is still within the TTL window
-* `asBestEffortPreFetchedList()` defaults to `asBestEffortLazyList()`
-* `maxSize <= 0` means unbounded
-* ordering behavior is determined by `ordered` plus either a supplied comparator or durable natural ordering
-
-`org.smallmind.persistence.cache.praxis.AbstractDurableVector` adds more rules:
-
-* ordered vectors remove duplicates, place new values according to comparator or natural ordering, and trim to `maxSize`
-* unordered vectors add new elements to the front
-* `remove(...)` removes all matching elements, not just the first
-
-=== Cache Strategy Choices
-
-[cols="2,4",options="header"]
-|===
-|Implementation |Use It When...
-
-|`ByReferenceIntrinsicCacheDao`
-|You are inside one JVM and want vectors to hold direct object references to cached instances
-
-|`ByKeyIntrinsicCacheDao`
-|You are inside one JVM but want vectors to store `DurableKey` indirection instead of direct references
-
-|`ByKeyExtrinsicCacheDao`
-|You are using a distributed cache and need CAS-safe updates to vectors that store keys rather than full payloads
-
-|`WideExtrinsicCacheDao`
-|You want to cache an entire child list under one parent/context key instead of maintaining a vector of keys
-|===
-
-=== Intrinsic And Extrinsic Roster Behavior
-
-Key-backed vectors are more than a storage optimization.
-They depend on registry state:
-
-* `IntrinsicRoster` is guarded by a `ReentrantReadWriteLock`
-* `ByKeyRoster` uses `OrmDaoManager` to rehydrate durables from cached `DurableKey` values
-* `ByKeyRoster.prefetch()` tries bulk cache hydration first through `VectoredDao.get(Class, List<DurableKey>)`
-* when bulk cache hydration misses, it falls back to `ormDao.acquire(...)`
-
-[IMPORTANT]
-====
-If you use key-backed vectors and the corresponding DAO is not registered in `OrmDaoManager`, vector hydration can fail with `CacheOperationException`.
-====
-
-=== Memcached-Backed Caches
-
-`MemcachedCache<V>` is the bundled distributed-cache implementation.
-
-Operational details:
-
-* the real memcached key is `discriminator[key]`
-* non-positive TTL arguments fall back to the cache default TTL
-* `putIfAbsent(...)` uses a CAS loop
-* `requiresCopyOnDistributedCASOperation()` returns `false`
-* memcached client lifecycle is external; the cache object does not start or stop it
-
-`MemcachedCacheDomain<I, D>` lazily builds:
-
-* one instance cache per managed durable class
-* one wide-instance cache per managed durable class
-* one vector cache per managed durable class
-
-It also supports an optional per-class TTL override map.
-
-[[persistence-cache-automation, Cache Automation Annotations]]
-== Cache Automation Annotations
-
-[IMPORTANT]
-====
-This entire section is an AspectJ surface.
-Without weaving, the annotations are metadata only and no cache behavior occurs.
-====
-
-=== Annotation Map
-
-[cols="2,4",options="header"]
-|===
-|Annotation |Role
-
-|`@CacheAs`
-|Caches the return value of a DAO method under a calculated `VectorKey`
-
-|`@CacheCoherent`
-|SOFT-persists the durable or iterable returned by a DAO method into the cache
-
-|`@CachedWith`
-|Class-level rules that update or invalidate vectors on DAO persist and delete operations
-
-|`@Vector`
-|Describes vector namespace, keys, and optional classifier
-
-|`@Key`
-|Defines one key component used by `VectorCalculator`
-
-|`@Classifier`
-|Optional suffix appended to the cache key
-
-|`@Time`
-|TTL descriptor for `@CacheAs`
-
-|`@Update`
-|A vector update rule inside `@CachedWith`
-
-|`@Invalidate`
-|A vector invalidation rule inside `@CachedWith`
-
-|`@Finder`
-|Optional DAO method used to locate related durables for `@CachedWith`
-
-|`@Proxy`
-|Optional DAO method used to transform a durable before vector-key calculation
-|===
-
-=== `@CacheAs`
-
-`@CacheAs` is a cache-aside method contract.
-
-Supported return shapes:
-
-* the DAO's managed durable type
-* `Iterable<? extends ManagedType>`
-* `List<? extends ManagedType>`
-
-Rules enforced by `CacheAsAspect`:
-
-* singular-return methods may not set `ordered=true`
-* singular-return methods may not set `max > 0`
-* singular-return methods may not register a comparator
-* iterable-return methods that declare a comparator must also set `ordered=true`
-* iterable-return methods must be parameterized to the DAO's managed durable type
-* anything else throws `CacheAutomationError`
-
-TTL rules:
-
-* `@Time(0)` with `stochastic=0` means "use the cache domain default"
-* `stochastic > 0` adds a random positive jitter in the same time unit, plus one extra second
-
-Key rules:
-
-* if `@Vector.namespace` is empty, `VectorCalculator` uses the method name
-* `@Key.value` defaults to `"id"`
-* `@Key.alias` defaults to the empty string
-* `@Key.constant` defaults to `false`
-* `@Key.nullable` defaults to `false`
-
-Classifier rules:
-
-* constant classifiers work everywhere
-* parameter-based classifiers are only supported on `@CacheAs`
-
-Expiration behavior:
-
-* if a cached vector exists but `isAlive()` returns `false`, the aspect deletes the vector and recomputes it
-
-Timing behavior:
-
-* if the DAO class is annotated `@Timed(true)`, the aspect records a Claxon speedometer tagged with durable name, method name, and metric source
-
-=== `@CacheCoherent`
-
-`@CacheCoherent` is narrower than `@CacheAs`.
-It does not create or invalidate vectors.
-It only makes returned objects cache-consistent.
-
-Supported return shapes:
-
-* managed durable
-* `List<? extends ManagedType>`
-* `Iterable<? extends ManagedType>`
-
-Behavior:
-
-* each returned durable is inserted with `UpdateMode.SOFT`
-* returned `Iterable` values are wrapped in `CacheCoherentIterable`
-* if no `VectoredDao` is configured or cache use is disabled, the original return value is passed through
-
-=== `@CachedWith`
-
-`@CachedWith` lives on the DAO class and reacts to DAO `persist(...)` and `delete(...)`.
-
-`Update` rules can:
-
-* insert into a vector
-* remove from a vector
-* choose behavior dynamically through an `onPersist` method returning `OnPersist`
-
-`Invalidate` rules can:
-
-* delete a vector outright
-
-Both `Update` and `Invalidate` can declare:
-
-* `filter`: DAO method returning `boolean`
-* `finder`: DAO method returning either a durable or a parameterized iterable of durables
-* `proxy`: DAO method returning a transformed durable used to build the `VectorKey`
-
-Defaults:
-
-* `onPersist` defaults to `OnPersist.INSERT`
-* if no `finder` is declared, the managed durable itself is used
-* if no `proxy` is declared, the managed durable itself supplies vector-key fields
-
-Misconfiguration behavior:
-
-* missing methods
-* wrong return types
-* wrong parameterization
-* incompatible proxy result types
-
-All surface as `CacheAutomationError`.
-
-[IMPORTANT]
-====
-`CacheAutomationError` extends `FormattedError`, not `RuntimeException`.
-Treat it as a hard configuration failure.
-====
-
-=== Example
+`dataSources`::
+    An explicit list of session source keys this boundary permits. An
+    empty array allows the default unnamed source only (and only when
+    `implicit` is left at its default). Declaring explicit sources forces
+    a boundary to be *explicit*, not implicit — see below.
+
+`implicit` (default `true`)::
+    When `true`, the boundary is established implicitly from a class-level
+    annotation on a DAO. Implicit boundaries only allow the default source.
+    An implicit boundary that also lists explicit sources throws
+    `IllegalArgumentException` at boundary check time. Set `implicit=false`
+    whenever you list explicit `dataSources`.
+
+`rollbackOnly` (default `false`)::
+    Forces every transaction in the boundary to roll back regardless of
+    outcome. Used for tests or for methods whose side-effects should be
+    observed but not committed.
+
+`rollbackOnException` (default `true`)::
+    When an exception escapes the boundary, roll back (`true`) or commit
+    (`false`). The default is the common-sense behaviour; `false` is
+    useful when an exception is a *signal*, not a failure, and the
+    updates made before it should persist.
+
+=== @NonTransactional
 
 [source,java]
 ----
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import org.smallmind.persistence.cache.aop.CacheAs;
-import org.smallmind.persistence.cache.aop.CachedWith;
-import org.smallmind.persistence.cache.aop.Key;
-import org.smallmind.persistence.cache.aop.Time;
-import org.smallmind.persistence.cache.aop.Update;
-import org.smallmind.persistence.cache.aop.Vector;
-import org.smallmind.persistence.orm.querydsl.jpa.QJPADao;
+@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NonTransactional {
 
-@CachedWith(
-  updates = @Update(
-    value = @Vector(
-      namespace = "byCompany",
-      value = @Key("companyId")
-    )
-  )
-)
-public class AccountQueryDao extends QJPADao<Long, Account> {
+  String[] dataSources () default {};
+  boolean implicit () default true;
+}
+----
 
-  public AccountQueryDao (JPAProxySession proxySession, VectoredDao<Long, Account> vectoredDao) {
+`dataSources` and `implicit` have the same meaning as on `@Transactional`.
+A non-transactional boundary opens a read-only session scope: the session
+is created on first use, held for the boundary body, and closed on exit.
+Commit and rollback do not apply.
 
-    super(proxySession, vectoredDao);
+=== Boundary Semantics In Detail
+
+Both aspects use matching stacks of thread-local boundary sets:
+
+`TransactionalState`::
+    Thread-local `LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>>`.
+    Every `@Transactional` method push/pops one entry. Each entry carries
+    the annotation's `dataSources` array and `rollbackOnly` flag, and
+    holds every `ProxyTransaction` that joined it.
+
+`NonTransactionalState`::
+    Thread-local `LinkedList<BoundarySet<ProxySession<?, ?>>>`. Every
+    `@NonTransactional` method push/pops one entry. Each entry carries
+    the annotation's `dataSources` array and holds every `ProxySession`
+    that joined it.
+
+When a DAO asks its `ProxySession` for a native session (e.g.,
+`EntityManager`), the session does this:
+
+. Call `TransactionalState.obtainBoundary(this)` — does any active
+  transactional boundary permit my source key?
+. If yes, begin a transaction and add it to that boundary's set. Also
+  check `NonTransactionalState.containsSession(this)` — if a
+  non-transactional boundary has already taken the session on this
+  thread, raise `StolenTransactionError`. This prevents a transactional
+  boundary from *stealing* a session that a non-transactional boundary
+  is relying on.
+. If no transactional boundary allows the session, call
+  `NonTransactionalState.obtainBoundary(this)`.
+. If neither allows it, and `isBoundaryEnforced()` is true, raise
+  `SessionEnforcementException`. Otherwise the session runs detached
+  (rare; `boundaryEnforced=true` is the normal production configuration).
+
+On boundary exit:
+
+* `@Transactional` success → `commitBoundary()`: for every transaction in
+  the boundary, commit unless the boundary is `rollbackOnly` or the
+  transaction itself is `rollbackOnly`.
+* `@Transactional` exception + `rollbackOnException=true` →
+  `rollbackBoundary(throwable)`: every transaction rolls back.
+* `@Transactional` exception + `rollbackOnException=false` →
+  `commitBoundary(throwable)`: commit as if success.
+* `@NonTransactional` exit → close every session in the boundary.
+
+If any individual commit or rollback throws, the first such failure is
+wrapped in `IncompleteTransactionError`; subsequent failures are silently
+absorbed so one bad transaction cannot hide the others from failing.
+
+=== Aspect Precedence
+
+`TransactionalAspect` is declared after
+`org.smallmind.nutsnbolts.inject.LazyFieldAspect`:
+
+[source,java]
+----
+@Aspect
+@DeclarePrecedence("org.smallmind.nutsnbolts.inject.LazyFieldAspect, "
+                   + "org.smallmind.persistence.orm.aop.TransactionalAspect")
+public class TransactionalAspect { ... }
+----
+
+This means that when a lazy-injected field is resolved inside a
+`@Transactional` method, the lazy field is resolved *before* the
+transaction boundary is established, so lazy-injection lookups do not
+accidentally open a transaction of their own.
+
+=== Usage Examples
+
+The canonical pattern: annotate a service-layer class with
+`@Transactional`. Every method (and constructor) in the class establishes
+a boundary unless separately annotated `@NonTransactional`.
+
+[source,java]
+----
+@Transactional
+public class OrderService {
+
+  private final OrderDao orderDao;
+  private final AuditDao auditDao;
+
+  public OrderService (OrderDao orderDao, AuditDao auditDao) {
+    this.orderDao = orderDao;
+    this.auditDao = auditDao;
   }
 
-  @CacheAs(
-    value = @Vector(
-      namespace = "byCompany",
-      value = @Key("companyId")
-    ),
-    time = @Time(value = 5, unit = TimeUnit.MINUTES, stochastic = 30)
-  )
-  public List<Account> listByCompany (Long companyId) {
+  public Order placeOrder (Long customerId, String reference) {
 
-    return listByQuery(/* your JPA or Querydsl implementation */);
+    Order order = new Order();
+    order.setCustomerId(customerId);
+    order.setReference(reference);
+    orderDao.persist(order);               <1>
+
+    auditDao.persist(new AuditEntry(order, "placed"));  <2>
+    return order;
+  }
+
+  @NonTransactional                        <3>
+  public Order findById (Long id) {
+    return orderDao.get(id);
+  }
+}
+----
+<1> Runs inside the implicit boundary opened by the class-level annotation.
+<2> Same boundary — commits or rolls back atomically with the order.
+<3> Overrides the class-level boundary. `findById` opens a
+    non-transactional session, closes it on return, and never commits.
+
+Multiple data sources:
+
+[source,java]
+----
+public class CrossStoreReport {
+
+  private final ReportingDao relationalDao;
+  private final MetricsDao mongoDao;
+
+  @Transactional(implicit = false, dataSources = {"relational", "metrics"})  <1>
+  public ReportBundle assemble (LocalDate date) {
+    return new ReportBundle(
+      relationalDao.findByDate(date),
+      mongoDao.findByDate(date)
+    );
+  }
+}
+----
+<1> `implicit=false` is required whenever `dataSources` is explicit.
+    Both sessions (keyed `"relational"` and `"metrics"`) join the same
+    boundary, and both commit together or roll back together.
+
+Forcing rollback in an integration test:
+
+[source,java]
+----
+@Transactional(rollbackOnly = true)       <1>
+public void assertCustomerCanBeInserted () {
+
+  Customer customer = new Customer("Test", "test@example.com");
+  customerDao.persist(customer);
+  assertThat(customer.getId()).isNotNull();
+}
+----
+<1> Writes happen and the id generator fires, but the boundary rolls
+    back on return. The test leaves no trace.
+
+Suppressing rollback on a signalling exception:
+
+[source,java]
+----
+@Transactional(rollbackOnException = false)  <1>
+public void runMigrationStep (int step) throws StopMigrationSignal {
+
+  migrationDao.applyStep(step);
+  if (step == lastStep()) {
+    throw new StopMigrationSignal();
+  }
+}
+----
+<1> The `StopMigrationSignal` propagates to the caller *after* the step's
+    updates commit. Use sparingly; the default of `true` is safer.
+
+=== Spring Wiring For Boundaries
+
+A `ProxySession` bean's `init-method="register"` places it into the
+`SessionManager` under a source key. The `boundaryEnforced` constructor
+argument chooses whether the session will refuse to open outside an AOP
+boundary.
+
+[source,xml]
+----
+<bean id="schemaProxySession"
+      class="org.smallmind.persistence.orm.hibernate.HibernateProxySession"
+      init-method="register">
+  <constructor-arg index="0" value="orm"/>           <1>
+  <constructor-arg index="1" value="schema"/>        <2>
+  <constructor-arg index="2" ref="schemaSessionFactory"/>
+  <constructor-arg index="3" value="true"/>          <3>
+  <constructor-arg index="4" value="true"/>          <4>
+</bean>
+----
+<1> `dataSourceType` — descriptive, used as the metric tag.
+<2> `sessionSourceKey` — the key the aspects will match against
+    `@Transactional(dataSources=...)`.
+<3> `boundaryEnforced` — raise `SessionEnforcementException` if a session
+    is requested outside a boundary. Set to `true` in production.
+<4> `cacheEnabled` — default value of `isCacheEnabled()` on this session;
+    togglable per-thread via `overrideCacheEnabled`.
+
+[[cache-as]]
+== Using @CacheAs
+
+`@CacheAs` is the cache-aside read path. Apply it to a DAO method whose
+result is expensive to compute and changes rarely; the next call for the
+same key will be served from the cache instead of the ORM.
+
+[source,java]
+----
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CacheAs {
+
+  Vector value ();
+  Class<? extends Comparator> comparator () default Comparator.class;
+  int max () default 0;
+  Time time () default @Time(0);
+  boolean ordered () default false;
+}
+----
+
+=== What The Aspect Does
+
+On invocation, `CacheAsAspect`:
+
+. Builds a `VectorKey` from the `@Vector` descriptor, the method
+  arguments, and the `VectorCalculator`.
+. Calls `vectoredDao.getVector(vectorKey)`.
+. If the vector exists and `isAlive()` returns true, serves from cache.
+  For a single-durable method this is `vector.head()`; for an iterable
+  method this is `asBestEffortPreFetchedList()` (if the return type is
+  `List`) or `asBestEffortLazyList()` (otherwise).
+. If the vector is present but stale, deletes it and falls through to
+  the ORM call.
+. Proceeds to the underlying method. If the result is non-null, wraps
+  it in a vector (`createSingularVector` or `createVector`), stores it
+  via `persistVector`, and returns.
+
+Any misconfiguration surfaces as a `CacheAutomationError` with a
+specific message. In particular:
+
+* A scalar `@CacheAs` method cannot declare `ordered`, `max`, or
+  `comparator`.
+* An iterable `@CacheAs` method must be parameterised to
+  `<? extends Iterable<? extends ManagedDurable>>`; the aspect reads the
+  actual type argument through reflection.
+* A non-iterable method that declares a comparator throws — the aspect
+  will not silently ignore the annotation.
+
+=== Vector, Key, Classifier
+
+`@Vector` describes how the cache key is built. Its attributes:
+
+`namespace` (default: method name when used on `@CacheAs`)::
+    The prefix of every key built from this vector.
+
+`value` (required)::
+    An ordered `@Key[]` describing each key segment.
+
+`classifier` (default: empty)::
+    An optional `@Classifier` appended to the key.
+
+`@Key` attributes:
+
+`value` (default `"id"`)::
+    The name of the method parameter (for `@CacheAs`) or the bean
+    property on the durable (for `@CachedWith` updates) that provides the
+    value.
+
+`alias` (default `""`)::
+    Renames the key segment in the generated cache key. Useful when the
+    parameter name is verbose but you want a short, stable key.
+
+`constant` (default `false`)::
+    When true, `value` is used verbatim as a literal string, not as a
+    parameter or field name.
+
+`nullable` (default `false`)::
+    Permits null for this segment. Without it, a null value at key
+    construction time is an error.
+
+`@Classifier` attributes:
+
+`value` (required)::
+    A literal string, or a method parameter name if `asParameter=true`.
+
+`asParameter` (default `false`)::
+    When true, treat `value` as a method parameter name and use the
+    parameter's runtime value as the classifier.
+
+=== Time
+
+`@Time` configures the cache entry's TTL with optional stampede jitter:
+
+[source,java]
+----
+@Time(value = 60, stochastic = 10, unit = TimeUnit.SECONDS)
+----
+
+`value`::
+    Base TTL in `unit` units. Zero means "use the cache domain default".
+
+`stochastic` (default 0)::
+    Upper bound of a random delta added to `value`, in the same unit.
+    The aspect adds `stochastic * Random.nextDouble() + 1` to the base,
+    then converts to seconds. Zero disables jitter.
+
+`unit` (default `TimeUnit.SECONDS`)::
+    Unit for both `value` and `stochastic`.
+
+The jitter exists to spread expiry times across callers that populated
+the same entry at the same moment. Without it, an entry populated at
+startup by thousands of requests would expire simultaneously and all of
+them would miss on the next tick — a classic cache-stampede pattern.
+
+=== Examples
+
+A scalar lookup by id:
+
+[source,java]
+----
+@CachedWith(...)
+public class CustomerDao extends JPADao<Long, Customer> {
+
+  @CacheAs(
+    value = @Vector(namespace = "customer", value = @Key("id")),
+    time = @Time(value = 5, unit = TimeUnit.MINUTES)
+  )
+  public Customer findById (Long id) {
+    return acquire(Customer.class, id);
   }
 }
 ----
 
-This arrangement means:
-
-* `listByCompany(...)` caches the result vector under a key beginning with `Account:byCompany[...]`
-* persisting or deleting an `Account` updates that vector automatically
-* TTL is five minutes plus a small random spread to avoid a synchronized refresh stampede
-
-[[persistence-sequences, Sequence Utilities]]
-== Sequence Utilities
-
-=== Available Implementations
-
-[cols="2,4",options="header"]
-|===
-|Type |Behavior
-
-|`SequenceManager`
-|Global application entry point for `nextLong(String name)`
-
-|`InMemorySequence`
-|In-memory per-name counter, starting at `1` for the first value
-
-|`SimulatedSequence`
-|Table-backed sequence for MySQL-style databases using `LAST_INSERT_ID`
-|===
-
-=== `SequenceManager`
-
-`SequenceManager.nextLong(name)` is intentionally simple.
-It delegates to the registered `Sequence`.
-
-[IMPORTANT]
-====
-If no sequence has been registered, `SequenceManager.nextLong(...)` throws:
-
-`IllegalStateException("The SequenceManager has not been properly initialized")`
-====
-
-=== `InMemorySequence`
-
-Use `InMemorySequence` when:
-
-* you need deterministic local tests
-* one JVM is enough
-* you do not need database-backed monotonicity across nodes
+A scalar lookup by a non-id parameter, with a renamed key:
 
 [source,java]
 ----
-import org.smallmind.persistence.database.InMemorySequence;
-import org.smallmind.persistence.database.SequenceManager;
-
-InMemorySequence sequence = new InMemorySequence();
-sequence.register();
-
-long first = SequenceManager.nextLong("orders");
-long second = SequenceManager.nextLong("orders");
+@CacheAs(
+  value = @Vector(
+    namespace = "customer.byEmail",
+    value = @Key(value = "email", alias = "e")
+  ),
+  time = @Time(value = 10, unit = TimeUnit.MINUTES)
+)
+public Customer findByEmail (String email) {
+  // JPA query or QueryDSL call
+}
 ----
 
-`first` is `1`.
-
-=== `SimulatedSequence`
-
-`SimulatedSequence` is for databases that need table-backed sequence emulation.
-
-Constructor:
+An ordered iterable with a comparator and a cap:
 
 [source,java]
 ----
-new SimulatedSequence(dataSource, "sequence_table", 20);
+@CacheAs(
+  value = @Vector(
+    namespace = "orders.byCustomer",
+    value = @Key("customerId")
+  ),
+  comparator = Order.ByReferenceComparator.class,
+  ordered = true,
+  max = 50,
+  time = @Time(value = 1, stochastic = 15, unit = TimeUnit.MINUTES)
+)
+public List<Order> findAllByCustomer (Long customerId) {
+  // ...
+}
 ----
 
-Meaning:
-
-* `dataSource`: caller-owned JDBC data source
-* `tableName`: table containing sequence rows
-* `incrementBy`: how many values to reserve from the database at once
-
-Required table contract:
-
-* column `name`
-* column `next_val`
-
-Example DDL:
-
-[source,sql]
-----
-create table sequence_table (
-  name varchar(255) primary key,
-  next_val bigint not null
-);
-----
-
-Internal SQL shape:
-
-* `INSERT IGNORE INTO <table> (name, next_val) VALUES('<name>', 0)`
-* `UPDATE <table> SET next_val=LAST_INSERT_ID(next_val + <incrementBy>) where name='<name>'`
-
-Operational details:
-
-* `incrementBy == 1` means every call goes back to the database
-* `incrementBy > 1` means one database round-trip reserves a local block
-* failures while refreshing the local block are logged through Scribe as `SimulatedSequenceDisasterException`
-* after a logged block-refresh failure, the implementation retries later rather than permanently disabling the sequence
-
-[[persistence-session-model, Session And Transaction Model]]
-== Session And Transaction Model
-
-=== `ProxySession`
-
-Every relational or Throng DAO works through a `ProxySession`.
-
-Constructor flags matter:
-
-[cols="2,4",options="header"]
-|===
-|Argument |Meaning
-
-|`dataSourceType`
-|Human-readable source name used for metrics
-
-|`sessionSourceKey`
-|Lookup key for `SessionManager` and boundary matching
-
-|`boundaryEnforced`
-|Whether access outside `@Transactional` or `@NonTransactional` boundaries should fail
-
-|`cacheEnabled`
-|Whether the DAO should delegate to its configured `VectoredDao`
-|===
-
-There is no hidden default for these booleans.
-The caller chooses them explicitly.
-
-=== `ProxyTransaction`
-
-`ProxyTransaction` adds behavior above a native transaction:
-
-* a unique id generated from `SnowflakeId`
-* `rollbackOnly` support
-* ordered post-process callbacks
-* aggregation of post-process failures into `TransactionPostProcessException`
-
-=== Transaction And Boundary Annotations
-
-[cols="2,4",options="header"]
-|===
-|Annotation |Behavior
-
-|`@Transactional`
-|Default values are `implicit=true`, `rollbackOnly=false`, `rollbackOnException=true`; optional `dataSources` restrict the boundary to specific `sessionSourceKey` values
-
-|`@NonTransactional`
-|Default value is `implicit=true`; optional `dataSources` restrict the boundary to specific `sessionSourceKey` values
-
-|`@SessionSource`
-|Type-level, inherited key used to associate a DAO or mapped type with a named session source
-
-|`@Repository`
-|Injects a registered DAO into a field after construction of a `@org.smallmind.nutsnbolts.inject.Service`
-
-|`@Timed`
-|Type-level timing flag, default `true`
-
-|`@Timer`
-|Method-level timing marker handled by the timer aspect
-|===
-
-=== Boundary Rules
-
-The boundary model is strict.
-
-Rules enforced by the AOP infrastructure:
-
-* if `boundaryEnforced=true` and a JPA session is requested outside any boundary, `JPAProxySession` throws `SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)")`
-* `BoundarySet` forbids `implicit=true` together with an explicit `dataSources` list
-* a transactional boundary cannot steal a session already held by a non-transactional boundary; `TransactionalState.obtainBoundary(...)` throws `StolenTransactionError`
-* `NonTransactionalState.endBoundary(...)` closes every tracked session at boundary end
-
-=== `JPAProxySession`
-
-`JPAProxySession` owns:
-
-* a thread-local `EntityManager`
-* a thread-local `JPAProxyTransaction`
-
-Behavior:
-
-* `beginTransaction()` creates the transaction wrapper lazily
-* `currentTransaction()` returns the existing wrapper or `null`
-* `flush()` and `clear()` delegate to the current `EntityManager`
-* closed entity managers are removed from the thread-local state automatically
-
-=== `JPAProxyTransaction`
-
-Commit path:
-
-* if `rollbackOnly` is set, `commit()` rolls back instead
-* otherwise `commit()` flushes, commits, and closes the session
-* successful commit then runs post-process callbacks for `TransactionEndState.COMMIT`
-
-Rollback path:
-
-* `rollback()` rolls back, closes the session, and runs rollback post-process callbacks
-* rollback and post-process failures are wrapped in `ProxyTransactionException`
-
-=== `ThrongProxySession` And `ThrongProxyTransaction`
-
-The Throng bridge uses the same `ProxySession` and `ProxyTransaction` vocabulary but not the same semantics.
-
-Current behavior:
-
-* `beginTransaction()` and `currentTransaction()` return the same singleton `ThrongProxyTransaction`
-* `ThrongProxyTransaction.commit()`, `rollback()`, and `flush()` are no-ops
-* `ThrongProxyTransaction.isCompleted()` is unsupported
-* `ThrongProxySession.flush()`, `clear()`, `close()`, and `isClosed()` are unsupported
-
-Treat the Throng bridge as an explicit DAO adapter, not as a general-purpose transaction manager.
-
-[[persistence-jpa, JPA Surface]]
-== JPA Surface
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`JPADurable`
-|JPA durable base with identity-generated id property
-
-|`TimestampedJPADurable`
-|JPA durable base with `created` and `lastUpdated` timestamps
-
-|`JPAProxySession`
-|Thread-local `EntityManager` and `JPAProxyTransaction` wrapper
-
-|`JPAProxyTransaction`
-|Commit, rollback, flush, post-process, and rollback-only behavior over `EntityTransaction`
-
-|`JPADao`
-|Criteria-based JPA DAO with optional vector cache integration
-
-|`QueryDetails`
-|Direct query helper for arbitrary `Query` execution
-
-|`CriteriaQueryDetails`
-|Criteria query helper for read operations
-
-|`CriteriaUpdateDetails`
-|Criteria update helper for bulk update operations
-
-|`CriteriaDeleteDetails`
-|Criteria delete helper for bulk delete operations
-|===
-
-=== `JPADao` Behavior
-
-`JPADao` is intentionally thin.
-
-Key behaviors:
-
-* `get(...)` consults the configured `VectoredDao` first when cache use is enabled
-* `acquire(...)` always goes directly to `EntityManager.find(...)`
-* `persist(...)` uses `EntityManager.merge(...)`, not `persist(...)`
-* if the durable is already managed, `persist(...)` returns the same instance
-* otherwise `persist(...)` returns the merged managed instance and flushes
-* when cache use is enabled, successful persist performs a `HARD` cache update
-* `delete(...)` removes the entity, flushes, and evicts the cache entry when caching is enabled
-
-[IMPORTANT]
-====
-Because `JPADao.persist(...)` uses `merge(...)`, the returned durable can be a different Java object than the one you passed in.
-Use the returned value when you need the managed instance.
-====
-
-=== Listing, Criteria, And Bulk Operations
-
-`JPADao` includes:
-
-* `list()`
-* `list(int fetchSize)`
-* `list(I greaterThan, int fetchSize)`
-* `list(Collection<I> ids)`
-* `deleteWithCriteria(...)`
-* `executeWithCriteria(...)`
-* `executeWithQuery(...)`
-
-The criteria helpers keep query structure explicit.
-They do not replace the JPA Criteria API; they only give you a narrow callback point for completing a query or mutation.
-
-=== Unsupported Operations In `JPADao`
-
-`JPADao` does not implement every `DurableDao` convenience:
-
-* `scroll()`
-* `scroll(int fetchSize)`
-* `scrollById(...)`
-* `size()`
-* `detach(...)`
-
-`detach(...)` throws:
-
-`UnsupportedOperationException("JPA has no explicit detached state")`
-
-=== Numeric Id Caveat
-
-`JPADao.list(greaterThan, fetchSize)` currently builds its criteria with:
-
-* `criteriaBuilder.gt(root.get("id"), (Number)greaterThan)`
-
-That makes this path effectively numeric-id-oriented.
-If your JPA ids are not numeric, do not rely on this convenience method.
-
-=== Hibernate Helpers
-
-`org.smallmind.persistence.orm.hibernate` contains a few small additions:
-
-* `CurrencyUserType` stores `Currency` as a three-letter ISO code in a `CHAR` column
-* `H2Dialect` registers `org_smallmind_day_diff` and `org_smallmind_date_sub_minutes`
-
-These helpers are intentionally narrow.
-They do not introduce a Hibernate-specific framework vocabulary beyond the two concrete use cases.
-
-[[persistence-querydsl, Querydsl JPA Surface]]
-== Querydsl JPA Surface
-
-Use `QJPADao` when `JPADao` is too narrow and you want Querydsl to stay explicit instead of hidden behind repository generation.
-
-=== What `QJPADao` Adds
-
-[cols="2,4",options="header"]
-|===
-|Method |Purpose
-
-|`countByQuery(...)`
-|Count rows matching a Querydsl query
-
-|`findByQuery(...)`
-|Fetch one durable or projection using a Querydsl query
-
-|`listByQuery(...)`
-|Fetch a list of durables or projections
-
-|`scrollByQuery(...)`
-|Return an iterable over a Querydsl query
-
-|`updateWithQuery(...)`
-|Perform a bulk Querydsl update
-
-|`deleteWithQuery(...)`
-|Perform a bulk Querydsl delete
-|===
-
-It also provides working implementations of:
-
-* `size()`
-* `scroll()`
-* `scroll(int fetchSize)`
-* `scrollById(...)`
-
-=== `JPAQueryDetails`
-
-`JPAQueryDetails<T>` lets you keep the Querydsl query body explicit in a subclass or anonymous class.
+A literal-keyed singleton, useful for cacheable configuration:
 
 [source,java]
 ----
-import com.querydsl.jpa.impl.JPAQuery;
+@CacheAs(
+  value = @Vector(
+    namespace = "config.currentTaxRate",
+    value = @Key(value = "current", constant = true)
+  ),
+  time = @Time(value = 1, unit = TimeUnit.HOURS)
+)
+public TaxRate currentTaxRate () { ... }
+----
 
-List<Account> activeAccounts = accountDao.listByQuery(new JPAQueryDetails<Account>("Account.withRoles") {
+A polymorphic classifier to cache different subtypes under the same
+namespace:
 
-  @Override
-  public JPAQuery<Account> completeQuery (JPAQuery<Account> query) {
+[source,java]
+----
+@CacheAs(
+  value = @Vector(
+    namespace = "asset.byOwner",
+    value = @Key("ownerId"),
+    classifier = @Classifier(value = "kind", asParameter = true)
+  ),
+  time = @Time(value = 5, unit = TimeUnit.MINUTES)
+)
+public Iterable<Asset> findByOwnerAndKind (Long ownerId, String kind) { ... }
+----
 
-    return query
-      .from(QAccount.account)
-      .where(QAccount.account.active.isTrue())
-      .orderBy(QAccount.account.id.asc());
+=== Graceful Degradation
+
+`@CacheAs` depends on `ORMDao.getVectoredDao()` returning non-null. That
+method returns the delegate only when `isCacheEnabled()` is true on the
+underlying `ProxySession`. If either is false — the DAO was wired without
+a cache, or the session's thread-local cache flag was temporarily turned
+off — the aspect simply proceeds to the underlying method and returns
+its result unwrapped. The annotation is a hint, not a requirement.
+
+[[cached-with]]
+== Using @CachedWith
+
+`@CacheAs` keeps fresh data in the cache. `@CachedWith` keeps the cache
+coherent when the underlying data changes. The two annotations are
+complements: without `@CachedWith`, a persist or delete will leave
+`@CacheAs`-populated vectors stale until their TTL expires. That may be
+acceptable for low-churn data; for anything else, `@CachedWith` is
+mandatory.
+
+`@CachedWith` is a class-level annotation on a DAO:
+
+[source,java]
+----
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CachedWith {
+
+  Update[] updates () default {};
+  Invalidate[] invalidates () default {};
+}
+----
+
+=== What The Aspect Does
+
+`CachedWithAspect` intercepts:
+
+* any `persist(Durable+)` method on a `@CachedWith` class (or any method
+  annotated `@Persist`), and
+* any `void delete(..)` method on a `@CachedWith` class (or any method
+  annotated `@Delete`).
+
+After the method proceeds, the aspect walks `updates()` and
+`invalidates()`. For each one:
+
+. *Filter* — if a `filter` method name is given, call
+  `filterMethod.invoke(dao, durable)`. The method must return `boolean`.
+  If false, skip this update/invalidate.
+. *Finder* — if a `finder.method` is given, call it on the DAO with the
+  durable; otherwise use the durable itself (as a `SingleItemIterable`).
+  The finder's return type is reconciled with `finder.with` (the
+  expected durable type) reflectively.
+. *Proxy* — if a `proxy.method` is given, call it to transform the
+  durable into the form used for key construction (useful when the key
+  is taken from a related entity, not the one being persisted).
+. *Compute vector key* from the `@Update`/`@Invalidate` `@Vector`
+  descriptor, the (possibly-proxied) durable, and the classifier.
+. *Apply the action*:
+  - `@Update` + `OnPersist.INSERT` → `vectoredDao.updateInVector(key,
+    indexingDurable)`.
+  - `@Update` + `OnPersist.REMOVE` → `vectoredDao.removeFromVector(key,
+    indexingDurable)`.
+  - `@Invalidate` → `vectoredDao.deleteVector(key)`.
+
+On delete, the semantics flip: every `@Update` applies `REMOVE`,
+regardless of the configured `onPersist`, because the durable no longer
+exists. `@Invalidate` runs unchanged.
+
+=== OnPersist
+
+`@Update.onPersist` is an optional DAO method name that returns
+`OnPersist`. When omitted, the aspect defaults to `OnPersist.INSERT`.
+The point of making it a method rather than an annotation attribute is
+that the action may depend on the durable's state: a "soft delete" flag
+flipping to true may mean REMOVE, while any other persist means INSERT.
+
+[source,java]
+----
+public OnPersist deletedOrActive (Order order) {
+  return order.isCancelled() ? OnPersist.REMOVE : OnPersist.INSERT;
+}
+----
+
+=== Examples
+
+A DAO that caches its own by-id lookup and invalidates it on persist:
+
+[source,java]
+----
+@CachedWith(
+  invalidates = {
+    @Invalidate(
+      value = @Vector(namespace = "customer", value = @Key("id"))
+    )
   }
-});
+)
+public class CustomerDao extends JPADao<Long, Customer> {
+
+  @CacheAs(
+    value = @Vector(namespace = "customer", value = @Key("id")),
+    time = @Time(value = 5, unit = TimeUnit.MINUTES)
+  )
+  public Customer findById (Long id) {
+    return acquire(Customer.class, id);
+  }
+}
 ----
 
-If a graph name is supplied, `QJPADao` applies it as the JPA hint:
-
-* `jakarta.persistence.fetchgraph`
-
-=== Build Requirements
-
-`QJPADao` assumes:
-
-* generated Querydsl `Q*` types exist
-* the Querydsl libraries are present at compile time
-* the JPA API is available to the annotation processor
-
-This repository's parent POM already configures those pieces.
-External consumers need to replicate them explicitly.
-
-[[persistence-throng, Throng Surface]]
-== Throng Surface
-
-The Throng bridge lets you reuse the Smallmind durable and DAO model over MongoDB through `mongodb-throng`.
-For the underlying Throng mapping system itself, see `MONGODB.adoc`.
-
-=== Core Types
-
-[cols="2,4",options="header"]
-|===
-|Type |Role
-
-|`ThrongDurable`
-|Base durable with Throng `@Id` support
-
-|`TimestampedThrongDurable`
-|Adds created and last-updated timestamps plus a descending index on `lastUpdated`
-
-|`ThrongClientFactory`
-|Small wrapper around a configured `ThrongClient`
-
-|`ThrongProxySession`
-|`ProxySession` implementation over `ThrongClientFactory`
-
-|`ThrongProxyTransaction`
-|Placeholder transaction wrapper with no real transactional semantics
-
-|`ThrongDao`
-|CRUD, list, scroll, count, update, and delete helpers over Throng
-|===
-
-=== `ThrongDao` Behavior
-
-`ThrongDao` mirrors the structure of `JPADao` where it can:
-
-* `get(...)` consults the configured `VectoredDao` first when caching is enabled
-* `list()`, `list(int)`, `list(I greaterThan, int)`, and `list(Collection<I>)` are implemented
-* `scroll()` and `scroll(int)` delegate to Throng query iteration
-* `size()` counts documents through Throng
-* `persist(...)` always performs `insert(...)`
-* cache-aware persistence uses `UpdateMode.HARD`
-* `delete(...)` evicts the cache after a successful delete
-
-Additional helper methods include:
-
-* `countByFilter(...)`
-* `findByQuery(...)`
-* `listByQuery(...)`
-* `scrollByQuery(...)`
-* `deleteByFilter(...)`
-* `updateByFilter(...)`
-
-[IMPORTANT]
-====
-`ThrongDao.persist(...)` is insert-oriented.
-It does not implement JPA-style merge semantics.
-====
-
-=== Current Implementation Limitation
-
-`ThrongDao.acquire(...)` currently builds its lookup with a literal string:
-
-* `Filter.where("_id").eq("id")`
-
-That means direct `acquire(...)` lookups are presently constrained by an implementation bug.
-If id-based acquisition behaves incorrectly, use another query path or patch the implementation before relying on it.
-
-=== Ownership And Closing
-
-The Throng bridge does not close the underlying `MongoClient`.
-`ThrongClientFactory` is just a wrapper around a configured `ThrongClient`.
-If Spring owns the `MongoClient`, let the Spring bean that created it close it.
-
-[[persistence-sql, SQL And Pooling Utilities]]
-== SQL And Pooling Utilities
-
-=== `DriverManagerDataSource`
-
-Use `DriverManagerDataSource` when you want a minimal `DataSource` without pooling.
-
-Behavior:
-
-* loads the driver class in the constructor
-* creates connections through `DriverManager`
-* `getLoginTimeout()` always returns `0`
-* `setLoginTimeout(...)` is unsupported
-* `getParentLogger()` throws `SQLFeatureNotSupportedException`
-
-`DriverManagerDataSourceFactory` is the matching `DataSourceFactory`.
-You must set `driverClassName` before constructing a data source.
-
-=== Pooled Data Sources
-
-`PooledDataSourceFactory.createPooledDataSource(...)` chooses:
-
-* `PooledXADataSource` for XA factories
-* `PooledDataSource` for non-XA factories
-
-Programmatic example:
+A DAO whose persist updates a per-customer order list:
 
 [source,java]
 ----
-import org.smallmind.persistence.sql.DriverManagerDataSourceFactory;
-import org.smallmind.persistence.sql.pool.PooledDataSource;
-import org.smallmind.persistence.sql.pool.PooledDataSourceFactory;
-import org.smallmind.persistence.sql.pool.spring.DatabaseConnection;
-import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
+@CachedWith(
+  updates = {
+    @Update(
+      value = @Vector(
+        namespace = "orders.byCustomer",
+        value = @Key("customerId")
+      ),
+      onPersist = "deletedOrActive"
+    )
+  },
+  invalidates = {
+    @Invalidate(
+      value = @Vector(namespace = "order", value = @Key("id"))
+    )
+  }
+)
+public class OrderDao extends JPADao<Long, Order> {
 
-DriverManagerDataSourceFactory factory = new DriverManagerDataSourceFactory();
-factory.setDriverClassName("com.mysql.cj.jdbc.Driver");
+  @CacheAs(
+    value = @Vector(
+      namespace = "orders.byCustomer",
+      value = @Key("customerId")
+    ),
+    comparator = Order.ByReferenceComparator.class,
+    ordered = true,
+    max = 50,
+    time = @Time(value = 1, stochastic = 15, unit = TimeUnit.MINUTES)
+  )
+  public List<Order> findAllByCustomer (Long customerId) { ... }
 
-DatabaseConnection connection = new DatabaseConnection();
-connection.setJdbcUrl("jdbc:mysql://db.example.org/app");
-connection.setUser("app");
-connection.setPassword("secret");
-
-ComplexPoolConfig poolConfig = new ComplexPoolConfig();
-poolConfig.setMaxPoolSize(20);
-
-PooledDataSource dataSource = (PooledDataSource)PooledDataSourceFactory.createPooledDataSource(
-  "app",
-  factory,
-  "select 1",
-  50,
-  poolConfig,
-  new DatabaseConnection[] {connection}
-);
-
-dataSource.startup();
-dataSource.register();
+  public OnPersist deletedOrActive (Order order) {
+    return order.isCancelled() ? OnPersist.REMOVE : OnPersist.INSERT;
+  }
+}
 ----
 
-Operational rules:
+When a persisted `Order` has `customerId=42`, the aspect:
 
-* `startup()` is explicit
-* `shutdown()` is explicit
-* `register()` stores the data source in `DataSourceManager`
-* username/password overloads on `PooledDataSource` are unsupported because credential ownership belongs to the configured underlying pool resources
+. Evaluates the filter (none in this example).
+. Calls `deletedOrActive(order)` → `INSERT`.
+. Uses the durable itself (default finder) as the indexing durable.
+. Builds the vector key `Order:orders.byCustomer[customerId=42]`.
+. Calls `vectoredDao.updateInVector(key, order)`.
+. Builds the key `Order:[id=<order.id>]` from the `@Invalidate` and
+  calls `deleteVector`, evicting the scalar entry.
 
-=== Pooled Connection Behavior
+A cross-entity invalidation using `proxy`:
 
-`AbstractPooledConnection` is worth understanding if you use the pool heavily:
+[source,java]
+----
+@CachedWith(
+  invalidates = {
+    @Invalidate(
+      value = @Vector(
+        namespace = "customer.profile",
+        value = @Key("id")
+      ),
+      finder = @Finder(with = Customer.class, method = "customerOf"),  <1>
+      proxy = @Proxy(with = Customer.class, method = "toCustomer")     <2>
+    )
+  }
+)
+public class OrderDao extends JPADao<Long, Order> {
 
-* logical `close()` returns the connection to the pool instead of closing the physical connection
-* if `maxStatements > 0`, it installs an LRU `PooledPreparedStatementCache`
-* `maxStatements == 0` disables statement caching
-* negative `maxStatements` is rejected
-* SQL exceptions during real operations notify the pool and raise `PooledConnectionException`
+  public Customer customerOf (Order order) {                          <1>
+    return customerDao.get(order.getCustomerId());
+  }
 
-Diagnostics:
+  public Customer toCustomer (Customer customer) {                    <2>
+    return customer;
+  }
+}
+----
+<1> The finder resolves the related customer given the order being
+    persisted. The aspect uses that customer as the `indexingDurable`.
+<2> The proxy leaves the customer alone, but any transformation could
+    be performed here. The (possibly-transformed) durable is then used
+    to build the cache key — so the vector key reads the `id` property
+    of the customer, not the order.
 
-* `PooledDataSource.getExistentialStackTraces()` exposes active checkout stack traces
-* `PooledDataSource.killAllProcessing()` forcibly terminates in-flight processing
+=== A Note On @Persist And @Delete
 
-=== Contextual Pools
+The default pointcut matches any `persist(Durable+)` and `void delete(..)`
+on a `@CachedWith` class. If a DAO has a persist-style method with a
+different name (`saveOrUpdate`, `store`, etc.), tag it with `@Persist`;
+for a delete-style method, tag it `@Delete`. The aspect picks up both
+forms.
 
-`ContextualPooledDataSource` routes requests based on `ContextFactory.getContext(PooledDataSourceContext.class)`.
+[[cache-coherent]]
+== Using @CacheCoherent
 
-Use it when:
+`@CacheCoherent` is the smaller cousin of `@CachedWith`. It is a
+method-level marker that says "whatever this method returns, make sure
+the cache knows about it before you hand it out". Useful when the method
+fetches durables from an external system — a remote API, a bulk load —
+that should immediately appear in the cache as if they had been
+`persist()`ed.
 
-* one logical pool name needs multiple runtime contexts
-* the current request or execution context decides which physical pool to borrow from
+The aspect wraps a single durable in
+`vectoredDao.persist(Class, Durable, UpdateMode.SOFT)`. For an
+`Iterable<Durable>` result it wraps the result in `CacheCoherentIterable`,
+which performs the same `persist` lazily as each element is iterated, so
+an unused tail of a very long iterable is not eagerly cached.
 
-`DefaultContextualPoolNameTranslator` maps between:
+Use it alongside a finder that does not itself go through the DAO:
 
-* base pool name
-* contextual pool names
-* context suffixes
+[source,java]
+----
+@CacheCoherent
+public List<Customer> importFromFeed () {
+  return externalFeed.readCustomers();
+}
+----
 
-If the current context cannot be mapped to a pool, `ContextualPooledDataSource.getConnection()` surfaces a `SQLException` wrapping a `ComponentPoolException`.
+[[cache-architecture]]
+== Cache Architecture
 
-[[persistence-spring, Spring Wiring]]
-== Spring Wiring
+The cache layer sits between `ORMDao` and an underlying
+`PersistenceCache`. Everything between those two ends is framework code.
 
-Spring support in this module is deliberately narrow.
-It constructs or discovers explicit objects.
-It does not replace your runtime policy.
+=== PersistenceCache
 
-=== JPA Entity Discovery And `EntityManagerFactory`
+`PersistenceCache<K, V>` is a minimal get/set/remove store. Its semantics
+match Memcached's:
 
-The JPA scanner works by inspecting DAO beans, not by scanning the classpath.
+* `get(K)` — single fetch, or null on miss.
+* `get(K[])` — bulk fetch, missing keys are omitted from the result map.
+* `set(K, V, int timeToLiveSeconds)` — unconditional write.
+* `putIfAbsent(K, V, int ttl)` — conditional write. Returns the
+  pre-existing value if any, else null.
+* `remove(K)` — eviction.
 
-Discovery sources:
+`CASSupportingPersistenceCache<K, V>` extends with `getViaCas` (fetches
+a `CASValue<V>` pairing the value with a version token) and `putViaCas`
+(attempts an update keyed on the version; succeeds only if the stored
+version is unchanged). Used for optimistic concurrency on vector
+mutations. Not every backend supports it;
+`requiresCopyOnDistributedCASOperation()` allows the backend to ask for a
+deep copy before a CAS cycle.
 
-* DAO beans assignable to `JPADao` or `QJPADao`
-* managed durable classes annotated with `@Entity`, `@Embeddable`, or `@MappedSuperclass`
-* related classes from `@MappedSubClasses` and `@MappedRelationships`
-* optional partitioning by `@SessionSource`
+=== CacheDomain
 
-Example Spring XML:
+`CacheDomain<I, D>` is the factory from which a DAO obtains its logical caches:
+
+* `getInstanceCache(Class<D>)` — single-durable cache, keyed by id.
+
+* `getVectorCache(Class<D>)` — the backing store for `DurableVector`.
+
+A cache backend such as Memcached ships a concrete `CacheDomain`
+(`MemcachedCacheDomain`) plus Spring factory beans
+(`MemcachedCacheDomainFactoryBean`, `MemcachedCacheDaoFactoryBean`).
+
+=== DurableVector And Rosters
+
+A `DurableVector<I, D>` is a serialisable, optionally-ordered, size-bounded
+collection of durables stored under one cache key. It has a TTL and an
+`isAlive()` check.
+
+The concrete vector implementations live in `cache.praxis`. They split
+along two axes:
+
+* *Singular vs plural* — one element or many.
+* *By-key vs by-reference* — whether the vector stores references to the
+  durable (lazy, fetched through `OrmDaoManager` on access) or the
+  durables themselves (eager).
+
+The plural vectors are backed by `Roster<T>` — a serialisable `List`
+with deque-style `addFirst`/`removeLast` operations. Two roster
+implementations:
+
+* `IntrinsicRoster` — doubly-linked-node structure of durables,
+  used when the durables themselves are serialised into the cache.
+* `ExtrinsicRoster` — same structure but of `DurableKey`s,
+  used when only references are serialised.
+
+A DAO picks a roster style by selecting its `CacheDao`
+implementation — `ByKeyIntrinsicCacheDao`, `ByReferenceIntrinsicCacheDao`,
+or `ByKeyExtrinsicCacheDao`. For most applications a Memcached-backed
+extrinsic (key-only) roster is the right starting point: it stores less
+data and always returns fresh durables at iteration time.
+
+=== VectorKey
+
+`VectorKey<D>` is the actual cache key the aspects compute:
+
+[source]
+----
+<ClassName>:<namespace>[index1=value1,index2=value2]<classifier>
+----
+
+A `VectorKey` built from `Order`, namespace `orders.byCustomer`, key
+`customerId=42`, and an empty classifier looks like:
+
+[source]
+----
+Order:orders.byCustomer[customerId=42]
+----
+
+=== VectoredDao
+
+`VectoredDao<I, D>` is the cache-facing interface `CacheAsAspect` and
+`CachedWithAspect` call. It exposes:
+
+* `get(Class<D>, List<DurableKey<I,D>>)` — bulk hydration from instance
+  cache.
+* `persist(Class<D>, D, UpdateMode)` — write with cache side-effects.
+* `updateInVector(VectorKey, D)` and `removeFromVector(VectorKey, D)` —
+  fine-grained vector mutations.
+* `getVector(VectorKey)`, `persistVector(VectorKey, DurableVector)`,
+  `deleteVector(VectorKey)` — whole-vector ops.
+* `createSingularVector(VectorKey, D, int ttlSeconds)` and
+  `createVector(VectorKey, Iterable<D>, Comparator<D>, int max, int ttl,
+  boolean ordered)` — vector constructors called by `CacheAsAspect`.
+
+`AbstractCacheDao` is the usual implementation, delegating to a
+`CacheDomain`.
+
+[[sql-pool]]
+== SQL And Connection Pooling
+
+=== DriverManagerDataSource
+
+`org.smallmind.persistence.sql.DriverManagerDataSource` is a tiny
+`DataSource` that loads a driver class in its constructor and calls
+`DriverManager.getConnection(url, user, password)` on every
+`getConnection()`. No pooling, no statement caching, no login-timeout
+support. Useful for single-connection tools and for Liquibase migrations
+(see `schema-hibernate.xml`).
+
+=== Connection Pool
+
+The real pool is `PooledDataSource`, a `DataSource` wrapping a
+`ComponentPool<PooledConnection>` from `smallmind-quorum`:
 
 [source,xml]
 ----
-<bean id="jpaAnnotationScanner"
+<bean id="schemaConnectionInstanceFactory"
+      class="org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory">
+  <constructor-arg index="0" value="${jdbc.driver.class_name.pool}"/>
+  <constructor-arg index="1" value="${jdbc.url.pool}"/>
+  <constructor-arg index="2" value="${jdbc.user.pool}"/>
+  <constructor-arg index="3" value="${jdbc.password.pool}"/>
+  <property name="validationQuery" value="${jdbc.validation_query.pool}"/>
+</bean>
+
+<bean id="schemaDBPool"
+      class="org.smallmind.quorum.pool.complex.ComponentPool"
+      init-method="startup" destroy-method="shutdown">
+  <constructor-arg index="0" value="dbPool"/>
+  <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
+  <property name="complexPoolConfig">
+    <bean class="org.smallmind.quorum.pool.complex.ComplexPoolConfig">
+      <property name="testOnAcquire"         value="${jdbc.pool.test_on_acquire.pool}"/>
+      <property name="initialPoolSize"       value="${jdbc.pool.initial_size.poo}"/>
+      <property name="minPoolSize"           value="${jdbc.pool.min_size.poo}"/>
+      <property name="maxPoolSize"           value="${jdbc.pool.max_size.poo}"/>
+      <property name="acquireWaitTimeMillis" value="750"/>
+      <property name="creationTimeoutMillis" value="300"/>
+      <property name="maxIdleTimeSeconds"    value="300"/>
+      <property name="maxLeaseTimeSeconds"   value="1800"/>
+    </bean>
+  </property>
+</bean>
+
+<bean id="schemaPooledDataSource"
+      class="org.smallmind.persistence.sql.pool.PooledDataSource">
+  <constructor-arg index="0" value="schema"/>
+  <constructor-arg index="1" ref="schemaDBPool"/>
+</bean>
+----
+
+Key traits:
+
+* Constructor arg 0 of `PooledDataSource` is the *registration key*. A
+  call to `register()` places the bean in `DataSourceManager` under that
+  key so `DataSourceManager.getDataSource("schema")` finds it.
+* The pool is an active component: it has `startup` and `shutdown`
+  methods, declared in Spring as `init-method`/`destroy-method`.
+* `AbstractPooledDataSource` implements `ConnectionPoolDataSource` and
+  exposes the pooled connection as a `javax.sql.PooledConnection`, which
+  is what Hibernate and JPA expect.
+* For XA, `PooledXADataSource` uses the same pool infrastructure but
+  exposes an `XADataSource`.
+
+The `sql.pool.context` package provides "contextual" variants
+(`ContextualPooledDataSource`, `ContextualPooledXADataSource`) that pick
+a pool by a thread-local key — useful when the same DAO method is
+targeted at different shards depending on request context. The
+`ContextualPoolNameTranslator` plugs in the name-resolution strategy.
+
+The `sql.pool.spring` package adds Spring factory beans that build a
+`PooledDataSource` (or XA variant) directly:
+
+* `PooledDataSourceFactoryBean` — builds a single pool-backed
+  data source.
+* `DynamicPooledDataSourceFactoryBean` /
+  `DynamicPooledDataSourceInitializingBean` — discover `DatabaseConnection`
+  beans by `ContextIndex` and build one pool per context.
+* `DataSourceLocator` — application-scoped lookup by key.
+
+=== DataSourceManager
+
+`DataSourceManager` is a static registry analogous to `SessionManager`:
+`DataSourceManager.register(key, dataSource)` places a
+`CommonDataSource` into the per-application context, and
+`DataSourceManager.getDataSource(key)` retrieves it. Used by runtime
+components that need a data source but were not given one by
+constructor injection.
+
+[[sequences]]
+== Sequence Generation
+
+=== The Problem
+
+Oracle, PostgreSQL, and most other relational databases provide a native
+`SEQUENCE`. MySQL does not — the usual substitutes (`AUTO_INCREMENT` on a
+surrogate column, `UUID()`, a separate counter table) each fail in some
+meaningful dimension:
+
+* `AUTO_INCREMENT` is column-local and cannot be shared.
+* `UUID()` values are not monotonic, interact badly with clustered
+  indexes, and cost more storage.
+* A hand-written counter table is not atomic without explicit locking.
+
+`smallmind-persistence.database` provides a portable abstraction
+(`Sequence`) and a MySQL-specific implementation (`SimulatedSequence`)
+that solves the counter-table problem correctly.
+
+=== Sequence And SequenceManager
+
+`Sequence` is abstract:
+
+[source,java]
+----
+public abstract class Sequence {
+  public abstract long nextLong (String name);
+  public void register () { SequenceManager.register(this); }
+}
+----
+
+`SequenceManager` holds exactly one `Sequence` globally, guarded by an
+`AtomicReference`. The pattern is: at application startup, construct the
+desired `Sequence` implementation, call `register()`, then everywhere
+else call `SequenceManager.nextLong(name)` as a static.
+
+`InMemorySequence` is a testing implementation: a
+`ConcurrentHashMap<String, AtomicLong>` per name.
+`SequenceManager.nextLong("orderNumber")` returns 1, 2, 3, ... within a
+JVM run; it does *not* survive restart.
+
+=== SimulatedSequence (MySQL)
+
+`SimulatedSequence` is the production implementation for MySQL. It uses
+a dedicated counter table:
+
+[source,sql]
+----
+CREATE TABLE sequences (
+  name     VARCHAR(64) PRIMARY KEY,
+  next_val BIGINT NOT NULL
+);
+----
+
+And atomically advances the counter using MySQL's `LAST_INSERT_ID()`
+idiom:
+
+[source,sql]
+----
+UPDATE sequences
+   SET next_val = LAST_INSERT_ID(next_val + <incrementBy>)
+ WHERE name = '<name>';
+
+-- then retrieve: SELECT LAST_INSERT_ID();
+----
+
+The JDBC driver surfaces the result through `Statement.RETURN_GENERATED_KEYS`.
+Because the update is atomic at the storage engine level, two concurrent
+JVMs cannot collide.
+
+The constructor takes `incrementBy`. When it is `1`, every `nextLong`
+call hits the database. When it is larger, each database round-trip
+reserves that many values; subsequent `nextLong` calls draw from the
+local block until it is exhausted.
+
+[source,java]
+----
+@Bean(initMethod = "register")
+public SimulatedSequence applicationSequence (DataSource ds) {
+  return new SimulatedSequence(ds, "sequences", 100);   <1>
+}
+----
+<1> Block of 100 values per round-trip. A JVM crash loses the unallocated
+    remainder of the block; that is acceptable because the block
+    reservation has already committed, so no other process will reuse
+    the discarded values.
+
+`SimulatedSequenceDisasterException` is thrown if the counter table is
+unreachable, if the update returned no key, or if any other SQL fault
+surfaced during a sequence call. The exception is unchecked — callers
+are expected to let it propagate and fail the request.
+
+=== Usage
+
+[source,java]
+----
+long orderNumber = SequenceManager.nextLong("orderNumber");
+----
+
+[[spring-wiring]]
+== Spring Wiring
+
+The `src/main/resources/spring/org/smallmind/persistence/` directory
+ships three Spring XML files that show the canonical wiring for each
+supported stack:
+
+=== hibernate.xml — JPA on Hibernate
+
+Wires a JPA `EntityManagerFactory` via
+`EntitySeekingEntityManagerFactoryBean`. The
+`AnnotationSeekingBeanFactoryPostProcessor` scans the configured
+packages for `@Entity`-annotated classes and supplies them to the
+persistence unit. The provider is pinned to
+`org.hibernate.jpa.HibernatePersistenceProvider`.
+
+[source,xml]
+----
+<bean id="jpaAnnotationSeekingBeanFactoryPostProcessor"
       class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
 
 <bean id="entityManagerFactory"
       class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean">
-  <property name="annotationSeekingBeanFactoryPostProcessor" ref="jpaAnnotationScanner"/>
-  <property name="dataSource" ref="appDataSource"/>
-  <property name="jpaVendorAdapter">
-    <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"/>
-  </property>
+  <property name="sessionSourceKey" value="sourceKey"/>
+  <property name="annotationSeekingBeanFactoryPostProcessor"
+            ref="jpaAnnotationSeekingBeanFactoryPostProcessor"/>
+  <property name="dataSource" ref="dataSource"/>
   <property name="persistenceUnitInfo">
-    <bean class="org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo">
-      <property name="persistenceUnitName" value="app"/>
+    <bean class="org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo">
+      <property name="persistenceUnitName" value="persistenceUnitName"/>
       <property name="persistenceProviderClassName"
                 value="org.hibernate.jpa.HibernatePersistenceProvider"/>
+      <property name="properties">
+        <value>
+        </value>
+      </property>
     </bean>
   </property>
 </bean>
 ----
 
-`EntitySeekingEntityManagerFactoryBean` supports explicit properties for:
-
-* `annotationSeekingBeanFactoryPostProcessor`
-* `sessionSourceKey`
-* `dataSource`
-* `jtaDataSource`
-* `sharedCacheMode`
-* `cacheStoreMode`
-* `cacheRetrieveMode`
-* `validationMode`
-* `persistenceUnitInfo`
-* `excludeUnlistedClasses`
-* `persistenceUnitPostProcessors`
-
-[IMPORTANT]
-====
-If neither `getPersistenceProvider()` nor `persistenceUnitInfo.persistenceProviderClassName` is available, `EntitySeekingEntityManagerFactoryBean` throws an `IllegalArgumentException`.
-====
-
-[NOTE]
-====
-The realized `PersistenceUnitInfo` wrapper is intentionally minimal:
-
-* `addTransformer(...)` is a no-op
-* `getNewTempClassLoader()` returns `null`
-
-That is usually fine for standard provider bootstrapping, but it matters if you expected extra persistence-unit instrumentation hooks from the wrapper itself.
-====
-
-=== Memcached Cache Beans
-
-The memcached Spring surface is bean construction only.
+A `JPAProxySession` consumes the entity manager factory:
 
 [source,xml]
 ----
-<bean id="cacheDomain"
-      class="org.smallmind.persistence.cache.memcached.spring.MemcachedCacheDomainFactoryBean">
-  <property name="memcachedClient" ref="proxyMemcachedClient"/>
-  <property name="discriminator" value="account"/>
-  <property name="timeToLiveSeconds" value="300"/>
-</bean>
-
-<bean id="cacheDao"
-      class="org.smallmind.persistence.cache.memcached.spring.MemcachedCacheDaoFactoryBean">
-  <property name="memcachedCacheDomain" ref="cacheDomain"/>
-</bean>
-
-<bean id="wideCacheDao"
-      class="org.smallmind.persistence.cache.memcached.spring.MemcachedWideCacheDaoFactoryBean">
-  <property name="memcachedCacheDomain" ref="cacheDomain"/>
+<bean id="applicationProxySession"
+      class="org.smallmind.persistence.orm.jpa.JPAProxySession"
+      init-method="register">
+  <constructor-arg index="0" value="jpa"/>
+  <constructor-arg index="1" value="sourceKey"/>
+  <constructor-arg index="2" ref="entityManagerFactory"/>
+  <constructor-arg index="3" value="true"/>
+  <constructor-arg index="4" value="true"/>
 </bean>
 ----
 
-Supported cache-domain properties:
+=== mongo.xml — Throng On MongoDB
 
-* `memcachedClient`
-* `discriminator`
-* `timeToLiveSeconds`
-* `timeToLiveOverrideMap`
+Wires a Mongo client, an `EntitySeekingThrongClientFactoryBean`, and a
+`ThrongProxySession`. The Mongo client is built from
+`smallmind-mongodb-utility`'s Spring factory beans (credentials, server
+addresses, write concern); the Throng client factory scans for
+`@ThrongEntity` classes and returns them via
+`AnnotationSeekingBeanFactoryPostProcessor` (the Throng variant). The
+profile is `default` so the XML only activates outside test profiles.
 
-The factory beans do not own `ProxyMemcachedClient` shutdown.
+=== schema-hibernate.xml — Hibernate (Session API) Plus Schema Migration
 
-=== Throng Entity Discovery
-
-The Throng Spring scanner follows the same pattern as the JPA scanner:
-
-* it inspects DAO beans assignable to `ThrongDao`
-* it collects Throng types annotated with `@Entity` or `@Embedded`
-* it partitions discovered types by `@SessionSource` when present
+The full stack for the older Hibernate session API: connection pool,
+Liquibase migration, `SessionFactory`, and `HibernateProxySession`:
 
 [source,xml]
 ----
-<bean id="throngAnnotationScanner"
-      class="org.smallmind.persistence.orm.spring.throng.AnnotationSeekingBeanFactoryPostProcessor"/>
+<import resource="classpath:org/smallmind/persistence/hibernate.xml"/>
 
-<bean id="throngClientFactory"
-      class="org.smallmind.persistence.orm.spring.throng.EntitySeekingThrongClientFactoryBean">
-  <property name="annotationSeekingBeanFactoryPostProcessor" ref="throngAnnotationScanner"/>
-  <property name="mongoClient" ref="mongoClient"/>
-  <property name="databaseName" value="app"/>
-</bean>
-----
-
-`EntitySeekingThrongClientFactoryBean` supports:
-
-* `annotationSeekingBeanFactoryPostProcessor`
-* `mongoClient`
-* `throngOptions`
-* `sessionSourceKey`
-* `databaseName`
-
-It constructs a `ThrongClient`, then wraps it in `ThrongClientFactory`.
-
-=== SQL Pool Factory Beans
-
-`PooledDataSourceFactoryBean` is the direct Spring wrapper around an explicit pool.
-
-[source,xml]
-----
-<bean id="ordersPool"
-      class="org.smallmind.persistence.sql.pool.spring.PooledDataSourceFactoryBean">
-  <property name="poolName" value="orders"/>
-  <property name="dataSourceFactory">
-    <bean class="org.smallmind.persistence.sql.DriverManagerDataSourceFactory">
-      <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-    </bean>
-  </property>
-  <property name="connections">
-    <array>
-      <bean class="org.smallmind.persistence.sql.pool.spring.DatabaseConnection">
-        <property name="jdbcUrl" value="${orders.jdbc.url}"/>
-        <property name="user" value="${orders.jdbc.user}"/>
-        <property name="password" value="${orders.jdbc.password}"/>
+<!-- Liquibase updates -->
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="schemaPooledDataSource"/>
+  <property name="source"     value="CLASSPATH"/>
+  <property name="goal"       value="${liquibase.goal}"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="database/schema/schema.xml"/>
       </bean>
-    </array>
+    </list>
   </property>
-  <property name="validationQuery" value="select 1"/>
-  <property name="maxStatements" value="50"/>
+</bean>
+
+<!-- Connection Pooling -->
+<bean id="schemaConnectionInstanceFactory" class="...DriverManagerComponentInstanceFactory">
+  ...
+</bean>
+<bean id="schemaDBPool" class="org.smallmind.quorum.pool.complex.ComponentPool"
+      init-method="startup" destroy-method="shutdown">
+  ...
+</bean>
+<bean id="schemaPooledDataSource" class="org.smallmind.persistence.sql.pool.PooledDataSource">
+  <constructor-arg index="0" value="schema"/>
+  <constructor-arg index="1" ref="schemaDBPool"/>
+</bean>
+
+<!-- Session and Transaction -->
+<bean id="schemaSessionFactory" class="...EntitySeekingSessionFactoryBean">
+  ...
+</bean>
+
+<bean id="schemaProxySession"
+      class="org.smallmind.persistence.orm.hibernate.HibernateProxySession"
+      init-method="register">
+  <constructor-arg index="0" value="orm"/>
+  <constructor-arg index="1" value="schema"/>
+  <constructor-arg index="2" ref="schemaSessionFactory"/>
+  <constructor-arg index="3" value="true"/>
+  <constructor-arg index="4" value="true"/>
 </bean>
 ----
 
-Lifecycle behavior:
+Notice how `schemaPooledDataSource` is shared between Liquibase (which
+runs schema migrations at startup) and the Hibernate session factory
+(which executes application queries). Both participate in the same pool,
+so sizing is done once.
+
+=== Aspect Weaving
+
+None of this XML configures the AOP aspects. Aspects are applied at
+build time by `aspectj-maven-plugin` in the consumer's POM. The
+aspects' `@Aspect` classes live in `smallmind-persistence` and must be
+on the classpath both at weave time and at runtime.
+
+== Behavioral Reference
+
+=== Thread And Session Model
+
+`ProxySession` binds native sessions to the current thread through a
+`ThreadLocal` held inside the implementation. `JPAProxySession` has one
+`ThreadLocal<EntityManager>` and one `ThreadLocal<JPAProxyTransaction>`;
+`ThrongProxySession` has a single session because a Throng client is
+already thread-safe.
+
+The aspect model assumes one thread per request. A request enters at a
+`@Transactional` or `@NonTransactional` boundary, the boundary is pushed
+onto the thread-local stack, the request body runs, the boundary pops
+and closes its sessions. Asynchronous work that returns results on a
+different thread must establish a new boundary on the worker thread —
+the parent's boundary does not follow.
+
+=== Session Stealing
+
+If a method runs under `@NonTransactional` and then calls a method
+annotated `@Transactional`, the inner call will request a native session
+for the same source key. `TransactionalState.obtainBoundary` walks the
+transaction stack first; if it finds a matching boundary it will raise
+`StolenTransactionError` when the outer non-transactional boundary
+already holds a session with the same source key. This is intentional —
+silently promoting a non-transactional session to a transactional one
+loses the non-transactional boundary's close-on-exit guarantee.
+
+=== Cache Misses Are Never Failures
+
+An unreachable cache, a serialisation mismatch, or a misconfigured
+`CacheDomain` manifests as `CacheOperationException` *only* when the
+underlying backend actually failed mid-call. A cache that returns null
+for every key is a correct cache; `@CacheAs` will proceed to the ORM
+and attempt to repopulate.
+
+=== OrmDaoManager Registration Order
+
+`ByKeySingularVector` and similar lazy-hydrating vectors call
+`OrmDaoManager.get(Class)` at iteration time. The DAO must have called
+`register()` before the first such call. In the canonical Spring wiring
+that happens during context refresh, so a by-key vector read during a
+servlet request is always safe. For standalone tooling that reads from
+the cache outside a Spring context, either call `dao.register()`
+manually or avoid by-key vectors entirely.
 
-* `afterPropertiesSet()` builds and starts the pool
-* `destroy()` shuts the pool down
-
-`DynamicPooledDataSourceInitializingBean` is the property-driven alternative.
-
-It reads keys shaped like:
-
-* `<prefix>.jdbc.url.<pool>.<context>.<index>`
-* `<prefix>.jdbc.user.<pool>.<context>.<index>`
-* `<prefix>.jdbc.password.<pool>.<context>.<index>`
-* `<prefix>.jdbc.mapping.<data source key>`
-
-It then exposes pools through `DataSourceLocator`, which works with:
-
-* `DynamicPooledDataSourceFactoryBean`
-* `DynamicPooledXADataSourceFactoryBean`
-
-Operational rules enforced by the initializer:
-
-* connection indices must be contiguous starting at `0`
-* a pool with exactly one context may not use a non-null context name
-* missing pool mappings or incomplete connection definitions raise `RuntimeBeansException`
-
-[[persistence-lifecycle, Lifecycle And Resource Ownership]]
-== Lifecycle And Resource Ownership
-
-[cols="2,2,4",options="header"]
-|===
-|Resource |Owner By Default |Operational Rule
-
-|`EntityManagerFactory`
-|caller or outer container
-|The persistence module does not construct or close it unless Spring owns it through `EntitySeekingEntityManagerFactoryBean`
-
-|`JPAProxySession`
-|caller
-|Per-thread `EntityManager` lifecycle is closed by `JPAProxyTransaction.commit()` or `rollback()`, or manually via `close()`
-
-|`ThrongClientFactory`
-|caller
-|It only wraps a `ThrongClient`; it does not close MongoDB resources
-
-|`ProxyMemcachedClient`
-|caller or outer container
-|`MemcachedCacheDomain` and related factory beans do not own client shutdown
-
-|`PooledDataSource` and `PooledXADataSource`
-|caller
-|Call `startup()` before use and `shutdown()` on teardown unless a Spring factory bean owns lifecycle
-
-|`DynamicPooledDataSourceInitializingBean`
-|the Spring bean itself
-|Starts all pools in `afterPropertiesSet()` and shuts them all down in `destroy()`
-
-|`SequenceManager`
-|no resource ownership
-|It stores a sequence implementation reference; the actual sequence object remains caller-owned
-
-|`OrmDaoManager`, `SessionManager`, `DataSourceManager`
-|no resource ownership
-|These are registries only, not lifecycle managers
-|===
-
-[[persistence-errors, Error Model]]
-== Error Model
-
-[cols="2,4",options="header"]
-|===
-|Type Family |Meaning
-
-|`PersistenceException`, `DataIntegrityException`, `AuthorizationException`
-|Core persistence failures and contract violations
-
-|`ORMInitializationException`
-|Missing registry entries, unsupported id conversion defaults, or invalid ORM wiring
-
-|`ORMOperationException`
-|Runtime failures while performing ORM-backed work
-
-|`CacheOperationException`
-|Cache read, write, CAS, or hydration failures
-
-|`CacheAutomationError`
-|Hard failure in cache annotation configuration or reflective cache automation
-
-|`SessionError`, `UnexpectedSessionError`, `SessionEnforcementException`
-|Boundary failures, unexpected closure problems, or out-of-boundary session access
-
-|`TransactionError`, `ProxyTransactionException`, `TransactionPostProcessException`
-|Transactional boundary or commit and rollback failures; post-process exceptions can aggregate multiple causes
-
-|`RepositoryError`
-|Missing or type-incompatible DAO for `@Repository` field injection
-
-|`StolenTransactionError`
-|Attempt to move a session into a transactional boundary while it is already held by a non-transactional boundary
-
-|`SimulatedSequenceDisasterException`
-|Sequence-row creation or update failure in `SimulatedSequence`
-|===
-
-[IMPORTANT]
-====
-Many AOP-layer failures are surfaced as `FormattedError` subclasses rather than ordinary unchecked exceptions.
-Treat them as immediate configuration faults.
-====
-
-[[persistence-api-index, API Index]]
-== API Index
-
-=== Core Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence`
-|`Durable`
-|Persistent identity contract
-
-|`org.smallmind.persistence`
-|`AbstractDurable`
-|Base identity, comparison, mirror, and `toString()` behavior
-
-|`org.smallmind.persistence`
-|`ManagedDao`
-|Managed-class and id-class introspection
-
-|`org.smallmind.persistence`
-|`AbstractManagedDao`
-|Generic type inference and id parsing support
-
-|`org.smallmind.persistence`
-|`Dao`, `DurableDao`, `WideDurableDao`
-|Core DAO contracts
-
-|`org.smallmind.persistence`
-|`NaturalKey`, `@NaturalKeys`
-|Business-key representation and declaration
-
-|`org.smallmind.persistence`
-|`UpdateMode`
-|SOFT vs HARD cache update intent
-|===
-
-=== Cache Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence.cache`
-|`PersistenceCache`
-|Narrow cache contract
-
-|`org.smallmind.persistence.cache`
-|`CacheDomain`
-|Groups instance, wide-instance, and vector caches
-
-|`org.smallmind.persistence.cache`
-|`DurableKey`, `VectorKey`, `WideDurableKey`
-|Cache key value objects
-
-|`org.smallmind.persistence.cache`
-|`DurableVector`
-|TTL-aware vector abstraction
-
-|`org.smallmind.persistence.cache`
-|`VectoredDao`
-|Cache-aware DAO contract
-
-|`org.smallmind.persistence.cache.memcached`
-|`MemcachedCache`
-|Memcached-backed cache implementation
-
-|`org.smallmind.persistence.cache.memcached`
-|`MemcachedCacheDomain`
-|Lazy cache domain over memcached
-
-|`org.smallmind.persistence.cache.praxis.intrinsic`
-|`ByReferenceIntrinsicCacheDao`
-|In-process vector cache using direct durable references
-
-|`org.smallmind.persistence.cache.praxis.intrinsic`
-|`ByKeyIntrinsicCacheDao`
-|In-process vector cache using `DurableKey` indirection
-
-|`org.smallmind.persistence.cache.praxis.extrinsic`
-|`ByKeyExtrinsicCacheDao`
-|Distributed vector cache with CAS support
-
-|`org.smallmind.persistence.cache.praxis.extrinsic`
-|`WideExtrinsicCacheDao`
-|Distributed wide-list cache
-|===
-
-=== Cache AOP Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence.cache.aop`
-|`@CacheAs`
-|Cache-aside method annotation
-
-|`org.smallmind.persistence.cache.aop`
-|`@CacheCoherent`
-|Return-value cache warming annotation
-
-|`org.smallmind.persistence.cache.aop`
-|`@CachedWith`
-|Class-level vector update and invalidation rules
-
-|`org.smallmind.persistence.cache.aop`
-|`@Vector`, `@Key`, `@Classifier`, `@Time`
-|Cache-key and TTL metadata
-
-|`org.smallmind.persistence.cache.aop`
-|`@Update`, `@Invalidate`, `@Finder`, `@Proxy`
-|Cache mutation metadata for `@CachedWith`
-
-|`org.smallmind.persistence.cache.aop`
-|`Classifications`, `VectorCalculator`
-|Support utilities used by the aspects
-|===
-
-=== ORM And JPA Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence.orm`
-|`ProxySession`
-|Framework-neutral session wrapper contract
-
-|`org.smallmind.persistence.orm`
-|`ProxyTransaction`
-|Framework-neutral transaction wrapper contract
-
-|`org.smallmind.persistence.orm`
-|`ORMDao`
-|Registry-aware ORM DAO base with optional vector caching
-
-|`org.smallmind.persistence.orm`
-|`OrmDaoManager`, `SessionManager`
-|Application-scoped ORM registries
-
-|`org.smallmind.persistence.orm`
-|`@SessionSource`
-|Named session-source association
-
-|`org.smallmind.persistence.orm.aop`
-|`@Transactional`, `@NonTransactional`
-|Boundary annotations
-
-|`org.smallmind.persistence.orm.aop`
-|`@Repository`
-|DAO injection into service fields
-
-|`org.smallmind.persistence.orm.aop`
-|`@Timed`, `@Timer`
-|Timing annotations
-
-|`org.smallmind.persistence.orm.jpa`
-|`JPADurable`, `TimestampedJPADurable`
-|JPA durable bases
-
-|`org.smallmind.persistence.orm.jpa`
-|`JPAProxySession`, `JPAProxyTransaction`
-|JPA session and transaction wrappers
-
-|`org.smallmind.persistence.orm.jpa`
-|`JPADao`
-|Criteria-based JPA DAO implementation
-
-|`org.smallmind.persistence.orm.querydsl.jpa`
-|`QJPADao`, `JPAQueryDetails`
-|Querydsl-backed JPA DAO and query-description surface
-
-|`org.smallmind.persistence.orm.hibernate`
-|`CurrencyUserType`, `H2Dialect`
-|Hibernate-specific helpers
-|===
-
-=== Throng And Spring Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence.orm.throng`
-|`ThrongDurable`, `TimestampedThrongDurable`
-|Throng-backed durable bases
-
-|`org.smallmind.persistence.orm.throng`
-|`ThrongClientFactory`
-|Wrapper around a configured `ThrongClient`
-
-|`org.smallmind.persistence.orm.throng`
-|`ThrongProxySession`, `ThrongProxyTransaction`
-|Throng session and transaction adapters
-
-|`org.smallmind.persistence.orm.throng`
-|`ThrongDao`
-|Throng-backed durable DAO
-
-|`org.smallmind.persistence.orm.spring.jpa`
-|`AnnotationSeekingBeanFactoryPostProcessor`
-|Discovers JPA mapped classes from DAO beans
-
-|`org.smallmind.persistence.orm.spring.jpa`
-|`EntitySeekingEntityManagerFactoryBean`
-|Builds `EntityManagerFactory` from explicit configuration plus discovered entity classes
-
-|`org.smallmind.persistence.orm.spring.throng`
-|`AnnotationSeekingBeanFactoryPostProcessor`
-|Discovers Throng mapped classes from DAO beans
-
-|`org.smallmind.persistence.orm.spring.throng`
-|`EntitySeekingThrongClientFactoryBean`
-|Builds `ThrongClientFactory` from explicit configuration plus discovered Throng classes
-
-|`org.smallmind.persistence.cache.memcached.spring`
-|`MemcachedCacheDomainFactoryBean`, `MemcachedCacheDaoFactoryBean`, `MemcachedWideCacheDaoFactoryBean`
-|Spring cache construction helpers
-|===
-
-=== SQL And Pooling Types
-
-[cols="2,3,5",options="header"]
-|===
-|Package |Type |Role
-
-|`org.smallmind.persistence.sql`
-|`DriverManagerDataSource`
-|Minimal `DataSource` using `DriverManager`
-
-|`org.smallmind.persistence.sql`
-|`DriverManagerDataSourceFactory`
-|Factory for `DriverManagerDataSource`
-
-|`org.smallmind.persistence.sql`
-|`DataSourceManager`
-|Keyed registry of `CommonDataSource`
-
-|`org.smallmind.persistence.sql.pool`
-|`PooledDataSource`, `PooledXADataSource`
-|Explicit pooled data sources
-
-|`org.smallmind.persistence.sql.pool`
-|`PooledDataSourceFactory`
-|Constructs XA or non-XA pools
-
-|`org.smallmind.persistence.sql.pool.context`
-|`ContextualPooledDataSource`
-|Routes pool access by `PooledDataSourceContext`
-
-|`org.smallmind.persistence.sql.pool.context`
-|`DefaultContextualPoolNameTranslator`
-|Translates between base pool names and contextual pool names
-
-|`org.smallmind.persistence.sql.pool.spring`
-|`DatabaseConnection`
-|Simple JDBC URL, user, and password holder
-
-|`org.smallmind.persistence.sql.pool.spring`
-|`PooledDataSourceFactoryBean`
-|Spring factory bean that builds, starts, and stops a pool
-
-|`org.smallmind.persistence.sql.pool.spring`
-|`DynamicPooledDataSourceInitializingBean`
-|Property-driven dynamic pool creation and shutdown
-
-|`org.smallmind.persistence.sql.pool.spring`
-|`DynamicPooledDataSourceFactoryBean`, `DynamicPooledXADataSourceFactoryBean`
-|Late-binding Spring lookup of dynamically created pools
-|===
-
-[[persistence-defaults, Defaults Reference]]
-== Defaults Reference
-
-[cols="2,2,4",options="header"]
-|===
-|Setting |Default |Notes
-
-|`@Transactional.implicit`
-|`true`
-|Boundary applies implicitly unless overridden
-
-|`@Transactional.rollbackOnly`
-|`false`
-|Normal commit path unless explicitly marked rollback-only
-
-|`@Transactional.rollbackOnException`
-|`true`
-|Thrown exceptions trigger rollback behavior
-
-|`@NonTransactional.implicit`
-|`true`
-|Non-transactional boundary applies implicitly unless overridden
-
-|`@Timed.value`
-|`true`
-|Timing enabled when the annotation is present
-
-|`@CacheAs.ordered`
-|`false`
-|Iterable cache result order is unordered unless explicitly enabled
-
-|`@CacheAs.max`
-|`0`
-|No maximum size
-
-|`@CacheAs.comparator`
-|`Comparator.class`
-|Sentinel meaning "no comparator supplied"
-
-|`@CacheAs.time`
-|`@Time(0)`
-|Delegates to the cache domain default TTL
-
-|`@Time.stochastic`
-|`0`
-|No random TTL jitter
-
-|`@Time.unit`
-|`SECONDS`
-|TTL values are interpreted in seconds unless overridden
-
-|`@Vector.namespace`
-|empty string
-|`@CacheAs` interprets this as the method name
-
-|`@Key.value`
-|`id`
-|Default key component field or parameter name
-
-|`@Key.alias`
-|empty string
-|Field name is used when alias is absent
-
-|`@Key.constant`
-|`false`
-|Treats `value` as a field or parameter name unless set to `true`
-
-|`@Key.nullable`
-|`false`
-|Null key values are rejected unless allowed
-
-|`MemcachedCache` TTL override on `set(...)` or `putIfAbsent(...)`
-|cache default TTL
-|Used whenever the supplied TTL is non-positive
-
-|`DurableVector` TTL
-|non-expiring when `<= 0`
-|`isAlive()` always returns `true`
-
-|`InMemorySequence`
-|first value is `1`
-|Counter starts at `0` internally and increments before returning
-
-|`DriverManagerDataSource.getLoginTimeout()`
-|`0`
-|Timeout configuration is unsupported
-
-|`JPADurable` id generation
-|`GenerationType.IDENTITY`
-|Declared directly on the base durable property
-
-|`TimestampedJPADurable.created`
-|column `created`
-|Non-null, not updatable
-
-|`TimestampedJPADurable.lastUpdated`
-|column `last_updated`
-|Updated through Hibernate `@UpdateTimestamp`
-
-|`ComplexPoolConfig.maxPoolSize`
-|`10`
-|Quorum default when not overridden
-
-|`ComplexPoolConfig.acquireWaitTimeMillis`
-|`0`
-|No wait limit by default
-
-|`ComplexPoolConfig.testOnCreate`
-|`false`
-|No validation on creation by default
-
-|`ComplexPoolConfig.testOnAcquire`
-|`false`
-|No validation on checkout by default
-
-|`ComplexPoolConfig.existentiallyAware`
-|`false`
-|Diagnostics off by default
-
-|`ComplexPoolConfig.creationTimeoutMillis`
-|`0`
-|No creation timeout by default
-
-|`ComplexPoolConfig.initialPoolSize`
-|`0`
-|No eager connections by default
-
-|`ComplexPoolConfig.minPoolSize`
-|`0`
-|No floor above zero by default
-
-|`ComplexPoolConfig.maxLeaseTimeSeconds`
-|`0`
-|No lease timeout by default
-
-|`ComplexPoolConfig.maxIdleTimeSeconds`
-|`0`
-|No idle timeout by default
-
-|`ComplexPoolConfig.maxProcessingTimeSeconds`
-|`0`
-|No processing timeout by default
-
-|`DynamicPooledDataSourceInitializingBean.maxStatements`
-|`0`
-|Prepared statement cache disabled when omitted
-|===
-
-[[persistence-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-[cols="2,4",options="header"]
-|===
-|Behavior |Operational Consequence
-
-|`AbstractDurable.compareTo(...)` orders by `otherId.compareTo(thisId)`
-|Natural ordering is descending for non-null ids
-
-|Transient durables with `null` ids fall back to object identity in `equals(...)` and `hashCode()`
-|Two unsaved objects with the same field values are still distinct map or set keys
-
-|`JPADao.persist(...)` uses `merge(...)`
-|The returned durable can be a different Java instance than the input
-
-|`JPADao.list(greaterThan, fetchSize)` casts `greaterThan` to `Number`
-|This helper is effectively numeric-id-oriented
-
-|`JPADao.scroll(...)`, `scrollById(...)`, and `size()`
-|All are unsupported; use `QJPADao` if you need them
-
-|`detach(...)` in both `JPADao` and `ThrongDao`
-|Unsupported with explicit messages stating there is no explicit detached state
-
-|Parameter-based `@Classifier`
-|Only supported on `@CacheAs`
-
-|`CacheAutomationError`
-|Is an `Error`, not a `RuntimeException`
-
-|Key-backed vectors rehydrate through `OrmDaoManager`
-|Missing DAO registration can break vector reads
-
-|`MemcachedCache` prefixes every key with `discriminator[...]`
-|Changing the discriminator changes the entire cache namespace
-
-|`ThrongProxySession`
-|Does not support `flush()`, `clear()`, `close()`, or `isClosed()`
-
-|`ThrongProxyTransaction`
-|`commit()` and `rollback()` are no-ops
-
-|`ThrongDao.persist(...)`
-|Always inserts; there is no merge or upsert behavior in the DAO contract
-
-|`ThrongDao.acquire(...)`
-|Current implementation compares `_id` to the literal `"id"` string rather than the provided identifier
-
-|`EntitySeekingEntityManagerFactoryBean.setJtaDataSource(...)`
-|Current implementation passes the `dataSource` field into `setJtaDataSource(...)`, so verify JTA bootstrapping carefully
-
-|`DynamicPooledDataSourceInitializingBean`
-|Rejects a pool that defines exactly one non-null context; define it as the default context instead
-|===
-
-[[persistence-troubleshooting, Troubleshooting]]
-== Troubleshooting
-
-=== Session Enforcement Failures
-
-Common symptom:
-
-* `Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)`
-
-Checks:
-
-* if you want manual session usage, construct `JPAProxySession` with `boundaryEnforced=false`
-* if you want declarative boundaries, enable AspectJ weaving and enter work through `@Transactional` or `@NonTransactional`
-* if you are using named sessions, verify `@SessionSource` and `SessionManager.register(...)` agree on the key
-
-=== DAO Or Session Registry Failures
-
-Common symptoms:
-
-* `No ProxySession was mapped to the data source value(...)`
-* `No DataSource was mapped to the key(...)`
-* `@Repository` field injection fails with `RepositoryError`
-
-Checks:
-
-* register sessions with `SessionManager.register(sessionSourceKey, proxySession)`
-* register DAOs with `dao.register()`
-* register data sources with `DataSourceManager.register(key, dataSource)`
-* make sure `@Repository(Account.class)` matches the DAO's managed durable type
-
-=== Cache Vector Does Not Populate Or Update
-
-Common causes:
-
-* the DAO was constructed without a `VectoredDao`
-* the session was created with `cacheEnabled=false`
-* AspectJ weaving is missing, so `@CacheAs`, `@CacheCoherent`, or `@CachedWith` never executes
-* a key-backed vector cannot resolve its DAO from `OrmDaoManager`
-
-Checks:
-
-* verify both the DAO constructor and `ProxySession` cache flag
-* verify DAO registration when vectors store `DurableKey` values
-* verify `@CacheAs` return types are either the managed durable or a parameterized iterable of the managed durable
-* verify `@CachedWith` `finder`, `proxy`, and `filter` method signatures
-
-=== Querydsl Build Problems
-
-Common symptom:
-
-* missing `Q*` types or Querydsl compilation errors
-
-Checks:
-
-* add `querydsl-apt` as an annotation processor
-* add `jakarta.persistence-api` to the annotation processor path
-* generate the `Q*` types before compiling code that references them
-* verify the managed durable really is a JPA-mapped type
-
-=== Spring Persistence Unit Fails To Build
-
-Common causes:
-
-* `EntitySeekingEntityManagerFactoryBean` has no provider
-* the annotation-seeking post processor was not declared
-* the DAO bean types do not infer a durable class cleanly
-* a `@MappedSubClasses` relationship is invalid
-
-Checks:
-
-* verify `persistenceProviderClassName` or a `JpaVendorAdapter`
-* verify the scanner bean exists before the factory bean uses it
-* verify the DAO generic signature is concrete enough for `ManagedDaoSupport.findDurableClass(...)`
-* verify mapped subclasses actually inherit from the declared parent type
-
-=== Dynamic Pool Initialization Fails
-
-Common symptoms:
-
-* missing connection definition at index `0`
-* missing connection definition at a later contiguous index
-* no pool definition for a `<prefix>.jdbc.mapping.*` key
-
-Checks:
-
-* define `url`, `user`, and `password` for every numeric index starting at `0`
-* verify mappings refer to a configured pool name
-* if there is only one context, omit the context segment entirely
-
-=== Sequence Failures
-
-Common symptoms:
-
-* `The SequenceManager has not been properly initialized`
-* `SimulatedSequenceDisasterException`
-
-Checks:
-
-* call `register()` on the chosen sequence implementation before first use
-* verify the simulated-sequence table exists
-* verify the table uses the expected column names `name` and `next_val`
-* choose `incrementBy > 1` when database round-trips are too frequent
-
-=== Throng Id Lookups Behave Unexpectedly
-
-Common symptom:
-
-* `ThrongDao.get(id)` or `acquire(id)` misses rows you expect to exist
-
-Checks:
-
-* verify whether the call path is hitting the current `ThrongDao.acquire(...)` implementation limitation
-* use `findByQuery(...)`, `listByQuery(...)`, or a direct Throng query path if you need a verified workaround
-* confirm the underlying Throng entity mapping in `MONGODB.adoc`
-
-[[persistence-minimal-checklist, Minimal Checklist]]
 == Minimal Checklist
 
-1. Add `org.smallmind:smallmind-persistence`.
-2. Add only the optional dependencies required by the surface you are actually using.
-3. Pick one durable base type or implement `Durable<I>` directly.
-4. Keep DAO subclasses focused and let generic inference declare the managed types.
-5. Decide whether sessions are manual (`boundaryEnforced=false`) or boundary-driven through AspectJ.
-6. Register DAOs, sessions, or data sources only when you need registry-driven features.
-7. If you use cache or transaction annotations, enable AspectJ weaving explicitly.
-8. If you use `QJPADao`, generate Querydsl `Q*` types in the build.
-9. Make lifecycle ownership explicit for `EntityManagerFactory`, `MongoClient`, memcached clients, and JDBC pools.
-10. Test one end-to-end success path and one failure path before treating the integration as complete.
+Before declaring persistence wired:
 
-[[persistence-verification, Verification Checklist]]
-== Verification Checklist
+. A `DataSource` bean exists, pooled, and its `startup`/`shutdown`
+  methods are bound to the Spring lifecycle.
+. A `ProxySession` bean exists with `init-method="register"` and
+  `boundaryEnforced=true`.
+. Every application DAO extends `JPADao`, `ThrongDao`, or another
+  `ORMDao` subclass, and calls `register()` (either via Spring
+  `init-method="register"` or from a `@PostConstruct`).
+. Every transactional code path is reachable only through a
+  `@Transactional` or `@NonTransactional` boundary.
+. `aspectj-maven-plugin` is present in the consumer's POM.
+. If sequences are used, a `Sequence` is registered at startup.
+. If the cache is used, a `CacheDomain` and a matching
+  `VectoredDao`/`CacheDao` are wired, and the `ProxySession` is
+  constructed with `cacheEnabled=true`.
 
-* persist, load, update, and delete at least one representative durable for every active runtime surface
-* verify rollback behavior, not just commit behavior
-* if caching is enabled, verify instance-cache hits, vector-cache hits, vector invalidation, and TTL expiry handling
-* if you use key-backed vectors, confirm DAO registration and vector rehydration through `OrmDaoManager`
-* if you use `@Transactional` or `@Repository`, run a focused test with weaving enabled so the aspects execute for real
-* if you use `QJPADao`, confirm that generated `Q*` types are present in the build output and that at least one `JPAQueryDetails` path runs end to end
-* if you use `EntitySeekingEntityManagerFactoryBean`, start a Spring context and verify the discovered entity set matches the DAO set you expected
-* if you use `EntitySeekingThrongClientFactoryBean`, start a Spring context and verify the expected Throng entities are registered
-* if you use JDBC pools, verify `startup()` and `shutdown()` behavior and exercise validation-query and statement-cache settings
-* if you use `SimulatedSequence`, verify monotonic sequence allocation under both `incrementBy=1` and block-reservation settings relevant to production
+== Limitations And Known Issues
+
+Sessions are per-thread::
+    Every `ProxySession` implementation binds to `ThreadLocal`. An
+    asynchronous handoff that returns on a different thread must
+    establish its own boundary. Virtual threads work if the AOP weave
+    covers them, but boundaries still do not cross thread boundaries.
+
+Cache backends must serialise durables::
+    `PersistenceCache<String, DurableVector>` requires the vector (and
+    its durables, in intrinsic mode) to serialise. Entities with
+    non-serialisable fields (open streams, framework proxies) do not
+    cache correctly. Prefer `ByKeyExtrinsicCacheDao` when only the
+    durable's id needs to survive the trip.
+
+No automatic cache invalidation across JVMs::
+    `@CachedWith` updates are push-based: the persisting JVM writes the
+    update into the shared cache. If a second JVM persists the same
+    durable without going through a `@CachedWith` DAO, the first JVM
+    will serve stale data until the TTL expires. Every write path that
+    shares the cache must share the annotation.
+
+`@CacheAs` does not batch misses::
+    Two concurrent cache misses on the same key will both call the
+    underlying method and both write the result; the second write
+    overwrites the first. For expensive methods, combine `@CacheAs`
+    with the caller's own `putIfAbsent`-style guard.
+
+Simulated sequences lose unallocated blocks on crash::
+    `SimulatedSequence` with `incrementBy > 1` reserves a block per
+    round-trip. A JVM crash discards the remainder; the values are
+    never reused. This is a feature (no reassignment) but a surprise
+    if you assume sequence values are dense.
+
+`MySQL` is the only `Simulated*` store::
+    Other relational databases have native sequences or `IDENTITY`
+    columns. Rolling a new `Sequence` subclass for a non-MySQL store
+    is straightforward, but the shipped implementation is MySQL-only.
+
+== See Also
+
+* `LIQUIBASE.adoc` — the migration story that usually precedes this one.
+* `MEMCACHED.adoc` — the `memcached-utility` module that backs
+  `MemcachedCache`.
+* `MONGODB.adoc` — the `throng` document mapping layer that backs
+  `ThrongProxySession`.
+* `NUTSNBOLTS.adoc` — `FormattedRuntimeException`, `PerApplicationContext`,
+  and the generic utilities this module depends on.

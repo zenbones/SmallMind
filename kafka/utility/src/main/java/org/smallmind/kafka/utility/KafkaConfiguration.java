@@ -33,10 +33,10 @@
 package org.smallmind.kafka.utility;
 
 /**
- * Placeholder for broker configuration guidance.
- * Currently documents recommended Kafka broker defaults and options in comments so they can
- * be copied into external configuration (for example a Kubernetes config map) without tying
- * the values to compiled code.
+ * Reference container for recommended Kafka broker configuration properties.
+ * This class holds no runtime state; its body is a comment block documenting
+ * broker-level settings (partitioning, replication, retention, compression, etc.)
+ * intended to be applied via an external config file or Kubernetes ConfigMap.
  */
 public class KafkaConfiguration {
 

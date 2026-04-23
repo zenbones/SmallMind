@@ -39,16 +39,37 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.context.Context;
 
 /**
- * Context object that carries the jailed root path used by {@link ContextSensitiveRootedPathTranslator}.
+ * Thread- or request-scoped context object that carries the jail root path used by
+ * {@link ContextSensitiveRootedPathTranslator} to determine the boundary of the file
+ * system jail at translation time.
+ *
+ * <p>Instances of this class are typically installed into a
+ * {@link org.smallmind.nutsnbolts.context.ContextFactory} before performing any
+ * jailed file-system operation, allowing the jail boundary to vary per caller or
+ * per request without changing the underlying {@link JailedFileSystem} configuration.
+ *
+ * <p>The class is JAXB-annotated and can be unmarshalled from XML when the root
+ * element is {@code <test>} in the {@code http://org.smallmind/file/jailed} namespace.
+ *
+ * @see ContextSensitiveRootedPathTranslator
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "test", namespace = "http://org.smallmind/file/jailed")
 public class RootedFileSystemContext implements Context {
 
+  /**
+   * The native root directory string that defines the jail boundary for this context.
+   */
   private String root;
 
   /**
-   * @return the configured root directory for the current context
+   * Returns the native root directory path that defines the jail boundary for the
+   * current context.
+   *
+   * <p>A {@code null} return value is treated by {@link ContextSensitiveRootedPathTranslator}
+   * as an authorization failure, resulting in a {@link SecurityException}.
+   *
+   * @return the root directory path string, or {@code null} if not configured
    */
   @XmlElement(name = "root")
   public String getRoot () {
@@ -57,7 +78,11 @@ public class RootedFileSystemContext implements Context {
   }
 
   /**
-   * @param root the root directory to set for the current context
+   * Sets the native root directory path that defines the jail boundary for the
+   * current context.
+   *
+   * @param root the root directory path string to use as the jail boundary;
+   *             may be {@code null} to indicate no authorization
    */
   public void setRoot (String root) {
 

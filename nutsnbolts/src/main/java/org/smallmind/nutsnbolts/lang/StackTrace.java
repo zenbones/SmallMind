@@ -33,16 +33,17 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Simple wrapper around an array of {@link StackTraceElement}s.
+ * Value holder for an array of {@link StackTraceElement}s captured from a throwable or the
+ * current thread.
  */
 public class StackTrace {
 
   private final StackTraceElement[] stackTraceElements;
 
   /**
-   * Constructs the wrapper with the provided stack trace elements.
+   * Constructs a holder wrapping the given stack trace element array.
    *
-   * @param stackTraceElements the elements to wrap
+   * @param stackTraceElements the stack trace elements to store
    */
   public StackTrace (StackTraceElement[] stackTraceElements) {
 
@@ -50,7 +51,7 @@ public class StackTrace {
   }
 
   /**
-   * Returns the wrapped stack trace.
+   * Returns the wrapped stack trace element array.
    *
    * @return the stack trace elements
    */

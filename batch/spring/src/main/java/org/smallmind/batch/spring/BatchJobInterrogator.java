@@ -39,7 +39,12 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 /**
- * Polls Spring Batch metadata tables to detect when all job executions have quiesced.
+ * Queries Spring Batch metadata tables directly via JDBC to determine when all job executions
+ * have quiesced.
+ * <p>
+ * Unlike {@link BatchJobWatcher}, this class bypasses the {@code JobRepository} API and reads
+ * the {@code BATCH_JOB_EXECUTION} table directly, making it suitable for use outside a Spring
+ * Batch application context.
  */
 public class BatchJobInterrogator {
 
@@ -47,9 +52,9 @@ public class BatchJobInterrogator {
   private String schemaName;
 
   /**
-   * Injects the data source used to inspect batch execution state.
+   * Sets the data source through which the batch metadata tables are accessed.
    *
-   * @param dataSource the data source to query
+   * @param dataSource the JDBC data source to use
    */
   public void setDataSource (DataSource dataSource) {
 
@@ -57,7 +62,7 @@ public class BatchJobInterrogator {
   }
 
   /**
-   * Sets the schema containing Spring Batch metadata tables.
+   * Sets the schema that qualifies the {@code BATCH_JOB_EXECUTION} table name.
    *
    * @param schemaName the database schema name
    */
@@ -67,13 +72,16 @@ public class BatchJobInterrogator {
   }
 
   /**
-   * Waits until no non-completed job executions remain, or the timeout expires.
+   * Blocks until no non-completed job executions remain, or the timeout elapses.
+   * <p>
+   * Polls at an interval of at most one-tenth of the total timeout, with a minimum of one
+   * second between checks.
    *
-   * @param timeout  the maximum duration to wait
+   * @param timeout  the maximum time to wait before returning {@code false}
    * @param timeUnit the unit for {@code timeout}
-   * @return {@code true} if quiescence is reached before timing out, otherwise {@code false}
-   * @throws SQLException if the batch metadata query fails
-   * @throws InterruptedException if interrupted while sleeping between checks
+   * @return {@code true} if quiescence was confirmed before the deadline, {@code false} if timed out
+   * @throws SQLException         if a JDBC error occurs while querying the metadata table
+   * @throws InterruptedException if the polling thread is interrupted between checks
    */
   public boolean awaitQuiescence (long timeout, TimeUnit timeUnit)
     throws SQLException, InterruptedException {
@@ -97,10 +105,11 @@ public class BatchJobInterrogator {
   }
 
   /**
-   * Counts batch job executions whose status is not {@code COMPLETED}.
+   * Executes a COUNT query against {@code BATCH_JOB_EXECUTION} and returns the number of rows
+   * whose {@code STATUS} column is not {@code 'COMPLETED'}.
    *
    * @return the count of non-completed executions
-   * @throws SQLException if the metadata query cannot be executed
+   * @throws SQLException if the query cannot be prepared or executed
    */
   private long uncompletedCount ()
     throws SQLException {

@@ -45,7 +45,19 @@ import org.smallmind.sleuth.runner.annotation.Test;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 
 /**
- * Coordinates execution of a single test suite, including lifecycle hooks and contained test methods.
+ * Executes a single test suite on the {@link TestTier#SUITE} thread assigned to it.
+ * <p>
+ * {@code SuiteRunner} implements the full lifecycle of one suite: constructing the test class
+ * instance, invoking {@link BeforeSuite} methods, building and draining the test-method dependency
+ * queue, waiting for all tests to complete, invoking {@link AfterSuite} methods, and finally
+ * recording any culprit on the suite dependency so dependent suites can be skipped.
+ * <p>
+ * If an unhandled exception escapes the execution body, a {@link org.smallmind.sleuth.runner.event.FatalSleuthEvent}
+ * is fired and the runner calls {@link #complete()} in a {@code finally} block to guarantee that
+ * all latches and semaphores are released regardless of the failure.
+ *
+ * @see TestRunner
+ * @see SleuthRunner
  */
 public class SuiteRunner implements TestController {
 
@@ -59,14 +71,19 @@ public class SuiteRunner implements TestController {
   private final boolean stopOnFailure;
 
   /**
-   * @param sleuthRunner         runner used for event dispatch and cancellation
-   * @param suiteCompletedLatch  latch decremented when the suite is finished
-   * @param suiteDependency      dependency metadata for the suite
-   * @param suiteDependencyQueue queue managing inter-suite dependencies
-   * @param annotationProcessor  processor translating annotations into executable metadata
-   * @param threadPool           thread pool used to execute test tiers
-   * @param stopOnError          whether errors should halt execution of remaining suites/tests
-   * @param stopOnFailure        whether assertion failures should halt execution of remaining suites/tests
+   * Constructs a runner for one suite.
+   *
+   * @param sleuthRunner         central runner used for event dispatch and cancellation queries; must not be {@code null}
+   * @param suiteCompletedLatch  latch decremented once this suite finishes, allowing the
+   *                             {@link SleuthRunner} caller to detect overall completion; must not be {@code null}
+   * @param suiteDependency      dependency node carrying the suite class and its scheduling metadata;
+   *                             must not be {@code null}
+   * @param suiteDependencyQueue shared queue from which completed suites unblock dependent suites;
+   *                             must not be {@code null}
+   * @param annotationProcessor  processor used to resolve annotations on the suite class; must not be {@code null}
+   * @param threadPool           pool used to dispatch individual test runners; must not be {@code null}
+   * @param stopOnError          {@code true} to cancel the run on the first unexpected error
+   * @param stopOnFailure        {@code true} to cancel the run on the first assertion failure
    */
   public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool, boolean stopOnError, boolean stopOnFailure) {
 
@@ -81,8 +98,20 @@ public class SuiteRunner implements TestController {
   }
 
   /**
-   * Executes suite-level lifecycle hooks and schedules contained tests while honoring dependencies.
-   * Propagates any culprit produced by lifecycle or test execution.
+   * Runs the full suite lifecycle: before-suite hooks, all enabled tests, then after-suite hooks.
+   * <p>
+   * The test class is instantiated via its no-argument constructor. Before-suite methods are invoked
+   * in order; any resulting culprit suppresses individual tests (they are skipped rather than run).
+   * Enabled test methods are added to a per-suite {@link DependencyAnalysis}, and the resulting
+   * queue is drained by submitting each ready test to the {@link SleuthThreadPool}. After all tests
+   * finish (or the run is cancelled), after-suite methods are invoked and the final culprit is stored
+   * on the suite dependency for downstream suites to read.
+   * <p>
+   * Any exception that escapes this method body causes a {@link FatalSleuthEvent} to be fired and
+   * optionally cancels the run. {@link #complete()} is always called in a {@code finally} block.
+   *
+   * @throws TestProcessingException if the suite class has no accessible no-argument constructor
+   *                                 or instantiation fails
    */
   @Override
   public void run () {
@@ -153,7 +182,11 @@ public class SuiteRunner implements TestController {
   }
 
   /**
-   * Marks the suite as complete, releases its semaphore slot, and notifies dependent suites.
+   * Releases the suite-tier semaphore permit, marks this suite complete in the queue, and
+   * decrements the global suite completion latch.
+   * <p>
+   * This method is always called from the {@code finally} block of {@link #run()}, ensuring
+   * correct cleanup even when an exception escapes.
    */
   @Override
   public void complete () {

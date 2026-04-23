@@ -13,7 +13,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
- * Mojo that copies configured license files into the build output directory for distribution artifacts.
+ * Maven Mojo that copies license files into the project's build output directory so they are
+ * included in distribution artifacts.
+ *
+ * <p>Bound to the {@code prepare-package} lifecycle phase under the goal name
+ * {@code install-license-files}. Each entry in the {@code licenses} list is resolved relative to
+ * the root project's base directory when the path is not absolute. Files that cannot be located
+ * are skipped with a warning; files that cannot be copied cause the build to fail.
  */
 @Mojo(name = "install-license-files", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, threadSafe = true)
 public class TargetLicenseMojo extends AbstractMojo {
@@ -23,34 +29,41 @@ public class TargetLicenseMojo extends AbstractMojo {
    */
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+
   /**
-   * Optional root project identifier used to resolve relative license file paths from a specific parent module instead
-   * of the top-most Maven parent.
+   * Optional root project identifier. When set, relative license file paths are resolved against
+   * the identified ancestor module rather than the top-most Maven parent.
    */
   @Parameter
   private Root root;
+
   /**
-   * Shared plugin configuration accepted so the goal can coexist with {@code generate-notice-headers} under one plugin
-   * declaration. This goal does not currently use rule definitions.
+   * Accepted so this goal can share a single plugin declaration with
+   * {@code generate-notice-headers}. This goal does not use rule definitions.
    */
   @Parameter
   private Rule[] rules;
+
   /**
-   * License files to copy into the project's output directory.
+   * Paths of the license files to copy into the project's output directory. At least one entry
+   * is required. Relative paths are resolved against the root project's base directory.
    */
   @Parameter(required = true)
   private String[] licenses;
+
   /**
-   * Enables informational logging for each copied license file.
+   * When {@code true}, an informational log message is emitted for each license file copied.
    */
   @Parameter(defaultValue = "false")
   private boolean verbose;
 
   /**
-   * Copies each configured license file into the project's output directory, resolving files relative to the root
-   * project when necessary.
+   * Copies each configured license file into the project's build output directory. Files that
+   * cannot be located are skipped with a warning. The goal is a no-op when the output directory
+   * does not yet exist.
    *
-   * @throws MojoExecutionException if a license file cannot be copied to the output directory
+   * @throws MojoExecutionException if a located license file cannot be copied to the output
+   *                                directory
    */
   @Override
   public void execute ()

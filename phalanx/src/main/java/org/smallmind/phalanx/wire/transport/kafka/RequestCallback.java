@@ -46,7 +46,11 @@ import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Callback invoked by the response ingester to complete pending requests.
+ * Kafka {@link Consumer} callback supplied to the response ingester of {@link KafkaRequestTransport}.
+ * For each inbound record, measures the response's transit time through the topic, records that
+ * duration as a metric, decodes the payload as a {@link ResultSignal}, and forwards the signal to
+ * the transport's pending-request completion mechanism via
+ * {@link KafkaRequestTransport#completeCallback}.
  */
 public class RequestCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
 
@@ -54,10 +58,10 @@ public class RequestCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
   private final SignalCodec signalCodec;
 
   /**
-   * Creates a callback that hands decoded responses back to the request transport.
+   * Constructs a callback that routes decoded result signals to the given request transport.
    *
-   * @param transport   request transport used to match responses to pending calls.
-   * @param signalCodec codec for decoding result signals.
+   * @param transport   the request transport whose pending callbacks are to be completed
+   * @param signalCodec codec used to deserialize record bytes into a {@link ResultSignal}
    */
   public RequestCallback (KafkaRequestTransport transport, SignalCodec signalCodec) {
 
@@ -66,9 +70,13 @@ public class RequestCallback implements Consumer<ConsumerRecord<Long, byte[]>> {
   }
 
   /**
-   * Decodes the result signal and hands it off to the transport's callback completion.
+   * Computes how long {@code record} waited in the topic, records that duration as a metric,
+   * decodes the value bytes as a {@link ResultSignal}, and completes the corresponding pending
+   * request on the transport.  Any error during processing is logged and swallowed so the
+   * consumer poll loop continues uninterrupted.
    *
-   * @param record the Kafka record containing a serialized {@link ResultSignal}.
+   * @param record Kafka record whose value bytes encode a {@link ResultSignal} and whose
+   *               {@link HeaderUtility#CORRELATION_ID} header identifies the pending request to complete
    */
   @Override
   public void accept (ConsumerRecord<Long, byte[]> record) {

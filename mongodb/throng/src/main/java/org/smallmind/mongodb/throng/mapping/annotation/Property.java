@@ -37,15 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
 /**
  * Marks a field to be persisted as a document property, optionally overriding the stored name.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface Property {
 
   /**
-   * @return persisted property name; defaults to the field name when empty
+   * The name under which the field is persisted in the BSON document; defaults to the Java field name when empty.
+   *
+   * @return the persisted property name
    */
   String value () default "";
 }

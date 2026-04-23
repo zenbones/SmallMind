@@ -40,9 +40,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Background inspector that disconnects and cleans up idle sessions.
+ * Background {@link Runnable} that periodically iterates the active session registry, disconnects
+ * any session that has been idle beyond its configured timeout, removes it from the server, and
+ * departs it from all channels.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
@@ -53,11 +55,12 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   private final long connectionMaintenanceCycleMinutes;
 
   /**
-   * Constructs an inspector that periodically evaluates sessions for idleness.
+   * Creates an inspector bound to the given server with the specified maintenance cadence.
    *
-   * @param server                            owning server
-   * @param connectionMaintenanceCycleMinutes cadence for maintenance checks
-   * @param idleSessionLogLevel               log level used when terminating idle sessions
+   * @param server                            the server whose session map will be inspected
+   * @param connectionMaintenanceCycleMinutes how many minutes to wait between maintenance sweeps
+   * @param idleSessionLogLevel               log level at which idle-session termination events
+   *                                          are recorded
    */
   public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes, Level idleSessionLogLevel) {
 
@@ -67,9 +70,10 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   }
 
   /**
-   * Requests shutdown and waits for the worker to exit.
+   * Signals the worker loop to exit and blocks until the thread has fully stopped.
    *
-   * @throws InterruptedException if interrupted while waiting
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the worker
+   *                              to exit
    */
   public void stop ()
     throws InterruptedException {
@@ -79,7 +83,10 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
   }
 
   /**
-   * Loops until stopped, terminating idle sessions and cleaning up their channels.
+   * Worker loop: sleeps for the configured cycle duration, then iterates all active sessions and
+   * for each one that has exceeded its idle timeout calls {@link OumuamuaSession#completeDisconnect},
+   * removes it from the registry via the iterator, departs it from all channels, and triggers
+   * connection cleanup; repeats until {@link #stop()} is called.
    */
   @Override
   public void run () {

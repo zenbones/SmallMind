@@ -35,10 +35,20 @@ package org.smallmind.claxon.registry.aggregate;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Aggregate that maintains a running tally using atomic arithmetic.
+ * Thread-safe {@link Aggregate} that maintains a monotonically adjustable running tally.
+ *
+ * <p>Unlike {@link Paced}, which resets its counter on each read, {@code Tallied} retains its
+ * cumulative value indefinitely. This makes it suitable for tracking quantities that naturally
+ * rise and fall over time, such as the number of active connections or items in a queue.</p>
+ *
+ * <p>All mutations are performed via {@link AtomicLong#addAndGet(long)}, which is lock-free
+ * and linearisable.</p>
  */
 public class Tallied implements Aggregate {
 
+  /**
+   * The current tally, updated atomically by all write operations.
+   */
   private final AtomicLong count = new AtomicLong();
 
   /**
@@ -58,9 +68,10 @@ public class Tallied implements Aggregate {
   }
 
   /**
-   * Adjusts the tally by a delta.
+   * Adjusts the tally by the given delta, which may be positive (increment) or negative
+   * (decrement).
    *
-   * @param delta delta to add (negative to subtract)
+   * @param delta the amount to add to the current count; use a negative value to subtract
    */
   public void add (long delta) {
 
@@ -68,9 +79,9 @@ public class Tallied implements Aggregate {
   }
 
   /**
-   * Adds the value to the tally.
+   * Adjusts the tally by {@code value} via {@link #add(long)}.
    *
-   * @param value value to add
+   * @param value the amount to add to the current count; negative values decrement the tally
    */
   @Override
   public void update (long value) {
@@ -79,7 +90,9 @@ public class Tallied implements Aggregate {
   }
 
   /**
-   * @return current tally value
+   * Returns the current tally without resetting it.
+   *
+   * @return the present value of the running count
    */
   public long getCount () {
 

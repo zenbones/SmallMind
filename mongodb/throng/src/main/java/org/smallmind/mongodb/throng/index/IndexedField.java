@@ -43,8 +43,10 @@ public class IndexedField {
   private final String field;
 
   /**
+   * Constructs an indexed field descriptor for the given path and annotation.
+   *
    * @param field   the field path designated for indexing
-   * @param indexed annotation describing index parameters
+   * @param indexed annotation describing the index parameters
    */
   public IndexedField (String field, Indexed indexed) {
 
@@ -64,7 +66,9 @@ public class IndexedField {
   }
 
   /**
-   * @return the field path marked for indexing
+   * Returns the field path marked for indexing.
+   *
+   * @return the field path
    */
   public String getField () {
 
@@ -72,7 +76,9 @@ public class IndexedField {
   }
 
   /**
-   * @return the {@link Indexed} annotation associated with the field
+   * Returns the {@link Indexed} annotation that describes the index parameters.
+   *
+   * @return the index annotation
    */
   public Indexed getIndexed () {
 

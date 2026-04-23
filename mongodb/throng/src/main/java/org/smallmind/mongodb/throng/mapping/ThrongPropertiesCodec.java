@@ -53,7 +53,9 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   private final ThrongProperties<T> throngProperties;
 
   /**
-   * @param throngProperties metadata describing fields and codecs for the type
+   * Constructs the codec from the given property metadata.
+   *
+   * @param throngProperties metadata describing the fields, codecs, and indexes for the mapped type
    */
   public ThrongPropertiesCodec (ThrongProperties<T> throngProperties) {
 
@@ -61,7 +63,9 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the class this codec handles.
+   *
+   * @return the entity or embedded class described by the underlying property metadata
    */
   @Override
   public Class<T> getEncoderClass () {
@@ -70,7 +74,9 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   /**
-   * @return whether null values should be stored when encoding
+   * Returns whether null property values are written as BSON null rather than omitted.
+   *
+   * @return {@code true} if null values are persisted
    */
   public boolean isStoreNulls () {
 
@@ -78,7 +84,9 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the index definitions from the underlying property metadata.
+   *
+   * @return index definitions for the mapped type
    */
   @Override
   public ThrongIndexes provideIndexes () {
@@ -89,7 +97,10 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   /**
    * Decodes a BSON document into an instance of the mapped class using configured property codecs.
    *
-   * @throws ThrongRuntimeException if the instance cannot be constructed or fields cannot be set
+   * @param reader         BSON reader positioned within a document
+   * @param decoderContext decoder context
+   * @return decoded instance, or {@code null} if the current BSON value is null
+   * @throws ThrongRuntimeException if the no-arg constructor is unavailable or reflection cannot set a field
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -125,9 +136,12 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
   }
 
   /**
-   * Encodes an object by iterating its mapped properties and writing names/values to the writer.
+   * Encodes an object by iterating its mapped properties and writing field names and values to the writer.
    *
-   * @throws ThrongRuntimeException if property values cannot be accessed
+   * @param writer         destination BSON writer
+   * @param value          object to encode
+   * @param encoderContext encoder context
+   * @throws ThrongRuntimeException if reflection cannot read a property value
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {

@@ -33,12 +33,12 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Holds the partial layout position and measurement for a component along a single axis.
- * Used until both axes have been resolved.
+ * Stores the resolved position and size for a planar element along the first axis it was encountered,
+ * held by the {@link LayoutTailor} until the second axis is resolved and final placement can occur.
  *
- * @param bias        axis to which this partial result applies
- * @param position    resolved starting position along the axis
- * @param measurement resolved size along the axis
+ * @param bias        the axis for which this partial result was computed
+ * @param position    the resolved starting offset along that axis
+ * @param measurement the resolved size along that axis
  */
 public record PartialSolution(Bias bias, double position, double measurement) {
 

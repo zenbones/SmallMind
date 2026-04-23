@@ -33,14 +33,15 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Mutates or enriches a record prior to publication.
+ * Pipeline stage that mutates or decorates a {@link Record} in place before it is delivered to any appender,
+ * typically to attach additional context such as MDC values, host names, or request identifiers.
  */
 public interface Enhancer {
 
   /**
-   * Applies enhancements to the supplied record.
+   * Applies enhancements to the supplied record, modifying it in place before it is published.
    *
-   * @param record record to enhance
+   * @param record the log record to enhance; must not be {@code null}
    */
   void enhance (Record<?> record);
 }

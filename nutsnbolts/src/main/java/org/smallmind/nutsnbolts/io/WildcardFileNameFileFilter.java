@@ -37,14 +37,18 @@ import java.io.FileFilter;
 import java.util.regex.Pattern;
 
 /**
- * File filter that matches file names against a wildcard pattern (no path separators).
+ * A {@link FileFilter} that accepts files whose names match a glob-style wildcard pattern
+ * translated to a regular expression by {@link RegExTranslator}.
  */
 public class WildcardFileNameFileFilter implements FileFilter {
 
   private final Pattern namePattern;
 
   /**
-   * @param name glob-like pattern (supports '*' and '?')
+   * Constructs a filter that matches file names against the given glob pattern.
+   *
+   * @param name a glob pattern using {@code *} (any characters except {@code /}) and
+   *             {@code ?} (any single character except {@code /})
    */
   public WildcardFileNameFileFilter (String name) {
 
@@ -52,7 +56,10 @@ public class WildcardFileNameFileFilter implements FileFilter {
   }
 
   /**
-   * Accepts files whose names match the supplied pattern.
+   * Returns {@code true} if the file's name matches the configured pattern.
+   *
+   * @param file the file to test
+   * @return {@code true} when the file name matches; {@code false} otherwise
    */
   public boolean accept (File file) {
 

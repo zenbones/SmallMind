@@ -38,17 +38,23 @@ import javax.naming.directory.DirContext;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 /**
- * Helper methods for converting naming enumeration elements between internal and external forms.
+ * Package-private utility methods shared by {@link JavaNamingEnumeration} for converting
+ * naming enumeration elements from backing-store-specific representations into the forms
+ * expected by {@link JavaContext} callers.
+ * <p>
+ * Three conversions are provided: translating the element's name string, replacing the internal
+ * directory context class name with the {@link JavaContext} class name, and wrapping a bound
+ * {@link DirContext} object in a new {@link JavaContext} instance.
  */
 public class NamingEnumerationUtility {
 
   /**
-   * Converts an external string name to its internal representation using the translator.
+   * Converts a backing-store name string into its internal representation.
    *
-   * @param name           external string form
-   * @param nameTranslator translator to apply
-   * @return internal string form
-   * @throws InvalidNameException if the name cannot be converted
+   * @param name           the external name string returned by the backing store
+   * @param nameTranslator the translator used to map external names to internal form
+   * @return the internal path string for {@code name}
+   * @throws InvalidNameException if {@code name} cannot be mapped to a valid internal form
    */
   protected static String convertName (String name, NameTranslator nameTranslator)
     throws InvalidNameException {
@@ -57,11 +63,16 @@ public class NamingEnumerationUtility {
   }
 
   /**
-   * Converts a class name, swapping internal directory context types for the external {@link JavaContext}.
+   * Replaces the backing-store context class name with the {@link JavaContext} class name.
+   * <p>
+   * When a naming enumeration element reports a class name that equals the runtime class of the
+   * internal directory context, callers should see {@link JavaContext} instead. All other class
+   * names are returned unchanged.
    *
-   * @param className               class name to convert
-   * @param internalDirContextClass backing directory context class
-   * @return converted class name
+   * @param className               the class name reported by the enumeration element
+   * @param internalDirContextClass the runtime class of the backing-store's directory context
+   * @return {@code JavaContext.class.getName()} if {@code className} matches the internal
+   * context class, otherwise {@code className} unchanged
    */
   protected static String convertClassName (String className, Class internalDirContextClass) {
 
@@ -76,15 +87,17 @@ public class NamingEnumerationUtility {
   }
 
   /**
-   * Converts a bound object, wrapping directory contexts in {@link JavaContext} instances.
+   * Wraps a bound object in a {@link JavaContext} if it is an instance of the internal
+   * directory context class; otherwise returns the object unchanged.
    *
-   * @param boundObject             object bound in the naming enumeration
-   * @param internalDirContextClass internal directory context class
-   * @param environment             JNDI environment
-   * @param nameTranslator          translator for names
-   * @param nameParser              parser for names
-   * @param modifiable              whether the context is modifiable
-   * @return converted object
+   * @param boundObject             the object bound to the name in the backing store
+   * @param internalDirContextClass the runtime class of the backing-store's directory context
+   * @param environment             the JNDI environment to pass to the new {@link JavaContext}
+   * @param nameTranslator          the name translator to pass to the new {@link JavaContext}
+   * @param nameParser              the name parser to pass to the new {@link JavaContext}
+   * @param modifiable              whether the new {@link JavaContext} should allow mutations
+   * @return a new {@link JavaContext} wrapping {@code boundObject} if it is a directory context,
+   * or {@code boundObject} itself if it is not
    */
   protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 

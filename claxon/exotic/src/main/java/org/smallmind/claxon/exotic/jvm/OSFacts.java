@@ -36,16 +36,38 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
 /**
- * Accessor for OS-level metrics such as CPU count, description, CPU time, and memory sizes.
+ * Accessor for operating-system level metrics exposed through the JVM's
+ * {@link OperatingSystemMXBean}.
+ *
+ * <p>Static OS information (processor count and description) is captured once at construction
+ * time. Dynamic metrics (process CPU time, total memory, and free memory) require the
+ * platform-specific {@link com.sun.management.OperatingSystemMXBean} extension; when that
+ * interface is not available, {@code -1} is returned as a sentinel indicating that the value
+ * cannot be determined.
  */
 public class OSFacts {
 
+  /**
+   * The underlying OS MXBean obtained from {@link ManagementFactory}; may additionally
+   * implement {@link com.sun.management.OperatingSystemMXBean} on Oracle/OpenJDK platforms.
+   */
   private final OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
+
+  /**
+   * Human-readable OS description in the form {@code "name version arch"}, captured at
+   * construction time.
+   */
   private final String description;
+
+  /**
+   * The number of processors available to the JVM at construction time, as reported by
+   * {@link OperatingSystemMXBean#getAvailableProcessors()}.
+   */
   private final int cores;
 
   /**
-   * Captures static OS facts at construction time.
+   * Captures the available processor count and constructs a human-readable OS description
+   * from the OS name, version, and architecture.
    */
   public OSFacts () {
 
@@ -54,7 +76,10 @@ public class OSFacts {
   }
 
   /**
-   * @return available processor count
+   * Returns the number of processors available to the JVM at the time this instance was
+   * created.
+   *
+   * @return the available processor count
    */
   public int getCores () {
 
@@ -62,7 +87,10 @@ public class OSFacts {
   }
 
   /**
-   * @return formatted OS description
+   * Returns a human-readable description of the host operating system in the form
+   * {@code "name version arch"}.
+   *
+   * @return the OS description string
    */
   public String getDescription () {
 
@@ -70,7 +98,13 @@ public class OSFacts {
   }
 
   /**
-   * @return process CPU time in nanoseconds, or -1 if unsupported
+   * Returns the CPU time used by the JVM process in nanoseconds.
+   *
+   * <p>This value is only available when the JVM provides the
+   * {@link com.sun.management.OperatingSystemMXBean} extension.
+   *
+   * @return process CPU time in nanoseconds, or {@code -1} if the platform does not support
+   * this measurement
    */
   public long getProcessCpuTime () {
 
@@ -78,7 +112,13 @@ public class OSFacts {
   }
 
   /**
-   * @return total physical memory size, or -1 if unsupported
+   * Returns the total physical memory size of the host machine.
+   *
+   * <p>This value is only available when the JVM provides the
+   * {@link com.sun.management.OperatingSystemMXBean} extension.
+   *
+   * @return total physical memory in bytes, or {@code -1} if the platform does not support
+   * this measurement
    */
   public long getTotalMemorySize () {
 
@@ -86,7 +126,13 @@ public class OSFacts {
   }
 
   /**
-   * @return free physical memory size, or -1 if unsupported
+   * Returns the amount of free physical memory on the host machine.
+   *
+   * <p>This value is only available when the JVM provides the
+   * {@link com.sun.management.OperatingSystemMXBean} extension.
+   *
+   * @return free physical memory in bytes, or {@code -1} if the platform does not support
+   * this measurement
    */
   public long getFreeMemorySize () {
 

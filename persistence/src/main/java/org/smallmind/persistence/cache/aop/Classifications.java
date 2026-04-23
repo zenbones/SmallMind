@@ -37,17 +37,19 @@ import org.aspectj.lang.JoinPoint;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 
 /**
- * Utility for deriving classifier strings used to partition cache vectors.
+ * Utility that resolves the classifier string used to partition a cache vector key.
  */
 public class Classifications {
 
   /**
-   * Resolves a classifier value based on annotation configuration and the current join point.
+   * Derives the classifier from the vector's {@link Classifier} configuration, reading it from a method
+   * parameter when {@link Classifier#asParameter()} is {@code true}.
    *
-   * @param annotationType the annotation driving the cache operation
-   * @param joinPoint      the intercepted invocation supplying parameter values when needed
-   * @param vector         the vector metadata containing classifier information
-   * @return classifier string applied to the cache key
+   * @param annotationType the cache annotation type driving the operation (must be {@link CacheAs} for parameter-based classifiers)
+   * @param joinPoint      the intercepted invocation that provides parameter values; may be {@code null} for static contexts
+   * @param vector         the vector whose classifier configuration is evaluated
+   * @return the classifier string to append to the cache key
+   * @throws CacheAutomationError if a parameter-based classifier is used outside of a {@link CacheAs} context or the parameter cannot be resolved
    */
   public static String get (Class<? extends Annotation> annotationType, JoinPoint joinPoint, Vector vector) {
 

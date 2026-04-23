@@ -38,18 +38,17 @@ import java.util.Comparator;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Comparator for {@link Number} types that normalizes differing numeric classes to compare accurately.
- * Supports {@link BigDecimal}, {@link BigInteger}, floating point, and integral primitives/wrappers.
+ * Comparator for heterogeneous {@link Number} values that normalizes across {@link BigDecimal}, {@link BigInteger}, floating-point, and integral primitive wrappers before comparing.
  */
 public class NumberComparator implements Comparator<Number> {
 
   /**
-   * Compares two numbers, treating {@code null} as less than any non-null value.
+   * Compares two numbers, treating {@code null} as less than any non-null value and cross-promoting types as needed for an accurate result.
    *
-   * @param number1 first number
-   * @param number2 second number
-   * @return comparison result per {@link Comparator} contract
-   * @throws FormattedRuntimeException if either value is of an unsupported {@link Number} subtype
+   * @param number1 first number, or {@code null}
+   * @param number2 second number, or {@code null}
+   * @return a negative integer, zero, or positive integer per the {@link Comparator} contract
+   * @throws FormattedRuntimeException if either argument is a {@link Number} subtype not supported by this comparator
    */
   @Override
   public int compare (Number number1, Number number2) {

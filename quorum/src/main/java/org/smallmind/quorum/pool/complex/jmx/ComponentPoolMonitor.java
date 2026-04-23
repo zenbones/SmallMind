@@ -44,8 +44,19 @@ import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 
 /**
- * JMX monitor exposing configuration and metrics for a {@link ComponentPool}. Emits notifications
- * for creation errors and lease time reporting.
+ * JMX MBean that bridges a {@link ComponentPool} to the platform MBean server.
+ * <p>
+ * Implements {@link ComponentPoolMonitorMXBean} to expose the full pool management surface
+ * (sizes, timeouts, feature flags, lifecycle operations), {@link MBeanRegistration} to
+ * register itself as a pool event listener when the MBean is registered and deregister when
+ * it is removed, and {@link ComponentPoolEventListener} to convert pool events into typed
+ * JMX notifications:
+ * <ul>
+ *   <li>Pool errors generate a {@link CreationErrorOccurredNotification}.</li>
+ *   <li>Lease-time events generate a {@link ComponentLeaseTimeNotification}.</li>
+ * </ul>
+ * The monitor is constructed with the pool as its only argument. All configuration getters
+ * and setters delegate directly to the pool's {@link org.smallmind.quorum.pool.complex.ComplexPoolConfig}.
  */
 public class ComponentPoolMonitor extends NotificationBroadcasterSupport implements ComponentPoolMonitorMXBean, MBeanRegistration, ComponentPoolEventListener {
 
@@ -53,9 +64,10 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   private ObjectName objectName;
 
   /**
-   * Creates the monitor for the given pool.
+   * Creates the monitor for the given pool and declares the two notification types it may
+   * emit.
    *
-   * @param componentPool pool to expose via JMX
+   * @param componentPool the pool to expose and listen to via JMX
    */
   public ComponentPoolMonitor (ComponentPool<?> componentPool) {
 
@@ -65,12 +77,15 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   }
 
   /**
-   * Registers this monitor and attaches as a pool listener.
+   * Called by the MBean server before registering this bean. Attaches the monitor as a pool
+   * event listener and records the proposed {@link ObjectName} for use as the notification
+   * source.
    *
-   * @param mBeanServer server registering the bean
-   * @param objectName  proposed object name
-   * @return the object name used for registration
+   * @param mBeanServer the server performing the registration
+   * @param objectName  the proposed name for this MBean
+   * @return the name to use for registration (returned unchanged)
    */
+  @Override
   public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName) {
 
     componentPool.addComponentPoolEventListener(this);
@@ -79,31 +94,38 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   }
 
   /**
-   * Post-registration hook (no-op).
+   * Called by the MBean server after registration. No-op.
    *
-   * @param success whether registration succeeded
+   * @param success {@code true} if registration succeeded
    */
+  @Override
   public void postRegister (Boolean success) {
 
   }
 
   /**
-   * Pre-deregistration hook that removes pool listener registration.
+   * Called by the MBean server before deregistering this bean. Detaches the monitor from
+   * the pool's event listener list so notifications stop.
    */
+  @Override
   public void preDeregister () {
 
     componentPool.removeComponentPoolEventListener(this);
   }
 
   /**
-   * Post-deregistration hook (no-op).
+   * Called by the MBean server after deregistration. No-op.
    */
+  @Override
   public void postDeregister () {
 
   }
 
   /**
-   * Handles pool error events by sending a JMX notification.
+   * Receives a pool error event and emits a {@link CreationErrorOccurredNotification} to
+   * all JMX notification subscribers.
+   *
+   * @param event the error event carrying the exception
    */
   @Override
   public void reportErrorOccurred (ErrorReportingComponentPoolEvent<?> event) {
@@ -112,7 +134,10 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   }
 
   /**
-   * Handles lease time events by sending a JMX notification.
+   * Receives a lease-time event and emits a {@link ComponentLeaseTimeNotification} to all
+   * JMX notification subscribers.
+   *
+   * @param event the lease-time event carrying the duration in nanoseconds
    */
   @Override
   public void reportLeaseTime (LeaseTimeReportingComponentPoolEvent<?> event) {
@@ -123,8 +148,9 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Returns the name of the monitored pool.
    *
-   * @return pool name
+   * @return the pool name
    */
+  @Override
   public String getPoolName () {
 
     return componentPool.getPoolName();
@@ -133,8 +159,9 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Starts the underlying pool.
    *
-   * @throws ComponentPoolException if startup fails
+   * @throws ComponentPoolException if the startup sequence fails
    */
+  @Override
   public void startup ()
     throws ComponentPoolException {
 
@@ -144,8 +171,9 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Shuts down the underlying pool.
    *
-   * @throws ComponentPoolException if shutdown fails
+   * @throws ComponentPoolException if the shutdown sequence fails
    */
+  @Override
   public void shutdown ()
     throws ComponentPoolException {
 
@@ -153,80 +181,88 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   }
 
   /**
-   * Whether components are validated on creation.
+   * Returns whether validate-on-create is enabled.
    *
-   * @return {@code true} if validation occurs on create
+   * @return {@code true} if components are validated after creation
    */
+  @Override
   public boolean isTestOnCreate () {
 
     return componentPool.getComplexPoolConfig().isTestOnCreate();
   }
 
   /**
-   * Sets validation on creation.
+   * Enables or disables validate-on-create.
    *
-   * @param testOnCreate {@code true} to validate on create
+   * @param testOnCreate {@code true} to validate components after creation
    */
+  @Override
   public void setTestOnCreate (boolean testOnCreate) {
 
     componentPool.getComplexPoolConfig().setTestOnCreate(testOnCreate);
   }
 
   /**
-   * Whether components are validated on acquire.
+   * Returns whether validate-on-acquire is enabled.
    *
-   * @return {@code true} if validation occurs on acquire
+   * @return {@code true} if components are validated before being handed to a caller
    */
+  @Override
   public boolean isTestOnAcquire () {
 
     return componentPool.getComplexPoolConfig().isTestOnAcquire();
   }
 
   /**
-   * Sets validation on acquire.
+   * Enables or disables validate-on-acquire.
    *
-   * @param testOnAcquire {@code true} to validate on acquire
+   * @param testOnAcquire {@code true} to validate components at acquisition time
    */
+  @Override
   public void setTestOnAcquire (boolean testOnAcquire) {
 
     componentPool.getComplexPoolConfig().setTestOnAcquire(testOnAcquire);
   }
 
   /**
-   * Whether lease time reporting is enabled.
+   * Returns whether per-component lease-time reporting is enabled.
    *
-   * @return {@code true} if reporting is enabled
+   * @return {@code true} if lease-time events and metrics are emitted on return
    */
+  @Override
   public boolean isReportLeaseTimeNanos () {
 
     return componentPool.getComplexPoolConfig().isReportLeaseTimeNanos();
   }
 
   /**
-   * Enables or disables lease time reporting.
+   * Enables or disables per-component lease-time reporting.
    *
-   * @param reportLeaseTimeNanos {@code true} to enable reporting
+   * @param reportLeaseTimeNanos {@code true} to emit lease-time events on each return
    */
+  @Override
   public void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
     componentPool.getComplexPoolConfig().setReportLeaseTimeNanos(reportLeaseTimeNanos);
   }
 
   /**
-   * Whether existential awareness is enabled.
+   * Returns whether existential stack-trace capture is enabled.
    *
-   * @return {@code true} if enabled
+   * @return {@code true} if the acquiring thread's stack trace is recorded per component
    */
+  @Override
   public boolean isExistentiallyAware () {
 
     return componentPool.getComplexPoolConfig().isExistentiallyAware();
   }
 
   /**
-   * Enables or disables existential awareness.
+   * Enables or disables existential stack-trace capture.
    *
-   * @param existentiallyAware {@code true} to enable tracking
+   * @param existentiallyAware {@code true} to record the acquiring thread's stack trace
    */
+  @Override
   public void setExistentiallyAware (boolean existentiallyAware) {
 
     componentPool.getComplexPoolConfig().setExistentiallyAware(existentiallyAware);
@@ -235,8 +271,9 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Returns the creation timeout in milliseconds.
    *
-   * @return creation timeout
+   * @return the creation timeout; {@code 0} for no limit
    */
+  @Override
   public long getCreationTimeoutMillis () {
 
     return componentPool.getComplexPoolConfig().getCreationTimeoutMillis();
@@ -245,68 +282,76 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Sets the creation timeout in milliseconds.
    *
-   * @param creationTimeoutMillis timeout in milliseconds
+   * @param creationTimeoutMillis timeout; {@code 0} for no limit
    */
+  @Override
   public void setCreationTimeoutMillis (long creationTimeoutMillis) {
 
     componentPool.getComplexPoolConfig().setCreationTimeoutMillis(creationTimeoutMillis);
   }
 
   /**
-   * Gets the initial pool size.
+   * Returns the initial pool size.
    *
-   * @return initial size
+   * @return the number of components pre-created at startup
    */
+  @Override
   public int getInitialPoolSize () {
 
     return componentPool.getComplexPoolConfig().getInitialPoolSize();
   }
 
   /**
-   * Gets the minimum pool size.
+   * Returns the minimum pool size floor.
    *
-   * @return minimum size
+   * @return the minimum number of components to maintain
    */
+  @Override
   public int getMinPoolSize () {
 
     return componentPool.getComplexPoolConfig().getMinPoolSize();
   }
 
   /**
-   * Sets the minimum pool size.
+   * Sets the minimum pool size floor.
    *
-   * @param minPoolSize minimum size
+   * @param minPoolSize minimum instances to keep alive
    */
+  @Override
   public void setMinPoolSize (int minPoolSize) {
 
     componentPool.getComplexPoolConfig().setMinPoolSize(minPoolSize);
   }
 
   /**
-   * Gets the maximum pool size (0 for unbounded).
+   * Returns the maximum pool size cap.
    *
-   * @return maximum size
+   * @return the maximum number of managed instances; {@code 0} for unbounded
    */
+  @Override
   public int getMaxPoolSize () {
 
     return componentPool.getComplexPoolConfig().getMaxPoolSize();
   }
 
   /**
-   * Sets the maximum pool size.
+   * Sets the maximum pool size cap.
    *
-   * @param maxPoolSize maximum size (0 for unbounded)
+   * @param maxPoolSize maximum instances; {@code 0} for unbounded
    */
+  @Override
   public void setMaxPoolSize (int maxPoolSize) {
 
     componentPool.getComplexPoolConfig().setMaxPoolSize(maxPoolSize);
   }
 
   /**
-   * Gets the acquire wait time in milliseconds.
+   * Returns the acquire wait time in milliseconds.
    *
-   * @return wait time
+   * @return the maximum time a caller may block waiting for a component; {@code 0} for
+   * immediate failure
    */
+  @Override
   public synchronized long getAcquireWaitTimeMillis () {
 
     return componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis();
@@ -315,18 +360,20 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Sets the acquire wait time in milliseconds.
    *
-   * @param acquireWaitTimeMillis wait time
+   * @param acquireWaitTimeMillis wait time; {@code 0} for immediate failure
    */
+  @Override
   public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
     componentPool.getComplexPoolConfig().setAcquireWaitTimeMillis(acquireWaitTimeMillis);
   }
 
   /**
-   * Gets the maximum lease time in seconds.
+   * Returns the maximum lease time in seconds.
    *
-   * @return maximum lease time
+   * @return the lease timeout; {@code 0} means no limit
    */
+  @Override
   public int getMaxLeaseTimeSeconds () {
 
     return componentPool.getComplexPoolConfig().getMaxLeaseTimeSeconds();
@@ -335,18 +382,20 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Sets the maximum lease time in seconds.
    *
-   * @param leaseTimeSeconds lease timeout
+   * @param leaseTimeSeconds lease timeout; {@code 0} to disable
    */
+  @Override
   public void setMaxLeaseTimeSeconds (int leaseTimeSeconds) {
 
     componentPool.getComplexPoolConfig().setMaxLeaseTimeSeconds(leaseTimeSeconds);
   }
 
   /**
-   * Gets the maximum idle time in seconds.
+   * Returns the maximum idle time in seconds.
    *
-   * @return maximum idle time
+   * @return the idle timeout; {@code 0} means no limit
    */
+  @Override
   public int getMaxIdleTimeSeconds () {
 
     return componentPool.getComplexPoolConfig().getMaxIdleTimeSeconds();
@@ -355,18 +404,20 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Sets the maximum idle time in seconds.
    *
-   * @param maxIdleTimeSeconds idle timeout
+   * @param maxIdleTimeSeconds idle timeout; {@code 0} to disable
    */
+  @Override
   public void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
     componentPool.getComplexPoolConfig().setMaxIdleTimeSeconds(maxIdleTimeSeconds);
   }
 
   /**
-   * Gets the maximum processing time in seconds.
+   * Returns the maximum processing time in seconds.
    *
-   * @return maximum processing time
+   * @return the processing timeout; {@code 0} means no limit
    */
+  @Override
   public int getMaxProcessingTimeSeconds () {
 
     return componentPool.getComplexPoolConfig().getMaxProcessingTimeSeconds();
@@ -375,38 +426,42 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   /**
    * Sets the maximum processing time in seconds.
    *
-   * @param maxProcessingTimeSeconds processing timeout
+   * @param maxProcessingTimeSeconds processing timeout; {@code 0} to disable
    */
-  public void setMaxProcessingTimeTimeSeconds (int maxProcessingTimeSeconds) {
+  @Override
+  public void setMaxProcessingTimeSeconds (int maxProcessingTimeSeconds) {
 
     componentPool.getComplexPoolConfig().setMaxProcessingTimeSeconds(maxProcessingTimeSeconds);
   }
 
   /**
-   * Returns the current pool size.
+   * Returns the total number of component instances managed by the pool.
    *
-   * @return pool size
+   * @return the pool size (free + processing)
    */
+  @Override
   public int getPoolSize () {
 
     return componentPool.getPoolSize();
   }
 
   /**
-   * Returns the number of free components.
+   * Returns the number of idle component instances on the free queue.
    *
-   * @return free size
+   * @return the free count
    */
+  @Override
   public int getFreeSize () {
 
     return componentPool.getFreeSize();
   }
 
   /**
-   * Returns the number of components currently processing.
+   * Returns the number of component instances currently checked out by callers.
    *
-   * @return processing size
+   * @return the processing count
    */
+  @Override
   public int getProcessingSize () {
 
     return componentPool.getProcessingSize();

@@ -38,16 +38,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Overrides the wire-level function name for a method invocation.
+ * Overrides the function name used on the wire for a service method, decoupling the
+ * Java method name from the name seen by remote consumers. When present, this name
+ * is used in place of the Java method name during dispatch.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CallAs {
 
   /**
-   * Name to use when transmitting the call over the wire.
+   * The name transmitted over the wire in place of the annotated method's Java name.
    *
-   * @return alternate function name
+   * @return the wire-level function name; must not be empty
    */
   String value ();
 }

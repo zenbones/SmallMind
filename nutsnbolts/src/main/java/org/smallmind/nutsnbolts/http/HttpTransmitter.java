@@ -38,18 +38,17 @@ import java.net.URL;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Convenience factory for emitting simple HTTP requests using {@link HttpURLConnection}.
- * Creates an {@link HttpPipe} configured for the requested verb and I/O direction.
+ * Factory for opening simple HTTP requests via {@link HttpURLConnection}, returning a ready-to-use {@link HttpPipe}.
  */
 public class HttpTransmitter {
 
   /**
-   * Opens a GET request.
+   * Opens a GET request to the given URL.
    *
-   * @param url        target URL
-   * @param openReader {@code true} to read the response body
-   * @return configured {@link HttpPipe}
-   * @throws IOException if the connection cannot be opened
+   * @param url        target endpoint
+   * @param openReader {@code true} to enable reading the response body
+   * @return a connected {@link HttpPipe} in the appropriate state
+   * @throws IOException if the connection cannot be established
    */
   public static HttpPipe emitGetRequest (URL url, boolean openReader)
     throws IOException {
@@ -58,12 +57,12 @@ public class HttpTransmitter {
   }
 
   /**
-   * Opens a PUT request.
+   * Opens a PUT request to the given URL.
    *
-   * @param url        target URL
-   * @param openReader {@code true} to read the response body
-   * @return configured {@link HttpPipe}
-   * @throws IOException if the connection cannot be opened
+   * @param url        target endpoint
+   * @param openReader {@code true} to enable reading the response body
+   * @return a connected {@link HttpPipe} in the appropriate state
+   * @throws IOException if the connection cannot be established
    */
   public static HttpPipe emitPutRequest (URL url, boolean openReader)
     throws IOException {
@@ -72,12 +71,12 @@ public class HttpTransmitter {
   }
 
   /**
-   * Opens a POST request.
+   * Opens a POST request to the given URL.
    *
-   * @param url        target URL
-   * @param openReader {@code true} to read the response body
-   * @return configured {@link HttpPipe}
-   * @throws IOException if the connection cannot be opened
+   * @param url        target endpoint
+   * @param openReader {@code true} to enable reading the response body
+   * @return a connected {@link HttpPipe} in the appropriate state
+   * @throws IOException if the connection cannot be established
    */
   public static HttpPipe emitPostRequest (URL url, boolean openReader)
     throws IOException {
@@ -86,12 +85,12 @@ public class HttpTransmitter {
   }
 
   /**
-   * Opens a DELETE request.
+   * Opens a DELETE request to the given URL.
    *
-   * @param url        target URL
-   * @param openReader {@code true} to read the response body
-   * @return configured {@link HttpPipe}
-   * @throws IOException if the connection cannot be opened
+   * @param url        target endpoint
+   * @param openReader {@code true} to enable reading the response body
+   * @return a connected {@link HttpPipe} in the appropriate state
+   * @throws IOException if the connection cannot be established
    */
   public static HttpPipe emitDeleteRequest (URL url, boolean openReader)
     throws IOException {
@@ -100,13 +99,13 @@ public class HttpTransmitter {
   }
 
   /**
-   * Opens an HTTP request using the supplied method.
+   * Opens an HTTP request for the given method, configuring output/input flags and returning a ready {@link HttpPipe}.
    *
-   * @param method     HTTP verb to issue
-   * @param url        target URL
-   * @param openReader {@code true} to request an input stream
-   * @return configured {@link HttpPipe}
-   * @throws IOException if the connection cannot be opened
+   * @param method     HTTP verb to use for the request
+   * @param url        target endpoint
+   * @param openReader {@code true} to enable reading the response body
+   * @return a connected {@link HttpPipe} configured for the specified method
+   * @throws IOException if the connection cannot be established or the method is unsupported
    */
   public static HttpPipe emitHttpRequest (HttpMethod method, URL url, boolean openReader)
     throws IOException {

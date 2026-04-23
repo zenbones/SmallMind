@@ -37,7 +37,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that creates a {@link StaticParameterExtractor} with a configured static value.
+ * Spring {@link FactoryBean} that constructs a {@link StaticParameterExtractor} from a fixed string value
+ * configured via {@link #setParameter(String)}.
  */
 public class StaticParameterExtractorFactoryBean implements InitializingBean, FactoryBean<StaticParameterExtractor<?>> {
 
@@ -45,7 +46,9 @@ public class StaticParameterExtractorFactoryBean implements InitializingBean, Fa
   private String parameter;
 
   /**
-   * @param parameter constant value returned by the extractor.
+   * Sets the constant string value that the produced extractor always returns.
+   *
+   * @param parameter static value to embed in the extractor
    */
   public void setParameter (String parameter) {
 
@@ -53,7 +56,9 @@ public class StaticParameterExtractorFactoryBean implements InitializingBean, Fa
   }
 
   /**
-   * Builds the extractor after properties have been set.
+   * Constructs the {@link StaticParameterExtractor} after all properties have been set.
+   *
+   * @throws Exception if extractor construction fails
    */
   @Override
   public void afterPropertiesSet ()
@@ -63,7 +68,9 @@ public class StaticParameterExtractorFactoryBean implements InitializingBean, Fa
   }
 
   /**
-   * @return the configured {@link StaticParameterExtractor}.
+   * Returns the constructed {@link StaticParameterExtractor}.
+   *
+   * @return the singleton extractor instance
    */
   @Override
   public StaticParameterExtractor<?> getObject () {
@@ -72,7 +79,9 @@ public class StaticParameterExtractorFactoryBean implements InitializingBean, Fa
   }
 
   /**
-   * @return extractor type.
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link StaticParameterExtractor}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -81,7 +90,9 @@ public class StaticParameterExtractorFactoryBean implements InitializingBean, Fa
   }
 
   /**
-   * @return always true; the extractor is a singleton.
+   * Indicates that this factory always returns the same extractor instance.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {

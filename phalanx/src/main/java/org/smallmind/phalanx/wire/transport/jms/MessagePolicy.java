@@ -36,7 +36,13 @@ import jakarta.jms.JMSException;
 import jakarta.jms.MessageProducer;
 
 /**
- * Configures per-message settings applied to JMS producers.
+ * Holder for JMS producer configuration applied uniformly to every {@link MessageProducer}
+ * created by a {@link ConnectionManager}.
+ *
+ * <p>Settings include the session acknowledge mode, message delivery mode, message-ID and
+ * timestamp generation hints, time-to-live, and priority.  Defaults are
+ * {@link JmsAcknowledgeMode#AUTO_ACKNOWLEDGE}, {@link DeliveryMode#NON_PERSISTENT},
+ * no ID/timestamp suppression, unlimited TTL (0), and priority 4.
  */
 public class MessagePolicy {
 
@@ -48,9 +54,9 @@ public class MessagePolicy {
   private int priority = 4;
 
   /**
-   * Returns the acknowledge mode to use when creating sessions.
+   * Returns the acknowledge mode used when creating JMS sessions.
    *
-   * @return acknowledge mode
+   * @return configured {@link AcknowledgeMode}
    */
   public AcknowledgeMode getAcknowledgeMode () {
 
@@ -58,9 +64,9 @@ public class MessagePolicy {
   }
 
   /**
-   * Sets the acknowledge mode to use when creating sessions.
+   * Sets the acknowledge mode used when creating JMS sessions.
    *
-   * @param acknowledgeMode acknowledge strategy
+   * @param acknowledgeMode acknowledge strategy to apply; must not be {@code null}
    */
   public void setAcknowledgeMode (AcknowledgeMode acknowledgeMode) {
 
@@ -68,9 +74,9 @@ public class MessagePolicy {
   }
 
   /**
-   * Sets the delivery mode for produced messages.
+   * Sets the delivery mode applied to all produced messages.
    *
-   * @param deliveryMode JMS delivery mode
+   * @param deliveryMode {@link DeliveryMode} to use; persistent or non-persistent
    */
   public void setDeliveryMode (DeliveryMode deliveryMode) {
 
@@ -78,9 +84,9 @@ public class MessagePolicy {
   }
 
   /**
-   * Enables or disables JMS message ID generation.
+   * Controls whether the JMS provider skips message-ID generation for produced messages.
    *
-   * @param disableMessageID {@code true} to disable IDs
+   * @param disableMessageID {@code true} to hint that message IDs need not be set
    */
   public void setDisableMessageID (boolean disableMessageID) {
 
@@ -88,9 +94,9 @@ public class MessagePolicy {
   }
 
   /**
-   * Enables or disables JMS timestamp generation.
+   * Controls whether the JMS provider skips timestamp generation for produced messages.
    *
-   * @param disableMessageTimestamp {@code true} to disable timestamps
+   * @param disableMessageTimestamp {@code true} to hint that message timestamps need not be set
    */
   public void setDisableMessageTimestamp (boolean disableMessageTimestamp) {
 
@@ -98,9 +104,10 @@ public class MessagePolicy {
   }
 
   /**
-   * Sets message time-to-live in seconds.
+   * Sets the message time-to-live in seconds (converted to milliseconds when applied to the producer).
+   * A value of {@code 0} means the message never expires.
    *
-   * @param timeToLiveSeconds TTL in seconds
+   * @param timeToLiveSeconds TTL in seconds; {@code 0} for unlimited
    */
   public void setTimeToLiveSeconds (int timeToLiveSeconds) {
 
@@ -108,9 +115,9 @@ public class MessagePolicy {
   }
 
   /**
-   * Sets message priority.
+   * Sets the JMS message priority for produced messages.
    *
-   * @param priority JMS priority 0-9
+   * @param priority integer priority in the range 0 (lowest) to 9 (highest); default is 4
    */
   public void setPriority (int priority) {
 
@@ -118,10 +125,10 @@ public class MessagePolicy {
   }
 
   /**
-   * Applies the configured policy to a JMS {@link MessageProducer}.
+   * Applies all configured settings to the given {@link MessageProducer}.
    *
    * @param producer producer to configure
-   * @throws JMSException if the producer cannot be updated
+   * @throws JMSException if any producer property cannot be set
    */
   public void apply (MessageProducer producer)
     throws JMSException {

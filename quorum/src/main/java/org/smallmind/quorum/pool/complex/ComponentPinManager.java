@@ -52,10 +52,28 @@ import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Manages the lifecycle of {@link ComponentPin}s, including creation, validation, leasing,
- * and deconstruction scheduling for the complex pool.
+ * Core lifecycle engine for the complex component pool.
+ * <p>
+ * Maintains two complementary data structures:
+ * <ul>
+ *   <li>A {@link HashMap} ({@code backingMap}) keyed by {@link ComponentInstance} that maps
+ *       each instance to its {@link ComponentPin}. All structural mutations are serialized
+ *       through a {@link ReentrantReadWriteLock}.</li>
+ *   <li>A {@link LinkedBlockingQueue} ({@code freeQueue}) of {@link ComponentPin}s that are
+ *       idle and available for acquisition.</li>
+ * </ul>
+ * The manager is also responsible for:
+ * <ul>
+ *   <li>Enforcing the minimum and maximum pool sizes.</li>
+ *   <li>Optionally validating components on acquire ({@link ComplexPoolConfig#isTestOnAcquire()})
+ *       and on creation ({@link ComplexPoolConfig#isTestOnCreate()}).</li>
+ *   <li>Applying a creation timeout via a {@link ComponentCreationWorker} daemon thread when
+ *       {@link ComplexPoolConfig#getCreationTimeoutMillis()} is positive.</li>
+ *   <li>Replacing terminated components up to the minimum pool size.</li>
+ *   <li>Emitting Claxon metrics for free size, processing size, and acquisition timeouts.</li>
+ * </ul>
  *
- * @param <C> component type managed
+ * @param <C> the type of component managed by the enclosing pool
  */
 public class ComponentPinManager<C> {
 
@@ -70,7 +88,7 @@ public class ComponentPinManager<C> {
   /**
    * Creates a manager for the given pool.
    *
-   * @param componentPool owning pool
+   * @param componentPool the pool this manager serves
    */
   public ComponentPinManager (ComponentPool<C> componentPool) {
 
@@ -78,9 +96,14 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Starts the manager by creating initial pins and enabling deconstruction scheduling.
+   * Starts the manager: launches the {@link DeconstructionQueue} background worker and
+   * pre-populates the pool with {@code max(minPoolSize, initialPoolSize)} components.
+   * <p>
+   * If another thread is concurrently starting the manager, this method polls until that
+   * thread completes.
    *
-   * @throws ComponentPoolException if initialization fails
+   * @throws ComponentPoolException if any component cannot be created during startup or if
+   *                                the startup wait is interrupted
    */
   public void startup ()
     throws ComponentPoolException {
@@ -125,10 +148,18 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Serves a pin to a caller, validating on acquire and respecting size/wait constraints.
+   * Returns a {@link ComponentPin} to a caller, creating a new one if the free queue is
+   * empty and the pool is below its maximum size, or blocking up to the configured acquire
+   * wait time if the pool is full.
+   * <p>
+   * When {@link ComplexPoolConfig#isTestOnAcquire()} is enabled, a pin that fails validation
+   * is discarded and the method continues searching. The acquire wait time is adjusted on
+   * each retry to honour the original total budget.
    *
-   * @return a component pin ready for use
-   * @throws ComponentPoolException if the pool is not started, validation fails, or waits timeout
+   * @return a {@link ComponentPin} whose component has passed any configured validation
+   * @throws ComponentPoolException if the manager is not started, if the wait is interrupted,
+   *                                or if the maximum wait time is exceeded without a component
+   *                                becoming available
    */
   public ComponentPin<C> serve ()
     throws ComponentPoolException {
@@ -181,12 +212,17 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Attempts to add a new pin, honoring min/max limits. May force creation.
+   * Attempts to create and register a new {@link ComponentPin} when the pool has capacity.
+   * <p>
+   * A write lock is acquired before the capacity check is re-evaluated to guard against
+   * races. When {@code forced} is {@code false} creation is skipped if the pool is already
+   * at or above {@code minPoolSize}.
    *
-   * @param forced whether creation should bypass the minimum size check
-   * @return newly created pin or {@code null} if limits prevent creation
-   * @throws ComponentCreationException   if creation fails
-   * @throws ComponentValidationException if validation fails
+   * @param forced {@code true} to force creation regardless of the minimum-pool-size check
+   * @return the newly created pin, or {@code null} if the pool is at maximum capacity
+   * @throws ComponentCreationException   if the factory throws, times out, or is aborted
+   * @throws ComponentValidationException if {@code testOnCreate} is enabled and the new
+   *                                      instance fails validation
    */
   private ComponentPin<C> addComponentPin (boolean forced)
     throws ComponentCreationException, ComponentValidationException {
@@ -223,11 +259,21 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Creates and validates a new component instance, optionally enforcing a timeout.
+   * Invokes the {@link ComponentInstanceFactory} to create a new {@link ComponentInstance},
+   * honouring the optional creation timeout and performing a post-creation validation check
+   * when configured.
+   * <p>
+   * When a creation timeout is configured, the factory call is delegated to a
+   * {@link ComponentCreationWorker} daemon thread. The calling thread joins for the timeout
+   * duration; if the worker has not yet finished, {@link ComponentCreationWorker#abort()} is
+   * called, which either aborts the in-progress creation (returning {@code true}) or retrieves
+   * the worker's exception.
    *
-   * @return new component instance
-   * @throws ComponentCreationException   if creation fails or times out
-   * @throws ComponentValidationException if validation fails
+   * @return the newly constructed and validated {@link ComponentInstance}
+   * @throws ComponentCreationException   if the factory throws, the creation times out, or
+   *                                      the creation thread is interrupted
+   * @throws ComponentValidationException if {@code testOnCreate} is enabled and the new
+   *                                      instance fails {@link ComponentInstance#validate()}
    */
   private ComponentInstance<C> manufactureComponentInstance ()
     throws ComponentCreationException, ComponentValidationException {
@@ -268,12 +314,20 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Removes a pin from service, optionally terminating with prejudice and tracking metrics.
+   * Removes a pin from the pool and terminates the underlying component, optionally using
+   * prejudice (forced termination) and optionally emitting metrics afterward.
+   * <p>
+   * The removal succeeds if the pin was already taken off the free queue
+   * ({@code alreadyAcquired}), if it can be polled off now, or if {@code withPrejudice} is
+   * {@code true} (even if the pin is not on the free queue — used to terminate a pin that
+   * is currently processing).
    *
-   * @param componentPin    pin to remove
-   * @param alreadyAcquired whether the pin has been removed from the free queue already
-   * @param withPrejudice   whether to terminate regardless of queue state
-   * @param track           whether to update metrics after removal
+   * @param componentPin    the pin to remove
+   * @param alreadyAcquired {@code true} if the caller has already removed the pin from the
+   *                        free queue
+   * @param withPrejudice   {@code true} to force removal even when the pin is not on the
+   *                        free queue
+   * @param track           {@code true} to update Claxon size metrics after removal
    */
   public void remove (ComponentPin<C> componentPin, boolean alreadyAcquired, boolean withPrejudice, boolean track) {
 
@@ -291,7 +345,11 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Terminates all components currently processing (i.e., checked out).
+   * Terminates every component that is currently in the processing state (checked out by a
+   * caller), then updates metrics.
+   * <p>
+   * Useful when a prejudicial processing-time fuse is not used but the caller still wants to
+   * forcibly reclaim all checked-out components.
    */
   public void killAllProcessing () {
 
@@ -310,10 +368,15 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Processes the return of a component instance, re-queuing or terminating as necessary.
+   * Processes the return of a {@link ComponentInstance} to the pool.
+   * <p>
+   * Notifies the pin that it has been freed (updating lease metrics and deconstruction timers).
+   * If the pin was marked terminated while it was out, the instance is closed; otherwise it is
+   * placed back on the free queue for future acquisition. Metric tracking is controlled by
+   * {@code track}.
    *
-   * @param componentInstance instance being returned
-   * @param track             whether to update metrics
+   * @param componentInstance the instance being returned
+   * @param track             {@code true} to update Claxon size metrics
    */
   public void process (ComponentInstance<C> componentInstance, boolean track) {
 
@@ -351,11 +414,17 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Terminates a component instance and optionally replaces it with a new one.
+   * Permanently removes a {@link ComponentInstance} from the pool, closes it, and optionally
+   * creates a replacement to maintain the minimum pool size.
+   * <p>
+   * Acquires the write lock only to update the backing map; the close call and optional
+   * replacement happen outside the lock to minimise contention. Logs any exceptions thrown
+   * during close or replacement.
    *
-   * @param componentInstance instance to terminate
-   * @param allowReplacement  whether to create a replacement
-   * @param track             whether to update metrics
+   * @param componentInstance the instance to terminate
+   * @param allowReplacement  {@code true} to attempt creating a replacement if the pool is
+   *                          below its minimum size after removal
+   * @param track             {@code true} to update Claxon size metrics after removal
    */
   public void terminate (ComponentInstance<C> componentInstance, boolean allowReplacement, boolean track) {
 
@@ -401,9 +470,13 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Stops the manager, terminating all components and shutting down deconstruction.
+   * Stops the manager: terminates all managed component instances, clears the free queue,
+   * and shuts down the {@link DeconstructionQueue} background worker.
+   * <p>
+   * If another thread is concurrently stopping the manager, this method polls until that
+   * thread completes.
    *
-   * @throws ComponentPoolException if shutdown is interrupted
+   * @throws ComponentPoolException if the wait for a concurrent shutdown is interrupted
    */
   public void shutdown ()
     throws ComponentPoolException {
@@ -452,9 +525,10 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Current total pool size (free + processing).
+   * Returns the total number of component instances currently managed by the pool, including
+   * both free (idle) and processing (checked out) instances.
    *
-   * @return pool size
+   * @return the total pool size
    */
   public int getPoolSize () {
 
@@ -462,9 +536,10 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Current number of free pins.
+   * Returns the number of instances currently on the free queue, available for immediate
+   * acquisition without blocking or creation.
    *
-   * @return number of available pins
+   * @return the number of idle components
    */
   public int getFreeSize () {
 
@@ -472,9 +547,10 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Current number of pins in processing state.
+   * Returns the number of instances currently checked out by callers (total pool size minus
+   * free size).
    *
-   * @return processing count
+   * @return the number of components in the processing state
    */
   public int getProcessingSize () {
 
@@ -482,7 +558,7 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Updates Claxon metrics for pool size and processing counts.
+   * Updates the Claxon free-size and processing-size speedometer metrics.
    */
   private void trackSize () {
 
@@ -493,7 +569,8 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Updates the timeout metric when acquisition waits are exceeded.
+   * Increments the Claxon timeout counter metric when an acquisition attempt exceeds the
+   * configured wait limit.
    */
   private void trackTimeout () {
 
@@ -501,9 +578,14 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Returns stack traces for components currently in processing state when existential tracking is enabled.
+   * Returns the existential stack traces of all components that are currently in the
+   * processing state, when existential awareness is enabled.
+   * <p>
+   * Pins whose components are on the free queue are excluded. Pins with no recorded stack
+   * trace (existential awareness disabled) contribute no entry.
    *
-   * @return array of stack traces for borrowed components
+   * @return an array of {@link StackTrace} objects for each checked-out component that has
+   * a recorded acquisition trace; never {@code null} but may be empty
    */
   public StackTrace[] getExistentialStackTraces () {
 

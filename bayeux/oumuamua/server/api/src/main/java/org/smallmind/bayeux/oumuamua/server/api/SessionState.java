@@ -33,17 +33,36 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Lifecycle states for a session along with comparison helpers.
+ * Ordered lifecycle states of a Bayeux {@link Session}, progressing from creation through
+ * handshake and connection to final disconnection.
  */
 public enum SessionState {
 
-  INITIALIZED, HANDSHOOK, CONNECTED, DISCONNECTED;
+  /**
+   * Session created but handshake not yet completed.
+   */
+  INITIALIZED,
 
   /**
-   * Tests whether this state occurs before the provided state.
+   * Handshake successfully completed; not yet connected.
+   */
+  HANDSHOOK,
+
+  /**
+   * Connect successfully completed; session is fully active.
+   */
+  CONNECTED,
+
+  /**
+   * Session has been disconnected and is no longer usable.
+   */
+  DISCONNECTED;
+
+  /**
+   * Returns whether this state precedes the given state in the lifecycle.
    *
-   * @param state the state to compare against
-   * @return {@code true} if this state ordinal is less than the provided state
+   * @param state state to compare against
+   * @return {@code true} if this state's ordinal is strictly less than {@code state}'s ordinal
    */
   public boolean lt (SessionState state) {
 
@@ -51,10 +70,10 @@ public enum SessionState {
   }
 
   /**
-   * Tests whether this state occurs before or at the provided state.
+   * Returns whether this state precedes or equals the given state in the lifecycle.
    *
-   * @param state the state to compare against
-   * @return {@code true} if this state ordinal is less than or equal to the provided state
+   * @param state state to compare against
+   * @return {@code true} if this state's ordinal is less than or equal to {@code state}'s ordinal
    */
   public boolean lte (SessionState state) {
 
@@ -62,10 +81,10 @@ public enum SessionState {
   }
 
   /**
-   * Tests whether this state occurs at or after the provided state.
+   * Returns whether this state follows or equals the given state in the lifecycle.
    *
-   * @param state the state to compare against
-   * @return {@code true} if this state ordinal is greater than or equal to the provided state
+   * @param state state to compare against
+   * @return {@code true} if this state's ordinal is greater than or equal to {@code state}'s ordinal
    */
   public boolean gte (SessionState state) {
 
@@ -73,10 +92,10 @@ public enum SessionState {
   }
 
   /**
-   * Tests whether this state occurs after the provided state.
+   * Returns whether this state strictly follows the given state in the lifecycle.
    *
-   * @param state the state to compare against
-   * @return {@code true} if this state ordinal is greater than the provided state
+   * @param state state to compare against
+   * @return {@code true} if this state's ordinal is strictly greater than {@code state}'s ordinal
    */
   public boolean ge (SessionState state) {
 

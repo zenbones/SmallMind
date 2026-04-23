@@ -37,7 +37,20 @@ import org.smallmind.memcached.cubby.connection.ExposedByteArrayOutputStream;
 import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
 
 /**
- * Presents a contiguous view over the accumulated bytes and the current read buffer while parsing responses.
+ * Presents a unified, position-tracked view over two consecutive byte sources used during
+ * response parsing: an accumulation buffer holding bytes from previous reads, and a
+ * newly received {@link ByteBuffer}.
+ *
+ * <p>The Cubby connection layer may receive partial responses across multiple NIO read
+ * operations. When a complete line has not yet arrived, the bytes read so far are stored in
+ * an {@code ExposedByteArrayOutputStream}. On the next read the new bytes are combined with
+ * the accumulated bytes via a {@code JoinedBuffer}, allowing the parser to treat both sources
+ * as a single contiguous stream without copying data.</p>
+ *
+ * <p>The class maintains its own logical {@code position} counter and keeps the underlying
+ * buffer positions in sync. It supports a single {@link #mark()}/{@link #reset()} pair
+ * analogous to {@link ByteBuffer}, as well as absolute-index access via {@link #get(int)} and
+ * look-ahead via {@link #peek(int)}.</p>
  */
 public class JoinedBuffer {
 
@@ -50,10 +63,14 @@ public class JoinedBuffer {
   private int mark = -1;
 
   /**
-   * Joins an accumulation buffer with the current read buffer.
+   * Constructs a joined view over the accumulated stream and the current read buffer.
    *
-   * @param accumulatingStream stream containing bytes from previous reads
-   * @param readBuffer         buffer containing newly read bytes
+   * <p>The accumulating stream is wrapped as a read-only {@link ByteBuffer} covering exactly
+   * the bytes written so far ({@code 0} to {@code accumulatingStream.size()}). The logical
+   * limit is the sum of that count and {@code readBuffer.limit()}.</p>
+   *
+   * @param accumulatingStream the stream holding bytes received in previous partial reads
+   * @param readBuffer         the buffer containing the bytes from the most recent NIO read
    */
   public JoinedBuffer (ExposedByteArrayOutputStream accumulatingStream, ByteBuffer readBuffer) {
 
@@ -65,8 +82,10 @@ public class JoinedBuffer {
   }
 
   /**
-   * @param index offset from the current position
-   * @return byte at the specified offset without advancing
+   * Returns the byte at a given offset from the current position without advancing the position.
+   *
+   * @param index the zero-based offset from the current position
+   * @return the byte at {@code position() + index}
    */
   public byte peek (int index) {
 
@@ -74,9 +93,12 @@ public class JoinedBuffer {
   }
 
   /**
-   * Reads a single byte advancing the position.
+   * Reads and returns the next byte, advancing the logical position by one.
    *
-   * @return next byte
+   * <p>Bytes are drawn from the accumulating buffer first; once it is exhausted subsequent
+   * bytes come from the read buffer.</p>
+   *
+   * @return the next byte in the joined stream
    */
   public byte get () {
 
@@ -88,10 +110,10 @@ public class JoinedBuffer {
   }
 
   /**
-   * Retrieves a byte at an absolute index without moving the current position.
+   * Returns the byte at the given absolute index without altering the current position.
    *
-   * @param index absolute index
-   * @return byte at the index
+   * @param index the absolute zero-based index within the joined stream
+   * @return the byte at that index
    */
   public byte get (int index) {
 
@@ -103,10 +125,14 @@ public class JoinedBuffer {
   }
 
   /**
-   * Reads into the provided buffer advancing the position.
+   * Reads exactly {@code buffer.length} bytes into the supplied array, advancing the position
+   * by the same amount.
    *
-   * @param buffer destination array
-   * @return the same buffer populated with data
+   * <p>Bytes are taken from the accumulating buffer first; any remaining bytes are taken from
+   * the read buffer.</p>
+   *
+   * @param buffer the destination array; its length determines how many bytes are read
+   * @return the same {@code buffer} instance, now filled with the read data
    */
   public byte[] get (byte[] buffer) {
 
@@ -125,7 +151,9 @@ public class JoinedBuffer {
   }
 
   /**
-   * @return total readable limit across buffers
+   * Returns the total number of bytes available across both underlying buffers.
+   *
+   * @return the combined limit of the accumulating buffer and the read buffer
    */
   public int limit () {
 
@@ -133,7 +161,9 @@ public class JoinedBuffer {
   }
 
   /**
-   * @return current read position
+   * Returns the current logical read position within the joined stream.
+   *
+   * @return the current position, measured from the start of the accumulating buffer
    */
   public int position () {
 
@@ -141,10 +171,10 @@ public class JoinedBuffer {
   }
 
   /**
-   * Increments the position by the given delta.
+   * Advances the current position by the given delta and returns the new position.
    *
-   * @param delta amount to move forward
-   * @return new position
+   * @param delta the number of positions to move forward
+   * @return the new logical position after the increment
    */
   public int incPosition (int delta) {
 
@@ -154,9 +184,17 @@ public class JoinedBuffer {
   }
 
   /**
-   * Sets the current position across the joined buffers.
+   * Sets the logical position to an absolute value and synchronises the positions of both
+   * underlying buffers accordingly.
    *
-   * @param position absolute position
+   * <p>If the new position falls within the accumulating buffer, that buffer is positioned
+   * directly and the read buffer is rewound to zero. If the new position lies in the read
+   * buffer, the accumulating buffer is advanced to its limit and the read buffer is positioned
+   * at the offset relative to where the read buffer begins.</p>
+   *
+   * <p>Any previously recorded mark that is greater than the new position is invalidated.</p>
+   *
+   * @param position the target absolute position
    */
   public void position (int position) {
 
@@ -184,7 +222,9 @@ public class JoinedBuffer {
   }
 
   /**
-   * @return number of bytes remaining to be read
+   * Returns the number of bytes remaining between the current position and the limit.
+   *
+   * @return {@code limit() - position()}
    */
   public int remaining () {
 
@@ -192,7 +232,9 @@ public class JoinedBuffer {
   }
 
   /**
-   * Marks the current position for later reset.
+   * Records the current position so that a later call to {@link #reset()} can return to it.
+   *
+   * <p>The mark is recorded on whichever underlying buffer owns the current position.</p>
    */
   public void mark () {
 
@@ -206,7 +248,10 @@ public class JoinedBuffer {
   }
 
   /**
-   * Resets to the previously marked position if any.
+   * Resets the logical position to the value recorded by the most recent call to {@link #mark()}.
+   *
+   * <p>If no mark has been set this method is a no-op. Both underlying buffer positions are
+   * restored to be consistent with the marked logical position.</p>
    */
   public void reset () {
 

@@ -38,18 +38,37 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean creating a singleton {@link ScribeLoggerConsumer} with configurable caller and level.
+ * Spring {@link FactoryBean} that constructs a singleton {@link ScribeLoggerConsumer} with a
+ * configurable caller class and log level.
+ *
+ * <p>The {@code caller} property identifies the class whose Scribe logger should be used; when
+ * left unset it defaults to {@code null} and the consumer falls back to its own class logger.
+ * The {@code level} property defaults to {@link Level#DEBUG}. Both may be overridden via
+ * standard Spring dependency injection before {@link #afterPropertiesSet()} is called.
  */
 public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLoggerConsumer>, InitializingBean {
 
+  /**
+   * The singleton {@link ScribeLoggerConsumer} produced by this factory; populated during
+   * {@link #afterPropertiesSet()}.
+   */
   private ScribeLoggerConsumer scribeLoggerConsumer;
+
+  /**
+   * The class whose Scribe logger will be used by the produced consumer; {@code null} causes
+   * the consumer to use its own class logger.
+   */
   private Class<?> caller;
+
+  /**
+   * The log level at which metric messages will be logged; defaults to {@link Level#DEBUG}.
+   */
   private Level level = Level.DEBUG;
 
   /**
-   * Sets the caller class whose logger will be used.
+   * Sets the class whose Scribe logger should be used for metric messages.
    *
-   * @param caller logger owner class
+   * @param caller the logger owner class; may be {@code null} to use the consumer's own class
    */
   public void setCaller (Class<?> caller) {
 
@@ -57,9 +76,9 @@ public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLogger
   }
 
   /**
-   * Sets the log level.
+   * Sets the log level at which metric messages will be emitted.
    *
-   * @param level log level
+   * @param level the desired {@link Level}; must not be {@code null}
    */
   public void setLevel (Level level) {
 
@@ -67,7 +86,9 @@ public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLogger
   }
 
   /**
-   * @return always true; consumer is singleton
+   * Indicates that this factory always returns the same consumer instance.
+   *
+   * @return {@code true} because the produced {@link ScribeLoggerConsumer} is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -76,7 +97,9 @@ public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLogger
   }
 
   /**
-   * @return produced object type ({@link ScribeLoggerConsumer})
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link ScribeLoggerConsumer}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -85,7 +108,10 @@ public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLogger
   }
 
   /**
-   * @return the configured consumer
+   * Returns the singleton {@link ScribeLoggerConsumer} built during
+   * {@link #afterPropertiesSet()}.
+   *
+   * @return the configured {@link ScribeLoggerConsumer}
    */
   @Override
   public ScribeLoggerConsumer getObject () {
@@ -94,7 +120,8 @@ public class ScribeLoggerConsumerFactoryBean implements FactoryBean<ScribeLogger
   }
 
   /**
-   * Instantiates the consumer after properties are set.
+   * Constructs the {@link ScribeLoggerConsumer} from the configured caller and level after
+   * Spring has finished injecting all values.
    */
   @Override
   public void afterPropertiesSet () {

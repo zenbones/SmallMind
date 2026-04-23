@@ -41,9 +41,10 @@ import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 /**
- * Loads an extension Spring context and optionally sets a gated classloader based on classpath components declared by the extension.
+ * Loads an extension Spring XML context from the working directory and optionally installs a {@link GatingClassLoader}
+ * for the classpath components declared by the extension.
  *
- * @param <E> the extension instance type
+ * @param <E> the concrete {@link ExtensionInstance} type
  */
 public class ExtensionLoader<E extends ExtensionInstance> {
 
@@ -51,11 +52,12 @@ public class ExtensionLoader<E extends ExtensionInstance> {
   private GatingClassLoader classLoader;
 
   /**
-   * Constructs an extension loader that reads a Spring context and initializes the extension instance.
+   * Locates the Spring XML file relative to the current working directory, loads the application context,
+   * retrieves the extension instance bean, and installs a gating classloader if classpath components are declared.
    *
-   * @param extensionInstanceClass the bean type to retrieve from the Spring context
-   * @param springFileName         the path to the Spring XML configuration file
-   * @throws ExtensionLoaderException if the extension cannot be constructed or initialized
+   * @param extensionInstanceClass the type of the extension instance bean to retrieve from the context
+   * @param springFileName         the Spring XML configuration file path, resolved relative to {@code user.dir}
+   * @throws ExtensionLoaderException if the extension context cannot be loaded or initialized
    */
   public ExtensionLoader (Class<E> extensionInstanceClass, String springFileName)
     throws ExtensionLoaderException {
@@ -89,7 +91,9 @@ public class ExtensionLoader<E extends ExtensionInstance> {
   }
 
   /**
-   * @return the initialized extension instance, or {@code null} if no configuration was loaded
+   * Returns the extension instance retrieved from the Spring context.
+   *
+   * @return the initialized extension instance, or {@code null} if no configuration file was found
    */
   protected E getExtensionInstance () {
 
@@ -97,7 +101,9 @@ public class ExtensionLoader<E extends ExtensionInstance> {
   }
 
   /**
-   * @return the gated classloader installed for the extension, or {@code null} if none was set
+   * Returns the gating classloader installed on the current thread for the extension's classpath components.
+   *
+   * @return the installed {@link GatingClassLoader}, or {@code null} if no classpath components were declared
    */
   public GatingClassLoader getClassLoader () {
 

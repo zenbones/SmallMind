@@ -55,8 +55,12 @@ import org.springframework.batch.core.launch.NoSuchJobException;
 import org.springframework.batch.core.repository.JobRepository;
 
 /**
- * Spring Batch backed implementation of {@link org.smallmind.batch.base.JobFactory} that translates the project level
- * parameter wrappers into Spring {@link org.springframework.batch.core.job.parameters.JobParameters} and launches jobs.
+ * Spring Batch implementation of {@link org.smallmind.batch.base.JobFactory}.
+ * <p>
+ * Converts framework-neutral {@link org.smallmind.batch.base.BatchParameter} instances to Spring
+ * {@link org.springframework.batch.core.job.parameters.JobParameters}, then delegates to a
+ * {@link org.springframework.batch.core.launch.JobOperator} to start or restart jobs. Also
+ * vends {@link BatchJobMonitor} and {@link BatchJobWatcher} instances for polling job state.
  */
 public class BatchJobFactory implements JobFactory {
 
@@ -65,9 +69,9 @@ public class BatchJobFactory implements JobFactory {
   private JobOperator jobOperator;
 
   /**
-   * Injects the {@link JobRepository} used to query historical executions.
+   * Sets the repository used to query historical job executions.
    *
-   * @param jobRepository the repository to use
+   * @param jobRepository the Spring Batch repository
    */
   public void setJobRepository (JobRepository jobRepository) {
 
@@ -75,9 +79,9 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Injects the {@link JobRegistry} used to resolve jobs by logical name.
+   * Sets the registry used to resolve job definitions by logical name.
    *
-   * @param jobRegistry the registry to use
+   * @param jobRegistry the Spring Batch job registry
    */
   public void setJobRegistry (JobRegistry jobRegistry) {
 
@@ -85,9 +89,9 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Injects the {@link JobOperator} used to restart jobs.
+   * Sets the operator used to start and restart jobs.
    *
-   * @param jobOperator the operator to use
+   * @param jobOperator the Spring Batch job operator
    */
   public void setJobOperator (JobOperator jobOperator) {
 
@@ -95,17 +99,17 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Launches a job while logging the invocation reason and parameters.
+   * Logs the launch reason and parameters, then starts the named job.
    *
-   * @param logicalName  the logical job name
-   * @param parameterMap parameters supplied to the job
-   * @param reason       optional text describing why the job is starting (used only for logging)
+   * @param logicalName  logical name of the job to start
+   * @param parameterMap parameters to supply; {@code null} is treated as empty
+   * @param reason       optional launch reason written to the log; defaults to {@code "unknown"} when {@code null}
    * @return the id of the resulting job execution
-   * @throws NoSuchJobException                  if the logical name cannot be resolved
-   * @throws InvalidJobParametersException       if required parameters are missing or invalid
-   * @throws JobExecutionAlreadyRunningException if an execution of the job is already running and cannot overlap
-   * @throws JobRestartException                 if a restartable job cannot be restarted
-   * @throws JobInstanceAlreadyCompleteException if the specified parameters map to a job instance that already completed
+   * @throws NoSuchJobException                  if {@code logicalName} cannot be resolved in the registry
+   * @throws InvalidJobParametersException       if the translated parameters fail Spring Batch validation
+   * @throws JobExecutionAlreadyRunningException if the same job instance is already executing
+   * @throws JobRestartException                 if a restartable execution cannot be restarted with these parameters
+   * @throws JobInstanceAlreadyCompleteException if the given parameters map to an already-completed instance
    */
   @Override
   public Long create (String logicalName, Map<String, BatchParameter<?>> parameterMap, String reason)
@@ -117,10 +121,10 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Produces a readable representation of the parameter map for logging.
+   * Formats the parameter map as a human-readable string for log output.
    *
-   * @param parameterMap the parameters to describe
-   * @return a formatted string describing the parameters, or {@code "none"} if the map is empty
+   * @param parameterMap the parameters to describe; may be {@code null}
+   * @return a brace-delimited entry list, or {@code "none"} if the map is absent or empty
    */
   private String parametersAsString (Map<String, BatchParameter<?>> parameterMap) {
 
@@ -145,11 +149,11 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Restarts a previously executed job by id.
+   * Re-runs the job execution identified by {@code executionId}.
    *
-   * @param executionId the job execution id
-   * @throws NoSuchJobException  if the job cannot be found
-   * @throws JobRestartException if the job cannot be restarted
+   * @param executionId the id of the execution to restart
+   * @throws NoSuchJobException  if no execution with the given id can be found
+   * @throws JobRestartException if the operator cannot restart the execution
    */
   @Override
   public void restart (long executionId)
@@ -165,10 +169,10 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Creates a monitor for the given job id.
+   * Returns a monitor that can poll the given job execution until a desired exit status is reached.
    *
-   * @param jobId the job id to monitor
-   * @return a monitor that can await specific exit states
+   * @param jobId the execution id to monitor
+   * @return a {@link BatchJobMonitor} targeting the specified execution
    */
   public BatchJobMonitor monitor (Long jobId) {
 
@@ -176,11 +180,11 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Creates a monitor for the most recent execution of the named job.
+   * Returns a monitor for the most recent execution of the named job.
    *
-   * @param logicalName the job name
-   * @return a monitor targeting the latest job execution
-   * @throws NoSuchJobException if no job instance or execution can be found
+   * @param logicalName the job name to inspect
+   * @return a {@link BatchJobMonitor} targeting the latest execution
+   * @throws NoSuchJobException if no job instance or execution exists for {@code logicalName}
    */
   public BatchJobMonitor monitorLatest (String logicalName)
     throws NoSuchJobException {
@@ -203,9 +207,10 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Creates a watcher that can block until all known Spring Batch jobs finish.
+   * Returns a watcher that can block until all batch jobs visible to this factory reach
+   * {@link org.springframework.batch.core.BatchStatus#COMPLETED}.
    *
-   * @return a watcher bound to this factory's {@link JobRepository}
+   * @return a new {@link BatchJobWatcher} bound to this factory's repository
    */
   public BatchJobWatcher watch () {
 
@@ -213,16 +218,16 @@ public class BatchJobFactory implements JobFactory {
   }
 
   /**
-   * Launches a job with the supplied parameters.
+   * Translates the parameter map to Spring {@code JobParameters} and launches the job.
    *
-   * @param logicalName  the logical job name to resolve
-   * @param parameterMap the parameters to pass to the job
-   * @return the id of the created job execution
-   * @throws NoSuchJobException                  if the job name cannot be resolved
-   * @throws InvalidJobParametersException       if the parameter map fails Spring Batch validation
-   * @throws JobExecutionAlreadyRunningException if the job is already running with the same parameters
-   * @throws JobRestartException                 if the job cannot be restarted with the provided parameters
-   * @throws JobInstanceAlreadyCompleteException if the parameters map to a completed job instance
+   * @param logicalName  the registered job name
+   * @param parameterMap the parameters to pass; {@code null} is treated as no parameters
+   * @return the id of the new job execution
+   * @throws NoSuchJobException                  if {@code logicalName} is not in the registry
+   * @throws InvalidJobParametersException       if Spring Batch rejects the translated parameters
+   * @throws JobExecutionAlreadyRunningException if a conflicting execution is already active
+   * @throws JobRestartException                 if the job cannot be restarted with these parameters
+   * @throws JobInstanceAlreadyCompleteException if the parameters identify a completed instance
    */
   public long start (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {

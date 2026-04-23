@@ -33,7 +33,11 @@
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
 /**
- * Spring reference for a JMS connection factory.
+ * Spring bean reference that identifies a JMS {@link jakarta.jms.ConnectionFactory} by logical
+ * name and JNDI lookup path.
+ *
+ * <p>Extends {@link ManagedObjectReference} to carry the name and path properties used by
+ * the Spring wiring layer when configuring a {@link org.smallmind.phalanx.wire.transport.jms.ManagedObjectFactory}.
  */
 public class ConnectionFactoryReference extends ManagedObjectReference {
 

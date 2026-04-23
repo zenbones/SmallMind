@@ -35,12 +35,13 @@ package org.smallmind.nutsnbolts.reflection;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals that a reflected element violates an expected naming or signature contract.
+ * Checked exception thrown when a reflected method or field does not conform to the naming or
+ * signature conventions required by the framework, such as JavaBean getter and setter rules.
  */
 public class ReflectionContractException extends FormattedException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public ReflectionContractException () {
 
@@ -48,10 +49,10 @@ public class ReflectionContractException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message describing the contract violation
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the contract violation
+   * @param args    arguments substituted into the format string
    */
   public ReflectionContractException (String message, Object... args) {
 
@@ -59,11 +60,11 @@ public class ReflectionContractException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying problem
-   * @param message   a {@link java.util.Formatter}-style message describing the contract violation
-   * @param args      values interpolated into the message
+   * @param throwable the underlying reflection failure that triggered the contract violation
+   * @param message   a {@link java.util.Formatter}-style format string describing the violation
+   * @param args      arguments substituted into the format string
    */
   public ReflectionContractException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +72,9 @@ public class ReflectionContractException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying problem
+   * @param throwable the underlying reflection failure that triggered the contract violation
    */
   public ReflectionContractException (Throwable throwable) {
 

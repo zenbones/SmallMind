@@ -33,9 +33,25 @@
 package org.smallmind.sleuth.runner;
 
 /**
- * Execution tiers used to separate suite-level and test-level work.
+ * Identifies the two concurrency tiers used by the Sleuth scheduler.
+ * <p>
+ * {@link SleuthThreadPool} maintains one fair {@link java.util.concurrent.Semaphore} per tier,
+ * so suite-level and test-level work can be throttled independently. Ordinal values are used
+ * as semaphore array indices and must not be reordered without updating the pool.
+ *
+ * @see SleuthThreadPool
  */
 public enum TestTier {
 
-  SUITE, TEST
+  /**
+   * Suite execution tier, used by {@link SuiteRunner}.
+   * Controls how many suites may run concurrently across the whole test run.
+   */
+  SUITE,
+
+  /**
+   * Test execution tier, used by {@link TestRunner}.
+   * Controls how many individual test methods may run concurrently within a single suite.
+   */
+  TEST
 }

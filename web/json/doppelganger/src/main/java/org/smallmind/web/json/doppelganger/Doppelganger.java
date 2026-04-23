@@ -38,46 +38,45 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a domain class for Doppelganger processing. The processor generates DTO-style JAXB/Jackson compatible
- * views for inbound and outbound directions according to the declared virtual/real properties, idioms,
- * polymorphism/hierarchy, and supplemental metadata.
+ * Marks a domain class for Doppelganger processing, causing the annotation processor to generate
+ * JAXB/Jackson-compatible inbound and outbound view classes.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Doppelganger {
 
   /**
-   * @return the list of virtual properties (not backed by real fields) to inject into generated views
+   * @return virtual properties (not backed by real fields) to inject into generated views
    */
   // the list of virtual properties to be added to the generated class
   Virtual[] virtual () default {};
 
   /**
-   * @return the list of actual class fields that should be exposed with alternate metadata
+   * @return real entity fields to expose in generated views with optional metadata overrides
    */
   // the list of real properties to be added to the generated class
   Real[] real () default {};
 
   /**
-   * @return the set of pledges that force generation of specific purpose/visibility views even when empty
+   * @return pledges that force view generation for specific purpose/visibility combinations even when no properties exist
    */
   // the list of conditions under which to guarantee a class is generated (should be used only when the class would otherwise not be generated)
   Pledge[] pledges () default {};
 
   /**
-   * @return polymorphic handling details for the annotated class
+   * @return polymorphic configuration for the annotated class
    */
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
   /**
-   * @return inheritance hierarchy handling details for the annotated class
+   * @return hierarchy configuration for the annotated class
    */
   // the requirements for hierarchy annotations
   Hierarchy hierarchy () default @Hierarchy();
 
   /**
-   * @return idiom-level constraints to apply at the class level for selected purposes/directions
+   * @return class-level idiom constraints applied to generated views for matching purposes and directions
    */
   // the constraint annotations to be applied to the generated class
   Idiom[] constrainingIdioms () default {};
@@ -89,13 +88,13 @@ public @interface Doppelganger {
   Implementation[] implementations () default {};
 
   /**
-   * @return additional imports to be injected into generated view source
+   * @return additional import statements to inject into generated view source files
    */
   // Additional imports to be added to the generated class
   Import[] imports () default {};
 
   /**
-   * @return explicit XML element name for the generated root (defaults to decapitalized class name)
+   * @return explicit XML root element name for generated views, defaulting to the decapitalized class name
    */
   // the xml root element name
   String name () default "";
@@ -111,7 +110,7 @@ public @interface Doppelganger {
   boolean serializable () default false;
 
   /**
-   * @return text to include in a generated {@code @Comment} annotation for every view
+   * @return text to embed in a generated {@code @Comment} annotation on every view
    */
   // The text for a generated @Comment annotation
   String comment () default "";

@@ -35,12 +35,15 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 import java.util.Collection;
 
 /**
- * Mutable JSON array value with convenience helpers for primitive insertion.
+ * Mutable ordered sequence of {@link Value} instances corresponding to a JSON array,
+ * with fluent primitive-convenience overloads for append, replace, and insert operations.
+ *
+ * @param <V> concrete value subtype held within this array
  */
 public interface ArrayValue<V extends Value<V>> extends Value<V> {
 
   /**
-   * Identifies this value as an array.
+   * Returns {@link ValueType#ARRAY}, identifying this value as a JSON array.
    *
    * @return {@link ValueType#ARRAY}
    */
@@ -50,10 +53,10 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Appends a boolean value.
+   * Appends a boolean to the end of the array.
    *
-   * @param bool boolean to add
-   * @return this array
+   * @param bool value to append
+   * @return this array for chaining
    */
   default ArrayValue<V> add (boolean bool) {
 
@@ -61,11 +64,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Sets a boolean at the given index.
+   * Replaces the element at {@code index} with a boolean.
    *
-   * @param index position to set
-   * @param bool  boolean to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param bool  replacement value
+   * @return this array for chaining
    */
   default ArrayValue<V> set (int index, boolean bool) {
 
@@ -73,11 +76,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Inserts a boolean before the given index.
+   * Inserts a boolean before the element at {@code index}, shifting subsequent elements right.
    *
-   * @param index position to insert at
-   * @param bool  boolean to insert
-   * @return this array
+   * @param index zero-based position to insert before
+   * @param bool  value to insert
+   * @return this array for chaining
    */
   default ArrayValue<V> insert (int index, boolean bool) {
 
@@ -85,10 +88,10 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Appends an int value.
+   * Appends an integer to the end of the array.
    *
-   * @param i integer to add
-   * @return this array
+   * @param i value to append
+   * @return this array for chaining
    */
   default ArrayValue<V> add (int i) {
 
@@ -96,11 +99,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Sets an int at the given index.
+   * Replaces the element at {@code index} with an integer.
    *
-   * @param index position to set
-   * @param i     integer to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param i     replacement value
+   * @return this array for chaining
    */
   default ArrayValue<V> set (int index, int i) {
 
@@ -108,11 +111,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Inserts an int before the given index.
+   * Inserts an integer before the element at {@code index}, shifting subsequent elements right.
    *
-   * @param index position to insert at
-   * @param i     integer to insert
-   * @return this array
+   * @param index zero-based position to insert before
+   * @param i     value to insert
+   * @return this array for chaining
    */
   default ArrayValue<V> insert (int index, int i) {
 
@@ -120,10 +123,10 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Appends a long value.
+   * Appends a long to the end of the array.
    *
-   * @param l long to add
-   * @return this array
+   * @param l value to append
+   * @return this array for chaining
    */
   default ArrayValue<V> add (long l) {
 
@@ -131,11 +134,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Sets a long at the given index.
+   * Replaces the element at {@code index} with a long.
    *
-   * @param index position to set
-   * @param l     long to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param l     replacement value
+   * @return this array for chaining
    */
   default ArrayValue<V> set (int index, long l) {
 
@@ -143,11 +146,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Inserts a long before the given index.
+   * Inserts a long before the element at {@code index}, shifting subsequent elements right.
    *
-   * @param index position to insert at
-   * @param l     long to insert
-   * @return this array
+   * @param index zero-based position to insert before
+   * @param l     value to insert
+   * @return this array for chaining
    */
   default ArrayValue<V> insert (int index, long l) {
 
@@ -155,10 +158,10 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Appends a double value.
+   * Appends a double to the end of the array.
    *
-   * @param d double to add
-   * @return this array
+   * @param d value to append
+   * @return this array for chaining
    */
   default ArrayValue<V> add (double d) {
 
@@ -166,11 +169,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Sets a double at the given index.
+   * Replaces the element at {@code index} with a double.
    *
-   * @param index position to set
-   * @param d     double to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param d     replacement value
+   * @return this array for chaining
    */
   default ArrayValue<V> set (int index, double d) {
 
@@ -178,11 +181,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Inserts a double before the given index.
+   * Inserts a double before the element at {@code index}, shifting subsequent elements right.
    *
-   * @param index position to insert at
-   * @param d     double to insert
-   * @return this array
+   * @param index zero-based position to insert before
+   * @param d     value to insert
+   * @return this array for chaining
    */
   default ArrayValue<V> insert (int index, double d) {
 
@@ -190,10 +193,10 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Appends a string value.
+   * Appends a string to the end of the array.
    *
-   * @param text text to add
-   * @return this array
+   * @param text value to append
+   * @return this array for chaining
    */
   default ArrayValue<V> add (String text) {
 
@@ -201,11 +204,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Sets a string at the given index.
+   * Replaces the element at {@code index} with a string.
    *
-   * @param index position to set
-   * @param text  text to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param text  replacement value
+   * @return this array for chaining
    */
   default ArrayValue<V> set (int index, String text) {
 
@@ -213,11 +216,11 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * Inserts a string before the given index.
+   * Inserts a string before the element at {@code index}, shifting subsequent elements right.
    *
-   * @param index position to insert at
-   * @param text  text to insert
-   * @return this array
+   * @param index zero-based position to insert before
+   * @param text  value to insert
+   * @return this array for chaining
    */
   default ArrayValue<V> insert (int index, String text) {
 
@@ -225,70 +228,77 @@ public interface ArrayValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * @return number of items in the array
+   * Returns the number of elements in the array.
+   *
+   * @return element count, zero when empty
    */
   int size ();
 
   /**
-   * @return {@code true} if the array has no items
+   * Returns whether the array contains no elements.
+   *
+   * @return {@code true} if {@link #size()} is zero
    */
   boolean isEmpty ();
 
   /**
-   * Retrieves a value at the specified index.
+   * Returns the element at the specified index.
    *
-   * @param index index to read
-   * @return the value at the index
+   * @param index zero-based position to read
+   * @return value at that position
    */
   Value<V> get (int index);
 
   /**
-   * Appends a value.
+   * Appends the given value to the end of the array.
    *
-   * @param value value to add
-   * @return this array
+   * @param value value to append
+   * @param <U>   concrete value subtype
+   * @return this array for chaining
    */
   <U extends Value<V>> ArrayValue<V> add (U value);
 
   /**
-   * Replaces a value at the specified index.
+   * Replaces the element at the specified index with the given value.
    *
-   * @param index index to set
-   * @param value value to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param value replacement value
+   * @param <U>   concrete value subtype
+   * @return this array for chaining
    */
   <U extends Value<V>> ArrayValue<V> set (int index, U value);
 
   /**
-   * Inserts a value before the given index.
+   * Inserts the given value before the element at the specified index.
    *
-   * @param index index to insert before
+   * @param index zero-based position to insert before
    * @param value value to insert
-   * @return this array
+   * @param <U>   concrete value subtype
+   * @return this array for chaining
    */
   <U extends Value<V>> ArrayValue<V> insert (int index, U value);
 
   /**
-   * Removes the value at the given index.
+   * Removes and returns the element at the specified index.
    *
-   * @param index index to remove
-   * @return the removed value
+   * @param index zero-based position to remove
+   * @return the value that was removed
    */
   Value<V> remove (int index);
 
   /**
-   * Appends a collection of values.
+   * Appends all values in the collection to the end of the array.
    *
-   * @param values values to add
-   * @param <U>    value subtype
-   * @return this array
+   * @param values values to append
+   * @param <U>    concrete value subtype
+   * @return this array for chaining
    */
   <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values);
 
   /**
-   * Clears all entries from the array.
+   * Removes all elements from the array.
    *
-   * @return this array
+   * @return this array for chaining
    */
   ArrayValue<V> removeAll ();
 }

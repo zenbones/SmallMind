@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.spring.jmx;
 
 /**
- * Determines whether the RMI hostname should use the machine's IP address or host name.
+ * Selects whether the {@code java.rmi.server.hostname} system property is set to the machine's IP address or its host name.
  */
 public enum RMIHost {
 

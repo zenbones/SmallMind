@@ -40,8 +40,9 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Declares an overlay nullifier for {@link java.time.LocalDateTime} values that map to the
- * Unix epoch instant.
+ * Field annotation that instructs overlay processing to replace a {@link java.time.LocalDateTime}
+ * value that corresponds to the Unix epoch instant with {@code null}, validated by
+ * {@link StartOfEpochNullifierValidator}.
  */
 @Documented
 @Retention(RUNTIME)
@@ -50,16 +51,16 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface StartOfEpochNullifier {
 
   /**
-   * Specifies the zone id used to convert a date-time value to an instant before validation.
+   * Specifies the time zone used to convert the {@link java.time.LocalDateTime} to an instant for comparison.
    *
-   * @return the zone id used by the validator
+   * @return the zone ID string passed to {@link java.time.ZoneId#of(String)}; defaults to {@code "UTC"}
    */
   String zoneId () default "UTC";
 
   /**
-   * Defines the validation message associated with this nullifier.
+   * Specifies the diagnostic message associated with this nullification rule.
    *
-   * @return the validation message
+   * @return the message used when an epoch-equivalent date-time is treated as {@code null}
    */
   String message () default "1970-01-01T00:00:00.000Z";
 }

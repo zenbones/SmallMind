@@ -33,7 +33,7 @@
 package org.smallmind.persistence;
 
 /**
- * Indicates the persistence backing technology for an entity.
+ * Enumerates the persistence backing technologies that can store entities managed by this framework.
  */
 public enum EntitySource {
 
@@ -42,9 +42,9 @@ public enum EntitySource {
   private final String display;
 
   /**
-   * Constructs an entity source enum value with a friendly display label.
+   * Initializes the enum constant with its human-readable display label.
    *
-   * @param display the human readable name
+   * @param display the display label for this persistence technology
    */
   EntitySource (String display) {
 
@@ -52,7 +52,7 @@ public enum EntitySource {
   }
 
   /**
-   * Returns the human readable display value for this source.
+   * Returns the human-readable label for this persistence technology.
    *
    * @return the display label
    */

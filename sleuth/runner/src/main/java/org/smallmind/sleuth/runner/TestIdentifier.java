@@ -36,9 +36,20 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Generates stable numeric identifiers for test class/method combinations.
+ * Assigns and tracks stable numeric identifiers for class/method pairs across a test run.
  * <p>
- * Identifiers are stored in an inheritable thread-local to ensure child threads report under the correct test id.
+ * Each unique {@code (className, methodName)} pair is allocated a monotonically increasing
+ * {@code long} identifier the first time it is seen. The identifier is stored in an
+ * {@link InheritableThreadLocal} so that child threads (e.g., test runner threads spawned by a
+ * suite runner) automatically inherit the active identifier. Callers retrieve the current
+ * thread's identifier via {@link #getTestIdentifier()} and update it when switching to a new
+ * test via {@link #updateIdentifier(String, String)}.
+ * <p>
+ * The identifier is primarily used by the Surefire integration to correlate output entries with
+ * the correct test case in the Surefire report.
+ * <p>
+ * This class is thread-safe; identifier allocation is double-checked with synchronization.
+ * All methods are static; instantiation is not intended.
  */
 public class TestIdentifier {
 
@@ -55,10 +66,14 @@ public class TestIdentifier {
   private static final AtomicLong IDENTIFIER_COUNTER = new AtomicLong(0);
 
   /**
-   * Updates the current thread's identifier to the value associated with the given class/method, creating one if needed.
+   * Sets the current thread's active identifier to the one assigned to the given class/method pair,
+   * creating a new identifier if this pair has not been seen before.
+   * <p>
+   * Allocation uses double-checked locking: the volatile map is checked unsynchronised first and
+   * only synchronised on a miss to keep the common path cheap.
    *
-   * @param className  fully qualified class name
-   * @param methodName method name; may be {@code null} for suite-level identifiers
+   * @param className  fully qualified class name; must not be {@code null}
+   * @param methodName method name within the class; may be {@code null} for suite-level identifiers
    */
   public static void updateIdentifier (String className, String methodName) {
 
@@ -77,7 +92,12 @@ public class TestIdentifier {
   }
 
   /**
-   * @return identifier assigned to the current thread's active test
+   * Returns the identifier currently active on this thread.
+   * <p>
+   * The initial value for a new thread is {@code 1}. The value is updated by calling
+   * {@link #updateIdentifier(String, String)} and is inherited by child threads.
+   *
+   * @return current thread-local test identifier; never {@code null}
    */
   public static long getTestIdentifier () {
 
@@ -85,7 +105,7 @@ public class TestIdentifier {
   }
 
   /**
-   * Composite key for identifier lookup.
+   * Composite key combining class name and method name for identifier map lookups.
    */
   private static class TestKey {
 
@@ -93,8 +113,10 @@ public class TestIdentifier {
     private final String methodName;
 
     /**
-     * @param className  fully qualified class name
-     * @param methodName method name; may be {@code null}
+     * Constructs a key for the given class/method pair.
+     *
+     * @param className  fully qualified class name; must not be {@code null}
+     * @param methodName method name; may be {@code null} for suite-level entries
      */
     public TestKey (String className, String methodName) {
 
@@ -102,13 +124,16 @@ public class TestIdentifier {
       this.methodName = methodName;
     }
 
+    /**
+     * @return fully qualified class name component of this key; never {@code null}
+     */
     public String getClassName () {
 
       return className;
     }
 
     /**
-     * @return method name component; may be {@code null}
+     * @return method name component of this key; may be {@code null}
      */
     public String getMethodName () {
 
@@ -116,7 +141,7 @@ public class TestIdentifier {
     }
 
     /**
-     * @return combined hash of class and method names
+     * @return combined hash of class and method name components
      */
     @Override
     public int hashCode () {
@@ -125,10 +150,10 @@ public class TestIdentifier {
     }
 
     /**
-     * Equality is based on both class and method name.
+     * Two keys are equal when both their class and method name components match.
      *
-     * @param obj object to compare
-     * @return {@code true} when both parts match
+     * @param obj object to compare; may be {@code null}
+     * @return {@code true} if both components are identical
      */
     @Override
     public boolean equals (Object obj) {

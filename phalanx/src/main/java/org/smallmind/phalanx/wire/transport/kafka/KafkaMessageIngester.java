@@ -49,8 +49,14 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Manages a configurable set of Kafka consumers used to ingest messages for a single topic.
- * Each {@link ConsumerWorker} pulls from Kafka and dispatches records to the provided callback.
+ * Manages a fixed pool of Kafka consumer threads that continuously poll a single topic and
+ * deliver each record to a caller-supplied callback.
+ *
+ * <p>Consumption can be suspended via {@link #pause()} and resumed via {@link #play()} without
+ * tearing down the worker threads.  On recoverable poll errors each worker automatically closes
+ * and recreates its consumer, preserving its paused or playing state.  Offsets are committed
+ * synchronously per partition after each batch; callback errors are logged but do not prevent
+ * the commit.
  */
 public class KafkaMessageIngester {
 
@@ -64,14 +70,15 @@ public class KafkaMessageIngester {
   private ConsumerWorker[] workers;
 
   /**
-   * Builds an ingester for the supplied topic.
+   * Creates an ingester configured for the named topic without starting any threads.
+   * Call {@link #startUp()} before invoking {@link #play()} or {@link #pause()}.
    *
-   * @param nodeName         identifier appended to consumer names for diagnostics.
-   * @param groupId          Kafka consumer group id.
-   * @param topicName        topic to subscribe to when playing.
-   * @param connector        factory used to create Kafka clients.
-   * @param callback         consumer invoked for each received record.
-   * @param concurrencyLimit number of parallel consumer workers.
+   * @param nodeName         label appended to consumer client IDs for broker-side diagnostics
+   * @param groupId          Kafka consumer group identifier; governs offset coordination among workers
+   * @param topicName        topic to subscribe to when the ingester is in the playing state
+   * @param connector        factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
+   * @param callback         invoked for every record polled from the topic
+   * @param concurrencyLimit number of parallel consumer worker threads to maintain
    */
   public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
 
@@ -84,11 +91,13 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Creates a new consumer for this topic.
+   * Creates a Kafka consumer for the given worker slot, optionally subscribing it to the
+   * configured topic.
    *
-   * @param index  the worker index used for naming.
-   * @param paused whether the consumer should initially be unsubscribed.
-   * @return a configured consumer for the topic.
+   * @param index  zero-based worker index; incorporated into the consumer's client ID for uniqueness
+   * @param paused when {@code true} the consumer is created without an initial topic subscription;
+   *               when {@code false} it subscribes to the configured topic immediately
+   * @return a newly created {@link Consumer}
    */
   private Consumer<Long, byte[]> createConsumer (int index, boolean paused) {
 
@@ -96,10 +105,12 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Starts the worker threads if not already running.
+   * Starts {@code concurrencyLimit} consumer worker threads and transitions the ingester to the
+   * {@link ComponentStatus#STARTED} state.  If another thread is concurrently starting the
+   * ingester, this call blocks until that start completes.  Returns {@code this} for chaining.
    *
-   * @return this ingester for chaining.
-   * @throws InterruptedException if interrupted while waiting for another thread to finish starting.
+   * @return this ingester instance
+   * @throws InterruptedException if interrupted while waiting for a concurrent start to finish
    */
   public synchronized KafkaMessageIngester startUp ()
     throws InterruptedException {
@@ -121,7 +132,9 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Subscribes all workers to the target topic if currently started.
+   * Subscribes all worker consumers to the configured topic, causing them to resume delivering
+   * records to the callback.  Does nothing if the ingester is not in the
+   * {@link ComponentStatus#STARTED} state.
    */
   public synchronized void play () {
 
@@ -133,7 +146,9 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Unsubscribes all workers from the topic while keeping them alive.
+   * Unsubscribes all worker consumers from the topic, halting record delivery without stopping
+   * the underlying worker threads.  Does nothing if the ingester is not in the
+   * {@link ComponentStatus#STARTED} state.
    */
   public synchronized void pause () {
 
@@ -145,9 +160,11 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Stops all workers and waits for them to exit.
+   * Signals all workers to exit their poll loops and blocks until each worker thread has stopped.
+   * If another thread is concurrently shutting down the ingester, this call blocks until that
+   * shutdown completes.
    *
-   * @throws InterruptedException if interrupted while waiting for worker shutdown.
+   * @throws InterruptedException if interrupted while waiting for workers to finish
    */
   public synchronized void shutDown ()
     throws InterruptedException {
@@ -165,7 +182,11 @@ public class KafkaMessageIngester {
   }
 
   /**
-   * Runnable responsible for consuming Kafka records in a single thread.
+   * Single-threaded Kafka consumer that polls in a loop, dispatches each record to the ingester
+   * callback, and commits offsets synchronously per partition after each batch.  Supports
+   * dynamic subscribe and unsubscribe via {@link #play()} and {@link #pause()}.  On any
+   * recoverable poll error the underlying consumer is closed and recreated before the next poll,
+   * preserving the current paused or playing state.
    */
   private class ConsumerWorker implements Runnable {
 
@@ -176,9 +197,9 @@ public class KafkaMessageIngester {
     private boolean paused = false;
 
     /**
-     * Creates a worker tied to the given index.
+     * Creates a worker for the given slot and immediately subscribes its consumer to the topic.
      *
-     * @param index numeric worker identifier for logging and client naming.
+     * @param index zero-based worker index used to compose a unique consumer client ID
      */
     public ConsumerWorker (int index) {
 
@@ -188,9 +209,10 @@ public class KafkaMessageIngester {
     }
 
     /**
-     * Requests the worker to stop and waits until the run loop exits.
+     * Wakes the consumer out of its current poll call and blocks until the worker thread
+     * has fully exited.
      *
-     * @throws InterruptedException if waiting for the worker to exit is interrupted.
+     * @throws InterruptedException if interrupted while awaiting the exit latch
      */
     private void stop ()
       throws InterruptedException {
@@ -203,7 +225,7 @@ public class KafkaMessageIngester {
     }
 
     /**
-     * Subscribes the worker to the configured topic.
+     * Subscribes this worker's consumer to the configured topic so that record delivery resumes.
      */
     public synchronized void play () {
 
@@ -212,7 +234,8 @@ public class KafkaMessageIngester {
     }
 
     /**
-     * Unsubscribes the worker from the topic to temporarily halt consumption.
+     * Unsubscribes this worker's consumer from all topics, halting record delivery without
+     * terminating the poll thread.
      */
     public synchronized void pause () {
 
@@ -221,8 +244,9 @@ public class KafkaMessageIngester {
     }
 
     /**
-     * Main consumer loop that polls Kafka and dispatches records to the callback.
-     * Errors during callback execution are logged and offsets are still committed.
+     * Main poll loop.  Polls Kafka with a 3-second timeout per iteration, invokes the callback
+     * for every record, commits offsets synchronously after each per-partition batch, recreates
+     * the consumer on recoverable errors, and releases the exit latch upon termination.
      */
     @Override
     public void run () {

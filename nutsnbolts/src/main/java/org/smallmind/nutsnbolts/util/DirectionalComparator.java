@@ -35,12 +35,15 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Comparator;
 
 /**
- * Comparator base that captures an ordering direction.
+ * Abstract base comparator that stores a sort direction for use by concrete subclasses.
  *
- * @param <T> value type
+ * @param <T> the type of values this comparator compares
  */
 public abstract class DirectionalComparator<T> implements Comparator<T> {
 
+  /**
+   * Enumeration of the two possible sort directions.
+   */
   public enum Direction {
 
     DESCENDING, ASCENDING
@@ -49,7 +52,9 @@ public abstract class DirectionalComparator<T> implements Comparator<T> {
   private final Direction direction;
 
   /**
-   * @param direction sort direction to apply
+   * Constructs a directional comparator with the specified sort direction.
+   *
+   * @param direction the sort direction to apply
    */
   public DirectionalComparator (Direction direction) {
 
@@ -57,7 +62,9 @@ public abstract class DirectionalComparator<T> implements Comparator<T> {
   }
 
   /**
-   * @return configured sort direction
+   * Returns the sort direction configured for this comparator.
+   *
+   * @return the sort direction
    */
   public Direction getDirection () {
 

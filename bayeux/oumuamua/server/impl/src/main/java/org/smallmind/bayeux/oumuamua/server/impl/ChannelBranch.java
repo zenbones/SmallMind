@@ -51,9 +51,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
 
 /**
- * Node in the channel tree that holds a channel and any child branches.
+ * Single node in the channel path hierarchy, holding an optional {@link Channel} and a map of
+ * child nodes keyed by path segment; supports concurrent reads with exclusive writes via a
+ * read/write lock on the channel reference.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class ChannelBranch<V extends Value<V>> {
 
@@ -63,9 +65,10 @@ public class ChannelBranch<V extends Value<V>> {
   private Channel<V> channel;
 
   /**
-   * Creates a branch with an optional parent branch.
+   * Allocates a new branch node with the given parent reference.
    *
-   * @param parent parent branch in the channel hierarchy, or {@code null} for the root
+   * @param parent the branch one level up in the hierarchy, or {@code null} when this node is the
+   *               top-level sentinel used by {@link ChannelTree}
    */
   public ChannelBranch (ChannelBranch<V> parent) {
 
@@ -73,9 +76,9 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Retrieves the channel associated with this branch.
+   * Returns the channel stored at this branch node under a read lock.
    *
-   * @return the channel, or {@code null} when not yet created
+   * @return the channel, or {@code null} if no channel has been placed here yet
    */
   public Channel<V> getChannel () {
 
@@ -90,11 +93,12 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Recursively finds a channel using the provided route segments.
+   * Traverses the child map segment-by-segment to locate the channel at the given route.
    *
-   * @param index current segment index
-   * @param route route to traverse
-   * @return channel at the route location, or {@code null} if not found
+   * @param index the current position within {@code route}; incremented on each recursive call
+   * @param route the full route whose segments drive the traversal
+   * @return the channel at the terminal segment, or {@code null} if any intermediate segment is
+   * absent
    */
   public Channel<V> find (int index, DefaultRoute route) {
 
@@ -110,17 +114,19 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Creates intermediate branches and the channel as necessary to satisfy the route.
+   * Navigates to the terminal segment of the route, creating any absent intermediate branch nodes
+   * along the way, then delegates to {@link #initializeChannel} at the leaf.
    *
-   * @param timeToLive             channel ttl in milliseconds
-   * @param index                  current segment index
-   * @param route                  route being constructed
-   * @param root                   root container for all channels
-   * @param channelCallback        callback invoked when a channel is created
-   * @param onSubscribedCallback   callback invoked on subscription
-   * @param onUnsubscribedCallback callback invoked on unsubscription
-   * @param initializerQueue       initializers applied to a newly created channel
-   * @return resulting channel instance
+   * @param timeToLive             TTL in milliseconds for a newly created channel
+   * @param index                  the current segment index; incremented on each recursive call
+   * @param route                  the full route being resolved
+   * @param root                   server facade passed through to the created channel
+   * @param channelCallback        invoked with the new channel immediately after creation
+   * @param onSubscribedCallback   forwarded to the channel for subscription events
+   * @param onUnsubscribedCallback forwarded to the channel for unsubscription events
+   * @param initializerQueue       initializers to apply to a newly created channel; may be
+   *                               {@code null}
+   * @return the existing or newly created channel at the route's terminal position
    */
   protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
@@ -135,16 +141,17 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Initializes a channel on this branch if absent.
+   * Creates the channel on this branch under an exclusive write lock if one does not already
+   * exist, runs all initializers, and fires the creation callback.
    *
-   * @param timeToLive             channel ttl in milliseconds
-   * @param route                  channel route
-   * @param root                   root container
-   * @param channelCallback        callback invoked after creation
-   * @param onSubscribedCallback   callback invoked on subscription
-   * @param onUnsubscribedCallback callback invoked on unsubscription
-   * @param initializerQueue       initializers to apply to the channel
-   * @return created or existing channel
+   * @param timeToLive             TTL in milliseconds assigned to the new channel
+   * @param route                  the route the new channel will be registered under
+   * @param root                   server facade passed to the {@link OumuamuaChannel} constructor
+   * @param channelCallback        invoked with the channel after all initializers have run
+   * @param onSubscribedCallback   forwarded to the channel for subscription events
+   * @param onUnsubscribedCallback forwarded to the channel for unsubscription events
+   * @param initializerQueue       ordered set of initializers to apply; may be {@code null}
+   * @return the existing channel if already present, or the newly constructed one
    */
   private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
@@ -170,13 +177,13 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Removes the channel at the route if present, returning the branch holding it.
+   * Traverses the route to find the target branch and removes its channel.
    *
-   * @param index           current segment index
-   * @param route           route to remove
-   * @param channelCallback callback invoked when a channel is removed
-   * @return branch containing the removed channel, or {@code null} if not found
-   * @throws ChannelStateException if a persistent channel is targeted for removal
+   * @param index           the current segment index; incremented on each recursive call
+   * @param route           the full route of the channel to remove
+   * @param channelCallback invoked with the terminated channel if one was found and removed
+   * @return the branch that held the channel, or {@code null} if the route was not found
+   * @throws ChannelStateException if the target channel is persistent and removal is not permitted
    */
   public ChannelBranch<V> removeChannelIfPresent (int index, Route route, Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
@@ -193,11 +200,12 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Removes the channel from this branch, respecting persistence rules.
+   * Terminates and nulls out the channel on this branch under an exclusive write lock.
    *
-   * @param channelCallback callback invoked after channel termination
-   * @return this branch instance
-   * @throws ChannelStateException if the channel is persistent and cannot be removed
+   * @param channelCallback invoked with the terminated {@link OumuamuaChannel} before this method
+   *                        returns; only called if a channel was present
+   * @return this branch instance, allowing callers to chain inspection of the now-empty branch
+   * @throws ChannelStateException if the channel is marked persistent; the channel is left intact
    */
   public ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
@@ -222,12 +230,15 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Delivers a packet to matching child channels based on the route.
+   * Routes the packet down the tree, matching literal segments, the single-level wildcard
+   * ({@code *}), and the deep wildcard ({@code **}) according to Bayeux routing rules.
    *
-   * @param sender       originating session
-   * @param index        current route index
-   * @param packet       packet to deliver
-   * @param sessionIdSet set used to track delivery to avoid duplicates
+   * @param sender       the originating session, or {@code null} for server-side publishes
+   * @param index        the current position within the packet's route; incremented on each
+   *                     recursive call
+   * @param packet       the packet to deliver to matching channel branches
+   * @param sessionIdSet accumulates subscriber ids already delivered to, preventing duplicate
+   *                     delivery when multiple wildcard patterns match the same subscriber
    */
   public void deliver (Session<V> sender, int index, Packet<V> packet, Set<String> sessionIdSet) {
 
@@ -256,11 +267,11 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Delivers the packet to the channel at this branch if present.
+   * Forwards the packet to this branch's channel under a read lock; no-op if the channel is absent.
    *
-   * @param sender       originating session
-   * @param packet       packet to deliver
-   * @param sessionIdSet set tracking delivered session ids
+   * @param sender       the originating session
+   * @param packet       the packet to forward to the channel's subscribers
+   * @param sessionIdSet the deduplication set forwarded to {@link Channel#deliver}
    */
   private void deliverToChannel (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
@@ -276,9 +287,11 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Removes empty branches from the tree to keep the structure compact.
+   * Recursively removes childless, channel-free branches from the tree, or removes this branch
+   * from its parent when it qualifies.
    *
-   * @param segment segment used to remove this branch from the parent
+   * @param segment the key under which this branch is stored in the parent's child map; pass
+   *                {@code null} for the root call so the root itself is never removed
    */
   protected void removeDeadLeaves (Segment segment) {
 
@@ -292,9 +305,11 @@ public class ChannelBranch<V extends Value<V>> {
   }
 
   /**
-   * Walks the branch hierarchy depth-first, invoking the supplied operation.
+   * Performs a depth-first traversal of this branch and all descendants, invoking the operation
+   * on every node including this one.
    *
-   * @param operation callback applied to each branch
+   * @param operation the action to perform at each branch; called with this branch first, then
+   *                  recursively with each child
    */
   public void walk (ChannelOperation<V> operation) {
 

@@ -33,7 +33,7 @@
 package org.smallmind.web.jetty.option;
 
 /**
- * Configures WebSocket settings for a Jetty context.
+ * Configuration option that enables Jakarta WebSocket support within a Jetty context and controls the default session idle timeout.
  */
 public class WebSocketOption {
 
@@ -42,9 +42,9 @@ public class WebSocketOption {
   private long maxSessionIdleTimeout = FIVE_MINUTES;
 
   /**
-   * Convenience accessor for a five-minute timeout value.
+   * Returns the constant five-minute value in milliseconds.
    *
-   * @return five minutes in milliseconds
+   * @return five minutes expressed in milliseconds
    */
   public static long getFiveMinutes () {
 
@@ -52,7 +52,7 @@ public class WebSocketOption {
   }
 
   /**
-   * Retrieves the maximum idle timeout applied to WebSocket sessions.
+   * Returns the maximum idle timeout applied to all WebSocket sessions in this context.
    *
    * @return idle timeout in milliseconds
    */
@@ -62,7 +62,7 @@ public class WebSocketOption {
   }
 
   /**
-   * Sets the maximum idle timeout applied to WebSocket sessions.
+   * Sets the maximum idle timeout applied to all WebSocket sessions in this context.
    *
    * @param maxSessionIdleTimeout idle timeout in milliseconds
    */

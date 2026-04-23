@@ -33,64 +33,71 @@
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
 /**
- * Factory for constructing JSON value instances used in Bayeux messages.
+ * Allocation point for all concrete {@link Value} subtypes used within a single codec binding;
+ * implementations are codec-specific and produce values that can be freely combined in messages.
  *
- * @param <V> concrete value subtype produced
+ * @param <V> concrete value subtype produced by this factory
  */
 public interface ValueFactory<V extends Value<V>> {
 
   /**
-   * @return a new empty object value
+   * Allocates a new, empty JSON object value.
+   *
+   * @return new mutable object with no fields
    */
   ObjectValue<V> objectValue ();
 
   /**
-   * @return a new empty array value
+   * Allocates a new, empty JSON array value.
+   *
+   * @return new mutable array with no elements
    */
   ArrayValue<V> arrayValue ();
 
   /**
-   * Creates a text value.
+   * Creates a JSON string value wrapping the given text.
    *
-   * @param text text content
-   * @return a new string value
+   * @param text string content to wrap
+   * @return new string value
    */
   StringValue<V> textValue (String text);
 
   /**
-   * Creates a numeric value from an integer.
+   * Creates a JSON number value backed by a 32-bit integer.
    *
-   * @param i integer content
-   * @return a numeric value
+   * @param i integer to wrap
+   * @return new numeric value with {@link NumberType#INTEGER} backing
    */
   NumberValue<V> numberValue (int i);
 
   /**
-   * Creates a numeric value from a long.
+   * Creates a JSON number value backed by a 64-bit long.
    *
-   * @param l long content
-   * @return a numeric value
+   * @param l long to wrap
+   * @return new numeric value with {@link NumberType#LONG} backing
    */
   NumberValue<V> numberValue (long l);
 
   /**
-   * Creates a numeric value from a double.
+   * Creates a JSON number value backed by a 64-bit double.
    *
-   * @param d double content
-   * @return a numeric value
+   * @param d double to wrap
+   * @return new numeric value with {@link NumberType#DOUBLE} backing
    */
   NumberValue<V> numberValue (double d);
 
   /**
-   * Creates a boolean value.
+   * Creates a JSON boolean value.
    *
-   * @param bool boolean content
-   * @return a boolean value
+   * @param bool boolean to wrap
+   * @return new boolean value
    */
   BooleanValue<V> booleanValue (boolean bool);
 
   /**
-   * @return the singleton null value
+   * Returns the shared JSON null literal for this factory.
+   *
+   * @return null value singleton (or equivalent)
    */
   NullValue<V> nullValue ();
 }

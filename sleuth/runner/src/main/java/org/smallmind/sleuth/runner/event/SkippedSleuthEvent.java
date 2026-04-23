@@ -35,15 +35,27 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when a test is skipped.
+ * Event fired when a test is bypassed without execution because of a prior failure or unmet dependency.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.TestRunner} when a non-null
+ * {@link org.smallmind.sleuth.runner.Culprit} is present at the point the test would otherwise
+ * run. This can occur when a suite-level before-hook fails, when a test that the current test
+ * {@code dependsOn} previously errored, or when the {@link org.smallmind.sleuth.runner.DependencyQueue}
+ * propagates a culprit from a failed predecessor. The message field describes which culprit
+ * triggered the skip.
+ *
+ * @see org.smallmind.sleuth.runner.TestRunner
+ * @see org.smallmind.sleuth.runner.Culprit
  */
 public class SkippedSleuthEvent extends MessageSleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds before skipping
-   * @param message    reason for the skip
+   * Constructs a skipped event for the given test.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test method that was skipped; must not be {@code null}
+   * @param elapsed    time elapsed before the skip decision was made, in milliseconds; typically zero
+   * @param message    human-readable explanation of the skip reason; must not be {@code null}
    */
   public SkippedSleuthEvent (String className, String methodName, long elapsed, String message) {
 
@@ -51,6 +63,8 @@ public class SkippedSleuthEvent extends MessageSleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#SKIPPED}.
+   *
    * @return {@link SleuthEventType#SKIPPED}
    */
   @Override
@@ -60,7 +74,9 @@ public class SkippedSleuthEvent extends MessageSleuthEvent {
   }
 
   /**
-   * @return yellow to indicate a skipped test
+   * Returns yellow, used to distinguish skipped tests from passed and failed tests on the console.
+   *
+   * @return {@link AnsiColor#YELLOW}
    */
   @Override
   public AnsiColor getColor () {

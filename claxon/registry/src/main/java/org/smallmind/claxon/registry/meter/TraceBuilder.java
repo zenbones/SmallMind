@@ -37,20 +37,39 @@ import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Window;
 
 /**
- * Builder for {@link Trace} meters.
+ * Fluent {@link MeterBuilder} implementation for constructing {@link Trace} meters.
+ *
+ * <p>Two parameters can be configured:</p>
+ * <ul>
+ *   <li>{@code windowTimeUnit} — the {@link TimeUnit} applied to the numeric size of
+ *       each {@link Window}; defaults to {@link TimeUnit#MINUTES}.</li>
+ *   <li>{@code windows} — the set of named EWMA windows to track; defaults to
+ *       {@code m1} (1 minute), {@code m5} (5 minutes), and {@code m15} (15 minutes).</li>
+ * </ul>
  */
 public class TraceBuilder implements MeterBuilder<Trace> {
 
+  /**
+   * Default set of windows emitted by a trace meter when none are explicitly configured:
+   * 1-minute ({@code "m1"}), 5-minute ({@code "m5"}), and 15-minute ({@code "m15"}) EWMAs.
+   */
   private static final Window[] DEFAULT_WINDOWS = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
+  /**
+   * The time unit applied to each window's numeric value; defaults to {@link TimeUnit#MINUTES}.
+   */
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
+
+  /**
+   * The window definitions used to create per-window EWMAs; defaults to {@link #DEFAULT_WINDOWS}.
+   */
   private Window[] windows = DEFAULT_WINDOWS;
 
   /**
-   * Sets the time unit applied to each window definition.
+   * Sets the {@link TimeUnit} applied to the numeric size of each configured {@link Window}.
    *
-   * @param windowTimeUnit window time unit
-   * @return this builder
+   * @param windowTimeUnit the time unit for all window values; must not be {@code null}
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
 
@@ -59,6 +78,13 @@ public class TraceBuilder implements MeterBuilder<Trace> {
     return this;
   }
 
+  /**
+   * Sets the window definitions that determine the EWMA decay constants tracked by the meter.
+   *
+   * @param windows one or more {@link Window} instances specifying a name and numeric size
+   *                for each moving-average window; must not be {@code null} or empty
+   * @return this builder, for method chaining
+   */
   public MeterBuilder<Trace> windows (Window[] windows) {
 
     this.windows = windows;
@@ -67,10 +93,10 @@ public class TraceBuilder implements MeterBuilder<Trace> {
   }
 
   /**
-   * Builds a trace meter with the configured windows.
+   * Builds a {@link Trace} meter using the configured time unit and window definitions.
    *
-   * @param clock registry clock
-   * @return configured trace meter
+   * @param clock the registry clock forwarded to the {@link Trace} for EWMA decay timing
+   * @return a fully configured {@link Trace} instance
    */
   @Override
   public Trace build (Clock clock) {

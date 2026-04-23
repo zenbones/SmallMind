@@ -33,19 +33,28 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Abstraction over time sources to allow monotonic and wall-clock access.
+ * Abstraction over a time source that provides both wall-clock time and a monotonic time
+ * suitable for measuring elapsed durations.
+ *
+ * <p>Implementations can back this interface with the system clock, a test-controlled
+ * fake clock, or any other time source appropriate for the environment.
+ *
+ * @see SystemClock
  */
 public interface Clock {
 
   /**
-   * Returns current wall-clock time in milliseconds since the epoch.
+   * Returns the current wall-clock time as milliseconds since the Unix epoch
+   * (midnight UTC, 1 January 1970).
    *
-   * @return epoch milliseconds
+   * @return epoch milliseconds from the wall clock
    */
   long wallTime ();
 
   /**
-   * Returns a monotonic time suitable for measuring durations.
+   * Returns a monotonically increasing time value in nanoseconds suitable for
+   * measuring elapsed durations. The reference point of the returned value is
+   * implementation-defined and must not be used as an absolute timestamp.
    *
    * @return monotonic nanoseconds
    */

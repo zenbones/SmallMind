@@ -48,18 +48,22 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.nutsnbolts.util.Bytes;
 
 /**
- * Utilities for serializing and deserializing packets transmitted over a backbone transport.
+ * Serialization helpers for encoding and decoding {@link Packet} instances transmitted over
+ * a backbone transport; each record includes the originating node name, the channel route path,
+ * and the JSON-encoded messages, each preceded by a 4-byte big-endian length prefix.
  */
 public class RecordUtility {
 
   /**
-   * Serializes a packet with its originating node name and route into a byte array.
+   * Encodes a packet into a self-delimiting byte array suitable for backbone transmission.
    *
-   * @param nodeName name of the node emitting the packet
-   * @param packet   packet to serialize
-   * @param <V>      value type used in the packet
-   * @return serialized representation
-   * @throws IOException if writing fails
+   * <p>The layout is: {@code [4-byte nodeNameLen][nodeName][4-byte pathLen][path][4-byte payloadLen][payload]}.
+   *
+   * @param nodeName unique identifier of the cluster node emitting the packet
+   * @param packet   packet to encode; its route's path and messages are both included
+   * @param <V>      value type carried in the packet
+   * @return byte array containing the length-prefixed record
+   * @throws IOException if message encoding or stream writing fails
    */
   public static <V extends Value<V>> byte[] serialize (String nodeName, Packet<V> packet)
     throws IOException {
@@ -81,14 +85,16 @@ public class RecordUtility {
   }
 
   /**
-   * Deserializes a packet record produced by {@link #serialize(String, Packet)}.
+   * Decodes a byte array produced by {@link #serialize(String, Packet)} back into a
+   * {@link DebonedPacket}, annotating each decoded message with a {@code backbone} ext field
+   * indicating the record originated from a remote Kafka node.
    *
-   * @param codec  codec used to decode message payloads
-   * @param buffer serialized bytes
-   * @param <V>    value type used in the packet
-   * @return packet with node metadata restored
-   * @throws IOException          if decoding fails
-   * @throws InvalidPathException if the recorded route is invalid
+   * @param codec  codec used to decode the JSON message payload
+   * @param buffer serialized record bytes in the format written by {@link #serialize}
+   * @param <V>    value type carried in the packet
+   * @return a {@link DebonedPacket} containing the source node name and the reconstructed packet
+   * @throws IOException          if stream reading or message decoding fails
+   * @throws InvalidPathException if the path encoded in the record is not a valid channel path
    */
   public static <V extends Value<V>> DebonedPacket<V> deserialize (Codec<V> codec, byte[] buffer)
     throws IOException, InvalidPathException {
@@ -114,11 +120,12 @@ public class RecordUtility {
   }
 
   /**
-   * Reads a length-prefixed buffer from the stream.
+   * Reads one length-prefixed field from {@code byteArrayInputStream}, reusing {@code lengthBuffer}
+   * to avoid allocating a new 4-byte array on each call.
    *
-   * @param byteArrayInputStream source stream
-   * @param lengthBuffer         reusable buffer for reading the length prefix
-   * @return content bytes
+   * @param byteArrayInputStream source stream positioned at the start of a length prefix
+   * @param lengthBuffer         4-byte scratch buffer used to read the big-endian length value
+   * @return the content bytes that followed the length prefix
    */
   private static byte[] readRecordBuffer (ByteArrayInputStream byteArrayInputStream, byte[] lengthBuffer) {
 

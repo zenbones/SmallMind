@@ -33,12 +33,12 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * {@link Error} that formats its message using {@link String#format(String, Object...)}.
+ * An {@link Error} whose detail message is constructed via {@link String#format(String, Object...)}, allowing printf-style message formatting at the call site.
  */
 public class FormattedError extends Error {
 
   /**
-   * Creates an error without a detail message.
+   * Creates an error with no detail message.
    */
   public FormattedError () {
 
@@ -46,10 +46,10 @@ public class FormattedError extends Error {
   }
 
   /**
-   * Creates an error with a formatted message.
+   * Creates an error whose detail message is produced by formatting {@code message} with the supplied arguments.
    *
-   * @param message the format string, or {@code null}
-   * @param args    arguments applied to the format string
+   * @param message the format string passed to {@link String#format}, or {@code null} for a {@code null} message
+   * @param args    the arguments referenced by the format specifiers in {@code message}
    */
   public FormattedError (String message, Object... args) {
 
@@ -57,11 +57,11 @@ public class FormattedError extends Error {
   }
 
   /**
-   * Creates an error with a cause and a formatted message.
+   * Creates an error with a cause and a formatted detail message.
    *
-   * @param throwable the underlying cause
-   * @param message   the format string, or {@code null}
-   * @param args      arguments applied to the format string
+   * @param throwable the cause of this error
+   * @param message   the format string passed to {@link String#format}, or {@code null} for a {@code null} message
+   * @param args      the arguments referenced by the format specifiers in {@code message}
    */
   public FormattedError (Throwable throwable, String message, Object... args) {
 
@@ -69,9 +69,9 @@ public class FormattedError extends Error {
   }
 
   /**
-   * Creates an error with the supplied cause.
+   * Creates an error wrapping the supplied cause with no additional message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the cause of this error
    */
   public FormattedError (Throwable throwable) {
 

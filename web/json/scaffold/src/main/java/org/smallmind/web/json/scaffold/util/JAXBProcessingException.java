@@ -35,8 +35,8 @@ package org.smallmind.web.json.scaffold.util;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception thrown when JAXB/Jackson processing encounters invalid polymorphic structures
- * or other binding issues.
+ * Runtime exception thrown when JAXB/Jackson processing encounters an invalid polymorphic structure
+ * or other binding failure.
  */
 public class JAXBProcessingException extends FormattedRuntimeException {
 

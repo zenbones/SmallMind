@@ -33,7 +33,21 @@
 package org.smallmind.memcached.cubby.response;
 
 /**
- * Enumerates memcached response status codes used by the Cubby binary protocol variant.
+ * Enumeration of the two-character response codes defined by the memcached meta protocol.
+ *
+ * <p>Each constant name is the exact two-character ASCII token sent by the server. The enum
+ * provides helper methods to match raw bytes against a code and to test membership in a set of
+ * codes, both of which are used heavily by {@link ResponseParser}.</p>
+ *
+ * <ul>
+ *   <li>{@link #MN} &ndash; NOOP; echoed by the {@code mn} command.</li>
+ *   <li>{@link #HD} &ndash; HIT/stored; indicates the operation succeeded.</li>
+ *   <li>{@link #VA} &ndash; VALUE; the response carries a value payload.</li>
+ *   <li>{@link #EN} &ndash; MISS; the requested key was not found.</li>
+ *   <li>{@link #EX} &ndash; EXISTS; a CAS mismatch was detected.</li>
+ *   <li>{@link #NF} &ndash; NOT_FOUND; the key does not exist for a CAS store.</li>
+ *   <li>{@link #NS} &ndash; NOT_STORED; the item was not stored (non-error condition).</li>
+ * </ul>
  */
 public enum ResponseCode {
 
@@ -53,9 +67,13 @@ public enum ResponseCode {
   NS;
 
   /**
-   * @param first  first response byte
-   * @param second second response byte
-   * @return {@code true} if the bytes match the start of this code
+   * Tests whether the two raw bytes at the start of a response line match this code.
+   *
+   * <p>The comparison is byte-for-byte against the two characters of the constant's name.</p>
+   *
+   * @param first  the first byte of the response line
+   * @param second the second byte of the response line
+   * @return {@code true} if both bytes match the corresponding characters of this code's name
    */
   public boolean begins (byte first, byte second) {
 
@@ -63,8 +81,10 @@ public enum ResponseCode {
   }
 
   /**
-   * @param codes set of codes to check membership against
-   * @return {@code true} if this code is contained in the list
+   * Tests whether this code is present in the supplied varargs list.
+   *
+   * @param codes one or more codes to check membership against
+   * @return {@code true} if this code equals at least one element in {@code codes}
    */
   public boolean in (ResponseCode... codes) {
 

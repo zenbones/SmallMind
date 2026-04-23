@@ -38,8 +38,7 @@ import java.io.Reader;
 import freemarker.cache.TemplateLoader;
 
 /**
- * FreeMarker {@link TemplateLoader} that resolves templates from the classpath.
- * Supports loading relative to an anchor class/package or directly from a class loader.
+ * FreeMarker {@link TemplateLoader} that resolves templates from the classpath, supporting both absolute resource names and names resolved relative to an anchor class's package.
  */
 public class ClassPathTemplateLoader implements TemplateLoader {
 
@@ -48,7 +47,7 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   private Class<?> anchorClass;
 
   /**
-   * Creates a loader using the thread context class loader.
+   * Creates a loader that resolves absolute classpath resource names using the current thread's context class loader.
    */
   public ClassPathTemplateLoader () {
 
@@ -56,9 +55,9 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Creates a loader using the supplied class loader and absolute template names.
+   * Creates a loader that resolves absolute classpath resource names using the supplied class loader.
    *
-   * @param classLoader class loader used to resolve resources
+   * @param classLoader class loader to use when locating template resources
    */
   public ClassPathTemplateLoader (ClassLoader classLoader) {
 
@@ -68,9 +67,9 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Creates a loader that resolves templates relative to the package of an anchor class.
+   * Creates a loader that resolves template names relative to the package of the given anchor class using that class's own class loader.
    *
-   * @param anchorClass class whose package provides the base path
+   * @param anchorClass class whose package path is used as the base for relative template names
    */
   public ClassPathTemplateLoader (Class<?> anchorClass) {
 
@@ -78,10 +77,10 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Creates a loader that resolves templates relative to the package of an anchor class.
+   * Creates a loader anchored to the given class; when {@code relative} is {@code true}, template names are prefixed with the anchor class's package path before lookup.
    *
-   * @param anchorClass class whose package provides the base path
-   * @param relative    if {@code true}, prepend the anchor package path to template names
+   * @param anchorClass class whose package path is used as the base for template names
+   * @param relative    {@code true} to prepend the anchor class's package path to all template names
    */
   public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
 
@@ -92,7 +91,9 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * @return class whose package is used for relative template resolution, or {@code null}
+   * Returns the anchor class whose package is used as the base path for relative template resolution.
+   *
+   * @return the anchor class, or {@code null} if this loader uses absolute names
    */
   public Class<?> getAnchorClass () {
 
@@ -100,7 +101,9 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * @return class loader used to locate classpath resources
+   * Returns the class loader used to locate classpath template resources.
+   *
+   * @return the class loader
    */
   public ClassLoader getClassLoader () {
 
@@ -108,10 +111,10 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Locates a template resource by name, optionally resolving relative to the anchor package.
+   * Locates a template by name on the classpath, optionally prefixing the name with the anchor class's package path, and returns a {@link ClassPathTemplateSource} or {@code null} if the resource does not exist.
    *
-   * @param name template name/path
-   * @return template source handle or {@code null} if not found
+   * @param name the template resource name or path
+   * @return a {@link ClassPathTemplateSource} if the resource exists, or {@code null} otherwise
    */
   @Override
   public Object findTemplateSource (String name) {
@@ -133,10 +136,10 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Classpath resources do not expose modification times; returns {@code -1}.
+   * Returns {@code -1} because classpath resources do not expose last-modified timestamps.
    *
    * @param templateSource ignored
-   * @return {@code -1} to indicate unknown modification time
+   * @return {@code -1} always
    */
   @Override
   public long getLastModified (Object templateSource) {
@@ -146,12 +149,12 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Opens a reader for the supplied template source using the requested encoding.
+   * Opens and returns a character reader for the template resource using the specified encoding.
    *
-   * @param templateSource classpath template source
-   * @param encoding       character encoding to apply
-   * @return reader over the template content
-   * @throws IOException if the stream cannot be opened
+   * @param templateSource a {@link ClassPathTemplateSource} previously returned by {@link #findTemplateSource}
+   * @param encoding       the character encoding to apply to the input stream
+   * @return a reader over the template content
+   * @throws IOException if the underlying input stream cannot be opened or the encoding is unsupported
    */
   @Override
   public Reader getReader (Object templateSource, String encoding)
@@ -161,10 +164,10 @@ public class ClassPathTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Closes the underlying template source stream.
+   * Closes the input stream held by the given template source.
    *
-   * @param templateSource template source to close
-   * @throws IOException if closing fails
+   * @param templateSource a {@link ClassPathTemplateSource} previously returned by {@link #findTemplateSource}
+   * @throws IOException if closing the stream fails
    */
   @Override
   public void closeTemplateSource (Object templateSource)

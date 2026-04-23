@@ -36,8 +36,7 @@ import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.util.NumberComparator;
 
 /**
- * Supported comparison operators for field predicates. Each constant implements {@link #isTrue(WhereOperand, WhereOperand)}
- * to evaluate the operator against two operands.
+ * Enumeration of supported comparison operators for where field predicates; each constant implements in-memory evaluation via {@link #isTrue}.
  */
 public enum WhereOperator {
 
@@ -242,12 +241,12 @@ public enum WhereOperator {
   private static final char WILDCARD_CHAR = '*';
 
   /**
-   * Evaluates the operator against the supplied operands.
+   * Evaluates this operator against the two supplied operands and returns whether the comparison holds.
    *
-   * @param op1 operator-specific left operand
-   * @param op2 operator-specific right operand
-   * @return {@code true} if the comparison succeeds
-   * @throws QueryProcessingException if operand types are incompatible for the operator
+   * @param op1 left-hand (pattern/threshold) operand
+   * @param op2 right-hand (input value) operand
+   * @return {@code true} if the comparison is satisfied
+   * @throws QueryProcessingException if the operand types are incompatible with this operator
    */
   public abstract boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2);
 }

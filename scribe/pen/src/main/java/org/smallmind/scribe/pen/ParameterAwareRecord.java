@@ -33,9 +33,11 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Base record implementation that carries contextual parameters.
+ * Abstract base implementation of {@link Record} that manages an optional array of {@link Parameter} instances,
+ * providing concrete subclasses with the parameter storage and retrieval logic required by the {@code Record}
+ * contract.
  *
- * @param <N> native record type
+ * @param <N> the type of the underlying native log-entry object
  */
 public abstract class ParameterAwareRecord<N> implements Record<N> {
 
@@ -44,9 +46,9 @@ public abstract class ParameterAwareRecord<N> implements Record<N> {
   private Parameter[] parameters;
 
   /**
-   * Returns the contextual parameters associated with this record.
+   * Returns the contextual parameters attached to this record, or an empty array if none have been set.
    *
-   * @return parameters or an empty array if none
+   * @return the parameters array; never {@code null}
    */
   @Override
   public Parameter[] getParameters () {
@@ -55,9 +57,9 @@ public abstract class ParameterAwareRecord<N> implements Record<N> {
   }
 
   /**
-   * Sets the contextual parameters associated with this record.
+   * Attaches the supplied parameters to this record, replacing any previously set parameters.
    *
-   * @param parameters parameters to attach
+   * @param parameters the parameters to attach; passing {@code null} or no arguments clears existing parameters
    */
   public void setParameters (Parameter... parameters) {
 

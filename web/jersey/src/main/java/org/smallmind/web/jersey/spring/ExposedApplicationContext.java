@@ -35,16 +35,16 @@ package org.smallmind.web.jersey.spring;
 import org.springframework.context.ApplicationContext;
 
 /**
- * Simple static holder used to expose the Spring {@link ApplicationContext} to Jersey components.
+ * Static holder that makes the Spring {@link ApplicationContext} accessible to Jersey components outside the Spring container.
  */
 public class ExposedApplicationContext {
 
   private static ApplicationContext APPLICATION_CONTEXT;
 
   /**
-   * Registers the application context for later retrieval.
+   * Stores the application context for subsequent retrieval.
    *
-   * @param applicationContext Spring context
+   * @param applicationContext the Spring context to expose
    */
   public static void register (ApplicationContext applicationContext) {
 
@@ -52,9 +52,9 @@ public class ExposedApplicationContext {
   }
 
   /**
-   * Returns the previously registered application context.
+   * Returns the registered application context.
    *
-   * @return Spring context, or {@code null} if not registered
+   * @return the Spring context, or {@code null} if {@link #register} has not been called
    */
   public static ApplicationContext getApplicationContext () {
 

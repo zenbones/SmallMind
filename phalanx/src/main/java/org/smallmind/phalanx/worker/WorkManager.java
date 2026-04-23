@@ -43,10 +43,16 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Coordinates a set of worker instances, handling lifecycle and queuing of work items.
+ * Manages a fixed-size pool of {@link Worker} instances sharing a common {@link WorkQueue}.
  *
- * @param <W> concrete worker type that will process items
- * @param <T> type of work accepted by the queue
+ * <p>The manager owns the full lifecycle of its workers: it creates and starts them via a
+ * {@link WorkerFactory} on {@link #startUp}, dispatches work items through {@link #execute},
+ * and cooperatively shuts them down via {@link #shutDown}.  Metrics for work-acquisition latency
+ * are recorded with Claxon.  Concurrent calls to {@code startUp} or {@code shutDown} are safe;
+ * subsequent callers spin-wait until the transition in progress completes.</p>
+ *
+ * @param <W> the concrete {@link Worker} subtype managed by this instance
+ * @param <T> the type of work items accepted by the underlying queue
  */
 public class WorkManager<W extends Worker<T>, T> {
 
@@ -57,10 +63,10 @@ public class WorkManager<W extends Worker<T>, T> {
   private W[] workers;
 
   /**
-   * Creates a manager with a default transferring work queue.
+   * Creates a manager that uses a {@link TransferringWorkQueue} as the default queue implementation.
    *
-   * @param workerClass      class of the worker to instantiate
-   * @param concurrencyLimit maximum number of concurrently running workers
+   * @param workerClass      the runtime class of the worker type, used to allocate the worker array
+   * @param concurrencyLimit the maximum number of worker threads to run concurrently
    */
   public WorkManager (Class<W> workerClass, int concurrencyLimit) {
 
@@ -68,11 +74,11 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   /**
-   * Creates a manager with the supplied queue implementation.
+   * Creates a manager with an explicitly supplied queue implementation.
    *
-   * @param workerClass      class of the worker to instantiate
-   * @param concurrencyLimit maximum number of concurrently running workers
-   * @param workQueue        queue used to hand off work items to workers
+   * @param workerClass      the runtime class of the worker type, used to allocate the worker array
+   * @param concurrencyLimit the maximum number of worker threads to run concurrently
+   * @param workQueue        the queue through which work items are handed off to workers
    */
   public WorkManager (Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
 
@@ -82,9 +88,9 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   /**
-   * Returns the configured concurrency cap for this manager.
+   * Returns the maximum number of workers this manager will run concurrently.
    *
-   * @return maximum worker count
+   * @return the concurrency limit supplied at construction time
    */
   public int getConcurrencyLimit () {
 
@@ -92,10 +98,13 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   /**
-   * Starts the worker pool if not already running.
+   * Starts the worker pool if it is not already started.
    *
-   * @param workerFactory factory used to construct worker instances
-   * @throws InterruptedException if the thread is interrupted while waiting on startup
+   * <p>Workers are created via {@code workerFactory}, wrapped in daemon threads, and started immediately.
+   * If a start is already in progress the calling thread spin-waits until it completes.</p>
+   *
+   * @param workerFactory factory used to create each worker instance
+   * @throws InterruptedException if the calling thread is interrupted while spin-waiting for a concurrent start
    */
   public void startUp (WorkerFactory<W, T> workerFactory)
     throws InterruptedException {
@@ -120,10 +129,14 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   /**
-   * Enqueues work for processing, blocking until a worker accepts it.
+   * Submits a work item for processing, blocking with retries until the queue accepts it.
    *
-   * @param work the item to process
-   * @throws Throwable if the manager is not started or enqueueing fails
+   * <p>The method measures and records work-acquisition time via Claxon.  The manager must be in the
+   * {@code STARTED} state; otherwise a {@link WorkManagerException} is thrown.</p>
+   *
+   * @param work the work item to enqueue
+   * @throws WorkManagerException if the manager is not in the {@code STARTED} state
+   * @throws Throwable            if the Claxon instrumentation or queue interaction throws unexpectedly
    */
   public void execute (final T work)
     throws Throwable {
@@ -143,9 +156,13 @@ public class WorkManager<W extends Worker<T>, T> {
   }
 
   /**
-   * Stops all workers and transitions the manager to the stopped state.
+   * Stops all workers and transitions the manager to the {@code STOPPED} state.
    *
-   * @throws InterruptedException if interrupted while waiting for stop completion
+   * <p>Each worker's {@link Worker#stop} method is called in sequence; any exception thrown is logged
+   * and the remaining workers are still stopped.  If a shutdown is already in progress the calling
+   * thread spin-waits until it completes.</p>
+   *
+   * @throws InterruptedException if the calling thread is interrupted while spin-waiting for a concurrent shutdown
    */
   public void shutDown ()
     throws InterruptedException {

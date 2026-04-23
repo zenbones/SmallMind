@@ -38,7 +38,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
- * Runtime helpers used by generated proxy classes to invoke target methods.
+ * Static helpers called by generated proxy byte code to look up the target {@link Method} and dispatch
+ * the call through the proxy's {@link InvocationHandler}.
  */
 public class ProxyUtility {
 
@@ -46,18 +47,20 @@ public class ProxyUtility {
   private static final HashMap<String, Class<?>> SIGNATURE_MAP = new HashMap<>();
 
   /**
-   * Invokes a proxied method through the supplied {@link InvocationHandler}.
+   * Resolves the reflective {@link Method} for the call (caching the result by {@code methodCode}),
+   * then dispatches to {@code invocationHandler}, returning a type-appropriate default if the handler
+   * is {@code null}.
    *
-   * @param proxy             the proxy instance
-   * @param invocationHandler the handler responsible for dispatching calls
-   * @param isSubclass        whether the proxy extends a class ({@code true}) or implements an interface ({@code false})
-   * @param methodCode        a unique key for caching the reflected method
+   * @param proxy             the proxy object on which the method was invoked
+   * @param invocationHandler the handler to dispatch to; may be {@code null} to return the default value
+   * @param isSubclass        {@code true} when the proxy extends a class, {@code false} for an interface proxy
+   * @param methodCode        a UUID string used as a cache key for the resolved {@link Method}
    * @param methodName        the name of the method being invoked
-   * @param resultSignature   the JVM descriptor of the return type
-   * @param signatures        JVM descriptors of the parameter types
-   * @param args              invocation arguments
-   * @return the invocation result or default primitive values when no handler is provided
-   * @throws Throwable propagated from the handler invocation
+   * @param resultSignature   the JVM return type descriptor, e.g. {@code V}, {@code I}, or {@code Ljava/lang/String;}
+   * @param signatures        JVM type descriptors of the method's parameters in declaration order
+   * @param args              the actual argument values for this invocation
+   * @return the value returned by the handler, or a suitable primitive default when the handler is {@code null}
+   * @throws Throwable any exception thrown by the handler or the underlying reflection call
    */
   public static Object invoke (Object proxy, InvocationHandler invocationHandler, boolean isSubclass, String methodCode, String methodName, String resultSignature, String[] signatures, Object... args)
     throws Throwable {
@@ -96,10 +99,12 @@ public class ProxyUtility {
   }
 
   /**
-   * Converts JVM type descriptors into a reflective {@link Class} array.
+   * Converts an array of JVM type descriptors into a {@link Class} array suitable for
+   * {@link Class#getMethod(String, Class[])} lookup.
    *
-   * @param signatures parameter type descriptors
-   * @return the resolved parameter classes
+   * @param signatures the JVM parameter type descriptors to resolve
+   * @return an array of {@link Class} objects corresponding to the descriptors in order
+   * @throws ByteCodeManipulationException if an unrecognised descriptor is encountered
    */
   private static Class[] assembleSignature (String[] signatures) {
 
@@ -151,11 +156,11 @@ public class ProxyUtility {
   }
 
   /**
-   * Resolves a class for the supplied type name, caching results for reuse.
+   * Resolves a fully qualified class name or array descriptor to a {@link Class}, caching the result.
    *
-   * @param type the fully qualified class name or array descriptor
-   * @return the resolved class
-   * @throws ByteCodeManipulationException if the class cannot be loaded
+   * @param type the fully qualified binary class name or array descriptor to resolve
+   * @return the resolved {@link Class} object
+   * @throws ByteCodeManipulationException if {@link Class#forName(String)} fails for the given type
    */
   private static Class<?> getObjectType (String type) {
 

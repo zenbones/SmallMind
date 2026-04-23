@@ -39,20 +39,43 @@ import org.smallmind.web.json.doppelganger.View;
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
 /**
- * Represents a named snapshot window of measurements for serialization.
+ * Represents a named time window used by meters such as the trace meter to define rolling
+ * measurement intervals. The {@code name} is a human-readable label (e.g., {@code "m1"},
+ * {@code "m5"}) and the {@code value} is the numeric duration expressed in the unit
+ * configured on the enclosing meter properties (typically minutes). Instances are
+ * populated by the JSON doppelganger framework during deserialization.
  */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class Window {
 
+  /**
+   * Human-readable label identifying this window (e.g., {@code "m1"} for a one-minute window).
+   */
   @View(idioms = @Idiom(visibility = IN))
   private String name;
+
+  /**
+   * Numeric duration of the window expressed in the time unit configured on the enclosing
+   * properties object (e.g., {@code 1} combined with {@code TimeUnit.MINUTES} yields a
+   * one-minute window).
+   */
   @View(idioms = @Idiom(visibility = IN))
   private long value;
 
+  /**
+   * No-argument constructor required by the JSON doppelganger framework for reflective
+   * instantiation during deserialization.
+   */
   public Window () {
 
   }
 
+  /**
+   * Constructs a window with the given name and duration value.
+   *
+   * @param name  human-readable label for the window (e.g., {@code "m5"})
+   * @param value numeric duration in the unit defined by the enclosing configuration
+   */
   public Window (String name, long value) {
 
     this.name = name;
@@ -60,7 +83,9 @@ public class Window {
   }
 
   /**
-   * @return the window name
+   * Returns the human-readable label for this window.
+   *
+   * @return the window name (e.g., {@code "m1"}, {@code "m15"})
    */
   public String getName () {
 
@@ -68,9 +93,9 @@ public class Window {
   }
 
   /**
-   * Sets the window name.
+   * Sets the human-readable label for this window.
    *
-   * @param name name describing the window or bucket
+   * @param name the window name (e.g., {@code "m5"})
    */
   public void setName (String name) {
 
@@ -78,7 +103,9 @@ public class Window {
   }
 
   /**
-   * @return the window value
+   * Returns the numeric duration of this window.
+   *
+   * @return the duration value in the unit defined by the enclosing configuration
    */
   public long getValue () {
 
@@ -86,9 +113,9 @@ public class Window {
   }
 
   /**
-   * Sets the window value.
+   * Sets the numeric duration of this window.
    *
-   * @param value measured value for the window
+   * @param value the duration in the unit defined by the enclosing configuration
    */
   public void setValue (long value) {
 

@@ -36,7 +36,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * Convenience base class for {@link ElementExtender} implementations providing storage for parent/document references.
+ * Abstract base implementation of {@link ElementExtender} that stores the owning {@link DocumentExtender} and parent {@link SAXExtender}, with no-op SAX callback methods.
  */
 public abstract class AbstractElementExtender implements ElementExtender {
 
@@ -44,7 +44,9 @@ public abstract class AbstractElementExtender implements ElementExtender {
   private SAXExtender parent;
 
   /**
-   * @return enclosing document extender
+   * Returns the document extender that owns this parse.
+   *
+   * @return the enclosing {@link DocumentExtender}
    */
   public DocumentExtender getDocumentExtender () {
 
@@ -52,9 +54,9 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * Assigns the enclosing document extender.
+   * Sets the document extender that owns this parse.
    *
-   * @param documentExtender document extender managing the parse
+   * @param documentExtender the {@link DocumentExtender} managing the current document
    */
   public void setDocumentExtender (DocumentExtender documentExtender) {
 
@@ -62,7 +64,9 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * @return parent extender in the element stack
+   * Returns the parent extender on the element stack.
+   *
+   * @return the parent {@link SAXExtender}
    */
   public SAXExtender getParent () {
 
@@ -70,9 +74,9 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * Sets the parent extender.
+   * Sets the parent extender on the element stack.
    *
-   * @param parent parent extender for the current element
+   * @param parent the parent {@link SAXExtender} for the element being processed
    */
   public void setParent (SAXExtender parent) {
 
@@ -80,7 +84,13 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to handle the start of an element.
+   *
+   * @param namespaceURI the element namespace URI
+   * @param localName    the element local name
+   * @param qName        the qualified element name
+   * @param atts         the element attributes
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
     throws SAXException {
@@ -88,7 +98,13 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to handle the end of an element.
+   *
+   * @param namespaceURI   the element namespace URI
+   * @param localName      the element local name
+   * @param qName          the qualified element name
+   * @param contentBuilder the accumulated character content of the element
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder)
     throws SAXException {
@@ -96,7 +112,10 @@ public abstract class AbstractElementExtender implements ElementExtender {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op implementation; subclasses may override to act on a completed child element.
+   *
+   * @param elementExtender the extender that has just finished processing its child element
+   * @throws SAXException if a subclass implementation encounters a processing error
    */
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {

@@ -42,8 +42,16 @@ import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.quorum.namespace.backingStore.NameTranslator;
 
 /**
- * Implementation of {@link Name} that works with a {@link NameTranslator} to convert
- * between internal and external name forms.
+ * {@link Name} implementation used within the {@code java:} namespace that carries a
+ * {@link NameTranslator} so it can render itself in the backing store's external format.
+ * <p>
+ * Components are stored in an {@link ArrayList} in logical order (most general last for LDAP).
+ * Prefix and suffix slices are backed by views of the same list, so mutations to the original name
+ * after a slice is taken are visible through the slice. {@link #clone()} produces a deep copy
+ * with a new backing list.
+ * <p>
+ * Comparison first orders by size (shorter names come first), then component-by-component using
+ * an alphanumeric sort.
  */
 public class JavaName implements Name {
 
@@ -53,9 +61,9 @@ public class JavaName implements Name {
   private final ArrayList<String> nameList;
 
   /**
-   * Copy constructor.
+   * Copy constructor that duplicates the component list of the given name.
    *
-   * @param name source name to duplicate
+   * @param name the source name to copy; its translator is reused
    */
   public JavaName (JavaName name) {
 
@@ -63,9 +71,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Constructs an empty name using the provided translator.
+   * Creates an empty name backed by the given translator.
    *
-   * @param nameTranslator translator used to render names
+   * @param nameTranslator the translator used to render this name to its external string form
    */
   public JavaName (NameTranslator nameTranslator) {
 
@@ -79,9 +87,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns the translator used for external/internal conversions.
+   * Returns the translator used to convert this name to its external string form.
    *
-   * @return name translator
+   * @return the {@link NameTranslator}; never {@code null}
    */
   protected NameTranslator getNameTranslator () {
 
@@ -89,9 +97,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns the mutable list of name components.
+   * Returns the mutable backing list of name components.
    *
-   * @return underlying component list
+   * @return the component list; never {@code null}
    */
   protected ArrayList<String> getNameList () {
 
@@ -99,11 +107,13 @@ public class JavaName implements Name {
   }
 
   /**
-   * Compares this name to another {@link JavaName} using size then alphanumeric components.
+   * Compares this name to another {@link JavaName} first by size, then alphanumerically
+   * component by component.
    *
-   * @param obj object to compare
-   * @return negative, zero, or positive per {@link Comparable} contract
-   * @throws ClassCastException if {@code obj} is not a {@link JavaName}
+   * @param obj the object to compare to; must be a {@link JavaName}
+   * @return a negative integer, zero, or a positive integer as this name is less than, equal to,
+   * or greater than {@code obj}
+   * @throws ClassCastException if {@code obj} is not an instance of {@link JavaName}
    */
   public int compareTo (Object obj) {
 
@@ -128,9 +138,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns the number of components in the name.
+   * Returns the number of components in this name.
    *
-   * @return size of the name
+   * @return the component count; {@code 0} for an empty name
    */
   public int size () {
 
@@ -138,9 +148,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Indicates whether the name has no components.
+   * Returns {@code true} if this name has no components.
    *
-   * @return {@code true} if empty
+   * @return {@code true} when empty
    */
   public boolean isEmpty () {
 
@@ -148,9 +158,9 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns an enumeration of the name components.
+   * Returns an enumeration over the components of this name in order.
    *
-   * @return enumeration over components
+   * @return a non-null {@link Enumeration} of component strings
    */
   public Enumeration<String> getAll () {
 
@@ -158,10 +168,11 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns the component at the given position.
+   * Returns the component at the given zero-based index.
    *
-   * @param posn zero-based position
-   * @return component value
+   * @param posn zero-based index of the component to return
+   * @return the component string at position {@code posn}
+   * @throws IndexOutOfBoundsException if {@code posn} is out of range
    */
   public String get (int posn) {
 
@@ -169,10 +180,10 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns a prefix of the name.
+   * Returns a {@link JavaName} containing the first {@code posn} components of this name.
    *
-   * @param posn exclusive end index
-   * @return prefix as a new {@link Name}
+   * @param posn the exclusive end index of the prefix; {@code 0} returns an empty name
+   * @return a new {@link JavaName} backed by a sublist view
    */
   public Name getPrefix (int posn) {
 
@@ -180,10 +191,10 @@ public class JavaName implements Name {
   }
 
   /**
-   * Returns a suffix of the name starting at the given position.
+   * Returns a {@link JavaName} containing the components from index {@code posn} to the end.
    *
-   * @param posn start index
-   * @return suffix as a new {@link Name}
+   * @param posn the inclusive start index of the suffix
+   * @return a new {@link JavaName} backed by a sublist view
    */
   public Name getSuffix (int posn) {
 
@@ -191,10 +202,11 @@ public class JavaName implements Name {
   }
 
   /**
-   * Tests whether this name starts with the components of the supplied name.
+   * Tests whether this name begins with the same components as {@code n}.
    *
-   * @param n name to compare
-   * @return {@code true} if this name begins with {@code n}
+   * @param n the name whose components to compare against the start of this name
+   * @return {@code true} if this name has at least {@code n.size()} components and the first
+   * {@code n.size()} components are equal to those of {@code n}
    */
   public boolean startsWith (Name n) {
 
@@ -212,10 +224,11 @@ public class JavaName implements Name {
   }
 
   /**
-   * Tests whether this name ends with the components of the supplied name.
+   * Tests whether this name ends with the same components as {@code n}.
    *
-   * @param n name to compare
-   * @return {@code true} if this name ends with {@code n}
+   * @param n the name whose components to compare against the end of this name
+   * @return {@code true} if this name has at least {@code n.size()} components and the last
+   * {@code n.size()} components are equal to those of {@code n}
    */
   public boolean endsWith (Name n) {
 
@@ -233,11 +246,11 @@ public class JavaName implements Name {
   }
 
   /**
-   * Appends all components of the supplied suffix to this name.
+   * Appends all components of {@code suffix} to the end of this name.
    *
-   * @param suffix name whose components to add
-   * @return this name for chaining
-   * @throws InvalidNameException if the suffix is invalid
+   * @param suffix the name whose components to append
+   * @return this name, for chaining
+   * @throws InvalidNameException if {@link #add(String)} rejects any component of {@code suffix}
    */
   public Name addAll (Name suffix)
     throws InvalidNameException {
@@ -251,12 +264,13 @@ public class JavaName implements Name {
   }
 
   /**
-   * Inserts the given name at the specified position.
+   * Inserts all components of {@code n} into this name starting at position {@code posn}.
    *
-   * @param posn position to start insertion
-   * @param n    name whose components to insert
-   * @return this name for chaining
-   * @throws InvalidNameException if insertion fails
+   * @param posn the index at which insertion begins; existing components at and after this
+   *             position are shifted right
+   * @param n    the name whose components to insert
+   * @return this name, for chaining
+   * @throws InvalidNameException if {@link #add(int, String)} rejects any component
    */
   public Name addAll (int posn, Name n)
     throws InvalidNameException {
@@ -272,9 +286,9 @@ public class JavaName implements Name {
   /**
    * Appends a single component to the end of this name.
    *
-   * @param comp component to add
-   * @return this name for chaining
-   * @throws InvalidNameException if the component is invalid
+   * @param comp the component string to append; must not be {@code null}
+   * @return this name, for chaining
+   * @throws InvalidNameException never thrown by this implementation
    */
   public Name add (String comp)
     throws InvalidNameException {
@@ -284,12 +298,13 @@ public class JavaName implements Name {
   }
 
   /**
-   * Inserts a component at the specified position.
+   * Inserts a single component at position {@code posn}.
    *
-   * @param posn index at which to insert
-   * @param comp component to insert
-   * @return this name for chaining
-   * @throws InvalidNameException if the component is invalid
+   * @param posn the zero-based index at which to insert; existing components at and after this
+   *             position are shifted right
+   * @param comp the component string to insert; must not be {@code null}
+   * @return this name, for chaining
+   * @throws InvalidNameException never thrown by this implementation
    */
   public Name add (int posn, String comp)
     throws InvalidNameException {
@@ -299,11 +314,11 @@ public class JavaName implements Name {
   }
 
   /**
-   * Removes the component at the given position.
+   * Removes and returns the component at position {@code posn}.
    *
-   * @param posn position of component to remove
-   * @return removed component
-   * @throws InvalidNameException if the position is invalid
+   * @param posn the zero-based index of the component to remove
+   * @return the removed component string
+   * @throws InvalidNameException never thrown by this implementation
    */
   public Object remove (int posn)
     throws InvalidNameException {
@@ -312,9 +327,10 @@ public class JavaName implements Name {
   }
 
   /**
-   * Creates a deep copy of this name.
+   * Returns a deep copy of this name with a new, independent backing list.
    *
-   * @return cloned name
+   * @return a new {@link JavaName} with the same translator and an independent copy of the
+   * component list
    */
   public Object clone () {
 
@@ -322,9 +338,10 @@ public class JavaName implements Name {
   }
 
   /**
-   * Converts the name to its external string representation.
+   * Returns the external string representation of this name as produced by the associated
+   * {@link NameTranslator}.
    *
-   * @return external string form
+   * @return the external string form; never {@code null}
    */
   public String toString () {
 

@@ -38,14 +38,17 @@ import org.smallmind.scribe.pen.Template;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring helper that registers a list of templates on initialization.
+ * Spring {@link InitializingBean} that accepts a list of pre-built {@link Template} instances and calls
+ * {@link Template#register()} on each of them during Spring's post-construction callback, making the
+ * templates active within the Scribe framework.
  */
 public class TemplateInitializingBean implements InitializingBean {
 
   private final LinkedList<Template> initialTemplates;
 
   /**
-   * Creates a bean ready to collect templates for later registration.
+   * Constructs a {@code TemplateInitializingBean} with an empty internal list, ready to accept templates
+   * via {@link #setInitialTemplates(List)}.
    */
   public TemplateInitializingBean () {
 
@@ -53,9 +56,10 @@ public class TemplateInitializingBean implements InitializingBean {
   }
 
   /**
-   * Sets the templates to register during initialization.
+   * Provides the list of {@link Template} instances that this bean will register when
+   * {@link #afterPropertiesSet()} is invoked; the templates are appended to the internal list.
    *
-   * @param initialTemplates templates to register
+   * @param initialTemplates the templates to register; must not be {@code null}
    */
   public void setInitialTemplates (List<Template> initialTemplates) {
 
@@ -63,7 +67,8 @@ public class TemplateInitializingBean implements InitializingBean {
   }
 
   /**
-   * Registers all configured templates.
+   * Iterates over all templates provided via {@link #setInitialTemplates(List)} and calls
+   * {@link Template#register()} on each one, making them active within the Scribe logging framework.
    */
   public void afterPropertiesSet () {
 

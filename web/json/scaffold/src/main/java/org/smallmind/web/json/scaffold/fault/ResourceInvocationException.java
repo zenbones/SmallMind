@@ -35,11 +35,13 @@ package org.smallmind.web.json.scaffold.fault;
 import java.io.IOException;
 
 /**
- * Indicates an error invoking a resource method, preserving the original cause message.
+ * Signals an error that occurred while invoking a resource method, preserving the original cause.
  */
 public class ResourceInvocationException extends IOException {
 
   /**
+   * Wraps the throwable raised during resource invocation.
+   *
    * @param throwable underlying cause raised during invocation
    */
   public ResourceInvocationException (Throwable throwable) {

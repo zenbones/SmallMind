@@ -35,13 +35,27 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when a test or lifecycle method begins.
+ * Event fired immediately before a test method or lifecycle hook begins execution.
+ * <p>
+ * Emitted by {@link org.smallmind.sleuth.runner.TestRunner} just before the test body is
+ * about to run (after before-test hooks) and by
+ * {@link org.smallmind.sleuth.runner.annotation.AnnotationMethodology} before each lifecycle
+ * method invocation. A corresponding outcome event ({@link SuccessSleuthEvent},
+ * {@link FailureSleuthEvent}, {@link ErrorSleuthEvent}, or {@link SkippedSleuthEvent}) always
+ * follows for the same class/method pair.
+ *
+ * @see SuccessSleuthEvent
+ * @see FailureSleuthEvent
+ * @see ErrorSleuthEvent
+ * @see SkippedSleuthEvent
  */
 public class StartSleuthEvent extends SleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
+   * Constructs a start event for the given test.
+   *
+   * @param className  fully qualified name of the test class; must not be {@code null}
+   * @param methodName name of the test or lifecycle method beginning execution; must not be {@code null}
    */
   public StartSleuthEvent (String className, String methodName) {
 
@@ -49,6 +63,8 @@ public class StartSleuthEvent extends SleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#START}.
+   *
    * @return {@link SleuthEventType#START}
    */
   @Override
@@ -58,7 +74,9 @@ public class StartSleuthEvent extends SleuthEvent {
   }
 
   /**
-   * @return bright blue to indicate start
+   * Returns bright blue, used to make start events visually distinct on the console.
+   *
+   * @return {@link AnsiColor#BRIGHT_BLUE}
    */
   @Override
   public AnsiColor getColor () {

@@ -44,7 +44,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import org.smallmind.nutsnbolts.util.Mutation;
 
 /**
- * Generic container representing a page of results along with pagination metadata.
+ * Generic paginated result container holding a typed value array and pagination metadata.
  *
  * @param <T> element type within the page
  */
@@ -66,11 +66,11 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Builds a page from a list of values.
+   * Creates a page from a list of values and paging parameters.
    *
-   * @param listOfValues page contents
-   * @param firstResult  index of the first result in the overall result set
-   * @param maxResults   page size
+   * @param listOfValues page content
+   * @param firstResult  zero-based offset of the first result in the overall set
+   * @param maxResults   configured maximum results per page
    * @param totalResults total number of results across all pages
    */
   public Page (List<T> listOfValues, long firstResult, int maxResults, long totalResults) {
@@ -79,11 +79,11 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Builds a page from an array of values.
+   * Creates a page from an array of values and paging parameters.
    *
-   * @param values       page contents
-   * @param firstResult  index of the first result in the overall result set
-   * @param maxResults   page size
+   * @param values       page content
+   * @param firstResult  zero-based offset of the first result in the overall set
+   * @param maxResults   configured maximum results per page
    * @param totalResults total number of results across all pages
    */
   public Page (T[] values, long firstResult, int maxResults, long totalResults) {
@@ -97,11 +97,11 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Creates an empty page for the given component type.
+   * Creates an empty page for the given component type with all numeric fields set to zero.
    *
-   * @param arrayClass component class for the values array
+   * @param arrayClass component class for the empty values array
    * @param <T>        component type
-   * @return empty page
+   * @return empty page instance
    */
   public static <T> Page<T> empty (Class<T> arrayClass) {
 
@@ -120,12 +120,13 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Transforms the contents of this page into another type using the supplied mutation function.
+   * Transforms each element of this page using the supplied mutation, returning a new page with the
+   * same paging metadata.
    *
-   * @param outType  target component class
-   * @param mutation transformation applied to each element
+   * @param outType  target component class for the new page
+   * @param mutation transformation applied to every element
    * @param <U>      target element type
-   * @return a new page containing the transformed elements and the same paging metadata
+   * @return new page containing the transformed elements
    * @throws Exception if the mutation function throws
    */
   public <U> Page<U> mutate (Class<U> outType, Mutation<? super T, U> mutation)
@@ -142,7 +143,8 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Converts the underlying value array to the requested component type via JSON conversion.
+   * Re-converts the value array elements to the specified component type via Jackson data binding,
+   * replacing the internal array if the types differ.
    *
    * @param componentClass target component type
    * @return this page for chaining
@@ -175,7 +177,7 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * @return zero-based index of the first result
+   * @return zero-based index of the first result in the overall result set
    */
   @XmlElement(name = "firstResult", required = true, nillable = false)
   public long getFirstResult () {
@@ -186,7 +188,7 @@ public class Page<T> implements Iterable<T> {
   /**
    * Sets the zero-based index of the first result.
    *
-   * @param firstResult first result index
+   * @param firstResult first result offset
    */
   public void setFirstResult (long firstResult) {
 
@@ -213,7 +215,7 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * @return number of results contained in this page
+   * @return actual number of results contained in this page
    */
   @XmlElement(name = "resultSize", required = true, nillable = false)
   public int getResultSize () {
@@ -222,7 +224,7 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Sets the number of results contained in this page.
+   * Sets the actual number of results contained in this page.
    *
    * @param resultSize result count
    */
@@ -251,7 +253,7 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * @return array of page values
+   * @return array of values in this page
    */
   @XmlAnyElement()
   public T[] getValues () {
@@ -260,9 +262,9 @@ public class Page<T> implements Iterable<T> {
   }
 
   /**
-   * Sets the page values.
+   * Sets the values in this page.
    *
-   * @param values array of values
+   * @param values page value array
    */
   public void setValues (T[] values) {
 

@@ -39,41 +39,42 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 /**
- * SPI for decoding inbound JSON structures into Bayeux {@link Message} and {@link Value} objects.
+ * SPI contract for parsing inbound JSON payloads into Bayeux {@link Message} arrays and for
+ * converting arbitrary objects into the {@link Value} type hierarchy used by a given codec.
  *
- * @param <V> concrete value type produced
+ * @param <V> the concrete {@link Value} subtype produced by implementations of this interface
  */
 public interface JsonDeserializer<V extends Value<V>> {
 
   /**
-   * Deserializes a buffer into an array of messages.
+   * Parses a raw byte payload into an array of Bayeux messages using the codec's factory.
    *
-   * @param codec  codec supplying value factory information
-   * @param buffer encoded payload
-   * @return decoded messages
-   * @throws IOException if decoding fails
+   * @param codec  codec that supplies the message factory and value creation context
+   * @param buffer UTF-8 (or codec-appropriate) encoded JSON payload
+   * @return one or more decoded messages; never {@code null} but may be empty
+   * @throws IOException if the bytes cannot be parsed or do not represent valid message JSON
    */
   Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException;
 
   /**
-   * Deserializes string data into an array of messages.
+   * Parses a JSON string payload into an array of Bayeux messages using the codec's factory.
    *
-   * @param codec codec supplying value factory information
-   * @param data  encoded payload
-   * @return decoded messages
-   * @throws IOException if decoding fails
+   * @param codec codec that supplies the message factory and value creation context
+   * @param data  JSON string encoding one object or an array of objects
+   * @return one or more decoded messages; never {@code null} but may be empty
+   * @throws IOException if the string cannot be parsed or does not represent valid message JSON
    */
   Message<V>[] read (Codec<V> codec, String data)
     throws IOException;
 
   /**
-   * Converts an arbitrary object into a {@link Value} using the supplied factory.
+   * Converts {@code object} into an equivalent {@link Value} using {@code factory} for construction.
    *
-   * @param factory value factory
-   * @param object  source object
-   * @return converted value
-   * @throws IOException if conversion fails
+   * @param factory factory used to instantiate value nodes during conversion
+   * @param object  arbitrary object to convert (typically a POJO or collection)
+   * @return value tree representing {@code object}
+   * @throws IOException if the object cannot be serialized or contains unsupported types
    */
   Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException;

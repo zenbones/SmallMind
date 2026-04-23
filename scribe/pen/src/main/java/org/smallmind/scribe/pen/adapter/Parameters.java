@@ -36,22 +36,16 @@ import java.io.Serializable;
 import org.smallmind.scribe.pen.Parameter;
 
 /**
- * Thread-local implementation of {@link ParameterAdapter} using inheritable thread storage.
+ * Singleton {@link ParameterAdapter} implementation that stores contextual key/value parameters in an
+ * {@link InheritableThreadLocal}, so that child threads automatically inherit the parameter set that was
+ * active in their parent thread at the time of creation.
  */
 public class Parameters implements ParameterAdapter {
 
   private static final Parameters INSTANCE = new Parameters();
 
-  /**
-   * Thread-local storage for parameters, inherited by child threads.
-   */
   private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<>() {
 
-    /**
-     * Initializes thread-local storage with an empty parameter set.
-     *
-     * @return new {@link RecordParameters} instance
-     */
     @Override
     protected RecordParameters initialValue () {
 
@@ -60,9 +54,9 @@ public class Parameters implements ParameterAdapter {
   };
 
   /**
-   * Returns the singleton parameter adapter instance.
+   * Returns the process-wide singleton instance of this adapter.
    *
-   * @return shared {@link Parameters} instance
+   * @return the shared {@code Parameters} instance
    */
   public static Parameters getInstance () {
 
@@ -70,10 +64,10 @@ public class Parameters implements ParameterAdapter {
   }
 
   /**
-   * Adds or replaces a parameter value for the current thread.
+   * Stores or replaces the value associated with {@code key} in the calling thread's parameter map.
    *
-   * @param key   parameter key
-   * @param value serializable value
+   * @param key   the parameter key; must not be {@code null}
+   * @param value the serializable value to associate with the key
    */
   @Override
   public void put (String key, Serializable value) {
@@ -82,9 +76,9 @@ public class Parameters implements ParameterAdapter {
   }
 
   /**
-   * Removes a parameter for the current thread.
+   * Removes the parameter identified by {@code key} from the calling thread's parameter map.
    *
-   * @param key key to remove
+   * @param key the key of the parameter to remove
    */
   @Override
   public void remove (String key) {
@@ -93,7 +87,7 @@ public class Parameters implements ParameterAdapter {
   }
 
   /**
-   * Clears all parameters for the current thread.
+   * Removes all parameters from the calling thread's parameter map.
    */
   @Override
   public void clear () {
@@ -102,10 +96,10 @@ public class Parameters implements ParameterAdapter {
   }
 
   /**
-   * Retrieves a parameter for the current thread.
+   * Returns the value associated with {@code key} in the calling thread's parameter map.
    *
-   * @param key key to look up
-   * @return value or {@code null} if absent
+   * @param key the key to look up
+   * @return the associated value, or {@code null} if no mapping exists for the key
    */
   @Override
   public Serializable get (String key) {
@@ -114,9 +108,9 @@ public class Parameters implements ParameterAdapter {
   }
 
   /**
-   * Returns all parameters for the current thread.
+   * Returns a snapshot of all parameters in the calling thread's parameter map as a {@link Parameter} array.
    *
-   * @return array of parameters
+   * @return an array of all current parameters; never {@code null} but may be empty
    */
   @Override
   public Parameter[] getParameters () {

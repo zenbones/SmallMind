@@ -33,7 +33,11 @@
 package org.smallmind.quorum.namespace.backingStore;
 
 /**
- * Connection parameters used to build backing store contexts (e.g., LDAP).
+ * Immutable value object holding the network and authentication parameters needed to connect to a
+ * naming backing store.
+ * <p>
+ * Instances are passed to a {@link ContextCreator}, which uses them to build the provider URL,
+ * select the security protocol, and authenticate to the backing store.
  */
 public class NamingConnectionDetails {
 
@@ -45,14 +49,14 @@ public class NamingConnectionDetails {
   private boolean tls = false;
 
   /**
-   * Constructs connection details.
+   * Creates connection details with all required parameters.
    *
-   * @param host          server host
-   * @param port          server port
-   * @param tls           whether TLS should be used
-   * @param rootNamespace root namespace for lookups
-   * @param userName      user name for authentication
-   * @param password      password for authentication
+   * @param host          hostname or IP address of the backing store server
+   * @param port          TCP port the backing store listens on
+   * @param tls           {@code true} to use TLS/LDAPS; {@code false} for a plain connection
+   * @param rootNamespace root namespace or base DN under which all names are resolved
+   * @param userName      principal used to authenticate to the backing store
+   * @param password      credential used to authenticate to the backing store
    */
   public NamingConnectionDetails (String host, int port, boolean tls, String rootNamespace, String userName, String password) {
 
@@ -65,9 +69,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Returns the server host.
+   * Returns the hostname or IP address of the backing store server.
    *
-   * @return host
+   * @return server host; never {@code null}
    */
   public String getHost () {
 
@@ -75,9 +79,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Returns the server port.
+   * Returns the TCP port the backing store server listens on.
    *
-   * @return port
+   * @return server port
    */
   public int getPort () {
 
@@ -85,9 +89,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Indicates whether TLS should be used.
+   * Indicates whether TLS should be used when connecting to the backing store.
    *
-   * @return {@code true} if TLS is enabled
+   * @return {@code true} if TLS is enabled; {@code false} for a plain connection
    */
   public boolean useTLS () {
 
@@ -95,9 +99,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Returns the root namespace for lookups.
+   * Returns the root namespace or base DN under which all names are resolved.
    *
-   * @return root namespace
+   * @return root namespace; never {@code null}
    */
   public String getRootNamespace () {
 
@@ -105,9 +109,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Returns the user name for authentication.
+   * Returns the principal used to authenticate to the backing store.
    *
-   * @return user name
+   * @return user name; never {@code null}
    */
   public String getUserName () {
 
@@ -115,9 +119,9 @@ public class NamingConnectionDetails {
   }
 
   /**
-   * Returns the password for authentication.
+   * Returns the credential used to authenticate to the backing store.
    *
-   * @return password
+   * @return password; never {@code null}
    */
   public String getPassword () {
 

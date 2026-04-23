@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
 /**
- * Spring reference bean for JMS destinations, capturing selector and durability settings.
+ * Abstract Spring reference bean for JMS destinations, capturing type, message selector, and durability settings.
  */
 public abstract class DestinationReference extends ManagedObjectReference {
 
@@ -41,14 +41,16 @@ public abstract class DestinationReference extends ManagedObjectReference {
   private boolean durable = false;
 
   /**
-   * Returns the destination type (queue or topic).
+   * Returns the destination type (queue or topic) for this reference.
+   *
+   * @return destination type.
    */
   public abstract DestinationType getDestinationType ();
 
   /**
-   * Message selector expression, if any.
+   * Returns the JMS message selector expression used when creating consumers, if any.
    *
-   * @return selector string
+   * @return selector string, or {@code null} if none.
    */
   public String getSelector () {
 
@@ -56,7 +58,9 @@ public abstract class DestinationReference extends ManagedObjectReference {
   }
 
   /**
-   * Sets the message selector expression.
+   * Sets the JMS message selector expression used when creating consumers.
+   *
+   * @param selector selector string, or {@code null} for no selector.
    */
   public void setSelector (String selector) {
 
@@ -64,7 +68,9 @@ public abstract class DestinationReference extends ManagedObjectReference {
   }
 
   /**
-   * Indicates whether the destination should be durable (relevant for topics).
+   * Returns whether the destination subscription should be durable (applicable to topic subscriptions).
+   *
+   * @return {@code true} if durable, {@code false} otherwise.
    */
   public boolean isDurable () {
 
@@ -72,7 +78,9 @@ public abstract class DestinationReference extends ManagedObjectReference {
   }
 
   /**
-   * Sets destination durability flag.
+   * Sets the durability flag for the destination subscription.
+   *
+   * @param durable {@code true} to make the subscription durable.
    */
   public void setDurable (boolean durable) {
 

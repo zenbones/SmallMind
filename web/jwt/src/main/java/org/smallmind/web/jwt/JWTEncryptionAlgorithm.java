@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
 /**
- * Supported signing algorithms for JSON Web Tokens, wrapping corresponding implementations and header codes.
+ * Enumeration of supported JWT signing algorithms, each delegating to the corresponding cryptographic implementation.
  */
 public enum JWTEncryptionAlgorithm {
 
@@ -116,9 +116,9 @@ public enum JWTEncryptionAlgorithm {
   }
 
   /**
-   * Returns the compact JWT header algorithm code for this algorithm.
+   * Returns the JWT header algorithm identifier string for this algorithm.
    *
-   * @return the header algorithm code
+   * @return the algorithm code (e.g. {@code "HS256"}, {@code "RS256"}, {@code "EdDSA"})
    */
   public String getCode () {
 
@@ -126,24 +126,24 @@ public enum JWTEncryptionAlgorithm {
   }
 
   /**
-   * Signs the supplied prologue string using the provided key.
+   * Produces a signature over the given prologue bytes using the supplied private key.
    *
-   * @param privateKey the signing key
-   * @param prologue   the content to sign
-   * @return the generated signature bytes
-   * @throws Exception if signing fails
+   * @param privateKey the key used to generate the signature
+   * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+   * @return the raw signature bytes
+   * @throws Exception if the signing operation fails
    */
   public abstract byte[] sign (PrivateKey privateKey, String prologue)
     throws Exception;
 
   /**
-   * Verifies the signature for the provided JWT pieces.
+   * Verifies a JWT signature against the supplied public key and token segments.
    *
-   * @param publicKey the verification key
+   * @param publicKey the key used to verify the signature
    * @param pieces    the JWT segments required by the underlying verifier
-   * @param urlSafe   {@code true} if the JWT uses URL-safe Base64 encoding
-   * @return {@code true} if the signature is valid; otherwise {@code false}
-   * @throws Exception if verification fails
+   * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+   * @return {@code true} if the signature is valid
+   * @throws Exception if the verification operation fails
    */
   public abstract boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
     throws Exception;

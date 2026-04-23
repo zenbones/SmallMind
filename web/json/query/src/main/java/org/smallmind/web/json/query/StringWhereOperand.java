@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * String literal operand.
+ * {@link WhereOperand} carrying a single {@link String} literal value.
  */
 @XmlRootElement(name = "string", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -54,7 +54,7 @@ public class StringWhereOperand extends WhereOperand<String> {
   }
 
   /**
-   * Creates an operand with the provided string value.
+   * Creates an operand wrapping the given string value.
    *
    * @param value string literal
    */
@@ -67,7 +67,7 @@ public class StringWhereOperand extends WhereOperand<String> {
    * Convenience factory for a string operand.
    *
    * @param value string literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static StringWhereOperand instance (String value) {
 
@@ -75,6 +75,8 @@ public class StringWhereOperand extends WhereOperand<String> {
   }
 
   /**
+   * Returns the element type for this operand.
+   *
    * @return {@link ElementType#STRING}
    */
   @Override
@@ -85,6 +87,8 @@ public class StringWhereOperand extends WhereOperand<String> {
   }
 
   /**
+   * Returns the operand type discriminator for this operand.
+   *
    * @return {@link OperandType#STRING}
    */
   @Override
@@ -95,9 +99,9 @@ public class StringWhereOperand extends WhereOperand<String> {
   }
 
   /**
-   * Returns the string value.
+   * Returns the string value held by this operand.
    *
-   * @return string literal or {@code null}
+   * @return string literal, or {@code null} if unset
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class StringWhereOperand extends WhereOperand<String> {
   }
 
   /**
-   * Returns the serialized string value.
+   * Returns the string value for serialization.
    *
-   * @return string literal or {@code null}
+   * @return string literal, or {@code null} if unset
    */
   @XmlElement(name = "value", required = true)
   public String getValue () {

@@ -40,12 +40,20 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 /**
- * Translator for class properties that themselves have generated view representations.
+ * Translator for class-typed properties whose type has a generated view representation.
  */
 public class ClassTranslator implements Translator {
 
   /**
-   * Emits a null-safe construction of a view from an entity instance.
+   * Emits a null-safe expression that calls the view's {@code instance()} factory from the entity getter.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityInstanceName         variable name of the source entity instance
+   * @param entityFieldName            the logical field name on the entity
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
@@ -65,7 +73,14 @@ public class ClassTranslator implements Translator {
   }
 
   /**
-   * Emits a null-safe conversion from a view back to the entity using {@code factory()}.
+   * Emits a null-safe expression that calls the view's {@code factory()} method to reconstruct the entity value.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @param viewFieldName              the name of the view field
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)

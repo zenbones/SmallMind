@@ -38,14 +38,23 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 /**
- * Iterates over all declared methods in a class hierarchy starting from the highest ancestor.
+ * Provides an {@link Iterable} view over all declared methods in a class hierarchy, visiting
+ * superclasses before subclasses.
+ * <p>
+ * This ordering ensures that when {@link AnnotationMethodology#add} deduplicates by name and
+ * parameter types, overriding methods in subclasses take precedence because the superclass
+ * version is registered first and subsequent identical signatures are dropped.
+ *
+ * @see AnnotationMethodology
  */
 public class MethodCensus implements Iterable<Method> {
 
   private final Class<?> clazz;
 
   /**
-   * @param clazz root class whose methods will be enumerated
+   * Constructs a census rooted at the given class.
+   *
+   * @param clazz leaf class in the hierarchy to enumerate; must not be {@code null}
    */
   public MethodCensus (Class<?> clazz) {
 
@@ -53,7 +62,9 @@ public class MethodCensus implements Iterable<Method> {
   }
 
   /**
-   * @return iterator over the class hierarchy's declared methods
+   * Returns a new iterator over all declared methods starting from the topmost superclass.
+   *
+   * @return iterator traversing the hierarchy from base to leaf; never {@code null}
    */
   @Override
   public Iterator<Method> iterator () {
@@ -62,7 +73,8 @@ public class MethodCensus implements Iterable<Method> {
   }
 
   /**
-   * Iterator that walks the class hierarchy breadth-first from base class to leaf.
+   * Iterator that walks the class hierarchy from the highest ancestor down to the leaf class,
+   * yielding each class's declared methods in turn.
    */
   private static class MethodCensusIterator implements Iterator<Method> {
 
@@ -71,7 +83,9 @@ public class MethodCensus implements Iterable<Method> {
     private int methodIndex = 0;
 
     /**
-     * @param clazz starting class
+     * Builds the ancestor stack for the given class, placing the topmost superclass first.
+     *
+     * @param clazz leaf class to start from; must not be {@code null}
      */
     private MethodCensusIterator (Class<?> clazz) {
 
@@ -81,7 +95,9 @@ public class MethodCensus implements Iterable<Method> {
     }
 
     /**
-     * @return {@code true} if a further method exists
+     * Returns {@code true} if at least one more method is available across the hierarchy.
+     *
+     * @return {@code true} when a further method can be returned by {@link #next()}
      */
     @Override
     public boolean hasNext () {
@@ -100,7 +116,9 @@ public class MethodCensus implements Iterable<Method> {
     }
 
     /**
-     * @return next method in the hierarchy
+     * Returns the next method in hierarchy order.
+     *
+     * @return the next declared method; never {@code null}
      * @throws NoSuchElementException if no more methods are available
      */
     @Override
@@ -114,7 +132,7 @@ public class MethodCensus implements Iterable<Method> {
     }
 
     /**
-     * Unsupported to avoid mutating reflection results.
+     * Not supported; removal from a reflection-backed view is not meaningful.
      *
      * @throws UnsupportedOperationException always
      */

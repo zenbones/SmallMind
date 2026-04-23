@@ -42,16 +42,16 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Utility methods for creating generated view class names and rendering type mirrors in generated source.
+ * Utility methods for deriving generated view class names and rendering type mirrors as source strings.
  */
 public class NameUtility {
 
   /**
-   * Resolves the package name for a type element.
+   * Returns the fully qualified package name of the given type element.
    *
-   * @param processingEnvironment current processing environment
-   * @param typeElement           type whose package is requested
-   * @return fully qualified package name
+   * @param processingEnvironment the current annotation processing environment
+   * @param typeElement           the type whose package is required
+   * @return the fully qualified package name
    */
   public static String getPackageName (ProcessingEnvironment processingEnvironment, TypeElement typeElement) {
 
@@ -59,13 +59,14 @@ public class NameUtility {
   }
 
   /**
-   * Builds the simple name for a generated view class based on purpose and direction.
+   * Builds the simple (unqualified) class name for a generated view by combining an optional prefix,
+   * the originating class name, purpose, direction code, and the {@code "View"} suffix.
    *
-   * @param processingEnvironment current processing environment (for prefix option)
-   * @param purpose               idiom purpose (may be empty)
-   * @param direction             direction suffix
-   * @param typeElement           original annotated type
-   * @return simple view class name (no package)
+   * @param processingEnvironment the current annotation processing environment (used for the {@code prefix} option)
+   * @param purpose               the idiom purpose to append to the name, or empty for the default idiom
+   * @param direction             the view direction whose code is appended to the name
+   * @param typeElement           the originating annotated type
+   * @return the simple class name of the generated view
    */
   public static String getSimpleName (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
@@ -79,16 +80,16 @@ public class NameUtility {
   }
 
   /**
-   * Renders a {@link TypeMirror} into a string suitable for inclusion in generated source, substituting
-   * generated view types for Doppelganger-annotated classes when visible.
+   * Renders a {@link TypeMirror} as a string suitable for inclusion in generated source, substituting
+   * the generated view class name whenever a type is visible as a view for the given purpose and direction.
    *
-   * @param processingEnvironment current processing environment
-   * @param visibilityTracker     tracker for resolved visibility information
-   * @param classTracker          tracker for polymorphic/hierarchy relationships
-   * @param purpose               idiom purpose
-   * @param direction             view direction
-   * @param typeMirror            type to render
-   * @return string representation of the type
+   * @param processingEnvironment the current annotation processing environment
+   * @param visibilityTracker     tracker that determines whether a type has a generated view
+   * @param classTracker          tracker for polymorphic and hierarchy class relationships
+   * @param purpose               the idiom purpose
+   * @param direction             the view direction
+   * @param typeMirror            the type to render
+   * @return the string representation of the type as it should appear in generated source
    */
   public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
@@ -100,16 +101,16 @@ public class NameUtility {
   }
 
   /**
-   * Recursively walks a {@link TypeMirror} building a rendered representation, handling arrays, generics,
-   * and substitution of generated view names.
+   * Recursively builds the source string for a type mirror into the provided builder, handling arrays,
+   * generic type arguments, and view name substitution.
    *
    * @param nameBuilder           the buffer to append to
-   * @param processingEnvironment current processing environment
-   * @param visibilityTracker     tracker of class visibility
-   * @param classTracker          tracker for polymorphic/hierarchy classes
-   * @param purpose               idiom purpose
-   * @param direction             view direction
-   * @param typeMirror            type to render
+   * @param processingEnvironment the current annotation processing environment
+   * @param visibilityTracker     tracker used to check view visibility
+   * @param classTracker          tracker for polymorphic and hierarchy classes
+   * @param purpose               the idiom purpose
+   * @param direction             the view direction
+   * @param typeMirror            the type being rendered
    */
   private static void walkTypeMirror (StringBuilder nameBuilder, ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 

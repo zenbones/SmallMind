@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.resource;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception raised when a {@link Resource} cannot be located, opened, or parsed.
+ * Checked exception raised when a {@link Resource} cannot be located, opened, or parsed.
  */
 public class ResourceException extends FormattedException {
 
   /**
-   * Constructs a {@link ResourceException} with no message or cause.
+   * Constructs a {@code ResourceException} with no detail message or cause.
    */
   public ResourceException () {
 
@@ -48,10 +48,10 @@ public class ResourceException extends FormattedException {
   }
 
   /**
-   * Constructs a {@link ResourceException} with a formatted message.
+   * Constructs a {@code ResourceException} with a {@link java.util.Formatter}-style message.
    *
-   * @param message message template
-   * @param args    message template arguments
+   * @param message format string for the detail message
+   * @param args    arguments referenced by the format specifiers in {@code message}
    */
   public ResourceException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class ResourceException extends FormattedException {
   }
 
   /**
-   * Constructs a {@link ResourceException} with a cause and formatted message.
+   * Constructs a {@code ResourceException} with a cause and a {@link java.util.Formatter}-style message.
    *
-   * @param throwable underlying cause
-   * @param message   message template
-   * @param args      message template arguments
+   * @param throwable the underlying cause of this exception
+   * @param message   format string for the detail message
+   * @param args      arguments referenced by the format specifiers in {@code message}
    */
   public ResourceException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class ResourceException extends FormattedException {
   }
 
   /**
-   * Constructs a {@link ResourceException} with a cause.
+   * Constructs a {@code ResourceException} wrapping an existing cause.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying cause of this exception
    */
   public ResourceException (Throwable throwable) {
 

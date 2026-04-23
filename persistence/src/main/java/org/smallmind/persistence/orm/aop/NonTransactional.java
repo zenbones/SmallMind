@@ -38,23 +38,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks classes or methods that should run outside of a transactional boundary.
+ * Marks a type, constructor, or method as executing outside any transactional boundary.
+ * The {@link NonTransactionalAspect} intercepts annotated join points and manages the surrounding
+ * non-transactional session scope.
  */
 @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NonTransactional {
 
   /**
-   * Optional list of data source keys this applies to; empty means all.
-   *
-   * @return data source identifiers
+   * The data source keys to which this non-transactional boundary applies; an empty array means all data sources.
    */
   String[] dataSources () default {};
 
   /**
-   * When true, non-transactionality is applied implicitly without explicit boundary setup.
-   *
-   * @return whether the annotation implies boundary setup
+   * When {@code true}, the boundary is established implicitly by a class-level annotation rather than explicitly on each member.
    */
   boolean implicit () default true;
 }

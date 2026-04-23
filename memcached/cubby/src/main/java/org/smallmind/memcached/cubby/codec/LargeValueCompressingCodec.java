@@ -39,7 +39,17 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Codec decorator that compresses large serialized payloads using GZIP before storage.
+ * A {@link CubbyCodec} decorator that transparently applies GZIP compression to
+ * serialized payloads that meet or exceed a configurable size threshold. Values smaller
+ * than the threshold are passed through to the delegate codec unchanged.
+ *
+ * <p>During serialization, if the byte array produced by the delegate codec is at least
+ * {@code compressionThreshold} bytes long, it is compressed with GZIP and re-serialized
+ * inside a {@link GzipObjectWrapper} envelope. During deserialization, the presence of a
+ * {@code GzipObjectWrapper} triggers the reverse process: the bytes are decompressed
+ * before being handed back to the delegate for final decoding.
+ *
+ * <p>The default compression threshold is {@value #DEFAULT_COMPRESSION_THRESHOLD} bytes.
  */
 public class LargeValueCompressingCodec implements CubbyCodec {
 
@@ -49,9 +59,10 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   private final int compressionThreshold;
 
   /**
-   * Wraps the supplied codec with a default compression threshold.
+   * Constructs a compressing codec that wraps the supplied delegate and uses the default
+   * compression threshold of {@value #DEFAULT_COMPRESSION_THRESHOLD} bytes.
    *
-   * @param codec delegate codec to serialize and deserialize values
+   * @param codec the delegate {@link CubbyCodec} used for underlying serialization
    */
   public LargeValueCompressingCodec (CubbyCodec codec) {
 
@@ -59,10 +70,13 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   }
 
   /**
-   * Wraps the supplied codec using the provided compression threshold.
+   * Constructs a compressing codec that wraps the supplied delegate and applies
+   * compression only when the serialized payload is at least {@code compressionThreshold}
+   * bytes.
    *
-   * @param codec                delegate codec
-   * @param compressionThreshold minimum payload size in bytes to trigger compression
+   * @param codec                the delegate {@link CubbyCodec} used for underlying serialization
+   * @param compressionThreshold minimum serialized payload size in bytes that triggers
+   *                             GZIP compression
    */
   public LargeValueCompressingCodec (CubbyCodec codec, int compressionThreshold) {
 
@@ -71,7 +85,13 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes {@code obj} using the delegate codec and, if the resulting byte array
+   * meets the compression threshold, compresses it with GZIP and wraps it in a
+   * {@link GzipObjectWrapper} before re-serializing with the delegate.
+   *
+   * @param obj the object to serialize; must not be {@code null}
+   * @return the encoded (and possibly compressed) byte array
+   * @throws IOException if an I/O error occurs during serialization or compression
    */
   @Override
   public byte[] serialize (Object obj)
@@ -95,7 +115,15 @@ public class LargeValueCompressingCodec implements CubbyCodec {
   }
 
   /**
-   * {@inheritDoc}
+   * Deserializes {@code bytes} using the delegate codec. If the result is a
+   * {@link GzipObjectWrapper}, the compressed payload is decompressed with GZIP and the
+   * uncompressed bytes are passed back to the delegate for final deserialization.
+   *
+   * @param bytes the byte array to deserialize
+   * @return the deserialized object
+   * @throws IOException            if an I/O error occurs during deserialization or
+   *                                decompression
+   * @throws ClassNotFoundException if the class of a serialized object cannot be found
    */
   @Override
   public Object deserialize (byte[] bytes)

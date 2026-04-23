@@ -33,7 +33,19 @@
 package org.smallmind.quorum.pool.complex;
 
 /**
- * Tags used for Claxon metrics emitted by the complex component pool.
+ * Metric event labels used as Claxon tag values when the complex component pool instruments
+ * its operations.
+ * <p>
+ * Each constant represents a distinct pool event category:
+ * <ul>
+ *   <li>{@link #PROCESSING} — components currently checked out by callers</li>
+ *   <li>{@link #FREE} — components sitting idle on the free queue</li>
+ *   <li>{@link #TIMEOUT} — acquisition attempts that exceeded the wait limit</li>
+ *   <li>{@link #RELEASED} — components that have been returned to the pool, tagged with lease
+ *       duration measurements</li>
+ *   <li>{@link #WAITED} — acquisition calls that had to wait before a component became
+ *       available</li>
+ * </ul>
  */
 public enum ClaxonTag {
 
@@ -42,9 +54,9 @@ public enum ClaxonTag {
   private final String display;
 
   /**
-   * Creates the tag with a human-readable display value.
+   * Associates the enum constant with its human-readable display label.
    *
-   * @param display label for metrics
+   * @param display the label emitted in Claxon metric tag values
    */
   ClaxonTag (String display) {
 
@@ -52,13 +64,12 @@ public enum ClaxonTag {
   }
 
   /**
-   * Display label for the tag.
+   * Returns the human-readable label for this tag, suitable for use as a Claxon metric tag value.
    *
-   * @return display text
+   * @return the display label string
    */
   public String getDisplay () {
 
     return display;
   }
 }
-

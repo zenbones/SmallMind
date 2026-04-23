@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.reflection.bean;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Wraps exceptions thrown while invoking bean methods.
+ * Thrown when a bean getter or setter method throws an exception during reflective invocation.
  */
 public class BeanInvocationException extends FormattedException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public BeanInvocationException () {
 
@@ -48,10 +48,10 @@ public class BeanInvocationException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message describing the invocation error
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the invocation failure
+   * @param args    arguments substituted into the format string
    */
   public BeanInvocationException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class BeanInvocationException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying problem
-   * @param message   a {@link java.util.Formatter}-style message describing the invocation error
-   * @param args      values interpolated into the message
+   * @param throwable the underlying exception thrown by the invoked bean method
+   * @param message   a {@link java.util.Formatter}-style format string describing the invocation failure
+   * @param args      arguments substituted into the format string
    */
   public BeanInvocationException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class BeanInvocationException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying problem
+   * @param throwable the underlying exception thrown by the invoked bean method
    */
   public BeanInvocationException (Throwable throwable) {
 

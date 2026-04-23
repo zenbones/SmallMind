@@ -44,7 +44,15 @@ import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
- * Factory that produces pooled {@link PooledJavaContext} instances for use with the complex pool.
+ * {@link org.smallmind.quorum.pool.complex.ComponentInstanceFactory} that produces
+ * {@link JavaContextComponentInstance} objects by performing a JNDI lookup against a
+ * freshly-constructed {@link InitialContext} configured for the target backing store.
+ * <p>
+ * Each call to {@link #createInstance} builds a new JNDI environment from the stored connection
+ * parameters, opens an {@link InitialContext}, looks up the configured context path to obtain a
+ * {@link PooledJavaContext}, then immediately closes the initial context and wraps the result in a
+ * {@link JavaContextComponentInstance}. The pool controls how many instances exist concurrently;
+ * this factory simply knows how to mint new ones.
  */
 public class PooledJavaContextComponentInstanceFactory extends AbstractComponentInstanceFactory<PooledJavaContext> {
 
@@ -58,16 +66,16 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
   private final int port;
 
   /**
-   * Constructs the factory with connection details for the backing store.
+   * Creates a factory that will open connections to the described backing store.
    *
-   * @param storageType   backing store type (e.g., LDAP)
-   * @param contextPath   JNDI path to look up
-   * @param host          host name
-   * @param port          port number
-   * @param tls           whether to use TLS
-   * @param rootNamespace root namespace for the store
-   * @param userContext   user DN for authentication
-   * @param password      password for authentication
+   * @param storageType   the backing store type (e.g., {@link StorageType#LDAP})
+   * @param contextPath   the JNDI path to look up in order to obtain the {@link PooledJavaContext}
+   * @param host          hostname or IP address of the backing store server
+   * @param port          TCP port the backing store server listens on
+   * @param tls           {@code true} to connect with TLS; {@code false} for a plain connection
+   * @param rootNamespace root namespace or base DN under which all names are resolved
+   * @param userContext   user DN or principal used to authenticate to the backing store
+   * @param password      credential used to authenticate to the backing store
    */
   public PooledJavaContextComponentInstanceFactory (StorageType storageType, String contextPath, String host, int port, boolean tls, String rootNamespace, String userContext, String password) {
 
@@ -82,11 +90,17 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
   }
 
   /**
-   * Creates a pooled JavaContext component instance configured for the backing store.
+   * Creates a new {@link JavaContextComponentInstance} by performing a JNDI lookup.
+   * <p>
+   * A transient {@link InitialContext} is built with the factory's connection parameters and
+   * pooling enabled. After the lookup resolves the configured {@code contextPath} to a
+   * {@link PooledJavaContext}, the initial context is closed and the result is wrapped in a
+   * {@link JavaContextComponentInstance} registered with {@code componentPool}.
    *
-   * @param componentPool owning pool
-   * @return component instance wrapping a {@link PooledJavaContext}
-   * @throws Exception if JNDI lookup or context creation fails
+   * @param componentPool the pool that will own the new instance
+   * @return a new {@link JavaContextComponentInstance} ready to be served to callers
+   * @throws Exception if the JNDI environment is misconfigured, the lookup fails, or listener
+   *                   registration on the context throws
    */
   public ComponentInstance<PooledJavaContext> createInstance (ComponentPool<PooledJavaContext> componentPool)
     throws Exception {

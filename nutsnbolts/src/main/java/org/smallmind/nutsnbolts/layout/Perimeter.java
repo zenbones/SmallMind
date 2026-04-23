@@ -33,12 +33,13 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Represents four-sided insets around a container.
+ * Immutable four-sided inset specification that {@link ParaboxLayout} reserves around the edge of a
+ * container before allocating space to the horizontal and vertical boxes.
  *
- * @param top    inset on the top edge
- * @param left   inset on the left edge
- * @param bottom inset on the bottom edge
- * @param right  inset on the right edge
+ * @param top    the inset to reserve along the top edge
+ * @param left   the inset to reserve along the left edge
+ * @param bottom the inset to reserve along the bottom edge
+ * @param right  the inset to reserve along the right edge
  */
 public record Perimeter(double top, double left, double bottom, double right) {
 

@@ -63,8 +63,13 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
 /**
- * Generates Tanuki Software wrapper distributions for the current project, assembling binaries, configs, and dependencies
- * into an installable package and optionally creating an artifact for deployment.
+ * Mojo goal {@code generate-wrapper} that assembles a ready-to-run Tanuki Software Java Service Wrapper distribution
+ * for the current project.
+ * <p>Under {@code ${project.build.directory}/${applicationDir}/<app-name>} the generator creates {@code bin/},
+ * {@code lib/}, and {@code conf/} directories, copies in the wrapper executable and native library for the
+ * configured {@link OSType}, stages runtime dependencies, project classes, additional dependencies, license and
+ * user-supplied configuration files, and renders Freemarker templates to produce the launch scripts and
+ * {@code wrapper.conf}. The tree is optionally compressed into a single archive and attached as an artifact.
  */
 @Mojo(name = "generate-wrapper", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateWrapperMojo extends AbstractMojo {
@@ -135,9 +140,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean skip;
 
   /**
-   * Aggregates project artifacts, dependencies, configuration, and wrapper binaries into a packaged distribution.
+   * Drives the end-to-end wrapper build. Validates the configured OS and compression values, lays out the
+   * {@code bin/}, {@code lib/}, {@code conf/} skeleton, copies the wrapper binaries and runtime artifacts, evaluates
+   * the script and configuration templates, and (if requested) compresses the result into a single archive.
    *
-   * @throws MojoExecutionException if any generation step fails
+   * @throws MojoExecutionException if the {@code operatingSystem} or {@code compression} values are unknown, if any
+   *                                file operation in the staging tree fails, if the OS style is unrecognized, or if a Freemarker template
+   *                                cannot be located, rendered, or written
    */
   public void execute ()
     throws MojoExecutionException {
@@ -417,11 +426,12 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Constructs the base application directory/artifact name.
+   * Composes the directory or artifact name for the wrapper distribution by joining the application name with the
+   * optional version, classifier, and aggregate suffix.
    *
-   * @param includeVersion    whether to append the project version
-   * @param aggregateArtifact whether the name represents the aggregate packaged artifact
-   * @return constructed name without an extension
+   * @param includeVersion    whether to append {@code -version}
+   * @param aggregateArtifact whether to append the {@code -app} suffix used for the final aggregate archive
+   * @return the composed name without any file extension
    */
   private String constructArtifactName (boolean includeVersion, boolean aggregateArtifact) {
 
@@ -445,12 +455,12 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Calculates the full path to the compressed artifact to be produced.
+   * Resolves the absolute filesystem path for a compressed output based on the build directory and compression type.
    *
-   * @param outputDir               base build directory
-   * @param artifactCompressionType compression type to use
-   * @param aggregateArtifact       whether this artifact represents the full application
-   * @return path for the resulting archive
+   * @param outputDir               root build directory (typically {@code target})
+   * @param artifactCompressionType the compression that determines the extension
+   * @param aggregateArtifact       whether the name represents the aggregate {@code -app} archive
+   * @return the full path of the archive to be produced
    */
   private Path constructCompressedArtifactPath (String outputDir, CompressionType artifactCompressionType, boolean aggregateArtifact) {
 
@@ -458,13 +468,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Processes a Freemarker template and writes the rendered file to the provided destination.
+   * Loads, evaluates, and writes a Freemarker template, reporting failures as {@link MojoExecutionException}.
    *
-   * @param templatePath        classpath-relative template path
-   * @param outputPath          directory where the rendered file will be written
-   * @param destinationFileName output filename
-   * @param interpolationMap    model containing replacement values
-   * @throws MojoExecutionException if the template cannot be loaded, processed, or written
+   * @param templatePath        classpath-relative path of the template to load
+   * @param outputPath          destination directory
+   * @param destinationFileName filename to create in {@code outputPath}
+   * @param interpolationMap    Freemarker model containing the template's variable bindings
+   * @throws MojoExecutionException if the template cannot be resolved, a writer cannot be opened, evaluation fails,
+   *                                or the writer cannot be closed
    */
   private void processFreemarkerTemplate (Path templatePath, Path outputPath, String destinationFileName, HashMap<String, Object> interpolationMap)
     throws MojoExecutionException {
@@ -503,10 +514,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Ensures the given directory exists, raising a {@link MojoExecutionException} on failure.
+   * Idempotently creates a directory that is part of the staged wrapper tree.
    *
-   * @param dirType label used in error messages
-   * @param dirPath directory path to create
+   * @param dirType short label ({@code bin}/{@code lib}/{@code conf}) used only in error messages
+   * @param dirPath directory to create
    * @throws MojoExecutionException if the directory cannot be created
    */
   private void createDirectory (String dirType, Path dirPath)
@@ -520,9 +531,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * @param dirType  directory category (bin/lib/conf)
-   * @param fileName file within the wrapper resources
-   * @return resolved resource path for the requested wrapper component
+   * Resolves the classpath location of a bundled wrapper resource.
+   *
+   * @param dirType  sub-bundle category ({@code bin}, {@code lib}, or {@code conf})
+   * @param fileName resource filename inside that sub-bundle
+   * @return the classpath-relative path of the requested resource
    */
   private Path getWrapperPath (String dirType, String fileName) {
 
@@ -530,11 +543,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Loads a resource stream from the wrapper bundle.
+   * Opens a classpath resource belonging to the bundled wrapper package.
    *
-   * @param path resource path to resolve
-   * @return an open input stream for the resource
-   * @throws MojoExecutionException if the resource cannot be found
+   * @param path classpath-relative resource path, typically built with {@link #getWrapperPath}
+   * @return an open {@link InputStream} that the caller must close
+   * @throws MojoExecutionException if no such resource exists on the plugin classpath
    */
   private InputStream getResourceAsStream (Path path)
     throws MojoExecutionException {
@@ -549,12 +562,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Copies a file from disk into the destination directory under a specific name.
+   * Copies a file on disk into a destination directory under a specified filename, using NIO channels for bulk
+   * transfer.
    *
-   * @param sourcePath          path to the source file
+   * @param sourcePath          path of the source file
    * @param destinationPath     destination directory
-   * @param destinationFileName resulting filename
-   * @throws IOException if reading or writing fails
+   * @param destinationFileName filename to create in {@code destinationPath}
+   * @throws IOException if either file cannot be opened or bytes cannot be transferred
    */
   private void copyToDestination (Path sourcePath, Path destinationPath, String destinationFileName)
     throws IOException {
@@ -574,12 +588,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Copies a standard {@link File} into the destination directory under a specific name.
+   * Copies a {@link File} into a destination directory under a specified filename, delegating the byte-copy loop to
+   * {@link #copyToDestination(InputStream, Path, String)}.
    *
    * @param file                source file to copy
    * @param destinationPath     destination directory
-   * @param destinationFileName resulting filename
-   * @throws IOException if reading or writing fails
+   * @param destinationFileName filename to create in {@code destinationPath}
+   * @throws IOException if the source cannot be opened or the copy fails
    */
   private void copyToDestination (File file, Path destinationPath, String destinationFileName)
     throws IOException {
@@ -590,12 +605,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   /**
-   * Copies data from an {@link InputStream} into the destination directory under a specific name.
+   * Streams bytes from an arbitrary {@link InputStream} to a file inside the destination directory, closing both
+   * streams on completion.
    *
-   * @param inputStream         source stream
+   * @param inputStream         source stream to drain (closed by this method)
    * @param destinationPath     destination directory
-   * @param destinationFileName resulting filename
-   * @throws IOException if reading or writing fails
+   * @param destinationFileName filename to create in {@code destinationPath}
+   * @throws IOException if reading from the stream or writing to the destination file fails
    */
   private void copyToDestination (InputStream inputStream, Path destinationPath, String destinationFileName)
     throws IOException {

@@ -40,17 +40,17 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 /**
- * Parsed representation of {@link Hierarchy} metadata for a class.
+ * Parsed representation of a {@link Hierarchy} annotation, holding the resolved list of declared subclasses.
  */
 public class HierarchyInformation {
 
   private final List<TypeElement> subClassList;
 
   /**
-   * Extracts the declared subclasses from a {@link Hierarchy} annotation.
+   * Extracts the declared subclass list from a {@link Hierarchy} annotation mirror.
    *
-   * @param processingEnvironment     current processing environment
-   * @param hierarchyAnnotationMirror annotation mirror describing the hierarchy
+   * @param processingEnvironment     the current annotation processing environment
+   * @param hierarchyAnnotationMirror the annotation mirror of the {@link Hierarchy} annotation
    */
   public HierarchyInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror hierarchyAnnotationMirror) {
 
@@ -58,7 +58,7 @@ public class HierarchyInformation {
   }
 
   /**
-   * @return the list of subclasses participating in the hierarchy
+   * @return the list of type elements representing the declared hierarchy subclasses
    */
   public List<TypeElement> getSubClassList () {
 

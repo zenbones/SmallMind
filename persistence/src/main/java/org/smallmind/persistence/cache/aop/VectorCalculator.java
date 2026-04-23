@@ -40,16 +40,18 @@ import org.smallmind.persistence.cache.VectorArtifact;
 import org.smallmind.persistence.cache.VectorIndex;
 
 /**
- * Utility for constructing {@link VectorArtifact} and key components from annotation metadata and runtime values.
+ * Utility that constructs {@link VectorArtifact} instances from {@link Vector} annotation metadata
+ * combined with runtime values sourced from either a durable entity or an AOP join point.
  */
 public class VectorCalculator {
 
   /**
-   * Builds a vector artifact from a durable instance using metadata supplied by {@link CachedWith}.
+   * Builds a {@link VectorArtifact} by reading key values from bean properties of the given durable.
+   * Used by {@link CachedWithAspect} during persist and delete operations.
    *
-   * @param vector  vector description containing key definitions
-   * @param durable durable providing field values for the key
-   * @return populated vector artifact suitable for cache operations
+   * @param vector  vector annotation that describes the key structure
+   * @param durable entity from which property values are read
+   * @return fully populated {@link VectorArtifact} ready for cache operations
    */
   public static VectorArtifact getVectorArtifact (Vector vector, Durable durable) {
 
@@ -68,11 +70,12 @@ public class VectorCalculator {
   }
 
   /**
-   * Builds a vector artifact from method parameters using metadata supplied by {@link CacheAs}.
+   * Builds a {@link VectorArtifact} by reading key values from method arguments exposed by the join point.
+   * Used by {@link CacheAsAspect} during annotated method interception.
    *
-   * @param vector    vector description containing key definitions
-   * @param joinPoint join point exposing argument values
-   * @return populated vector artifact suitable for cache operations
+   * @param vector    vector annotation that describes the key structure
+   * @param joinPoint the intercepted invocation that provides argument values
+   * @return fully populated {@link VectorArtifact} ready for cache operations
    */
   public static VectorArtifact getVectorArtifact (Vector vector, JoinPoint joinPoint) {
 
@@ -91,12 +94,12 @@ public class VectorCalculator {
   }
 
   /**
-   * Retrieves a parameter value from a join point, enforcing nullability constraints.
+   * Extracts the named parameter value from a join point, throwing a {@link CacheAutomationError} if extraction fails.
    *
-   * @param joinPoint     intercepted invocation containing parameters
-   * @param parameterName name of the parameter to extract
-   * @param nullable      whether null is permitted for this value
-   * @return parameter value
+   * @param joinPoint     the intercepted invocation that contains the arguments
+   * @param parameterName the name of the parameter to extract
+   * @param nullable      {@code true} to permit a {@code null} value for this parameter
+   * @return the runtime argument value for the named parameter
    */
   public static Object getValue (JoinPoint joinPoint, String parameterName, boolean nullable) {
 
@@ -108,12 +111,12 @@ public class VectorCalculator {
   }
 
   /**
-   * Retrieves a property value from a durable entity, enforcing nullability constraints.
+   * Reads the named bean property from a durable entity, throwing a {@link CacheAutomationError} if access fails.
    *
-   * @param durable   source durable
-   * @param fieldName bean property name to read
-   * @param nullable  whether null is permitted for this value
-   * @return property value from the durable
+   * @param durable   the entity from which the property is read
+   * @param fieldName the bean-property name to access
+   * @param nullable  {@code true} to permit a {@code null} property value
+   * @return the property value from the durable
    */
   public static Object getValue (Durable durable, String fieldName, boolean nullable) {
 

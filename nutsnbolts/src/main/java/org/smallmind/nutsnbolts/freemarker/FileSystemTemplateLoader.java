@@ -40,24 +40,23 @@ import java.nio.file.Paths;
 import freemarker.cache.TemplateLoader;
 
 /**
- * FreeMarker {@link TemplateLoader} backed by the local file system.
- * Optionally anchors lookups at a base path to prevent template path traversal.
+ * FreeMarker {@link TemplateLoader} backed by the local file system, with an optional base path that template names are resolved against.
  */
 public class FileSystemTemplateLoader implements TemplateLoader {
 
   private Path basePath;
 
   /**
-   * Creates a loader without a base path; callers should supply absolute template names.
+   * Creates a loader without a fixed base path; template names are used as absolute file-system paths.
    */
   public FileSystemTemplateLoader () {
 
   }
 
   /**
-   * Creates a loader anchored at the specified base path.
+   * Creates a loader that resolves all template names relative to the given base directory.
    *
-   * @param basePath root directory from which templates will be resolved
+   * @param basePath root directory used to resolve template names
    */
   public FileSystemTemplateLoader (Path basePath) {
 
@@ -65,9 +64,9 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Sets or replaces the base path used to resolve template names.
+   * Sets the base directory against which relative template names are resolved.
    *
-   * @param basePath root directory for templates
+   * @param basePath root directory for template resolution; {@code null} to use absolute names
    */
   public void setBasePath (Path basePath) {
 
@@ -75,10 +74,10 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Resolves the named template against the base path (if configured) or the raw file system.
+   * Returns a {@link FileSystemTemplateSource} for the given name, resolving it against the configured base path or treating it as an absolute path when no base is set.
    *
-   * @param name template name/path
-   * @return template source reference
+   * @param name the template name or path as provided by FreeMarker
+   * @return a {@link FileSystemTemplateSource} representing the resolved file; never {@code null}
    */
   @Override
   public Object findTemplateSource (String name) {
@@ -97,10 +96,10 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Reports the last-modified timestamp for the template source.
+   * Returns the last-modified timestamp of the template file in milliseconds, or {@code -1} if the timestamp cannot be determined.
    *
-   * @param templateSource file-system template source
-   * @return timestamp in milliseconds or {@code -1} if unavailable
+   * @param templateSource a {@link FileSystemTemplateSource} previously returned by {@link #findTemplateSource}
+   * @return last-modified time in milliseconds, or {@code -1} if unavailable
    */
   @Override
   public long getLastModified (Object templateSource) {
@@ -116,12 +115,12 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Opens a reader for the template using the requested encoding.
+   * Opens and returns a character reader for the template file using the specified encoding.
    *
-   * @param templateSource file-system template source
-   * @param encoding       character encoding to apply
-   * @return reader over the template content
-   * @throws IOException if the file cannot be opened
+   * @param templateSource a {@link FileSystemTemplateSource} previously returned by {@link #findTemplateSource}
+   * @param encoding       the character encoding to apply when reading the file
+   * @return a reader positioned at the start of the template file
+   * @throws IOException if the file cannot be opened or the encoding is unsupported
    */
   @Override
   public Reader getReader (Object templateSource, String encoding)
@@ -131,10 +130,10 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   }
 
   /**
-   * Closes the underlying template stream.
+   * Closes the input stream held by the given template source.
    *
-   * @param templateSource template source to close
-   * @throws IOException if closing fails
+   * @param templateSource a {@link FileSystemTemplateSource} previously returned by {@link #findTemplateSource}
+   * @throws IOException if closing the stream fails
    */
   @Override
   public void closeTemplateSource (Object templateSource)

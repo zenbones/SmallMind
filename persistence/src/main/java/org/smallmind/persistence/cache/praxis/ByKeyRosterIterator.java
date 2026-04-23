@@ -40,11 +40,11 @@ import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.orm.ORMDao;
 
 /**
- * {@link ListIterator} implementation that stores {@link DurableKey} values but exposes hydrated
- * {@link Durable} instances when iterating.
+ * {@link ListIterator} that traverses a key-based roster while transparently hydrating
+ * {@link DurableKey} values into {@link Durable} instances via an {@link ORMDao}.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {
 
@@ -54,8 +54,8 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   /**
    * Constructs an iterator that resolves durables via the supplied DAO.
    *
-   * @param ormDao          DAO used to load durables from keys
-   * @param keyListIterator underlying iterator of durable keys
+   * @param ormDao          the DAO used to load durable instances from their keys
+   * @param keyListIterator the underlying iterator over {@link DurableKey} values
    */
   public ByKeyRosterIterator (ORMDao<I, D, ?, ?> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
 
@@ -64,10 +64,11 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Resolves a durable instance for the supplied key.
+   * Hydrates a durable from its key using the backing DAO.
    *
-   * @param durableKey key identifying the durable
-   * @return durable instance or {@code null} when the key is null
+   * @param durableKey the key to resolve; returns {@code null} when this parameter is {@code null}
+   * @return the hydrated durable
+   * @throws CacheOperationException when the durable cannot be found in the backing store
    */
   private D getDurable (DurableKey<I, D> durableKey) {
 
@@ -86,7 +87,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return {@code true} when another element is available
+   * Returns {@code true} when more elements are available in the forward direction.
+   *
+   * @return {@code true} if {@link #next()} would succeed
    */
   public boolean hasNext () {
 
@@ -94,9 +97,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Returns the next raw durable key without hydrating the durable.
+   * Returns the next raw {@link DurableKey} without hydrating it into a durable.
    *
-   * @return next durable key
+   * @return the next durable key
    */
   public DurableKey<I, D> nextKey () {
 
@@ -104,9 +107,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Returns the next hydrated durable.
+   * Returns the next element, hydrated from its stored key.
    *
-   * @return next durable
+   * @return the next durable
    */
   public D next () {
 
@@ -114,7 +117,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return {@code true} when a previous element is available
+   * Returns {@code true} when more elements are available in the backward direction.
+   *
+   * @return {@code true} if {@link #previous()} would succeed
    */
   public boolean hasPrevious () {
 
@@ -122,9 +127,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Returns the previous hydrated durable.
+   * Returns the previous element, hydrated from its stored key.
    *
-   * @return previous durable
+   * @return the previous durable
    */
   public D previous () {
 
@@ -132,7 +137,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return index of the element that would be returned by {@link #next()}
+   * Returns the index of the element that would be returned by a subsequent call to {@link #next()}.
+   *
+   * @return the next index
    */
   public int nextIndex () {
 
@@ -140,7 +147,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return index of the element that would be returned by {@link #previous()}
+   * Returns the index of the element that would be returned by a subsequent call to {@link #previous()}.
+   *
+   * @return the previous index
    */
   public int previousIndex () {
 
@@ -148,7 +157,7 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Removes the current element from the underlying iterator.
+   * Removes the element last returned by {@link #next()} or {@link #previous()} from the underlying key roster.
    */
   public void remove () {
 
@@ -156,9 +165,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Replaces the current element with the supplied durable.
+   * Replaces the last returned element with a key derived from the supplied durable.
    *
-   * @param durable durable to set
+   * @param durable the durable whose key will replace the current element
    */
   public void set (D durable) {
 
@@ -166,9 +175,9 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Inserts the supplied durable at the current iterator position.
+   * Inserts a key derived from the supplied durable at the current iterator position.
    *
-   * @param durable durable to add
+   * @param durable the durable to add
    */
   public void add (D durable) {
 

@@ -33,17 +33,17 @@
 package org.smallmind.web.json.query;
 
 /**
- * Marks a field that must appear in a where clause.
+ * Annotation element within {@link WhereConstraint} declaring a field that must be present in the where clause.
  */
 public @interface Required {
 
   /**
-   * @return entity alias for the required field (optional)
+   * @return optional entity alias scoping the required field
    */
   String entity () default "";
 
   /**
-   * @return name of the field that must be present
+   * @return name of the field that must appear in the where clause
    */
   String field ();
 }

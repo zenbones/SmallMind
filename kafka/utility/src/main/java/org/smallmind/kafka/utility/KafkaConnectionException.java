@@ -35,15 +35,15 @@ package org.smallmind.kafka.utility;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals an inability to communicate with the Kafka cluster during connection checks.
+ * Thrown when a Kafka cluster cannot be reached or confirmed available within the allowed grace period.
  */
 public class KafkaConnectionException extends FormattedException {
 
   /**
-   * Constructs an exception with a formatted message describing the failed connection attempt.
+   * Constructs an exception whose detail message is assembled from a format pattern and arguments.
    *
-   * @param message the message pattern
-   * @param args    values to interpolate into the message pattern
+   * @param message {@link String#format}-style pattern describing the failure
+   * @param args    values substituted into {@code message}
    */
   public KafkaConnectionException (String message, Object... args) {
 

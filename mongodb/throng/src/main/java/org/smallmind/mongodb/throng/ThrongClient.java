@@ -58,18 +58,20 @@ import org.smallmind.mongodb.throng.query.Filter;
 import org.smallmind.mongodb.throng.query.Query;
 import org.smallmind.mongodb.throng.query.Updates;
 
-/*
-  Weaknesses...
-    1) Entity classes can not be marked as polymorphic.
-    2) Embedded classes can not have lifecycle methods.
-    3) There's no fully correct automated handling for containers with generics of either @Embedded or @Codec types, i.e. List, Map, Bag, etc.
-       Containers of @Embedded types will miss automated index processing, and containers of @Codec types will throw an exception due to mismatch
-       of the field and codec. Creating container subclasses, with codecs parameterized for those subclasses, and, in the case of @Embedded types,
-       adding the appropriate indexes to the parent class, is the correct route.
-*/
-
 /**
- * High-level convenience wrapper for Throng-mapped entities that wires codecs, index creation, and CRUD helpers.
+ * Primary entry point for Throng-based MongoDB access that wires together codec registration, optional automatic
+ * index creation, and typed CRUD operations for annotated entity classes.
+ *
+ * <p><b>Known limitations:</b>
+ * <ul>
+ *   <li>Entity classes ({@code @Entity}) cannot themselves be marked as polymorphic.</li>
+ *   <li>Embedded classes ({@code @Embedded}) cannot declare lifecycle methods.</li>
+ *   <li>Generic containers ({@code List}, {@code Map}, etc.) whose element type is an {@code @Embedded}
+ *       or {@code @Codec} type are not fully supported: {@code @Embedded} containers will miss automated
+ *       index processing, and {@code @Codec} containers will throw an exception due to a type mismatch.
+ *       The recommended workaround is to create a typed container subclass with a parameterized codec,
+ *       and, for {@code @Embedded} element types, declare the required indexes on the parent entity.</li>
+ * </ul>
  */
 public class ThrongClient {
 
@@ -78,17 +80,18 @@ public class ThrongClient {
   private final HashMap<Class<?>, ThrongEntityCodec<?>> entityCodecMap = new HashMap<>();
 
   /**
-   * Builds a client for the given database, registering codecs and optionally creating indexes for the provided entity classes.
+   * Constructs a client for the given database, scanning the supplied classes to register embedded codecs and
+   * entity codecs, and optionally creating collection indexes.
    *
-   * @param mongoClient   the underlying MongoDB client
-   * @param database      the database name
-   * @param options       configurable behaviors such as index creation and null storage
-   * @param entityClasses the entity and embedded classes to register
-   * @throws ThrongMappingException    if entity metadata is invalid
-   * @throws NoSuchMethodException     if an entity lacks an expected constructor
-   * @throws InstantiationException    if an entity cannot be instantiated
-   * @throws IllegalAccessException    if reflection cannot access an entity
-   * @throws InvocationTargetException if construction of an entity fails
+   * @param mongoClient   the underlying MongoDB driver client
+   * @param database      the name of the database to operate on
+   * @param options       runtime options governing null storage, index creation, and collation inclusion
+   * @param entityClasses the entity ({@code @Entity}) and embedded ({@code @Embedded}) classes to register
+   * @throws ThrongMappingException    if any entity or embedded annotation is invalid or a codec cannot be resolved
+   * @throws NoSuchMethodException     if reflective construction of a codec fails due to a missing constructor
+   * @throws InstantiationException    if a codec class cannot be instantiated
+   * @throws IllegalAccessException    if reflection cannot access a required constructor or field
+   * @throws InvocationTargetException if a constructor invoked during codec setup throws an exception
    */
   public ThrongClient (MongoClient mongoClient, String database, ThrongOptions options, Class<?>... entityClasses)
     throws ThrongMappingException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -130,12 +133,12 @@ public class ThrongClient {
   }
 
   /**
-   * Looks up the {@link ThrongEntityCodec} registered for the provided entity type.
+   * Retrieves the registered {@link ThrongEntityCodec} for the given entity class.
    *
-   * @param entityClass the entity type
-   * @param <T>         entity type
-   * @return the codec configured for the entity
-   * @throws ThrongRuntimeException if the entity is not registered with the client
+   * @param entityClass the entity class whose codec is required
+   * @param <T>         the entity type
+   * @return the codec registered for the class
+   * @throws ThrongRuntimeException if no codec has been registered for the class
    */
   private <T> ThrongEntityCodec<T> getCodec (Class<T> entityClass) {
 
@@ -150,12 +153,12 @@ public class ThrongClient {
   }
 
   /**
-   * Counts documents for the entity type matching the provided filter.
+   * Counts all documents in the entity's collection that satisfy the given filter.
    *
-   * @param entityClass the entity type
-   * @param filter      the filter to apply
-   * @param <T>         entity type
-   * @return number of matching documents
+   * @param entityClass the entity class identifying the collection
+   * @param filter      the filter to apply to the count
+   * @param <T>         the entity type
+   * @return the number of matching documents
    */
   public <T> long count (Class<T> entityClass, Filter filter) {
 
@@ -165,12 +168,12 @@ public class ThrongClient {
   }
 
   /**
-   * Executes a find query for the entity type.
+   * Executes a find query against the entity's collection and returns a lazy iterable of decoded entities.
    *
-   * @param entityClass the entity type
-   * @param query       query options such as filters, projections, and sorting
-   * @param <T>         entity type
-   * @return iterable over decoded entity instances
+   * @param entityClass the entity class identifying the collection
+   * @param query       the query carrying filter, sort, projection, skip, limit, and batch-size settings
+   * @param <T>         the entity type
+   * @return a {@link ThrongIterable} over the matching entity instances
    */
   public <T> ThrongIterable<T> find (Class<T> entityClass, Query query) {
 
@@ -180,12 +183,12 @@ public class ThrongClient {
   }
 
   /**
-   * Fetches the first document that matches the provided query.
+   * Returns the first entity that matches the query, or {@code null} if there are no matches.
    *
-   * @param entityClass the entity type
-   * @param query       query options to apply
-   * @param <T>         entity type
-   * @return the first matching entity or {@code null} if none are found
+   * @param entityClass the entity class identifying the collection
+   * @param query       the query to apply
+   * @param <T>         the entity type
+   * @return the first matching entity, or {@code null}
    */
   public <T> T findOne (Class<T> entityClass, Query query) {
 
@@ -203,12 +206,12 @@ public class ThrongClient {
   }
 
   /**
-   * Inserts a new entity using the configured codecs and collection.
+   * Inserts a single entity into its mapped collection.
    *
    * @param value   the entity instance to insert
-   * @param options insert options such as bypassing validation
-   * @param <T>     entity type
-   * @return insert result produced by the driver
+   * @param options driver options for the insert operation such as bypassing document validation
+   * @param <T>     the entity type
+   * @return the driver {@link InsertOneResult} describing the outcome
    */
   public <T> InsertOneResult insert (T value, InsertOneOptions options) {
 
@@ -218,14 +221,14 @@ public class ThrongClient {
   }
 
   /**
-   * Applies updates to documents matching the filter.
+   * Applies an update to all documents in the entity's collection that match the given filter.
    *
-   * @param entityClass   the entity type
-   * @param filter        selector for documents to update
+   * @param entityClass   the entity class identifying the collection
+   * @param filter        the filter that selects documents to update
    * @param updates       the update operations to apply
-   * @param updateOptions driver update options (upsert, etc.)
-   * @param <T>           entity type
-   * @return wrapper around the driver's update result
+   * @param updateOptions driver options such as upsert behaviour
+   * @param <T>           the entity type
+   * @return an {@link UpdateResult} describing the number of matched, modified, and upserted documents
    */
   public <T> UpdateResult update (Class<T> entityClass, Filter filter, Updates updates, UpdateOptions updateOptions) {
 
@@ -235,13 +238,13 @@ public class ThrongClient {
   }
 
   /**
-   * Deletes documents matching the provided filter.
+   * Deletes all documents in the entity's collection that match the given filter.
    *
-   * @param entityClass   the entity type
-   * @param filter        selector for documents to delete
-   * @param deleteOptions driver delete options
-   * @param <T>           entity type
-   * @return driver delete result
+   * @param entityClass   the entity class identifying the collection
+   * @param filter        the filter that selects documents to delete
+   * @param deleteOptions driver options for the delete operation
+   * @param <T>           the entity type
+   * @return the driver {@link DeleteResult} describing the number of deleted documents
    */
   public <T> DeleteResult delete (Class<T> entityClass, Filter filter, DeleteOptions deleteOptions) {
 

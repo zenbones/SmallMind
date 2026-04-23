@@ -65,7 +65,9 @@ public class JmsConnectionDetails {
   }
 
   /**
-   * @return pool used to obtain JNDI contexts.
+   * Returns the pool used to obtain JNDI {@link Context} instances for lookups.
+   *
+   * @return JNDI context pool.
    */
   public ComponentPool<Context> getContextPool () {
 
@@ -73,7 +75,9 @@ public class JmsConnectionDetails {
   }
 
   /**
-   * Destination JNDI name.
+   * Returns the JNDI name of the destination.
+   *
+   * @return destination JNDI name.
    */
   public String getDestinationName () {
 
@@ -81,7 +85,9 @@ public class JmsConnectionDetails {
   }
 
   /**
-   * Connection factory JNDI name.
+   * Returns the JNDI name of the connection factory.
+   *
+   * @return connection factory JNDI name.
    */
   public String getConnectionFactoryName () {
 
@@ -89,7 +95,9 @@ public class JmsConnectionDetails {
   }
 
   /**
-   * Username used for connections.
+   * Returns the username used for connection authentication.
+   *
+   * @return authentication username.
    */
   public String getUserName () {
 
@@ -97,7 +105,9 @@ public class JmsConnectionDetails {
   }
 
   /**
-   * Password used for connections.
+   * Returns the password used for connection authentication.
+   *
+   * @return authentication password.
    */
   public String getPassword () {
 

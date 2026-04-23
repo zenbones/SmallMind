@@ -41,7 +41,17 @@ import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Implements memcached increment/decrement semantics with optional initialization and CAS guards.
+ * Command that implements the memcached meta-arithmetic ({@code ma}) operation,
+ * supporting both increment and decrement of a numeric counter stored at a given key.
+ *
+ * <p>In addition to basic delta arithmetic, this command supports optional
+ * initialization (creating the key with a seed value when absent), a TTL for
+ * the key, CAS-guarded updates, and an opaque correlation token. When a negative
+ * {@code delta} is supplied the mode is automatically flipped so the sign is
+ * absorbed into the direction of the operation.</p>
+ *
+ * <p>A successful response returns the post-operation counter value inside
+ * the {@link Result#getValue()} byte array.</p>
  */
 public class ArithmeticCommand extends Command {
 
@@ -63,10 +73,10 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Sets the target cache key.
+   * Sets the cache key whose numeric value will be modified.
    *
-   * @param key cache key to update
-   * @return this command for chaining
+   * @param key the cache key to target
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setKey (String key) {
 
@@ -76,10 +86,11 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Sets whether to increment or decrement.
+   * Sets whether the operation increments or decrements the stored counter.
+   * Defaults to {@link ArithmeticMode#INCREMENT} when not called.
    *
-   * @param mode arithmetic mode
-   * @return this command for chaining
+   * @param mode the arithmetic direction to apply
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setMode (ArithmeticMode mode) {
 
@@ -89,10 +100,11 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Supplies a CAS token for conditional updates.
+   * Supplies a CAS token so the mutation is applied only when the server-side
+   * version matches, providing optimistic-concurrency protection.
    *
-   * @param cas compare-and-swap token
-   * @return this command for chaining
+   * @param cas the compare-and-swap token obtained from a previous read
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setCas (Long cas) {
 
@@ -102,10 +114,12 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Sets the initial value to use when the key is absent.
+   * Sets the seed value used to initialize the counter when the key does not
+   * yet exist in the cache. Requires {@link #setExpiration(Integer)} to also
+   * be set if a TTL is desired at creation time.
    *
-   * @param initial initial value
-   * @return this command for chaining
+   * @param initial the value to store when creating a previously absent key
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setInitial (Integer initial) {
 
@@ -115,10 +129,12 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Specifies the amount to add or subtract.
+   * Specifies the amount to add to (or subtract from) the stored counter.
+   * If the value is negative the operation's {@link ArithmeticMode} is
+   * automatically flipped to preserve correct semantics.
    *
-   * @param delta increment/decrement delta
-   * @return this command for chaining
+   * @param delta the magnitude of the change; may be negative
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setDelta (Integer delta) {
 
@@ -128,10 +144,12 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Sets the expiration in seconds for the key when initializing.
+   * Sets the TTL applied to the key. When used together with
+   * {@link #setInitial(Integer)}, the expiration governs the lifetime of the
+   * newly created key; otherwise it refreshes the TTL of an existing key.
    *
-   * @param expiration expiration time in seconds
-   * @return this command for chaining
+   * @param expiration the time-to-live in seconds
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setExpiration (Integer expiration) {
 
@@ -141,10 +159,11 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * Attaches an opaque token echoed in responses.
+   * Attaches an opaque correlation token that the server echoes back verbatim
+   * in its response, allowing callers to correlate pipelined replies.
    *
-   * @param opaqueToken token to include
-   * @return this command for chaining
+   * @param opaqueToken an arbitrary string token to include in the request
+   * @return this command instance, for method chaining
    */
   public ArithmeticCommand setOpaqueToken (String opaqueToken) {
 
@@ -155,6 +174,10 @@ public class ArithmeticCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Builds the {@code ma} meta-arithmetic command line. If the configured
+   * {@code delta} is negative its absolute value is used and the {@code mode}
+   * is flipped accordingly before serialization.</p>
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -192,6 +215,14 @@ public class ArithmeticCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Interprets the server response for the arithmetic operation.
+   * Response codes {@code EX}, {@code NF}, and {@code NS} indicate the operation
+   * did not complete (expired, not found, or not stored); {@code HD} indicates
+   * success and carries the resulting counter value.</p>
+   *
+   * @throws UnexpectedResponseException if the response code is none of
+   *                                     {@code EX}, {@code NF}, {@code NS}, or {@code HD}
    */
   @Override
   public Result process (Response response)

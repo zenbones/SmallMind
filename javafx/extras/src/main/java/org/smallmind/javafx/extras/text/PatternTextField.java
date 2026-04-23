@@ -37,23 +37,27 @@ import javafx.scene.control.IndexRange;
 import javafx.scene.control.TextField;
 
 /**
- * {@link TextField} that restricts edits to those matching a supplied {@link Pattern}.
+ * A {@link TextField} that restricts user input to text matching a configurable {@link Pattern}.
+ * Both typed characters and clipboard pastes are validated by pre-computing the resulting field
+ * value and testing it against the pattern before permitting the edit. If no pattern is configured
+ * all input is accepted, making the field behave identically to a plain {@link TextField}.
  */
 public class PatternTextField extends TextField {
 
   private Pattern pattern;
 
   /**
-   * Creates an unrestricted text field.
+   * Creates an unrestricted text field with no validation pattern.
    */
   public PatternTextField () {
 
   }
 
   /**
-   * Creates a text field that enforces the supplied pattern.
+   * Creates a text field that enforces the given pattern on all edits.
    *
-   * @param pattern pattern used to validate edits
+   * @param pattern the pattern the full field value must match after any edit; may be {@code null}
+   *                to allow unrestricted input
    */
   public PatternTextField (Pattern pattern) {
 
@@ -61,10 +65,11 @@ public class PatternTextField extends TextField {
   }
 
   /**
-   * Creates a text field with an initial value and enforcement pattern.
+   * Creates a text field with an initial value and a validation pattern.
    *
-   * @param pattern pattern used to validate edits
-   * @param text    initial value
+   * @param pattern the pattern the full field value must match after any edit; may be {@code null}
+   *                to allow unrestricted input
+   * @param text    the initial text content; must not be {@code null}
    */
   public PatternTextField (Pattern pattern, String text) {
 
@@ -74,10 +79,10 @@ public class PatternTextField extends TextField {
   }
 
   /**
-   * Sets the validation pattern.
+   * Replaces the current validation pattern. The new pattern takes effect on the next edit.
    *
-   * @param pattern the new pattern
-   * @return this field for chaining
+   * @param pattern the new validation pattern; may be {@code null} to remove the restriction
+   * @return this field for method chaining
    */
   public synchronized PatternTextField setPattern (Pattern pattern) {
 
@@ -87,11 +92,13 @@ public class PatternTextField extends TextField {
   }
 
   /**
-   * Replaces a range of text only if the resulting value matches the configured pattern.
+   * Replaces the text in the range {@code [start, end)} with {@code text} only if the resulting
+   * field value would match the configured pattern. If no pattern is set the replacement is always
+   * applied.
    *
-   * @param start start index
-   * @param end   end index
-   * @param text  replacement text
+   * @param start the inclusive start index of the range to replace
+   * @param end   the exclusive end index of the range to replace
+   * @param text  the replacement text; must not be {@code null}
    */
   @Override
   public synchronized void replaceText (int start, int end, String text) {
@@ -104,9 +111,10 @@ public class PatternTextField extends TextField {
   }
 
   /**
-   * Replaces the current selection only if the resulting value matches the configured pattern.
+   * Replaces the current selection with {@code text} only if the resulting field value would match
+   * the configured pattern. If no pattern is set the replacement is always applied.
    *
-   * @param text replacement text
+   * @param text the replacement text; must not be {@code null}
    */
   @Override
   public synchronized void replaceSelection (String text) {

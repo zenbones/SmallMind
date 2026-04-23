@@ -33,7 +33,9 @@
 package org.smallmind.spark.tanukisoft.maven;
 
 /**
- * Distinguishes wrapper behavior between Windows and Unix-like operating systems.
+ * Coarse classification of wrapper platforms into the two families ({@code WINDOWS} and {@code UNIX}) that determine
+ * which scripts and native library name the generator produces. Each constant carries the platform's
+ * generically-named library.
  */
 public enum OSStyle {
 
@@ -42,7 +44,9 @@ public enum OSStyle {
   private final String library;
 
   /**
-   * @param library default library name used by this style
+   * Associates the style with the generic native library name it installs alongside the platform-specific one.
+   *
+   * @param library the generic library filename for this style
    */
   OSStyle (String library) {
 
@@ -50,7 +54,9 @@ public enum OSStyle {
   }
 
   /**
-   * @return the default native library name for this OS style
+   * Returns the generic wrapper library filename associated with this style.
+   *
+   * @return the generic library filename
    */
   public String getLibrary () {
 

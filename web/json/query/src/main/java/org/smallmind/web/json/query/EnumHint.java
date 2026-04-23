@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Hint capturing the fully qualified class name of an enum type.
+ * A {@link Hint} that records the fully qualified class name of an enum type for array operands.
  */
 @XmlRootElement(name = "enum", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(HintPolymorphicXmlAdapter.class)
@@ -47,16 +47,16 @@ public class EnumHint extends Hint {
   private String type;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public EnumHint () {
 
   }
 
   /**
-   * Creates an enum hint for the supplied enum class.
+   * Constructs a hint recording the fully qualified name of the given enum class.
    *
-   * @param enumClass the enum type
+   * @param enumClass enum type whose name is stored
    */
   public EnumHint (Class<? extends Enum> enumClass) {
 
@@ -64,6 +64,8 @@ public class EnumHint extends Hint {
   }
 
   /**
+   * Returns the hint discriminator for enum hints.
+   *
    * @return {@link HintType#ENUM}
    */
   @Override
@@ -74,7 +76,7 @@ public class EnumHint extends Hint {
   }
 
   /**
-   * Returns the fully qualified enum class name.
+   * Returns the fully qualified class name of the enum type.
    *
    * @return enum class name
    */
@@ -85,7 +87,7 @@ public class EnumHint extends Hint {
   }
 
   /**
-   * Sets the fully qualified enum class name.
+   * Sets the fully qualified class name of the enum type.
    *
    * @param type enum class name
    */

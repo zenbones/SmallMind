@@ -38,7 +38,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method invocation as a broadcast shout to an entire service group.
+ * Routes a method invocation as a broadcast to every active instance of the target service
+ * group. Unlike {@link InOut} or {@link Whisper}, a shout does not target a single instance
+ * and does not expect any response; it is inherently fire-and-forget across all listeners.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

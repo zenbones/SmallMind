@@ -65,7 +65,11 @@ import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
 /**
- * Generates Singularity-based executable jars by aggregating runtime dependencies, application classes, and bootstrapping metadata.
+ * Mojo goal {@code generate-singularity} that assembles a single executable jar by staging boot classes, runtime
+ * dependencies (as untouched nested jars), and the project's own classes beneath a build directory, then compressing
+ * the whole tree into a jar with a manifest that declares {@link SingularityEntryPoint} as the {@code Main-Class}.
+ * <p>A {@link SingularityIndex} written to {@code META-INF/singularity/index/singularity.idx} records every entry's
+ * provenance so that {@code SingularityClassLoader} can resolve classes and resources at run time.
  */
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateSingularityMojo extends AbstractMojo {
@@ -88,9 +92,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
   protected List<Artifact> pluginArtifacts;
 
   /**
-   * Builds the Singularity jar, copying boot classes, runtime dependencies, and application classes before writing the index and manifest.
+   * Builds the Singularity bundle end-to-end: extracts boot classes from this plugin's own dependency, stages every
+   * non-excluded runtime dependency jar, walks the project's {@code classes} output directory, writes the index, and
+   * finally compresses everything into the output jar. The resulting jar is attached to the project so subsequent
+   * lifecycle phases see it.
    *
-   * @throws MojoExecutionException if any build step fails
+   * @throws MojoExecutionException if the build directory cannot be created, the boot classes cannot be located,
+   *                                any dependency or class copy fails, the index cannot be serialized, or the final jar cannot be written
    */
   public void execute ()
     throws MojoExecutionException {
@@ -224,9 +232,10 @@ public class GenerateSingularityMojo extends AbstractMojo {
   }
 
   /**
-   * Constructs the standard jar filename for the current project and classifier.
+   * Constructs the canonical output jar filename for the current project, using the project's artifactId, version,
+   * and optional classifier.
    *
-   * @return artifact filename ending in .jar
+   * @return filename in the form {@code artifactId-version[-classifier].jar}
    */
   private String constructArtifactName () {
 
@@ -240,11 +249,11 @@ public class GenerateSingularityMojo extends AbstractMojo {
   }
 
   /**
-   * Copies a file to a destination path using NIO channels for efficiency.
+   * Transfers a file to a destination path using NIO channels, looping until the entire source has been written.
    *
-   * @param file            source file to copy
-   * @param destinationPath destination location
-   * @throws IOException if reading or writing fails
+   * @param file            source file to read
+   * @param destinationPath destination path to write; an existing file is overwritten
+   * @throws IOException if either stream cannot be opened or bytes cannot be transferred
    */
   private void copyToDestination (File file, Path destinationPath)
     throws IOException {
@@ -266,12 +275,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
   }
 
   /**
-   * Extracts boot classes from the supplied jar into the Singularity build path while recording them in the index.
+   * Extracts every class under {@code org/smallmind/spark/singularity/boot/} from the plugin's boot jar into the
+   * Singularity build tree so they become the public classes of the generated outer jar, recording each in the index.
    *
-   * @param singularityIndex index to update
-   * @param jarFile          jar that contains the boot classes
-   * @param destinationPath  target directory for extracted classes
-   * @throws IOException if extraction fails
+   * @param singularityIndex index that should be updated with every boot class extracted
+   * @param jarFile          jar containing the precompiled boot classes (the {@code spark-singularity-boot} plugin dependency)
+   * @param destinationPath  root of the Singularity build tree into which the classes are laid down
+   * @throws IOException if the jar cannot be opened, a directory cannot be created, or bytes cannot be written
    */
   private void copyBootClasses (SingularityIndex singularityIndex, File jarFile, Path destinationPath)
     throws IOException {

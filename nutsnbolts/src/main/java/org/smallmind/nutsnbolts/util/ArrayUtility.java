@@ -36,17 +36,17 @@ import java.lang.reflect.Array;
 import java.util.Objects;
 
 /**
- * Utilities for working with generic arrays.
+ * Utility methods for cloning, concatenating, and searching generic arrays.
  */
 public class ArrayUtility {
 
   /**
-   * Clones the provided array into a new array of the same length and type.
+   * Clones the given array into a new array of the same component type and length.
    *
-   * @param clazz    component class
-   * @param original array to clone; may be {@code null}
-   * @param <T>      component type
-   * @return cloned array or {@code null} when original is {@code null}
+   * @param clazz    the component class of the array
+   * @param original the array to clone; may be {@code null}
+   * @param <T>      the component type
+   * @return a shallow copy of the original array, or {@code null} if the original is {@code null}
    */
   public static <T> T[] clone (Class<T> clazz, T[] original) {
 
@@ -64,13 +64,14 @@ public class ArrayUtility {
   }
 
   /**
-   * Concatenates two arrays, creating a new array of the combined length.
+   * Concatenates two arrays into a single new array containing all elements of both.
    *
-   * @param clazz  component class
-   * @param first  first array; may be {@code null} or empty
-   * @param second second array; may be {@code null} or empty
-   * @param <T>    component type
-   * @return concatenated array (or empty array if both inputs are null/empty)
+   * @param clazz  the component class of the arrays
+   * @param first  the first array; may be {@code null} or empty
+   * @param second the second array; may be {@code null} or empty
+   * @param <T>    the component type
+   * @return a new array containing all elements of {@code first} followed by all elements of {@code second},
+   * or an empty array if both inputs are null or empty
    */
   public static <T> T[] concatenate (Class<T> clazz, T[] first, T... second) {
 
@@ -92,12 +93,12 @@ public class ArrayUtility {
   }
 
   /**
-   * Performs a linear search for a key within an array.
+   * Performs a linear scan of the array for the first element equal to the key.
    *
-   * @param array array to scan; may be {@code null}
-   * @param key   element to match (via {@link Objects#equals(Object, Object)})
-   * @param <T>   component type
-   * @return index of the first match, or -1 if not found
+   * @param array the array to search; may be {@code null}
+   * @param key   the element to find, compared using {@link Objects#equals(Object, Object)}
+   * @param <T>   the component type
+   * @return the index of the first matching element, or {@code -1} if not found or the array is null/empty
    */
   public static <T> int linearSearch (T[] array, T key) {
 

@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Fluent builder for configuring recursive deletion via {@link FileUtility#deleteTree}.
+ * Fluent builder that assembles the parameters for a recursive deletion and executes it via {@link FileUtility}.
  */
 public class DeleteTreeConfigurationBuilder {
 
@@ -46,6 +46,8 @@ public class DeleteTreeConfigurationBuilder {
   private boolean throwErrorOnDirectoryNotEmpty = true;
 
   /**
+   * Constructs a builder targeting the given path for deletion.
+   *
    * @param target root directory or file to delete
    */
   public DeleteTreeConfigurationBuilder (Path target) {
@@ -54,10 +56,10 @@ public class DeleteTreeConfigurationBuilder {
   }
 
   /**
-   * Sets filters to control which paths are deleted.
+   * Specifies path filters to apply during the tree walk; a path is deleted only when all filters accept it.
    *
-   * @param pathFilters optional filters; all must accept for deletion
-   * @return this builder
+   * @param pathFilters zero or more filters to apply
+   * @return this builder for method chaining
    */
   public DeleteTreeConfigurationBuilder filter (PathFilter... pathFilters) {
 
@@ -67,10 +69,10 @@ public class DeleteTreeConfigurationBuilder {
   }
 
   /**
-   * Configures whether the target directory itself is removed.
+   * Controls whether the root target directory is itself removed after its contents are deleted.
    *
-   * @param includeTargetDirectory {@code true} to delete the root directory
-   * @return this builder
+   * @param includeTargetDirectory {@code true} to delete the root; {@code false} to leave it in place
+   * @return this builder for method chaining
    */
   public DeleteTreeConfigurationBuilder includeTargetDirectory (boolean includeTargetDirectory) {
 
@@ -80,10 +82,10 @@ public class DeleteTreeConfigurationBuilder {
   }
 
   /**
-   * Determines whether a non-empty directory raises an error.
+   * Controls whether an attempt to delete a non-empty directory raises an error.
    *
-   * @param throwErrorOnDirectoryNotEmpty {@code true} to fail when a directory isn't empty
-   * @return this builder
+   * @param throwErrorOnDirectoryNotEmpty {@code true} to propagate {@code DirectoryNotEmptyException}; {@code false} to silently skip
+   * @return this builder for method chaining
    */
   public DeleteTreeConfigurationBuilder throwErrorOnDirectoryNotEmpty (boolean throwErrorOnDirectoryNotEmpty) {
 
@@ -93,9 +95,9 @@ public class DeleteTreeConfigurationBuilder {
   }
 
   /**
-   * Performs the configured deletion.
+   * Performs the configured recursive deletion.
    *
-   * @throws IOException if deletion fails
+   * @throws IOException if walking the tree or deleting any entry fails
    */
   public void build ()
     throws IOException {

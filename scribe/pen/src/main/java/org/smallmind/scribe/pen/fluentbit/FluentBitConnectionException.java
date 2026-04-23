@@ -37,16 +37,17 @@ import org.smallmind.nutsnbolts.lang.FormattedIOException;
 // TODO: The underlying org.msgpack.jackson.dataformat will be dependent on jackson 2.x for the foreseeable future
 
 /**
- * IOException thrown when a Fluent Bit connection cannot be established or maintained.
+ * Specialization of {@link FormattedIOException} raised when a TCP connection to the Fluent Bit input
+ * cannot be established or is lost and all retry attempts have been exhausted.
  */
 public class FluentBitConnectionException extends FormattedIOException {
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs a {@code FluentBitConnectionException} with a root cause and a printf-style diagnostic message.
    *
-   * @param throwable cause of the connection failure
-   * @param message   message template
-   * @param args      message arguments
+   * @param throwable the underlying I/O exception that caused the connection failure
+   * @param message   a printf-style message template describing the failure context
+   * @param args      arguments substituted into the message template
    */
   public FluentBitConnectionException (Throwable throwable, String message, Object... args) {
 

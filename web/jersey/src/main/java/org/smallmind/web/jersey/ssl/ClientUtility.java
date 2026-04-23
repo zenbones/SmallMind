@@ -43,16 +43,16 @@ import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
 import org.smallmind.nutsnbolts.ssl.NaiveTrustManager;
 
 /**
- * Utility for constructing Jersey client builders that trust all certificates and host names.
+ * Utility class for building JAX-RS clients that accept all TLS certificates and host names without verification.
  */
 public class ClientUtility {
 
   /**
-   * Creates a {@link ClientBuilder} configured with a permissive SSL context and hostname verifier.
+   * Creates a {@link ClientBuilder} configured with a trust-all {@link SSLContext} and a permissive hostname verifier.
    *
-   * @return configured client builder
-   * @throws NoSuchAlgorithmException if TLS is not available
-   * @throws KeyManagementException   if the SSL context cannot be initialized
+   * @return a client builder ready to build SSL-permissive clients
+   * @throws NoSuchAlgorithmException if the TLS algorithm is not available in the current JVM
+   * @throws KeyManagementException   if the SSL context fails to initialize
    */
   public static ClientBuilder clientBuilder ()
     throws NoSuchAlgorithmException, KeyManagementException {

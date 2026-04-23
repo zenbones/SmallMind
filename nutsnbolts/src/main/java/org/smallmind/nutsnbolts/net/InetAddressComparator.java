@@ -36,18 +36,18 @@ import java.net.InetAddress;
 import java.util.Comparator;
 
 /**
- * Compares {@link InetAddress} instances lexicographically by their raw octets, normalizing
- * differing address lengths (IPv4 vs IPv6) by left-padding with zeros.
+ * Compares two {@link InetAddress} instances byte-by-byte, padding shorter addresses with leading
+ * zero bytes so that IPv4 and IPv6 addresses are ordered consistently.
  */
 public class InetAddressComparator implements Comparator<InetAddress> {
 
   /**
-   * Compares two addresses by iterating through their octets (most significant first), padding
-   * the shorter address with leading zeros so IPv4 and IPv6 can be compared consistently.
+   * Performs a lexicographic comparison of the raw address bytes of {@code a} and {@code b},
+   * aligning them by right-justifying and zero-filling the shorter address before comparing.
    *
-   * @param a first address
-   * @param b second address
-   * @return negative if {@code a} is less than {@code b}, positive if greater, zero if equal
+   * @param a the first address to compare
+   * @param b the second address to compare
+   * @return a negative integer if {@code a} sorts before {@code b}, a positive integer if after, or zero if equal
    */
   @Override
   public int compare (InetAddress a, InetAddress b) {

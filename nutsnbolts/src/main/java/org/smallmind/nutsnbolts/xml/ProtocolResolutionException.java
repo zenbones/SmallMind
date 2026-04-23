@@ -48,10 +48,10 @@ public class ProtocolResolutionException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception with a {@link String#format} style message.
    *
-   * @param message message pattern
-   * @param args    pattern arguments
+   * @param message the message pattern
+   * @param args    the arguments to substitute into the pattern
    */
   public ProtocolResolutionException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class ProtocolResolutionException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and formatted message.
+   * Creates an exception with an underlying cause and a {@link String#format} style message.
    *
-   * @param throwable underlying cause
-   * @param message   message pattern
-   * @param args      pattern arguments
+   * @param throwable the underlying cause
+   * @param message   the message pattern
+   * @param args      the arguments to substitute into the pattern
    */
   public ProtocolResolutionException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class ProtocolResolutionException extends FormattedException {
   }
 
   /**
-   * Creates an exception that wraps an underlying cause.
+   * Creates an exception that wraps the supplied cause without an additional message.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying cause
    */
   public ProtocolResolutionException (Throwable throwable) {
 

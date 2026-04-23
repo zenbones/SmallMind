@@ -37,7 +37,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 /**
- * Resource configuration extension that installs {@link ThrowableExceptionMapper} with optional custom mappers.
+ * Spring-injectable Jersey extension that registers a {@link ThrowableExceptionMapper} with optional delegate mappers
+ * and configurable unclassified-error logging.
  */
 public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtension {
 
@@ -45,9 +46,9 @@ public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtens
   private boolean logUnclassifiedErrors = false;
 
   /**
-   * Sets additional exception mappers that should be consulted before the default mapping occurs.
+   * Sets additional exception mappers that are consulted before the catch-all {@link ThrowableExceptionMapper}.
    *
-   * @param mappers mapper instances
+   * @param mappers array of exception mapper instances to delegate to first
    */
   public void setMappers (ExceptionMapper[] mappers) {
 
@@ -55,9 +56,9 @@ public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtens
   }
 
   /**
-   * Controls whether previously unclassified errors should be logged.
+   * Controls whether exceptions not handled by a specific mapper are logged before a fault response is returned.
    *
-   * @param logUnclassifiedErrors {@code true} to log unhandled exceptions
+   * @param logUnclassifiedErrors {@code true} to log unclassified errors
    */
   public void setLogUnclassifiedErrors (boolean logUnclassifiedErrors) {
 
@@ -65,9 +66,10 @@ public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtens
   }
 
   /**
-   * Registers the {@link ThrowableExceptionMapper} and sets Jersey properties needed for status handling.
+   * Enables the {@code setStatusOverSendError} property and registers a {@link ThrowableExceptionMapper} with the
+   * Jersey resource configuration.
    *
-   * @param resourceConfig Jersey resource configuration
+   * @param resourceConfig the Jersey resource configuration to extend
    */
   @Override
   public void apply (ResourceConfig resourceConfig) {

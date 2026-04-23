@@ -35,14 +35,23 @@ package org.smallmind.memcached.cubby.connection;
 import java.io.ByteArrayOutputStream;
 
 /**
- * ByteArrayOutputStream exposing its internal buffer for zero-copy operations.
+ * A {@link ByteArrayOutputStream} subclass that exposes its internal backing buffer directly,
+ * avoiding the defensive copy that {@link ByteArrayOutputStream#toByteArray()} would otherwise
+ * produce.
+ *
+ * <p>This class is used by {@link ResponseReader} to accumulate partial read data between NIO
+ * select cycles. Callers that obtain the buffer via {@link #getBuffer()} must respect the
+ * stream's {@code count} field (inherited from {@link ByteArrayOutputStream}) to determine
+ * how many bytes are valid, and must not modify the array contents in a way that would
+ * corrupt the stream's state.</p>
  */
 public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
 
   /**
-   * Constructs the stream with an initial buffer size.
+   * Constructs the stream with the given initial buffer capacity.
    *
-   * @param size initial buffer size
+   * @param size the initial size of the internal buffer in bytes; the buffer grows
+   *             automatically if more bytes are written than the initial capacity allows
    */
   public ExposedByteArrayOutputStream (int size) {
 
@@ -50,7 +59,13 @@ public class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
   }
 
   /**
-   * @return the internal buffer backing this stream
+   * Returns a direct reference to the internal byte array backing this stream.
+   *
+   * <p>Only bytes in the range {@code [0, count)} contain valid data, where {@code count}
+   * is the protected field inherited from {@link ByteArrayOutputStream}. The reference is
+   * stable as long as no write operation causes the buffer to be reallocated.</p>
+   *
+   * @return the internal backing buffer; may be larger than the number of bytes written
    */
   public byte[] getBuffer () {
 

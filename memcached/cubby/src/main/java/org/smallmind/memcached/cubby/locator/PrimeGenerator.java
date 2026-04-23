@@ -33,10 +33,27 @@
 package org.smallmind.memcached.cubby.locator;
 
 /**
- * Utility methods for generating prime numbers used in hashing schemes.
+ * Utility class providing prime-number generation support for hash-based routing algorithms.
+ *
+ * <p>The Maglev consistent-hashing algorithm ({@link MaglevKeyLocator}) requires a prime-sized
+ * lookup table to guarantee that every slot is filled during table construction. This class
+ * supplies the {@link #nextPrime(int)} method used to compute that table size from the number
+ * of hosts and the configured virtual host count.</p>
+ *
+ * <p>All methods are static; this class is not intended to be instantiated.</p>
  */
 public class PrimeGenerator {
 
+  /**
+   * Tests whether the given integer is a prime number.
+   *
+   * <p>Uses trial division with the standard 6k ± 1 optimisation: after handling the special
+   * cases for values less than or equal to 3 and for multiples of 2 or 3, candidate divisors
+   * are tested at {@code 5, 7, 11, 13, ...} up to {@code sqrt(n)}.</p>
+   *
+   * @param n the integer to test; must be a non-negative value
+   * @return {@code true} if {@code n} is prime; {@code false} otherwise
+   */
   private static boolean isPrime (int n) {
 
     if (n <= 1) {
@@ -63,10 +80,13 @@ public class PrimeGenerator {
   }
 
   /**
-   * Finds the next prime greater than the provided value.
+   * Returns the smallest prime number that is strictly greater than {@code n}.
    *
-   * @param n lower bound
-   * @return next prime number
+   * <p>If {@code n} is less than or equal to 1 the method immediately returns 2, the smallest
+   * prime. Otherwise candidates are tested in ascending order starting at {@code n + 1}.</p>
+   *
+   * @param n the lower bound; the returned prime will be strictly greater than this value
+   * @return the next prime number greater than {@code n}
    */
   public static int nextPrime (int n) {
 

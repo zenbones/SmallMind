@@ -33,7 +33,8 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Describes whether layout is linear (one-dimensional) or planar (two-dimensional).
+ * Classifies a layout part as either one-dimensional ({@code LINE}) or two-dimensional ({@code PLANE}),
+ * determining how the {@link LayoutTailor} coordinates axis constraints for the part.
  */
 public enum Dimensionality {
 

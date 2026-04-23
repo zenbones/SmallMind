@@ -45,7 +45,7 @@ import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.nutsnbolts.security.InvalidPasswordException;
 
 /**
- * PBKDF2-based password hashing/verification utility.
+ * PBKDF2-based password hashing and verification engine that prepends a random salt to each stored hash.
  */
 public class PBKDF2PasswordEngine implements PasswordEngine {
 
@@ -69,7 +69,7 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with default settings (50,000 iterations, 32-byte salt, 256-bit key).
+   * Constructs an engine with default PBKDF2 parameters (50,000 iterations, 32-byte salt, 256-bit derived key).
    */
   public PBKDF2PasswordEngine () {
 
@@ -77,9 +77,9 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with custom iterations and default salt/key lengths.
+   * Constructs an engine with a custom iteration count and all other parameters set to their defaults.
    *
-   * @param iterations number of PBKDF2 iterations
+   * @param iterations the number of PBKDF2 iterations to perform
    */
   public PBKDF2PasswordEngine (int iterations) {
 
@@ -87,11 +87,11 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with custom parameters.
+   * Constructs an engine with fully customized PBKDF2 parameters.
    *
-   * @param iterations       number of PBKDF2 iterations
-   * @param saltLength       bytes of random salt to prepend to stored hashes
-   * @param desiredKeyLength desired derived key length in bits
+   * @param iterations       the number of PBKDF2 iterations; higher values increase computation cost
+   * @param saltLength       the number of random salt bytes prepended to each stored hash
+   * @param desiredKeyLength the desired length of the derived key in bits
    */
   public PBKDF2PasswordEngine (int iterations, int saltLength, int desiredKeyLength) {
 
@@ -101,13 +101,13 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Hashes the password with a random salt and returns the salt+hash encoded as Base64.
+   * Hashes the password with a freshly generated random salt using PBKDF2WithHmacSHA1 and returns the concatenated salt and derived key encoded as Base64.
    *
-   * @param password the plain-text password
-   * @return Base64 string containing salt concatenated with derived key
-   * @throws IOException              if encoding fails
-   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
-   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @param password the plaintext password to hash; must not be {@code null} or empty
+   * @return a Base64-encoded string containing the random salt followed by the derived key bytes
+   * @throws IOException              if Base64 encoding fails
+   * @throws NoSuchAlgorithmException if the PBKDF2WithHmacSHA1 algorithm is not available
+   * @throws InvalidKeySpecException  if the key derivation parameters are invalid
    * @throws InvalidPasswordException if the password is {@code null} or empty
    */
   @Override
@@ -134,14 +134,15 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Checks whether the supplied password matches a stored salt+hash.
+   * Verifies a candidate password against a stored PBKDF2 salt+derived-key value produced by {@link #encrypt(String)}.
+   * Returns {@code false} without throwing if either argument is {@code null} or empty.
    *
-   * @param password candidate password
-   * @param stored   Base64 salt+hash string produced by {@link #encrypt(String)}
-   * @return {@code true} if the password matches
-   * @throws IOException              if decoding fails
-   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
-   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @param password the candidate plaintext password to check
+   * @param stored   the Base64-encoded salt+derived-key string previously produced by {@link #encrypt(String)}
+   * @return {@code true} if the candidate password produces the same derived key as the stored value
+   * @throws IOException              if Base64 decoding of the stored value fails
+   * @throws NoSuchAlgorithmException if the PBKDF2WithHmacSHA1 algorithm is not available
+   * @throws InvalidKeySpecException  if the key derivation parameters are invalid
    */
   @Override
   public boolean match (String password, String stored)
@@ -164,13 +165,13 @@ public class PBKDF2PasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Derives a key from the supplied salt and password.
+   * Derives a key from the supplied salt and password using PBKDF2WithHmacSHA1.
    *
-   * @param salt     random salt bytes
-   * @param password the password
-   * @return derived key bytes
-   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
-   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @param salt     the random salt bytes to use during key derivation
+   * @param password the plaintext password
+   * @return the raw derived key bytes
+   * @throws NoSuchAlgorithmException if the PBKDF2WithHmacSHA1 algorithm is not available
+   * @throws InvalidKeySpecException  if the key derivation parameters are invalid
    */
   private byte[] hash (byte[] salt, String password)
     throws NoSuchAlgorithmException, InvalidKeySpecException {

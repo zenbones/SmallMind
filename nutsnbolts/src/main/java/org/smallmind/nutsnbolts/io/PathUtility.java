@@ -35,13 +35,15 @@ package org.smallmind.nutsnbolts.io;
 import java.nio.file.Path;
 
 /**
- * Utilities for converting {@link Path} values to normalized string forms.
+ * Utility methods for converting {@link Path} objects to normalized, cross-platform string representations.
  */
 public class PathUtility {
 
   /**
-   * @param path path whose file name will be returned
-   * @return file name component as a string
+   * Returns the file-name element of the given path as a string.
+   *
+   * @param path the path whose final name component is desired
+   * @return the file name as a string
    */
   public static String fileNameAsString (Path path) {
 
@@ -49,10 +51,10 @@ public class PathUtility {
   }
 
   /**
-   * Converts a path to a resource-friendly string using forward slashes.
+   * Returns the path as a string with platform file separators replaced by forward slashes.
    *
-   * @param path path to convert
-   * @return path string with separators replaced by '/'
+   * @param path the path to convert
+   * @return path string suitable for use as a resource path
    */
   public static String asResourceString (Path path) {
 
@@ -60,10 +62,10 @@ public class PathUtility {
   }
 
   /**
-   * Normalizes a path to absolute form and returns a forward-slash string.
+   * Resolves the path to its absolute, normalized form and returns it as a forward-slash string.
    *
-   * @param path path to normalize
-   * @return normalized absolute path with '/' separators
+   * @param path the path to normalize
+   * @return absolute normalized path string with {@code /} separators
    */
   public static String asNormalizedString (Path path) {
 

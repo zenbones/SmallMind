@@ -41,9 +41,10 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
 /**
- * Array wrapper that defers copying until mutation occurs, sharing the original array for reads.
+ * Lazily-copied {@link ArrayValue} that shares the original backing array for reads and materializes
+ * a mutable copy only when a write operation is first invoked.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} subtype carried by this array
  */
 public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> {
 
@@ -51,9 +52,9 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   private ArrayValue<V> outerArrayValue;
 
   /**
-   * Wraps an existing array value.
+   * Wraps {@code innerArrayValue} as the read-through backing array.
    *
-   * @param innerArrayValue array to wrap
+   * @param innerArrayValue the original array to wrap; reads fall through to this until a write occurs
    */
   public CopyOnWriteArrayValue (ArrayValue<V> innerArrayValue) {
 
@@ -61,9 +62,10 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Realizes a copy of the inner array to allow safe mutation.
+   * Materializes the mutable outer copy by cloning all elements from the inner array,
+   * then returns it for chaining; subsequent calls are no-ops because the outer copy already exists.
    *
-   * @return the mutable copy
+   * @return the mutable outer copy, ready for modification
    */
   private ArrayValue<V> fill () {
 
@@ -76,7 +78,9 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * @return the value factory associated with the underlying array
+   * Returns the {@link ValueFactory} associated with the inner array.
+   *
+   * @return value factory for creating new values of type {@code V}
    */
   @Override
   public ValueFactory<V> getFactory () {
@@ -85,7 +89,9 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * @return current array size, reading from the copy if it exists
+   * Returns the number of elements in the effective array, consulting the outer copy when available.
+   *
+   * @return element count
    */
   @Override
   public int size () {
@@ -94,6 +100,8 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
+   * Reports whether the effective array contains no elements.
+   *
    * @return {@code true} when the array is empty
    */
   @Override
@@ -103,10 +111,12 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Retrieves a value, creating defensive wrappers for nested objects/arrays when needed.
+   * Returns the value at {@code index}, wrapping nested objects in {@link MergingObjectValue} and
+   * nested arrays in {@link CopyOnWriteArrayValue} on first access so mutations remain isolated.
+   * When the outer copy already exists, delegates directly to it.
    *
-   * @param index index to retrieve
-   * @return the value at the index or {@code null}
+   * @param index zero-based position to retrieve
+   * @return value at the position, or {@code null} if the slot is empty
    */
   @Override
   public Value<V> get (int index) {
@@ -146,10 +156,10 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Appends a value, realizing the copy if necessary.
+   * Appends {@code value} to the array, materializing the outer copy if not yet done.
    *
-   * @param value value to add
-   * @return this array
+   * @param value value to append
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<V>> ArrayValue<V> add (U value) {
@@ -160,11 +170,11 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Sets a value at the index, realizing the copy if necessary.
+   * Replaces the element at {@code index} with {@code value}, materializing the outer copy if not yet done.
    *
-   * @param index index to set
-   * @param value value to store
-   * @return this array
+   * @param index zero-based position to replace
+   * @param value replacement value
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<V>> ArrayValue<V> set (int index, U value) {
@@ -175,11 +185,11 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Inserts a value before the index, realizing the copy if necessary.
+   * Inserts {@code value} at {@code index}, shifting existing elements right, materializing the outer copy if not yet done.
    *
-   * @param index position to insert
+   * @param index zero-based insertion point
    * @param value value to insert
-   * @return this array
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<V>> ArrayValue<V> insert (int index, U value) {
@@ -190,10 +200,10 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Removes a value at the index, realizing the copy if necessary.
+   * Removes and returns the element at {@code index}, materializing the outer copy if not yet done.
    *
-   * @param index index to remove
-   * @return removed value
+   * @param index zero-based position to remove
+   * @return the value that was removed
    */
   @Override
   public Value<V> remove (int index) {
@@ -202,10 +212,10 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Appends a collection of values, realizing the copy if necessary.
+   * Appends all elements in {@code values}, materializing the outer copy if not yet done.
    *
-   * @param values values to add
-   * @return this array
+   * @param values collection of values to append
+   * @return this array for chaining
    */
   @Override
   public <U extends Value<V>> ArrayValue<V> addAll (Collection<U> values) {
@@ -216,9 +226,10 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Clears all values by replacing with a new array instance.
+   * Discards all elements by substituting a fresh empty array as the outer copy, abandoning both
+   * the previous outer copy and the inner backing array.
    *
-   * @return this array
+   * @return this array for chaining
    */
   @Override
   public ArrayValue<V> removeAll () {
@@ -229,10 +240,11 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
   }
 
   /**
-   * Encodes either the original array or the realized copy.
+   * Writes the JSON array representation to {@code writer}, using the outer copy when it exists
+   * and falling back to the inner array otherwise.
    *
-   * @param writer destination writer
-   * @throws IOException if encoding fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

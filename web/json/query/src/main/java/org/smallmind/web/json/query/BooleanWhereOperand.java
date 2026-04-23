@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Boolean literal operand.
+ * A where operand that holds a single boolean literal value.
  */
 @XmlRootElement(name = "boolean", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   private Boolean value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public BooleanWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided boolean value.
+   * Constructs an operand wrapping the given boolean.
    *
    * @param value boolean literal
    */
@@ -64,10 +64,10 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
-   * Convenience factory for a boolean operand.
+   * Factory method that wraps a boolean in a {@code BooleanWhereOperand}.
    *
    * @param value boolean literal
-   * @return the operand instance
+   * @return new operand instance
    */
   public static BooleanWhereOperand instance (Boolean value) {
 
@@ -75,6 +75,8 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
+   * Returns the element type for boolean operands.
+   *
    * @return {@link ElementType#BOOLEAN}
    */
   @Override
@@ -85,6 +87,8 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#BOOLEAN}
    */
   @Override
@@ -95,9 +99,9 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
-   * Returns the boolean value.
+   * Returns the stored boolean value.
    *
-   * @return boolean literal or {@code null}
+   * @return boolean literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
-   * Returns the serialized boolean value.
+   * Returns the boolean value used during serialization.
    *
-   * @return boolean literal or {@code null}
+   * @return boolean literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Boolean getValue () {
@@ -118,7 +122,7 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   }
 
   /**
-   * Sets the boolean value.
+   * Sets the boolean value for this operand.
    *
    * @param value boolean literal
    */

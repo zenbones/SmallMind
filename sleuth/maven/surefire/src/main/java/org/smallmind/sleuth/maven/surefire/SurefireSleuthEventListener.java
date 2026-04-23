@@ -48,10 +48,34 @@ import org.smallmind.sleuth.runner.event.SleuthEventListener;
 import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 /**
- * Adapts Sleuth runner events to Surefire {@link RunListener} callbacks.
+ * Translates Sleuth runner events into Surefire {@link RunListener} notifications.
  * <p>
- * The listener converts each Sleuth event into the appropriate Surefire report entry and tracks fatal
- * throwables so they can be rethrown to Maven after execution completes.
+ * Registered with {@link org.smallmind.sleuth.runner.SleuthRunner} by {@link SleuthProvider}
+ * before the test run starts. For every {@link SleuthEvent} received it:
+ * <ol>
+ *   <li>Prints the event to {@code System.out} with ANSI coloring for console visibility.</li>
+ *   <li>Constructs a {@link SimpleReportEntry} embedding the current {@link RunMode} and the
+ *       active numeric test identifier from {@link TestIdentifier#getTestIdentifier()}.</li>
+ *   <li>Calls the appropriate {@link RunListener} method for the event type:
+ *     <ul>
+ *       <li>{@code SETUP} → {@link RunListener#testSetStarting}</li>
+ *       <li>{@code START} → {@link RunListener#testStarting}</li>
+ *       <li>{@code SUCCESS} → {@link RunListener#testSucceeded}</li>
+ *       <li>{@code FAILURE} → {@link RunListener#testFailed} with a {@link SleuthStackTraceWriter}</li>
+ *       <li>{@code ERROR} → {@link RunListener#testError} with a {@link SleuthStackTraceWriter}</li>
+ *       <li>{@code SKIPPED} → {@link RunListener#testSkipped}</li>
+ *       <li>{@code CANCELLED} → {@link RunListener#testSetCompleted}</li>
+ *       <li>{@code MOOT} → {@link RunListener#testAssumptionFailure} with a {@link SleuthStackTraceWriter}</li>
+ *       <li>{@code FATAL} → captures the throwable and calls {@link RunListener#testExecutionSkippedByUser}</li>
+ *     </ul>
+ *   </li>
+ * </ol>
+ * The throwable captured from a {@code FATAL} event is retrievable via {@link #getThrowable()} so
+ * {@link SleuthProvider} can rethrow it as a {@code TestSetFailedException} after the run ends.
+ *
+ * @see SleuthProvider
+ * @see SleuthStackTraceWriter
+ * @see org.smallmind.sleuth.runner.event.SleuthEventListener
  */
 public class SurefireSleuthEventListener implements SleuthEventListener {
 
@@ -60,10 +84,10 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   private Throwable throwable;
 
   /**
-   * Creates a new listener bound to the provided Surefire listener and run mode.
+   * Constructs a listener bound to the given Surefire listener and run mode.
    *
-   * @param runListener destination for translated events
-   * @param runMode     execution mode used in report entries
+   * @param runListener destination for translated Surefire notifications; must not be {@code null}
+   * @param runMode     execution mode embedded in every report entry (e.g., {@link RunMode#NORMAL_RUN}); must not be {@code null}
    */
   public SurefireSleuthEventListener (RunListener runListener, RunMode runMode) {
 
@@ -72,7 +96,13 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   }
 
   /**
-   * @return any fatal throwable captured during execution, otherwise {@code null}
+   * Returns the throwable captured from the most recent {@code FATAL} event, or {@code null}
+   * if no fatal event has been received.
+   * <p>
+   * {@link SleuthProvider} checks this after the run completes and rethrows the throwable as a
+   * {@code TestSetFailedException} to fail the Maven build.
+   *
+   * @return the fatal throwable, or {@code null}
    */
   public Throwable getThrowable () {
 
@@ -80,9 +110,14 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
   }
 
   /**
-   * Translates a Sleuth event into a Surefire notification, recording fatal errors for later propagation.
+   * Receives a Sleuth event, logs it to the console, and translates it into the corresponding
+   * Surefire {@link RunListener} callback.
+   * <p>
+   * An {@link UnknownSwitchCaseException} is thrown if an unrecognized event type is encountered,
+   * signaling that the switch statement needs updating.
    *
-   * @param event event emitted by the Sleuth runner
+   * @param event the Sleuth event emitted by the runner; must not be {@code null}
+   * @throws UnknownSwitchCaseException if {@code event.getType()} does not match any known {@link org.smallmind.sleuth.runner.event.SleuthEventType}
    */
   @Override
   public void handle (SleuthEvent event) {

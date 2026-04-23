@@ -41,55 +41,73 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
 /**
  * Describes collation settings to be applied to an index.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
 public @interface Collation {
 
   /**
-   * @return locale identifier for the collation; defaults to the simple binary collation
+   * Locale identifier for the collation; defaults to the simple binary collation ({@code "simple"}).
+   *
+   * @return the locale string
    */
   String locale () default "simple";
 
   /**
-   * @return whether case comparisons are performed at an extra level
+   * Whether case comparisons are performed at a dedicated extra level of comparison.
+   *
+   * @return {@code true} to enable case-level comparison
    */
   boolean caseLevel () default false;
 
   /**
-   * @return ordering preference for upper or lower case when strength is set accordingly
+   * Ordering preference for upper- or lower-case letters when the strength is set to allow it.
+   *
+   * @return the case-first setting
    */
   CollationCaseFirst caseFirst () default CollationCaseFirst.OFF;
 
   /**
-   * @return comparison strength indicating sensitivity to case, diacritics, etc.
+   * Comparison strength indicating the sensitivity to case, diacritics, and other differences.
+   *
+   * @return the collation strength
    */
   CollationStrength strength () default CollationStrength.TERTIARY;
 
   /**
-   * @return whether numeric strings are ordered by numeric value
+   * Whether numeric strings are collated by their numeric value rather than lexicographically.
+   *
+   * @return {@code true} to enable numeric ordering
    */
   boolean numericOrdering () default false;
 
   /**
-   * @return whether spaces and punctuation are considered ignorable
+   * Whether spaces and punctuation are treated as ignorable characters.
+   *
+   * @return the alternate handling setting
    */
   CollationAlternate alternate () default CollationAlternate.NON_IGNORABLE;
 
   /**
-   * @return which characters are affected by {@link #alternate()}
+   * Which characters are affected by the {@link #alternate()} setting.
+   *
+   * @return the max-variable setting
    */
   CollationMaxVariable maxVariable () default CollationMaxVariable.PUNCT;
 
   /**
-   * @return whether text is normalized before comparison
+   * Whether text is Unicode-normalized before comparison.
+   *
+   * @return {@code true} to enable normalization
    */
   boolean normalization () default false;
 
   /**
-   * @return whether secondary comparisons are reversed (for certain languages)
+   * Whether secondary differences are sorted in reverse order, as required by certain languages.
+   *
+   * @return {@code true} to enable backwards secondary sorting
    */
   boolean backwards () default false;
 }

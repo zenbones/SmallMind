@@ -36,15 +36,26 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 /**
- * Translates Sleuth's native annotations into an {@link AnnotationDictionary}.
+ * {@link AnnotationTranslator} that recognises Sleuth's own annotation dialect.
+ * <p>
+ * Scans the target class for {@link Suite} at the class level and for {@link BeforeSuite},
+ * {@link AfterSuite}, {@link BeforeTest}, {@link AfterTest}, and {@link Test} at the method level
+ * using a {@link MethodCensus} so that superclass methods are discovered in the correct order.
+ * No format conversion is needed since annotations are already in Sleuth terms.
+ *
+ * @see AnnotationTranslator
+ * @see TestNGAnnotationTranslator
  */
 public class NativeAnnotationTranslator implements AnnotationTranslator {
 
   /**
-   * Scans the class and its methods for Sleuth annotations and builds a dictionary.
+   * Scans the given class and its hierarchy for Sleuth annotations and builds a dictionary.
+   * <p>
+   * An empty (un-implemented) dictionary is returned when no Sleuth annotations are found.
+   * This method never returns {@code null}.
    *
-   * @param clazz class to inspect
-   * @return populated dictionary (possibly empty when no annotations are present)
+   * @param clazz class to inspect; must not be {@code null}
+   * @return populated or empty annotation dictionary; never {@code null}
    */
   @Override
   public AnnotationDictionary process (Class<?> clazz) {

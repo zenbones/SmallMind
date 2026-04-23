@@ -45,7 +45,9 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Appender that publishes structured syslog messages using syslog4j.
+ * Appender that encodes log records as RFC 5424 structured syslog messages and transmits them
+ * over UDP using syslog4j. Designed for use as a Spring bean; the syslog client is initialized
+ * via {@link #afterPropertiesSet()} once all properties have been injected.
  */
 public class SyslogAppender extends AbstractAppender implements InitializingBean {
 
@@ -56,7 +58,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   private int syslogPort = 514;
 
   /**
-   * Hostname or IP of the syslog server.
+   * Returns the hostname or IP address of the syslog server to which messages are sent.
+   *
+   * @return the configured syslog host; defaults to {@code "localhost"}
    */
   public String getSyslogHost () {
 
@@ -64,9 +68,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Sets the hostname or IP of the syslog server.
+   * Sets the hostname or IP address of the syslog server to which messages will be sent.
    *
-   * @param syslogHost syslog host
+   * @param syslogHost the hostname or IP address of the target syslog server
    */
   public void setSyslogHost (String syslogHost) {
 
@@ -74,7 +78,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Syslog port.
+   * Returns the UDP port on which the syslog server is listening.
+   *
+   * @return the configured syslog port; defaults to {@code 514}
    */
   public int getSyslogPort () {
 
@@ -82,9 +88,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Sets the syslog port.
+   * Sets the UDP port on which the syslog server is listening.
    *
-   * @param syslogPort port number
+   * @param syslogPort the port number of the target syslog server
    */
   public void setSyslogPort (int syslogPort) {
 
@@ -92,7 +98,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Syslog facility code (e.g., LOCAL7).
+   * Returns the syslog facility code used when encoding outgoing messages.
+   *
+   * @return the configured facility name (e.g. {@code "LOCAL7"}); defaults to {@code "LOCAL7"}
    */
   public String getFacility () {
 
@@ -100,9 +108,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Sets the syslog facility code (e.g., LOCAL7).
+   * Sets the syslog facility code used when encoding outgoing messages (e.g. {@code "LOCAL7"}).
    *
-   * @param facility facility name
+   * @param facility the syslog facility name recognized by syslog4j
    */
   public void setFacility (String facility) {
 
@@ -110,7 +118,9 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Whether to base64 encode stack traces before sending.
+   * Returns whether stack traces are base64-encoded before being included in outgoing syslog messages.
+   *
+   * @return {@code true} if stack traces are base64-encoded; {@code false} if they are sent as plain text
    */
   public boolean isBase64EncodeStackTraces () {
 
@@ -118,9 +128,10 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Enables or disables base64 encoding of stack traces.
+   * Controls whether stack traces are base64-encoded before being embedded in outgoing syslog messages.
+   * Encoding avoids syslog framing issues caused by newlines and special characters in stack trace text.
    *
-   * @param base64EncodeStackTraces {@code true} to base64 encode stack traces
+   * @param base64EncodeStackTraces {@code true} to base64-encode stack traces; {@code false} to send them as plain text
    */
   public void setBase64EncodeStackTraces (boolean base64EncodeStackTraces) {
 
@@ -128,7 +139,8 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Initializes the syslog client after Spring properties are set.
+   * Builds and registers the syslog4j UDP client using the configured host, port, and facility.
+   * This method is called automatically by the Spring container after all bean properties have been set.
    */
   @Override
   public void afterPropertiesSet () {
@@ -144,10 +156,14 @@ public class SyslogAppender extends AbstractAppender implements InitializingBean
   }
 
   /**
-   * Renders the record as a structured syslog message and dispatches it.
+   * Encodes the record as an RFC 5424 structured syslog message and transmits it via the UDP client.
+   * Thread name, logger context (class, method, file, line), thrown exception stack trace, and
+   * log parameters are each included as separate structured data elements when present. The syslog
+   * severity level is mapped from the record's {@link Level}: FATAL to {@code critical}, ERROR to
+   * {@code error}, WARN to {@code warn}, INFO to {@code info}, DEBUG and TRACE to {@code debug}.
    *
-   * @param record record to publish
-   * @throws IOException if syslog transmission fails
+   * @param record the log record to encode and transmit
+   * @throws IOException if transmission over the UDP socket fails
    */
   @Override
   public void handleOutput (Record<?> record)

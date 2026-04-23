@@ -45,7 +45,10 @@ import freemarker.template.TemplateException;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 /**
- * Decorator that generates Upstart installation scripts for Linux deployments.
+ * {@link Decorator} that generates a Linux Upstart installation script for the deployed
+ * application. The script is produced by processing a FreeMarker template loaded from the
+ * classpath and is written to {@code <installPath>/<artifactId>/bin/<artifactId>.install}.
+ * This decorator is a no-op when targeting any platform other than Linux.
  */
 public class UpstartDecorator implements Decorator {
 
@@ -65,23 +68,27 @@ public class UpstartDecorator implements Decorator {
   }
 
   /**
-   * Generate the Upstart installation script when targeting Linux, interpolating the application metadata.
+   * Generate the Upstart installation script for a Linux deployment.
    *
-   * @param operatingSystem the target operating system
-   * @param appUser         the user that should own the installation
-   * @param installPath     the installation root directory
-   * @param nexusHost       the Nexus host used for downloads
-   * @param nexusUser       the Nexus user name
-   * @param nexusPassword   the Nexus password
-   * @param repository      the repository used to retrieve artifacts
-   * @param groupId         the application group id
-   * @param artifactId      the application artifact id
-   * @param version         the application version
-   * @param classifier      the classifier, or {@code null} if none
-   * @param extension       the artifact extension
-   * @param envVars         environment variable declarations to inject into the Upstart script
-   * @throws IOException       if the script cannot be written
-   * @throws TemplateException if template interpolation fails
+   * <p>Populates a FreeMarker template with the application's metadata and writes the result to
+   * the {@code bin} subdirectory of the installed application. Has no effect when
+   * {@code operatingSystem} is not {@link OperatingSystem#LINUX}.
+   *
+   * @param operatingSystem only {@link OperatingSystem#LINUX} triggers script generation
+   * @param appUser         OS account owning the installation (passed to the template context)
+   * @param installPath     root installation directory used to construct the output file path
+   * @param nexusHost       Nexus hostname (available in the template context)
+   * @param nexusUser       Nexus username (available in the template context)
+   * @param nexusPassword   Nexus password (available in the template context)
+   * @param repository      repository from which the artifact was retrieved (available in the template context)
+   * @param groupId         Maven {@code groupId} (available in the template context)
+   * @param artifactId      Maven {@code artifactId}; used to name the output file
+   * @param version         deployed version (available in the template context)
+   * @param classifier      artifact classifier (available in the template context)
+   * @param extension       artifact extension (available in the template context)
+   * @param envVars         environment variable declarations injected into the generated script
+   * @throws IOException       if the output file cannot be created or written
+   * @throws TemplateException if FreeMarker template interpolation fails
    */
   public void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
     throws IOException, TemplateException {

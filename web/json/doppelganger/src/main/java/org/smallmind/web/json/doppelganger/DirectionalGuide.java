@@ -37,8 +37,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Holds the properties to include in generated views for a particular {@link Direction}.
- * Each purpose maps to a {@link PropertyLexicon} containing the per-field metadata.
+ * Organizes the properties to include in generated views for a single {@link Direction},
+ * grouped by purpose into {@link PropertyLexicon} instances.
  */
 public class DirectionalGuide {
 
@@ -46,9 +46,9 @@ public class DirectionalGuide {
   private final Direction direction;
 
   /**
-   * Creates a guide for the supplied direction.
+   * Constructs a guide for the given direction.
    *
-   * @param direction whether the guide tracks inbound or outbound properties
+   * @param direction the direction (IN or OUT) this guide covers
    */
   public DirectionalGuide (Direction direction) {
 
@@ -56,12 +56,12 @@ public class DirectionalGuide {
   }
 
   /**
-   * Registers a property for the given purpose and field name.
+   * Registers a property under the given purpose, raising an error on duplicate entries or invalid purpose names.
    *
-   * @param purpose             the idiom/purpose bucket
-   * @param fieldName           the source field name
+   * @param purpose             the idiom purpose bucket (must contain only Java identifier characters)
+   * @param fieldName           the logical field name of the property
    * @param propertyInformation metadata describing the property
-   * @throws DefinitionException if the purpose is not a legal Java identifier fragment or a duplicate entry is detected
+   * @throws DefinitionException if the purpose contains illegal characters or the field has already been registered
    */
   public void put (String purpose, String fieldName, PropertyInformation propertyInformation)
     throws DefinitionException {
@@ -84,9 +84,9 @@ public class DirectionalGuide {
   }
 
   /**
-   * Returns all entries keyed by purpose for iteration.
+   * Returns the set of all purpose-to-lexicon entries for iteration.
    *
-   * @return map entries of purpose to lexicon
+   * @return entry set mapping purpose strings to their property lexicons
    */
   public Set<Map.Entry<String, PropertyLexicon>> lexiconEntrySet () {
 
@@ -94,10 +94,10 @@ public class DirectionalGuide {
   }
 
   /**
-   * Validates that the supplied purpose contains only Java identifier parts.
+   * Returns whether every character in the purpose string is a valid Java identifier part.
    *
-   * @param purpose the purpose text to validate
-   * @return {@code true} when valid; {@code false} otherwise
+   * @param purpose the purpose string to validate
+   * @return {@code true} if every character passes {@link Character#isJavaIdentifierPart(char)}
    */
   private boolean isJavaNameFragment (String purpose) {
 

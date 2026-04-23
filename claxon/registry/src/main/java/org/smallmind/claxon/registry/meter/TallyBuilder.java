@@ -35,15 +35,22 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 
 /**
- * Builder for {@link Tally} meters.
+ * {@link MeterBuilder} implementation that constructs {@link Tally} meters.
+ *
+ * <p>{@code TallyBuilder} requires no configuration; a {@link Tally} meter is
+ * entirely stateless with respect to time. The supplied {@link Clock} is accepted
+ * for interface compliance but is not forwarded to the meter.</p>
  */
 public class TallyBuilder implements MeterBuilder<Tally> {
 
   /**
-   * Builds a new tally. Clock is unused but accepted for interface compliance.
+   * Constructs a new {@link Tally} meter.
    *
-   * @param clock registry clock
-   * @return new tally meter
+   * <p>The {@code clock} parameter is accepted to satisfy the {@link MeterBuilder}
+   * interface but is not used, because {@link Tally} aggregates are time-independent.</p>
+   *
+   * @param clock the registry clock; accepted for interface compliance but unused
+   * @return a new {@link Tally} instance
    */
   @Override
   public Tally build (Clock clock) {

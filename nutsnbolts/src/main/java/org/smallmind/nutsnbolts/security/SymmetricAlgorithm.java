@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.security;
 
 /**
- * Supported symmetric key algorithms and their JCA names.
+ * Enumeration of supported symmetric encryption algorithms together with their JCA algorithm names.
  */
 public enum SymmetricAlgorithm implements SecurityAlgorithm {
 
@@ -42,7 +42,9 @@ public enum SymmetricAlgorithm implements SecurityAlgorithm {
   private final String algorithmName;
 
   /**
-   * @param algorithmName the JCA algorithm name
+   * Constructs an enum constant with the given JCA algorithm name.
+   *
+   * @param algorithmName the JCA name used when creating ciphers or key generators
    */
   SymmetricAlgorithm (String algorithmName) {
 
@@ -50,7 +52,9 @@ public enum SymmetricAlgorithm implements SecurityAlgorithm {
   }
 
   /**
-   * @return the JCA name used when creating ciphers or key generators
+   * Returns the JCA algorithm name used when creating {@link javax.crypto.Cipher} or {@link javax.crypto.KeyGenerator} instances.
+   *
+   * @return the JCA algorithm name string
    */
   public String getAlgorithmName () {
 

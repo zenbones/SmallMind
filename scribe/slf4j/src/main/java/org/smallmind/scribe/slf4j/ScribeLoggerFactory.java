@@ -37,15 +37,18 @@ import org.slf4j.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * SLF4J {@link ILoggerFactory} that produces adapters backed by scribe loggers.
+ * SLF4J {@link ILoggerFactory} implementation that resolves scribe loggers from
+ * {@link LoggerManager} and wraps them in {@link ScribeLoggerAdapter} instances,
+ * completing the SLF4J binding established by {@link org.slf4j.impl.StaticLoggerBinder}.
  */
 public class ScribeLoggerFactory implements ILoggerFactory {
 
   /**
-   * Creates or retrieves an SLF4J logger that delegates to the scribe {@link org.smallmind.scribe.pen.Logger}.
+   * Resolves the scribe logger for {@code name} and returns it wrapped in a
+   * {@link ScribeLoggerAdapter} that satisfies the SLF4J {@link Logger} contract.
    *
-   * @param name the logger name to resolve
-   * @return an SLF4J {@link Logger} adapter
+   * @param name the logger name passed to {@link LoggerManager}
+   * @return a new {@link ScribeLoggerAdapter} wrapping the resolved scribe logger
    */
   public Logger getLogger (String name) {
 

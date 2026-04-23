@@ -1,7 +1,13 @@
 package org.smallmind.license.stencil;
 
 /**
- * Describes how a notice should be formatted and delimited when inserted into source files.
+ * Describes the formatting rules used to wrap a notice inside a source file.
+ *
+ * <p>A stencil defines the opening and closing delimiter lines, the per-line prefix written before
+ * each notice line, an alternate prefix for blank lines, and optional padding written before and
+ * after the notice block. Subclasses may override individual getters to return fixed values.
+ * {@link StaticStencil} additionally makes all setters throw {@link UnsupportedOperationException}
+ * to enforce immutability.
  */
 public class Stencil {
 
@@ -15,9 +21,9 @@ public class Stencil {
   private int blankLinesAfter;
 
   /**
-   * Returns the identifier used to reference this stencil.
+   * Returns the identifier used to reference this stencil from a {@link org.smallmind.license.Rule}.
    *
-   * @return the stencil identifier
+   * @return the stencil id; may be {@code null} if not yet assigned
    */
   public String getId () {
 
@@ -27,7 +33,7 @@ public class Stencil {
   /**
    * Sets the identifier used to reference this stencil.
    *
-   * @param id the stencil identifier
+   * @param id the stencil id to assign
    */
   public void setId (String id) {
 
@@ -35,9 +41,12 @@ public class Stencil {
   }
 
   /**
-   * Pattern describing lines to skip while searching for an existing notice.
+   * Returns a regular expression matched against leading file lines that should be skipped before
+   * the mojo searches for an existing notice block.
    *
-   * @return the skip line pattern, or {@code null} if no skipping is required
+   * <p>Useful for files that begin with mandatory lines such as shebang or encoding declarations.
+   *
+   * @return the skip-line regular expression, or {@code null} if no lines should be skipped
    */
   public String getSkipLinePattern () {
 
@@ -45,9 +54,10 @@ public class Stencil {
   }
 
   /**
-   * Defines the pattern of lines that should be skipped when seeking a notice.
+   * Sets the regular expression used to identify leading file lines that should be skipped.
    *
-   * @param skipLinePattern the regular expression to match lines that should be ignored
+   * @param skipLinePattern a regular expression applied to leading lines, or {@code null} to
+   *                        disable skipping
    */
   public void setSkipLinePattern (String skipLinePattern) {
 
@@ -55,9 +65,12 @@ public class Stencil {
   }
 
   /**
-   * Returns the first delimiter line expected at the start of a notice block.
+   * Returns the delimiter written as the first line of the notice block.
    *
-   * @return the first line string, or {@code null} if no explicit first line is required
+   * <p>When non-{@code null}, this string is also used to detect and consume existing notices so
+   * they can be replaced or removed.
+   *
+   * @return the opening delimiter, or {@code null} when no explicit first line is required
    */
   public String getFirstLine () {
 
@@ -65,9 +78,9 @@ public class Stencil {
   }
 
   /**
-   * Sets the first delimiter line expected at the start of a notice block.
+   * Sets the delimiter written as the first line of the notice block.
    *
-   * @param firstLine the first line string, or {@code null} when no explicit first line is used
+   * @param firstLine the opening delimiter string, or {@code null} when none is required
    */
   public void setFirstLine (String firstLine) {
 
@@ -75,9 +88,9 @@ public class Stencil {
   }
 
   /**
-   * Returns the trailing delimiter line that should close a notice block.
+   * Returns the delimiter written as the last line of the notice block.
    *
-   * @return the last line string, or {@code null} when no closing delimiter is required
+   * @return the closing delimiter, or {@code null} when no explicit last line is required
    */
   public String getLastLine () {
 
@@ -85,9 +98,9 @@ public class Stencil {
   }
 
   /**
-   * Sets the trailing delimiter line that should close a notice block.
+   * Sets the delimiter written as the last line of the notice block.
    *
-   * @param lastLine the closing delimiter string, or {@code null} if none is required
+   * @param lastLine the closing delimiter string, or {@code null} when none is required
    */
   public void setLastLine (String lastLine) {
 
@@ -95,9 +108,9 @@ public class Stencil {
   }
 
   /**
-   * Returns the prefix applied to each non-blank notice line.
+   * Returns the string prepended to each non-blank notice line.
    *
-   * @return the notice line prefix, or {@code null} to omit a prefix
+   * @return the line prefix, or {@code null} to write notice lines without a prefix
    */
   public String getLinePrefix () {
 
@@ -105,9 +118,9 @@ public class Stencil {
   }
 
   /**
-   * Defines the prefix applied to each non-blank notice line.
+   * Sets the string prepended to each non-blank notice line.
    *
-   * @param linePrefix the notice line prefix, or {@code null} to omit a prefix
+   * @param linePrefix the prefix string, or {@code null} to omit a prefix
    */
   public void setLinePrefix (String linePrefix) {
 
@@ -115,9 +128,13 @@ public class Stencil {
   }
 
   /**
-   * Returns the prefix that should be written when emitting blank lines inside the notice.
+   * Returns the string written in place of blank notice lines.
    *
-   * @return the blank line prefix, or {@code null} to leave blank lines empty
+   * <p>When {@code null}, blank lines inside the notice are emitted as truly empty lines. When
+   * set, this value is written instead so comment blocks remain properly decorated (for example,
+   * {@code " *"} in a JavaDoc block).
+   *
+   * @return the blank-line prefix, or {@code null} to leave blank lines empty
    */
   public String getBlankLinePrefix () {
 
@@ -125,9 +142,9 @@ public class Stencil {
   }
 
   /**
-   * Defines the prefix that should be written when emitting blank lines inside the notice.
+   * Sets the string written in place of blank lines inside the notice block.
    *
-   * @param blankLinePrefix the prefix for blank lines, or {@code null} to leave blanks empty
+   * @param blankLinePrefix the prefix for blank notice lines, or {@code null} for empty lines
    */
   public void setBlankLinePrefix (String blankLinePrefix) {
 
@@ -135,9 +152,9 @@ public class Stencil {
   }
 
   /**
-   * Returns the number of blank lines that should precede the notice content.
+   * Returns the number of blank lines written immediately before the notice block.
    *
-   * @return the count of blank lines before the notice
+   * @return the pre-notice blank line count; {@code 0} means no padding
    */
   public int getBlankLinesBefore () {
 
@@ -145,9 +162,9 @@ public class Stencil {
   }
 
   /**
-   * Sets the number of blank lines that should precede the notice content.
+   * Sets the number of blank lines written immediately before the notice block.
    *
-   * @param blankLinesBefore the number of blank lines to write before the notice
+   * @param blankLinesBefore the desired pre-notice blank line count; use {@code 0} for no padding
    */
   public void setBlankLinesBefore (int blankLinesBefore) {
 
@@ -155,9 +172,9 @@ public class Stencil {
   }
 
   /**
-   * Returns the number of blank lines that should follow the notice content.
+   * Returns the number of blank lines written immediately after the notice block.
    *
-   * @return the count of blank lines after the notice
+   * @return the post-notice blank line count; {@code 0} means no padding
    */
   public int getBlankLinesAfter () {
 
@@ -165,9 +182,9 @@ public class Stencil {
   }
 
   /**
-   * Sets the number of blank lines that should follow the notice content.
+   * Sets the number of blank lines written immediately after the notice block.
    *
-   * @param blankLinesAfter the number of blank lines to write after the notice
+   * @param blankLinesAfter the desired post-notice blank line count; use {@code 0} for no padding
    */
   public void setBlankLinesAfter (int blankLinesAfter) {
 

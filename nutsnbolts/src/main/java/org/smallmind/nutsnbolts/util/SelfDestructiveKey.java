@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.util;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Wrapper around a map key carrying an expiration time for self-destruction.
+ * Wrapper that pairs a map key with a computed expiration timestamp, used by {@link SelfDestructiveMap} to schedule entry removal.
  *
  * @param <K> comparable key type
  */
@@ -46,9 +46,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   private final long ignitionTime;
 
   /**
-   * Constructs a key without an underlying map key, using the provided timeout.
+   * Constructs a sentinel key with no underlying map key, used for range queries against the expiry set.
    *
-   * @param timeoutStint timeout before destruction
+   * @param timeoutStint duration used to compute the expiration timestamp
    */
   public SelfDestructiveKey (Stint timeoutStint) {
 
@@ -56,10 +56,10 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * Constructs a key associated with a map key and timeout.
+   * Constructs a key that associates a map key with its expiration time derived from the supplied timeout.
    *
-   * @param mapKey       underlying key
-   * @param timeoutStint timeout before destruction
+   * @param mapKey       the underlying map key, or {@code null} for sentinel use
+   * @param timeoutStint duration after which the entry should be destroyed
    */
   public SelfDestructiveKey (K mapKey, Stint timeoutStint) {
 
@@ -70,7 +70,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * @return underlying map key
+   * Returns the underlying map key associated with this expiry entry.
+   *
+   * @return the map key, or {@code null} for sentinel instances
    */
   public K getMapKey () {
 
@@ -78,7 +80,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * @return timeout stint used when this key was created
+   * Returns the timeout duration that was used to compute this key's expiration time.
+   *
+   * @return the timeout stint
    */
   public Stint getTimeoutStint () {
 
@@ -86,7 +90,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * @return absolute expiration time in milliseconds since epoch
+   * Returns the absolute wall-clock time at which this entry expires, in milliseconds since the epoch.
+   *
+   * @return expiration timestamp in milliseconds
    */
   public long getIgnitionTime () {
 
@@ -94,7 +100,10 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * Orders keys by ignition time, then by underlying key when present.
+   * Orders keys first by ignition time and, when equal, by the underlying map key (nulls sort before non-nulls).
+   *
+   * @param key the key to compare against
+   * @return a negative integer, zero, or positive integer per the {@link Comparable} contract
    */
   @Override
   public int compareTo (SelfDestructiveKey<K> key) {
@@ -110,7 +119,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * Hashes based on the underlying map key.
+   * Returns a hash code derived solely from the underlying map key.
+   *
+   * @return hash code of the map key
    */
   @Override
   public int hashCode () {
@@ -119,7 +130,10 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   }
 
   /**
-   * Equality is based on the underlying map key value.
+   * Two keys are equal when their underlying map keys are equal, regardless of expiration time.
+   *
+   * @param obj object to compare
+   * @return {@code true} if {@code obj} is a {@link SelfDestructiveKey} whose map key equals this key's map key
    */
   @Override
   public boolean equals (Object obj) {

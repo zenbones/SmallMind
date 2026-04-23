@@ -36,15 +36,15 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Hex encoder/decoder for binary data.
+ * Utility for encoding binary data to lowercase hexadecimal strings and decoding them back.
  */
 public class HexCodec {
 
   /**
-   * Encodes an entire byte array to a lowercase hex string.
+   * Encodes an entire byte array to a lowercase hexadecimal string.
    *
    * @param bytes the data to encode
-   * @return a hex string
+   * @return a lowercase hex string with two characters per input byte
    */
   public static String hexEncode (byte[] bytes) {
 
@@ -52,12 +52,12 @@ public class HexCodec {
   }
 
   /**
-   * Encodes a slice of a byte array to lowercase hex.
+   * Encodes a contiguous slice of a byte array to a lowercase hexadecimal string.
    *
-   * @param bytes  the data to encode
-   * @param offset starting offset
-   * @param length number of bytes to encode
-   * @return a hex string
+   * @param bytes  the data array containing the bytes to encode
+   * @param offset the zero-based index of the first byte to encode
+   * @param length the number of bytes to encode
+   * @return a lowercase hex string with two characters per encoded byte
    */
   public static String hexEncode (byte[] bytes, int offset, int length) {
 
@@ -75,11 +75,11 @@ public class HexCodec {
   }
 
   /**
-   * Decodes a hex string into bytes.
+   * Decodes a hexadecimal string into the original byte array.
    *
-   * @param toBeDecoded the hex string
-   * @return the decoded bytes
-   * @throws UnsupportedEncodingException if the input is not valid hex
+   * @param toBeDecoded the hex-encoded string (must have an even number of hex digit characters)
+   * @return the decoded byte array
+   * @throws UnsupportedEncodingException if the string length is odd or contains non-hex characters
    */
   public static byte[] hexDecode (String toBeDecoded)
     throws UnsupportedEncodingException {
@@ -88,11 +88,11 @@ public class HexCodec {
   }
 
   /**
-   * Decodes hex-encoded bytes into the original byte array.
+   * Decodes a byte array of ASCII hex digit characters into the original binary data.
    *
-   * @param toBeDecoded the hex characters as bytes
-   * @return the decoded bytes
-   * @throws UnsupportedEncodingException if the input is not valid hex
+   * @param toBeDecoded the hex characters represented as ASCII bytes (must have an even length)
+   * @return the decoded byte array
+   * @throws UnsupportedEncodingException if the array length is odd or contains non-hex characters
    */
   public static byte[] hexDecode (byte[] toBeDecoded)
     throws UnsupportedEncodingException {
@@ -116,10 +116,10 @@ public class HexCodec {
   }
 
   /**
-   * Tests whether the supplied byte represents a hex digit character.
+   * Returns {@code true} if the supplied byte represents an ASCII hexadecimal digit (0-9, a-f, or A-F).
    *
-   * @param singleChar the character to test
-   * @return {@code true} if the character is 0-9, a-f, or A-F
+   * @param singleChar the ASCII byte value to test
+   * @return {@code true} if the character is a valid hex digit
    */
   private static boolean isHexDigit (byte singleChar) {
 

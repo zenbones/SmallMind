@@ -39,7 +39,8 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 
 /**
- * Codec implementation using the orthodox value model and an injected JSON deserializer.
+ * {@link Codec} implementation for the orthodox value model, delegating JSON parsing and object
+ * conversion to an injected {@link JsonDeserializer} and using a shared {@link OrthodoxValueFactory}.
  */
 public class OrthodoxCodec implements Codec<OrthodoxValue> {
 
@@ -48,9 +49,9 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   private final JsonDeserializer<OrthodoxValue> deserializer;
 
   /**
-   * Creates the codec using the provided deserializer.
+   * Constructs the codec with the given deserializer for all inbound JSON parsing.
    *
-   * @param deserializer JSON deserializer to use
+   * @param deserializer the {@link JsonDeserializer} used to decode byte and string payloads
    */
   public OrthodoxCodec (JsonDeserializer<OrthodoxValue> deserializer) {
 
@@ -58,7 +59,9 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   }
 
   /**
-   * @return a new empty message
+   * Allocates and returns a new, empty {@link OrthodoxMessage} backed by the shared factory.
+   *
+   * @return fresh empty message ready to be populated
    */
   @Override
   public Message<OrthodoxValue> create () {
@@ -67,11 +70,11 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   }
 
   /**
-   * Parses messages from a byte buffer.
+   * Parses one or more messages from a raw byte payload via the injected deserializer.
    *
-   * @param buffer encoded payload
-   * @return decoded messages
-   * @throws IOException if parsing fails
+   * @param buffer JSON-encoded payload bytes
+   * @return array of decoded messages
+   * @throws IOException if the payload cannot be parsed
    */
   @Override
   public Message<OrthodoxValue>[] from (byte[] buffer)
@@ -81,11 +84,11 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   }
 
   /**
-   * Parses messages from string data.
+   * Parses one or more messages from a JSON string payload via the injected deserializer.
    *
-   * @param data encoded payload
-   * @return decoded messages
-   * @throws IOException if parsing fails
+   * @param data JSON-encoded string
+   * @return array of decoded messages
+   * @throws IOException if the string cannot be parsed
    */
   @Override
   public Message<OrthodoxValue>[] from (String data)
@@ -95,10 +98,11 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
   }
 
   /**
-   * Converts an arbitrary object to a value using the shared factory.
+   * Converts {@code object} to an {@link OrthodoxValue} tree using the shared factory and the
+   * injected deserializer.
    *
-   * @param object object to convert
-   * @return converted value
+   * @param object arbitrary object to convert; must be serializable by the configured deserializer
+   * @return value tree representing {@code object}
    * @throws IOException if conversion fails
    */
   @Override

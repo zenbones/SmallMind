@@ -38,17 +38,29 @@ import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 
 /**
- * Distributes memcached commands across a pool of connection coordinators to balance load.
+ * Spreads memcached commands across a fixed pool of {@link ConnectionCoordinator} instances to
+ * increase throughput under concurrent load.
+ *
+ * <p>The number of coordinators is determined by
+ * {@link CubbyConfiguration#getConnectionsPerHost()}, which effectively controls the number of
+ * independent TCP connections maintained to each host. When more than one coordinator exists, a
+ * coordinator is chosen at random for each outbound command using
+ * {@link ThreadLocalRandom}, avoiding contention on a single shared connection.</p>
+ *
+ * <p>{@link CubbyMemcachedClient} holds exactly one {@code ConnectionMultiplexer}.</p>
  */
 public class ConnectionMultiplexer {
 
   private final ConnectionCoordinator[] connectionCoordinators;
 
   /**
-   * Creates a multiplexer managing a configurable number of connections per host.
+   * Creates a multiplexer that owns one {@link ConnectionCoordinator} per configured connection
+   * slot. Each coordinator independently manages its own set of connections to every host.
    *
-   * @param configuration  runtime settings for connections and routing
-   * @param memcachedHosts target memcached hosts
+   * @param configuration  runtime settings; {@link CubbyConfiguration#getConnectionsPerHost()}
+   *                       determines the number of coordinators
+   * @param memcachedHosts the hosts forming the memcached cluster; passed through to each
+   *                       coordinator
    */
   public ConnectionMultiplexer (CubbyConfiguration configuration, MemcachedHost... memcachedHosts) {
 
@@ -60,11 +72,12 @@ public class ConnectionMultiplexer {
   }
 
   /**
-   * Starts each managed coordinator, opening their respective connections.
+   * Starts every managed {@link ConnectionCoordinator}, opening their respective connections and
+   * launching background health-monitoring threads.
    *
-   * @throws InterruptedException    if interrupted while connecting
-   * @throws IOException             if sockets cannot be opened
-   * @throws CubbyOperationException if initialization fails
+   * @throws InterruptedException    if the calling thread is interrupted while starting a coordinator
+   * @throws IOException             if a socket cannot be opened during startup
+   * @throws CubbyOperationException if a coordinator fails to initialize
    */
   public synchronized void start ()
     throws InterruptedException, IOException, CubbyOperationException {
@@ -75,10 +88,11 @@ public class ConnectionMultiplexer {
   }
 
   /**
-   * Stops each managed coordinator, closing open connections.
+   * Stops every managed {@link ConnectionCoordinator}, closing all open connections and
+   * terminating background health-monitoring threads.
    *
-   * @throws InterruptedException if interrupted while closing
-   * @throws IOException          if closing sockets fails
+   * @throws InterruptedException if the calling thread is interrupted while awaiting shutdown
+   * @throws IOException          if closing a connection fails
    */
   public synchronized void stop ()
     throws InterruptedException, IOException {
@@ -89,14 +103,19 @@ public class ConnectionMultiplexer {
   }
 
   /**
-   * Sends a command via a randomly selected coordinator.
+   * Dispatches a command to a randomly selected {@link ConnectionCoordinator}.
    *
-   * @param command        command to dispatch
-   * @param timeoutSeconds optional timeout in seconds; {@code null} uses configured default
-   * @return server response parsed by the coordinator
-   * @throws InterruptedException    if interrupted while awaiting completion
-   * @throws IOException             if network I/O fails
-   * @throws CubbyOperationException if routing or server processing fails
+   * <p>When only one coordinator exists the random selection is skipped. For multiple
+   * coordinators, {@link ThreadLocalRandom} is used to pick an index, distributing load without
+   * introducing shared state contention.</p>
+   *
+   * @param command        the command to send to the cluster
+   * @param timeoutSeconds optional per-request timeout in seconds; {@code null} defers to the
+   *                       configured default
+   * @return the server's parsed response
+   * @throws InterruptedException    if the calling thread is interrupted while awaiting a response
+   * @throws IOException             if a network error occurs during transmission
+   * @throws CubbyOperationException if routing fails or the server returns an error
    */
   public Response send (Command command, Long timeoutSeconds)
     throws InterruptedException, IOException, CubbyOperationException {

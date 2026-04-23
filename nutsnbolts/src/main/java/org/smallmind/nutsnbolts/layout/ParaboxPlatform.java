@@ -33,27 +33,37 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Supplies platform-specific metrics such as gaps, default orientation, and frame perimeter.
+ * Supplies platform-specific layout metrics — gap sizes, frame insets, and orientation — to the
+ * Parabox layout engine so that spacing and directional defaults can vary across platforms.
  */
 public interface ParaboxPlatform {
 
   /**
-   * @return the standard gap for related components
+   * Returns the standard spacing to use between visually related elements on this platform.
+   *
+   * @return the related-component gap size in platform units
    */
   double getRelatedGap ();
 
   /**
-   * @return the standard gap for unrelated components
+   * Returns the standard spacing to use between visually unrelated elements on this platform.
+   *
+   * @return the unrelated-component gap size in platform units
    */
   double getUnrelatedGap ();
 
   /**
-   * @return the perimeter representing platform insets/borders
+   * Returns the insets that should be reserved around the inside edges of the container frame.
+   *
+   * @return the frame perimeter insets
    */
   Perimeter getFramePerimeter ();
 
   /**
-   * @return the default layout orientation for the platform
+   * Returns the default layout orientation for this platform, which determines how
+   * {@code LEADING} and {@code TRAILING} alignment and justification are resolved.
+   *
+   * @return the platform's default {@link Orientation}
    */
   Orientation getOrientation ();
 }

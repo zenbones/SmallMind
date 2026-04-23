@@ -35,7 +35,7 @@ package org.smallmind.web.grizzly;
 import org.smallmind.nutsnbolts.lang.SecureStore;
 
 /**
- * Encapsulates SSL/TLS configuration for the Grizzly server including key/trust stores, client auth and port settings.
+ * Value object carrying all SSL/TLS configuration needed to create a secure Grizzly listener.
  */
 public class SSLInfo {
 
@@ -46,7 +46,9 @@ public class SSLInfo {
   private int port = 443;
 
   /**
-   * @return HTTPS listener port
+   * Returns the HTTPS listener port.
+   *
+   * @return port number
    */
   public int getPort () {
 
@@ -54,7 +56,9 @@ public class SSLInfo {
   }
 
   /**
-   * @param port HTTPS listener port to bind
+   * Sets the HTTPS listener port.
+   *
+   * @param port port number to bind
    */
   public void setPort (int port) {
 
@@ -62,7 +66,9 @@ public class SSLInfo {
   }
 
   /**
-   * @return secure store containing the private key and certificate chain
+   * Returns the secure store containing the server's private key and certificate chain.
+   *
+   * @return key secure store, or {@code null} if not set
    */
   public SecureStore getKeySecureStore () {
 
@@ -70,7 +76,9 @@ public class SSLInfo {
   }
 
   /**
-   * @param keySecureStore secure keystore with server credentials
+   * Sets the secure store containing the server's private key and certificate chain.
+   *
+   * @param keySecureStore keystore with server credentials
    */
   public void setKeySecureStore (SecureStore keySecureStore) {
 
@@ -78,7 +86,9 @@ public class SSLInfo {
   }
 
   /**
-   * @return secure store containing trusted CA certificates
+   * Returns the secure store containing trusted CA certificates.
+   *
+   * @return trust secure store, or {@code null} if not set
    */
   public SecureStore getTrustSecureStore () {
 
@@ -86,7 +96,9 @@ public class SSLInfo {
   }
 
   /**
-   * @param trustSecureStore trust store defining accepted client/server certificates
+   * Sets the secure store containing trusted CA certificates.
+   *
+   * @param trustSecureStore trust store defining accepted certificates
    */
   public void setTrustSecureStore (SecureStore trustSecureStore) {
 
@@ -94,6 +106,8 @@ public class SSLInfo {
   }
 
   /**
+   * Returns whether mutual TLS client authentication is required.
+   *
    * @return {@code true} when client certificates are required
    */
   public boolean isRequireClientAuth () {
@@ -102,7 +116,9 @@ public class SSLInfo {
   }
 
   /**
-   * @param requireClientAuth enables or disables mutual TLS
+   * Enables or disables mutual TLS client authentication.
+   *
+   * @param requireClientAuth {@code true} to require client certificates
    */
   public void setRequireClientAuth (boolean requireClientAuth) {
 
@@ -110,7 +126,9 @@ public class SSLInfo {
   }
 
   /**
-   * @return {@code true} if authentication headers are trusted to be injected by an upstream proxy
+   * Returns whether an upstream proxy is trusted to inject client-auth headers.
+   *
+   * @return {@code true} when proxy mode is active
    */
   public boolean isProxyMode () {
 
@@ -118,7 +136,9 @@ public class SSLInfo {
   }
 
   /**
-   * @param proxyMode set true when an upstream proxy handles client authentication and forwards identity headers
+   * Sets whether an upstream proxy handles client authentication and forwards identity headers.
+   *
+   * @param proxyMode {@code true} to trust forwarded auth headers from a proxy
    */
   public void setProxyMode (boolean proxyMode) {
 

@@ -36,16 +36,20 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
- * Mutable collection of batch parameters keyed by name, with helpers to add typed entries.
+ * Named collection of {@link BatchParameter} instances keyed by parameter name.
+ * <p>
+ * Extends {@link java.util.HashMap} with typed convenience mutators that wrap raw values in
+ * the appropriate {@link BatchParameter} subclass, so callers never need to instantiate
+ * subclasses directly.
  */
 public class BatchParameters extends HashMap<String, BatchParameter<?>> {
 
   /**
-   * Adds a {@link LocalDateTime} parameter.
+   * Wraps {@code aLocalDateTime} in a {@link DateBatchParameter} and stores it under {@code key}.
    *
-   * @param key            the parameter name expected by the job
-   * @param aLocalDateTime the date value to supply
-   * @param identifying    whether the value helps identify the job instance
+   * @param key            the parameter name recognised by the batch job
+   * @param aLocalDateTime the date/time value to deliver
+   * @param identifying    {@code true} if this value should contribute to job-instance identity
    */
   public void putDate (String key, LocalDateTime aLocalDateTime, boolean identifying) {
 
@@ -53,11 +57,11 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   }
 
   /**
-   * Adds a {@link Double} parameter.
+   * Wraps {@code aDouble} in a {@link DoubleBatchParameter} and stores it under {@code key}.
    *
-   * @param key         the parameter name expected by the job
-   * @param aDouble     the numeric value to supply
-   * @param identifying whether the value helps identify the job instance
+   * @param key         the parameter name recognised by the batch job
+   * @param aDouble     the floating-point value to deliver
+   * @param identifying {@code true} if this value should contribute to job-instance identity
    */
   public void putDouble (String key, Double aDouble, boolean identifying) {
 
@@ -65,11 +69,11 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   }
 
   /**
-   * Adds a {@link Long} parameter.
+   * Wraps {@code aLong} in a {@link LongBatchParameter} and stores it under {@code key}.
    *
-   * @param key         the parameter name expected by the job
-   * @param aLong       the numeric value to supply
-   * @param identifying whether the value helps identify the job instance
+   * @param key         the parameter name recognised by the batch job
+   * @param aLong       the integer value to deliver
+   * @param identifying {@code true} if this value should contribute to job-instance identity
    */
   public void putLong (String key, Long aLong, boolean identifying) {
 
@@ -77,11 +81,11 @@ public class BatchParameters extends HashMap<String, BatchParameter<?>> {
   }
 
   /**
-   * Adds a {@link String} parameter.
+   * Wraps {@code aString} in a {@link StringBatchParameter} and stores it under {@code key}.
    *
-   * @param key         the parameter name expected by the job
-   * @param aString     the string value to supply
-   * @param identifying whether the value helps identify the job instance
+   * @param key         the parameter name recognised by the batch job
+   * @param aString     the string value to deliver
+   * @param identifying {@code true} if this value should contribute to job-instance identity
    */
   public void putString (String key, String aString, boolean identifying) {
 

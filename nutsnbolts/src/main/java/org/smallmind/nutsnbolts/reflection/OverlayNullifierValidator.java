@@ -35,27 +35,30 @@ package org.smallmind.nutsnbolts.reflection;
 import java.lang.annotation.Annotation;
 
 /**
- * Contract for validators that determine whether a field value should be interpreted as {@code null} during overlays.
+ * Strategy interface for classes that decide whether a given field value should be treated as {@code null}
+ * during overlay processing, parameterised over the annotation type that carries the configuration.
  *
- * @param <A> the overlay nullifier annotation type
- * @param <T> the value type being evaluated
+ * @param <A> the {@link Annotation} type that activates this validator
+ * @param <T> the field value type that this validator evaluates
  */
 public interface OverlayNullifierValidator<A extends Annotation, T> {
 
   /**
-   * Allows the validator to read settings from the overlay annotation before evaluation begins.
+   * Called once before the first evaluation to allow the validator to read configuration from the
+   * annotation instance placed on the field.
+   * The default implementation is a no-op.
    *
-   * @param constraintAnnotation the annotation configuring this validator
+   * @param constraintAnnotation the annotation instance found on the field
    */
   default void initialize (A constraintAnnotation) {
 
   }
 
   /**
-   * Determines whether the supplied value is considered equivalent to {@code null}.
+   * Evaluates whether the supplied value should be replaced by {@code null} in the target object.
    *
-   * @param obj the value to test
-   * @return {@code true} if the value should be nullified
+   * @param obj the non-null field value read from the overlay source
+   * @return {@code true} if the value is a sentinel that the overlay system should treat as {@code null}
    */
   boolean equivalentToNull (T obj);
 }

@@ -46,12 +46,25 @@ import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Coordinates a pool of {@link JugglingPin}s that each wrap a provider-specific resource. The class shuffles
- * access evenly across the available pins, blacklisting failed ones and optionally attempting recovery after
- * a configurable delay.
+ * Load-balancing pool that distributes resource requests randomly across a set of {@link JugglingPin}s,
+ * blacklisting any pin that fails and optionally recovering it after a configurable delay.
+ * <p>
+ * Pins are drawn from two rotating lists — a source list and a target list — so that each call to
+ * {@link #pickResource()} selects uniformly at random without replacement until the source list is
+ * exhausted, at which point the roles of the two lists swap. This ensures every active pin is used
+ * once per full rotation before any pin is repeated.
+ * <p>
+ * Failed pins are moved into a timestamp-keyed blacklist map. If {@code recoveryCheckSeconds} is
+ * greater than zero, a daemon thread scans this map every three seconds and calls
+ * {@link JugglingPin#recover()} on any entry whose timestamp has aged past the threshold; recovered
+ * pins are silently returned to the target list.
+ * <p>
+ * All public methods are {@code synchronized} on the juggler instance. The blacklist map is a
+ * {@link ConcurrentSkipListMap} so the recovery worker can read it without holding the juggler lock,
+ * but the final promotion of a recovered pin is performed inside a {@code synchronized} block.
  *
- * @param <P> provider type used to create resources
- * @param <R> type of resource being served
+ * @param <P> the type of provider used to construct the managed resources
+ * @param <R> the type of resource served to callers
  */
 public class Juggler<P, R> implements BlackList<R> {
 
@@ -68,14 +81,17 @@ public class Juggler<P, R> implements BlackList<R> {
   private ComponentStatus status = ComponentStatus.UNINITIALIZED;
 
   /**
-   * Creates a juggler with a single provider replicated to the given size.
+   * Creates a juggler that replicates a single provider across {@code size} pins.
+   * <p>
+   * Equivalent to calling {@link #Juggler(Class, Class, int, JugglingPinFactory, Object[])} with
+   * an array of {@code size} references all pointing to the same provider instance.
    *
-   * @param providerClass        class of the provider instances
-   * @param resourceClass        class of the resources produced by pins
-   * @param recoveryCheckSeconds period in seconds to check for blacklisted resource recovery (0 disables recovery)
-   * @param jugglingPinFactory   factory that constructs pins for providers
-   * @param provider             provider instance to clone for each slot
-   * @param size                 number of resources to manage
+   * @param providerClass        the runtime class of the provider, used for typed array creation
+   * @param resourceClass        the runtime class of the resource, forwarded to the factory
+   * @param recoveryCheckSeconds seconds between blacklist recovery scans; {@code 0} disables recovery
+   * @param jugglingPinFactory   factory that constructs a pin from each provider
+   * @param provider             provider instance to replicate across all slots
+   * @param size                 number of pins (and therefore concurrent resource handles) to manage
    */
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
@@ -83,13 +99,16 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Creates a juggler with explicit providers.
+   * Creates a juggler backed by an explicit array of providers.
+   * <p>
+   * One pin is created per provider during {@link #initialize()}; duplicate provider references
+   * are allowed and result in independently managed pins that happen to share the same provider.
    *
-   * @param providerClass        class of the provider instances
-   * @param resourceClass        class of the resources produced by pins
-   * @param recoveryCheckSeconds period in seconds to check for blacklisted resource recovery (0 disables recovery)
-   * @param jugglingPinFactory   factory that constructs pins for providers
-   * @param providers            provider instances to wrap
+   * @param providerClass        the runtime class of the provider, used when building error messages
+   * @param resourceClass        the runtime class of the resource, forwarded to the factory
+   * @param recoveryCheckSeconds seconds between blacklist recovery scans; {@code 0} disables recovery
+   * @param jugglingPinFactory   factory that constructs a pin from each provider
+   * @param providers            provider instances to wrap, one pin per element
    */
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
 
@@ -101,13 +120,13 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Utility to create an array filled with the provided provider instance.
+   * Creates an array of {@code size} elements all holding the same provider reference.
    *
-   * @param provider      provider to repeat
-   * @param providerClass provider class used for array creation
-   * @param size          desired array length
+   * @param provider      the provider to fill into every element
+   * @param providerClass the component type of the resulting array
+   * @param size          the length of the resulting array
    * @param <P>           provider type
-   * @return populated provider array
+   * @return a new array of the requested length, every element set to {@code provider}
    */
   private static <P> P[] generateArray (P provider, Class<P> providerClass, int size) {
 
@@ -119,9 +138,14 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Initializes pin collections and constructs pins from the configured providers.
+   * Allocates the source and target pin lists, constructs a pin for each configured provider,
+   * and shuffles the pins into a random initial order.
+   * <p>
+   * This method is idempotent: subsequent calls while the juggler is already initialized have
+   * no effect. Must be called before {@link #startup()}.
    *
-   * @throws JugglerResourceCreationException if pin creation fails
+   * @throws JugglerResourceCreationException if {@link JugglingPinFactory#createJugglingPin} fails
+   *                                          for any provider
    */
   public synchronized void initialize ()
     throws JugglerResourceCreationException {
@@ -144,7 +168,8 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Starts all pins without invoking any lifecycle hook.
+   * Starts all pins without invoking an additional lifecycle hook on each resource.
+   * Delegates to {@link #startup(Method, Object...) startup(null)}.
    */
   public synchronized void startup () {
 
@@ -152,11 +177,16 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Starts all pins, optionally invoking a supplied lifecycle method with arguments on each resource.
-   * Failed pins are blacklisted and removed from circulation.
+   * Starts all pins, calling {@code method} on each resource if non-null.
+   * <p>
+   * Any pin that throws during start is immediately blacklisted and removed from active circulation.
+   * If {@code recoveryCheckSeconds} is positive, a daemon recovery thread is started after all pins
+   * have been processed.
+   * <p>
+   * This method is a no-op unless the juggler is in the {@code INITIALIZED} state.
    *
-   * @param method lifecycle method to invoke on each resource prior to becoming available; may be {@code null}
-   * @param args   arguments for the lifecycle method
+   * @param method lifecycle hook to invoke on each resource after starting, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   public synchronized void startup (Method method, Object... args) {
 
@@ -192,12 +222,19 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Selects and obtains a resource from the available pins. Failed resources are blacklisted and suppressed
-   * exceptions are accumulated before eventually throwing when no resources remain.
+   * Selects a resource at random from the active pin pool and returns it.
+   * <p>
+   * Pins are drawn from the source list uniformly at random. When the source list is empty the two
+   * lists swap, giving every active pin an equal chance over each full rotation. Any pin that throws
+   * from {@link JugglingPin#obtain()} is blacklisted on the spot and the method retries with the
+   * remaining pins. When both lists are empty the accumulated blacklist causes are collected into a
+   * single {@link NoAvailableJugglerResourceException} with all failures attached as suppressed
+   * exceptions.
    *
-   * @return an available resource
-   * @throws NoAvailableJugglerResourceException if every resource is unavailable or blacklisted
-   * @throws IllegalStateException               if the juggler has not been initialized or started
+   * @return a live resource obtained from the least-recently-used available pin
+   * @throws NoAvailableJugglerResourceException if every pin has been blacklisted and no resource
+   *                                             can be returned
+   * @throws IllegalStateException               if the juggler is not in the initialized or started state
    */
   public synchronized R pickResource ()
     throws NoAvailableJugglerResourceException {
@@ -238,9 +275,11 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Builds a terminating exception that aggregates all suppressed blacklist causes.
+   * Builds a {@link NoAvailableJugglerResourceException} whose primary cause is the most recent
+   * blacklist entry and whose suppressed exceptions carry the remaining blacklist causes in
+   * descending timestamp order.
    *
-   * @return aggregated exception detailing resource failures
+   * @return the aggregated exception representing all accumulated resource failures
    */
   private NoAvailableJugglerResourceException generateTerminatingException () {
 
@@ -260,9 +299,13 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Adds the supplied entry to the blacklist, removing the pin from active circulation.
+   * Removes the pin identified by {@code blacklistEntry} from active circulation and records it in
+   * the blacklist map, logging the event at INFO level.
+   * <p>
+   * If the pin is not found in either the source or target list — for example because it was already
+   * blacklisted via a prior call — the method silently does nothing.
    *
-   * @param blacklistEntry entry describing the failed pin and cause
+   * @param blacklistEntry record holding the pin to quarantine and the exception that caused the failure
    */
   @Override
   public synchronized void addToBlackList (BlacklistEntry<R> blacklistEntry) {
@@ -277,7 +320,8 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Stops all pins without invoking any lifecycle hook.
+   * Stops all pins without invoking an additional lifecycle hook on each resource.
+   * Delegates to {@link #shutdown(Method, Object...) shutdown(null)}.
    */
   public synchronized void shutdown () {
 
@@ -285,10 +329,16 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Stops all pins, optionally invoking a supplied lifecycle method with arguments. Recovery worker is aborted first.
+   * Stops all active pins, calling {@code method} on each resource if non-null.
+   * <p>
+   * The recovery worker, if running, is signalled to stop and awaited before any pins are touched.
+   * Exceptions thrown during stop are logged and swallowed so that all pins receive the stop call.
+   * Pins in the target list are drained into the source list first so that both lists are visited.
+   * <p>
+   * This method is a no-op unless the juggler is in the {@code STARTED} state.
    *
-   * @param method lifecycle method to invoke on each pin
-   * @param args   arguments for the lifecycle method invocation
+   * @param method lifecycle hook to invoke on each resource before stopping, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   public synchronized void shutdown (Method method, Object... args) {
 
@@ -326,7 +376,8 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Closes all pins without invoking any lifecycle hook.
+   * Closes all pins and releases their resources without invoking an additional lifecycle hook.
+   * Delegates to {@link #deconstruct(Method, Object...) deconstruct(null)}.
    */
   public synchronized void deconstruct () {
 
@@ -334,10 +385,15 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Closes all pins, optionally invoking a supplied lifecycle method with arguments.
+   * Closes all pins, calling {@code method} on each resource if non-null before disposal.
+   * <p>
+   * Exceptions thrown during close are logged and swallowed. After this call the juggler
+   * returns to the {@code UNINITIALIZED} state and must be re-initialized before use.
+   * <p>
+   * This method is a no-op unless the juggler is in the {@code STOPPED} state.
    *
-   * @param method lifecycle method to invoke during close
-   * @param args   arguments for the lifecycle method
+   * @param method lifecycle hook to invoke on each resource before closing, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   public synchronized void deconstruct (Method method, Object... args) {
 
@@ -355,7 +411,14 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Worker that periodically attempts to recover blacklisted pins after the configured interval.
+   * Daemon thread that periodically scans the blacklist and attempts to recover failed pins.
+   * <p>
+   * The worker wakes every three seconds and inspects all blacklist entries whose recorded timestamp
+   * is older than {@code recoveryCheckMillis}. For each such entry it calls
+   * {@link JugglingPin#recover()}; if that returns {@code true} the pin is removed from the blacklist
+   * and added to the juggler's target list inside a {@code synchronized} block. A fatal log message
+   * is emitted if the pin cannot be found in the map at promotion time, which indicates a race that
+   * should never occur.
    */
   private class ProviderRecoveryWorker implements Runnable {
 
@@ -364,9 +427,9 @@ public class Juggler<P, R> implements BlackList<R> {
     private final long recoveryCheckMillis;
 
     /**
-     * Constructs a worker that will check for recovery every supplied number of seconds.
+     * Creates a worker that checks for recoverable pins on the given interval.
      *
-     * @param recoveryCheckSeconds interval in seconds to wait between blacklist scans
+     * @param recoveryCheckSeconds interval in seconds between blacklist recovery scans
      */
     public ProviderRecoveryWorker (int recoveryCheckSeconds) {
 
@@ -376,9 +439,10 @@ public class Juggler<P, R> implements BlackList<R> {
     }
 
     /**
-     * Signals the worker to exit and waits for the thread to terminate.
+     * Signals the worker to stop and blocks until its thread has exited.
      *
-     * @throws InterruptedException if interrupted while waiting for termination
+     * @throws InterruptedException if the calling thread is interrupted while waiting for the
+     *                              worker to finish
      */
     public void abort ()
       throws InterruptedException {
@@ -388,7 +452,11 @@ public class Juggler<P, R> implements BlackList<R> {
     }
 
     /**
-     * Periodically scans the blacklist and attempts to recover pins whose delay has expired.
+     * Main loop: waits up to three seconds on the termination latch, then scans the front of the
+     * blacklist map for entries that have aged past {@code recoveryCheckMillis}. Each qualifying entry
+     * is offered to {@link JugglingPin#recover()}; successful recoveries are promoted to the target
+     * list under the juggler lock. The loop exits cleanly when the termination latch fires or if the
+     * thread is interrupted.
      */
     @Override
     public void run () {

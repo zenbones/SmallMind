@@ -56,7 +56,7 @@ public class RoutingFactories {
   }
 
   /**
-   * Factory for request queues (talk mode).
+   * Returns the factory for request queues (talk mode).
    *
    * @return managed object factory for request queues.
    */
@@ -66,7 +66,9 @@ public class RoutingFactories {
   }
 
   /**
-   * Factory for request topics (used by whisper/shout).
+   * Returns the factory for request topics (whisper and shout modes).
+   *
+   * @return managed object factory for request topics.
    */
   public ManagedObjectFactory getRequestTopicFactory () {
 
@@ -74,7 +76,9 @@ public class RoutingFactories {
   }
 
   /**
-   * Factory for response topics.
+   * Returns the factory for response topics.
+   *
+   * @return managed object factory for response topics.
    */
   public ManagedObjectFactory getResponseTopicFactory () {
 

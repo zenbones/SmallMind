@@ -1,17 +1,21 @@
 package org.smallmind.license;
 
 /**
- * Resolves the correct line separator string based on a configured {@link LineEndings} setting.
+ * Supplies the correct line separator string for a configured {@link LineEndings} style.
  */
 public class LineTerminator {
 
   private static final String SYSTEM_SEPARATOR = System.getProperty("line.separator");
+
+  /**
+   * The line-ending style that governs the separator returned by {@link #end()}.
+   */
   public LineEndings lineEndings;
 
   /**
-   * Constructs a terminator that will supply line separators according to the given ending style.
+   * Constructs a terminator that resolves separators according to the given style.
    *
-   * @param lineEndings the target line ending style to apply when writing text
+   * @param lineEndings the desired line-ending style; must not be {@code null}
    */
   public LineTerminator (LineEndings lineEndings) {
 
@@ -19,10 +23,12 @@ public class LineTerminator {
   }
 
   /**
-   * Returns the line separator string matching the configured {@link LineEndings}.
+   * Returns the line separator string for the configured style.
    *
-   * @return the correct line separator string for the configured style
-   * @throws RuntimeException if the configured line ending value is not recognized
+   * @return {@code "\n"} for {@link LineEndings#UNIX}; the value of
+   * {@code System.getProperty("line.separator")} for {@link LineEndings#SYSTEM}
+   * @throws RuntimeException if the configured {@link LineEndings} constant is not handled by
+   *                          the switch statement
    */
   public String end () {
 

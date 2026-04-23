@@ -36,14 +36,16 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
- * Simple listener that logs when the Spring context has been refreshed/initialized.
+ * Prints a startup message to standard output when the Spring application context is refreshed.
  */
 public class SpringContextRefreshedAnnouncer implements ApplicationListener<ContextRefreshedEvent> {
 
   private String applicationName;
 
   /**
-   * @param applicationName optional name to include in the log message
+   * Sets an optional application name to display in the startup message; if not set, the context's own application name is used.
+   *
+   * @param applicationName the name to include in the announcement
    */
   public void setApplicationName (String applicationName) {
 
@@ -51,9 +53,9 @@ public class SpringContextRefreshedAnnouncer implements ApplicationListener<Cont
   }
 
   /**
-   * Logs a message indicating the application context has been initialized.
+   * Prints a message to {@link System#out} announcing that the Spring context has been initialized.
    *
-   * @param event the context refreshed event
+   * @param event the context-refreshed event fired by Spring
    */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {

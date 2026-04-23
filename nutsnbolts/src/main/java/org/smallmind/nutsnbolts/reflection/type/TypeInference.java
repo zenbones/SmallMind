@@ -35,16 +35,17 @@ package org.smallmind.nutsnbolts.reflection.type;
 import java.util.Arrays;
 
 /**
- * Collects candidate types discovered during generic resolution and enforces a single inference.
+ * Accumulates candidate concrete classes discovered during generic type resolution and enforces
+ * that exactly one candidate is present when the inferred type is requested.
  */
 public class TypeInference {
 
   Class[] possibilities;
 
   /**
-   * Adds another possible concrete class for the inferred type.
+   * Registers an additional candidate class for the inferred type.
    *
-   * @param clazz the candidate class
+   * @param clazz the concrete class to add as a candidate
    */
   public void addPossibility (Class clazz) {
 
@@ -62,10 +63,10 @@ public class TypeInference {
   }
 
   /**
-   * Returns the inferred class once collection is complete.
+   * Returns the sole inferred class after all candidates have been collected.
    *
-   * @return the inferred class
-   * @throws TypeInferenceException if no or multiple possibilities were collected
+   * @return the single concrete class that was inferred
+   * @throws TypeInferenceException if no candidate was added or more than one candidate was added
    */
   public Class getInference () {
 

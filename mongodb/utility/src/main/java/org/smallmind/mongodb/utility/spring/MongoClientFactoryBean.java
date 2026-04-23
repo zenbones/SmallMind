@@ -48,7 +48,9 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   private MongoClientSettings clientSettings;
 
   /**
-   * @param clientSettings settings used to create the Mongo client
+   * Sets the {@link MongoClientSettings} used to construct the managed client.
+   *
+   * @param clientSettings the settings to apply when creating the client
    */
   public void setClientSettings (MongoClientSettings clientSettings) {
 
@@ -56,7 +58,7 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   }
 
   /**
-   * {@inheritDoc}
+   * Creates the {@link MongoClient} from the configured settings.
    */
   @Override
   public void afterPropertiesSet () {
@@ -65,7 +67,9 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true}; the managed client is a shared singleton.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {
@@ -74,7 +78,9 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code MongoClient.class}.
+   *
+   * @return {@code MongoClient.class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -83,7 +89,9 @@ public class MongoClientFactoryBean implements FactoryBean<MongoClient>, Initial
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the created MongoDB client.
+   *
+   * @return the constructed {@link MongoClient}
    */
   @Override
   public MongoClient getObject () {

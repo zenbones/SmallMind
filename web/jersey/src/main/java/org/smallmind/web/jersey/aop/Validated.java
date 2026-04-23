@@ -38,7 +38,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation indicating that a proxied resource method should undergo bean validation.
+ * Triggers {@link ValidatedAspect} to apply bean validation to the annotated method's parameters and return value.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

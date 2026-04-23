@@ -60,7 +60,16 @@ import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
 /**
- * JMS response transport that consumes invocation requests and sends results back over topics.
+ * JMS-based response transport that listens for incoming service invocation requests on queues
+ * and topics, executes them through a pool of {@link InvocationWorker} instances, and publishes
+ * encoded results back to callers via a response topic.
+ *
+ * <p>Three sets of {@link RequestListener} instances cover the three vocal modes:
+ * <ul>
+ *   <li><b>talk</b> – point-to-point queue listeners
+ *   <li><b>shout</b> – topic listeners without instance filtering
+ *   <li><b>whisper</b> – topic listeners filtered to this transport's unique instance id
+ * </ul>
  */
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
 
@@ -77,19 +86,21 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private final int maximumMessageLength;
 
   /**
-   * Constructs the response transport, wiring request listeners for shout/talk/whisper patterns and response publishers.
+   * Constructs the response transport, establishing all request listeners and response publisher
+   * pools, then starting the worker thread pool.
    *
-   * @param routingFactories     factories supplying JMS destinations and connection factories
-   * @param messagePolicy        producer configuration
-   * @param reconnectionPolicy   reconnection behavior
-   * @param signalCodec          codec used to decode requests and encode results
-   * @param serviceGroup         service group identifier to listen on
-   * @param clusterSize          number of listener/connection sets to create
-   * @param concurrencyLimit     worker concurrency limit
-   * @param maximumMessageLength maximum size of inbound messages to buffer
-   * @throws InterruptedException if startup is interrupted
-   * @throws JMSException         if JMS resources cannot be created
-   * @throws TransportException   if initialization fails
+   * @param routingFactories     group of {@link ManagedObjectFactory} instances for request queues,
+   *                             request topics, and the response topic
+   * @param messagePolicy        producer settings applied to all outbound message producers
+   * @param reconnectionPolicy   reconnection timing and attempt limits for all connection managers
+   * @param signalCodec          codec used to deserialise request signals and serialise result signals
+   * @param serviceGroup         service group name used as a JMS message-selector filter
+   * @param clusterSize          number of independent connection managers per channel
+   * @param concurrencyLimit     maximum number of concurrent {@link InvocationWorker} threads
+   * @param maximumMessageLength maximum byte length of any single inbound request payload
+   * @throws InterruptedException if worker start-up is interrupted
+   * @throws JMSException         if any JMS resource cannot be created
+   * @throws TransportException   if transport initialisation fails
    */
   public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
     throws InterruptedException, JMSException, TransportException {
@@ -131,7 +142,10 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the snowflake-generated instance identifier used to distinguish this service
+   * endpoint and to filter whisper-mode messages.
+   *
+   * @return unique instance id string
    */
   @Override
   public String getInstanceId () {
@@ -140,7 +154,13 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Registers a service implementation with the invocation circuit.
+   * Registers a service implementation against the given interface in the invocation circuit.
+   *
+   * @param serviceInterface the service interface whose invocations the target handles
+   * @param targetService    the service implementation to register
+   * @return the instance id of this transport
+   * @throws NoSuchMethodException      if the interface declares methods the circuit cannot bind
+   * @throws ServiceDefinitionException if registration violates service-definition constraints
    */
   @Override
   public String register (Class<?> serviceInterface, WiredService targetService)
@@ -152,7 +172,10 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Creates workers that pull JMS messages and execute invocations.
+   * Creates an {@link InvocationWorker} bound to the given work queue.
+   *
+   * @param workQueue work queue from which the new worker draws messages
+   * @return a new {@link InvocationWorker} instance
    */
   @Override
   public InvocationWorker createWorker (WorkQueue<Message> workQueue) {
@@ -161,7 +184,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the current transport state (playing, paused, or closed).
+   *
+   * @return current {@link TransportState}
    */
   @Override
   public TransportState getState () {
@@ -170,7 +195,10 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Resumes consumption from all request listeners.
+   * Transitions from {@link TransportState#PAUSED} to {@link TransportState#PLAYING} and
+   * resumes message delivery on all request listeners.  No-op if already playing.
+   *
+   * @throws JMSException if any listener cannot be started
    */
   @Override
   public void play ()
@@ -192,7 +220,10 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Pauses consumption from all request listeners.
+   * Transitions from {@link TransportState#PLAYING} to {@link TransportState#PAUSED} and
+   * suspends message delivery on all request listeners.  No-op if already paused.
+   *
+   * @throws JMSException if any listener cannot be stopped
    */
   @Override
   public void pause ()
@@ -214,7 +245,15 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Sends a result signal back to the caller over the response topic.
+   * Encodes a {@link ResultSignal} and publishes it to the response topic so the originating
+   * caller can complete its pending callback.
+   *
+   * @param callerId      id of the caller that issued the original request
+   * @param correlationId JMS correlation id matching the request message id
+   * @param error         {@code true} if the result represents a fault
+   * @param nativeType    fully-qualified type name of the result object, or {@code null}
+   * @param result        result value to encode and transmit
+   * @throws Throwable if a topic operator is unavailable or encoding/sending fails
    */
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
@@ -231,7 +270,15 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Builds a JMS response message with the encoded result signal and correlation headers.
+   * Builds a JMS {@link BytesMessage} carrying the encoded result signal and the required
+   * correlation and routing headers.
+   *
+   * @param callerId      caller id stamped as a JMS message property
+   * @param correlationId JMS correlation id linking the response to the original request
+   * @param topicOperator operator used to create the message
+   * @param resultSignal  result signal to encode into the message body
+   * @return a populated response {@link Message} ready to send
+   * @throws Throwable if message creation or encoding fails
    */
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
     throws Throwable {
@@ -254,7 +301,11 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   /**
-   * Stops listeners, closes resources, and shuts down worker threads.
+   * Closes all request listeners and response connection managers, then shuts down the worker
+   * pool.  Sets the transport state to {@link TransportState#CLOSED}.  Idempotent.
+   *
+   * @throws JMSException         if any JMS resource cannot be closed
+   * @throws InterruptedException if the worker shutdown is interrupted
    */
   @Override
   public void close ()

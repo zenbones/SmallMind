@@ -35,7 +35,7 @@ package org.smallmind.web.jetty.installer;
 // @ServicePath("/<service Uri>")
 
 /**
- * Captures metadata needed to publish a SOAP web service through Jetty's JAX-WS support.
+ * Holds the path and implementation instance needed to publish a SOAP web service through Jetty's JAX-WS HTTP server support.
  */
 public class WebServiceInstaller {
 
@@ -44,10 +44,10 @@ public class WebServiceInstaller {
   private Boolean asyncSupported;
 
   /**
-   * Creates an installer for a SOAP service.
+   * Creates an installer for the given service implementation at the given path.
    *
-   * @param path    relative URL path where the service is exposed
-   * @param service service implementation instance
+   * @param path    relative URL path where the service endpoint is exposed
+   * @param service the SOAP service implementation instance
    */
   public WebServiceInstaller (String path, Object service) {
 
@@ -56,9 +56,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Retrieves the relative URL path for the service.
+   * Returns the relative URL path at which the service is published.
    *
-   * @return service path
+   * @return the service path
    */
   public String getPath () {
 
@@ -66,9 +66,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Sets the relative URL path for the service.
+   * Sets the relative URL path at which the service should be published.
    *
-   * @param path service path to publish
+   * @param path the service path
    */
   public void setPath (String path) {
 
@@ -76,9 +76,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Returns the service implementation instance.
+   * Returns the SOAP service implementation instance.
    *
-   * @return the SOAP service to publish
+   * @return the service object
    */
   public Object getService () {
 
@@ -86,9 +86,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Assigns the service implementation to publish.
+   * Sets the SOAP service implementation to publish.
    *
-   * @param service the SOAP service instance
+   * @param service the service instance
    */
   public void setService (Object service) {
 
@@ -96,9 +96,9 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Indicates whether the service supports asynchronous processing.
+   * Returns whether this service supports asynchronous invocation.
    *
-   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unspecified
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} if unset
    */
   public Boolean getAsyncSupported () {
 
@@ -106,7 +106,7 @@ public class WebServiceInstaller {
   }
 
   /**
-   * Configures whether the service supports asynchronous invocation.
+   * Configures whether this service supports asynchronous invocation.
    *
    * @param asyncSupported {@code true} to enable async support, {@code false} to disable, {@code null} to leave unset
    */

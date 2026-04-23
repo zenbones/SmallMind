@@ -47,7 +47,7 @@ import static java.lang.annotation.ElementType.RECORD_COMPONENT;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Bean Validation constraint requiring a numeric value to be non-zero.
+ * Bean Validation constraint that requires an annotated numeric value to be non-zero.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NotZero {
 
   /**
-   * Allows multiple {@link NotZero} annotations on the same element.
+   * Container annotation that allows multiple {@link NotZero} constraints on the same element.
    */
   @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE, RECORD_COMPONENT})
   @Retention(RUNTIME)
@@ -64,23 +64,23 @@ public @interface NotZero {
   @interface List {
 
     /**
-     * @return array of {@link NotZero} constraints
+     * @return the contained {@link NotZero} constraints
      */
     NotZero[] value ();
   }
 
   /**
-   * @return message when the value is zero
+   * @return the constraint violation message
    */
   String message () default "must be not be zero";
 
   /**
-   * @return validation groups this constraint belongs to
+   * @return the validation groups to which this constraint belongs
    */
   Class<?>[] groups () default {};
 
   /**
-   * @return payload for Bean Validation clients
+   * @return the payload types associated with this constraint
    */
   Class<? extends Payload>[] payload () default {};
 }

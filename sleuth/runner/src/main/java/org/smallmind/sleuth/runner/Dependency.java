@@ -36,10 +36,29 @@ import java.lang.annotation.Annotation;
 import java.util.HashSet;
 
 /**
- * Represents a unit of work with dependency and priority metadata used by the Sleuth scheduler.
+ * Node in the Sleuth dependency graph representing a unit of work with ordering and prerequisite constraints.
+ * <p>
+ * Dependencies are built by {@link DependencyAnalysis}, sorted topologically, and consumed by
+ * {@link DependencyQueue}. Each node carries the annotation that described it, the payload (a class for
+ * suite-level nodes or a {@link java.lang.reflect.Method} for test-level nodes), and three kinds of
+ * prerequisite relationships:
+ * <ul>
+ *   <li>{@link #dependsOn} — hard: the node is skipped if any named prerequisite failed.</li>
+ *   <li>{@link #executeAfter} — soft: the node waits for named predecessors but is not affected by their outcomes.</li>
+ *   <li>{@link #priorityOn} — injected by the scheduler: nodes from a lower-priority tier must all complete first.</li>
+ * </ul>
+ * A node begins in an <em>incomplete</em> state when created as a forward-reference placeholder and
+ * becomes complete either on construction via the full-argument constructor or via {@link #align}.
+ * <p>
+ * During topological sorting, {@link #setTemporary()}/{@link #unsetTemporary()} mark nodes that are
+ * currently on the DFS stack (used for cycle detection), and {@link #setPermanent()} marks nodes that
+ * have been fully processed.
  *
- * @param <A> annotation type that describes the dependency
- * @param <T> payload represented by the dependency (class, method, etc.)
+ * @param <A> annotation type that configured this node (e.g., {@link org.smallmind.sleuth.runner.annotation.Suite} or
+ *            {@link org.smallmind.sleuth.runner.annotation.Test})
+ * @param <T> payload type carried by this node (e.g., {@link Class} or {@link java.lang.reflect.Method})
+ * @see DependencyAnalysis
+ * @see DependencyQueue
  */
 public class Dependency<A extends Annotation, T> {
 
@@ -57,9 +76,12 @@ public class Dependency<A extends Annotation, T> {
   private int priority;
 
   /**
-   * Creates an incomplete placeholder dependency that can later be aligned with details.
+   * Creates an incomplete placeholder node for forward-references during graph construction.
+   * <p>
+   * This constructor is used when a dependency is mentioned by name before its details are known.
+   * The node transitions to complete once {@link #align(Dependency)} is called with the full definition.
    *
-   * @param name unique name of the dependency node
+   * @param name unique name that identifies this node within the graph; must not be {@code null}
    */
   public Dependency (String name) {
 
@@ -69,14 +91,16 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Creates a fully specified dependency node.
+   * Creates a fully specified, complete dependency node.
    *
-   * @param name         unique name of the dependency node
-   * @param annotation   annotation that configured the dependency
-   * @param value        payload value associated with the dependency
-   * @param priority     ordering priority; higher values run later
-   * @param executeAfter optional list of dependencies that must finish before execution
-   * @param dependsOn    optional list of hard dependencies that must succeed first
+   * @param name         unique name identifying this node within the graph; must not be {@code null}
+   * @param annotation   annotation instance that declared this dependency; may be {@code null}
+   * @param value        payload associated with this node (e.g., the class or method to execute)
+   * @param priority     scheduling priority; lower values are scheduled before higher values
+   * @param executeAfter names of nodes that must finish (regardless of outcome) before this one starts;
+   *                     may be {@code null} or empty
+   * @param dependsOn    names of nodes that must succeed before this one starts; failure of any
+   *                     named node propagates its culprit here; may be {@code null} or empty
    */
   public Dependency (String name, A annotation, T value, int priority, String[] executeAfter, String[] dependsOn) {
 
@@ -91,9 +115,12 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Copies dependency details from another node with the same name.
+   * Fills in the details of a placeholder node from a fully defined node with the same name.
+   * <p>
+   * After alignment the node is marked complete. Only the annotation, value, priority, and
+   * {@code dependsOn} fields are copied; children accumulated during graph construction are preserved.
    *
-   * @param dependency fully defined dependency to align with
+   * @param dependency fully defined source node to copy details from; must not be {@code null}
    */
   public void align (Dependency<A, T> dependency) {
 
@@ -106,7 +133,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return the unique dependency name
+   * @return unique name of this node within its dependency graph; never {@code null}
    */
   public String getName () {
 
@@ -114,7 +141,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return the annotation that describes this dependency, or {@code null} if not yet aligned
+   * @return annotation instance that described this dependency, or {@code null} when not yet aligned
    */
   public A getAnnotation () {
 
@@ -122,7 +149,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return the payload value associated with the dependency
+   * @return payload value to execute when this node is dispatched; may be {@code null} for placeholders
    */
   public T getValue () {
 
@@ -130,7 +157,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return execution priority; larger numbers are scheduled later
+   * @return scheduling priority; lower values execute before higher values
    */
   public int getPriority () {
 
@@ -138,7 +165,8 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return names of dependencies that must be completed when this node has lower priority
+   * @return names of nodes that must complete due to a higher priority tier before this node may start;
+   * {@code null} until set by {@link DependencyAnalysis}
    */
   public String[] getPriorityOn () {
 
@@ -146,9 +174,10 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Sets dependencies imposed by a higher-priority tier.
+   * Sets the cross-tier priority ordering constraint injected by {@link DependencyAnalysis}.
    *
-   * @param priorityOn dependency names that must be complete before this one executes
+   * @param priorityOn names of lower-priority-tier nodes that must all complete first;
+   *                   may be {@code null}
    */
   public void setPriorityOn (String[] priorityOn) {
 
@@ -156,7 +185,8 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return dependencies that must complete before this node executes when in the same tier
+   * @return names of nodes that must complete (soft ordering) before this node may start;
+   * may be {@code null} or empty
    */
   public String[] getExecuteAfter () {
 
@@ -164,7 +194,8 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return required dependencies that must succeed prior to execution
+   * @return names of nodes that must succeed (hard dependency) before this node may start;
+   * may be {@code null} or empty
    */
   public String[] getDependsOn () {
 
@@ -172,9 +203,9 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Registers a child dependency that is downstream of this node.
+   * Registers a downstream node that must wait for this node to complete before it can execute.
    *
-   * @param dependency child node
+   * @param dependency child node to add; must not be {@code null}
    */
   public void addChild (Dependency<A, T> dependency) {
 
@@ -182,7 +213,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return current child dependencies
+   * @return set of nodes that are downstream of this one; never {@code null}
    */
   public HashSet<Dependency<A, T>> getChildren () {
 
@@ -190,7 +221,8 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return {@code true} when the node has been fully defined/aligned
+   * @return {@code true} when this node has been fully defined, either via the full constructor or
+   * via {@link #align(Dependency)}
    */
   public boolean isCompleted () {
 
@@ -198,7 +230,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return recorded culprit propagated from a failed prerequisite, if any
+   * @return culprit propagated from a failed prerequisite, or {@code null} if none
    */
   public Culprit getCulprit () {
 
@@ -206,9 +238,9 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Propagates a culprit from an upstream dependency.
+   * Records a culprit from a failed prerequisite so that downstream nodes can be skipped.
    *
-   * @param culprit failure to record
+   * @param culprit failure origin to propagate; may be {@code null} to clear
    */
   public void setCulprit (Culprit culprit) {
 
@@ -216,7 +248,8 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return whether this node is currently being visited in dependency resolution
+   * @return {@code true} if this node is currently on the DFS stack during topological sorting
+   * (cycle detection marker)
    */
   public boolean isTemporary () {
 
@@ -224,7 +257,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Marks the node as temporarily visited to detect cycles.
+   * Marks this node as currently being visited during topological sort (cycle detection).
    */
   public void setTemporary () {
 
@@ -232,7 +265,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Clears the temporary visit marker.
+   * Clears the temporary-visit marker after the DFS recursion unwinds from this node.
    */
   public void unsetTemporary () {
 
@@ -240,7 +273,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return whether this node has been fully processed in dependency resolution
+   * @return {@code true} if this node has been fully processed and added to the sorted output
    */
   public boolean isPermanent () {
 
@@ -248,7 +281,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Marks the node as permanently processed.
+   * Marks this node as permanently processed, preventing it from being visited again.
    */
   public void setPermanent () {
 
@@ -256,7 +289,7 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * @return hash code derived from the dependency name
+   * @return hash code derived from the node's name for use in hash-based collections
    */
   @Override
   public int hashCode () {
@@ -265,10 +298,10 @@ public class Dependency<A extends Annotation, T> {
   }
 
   /**
-   * Dependencies are considered equal when their names match.
+   * Two dependency nodes are considered equal when their names match, regardless of payload.
    *
-   * @param obj object to compare
-   * @return {@code true} if names are equal
+   * @param obj object to compare; may be {@code null}
+   * @return {@code true} if both nodes have the same name
    */
   @Override
   public boolean equals (Object obj) {

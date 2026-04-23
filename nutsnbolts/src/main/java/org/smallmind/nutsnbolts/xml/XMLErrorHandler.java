@@ -37,15 +37,17 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * SAX {@link ErrorHandler} that converts warnings/errors into exceptions with location details.
- * Singleton instance is provided for reuse.
+ * SAX {@link ErrorHandler} that promotes all warnings, errors, and fatal errors to thrown {@link SAXException}s enriched with source location details.
+ * A pre-built singleton is exposed for convenient wiring into SAX parsers.
  */
 public class XMLErrorHandler implements ErrorHandler {
 
   private static final XMLErrorHandler ERROR_HANDLER = new XMLErrorHandler();
 
   /**
-   * @return shared instance suitable for wiring into SAX parsers
+   * Returns the shared singleton instance.
+   *
+   * @return the singleton {@link XMLErrorHandler}
    */
   public static XMLErrorHandler getInstance () {
 
@@ -53,10 +55,10 @@ public class XMLErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Treats parser warnings as errors and raises a {@link SAXException}.
+   * Promotes a parser warning to a thrown exception.
    *
-   * @param saxParseException warning encountered
-   * @throws SAXException always thrown with location context
+   * @param saxParseException the warning reported by the parser
+   * @throws SAXException always, carrying the warning message and location
    */
   public void warning (SAXParseException saxParseException)
     throws SAXException {
@@ -65,10 +67,10 @@ public class XMLErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Handles recoverable parser errors by throwing a {@link SAXException}.
+   * Promotes a recoverable parser error to a thrown exception.
    *
-   * @param saxParseException error encountered
-   * @throws SAXException always thrown with location context
+   * @param saxParseException the error reported by the parser
+   * @throws SAXException always, carrying the error message and location
    */
   public void error (SAXParseException saxParseException)
     throws SAXException {
@@ -77,10 +79,10 @@ public class XMLErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Handles fatal parser errors by throwing a {@link SAXException}.
+   * Promotes a fatal parser error to a thrown exception.
    *
-   * @param saxParseException fatal error encountered
-   * @throws SAXException always thrown with location context
+   * @param saxParseException the fatal error reported by the parser
+   * @throws SAXException always, carrying the error message and location
    */
   public void fatalError (SAXParseException saxParseException)
     throws SAXException {
@@ -89,10 +91,10 @@ public class XMLErrorHandler implements ErrorHandler {
   }
 
   /**
-   * Formats the parser exception with public/system ids and line/column numbers.
+   * Builds a {@link SAXException} whose message includes the public identifier, system identifier, line number, and column number from the parse exception.
    *
-   * @param saxParseException exception reported by the parser
-   * @return wrapped {@link SAXException} including location context
+   * @param saxParseException the parse exception to wrap
+   * @return a new {@link SAXException} containing location-enriched diagnostic text
    */
   private SAXException handleException (SAXParseException saxParseException) {
 

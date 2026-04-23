@@ -44,7 +44,7 @@ import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.nutsnbolts.security.InvalidPasswordException;
 
 /**
- * PBKDF2-based password hashing/verification utility.
+ * Argon2id-based password hashing and verification engine that prepends a random salt to each stored hash.
  */
 public class Argon2IDPasswordEngine implements PasswordEngine {
 
@@ -70,7 +70,7 @@ public class Argon2IDPasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with default settings (50,000 iterations, 32-byte salt, 256-bit key).
+   * Constructs an engine with default Argon2id parameters (2 iterations, 32-byte salt, 64 KiB memory, 32-byte hash, 1 thread).
    */
   public Argon2IDPasswordEngine () {
 
@@ -78,9 +78,9 @@ public class Argon2IDPasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with custom iterations and default salt/key lengths.
+   * Constructs an engine with a custom iteration count and all other parameters set to their defaults.
    *
-   * @param iterations number of PBKDF2 iterations
+   * @param iterations the number of Argon2id iterations to perform
    */
   public Argon2IDPasswordEngine (int iterations) {
 
@@ -88,13 +88,13 @@ public class Argon2IDPasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Creates an engine with custom parameters.
+   * Constructs an engine with fully customized Argon2id parameters.
    *
-   * @param iterations  number of Argon2_id iterations
-   * @param saltLength  bytes of random salt to prepend to stored hashes
-   * @param memLimit    limit to bytes of memory consumed (this relates directly to attack resistance with a recommended lower bound of 64k)
-   * @param hashLength  length of the hash in bytes (also directly relates to attack resistance with recommended lower bound of 32 bytes)
-   * @param parallelism number of threads used in the computation
+   * @param iterations  the number of Argon2id iterations; higher values increase computation cost
+   * @param saltLength  the number of random salt bytes prepended to each stored hash
+   * @param memLimit    the memory cost in KiB; directly affects attack resistance with a recommended lower bound of 64 KiB
+   * @param hashLength  the output hash length in bytes; directly affects attack resistance with a recommended lower bound of 32 bytes
+   * @param parallelism the number of parallel threads used during key derivation
    */
   public Argon2IDPasswordEngine (int iterations, int saltLength, int memLimit, int hashLength, int parallelism) {
 
@@ -106,11 +106,11 @@ public class Argon2IDPasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Hashes the password with a random salt and returns the salt+hash encoded as Base64.
+   * Hashes the password with a freshly generated random salt using Argon2id and returns the concatenated salt and hash encoded as Base64.
    *
-   * @param password the plain-text password
-   * @return Base64 string containing salt concatenated with derived key
-   * @throws IOException              if encoding fails
+   * @param password the plaintext password to hash; must not be {@code null} or empty
+   * @return a Base64-encoded string containing the random salt followed by the derived hash
+   * @throws IOException              if Base64 encoding fails
    * @throws InvalidPasswordException if the password is {@code null} or empty
    */
   @Override
@@ -138,12 +138,13 @@ public class Argon2IDPasswordEngine implements PasswordEngine {
   }
 
   /**
-   * Checks whether the supplied password matches a stored salt+hash.
+   * Verifies a candidate password against a stored Argon2id salt+hash value produced by {@link #encrypt(String)}.
+   * Returns {@code false} without throwing if either argument is {@code null} or empty.
    *
-   * @param password candidate password
-   * @param stored   Base64 salt+hash string produced by {@link #encrypt(String)}
-   * @return {@code true} if the password matches
-   * @throws IOException if decoding fails
+   * @param password the candidate plaintext password to check
+   * @param stored   the Base64-encoded salt+hash string previously produced by {@link #encrypt(String)}
+   * @return {@code true} if the candidate password matches the stored hash, {@code false} otherwise
+   * @throws IOException if Base64 decoding of the stored value fails
    */
   @Override
   public boolean match (String password, String stored)

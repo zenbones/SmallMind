@@ -38,14 +38,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares the concrete subclasses eligible for polymorphic serialization of the annotated base type.
+ * Declares the set of concrete subclasses eligible for polymorphic marshaling on the annotated base type.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface XmlPolymorphicSubClasses {
 
   /**
-   * @return list of allowed subclasses
+   * @return concrete subclasses that may be serialized in place of the annotated base type
    */
   Class[] value ();
 }

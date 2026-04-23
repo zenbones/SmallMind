@@ -41,7 +41,8 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 
 /**
- * Callback that waits asynchronously for a response signal, enforcing a timeout.
+ * {@link TransmissionCallback} implementation that blocks the calling thread on a {@link CountDownLatch}
+ * until a result signal is delivered or the timeout expires.
  */
 public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
@@ -51,10 +52,11 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   private final String functionName;
 
   /**
-   * Constructs a callback for the given service/function, used in timeout messaging.
+   * Constructs a callback associated with a specific service and function, whose names appear
+   * in the timeout exception message when the wait expires.
    *
-   * @param serviceName  service name associated with the call
-   * @param functionName function name associated with the call
+   * @param serviceName  name of the remote service being called
+   * @param functionName name of the remote function being called
    */
   public AsynchronousTransmissionCallback (String serviceName, String functionName) {
 
@@ -63,7 +65,13 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   /**
-   * Waits for the result or throws when the timeout expires.
+   * Blocks until the result signal is set or the timeout elapses, then decodes and returns the result.
+   *
+   * @param signalCodec    codec used to decode the result payload
+   * @param timeoutSeconds maximum number of seconds to wait for the response
+   * @return the decoded return value of the remote invocation
+   * @throws TransportTimeoutException if {@code timeoutSeconds} elapses before a result arrives
+   * @throws Throwable                 if the result signal carries an error or decoding fails
    */
   public Object getResult (SignalCodec signalCodec, long timeoutSeconds)
     throws Throwable {
@@ -86,9 +94,10 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   /**
-   * Supplies the received result signal and releases any waiting callers.
+   * Stores the received result signal and releases the latch so that any thread blocked in
+   * {@link #getResult} can proceed.
    *
-   * @param resultSignal result to provide
+   * @param resultSignal the result signal delivered by the transport
    */
   public void setResultSignal (ResultSignal resultSignal) {
 

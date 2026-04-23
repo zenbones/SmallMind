@@ -37,17 +37,17 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * IOException that wraps a {@link Fault}, mirroring its message and stack trace for compatibility
- * with standard exception handling while preserving fault details.
+ * IOException that wraps a {@link Fault}, aligning its stack trace with the fault's elements so
+ * that standard exception-printing shows the original fault details.
  */
 public class FaultWrappingException extends IOException {
 
   private final Fault fault;
 
   /**
-   * Constructs the wrapper and aligns this exception's stack trace with the provided fault.
+   * Constructs the wrapper and copies the fault's stack trace elements to this exception.
    *
-   * @param fault fault payload being wrapped
+   * @param fault fault payload to wrap
    */
   public FaultWrappingException (Fault fault) {
 

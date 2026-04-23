@@ -42,8 +42,8 @@ import org.smallmind.scribe.pen.LoggerManager;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * Structured fault representation that can be serialized to JSON/XML, carrying stack trace,
- * nested causes, and optional native/extra information.
+ * Serializable fault representation that carries the throwable type, message, stack trace, nested
+ * causes, and optional native/extra information for transport over JSON or XML.
  */
 @XmlRootElement(name = "fault", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -58,16 +58,16 @@ public class Fault implements Serializable, Informed {
   private NativeObject nativeObject;
 
   /**
-   * No-arg constructor for frameworks.
+   * No-arg constructor for JAXB/Jackson.
    */
   public Fault () {
 
   }
 
   /**
-   * Creates a fault with only a message.
+   * Creates a fault carrying only a message.
    *
-   * @param message human-readable message
+   * @param message human-readable fault message
    */
   public Fault (String message) {
 
@@ -75,10 +75,10 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Creates a fault with contextual location and message.
+   * Creates a fault with a contextual origin and a message.
    *
-   * @param context context element describing where the fault occurred
-   * @param message human-readable message
+   * @param context element describing where the fault occurred
+   * @param message human-readable fault message
    */
   public Fault (FaultElement context, String message) {
 
@@ -88,9 +88,9 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Creates a fault from a throwable, capturing stack trace and optional native encoding.
+   * Creates a fault from a throwable, capturing stack trace and native encoding.
    *
-   * @param throwable thrown exception
+   * @param throwable thrown exception to represent
    */
   public Fault (Throwable throwable) {
 
@@ -98,10 +98,10 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Creates a contextual fault from a throwable, capturing stack trace and optional native encoding.
+   * Creates a contextual fault from a throwable, capturing stack trace and native encoding.
    *
-   * @param context   context element describing the call site
-   * @param throwable thrown exception
+   * @param context   element describing the call site
+   * @param throwable thrown exception to represent
    */
   public Fault (FaultElement context, Throwable throwable) {
 
@@ -109,9 +109,9 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Creates a fault from a throwable with control over native encoding.
+   * Creates a fault from a throwable with control over whether native encoding is included.
    *
-   * @param throwable             thrown exception
+   * @param throwable             thrown exception to represent
    * @param includeNativeEncoding whether to serialize the exception natively
    */
   public Fault (Throwable throwable, boolean includeNativeEncoding) {
@@ -120,10 +120,10 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Creates a contextual fault from a throwable with control over native encoding.
+   * Creates a contextual fault from a throwable with control over whether native encoding is included.
    *
-   * @param context               context element describing the call site
-   * @param throwable             thrown exception
+   * @param context               element describing the call site
+   * @param throwable             thrown exception to represent
    * @param includeNativeEncoding whether to serialize the exception natively
    */
   public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding) {
@@ -161,11 +161,12 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Computes how many trailing elements of the previous trace are repeated by the current element.
+   * Returns the number of trailing elements in the previous trace that are repeated starting at the
+   * given element, or -1 if the element does not appear in the previous trace.
    *
-   * @param element   current fault element
-   * @param prevTrace prior stack trace to compare against
-   * @return number of repeated elements from the previous trace, or -1 if none match
+   * @param element   current fault element to locate
+   * @param prevTrace prior stack trace to search
+   * @return count of repeated trailing elements, or -1 if not found
    */
   private static int findRepeatedStackElements (FaultElement element, FaultElement[] prevTrace) {
 
@@ -180,7 +181,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * @return contextual element indicating the origin of the fault
+   * @return element indicating the origin of the fault, or {@code null} if not set
    */
   @XmlElement(name = "context")
   public FaultElement getContext () {
@@ -189,7 +190,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Sets the contextual element indicating the origin of the fault.
+   * Sets the element indicating the origin of the fault.
    *
    * @param context context element
    */
@@ -199,7 +200,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * @return fully qualified throwable type name
+   * @return fully qualified throwable class name
    */
   @XmlElement(name = "type")
   public String getThrowableType () {
@@ -208,7 +209,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Sets the fully qualified throwable type name.
+   * Sets the fully qualified throwable class name.
    *
    * @param throwableType throwable class name
    */
@@ -237,7 +238,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * @return nested cause fault, if any
+   * @return nested cause fault, or {@code null} if none
    */
   @XmlElement(name = "cause")
   public Fault getCause () {
@@ -275,7 +276,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * @return structured auxiliary information (may be {@code null})
+   * @return structured auxiliary information, or {@code null} if not present
    */
   @XmlElement(name = "information")
   public ObjectNode getInformation () {
@@ -286,7 +287,7 @@ public class Fault implements Serializable, Informed {
   /**
    * Sets structured auxiliary information.
    *
-   * @param information JSON node containing metadata
+   * @param information JSON node containing supplemental metadata
    */
   public void setInformation (ObjectNode information) {
 
@@ -294,7 +295,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * @return optional native representation of the faulting object
+   * @return native serialized representation of the faulting object, or {@code null} if not captured
    */
   @XmlElement(name = "native")
   public NativeObject getNativeObject () {
@@ -303,7 +304,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Sets the native representation of the faulting object.
+   * Sets the native serialized representation of the faulting object.
    *
    * @param nativeObject serialized native payload
    */
@@ -313,7 +314,7 @@ public class Fault implements Serializable, Informed {
   }
 
   /**
-   * Renders the fault and its causes into a multi-line human-readable string.
+   * Renders this fault and all nested causes into a multi-line human-readable string.
    *
    * @return formatted fault text
    */

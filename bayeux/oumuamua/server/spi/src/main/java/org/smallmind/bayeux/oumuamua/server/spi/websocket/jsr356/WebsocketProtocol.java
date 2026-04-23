@@ -39,9 +39,11 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
 /**
- * Protocol implementation for websocket-based Bayeux messaging.
+ * {@link AbstractProtocol} implementation that drives Bayeux messaging over a JSR-356 websocket
+ * connection, owning a single {@link WebSocketTransport} and exposing the
+ * {@link org.smallmind.bayeux.oumuamua.server.spi.Transports#WEBSOCKET} transport name.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
  */
 public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
 
@@ -49,10 +51,12 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   private final long longPollTimeoutMilliseconds;
 
   /**
-   * Creates the protocol with default listeners.
+   * Creates the protocol with no additional listeners.
    *
-   * @param longPollTimeoutMilliseconds timeout value retained for compatibility
-   * @param websocketConfiguration      websocket configuration
+   * @param longPollTimeoutMilliseconds long-poll timeout stored and exposed via
+   *                                    {@link #getLongPollTimeoutMilliseconds()}; not used by the
+   *                                    websocket transport itself
+   * @param websocketConfiguration      configuration for the underlying {@link WebSocketTransport}
    */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration) {
 
@@ -60,11 +64,13 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * Creates the protocol with optional listeners.
+   * Creates the protocol and registers the supplied listeners.
    *
-   * @param longPollTimeoutMilliseconds timeout value retained for compatibility
-   * @param websocketConfiguration      websocket configuration
-   * @param listeners                   optional protocol listeners to register
+   * @param longPollTimeoutMilliseconds long-poll timeout stored and exposed via
+   *                                    {@link #getLongPollTimeoutMilliseconds()}; not used by the
+   *                                    websocket transport itself
+   * @param websocketConfiguration      configuration for the underlying {@link WebSocketTransport}
+   * @param listeners                   protocol listeners to register, or {@code null} for none
    */
   public WebsocketProtocol (long longPollTimeoutMilliseconds, WebsocketConfiguration websocketConfiguration, ProtocolListener<V>[] listeners) {
 
@@ -80,7 +86,10 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * @return protocol name
+   * Returns the canonical name of this protocol as defined by
+   * {@link org.smallmind.bayeux.oumuamua.server.spi.Protocols#WEBSOCKET}.
+   *
+   * @return protocol name string
    */
   @Override
   public String getName () {
@@ -89,9 +98,9 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * Websocket protocol is not long-polling.
+   * Indicates that websocket connections are persistent and therefore not long-polling.
    *
-   * @return false
+   * @return {@code false} always
    */
   @Override
   public boolean isLongPolling () {
@@ -100,7 +109,9 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * @return configured long poll timeout value
+   * Returns the long-poll timeout value supplied at construction time.
+   *
+   * @return timeout in milliseconds as configured; not used internally by the websocket transport
    */
   @Override
   public long getLongPollTimeoutMilliseconds () {
@@ -109,7 +120,9 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * @return supported transport names
+   * Returns the single transport name supported by this protocol.
+   *
+   * @return a one-element array containing the websocket transport name
    */
   @Override
   public String[] getTransportNames () {
@@ -118,10 +131,11 @@ public class WebsocketProtocol<V extends Value<V>> extends AbstractProtocol<V> {
   }
 
   /**
-   * Resolves the websocket transport by name.
+   * Looks up the transport by name, returning the owned {@link WebSocketTransport} when the name
+   * matches, or {@code null} for any other name.
    *
-   * @param name transport name
-   * @return websocket transport or {@code null} if name differs
+   * @param name the transport name to look up
+   * @return the {@link WebSocketTransport} instance, or {@code null} if {@code name} does not match
    */
   @Override
   public Transport<V> getTransport (String name) {

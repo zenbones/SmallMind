@@ -33,15 +33,15 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Case and identifier helpers for strings.
+ * Utility methods for string case conversion, identifier validation, and miscellaneous string manipulation.
  */
 public class StringUtility {
 
   /**
-   * Converts a string to display case, capitalizing the first character of each word and lowercasing the rest.
+   * Converts a string to display case, capitalizing the first character of each word and lowercasing all other characters; the source is treated as a single word.
    *
-   * @param anyCase source string
-   * @return display-cased string
+   * @param anyCase the source string to convert
+   * @return the display-cased string
    */
   public static String toDisplayCase (String anyCase) {
 
@@ -49,11 +49,11 @@ public class StringUtility {
   }
 
   /**
-   * Converts a string to display case using a custom word separator character that will be replaced by spaces.
+   * Converts a string to display case, capitalizing the first character of each word (delimited by {@code wordMarker}) and lowercasing the rest; the delimiter character is replaced by a space.
    *
-   * @param anyCase    source string
-   * @param wordMarker character that separates words
-   * @return display-cased string with separators replaced by spaces
+   * @param anyCase    the source string to convert
+   * @param wordMarker character that marks word boundaries; occurrences are replaced by spaces in the output
+   * @return the display-cased string with separators replaced by spaces
    */
   public static String toDisplayCase (String anyCase, char wordMarker) {
 
@@ -78,11 +78,11 @@ public class StringUtility {
   }
 
   /**
-   * Converts a word-delimited string to camel case, capitalizing each word after the first.
+   * Converts a word-delimited string to upper camel case (PascalCase), capitalizing the first letter of every word and removing the delimiter.
    *
-   * @param anyCase    source string
-   * @param wordMarker delimiter separating words
-   * @return camel-cased string starting with an uppercase letter
+   * @param anyCase    the source string to convert
+   * @param wordMarker the character that separates words
+   * @return the camel-cased string with its first character uppercased
    */
   public static String toCamelCase (String anyCase, char wordMarker) {
 
@@ -90,12 +90,12 @@ public class StringUtility {
   }
 
   /**
-   * Converts a word-delimited string to camel case.
+   * Converts a word-delimited string to camel case, optionally starting with an uppercase or lowercase first character.
    *
-   * @param anyCase    source string
-   * @param wordMarker delimiter separating words
-   * @param startUpper whether the first character should be uppercase
-   * @return camel-cased string
+   * @param anyCase    the source string to convert
+   * @param wordMarker the character that separates words
+   * @param startUpper {@code true} to uppercase the very first character (PascalCase), {@code false} for lower camelCase
+   * @return the camel-cased string
    */
   public static String toCamelCase (String anyCase, char wordMarker, boolean startUpper) {
 
@@ -119,11 +119,11 @@ public class StringUtility {
   }
 
   /**
-   * Converts a word-delimited string to an uppercase-with-underscores constant name.
+   * Converts a word-delimited string to a Java static constant name by uppercasing all characters and replacing the delimiter with underscores.
    *
-   * @param anyCase    source string
-   * @param wordMarker delimiter separating words
-   * @return uppercase string with underscores replacing delimiters
+   * @param anyCase    the source string to convert
+   * @param wordMarker the character that separates words, replaced by {@code '_'} in the result
+   * @return the uppercase, underscore-delimited constant name
    */
   public static String toStaticFieldName (String anyCase, char wordMarker) {
 
@@ -143,12 +143,12 @@ public class StringUtility {
   }
 
   /**
-   * Trims a string to a maximum length, appending "..." when truncated.
+   * Returns the text unchanged if it fits within {@code maxLength}, otherwise truncates it and appends {@code "..."}.
    *
-   * @param text      source text
-   * @param maxLength maximum allowed length (must be at least 4)
-   * @return original text if short enough; otherwise truncated with ellipses
-   * @throws IllegalArgumentException if {@code maxLength < 4}
+   * @param text      the source text to trim
+   * @param maxLength the maximum length of the returned string, including the ellipsis; must be at least 4
+   * @return the original text if its length is at most {@code maxLength}, otherwise the text truncated to {@code maxLength - 3} characters followed by {@code "..."}
+   * @throws IllegalArgumentException if {@code maxLength} is less than 4
    */
   public static String trimWithElipses (String text, int maxLength) {
 
@@ -166,10 +166,10 @@ public class StringUtility {
   }
 
   /**
-   * Validates whether a string is a legal Java identifier.
+   * Returns {@code true} if the supplied string is a syntactically valid Java identifier.
    *
-   * @param anyName string to check
-   * @return {@code true} if the name is a valid identifier
+   * @param anyName the string to validate
+   * @return {@code true} if every character satisfies the Java identifier rules
    */
   public static boolean isJavaIdentifier (String anyName) {
 
@@ -187,12 +187,12 @@ public class StringUtility {
   }
 
   /**
-   * Tests whether a given substring exists in the template starting at the provided index.
+   * Returns {@code true} if {@code match} appears in {@code template} starting exactly at {@code index}.
    *
-   * @param template full string
-   * @param match    substring to test
-   * @param index    starting offset in the template
-   * @return {@code true} if the substring fully matches starting at the index
+   * @param template the string to search within
+   * @param match    the substring to look for
+   * @param index    the zero-based starting position in {@code template}
+   * @return {@code true} if {@code match} is fully present starting at {@code index}
    */
   public static boolean hasNext (String template, String match, int index) {
 

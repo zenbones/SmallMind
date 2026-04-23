@@ -35,7 +35,10 @@ package org.smallmind.scribe.pen;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Default implementation that derives logger context information from the current thread stack.
+ * A {@link LoggerContext} that identifies the originating caller by walking
+ * {@code Thread.currentThread().getStackTrace()}, skipping frames that belong to the logging
+ * infrastructure, and capturing the first non-logging frame; the result is stored under
+ * double-checked locking so the stack walk happens at most once per instance.
  */
 public class DefaultLoggerContext implements LoggerContext {
 
@@ -43,10 +46,11 @@ public class DefaultLoggerContext implements LoggerContext {
   private StackTraceElement contextElement;
 
   /**
-   * Determines whether the given class name belongs to the logging infrastructure.
+   * Returns {@code true} if the given class name is part of the logging infrastructure as
+   * determined by {@link LoggerManager#isLoggingClass(String)}.
    *
-   * @param className class name to test
-   * @return {@code true} if the class is part of the logging stack
+   * @param className the fully-qualified class name to test
+   * @return {@code true} if the class belongs to the logging stack; {@code false} otherwise
    */
   private static boolean willPrime (String className) {
 
@@ -54,9 +58,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Indicates whether the context has been captured.
+   * Returns {@code true} if the caller context has already been captured from the stack.
    *
-   * @return {@code true} if filled
+   * @return {@code true} if {@link #setContextElement()} has successfully completed
    */
   public boolean isFilled () {
 
@@ -64,9 +68,10 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Captures context information from the current call stack if not already filled.
+   * Eagerly captures the caller context from the current thread's stack if not already filled;
+   * subsequent calls are no-ops.
    *
-   * @throws IllegalStateException if a logging context frame cannot be found
+   * @throws IllegalStateException if the logging call context cannot be found in the stack
    */
   public void fillIn () {
 
@@ -74,9 +79,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Returns the originating class name.
+   * Returns the fully-qualified class name of the first non-logging frame in the call stack.
    *
-   * @return class name
+   * @return the originating class name
    * @throws IllegalStateException if the logging call context cannot be determined
    */
   public String getClassName () {
@@ -87,9 +92,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Returns the originating method name.
+   * Returns the method name of the first non-logging frame in the call stack.
    *
-   * @return method name
+   * @return the originating method name
    * @throws IllegalStateException if the logging call context cannot be determined
    */
   public String getMethodName () {
@@ -100,9 +105,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Returns the originating file name.
+   * Returns the source file name of the first non-logging frame in the call stack.
    *
-   * @return file name
+   * @return the originating source file name, or {@code null} if unavailable
    * @throws IllegalStateException if the logging call context cannot be determined
    */
   public String getFileName () {
@@ -113,9 +118,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Indicates whether the originating frame is native.
+   * Returns whether the first non-logging frame is a native method.
    *
-   * @return {@code true} if native
+   * @return {@code true} if the originating frame is native
    * @throws IllegalStateException if the logging call context cannot be determined
    */
   public boolean isNativeMethod () {
@@ -126,9 +131,9 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Returns the originating line number.
+   * Returns the source line number of the first non-logging frame in the call stack.
    *
-   * @return line number
+   * @return the originating line number, or a negative value if unavailable
    * @throws IllegalStateException if the logging call context cannot be determined
    */
   public int getLineNumber () {
@@ -139,9 +144,12 @@ public class DefaultLoggerContext implements LoggerContext {
   }
 
   /**
-   * Captures the first stack frame outside the logging infrastructure.
+   * Performs a double-checked lock to ensure the stack walk occurs exactly once: iterates over
+   * the current thread's stack frames, primes on the first logging-infrastructure frame, then
+   * captures the first frame that is no longer part of the infrastructure as the caller context.
    *
-   * @throws IllegalStateException if the caller frame cannot be determined
+   * @throws IllegalStateException if no logging frame is found in the stack, or if no
+   *                               non-logging frame follows the logging frames
    */
   public void setContextElement () {
 

@@ -55,7 +55,10 @@ import org.smallmind.scribe.pen.TimestampQuantifier;
 import org.smallmind.scribe.pen.TimestampRolloverRule;
 
 /**
- * Logging plan that writes to a rolling file with cleanup and a console fallback for errors.
+ * Concrete {@link LoggingPlan} that writes log records to a rolling file appender configured with a
+ * time-based {@link TimestampRolloverRule}, a size-based {@link FileSizeRolloverRule}, a
+ * {@link LastModifiedCleanupRule} for retention, and a {@link ConsoleAppender} as the error handler
+ * so that appender failures are reported to the console.
  */
 public class FileLoggingPlan extends LoggingPlan {
 
@@ -67,7 +70,9 @@ public class FileLoggingPlan extends LoggingPlan {
   private long rolloverMegabyteLimit = 100;
 
   /**
-   * Sets the root log path.
+   * Sets the root directory path under which log files are written and rolled.
+   *
+   * @param logPath the directory to write log files to; defaults to {@code /var/log}
    */
   public void setLogPath (Path logPath) {
 
@@ -75,7 +80,10 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the timestamp format used in rollover file names.
+   * Sets the timestamp formatter used to generate the date portion of rolled file names; defaults to
+   * {@code yyyy-MM-dd} format.
+   *
+   * @param shortTimestamp the timestamp implementation used when naming rolled-over log files
    */
   public void setShortTimestamp (DateFormatTimestamp shortTimestamp) {
 
@@ -83,7 +91,10 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the timestamp format used in log contents.
+   * Sets the timestamp formatter used when rendering individual log record timestamps inside the log file;
+   * defaults to ISO-8601 format with milliseconds and timezone offset.
+   *
+   * @param fullTimestamp the timestamp implementation used in log record output
    */
   public void setFullTimestamp (DateFormatTimestamp fullTimestamp) {
 
@@ -91,7 +102,9 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the time-based rollover period.
+   * Sets the time boundary at which the log file is rolled over; defaults to {@link TimestampQuantifier#TOP_OF_DAY}.
+   *
+   * @param rolloverPeriod the time-based quantifier controlling when a new log file is started
    */
   public void setRolloverPeriod (TimestampQuantifier rolloverPeriod) {
 
@@ -99,7 +112,10 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets how many days to retain rolled files.
+   * Sets the number of days that rolled log files are retained before the cleanup rule removes them;
+   * defaults to 31 days.
+   *
+   * @param retentionDays the number of days to keep rolled files
    */
   public void setRetentionDays (long retentionDays) {
 
@@ -107,7 +123,10 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Sets the size threshold (in MB) for rolling the log file.
+   * Sets the maximum file size in megabytes at which the current log file is rolled over regardless of the
+   * time-based period; defaults to 100 MB.
+   *
+   * @param rolloverMegabyteLimit the size threshold in megabytes that triggers a rollover
    */
   public void setRolloverMegabyteLimit (long rolloverMegabyteLimit) {
 
@@ -115,10 +134,12 @@ public class FileLoggingPlan extends LoggingPlan {
   }
 
   /**
-   * Builds the file appender configured with rollover, cleanup, formatter, and console error handler.
+   * Constructs and returns a {@link FileAppender} assembled from the configured rollover rules, cleanup rule,
+   * pattern formatter, and a {@link ConsoleAppender}-backed {@link DefaultErrorHandler} that captures
+   * appender-level failures.
    *
-   * @return configured file appender
-   * @throws IOException if any file path cannot be created or opened
+   * @return a fully configured {@link FileAppender}
+   * @throws IOException if the log directory or file cannot be accessed
    */
   @Override
   public Appender getAppender ()

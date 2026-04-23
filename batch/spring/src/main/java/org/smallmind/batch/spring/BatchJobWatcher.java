@@ -39,16 +39,20 @@ import org.springframework.batch.core.job.JobInstance;
 import org.springframework.batch.core.repository.JobRepository;
 
 /**
- * Waits for all jobs visible through a {@link JobRepository} to reach {@link BatchStatus#COMPLETED}.
+ * Waits for every job execution visible through a {@link JobRepository} to reach
+ * {@link BatchStatus#COMPLETED}.
+ * <p>
+ * An additional <em>clear</em> period prevents premature success: all jobs must have been
+ * complete for at least the specified duration before the watcher declares victory.
  */
 public class BatchJobWatcher {
 
   private final JobRepository jobRepository;
 
   /**
-   * Builds a watcher against the provided repository.
+   * Creates a watcher backed by the provided repository.
    *
-   * @param jobRepository repository used to inspect running and completed jobs
+   * @param jobRepository the repository whose jobs are monitored
    */
   public BatchJobWatcher (JobRepository jobRepository) {
 
@@ -56,12 +60,16 @@ public class BatchJobWatcher {
   }
 
   /**
-   * Polls until all jobs are complete for a minimum clear period or until timeout is reached.
+   * Blocks until all jobs have been continuously complete for the {@code clear} period, or
+   * until {@code timeout} elapses.
+   * <p>
+   * Polls at an interval of at most one-tenth of the total timeout with a minimum of one second.
    *
-   * @param clear minimum duration jobs must remain complete before success is reported
-   * @param timeout maximum wait duration before failing
-   * @param timeUnit time unit for {@code clear} and {@code timeout}
-   * @return {@code true} if all jobs remained complete for the clear period before timeout; otherwise {@code false}
+   * @param clear    minimum duration for which all jobs must remain complete before success is reported
+   * @param timeout  maximum time to wait before returning {@code false}
+   * @param timeUnit unit for both {@code clear} and {@code timeout}
+   * @return {@code true} if all jobs stayed complete for the clear period before the deadline,
+   * {@code false} if the timeout expired first
    * @throws InterruptedException if the polling thread is interrupted while sleeping
    */
   public boolean await (long clear, long timeout, TimeUnit timeUnit)
@@ -90,9 +98,10 @@ public class BatchJobWatcher {
   }
 
   /**
-   * Checks whether every known execution has completed.
+   * Iterates every execution across every known job instance and returns {@code false} as soon
+   * as any execution has a status other than {@link BatchStatus#COMPLETED}.
    *
-   * @return {@code true} when no execution is found in a non-completed state
+   * @return {@code true} only when every execution is in the completed state
    */
   private boolean hasCompleted () {
 

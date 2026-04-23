@@ -33,15 +33,16 @@
 package org.smallmind.nutsnbolts.resource;
 
 /**
- * Base {@link Resource} implementation that handles common identifier and equality logic
- * using a simple {@code scheme:path} convention.
+ * Base {@link Resource} implementation that stores the path component and provides
+ * identifier composition, string representation, and value-based equality using the
+ * {@code scheme:path} convention.
  */
 public abstract class AbstractResource implements Resource {
 
   private final String path;
 
   /**
-   * Creates a resource with the supplied path component.
+   * Constructs an {@code AbstractResource} with the given path component.
    *
    * @param path raw path portion of the resource identifier
    */
@@ -51,9 +52,9 @@ public abstract class AbstractResource implements Resource {
   }
 
   /**
-   * Composes a unique identifier from the scheme and path in {@code scheme:path} format.
+   * Composes a unique identifier by joining the scheme and path with a colon separator.
    *
-   * @return unique identifier string
+   * @return identifier string of the form {@code scheme:path}
    */
   public String getIdentifier () {
 
@@ -61,9 +62,9 @@ public abstract class AbstractResource implements Resource {
   }
 
   /**
-   * Returns the raw path supplied when constructing the resource.
+   * Returns the raw path component supplied at construction time.
    *
-   * @return resource path component
+   * @return path portion of the resource identifier
    */
   public String getPath () {
 
@@ -71,7 +72,7 @@ public abstract class AbstractResource implements Resource {
   }
 
   /**
-   * Returns the {@link #getIdentifier()} for convenience.
+   * Returns the full resource identifier string, equivalent to {@link #getIdentifier()}.
    *
    * @return resource identifier
    */
@@ -81,9 +82,9 @@ public abstract class AbstractResource implements Resource {
   }
 
   /**
-   * Computes a hash code based on the scheme and path to allow map/set usage.
+   * Computes a hash code derived from both the scheme and path to support use in maps and sets.
    *
-   * @return hash code derived from scheme and path
+   * @return hash code based on scheme and path
    */
   @Override
   public int hashCode () {
@@ -92,10 +93,10 @@ public abstract class AbstractResource implements Resource {
   }
 
   /**
-   * Equality is based on both scheme and path values.
+   * Compares this resource to another for equality based on scheme and path.
    *
-   * @param obj object to compare
-   * @return {@code true} if the other object is an {@link AbstractResource} with equal scheme and path; otherwise {@code false}
+   * @param obj the object to compare against this resource
+   * @return {@code true} if {@code obj} is an {@link AbstractResource} with the same scheme and path; {@code false} otherwise
    */
   @Override
   public boolean equals (Object obj) {

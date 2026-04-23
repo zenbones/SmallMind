@@ -41,19 +41,41 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 
 /**
- * Spring factory bean that builds a singleton {@link CloudWatchClient} using static credentials and a region.
+ * Spring {@link FactoryBean} that constructs and exposes a singleton {@link CloudWatchClient}
+ * configured with static AWS credentials and a target region.
+ *
+ * <p>Callers should set {@link #setAwsAccessKey(String)}, {@link #setAwsSecretKey(String)},
+ * and {@link #setRegion(Region)} before the Spring container invokes
+ * {@link #afterPropertiesSet()}, at which point the client is built and cached for the
+ * lifetime of the bean.
  */
 public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, InitializingBean {
 
+  /**
+   * The fully-constructed {@link CloudWatchClient} produced by this factory; populated during
+   * {@link #afterPropertiesSet()}.
+   */
   private CloudWatchClient client;
+
+  /**
+   * The AWS region to which the CloudWatch client will connect.
+   */
   private Region region;
+
+  /**
+   * The AWS access key ID used to authenticate API calls.
+   */
   private String awsAccessKey;
+
+  /**
+   * The AWS secret access key used to authenticate API calls.
+   */
   private String awsSecretKey;
 
   /**
-   * Sets the AWS access key.
+   * Sets the AWS access key ID used to authenticate requests to CloudWatch.
    *
-   * @param awsAccessKey access key
+   * @param awsAccessKey the AWS access key ID; must not be {@code null}
    */
   public void setAwsAccessKey (String awsAccessKey) {
 
@@ -61,9 +83,9 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * Sets the AWS secret key.
+   * Sets the AWS secret access key used to authenticate requests to CloudWatch.
    *
-   * @param awsSecretKey secret key
+   * @param awsSecretKey the AWS secret access key; must not be {@code null}
    */
   public void setAwsSecretKey (String awsSecretKey) {
 
@@ -71,9 +93,9 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * Sets the AWS region for the client.
+   * Sets the AWS region to which the {@link CloudWatchClient} will connect.
    *
-   * @param region AWS region
+   * @param region the target {@link Region}; must not be {@code null}
    */
   public void setRegion (Region region) {
 
@@ -81,7 +103,9 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * @return true; client is singleton
+   * Indicates that this factory always produces the same client instance.
+   *
+   * @return {@code true} because the produced {@link CloudWatchClient} is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -90,7 +114,9 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * @return produced object type ({@link CloudWatchClient})
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link CloudWatchClient}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -99,7 +125,9 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * @return built CloudWatch client
+   * Returns the singleton {@link CloudWatchClient} built during {@link #afterPropertiesSet()}.
+   *
+   * @return the configured {@link CloudWatchClient}
    */
   @Override
   public CloudWatchClient getObject () {
@@ -108,7 +136,8 @@ public class CloudWatchClientFactory implements FactoryBean<CloudWatchClient>, I
   }
 
   /**
-   * Builds the CloudWatch client after properties are set.
+   * Constructs the {@link CloudWatchClient} using the configured access key, secret key, and
+   * region after all Spring properties have been injected.
    */
   @Override
   public void afterPropertiesSet () {

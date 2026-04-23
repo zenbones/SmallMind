@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.multipart;
 
 /**
- * Known multipart content types keyed by file extension.
+ * Enumeration mapping file extensions to their corresponding MIME content types for multipart uploads.
  */
 public enum MultiPartContentType {
 
@@ -43,10 +43,10 @@ public enum MultiPartContentType {
   private final String contentType;
 
   /**
-   * Associates an extension with a content type string.
+   * Associates a file extension with a MIME content type string.
    *
-   * @param extension   file extension without dot
-   * @param contentType MIME content type
+   * @param extension   the file extension without a leading dot
+   * @param contentType the corresponding MIME type string
    */
   MultiPartContentType (String extension, String contentType) {
 
@@ -55,10 +55,10 @@ public enum MultiPartContentType {
   }
 
   /**
-   * Looks up a content type based on a file extension.
+   * Finds the {@link MultiPartContentType} whose extension matches the given value.
    *
-   * @param extension extension to match
-   * @return matching {@link MultiPartContentType} or {@code null} if none found
+   * @param extension the file extension to look up
+   * @return the matching constant, or {@code null} if no match is found
    */
   public static MultiPartContentType forExtension (String extension) {
 
@@ -72,15 +72,20 @@ public enum MultiPartContentType {
     return null;
   }
 
+  /**
+   * Returns the file extension associated with this content type.
+   *
+   * @return the file extension without a leading dot
+   */
   public String getExtension () {
 
     return extension;
   }
 
   /**
-   * Returns the MIME content type string.
+   * Returns the MIME content type string associated with this constant.
    *
-   * @return content type
+   * @return the MIME type string
    */
   public String getContentType () {
 

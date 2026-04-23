@@ -37,14 +37,15 @@ import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.NullValue;
 
 /**
- * Null value representation for the orthodox codec.
+ * Immutable {@link NullValue} implementation for the orthodox codec that encodes as the JSON literal
+ * {@code null}; instances are created by {@link OrthodoxValueFactory#nullValue()}.
  */
 public class OrthodoxNullValue extends OrthodoxValue implements NullValue<OrthodoxValue> {
 
   /**
-   * Creates the singleton null value.
+   * Constructs the null value associated with the given factory.
    *
-   * @param factory owning factory
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
    */
   protected OrthodoxNullValue (OrthodoxValueFactory factory) {
 
@@ -52,10 +53,10 @@ public class OrthodoxNullValue extends OrthodoxValue implements NullValue<Orthod
   }
 
   /**
-   * Encodes the literal {@code null}.
+   * Writes the JSON literal {@code null} to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

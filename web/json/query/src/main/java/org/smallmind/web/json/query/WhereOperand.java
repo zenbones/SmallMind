@@ -40,9 +40,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 
 /**
- * Base type for operands that can appear on the right-hand side of a where field comparison.
+ * Abstract base for the right-hand side value in a where field comparison, parameterized on the Java type it carries.
  *
- * @param <I> the Java type represented by the operand
+ * @param <I> the Java type of the value held by this operand
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -50,11 +50,11 @@ import tools.jackson.databind.node.ArrayNode;
 public abstract class WhereOperand<I> {
 
   /**
-   * Creates a concrete operand from a generic JSON node by inspecting its node type.
+   * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given JSON node.
    *
-   * @param node JSON node representing a literal value
-   * @return the matching operand implementation
-   * @throws QueryProcessingException if the node type cannot be mapped to an operand
+   * @param node JSON node representing a scalar or array literal
+   * @return matching operand implementation
+   * @throws QueryProcessingException if the node type or number sub-type cannot be mapped to a known operand
    */
   public static WhereOperand<?> fromJsonNode (JsonNode node) {
 
@@ -96,23 +96,23 @@ public abstract class WhereOperand<I> {
   }
 
   /**
-   * Returns the semantic element type represented by this operand.
+   * Returns the semantic element type (e.g., NUMBER, STRING, NULL) of this operand.
    *
-   * @return element type enumeration
+   * @return element type
    */
   public abstract ElementType getElementType ();
 
   /**
-   * Returns the operand discriminator used in adapters.
+   * Returns the operand type discriminator used during serialization and adapter dispatch.
    *
-   * @return operand type enumeration
+   * @return operand type
    */
   public abstract OperandType getOperandType ();
 
   /**
-   * Retrieves the value represented by this operand in its Java form.
+   * Returns the Java value held by this operand.
    *
-   * @return the operand value (may be {@code null})
+   * @return operand value, may be {@code null}
    */
   public abstract I get ();
 }

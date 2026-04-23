@@ -37,16 +37,18 @@ import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 
 /**
- * Thread-local tracker for transactional boundaries and the proxy transactions they contain.
- * Supports nested boundaries and enforces allowed session sources, rollback-only semantics,
- * and coordination with non-transactional boundaries.
+ * Thread-local registry for transactional boundary stacks and the {@link ProxyTransaction} instances they contain.
+ * Manages nested boundaries, enforces session source key constraints, coordinates rollback-only semantics,
+ * and prevents session stealing by non-transactional boundaries.
  */
 public class TransactionalState {
 
   private static final ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction<?>>>> TRANSACTION_SET_STACK_LOCAL = new ThreadLocal<>();
 
   /**
-   * @return true when any transaction is active in the current thread
+   * Returns {@code true} when any transaction is active on the current thread.
+   *
+   * @return {@code true} if a transaction exists for any source key
    */
   public static boolean isInTransaction () {
 
@@ -54,10 +56,10 @@ public class TransactionalState {
   }
 
   /**
-   * Determines whether a transaction for the given session source key is active.
+   * Returns {@code true} when a transaction for the given session source key is active on the current thread.
    *
-   * @param sessionSourceKey session key to check; {@code null} checks the default
-   * @return true when active
+   * @param sessionSourceKey the source key to check; {@code null} checks the unnamed default source
+   * @return {@code true} if a matching transaction is active
    */
   public static boolean isInTransaction (String sessionSourceKey) {
 
@@ -65,10 +67,10 @@ public class TransactionalState {
   }
 
   /**
-   * Returns the current transaction for the given session source key.
+   * Returns the currently active transaction for the given session source key.
    *
-   * @param sessionSourceKey session key to find; {@code null} finds the default
-   * @return the matching transaction or {@code null} if none
+   * @param sessionSourceKey the source key to find; {@code null} finds the unnamed default source
+   * @return the matching {@link ProxyTransaction}, or {@code null} if no transaction is active for that key
    */
   public static ProxyTransaction<?> currentTransaction (String sessionSourceKey) {
 
@@ -94,10 +96,10 @@ public class TransactionalState {
   }
 
   /**
-   * Checks whether the given session is inside any transactional boundary.
+   * Returns {@code true} if the given session's source key falls within any active transactional boundary.
    *
-   * @param proxySession session to test
-   * @return true when within a boundary that allows the session
+   * @param proxySession the session whose source key is tested
+   * @return {@code true} if the session is covered by an active boundary
    */
   public static boolean withinBoundary (ProxySession<?, ?> proxySession) {
 
@@ -105,10 +107,10 @@ public class TransactionalState {
   }
 
   /**
-   * Checks whether a session source key is inside any transactional boundary.
+   * Returns {@code true} if the given session source key falls within any active transactional boundary.
    *
-   * @param sessionSourceKey session key to test
-   * @return true when within a boundary that allows the session
+   * @param sessionSourceKey the source key to test
+   * @return {@code true} if the key is covered by an active boundary
    */
   public static boolean withinBoundary (String sessionSourceKey) {
 
@@ -126,11 +128,12 @@ public class TransactionalState {
   }
 
   /**
-   * Finds the active boundary set that allows the given session.
+   * Returns the innermost transactional boundary set that permits the given session, or {@code null}
+   * if no active boundary allows it.
    *
-   * @param proxySession session to locate
-   * @return the boundary set or {@code null} if none
-   * @throws StolenTransactionError if a non-transactional boundary already claims the session
+   * @param proxySession the session to locate
+   * @return the matching {@link RollbackAwareBoundarySet}, or {@code null} if none
+   * @throws StolenTransactionError if a non-transactional boundary has already claimed the same session
    */
   public static RollbackAwareBoundarySet<ProxyTransaction<?>> obtainBoundary (ProxySession<?, ?> proxySession) {
 
@@ -152,9 +155,10 @@ public class TransactionalState {
   }
 
   /**
-   * Begins a new transactional boundary for the given annotation configuration.
+   * Pushes a new transactional boundary onto the current thread's stack, initialized from the given annotation.
    *
-   * @param transactional the annotation describing the boundary
+   * @param transactional the annotation whose {@code dataSources}, {@code implicit}, and {@code rollbackOnly}
+   *                      attributes configure the boundary
    */
   protected static void startBoundary (Transactional transactional) {
 
@@ -167,6 +171,11 @@ public class TransactionalState {
     transactionSetStack.addLast(new RollbackAwareBoundarySet<>(transactional.dataSources(), transactional.implicit(), transactional.rollbackOnly()));
   }
 
+  /**
+   * Pops and commits the most recent transactional boundary with no associated throwable.
+   *
+   * @throws TransactionError if the boundary stack is missing, empty, or a transaction commit fails
+   */
   protected static void commitBoundary ()
     throws TransactionError {
 
@@ -174,10 +183,11 @@ public class TransactionalState {
   }
 
   /**
-   * Ends the current transactional boundary, committing unless the supplied throwable indicates otherwise.
+   * Pops and commits the most recent transactional boundary, passing the given throwable through to
+   * boundary cleanup without triggering a rollback.
    *
-   * @param throwable throwable captured during boundary execution; may be {@code null}
-   * @throws TransactionError when commit processing fails
+   * @param throwable the throwable captured during boundary execution, or {@code null}
+   * @throws TransactionError if the boundary stack is missing, empty, or a transaction commit fails
    */
   protected static void commitBoundary (Throwable throwable)
     throws TransactionError {
@@ -186,10 +196,10 @@ public class TransactionalState {
   }
 
   /**
-   * Ends the current transactional boundary with an explicit rollback.
+   * Pops the most recent transactional boundary and rolls back all transactions it contains.
    *
-   * @param throwable throwable captured during boundary execution; may be {@code null}
-   * @throws TransactionError when rollback processing fails
+   * @param throwable the throwable that triggered the rollback, or {@code null}
+   * @throws TransactionError if the boundary stack is missing, empty, or a transaction rollback fails
    */
   protected static void rollbackBoundary (Throwable throwable)
     throws TransactionError {
@@ -198,11 +208,12 @@ public class TransactionalState {
   }
 
   /**
-   * Processes the end of a transactional boundary, committing or rolling back transactions and cleaning up the stack.
+   * Pops the most recent transactional boundary from the stack, committing or rolling back each contained
+   * transaction, and removes thread-local state when the stack becomes empty.
    *
-   * @param throwable    throwable propagated from the boundary, if any
-   * @param rollbackOnly whether to force rollback
-   * @throws TransactionError if boundary state is invalid or commit/rollback fails
+   * @param throwable    the throwable propagated from the boundary body, or {@code null} on normal return
+   * @param rollbackOnly when {@code true}, forces rollback regardless of individual transaction state
+   * @throws TransactionError if the boundary stack is in an invalid state or any commit/rollback fails
    */
   private static void endBoundary (Throwable throwable, boolean rollbackOnly)
     throws TransactionError {

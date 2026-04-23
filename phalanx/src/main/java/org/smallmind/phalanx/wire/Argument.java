@@ -39,7 +39,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares the logical name (and optional explicit type) for a service method parameter.
+ * Binds a service method parameter to a named wire argument, allowing the transport layer to
+ * match parameters by name rather than by position. An optional explicit type overrides the
+ * inferred signature code when the default inference is insufficient.
  */
 @Inherited
 @Target({ElementType.PARAMETER})
@@ -47,16 +49,18 @@ import java.lang.annotation.Target;
 public @interface Argument {
 
   /**
-   * Name to associate with the parameter on the wire.
+   * Logical name assigned to this parameter in the wire protocol; used as the key when
+   * encoding and decoding the argument map.
    *
-   * @return argument name
+   * @return the wire-level argument name; must be unique within the method signature
    */
   String value ();
 
   /**
-   * Optional explicit type hint to use during signature encoding.
+   * Explicit type identifier that overrides the signature code inferred from the parameter's
+   * Java type. Leave empty to allow the framework to infer the type automatically.
    *
-   * @return custom type name or empty for inference
+   * @return a custom type name, or an empty string (the default) to use inferred encoding
    */
   String type () default "";
 }

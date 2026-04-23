@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.spring;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Thrown when an extension context cannot be loaded or initialized.
+ * Signals that an extension Spring context could not be loaded or its extension instance could not be initialized.
  */
 public class ExtensionLoaderException extends FormattedException {
 
@@ -48,10 +48,10 @@ public class ExtensionLoaderException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Creates an exception with a {@link java.util.Formatter}-style detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a format string
+   * @param args    arguments interpolated into the format string
    */
   public ExtensionLoaderException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class ExtensionLoaderException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Creates an exception with an underlying cause and a {@link java.util.Formatter}-style detail message.
    *
-   * @param throwable the underlying failure
-   * @param message   a {@link java.util.Formatter}-style message
-   * @param args      values interpolated into the message
+   * @param throwable the cause of this exception
+   * @param message   a format string
+   * @param args      arguments interpolated into the format string
    */
   public ExtensionLoaderException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class ExtensionLoaderException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Creates an exception wrapping the given cause with no additional detail message.
    *
-   * @param throwable the underlying failure
+   * @param throwable the cause of this exception
    */
   public ExtensionLoaderException (Throwable throwable) {
 

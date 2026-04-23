@@ -33,16 +33,27 @@
 package org.smallmind.liquibase.spring;
 
 /**
- * Identifies where change log resources are resolved from.
+ * Identifies the resolution strategy used to locate {@link ChangeLog} resources.
+ *
+ * <p>Passed to {@link SpringLiquibase#setSource(Source)} to select the appropriate
+ * Liquibase {@code ResourceAccessor} before change logs are processed.</p>
  */
 public enum Source {
 
   /**
-   * Resolve change logs from the user's home directory.
+   * Resolve change log paths relative to the user's home directory.
+   *
+   * <p>Backed by a {@code DirectoryResourceAccessor} rooted at {@code System.getProperty("user.home")}.
+   * Use this when change log files are deployed alongside application configuration on the local
+   * filesystem rather than bundled inside the application archive.</p>
    */
   FILE,
+
   /**
-   * Resolve change logs from the configured class loader.
+   * Resolve change log paths through the class loader configured on the {@link SpringLiquibase} bean.
+   *
+   * <p>Backed by a {@code ClassLoaderResourceAccessor}. Use this when change log files are
+   * packaged inside the application JAR or WAR and must be read from the classpath.</p>
    */
   CLASSPATH
 }

@@ -35,7 +35,9 @@ package org.smallmind.persistence.orm.aop;
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
 /**
- * Base error type for session boundary failures, tracking how many boundaries remain to close.
+ * Abstract base error for failures that occur while managing non-transactional session boundaries.
+ * Carries a {@code closure} count indicating how many boundary levels remained open when the error was raised,
+ * enabling callers to determine whether cleanup should continue.
  */
 public abstract class SessionError extends FormattedError {
 
@@ -44,7 +46,7 @@ public abstract class SessionError extends FormattedError {
   /**
    * Creates a session error with no message.
    *
-   * @param closure number of remaining boundaries to close
+   * @param closure the number of remaining boundary levels open at the time this error was raised
    */
   public SessionError (int closure) {
 
@@ -56,9 +58,9 @@ public abstract class SessionError extends FormattedError {
   /**
    * Creates a session error with a formatted message.
    *
-   * @param closure number of remaining boundaries to close
-   * @param message error message format
-   * @param args    message arguments
+   * @param closure the number of remaining boundary levels open at the time this error was raised
+   * @param message the message template
+   * @param args    arguments referenced by the format specifiers in the message
    */
   public SessionError (int closure, String message, Object... args) {
 
@@ -68,12 +70,12 @@ public abstract class SessionError extends FormattedError {
   }
 
   /**
-   * Creates a session error wrapping another throwable with a formatted message.
+   * Creates a session error wrapping an underlying cause with a formatted message.
    *
-   * @param closure   number of remaining boundaries to close
-   * @param throwable underlying cause
-   * @param message   error message format
-   * @param args      message arguments
+   * @param closure   the number of remaining boundary levels open at the time this error was raised
+   * @param throwable the underlying cause
+   * @param message   the message template
+   * @param args      arguments referenced by the format specifiers in the message
    */
   public SessionError (int closure, Throwable throwable, String message, Object... args) {
 
@@ -83,10 +85,10 @@ public abstract class SessionError extends FormattedError {
   }
 
   /**
-   * Creates a session error wrapping another throwable.
+   * Creates a session error wrapping an underlying cause with no message.
    *
-   * @param closure   number of remaining boundaries to close
-   * @param throwable underlying cause
+   * @param closure   the number of remaining boundary levels open at the time this error was raised
+   * @param throwable the underlying cause
    */
   public SessionError (int closure, Throwable throwable) {
 
@@ -96,7 +98,9 @@ public abstract class SessionError extends FormattedError {
   }
 
   /**
-   * @return the remaining boundary depth expected when this error was raised
+   * Returns the number of boundary levels that remained open when this error was raised.
+   *
+   * @return the remaining boundary depth at the time of the error
    */
   public int getClosure () {
 

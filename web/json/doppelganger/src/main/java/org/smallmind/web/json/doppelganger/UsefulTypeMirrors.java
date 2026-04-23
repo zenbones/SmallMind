@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.reflection.OverlayNullifier;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Caches commonly used {@link TypeMirror} instances to avoid repeated lookups during processing.
+ * Caches frequently needed {@link TypeMirror} instances to avoid repeated lookups during annotation processing.
  */
 public class UsefulTypeMirrors {
 
@@ -54,9 +54,9 @@ public class UsefulTypeMirrors {
   private final TypeMirror objectTypeMirror;
 
   /**
-   * Initializes cached type mirrors from the processing environment.
+   * Resolves and caches all required type mirrors from the given processing environment.
    *
-   * @param processingEnvironment current processing environment
+   * @param processingEnvironment the current annotation processing environment
    */
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
@@ -70,7 +70,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link Serializable} type mirror
+   * @return the cached {@link Serializable} type mirror
    */
   public TypeMirror getSerializableTypeMirror () {
 
@@ -78,7 +78,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link View} annotation type mirror
+   * @return the cached {@link View} annotation type mirror
    */
   public TypeMirror getViewTypeMirror () {
 
@@ -86,7 +86,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link OverlayNullifier} annotation type mirror
+   * @return the cached {@link OverlayNullifier} annotation type mirror
    */
   public TypeMirror getOverlayNullifierTypeMirror () {
 
@@ -94,7 +94,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link NotNull} annotation type mirror
+   * @return the cached {@link NotNull} annotation type mirror
    */
   public TypeMirror getNotNullTypeMirror () {
 
@@ -102,7 +102,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link List} raw type mirror
+   * @return the cached {@link List} raw type mirror
    */
   public TypeMirror getListTypeMirror () {
 
@@ -110,7 +110,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link JsonNode} type mirror
+   * @return the cached {@link JsonNode} type mirror
    */
   public TypeMirror getJsonNodeTypeMirror () {
 
@@ -118,7 +118,7 @@ public class UsefulTypeMirrors {
   }
 
   /**
-   * @return {@link Object} type mirror
+   * @return the cached {@link Object} type mirror
    */
   public TypeMirror getObjectTypeMirror () {
 

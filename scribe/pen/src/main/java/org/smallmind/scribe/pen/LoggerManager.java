@@ -37,7 +37,10 @@ import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Central registry responsible for creating and managing {@link Logger} instances and their {@link Template} associations.
+ * Static registry that creates, caches, and manages {@link Logger} instances and maps each one to
+ * its highest-priority matching {@link Template}. Logger lookup uses double-checked locking for
+ * safe, low-contention creation. Adding or removing a template triggers re-association of all
+ * known loggers.
  */
 public class LoggerManager {
 
@@ -52,9 +55,11 @@ public class LoggerManager {
   }
 
   /**
-   * Registers a package prefix that denotes logging infrastructure classes (used to avoid capturing them in call stacks).
+   * Registers an additional package prefix whose classes should be treated as logging infrastructure
+   * and excluded from call-stack capture when computing caller information.
    *
-   * @param packageName package prefix to register
+   * @param packageName package prefix string to register (e.g. {@code "com.example.logging."});
+   *                    must not be {@code null}
    */
   public static void addLoggingPackagePrefix (String packageName) {
 
@@ -62,10 +67,12 @@ public class LoggerManager {
   }
 
   /**
-   * Determines whether the supplied class name belongs to a logging implementation package.
+   * Tests whether the given fully qualified class name belongs to any registered logging
+   * infrastructure package and should therefore be skipped during call-stack inspection.
    *
-   * @param className fully qualified class name
-   * @return {@code true} if the class is part of the logging infrastructure
+   * @param className fully qualified class name to test; must not be {@code null}
+   * @return {@code true} if {@code className} starts with any registered package prefix;
+   * {@code false} otherwise
    */
   public static boolean isLoggingClass (String className) {
 
@@ -79,9 +86,10 @@ public class LoggerManager {
   }
 
   /**
-   * Adds a template to the set of available logger templates and reassociates all loggers.
+   * Adds a template to the active template set and immediately re-associates every known logger
+   * with the highest-priority matching template. Has no effect if the template is already registered.
    *
-   * @param template template to add
+   * @param template template to register; must not be {@code null}
    */
   public static void addTemplate (Template template) {
 
@@ -94,9 +102,10 @@ public class LoggerManager {
   }
 
   /**
-   * Removes a template and reassociates all loggers.
+   * Removes a template from the active template set and immediately re-associates every known logger
+   * with the highest-priority remaining matching template. Has no effect if the template is not registered.
    *
-   * @param template template to remove
+   * @param template template to remove; must not be {@code null}
    */
   public static void removeTemplate (Template template) {
 
@@ -108,10 +117,10 @@ public class LoggerManager {
   }
 
   /**
-   * Retrieves the template currently associated with the provided logger.
+   * Returns the template currently mapped to the given logger.
    *
-   * @param logger target logger
-   * @return the associated template, or {@code null} if none matched
+   * @param logger the logger whose associated template is requested; must not be {@code null}
+   * @return the template governing this logger, or {@code null} if no template matches it
    */
   public static Template getTemplate (Logger logger) {
 
@@ -121,10 +130,11 @@ public class LoggerManager {
   }
 
   /**
-   * Returns or creates a logger keyed by the canonical name of the supplied class.
+   * Returns or creates the {@link Logger} whose name is the canonical name of the supplied class,
+   * delegating to {@link #getLogger(String)}.
    *
-   * @param loggableClass class whose name identifies the logger
-   * @return logger instance
+   * @param loggableClass class whose canonical name identifies the logger; must not be {@code null}
+   * @return the cached or newly created logger for that name
    */
   public static Logger getLogger (Class<?> loggableClass) {
 
@@ -132,10 +142,12 @@ public class LoggerManager {
   }
 
   /**
-   * Returns or creates a logger for the supplied name. Newly created loggers are immediately associated with a template.
+   * Returns the cached {@link Logger} for the given name, or creates and caches a new one using
+   * double-checked locking. Newly created loggers are immediately associated with the best matching
+   * template from the active template set.
    *
-   * @param name logger name
-   * @return logger instance
+   * @param name the logger name; must not be {@code null}
+   * @return the cached or newly created logger for that name
    */
   public static Logger getLogger (String name) {
 
@@ -155,10 +167,11 @@ public class LoggerManager {
   }
 
   /**
-   * Propagates a template change event to all loggers currently associated with the template.
+   * Applies a single template change to every logger currently associated with the given template,
+   * pushing the updated configuration value onto each affected logger.
    *
-   * @param change   the change that occurred
-   * @param template the template that changed
+   * @param change   the aspect of the template that changed
+   * @param template the template that was modified; must not be {@code null}
    */
   protected static void commitTemplateChanges (Template.Change change, Template template) {
 
@@ -172,7 +185,8 @@ public class LoggerManager {
   }
 
   /**
-   * Reassociates every logger with the best matching template.
+   * Iterates over all known loggers and re-runs template matching for each one, updating the
+   * template association map and applying any changed configuration.
    */
   private static void reAssociateAllLoggers () {
 
@@ -182,9 +196,11 @@ public class LoggerManager {
   }
 
   /**
-   * Associates the given logger with the highest priority matching template, applying the template if changed.
+   * Finds the highest-priority matching template for the given logger, applies it if the association
+   * has changed, and updates the template map accordingly. Removes the logger from the map if no
+   * template matches.
    *
-   * @param logger logger to associate
+   * @param logger the logger to match and configure
    */
   private static void associateTemplate (Logger logger) {
 

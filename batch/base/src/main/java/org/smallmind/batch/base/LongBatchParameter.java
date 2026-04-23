@@ -33,15 +33,15 @@
 package org.smallmind.batch.base;
 
 /**
- * {@link Long} implementation of {@link BatchParameter}.
+ * {@link BatchParameter} specialisation that carries a {@link Long} value.
  */
 public class LongBatchParameter extends BatchParameter<Long> {
 
   /**
-   * Creates a long parameter wrapper.
+   * Wraps an integer value as a batch parameter.
    *
-   * @param value       the numeric value to pass to the batch job
-   * @param identifying whether the value should contribute to job identity
+   * @param value       the integer to forward to the batch job
+   * @param identifying {@code true} if the integer should form part of the job-instance key
    */
   public LongBatchParameter (Long value, boolean identifying) {
 

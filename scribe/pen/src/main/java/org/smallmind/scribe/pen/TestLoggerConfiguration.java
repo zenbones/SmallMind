@@ -35,12 +35,15 @@ package org.smallmind.scribe.pen;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Convenience configuration for tests to bootstrap a console logger with pattern formatting.
+ * A static bootstrap utility that configures the Scribe logging system for use in automated tests,
+ * installing a console appender with a {@link PatternFormatter} and {@link Level#DEBUG} threshold.
  */
 public class TestLoggerConfiguration {
 
   /**
-   * Installs a default template with DEBUG level and pattern formatter to console.
+   * Registers a {@link DefaultTemplate} at {@link Level#DEBUG} with auto-filled logger context and a
+   * {@link PatternFormatter} that emits timestamp, level, class, method, line, thread, and message
+   * (including exception principal and stack trace) to standard output via a {@link ConsoleAppender}.
    */
   public static void setup () {
 

@@ -36,15 +36,15 @@ import java.util.Currency;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * JAXB adapter that marshals {@link Currency} values to ISO currency codes and back.
+ * JAXB adapter that converts {@link Currency} values to their ISO 4217 currency codes and back.
  */
 public class CurrencyXmlAdapter extends XmlAdapter<String, Currency> {
 
   /**
-   * Converts an ISO currency code into a {@link Currency} instance.
+   * Converts an ISO currency code string into a {@link Currency} instance.
    *
-   * @param code the textual currency code, case-insensitive
-   * @return the matching currency, or {@code null} when the code is {@code null}
+   * @param code the ISO 4217 currency code; the comparison is case-insensitive
+   * @return the corresponding {@link Currency}, or {@code null} when {@code code} is {@code null}
    */
   @Override
   public Currency unmarshal (String code) {
@@ -53,10 +53,10 @@ public class CurrencyXmlAdapter extends XmlAdapter<String, Currency> {
   }
 
   /**
-   * Marshals a {@link Currency} into its ISO currency code.
+   * Converts a {@link Currency} into its ISO 4217 currency code string.
    *
-   * @param currency the currency to marshal
-   * @return the ISO code, or {@code null} when the currency is {@code null}
+   * @param currency the currency value to marshal
+   * @return the ISO 4217 code, or {@code null} when {@code currency} is {@code null}
    */
   @Override
   public String marshal (Currency currency) {

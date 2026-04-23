@@ -37,15 +37,31 @@ import org.smallmind.claxon.registry.aggregate.Averaged;
 import org.smallmind.claxon.registry.aggregate.Bounded;
 
 /**
- * Meter that reports minimum, maximum, and average values over the collection interval.
+ * A {@link Meter} that reports the minimum, maximum, and average of all values
+ * submitted during the collection interval.
+ *
+ * <p>Each call to {@link #update(long)} feeds both a {@link Bounded} aggregate
+ * (tracking minimum and maximum) and an {@link Averaged} aggregate (tracking the
+ * running mean). On {@link #record()}, up to three named {@link Quantity} values
+ * are emitted: {@code "minimum"}, {@code "maximum"}, and {@code "average"}.
+ * The minimum and maximum quantities are omitted when no values have been recorded
+ * (i.e., when the bounded aggregate still holds its sentinel initial values).</p>
  */
 public class Gauge implements Meter {
 
+  /**
+   * Aggregate that tracks the minimum and maximum values seen since creation.
+   */
   private final Bounded bounded;
+
+  /**
+   * Aggregate that computes a running arithmetic mean of all submitted values.
+   */
   private final Averaged averaged;
 
   /**
-   * Creates a gauge with bounded and averaged aggregates.
+   * Creates a new {@code Gauge} with freshly initialised {@link Bounded} and
+   * {@link Averaged} aggregates.
    */
   public Gauge () {
 
@@ -54,9 +70,9 @@ public class Gauge implements Meter {
   }
 
   /**
-   * Updates both min/max and average with the supplied value.
+   * Incorporates {@code value} into both the min/max and average aggregates.
    *
-   * @param value value to incorporate
+   * @param value the measurement to record
    */
   @Override
   public void update (long value) {
@@ -66,9 +82,19 @@ public class Gauge implements Meter {
   }
 
   /**
-   * Records minimum, maximum, and average quantities for the current window.
+   * Captures the current minimum, maximum, and average measurements as
+   * {@link Quantity} instances.
    *
-   * @return array containing available quantities
+   * <p>The {@code "minimum"} quantity is included only when the bounded aggregate
+   * has received at least one update (i.e., its minimum is less than
+   * {@link Long#MAX_VALUE}). The {@code "maximum"} quantity is included only when
+   * the bounded aggregate has received at least one update (i.e., its maximum is
+   * greater than {@link Long#MIN_VALUE}). The {@code "average"} quantity is always
+   * present.</p>
+   *
+   * @return an array containing the available {@link Quantity} values for this
+   * collection window; the array length varies between 1 and 3 depending
+   * on whether minimum and maximum have been observed
    */
   @Override
   public Quantity[] record () {

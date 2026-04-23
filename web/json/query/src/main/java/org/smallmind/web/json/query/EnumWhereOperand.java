@@ -38,9 +38,9 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Enum literal operand that stores the enum class name and constant value.
+ * A where operand that holds a single enum constant, preserving both its class name and constant name.
  *
- * @param <E> enum type
+ * @param <E> the enum type
  */
 @XmlRootElement(name = "enum", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -50,16 +50,16 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   private String value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public EnumWhereOperand () {
 
   }
 
   /**
-   * Creates an operand for the given enum constant.
+   * Constructs an operand for the given enum constant.
    *
-   * @param enumeration enum constant
+   * @param enumeration enum constant to wrap
    */
   public EnumWhereOperand (E enumeration) {
 
@@ -68,10 +68,11 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Convenience factory for an enum operand.
+   * Factory method that wraps an enum constant in an {@code EnumWhereOperand}.
    *
-   * @param enumeration enum constant
-   * @return operand instance
+   * @param enumeration enum constant to wrap
+   * @param <E>         the enum type
+   * @return new operand instance
    */
   public static <E extends Enum<E>> EnumWhereOperand instance (E enumeration) {
 
@@ -79,7 +80,7 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Enums are represented as strings (their names).
+   * Returns the element type for enum operands, which are treated as strings.
    *
    * @return {@link ElementType#STRING}
    */
@@ -91,6 +92,8 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#ENUM}
    */
   @Override
@@ -101,10 +104,10 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Resolves the enum constant using the stored class name and value.
+   * Resolves and returns the enum constant by loading the class from the hint and looking up the stored name.
    *
-   * @return enum constant
-   * @throws QueryProcessingException if the enum class cannot be loaded
+   * @return resolved enum constant
+   * @throws QueryProcessingException if the enum class named in the hint cannot be loaded
    */
   @Override
   @XmlTransient
@@ -119,7 +122,7 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Returns the hint containing the enum class name.
+   * Returns the hint holding the enum class name.
    *
    * @return enum hint
    */
@@ -130,7 +133,7 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Sets the hint containing the enum class name.
+   * Sets the hint holding the enum class name.
    *
    * @param hint enum hint
    */
@@ -140,9 +143,9 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Returns the enum constant name.
+   * Returns the name of the enum constant.
    *
-   * @return enum name
+   * @return enum constant name
    */
   @XmlElement(name = "value", required = true)
   public String getValue () {
@@ -151,9 +154,9 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   }
 
   /**
-   * Sets the enum constant name.
+   * Sets the name of the enum constant.
    *
-   * @param value enum name
+   * @param value enum constant name
    */
   public void setValue (String value) {
 

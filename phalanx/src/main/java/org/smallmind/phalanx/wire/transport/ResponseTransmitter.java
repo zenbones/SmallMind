@@ -33,19 +33,20 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Sends results back to the caller for completed invocations.
+ * Contract for sending invocation results (or errors) back to the originating caller over
+ * the response channel of the wire transport.
  */
 public interface ResponseTransmitter {
 
   /**
-   * Transmits a response or error payload to the original caller.
+   * Encodes and sends a result or error payload to the caller identified by {@code callerId}.
    *
-   * @param callerId      identifier for the requesting party
-   * @param correlationId correlation id tying the response to the request
-   * @param error         {@code true} if the payload represents an error
-   * @param nativeType    JVM descriptor of the result type
-   * @param result        result or error payload
-   * @throws Throwable if transmission fails
+   * @param callerId      identifier of the originating caller, used to address the response
+   * @param correlationId correlation id that ties this response to the original request
+   * @param error         {@code true} if {@code result} represents a fault rather than a normal return value
+   * @param nativeType    JVM type descriptor of the result value
+   * @param result        encoded result or error object to transmit
+   * @throws Throwable if the underlying send operation fails
    */
   void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable;

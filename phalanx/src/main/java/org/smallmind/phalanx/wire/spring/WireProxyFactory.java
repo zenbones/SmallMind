@@ -38,22 +38,24 @@ import org.smallmind.phalanx.wire.WireInvocationHandler;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 
 /**
- * Utility for creating client proxies that route calls through the wire transport.
+ * Static utility that creates JDK dynamic proxy instances whose method calls are dispatched
+ * through a {@link WireInvocationHandler} over the wire transport.
  */
 public class WireProxyFactory {
 
   /**
-   * Creates a proxy implementing the supplied service interface and delegating to a {@link WireInvocationHandler}.
+   * Creates a {@link Proxy} that implements the given service interface and routes all calls
+   * through a {@link WireInvocationHandler} backed by the provided transport.
    *
-   * @param transport             request transport used for outbound calls.
-   * @param version               service version.
-   * @param serviceName           logical service name.
-   * @param serviceInterface      interface the proxy should implement.
-   * @param serviceGroupExtractor extractor for resolving service group at invocation time (may be {@code null}).
-   * @param instanceIdExtractor   extractor for resolving instance id for whisper calls (may be {@code null}).
-   * @param timeoutExtractor      extractor for per-invocation timeouts (may be {@code null}).
-   * @return proxy implementing the service interface.
-   * @throws Exception if proxy creation or handler initialization fails.
+   * @param transport             request transport used for outbound invocations
+   * @param version               service version included in each outbound request
+   * @param serviceName           logical service name used for routing
+   * @param serviceInterface      interface that the proxy must implement
+   * @param serviceGroupExtractor extractor that resolves the service group per invocation, or {@code null}
+   * @param instanceIdExtractor   extractor that resolves the target instance id for whisper calls, or {@code null}
+   * @param timeoutExtractor      extractor that resolves a per-call timeout in milliseconds, or {@code null}
+   * @return a {@link Proxy} implementing {@code serviceInterface}
+   * @throws Exception if handler initialization or proxy creation fails
    */
   public static Proxy generateProxy (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Long> timeoutExtractor)
     throws Exception {

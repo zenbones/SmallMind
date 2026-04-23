@@ -33,7 +33,13 @@
 package org.smallmind.memcached.cubby;
 
 /**
- * Tracks the active status of a memcached host and exposes access to its definition.
+ * Associates a {@link MemcachedHost} with its current health state within a {@link ServerPool}.
+ *
+ * <p>{@code HostControl} is an internal bookkeeping object managed by the pool. The active flag
+ * is toggled by the {@link ConnectionCoordinator} when a host goes offline or is successfully
+ * reconnected. The {@link ServerDefibrillator} consults this flag to determine which hosts
+ * need reconnection attempts, and the configured {@link org.smallmind.memcached.cubby.locator.KeyLocator}
+ * uses it to exclude unhealthy hosts from routing decisions.</p>
  */
 public class HostControl {
 
@@ -41,9 +47,9 @@ public class HostControl {
   private boolean active = true;
 
   /**
-   * Wraps the provided host with active state.
+   * Wraps the supplied host definition with an initially active state.
    *
-   * @param memcachedHost host definition
+   * @param memcachedHost the host whose health this control object tracks
    */
   public HostControl (MemcachedHost memcachedHost) {
 
@@ -51,7 +57,9 @@ public class HostControl {
   }
 
   /**
-   * @return the underlying memcached host
+   * Returns the underlying host definition managed by this control object.
+   *
+   * @return the {@link MemcachedHost}, never {@code null}
    */
   public MemcachedHost getMemcachedHost () {
 
@@ -59,7 +67,9 @@ public class HostControl {
   }
 
   /**
-   * @return {@code true} when the host is considered healthy
+   * Indicates whether the host is currently considered healthy and eligible for routing.
+   *
+   * @return {@code true} if the host is reachable; {@code false} if it has been marked offline
    */
   public boolean isActive () {
 
@@ -67,9 +77,10 @@ public class HostControl {
   }
 
   /**
-   * Updates the health indicator for this host.
+   * Updates the health state of the host.
    *
-   * @param active {@code true} if the host is reachable
+   * @param active {@code true} to mark the host as healthy and available for routing;
+   *               {@code false} to remove it from routing consideration
    */
   public void setActive (boolean active) {
 

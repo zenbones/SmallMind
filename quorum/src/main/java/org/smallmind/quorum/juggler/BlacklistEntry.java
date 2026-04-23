@@ -33,11 +33,15 @@
 package org.smallmind.quorum.juggler;
 
 /**
- * Immutable description of a blacklisted pin and the reason it failed.
+ * Immutable record pairing a failed {@link JugglingPin} with the exception that caused its failure.
+ * <p>
+ * Instances are created at failure time and stored in the {@link Juggler}'s blacklist map, keyed by
+ * the timestamp of the failure. The recovery worker reads entries from this map when attempting to
+ * restore pins to active service.
  *
- * @param <R>         resource type associated with the pin
- * @param jugglingPin pin that has been blacklisted
- * @param throwable   cause of the blacklist entry
+ * @param <R>         the type of resource associated with the pin
+ * @param jugglingPin the pin that has been removed from active circulation
+ * @param throwable   the exception that triggered the blacklisting
  */
 public record BlacklistEntry<R>(JugglingPin<R> jugglingPin, Throwable throwable) {
 

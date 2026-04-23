@@ -38,24 +38,61 @@ import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Fluent builder for {@link Histogram} meters.
+ * Fluent {@link MeterBuilder} implementation for constructing {@link Histogram} meters.
+ *
+ * <p>All setter methods return {@code this} (typed as {@link MeterBuilder}{@code <Histogram>})
+ * to support method chaining. Default values are:</p>
+ * <ul>
+ *   <li>{@code lowestDiscernibleValue} — {@code 1}</li>
+ *   <li>{@code highestTrackableValue} — {@code 3_600_000} (1 hour in milliseconds)</li>
+ *   <li>{@code numberOfSignificantValueDigits} — {@code 2}</li>
+ *   <li>{@code resolutionStint} — 1 second</li>
+ *   <li>{@code percentiles} — p75, p95, p98, p99, p99.9</li>
+ * </ul>
  */
 public class HistogramBuilder implements MeterBuilder<Histogram> {
 
+  /**
+   * Default resolution window of one second used when none is explicitly configured.
+   */
   private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
+
+  /**
+   * Default set of percentiles emitted by a histogram when none are explicitly configured:
+   * 75th, 95th, 98th, 99th, and 99.9th percentiles.
+   */
   private static final Percentile[] DEFAULT_PERCENTILES = new Percentile[] {new Percentile("p75", 75.0), new Percentile("p95", 95.0), new Percentile("p98", 98.0), new Percentile("p99", 99.0), new Percentile("p999", 99.9)};
 
+  /**
+   * Duration of each rolling histogram interval; defaults to {@link #ONE_SECOND_STINT}.
+   */
   private Stint resolutionStint = ONE_SECOND_STINT;
+
+  /**
+   * Percentiles to include in each recording; defaults to {@link #DEFAULT_PERCENTILES}.
+   */
   private Percentile[] percentiles = DEFAULT_PERCENTILES;
+
+  /**
+   * Smallest value the histogram is able to distinguish; defaults to {@code 1}.
+   */
   private long lowestDiscernibleValue = 1;
+
+  /**
+   * Largest value the histogram is configured to track without overflow; defaults to {@code 3_600_000}.
+   */
   private long highestTrackableValue = 3600000L;
+
+  /**
+   * Number of significant decimal digits of precision maintained by the histogram; defaults to {@code 2}.
+   */
   private int numberOfSignificantValueDigits = 2;
 
   /**
    * Sets the smallest value the histogram should track.
    *
-   * @param lowestDiscernibleValue minimum trackable value
-   * @return this builder
+   * @param lowestDiscernibleValue the minimum distinguishable value; must be a positive integer
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Histogram> lowestDiscernibleValue (long lowestDiscernibleValue) {
 
@@ -64,6 +101,13 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
     return this;
   }
 
+  /**
+   * Sets the largest value the histogram should track without overflow.
+   *
+   * @param highestTrackableValue the maximum trackable value; must be at least twice the
+   *                              {@code lowestDiscernibleValue}
+   * @return this builder, for method chaining
+   */
   public MeterBuilder<Histogram> highestTrackableValue (long highestTrackableValue) {
 
     this.highestTrackableValue = highestTrackableValue;
@@ -72,10 +116,10 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   }
 
   /**
-   * Sets the number of significant value digits for histogram precision.
+   * Sets the number of significant decimal digits of precision maintained by the histogram.
    *
-   * @param numberOfSignificantValueDigits precision digits
-   * @return this builder
+   * @param numberOfSignificantValueDigits precision level; valid range is 1 through 5
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Histogram> numberOfSignificantValueDigits (int numberOfSignificantValueDigits) {
 
@@ -85,10 +129,12 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   }
 
   /**
-   * Configures the percentiles to be emitted with each recording.
+   * Configures the set of percentiles to be emitted alongside the base quantities on each
+   * {@link Histogram#record()} call.
    *
-   * @param percentiles percentile definitions
-   * @return this builder
+   * @param percentiles one or more {@link Percentile} definitions; passing an empty array
+   *                    suppresses all percentile quantities
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Histogram> percentiles (Percentile... percentiles) {
 
@@ -98,10 +144,11 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   }
 
   /**
-   * Sets the duration of histogram intervals.
+   * Sets the duration of each rolling histogram interval, which also governs the
+   * time factor applied to rate calculations.
    *
-   * @param resolutionStint interval duration
-   * @return this builder
+   * @param resolutionStint the interval duration; must be a positive duration
+   * @return this builder, for method chaining
    */
   public MeterBuilder<Histogram> resolution (Stint resolutionStint) {
 
@@ -111,10 +158,10 @@ public class HistogramBuilder implements MeterBuilder<Histogram> {
   }
 
   /**
-   * Builds a histogram with the configured parameters.
+   * Builds a {@link Histogram} meter using the parameters accumulated on this builder.
    *
-   * @param clock clock provided by the registry
-   * @return configured histogram
+   * @param clock the clock provided by the registry, used for rolling-window management
+   * @return a fully configured {@link Histogram} instance
    */
   @Override
   public Histogram build (Clock clock) {

@@ -38,15 +38,15 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
- * Stores and retrieves generated resource proxies in per-application scope.
+ * Registry that stores and retrieves generated resource proxies scoped to the current application context.
  */
 public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
 
   /**
-   * Registers a proxy instance for the given resource interface within the current application context.
+   * Stores the given proxy under its resource interface in the per-application proxy map.
    *
-   * @param resourceInterface interface implemented by the proxy
-   * @param proxy             proxy instance
+   * @param resourceInterface interface key used to look up the proxy later
+   * @param proxy             proxy instance to register
    */
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
@@ -59,11 +59,11 @@ public class JsonEntityResourceProxyManager implements PerApplicationDataManager
   }
 
   /**
-   * Fetches the proxy registered for the specified resource interface.
+   * Returns the proxy previously registered for the given resource interface.
    *
-   * @param resourceInterface interface used as a key
+   * @param resourceInterface interface whose proxy is being requested
    * @param <T>               resource type
-   * @return proxy implementing the interface
+   * @return proxy cast to {@code T}
    */
   public static <T> T getProxy (Class<T> resourceInterface) {
 

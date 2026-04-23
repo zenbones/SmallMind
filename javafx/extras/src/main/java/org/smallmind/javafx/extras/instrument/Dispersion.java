@@ -33,9 +33,11 @@
 package org.smallmind.javafx.extras.instrument;
 
 /**
- * Represents latency distribution percentiles captured at a point in time.
+ * Immutable snapshot of latency distribution percentiles captured at a point in time. Used by
+ * {@link SigmaChart} to render a stacked area view of latency spread across the common SLA
+ * percentile thresholds.
  *
- * @param median         median latency
+ * @param median         50th percentile latency
  * @param percentile_75  75th percentile latency
  * @param percentile_95  95th percentile latency
  * @param percentile_98  98th percentile latency

@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Character literal operand.
+ * A where operand that holds a single character literal value.
  */
 @XmlRootElement(name = "character", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   private Character value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public CharacterWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided character value.
+   * Constructs an operand wrapping the given character.
    *
    * @param value character literal
    */
@@ -64,10 +64,10 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
-   * Convenience factory for a character operand.
+   * Factory method that wraps a character in a {@code CharacterWhereOperand}.
    *
    * @param value character literal
-   * @return the operand instance
+   * @return new operand instance
    */
   public static CharacterWhereOperand instance (Character value) {
 
@@ -75,6 +75,8 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
+   * Returns the element type for character operands.
+   *
    * @return {@link ElementType#STRING}
    */
   @Override
@@ -85,6 +87,8 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#CHARACTER}
    */
   @Override
@@ -95,9 +99,9 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
-   * Returns the character value.
+   * Returns the stored character value.
    *
-   * @return character literal or {@code null}
+   * @return character literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
-   * Returns the serialized character value.
+   * Returns the character value used during serialization.
    *
-   * @return character literal or {@code null}
+   * @return character literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Character getValue () {
@@ -118,7 +122,7 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   }
 
   /**
-   * Sets the character value.
+   * Sets the character value for this operand.
    *
    * @param value character literal
    */

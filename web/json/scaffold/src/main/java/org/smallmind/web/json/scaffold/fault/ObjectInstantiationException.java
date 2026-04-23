@@ -35,14 +35,14 @@ package org.smallmind.web.json.scaffold.fault;
 import java.io.IOException;
 
 /**
- * Signals a failure to instantiate an object because its class could not be located.
+ * Signals that an object could not be instantiated because its class was not found.
  */
 public class ObjectInstantiationException extends IOException {
 
   /**
    * Wraps the underlying {@link ClassNotFoundException}.
    *
-   * @param cause missing class exception
+   * @param cause the missing-class exception
    */
   public ObjectInstantiationException (ClassNotFoundException cause) {
 

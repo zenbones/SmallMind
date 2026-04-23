@@ -35,21 +35,49 @@ package org.smallmind.quorum.namespace.event;
 import java.util.EventListener;
 
 /**
- * Listener notified when a {@link org.smallmind.quorum.namespace.JavaContext} is closed or aborted.
+ * Listener interface for receiving lifecycle events from a
+ * {@link org.smallmind.quorum.namespace.PooledJavaContext}.
+ * <p>
+ * Implementations are registered with
+ * {@link org.smallmind.quorum.namespace.PooledJavaContext#addJavaContextListener} and receive
+ * one of two mutually exclusive notifications per context lifetime:
+ * <ul>
+ *   <li>{@link #contextClosed} — the context was explicitly closed by its owner, signalling
+ *       that the underlying component is healthy and should be returned to the pool.</li>
+ *   <li>{@link #contextAborted} — a {@link javax.naming.CommunicationException} was caught
+ *       during a backing-store operation, signalling that the component is unusable and
+ *       should be terminated rather than returned.</li>
+ * </ul>
+ * {@link org.smallmind.quorum.namespace.pool.JavaContextComponentInstance} is the primary
+ * implementation: it returns or terminates the instance in the pool depending on which
+ * callback fires.
  */
 public interface JavaContextListener extends EventListener {
 
   /**
-   * Invoked when the context is intentionally closed.
+   * Invoked when the {@link org.smallmind.quorum.namespace.PooledJavaContext} is intentionally
+   * closed by its caller via {@link org.smallmind.quorum.namespace.PooledJavaContext#close()}.
+   * <p>
+   * Implementations should return the underlying component instance to the pool so it can
+   * be leased to the next caller.
    *
-   * @param javaContextEvent event describing the closure
+   * @param javaContextEvent the event describing the closure; its
+   *                         {@link JavaContextEvent#containsCommunicationException()} will
+   *                         be {@code false}
    */
   void contextClosed (JavaContextEvent javaContextEvent);
 
   /**
-   * Invoked when the context is aborted due to a communication failure.
+   * Invoked when the {@link org.smallmind.quorum.namespace.PooledJavaContext} detects a
+   * {@link javax.naming.CommunicationException} while forwarding a JNDI operation to the
+   * backing store.
+   * <p>
+   * Implementations should permanently remove the underlying component instance from the
+   * pool rather than returning it, since the backing-store connection is no longer usable.
    *
-   * @param javaContextEvent event describing the abort
+   * @param javaContextEvent the event describing the abort; its
+   *                         {@link JavaContextEvent#getCommunicationException()} carries
+   *                         the exception that triggered the abort
    */
   void contextAborted (JavaContextEvent javaContextEvent);
 }

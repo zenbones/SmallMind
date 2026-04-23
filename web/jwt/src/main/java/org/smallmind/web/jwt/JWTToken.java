@@ -32,33 +32,36 @@
  */
 package org.smallmind.web.jwt;
 
+/**
+ * Contract for JWT claim objects that carry a subject identifier and an expiration timestamp.
+ */
 public interface JWTToken {
 
   /**
-   * Retrieves the subject (typically a user identifier) encoded into the token.
+   * Returns the subject claim ({@code sub}) identifying the principal the token represents.
    *
    * @return the subject value
    */
   String getSub ();
 
   /**
-   * Assigns the subject (typically a user identifier) that will be embedded within the token.
+   * Sets the subject claim ({@code sub}) identifying the principal the token represents.
    *
    * @param sub the subject value
    */
   void setSub (String sub);
 
   /**
-   * Retrieves the token expiration epoch time in seconds.
+   * Returns the expiration claim ({@code exp}) as a Unix epoch time in seconds.
    *
-   * @return the expiration timestamp
+   * @return the expiration timestamp in seconds since the epoch
    */
   long getExp ();
 
   /**
-   * Sets the expiration epoch time (in seconds) after which the token is no longer valid.
+   * Sets the expiration claim ({@code exp}) as a Unix epoch time in seconds.
    *
-   * @param exp the expiration timestamp
+   * @param exp the expiration timestamp in seconds since the epoch
    */
   void setExp (long exp);
 }

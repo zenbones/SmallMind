@@ -35,16 +35,16 @@ package org.smallmind.nutsnbolts.time;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
 /**
- * Weekday enumeration with display formatting support.
+ * Enumeration of the days of the week, ordered from Sunday through Saturday, with display-name formatting.
  */
 public enum Day {
 
   SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
 
   /**
-   * Returns a capitalized display form of the enum constant name.
+   * Returns the day name formatted for display, with only the first letter capitalized.
    *
-   * @return human-friendly day name
+   * @return a human-readable day name such as {@code Sunday} or {@code Monday}
    */
   public String getDisplayName () {
 

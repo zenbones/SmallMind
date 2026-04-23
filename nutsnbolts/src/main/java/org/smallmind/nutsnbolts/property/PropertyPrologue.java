@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.property;
 import org.smallmind.nutsnbolts.security.kms.Decryptor;
 
 /**
- * Represents a discovered property prologue within an expression, capturing its position,
- * prefix, and optional decryptor to apply to resolved values.
+ * Captures the location, prefix text, and optional decryptor for a single property placeholder
+ * occurrence discovered during expression scanning.
  */
 public class PropertyPrologue {
 
@@ -45,11 +45,13 @@ public class PropertyPrologue {
   private final int pos;
 
   /**
-   * Creates a prologue descriptor.
+   * Constructs a prologue record for the next placeholder found in an expression.
    *
-   * @param decryptor decryptor to apply if the property is encrypted; {@code null} for plain properties
-   * @param prefix    the matched prefix text
-   * @param pos       the index of the prefix in the expression
+   * @param decryptor the decryptor to apply after resolving the placeholder value, or {@code null}
+   *                  when the placeholder is not encrypted
+   * @param prefix    the prefix text that was matched at this position
+   * @param pos       the index of the first character of the prefix within the expression, or
+   *                  a negative value when no placeholder was found
    */
   public PropertyPrologue (Decryptor decryptor, String prefix, int pos) {
 
@@ -59,7 +61,9 @@ public class PropertyPrologue {
   }
 
   /**
-   * @return decryptor to apply, or {@code null} when not encrypted
+   * Returns the decryptor for this placeholder, or {@code null} when the placeholder is not encrypted.
+   *
+   * @return the applicable {@link Decryptor}, or {@code null}
    */
   public Decryptor getDecryptor () {
 
@@ -67,6 +71,8 @@ public class PropertyPrologue {
   }
 
   /**
+   * Returns the prefix string that introduced this placeholder.
+   *
    * @return the matched prefix text
    */
   public String getPrefix () {
@@ -75,7 +81,9 @@ public class PropertyPrologue {
   }
 
   /**
-   * @return the position of the prefix within the expression
+   * Returns the index of the prefix within the expression, or a negative value when no placeholder was found.
+   *
+   * @return the index of the matched prefix in the expression string
    */
   public int getPos () {
 

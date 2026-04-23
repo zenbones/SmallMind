@@ -35,7 +35,7 @@ package org.smallmind.web.schema;
 import java.util.List;
 
 /**
- * Represents a W3C XML Schema (XSD) resource and its associated XML implementations to validate.
+ * Maven plugin configuration element that pairs an XSD resource path with the XML files that should be validated against it.
  */
 public class XSD {
 
@@ -43,7 +43,7 @@ public class XSD {
   private List<String> impls;
 
   /**
-   * Returns the classpath-relative path to the XSD resource.
+   * Returns the resource-directory-relative path to the XSD file.
    *
    * @return the XSD resource path
    */
@@ -53,7 +53,7 @@ public class XSD {
   }
 
   /**
-   * Sets the classpath-relative path to the XSD resource.
+   * Sets the resource-directory-relative path to the XSD file.
    *
    * @param path the XSD resource path
    */
@@ -63,9 +63,9 @@ public class XSD {
   }
 
   /**
-   * Retrieves the list of XML resource paths that should be validated against this schema.
+   * Returns the list of resource-directory-relative paths to XML files that must validate against this schema.
    *
-   * @return the XML implementation paths
+   * @return the XML implementation paths, or {@code null} if none are configured
    */
   public List<String> getImpls () {
 
@@ -73,7 +73,7 @@ public class XSD {
   }
 
   /**
-   * Declares the XML resources that should be validated against this schema.
+   * Sets the list of resource-directory-relative paths to XML files that must validate against this schema.
    *
    * @param impls the XML implementation paths
    */

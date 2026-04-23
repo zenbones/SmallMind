@@ -35,31 +35,31 @@ package org.smallmind.web.json.query;
 import java.util.Set;
 
 /**
- * Represents a translated query product, including its root objects and final value representation.
+ * Encapsulates the result of translating a query structure, pairing the query roots with the produced value.
  *
- * @param <R> type representing roots used during query construction
- * @param <T> type representing the translated value (e.g., predicate)
+ * @param <R> type of the query root objects collected during translation
+ * @param <T> type of the translated output value (e.g., a predicate or order array)
  */
 public interface Product<R, T> {
 
   /**
-   * Indicates whether the product contains any value.
+   * Returns whether this product contains any translated content.
    *
    * @return {@code true} if no content is present
    */
   boolean isEmpty ();
 
   /**
-   * Returns all root objects involved in this product.
+   * Returns all root objects that were referenced during translation.
    *
    * @return set of roots
    */
   Set<R> getRootSet ();
 
   /**
-   * Returns the translated value (e.g., a predicate or expression).
+   * Returns the translated output value produced by the query translation.
    *
-   * @return translated value
+   * @return translated value, or {@code null} if the product is empty
    */
   T getValue ();
 }

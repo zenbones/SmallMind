@@ -35,8 +35,7 @@ package org.smallmind.nutsnbolts.xml;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception thrown when the {@link org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser} encounters configuration or parsing problems.
- * Carries formatted messages for consistent diagnostics.
+ * Signals a configuration or parsing failure in the {@link org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser}.
  */
 public class ExtensibleSAXParserException extends FormattedException {
 
@@ -49,10 +48,10 @@ public class ExtensibleSAXParserException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted message.
+   * Creates an exception with a {@link String#format} style message.
    *
-   * @param message message pattern
-   * @param args    pattern arguments
+   * @param message the message pattern
+   * @param args    the arguments to substitute into the pattern
    */
   public ExtensibleSAXParserException (String message, Object... args) {
 
@@ -60,11 +59,11 @@ public class ExtensibleSAXParserException extends FormattedException {
   }
 
   /**
-   * Creates an exception with both a cause and a formatted message.
+   * Creates an exception with an underlying cause and a {@link String#format} style message.
    *
-   * @param throwable underlying cause
-   * @param message   message pattern
-   * @param args      pattern arguments
+   * @param throwable the underlying cause
+   * @param message   the message pattern
+   * @param args      the arguments to substitute into the pattern
    */
   public ExtensibleSAXParserException (Throwable throwable, String message, Object... args) {
 
@@ -72,9 +71,9 @@ public class ExtensibleSAXParserException extends FormattedException {
   }
 
   /**
-   * Creates an exception that wraps an underlying cause.
+   * Creates an exception that wraps the supplied cause without an additional message.
    *
-   * @param throwable underlying cause
+   * @param throwable the underlying cause
    */
   public ExtensibleSAXParserException (Throwable throwable) {
 

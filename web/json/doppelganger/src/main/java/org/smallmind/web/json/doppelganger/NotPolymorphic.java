@@ -33,7 +33,7 @@
 package org.smallmind.web.json.doppelganger;
 
 /**
- * Marker used to indicate that polymorphic handling is not applicable.
+ * Sentinel class used as a default marker indicating that no polymorphic handling applies.
  */
 public class NotPolymorphic {
 

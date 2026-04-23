@@ -39,7 +39,19 @@ import org.smallmind.phalanx.wire.transport.ArgumentInfo;
 import org.smallmind.phalanx.wire.transport.SyntheticArgument;
 
 /**
- * Captures metadata about a service method, including the mapping of argument names to parameter positions and types.
+ * Holds reflective metadata for a single service method, mapping each logical argument name
+ * to its parameter index and declared type.
+ *
+ * <p>Argument names are resolved from one of two sources, tried in order:
+ * <ol>
+ *   <li><b>Synthetic arguments</b> — an explicit {@link SyntheticArgument} array supplied at
+ *       construction time, used when annotation-based discovery is impractical (e.g., for
+ *       generated proxies).</li>
+ *   <li><b>{@link Argument} annotations</b> — per-parameter {@code @Argument} annotations
+ *       present on the method in the service interface.</li>
+ * </ol>
+ * Construction throws {@link ServiceDefinitionException} when the number of resolved argument
+ * names does not match the method's actual parameter count.</p>
  */
 public class Methodology {
 
@@ -47,12 +59,16 @@ public class Methodology {
   private final HashMap<String, ArgumentInfo> argumentInfoMap = new HashMap<>();
 
   /**
-   * Builds the method metadata by inspecting declared @Argument annotations or synthetic argument definitions.
+   * Constructs a {@code Methodology} for the given service method.
    *
-   * @param serviceInterface   interface that declares the method
-   * @param method             service method being described
-   * @param syntheticArguments optional synthetic arguments to apply instead of inspecting annotations
-   * @throws ServiceDefinitionException if the method parameters cannot be fully resolved to argument names
+   * @param serviceInterface   the interface that declares {@code method}; used only in
+   *                           diagnostic messages
+   * @param method             the service method whose argument metadata is to be captured
+   * @param syntheticArguments optional explicit argument descriptors; when non-empty, these
+   *                           take precedence over any {@link Argument} annotations on the method
+   * @throws ServiceDefinitionException if the number of resolved argument names does not equal
+   *                                    the method's parameter count, indicating missing
+   *                                    {@link Argument} annotations
    */
   public Methodology (Class<?> serviceInterface, Method method, SyntheticArgument... syntheticArguments)
     throws ServiceDefinitionException {
@@ -82,9 +98,9 @@ public class Methodology {
   }
 
   /**
-   * Returns the reflected method this instance describes.
+   * Returns the service method this {@code Methodology} describes.
    *
-   * @return the service method
+   * @return the reflected {@link Method}; never {@code null}
    */
   public Method getMethod () {
 
@@ -92,10 +108,12 @@ public class Methodology {
   }
 
   /**
-   * Resolves the argument metadata by its declared name.
+   * Returns the argument metadata registered under the given logical name.
    *
-   * @param name logical argument name
-   * @return argument metadata or {@code null} if no such argument is registered
+   * @param name the logical argument name as declared via {@link Argument} or a
+   *             {@link SyntheticArgument}
+   * @return the {@link ArgumentInfo} containing the parameter's index and declared type,
+   * or {@code null} if no argument with that name was registered
    */
   public ArgumentInfo getArgumentInfo (String name) {
 

@@ -38,14 +38,34 @@ import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Bridges Liquibase logging into the SmallMind Scribe logging system.
+ * Liquibase {@code Logger} implementation that forwards log events to the SmallMind Scribe system.
+ *
+ * <p>Liquibase uses {@link java.util.logging.Level} (JUL) for its log levels. This class translates
+ * each JUL level to its closest Scribe equivalent and delegates to a per-class Scribe
+ * {@link Logger} obtained from {@link LoggerManager}. Instances are created by
+ * {@link ScribeLogService} and should not normally be constructed directly.</p>
+ *
+ * <p>JUL-to-Scribe level mapping:</p>
+ * <ul>
+ *   <li>{@link Level#ALL}, {@link Level#FINEST}, {@link Level#FINER} → {@code TRACE}</li>
+ *   <li>{@link Level#FINE} → {@code DEBUG}</li>
+ *   <li>{@link Level#CONFIG}, {@link Level#INFO} → {@code INFO}</li>
+ *   <li>{@link Level#WARNING} → {@code WARN}</li>
+ *   <li>{@link Level#SEVERE} → {@code ERROR}</li>
+ *   <li>{@link Level#OFF} → {@code OFF}</li>
+ *   <li>Any unrecognised level → {@code INFO}</li>
+ *   <li>{@code null} → {@code null} (the Scribe logger will suppress the entry)</li>
+ * </ul>
  */
 public class ScribeLiquibaseLogger extends AbstractLogger {
 
   private final Logger scribeLogger;
 
   /**
-   * @param clazz originating class so logs are tagged consistently
+   * Creates a logger that emits events tagged with the given class.
+   *
+   * @param clazz the class whose name is used to identify log entries in the Scribe output;
+   *              must not be {@code null}
    */
   public ScribeLiquibaseLogger (Class<?> clazz) {
 
@@ -53,11 +73,14 @@ public class ScribeLiquibaseLogger extends AbstractLogger {
   }
 
   /**
-   * Logs a Liquibase message at the translated Scribe level.
+   * Forwards a Liquibase log event to the Scribe logger after translating the level.
    *
-   * @param level   java.util.logging level supplied by Liquibase
-   * @param message log message to emit
-   * @param e       optional exception to attach to the log entry
+   * <p>If {@code level} is {@code null}, {@link #translateLevel(Level)} returns {@code null}
+   * and the Scribe logger silently discards the entry.</p>
+   *
+   * @param level   the JUL severity level supplied by Liquibase; may be {@code null}
+   * @param message the log message to emit; may be {@code null}
+   * @param e       an optional exception to attach to the log entry; may be {@code null}
    */
   @Override
   public void log (Level level, String message, Throwable e) {
@@ -66,10 +89,14 @@ public class ScribeLiquibaseLogger extends AbstractLogger {
   }
 
   /**
-   * Converts JUL levels to their Scribe equivalents.
+   * Translates a {@link java.util.logging.Level} value to the corresponding Scribe level.
    *
-   * @param level java.util.logging level
-   * @return mapped Scribe level, or {@code null} when no level is supplied
+   * <p>Unknown non-null levels default to {@code INFO} to ensure log events are never silently
+   * dropped by an unrecognised mapping.</p>
+   *
+   * @param level the JUL level to translate; may be {@code null}
+   * @return the corresponding {@link org.smallmind.scribe.pen.Level}, or {@code null}
+   * when {@code level} is {@code null}
    */
   private org.smallmind.scribe.pen.Level translateLevel (java.util.logging.Level level) {
 

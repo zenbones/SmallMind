@@ -35,7 +35,15 @@ package org.smallmind.quorum.pool.complex.jmx;
 import org.smallmind.quorum.pool.complex.ComponentPoolSurface;
 
 /**
- * JMX MXBean interface exposing {@link ComponentPoolSurface} management operations.
+ * JMX MXBean interface that exposes the full {@link ComponentPoolSurface} management API
+ * via the platform MBean server.
+ * <p>
+ * By extending {@link ComponentPoolSurface}, this interface inherits all pool configuration
+ * getters and setters (sizes, timeouts, feature flags) and lifecycle operations (startup,
+ * shutdown). The {@link ComponentPoolMonitor} implementation also implements
+ * {@link javax.management.MBeanRegistration} and
+ * {@link org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener} to attach
+ * itself to the pool and convert pool events into JMX notifications.
  */
 public interface ComponentPoolMonitorMXBean extends ComponentPoolSurface {
 

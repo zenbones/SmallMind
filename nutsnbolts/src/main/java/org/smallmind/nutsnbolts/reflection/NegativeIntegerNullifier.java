@@ -40,7 +40,8 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Declares that negative integer values should be coerced to {@code null} during overlay operations.
+ * Field annotation that instructs overlay processing to replace any integer value that is strictly
+ * negative with {@code null}, validated by {@link NegativeIntegerNullifierValidator}.
  */
 @Documented
 @Retention(RUNTIME)
@@ -49,7 +50,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NegativeIntegerNullifier {
 
   /**
-   * @return the validation message used when a negative value is encountered
+   * Specifies the diagnostic message associated with this nullification rule.
+   *
+   * @return the message used when a negative integer is treated as {@code null}
    */
   String message () default "< 0";
 }

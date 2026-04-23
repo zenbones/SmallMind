@@ -45,8 +45,7 @@ import org.smallmind.web.jersey.aop.EntityParam;
 import org.smallmind.web.jersey.aop.Envelope;
 
 /**
- * Invocation handler for client-side JSON resource proxies. It builds an {@link Envelope} from method arguments,
- * applies optional XML adapters, injects headers, and posts the request to the configured {@link JsonTarget}.
+ * {@link InvocationHandler} that translates interface method calls into JSON-over-HTTP requests sent via a {@link JsonTarget}.
  */
 public class JsonEntityInvocationHandler implements InvocationHandler {
 
@@ -60,14 +59,14 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   private final int serviceVersion;
 
   /**
-   * Creates a handler for a specific service endpoint.
+   * Constructs a handler bound to a specific versioned service endpoint.
    *
-   * @param target          base target used for requests
-   * @param versionPrefix   prefix preceding the numeric service version in the path
-   * @param serviceVersion  service version number
-   * @param serviceName     name of the service
-   * @param level           log level used for debug output
-   * @param headerInjectors optional header injectors to apply on each invocation
+   * @param target          base target to which requests are sent
+   * @param versionPrefix   string placed immediately before the version number in the URL path
+   * @param serviceVersion  numeric version of the service
+   * @param serviceName     service name segment of the URL path
+   * @param level           log level used for request/response debug output
+   * @param headerInjectors zero or more injectors applied to each request
    */
   public JsonEntityInvocationHandler (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Level level, JsonHeaderInjector... headerInjectors) {
 
@@ -81,13 +80,13 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   }
 
   /**
-   * Constructs and sends a JSON request for the invoked method, converting annotated parameters and applying headers.
+   * Marshals method arguments into an {@link Envelope}, applies any configured headers, and POSTs the request to the target.
    *
-   * @param proxy  proxy instance
-   * @param method invoked method
-   * @param args   method arguments
-   * @return deserialized response
-   * @throws Throwable if argument conversion or request execution fails
+   * @param proxy  proxy instance on which the method was invoked
+   * @param method the interface method being invoked
+   * @param args   arguments passed to the method
+   * @return the deserialized response object
+   * @throws Throwable if argument marshalling or the HTTP request fails
    */
   @Override
   public Object invoke (Object proxy, Method method, Object[] args)
@@ -126,16 +125,6 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
     return rectifiedTarget.debug(level).post(new JsonBody(new Envelope(arguments)), method.getReturnType());
   }
 
-  /**
-   * Builds JsonArgument descriptors for the method parameters, resolving {@link EntityParam} names and
-   * caching {@link XmlAdapter} instances declared via {@link XmlJavaTypeAdapter}.
-   *
-   * @param method method for which arguments are being constructed
-   * @return array of JsonArgument definitions
-   * @throws ResourceDefinitionException if a required {@link EntityParam} annotation is missing
-   * @throws IllegalAccessException      if an adapter cannot be instantiated
-   * @throws InstantiationException      if an adapter cannot be instantiated
-   */
   private JsonArgument[] constructJsonArguments (Method method)
     throws ResourceDefinitionException, IllegalAccessException, InstantiationException {
 

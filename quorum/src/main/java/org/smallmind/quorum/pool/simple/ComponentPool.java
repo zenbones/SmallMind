@@ -39,10 +39,26 @@ import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.Pool;
 
 /**
- * Simple synchronized pool implementation backed by linked lists. Components can be bounded by size and
- * optionally block while waiting for availability.
+ * A bounded, synchronized object pool backed by two linked lists — one for in-use components
+ * and one for free components.
+ * <p>
+ * When a component is requested and the free list is empty, the pool either creates a new
+ * instance (if the total pool size is below {@link SimplePoolConfig#getMaxPoolSize()}, or if
+ * the pool is unbounded), or it blocks the caller for up to
+ * {@link SimplePoolConfig#getAcquireWaitTimeMillis()} milliseconds waiting for a component to
+ * be returned. A wait time of {@code 0} causes the pool to throw immediately when no free
+ * component is available and the size cap has been reached.
+ * <p>
+ * When a component is returned and the combined free+used count already equals the size cap,
+ * the returned component is terminated rather than re-pooled, allowing the pool to shrink
+ * after its configuration has been tightened at runtime.
+ * <p>
+ * {@link #close()} marks the pool closed, wakes all blocked waiters, waits for every
+ * borrowed component to be returned, terminates everything on the free list, and then
+ * returns. Concurrent callers of {@code close()} all block on an exit latch and return
+ * together once the single winner completes the shutdown.
  *
- * @param <T> component type managed by the pool
+ * @param <T> the type of {@link PooledComponent} managed by this pool
  */
 public class ComponentPool<T extends PooledComponent> extends Pool {
 
@@ -56,9 +72,10 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   private SimplePoolConfig simplePoolConfig = new SimplePoolConfig();
 
   /**
-   * Creates a pool using the provided factory and default configuration.
+   * Creates a pool that uses default configuration values (max pool size 10, no acquire wait).
    *
-   * @param componentFactory factory that produces components
+   * @param componentFactory the factory used to construct new component instances when the free
+   *                         list is empty and the pool has not yet reached its size cap
    */
   public ComponentPool (ComponentFactory<T> componentFactory) {
 
@@ -69,10 +86,11 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Creates a pool using the provided factory and configuration.
+   * Creates a pool with an explicit configuration.
    *
-   * @param componentFactory factory that produces components
-   * @param simplePoolConfig configuration for bounds and wait behavior
+   * @param componentFactory the factory used to construct new component instances when the free
+   *                         list is empty and the pool has not yet reached its size cap
+   * @param simplePoolConfig configuration controlling the size cap and acquire wait time
    */
   public ComponentPool (ComponentFactory<T> componentFactory, SimplePoolConfig simplePoolConfig) {
 
@@ -82,10 +100,24 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Obtains a component from the pool, creating one if capacity allows or blocking according to the configuration.
+   * Acquires a component from the pool.
+   * <p>
+   * The following acquisition strategy is used in order:
+   * <ol>
+   *   <li>If the free list is non-empty, the first free component is returned immediately.</li>
+   *   <li>If the free list is empty and the pool is below its size cap (or unbounded), a new
+   *       component is created via the factory.</li>
+   *   <li>If the free list is empty and the size cap has been reached, the caller blocks for up
+   *       to {@link SimplePoolConfig#getAcquireWaitTimeMillis()} milliseconds. If a free
+   *       component becomes available within that window, it is returned. If the window expires
+   *       with no free component, a {@link ComponentPoolException} is thrown.</li>
+   * </ol>
    *
-   * @return pooled component instance
-   * @throws ComponentPoolException if the pool is closed, construction fails, or waiting times out
+   * @return a component instance ready for use; the caller must eventually pass it to
+   * {@link #returnComponent(PooledComponent)} when finished
+   * @throws ComponentPoolException if the pool has been closed, if the factory throws while
+   *                                creating a new component, if the acquire wait is interrupted,
+   *                                or if the wait timeout expires before a component is returned
    */
   public synchronized T getComponent ()
     throws ComponentPoolException {
@@ -130,9 +162,18 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Returns a component to the pool or terminates it if the pool is at capacity.
+   * Returns a previously acquired component to the pool.
+   * <p>
+   * If the combined count of in-use and free components is already at the configured size cap,
+   * the component is terminated via {@link PooledComponent#terminate()} rather than re-pooled,
+   * allowing the pool to shrink when the configuration has been tightened. Otherwise the
+   * component is placed on the free list and a waiting thread (if any) is notified.
+   * <p>
+   * If the pool has been closed and this return empties the in-use list, the termination latch
+   * is released so that {@link #close()} can proceed to drain the free list.
    *
-   * @param component component to return
+   * @param component the component to return; must have been obtained from this pool via
+   *                  {@link #getComponent()}
    */
   public synchronized void returnComponent (T component) {
 
@@ -154,9 +195,10 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Current total number of components both in use and free.
+   * Returns the total number of components currently tracked by the pool, including both
+   * in-use and free components.
    *
-   * @return size of the pool
+   * @return the sum of the in-use count and the free count
    */
   public synchronized int poolSize () {
 
@@ -164,9 +206,10 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Number of currently free components.
+   * Returns the number of components currently sitting on the free list, available for
+   * immediate acquisition without creation or blocking.
    *
-   * @return free component count
+   * @return the number of free (idle) components
    */
   public synchronized int freeSize () {
 
@@ -174,9 +217,20 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
   }
 
   /**
-   * Closes the pool, waiting for borrowed components to return and terminating free ones.
+   * Closes the pool and waits for all borrowed components to be returned before terminating
+   * the remaining free components.
+   * <p>
+   * The first thread to call this method marks the pool closed and wakes all threads blocked
+   * in {@link #getComponent()} so they receive a {@link ComponentPoolException}. It then waits
+   * for the in-use list to drain (each {@link #returnComponent} call counts down the
+   * termination latch when the list becomes empty), terminates every component on the free
+   * list, and finally counts down an exit latch so concurrent callers can return together.
+   * <p>
+   * Subsequent concurrent callers of {@code close()} bypass the shutdown logic and simply
+   * block on the exit latch until the first caller completes the shutdown sequence.
    *
-   * @throws InterruptedException if interrupted while waiting for components to be returned
+   * @throws InterruptedException if the calling thread is interrupted while waiting for
+   *                              borrowed components to be returned or for the exit latch
    */
   public void close ()
     throws InterruptedException {

@@ -39,9 +39,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -67,9 +64,17 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Kafka-based {@link Backbone} implementation that distributes packets across clustered nodes.
+ * Kafka-backed {@link Backbone} that fans every published packet out to all nodes in the
+ * Oumuamua cluster by writing to a shared topic prefixed with {@code oumuamua-}.
  *
- * @param <V> concrete value type used in Bayeux messages
+ * <p>Each node creates a unique consumer group at startup (via a Snowflake-generated group ID)
+ * so that every node independently receives every record.  Records produced by the local node
+ * are skipped on consumption to prevent loopback delivery.  A pool of virtual-thread consumer
+ * workers polls the topic, deserializes each record with {@link RecordUtility}, and delivers
+ * the packet to the local server.  Workers automatically recreate their consumers on recoverable
+ * poll errors.
+ *
+ * @param <V> the concrete {@link Value} type carried in Bayeux messages
  */
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
@@ -85,14 +90,15 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private ConsumerWorker<V>[] workers;
 
   /**
-   * Creates a backbone using the given Kafka configuration.
+   * Creates the backbone, verifies broker availability, and opens a shared producer.
    *
-   * @param nodeName                  unique identifier for this node
-   * @param concurrencyLimit          number of consumer threads
-   * @param startupGracePeriodSeconds time to wait for Kafka readiness
-   * @param topicName                 logical topic name (prefixed internally)
-   * @param servers                   Kafka bootstrap servers
-   * @throws KafkaConnectionException if Kafka connectivity fails
+   * @param nodeName                  unique name for this cluster node; embedded in every produced record
+   *                                  and used to skip locally-originating records on consumption
+   * @param concurrencyLimit          number of parallel consumer worker threads spawned at {@link #startUp}
+   * @param startupGracePeriodSeconds maximum seconds to wait for at least one broker to become reachable
+   * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
+   * @param servers                   one or more Kafka bootstrap broker addresses
+   * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    */
   public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
     throws KafkaConnectionException {
@@ -112,10 +118,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Creates a consumer instance for the given index.
+   * Creates and subscribes a new Kafka consumer for the worker at {@code index}.
+   * Each worker uses the same group ID so the full fan-out is preserved.
    *
-   * @param index worker index
-   * @return configured consumer
+   * @param index zero-based worker index used to form a unique consumer client ID
+   * @return a new {@link Consumer} already subscribed to the backbone topic
    */
   private Consumer<Long, byte[]> createConsumer (int index) {
 
@@ -123,11 +130,12 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Starts consumer workers and transitions the backbone to STARTED.
+   * Spawns {@code concurrencyLimit} consumer worker threads and transitions the backbone to
+   * {@link ComponentStatus#STARTED}.  Blocks if a concurrent state transition is in progress.
    *
-   * @param server owning server instance
-   * @throws ComponentStateException if the lifecycle settles without reaching {@code STARTED}
-   * @throws InterruptedException if interrupted while waiting on lifecycle synchronization
+   * @param server server to which deserialized packets from remote nodes will be delivered
+   * @throws ComponentStateException if the backbone cannot reach the started state
+   * @throws InterruptedException    if interrupted while waiting for the state transition
    */
   @Override
   public void startUp (Server<V> server)
@@ -146,10 +154,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Signals consumer workers to stop and transitions the backbone to {@link ComponentStatus#STOPPED}.
+   * Wakes up all consumer workers, waits for each to exit, and transitions the backbone to
+   * {@link ComponentStatus#STOPPED}.  Blocks if a concurrent state transition is in progress.
    *
-   * @throws ComponentStateException if the lifecycle settles without reaching {@code STOPPED}
-   * @throws InterruptedException if interrupted while waiting on lifecycle synchronization
+   * @throws ComponentStateException if the backbone cannot reach the stopped state
+   * @throws InterruptedException    if interrupted while waiting for worker exit or the state transition
    */
   @Override
   public void shutDown ()
@@ -166,9 +175,10 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Publishes a packet asynchronously to Kafka.
+   * Serializes {@code packet} and publishes it to the backbone topic via the virtual-thread executor.
+   * Serialization and send errors are logged but not propagated; this is a best-effort fan-out.
    *
-   * @param packet packet to distribute
+   * @param packet packet to distribute to all cluster nodes
    */
   @Override
   public void publish (Packet<V> packet) {
@@ -183,7 +193,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Worker that consumes records from Kafka and hands them to the server.
+   * Single-threaded consumer that polls the backbone topic, deserializes each record, delivers
+   * packets from remote nodes to the local server, commits offsets per partition, and replaces
+   * its consumer automatically on recoverable errors.
    */
   private class ConsumerWorker<V extends Value<V>> implements Runnable {
 
@@ -195,11 +207,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     private Consumer<Long, byte[]> consumer;
 
     /**
-     * Creates a consumer worker for a partition group.
+     * Creates a consumer worker for the given server and slot.
      *
-     * @param server   owning server
-     * @param nodeName name of this node
-     * @param index    worker index
+     * @param server   local server to which packets from remote nodes are delivered
+     * @param nodeName name of this cluster node; records whose node name matches are skipped
+     * @param index    zero-based worker index used when recreating the consumer after an error
      */
     public ConsumerWorker (Server<V> server, String nodeName, int index) {
 
@@ -211,9 +223,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
 
     /**
-     * Initiates worker shutdown and waits for completion.
+     * Signals the poll loop to stop and blocks until the worker thread has fully exited.
      *
-     * @throws InterruptedException if interrupted while awaiting exit
+     * @throws InterruptedException if interrupted while waiting on the exit latch
      */
     private void stop ()
       throws InterruptedException {
@@ -226,7 +238,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
 
     /**
-     * Polls Kafka for records, deserializes packets, and delivers them to the server.
+     * Polls the backbone topic in a loop.  For each record, deserializes the packet and — if
+     * the producing node differs from the local node — delivers it to the server.  Offsets are
+     * committed synchronously per partition after each batch.  On recoverable poll errors the
+     * consumer is replaced before the next iteration.  A {@link WakeupException} from a
+     * {@link #stop()} call exits the loop cleanly; unexpected wakeups are logged as errors.
      */
     @Override
     public void run () {

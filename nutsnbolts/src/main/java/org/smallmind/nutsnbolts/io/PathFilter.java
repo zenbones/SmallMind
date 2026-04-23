@@ -36,16 +36,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Predicate interface for filtering paths during traversal operations.
+ * Predicate tested against each {@link Path} encountered during recursive file-tree operations.
  */
 public interface PathFilter {
 
   /**
-   * Determines whether the given path should be included.
+   * Returns {@code true} when the given path should be included in the operation.
    *
-   * @param path path under consideration
-   * @return {@code true} to include
-   * @throws IOException if evaluation fails
+   * @param path the path being evaluated
+   * @return {@code true} to include the path; {@code false} to skip it
+   * @throws IOException if evaluating the path requires I/O and that I/O fails
    */
   boolean accept (Path path)
     throws IOException;

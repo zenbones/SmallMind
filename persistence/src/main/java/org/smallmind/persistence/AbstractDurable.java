@@ -43,25 +43,25 @@ import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.Overlay;
 
 /**
- * Base implementation of a persistent {@link Durable} that supplies common comparison,
- * identity and debugging helpers. Equality and ordering are based on the durable id
- * when it is present, and fall back to object identity when no id has been assigned.
- * Reflection is used to provide mirror comparisons and a descriptive {@code toString()}.
+ * Base implementation of {@link Durable} that provides id-based equality, ordering, reflective
+ * field comparison, and a cycle-safe {@code toString()}. Subclasses inherit all comparison
+ * and display behaviour without additional code.
  *
- * @param <I> the identifier type, which must be comparable and serializable
- * @param <D> the concrete durable type
+ * @param <I> the identifier type, which must be {@link Comparable} and {@link java.io.Serializable}
+ * @param <D> the concrete durable subtype
  */
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
   private static final ThreadLocal<Set<Durable<?>>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
 
   /**
-   * Compares this durable to another, ordering by identifier when both ids are populated.
-   * A durable with a {@code null} id is considered less than one with an id.
+   * Orders this durable relative to another by comparing identifiers. A {@code null} id
+   * sorts before any non-{@code null} id; two {@code null} ids are considered equal.
    *
-   * @param durable the other durable instance
-   * @return a negative value when {@code this} should sort before {@code durable}, a positive value when after, and zero when equal
-   * @throws TypeMismatchException if the provided durable is not of a compatible type
+   * @param durable the other durable to compare against
+   * @return a negative integer, zero, or a positive integer as this durable is less than,
+   * equal to, or greater than {@code durable}
+   * @throws TypeMismatchException if {@code durable} is not assignment-compatible with this instance's type
    */
   public int compareTo (Durable<I> durable) {
 
@@ -88,8 +88,8 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   /**
-   * Computes a hash code based on the durable id when available, or falls back to the
-   * default object hash code when the id has not yet been set.
+   * Returns an id-derived hash code when an id is present, or the default identity hash code
+   * when the id is {@code null}.
    *
    * @return the hash code for this durable
    */
@@ -109,11 +109,11 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   /**
-   * Tests equality based on the durable id when both sides have an id; otherwise defaults
-   * to the inherited {@link Object#equals(Object)} behavior.
+   * Returns {@code true} when {@code obj} is a {@link Durable} with an id equal to this
+   * instance's id. Falls back to identity equality when either side has a {@code null} id.
    *
    * @param obj the object to compare
-   * @return {@code true} when the two objects represent the same durable record
+   * @return {@code true} when both objects represent the same persisted record
    */
   @Override
   public boolean equals (Object obj) {
@@ -130,10 +130,12 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   /**
-   * Determines whether all non-id fields mirror those of the supplied durable.
+   * Returns {@code true} when every field except {@code id} has an equal value in {@code durable}.
+   * Locates the {@code id} field via reflection and delegates to {@link #mirrors(Durable, Field...)}.
    *
    * @param durable the durable to compare against
-   * @return {@code true} when all properties except the id match, otherwise {@code false}
+   * @return {@code true} when all non-id fields are equal
+   * @throws DataIntegrityException if the {@code id} field cannot be found on this type
    */
   public boolean mirrors (Durable<?> durable) {
 
@@ -148,12 +150,14 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   /**
-   * Determines whether all fields other than the supplied exclusions mirror those of the provided durable.
+   * Returns {@code true} when every field not listed in {@code exclusions} has an equal value
+   * in {@code durable}. The comparison is only attempted when {@code durable} is assignment-compatible
+   * with this instance's type.
    *
    * @param durable    the durable to compare against
-   * @param exclusions optional fields to omit from the comparison
-   * @return {@code true} when the two objects match on all non-excluded fields
-   * @throws PersistenceException if an exclusion does not belong to this durable type
+   * @param exclusions fields to skip during comparison; {@code null} entries are ignored
+   * @return {@code true} when all non-excluded fields are equal, {@code false} otherwise
+   * @throws PersistenceException if an exclusion field does not belong to this durable's class hierarchy
    */
   public boolean mirrors (Durable<?> durable, Field... exclusions) {
 
@@ -206,10 +210,11 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
   }
 
   /**
-   * Builds a reflective string representation of the durable, listing each field name and value.
-   * Recursion is guarded by a per-thread set so that cyclical graphs degrade gracefully.
+   * Returns a reflective string listing every field name and value. A per-thread guard
+   * prevents infinite recursion when durables form a cyclic graph; a cycle is rendered
+   * as {@code ClassName[id=...,...]}.
    *
-   * @return the string form of this durable
+   * @return the string representation of this durable
    */
   @Override
   public String toString () {

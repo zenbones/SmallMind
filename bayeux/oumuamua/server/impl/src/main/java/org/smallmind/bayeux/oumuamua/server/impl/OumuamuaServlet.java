@@ -52,9 +52,10 @@ import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Synchronous servlet entry point for Bayeux long-polling traffic.
+ * HTTP servlet that accepts Bayeux long-polling requests, reads the full request body, hands the
+ * decoded messages to the server, and completes the response asynchronously.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
@@ -62,7 +63,9 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   private OumuamuaServer<V> server;
 
   /**
-   * @return servlet metadata supplied by the base class
+   * Returns a human-readable description of the servlet, delegating to the base implementation.
+   *
+   * @return servlet info string from {@link HttpServlet#getServletInfo()}
    */
   @Override
   public String getServletInfo () {
@@ -71,10 +74,12 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   }
 
   /**
-   * Initializes the servlet, wiring in the server, protocol, and long-poll transport.
+   * Initializes the servlet by locating the {@link OumuamuaServer} from the servlet context,
+   * resolving the servlet protocol and long-polling transport, and starting the server.
    *
-   * @param servletConfig servlet configuration
-   * @throws ServletException if required components are missing
+   * @param servletConfig the servlet configuration provided by the container
+   * @throws ServletException if the server is absent from the context, the servlet protocol has
+   *                          not been configured, or the long-polling transport is missing
    */
   @Override
   public void init (ServletConfig servletConfig)
@@ -105,11 +110,12 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   }
 
   /**
-   * Handles posted Bayeux envelopes, reading the payload and dispatching to the server.
+   * Handles a Bayeux POST: validates the {@code Content-Length} header, reads the full body into
+   * a buffer, decodes the messages with the server codec, and submits asynchronous processing.
    *
-   * @param request  HTTP request containing the Bayeux payload
-   * @param response response used for error handling
-   * @throws IOException if the payload cannot be read
+   * @param request  the inbound HTTP request carrying the serialized Bayeux message array
+   * @param response used to send HTTP error codes when the request is malformed or unreadable
+   * @throws IOException if writing an HTTP error response fails
    */
   @Override
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
@@ -153,11 +159,13 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   }
 
   /**
-   * Attempts to fully read the request body into the provided buffer.
+   * Reads bytes from the stream until the buffer is completely filled or EOF is reached.
    *
-   * @param inputStream   request input stream
-   * @param contentBuffer destination buffer sized to the content length
-   * @return {@code true} if the entire payload was read
+   * @param inputStream   the stream to read from; expected to contain exactly
+   *                      {@code contentBuffer.length} bytes
+   * @param contentBuffer pre-allocated destination whose length defines how many bytes to read
+   * @return {@code true} if every byte was read successfully; {@code false} if EOF was encountered
+   * before the buffer was full or an {@link IOException} occurred
    */
   private boolean readStream (InputStream inputStream, byte[] contentBuffer) {
 
@@ -183,7 +191,7 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   }
 
   /**
-   * Shuts down the server when the servlet is destroyed.
+   * Stops the server and releases all resources when the servlet container unloads the servlet.
    */
   @Override
   public void destroy () {

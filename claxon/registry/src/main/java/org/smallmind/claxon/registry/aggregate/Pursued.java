@@ -36,16 +36,30 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.registry.Clock;
 
 /**
- * Tracks multiple exponentially weighted moving averages across configurable windows.
+ * {@link Aggregate} that maintains a set of independent
+ * {@link ExponentiallyWeightedMovingAverage} instances, each operating over a distinct time window.
+ *
+ * <p>The default constructor configures three averages matching the classic Unix load-average
+ * windows: 1 minute, 5 minutes, and 15 minutes. Custom window sets can be provided via the
+ * varargs constructor.</p>
+ *
+ * <p>Each call to {@link #update(long)} fans the value out to every tracked moving average,
+ * and {@link #getMovingAverages()} returns the current value of each average in the same order
+ * as the windows were specified.</p>
  */
 public class Pursued implements Aggregate {
 
+  /**
+   * Ordered array of moving averages, one per configured window duration.
+   * The order matches the {@code windowTimes} vararg passed to the constructor.
+   */
   private final ExponentiallyWeightedMovingAverage[] movingAverages;
 
   /**
-   * Creates moving averages for 1, 5, and 15 minute windows using the provided clock.
+   * Constructs a {@code Pursued} aggregate tracking 1-, 5-, and 15-minute EWMAs, mirroring
+   * the classic Unix load-average windows.
    *
-   * @param clock clock providing monotonic time
+   * @param clock source of monotonic time forwarded to each {@link ExponentiallyWeightedMovingAverage}
    */
   public Pursued (Clock clock) {
 
@@ -53,11 +67,12 @@ public class Pursued implements Aggregate {
   }
 
   /**
-   * Creates moving averages for the provided window durations.
+   * Constructs a {@code Pursued} aggregate with a custom set of window durations.
    *
-   * @param clock          clock providing monotonic time
-   * @param windowTimeUnit time unit applied to each window duration
-   * @param windowTimes    window durations to track
+   * @param clock          source of monotonic time forwarded to each moving average
+   * @param windowTimeUnit time unit applied uniformly to every value in {@code windowTimes}
+   * @param windowTimes    one or more window durations; the order determines the order of values
+   *                       returned by {@link #getMovingAverages()}
    */
   public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
 
@@ -69,6 +84,15 @@ public class Pursued implements Aggregate {
     }
   }
 
+  /**
+   * Returns the current moving average for each configured window, in the same order the
+   * windows were specified at construction time.
+   *
+   * <p>Each call flushes any pending queued values inside the corresponding
+   * {@link ExponentiallyWeightedMovingAverage} before returning its value.</p>
+   *
+   * @return array of current EWMA values, one per configured window; never {@code null}
+   */
   public double[] getMovingAverages () {
 
     double[] values = new double[movingAverages.length];
@@ -82,9 +106,9 @@ public class Pursued implements Aggregate {
   }
 
   /**
-   * Updates all tracked moving averages with the supplied value.
+   * Propagates {@code value} to every tracked moving average.
    *
-   * @param value value to include
+   * @param value the measurement to incorporate into all configured EWMAs
    */
   @Override
   public void update (long value) {

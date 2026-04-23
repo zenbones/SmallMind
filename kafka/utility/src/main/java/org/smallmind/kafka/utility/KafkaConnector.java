@@ -53,17 +53,19 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Utility for constructing Kafka clients (admin, producer, consumer) with a shared bootstrap server list.
- * Provides convenience methods for creating clients with sensible defaults and verifying cluster availability.
+ * Factory for Kafka client objects sharing a single bootstrap server list.
+ * Provides methods to create fire-and-forget producers, manually-committed consumers,
+ * and short-lived admin clients, as well as a blocking availability check.
  */
 public class KafkaConnector {
 
   private final String boostrapServers;
 
   /**
-   * Builds a connector from one or more broker descriptors.
+   * Builds the connector from one or more broker descriptors, assembling a comma-separated
+   * bootstrap server string in {@code host:port} format.
    *
-   * @param servers Kafka brokers that should appear in the bootstrap server string
+   * @param servers one or more broker descriptors; must not be empty
    */
   public KafkaConnector (KafkaServer... servers) {
 
@@ -84,9 +86,9 @@ public class KafkaConnector {
   }
 
   /**
-   * Returns the comma-separated bootstrap server string generated from the configured brokers.
+   * Returns the bootstrap server string that will be passed to all created clients.
    *
-   * @return bootstrap server list in {@code host:port,host:port} format
+   * @return comma-separated list of {@code host:port} entries
    */
   public String getBoostrapServers () {
 
@@ -94,11 +96,12 @@ public class KafkaConnector {
   }
 
   /**
-   * Verifies that at least one Kafka node is reachable within the supplied grace period.
+   * Blocks until at least one Kafka node is reachable or the grace period expires.
+   * Retries the cluster-describe call every second; logs and returns failure when interrupted.
    *
-   * @param startupGracePeriodSeconds number of seconds to keep retrying cluster discovery
-   * @return this connector for call chaining
-   * @throws KafkaConnectionException if no nodes can be confirmed before the grace period elapses
+   * @param startupGracePeriodSeconds maximum seconds to keep retrying before giving up
+   * @return this connector, allowing call chaining
+   * @throws KafkaConnectionException if no node can be confirmed before the grace period elapses
    */
   public KafkaConnector check (int startupGracePeriodSeconds)
     throws KafkaConnectionException {
@@ -137,11 +140,12 @@ public class KafkaConnector {
   }
 
   /**
-   * Executes an operation with a short-lived {@link AdminClient}, closing it afterward.
+   * Opens a temporary {@link AdminClient}, applies {@code clientFunction}, and closes the client.
    *
-   * @param clientFunction function that receives an {@link AdminClient} and returns a result
-   * @param <R>            type of the result produced by the supplied function
-   * @return the value returned by {@code clientFunction}
+   * @param clientFunction function that accepts an {@link AdminClient} and returns a result;
+   *                       the client is closed automatically when the function returns
+   * @param <R>            return type of the function
+   * @return the value produced by {@code clientFunction}
    */
   public <R> R invokeAdminClient (Function<AdminClient, R> clientFunction) {
 
@@ -162,11 +166,12 @@ public class KafkaConnector {
   }
 
   /**
-   * Creates a Kafka {@link Producer} that publishes {@code Long} keys and byte array values.
-   * The producer is tuned for low-latency fire-and-forget semantics (acks=0, no retries).
+   * Creates a {@link Producer} configured for fire-and-forget semantics: {@code acks=0},
+   * no retries, and a short delivery timeout.  The producer writes {@code Long} keys and
+   * raw byte-array values.
    *
-   * @param clientId client identifier passed to Kafka for tracing and metrics
-   * @return configured {@link Producer} instance
+   * @param clientId client identifier reported to the broker for monitoring and tracing
+   * @return a ready-to-use {@link Producer}; the caller is responsible for closing it
    */
   public Producer<Long, byte[]> createProducer (String clientId) {
 
@@ -198,13 +203,15 @@ public class KafkaConnector {
   }
 
   /**
-   * Creates a Kafka {@link Consumer} that reads {@code Long} keys and byte array values and optionally subscribes to topics.
-   * Offsets are not auto-committed; callers are responsible for committing once messages are handled.
+   * Creates a {@link Consumer} that reads {@code Long} keys and byte-array values with manual
+   * offset commits ({@code enable.auto.commit=false}) and resets to the latest offset on first
+   * assignment.  If {@code topics} are provided the consumer subscribes immediately.
    *
-   * @param clientId consumer client identifier
-   * @param groupId  consumer group identifier
-   * @param topics   optional list of topics to subscribe to immediately
-   * @return configured {@link Consumer}
+   * @param clientId consumer client identifier reported to the broker
+   * @param groupId  consumer group this instance belongs to
+   * @param topics   zero or more topic names to subscribe to; passing {@code null} or an empty
+   *                 array leaves the consumer unsubscribed
+   * @return a configured {@link Consumer}; the caller is responsible for closing it
    */
   public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String... topics) {
 

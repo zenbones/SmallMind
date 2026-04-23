@@ -35,17 +35,33 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Base class for Sleuth events that include a throwable cause.
+ * Intermediate base class for {@link TimedSleuthEvent} subtypes that also carry the throwable
+ * responsible for the non-successful outcome.
+ * <p>
+ * Concrete subclasses distinguish the category of failure:
+ * <ul>
+ *   <li>{@link FailureSleuthEvent} — the throwable is an {@link AssertionError} (test assertion failed)</li>
+ *   <li>{@link ErrorSleuthEvent} — the throwable is any other exception (unexpected runtime error)</li>
+ *   <li>{@link MootSleuthEvent} — the throwable signals an unmet assumption (test rendered moot)</li>
+ *   <li>{@link FatalSleuthEvent} — the throwable caused the runner itself to halt</li>
+ * </ul>
+ *
+ * @see FailureSleuthEvent
+ * @see ErrorSleuthEvent
+ * @see MootSleuthEvent
+ * @see FatalSleuthEvent
  */
 public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
   private final Throwable throwable;
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param throwable  associated throwable
+   * Constructs a throwable event with the given identity, elapsed time, and cause.
+   *
+   * @param className  fully qualified name of the class that produced the event; must not be {@code null}
+   * @param methodName name of the method that produced the event; may be {@code null} for suite-level events
+   * @param elapsed    wall-clock time in milliseconds from method invocation to the point the throwable was caught
+   * @param throwable  the exception or error that triggered this event; must not be {@code null}
    */
   public ThrowableSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
 
@@ -55,7 +71,9 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
-   * @return throwable that caused the event
+   * Returns the throwable that caused this event.
+   *
+   * @return the exception or error; never {@code null}
    */
   public Throwable getThrowable () {
 
@@ -63,7 +81,10 @@ public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
-   * @return colored string representation including the throwable
+   * Returns a human-readable, ANSI-colored string showing the event type, class, method, elapsed time,
+   * and the throwable.
+   *
+   * @return formatted event description; never {@code null}
    */
   @Override
   public String toString () {

@@ -35,12 +35,15 @@ package org.smallmind.nutsnbolts.resource;
 import java.io.InputStream;
 
 /**
- * {@link Resource} backed by the current thread's context class loader.
+ * A {@link Resource} implementation that locates content on the classpath using the current
+ * thread's context class loader.
  */
 public class ClasspathResource extends AbstractResource {
 
   /**
-   * @param path classpath location; leading slash is optional
+   * Constructs a {@code ClasspathResource} for the given classpath location.
+   *
+   * @param path classpath-relative path to the resource; a leading slash is stripped automatically
    */
   public ClasspathResource (String path) {
 
@@ -48,7 +51,9 @@ public class ClasspathResource extends AbstractResource {
   }
 
   /**
-   * @return {@code classpath}
+   * Returns the scheme identifier for this resource type.
+   *
+   * @return the string {@code "classpath"}
    */
   public String getScheme () {
 
@@ -56,9 +61,9 @@ public class ClasspathResource extends AbstractResource {
   }
 
   /**
-   * Resolves the classpath resource and returns a stream if found.
+   * Resolves the classpath entry and opens it for reading using the context class loader.
    *
-   * @return input stream for the classpath resource, or {@code null} if not found or no path supplied
+   * @return an input stream for the resource, or {@code null} if the path is empty or the entry cannot be found
    */
   public InputStream getInputStream () {
 

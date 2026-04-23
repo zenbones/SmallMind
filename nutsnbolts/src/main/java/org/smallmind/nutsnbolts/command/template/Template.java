@@ -48,7 +48,7 @@ import org.smallmind.nutsnbolts.xml.sax.ExtensibleSAXParser;
 import org.xml.sax.InputSource;
 
 /**
- * Defines the complete set of allowable command line options for an application.
+ * Defines the complete set of allowable command line options for an application and serves as the contract passed to {@link org.smallmind.nutsnbolts.command.CommandLineParser}.
  */
 public class Template {
 
@@ -60,9 +60,9 @@ public class Template {
   private final String shortName;
 
   /**
-   * Creates a template whose default short name is derived from the entry class.
+   * Creates a template whose short name is the simple class name of the given entry class.
    *
-   * @param entryClass class representing the entry point
+   * @param entryClass class whose simple name becomes the command's short name
    */
   public Template (Class<?> entryClass) {
 
@@ -70,11 +70,11 @@ public class Template {
   }
 
   /**
-   * Creates a template with the given short name and optional root options.
+   * Creates a template with an explicit short name and registers the supplied root options immediately.
    *
-   * @param shortName short name of the command (used in help)
-   * @param options   root options to register
-   * @throws CommandLineException if validation of the options fails
+   * @param shortName short name of the command, typically used in help/usage output
+   * @param options   root-level options to register at construction time
+   * @throws CommandLineException if any option fails validation (missing name and flag, or duplicate name/flag)
    */
   public Template (String shortName, Option... options)
     throws CommandLineException {
@@ -85,11 +85,12 @@ public class Template {
   }
 
   /**
-   * Loads a template from an XML descriptor named after the entry class with suffix ".arguments.xml".
+   * Loads and returns a {@link Template} by parsing an XML descriptor resource located alongside the given entry class.
+   * The resource is expected on the classpath at {@code <canonical-class-path>.arguments.xml}.
    *
-   * @param entryClass class representing the entry point
-   * @return populated template
-   * @throws CommandLineException if the resource is missing or parsing fails
+   * @param entryClass class whose canonical name determines the path of the XML descriptor
+   * @return fully populated {@link Template} derived from the XML descriptor
+   * @throws CommandLineException if the resource cannot be located, or if parsing or option validation fails
    */
   public static Template createTemplate (Class<?> entryClass)
     throws CommandLineException {
@@ -114,7 +115,9 @@ public class Template {
   }
 
   /**
-   * @return short name for the command
+   * Returns the short name of the command, typically the entry class simple name or an explicitly supplied label.
+   *
+   * @return command short name for use in help and usage output
    */
   public String getShortName () {
 
@@ -122,7 +125,9 @@ public class Template {
   }
 
   /**
-   * @return immutable view of the root option list
+   * Returns an unmodifiable view of the root-level options registered in declaration order.
+   *
+   * @return immutable ordered list of root {@link Option} objects
    */
   public synchronized List<Option> getRootOptionList () {
 
@@ -130,7 +135,9 @@ public class Template {
   }
 
   /**
-   * @return immutable view of all options, including nested children
+   * Returns an unmodifiable view of all registered options, including nested child options.
+   *
+   * @return immutable flat set of all {@link Option} objects known to this template
    */
   public synchronized Set<Option> getOptionSet () {
 
@@ -138,10 +145,10 @@ public class Template {
   }
 
   /**
-   * Adds one or more root options to the template.
+   * Registers one or more root options with this template.
    *
-   * @param options options to register
-   * @throws CommandLineException if validation fails
+   * @param options options to add at the root level
+   * @throws CommandLineException if any option lacks both a name and a flag, or if a name or flag is already in use
    */
   public synchronized void addOptions (Option... options)
     throws CommandLineException {
@@ -150,11 +157,11 @@ public class Template {
   }
 
   /**
-   * Adds options to the template, optionally indicating that the list is a nested child list.
+   * Registers a list of options, recursively processing any child options, and optionally suppressing their addition to the root option list.
    *
-   * @param optionList options to register
-   * @param sublist    {@code true} when the list represents child options
-   * @throws CommandLineException if names or flags are missing or not unique
+   * @param optionList ordered list of options to register
+   * @param sublist    {@code true} when the list represents child options and should not be added to the root list
+   * @throws CommandLineException if any option lacks both a name and a flag, or if a name or flag is not unique
    */
   public synchronized void addOptions (List<Option> optionList, boolean sublist)
     throws CommandLineException {
@@ -193,7 +200,9 @@ public class Template {
   }
 
   /**
-   * Renders the template as a nested textual representation.
+   * Returns a human-readable, nested textual representation of all registered options and their argument types.
+   *
+   * @return formatted string showing the option hierarchy with required/optional brackets
    */
   public synchronized String toString () {
 
@@ -205,10 +214,10 @@ public class Template {
   }
 
   /**
-   * Recursive helper to append options to a string builder in readable form.
+   * Recursively appends a formatted representation of each option in the list to the builder, descending into child options.
    *
-   * @param lineBuilder builder receiving the formatted options
-   * @param optionList  options to render
+   * @param lineBuilder builder that accumulates the formatted output
+   * @param optionList  options to format at the current nesting level
    */
   private void stringifyOptions (StringBuilder lineBuilder, List<Option> optionList) {
 

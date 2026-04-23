@@ -40,7 +40,15 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that constructs {@link MemcachedCacheDomain} instances for DAO configuration.
+ * Spring {@link FactoryBean} that assembles a {@link MemcachedCacheDomain} from injected
+ * configuration properties.
+ *
+ * <p>A {@link MemcachedCacheDomain} is created during {@link #afterPropertiesSet()} only when
+ * a non-null {@link ProxyMemcachedClient} has been supplied. This allows optional memcached
+ * caching to be declared in a Spring context without causing a startup failure when no client
+ * is available.</p>
+ *
+ * <p>This bean is always singleton-scoped.</p>
  */
 public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCacheDomain<?, ?>>, InitializingBean {
 
@@ -51,9 +59,9 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   private int timeToLiveSeconds;
 
   /**
-   * Sets the memcached client used by the domain.
+   * Sets the memcached client that the domain will use to operate on the cache cluster.
    *
-   * @param memcachedClient configured memcached client
+   * @param memcachedClient the configured client; may be {@code null} to suppress domain creation
    */
   public void setMemcachedClient (ProxyMemcachedClient memcachedClient) {
 
@@ -61,9 +69,9 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * Sets the discriminator applied to all keys created by the domain.
+   * Sets the discriminator namespace applied to every key managed by the domain.
    *
-   * @param discriminator namespace prefix for cache keys
+   * @param discriminator the namespace prefix string
    */
   public void setDiscriminator (String discriminator) {
 
@@ -71,9 +79,9 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * Sets the default TTL applied to cached entries.
+   * Sets the default time-to-live applied to all cached entries in this domain.
    *
-   * @param timeToLiveSeconds TTL in seconds
+   * @param timeToLiveSeconds the default TTL in seconds
    */
   public void setTimeToLiveSeconds (int timeToLiveSeconds) {
 
@@ -81,9 +89,10 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * Sets optional per-class TTL overrides.
+   * Sets an optional map of per-class TTL overrides that take precedence over the domain default.
    *
-   * @param timeToLiveOverrideMap map of managed class to TTL override
+   * @param timeToLiveOverrideMap map from entity class to override TTL in seconds; may be
+   *                              {@code null}
    */
   public void setTimeToLiveOverrideMap (Map<Class<?>, Integer> timeToLiveOverrideMap) {
 
@@ -91,9 +100,10 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * Instantiates the cache domain once required properties are present.
+   * Constructs the {@link MemcachedCacheDomain} from the injected properties, provided that a
+   * client has been supplied.
    *
-   * @throws IOException if initialization fails
+   * @throws IOException if domain initialisation fails
    */
   @Override
   public void afterPropertiesSet ()
@@ -105,7 +115,10 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * @return the constructed memcached cache domain
+   * Returns the constructed {@link MemcachedCacheDomain}, or {@code null} if no client was
+   * supplied.
+   *
+   * @return the cache domain, or {@code null}
    */
   @Override
   public MemcachedCacheDomain<?, ?> getObject () {
@@ -114,7 +127,9 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * @return type exposed by this factory bean
+   * Returns the concrete type produced by this factory.
+   *
+   * @return {@link MemcachedCacheDomain}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -123,7 +138,9 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   }
 
   /**
-   * @return {@code true} to indicate the factory is singleton-scoped
+   * Reports that this factory bean always returns the same singleton instance.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {

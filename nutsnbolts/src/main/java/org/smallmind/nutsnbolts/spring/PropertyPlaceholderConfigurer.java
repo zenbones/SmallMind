@@ -71,8 +71,8 @@ import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.core.PriorityOrdered;
 
 /**
- * Bean factory post-processor that loads property resources, performs expansion (optionally with decryption), and applies values to bean definitions.
- * Supports debug logging of selected keys and honoring system property resolution rules.
+ * A {@link BeanFactoryPostProcessor} that loads property resources, optionally decrypts values, expands placeholders,
+ * and applies the results to bean definitions; supports debug logging of selected keys via dot-notation patterns.
  */
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
 
@@ -90,7 +90,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   private int order;
 
   /**
-   * @return unmodifiable view of debug keys and resolved values
+   * Returns an unmodifiable sorted view of the property keys selected for debug logging and their resolved values.
+   *
+   * @return sorted map of debugged property keys to their resolved string values
    */
   public SortedMap<String, String> getDebugMap () {
 
@@ -98,7 +100,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the owning bean factory, used to guard against processing this configurer's own bean definition.
+   *
+   * @param beanFactory the enclosing bean factory
    */
   public void setBeanFactory (BeanFactory beanFactory) {
 
@@ -106,7 +110,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * {@inheritDoc}
+   * Records this bean's name so it can be skipped during bean definition visitation.
+   *
+   * @param beanName the name assigned to this bean in the context
    */
   public void setBeanName (String beanName) {
 
@@ -114,7 +120,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the priority order used to sequence this post-processor relative to others.
+   *
+   * @return the ordering value
    */
   @Override
   public int getOrder () {
@@ -123,9 +131,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Sets ordering priority.
+   * Sets the priority order used to sequence this post-processor relative to others.
    *
-   * @param order priority value
+   * @param order the ordering value
    */
   public void setOrder (int order) {
 
@@ -133,9 +141,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Configures a decryptor for encrypted property values.
+   * Supplies a {@link Decryptor} that will be applied to encrypted property values during expansion.
    *
-   * @param decryptor decryptor implementation
+   * @param decryptor the decryptor implementation to use
    */
   public void setDecryptor (Decryptor decryptor) {
 
@@ -143,9 +151,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Sets the system property resolution mode.
+   * Sets the system property resolution mode that governs how system properties interact with loaded property values.
    *
-   * @param systemPropertyMode mode to use when expanding properties
+   * @param systemPropertyMode the resolution mode to apply
    */
   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
 
@@ -153,9 +161,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Whether to ignore missing resources when loading property files.
+   * Controls whether a missing property resource causes an error or is silently skipped.
    *
-   * @param ignoreResourceNotFound flag controlling missing resource behavior
+   * @param ignoreResourceNotFound {@code true} to silently skip missing resources
    */
   public void setIgnoreResourceNotFound (boolean ignoreResourceNotFound) {
 
@@ -163,9 +171,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Whether unresolved placeholders should be ignored.
+   * Controls whether unresolvable property placeholders in bean definitions are silently ignored.
    *
-   * @param ignoreUnresolvableProperties flag controlling unresolved placeholder handling
+   * @param ignoreUnresolvableProperties {@code true} to leave unresolvable placeholders unchanged
    */
   public void setIgnoreUnresolvableProperties (boolean ignoreUnresolvableProperties) {
 
@@ -173,9 +181,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Whether system environment variables should be searched.
+   * Controls whether the OS environment variables are consulted during property placeholder expansion.
    *
-   * @param searchSystemEnvironment flag indicating environment search
+   * @param searchSystemEnvironment {@code true} to include environment variables in the search
    */
   public void setSearchSystemEnvironment (boolean searchSystemEnvironment) {
 
@@ -183,9 +191,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Adds property resource locations to load.
+   * Appends additional property resource locations to the list that will be loaded during post-processing.
    *
-   * @param locations resource locations
+   * @param locations resource location strings to add
    */
   public void setLocations (List<String> locations) {
 
@@ -193,10 +201,10 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Enables debug logging for matched property keys.
+   * Configures dot-notation patterns used to select property keys for debug logging.
    *
-   * @param debugPatterns include/exclude patterns
-   * @throws DotNotationException if a pattern is invalid
+   * @param debugPatterns include/exclude patterns; patterns prefixed with {@code -} are exclusions
+   * @throws DotNotationException if any pattern cannot be compiled
    */
   public void setDebugKeys (String[] debugPatterns)
     throws DotNotationException {
@@ -205,10 +213,11 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Loads property resources, resolves placeholders, and applies resolved values to bean definitions.
+   * Loads all configured property resources, expands placeholders in bean definitions, and optionally prints debug output
+   * for keys that match the configured debug patterns.
    *
-   * @param beanFactoryToProcess the bean factory being processed
-   * @throws BeansException if property expansion fails
+   * @param beanFactoryToProcess the bean factory whose definitions will be processed
+   * @throws BeansException if any property resource fails to load or a placeholder cannot be resolved
    */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
@@ -321,13 +330,14 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   }
 
   /**
-   * Loads properties from a single resource location and merges them into the provided map.
+   * Resolves a single resource location string, determines the property file type from the extension,
+   * and merges all entries from that resource into the given property map.
    *
-   * @param resourceParser   parser used to obtain the resource
-   * @param locationExpander expander used on the location string
-   * @param propertyMap      destination map for loaded properties
-   * @param location         resource location string
-   * @throws RuntimeBeansException wrapping any non-ignored failures
+   * @param resourceParser   parser used to resolve the location string to a {@link Resource}
+   * @param locationExpander expander applied to the location string before resource resolution
+   * @param propertyMap      destination map to which loaded property entries are written
+   * @param location         the resource location string to load
+   * @throws RuntimeBeansException wrapping any exception that is not suppressed by {@code ignoreResourceNotFound}
    */
   private void extractProperties (ResourceParser resourceParser, PropertyExpander locationExpander, Map<String, Object> propertyMap, String location) {
 

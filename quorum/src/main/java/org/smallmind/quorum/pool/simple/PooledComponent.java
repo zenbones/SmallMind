@@ -33,12 +33,20 @@
 package org.smallmind.quorum.pool.simple;
 
 /**
- * Marker for objects that can be pooled and terminated by the simple pool.
+ * Marker interface required of all objects managed by a simple {@link ComponentPool}.
+ * <p>
+ * The pool calls {@link #terminate()} when it permanently retires a component — either because the
+ * pool is shrinking below its capacity cap when a component is returned, or because {@link ComponentPool#close()}
+ * is draining the free list. Implementations should release any underlying resources (connections,
+ * file handles, etc.) inside this method.
  */
 public interface PooledComponent {
 
   /**
-   * Releases any resources held by the component.
+   * Releases all resources held by this component.
+   * <p>
+   * Called by the pool exactly once, just before the component is discarded. After this call the
+   * pool will never hand out or interact with the component again.
    */
   void terminate ();
 }

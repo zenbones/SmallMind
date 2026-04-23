@@ -38,7 +38,8 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * Signal that carries a return value or error indicator back to the caller.
+ * Wire signal that carries the outcome of a remote invocation back to the caller, holding
+ * the return value (or error payload), the JVM native type descriptor, and an error flag.
  */
 @XmlRootElement(name = "result", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -49,18 +50,18 @@ public class ResultSignal implements Signal {
   private boolean error;
 
   /**
-   * Default constructor for JAXB.
+   * No-argument constructor required by JAXB.
    */
   public ResultSignal () {
 
   }
 
   /**
-   * Creates a populated result signal.
+   * Creates a fully populated result signal.
    *
-   * @param error      {@code true} when the result represents an error payload
-   * @param nativeType JVM descriptor for the result type
-   * @param result     result object or error value
+   * @param error      {@code true} when the invocation failed and {@code result} is an error object
+   * @param nativeType JVM descriptor string for the declared return type of the invoked method
+   * @param result     the return value on success, or the error object on failure
    */
   public ResultSignal (boolean error, String nativeType, Object result) {
 
@@ -70,9 +71,9 @@ public class ResultSignal implements Signal {
   }
 
   /**
-   * Indicates whether the result represents an error.
+   * Returns {@code true} when the remote invocation failed and {@code result} contains an error payload.
    *
-   * @return {@code true} when the invocation failed
+   * @return {@code true} if this signal represents an error
    */
   @XmlElement(name = "error", required = true)
   public boolean isError () {
@@ -83,7 +84,7 @@ public class ResultSignal implements Signal {
   /**
    * Sets the error flag.
    *
-   * @param error {@code true} if the payload is an error
+   * @param error {@code true} if the payload is an error; {@code false} for a normal return value
    */
   public void setError (boolean error) {
 
@@ -91,9 +92,10 @@ public class ResultSignal implements Signal {
   }
 
   /**
-   * Returns the JVM descriptor for the result type.
+   * Returns the JVM descriptor string for the declared return type of the invoked method
+   * (e.g., {@code Ljava/lang/String;} or {@code V}).
    *
-   * @return native type descriptor
+   * @return the native type descriptor
    */
   @XmlElement(name = "nativeType", required = true)
   public String getNativeType () {
@@ -102,9 +104,9 @@ public class ResultSignal implements Signal {
   }
 
   /**
-   * Sets the JVM descriptor for the result type.
+   * Sets the JVM descriptor string for the declared return type.
    *
-   * @param nativeType native type descriptor
+   * @param nativeType the native type descriptor string
    */
   public void setNativeType (String nativeType) {
 
@@ -112,9 +114,10 @@ public class ResultSignal implements Signal {
   }
 
   /**
-   * Returns the result value or error payload.
+   * Returns the result value on a successful invocation, or the error object when
+   * {@link #isError()} is {@code true}.
    *
-   * @return result object
+   * @return the result or error payload
    */
   @XmlElement(name = "result", required = true)
   public Object getResult () {
@@ -123,9 +126,9 @@ public class ResultSignal implements Signal {
   }
 
   /**
-   * Sets the result value or error payload.
+   * Sets the result value or error payload for this signal.
    *
-   * @param result result object
+   * @param result the return value or error object to carry
    */
   public void setResult (Object result) {
 

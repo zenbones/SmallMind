@@ -40,8 +40,8 @@ import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 /**
- * Reflection helpers for interacting with JavaBean-style objects, including cached getter/setter lookup
- * and dotted path traversal for nested properties.
+ * Static helpers for reflective JavaBean interaction, providing cached getter, setter, and method
+ * lookup as well as dotted-path traversal for nested property access.
  */
 public class BeanUtility {
 
@@ -50,10 +50,11 @@ public class BeanUtility {
   private static final ClassLoaderAwareCache<MethodKey, Method> METHOD_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
 
   /**
-   * Resolves the expected parameter class for a setter, honoring {@link TypeHint} annotations when present.
+   * Returns the parameter type that should be used when invoking the given setter, preferring the
+   * class declared by a {@link TypeHint} annotation on the first parameter over the reflected type.
    *
-   * @param setterMethod the setter to inspect
-   * @return the class to use when invoking the setter
+   * @param setterMethod the setter method to inspect
+   * @return the {@link TypeHint}-declared class if present, or the method's declared parameter type
    */
   public static Class<?> getParameterClass (Method setterMethod) {
 
@@ -72,10 +73,10 @@ public class BeanUtility {
   }
 
   /**
-   * Converts a field name to a canonical getter name (e.g., {@code foo} to {@code getFoo}).
+   * Converts a lower-camel-case field name to a {@code getXxx} getter name.
    *
-   * @param name the field name
-   * @return the getter name
+   * @param name the field or property name, e.g. {@code firstName}
+   * @return the corresponding getter name, e.g. {@code getFirstName}
    */
   public static String asGetterName (String name) {
 
@@ -88,10 +89,10 @@ public class BeanUtility {
   }
 
   /**
-   * Converts a boolean field name to an {@code isXxx} style getter.
+   * Converts a lower-camel-case boolean field name to an {@code isXxx} accessor name.
    *
-   * @param name the field name
-   * @return the boolean getter name
+   * @param name the boolean field or property name, e.g. {@code active}
+   * @return the corresponding accessor name, e.g. {@code isActive}
    */
   public static String asIsName (String name) {
 
@@ -104,10 +105,10 @@ public class BeanUtility {
   }
 
   /**
-   * Converts a field name to a canonical setter name (e.g., {@code foo} to {@code setFoo}).
+   * Converts a lower-camel-case field name to a {@code setXxx} setter name.
    *
-   * @param name the field name
-   * @return the setter name
+   * @param name the field or property name, e.g. {@code firstName}
+   * @return the corresponding setter name, e.g. {@code setFirstName}
    */
   public static String asSetterName (String name) {
 
@@ -120,14 +121,17 @@ public class BeanUtility {
   }
 
   /**
-   * Executes a nested getter path (e.g., {@code address.street}) on the supplied target.
+   * Reads a property value from {@code target} by following a dotted getter path.
+   * Each segment except the last must resolve to a non-null intermediate object;
+   * the final segment provides the returned value.
    *
-   * @param target    the root object
-   * @param fieldPath dotted path representing successive getters
-   * @param nullable  whether {@code null} values are allowed in the chain
-   * @return the resolved value or {@code null} when allowed
-   * @throws BeanAccessException     if a getter is missing or returns {@code null} when not allowed
-   * @throws BeanInvocationException if an invoked getter throws an exception
+   * @param target    the root object from which navigation starts
+   * @param fieldPath a dotted path of property names, e.g. {@code "address.city"}
+   * @param nullable  when {@code true}, a {@code null} intermediate value causes early return of {@code null};
+   *                  when {@code false}, a {@code null} intermediate causes a {@link BeanAccessException}
+   * @return the value at the end of the property path, or {@code null} if an intermediate was null and nullable
+   * @throws BeanAccessException     if a getter is absent or returns {@code null} when {@code nullable} is false
+   * @throws BeanInvocationException if any getter along the path throws an exception
    */
   public static Object executeGet (Object target, String fieldPath, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
@@ -162,14 +166,16 @@ public class BeanUtility {
   }
 
   /**
-   * Executes a nested setter path (e.g., {@code address.street}) on the supplied target.
+   * Writes a value by following a dotted setter path rooted at {@code target}.
+   * All segments except the last are resolved as getter calls to reach the owning object;
+   * the final segment is resolved as a setter call.
    *
-   * @param target    the root object
-   * @param fieldPath dotted path representing successive accessors ending in a setter
-   * @param value     the value to set
-   * @return the result of the setter invocation (often {@code null})
-   * @throws BeanAccessException     if a setter is missing
-   * @throws BeanInvocationException if an invoked accessor throws an exception
+   * @param target    the root object from which navigation starts
+   * @param fieldPath a dotted path of property names ending in the property to set, e.g. {@code "address.city"}
+   * @param value     the value to assign to the final property
+   * @return the return value of the setter invocation, typically {@code null}
+   * @throws BeanAccessException     if the setter method cannot be found
+   * @throws BeanInvocationException if any accessor along the path throws an exception
    */
   public static Object executeSet (Object target, String fieldPath, Object value)
     throws BeanAccessException, BeanInvocationException {
@@ -190,14 +196,15 @@ public class BeanUtility {
   }
 
   /**
-   * Invokes a named method on the supplied target, traversing a dotted path to reach the owning object.
+   * Navigates a dotted path on {@code target} to reach the owning object, then invokes the final
+   * segment as a method call with the supplied argument values.
    *
-   * @param target     the root object
-   * @param methodPath dotted path to the target method
-   * @param values     argument values for the method
-   * @return the method result
-   * @throws BeanAccessException     if the method cannot be resolved
-   * @throws BeanInvocationException if the invocation throws an exception
+   * @param target     the root object from which navigation starts
+   * @param methodPath a dotted path where all but the last segment are getters and the last is the method name
+   * @param values     the arguments to pass to the target method
+   * @return the value returned by the invoked method
+   * @throws BeanAccessException     if the target method cannot be found on the owning object
+   * @throws BeanInvocationException if any accessor or the final method throws an exception
    */
   public static Object execute (Object target, String methodPath, Object... values)
     throws BeanAccessException, BeanInvocationException {
@@ -217,14 +224,15 @@ public class BeanUtility {
   }
 
   /**
-   * Navigates intermediate getters for a dotted method path, returning the owning object for the final method.
+   * Walks all path components except the last by invoking getter methods, returning the object
+   * that owns the final component.
    *
-   * @param target         the root object
-   * @param methodName     the full dotted method path
-   * @param pathComponents the split path components
-   * @return the object that declares the final method
-   * @throws BeanAccessException     if a required getter is missing or returns {@code null}
-   * @throws BeanInvocationException if an invoked getter throws an exception
+   * @param target         the root object from which traversal begins
+   * @param methodName     the full dotted path string, used for error messages
+   * @param pathComponents the individual segments of the dotted path
+   * @return the intermediate object that declares the final path segment
+   * @throws BeanAccessException     if any intermediate getter is missing or returns {@code null}
+   * @throws BeanInvocationException if any intermediate getter throws an exception
    */
   private static Object traverseComponents (Object target, String methodName, String... pathComponents)
     throws BeanAccessException, BeanInvocationException {
@@ -254,12 +262,13 @@ public class BeanUtility {
   }
 
   /**
-   * Locates or caches a getter for the supplied property name.
+   * Returns a cached getter method for the named property on the target's class, looking up and caching
+   * it if not yet known.
    *
-   * @param target the object to inspect
-   * @param name   the property name
-   * @return the getter method
-   * @throws BeanAccessException if a suitable getter cannot be found
+   * @param target the object whose class should be searched for the getter
+   * @param name   the property name to look up via {@code getXxx} or {@code isXxx}
+   * @return the resolved getter {@link Method}
+   * @throws BeanAccessException if neither a {@code getXxx} nor an {@code isXxx} method can be found
    */
   private static Method acquireGetterMethod (Object target, String name)
     throws BeanAccessException {
@@ -292,13 +301,14 @@ public class BeanUtility {
   }
 
   /**
-   * Locates or caches a setter for the supplied property name.
+   * Returns a cached setter method for the named property on the target's class, looking up and caching
+   * it if not yet known.
    *
-   * @param target the object to inspect
-   * @param name   the property name
-   * @param value  the value that will be assigned
-   * @return the setter method
-   * @throws BeanAccessException if a suitable setter cannot be found
+   * @param target the object whose class should be searched for the setter
+   * @param name   the property name to look up via {@code setXxx}
+   * @param value  the value that will be passed to the setter, used for type matching
+   * @return the resolved setter {@link Method}
+   * @throws BeanAccessException if a compatible {@code setXxx} method cannot be found
    */
   private static Method acquireSetterMethod (Object target, String name, Object value)
     throws BeanAccessException {
@@ -319,13 +329,14 @@ public class BeanUtility {
   }
 
   /**
-   * Locates or caches a method with the supplied name and argument types.
+   * Returns a cached method with the given name on the target's class, looking up and caching
+   * it if not yet known.
    *
-   * @param target the object to inspect
-   * @param name   the method name
-   * @param values the arguments that will be passed
-   * @return the resolved method
-   * @throws BeanAccessException if no matching method is found
+   * @param target the object whose class should be searched for the method
+   * @param name   the method name to look up
+   * @param values the argument values to be passed, used for parameter type matching; may be empty
+   * @return the resolved {@link Method}
+   * @throws BeanAccessException if no method matching the name and argument types can be found
    */
   private static Method acquireMethod (Object target, String name, Object... values)
     throws BeanAccessException {
@@ -354,12 +365,13 @@ public class BeanUtility {
   }
 
   /**
-   * Finds a non-static method with a matching name and compatible parameter types.
+   * Searches the target's class for a public non-static method with the given name and
+   * compatible parameter types.
    *
-   * @param target         the object to inspect
-   * @param name           the method name
-   * @param parameterTypes expected parameter types
-   * @return the method or {@code null} if none match
+   * @param target         the object whose class is searched
+   * @param name           the exact method name
+   * @param parameterTypes the expected parameter types in declaration order
+   * @return the matching {@link Method}, or {@code null} if none is found
    */
   private static Method findMethod (Object target, String name, Class... parameterTypes) {
 
@@ -374,13 +386,14 @@ public class BeanUtility {
   }
 
   /**
-   * Retrieves a public, non-static method matching the supplied signature.
+   * Retrieves the public method with the given name and parameter types from the target's class,
+   * throwing {@link NoSuchMethodException} if the method is static.
    *
-   * @param target         the object to inspect
-   * @param name           the method name
-   * @param parameterTypes expected parameter types
-   * @return the method
-   * @throws NoSuchMethodException if no matching non-static method exists
+   * @param target         the object whose class is inspected
+   * @param name           the exact method name
+   * @param parameterTypes the expected parameter types in declaration order
+   * @return the matching non-static {@link Method}
+   * @throws NoSuchMethodException if the method does not exist or is static
    */
   private static Method getMethod (Object target, String name, Class... parameterTypes)
     throws NoSuchMethodException {
@@ -396,12 +409,12 @@ public class BeanUtility {
   }
 
   /**
-   * Tests whether a method declares parameters compatible with the supplied types,
-   * including basic primitive-wrapper equivalence.
+   * Returns {@code true} when the method's parameter count and types are compatible with
+   * the supplied types, accounting for primitive/wrapper equivalence.
    *
-   * @param method         the method to evaluate
-   * @param parameterTypes desired parameter types
-   * @return {@code true} if the signatures are compatible
+   * @param method         the method whose signature should be evaluated
+   * @param parameterTypes the desired parameter types to match against; may be empty or {@code null}
+   * @return {@code true} if the method accepts parameters that are essentially the same as those provided
    */
   private static boolean hasParameterTypes (Method method, Class... parameterTypes) {
 
@@ -425,7 +438,8 @@ public class BeanUtility {
   }
 
   /**
-   * Cache key combining a declaring class and method name.
+   * Composite cache key that pairs a declaring class with a method or property name to avoid
+   * redundant reflective lookups.
    */
   private static class MethodKey {
 
@@ -439,7 +453,9 @@ public class BeanUtility {
     }
 
     /**
-     * @return the declaring class of the cached method
+     * Returns the class component of this cache key.
+     *
+     * @return the declaring class associated with this key
      */
     private Class<?> getMethodClass () {
 
@@ -447,7 +463,9 @@ public class BeanUtility {
     }
 
     /**
-     * @return the name of the cached method
+     * Returns the method or property name component of this cache key.
+     *
+     * @return the method or property name associated with this key
      */
     private String getMethodName () {
 
@@ -455,7 +473,9 @@ public class BeanUtility {
     }
 
     /**
-     * @return a hash code combining the class and method name
+     * Computes a hash code from the class and method name for use in hash-based maps.
+     *
+     * @return the XOR of the class hash code and the method name hash code
      */
     @Override
     public int hashCode () {
@@ -464,10 +484,10 @@ public class BeanUtility {
     }
 
     /**
-     * Compares cache keys by class and method name.
+     * Returns {@code true} if {@code obj} is a {@code MethodKey} with the same class and method name.
      *
-     * @param obj the object to compare
-     * @return {@code true} if both refer to the same class and method
+     * @param obj the object to compare with this key
+     * @return {@code true} if both keys identify the same class and method name
      */
     @Override
     public boolean equals (Object obj) {

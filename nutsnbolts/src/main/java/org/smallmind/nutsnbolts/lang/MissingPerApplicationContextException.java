@@ -33,15 +33,16 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Thrown when a per-application context is requested but not available.
+ * Thrown when an operation requires a per-application context that has not been initialized on
+ * the current thread.
  */
 public class MissingPerApplicationContextException extends FormattedRuntimeException {
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a formatted message describing the missing context.
    *
-   * @param message the format string describing the missing context
-   * @param args    arguments applied to the format string
+   * @param message the format string for the detail message
+   * @param args    arguments substituted into the format string
    */
   public MissingPerApplicationContextException (String message, Object... args) {
 

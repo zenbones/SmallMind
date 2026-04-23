@@ -33,7 +33,8 @@
 package org.smallmind.persistence.cache;
 
 /**
- * Holder for a cached value and its CAS version token.
+ * Immutable holder pairing a cached value with its CAS version token, used by
+ * {@link CASSupportingPersistenceCache} to perform optimistic updates.
  *
  * @param <V> value type
  */
@@ -45,8 +46,10 @@ public class CASValue<V> {
   private final long version;
 
   /**
-   * @param value   cached value
-   * @param version CAS version token
+   * Constructs a CAS value with the given content and version.
+   *
+   * @param value   value retrieved from the cache; may be {@code null}
+   * @param version version token associated with the cached entry
    */
   public CASValue (V value, long version) {
 
@@ -55,8 +58,11 @@ public class CASValue<V> {
   }
 
   /**
-   * @param <V> inferred type
-   * @return shared null instance representing a missing value
+   * Returns the shared sentinel instance representing a missing cache entry (value {@code null},
+   * version {@code 0}).
+   *
+   * @param <V> inferred value type
+   * @return shared null {@link CASValue} instance
    */
   public static <V> CASValue<V> nullInstance () {
 
@@ -64,7 +70,9 @@ public class CASValue<V> {
   }
 
   /**
-   * @return CAS version token
+   * Returns the CAS version token for use in a subsequent {@code putViaCas} call.
+   *
+   * @return version token
    */
   public long getVersion () {
 
@@ -72,7 +80,9 @@ public class CASValue<V> {
   }
 
   /**
-   * @return cached value (may be null)
+   * Returns the cached value.
+   *
+   * @return cached value, or {@code null} if the entry was absent
    */
   public V getValue () {
 

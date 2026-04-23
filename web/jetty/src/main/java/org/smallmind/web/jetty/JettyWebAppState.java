@@ -39,7 +39,7 @@ import org.smallmind.web.jetty.installer.ServletInstaller;
 import org.smallmind.web.jetty.installer.WebServiceInstaller;
 
 /**
- * Mutable holder for installers that should be applied to a specific Jetty web application context.
+ * Accumulates the set of installers — listeners, filters, servlets, and web services — that will be applied to a single Jetty web application context.
  */
 public class JettyWebAppState {
 
@@ -49,7 +49,7 @@ public class JettyWebAppState {
   private final LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
 
   /**
-   * Adds a SOAP web service installer to this context.
+   * Appends a SOAP web service installer to this context's list.
    *
    * @param webServiceInstaller the installer describing the service to publish
    */
@@ -59,7 +59,7 @@ public class JettyWebAppState {
   }
 
   /**
-   * Retrieves the list of SOAP web service installers for this context.
+   * Returns all SOAP web service installers registered for this context.
    *
    * @return mutable list of web service installers
    */
@@ -69,9 +69,9 @@ public class JettyWebAppState {
   }
 
   /**
-   * Adds a servlet context listener installer to this context.
+   * Appends a servlet context listener installer to this context's list.
    *
-   * @param listenerInstaller the listener installer to register
+   * @param listenerInstaller the listener installer to add
    */
   public void addListenerInstaller (ListenerInstaller listenerInstaller) {
 
@@ -79,7 +79,7 @@ public class JettyWebAppState {
   }
 
   /**
-   * Retrieves all listener installers configured for this context.
+   * Returns all listener installers registered for this context.
    *
    * @return mutable list of listener installers
    */
@@ -89,9 +89,9 @@ public class JettyWebAppState {
   }
 
   /**
-   * Adds a filter installer to this context.
+   * Appends a filter installer to this context's list.
    *
-   * @param filterInstaller the filter installer to register
+   * @param filterInstaller the filter installer to add
    */
   public void addFilterInstaller (FilterInstaller filterInstaller) {
 
@@ -99,7 +99,7 @@ public class JettyWebAppState {
   }
 
   /**
-   * Retrieves the filter installers configured for this context.
+   * Returns all filter installers registered for this context.
    *
    * @return mutable list of filter installers
    */
@@ -109,9 +109,9 @@ public class JettyWebAppState {
   }
 
   /**
-   * Adds a servlet installer to this context.
+   * Appends a servlet installer to this context's list.
    *
-   * @param servletInstaller the servlet installer to register
+   * @param servletInstaller the servlet installer to add
    */
   public void addServletInstaller (ServletInstaller servletInstaller) {
 
@@ -119,7 +119,7 @@ public class JettyWebAppState {
   }
 
   /**
-   * Retrieves the servlet installers configured for this context.
+   * Returns all servlet installers registered for this context.
    *
    * @return mutable list of servlet installers
    */

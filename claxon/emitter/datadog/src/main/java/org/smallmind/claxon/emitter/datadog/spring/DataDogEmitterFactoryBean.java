@@ -38,21 +38,51 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that creates a singleton {@link DataDogEmitter} with configurable connection and tags.
+ * Spring {@link FactoryBean} that constructs a singleton {@link DataDogEmitter} from
+ * Spring-injectable configuration properties.
+ *
+ * <p>Default values mirror those of the no-argument {@link DataDogEmitter} constructor:
+ * {@code hostName} defaults to {@code "localhost"}, {@code port} defaults to {@code 8125},
+ * and {@code countAsCount} defaults to {@code true}. All properties may be overridden via
+ * standard Spring dependency injection before {@link #afterPropertiesSet()} is called.
  */
 public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, InitializingBean {
 
+  /**
+   * The singleton {@link DataDogEmitter} constructed during {@link #afterPropertiesSet()}.
+   */
   private DataDogEmitter emitter;
+
+  /**
+   * Constant tags applied to every metric emission.
+   */
   private Tag[] constantTags;
+
+  /**
+   * Optional metric name prefix prepended to every emitted metric name.
+   */
   private String prefix;
+
+  /**
+   * Hostname of the Datadog StatsD agent; defaults to {@code "localhost"}.
+   */
   private String hostName = "localhost";
+
+  /**
+   * When {@code true}, quantities of type COUNT are emitted as StatsD counters rather than
+   * gauges; defaults to {@code true}.
+   */
   private boolean countAsCount = true;
+
+  /**
+   * UDP port of the Datadog StatsD agent; defaults to {@code 8125}.
+   */
   private int port = 8125;
 
   /**
-   * Sets an optional metric prefix.
+   * Sets an optional prefix that is prepended to every metric name before emission.
    *
-   * @param prefix prefix to prepend to metric names
+   * @param prefix the prefix string; may be {@code null} to disable prefixing
    */
   public void setPrefix (String prefix) {
 
@@ -60,9 +90,9 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * Sets the StatsD host name.
+   * Sets the hostname of the Datadog StatsD agent.
    *
-   * @param hostName host name
+   * @param hostName the StatsD agent hostname; must not be {@code null}
    */
   public void setHostName (String hostName) {
 
@@ -70,9 +100,9 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * Sets the StatsD port.
+   * Sets the UDP port on which the Datadog StatsD agent listens.
    *
-   * @param port port number
+   * @param port the port number
    */
   public void setPort (int port) {
 
@@ -80,9 +110,10 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * Controls whether count quantities are emitted as counters instead of gauges.
+   * Controls whether quantities of type COUNT are sent as StatsD counters instead of gauges.
    *
-   * @param countAsCount true to send counts as counters
+   * @param countAsCount {@code true} to emit counts as counters; {@code false} to emit them
+   *                     as gauges
    */
   public void setCountAsCount (boolean countAsCount) {
 
@@ -90,9 +121,10 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * Sets constant tags applied to every emission.
+   * Sets the constant tags that will be attached to every metric emitted by the produced
+   * {@link DataDogEmitter}.
    *
-   * @param constantTags constant tags
+   * @param constantTags array of tags; may be {@code null} or empty
    */
   public void setConstantTags (Tag[] constantTags) {
 
@@ -100,7 +132,9 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * @return always true; emitter is singleton
+   * Indicates that this factory always returns the same emitter instance.
+   *
+   * @return {@code true} because the produced {@link DataDogEmitter} is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -109,7 +143,9 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * @return produced object type ({@link DataDogEmitter})
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link DataDogEmitter}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -118,7 +154,9 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * @return the constructed emitter
+   * Returns the singleton {@link DataDogEmitter} built during {@link #afterPropertiesSet()}.
+   *
+   * @return the configured {@link DataDogEmitter}
    */
   @Override
   public DataDogEmitter getObject () {
@@ -127,7 +165,8 @@ public class DataDogEmitterFactoryBean implements FactoryBean<DataDogEmitter>, I
   }
 
   /**
-   * Builds the emitter after properties are set.
+   * Constructs the {@link DataDogEmitter} from the configured properties after Spring has
+   * finished injecting all values.
    */
   @Override
   public void afterPropertiesSet () {

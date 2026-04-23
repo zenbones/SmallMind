@@ -37,42 +37,46 @@ import jakarta.jms.Queue;
 import jakarta.jms.Topic;
 
 /**
- * Abstraction for locating JMS resources and managing the broker lifecycle.
+ * Lifecycle-aware service locator for JMS resources.
+ *
+ * <p>Implementations provide lookup operations for connection factories, queues, and topics,
+ * and expose {@link #start()} / {@link #stop()} hooks for managing any underlying broker
+ * or JNDI context lifecycle.
  */
 public interface MessageBroker {
 
   /**
-   * Looks up a JMS connection factory.
+   * Resolves a {@link ConnectionFactory} by the given identifier or JNDI path.
    *
-   * @param path identifier or JNDI path
-   * @return connection factory
-   * @throws Exception if lookup fails
+   * @param path broker-specific identifier or JNDI lookup path for the connection factory
+   * @return the resolved {@link ConnectionFactory}
+   * @throws Exception if the lookup fails
    */
   ConnectionFactory lookupConnectionFactory (String path)
     throws Exception;
 
   /**
-   * Looks up a JMS queue.
+   * Resolves a JMS {@link Queue} by the given identifier or JNDI path.
    *
-   * @param path identifier or JNDI path
-   * @return queue instance
-   * @throws Exception if lookup fails
+   * @param path broker-specific identifier or JNDI lookup path for the queue
+   * @return the resolved {@link Queue}
+   * @throws Exception if the lookup fails
    */
   Queue lookupQueue (String path)
     throws Exception;
 
   /**
-   * Looks up a JMS topic.
+   * Resolves a JMS {@link Topic} by the given identifier or JNDI path.
    *
-   * @param path identifier or JNDI path
-   * @return topic instance
-   * @throws Exception if lookup fails
+   * @param path broker-specific identifier or JNDI lookup path for the topic
+   * @return the resolved {@link Topic}
+   * @throws Exception if the lookup fails
    */
   Topic lookupTopic (String path)
     throws Exception;
 
   /**
-   * Starts the broker session or underlying resources.
+   * Starts the broker or its underlying resources.
    *
    * @throws Exception if startup fails
    */
@@ -80,7 +84,7 @@ public interface MessageBroker {
     throws Exception;
 
   /**
-   * Stops the broker session or underlying resources.
+   * Stops the broker or its underlying resources.
    *
    * @throws Exception if shutdown fails
    */

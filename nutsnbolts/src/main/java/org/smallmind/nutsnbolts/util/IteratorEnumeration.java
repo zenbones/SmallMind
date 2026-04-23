@@ -36,16 +36,18 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 /**
- * Adapts an {@link Iterator} to the {@link Enumeration} API.
+ * Adapter that wraps an {@link Iterator} and exposes it as a legacy {@link Enumeration}.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class IteratorEnumeration<T> implements Enumeration<T> {
 
   private final Iterator<T> internalIterator;
 
   /**
-   * @param internalIterator iterator to expose as an enumeration
+   * Constructs an enumeration backed by the given iterator.
+   *
+   * @param internalIterator the iterator to expose as an enumeration
    */
   public IteratorEnumeration (Iterator<T> internalIterator) {
 
@@ -53,7 +55,9 @@ public class IteratorEnumeration<T> implements Enumeration<T> {
   }
 
   /**
-   * @return {@code true} if the wrapped iterator has more elements
+   * Returns {@code true} if the underlying iterator has more elements.
+   *
+   * @return {@code true} if there are more elements to enumerate
    */
   @Override
   public boolean hasMoreElements () {
@@ -62,7 +66,9 @@ public class IteratorEnumeration<T> implements Enumeration<T> {
   }
 
   /**
-   * Returns the next element from the wrapped iterator.
+   * Returns the next element from the underlying iterator.
+   *
+   * @return the next element
    */
   @Override
   public T nextElement () {

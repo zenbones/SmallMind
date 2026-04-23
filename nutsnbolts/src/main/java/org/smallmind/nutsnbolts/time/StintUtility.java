@@ -35,17 +35,18 @@ package org.smallmind.nutsnbolts.time;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Helper for converting durations between {@link TimeUnit}s while preserving precision in double form.
+ * Utility methods for converting durations between {@link TimeUnit}s with fractional precision.
  */
 public class StintUtility {
 
   /**
-   * Converts a time quantity into another {@link TimeUnit}, yielding a double to retain fractional units.
+   * Converts a duration expressed in one {@link TimeUnit} to another, returning a {@code double} to preserve
+   * sub-unit precision when converting to a coarser unit.
    *
-   * @param fromTime     source duration
-   * @param fromTimeUnit source time unit
-   * @param toTimeUnit   target time unit
-   * @return converted value expressed in the target unit
+   * @param fromTime     the source duration value
+   * @param fromTimeUnit the unit of the source duration
+   * @param toTimeUnit   the target unit to convert into
+   * @return the duration expressed as a {@code double} in the target unit
    */
   public static double convertToDouble (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
 

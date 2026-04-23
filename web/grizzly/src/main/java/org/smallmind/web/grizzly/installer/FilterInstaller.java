@@ -36,7 +36,7 @@ import java.util.Map;
 import jakarta.servlet.Filter;
 
 /**
- * Describes a servlet filter to be installed into a Grizzly web application context.
+ * Descriptor for a servlet filter to be registered in a Grizzly web application context.
  */
 public class FilterInstaller extends GrizzlyInstaller {
 
@@ -49,6 +49,8 @@ public class FilterInstaller extends GrizzlyInstaller {
   private boolean matchAfter = false;
 
   /**
+   * Returns the installer type discriminator.
+   *
    * @return {@link GrizzlyInstallerType#FILTER}
    */
   @Override
@@ -58,7 +60,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return filter display name used when registering with the servlet context
+   * Returns the display name used when registering the filter with the servlet context.
+   *
+   * @return filter display name
    */
   public String getDisplayName () {
 
@@ -66,7 +70,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param displayName friendly name for the filter registration
+   * Sets the display name used when registering the filter with the servlet context.
+   *
+   * @param displayName friendly registration name
    */
   public void setDisplayName (String displayName) {
 
@@ -74,11 +80,11 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * Instantiates the filter instance if a class was supplied, or returns the provided instance.
+   * Returns the filter to deploy, instantiating from the configured class if no instance was set.
    *
-   * @return filter instance to deploy
-   * @throws InstantiationException if the filter cannot be instantiated
-   * @throws IllegalAccessException if the filter class or constructor is not accessible
+   * @return filter instance ready for deployment
+   * @throws InstantiationException if the filter class cannot be instantiated
+   * @throws IllegalAccessException if the filter class or no-arg constructor is not accessible
    */
   public Filter getFilter ()
     throws InstantiationException, IllegalAccessException {
@@ -87,6 +93,8 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets a pre-built filter instance to use instead of constructing one from a class.
+   *
    * @param filter concrete filter instance to register
    */
   public void setFilter (Filter filter) {
@@ -95,7 +103,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param filterClass filter implementation class to instantiate when deploying
+   * Sets the filter class to instantiate when no filter instance has been provided.
+   *
+   * @param filterClass filter implementation class
    */
   public void setFilterClass (Class<? extends Filter> filterClass) {
 
@@ -103,7 +113,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return init parameters to be supplied during filter registration
+   * Returns the init parameters to supply to the filter registration.
+   *
+   * @return init parameter map, or {@code null} if none
    */
   public Map<String, String> getInitParameters () {
 
@@ -111,7 +123,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param initParameters init parameters supplied to the servlet context
+   * Sets the init parameters to supply to the filter registration.
+   *
+   * @param initParameters filter init parameters
    */
   public void setInitParameters (Map<String, String> initParameters) {
 
@@ -119,7 +133,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return {@code true} if the filter should be matched after existing mappings
+   * Returns whether this filter's URL mapping should be added after existing mappings.
+   *
+   * @return {@code true} to map after existing filters
    */
   public boolean isMatchAfter () {
 
@@ -127,7 +143,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param matchAfter whether the mapping should occur after existing filters
+   * Controls whether the filter's URL mapping is added after existing mappings.
+   *
+   * @param matchAfter {@code true} to place the mapping after existing ones
    */
   public void setMatchAfter (boolean matchAfter) {
 
@@ -135,7 +153,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return URL pattern to map the filter to; defaults to {@code /*} when {@code null}
+   * Returns the URL pattern to map this filter to.
+   *
+   * @return URL pattern, or {@code null} to default to {@code /*}
    */
   public String getUrlPattern () {
 
@@ -143,6 +163,8 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets the URL pattern to map this filter to.
+   *
    * @param urlPattern URL pattern for the filter mapping
    */
   public void setUrlPattern (String urlPattern) {
@@ -151,7 +173,10 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return whether the filter supports async processing; {@code null} uses container default
+   * Returns whether the filter declares async support.
+   *
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} to leave the
+   * container default
    */
   public Boolean getAsyncSupported () {
 
@@ -159,7 +184,9 @@ public class FilterInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param asyncSupported flag indicating async support
+   * Sets whether the filter declares async support.
+   *
+   * @param asyncSupported async-support flag, or {@code null} to use the container default
    */
   public void setAsyncSupported (Boolean asyncSupported) {
 

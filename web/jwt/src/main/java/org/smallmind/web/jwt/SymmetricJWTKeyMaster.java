@@ -37,16 +37,16 @@ import java.security.Key;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 
 /**
- * Supplies an HMAC-based key master for JWT signing/verification using a shared secret.
+ * A {@link JWTKeyMaster} that derives an HMAC-SHA-256 key from a shared secret string for symmetric JWT signing and verification.
  */
 public class SymmetricJWTKeyMaster implements JWTKeyMaster {
 
   private final Key key;
 
   /**
-   * Constructs a key master from a shared secret string.
+   * Derives an HMAC-SHA-256 key from the UTF-8 encoding of the supplied secret.
    *
-   * @param secret the shared secret text
+   * @param secret the shared secret used as the HMAC key material
    */
   public SymmetricJWTKeyMaster (String secret) {
 

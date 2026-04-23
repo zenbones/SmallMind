@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
- * Describes a command line option including its name/flag, required status, children, and argument definition.
+ * Describes a single command line option, including its long name, single-character flag, required status, argument definition, and any child options that depend upon it.
  */
 public class Option {
 
@@ -48,12 +48,12 @@ public class Option {
   private Argument argument;
 
   /**
-   * Creates an option with no parent and optional child options.
+   * Creates a root option identified by a long name and/or flag, with optional child options that implicitly depend on it.
    *
-   * @param name     long option name (may be {@code null})
-   * @param flag     single-character flag (may be {@code null})
-   * @param required whether the option must be provided
-   * @param children child options that depend on this option
+   * @param name     long option name used with {@code --}; may be {@code null} or empty if {@code flag} is set
+   * @param flag     single-character flag used with {@code -}; may be {@code null} if {@code name} is set
+   * @param required {@code true} if the option must appear on the command line
+   * @param children zero or more child options whose parent is set to this option
    */
   public Option (String name, Character flag, boolean required, Option... children) {
 
@@ -71,13 +71,13 @@ public class Option {
   }
 
   /**
-   * Creates an option with an argument definition and optional children.
+   * Creates a root option with an argument definition and optional child options.
    *
-   * @param name     long option name (may be {@code null})
-   * @param flag     single-character flag (may be {@code null})
-   * @param required whether the option must be provided
-   * @param argument argument definition for the option
-   * @param children child options that depend on this option
+   * @param name     long option name used with {@code --}; may be {@code null} or empty if {@code flag} is set
+   * @param flag     single-character flag used with {@code -}; may be {@code null} if {@code name} is set
+   * @param required {@code true} if the option must appear on the command line
+   * @param argument argument definition describing how many values the option accepts
+   * @param children zero or more child options whose parent is set to this option
    */
   public Option (String name, Character flag, boolean required, Argument argument, Option... children) {
 
@@ -87,13 +87,13 @@ public class Option {
   }
 
   /**
-   * Creates a child option linked to a parent.
+   * Creates a child option that is linked to a parent option which must be present for this option to be valid.
    *
-   * @param parent   parent option that must be present
-   * @param name     long option name
-   * @param flag     single-character flag
-   * @param required whether the option must be provided
-   * @param children nested dependent options
+   * @param parent   parent option that must also be supplied on the command line
+   * @param name     long option name used with {@code --}; may be {@code null} or empty if {@code flag} is set
+   * @param flag     single-character flag used with {@code -}; may be {@code null} if {@code name} is set
+   * @param required {@code true} if the option must appear on the command line
+   * @param children zero or more grandchild options whose parent is set to this option
    */
   public Option (Option parent, String name, Character flag, boolean required, Option... children) {
 
@@ -103,14 +103,14 @@ public class Option {
   }
 
   /**
-   * Creates a child option with an argument definition.
+   * Creates a child option linked to a parent, with an argument definition and optional grandchild options.
    *
-   * @param parent   parent option that must be present
-   * @param name     long option name
-   * @param flag     single-character flag
-   * @param required whether the option must be provided
-   * @param argument argument definition
-   * @param children nested dependent options
+   * @param parent   parent option that must also be supplied on the command line
+   * @param name     long option name used with {@code --}; may be {@code null} or empty if {@code flag} is set
+   * @param flag     single-character flag used with {@code -}; may be {@code null} if {@code name} is set
+   * @param required {@code true} if the option must appear on the command line
+   * @param argument argument definition describing how many values the option accepts
+   * @param children zero or more grandchild options whose parent is set to this option
    */
   public Option (Option parent, String name, Character flag, boolean required, Argument argument, Option... children) {
 
@@ -120,7 +120,9 @@ public class Option {
   }
 
   /**
-   * @return long option name or {@code null}
+   * Returns the long name used with {@code --} on the command line.
+   *
+   * @return long option name, or {@code null} if not set
    */
   public String getName () {
 
@@ -128,7 +130,9 @@ public class Option {
   }
 
   /**
-   * @return flag character or {@code null}
+   * Returns the single-character flag used with {@code -} on the command line.
+   *
+   * @return flag character, or {@code null} if not set
    */
   public Character getFlag () {
 
@@ -136,7 +140,9 @@ public class Option {
   }
 
   /**
-   * @return {@code true} if the option is required
+   * Indicates whether the option must be present on every invocation.
+   *
+   * @return {@code true} if the option is mandatory
    */
   public boolean isRequired () {
 
@@ -144,7 +150,9 @@ public class Option {
   }
 
   /**
-   * @return parent option or {@code null} if root
+   * Returns the parent option that must be present when this option is used, or {@code null} for root options.
+   *
+   * @return parent {@link Option}, or {@code null} if this is a root option
    */
   public Option getParent () {
 
@@ -152,9 +160,9 @@ public class Option {
   }
 
   /**
-   * Sets the parent option dependency.
+   * Sets the parent option that this option depends upon.
    *
-   * @param parent parent option
+   * @param parent parent {@link Option} to associate with this option
    */
   public void setParent (Option parent) {
 
@@ -162,7 +170,9 @@ public class Option {
   }
 
   /**
-   * @return child options that depend on this option
+   * Returns the list of child options that require this option to also be present.
+   *
+   * @return child option list, or {@code null} if no children were declared
    */
   public LinkedList<Option> getChildren () {
 
@@ -170,9 +180,9 @@ public class Option {
   }
 
   /**
-   * Defines child options, replacing any existing list.
+   * Replaces the list of child options with the supplied list.
    *
-   * @param children new child option list
+   * @param children new ordered list of child {@link Option}s
    */
   public void setChildren (LinkedList<Option> children) {
 
@@ -180,7 +190,9 @@ public class Option {
   }
 
   /**
-   * @return argument definition or {@code null} if the option accepts none
+   * Returns the argument definition describing how many values this option accepts.
+   *
+   * @return argument definition, or {@code null} if none has been assigned
    */
   public Argument getArgument () {
 
@@ -188,9 +200,9 @@ public class Option {
   }
 
   /**
-   * Assigns the argument definition for the option.
+   * Assigns the argument definition that governs how this option's values are parsed.
    *
-   * @param argument argument model
+   * @param argument argument definition to associate with this option
    */
   public void setArgument (Argument argument) {
 

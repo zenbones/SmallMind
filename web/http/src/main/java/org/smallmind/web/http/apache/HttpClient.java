@@ -50,8 +50,8 @@ import org.apache.hc.core5.util.Timeout;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 /**
- * Thin wrapper around Apache HttpAsyncClient that configures a pooled HTTP/1 client with permissive TLS and provides a
- * simple execute helper using {@link HttpCallback} semantics.
+ * Singleton utility that manages a shared pooled HTTP/1 async client with permissive TLS settings and exposes a
+ * blocking execute method built on {@link HttpCallback} semantics.
  */
 public class HttpClient {
 
@@ -80,15 +80,14 @@ public class HttpClient {
   }
 
   /**
-   * Executes the given HTTP request asynchronously and waits for completion up to the provided timeout. The callback is
-   * invoked on completion, failure, or cancellation, and this method waits until the callback finishes handling.
+   * Submits the request to the shared async client and blocks until the callback handles the result or the timeout expires.
    *
-   * @param httpRequest    request to execute
-   * @param callback       callback that receives the result
-   * @param timeoutSeconds maximum time to wait for the operation
-   * @throws InterruptedException if the waiting thread is interrupted
-   * @throws ExecutionException   if execution fails before callback can handle it
-   * @throws TimeoutException     if the request or callback does not complete within the timeout
+   * @param httpRequest    the request to send
+   * @param callback       callback that receives the response, failure, or cancellation
+   * @param timeoutSeconds maximum seconds to wait for both the future and the callback to complete
+   * @throws InterruptedException if the calling thread is interrupted while waiting
+   * @throws ExecutionException   if the future completes with an unchecked execution failure
+   * @throws TimeoutException     if the combined wait exceeds the specified timeout
    */
   public static void execute (SimpleHttpRequest httpRequest, HttpCallback<SimpleHttpResponse> callback, int timeoutSeconds)
     throws InterruptedException, ExecutionException, TimeoutException {

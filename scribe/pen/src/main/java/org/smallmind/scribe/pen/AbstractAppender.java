@@ -36,8 +36,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Base implementation of an {@link Appender} that manages filters, error handling, and active state.
- * Subclasses need only implement {@link #handleOutput(Record)} to emit records.
+ * Skeletal {@link Appender} implementation that manages a filter chain, an active flag, and an
+ * {@link ErrorHandler}, routing each published {@link Record} through the filter chain before
+ * delegating to the concrete {@link #handleOutput(Record)} method.
  */
 public abstract class AbstractAppender implements Appender {
 
@@ -47,7 +48,7 @@ public abstract class AbstractAppender implements Appender {
   private boolean active = true;
 
   /**
-   * Constructs an appender without a name or error handler.
+   * Constructs an unnamed appender with no error handler and an empty filter chain.
    */
   public AbstractAppender () {
 
@@ -55,9 +56,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Constructs an appender with the given error handler.
+   * Constructs an unnamed appender with the given error handler and an empty filter chain.
    *
-   * @param errorHandler handler to invoke on failures
+   * @param errorHandler handler invoked when {@link #handleOutput(Record)} throws; may be {@code null}
    */
   public AbstractAppender (ErrorHandler errorHandler) {
 
@@ -65,10 +66,10 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Constructs an appender with a name and error handler.
+   * Constructs a named appender with the given error handler and an empty filter chain.
    *
-   * @param name         appender name
-   * @param errorHandler handler to invoke on failures
+   * @param name         name used to identify this appender; may be {@code null}
+   * @param errorHandler handler invoked when {@link #handleOutput(Record)} throws; may be {@code null}
    */
   public AbstractAppender (String name, ErrorHandler errorHandler) {
 
@@ -79,18 +80,18 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Emits the record to the concrete output target.
+   * Writes the record to the concrete output target after the filter chain has approved it.
    *
-   * @param record record to output
-   * @throws Exception if writing fails
+   * @param record the log record to emit
+   * @throws Exception if an I/O or encoding error occurs during output
    */
   public abstract void handleOutput (Record<?> record)
     throws Exception;
 
   /**
-   * Retrieves the configured name of this appender.
+   * Returns the name assigned to this appender.
    *
-   * @return appender name, or {@code null} if unnamed
+   * @return appender name, or {@code null} if no name has been set
    */
   @Override
   public String getName () {
@@ -99,9 +100,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Assigns a name to the appender for identification in logs or configuration.
+   * Sets the name used to identify this appender in configuration and diagnostics.
    *
-   * @param name new appender name, may be {@code null}
+   * @param name new appender name; may be {@code null}
    */
   @Override
   public void setName (String name) {
@@ -110,7 +111,7 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Removes all configured filters, allowing all records to proceed to output.
+   * Removes all filters from the filter chain so that every record is passed to output unconditionally.
    */
   @Override
   public synchronized void clearFilters () {
@@ -119,9 +120,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Replaces existing filters with a single filter.
+   * Replaces the entire filter chain with a single filter.
    *
-   * @param filter filter that must approve records before output
+   * @param filter the sole filter that records must satisfy before being output
    */
   @Override
   public synchronized void setFilter (Filter filter) {
@@ -131,9 +132,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Adds an additional filter that must approve records before output.
+   * Appends a filter to the end of the filter chain.
    *
-   * @param filter filter to append to the evaluation chain
+   * @param filter additional filter that records must satisfy before being output
    */
   @Override
   public synchronized void addFilter (Filter filter) {
@@ -142,9 +143,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Returns the filters currently applied to records.
+   * Returns a snapshot of the current filter chain.
    *
-   * @return array of configured filters in evaluation order
+   * @return array of filters in their evaluation order; never {@code null}
    */
   @Override
   public synchronized Filter[] getFilters () {
@@ -158,9 +159,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Replaces all configured filters with the supplied list.
+   * Replaces the entire filter chain with the supplied list of filters.
    *
-   * @param replacementFilterList filters to evaluate in order
+   * @param replacementFilterList ordered list of filters to install; must not be {@code null}
    */
   @Override
   public synchronized void setFilters (List<Filter> replacementFilterList) {
@@ -170,9 +171,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Retrieves the error handler invoked when output fails.
+   * Returns the error handler that receives exceptions thrown by {@link #handleOutput(Record)}.
    *
-   * @return configured error handler, or {@code null} if none
+   * @return the configured error handler, or {@code null} if none has been set
    */
   @Override
   public ErrorHandler getErrorHandler () {
@@ -181,9 +182,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Sets the error handler to use when publishing fails.
+   * Sets the error handler invoked when {@link #handleOutput(Record)} throws an exception.
    *
-   * @param errorHandler handler to receive failures, may be {@code null}
+   * @param errorHandler handler to receive output failures; may be {@code null}
    */
   @Override
   public void setErrorHandler (ErrorHandler errorHandler) {
@@ -192,9 +193,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Indicates whether this appender currently accepts records.
+   * Indicates whether this appender is currently accepting and processing records.
    *
-   * @return {@code true} if active and publishing, otherwise {@code false}
+   * @return {@code true} if publishing is enabled; {@code false} if the appender is disabled
    */
   @Override
   public boolean isActive () {
@@ -203,9 +204,9 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Enables or disables this appender.
+   * Enables or disables publishing on this appender.
    *
-   * @param active {@code true} to allow publishing, {@code false} to ignore records
+   * @param active {@code true} to enable publishing; {@code false} to silently drop all records
    */
   @Override
   public void setActive (boolean active) {
@@ -214,11 +215,11 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Processes a record by applying filters and delegating output.
-   * If any filter vetoes the record, output is skipped. Exceptions during output
-   * are forwarded to the configured error handler.
+   * Runs the record through the filter chain and, if every filter approves it, delegates to
+   * {@link #handleOutput(Record)}; any exception thrown by output is forwarded to the configured
+   * error handler.
    *
-   * @param record record to publish
+   * @param record the log record to evaluate and potentially emit
    */
   @Override
   public void publish (Record<?> record) {
@@ -237,10 +238,10 @@ public abstract class AbstractAppender implements Appender {
   }
 
   /**
-   * Closes the appender. Default implementation is a no-op; subclasses may override
-   * to release resources.
+   * Releases any resources held by this appender. The default implementation is a no-op;
+   * subclasses should override this method to close streams, sockets, or other resources.
    *
-   * @throws LoggerException if closing fails
+   * @throws LoggerException if an error occurs while releasing resources
    */
   @Override
   public void close ()

@@ -33,9 +33,9 @@
 package org.smallmind.nutsnbolts.spring.property;
 
 /**
- * Iterator over parsed property entries.
+ * An {@link Iterable} over a typed sequence of parsed {@link PropertyEntry} instances produced by a property source handler.
  *
- * @param <E> concrete entry type
+ * @param <E> the concrete {@link PropertyEntry} type produced by this handler
  */
 public interface PropertyHandler<E extends PropertyEntry> extends Iterable<E> {
 

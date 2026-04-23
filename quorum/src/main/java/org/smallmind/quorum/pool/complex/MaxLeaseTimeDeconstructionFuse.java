@@ -35,16 +35,29 @@ package org.smallmind.quorum.pool.complex;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Fuse that ignites after the maximum lease time for a component has elapsed.
+ * A {@link DeconstructionFuse} that fires once the total time since a component was created
+ * exceeds {@link ComplexPoolConfig#getMaxLeaseTimeSeconds()}.
+ * <p>
+ * The ignition time is calculated and registered with the {@link DeconstructionQueue} once
+ * at construction, using an absolute wall-clock deadline. Because the limit is absolute, the
+ * fuse does nothing in response to the component being returned to the free queue ({@link #free()})
+ * or handed to a caller ({@link #serve()}); the deadline ticks regardless of whether the
+ * component is in use or idle.
+ * <p>
+ * Lease-timeout removal is <em>non-prejudicial</em>: when the fuse fires the pin is retired
+ * normally and the pool will replace it, but a caller that already holds the component
+ * completes its use normally.
  */
 public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
 
   /**
-   * Constructs the fuse and immediately schedules ignition based on lease time.
+   * Creates the fuse and immediately schedules its ignition at
+   * {@code now + maxLeaseTimeSeconds}.
    *
-   * @param componentPool             owning pool
-   * @param deconstructionQueue       queue for scheduling ignition
-   * @param deconstructionCoordinator coordinator invoked on ignition
+   * @param componentPool             the pool whose configuration supplies the lease timeout
+   * @param deconstructionQueue       the queue that will fire this fuse when the deadline
+   *                                  elapses
+   * @param deconstructionCoordinator the coordinator that acts when this fuse ignites
    */
   public MaxLeaseTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
@@ -54,7 +67,10 @@ public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Lease expirations are not prejudicial; they represent natural lease ends.
+   * Returns {@code false} because a lease-timeout ignition should not force-remove a
+   * component that is currently being used by a caller.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean isPrejudicial () {
@@ -63,7 +79,8 @@ public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Lease fuse does not require action on free because it ignites based solely on absolute time.
+   * No-op; the ignition time is absolute and is not affected by whether the component is
+   * on the free queue.
    */
   @Override
   public void free () {
@@ -71,7 +88,8 @@ public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Lease fuse does not change scheduling on serve because ignition was set at construction.
+   * No-op; the ignition time is absolute and is not affected by whether the component is
+   * being served to a caller.
    */
   @Override
   public void serve () {

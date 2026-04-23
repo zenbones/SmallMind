@@ -39,20 +39,54 @@ import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
 /**
- * Sliding-window aggregate backed by HdrHistogram that produces time-normalized histograms.
+ * Sliding-window {@link Aggregate} backed by two HdrHistogram {@link Recorder} instances that
+ * are swapped on each read to provide wait-free writes and consistent snapshots.
+ *
+ * <p>Values are written to {@link #writeRecorder} at any time via {@link #update(long)}.
+ * When {@link #get()} is called the two recorders are swapped: the former write recorder
+ * becomes the read recorder and is queried for an interval histogram, while the former read
+ * recorder (now reset) becomes the new write recorder. This guarantees that the snapshot
+ * returned by {@link #get()} is not modified by concurrent writers after the swap.</p>
+ *
+ * <p>The {@link HistogramTime} returned by {@link #get()} carries a {@code timeFactor} that
+ * encodes how much real time elapsed between the two most recent calls, allowing consumers
+ * to normalise counts to the configured window duration.</p>
  */
 public class Stratified implements Aggregate {
 
+  /**
+   * Source of monotonic timestamps used to compute the time factor on each {@link #get()} call.
+   */
   private final Clock clock;
+
+  /**
+   * The configured window duration expressed in nanoseconds, used as the normalisation denominator.
+   */
   private final double nanosecondsInWindow;
+
+  /**
+   * The currently active write recorder; receives all {@link #update(long)} calls.
+   * Declared {@code volatile} so the swap performed inside the {@code synchronized} {@link #get()}
+   * is visible to unsynchronised writers immediately.
+   */
   private volatile Recorder writeRecorder;
+
+  /**
+   * The idle recorder that is reset between windows and queried for a snapshot during {@link #get()}.
+   * Only accessed from within the {@code synchronized} {@link #get()} method.
+   */
   private Recorder readRecorder;
+
+  /**
+   * Monotonic timestamp (nanoseconds) of the most recent {@link #get()} call (or construction).
+   */
   private long markTime;
 
   /**
-   * Creates a stratified histogram with default histogram bounds and a one-second window.
+   * Constructs a {@code Stratified} aggregate with default HdrHistogram bounds
+   * ({@code [1, 3600000]} with two significant digits) and a one-second window.
    *
-   * @param clock clock providing monotonic time
+   * @param clock source of monotonic time used to compute elapsed intervals
    */
   public Stratified (Clock clock) {
 
@@ -60,10 +94,11 @@ public class Stratified implements Aggregate {
   }
 
   /**
-   * Creates a stratified histogram with default bounds and a custom window.
+   * Constructs a {@code Stratified} aggregate with default HdrHistogram bounds
+   * ({@code [1, 3600000]} with two significant digits) and a custom window.
    *
-   * @param clock       clock providing monotonic time
-   * @param windowStint window duration
+   * @param clock       source of monotonic time used to compute elapsed intervals
+   * @param windowStint duration of the normalisation window; must be positive
    */
   public Stratified (Clock clock, Stint windowStint) {
 
@@ -71,12 +106,14 @@ public class Stratified implements Aggregate {
   }
 
   /**
-   * Creates a stratified histogram with custom histogram bounds and precision using a one-second window.
+   * Constructs a {@code Stratified} aggregate with custom HdrHistogram bounds and precision,
+   * using a one-second window.
    *
-   * @param clock                          clock providing monotonic time
-   * @param lowestDiscernibleValue         smallest value to track
-   * @param highestTrackableValue          largest value to track
-   * @param numberOfSignificantValueDigits histogram precision
+   * @param clock                          source of monotonic time used to compute elapsed intervals
+   * @param lowestDiscernibleValue         smallest value the histogram can distinguish; must be {@code >= 1}
+   * @param highestTrackableValue          largest value the histogram will track without overflow
+   * @param numberOfSignificantValueDigits number of significant decimal digits of precision
+   *                                       (typically 1–5)
    */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
 
@@ -84,13 +121,15 @@ public class Stratified implements Aggregate {
   }
 
   /**
-   * Creates a stratified histogram with full customization of bounds, precision, and window.
+   * Constructs a {@code Stratified} aggregate with full control over HdrHistogram bounds,
+   * precision, and the normalisation window.
    *
-   * @param clock                          clock providing monotonic time
-   * @param lowestDiscernibleValue         smallest value to track
-   * @param highestTrackableValue          largest value to track
-   * @param numberOfSignificantValueDigits histogram precision
-   * @param windowStint                    window duration
+   * @param clock                          source of monotonic time used to compute elapsed intervals
+   * @param lowestDiscernibleValue         smallest value the histogram can distinguish; must be {@code >= 1}
+   * @param highestTrackableValue          largest value the histogram will track without overflow
+   * @param numberOfSignificantValueDigits number of significant decimal digits of precision
+   *                                       (typically 1–5)
+   * @param windowStint                    duration of the normalisation window; must be positive
    */
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint windowStint) {
 
@@ -103,9 +142,12 @@ public class Stratified implements Aggregate {
   }
 
   /**
-   * Records a value into the current histogram.
+   * Records {@code value} into the currently active write recorder.
    *
-   * @param value value to record
+   * <p>This method is wait-free; it delegates directly to
+   * {@link Recorder#recordValue(long)} on the volatile {@link #writeRecorder} reference.</p>
+   *
+   * @param value the measurement to record into the histogram
    */
   @Override
   public void update (long value) {
@@ -114,9 +156,17 @@ public class Stratified implements Aggregate {
   }
 
   /**
-   * Returns the histogram for the last window and resets tracking for the next interval.
+   * Swaps the read and write recorders, captures an interval histogram, and returns it
+   * together with a time-normalisation factor.
    *
-   * @return histogram with time-scaling information
+   * <p>The swap is performed under {@code this} monitor so that concurrent readers always
+   * see a consistent view. After the swap, the newly retired recorder (now {@link #readRecorder})
+   * is queried for its interval histogram via {@link Recorder#getIntervalHistogram()}, and
+   * the formerly idle recorder (now {@link #writeRecorder}) is reset and ready to accept
+   * new writes.</p>
+   *
+   * @return a {@link HistogramTime} pairing the interval histogram with the ratio of actual
+   * elapsed nanoseconds to the configured window duration; never {@code null}
    */
   public synchronized HistogramTime get () {
 

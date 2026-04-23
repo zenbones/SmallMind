@@ -38,16 +38,17 @@ import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a JUL {@link ErrorManager} to the scribe {@link ErrorHandler} contract.
+ * Scribe {@link ErrorHandler} that delegates error reporting to a JUL {@link ErrorManager},
+ * printing the stack trace directly when the throwable is not an {@link Exception}.
  */
 public class JDKErrorHandlerAdapter implements ErrorHandler {
 
   private final ErrorManager errorManager;
 
   /**
-   * Creates an adapter around the provided JUL error manager.
+   * Builds an adapter that delegates error reporting to the given JUL {@link ErrorManager}.
    *
-   * @param errorManager native error manager
+   * @param errorManager the native JUL error manager to delegate to
    */
   public JDKErrorHandlerAdapter (ErrorManager errorManager) {
 
@@ -55,7 +56,7 @@ public class JDKErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Returns the wrapped JUL error manager.
+   * Returns the JUL {@link ErrorManager} that this adapter wraps.
    *
    * @return the native error manager
    */
@@ -65,12 +66,13 @@ public class JDKErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Handles an error originating from a logger.
+   * Reports an error from the named logger to the native {@link ErrorManager}; if the throwable is
+   * not an {@link Exception}, its stack trace is printed directly because JUL only accepts exceptions.
    *
-   * @param loggerName   name of the logger that produced the error
-   * @param throwable    throwable to report
+   * @param loggerName   the name of the logger where the error originated
+   * @param throwable    the throwable to report
    * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param args         arguments substituted into the message template
    */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
@@ -83,12 +85,13 @@ public class JDKErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Handles an error originating from a record, delegating to the logger-based handler.
+   * Reports an error associated with a record by extracting the logger name from the record and
+   * delegating to {@link #process(String, Throwable, String, Object...)}.
    *
-   * @param record       record that triggered the error handling
-   * @param throwable    throwable to report
+   * @param record       the record associated with the error
+   * @param throwable    the throwable to report
    * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param args         arguments substituted into the message template
    */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {

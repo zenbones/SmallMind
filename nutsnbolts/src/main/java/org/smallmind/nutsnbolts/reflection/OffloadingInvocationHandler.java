@@ -37,16 +37,17 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
- * Simple {@link InvocationHandler} that forwards method invocations to a target instance.
+ * An {@link InvocationHandler} that transparently forwards every proxied method call to a fixed
+ * delegate target, effectively treating the proxy as a thin wrapper around that object.
  */
 public class OffloadingInvocationHandler implements Serializable, InvocationHandler {
 
   private final Object target;
 
   /**
-   * Creates a handler that forwards invocations to the supplied target.
+   * Constructs a handler that delegates all method invocations to the specified object.
    *
-   * @param target the object that should receive invoked methods
+   * @param target the delegate object that will receive every forwarded method call
    */
   public OffloadingInvocationHandler (Object target) {
 
@@ -54,13 +55,13 @@ public class OffloadingInvocationHandler implements Serializable, InvocationHand
   }
 
   /**
-   * Invokes the same method on the target object.
+   * Forwards the method call to the delegate target and returns its result.
    *
-   * @param proxy  the generated proxy instance
-   * @param method the method to invoke
-   * @param args   invocation arguments
-   * @return the result of invoking the method on the target
-   * @throws Throwable propagated from the target invocation
+   * @param proxy  the proxy instance on which the method was invoked
+   * @param method the reflected method that was called on the proxy
+   * @param args   the arguments that were passed to the method call
+   * @return the value returned by the delegate target's method
+   * @throws Throwable any exception thrown by the delegate target's method
    */
   @Override
   public Object invoke (Object proxy, Method method, Object[] args)

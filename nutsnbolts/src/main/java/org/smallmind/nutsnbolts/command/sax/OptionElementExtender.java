@@ -40,14 +40,16 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * Builds an {@link Option} and wires up nested options/arguments while SAX-parsing the template.
+ * SAX element extender for the {@code <option>} element that constructs an {@link Option} from XML attributes and wires up child options and argument definitions.
  */
 public class OptionElementExtender extends AbstractElementExtender {
 
   private Option option;
 
   /**
-   * @return option created from the current element
+   * Returns the {@link Option} constructed from the parsed element.
+   *
+   * @return assembled option, or {@code null} before the element has started
    */
   public Option getOption () {
 
@@ -55,7 +57,12 @@ public class OptionElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Creates the {@link Option} instance using element attributes.
+   * Creates the {@link Option} from the element's {@code name}, {@code flag}, and {@code required} attributes.
+   *
+   * @param namespaceURI namespace URI of the starting element
+   * @param localName    local name of the starting element
+   * @param qName        qualified name of the starting element
+   * @param atts         element attributes containing {@code name}, {@code flag}, and {@code required}
    */
   @Override
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
@@ -66,9 +73,10 @@ public class OptionElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Receives child option groups and argument definitions, wiring up parent/child relationships.
+   * Wires child option lists and argument definitions into the constructed option, establishing parent-child relationships.
    *
-   * @throws SAXException if child processing fails
+   * @param elementExtender completed child extender; handled when it is an {@link OptionsElementExtender} or {@link ArgumentsElementExtender}
+   * @throws SAXException if an error occurs while linking child options to their parent
    */
   @Override
   public void completedChildElement (ElementExtender elementExtender)

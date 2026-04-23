@@ -38,8 +38,11 @@ import java.util.List;
 import org.smallmind.persistence.Durable;
 
 /**
- * Base representation of a cached vector of durables with optional ordering, TTL, and size
- * constraints.
+ * Abstract base for a cached, optionally ordered collection of durable instances with a bounded
+ * size and TTL-based expiry.
+ *
+ * @param <I> durable identifier type
+ * @param <D> durable type
  */
 public abstract class DurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
 
@@ -50,10 +53,12 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   private final int maxSize;
 
   /**
-   * @param comparator        optional comparator for ordering
-   * @param maxSize           maximum number of elements (0 for unlimited)
-   * @param timeToLiveSeconds TTL in seconds (0 or less for infinite)
-   * @param ordered           whether ordering matters for this vector
+   * Initialises a new vector with the provided constraints.
+   *
+   * @param comparator        comparator for element ordering; may be {@code null}
+   * @param maxSize           maximum number of elements retained; {@code 0} means unbounded
+   * @param timeToLiveSeconds how long the vector remains alive in seconds; {@code 0} or negative means infinite
+   * @param ordered           {@code true} if element order is meaningful for this vector
    */
   public DurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
@@ -66,47 +71,54 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Creates a defensive copy of this vector, preserving ordering and TTL semantics.
+   * Returns a deep copy of this vector, preserving all ordering, TTL, and size settings.
    *
-   * @return duplicated vector instance
+   * @return new vector instance with the same contents and configuration
    */
   public abstract DurableVector<I, D> copy ();
 
   /**
-   * Indicates whether the vector contains exactly one element.
+   * Returns {@code true} if the vector contains exactly one element.
    *
-   * @return {@code true} when only a single durable is present
+   * @return {@code true} when the vector is singular
    */
   public abstract boolean isSingular ();
 
   /**
-   * Adds the durable to the vector respecting ordering/size semantics.
+   * Adds a durable to the vector, respecting ordering and size constraints.
    *
-   * @param durable durable to add
-   * @return true if the vector changed
+   * @param durable durable instance to add
+   * @return {@code true} if the vector was modified
    */
   public abstract boolean add (D durable);
 
   /**
-   * Removes the durable from the vector.
+   * Removes a durable from the vector.
    *
-   * @param durable durable to remove
-   * @return true if removed
+   * @param durable durable instance to remove
+   * @return {@code true} if the vector was modified
    */
   public abstract boolean remove (D durable);
 
   /**
-   * @return head element of the vector or {@code null}
+   * Returns the first element of the vector without removing it.
+   *
+   * @return head element, or {@code null} if the vector is empty
    */
   public abstract D head ();
 
   /**
-   * @return list view of the vector; may fetch lazily
+   * Returns a list view of the vector's contents, potentially fetching elements lazily.
+   *
+   * @return list of durables in this vector
    */
   public abstract List<D> asBestEffortLazyList ();
 
   /**
-   * @return eagerly fetched list view of the vector when supported
+   * Returns a list view of the vector's contents, eagerly pre-fetching when the implementation
+   * supports it; falls back to {@link #asBestEffortLazyList()} by default.
+   *
+   * @return eagerly populated list of durables
    */
   public List<D> asBestEffortPreFetchedList () {
 
@@ -114,7 +126,9 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * @return comparator used for ordering (may be null)
+   * Returns the comparator used to order elements in this vector.
+   *
+   * @return element comparator, or {@code null} if unordered
    */
   public Comparator<D> getComparator () {
 
@@ -122,7 +136,9 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * @return maximum size of the vector (0 for unbounded)
+   * Returns the maximum number of elements this vector may hold.
+   *
+   * @return max size; {@code 0} indicates unbounded
    */
   public int getMaxSize () {
 
@@ -130,6 +146,8 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
+   * Returns the configured time-to-live for this vector.
+   *
    * @return TTL in seconds
    */
   public int getTimeToLiveSeconds () {
@@ -138,7 +156,9 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * @return whether ordering is meaningful for this vector
+   * Returns whether element ordering is meaningful for this vector.
+   *
+   * @return {@code true} if the vector maintains a defined element order
    */
   public boolean isOrdered () {
 
@@ -146,9 +166,9 @@ public abstract class DurableVector<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Determines if the vector has expired based on its TTL.
+   * Returns {@code true} if this vector has not yet exceeded its TTL.
    *
-   * @return true if still valid
+   * @return {@code true} if the vector is still valid; {@code false} if expired
    */
   public boolean isAlive () {
 

@@ -48,16 +48,30 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Push emitter that exposes metrics as JMX MBeans and updates their attributes.
+ * Push emitter that exposes Claxon metrics as JMX dynamic MBeans and keeps their attributes
+ * up to date on every recording cycle.
+ *
+ * <p>On the first invocation of {@link #record(String, Tag[], Quantity[])} for a given
+ * meter+tag combination, a {@link MeterDynamicMbean} is registered in the supplied
+ * {@link MBeanServer} under an {@link ObjectName} whose domain is the meter name and whose
+ * key-properties are derived from the provided tags. Subsequent invocations update the MBean
+ * attributes in place without re-registering the MBean.
+ *
+ * <p>Registration is guarded by a double-checked locking pattern on the {@link MBeanServer}
+ * monitor to avoid duplicate registration under concurrent access.
  */
 public class JMXEmitter extends PushEmitter {
 
+  /**
+   * The JMX {@link MBeanServer} used to register and update meter MBeans.
+   */
   private final MBeanServer server;
 
   /**
-   * Creates a JMX emitter bound to the provided MBeanServer.
+   * Creates a JMX emitter that registers and updates MBeans in the specified server.
    *
-   * @param server MBeanServer to register and update meters on
+   * @param server the {@link MBeanServer} in which meter MBeans will be registered; must not
+   *               be {@code null}
    */
   public JMXEmitter (MBeanServer server) {
 
@@ -65,17 +79,28 @@ public class JMXEmitter extends PushEmitter {
   }
 
   /**
-   * Registers a dynamic MBean for the meter if necessary and updates quantity attributes.
+   * Registers a {@link MeterDynamicMbean} for the meter if one does not already exist, then
+   * updates its attributes with the current quantity values.
    *
-   * @param meterName  meter name used as the JMX object name domain
-   * @param tags       tags translated to object name properties
-   * @param quantities quantities mapped to attributes
-   * @throws MalformedObjectNameException   when the object name is invalid
-   * @throws NotCompliantMBeanException     when the dynamic MBean does not comply
-   * @throws MBeanRegistrationException     when registration fails
-   * @throws InstanceAlreadyExistsException when the MBean already exists unexpectedly
-   * @throws InstanceNotFoundException      when the MBean cannot be found during update
-   * @throws ReflectionException            when attribute setting fails reflectively
+   * <p>Tags are translated into JMX {@link ObjectName} key-properties so that each unique
+   * meter+tag combination maps to a distinct MBean. Quantities are mapped to MBean attributes
+   * whose names match {@link Quantity#getName()}.
+   *
+   * @param meterName  the meter name used as the domain portion of the JMX {@link ObjectName}
+   * @param tags       tags translated to key-property pairs in the {@link ObjectName}; may be
+   *                   {@code null} or empty
+   * @param quantities the current measured values to store as MBean attributes; must not be
+   *                   {@code null}
+   * @throws MalformedObjectNameException   if the constructed {@link ObjectName} is invalid
+   * @throws NotCompliantMBeanException     if the {@link MeterDynamicMbean} does not comply
+   *                                        with JMX MBean conventions
+   * @throws MBeanRegistrationException     if the MBean server rejects the registration
+   * @throws InstanceAlreadyExistsException if a race condition causes a duplicate registration
+   *                                        attempt to reach the MBean server
+   * @throws InstanceNotFoundException      if the MBean cannot be found when updating
+   *                                        attributes
+   * @throws ReflectionException            if an error occurs while setting attributes
+   *                                        reflectively
    */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities)

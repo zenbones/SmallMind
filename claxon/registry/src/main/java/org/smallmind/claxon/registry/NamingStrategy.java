@@ -33,15 +33,24 @@
 package org.smallmind.claxon.registry;
 
 /**
- * Defines how a meter name or prefix is derived from a calling class.
+ * Strategy that derives a metric name (or name prefix) from the class that is requesting
+ * a meter registration.
+ *
+ * <p>The strategy is consulted by {@link ClaxonRegistry#register} each time a meter is
+ * registered. Returning {@code null} causes the registry to treat that caller as unmeasured
+ * and to substitute a {@link NoOpMeter} instead.
+ *
+ * @see ImpliedNamingStrategy
+ * @see ObviousNamingStrategy
  */
 public interface NamingStrategy {
 
   /**
-   * Generates a name component for the given caller.
+   * Derives a metric name or prefix from the supplied caller class.
    *
-   * @param caller class requesting a meter
-   * @return the derived name or {@code null} if none can be determined
+   * @param caller the class that is requesting a meter
+   * @return the derived name string, or {@code null} if this strategy cannot produce a
+   * name for the given caller (in which case the registry will use a no-op meter)
    */
   String from (Class<?> caller);
 }

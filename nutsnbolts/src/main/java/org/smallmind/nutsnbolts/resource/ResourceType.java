@@ -33,7 +33,8 @@
 package org.smallmind.nutsnbolts.resource;
 
 /**
- * Enumerates the built-in resource types and their scheme identifiers.
+ * Enumeration of the built-in resource types, each associating a scheme name with its
+ * concrete {@link Resource} implementation class.
  */
 public enum ResourceType {
 
@@ -42,10 +43,10 @@ public enum ResourceType {
   private final Class<? extends Resource> resourceClass;
 
   /**
-   * Associates a scheme string with the implementing {@link Resource} class.
+   * Constructs a resource type constant that binds a scheme name to its implementation class.
    *
-   * @param resourceScheme scheme name
-   * @param resourceClass  concrete resource implementation
+   * @param resourceScheme the scheme identifier string, such as {@code file} or {@code classpath}
+   * @param resourceClass  the concrete {@link Resource} class that handles this scheme
    */
   ResourceType (String resourceScheme, Class<? extends Resource> resourceClass) {
 
@@ -54,9 +55,9 @@ public enum ResourceType {
   }
 
   /**
-   * Returns the scheme string (e.g. {@code file}).
+   * Returns the scheme identifier string for this resource type.
    *
-   * @return resource scheme identifier
+   * @return scheme name, for example {@code file}, {@code classpath}, {@code jar}, or {@code url}
    */
   public String getResourceScheme () {
 
@@ -64,9 +65,9 @@ public enum ResourceType {
   }
 
   /**
-   * Returns the implementing class for the resource type.
+   * Returns the concrete {@link Resource} implementation class associated with this type.
    *
-   * @return concrete resource class
+   * @return the implementation class for this resource type
    */
   public Class<? extends Resource> getResourceClass () {
 

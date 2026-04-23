@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * Marks a field or accessor to be included in generated views, allowing idiom-specific overrides.
+ * Marks a field or accessor method to be included in generated views, with optional idiom overrides and metadata.
  */
 // Must have retention policy 'class' to allow annotated fields to be picked up in modules outside of
 // the source module of the annotated class, when that class is used as an annotated field in a class in another module.
@@ -60,25 +60,25 @@ public @interface View {
   Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class;
 
   /**
-   * @return type hint for tools (mapped to {@link org.smallmind.web.json.scaffold.util.As})
+   * @return type hint class for tools that process the generated view (mapped to {@code @As})
    */
   // a type hint for tools which may process generated classes
   Class<?> as () default Void.class;
 
   /**
-   * @return XML element name override for this property
+   * @return XML element name override for this property, defaulting to the field name
    */
   // the xml element name
   String name () default "";
 
   /**
-   * @return whether the property is required in the default idiom
+   * @return whether this property is required in the default idiom
    */
   // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
 
   /**
-   * @return comment text to attach to the generated property
+   * @return comment text to embed in a generated {@code @Comment} annotation on this property
    */
   // The text for a generated @Comment annotation
   String comment () default "";

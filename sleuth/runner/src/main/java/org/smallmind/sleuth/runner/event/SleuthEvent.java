@@ -35,7 +35,27 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Base class for all Sleuth events emitted during test execution.
+ * Abstract base class for all events emitted by the Sleuth test runner during execution.
+ * <p>
+ * Every event carries the fully qualified class name and method name of the test or lifecycle
+ * hook that produced it, along with a {@link SleuthEventType} discriminator. Subclasses extend
+ * the event with additional context such as elapsed time, a failure throwable, or a descriptive
+ * message.
+ * <p>
+ * The event hierarchy is:
+ * <ul>
+ *   <li>{@link SleuthEvent} — class and method identity only</li>
+ *   <li>{@link TimedSleuthEvent} — adds elapsed execution time in milliseconds</li>
+ *   <li>{@link ThrowableSleuthEvent} — adds a failure or error {@link Throwable}</li>
+ *   <li>{@link MessageSleuthEvent} — adds a human-readable reason string</li>
+ * </ul>
+ * Concrete types: {@link StartSleuthEvent}, {@link SuccessSleuthEvent},
+ * {@link FailureSleuthEvent}, {@link ErrorSleuthEvent}, {@link SkippedSleuthEvent},
+ * {@link MootSleuthEvent}, {@link SetupSleuthEvent}, {@link CancelledSleuthEvent},
+ * {@link FatalSleuthEvent}.
+ *
+ * @see SleuthEventListener
+ * @see SleuthEventType
  */
 public abstract class SleuthEvent {
 
@@ -43,8 +63,10 @@ public abstract class SleuthEvent {
   private final String methodName;
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
+   * Constructs an event attributed to the given class and method.
+   *
+   * @param className  fully qualified name of the class that produced the event; must not be {@code null}
+   * @param methodName name of the method that produced the event; may be {@code null} for suite-level events
    */
   public SleuthEvent (String className, String methodName) {
 
@@ -53,12 +75,19 @@ public abstract class SleuthEvent {
   }
 
   /**
-   * @return specific event type
+   * Returns the discriminator that identifies the concrete type of this event.
+   *
+   * @return the {@link SleuthEventType} constant for this event; never {@code null}
    */
   public abstract SleuthEventType getType ();
 
   /**
-   * @return color to use when rendering the event
+   * Returns the ANSI color used when rendering this event to the console.
+   * <p>
+   * The default returns {@link AnsiColor#DEFAULT}. Subclasses override this to provide
+   * distinct colors per event type (e.g., green for success, red for failure).
+   *
+   * @return ANSI color for console rendering; never {@code null}
    */
   public AnsiColor getColor () {
 
@@ -66,7 +95,9 @@ public abstract class SleuthEvent {
   }
 
   /**
-   * @return originating class name
+   * Returns the fully qualified name of the class that produced this event.
+   *
+   * @return class name; never {@code null}
    */
   public String getClassName () {
 
@@ -74,7 +105,9 @@ public abstract class SleuthEvent {
   }
 
   /**
-   * @return originating method name
+   * Returns the name of the method that produced this event.
+   *
+   * @return method name; may be {@code null} for suite-level events
    */
   public String getMethodName () {
 
@@ -82,7 +115,9 @@ public abstract class SleuthEvent {
   }
 
   /**
-   * @return colored string representation of the event
+   * Returns a human-readable, ANSI-colored string showing the event type, class, and method.
+   *
+   * @return formatted event description; never {@code null}
    */
   @Override
   public String toString () {

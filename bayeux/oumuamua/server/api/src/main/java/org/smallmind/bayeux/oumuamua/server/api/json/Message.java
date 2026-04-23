@@ -36,7 +36,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 
 /**
- * Represents a Bayeux JSON message with convenience accessors for standard fields.
+ * Bayeux protocol message represented as a JSON object, providing typed accessors for all
+ * standard Bayeux fields defined by the protocol specification.
+ *
+ * @param <V> concrete {@link Value} implementation used within this message
  */
 public interface Message<V extends Value<V>> extends ObjectValue<V> {
 
@@ -55,9 +58,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   String DATA = "data";
 
   /**
-   * Determines whether the message indicates success.
+   * Returns whether the {@code successful} field is present and set to {@code true}.
    *
-   * @return {@code true} when the {@code successful} field is present and true
+   * @return {@code true} if this message represents a successful Bayeux operation
    */
   default boolean isSuccessful () {
 
@@ -67,9 +70,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Reads the message identifier.
+   * Returns the value of the {@code id} field.
    *
-   * @return the {@code id} field or {@code null} if missing
+   * @return message id string, or {@code null} if the field is absent or not a string
    */
   default String getId () {
 
@@ -79,9 +82,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Reads the client/session identifier.
+   * Returns the value of the {@code clientId} field.
    *
-   * @return the {@code clientId} field or {@code null} if missing
+   * @return session id string, or {@code null} if the field is absent or not a string
    */
   default String getSessionId () {
 
@@ -91,9 +94,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Reads the channel path.
+   * Returns the value of the {@code channel} field.
    *
-   * @return the {@code channel} field or {@code null} if missing
+   * @return channel path string, or {@code null} if the field is absent or not a string
    */
   default String getChannel () {
 
@@ -103,9 +106,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves the advice object if present.
+   * Returns the {@code advice} object field if present, without creating it.
    *
-   * @return advice value or {@code null}
+   * @return advice object, or {@code null} if absent
    */
   default ObjectValue<V> getAdvice () {
 
@@ -113,10 +116,10 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves or creates the advice object.
+   * Returns the {@code advice} object field, optionally creating an empty object if absent.
    *
-   * @param createIfAbsent whether to create the object if missing
-   * @return advice value or {@code null}
+   * @param createIfAbsent {@code true} to create and insert an empty object when the field is missing
+   * @return advice object, or {@code null} if absent and {@code createIfAbsent} is {@code false}
    */
   default ObjectValue<V> getAdvice (boolean createIfAbsent) {
 
@@ -124,9 +127,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves the extension object if present.
+   * Returns the {@code ext} object field if present, without creating it.
    *
-   * @return extension value or {@code null}
+   * @return ext object, or {@code null} if absent
    */
   default ObjectValue<V> getExt () {
 
@@ -134,10 +137,10 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves or creates the extension object.
+   * Returns the {@code ext} object field, optionally creating an empty object if absent.
    *
-   * @param createIfAbsent whether to create the object if missing
-   * @return extension value or {@code null}
+   * @param createIfAbsent {@code true} to create and insert an empty object when the field is missing
+   * @return ext object, or {@code null} if absent and {@code createIfAbsent} is {@code false}
    */
   default ObjectValue<V> getExt (boolean createIfAbsent) {
 
@@ -145,9 +148,9 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves the data object if present.
+   * Returns the {@code data} object field if present, without creating it.
    *
-   * @return data value or {@code null}
+   * @return data object, or {@code null} if absent
    */
   default ObjectValue<V> getData () {
 
@@ -155,10 +158,10 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Retrieves or creates the data object.
+   * Returns the {@code data} object field, optionally creating an empty object if absent.
    *
-   * @param createIfAbsent whether to create the object if missing
-   * @return data value or {@code null}
+   * @param createIfAbsent {@code true} to create and insert an empty object when the field is missing
+   * @return data object, or {@code null} if absent and {@code createIfAbsent} is {@code false}
    */
   default ObjectValue<V> getData (boolean createIfAbsent) {
 
@@ -166,10 +169,10 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Encodes the message to a UTF-8 byte array.
+   * Serializes this message to a UTF-8 encoded byte array.
    *
-   * @return encoded bytes
-   * @throws Exception if encoding fails
+   * @return JSON-encoded representation of this message
+   * @throws Exception if serialization or I/O fails
    */
   default byte[] encode ()
     throws Exception {
@@ -184,11 +187,12 @@ public interface Message<V extends Value<V>> extends ObjectValue<V> {
   }
 
   /**
-   * Looks up a field as an object value, optionally creating it.
+   * Returns the named field as an {@link ObjectValue}, optionally inserting an empty object
+   * if the field is absent.
    *
-   * @param field          field name
-   * @param createIfAbsent whether to create the object if absent
-   * @return the object value or {@code null}
+   * @param field          field name to retrieve or create
+   * @param createIfAbsent {@code true} to create and store an empty object when the field is absent
+   * @return existing or newly created object value, or {@code null} if absent and not created
    */
   private ObjectValue<V> getOrCreate (String field, boolean createIfAbsent) {
 

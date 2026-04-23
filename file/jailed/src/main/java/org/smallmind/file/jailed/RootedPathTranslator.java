@@ -36,14 +36,29 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 /**
- * Translator that confines jailed paths to a single native root.
+ * A {@link JailedPathTranslator} that confines jailed paths to a fixed native root directory
+ * supplied at construction time.
+ *
+ * <p>Unlike {@link ContextSensitiveRootedPathTranslator}, this implementation binds the jail
+ * boundary to a single {@link Path} for the lifetime of the translator instance. It is
+ * appropriate when the root directory is known statically and does not need to vary per
+ * caller or per request.
+ *
+ * @see AbstractJailedPathTranslator
+ * @see ContextSensitiveRootedPathTranslator
  */
 public class RootedPathTranslator extends AbstractJailedPathTranslator {
 
+  /**
+   * The native root path that defines the jail boundary.
+   */
   private final Path rootPath;
 
   /**
-   * @param rootPath the native root that defines the jail boundary
+   * Constructs a translator with a fixed jail root.
+   *
+   * @param rootPath the native {@link Path} that serves as the root of the jail;
+   *                 all jailed paths are resolved relative to this directory
    */
   public RootedPathTranslator (Path rootPath) {
 
@@ -51,7 +66,9 @@ public class RootedPathTranslator extends AbstractJailedPathTranslator {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the file system that owns the fixed root path supplied at construction time.
+   *
+   * @return the {@link FileSystem} of the configured root path
    */
   @Override
   public FileSystem getNativeFileSystem () {
@@ -60,7 +77,14 @@ public class RootedPathTranslator extends AbstractJailedPathTranslator {
   }
 
   /**
-   * {@inheritDoc}
+   * Translates a native path into the jailed path space using the fixed root path configured
+   * at construction time.
+   *
+   * @param jailedFileSystem the {@link JailedFileSystem} for which the jailed path is created
+   * @param nativePath       the native path to translate into the jail
+   * @return the corresponding jailed {@link Path}
+   * @throws SecurityException if {@code nativePath} is absolute and does not start with
+   *                           the configured root path
    */
   @Override
   public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
@@ -69,7 +93,11 @@ public class RootedPathTranslator extends AbstractJailedPathTranslator {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves a jailed path back to its absolute native path using the fixed root path
+   * configured at construction time.
+   *
+   * @param jailedPath the jailed {@link Path} to translate back to the native file system
+   * @return the corresponding native {@link Path} resolved against the configured root
    */
   @Override
   public Path unwrapPath (Path jailedPath) {

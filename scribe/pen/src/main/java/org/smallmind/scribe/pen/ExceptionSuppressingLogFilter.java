@@ -37,7 +37,8 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Filter that prevents logging of specific throwable types.
+ * A {@link Filter} that suppresses log records whose attached throwable is a member of a statically
+ * configured set of throwable types, managed under a read-write lock for thread safety.
  */
 public class ExceptionSuppressingLogFilter implements Filter {
 
@@ -45,9 +46,11 @@ public class ExceptionSuppressingLogFilter implements Filter {
   private static final ReentrantReadWriteLock UPDATE_LOCK = new ReentrantReadWriteLock();
 
   /**
-   * Adds throwable classes to the suppressed set. Future logs containing these throwables will be filtered out.
+   * Adds one or more throwable classes to the shared suppression set; any subsequent log record
+   * whose thrown exception is an exact instance of a suppressed class will be blocked.
+   * A {@code null} argument is silently ignored.
    *
-   * @param suppressedThrowableClasses list of throwable classes to suppress
+   * @param suppressedThrowableClasses the throwable classes to add to the suppression set
    */
   public static void addSuppressedThrowableClasses (List<Class<? extends Throwable>> suppressedThrowableClasses) {
 
@@ -62,10 +65,11 @@ public class ExceptionSuppressingLogFilter implements Filter {
   }
 
   /**
-   * Determines whether the record should be logged, rejecting records that carry suppressed throwable types.
+   * Returns {@code false} if the record carries a throwable whose exact class appears in the suppression
+   * set; returns {@code true} for all records that have no throwable or whose throwable is not suppressed.
    *
-   * @param record record under evaluation
-   * @return {@code true} if no throwable is present or it is not suppressed
+   * @param record the log record to evaluate
+   * @return {@code true} if the record should be logged; {@code false} if its throwable is suppressed
    */
   @Override
   public boolean willLog (Record<?> record) {

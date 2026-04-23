@@ -37,7 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 
 /**
- * Fluent builder for configuring recursive copy operations via {@link FileUtility#copyTree}.
+ * Fluent builder that assembles the parameters for a recursive directory copy and executes it via {@link FileUtility}.
  */
 public class CopyTreeConfigurationBuilder {
 
@@ -48,8 +48,10 @@ public class CopyTreeConfigurationBuilder {
   private boolean includeSourceDirectory = false;
 
   /**
-   * @param source      root path to copy
-   * @param destination destination root
+   * Constructs a builder for copying {@code source} to {@code destination}.
+   *
+   * @param source      root path or file to copy
+   * @param destination destination directory or file path
    */
   public CopyTreeConfigurationBuilder (Path source, Path destination) {
 
@@ -58,10 +60,10 @@ public class CopyTreeConfigurationBuilder {
   }
 
   /**
-   * Sets filters to apply while walking the tree.
+   * Specifies path filters to apply during the tree walk; a path is copied only when all filters accept it.
    *
-   * @param pathFilters optional filters; all must accept for inclusion
-   * @return this builder
+   * @param pathFilters zero or more filters to apply
+   * @return this builder for method chaining
    */
   public CopyTreeConfigurationBuilder filter (PathFilter... pathFilters) {
 
@@ -71,10 +73,10 @@ public class CopyTreeConfigurationBuilder {
   }
 
   /**
-   * Sets file attributes to apply to created directories/files.
+   * Specifies file attributes to apply when creating directories during the copy.
    *
-   * @param fileAttributes attributes to apply
-   * @return this builder
+   * @param fileAttributes attributes to set on newly created directories
+   * @return this builder for method chaining
    */
   public CopyTreeConfigurationBuilder attributes (FileAttribute<?>... fileAttributes) {
 
@@ -84,10 +86,10 @@ public class CopyTreeConfigurationBuilder {
   }
 
   /**
-   * Configures whether the source directory itself should be replicated.
+   * Controls whether the source directory node is itself created under the destination.
    *
-   * @param includeSourceDirectory {@code true} to include the source dir as the top-level entry
-   * @return this builder
+   * @param includeSourceDirectory {@code true} to reproduce the source directory name at the destination root
+   * @return this builder for method chaining
    */
   public CopyTreeConfigurationBuilder includeSourceDirectory (boolean includeSourceDirectory) {
 
@@ -97,9 +99,9 @@ public class CopyTreeConfigurationBuilder {
   }
 
   /**
-   * Executes the copy with the configured options.
+   * Performs the configured recursive copy operation.
    *
-   * @throws IOException if traversal or copying fails
+   * @throws IOException if walking the source tree or copying any entry fails
    */
   public void build ()
     throws IOException {

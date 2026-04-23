@@ -42,7 +42,18 @@ import org.smallmind.memcached.cubby.NoAvailableHostException;
 import org.smallmind.memcached.cubby.ServerPool;
 
 /**
- * Simple locator that hashes keys and evenly distributes them across active hosts.
+ * A {@link KeyLocator} implementation that distributes keys across active hosts using a
+ * simple modulo-hash strategy.
+ *
+ * <p>Active host names are sorted alphabetically and stored in an array. A key is routed to
+ * the host at position {@code key.hashCode() % routingArray.length}, providing an even
+ * distribution across the active pool. Unlike consistent-hash strategies, this approach does
+ * not minimise remapping when the host set changes: adding or removing a host will re-route
+ * approximately all keys.</p>
+ *
+ * <p>Read and write access to the routing array and current host list is protected by a
+ * {@link ReentrantReadWriteLock} so that concurrent {@link #find(ServerPool, String)} calls
+ * from multiple client threads are safe.</p>
  */
 public class DefaultKeyLocator implements KeyLocator {
 
@@ -51,10 +62,14 @@ public class DefaultKeyLocator implements KeyLocator {
   private String[] routingArray;
 
   /**
-   * Builds a sorted routing table of active host names.
+   * Builds a sorted array of active host names from the current server pool, also updating
+   * the cached host list used for change detection.
    *
-   * @param serverPool pool of hosts to route across
-   * @return ordered host name array
+   * <p>If there are no active hosts an empty array is returned and subsequent
+   * {@link #find(ServerPool, String)} calls will throw {@link NoAvailableHostException}.</p>
+   *
+   * @param serverPool the pool from which active hosts are collected
+   * @return a sorted array of active host names, or an empty array if no host is active
    */
   private String[] generateRoutingArray (ServerPool serverPool) {
 
@@ -83,9 +98,12 @@ public class DefaultKeyLocator implements KeyLocator {
   }
 
   /**
-   * Initializes the routing information for the pool.
+   * {@inheritDoc}
    *
-   * @param serverPool pool that supplies host entries
+   * <p>Delegates to {@link #updateRouting(ServerPool)} to perform the initial build of the
+   * routing array.</p>
+   *
+   * @param serverPool the pool that supplies the initial set of candidate hosts
    */
   @Override
   public void installRouting (ServerPool serverPool) {
@@ -94,11 +112,14 @@ public class DefaultKeyLocator implements KeyLocator {
   }
 
   /**
-   * Rebuilds the routing table if the underlying host list has changed.
+   * {@inheritDoc}
    *
-   * <p>Uses a write lock to ensure the routing array and host list are updated atomically.</p>
+   * <p>Acquires the write lock and rebuilds the routing array only if the active host set has
+   * changed since the last build. Change detection is performed by comparing the current pool
+   * state against the cached {@code currentHostList}.</p>
    *
-   * @param serverPool pool that may have updated host state
+   * @param serverPool the pool whose current active host set should be reflected in the
+   *                   routing array
    */
   @Override
   public void updateRouting (ServerPool serverPool) {
@@ -114,14 +135,16 @@ public class DefaultKeyLocator implements KeyLocator {
   }
 
   /**
-   * Resolves the host responsible for the supplied cache key.
+   * {@inheritDoc}
    *
-   * <p>The routing array is read under a shared lock and the key hash is used to choose an active host.</p>
+   * <p>Acquires the read lock and returns the host at index
+   * {@code key.hashCode() % routingArray.length}. Throws {@link NoAvailableHostException} if
+   * the routing array is empty or has not been initialised, meaning no active host exists.</p>
    *
-   * @param serverPool pool that provides host lookups by name
-   * @param key        cache key to route
-   * @return active {@link MemcachedHost} that should service the key
-   * @throws IOException if no active host is available
+   * @param serverPool the pool used to resolve the winning host name to a {@link MemcachedHost}
+   * @param key        the cache key to route
+   * @return the active {@link MemcachedHost} responsible for this key
+   * @throws IOException if no active host is available ({@link NoAvailableHostException})
    */
   @Override
   public MemcachedHost find (ServerPool serverPool, String key)

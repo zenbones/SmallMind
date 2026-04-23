@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Empty {@link Option} sentinel.
+ * Singleton empty {@link Option} that represents the absence of a value.
  *
  * @param <T> element type
  */
@@ -46,7 +46,7 @@ public class None<T> implements Option<T> {
   }
 
   /**
-   * Always empty.
+   * Always returns {@code true} because this option carries no value.
    *
    * @return {@code true}
    */
@@ -56,7 +56,7 @@ public class None<T> implements Option<T> {
   }
 
   /**
-   * Always returns {@code null}; callers should check {@link #isNone()} before dereferencing.
+   * Always returns {@code null}; callers should call {@link #isNone()} before invoking this method.
    *
    * @return {@code null}
    */

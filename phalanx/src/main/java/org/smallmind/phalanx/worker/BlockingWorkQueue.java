@@ -38,14 +38,17 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link WorkQueue} implementation backed by a {@link LinkedBlockingQueue}.
  *
- * @param <E> type of work items stored
+ * <p>Supports both bounded and unbounded configurations.  {@code offer} enqueues by waiting up to
+ * the specified timeout; {@code poll} dequeues by waiting up to the specified timeout.</p>
+ *
+ * @param <E> type of work items stored in this queue
  */
 public class BlockingWorkQueue<E> implements WorkQueue<E> {
 
   private final LinkedBlockingQueue<E> linkedBlockingQueue;
 
   /**
-   * Builds an unbounded blocking queue.
+   * Creates an unbounded blocking queue with no capacity constraint.
    */
   public BlockingWorkQueue () {
 
@@ -53,9 +56,9 @@ public class BlockingWorkQueue<E> implements WorkQueue<E> {
   }
 
   /**
-   * Builds a bounded blocking queue with the given capacity.
+   * Creates a bounded blocking queue that holds at most {@code capacity} elements.
    *
-   * @param capacity maximum number of elements allowed in the queue
+   * @param capacity maximum number of elements the queue may hold at one time
    */
   public BlockingWorkQueue (int capacity) {
 
@@ -63,7 +66,13 @@ public class BlockingWorkQueue<E> implements WorkQueue<E> {
   }
 
   /**
-   * {@inheritDoc}
+   * Inserts the specified element into the queue, waiting up to the given timeout if the queue is full.
+   *
+   * @param e       the work item to enqueue
+   * @param timeout maximum time to wait for space to become available
+   * @param unit    time unit of the {@code timeout} argument
+   * @return {@code true} if the element was accepted; {@code false} if the timeout elapsed before space was available
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
   public boolean offer (E e, long timeout, TimeUnit unit)
@@ -73,7 +82,12 @@ public class BlockingWorkQueue<E> implements WorkQueue<E> {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves and removes the head of the queue, waiting up to the given timeout if the queue is empty.
+   *
+   * @param timeout maximum time to wait for an element to become available
+   * @param unit    time unit of the {@code timeout} argument
+   * @return the head element, or {@code null} if the timeout elapsed before an element was available
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
   public E poll (long timeout, TimeUnit unit)

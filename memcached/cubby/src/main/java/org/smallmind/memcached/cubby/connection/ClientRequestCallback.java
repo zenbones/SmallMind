@@ -41,7 +41,13 @@ import org.smallmind.memcached.cubby.command.Command;
 import org.smallmind.memcached.cubby.response.Response;
 
 /**
- * Callback used by client-issued commands to await a response or failure.
+ * A {@link RequestCallback} implementation that allows the client thread that issued a command
+ * to block until the corresponding server response arrives or a timeout expires.
+ *
+ * <p>When the NIO I/O loop receives a response it invokes {@link #setResult(Response)} or
+ * {@link #setException(IOException)}, releasing the latch and unblocking any thread waiting
+ * in {@link #getResult(long)}. A single instance is created per outbound command and must
+ * not be reused.</p>
  */
 public class ClientRequestCallback implements RequestCallback {
 
@@ -51,9 +57,10 @@ public class ClientRequestCallback implements RequestCallback {
   private final Command command;
 
   /**
-   * Creates a callback bound to the originating command.
+   * Creates a callback associated with the given command, which is used in timeout-exceeded
+   * error messages.
    *
-   * @param command command awaiting a response
+   * @param command the command for which a response is expected; must not be {@code null}
    */
   public ClientRequestCallback (Command command) {
 
@@ -61,12 +68,19 @@ public class ClientRequestCallback implements RequestCallback {
   }
 
   /**
-   * Waits for the response to arrive or throws if the wait exceeds the timeout.
+   * Blocks the calling thread until a response is available or the timeout elapses.
    *
-   * @param timeoutMilliseconds wait duration; zero means wait indefinitely
-   * @return the received response
-   * @throws InterruptedException if interrupted while waiting
-   * @throws IOException          if an I/O error occurred or the wait timed out
+   * <p>If {@code timeoutMilliseconds} is greater than zero the method waits at most that many
+   * milliseconds; if the latch does not count down within that window a
+   * {@link ResponseTimeoutException} is thrown. A value of zero or less causes the method to
+   * wait indefinitely.</p>
+   *
+   * @param timeoutMilliseconds maximum wait time in milliseconds; zero or negative means wait
+   *                            indefinitely
+   * @return the {@link Response} delivered by the I/O loop
+   * @throws InterruptedException if the calling thread is interrupted while waiting
+   * @throws IOException          if the I/O loop reported an error via {@link #setException(IOException)},
+   *                              or if the timeout is exceeded (thrown as {@link ResponseTimeoutException})
    */
   public Response getResult (long timeoutMilliseconds)
     throws InterruptedException, IOException {
@@ -99,6 +113,11 @@ public class ClientRequestCallback implements RequestCallback {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Stores the response and releases the latch, unblocking any thread waiting in
+   * {@link #getResult(long)}.</p>
+   *
+   * @param response the parsed server response; must not be {@code null}
    */
   public void setResult (Response response) {
 
@@ -108,6 +127,11 @@ public class ClientRequestCallback implements RequestCallback {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Stores the exception and releases the latch so that {@link #getResult(long)} can
+   * propagate it to the waiting client thread.</p>
+   *
+   * @param ioException the I/O error that occurred while processing the command
    */
   public void setException (IOException ioException) {
 

@@ -43,17 +43,18 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.KeyParsingException;
 
 /**
- * Utility for extracting RSA key factors from X.509 encoded keys.
+ * Utility for extracting RSA modulus and exponent from X.509/PKCS8/raw ASN.1 encoded key material.
  */
 public class X509KeyFactorUtility {
 
   /**
-   * Extracts modulus and exponent from an X.509 encoded RSA key.
+   * Parses an RSA public or private key from Base64 or PEM-encoded text and returns its modulus and exponent.
+   * Handles three ASN.1 structural variants: SubjectPublicKeyInfo (public), PKCS8 (private with algorithm id), and raw RSA sequence (private without wrapper).
    *
-   * @param raw the raw PEM or Base64 encoded key text
-   * @return parsed RSA key factors
-   * @throws IOException         if the key cannot be decoded
-   * @throws KeyParsingException if the ASN.1 structure is invalid
+   * @param raw the PEM or Base64-encoded RSA key text; whitespace and line breaks are ignored
+   * @return the extracted {@link RSAKeyFactors} containing the modulus and exponent
+   * @throws IOException         if the Base64 decoding of the key text fails
+   * @throws KeyParsingException if the ASN.1 structure does not match a recognized RSA key format
    */
   public static RSAKeyFactors extractKeyFactor (String raw)
     throws IOException, KeyParsingException {

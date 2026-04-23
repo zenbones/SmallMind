@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.reflection.type;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Thrown when generic type inference cannot determine a unique result.
+ * Thrown when generic type inference fails because zero or more than one candidate class is found.
  */
 public class TypeInferenceException extends FormattedRuntimeException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public TypeInferenceException () {
 
@@ -48,10 +48,10 @@ public class TypeInferenceException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message describing the failure
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the inference failure
+   * @param args    arguments substituted into the format string
    */
   public TypeInferenceException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class TypeInferenceException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying problem
-   * @param message   a {@link java.util.Formatter}-style message describing the failure
-   * @param args      values interpolated into the message
+   * @param throwable the underlying problem that prevented type inference
+   * @param message   a {@link java.util.Formatter}-style format string describing the inference failure
+   * @param args      arguments substituted into the format string
    */
   public TypeInferenceException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class TypeInferenceException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying problem
+   * @param throwable the underlying problem that prevented type inference
    */
   public TypeInferenceException (Throwable throwable) {
 

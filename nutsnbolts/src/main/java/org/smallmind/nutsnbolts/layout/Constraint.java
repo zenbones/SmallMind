@@ -33,7 +33,8 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Describes how a layout element grows or shrinks relative to available space.
+ * Describes the grow and shrink flexibility of a layout element, controlling how it responds
+ * when available space exceeds or falls short of its preferred size.
  */
 public class Constraint {
 
@@ -46,17 +47,17 @@ public class Constraint {
   private double shrink;
 
   /**
-   * Creates a constraint with zero grow and shrink factors.
+   * Creates a rigid constraint with grow and shrink factors both set to zero.
    */
   public Constraint () {
 
   }
 
   /**
-   * Creates a constraint with explicit grow and shrink weights.
+   * Creates a constraint with the specified grow and shrink weights.
    *
-   * @param grow   proportion used when extra space is available
-   * @param shrink proportion used when space is scarce
+   * @param grow   the relative weight used to distribute surplus space among growable elements
+   * @param shrink the relative weight used to reclaim space from shrinkable elements when space is scarce
    */
   public Constraint (double grow, double shrink) {
 
@@ -65,9 +66,9 @@ public class Constraint {
   }
 
   /**
-   * Returns a reusable constraint that is rigid (no grow or shrink).
+   * Returns a shared rigid constraint that neither grows nor shrinks.
    *
-   * @return an immutable constraint
+   * @return the shared immutable rigid constraint instance
    */
   public static Constraint immutable () {
 
@@ -75,9 +76,9 @@ public class Constraint {
   }
 
   /**
-   * Returns a reusable constraint that only grows.
+   * Returns a shared constraint that grows but does not shrink.
    *
-   * @return an immutable grow-only constraint
+   * @return the shared immutable grow-only constraint instance
    */
   public static Constraint expand () {
 
@@ -85,9 +86,9 @@ public class Constraint {
   }
 
   /**
-   * Returns a reusable constraint that only shrinks.
+   * Returns a shared constraint that shrinks but does not grow.
    *
-   * @return an immutable shrink-only constraint
+   * @return the shared immutable shrink-only constraint instance
    */
   public static Constraint contract () {
 
@@ -95,9 +96,9 @@ public class Constraint {
   }
 
   /**
-   * Returns a reusable constraint that can both grow and shrink.
+   * Returns a shared constraint that both grows and shrinks.
    *
-   * @return an immutable stretch constraint
+   * @return the shared immutable grow-and-shrink constraint instance
    */
   public static Constraint stretch () {
 
@@ -105,9 +106,9 @@ public class Constraint {
   }
 
   /**
-   * Creates a mutable constraint instance for custom settings.
+   * Creates a new {@link MutableConstraint} with default zero grow and shrink values.
    *
-   * @return a new mutable constraint
+   * @return a new mutable constraint instance
    */
   public static MutableConstraint create () {
 
@@ -115,9 +116,9 @@ public class Constraint {
   }
 
   /**
-   * Returns the grow weight.
+   * Returns the grow weight that controls how surplus space is allocated to this element.
    *
-   * @return the grow factor
+   * @return the grow factor; zero means this element does not grow
    */
   public double getGrow () {
 
@@ -125,9 +126,9 @@ public class Constraint {
   }
 
   /**
-   * Sets the grow weight.
+   * Sets the grow weight for this constraint.
    *
-   * @param grow the grow factor
+   * @param grow the grow factor to apply; zero means this element does not grow
    */
   private void setGrow (double grow) {
 
@@ -135,9 +136,9 @@ public class Constraint {
   }
 
   /**
-   * Returns the shrink weight.
+   * Returns the shrink weight that controls how space is reclaimed from this element when space is scarce.
    *
-   * @return the shrink factor
+   * @return the shrink factor; zero means this element does not shrink
    */
   public double getShrink () {
 
@@ -145,9 +146,9 @@ public class Constraint {
   }
 
   /**
-   * Sets the shrink weight.
+   * Sets the shrink weight for this constraint.
    *
-   * @param shrink the shrink factor
+   * @param shrink the shrink factor to apply; zero means this element does not shrink
    */
   private void setShrink (double shrink) {
 

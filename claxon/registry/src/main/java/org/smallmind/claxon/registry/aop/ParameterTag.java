@@ -37,19 +37,48 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a tag whose value is extracted from a method parameter.
+ * Declares a metrics tag whose value is resolved at runtime from a named or indexed parameter
+ * of the intercepted method or constructor.
+ *
+ * <p>This annotation has no {@link java.lang.annotation.ElementType} targets of its own
+ * (it is annotated with an empty {@code @Target({})}), meaning it is only valid as a nested
+ * annotation inside the {@link Instrumented#parameters()} array.</p>
+ *
+ * <p>At each invocation the {@link InstrumentedAspect} passes {@link #parameter()} to
+ * {@code AOPUtility.getParameterValue} to locate the actual argument, calls
+ * {@link Object#toString()} on it, and attaches the result as the tag value.</p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * {@literal @}Instrumented(
+ *     parser     = MyParser.class,
+ *     parameters = {
+ *         {@literal @}ParameterTag(key = "userId", parameter = "id")
+ *     }
+ * )
+ * public void processUser(String id) { ... }
+ * </pre>
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ParameterTag {
 
   /**
-   * @return tag key
+   * The tag key that identifies this dimension in the metrics backend.
+   *
+   * @return the tag key; must not be empty
    */
   String key ();
 
   /**
-   * @return parameter name or index expression used to derive the tag value
+   * The name or index expression used to locate the method parameter whose runtime value
+   * becomes the tag value.
+   *
+   * <p>The exact syntax accepted here is determined by
+   * {@code AOPUtility.getParameterValue}; typically this is the Java source parameter name
+   * (requires debug information or parameter name retention) or a zero-based index string.</p>
+   *
+   * @return the parameter name or index expression; must not be empty
    */
   String parameter ();
 }

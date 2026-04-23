@@ -1,1105 +1,825 @@
-[[liquibase, Liquibase]]
-= Liquibase
+= SmallMind Liquibase
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
 
-[partintro]
-Liquibase is Smallmind's thin integration layer around Liquibase execution for code that wants schema work to stay explicit.
-The module centers on `org.smallmind.liquibase.spring.SpringLiquibase`, a small runner that you configure with a `DataSource`, a `Goal`, a `Source`, and one or more `ChangeLog` descriptors.
+== Overview
 
-It keeps Liquibase execution close to native commands while giving Spring-managed code one explicit runner.
-It gives you one explicit place to decide:
+The `smallmind-liquibase` module is a thin Spring integration over
+https://www.liquibase.org[Liquibase] plus a logging bridge that routes
+Liquibase's own log output through the SmallMind Scribe framework.
 
-* what change log to run
-* where that change log comes from
-* whether to preview, update, document, or generate
-* whether startup should fail when migration work fails
+It is organised as a single Maven artifact (`smallmind-liquibase`) with one
+Java package (`org.smallmind.liquibase.spring`) containing six classes:
 
-Audience: developers wiring Liquibase into Spring-managed startup or other integration code and who want lifecycle, environment policy, and failure handling to remain application-owned.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+* **`SpringLiquibase`** — a Spring `InitializingBean` that runs a configurable
+  Liquibase command against one or more change logs during application-context
+  refresh.
+* **`ChangeLog`** — a plain parameter envelope describing the input (and
+  optional output) location of a single Liquibase change log file.
+* **`Goal`** — an enum enumerating the Liquibase commands `SpringLiquibase` is
+  willing to execute: `NONE`, `PREVIEW`, `UPDATE`, `DOCUMENT`, `GENERATE`.
+* **`Source`** — an enum selecting whether change log resources are resolved
+  from the filesystem (rooted at `user.home`) or from the classpath.
+* **`ScribeLogService`** — a Liquibase `LogService` implementation, discovered
+  through `java.util.ServiceLoader`, that supersedes Liquibase's built-in JUL
+  service when both are on the classpath.
+* **`ScribeLiquibaseLogger`** — a Liquibase `Logger` that translates
+  `java.util.logging.Level` to `org.smallmind.scribe.pen.Level` and delegates
+  to a per-class Scribe logger.
 
-== Quick Navigation
+The module is deliberately small. It does not wrap Liquibase's CLI, does not
+attempt to expose its full feature surface, and does not replace its schema.
+It exists to turn Liquibase into a bean you can drop into a Spring context,
+configure through five properties, and have it perform exactly one of five
+coarse-grained operations at the moment the context comes up.
 
-* <<liquibase-reading-paths,Reading Paths>>
-* <<liquibase-at-a-glance,At A Glance>>
-* <<liquibase-why-use,Why Use Liquibase Module>>
-* <<liquibase-fit,Where This Module Fits>>
-* <<liquibase-layout,Project Layout>>
-* <<liquibase-installation,Installation>>
-* <<liquibase-first-run,First Run In 5 Minutes>>
-* <<liquibase-quick-start,Quick Start>>
-* <<liquibase-advanced-examples,Example Catalog>>
-* <<liquibase-goals,Choosing A Goal>>
-* <<liquibase-required-properties,Required Properties>>
-* <<liquibase-goal-matrix,Goal Matrix>>
-* <<liquibase-property-matrix,Property Matrix By Goal>>
-* <<liquibase-resource-resolution,Resource Resolution>>
-* <<liquibase-lifecycle,Lifecycle And Ownership>>
-* <<liquibase-custom-types,Custom Data Types>>
-* <<liquibase-logging,Logging Integration>>
-* <<liquibase-use-cases,API By Use Case>>
-* <<liquibase-core-api,Core API>>
-* <<liquibase-command-mapping,Command Mapping>>
-* <<liquibase-defaults,Defaults Reference>>
-* <<liquibase-edge-cases,Behavioral Edge Cases>>
-* <<liquibase-troubleshooting,Troubleshooting>>
-* <<liquibase-scenarios,Operational Scenarios>>
-* <<liquibase-verification,Verification Checklist>>
+=== Why this package exists
 
-[[liquibase-reading-paths, Reading Paths]]
-== Reading Paths
+Liquibase ships with its own Spring integration
+(`liquibase.integration.spring.SpringLiquibase`), and for many applications
+that is sufficient. `smallmind-liquibase` exists because a SmallMind
+application has a particular shape that Liquibase's default integration does
+not quite fit:
 
-If you are integrating this module for the first time, read in this order:
+1. *A single bean must cover more than one command.* In a SmallMind service,
+   the same configuration file typically drives development ("generate the
+   schema from what the developer just changed"), QA ("preview the SQL that
+   would be executed"), CI ("produce the documentation"), and production
+   ("apply pending changes"). Liquibase's built-in integration is wired for
+   `update` only; switching commands means swapping bean classes. A single
+   `SpringLiquibase` bean in `smallmind-liquibase` covers all five operations
+   by flipping the `goal` property — in practice, via a placeholder like
+   `${liquibase.goal}` set differently per environment.
+2. *Multiple change logs, one bean.* A service that spans several logical
+   schemas (the application's own tables, plus infrastructure schemas like
+   Spring Batch's `BATCH_*` or Quartz's `QRTZ_*`) needs Liquibase to execute
+   the same command against each. `SpringLiquibase.setChangeLogs` accepts an
+   array, processes them in order, and opens a fresh JDBC connection per
+   change log.
+3. *Custom data types registered once.* Applications that define
+   `LiquibaseDataType` subclasses (for UUIDs, enumerated strings, domain
+   types, etc.) must register them with `DataTypeFactory` before any change
+   log is read. `SpringLiquibase.setDataTypes` performs the unregister/register
+   pair at the start of `afterPropertiesSet()` so the custom type wins over
+   any built-in of the same name. This works even when the configured goal is
+   `NONE` — a common pattern for beans that exist only to install data types
+   into a context that will use them later.
+4. *Schema round-tripping from a live database.* `Goal.GENERATE` uses
+   Liquibase's diff/snapshot machinery to reverse-engineer a live database
+   into a change log, keyed per catalog. The default Spring integration has
+   no equivalent. This is how the shipped `Batch.changelog.xml` and
+   `Quartz.changelog.xml` files were produced.
+5. *Logging that lines up with the rest of the service.* SmallMind services
+   use Scribe. Liquibase does not. Without a bridge, Liquibase output either
+   disappears (if JUL is not configured) or arrives on a different channel
+   than the service's own log. `ScribeLogService` plus `ScribeLiquibaseLogger`
+   make Liquibase log through the same appender, at the same level map, as
+   everything else.
+6. *Spring-managed transactions for `UPDATE`.* `afterPropertiesSet` is
+   annotated with SmallMind's `@Transactional` so that, when a transactional
+   context is already active at startup, the Liquibase `UPDATE` participates
+   in it.
 
-1. <<liquibase-why-use,Why Use Liquibase Module>>
-2. <<liquibase-fit,Where This Module Fits>>
-3. <<liquibase-installation,Installation>>
-4. <<liquibase-first-run,First Run In 5 Minutes>>
-5. <<liquibase-quick-start,Quick Start>>
-6. <<liquibase-advanced-examples,Example Catalog>>
-7. <<liquibase-goals,Choosing A Goal>>
-8. <<liquibase-edge-cases,Behavioral Edge Cases>>
+=== What it does, concretely
 
-If you already use the module and need exact behavior quickly, jump to:
+* **Wraps the Liquibase command API** (`CommandScope`, `UpdateCommandStep`,
+  `UpdateSqlCommandStep`, `DbDocCommandStep`) in a single Spring bean whose
+  behaviour is chosen by setting one enum property.
+* **Registers custom data types** with Liquibase's `DataTypeFactory` before
+  reading any change log, replacing prior registrations.
+* **Resolves change log resources** through either a
+  `DirectoryResourceAccessor` rooted at the user's home directory or a
+  `ClassLoaderResourceAccessor` bound to a caller-supplied class loader.
+* **Runs one change log at a time** inside a Liquibase `Scope` that carries
+  the configured resource accessor, so relative includes in the change log
+  resolve the same way the top-level file did.
+* **Reverse-engineers the live schema** into a change log file per catalog
+  when the goal is `GENERATE`, with the change set author pinned to
+  `auto.generated`.
+* **Installs a logging bridge** that routes Liquibase log events to a Scribe
+  logger keyed on the requesting class.
 
-* <<liquibase-goal-matrix,Goal Matrix>>
-* <<liquibase-resource-resolution,Resource Resolution>>
-* <<liquibase-command-mapping,Command Mapping>>
-* <<liquibase-defaults,Defaults Reference>>
-* <<liquibase-troubleshooting,Troubleshooting>>
+=== What it intentionally does not do
 
-[[liquibase-at-a-glance, At A Glance]]
-== At A Glance
+* It does not expose every Liquibase command. `rollback`, `status`, `tag`,
+  `history`, `clearCheckSums`, and the contexts-manipulation subcommands are
+  not wired in. Callers that need them run Liquibase directly.
+* It does not provide a transaction manager, a connection pool, or a data
+  source factory. `SpringLiquibase.setDataSource` expects an already-built
+  `javax.sql.DataSource` — the caller decides where it comes from (a JNDI
+  lookup, a `DriverManagerDataSource`, a pooled data source, etc.).
+* It does not support multi-schema comparisons or cross-database diffs. The
+  `GENERATE` goal always compares the default schema of the configured
+  database against an empty snapshot, producing a "create from nothing"
+  change log.
+* It does not ship its own change log XSD or any prewritten change sets.
+  Callers supply those; the module only executes them.
+* It does not lock or coordinate between JVMs. Liquibase's own
+  `DATABASECHANGELOGLOCK` table provides that guarantee, and
+  `smallmind-liquibase` relies on it rather than reimplementing it.
 
-[cols="1,2,3",options="header"]
+== Package structure
+
+[cols="1,3",options="header"]
 |===
-|Module |Artifact |Purpose
+| Class | Role
 
-|Liquibase
-|`org.smallmind:smallmind-liquibase`
-|Explicit Liquibase runner for Spring-oriented integration code, plus small goal/source/value types and an optional Scribe logging bridge
+| `SpringLiquibase`
+| The only bean a typical caller declares. Implements `InitializingBean` so
+  that the configured goal runs during context refresh, once all properties
+  have been injected. Holds a `DataSource`, a `ResourceAccessor`, the chosen
+  `Goal`, an array of `ChangeLog`s, optional custom `LiquibaseDataType[]`,
+  an optional comma-delimited `contexts` string, an optional `outputDir`,
+  and an optional `previewStream`.
+
+| `ChangeLog`
+| Plain JavaBean with two string properties, `input` and `output`. `input`
+  is required whenever the goal is not `NONE` and is interpreted according
+  to the active `Source`. `output` is retained for callers that want to pair
+  an input with a named output file, but the current `SpringLiquibase`
+  implementation writes `GENERATE` output under `$\{outputDir}/$\{catalog}.changelog`
+  rather than consuming `ChangeLog.getOutput()` — the property is part of
+  the configuration shape, not the execution path.
+
+| `Goal`
+| Five-valued enum that selects which Liquibase command
+  `afterPropertiesSet()` runs per change log. See
+  <<goals,Goals in detail>> below for the semantics of each constant.
+
+| `Source`
+| Two-valued enum (`FILE`, `CLASSPATH`) that selects the Liquibase
+  `ResourceAccessor` used to resolve change log paths. `FILE` builds a
+  `DirectoryResourceAccessor` rooted at `System.getProperty("user.home")`;
+  `CLASSPATH` builds a `ClassLoaderResourceAccessor` bound to the class
+  loader supplied at `SpringLiquibase` construction time.
+
+| `ScribeLogService`
+| Liquibase `LogService` SPI implementation. Its priority is
+  `PRIORITY_DEFAULT + 1`, which is enough to beat Liquibase's built-in JUL
+  service when both are on the classpath. `getLog(Class)` returns a fresh
+  `ScribeLiquibaseLogger` on every call.
+
+| `ScribeLiquibaseLogger`
+| Liquibase `Logger` implementation built on `AbstractLogger`. Holds a
+  `Logger` obtained from `LoggerManager.getLogger(clazz)` and translates
+  `java.util.logging.Level` to `org.smallmind.scribe.pen.Level` on each
+  emit. Unknown non-null levels default to `INFO` so nothing is silently
+  dropped.
 |===
 
-[[liquibase-why-use, Why Use Liquibase Module]]
-== Why Use Liquibase Module
+[[goals]]
+== Goals in detail
 
-Use this module when you want Liquibase execution to stay visible in your code instead of being hidden inside framework auto-configuration or deployment scripts.
+`Goal` is the single most important configuration knob on `SpringLiquibase`.
+Each constant maps to a different Liquibase command, with different inputs
+and different side effects.
 
-What this module does well:
+`NONE`::
+    Register custom data types, then return. No database connection is
+    opened, no change log is read. Use this when a bean's only purpose is
+    to install `LiquibaseDataType` instances — typically in a context where
+    another bean will perform the actual migration later, or in a read-only
+    process that must understand the schema's custom types without altering
+    anything.
 
-* keeps migration intent explicit through `Goal`, `Source`, and `ChangeLog[]`
-* keeps Liquibase behavior close to native Liquibase commands instead of wrapping it in a larger abstraction
-* lets Spring-managed code run migrations during bean initialization without adding framework-owned policy
-* supports preview, update, documentation, and schema-generation modes from one small API surface
-* allows optional registration of custom `LiquibaseDataType` implementations before execution
+`PREVIEW`::
+    Invoke `UpdateSqlCommandStep` against an offline database URL of the
+    form `offline:$\{displayName}`. Liquibase resolves the database dialect
+    from the display name, generates the SQL for every pending change set
+    filtered by the configured contexts, and writes the result to the
+    supplied `previewStream` (falling back to `System.out` when none is
+    set). No DDL or DML is applied — the live connection is used only to
+    determine which dialect to generate. Useful for change-control review
+    boards that want to see the exact SQL before a deployment.
 
-This module is especially useful when:
+`UPDATE`::
+    Invoke `UpdateCommandStep` against the live database. Liquibase
+    consults its `DATABASECHANGELOG` table to determine which change sets
+    have already been applied, filters the remainder by the configured
+    contexts, and executes them. The run happens inside the transaction
+    established by SmallMind's `@Transactional` annotation on
+    `afterPropertiesSet`, so a caller that wraps context startup in a
+    transaction gets all-or-nothing semantics. This is the canonical
+    production goal.
 
-* your application already owns the `DataSource`
-* you want changelog execution to happen from ordinary bean wiring or explicit startup code
-* you want the same wiring to support preview-first rollout and later update execution
-* you want a thin reusable library helper instead of a broader migration platform
+`DOCUMENT`::
+    Invoke `DbDocCommandStep`. Liquibase reads the change log plus the
+    current schema and produces an HTML documentation tree under
+    `outputDir` (or the system temp directory when `outputDir` is blank).
+    Useful in CI pipelines that publish a browseable schema reference
+    alongside the application artifact.
 
-[[liquibase-fit, Where This Module Fits]]
-== Where This Module Fits
+`GENERATE`::
+    Bypass the change log entirely and reverse-engineer the current
+    schema. For each distinct catalog encountered while iterating the
+    configured change logs, `SpringLiquibase`:
++
+. Builds a `SnapshotControl` from the resolved `Database`.
+. Builds a `CompareControl` that compares the default catalog/schema
+  against itself.
+. Captures a live snapshot through `SnapshotGeneratorFactory`.
+. Diffs it against an empty snapshot (producing a "create everything"
+  result).
+. Writes the change log to `$\{outputDir}/$\{catalog}.changelog`,
+  falling back to the system temp directory when `outputDir` is blank.
++
+The `changeSetAuthor` is hard-coded to `auto.generated` and the
+`changeSetContext` is set to the configured `contexts` string. A change
+log generated this way round-trips cleanly: running `UPDATE` against
+an empty database reproduces the snapshot.
 
-[cols="2,3,3",options="header"]
-|===
-|Situation |Fit |Why
+== Sources in detail
 
-|Application owns startup and wants schema work to run from ordinary Spring wiring
-|Strong fit
-|`SpringLiquibase` is built around explicit bean properties and `afterPropertiesSet()`
+`Source` controls how strings passed to `ChangeLog.setInput` are resolved.
+The two constants map to two different Liquibase `ResourceAccessor`
+implementations:
 
-|Application wants to preview SQL first, then switch to real updates with the same object graph
-|Strong fit
-|`Goal.PREVIEW` and `Goal.UPDATE` use the same core wiring
+`FILE`::
+    `DirectoryResourceAccessor` rooted at `System.getProperty("user.home")`.
+    A change log input of `schemas/main/schema.xml` resolves to
+    `$HOME/schemas/main/schema.xml` (or the Windows equivalent). Use this
+    when change logs are deployed alongside the application as external
+    configuration — a pattern common for hand-edited schemas that must be
+    modified without rebuilding the artifact.
 
-|Reusable library needs a small adapter around Liquibase without taking over caller policy
-|Strong fit
-|The API surface is small and behavior stays close to Liquibase itself
-|===
+`CLASSPATH`::
+    `ClassLoaderResourceAccessor` bound to the class loader supplied to
+    `SpringLiquibase`'s constructor (or the context class loader when the
+    no-arg constructor is used). A change log input of
+    `org/smallmind/batch/spring/Batch.changelog.xml` resolves through
+    `ClassLoader.getResource(...)`. Use this when change logs are packaged
+    inside the application JAR/WAR — the normal case for the `BATCH_*` and
+    `QRTZ_*` tables shipped by sibling SmallMind modules.
 
-[NOTE]
-====
-The module is Spring-oriented because `SpringLiquibase` implements `InitializingBean`, but the class can still be constructed and invoked directly.
-If you do not want migration work to happen during bean initialization, instantiate the runner yourself and call `afterPropertiesSet()` from your own lifecycle code.
-====
+NOTE: `Source` is not a per-change-log setting. One `SpringLiquibase` bean
+uses one `ResourceAccessor` for every change log it processes. Callers that
+mix filesystem-based and classpath-based change logs should declare two
+beans.
 
-[[liquibase-layout, Project Layout]]
-== Project Layout
-
-[cols="1,2,3",options="header"]
-|===
-|Path |Artifact |Notes
-
-|`liquibase/`
-|`org.smallmind:smallmind-liquibase`
-|Published jar containing `org.smallmind.liquibase.spring`
-|===
-
-[[liquibase-installation, Installation]]
 == Installation
 
-Add the Liquibase module to the component that owns schema migration lifecycle.
+The module is published as a single artifact:
 
 [source,xml]
 ----
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind-liquibase</artifactId>
-  <version>${smallmind.version}</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
-Current direct dependencies from `liquibase/pom.xml`:
+It transitively pulls in `liquibase-core`, `smallmind-nutsnbolts`, and
+`smallmind-persistence`. `spring-beans` is declared as an `optional`
+dependency, which means a project consuming `smallmind-liquibase` also has
+to declare its own Spring dependencies — the module does not pin a Spring
+version for you.
 
-* `org.liquibase:liquibase-core`
-* `org.smallmind:smallmind-nutsnbolts`
-* `org.smallmind:smallmind-persistence`
-* `org.springframework:spring-beans` (`optional=true`)
+=== Runtime prerequisites
 
-[IMPORTANT]
-====
-`spring-beans` is marked optional in `smallmind-liquibase`.
-If you use `SpringLiquibase`, declare `org.springframework:spring-beans` explicitly in your application because the runner implements `InitializingBean`.
-====
+* A working `javax.sql.DataSource` addressable as a Spring bean. The module
+  does not build one for you; the shipped example Spring XML files use
+  `org.smallmind.persistence.sql.DriverManagerDataSource`, but any
+  `DataSource` works.
+* A Liquibase change log reachable from the configured `Source`. Supported
+  formats are whatever `liquibase-core` understands at runtime (XML, YAML,
+  JSON, SQL).
+* For the Scribe logging bridge, a classpath entry
+  `META-INF/services/liquibase.logging.LogService` containing the single
+  line `org.smallmind.liquibase.spring.ScribeLogService`. Liquibase
+  discovers log services via `java.util.ServiceLoader`, so without this
+  file it will fall back to its built-in JUL service.
 
-[NOTE]
-====
-You still need a JDBC driver and a configured `DataSource` for the target database.
-Every active goal except `NONE` opens a JDBC connection.
-====
+== Wiring it up
 
-[[liquibase-first-run, First Run In 5 Minutes]]
-== First Run In 5 Minutes
-
-If you want the safest first adoption path:
-
-1. Add `smallmind-liquibase`, `spring-beans`, your JDBC driver, and a working `DataSource`.
-2. Put one known-good changelog on the classpath.
-3. Configure `Source.CLASSPATH`, `Goal.PREVIEW`, and a `ByteArrayOutputStream` for preview output.
-4. Run `afterPropertiesSet()` against a non-production database.
-5. Review the generated SQL.
-6. Switch only the goal to `UPDATE` when the preview matches expectations.
-7. Keep `contexts` explicit in every environment.
-
-That path is conservative for two reasons:
-
-* `PREVIEW` and `UPDATE` use the same basic wiring, so you are testing the real integration path.
-* `PREVIEW` does not mutate the database, but it still proves that the `DataSource`, changelog location, and Liquibase setup are all valid.
-
-[[liquibase-quick-start, Quick Start]]
-== Quick Start
-
-=== Spring Java Configuration
-
-When Spring manages the bean, configure it and return it.
-Spring will call `afterPropertiesSet()` during initialization.
-
-[source,java]
-----
-import javax.sql.DataSource;
-import org.smallmind.liquibase.spring.ChangeLog;
-import org.smallmind.liquibase.spring.Goal;
-import org.smallmind.liquibase.spring.Source;
-import org.smallmind.liquibase.spring.SpringLiquibase;
-
-public SpringLiquibase schemaLiquibase (DataSource dataSource)
-    throws Exception {
-
-  ChangeLog changeLog = new ChangeLog();
-  changeLog.setInput("db/changelog/master.xml");
-
-  SpringLiquibase liquibase = new SpringLiquibase();
-  liquibase.setDataSource(dataSource);
-  liquibase.setSource(Source.CLASSPATH);
-  liquibase.setGoal(Goal.UPDATE);
-  liquibase.setContexts("prod");
-  liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-
-  return liquibase;
-}
-----
-
-=== Manual Execution Outside Spring Initialization
-
-You can also construct the runner directly and invoke it yourself.
-This is useful when your application wants full control over startup order.
-
-[source,java]
-----
-ChangeLog changeLog = new ChangeLog();
-changeLog.setInput("db/changelog/master.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.UPDATE);
-liquibase.setContexts("prod,tenant-a");
-liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-
-liquibase.afterPropertiesSet();
-----
-
-=== Spring XML Wiring
+The typical wiring puts `SpringLiquibase` in a Spring XML file alongside
+the `DataSource` that feeds it. The shipped `smallmind-batch` and
+`smallmind-schedule-quartz` modules both use the same pattern — reproduced
+below as a template.
 
 [source,xml]
 ----
-<bean id="schemaChangeLog" class="org.smallmind.liquibase.spring.ChangeLog">
-  <property name="input" value="db/changelog/master.xml"/>
-</bean>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans
+         http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-<bean id="liquibaseRunner" class="org.smallmind.liquibase.spring.SpringLiquibase">
-  <property name="dataSource" ref="dataSource"/>
+  <bean id="applicationLiquibase"                                     <1>
+        class="org.smallmind.liquibase.spring.SpringLiquibase">
+    <property name="dataSource" ref="applicationDataSource"/>         <2>
+    <property name="source" value="CLASSPATH"/>                       <3>
+    <property name="goal" value="UPDATE"/>                            <4>
+    <property name="changeLogs">                                      <5>
+      <list>
+        <bean class="org.smallmind.liquibase.spring.ChangeLog">
+          <property name="input"
+                    value="com/example/db/schema.changelog.xml"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="applicationDataSource"                                    <2>
+        class="org.smallmind.persistence.sql.DriverManagerDataSource">
+    <constructor-arg index="0" value="${jdbc.driver.classname}"/>
+    <constructor-arg index="1" value="${jdbc.url}"/>
+    <constructor-arg index="2" value="${jdbc.username}"/>
+    <constructor-arg index="3" value="${jdbc.password}"/>
+  </bean>
+</beans>
+----
+<1> The bean id can be anything — nothing in the module depends on it.
+    Multiple `SpringLiquibase` beans are allowed in one context; each runs
+    independently during refresh.
+<2> Any `DataSource` bean will do. `SpringLiquibase` calls
+    `dataSource.getConnection()` once per change log and closes the
+    connection through try-with-resources before moving to the next.
+<3> `CLASSPATH` selects a `ClassLoaderResourceAccessor`. The `input` path
+    below is resolved via `ClassLoader.getResource`.
+<4> `UPDATE` is the production goal. Replace with `${liquibase.goal}` and
+    set a different value per environment to drive the other four
+    behaviours from the same bean definition.
+<5> `changeLogs` is a Spring list of `ChangeLog` beans. A single bean
+    instance processes every entry in order, opening a fresh JDBC
+    connection per entry.
+
+The Liquibase run happens during the `afterPropertiesSet` callback, which
+Spring invokes after all property setters have returned. Beans that depend
+on the schema (ORM session factories, DAO beans, etc.) should be wired to
+depend on `applicationLiquibase` so that Spring orders their initialisation
+after the migration has completed — either by listing the Liquibase bean
+as a constructor-arg, by declaring `depends-on="applicationLiquibase"`, or
+by importing the XML file that defines the bean before any dependent
+beans.
+
+=== Parameterising the goal per environment
+
+The goal is an enum-valued property, which Spring populates via
+`PropertyEditorSupport` from a string placeholder. A single XML file can
+cover every environment:
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
   <property name="source" value="CLASSPATH"/>
-  <property name="goal" value="UPDATE"/>
-  <property name="contexts" value="prod"/>
+  <property name="goal" value="${liquibase.goal}"/>
+  <property name="outputDir" value="${liquibase.output.dir}"/>
   <property name="changeLogs">
     <list>
-      <ref bean="schemaChangeLog"/>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="database/schema/schema.xml"/>
+      </bean>
     </list>
   </property>
 </bean>
 ----
 
-[[liquibase-advanced-examples, Example Catalog]]
-== Example Catalog
+Combine with per-environment property files:
 
-=== Preview SQL Before Applying Changes
-
-`Goal.PREVIEW` is the safest starting point when you want to validate resource resolution, contexts, and SQL generation before allowing mutations.
-
-[source,java]
+[source,properties]
 ----
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
-import org.smallmind.liquibase.spring.ChangeLog;
-import org.smallmind.liquibase.spring.Goal;
-import org.smallmind.liquibase.spring.Source;
-import org.smallmind.liquibase.spring.SpringLiquibase;
+# production.properties
+liquibase.goal=UPDATE
 
-ChangeLog changeLog = new ChangeLog();
-changeLog.setInput("db/changelog/master.xml");
+# ci.properties
+liquibase.goal=DOCUMENT
+liquibase.output.dir=/var/build/schema-docs
 
-ByteArrayOutputStream sqlBuffer = new ByteArrayOutputStream();
+# preview.properties
+liquibase.goal=PREVIEW
 
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.PREVIEW);
-liquibase.setContexts("staging");
-liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-liquibase.setPreviewStream(sqlBuffer);
-liquibase.afterPropertiesSet();
-
-String generatedSql = new String(sqlBuffer.toByteArray(), StandardCharsets.UTF_8);
+# developer-regenerating-from-db.properties
+liquibase.goal=GENERATE
+liquibase.output.dir=/home/dev/regen
 ----
 
-[NOTE]
-====
-`PREVIEW` still opens a real JDBC connection.
-It does not mutate the database, but it is not an offline mode in the sense of avoiding the `DataSource`.
-====
+This is the pattern used by `schema-hibernate.xml` in `smallmind-persistence`.
 
-=== Process Multiple Change Logs In A Known Order
+== Usage examples
 
-`SpringLiquibase` iterates the `ChangeLog[]` in array order for `PREVIEW`, `UPDATE`, and `DOCUMENT`.
-Use that to make execution order obvious.
+=== One bean, one change log, production update
 
-[source,java]
+The minimal configuration — the classpath-resident change log runs during
+context refresh, pending change sets are applied, the context comes up with
+the schema in the intended state.
+
+[source,xml]
 ----
-ChangeLog baseline = new ChangeLog();
-baseline.setInput("db/changelog/000-baseline.xml");
-
-ChangeLog features = new ChangeLog();
-features.setInput("db/changelog/100-features.xml");
-
-ChangeLog reporting = new ChangeLog();
-reporting.setInput("db/changelog/200-reporting.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.UPDATE);
-liquibase.setContexts("prod");
-liquibase.setChangeLogs(new ChangeLog[] {baseline, features, reporting});
-liquibase.afterPropertiesSet();
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
 ----
 
-=== Disable Migration Execution Without Removing Wiring
+=== Several change logs in one bean
 
-If you need to keep the bean graph intact but stop schema work temporarily, switch to `Goal.NONE`.
-Datatype registration still runs.
+A single `SpringLiquibase` processes every change log in array order with
+the same goal. A service that owns application tables plus auxiliary
+infrastructure tables might wire it like this:
 
-[source,java]
+[source,xml]
 ----
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setGoal(Goal.NONE);
-liquibase.afterPropertiesSet();
-----
-
-This pattern is useful when:
-
-* an environment should start without schema changes
-* you want to feature-flag migration execution
-* you need a temporary production stop while keeping the same assembly shape
-
-=== Use Externalized Change Logs From The File System
-
-`Source.FILE` resolves paths from `System.getProperty("user.home")`.
-That makes file-based changelogs viable when host layout is part of the deployment contract.
-
-[source,java]
-----
-ChangeLog external = new ChangeLog();
-external.setInput("liquibase/customer-a/master.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.FILE);
-liquibase.setGoal(Goal.UPDATE);
-liquibase.setContexts("customer-a");
-liquibase.setChangeLogs(new ChangeLog[] {external});
-liquibase.afterPropertiesSet();
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/application.changelog.xml"/>
+      </bean>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/audit.changelog.xml"/>
+      </bean>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/reporting.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
 ----
 
-With that configuration, the module resolves the changelog relative to the current process user's home directory.
-If the process runs as `svc-orders`, the effective file root is that account's home directory, not the application working directory.
+Each change log gets a fresh connection. Liquibase's own
+`DATABASECHANGELOG` table tracks applied change sets per change log — or
+per logical file, depending on how change sets are keyed — so cross-log
+`include` references remain safe.
 
-=== Generate Liquibase Database Documentation
+=== Previewing SQL to a file
 
-`Goal.DOCUMENT` is best treated as a dedicated job, not as part of a latency-sensitive service startup path.
+`Goal.PREVIEW` writes the SQL to whatever stream the caller supplies. A
+common pattern is to route it to a file so a DBA can review it before a
+production push.
 
-[source,java]
+[source,xml]
 ----
-ChangeLog changeLog = new ChangeLog();
-changeLog.setInput("db/changelog/master.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.DOCUMENT);
-liquibase.setContexts("docs");
-liquibase.setOutputDir("build/liquibase-docs");
-liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-liquibase.afterPropertiesSet();
-----
-
-If `outputDir` is null or empty, documentation is written under `System.getProperty("java.io.tmpdir")`.
-
-=== Generate A Change Log From The Current Schema
-
-`Goal.GENERATE` snapshots the current database and writes a generated changelog file named after the database default catalog.
-
-[source,java]
-----
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setGoal(Goal.GENERATE);
-liquibase.setContexts("snapshot");
-liquibase.setOutputDir("build/liquibase-output");
-liquibase.setChangeLogs(new ChangeLog[] {new ChangeLog()});
-liquibase.afterPropertiesSet();
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="PREVIEW"/>
+  <property name="previewStream">
+    <bean class="java.io.FileOutputStream">
+      <constructor-arg value="/var/build/pending-changes.sql"/>
+    </bean>
+  </property>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
 ----
 
-[IMPORTANT]
-====
-`GENERATE` does not use `ChangeLog.input`, but the current implementation still iterates `changeLogs`.
-Provide at least one `ChangeLog` entry or the loop cannot run.
-====
+The live database is contacted only to determine the dialect; no DDL or
+DML is issued.
 
-=== Use An Explicit ClassLoader For Classpath Change Logs
+=== Generating documentation in CI
 
-The no-argument constructor uses the thread context classloader.
-If your changelog lives in a module, plugin, or non-default loader, pass that loader explicitly.
+`Goal.DOCUMENT` produces a browseable HTML tree. Pointing `outputDir` at a
+build-artifact directory publishes the result alongside the rest of the
+build output:
 
-[source,java]
+[source,xml]
 ----
-ClassLoader changeLogClassLoader = pluginClassLoader();
-
-ChangeLog changeLog = new ChangeLog();
-changeLog.setInput("db/changelog/master.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase(changeLogClassLoader);
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.UPDATE);
-liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-liquibase.afterPropertiesSet();
-----
-
-=== Register Custom Liquibase Data Types
-
-Custom `LiquibaseDataType` implementations are unregistered by name and then registered before goal execution.
-That happens for every goal, including `NONE`.
-
-[source,java]
-----
-import liquibase.datatype.LiquibaseDataType;
-
-LiquibaseDataType customType = buildCustomType();
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setGoal(Goal.NONE);
-liquibase.setDataTypes(new LiquibaseDataType[] {customType});
-liquibase.afterPropertiesSet();
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="DOCUMENT"/>
+  <property name="outputDir" value="${project.build.directory}/dbdoc"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
 ----
 
-=== Capture Preview SQL For A Test Or CI Check
+=== Reverse-engineering a schema into a change log
 
-A useful pattern is to assert against preview output in a focused integration test.
+`Goal.GENERATE` ignores the change log's contents and snapshots the live
+database instead, writing one change log file per distinct catalog. The
+`input` is still required (the module iterates the change logs to pick up
+their catalogs), but its body is not parsed.
 
-[source,java]
+[source,xml]
 ----
-ByteArrayOutputStream sqlBuffer = new ByteArrayOutputStream();
-
-ChangeLog changeLog = new ChangeLog();
-changeLog.setInput("db/changelog/master.xml");
-
-SpringLiquibase liquibase = new SpringLiquibase();
-liquibase.setDataSource(dataSource);
-liquibase.setSource(Source.CLASSPATH);
-liquibase.setGoal(Goal.PREVIEW);
-liquibase.setChangeLogs(new ChangeLog[] {changeLog});
-liquibase.setPreviewStream(sqlBuffer);
-liquibase.afterPropertiesSet();
-
-String sql = new String(sqlBuffer.toByteArray(), StandardCharsets.UTF_8);
-if (!sql.contains("create table orders")) {
-  throw new IllegalStateException("Preview SQL did not include the expected DDL");
-}
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="legacyDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="GENERATE"/>
+  <property name="outputDir" value="/home/dev/generated"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="placeholder.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
 ----
 
-[[liquibase-goals, Choosing A Goal]]
-== Choosing A Goal
-
-The module exposes five goals.
-Pick the goal based on what you want the runner to own.
-
-[cols="1,3,3",options="header"]
-|===
-|Goal |Use it when |Avoid it when
-
-|`NONE`
-|You want the bean graph or datatype registration but no Liquibase execution
-|You expect validation, preview, or update work to happen
-
-|`PREVIEW`
-|You want generated SQL without database mutation
-|You do not have a working `DataSource`; preview still opens a JDBC connection
-
-|`UPDATE`
-|You want the database updated from the supplied changelog set
-|Your rollout policy forbids schema mutation during startup
-
-|`DOCUMENT`
-|You want Liquibase dbDoc output as an artifact
-|You expect the wrapper to manage artifact collection or publishing
-
-|`GENERATE`
-|You want a changelog derived from the current database schema
-|You need one generated file per `ChangeLog` entry or fine-grained output naming
-|===
-
-=== Goal Semantics
-
-==== `Goal.NONE`
-
-Behavior:
-
-* does not execute a Liquibase command
-* still registers `dataTypes` when provided
-* still requires `goal` itself to be set explicitly
-
-==== `Goal.PREVIEW`
-
-Behavior per changelog:
-
-* opens a JDBC connection from the configured `DataSource`
-* resolves a Liquibase `Database` from that connection
-* executes the Liquibase `updateSql` command
-* passes `contexts` through unchanged
-* writes SQL to `previewStream` or `System.out` when `previewStream` is null
-
-Operational meaning:
-
-* good for preview-first rollout
-* safe from mutation, but not safe from connection or changelog-resolution failures
-
-==== `Goal.UPDATE`
-
-Behavior per changelog:
-
-* opens a JDBC connection
-* resolves the target Liquibase `Database`
-* executes the Liquibase `update` command
-* applies matching change sets to the target database
-
-Operational meaning:
-
-* the simplest path when your application explicitly allows migration during startup
-* no extra retry, lock-policy, or orchestration layer is added by the wrapper
-
-==== `Goal.DOCUMENT`
-
-Behavior per changelog:
-
-* opens a JDBC connection
-* resolves the target Liquibase `Database`
-* executes Liquibase `dbDoc`
-* writes output under `outputDir` or the JVM temp directory
-
-Operational meaning:
-
-* best treated as a build or maintenance job
-* useful when you want database documentation from the same changelog set you already ship
-
-==== `Goal.GENERATE`
-
-Behavior:
-
-* opens a JDBC connection for each configured `ChangeLog`
-* snapshots the current schema and diffs it against an empty reference snapshot
-* writes a generated changelog named `<catalog>.changelog`
-* sets generated changeset author to `auto.generated`
-* sets generated changeset context to the configured `contexts`
-* deduplicates output by default catalog name
-
-Operational meaning:
-
-* useful for snapshotting an existing schema into a Liquibase changelog
-* not suitable when you need custom output naming or one output file per supplied `ChangeLog`
-
-[[liquibase-required-properties, Required Properties]]
-== Required Properties
-
-`SpringLiquibase` is deliberately explicit and performs very little defensive validation.
-For reliable execution, set the properties that the selected goal actually needs.
-
-For every use case:
-
-* `goal` should always be set explicitly, including `Goal.NONE`
-
-For `PREVIEW`, `UPDATE`, `DOCUMENT`, and `GENERATE`:
-
-* `dataSource` is required
-* `changeLogs` must be non-null and contain at least one entry
-
-For `PREVIEW`, `UPDATE`, and `DOCUMENT`:
-
-* `source` should be set to `CLASSPATH` or `FILE`
-* each active `ChangeLog` should provide `input`
-
-For `PREVIEW`:
-
-* `previewStream` is optional, but set it explicitly if you do not want output going to `System.out`
-
-For `DOCUMENT` and `GENERATE`:
-
-* `outputDir` is optional, but set it explicitly if temp-directory output is not acceptable
-
-[IMPORTANT]
-====
-If required properties are missing, failures occur inside `afterPropertiesSet()`.
-Typical outcomes are `NullPointerException`, Liquibase resource failures, or JDBC/Liquibase command exceptions.
-====
-
-[[liquibase-goal-matrix, Goal Matrix]]
-== Goal Matrix
-
-[cols="1,1,1,1,3",options="header"]
-|===
-|Goal |Mutates DB |Requires `DataSource` |Uses `ChangeLog.input` |Primary Output
-
-|`NONE`
-|No
-|No
-|No
-|No Liquibase command execution
-
-|`PREVIEW`
-|No
-|Yes
-|Yes
-|SQL text written to `previewStream` or `System.out`
-
-|`UPDATE`
-|Yes
-|Yes
-|Yes
-|Applied changes in the target database
-
-|`DOCUMENT`
-|No
-|Yes
-|Yes
-|Liquibase dbDoc files under `outputDir` or `java.io.tmpdir`
-
-|`GENERATE`
-|No
-|Yes
-|No
-|Generated `<catalog>.changelog` files under `outputDir` or `java.io.tmpdir`
-|===
-
-[[liquibase-property-matrix, Property Matrix By Goal]]
-== Property Matrix By Goal
-
-Legend:
-
-* `R` = required for reliable execution
-* `Rec` = recommended
-* `I` = ignored by the current goal path
-* `N/A` = not needed for that goal path
-
-[cols="1,1,1,1,1,1",options="header"]
-|===
-|Property |`NONE` |`PREVIEW` |`UPDATE` |`DOCUMENT` |`GENERATE`
-
-|`goal`
-|R
-|R
-|R
-|R
-|R
-
-|`dataSource`
-|N/A
-|R
-|R
-|R
-|R
-
-|`source`
-|N/A
-|R
-|R
-|R
-|I
-
-|`changeLogs`
-|N/A
-|R
-|R
-|R
-|R
-
-|`ChangeLog.input`
-|I
-|R
-|R
-|R
-|I
-
-|`ChangeLog.output`
-|I
-|I
-|I
-|I
-|I
-
-|`previewStream`
-|I
-|Rec
-|I
-|I
-|I
-
-|`contexts`
-|I
-|Rec
-|Rec
-|Rec
-|Rec
-
-|`outputDir`
-|I
-|I
-|I
-|Rec
-|Rec
-
-|`dataTypes`
-|Rec
-|Rec
-|Rec
-|Rec
-|Rec
-|===
-
-[[liquibase-resource-resolution, Resource Resolution]]
-== Resource Resolution
-
-`setSource(Source)` decides how changelog paths are resolved.
-
-=== `Source.CLASSPATH`
-
-* uses `ClassLoaderResourceAccessor`
-* resolves `ChangeLog.input` against the classloader held by `SpringLiquibase`
-* defaults to the thread context classloader when you use the no-argument constructor
-
-Typical use cases:
-
-* packaged changelogs in your application jar
-* shared changelogs in a reusable library jar
-* environments where filesystem layout should not matter
-
-=== `Source.FILE`
-
-* uses `DirectoryResourceAccessor`
-* anchors resolution at `System.getProperty("user.home")`
-* resolves each `ChangeLog.input` relative to that directory
-
-Typical use cases:
-
-* externalized changelogs managed outside the application artifact
-* deployments where the runtime account's home directory is part of the contract
-
-[IMPORTANT]
-====
-There is no property for supplying a different filesystem root.
-For `Source.FILE`, the root is fixed to the current user's home directory.
-====
-
-[[liquibase-lifecycle, Lifecycle And Ownership]]
-== Lifecycle And Ownership
-
-Execution happens inside `afterPropertiesSet()`.
-That one fact drives most of the integration behavior.
-
-What it means in practice:
-
-* if Spring manages the bean, execution happens during bean initialization
-* if you instantiate the runner yourself, nothing happens until you call `afterPropertiesSet()`
-* for every active goal except `NONE`, the runner opens one JDBC connection per processed `ChangeLog`
-* `PREVIEW`, `UPDATE`, and `DOCUMENT` process the supplied `ChangeLog[]` in order
-* `GENERATE` also iterates `changeLogs`, even though it ignores `ChangeLog.input`
-
-The method is annotated with `@org.smallmind.persistence.orm.aop.Transactional`, but this module does not create transaction infrastructure or proxying for you.
-Treat transaction behavior as an application concern and verify it in your runtime rather than assuming the annotation alone changes execution semantics.
-
-This module does not own:
-
-* startup ordering beyond where you place the bean or method call
-* retries or backoff
-* Liquibase lock management policy beyond whatever Liquibase itself does
-* artifact retention for generated files
-* environment or profile selection
-
-[[liquibase-custom-types, Custom Data Types]]
-== Custom Data Types
-
-`setDataTypes(LiquibaseDataType[])` exists for callers that need custom Liquibase type support available before the selected goal executes.
-
-Behavior is straightforward:
-
-* each provided type is unregistered by `getName()`
-* the type is then registered with Liquibase's `DataTypeFactory`
-* this happens before goal dispatch
-* it happens even when the goal is `NONE`
-
-Use it when:
-
-* a changelog depends on a custom type name
-* a database extension needs a non-default Liquibase datatype mapping
-* you want registration to be part of the same explicit startup path as migration execution
-
-[[liquibase-logging, Logging Integration]]
-== Logging Integration
-
-The module exposes two bridge classes for sending Liquibase log messages into Scribe:
-
-* `org.smallmind.liquibase.spring.ScribeLogService`
-* `org.smallmind.liquibase.spring.ScribeLiquibaseLogger`
-
-What the bridge does:
-
-* `ScribeLogService` extends Liquibase `AbstractLogService`
-* `ScribeLogService#getPriority()` returns `PRIORITY_DEFAULT + 1`
-* `ScribeLiquibaseLogger` maps `java.util.logging.Level` values onto Scribe levels
-
-Level mapping:
+After context refresh, `/home/dev/generated/$\{catalog}.changelog` contains
+a complete Liquibase change log whose change set author is
+`auto.generated`. This is exactly how `Batch.changelog.xml` and
+`Quartz.changelog.xml` were produced — run `GENERATE` against an empty
+database that has had the tool's native DDL applied, then commit the
+resulting file as the canonical change log.
+
+=== Registering custom data types
+
+`setDataTypes` takes an array of `LiquibaseDataType` instances. Each is
+unregistered from `DataTypeFactory` by name and then re-registered, so the
+caller's implementation wins over any built-in or prior registration for
+the same name.
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="dataTypes">
+    <list>
+      <bean class="com.example.db.types.UuidDataType"/>
+      <bean class="com.example.db.types.JsonbDataType"/>
+    </list>
+  </property>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
+----
+
+A bean wired purely to install data types uses `goal=NONE`:
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="goal" value="NONE"/>
+  <property name="dataTypes">
+    <list>
+      <bean class="com.example.db.types.UuidDataType"/>
+    </list>
+  </property>
+</bean>
+----
+
+No data source, no change logs, no resource accessor are required — the
+bean runs the data-type registration block and returns.
+
+=== Filtering by Liquibase context
+
+The `contexts` property is passed through to the underlying Liquibase
+command. A comma-delimited list restricts the change sets processed
+(or generated SQL) to those matching at least one of the supplied context
+names, plus any change sets declared without a context.
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="contexts" value="production,us-east"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
+----
+
+=== Reading change logs from the filesystem
+
+When `Source.FILE` is chosen, the `input` path is resolved relative to the
+user's home directory. This is the right choice for change logs that ship
+outside the application artifact — for instance, a schema maintained by
+operations and deployed to a fixed location on the host:
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="FILE"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="schemas/main/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
+----
+
+This resolves to `$HOME/schemas/main/schema.changelog.xml`. The resource
+accessor is shared across every change log in the bean, so every `input`
+in the list is resolved the same way.
+
+=== Using a non-default class loader
+
+The no-arg `SpringLiquibase()` constructor captures the current thread's
+context class loader. In an application server where the context class
+loader is the web module loader, that is usually the right thing. In
+embedded or test scenarios where the intended loader is different, use
+the one-arg constructor:
+
+[source,xml]
+----
+<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
+  <constructor-arg>
+    <bean class="org.springframework.util.ClassUtils"
+          factory-method="getDefaultClassLoader"/>
+  </constructor-arg>
+  <property name="dataSource" ref="applicationDataSource"/>
+  <property name="source" value="CLASSPATH"/>
+  <property name="goal" value="UPDATE"/>
+  <property name="changeLogs">
+    <list>
+      <bean class="org.smallmind.liquibase.spring.ChangeLog">
+        <property name="input" value="com/example/db/schema.changelog.xml"/>
+      </bean>
+    </list>
+  </property>
+</bean>
+----
+
+The class loader supplied here is the one `ClassLoaderResourceAccessor`
+will consult when `Source.CLASSPATH` is active; it has no effect when
+`Source.FILE` is used.
+
+== The Scribe logging bridge
+
+Liquibase writes a lot of output during a run, especially the first time a
+schema is applied. By default that output goes through Liquibase's
+built-in JUL `LogService`. A SmallMind application that uses Scribe for
+everything else has two options: configure JUL to forward to Scribe, or
+install `ScribeLogService` as Liquibase's log service. The second is
+simpler and requires no runtime configuration.
+
+=== How Liquibase discovers the bridge
+
+Liquibase discovers `LogService` implementations through
+`java.util.ServiceLoader`. For `ScribeLogService` to be picked up, the
+classpath must contain a file named
+`META-INF/services/liquibase.logging.LogService` whose contents are the
+fully-qualified class name of the service:
+
+[source]
+----
+org.smallmind.liquibase.spring.ScribeLogService
+----
+
+The module does not ship this file itself — the consumer must place it
+in `src/main/resources/META-INF/services/liquibase.logging.LogService` in
+their own artifact. This is intentional: shipping the file in the module
+would force the bridge on every consumer of `smallmind-liquibase`,
+including ones that are not using Scribe.
+
+=== Priority
+
+`ScribeLogService.getPriority()` returns `PRIORITY_DEFAULT + 1`. Liquibase
+resolves priority ties by preferring the service it sees last, but a
+priority above default guarantees the Scribe bridge wins even when
+Liquibase's own service is also registered. Custom services that want to
+override `ScribeLogService` can return a higher priority still.
+
+=== Level translation
+
+`ScribeLiquibaseLogger` maps `java.util.logging.Level` to
+`org.smallmind.scribe.pen.Level` as follows:
 
 [cols="1,1",options="header"]
 |===
-|Liquibase or JUL level |Scribe level
+| JUL level | Scribe level
 
-|`ALL`, `FINEST`, `FINER`
-|`TRACE`
+| `ALL`, `FINEST`, `FINER`
+| `TRACE`
 
-|`FINE`
-|`DEBUG`
+| `FINE`
+| `DEBUG`
 
-|`CONFIG`, `INFO`
-|`INFO`
+| `CONFIG`, `INFO`
+| `INFO`
 
-|`WARNING`
-|`WARN`
+| `WARNING`
+| `WARN`
 
-|`SEVERE`
-|`ERROR`
+| `SEVERE`
+| `ERROR`
 
-|`OFF`
-|`OFF`
+| `OFF`
+| `OFF`
 
-|`null`
-|`null`
+| Any other non-null level
+| `INFO` (fail-safe default)
 
-|other values
-|`INFO`
+| `null`
+| `null` (suppressed)
 |===
 
-[IMPORTANT]
-====
-The published jar exposes these classes, but it does not package a `META-INF/services` entry for Liquibase log-service discovery.
-If you want the bridge to be active, verify how your Liquibase runtime discovers or registers log services and wire `ScribeLogService` accordingly.
-====
-
-[[liquibase-use-cases, API By Use Case]]
-== API By Use Case
-
-[cols="2,3",options="header"]
-|===
-|Use case |API
-
-|Run migrations during startup
-|`setGoal(Goal.UPDATE)`, `setDataSource(...)`, `setSource(...)`, `setChangeLogs(...)`, `afterPropertiesSet()`
-
-|Generate SQL without mutating the database
-|`setGoal(Goal.PREVIEW)`, `setPreviewStream(...)`, plus normal source, datasource, and changelog configuration
-
-|Generate dbDoc output
-|`setGoal(Goal.DOCUMENT)`, `setOutputDir(...)`, plus normal source, datasource, and changelog configuration
-
-|Generate a changelog from the current schema
-|`setGoal(Goal.GENERATE)`, `setOutputDir(...)`, `setContexts(...)`, `setDataSource(...)`, `setChangeLogs(...)`
-
-|Register custom Liquibase types
-|`setDataTypes(LiquibaseDataType[])`
-
-|Keep wiring but disable execution
-|`setGoal(Goal.NONE)`
-|===
-
-[[liquibase-core-api, Core API]]
-== Core API
-
-=== `SpringLiquibase`
-
-Primary execution bean.
-Implements `org.springframework.beans.factory.InitializingBean`.
-
-Constructors:
-
-* `SpringLiquibase()` uses the current thread context classloader
-* `SpringLiquibase(ClassLoader)` uses the supplied classloader for `Source.CLASSPATH`
-
-Main setters:
-
-* `setDataSource(DataSource)`
-* `setSource(Source)`
-* `setGoal(Goal)`
-* `setPreviewStream(OutputStream)`
-* `setChangeLogs(ChangeLog[])`
-* `setDataTypes(LiquibaseDataType[])`
-* `setContexts(String)`
-* `setOutputDir(String)`
-
-Execution method:
-
-* `afterPropertiesSet()`
-
-=== `Goal`
-
-Supported execution modes:
-
-* `NONE`
-* `PREVIEW`
-* `UPDATE`
-* `GENERATE`
-* `DOCUMENT`
-
-=== `Source`
-
-Supported changelog sources:
-
-* `CLASSPATH`
-* `FILE`
-
-=== `ChangeLog`
-
-Small value object with two properties:
-
-* `input`: changelog path or classpath location to read
-* `output`: output hint
-
-[NOTE]
-====
-`SpringLiquibase` currently reads `ChangeLog.input` for `PREVIEW`, `UPDATE`, and `DOCUMENT`.
-`ChangeLog.output` is not consumed by any execution path in this module.
-====
-
-=== `ScribeLogService` and `ScribeLiquibaseLogger`
-
-Optional logging bridge classes for Liquibase-to-Scribe integration.
-They are useful only if your runtime actually registers the log service.
-
-[[liquibase-command-mapping, Command Mapping]]
-== Command Mapping
-
-This section maps the Smallmind wrapper properties to the Liquibase operations it performs.
-It matters when you need to predict behavior precisely or line the wrapper up with existing Liquibase usage.
-
-[cols="1,4",options="header"]
-|===
-|Goal |Command mapping
-
-|`NONE`
-|No Liquibase command is executed. Only datatype registration may occur.
-
-|`PREVIEW`
-|Uses Liquibase `updateSql`; `contexts` maps to `UpdateSqlCommandStep.CONTEXTS_ARG`; `ChangeLog.input` maps to `UpdateSqlCommandStep.CHANGELOG_FILE_ARG`; output is `previewStream` or `System.out`; the wrapper also sets a Liquibase URL argument of `offline:<database display name>` after resolving the real database from the `DataSource`.
-
-|`UPDATE`
-|Uses Liquibase `update`; `contexts` maps to `UpdateCommandStep.CONTEXTS_ARG`; the resolved `Database` maps to `DbUrlConnectionArgumentsCommandStep.DATABASE_ARG`; `ChangeLog.input` maps to `UpdateCommandStep.CHANGELOG_FILE_ARG`.
-
-|`DOCUMENT`
-|Uses Liquibase `dbDoc`; `contexts` maps to `DatabaseChangelogCommandStep.CONTEXTS_ARG`; the resolved `Database` maps to `DbUrlConnectionArgumentsCommandStep.DATABASE_ARG`; `ChangeLog.input` maps to `CommonArgumentNames.CHANGELOG_FILE`; output directory is `outputDir` or `java.io.tmpdir`.
-
-|`GENERATE`
-|Does not use Liquibase `CommandScope`; it uses snapshot and diff APIs directly (`SnapshotGeneratorFactory`, `DiffGeneratorFactory`, `DiffToChangeLog`) and writes output to `Paths.get(outputDir or java.io.tmpdir, <catalog>.changelog)`.
-|===
-
-[[liquibase-defaults, Defaults Reference]]
-== Defaults Reference
-
-[cols="1,2",options="header"]
-|===
-|Property or behavior |Default
-
-|Constructor classloader
-|Thread context classloader
-
-|`previewStream`
-|`System.out` when goal is `PREVIEW` and no stream is set
-
-|`outputDir`
-|`System.getProperty("java.io.tmpdir")` when null or empty and goal is `DOCUMENT` or `GENERATE`
-
-|`contexts`
-|`null`
-
-|`resourceAccessor`
-|Unset until `setSource(...)` is called
-
-|`goal`
-|Unset until `setGoal(...)` is called
-
-|`changeLogs`
-|Unset until `setChangeLogs(...)` is called
-
-|`dataTypes`
-|No custom datatypes registered
-
-|Generated changelog author
-|`auto.generated`
-
-|Generated changelog file name
-|`<catalog>.changelog`
-|===
-
-[[liquibase-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-* `goal` is effectively mandatory. If you never call `setGoal(...)`, `afterPropertiesSet()` fails before any Liquibase work starts.
-* `changeLogs` is not validated. For every goal except `NONE`, a null `changeLogs` array causes failure before command execution.
-* `PREVIEW` still needs a working `DataSource` and opens a real connection.
-* `setSource(...)` is practically required for `PREVIEW`, `UPDATE`, and `DOCUMENT`. Without it, Liquibase resource resolution fails.
-* `GENERATE` ignores `ChangeLog.input` and `ChangeLog.output`, but it still iterates `changeLogs` and opens a connection for each entry.
-* `GENERATE` deduplicates by `database.getDefaultCatalogName()`. Multiple entries against the same catalog can still produce only one file.
-* if `database.getDefaultCatalogName()` is `null`, the generated file name becomes `null.changelog`
-* `ChangeLog.output` is currently unused by all execution paths
-* generated files are written with `Files.newOutputStream(...)`; an existing file at the same path is truncated and replaced
-* `contexts` is passed through unchanged and may be `null`
-* `Source.FILE` uses the runtime user's home directory, not the application working directory
-* unsupported `Goal` or `Source` branches throw `UnknownSwitchCaseException`
-
-[[liquibase-troubleshooting, Troubleshooting]]
-== Troubleshooting
-
-[cols="2,3,3",options="header"]
-|===
-|Symptom |Likely cause |What to check
-
-|Failure before any Liquibase command seems to run
-|`goal` not set, or `changeLogs` missing for a non-`NONE` goal
-|Set `goal` explicitly in every environment and ensure `changeLogs` is non-null for active goals
-
-|`ClassNotFoundException` or missing `InitializingBean` when adopting the module
-|`spring-beans` was not declared by the consuming application
-|Add an explicit dependency on `org.springframework:spring-beans`
-
-|Changelog not found on startup
-|Wrong `Source`, wrong path, or wrong classloader
-|Use `Source.CLASSPATH` for packaged resources, verify `ChangeLog.input`, and pass an explicit classloader if needed
-
-|No preview SQL captured
-|`previewStream` not set, or output was written to `System.out`
-|Set a `ByteArrayOutputStream` explicitly and confirm the selected changelog and contexts actually match change sets
-
-|`DOCUMENT` ran but files are not where expected
-|`outputDir` was null or empty
-|Check `java.io.tmpdir` or set an explicit output directory
-
-|`GENERATE` produced fewer files than configured changelogs
-|Output is deduplicated by default catalog name
-|Check the effective catalog for the target database and do not assume one file per `ChangeLog`
-
-|Liquibase messages are not flowing into Scribe
-|The bridge types exist but the Liquibase log service was not registered
-|Verify your Liquibase runtime registration path for `ScribeLogService`
-|===
-
-[[liquibase-scenarios, Operational Scenarios]]
-== Operational Scenarios
-
-=== Preview-First Rollout
-
-Recommended when a team wants startup-time migrations but still wants a review point.
-
-1. Configure the production changelog set with `Goal.PREVIEW` against a staging-like database.
-2. Capture SQL to a known stream and store it as a build or deploy artifact.
-3. Review the SQL and Liquibase history expectations.
-4. Change only the goal to `UPDATE` when rollout is approved.
-5. Use the same changelog order and contexts in production.
-
-=== Dedicated Documentation Or Snapshot Job
-
-Recommended when you want `DOCUMENT` or `GENERATE` output without coupling that work to main application startup.
-
-1. Build the same `DataSource` and changelog configuration you trust for production.
-2. Run the job in a separate maintenance or CI process.
-3. Set `outputDir` explicitly.
-4. Collect the generated files as job artifacts.
-5. Clean up or version those artifacts using your normal operational process.
-
-=== Temporary Disable Without Rewiring
-
-Recommended when migrations must pause briefly but the application shape should stay stable.
-
-1. Keep the same bean or startup method.
-2. Switch the goal to `NONE`.
-3. Deploy and confirm startup no longer executes Liquibase commands.
-4. Restore `PREVIEW` or `UPDATE` once the blocking issue is resolved.
-
-[[liquibase-verification, Verification Checklist]]
-== Verification Checklist
-
-For each environment profile that uses this module:
-
-1. Verify the application declares `spring-beans` explicitly if it uses `SpringLiquibase`.
-2. Run once with `Goal.PREVIEW` and confirm SQL is written to the expected stream.
-3. Confirm the changelog path resolves under the selected `Source`.
-4. Run `Goal.UPDATE` against a non-production database and verify the expected Liquibase history entries appear.
-5. If using `DOCUMENT` or `GENERATE`, verify files land in the configured output directory.
-6. If using custom datatypes, verify a changelog that depends on the type succeeds.
-7. If using the Scribe bridge, verify Liquibase log output actually reaches Scribe in your runtime.
+The fail-safe `INFO` default means a future Liquibase release that adds a
+new JUL level never silently loses its output; it only loses its exact
+severity.
+
+=== Logger keying
+
+`ScribeLogService.getLog(Class)` returns a fresh `ScribeLiquibaseLogger`
+on every call, but the underlying Scribe `Logger` is obtained through
+`LoggerManager.getLogger(clazz)`, which is itself cached per class.
+Liquibase sees a new `Logger` wrapper, Scribe sees the shared per-class
+target. Callers configure Scribe appenders on Liquibase package names
+(`liquibase`, `liquibase.command`, `liquibase.database`, etc.) exactly as
+they would for their own code.
+
+== Transactional semantics
+
+`afterPropertiesSet` carries a SmallMind `@Transactional` annotation (from
+`org.smallmind.persistence.orm.aop.Transactional`). The annotation is
+honoured when a `HibernateProxySession` or equivalent transactional
+context is in scope; when no such context is active, the annotation is a
+no-op.
+
+The practical implication is that `Goal.UPDATE` runs inside whatever
+transaction the caller has already opened. In SmallMind services that do
+schema migrations under Hibernate, wiring the `SpringLiquibase` bean
+inside the persistence composition root ensures the migration either
+commits entirely or rolls back along with the rest of the startup
+sequence. Applications that do not use SmallMind's transaction AOP see
+ordinary, per-statement JDBC behaviour — which is what Liquibase expects
+by default anyway.
+
+Per-change-log isolation is absolute: each change log is processed inside
+its own try-with-resources block that closes the JDBC connection before
+the next change log opens one. A failure in change log N does not leave
+connection N+1's transaction dangling.
+
+== Failure modes
+
+* `FileNotFoundException` from `setSource(Source.FILE)`. Thrown when
+  `DirectoryResourceAccessor` cannot use `System.getProperty("user.home")`
+  as a root — usually because the property is unset in the JVM. Either
+  set `-Duser.home=...` or switch to `Source.CLASSPATH`.
+* `UnknownSwitchCaseException` from `setSource` or `afterPropertiesSet`.
+  Thrown when the caller has constructed a `Source` or `Goal` value that
+  the switch statement does not handle. Because both are enums declared
+  in this module, this indicates a programming error — a caller passing
+  `null`, or a new enum constant added without extending the switch.
+* Any `SQLException` thrown while acquiring a connection. Propagated up
+  as a wrapped `Exception` from `afterPropertiesSet`; the Spring container
+  will fail context refresh.
+* `liquibase.exception.CommandExecutionException` from an inner
+  `CommandScope.execute()`. Propagated identically. A failing change set
+  typically surfaces here — the error message identifies the change set
+  id and the offending SQL.
+* `IOException` while writing `PREVIEW`, `DOCUMENT`, or `GENERATE`
+  output. Propagated; the caller's container decides the policy.
+
+In every case, `SpringLiquibase` does not attempt to recover. The
+expectation is that a failed migration should fail the context, because
+continuing past one is almost always worse than aborting.
+
+== Interactions with other SmallMind modules
+
+* **`smallmind-batch`** — `batch-liquibase.xml` defines a
+  `SpringLiquibase` bean that runs `Batch.changelog.xml` against a
+  dedicated `batchDataSource`. The change log itself was generated by
+  running `Goal.GENERATE` against a database that had Spring Batch's
+  native DDL applied.
+* **`smallmind-schedule-quartz`** — `quartz-liquibase.xml` does the same
+  thing for Quartz's `QRTZ_*` tables.
+* **`smallmind-persistence`** — `schema-hibernate.xml` declares a
+  `SpringLiquibase` whose `goal` is driven by a placeholder, allowing
+  the same file to run `UPDATE`, `PREVIEW`, `DOCUMENT`, or `GENERATE`
+  depending on the environment.
+* **`smallmind-scribe-pen`** — the logging target for
+  `ScribeLiquibaseLogger`. Any Scribe appender configuration that applies
+  to the `liquibase.*` package hierarchy applies to Liquibase's output.
+
+Each of these consumers demonstrates the same pattern: declare one
+`SpringLiquibase` per logical schema, feed it a `DataSource` aimed at
+that schema, point it at a classpath change log, and let context refresh
+do the migration.

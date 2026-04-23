@@ -41,7 +41,8 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.PriorityOrdered;
 
 /**
- * Sets JMX/RMI host system property early in Spring initialization, choosing either host name or IP address.
+ * A {@link BeanFactoryPostProcessor} that sets the {@code java.rmi.server.hostname} system property early in Spring initialization,
+ * using either the local host name or IP address as configured.
  */
 public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
@@ -49,7 +50,9 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
   private RMIHost rmiHost = RMIHost.HOST_NAME;
 
   /**
-   * {@inheritDoc}
+   * Returns the priority order used to sequence this post-processor relative to others.
+   *
+   * @return the ordering value
    */
   @Override
   public int getOrder () {
@@ -58,7 +61,9 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
   }
 
   /**
-   * @param order priority order
+   * Sets the priority order used to sequence this post-processor relative to others.
+   *
+   * @param order the ordering value
    */
   public void setOrder (int order) {
 
@@ -66,9 +71,9 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
   }
 
   /**
-   * Configures whether to use host name or IP address for the RMI host property.
+   * Configures whether to use the local host name or IP address when setting the RMI hostname property.
    *
-   * @param rmiHost selector for host value
+   * @param rmiHost the desired host identifier type; ignored if {@code null}
    */
   public void setRmiHost (RMIHost rmiHost) {
 
@@ -78,10 +83,10 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
   }
 
   /**
-   * Sets {@code java.rmi.server.hostname} based on the configured {@link RMIHost}.
+   * Resolves the local host identifier and sets the {@code java.rmi.server.hostname} system property accordingly.
    *
-   * @param beanFactory the bean factory (unused)
-   * @throws FatalBeanException if the host cannot be determined
+   * @param beanFactory the bean factory provided by Spring (not used directly)
+   * @throws FatalBeanException if the local host address cannot be determined
    */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)

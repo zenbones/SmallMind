@@ -60,7 +60,9 @@ public class ThrongLifecycle<T> {
    * Scans the entity class for lifecycle annotations and records the appropriate methods.
    *
    * @param entityClass entity class to introspect
-   * @throws ThrongMappingException if lifecycle methods violate required static/non-static constraints
+   * @throws ThrongMappingException if a {@code @PreLoad} method is not declared {@code static}, or if a
+   *                                {@code @PostLoad}, {@code @PrePersist}, or {@code @PostPersist} method is
+   *                                declared {@code static}
    */
   public ThrongLifecycle (Class<T> entityClass)
     throws ThrongMappingException {

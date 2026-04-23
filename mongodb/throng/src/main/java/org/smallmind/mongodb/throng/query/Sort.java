@@ -45,7 +45,9 @@ public class Sort {
   private final LinkedList<Bson> sortList = new LinkedList<>();
 
   /**
-   * @return new sort builder
+   * Creates a new, unconfigured sort builder.
+   *
+   * @return a fresh {@link Sort} instance
    */
   public static Sort on () {
 

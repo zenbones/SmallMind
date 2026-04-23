@@ -35,12 +35,13 @@ package org.smallmind.nutsnbolts.reflection.bean;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Indicates that a bean property could not be accessed or resolved.
+ * Thrown when a bean property cannot be located or resolved, for example because no matching getter
+ * or setter method exists on the target class.
  */
 public class BeanAccessException extends FormattedException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public BeanAccessException () {
 
@@ -48,10 +49,10 @@ public class BeanAccessException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message describing the access error
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the access failure
+   * @param args    arguments substituted into the format string
    */
   public BeanAccessException (String message, Object... args) {
 
@@ -59,11 +60,11 @@ public class BeanAccessException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying reflection problem
-   * @param message   a {@link java.util.Formatter}-style message describing the access error
-   * @param args      values interpolated into the message
+   * @param throwable the underlying reflection failure that prevented property access
+   * @param message   a {@link java.util.Formatter}-style format string describing the access failure
+   * @param args      arguments substituted into the format string
    */
   public BeanAccessException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +72,9 @@ public class BeanAccessException extends FormattedException {
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying reflection problem
+   * @param throwable the underlying reflection failure that prevented property access
    */
   public BeanAccessException (Throwable throwable) {
 

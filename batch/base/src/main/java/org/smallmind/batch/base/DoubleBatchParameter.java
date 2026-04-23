@@ -33,15 +33,15 @@
 package org.smallmind.batch.base;
 
 /**
- * {@link Double} implementation of {@link BatchParameter}.
+ * {@link BatchParameter} specialisation that carries a {@link Double} value.
  */
 public class DoubleBatchParameter extends BatchParameter<Double> {
 
   /**
-   * Creates a double parameter wrapper.
+   * Wraps a floating-point value as a batch parameter.
    *
-   * @param value       the numeric value to pass to the batch job
-   * @param identifying whether the value should contribute to job identity
+   * @param value       the number to forward to the batch job
+   * @param identifying {@code true} if the number should form part of the job-instance key
    */
   public DoubleBatchParameter (Double value, boolean identifying) {
 

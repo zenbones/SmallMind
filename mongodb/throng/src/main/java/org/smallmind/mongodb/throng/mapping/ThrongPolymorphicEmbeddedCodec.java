@@ -46,7 +46,9 @@ import org.bson.codecs.EncoderContext;
 public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplexerCodec<T> {
 
   /**
-   * @param throngPropertiesMultiplexer multiplexer describing subtype codecs and discriminators
+   * Constructs the codec from the given polymorphic multiplexer.
+   *
+   * @param throngPropertiesMultiplexer the multiplexer that maps discriminator values to subtype codecs
    */
   public ThrongPolymorphicEmbeddedCodec (ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer) {
 
@@ -54,7 +56,12 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
   }
 
   /**
-   * Decodes a polymorphic embedded document or {@code null}.
+   * Decodes a polymorphic embedded document by reading surrounding boundaries and delegating to the matching
+   * subtype codec, or returns {@code null} when the current BSON value is null.
+   *
+   * @param reader         BSON reader positioned at the value
+   * @param decoderContext decoder context
+   * @return decoded base-type instance, or {@code null}
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -76,7 +83,12 @@ public class ThrongPolymorphicEmbeddedCodec<T> extends ThrongPropertiesMultiplex
   }
 
   /**
-   * Encodes the polymorphic embedded value, or {@code null} when permitted.
+   * Encodes a polymorphic embedded value wrapped in a BSON document; writes {@code null} when the value is absent
+   * and null storage is enabled.
+   *
+   * @param writer         destination BSON writer
+   * @param value          polymorphic instance to encode
+   * @param encoderContext encoder context
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {

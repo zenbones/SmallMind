@@ -68,7 +68,9 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * @return entity class handled by this codec
+   * Returns the entity class handled by this codec.
+   *
+   * @return the entity class
    */
   public Class<T> getEntityClass () {
 
@@ -76,7 +78,9 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * @return collection name associated with the entity
+   * Returns the MongoDB collection name associated with the entity.
+   *
+   * @return the collection name
    */
   public String getCollection () {
 
@@ -84,7 +88,9 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * @return lifecycle handler for the entity
+   * Returns the lifecycle handler for the entity; the handler is always present but may have no registered callbacks.
+   *
+   * @return the lifecycle handler
    */
   public ThrongLifecycle<T> getLifecycle () {
 
@@ -94,7 +100,10 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   /**
    * Decodes a BSON document into an entity, ensuring the id field appears first and is applied to the instance.
    *
-   * @throws ThrongRuntimeException if the id field is missing or mismatched, or reflection fails
+   * @param reader         BSON reader positioned at the document start
+   * @param decoderContext decoder context
+   * @return decoded entity instance
+   * @throws ThrongRuntimeException if the first field is not the id, or if reflection to set the id value fails
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -125,9 +134,12 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
   }
 
   /**
-   * Encodes an entity into a BSON document, writing its id before the remaining properties.
+   * Encodes an entity into a BSON document, writing the id field before all other properties.
    *
-   * @throws ThrongRuntimeException if the id value cannot be accessed
+   * @param writer         destination BSON writer
+   * @param value          entity instance to encode
+   * @param encoderContext encoder context
+   * @throws ThrongRuntimeException if reflection cannot read the id value
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {

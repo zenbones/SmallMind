@@ -40,16 +40,25 @@ import org.smallmind.web.json.doppelganger.View;
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
 /**
- * JSON-mapped properties for configuring a tachometer meter.
+ * JSON-mapped configuration properties for a tachometer meter. Instances of this class are
+ * populated by the JSON doppelganger framework and subsequently consumed by
+ * {@link TachometerParser} to build a configured tachometer. A {@code null} field value
+ * indicates that the corresponding builder default should be retained.
  */
 @Doppelganger
 public class TachometerProperties {
 
+  /**
+   * Resolution window that determines the time interval over which the tachometer computes
+   * its rate. Serialized and deserialized via {@link StintXmlAdapter}.
+   */
   @View(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private Stint resolutionStint;
 
   /**
-   * @return resolution stint for rate calculations
+   * Returns the resolution stint used by the tachometer for rate calculations.
+   *
+   * @return the configured {@link Stint}, or {@code null} if not set
    */
   public Stint getResolutionStint () {
 
@@ -57,9 +66,9 @@ public class TachometerProperties {
   }
 
   /**
-   * Sets the resolution stint.
+   * Sets the resolution stint used by the tachometer for rate calculations.
    *
-   * @param resolutionStint window duration
+   * @param resolutionStint the time window to apply, or {@code null} to use the builder default
    */
   public void setResolutionStint (Stint resolutionStint) {
 

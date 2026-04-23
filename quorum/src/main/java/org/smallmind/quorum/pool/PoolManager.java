@@ -36,14 +36,20 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
- * Application scoped holder for a single {@link Pool} instance.
+ * Application-scoped registry that holds a single {@link Pool} instance per application context.
+ * <p>
+ * Delegates storage to {@link PerApplicationContext} so that the registered pool is scoped to the
+ * current application rather than shared statically across the JVM. Pools register themselves via
+ * {@link Pool#register()}, which calls {@link #register(Pool)} here.
  */
 public class PoolManager implements PerApplicationDataManager {
 
   /**
-   * Registers a pool with the per-application context.
+   * Stores {@code pool} in the per-application context, making it retrievable via {@link #getPool()}.
+   * <p>
+   * Any previously registered pool for the current application context is replaced.
    *
-   * @param pool pool to register
+   * @param pool the pool instance to register; must not be {@code null}
    */
   public static void register (Pool pool) {
 
@@ -51,9 +57,10 @@ public class PoolManager implements PerApplicationDataManager {
   }
 
   /**
-   * Retrieves the registered pool from the per-application context.
+   * Returns the {@link Pool} that was registered for the current application context, or
+   * {@code null} if no pool has been registered.
    *
-   * @return registered pool, or {@code null} if none was registered
+   * @return the registered pool, or {@code null}
    */
   public static Pool getPool () {
 

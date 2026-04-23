@@ -42,8 +42,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Convenience helpers for translating between legacy time representations and {@link ZonedDateTime},
- * along with parsing and formatting using ISO-8601 variants.
+ * Utility methods for converting legacy time types to {@link ZonedDateTime} and for parsing and formatting
+ * ISO-8601 date-time strings.
  */
 public class TimeUtility {
 
@@ -53,10 +53,10 @@ public class TimeUtility {
   private static final DateTimeFormatter ISO_LOCAL_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
   /**
-   * Converts epoch milliseconds to a {@link ZonedDateTime} in the system default zone.
+   * Converts a primitive epoch-millisecond value to a {@link ZonedDateTime} in the system default zone.
    *
-   * @param milliseconds epoch milliseconds
-   * @return zoned date-time representation
+   * @param milliseconds epoch milliseconds since the Unix epoch
+   * @return the corresponding {@link ZonedDateTime} in the system default time zone
    */
   public static ZonedDateTime fromMilliseconds (long milliseconds) {
 
@@ -64,10 +64,11 @@ public class TimeUtility {
   }
 
   /**
-   * Converts boxed epoch milliseconds to a {@link ZonedDateTime}, returning {@code null} when the input is {@code null}.
+   * Converts a boxed epoch-millisecond value to a {@link ZonedDateTime}, returning {@code null} when the input
+   * is {@code null}.
    *
-   * @param milliseconds epoch milliseconds; may be {@code null}
-   * @return zoned date-time or {@code null} when input is {@code null}
+   * @param milliseconds epoch milliseconds since the Unix epoch, or {@code null}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null} if {@code milliseconds} is {@code null}
    */
   public static ZonedDateTime fromMilliseconds (Long milliseconds) {
 
@@ -75,11 +76,12 @@ public class TimeUtility {
   }
 
   /**
-   * Converts boxed epoch milliseconds to a {@link ZonedDateTime}.
+   * Converts a boxed epoch-millisecond value to a {@link ZonedDateTime}, with configurable null handling.
    *
-   * @param milliseconds epoch milliseconds; may be {@code null}
-   * @param allowNull    when {@code true} returns {@code null} for null input; when {@code false} returns {@link ZonedDateTime#now()}
-   * @return zoned date-time representation or {@code null}/now depending on {@code allowNull}
+   * @param milliseconds epoch milliseconds since the Unix epoch, or {@code null}
+   * @param allowNull    when {@code true}, a null input returns {@code null}; when {@code false}, a null input returns
+   *                     {@link ZonedDateTime#now()}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null}/now for a null input based on {@code allowNull}
    */
   public static ZonedDateTime fromMilliseconds (Long milliseconds, boolean allowNull) {
 
@@ -87,10 +89,11 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link Date} to a {@link ZonedDateTime} in the system default zone.
+   * Converts a legacy {@link Date} to a {@link ZonedDateTime} in the system default zone, returning {@code null}
+   * when the input is {@code null}.
    *
-   * @param date legacy date; may be {@code null}
-   * @return zoned date-time or {@code null} when input is {@code null}
+   * @param date the legacy date to convert, or {@code null}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null} if {@code date} is {@code null}
    */
   public static ZonedDateTime fromDate (Date date) {
 
@@ -98,11 +101,12 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link Date} to a {@link ZonedDateTime}.
+   * Converts a legacy {@link Date} to a {@link ZonedDateTime} with configurable null handling.
    *
-   * @param date      legacy date; may be {@code null}
-   * @param allowNull when {@code true} returns {@code null} for null input; when {@code false} returns {@link ZonedDateTime#now()}
-   * @return zoned date-time representation or {@code null}/now depending on {@code allowNull}
+   * @param date      the legacy date to convert, or {@code null}
+   * @param allowNull when {@code true}, a null input returns {@code null}; when {@code false}, a null input returns
+   *                  {@link ZonedDateTime#now()}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null}/now for a null input based on {@code allowNull}
    */
   public static ZonedDateTime fromDate (Date date, boolean allowNull) {
 
@@ -110,10 +114,11 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link LocalDateTime} to a {@link ZonedDateTime} in the system default zone.
+   * Converts a {@link LocalDateTime} to a {@link ZonedDateTime} in the system default zone, returning {@code null}
+   * when the input is {@code null}.
    *
-   * @param localDateTime local date-time; may be {@code null}
-   * @return zoned date-time or {@code null} when input is {@code null}
+   * @param localDateTime the local date-time to convert, or {@code null}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null} if {@code localDateTime} is {@code null}
    */
   public static ZonedDateTime fromLocalDateTime (LocalDateTime localDateTime) {
 
@@ -121,11 +126,12 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link LocalDateTime} to a {@link ZonedDateTime}.
+   * Converts a {@link LocalDateTime} to a {@link ZonedDateTime} with configurable null handling.
    *
-   * @param localDateTime local date-time; may be {@code null}
-   * @param allowNull     when {@code true} returns {@code null} for null input; when {@code false} returns {@link ZonedDateTime#now()}
-   * @return zoned date-time representation or {@code null}/now depending on {@code allowNull}
+   * @param localDateTime the local date-time to convert, or {@code null}
+   * @param allowNull     when {@code true}, a null input returns {@code null}; when {@code false}, a null input returns
+   *                      {@link ZonedDateTime#now()}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null}/now for a null input based on {@code allowNull}
    */
   public static ZonedDateTime fromLocalDateTime (LocalDateTime localDateTime, boolean allowNull) {
 
@@ -133,10 +139,11 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link Calendar} to a {@link ZonedDateTime} in the system default zone.
+   * Converts a {@link Calendar} to a {@link ZonedDateTime} in the system default zone, returning {@code null}
+   * when the input is {@code null}.
    *
-   * @param calendar calendar instance; may be {@code null}
-   * @return zoned date-time or {@code null} when input is {@code null}
+   * @param calendar the calendar instance to convert, or {@code null}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null} if {@code calendar} is {@code null}
    */
   public static ZonedDateTime fromCalendar (Calendar calendar) {
 
@@ -144,11 +151,12 @@ public class TimeUtility {
   }
 
   /**
-   * Converts a {@link Calendar} to a {@link ZonedDateTime}.
+   * Converts a {@link Calendar} to a {@link ZonedDateTime} with configurable null handling.
    *
-   * @param calendar  calendar instance; may be {@code null}
-   * @param allowNull when {@code true} returns {@code null} for null input; when {@code false} returns {@link ZonedDateTime#now()}
-   * @return zoned date-time representation or {@code null}/now depending on {@code allowNull}
+   * @param calendar  the calendar instance to convert, or {@code null}
+   * @param allowNull when {@code true}, a null input returns {@code null}; when {@code false}, a null input returns
+   *                  {@link ZonedDateTime#now()}
+   * @return the corresponding {@link ZonedDateTime}, or {@code null}/now for a null input based on {@code allowNull}
    */
   public static ZonedDateTime fromCalendar (Calendar calendar, boolean allowNull) {
 
@@ -156,10 +164,12 @@ public class TimeUtility {
   }
 
   /**
-   * Parses a string using ISO-8601 formats, tolerating missing zone information by assuming the system default zone.
+   * Parses an ISO-8601 date or date-time string into a {@link ZonedDateTime}, applying the system default zone when
+   * no zone or offset information is present in the input.
+   * Handles ISO local date ({@code yyyy-MM-dd}), local date-time, offset date-time, and fully zoned date-time formats.
    *
-   * @param value ISO-like date or date-time string; may be null
-   * @return parsed {@link ZonedDateTime}, or {@code null} when input is {@code null}
+   * @param value the ISO-8601 string to parse, or {@code null}
+   * @return the parsed {@link ZonedDateTime}, or {@code null} if {@code value} is {@code null}
    */
   public static ZonedDateTime parse (String value) {
 
@@ -209,8 +219,8 @@ public class TimeUtility {
   /**
    * Formats a {@link LocalDateTime} as an ISO-8601 offset date-time string.
    *
-   * @param localDateTime date-time to format; may be {@code null}
-   * @return formatted string or {@code null} when input is {@code null}
+   * @param localDateTime the local date-time to format, or {@code null}
+   * @return the ISO-8601 offset date-time string, or {@code null} if {@code localDateTime} is {@code null}
    */
   public static String format (LocalDateTime localDateTime) {
 
@@ -220,8 +230,8 @@ public class TimeUtility {
   /**
    * Formats a {@link ZonedDateTime} as an ISO-8601 offset date-time string.
    *
-   * @param zonedDateTime date-time to format; may be {@code null}
-   * @return formatted string or {@code null} when input is {@code null}
+   * @param zonedDateTime the zoned date-time to format, or {@code null}
+   * @return the ISO-8601 offset date-time string, or {@code null} if {@code zonedDateTime} is {@code null}
    */
   public static String format (ZonedDateTime zonedDateTime) {
 

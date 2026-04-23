@@ -45,9 +45,8 @@ import javax.net.ssl.TrustManager;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 /**
- * {@link SSLSocketFactory} implementation that accepts all certificates using a {@link NaiveTrustManager}.
- * Useful for testing against servers with self-signed or otherwise untrusted certificates. Do not use
- * in production where peer verification is required.
+ * {@link SSLSocketFactory} that trusts all certificates via {@link NaiveTrustManager}, suitable for testing against
+ * servers with self-signed or otherwise untrusted certificates only.
  */
 public class NaiveSSLSocketFactory extends SSLSocketFactory {
 
@@ -64,10 +63,10 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * Builds an SSL socket factory that trusts all certificates using the JVM's SSL context.
+   * Initializes an SSL context with a {@link NaiveTrustManager} and stores the resulting socket factory.
    *
    * @throws KeyManagementException   if SSL context initialization fails
-   * @throws NoSuchAlgorithmException if the SSL algorithm is unavailable
+   * @throws NoSuchAlgorithmException if the {@code SSL} algorithm is unavailable
    */
   private NaiveSSLSocketFactory ()
     throws KeyManagementException, NoSuchAlgorithmException {
@@ -80,9 +79,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * Returns the shared singleton instance to avoid repeated insecure context creation.
+   * Returns the shared singleton instance of this factory.
    *
-   * @return the reusable insecure socket factory
+   * @return the singleton {@link NaiveSSLSocketFactory}
    */
   public static NaiveSSLSocketFactory getDefault () {
 
@@ -90,7 +89,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the cipher suites enabled by default in the underlying SSL context.
+   *
+   * @return array of default cipher suite names
    */
   @Override
   public String[] getDefaultCipherSuites () {
@@ -99,7 +100,9 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns all cipher suites supported by the underlying SSL context.
+   *
+   * @return array of supported cipher suite names
    */
   @Override
   public String[] getSupportedCipherSuites () {
@@ -108,7 +111,10 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates an unconnected SSL socket.
+   *
+   * @return a new unconnected {@link Socket}
+   * @throws IOException if the socket cannot be created
    */
   @Override
   public Socket createSocket ()
@@ -118,7 +124,14 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Wraps an existing socket with SSL, connecting to the specified host and port.
+   *
+   * @param s         the existing socket to layer SSL over
+   * @param host      the server hostname
+   * @param port      the server port
+   * @param autoClose whether the underlying socket is closed when the returned socket is closed
+   * @return an SSL-wrapped {@link Socket}
+   * @throws IOException if the SSL socket cannot be created
    */
   @Override
   public Socket createSocket (Socket s, String host, int port, boolean autoClose)
@@ -128,7 +141,12 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates an SSL socket connected to the specified host and port.
+   *
+   * @param host the server hostname
+   * @param port the server port
+   * @return a connected SSL {@link Socket}
+   * @throws IOException if the connection cannot be established
    */
   @Override
   public Socket createSocket (String host, int port)
@@ -138,7 +156,14 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates an SSL socket connected to the specified host and port, bound to a specific local address and port.
+   *
+   * @param host      the server hostname
+   * @param port      the server port
+   * @param localHost the local address to bind to
+   * @param localPort the local port to bind to
+   * @return a connected SSL {@link Socket}
+   * @throws IOException if the connection cannot be established
    */
   @Override
   public Socket createSocket (String host, int port, InetAddress localHost, int localPort)
@@ -148,7 +173,12 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates an SSL socket connected to the specified address and port.
+   *
+   * @param host the server address
+   * @param port the server port
+   * @return a connected SSL {@link Socket}
+   * @throws IOException if the connection cannot be established
    */
   @Override
   public Socket createSocket (InetAddress host, int port)
@@ -158,7 +188,14 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates an SSL socket connected to the specified remote address and port, bound to a specific local address and port.
+   *
+   * @param address      the remote server address
+   * @param port         the remote server port
+   * @param localAddress the local address to bind to
+   * @param localPort    the local port to bind to
+   * @return a connected SSL {@link Socket}
+   * @throws IOException if the connection cannot be established
    */
   @Override
   public Socket createSocket (InetAddress address, int port, InetAddress localAddress, int localPort)

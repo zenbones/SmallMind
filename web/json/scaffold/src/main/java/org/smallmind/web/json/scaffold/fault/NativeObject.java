@@ -42,7 +42,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * Serializable wrapper for embedding native objects (and their language) inside fault responses.
+ * Holds a language-tagged binary encoding of a native object for embedding inside fault responses.
  */
 @XmlRootElement(name = "native", namespace = "http://org.smallmind/web/json/scaffold/fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -59,10 +59,10 @@ public class NativeObject implements Serializable {
   }
 
   /**
-   * Serializes the supplied object into bytes and records it as a Java payload.
+   * Java-serializes the supplied object and records it as a {@link NativeLanguage#JAVA} payload.
    *
    * @param object object to serialize
-   * @throws IOException if serialization fails
+   * @throws IOException if Java serialization fails
    */
   public NativeObject (Object object)
     throws IOException {
@@ -76,7 +76,7 @@ public class NativeObject implements Serializable {
   }
 
   /**
-   * @return the language associated with the serialized bytes
+   * @return language that produced the serialized bytes
    */
   @XmlElement(name = "language", required = true)
   public NativeLanguage getLanguage () {

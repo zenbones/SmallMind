@@ -66,7 +66,11 @@ import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * In-memory {@link FileStore} implementation that backs the ephemeral file system.
+ * In-memory {@link FileStore} implementation that backs the ephemeral file system. All file
+ * and directory data are stored in a heap tree rooted at an anonymous {@link DirectoryNode}.
+ * The store enforces a logical capacity ceiling and uses a fixed block size when allocating
+ * new file nodes. All mutating operations are {@code synchronized} to guard against concurrent
+ * access.
  */
 public class EphemeralFileStore extends FileStore {
 
@@ -79,12 +83,12 @@ public class EphemeralFileStore extends FileStore {
   private final int blockSize;
 
   /**
-   * Creates a file store with the requested capacity and allocation block size.
+   * Creates a file store bound to the given file system.
    *
-   * @param fileSystem the owning file system
-   * @param capacity   maximum capacity exposed
-   * @param blockSize  allocation unit for new files
-   * @throws IllegalArgumentException if capacity or blockSize are non-positive
+   * @param fileSystem the owning {@link EphemeralFileSystem}
+   * @param capacity   the maximum capacity in bytes that will be reported by {@link #getUsableSpace()}
+   * @param blockSize  the allocation unit in bytes used when creating new file nodes
+   * @throws IllegalArgumentException if {@code capacity} or {@code blockSize} are not positive
    */
   public EphemeralFileStore (EphemeralFileSystem fileSystem, long capacity, int blockSize) {
 
@@ -98,7 +102,7 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Removes all children from the root node, effectively clearing the store.
+   * Removes all child nodes from the root, effectively resetting the store to an empty state.
    */
   public void clear () {
 
@@ -106,7 +110,9 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name of this file store.
+   *
+   * @return the simple class name of this store
    */
   @Override
   public String name () {
@@ -115,7 +121,9 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the type identifier of this file store, which is the same as its name.
+   *
+   * @return the type string; never {@code null}
    */
   @Override
   public String type () {
@@ -124,7 +132,9 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether this file store is read-only.
+   *
+   * @return always {@code false}
    */
   @Override
   public boolean isReadOnly () {
@@ -133,7 +143,10 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the total size of this file store, which is equal to the usable space.
+   *
+   * @return the configured capacity in bytes
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public long getTotalSpace () {
@@ -147,7 +160,10 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the number of bytes available for use on this file store.
+   *
+   * @return the configured capacity in bytes
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public long getUsableSpace () {
@@ -161,7 +177,11 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the number of bytes not yet allocated in this file store, calculated as
+   * {@code capacity - rootNode.size()}.
+   *
+   * @return unallocated bytes remaining
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public synchronized long getUnallocatedSpace () {
@@ -175,7 +195,11 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether this file store supports the attribute view identified by the given class.
+   *
+   * @param type the attribute view class to test
+   * @return {@code true} if the view is supported
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public boolean supportsFileAttributeView (Class<? extends FileAttributeView> type) {
@@ -189,7 +213,11 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Indicates whether this file store supports the attribute view identified by the given name.
+   *
+   * @param name the attribute view name to test (e.g., {@code "basic"})
+   * @return {@code true} if the named view is supported
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public boolean supportsFileAttributeView (String name) {
@@ -203,7 +231,10 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * @return supported attribute view names
+   * Returns the set of attribute view names supported by this store.
+   *
+   * @return an unmodifiable set of supported view name strings
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public Set<String> getSupportedFileAttributeViewNames () {
 
@@ -216,7 +247,13 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a file-store-level attribute view of the requested type, or {@code null} when
+   * the type is not {@link EphemeralFileStoreAttributeView}.
+   *
+   * @param <V>  the view type
+   * @param type the class of the desired view
+   * @return the view instance, or {@code null} when unsupported
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public <V extends FileStoreAttributeView> V getFileStoreAttributeView (Class<V> type) {
@@ -230,13 +267,16 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Returns a file attribute view for the supplied path when supported.
+   * Returns a file-attribute view of the requested type for the specified path.
    *
-   * @param path    the path whose view is requested
-   * @param type    the view type
-   * @param options link options (unused)
-   * @return the view instance or {@code null} when unsupported
-   * @throws NoSuchFileException if the path does not exist
+   * @param <V>     the view type
+   * @param path    the path whose attributes are requested
+   * @param type    the class of the desired view
+   * @param options link options (currently unused)
+   * @return the view instance, or {@code null} when the type is unsupported or the path does
+   * not exist
+   * @throws NoSuchFileException       if a non-terminal path component does not exist
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public synchronized <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
     throws NoSuchFileException {
@@ -255,14 +295,18 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Reads strongly typed basic file attributes for a path.
+   * Reads basic file attributes for the specified path.
    *
-   * @param path    the path whose attributes are read
-   * @param type    expected attribute type (must be {@link EphemeralBasicFileAttributes})
-   * @param options link options (unused)
-   * @return the requested attributes
-   * @throws NoSuchFileException           if the path does not exist
-   * @throws UnsupportedOperationException if an unsupported attribute class is requested
+   * @param <A>     the attribute type
+   * @param path    the path whose attributes are to be read
+   * @param type    the expected attribute class; must be assignable from
+   *                {@link EphemeralBasicFileAttributes}
+   * @param options link options (currently unused)
+   * @return the attributes, or {@code null} if the path does not exist
+   * @throws NoSuchFileException           if a non-terminal path component does not exist
+   * @throws UnsupportedOperationException if {@code type} is not assignable from
+   *                                       {@link EphemeralBasicFileAttributes}
+   * @throws ClosedFileSystemException     if the owning file system has been closed
    */
   public synchronized <A extends BasicFileAttributes> A readAttributes (EphemeralPath path, Class<A> type, LinkOption... options)
     throws NoSuchFileException {
@@ -279,14 +323,19 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Reads selected basic attributes by name.
+   * Reads a selected subset of basic file attributes, specified by name, for the given path.
+   * The {@code attributes} string may optionally be prefixed with a view name followed by a
+   * colon (e.g., {@code "basic:size,isDirectory"}). An asterisk ({@code *}) in the name list
+   * selects all known attribute names.
    *
-   * @param path       the path whose attributes are read
-   * @param attributes attribute selection string, optionally prefixed with a view name
-   * @param options    link options (unused)
-   * @return a map of attribute names to values
+   * @param path       the path whose attributes are to be read
+   * @param attributes the comma-separated attribute name selection, optionally prefixed with
+   *                   a view name and colon
+   * @param options    link options (currently unused)
+   * @return a map from attribute name to value for the selected attributes
    * @throws NoSuchFileException           if the path does not exist
-   * @throws UnsupportedOperationException if an unsupported view name is supplied
+   * @throws UnsupportedOperationException if an unsupported view name is specified
+   * @throws ClosedFileSystemException     if the owning file system has been closed
    */
   public synchronized Map<String, Object> readAttributes (EphemeralPath path, String attributes, LinkOption... options)
     throws NoSuchFileException {
@@ -368,14 +417,18 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Sets a supported basic attribute.
+   * Sets a single basic file attribute for the given path. The {@code attribute} string may
+   * optionally be prefixed with a view name and colon (e.g., {@code "basic:creationTime"}).
+   * The supported settable attributes are {@code creationTime}, {@code lastModifiedTime}, and
+   * {@code lastAccessTime}, each expecting a {@link FileTime} value.
    *
-   * @param path      the path whose attribute will be set
-   * @param attribute attribute name, optionally with a view prefix
-   * @param value     the new value
-   * @param options   link options (unused)
+   * @param path      the path whose attribute is to be set
+   * @param attribute the attribute name, optionally prefixed with a view name and colon
+   * @param value     the new attribute value
+   * @param options   link options (currently unused)
    * @throws NoSuchFileException           if the path does not exist
-   * @throws UnsupportedOperationException for unsupported views
+   * @throws UnsupportedOperationException if an unsupported view name is specified
+   * @throws ClosedFileSystemException     if the owning file system has been closed
    */
   public synchronized void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
     throws NoSuchFileException {
@@ -420,7 +473,13 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * {@inheritDoc}
+   * Reads a file-store-level attribute by its qualified name ({@code viewName:attributeName}).
+   *
+   * @param attribute the qualified attribute name, which must contain a colon separator
+   * @return the attribute value, or {@code null} if the view name does not match
+   * @throws IOException               if the attribute field cannot be accessed via reflection
+   * @throws IllegalArgumentException  if the attribute string does not contain a colon
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public Object getAttribute (String attribute)
@@ -452,12 +511,14 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Registers a heap event listener on the given directory path.
+   * Registers a {@link HeapEventListener} on the directory node at the given path so that the
+   * listener is notified of heap changes within that directory.
    *
-   * @param path     the directory to listen to
+   * @param path     the directory path to which the listener should be attached
    * @param listener the listener to register
-   * @throws NoSuchFileException   if the path does not exist
-   * @throws NotDirectoryException if the path is not a directory
+   * @throws NoSuchFileException       if the path does not exist
+   * @throws NotDirectoryException     if the path exists but is not a directory
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public synchronized void registerHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NoSuchFileException, NotDirectoryException {
@@ -477,11 +538,13 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Unregisters a previously added heap listener.
+   * Removes a previously registered {@link HeapEventListener} from the directory node at
+   * the given path. If the path does not exist the method returns silently.
    *
-   * @param path     the directory path
-   * @param listener the listener to remove
-   * @throws NoSuchFileException if the path does not exist
+   * @param path     the directory path from which the listener should be removed
+   * @param listener the listener to unregister
+   * @throws NoSuchFileException       if a non-terminal component of the path does not exist
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public synchronized void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
     throws NoSuchFileException {
@@ -499,10 +562,10 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Ensures the supplied path exists.
+   * Verifies that the given path exists in the heap.
    *
-   * @param path the path to validate
-   * @throws NoSuchFileException if the path does not exist
+   * @param path the path to check
+   * @throws NoSuchFileException if the path does not exist in the heap
    */
   public synchronized void checkAccess (EphemeralPath path)
     throws NoSuchFileException {
@@ -513,14 +576,15 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Opens a secure directory stream for the given path.
+   * Opens a {@link SecureDirectoryStream} for the directory at the given path.
    *
-   * @param dir     directory path to stream
-   * @param filter  optional filter applied to entries
-   * @param options link options (unused)
-   * @return the directory stream
-   * @throws NoSuchFileException   if the path does not exist
-   * @throws NotDirectoryException if the path is not a directory
+   * @param dir     the directory path to open
+   * @param filter  an optional filter applied when iterating entries; may be {@code null}
+   * @param options link options (currently unused)
+   * @return a new {@link SecureDirectoryStream} for the directory
+   * @throws NoSuchFileException       if the path does not exist
+   * @throws NotDirectoryException     if the path is not a directory
+   * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
     throws NoSuchFileException, NotDirectoryException {
@@ -541,13 +605,16 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Creates a directory at the supplied path.
+   * Creates a new directory at the specified path.
    *
-   * @param path  the directory path
-   * @param attrs optional file attributes (only posix permissions supported)
-   * @throws NoSuchFileException           if the parent does not exist or a file is encountered mid-path
-   * @throws FileAlreadyExistsException    if the directory already exists
-   * @throws UnsupportedOperationException for unsupported attributes
+   * @param path  the path of the directory to create
+   * @param attrs optional file attributes; only {@code "posix:permissions"} is accepted
+   * @throws NoSuchFileException           if the parent directory does not exist, or if a file
+   *                                       occupies an intermediate path component
+   * @throws FileAlreadyExistsException    if a node already exists at the given path
+   * @throws UnsupportedOperationException if any attribute other than {@code "posix:permissions"}
+   *                                       is supplied
+   * @throws ClosedFileSystemException     if the owning file system has been closed
    */
   public synchronized void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
     throws NoSuchFileException, FileAlreadyExistsException {
@@ -589,12 +656,14 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Deletes a file or directory.
+   * Deletes the file or directory at the given path.
    *
    * @param path the path to delete
+   * @throws IOException                if deletion of the root is attempted, or another I/O error
+   *                                    occurs
    * @throws NoSuchFileException        if the path does not exist
-   * @throws DirectoryNotEmptyException if deleting a non-empty directory
-   * @throws IOException                when attempting to delete the root or other errors
+   * @throws DirectoryNotEmptyException if the path is a non-empty directory
+   * @throws ClosedFileSystemException  if the owning file system has been closed
    */
   public synchronized void delete (EphemeralPath path)
     throws IOException {
@@ -629,12 +698,23 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Copies a file or directory within the store.
+   * Copies a file or directory from {@code source} to {@code target}. When both paths refer
+   * to the same location the operation is a no-op. The {@link StandardCopyOption#REPLACE_EXISTING}
+   * option controls whether an existing target may be overwritten. File content is copied via
+   * a new {@link ByteArrayIOBuffer} snapshot.
    *
-   * @param source  the path to copy from
-   * @param target  the destination path
-   * @param options supported copy options (currently {@link StandardCopyOption#REPLACE_EXISTING})
-   * @throws IOException if the copy cannot be performed
+   * @param source  the source path
+   * @param target  the target path
+   * @param options copy options; only {@link StandardCopyOption} values are accepted
+   * @throws NoSuchFileException           if the source, or (when target is absent) the parent
+   *                                       of the target, does not exist
+   * @throws FileAlreadyExistsException    if the target already exists and
+   *                                       {@link StandardCopyOption#REPLACE_EXISTING} was not
+   *                                       specified
+   * @throws DirectoryNotEmptyException    if the target is a non-empty directory
+   * @throws UnsupportedOperationException if a non-standard copy option is provided
+   * @throws IOException                   if the root directory is the target of a directory copy,
+   *                                       or another I/O error occurs
    */
   public synchronized void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
     throws IOException {
@@ -744,12 +824,23 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Moves a file or directory to a new location, replacing existing targets when requested.
+   * Moves a file or directory from {@code source} to {@code target}. When both paths refer to
+   * the same location the operation is a no-op. Unlike {@link #copy}, the source node is
+   * removed after placement at the target. File content is transferred by reference rather than
+   * being duplicated.
    *
    * @param source  the source path
-   * @param target  the destination path
-   * @param options supported move options (currently {@link StandardCopyOption#REPLACE_EXISTING})
-   * @throws IOException if the move fails or either path is invalid
+   * @param target  the target path
+   * @param options move options; only {@link StandardCopyOption} values are accepted
+   * @throws NoSuchFileException           if the source, or (when target is absent) the parent
+   *                                       of the target, does not exist
+   * @throws FileAlreadyExistsException    if the target already exists and
+   *                                       {@link StandardCopyOption#REPLACE_EXISTING} was not
+   *                                       specified
+   * @throws DirectoryNotEmptyException    if the target is a non-empty directory
+   * @throws UnsupportedOperationException if a non-standard copy option is provided
+   * @throws IOException                   if the root directory is the target, or another I/O
+   *                                       error occurs
    */
   public synchronized void move (EphemeralPath source, EphemeralPath target, CopyOption... options)
     throws IOException {
@@ -858,13 +949,25 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Opens or creates a byte channel for a file.
+   * Opens or creates a seekable byte channel for the file at the given path. The behaviour is
+   * controlled by the supplied open options, which must all be instances of
+   * {@link StandardOpenOption}. Only {@code "posix:permissions"} file attributes are accepted
+   * on creation.
    *
-   * @param path    the file path
-   * @param options open options controlling read/write semantics
-   * @param attrs   optional file attributes (only posix permissions supported)
-   * @return the opened channel
-   * @throws IOException if the path is invalid or options conflict
+   * @param path    the path of the file to open or create
+   * @param options the set of open options; must not contain non-standard options
+   * @param attrs   optional attributes to apply on creation; only {@code "posix:permissions"}
+   *                is accepted
+   * @return the opened or newly created {@link SeekableByteChannel}
+   * @throws IOException                   if the path is the root, if an option combination is
+   *                                       invalid, or if the file cannot be created or opened
+   * @throws NoSuchFileException           if the file does not exist and no creation option was
+   *                                       provided, or if the parent directory is absent
+   * @throws FileAlreadyExistsException    if {@link StandardOpenOption#CREATE_NEW} was specified
+   *                                       and the file already exists
+   * @throws UnsupportedOperationException if a non-standard open option or unsupported file
+   *                                       attribute is supplied
+   * @throws ClosedFileSystemException     if the owning file system has been closed
    */
   public synchronized SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
@@ -996,11 +1099,15 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Navigates the heap to locate the node for the supplied absolute path.
+   * Traverses the heap tree to locate the node corresponding to the given absolute path.
+   * Returns {@code null} when a path component does not exist. Throws
+   * {@link NoSuchFileException} when a non-terminal component resolves to a file node rather
+   * than a directory.
    *
-   * @param path the absolute path to resolve
-   * @return the node or {@code null} if it does not exist
-   * @throws NoSuchFileException if a non-terminal file occurs before the end of the path
+   * @param path the absolute path to resolve; must be absolute
+   * @return the located {@link HeapNode}, or {@code null} if any component is absent
+   * @throws NoSuchFileException if the path is relative, or if a file node appears at a
+   *                             non-terminal position in the path
    */
   private HeapNode findNode (EphemeralPath path)
     throws NoSuchFileException {

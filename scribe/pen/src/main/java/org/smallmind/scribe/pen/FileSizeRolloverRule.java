@@ -33,7 +33,8 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Rollover rule that triggers when the log file exceeds a maximum size.
+ * A {@link RolloverRule} that triggers file rotation when the current file size plus the bytes
+ * about to be written would exceed {@code maxSize * fileSizeQuantifier.getMultiplier()}.
  */
 public class FileSizeRolloverRule implements RolloverRule {
 
@@ -41,7 +42,7 @@ public class FileSizeRolloverRule implements RolloverRule {
   private long maxSize;
 
   /**
-   * Creates a rollover rule with the default threshold of 10 megabytes.
+   * Constructs a rule with a default threshold of 10 megabytes.
    */
   public FileSizeRolloverRule () {
 
@@ -49,10 +50,10 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Creates a rollover rule with the provided size and quantifier.
+   * Constructs a rule with an explicit size threshold and unit quantifier.
    *
-   * @param maxSize            size threshold before rollover
-   * @param fileSizeQuantifier unit multiplier for the size
+   * @param maxSize            the numeric size threshold before rollover is triggered
+   * @param fileSizeQuantifier the {@link FileSizeQuantifier} whose multiplier scales {@code maxSize} to bytes
    */
   public FileSizeRolloverRule (long maxSize, FileSizeQuantifier fileSizeQuantifier) {
 
@@ -63,9 +64,9 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Retrieves the configured maximum file size threshold.
+   * Returns the numeric size threshold that, when multiplied by the quantifier, defines the maximum file size.
    *
-   * @return maximum size before rollover
+   * @return the configured maximum size value
    */
   public long getMaxSize () {
 
@@ -73,9 +74,9 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Sets the maximum file size before rollover.
+   * Sets the numeric size threshold; the effective limit is {@code maxSize * fileSizeQuantifier.getMultiplier()} bytes.
    *
-   * @param maxSize size threshold in units of {@link FileSizeQuantifier}
+   * @param maxSize the new size threshold in units of the configured {@link FileSizeQuantifier}
    */
   public void setMaxSize (long maxSize) {
 
@@ -83,9 +84,9 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Returns the quantifier used to interpret the maximum size.
+   * Returns the quantifier that provides the byte multiplier for the size threshold.
    *
-   * @return size quantifier
+   * @return the current {@link FileSizeQuantifier}
    */
   public FileSizeQuantifier getFileSizeQuantifier () {
 
@@ -93,9 +94,9 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Sets the size quantifier multiplier.
+   * Replaces the unit quantifier used to scale the size threshold.
    *
-   * @param fileSizeQuantifier quantifier to use
+   * @param fileSizeQuantifier the new {@link FileSizeQuantifier}
    */
   public void setFileSizeQuantifier (FileSizeQuantifier fileSizeQuantifier) {
 
@@ -103,12 +104,14 @@ public class FileSizeRolloverRule implements RolloverRule {
   }
 
   /**
-   * Determines whether writing the pending bytes would exceed the configured threshold.
+   * Returns {@code true} when {@code fileSize + bytesToBeWritten} exceeds
+   * {@code maxSize * fileSizeQuantifier.getMultiplier()}, indicating that the file must be rolled
+   * before the pending write.
    *
-   * @param fileSize         current file size in bytes
-   * @param lastModified     last modification time (ignored)
-   * @param bytesToBeWritten bytes about to be written
-   * @return {@code true} if rollover should occur
+   * @param fileSize         the current size of the log file in bytes
+   * @param lastModified     the last modification time in milliseconds (not used by this rule)
+   * @param bytesToBeWritten the number of bytes about to be appended
+   * @return {@code true} if the write would exceed the configured limit; {@code false} otherwise
    */
   public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 

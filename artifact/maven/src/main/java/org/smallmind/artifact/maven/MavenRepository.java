@@ -261,7 +261,7 @@ public class MavenRepository {
    * @param artifact root artifact for which to collect and resolve the full dependency closure;
    *                 must have its groupId, artifactId, version, and extension populated
    * @return array of resolved artifacts constituting the full compile-scope dependency closure;
-   *         order is not guaranteed
+   * order is not guaranteed
    * @throws DependencyCollectionException if the dependency metadata (POMs) for any reachable
    *                                       node cannot be retrieved or parsed
    * @throws DependencyResolutionException if Aether's final resolution pass fails for any node
@@ -353,7 +353,7 @@ public class MavenRepository {
    * are included.
    *
    * @param authenticationSelector selector that supplies {@link org.eclipse.aether.repository.Authentication}
-   *                                for a given repository id
+   *                               for a given repository id
    * @param mirrorSelector         selector that maps a repository to its configured mirror,
    *                               or returns {@code null} when no mirror applies
    * @param settings               effective Maven settings from which profile and mirror
@@ -403,7 +403,7 @@ public class MavenRepository {
    * {@code CHECKSUM_POLICY_WARN} so that re-deployed snapshots are always refetched.
    *
    * @param authenticationSelector selector that returns authentication for the effective
-   *                                repository id (which may be the mirror's id after redirection)
+   *                               repository id (which may be the mirror's id after redirection)
    * @param mirrorSelector         selector that returns a mirror for the original repository,
    *                               or {@code null} when no mirror applies
    * @param remoteRepositoryList   mutable list to which the constructed repository is appended
@@ -448,7 +448,7 @@ public class MavenRepository {
    *
    * @param settings effective Maven settings from which mirror declarations are read
    * @return selector that maps an original repository to its configured mirror, or returns
-   *         {@code null} when no mirror matches
+   * {@code null} when no mirror matches
    */
   private MirrorSelector getMirrorSelector (Settings settings) {
 

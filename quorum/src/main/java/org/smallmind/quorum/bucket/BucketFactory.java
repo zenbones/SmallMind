@@ -33,16 +33,20 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Factory for constructing bucket instances on demand.
+ * Supplier of {@link TokenBucket} instances used when lazily creating child buckets.
+ * <p>
+ * Implementations configure and return a fully initialised bucket ready for use.
+ * A factory is passed to {@link TokenBucket#add(BucketKey, BucketFactory)} so that
+ * the parent bucket can defer construction of child entries until they are first needed.
  *
- * @param <T> type governed by the bucket
+ * @param <T> the type of value governed by the produced buckets
  */
 public interface BucketFactory<T> {
 
   /**
-   * Creates a new bucket instance.
+   * Constructs and returns a new, fully configured {@link TokenBucket}.
    *
-   * @return the constructed bucket
+   * @return a ready-to-use token bucket
    */
   TokenBucket<T> create ();
 }

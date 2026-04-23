@@ -42,17 +42,19 @@ import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
 /**
- * SLF4J {@link MDCAdapter} backed by the scribe {@link Parameters} holder.
- * This adapter maps MDC operations to the parameter store used by scribe to
- * capture per-thread contextual information.
+ * SLF4J {@link MDCAdapter} that stores all diagnostic context in the scribe
+ * {@link Parameters} thread-local parameter store, making MDC values available
+ * to scribe formatters and appenders as first-class log record parameters.
+ * Supports both flat key/value entries and keyed deques for nested context.
  */
 public class ScribeMDCAdapter implements MDCAdapter {
 
   /**
-   * Adds or replaces an MDC value for the current thread.
+   * Stores or replaces a flat string value under {@code key} in the current thread's
+   * parameter context.
    *
-   * @param key the MDC key
-   * @param val the string value to associate
+   * @param key the MDC key; must not be {@code null}
+   * @param val the string value to associate with the key
    */
   @Override
   public void put (String key, String val) {
@@ -61,10 +63,11 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Pushes a value onto the MDC deque for the given key, creating a deque if none exists.
+   * Appends {@code val} to the deque stored under {@code key}, creating a new deque if
+   * the key is absent or its current value is not a {@link Deque}.
    *
-   * @param key the MDC key
-   * @param val the value to push
+   * @param key the MDC key identifying the deque
+   * @param val the string value to append
    */
   @Override
   public void pushByKey (String key, String val) {
@@ -83,10 +86,12 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Pops the most recent value from the MDC deque for the given key.
+   * Removes and returns the head of the deque stored under {@code key}.
+   * Returns {@code null} if the key is absent, its value is not a deque, or the deque is empty;
+   * removes the entry entirely if the value is a non-deque scalar.
    *
-   * @param key the MDC key
-   * @return the popped value, or {@code null} if none are present
+   * @param key the MDC key identifying the deque
+   * @return the popped string value, or {@code null} if nothing was available
    */
   @Override
   public String popByKey (String key) {
@@ -115,9 +120,10 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Clears the deque tracked for the supplied key, replacing it with an empty deque.
+   * Replaces the value stored under {@code key} with a new empty deque, discarding any
+   * previously accumulated entries.
    *
-   * @param key the MDC key
+   * @param key the MDC key whose deque should be cleared
    */
   @Override
   public void clearDequeByKey (String key) {
@@ -126,10 +132,12 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Returns a copy of the deque for the supplied key.
+   * Returns a snapshot copy of the deque stored under {@code key}, converting each element
+   * to a string via {@code toString()}.
    *
-   * @param key the MDC key
-   * @return a copy of the deque, or {@code null} if no deque exists
+   * @param key the MDC key identifying the deque
+   * @return a new {@link Deque} containing the current elements as strings, or {@code null}
+   * if no deque exists for the key
    */
   @Override
   public Deque<String> getCopyOfDequeByKey (String key) {
@@ -152,10 +160,10 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Retrieves a single MDC value for the supplied key.
+   * Retrieves the string representation of the value stored under {@code key}.
    *
-   * @param key the MDC key
-   * @return the string value, or {@code null} if none exists
+   * @param key the MDC key to look up
+   * @return the value's {@code toString()}, or {@code null} if the key is absent
    */
   @Override
   public String get (String key) {
@@ -166,9 +174,9 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Removes the MDC value associated with the supplied key.
+   * Removes the entry for {@code key} from the current thread's parameter context.
    *
-   * @param key the MDC key to clear
+   * @param key the MDC key to remove
    */
   @Override
   public void remove (String key) {
@@ -177,7 +185,7 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Clears all MDC entries for the current thread.
+   * Removes all entries from the current thread's parameter context.
    */
   @Override
   public void clear () {
@@ -186,9 +194,10 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Produces a copy of the current MDC map.
+   * Builds a {@link Map} snapshot of the current thread's parameter context, converting
+   * each value to a string via {@code toString()}.
    *
-   * @return a defensive copy of the context map
+   * @return a new modifiable map containing all current key/value pairs as strings
    */
   @Override
   public Map<String, String> getCopyOfContextMap () {
@@ -203,9 +212,10 @@ public class ScribeMDCAdapter implements MDCAdapter {
   }
 
   /**
-   * Replaces the current MDC map with the provided entries.
+   * Replaces the current thread's entire parameter context with the entries from
+   * {@code contextMap}, first clearing all existing entries.
    *
-   * @param contextMap the context entries to install for the current thread
+   * @param contextMap the new key/value pairs to install; must not be {@code null}
    */
   @Override
   public void setContextMap (Map<String, String> contextMap) {

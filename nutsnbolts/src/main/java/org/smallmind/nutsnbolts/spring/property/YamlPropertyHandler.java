@@ -39,16 +39,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Iterates over nested YAML structures, flattening them into dot-notated {@link YamlPropertyEntry} instances.
+ * A {@link PropertyHandler} that flattens nested YAML map and list structures into dot-notated {@link YamlPropertyEntry} instances.
  */
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
   private final Map<String, Object> yamlMap;
 
   /**
-   * Creates a handler backed by the provided YAML content.
+   * Creates a handler backed by the root YAML map produced by SnakeYAML.
    *
-   * @param yamlMap root YAML map parsed by SnakeYAML
+   * @param yamlMap the root map of the parsed YAML document
    */
   public YamlPropertyHandler (Map<String, Object> yamlMap) {
 
@@ -56,9 +56,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
   }
 
   /**
-   * Returns an iterator that flattens the YAML structure into sequential {@link YamlPropertyEntry} items.
+   * Returns an iterator that recursively walks the YAML structure and yields one flattened entry per leaf value.
    *
-   * @return iterator producing flattened property entries
+   * @return an iterator producing {@link YamlPropertyEntry} instances with dot-notated keys
    */
   @Override
   public Iterator<YamlPropertyEntry> iterator () {
@@ -67,16 +67,16 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
   }
 
   /**
-   * Iterator that walks nested maps/lists to produce flat dot-notated keys.
+   * Recursively walks nested YAML maps and lists, building dot-notated keys for each scalar leaf value.
    */
   private static class YamlPropertyEntryIterator implements Iterator<YamlPropertyEntry> {
 
     private final LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
 
     /**
-     * Creates the iterator seeded with the root map.
+     * Seeds the iterator with the root YAML map; an empty or null map produces an empty iteration.
      *
-     * @param yamlMap root YAML map
+     * @param yamlMap the root YAML map to iterate
      */
     private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
 
@@ -86,9 +86,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
 
     /**
-     * Indicates whether additional flattened entries remain.
+     * Returns {@code true} if the iteration stack contains at least one more leaf entry.
      *
-     * @return {@code true} if another entry is available
+     * @return {@code true} if another flattened entry is available
      */
     @Override
     public boolean hasNext () {
@@ -106,9 +106,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
 
     /**
-     * Produces the next flattened property entry by walking nested maps and lists.
+     * Advances to and returns the next flattened leaf entry, descending into nested maps and lists as needed.
      *
-     * @return the next {@link YamlPropertyEntry}
+     * @return the next {@link YamlPropertyEntry} with its full dot-notated key
      */
     @Override
     public YamlPropertyEntry next () {
@@ -151,7 +151,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
 
     /**
-     * Removal is not supported.
+     * Removal is not supported by this iterator.
      *
      * @throws UnsupportedOperationException always
      */
@@ -163,22 +163,27 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
   }
 
   /**
-   * Tracks iteration state for a nested map and the key segment name.
+   * Pairs a map-level iterator with the key segment name of the entry most recently advanced at that level.
    */
   private static class NamedIteration {
 
     private final Iterator<Map.Entry<String, Object>> iterator;
     private String name;
 
+    /**
+     * Creates a named iteration wrapping the given map entry iterator.
+     *
+     * @param iterator the iterator over entries at a single YAML map level
+     */
     private NamedIteration (Iterator<Map.Entry<String, Object>> iterator) {
 
       this.iterator = iterator;
     }
 
     /**
-     * Retrieves the current path segment name associated with the iterator.
+     * Returns the key segment recorded for the most recently visited entry at this map level.
      *
-     * @return the current path segment
+     * @return the current key segment name
      */
     private String getName () {
 
@@ -186,9 +191,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
 
     /**
-     * Updates the path segment name associated with the iterator.
+     * Records the key segment for the most recently visited entry at this map level.
      *
-     * @param name current path segment
+     * @param name the key segment to record
      */
     private void setName (String name) {
 
@@ -196,9 +201,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     }
 
     /**
-     * Accessor for the iterator over the current map level.
+     * Returns the underlying iterator over entries at this YAML map level.
      *
-     * @return iterator over map entries
+     * @return the map entry iterator
      */
     private Iterator<Map.Entry<String, Object>> getIterator () {
 

@@ -33,27 +33,28 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Handles errors that occur during logging.
+ * Callback invoked by appenders and the logging pipeline whenever an internal failure occurs, allowing
+ * applications to direct error output to a custom destination instead of the default stack trace.
  */
 public interface ErrorHandler {
 
   /**
-   * Processes an error reported by a logger.
+   * Handles a logger-level error that is not associated with a specific record.
    *
-   * @param loggerName   name of the logger that encountered the error
-   * @param throwable    the failure cause
-   * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param loggerName   the name of the logger or appender that encountered the error
+   * @param throwable    the exception or error that was caught
+   * @param errorMessage a {@link String#format}-style template describing the failure
+   * @param args         arguments substituted into {@code errorMessage}
    */
   void process (String loggerName, Throwable throwable, String errorMessage, Object... args);
 
   /**
-   * Processes an error reported while handling a specific record.
+   * Handles an error that occurred while the pipeline was processing a specific record.
    *
-   * @param record       record being processed
-   * @param throwable    the failure cause
-   * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param record       the record that was being processed when the failure occurred
+   * @param throwable    the exception or error that was caught
+   * @param errorMessage a {@link String#format}-style template describing the failure
+   * @param args         arguments substituted into {@code errorMessage}
    */
   void process (Record<?> record, Throwable throwable, String errorMessage, Object... args);
 }

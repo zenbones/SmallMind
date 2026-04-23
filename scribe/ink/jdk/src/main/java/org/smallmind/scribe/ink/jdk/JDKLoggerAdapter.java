@@ -50,7 +50,8 @@ import org.smallmind.scribe.pen.adapter.ParameterAdapter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
 /**
- * Logger adapter that routes scribe logging calls to Java Util Logging.
+ * Scribe {@link LoggerAdapter} that delegates to a JUL {@link Logger}, wrapping scribe appenders as JUL
+ * {@link Handler}s, scribe filters as JUL filters, and translating levels through {@link JDKLevelTranslator}.
  */
 public class JDKLoggerAdapter implements LoggerAdapter {
 
@@ -61,9 +62,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   private boolean autoFillLoggerContext = false;
 
   /**
-   * Creates an adapter around a JUL {@link Logger}.
+   * Builds an adapter around the given JUL {@link Logger}, initialising empty filter and enhancer queues.
    *
-   * @param logger the JUL logger to delegate to
+   * @param logger the JUL logger that will receive all delegated log events
    */
   public JDKLoggerAdapter (Logger logger) {
 
@@ -74,9 +75,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the underlying logger name.
+   * Returns the name of the underlying JUL logger.
    *
-   * @return the name reported by the JUL logger
+   * @return the logger name
    */
   @Override
   public String getName () {
@@ -85,9 +86,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Supplies the parameter adapter used to store MDC-style values.
+   * Returns the shared {@link ParameterAdapter} used to supply MDC-style contextual parameters to records.
    *
-   * @return the shared {@link ParameterAdapter}
+   * @return the singleton {@link Parameters} instance
    */
   @Override
   public ParameterAdapter getParameterAdapter () {
@@ -96,9 +97,10 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Indicates whether logger context should be auto-populated.
+   * Returns whether this adapter automatically populates caller context into the {@link LoggerContext}
+   * before evaluating filters.
    *
-   * @return {@code true} when context auto-fill is enabled
+   * @return {@code true} if auto-fill is enabled
    */
   @Override
   public boolean getAutoFillLoggerContext () {
@@ -107,9 +109,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Toggles automatic population of logger context data.
+   * Enables or disables automatic population of caller context into the {@link LoggerContext}.
    *
-   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   * @param autoFillLoggerContext {@code true} to capture class and method name automatically
    */
   @Override
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
@@ -118,9 +120,10 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds a scribe filter and installs a JUL filter wrapper.
+   * Adds a scribe filter to the local filter list and installs a corresponding {@link JDKFilterWrapper}
+   * on the underlying JUL logger; both operations are performed atomically.
    *
-   * @param filter filter to evaluate records with
+   * @param filter the scribe filter to add
    */
   @Override
   public synchronized void addFilter (Filter filter) {
@@ -132,7 +135,8 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all registered filters from both JUL and scribe collections.
+   * Removes all scribe filters and clears the JUL logger's filter so that no filter-based veto
+   * can block publishing.
    */
   @Override
   public synchronized void clearFilters () {
@@ -142,9 +146,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds an appender by wrapping it in a JUL {@link Handler}.
+   * Wraps the scribe appender in a {@link JDKAppenderWrapper} and registers it as a JUL handler.
    *
-   * @param appender appender to register
+   * @param appender the scribe appender to add
    */
   @Override
   public synchronized void addAppender (Appender appender) {
@@ -153,7 +157,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all appenders currently attached to the JUL logger.
+   * Removes and detaches every handler currently registered on the underlying JUL logger.
    */
   @Override
   public synchronized void clearAppenders () {
@@ -164,9 +168,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Registers an enhancer to mutate records prior to publishing.
+   * Registers an enhancer that will mutate each record after filters pass and before handlers receive it.
    *
-   * @param enhancer enhancer to register
+   * @param enhancer the enhancer to add
    */
   @Override
   public void addEnhancer (Enhancer enhancer) {
@@ -175,7 +179,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured enhancers.
+   * Removes all registered enhancers so that records are published without any mutation step.
    */
   @Override
   public void clearEnhancers () {
@@ -184,9 +188,10 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the effective log level.
+   * Returns the scribe-level equivalent of the JUL logger's current level, defaulting to
+   * {@link Level#INFO} when the JUL logger has no level set.
    *
-   * @return the scribe level equivalent of the JUL level
+   * @return the effective threshold level
    */
   @Override
   public Level getLevel () {
@@ -195,9 +200,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Sets the level on the underlying JUL logger.
+   * Translates the given scribe level to its JUL equivalent and sets it on the underlying JUL logger.
    *
-   * @param level the threshold level
+   * @param level the scribe threshold level to apply
    */
   @Override
   public void setLevel (Level level) {
@@ -206,12 +211,13 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a formatted message via JUL if permitted by level and filters.
+   * Logs a message using a format template via JUL if the level meets the threshold and all filters allow it;
+   * enhancers are applied before the record is handed to JUL.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
    * @param message   message template
-   * @param args      message arguments
+   * @param args      arguments substituted into the message template
    */
   @Override
   public void logMessage (Level level, Throwable throwable, String message, Object... args) {
@@ -230,11 +236,12 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs an arbitrary object via JUL if permitted by level and filters.
+   * Logs the string representation of an arbitrary object via JUL if the level meets the threshold
+   * and all filters allow the record; enhancers are applied before the record is handed to JUL.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param object    object whose {@code toString()} will be logged
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param object    object whose {@link Object#toString()} result is used as the message; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Object object) {
@@ -253,11 +260,13 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a lazily supplied message via JUL if permitted by level and filters.
+   * Logs a lazily evaluated message via JUL if the level meets the threshold and all filters allow the record;
+   * the supplier is not invoked when the level check fails, and enhancers are applied before the record
+   * is handed to JUL.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param supplier  supplier that produces the message when logging proceeds
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param supplier  supplier invoked to produce the message string; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Supplier<String> supplier) {
@@ -276,10 +285,12 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Evaluates whether logging should proceed based on context and filters.
+   * Creates and optionally fills a {@link LoggerContext}, then evaluates the JUL logger's filter and
+   * all scribe filters against a probe record, returning the context when all pass or {@code null}
+   * when any veto.
    *
-   * @param level the level of the candidate record
-   * @return prepared logger context if logging should continue, otherwise {@code null}
+   * @param level the level of the candidate record used to build the probe
+   * @return a populated {@link LoggerContext} if logging should proceed, or {@code null} if any filter vetoes it
    */
   private LoggerContext willLog (Level level) {
 
@@ -313,9 +324,9 @@ public class JDKLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Runs all enhancers against the supplied record.
+   * Passes the record through every registered enhancer in insertion order.
    *
-   * @param record record to enhance
+   * @param record the record to enhance before it is dispatched to JUL handlers
    */
   private void enhanceRecord (Record<LogRecord> record) {
 

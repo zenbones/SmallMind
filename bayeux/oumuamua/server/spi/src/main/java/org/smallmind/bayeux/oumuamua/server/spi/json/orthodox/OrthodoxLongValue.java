@@ -38,17 +38,18 @@ import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
 /**
- * Numeric value representing a long in the orthodox codec.
+ * Immutable {@link NumberValue} wrapping a 64-bit signed long scalar for the orthodox codec;
+ * reports {@link NumberType#LONG}, truncates when narrowed to int, and promotes when widened to double.
  */
 public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
   private final long value;
 
   /**
-   * Creates a long value.
+   * Constructs a long value associated with the given factory.
    *
-   * @param factory owning factory
-   * @param value   numeric value
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param value   the primitive long to wrap
    */
   protected OrthodoxLongValue (OrthodoxValueFactory factory, long value) {
 
@@ -58,6 +59,8 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
+   * Identifies the numeric subtype of this value.
+   *
    * @return {@link NumberType#LONG}
    */
   @Override
@@ -67,7 +70,9 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
-   * @return boxed number
+   * Returns the value boxed as a {@link Long}.
+   *
+   * @return boxed {@code Long} representation
    */
   @Override
   public Number asNumber () {
@@ -76,7 +81,9 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
-   * @return value coerced to int
+   * Returns the value narrowed to a primitive int by truncation of the high 32 bits.
+   *
+   * @return low 32 bits of the long value cast to int
    */
   @Override
   public int asInt () {
@@ -85,7 +92,9 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
-   * @return primitive long
+   * Returns the raw wrapped primitive long.
+   *
+   * @return the long value as stored at construction
    */
   @Override
   public long asLong () {
@@ -94,7 +103,9 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
-   * @return value coerced to double
+   * Returns the value widened to a primitive double; values beyond 2^53 may lose precision.
+   *
+   * @return the long value promoted to double
    */
   @Override
   public double asDouble () {
@@ -103,10 +114,10 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
   }
 
   /**
-   * Encodes the numeric literal.
+   * Writes the JSON numeric literal representation of the long to {@code writer}.
    *
-   * @param writer destination writer
-   * @throws IOException if writing fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

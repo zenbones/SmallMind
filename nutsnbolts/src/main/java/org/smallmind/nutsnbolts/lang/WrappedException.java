@@ -33,14 +33,15 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Runtime wrapper that stores a checked exception and allows retrieval as a specific type.
+ * {@link RuntimeException} that wraps a checked exception so it can cross boundaries that do not
+ * declare checked exceptions, with a typed accessor for recovering the original exception.
  */
 public class WrappedException extends RuntimeException {
 
   /**
-   * Wraps the provided exception.
+   * Constructs a runtime wrapper around the given checked exception.
    *
-   * @param exception the exception to wrap
+   * @param exception the checked exception to wrap as the cause
    */
   public WrappedException (Exception exception) {
 
@@ -48,12 +49,12 @@ public class WrappedException extends RuntimeException {
   }
 
   /**
-   * Returns the wrapped cause cast to the requested type.
+   * Returns the wrapped exception cast to the requested type.
    *
-   * @param exceptionClass the expected exception type
-   * @param <E>            the generic exception type
-   * @return the cause cast to the provided type
-   * @throws ClassCastException if the cause cannot be cast
+   * @param exceptionClass the class to which the wrapped cause should be cast
+   * @param <E>            the expected exception type
+   * @return the wrapped cause cast to {@code E}
+   * @throws ClassCastException if the wrapped cause is not an instance of {@code exceptionClass}
    */
   public <E extends Exception> E convert (Class<E> exceptionClass) {
 

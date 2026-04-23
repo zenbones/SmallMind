@@ -39,7 +39,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a type as adaptable for wire transport using a specific {@link WireAdapter}.
+ * Registers a {@link WireAdapter} responsible for marshalling and unmarshalling the
+ * annotated type during wire transport. The adapter bridges the domain type and its
+ * encoded form, keeping serialization logic separate from business code. The annotation
+ * is inherited so that subclasses automatically use the same adapter unless they
+ * declare their own.
  */
 @Inherited
 @Target({ElementType.TYPE})
@@ -47,9 +51,10 @@ import java.lang.annotation.Target;
 public @interface Wire {
 
   /**
-   * Adapter class that can marshal and unmarshal the annotated type.
+   * The {@link WireAdapter} implementation that handles encoding and decoding of the
+   * annotated type; must be instantiable by the framework at runtime.
    *
-   * @return adapter implementation class
+   * @return the adapter class; must not be an abstract class or interface
    */
   Class<? extends WireAdapter<?, ?>> adapter ();
 }

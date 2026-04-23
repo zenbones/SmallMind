@@ -43,8 +43,10 @@ import org.smallmind.nutsnbolts.util.AlphaNumericConverter;
 import org.smallmind.nutsnbolts.util.StringUtility;
 
 /**
- * {@link ChoiceBox} pre-populated with the constants of an {@link Enum} type. Values are displayed using a
- * human-friendly converter and can optionally omit certain enum constants or select a default value.
+ * A {@link ChoiceBox} pre-populated with the constants of an {@link Enum} type. Available constants
+ * are sorted alphabetically by their display-case names. Constants may be excluded at construction
+ * time and an initial selection may be provided. When no initial selection is specified the first
+ * remaining entry is selected automatically.
  *
  * @param <E> the enum type displayed by this choice box
  */
@@ -53,9 +55,10 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
   private final Class<E> enumClass;
 
   /**
-   * Constructs the choice box showing all enum constants and selects the first value.
+   * Constructs the choice box showing all constants of {@code enumClass}, sorted alphabetically,
+   * with the first entry selected.
    *
-   * @param enumClass the enum type to display
+   * @param enumClass the enum type to display; must not be {@code null}
    */
   public EnumChoiceBox (Class<E> enumClass) {
 
@@ -63,10 +66,11 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
   }
 
   /**
-   * Constructs the choice box showing all enum constants and selects the provided value.
+   * Constructs the choice box showing all constants of {@code enumClass} and pre-selects
+   * {@code selectedEnum}.
    *
-   * @param enumClass    the enum type to display
-   * @param selectedEnum the value to select initially, or {@code null} to select the first entry
+   * @param enumClass    the enum type to display; must not be {@code null}
+   * @param selectedEnum the constant to select initially, or {@code null} to select the first entry
    */
   public EnumChoiceBox (Class<E> enumClass, E selectedEnum) {
 
@@ -74,10 +78,11 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
   }
 
   /**
-   * Constructs the choice box excluding the provided enum constants and selecting the first remaining value.
+   * Constructs the choice box omitting the constants in {@code exemptEnums} and selecting the first
+   * remaining entry.
    *
-   * @param enumClass   the enum type to display
-   * @param exemptEnums constants that should not appear in the list
+   * @param enumClass   the enum type to display; must not be {@code null}
+   * @param exemptEnums constants that must not appear in the list, or {@code null} to include all
    */
   public EnumChoiceBox (Class<E> enumClass, List<E> exemptEnums) {
 
@@ -85,11 +90,12 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
   }
 
   /**
-   * Constructs the choice box, allowing both a default value and a list of excluded constants.
+   * Constructs the choice box, optionally excluding constants and specifying an initial selection.
+   * The remaining constants are sorted alphabetically by display-case name.
    *
-   * @param enumClass    the enum type to display
-   * @param selectedEnum the value to select initially, or {@code null} to select the first available
-   * @param exemptEnums  constants that should be removed from the available options
+   * @param enumClass    the enum type to display; must not be {@code null}
+   * @param selectedEnum the constant to select initially, or {@code null} to select the first remaining entry
+   * @param exemptEnums  constants to remove from the available options, or {@code null} to include all
    */
   public EnumChoiceBox (Class<E> enumClass, E selectedEnum, List<E> exemptEnums) {
 
@@ -132,7 +138,9 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
   }
 
   /**
-   * @return the enum class rendered by this choice box
+   * Returns the enum class whose constants are displayed by this choice box.
+   *
+   * @return the enum type; never {@code null}
    */
   public Class<E> getEnumClass () {
 

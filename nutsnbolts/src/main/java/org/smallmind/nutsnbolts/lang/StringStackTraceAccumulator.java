@@ -33,14 +33,15 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * {@link StackTraceAccumulator} that collects trace lines into a single {@link StringBuilder}.
+ * {@link StackTraceAccumulator} that concatenates rendered stack trace lines into a single
+ * {@link StringBuilder}, separating each line with the platform line separator.
  */
 public class StringStackTraceAccumulator implements StackTraceAccumulator {
 
   private final StringBuilder traceBuilder;
 
   /**
-   * Constructs an empty accumulator.
+   * Constructs an accumulator with an empty internal buffer.
    */
   public StringStackTraceAccumulator () {
 
@@ -48,9 +49,9 @@ public class StringStackTraceAccumulator implements StackTraceAccumulator {
   }
 
   /**
-   * Appends a line of text, adding the platform line separator.
+   * Appends the given text followed by the platform line separator to the internal buffer.
    *
-   * @param charSequence the text to append
+   * @param charSequence the line of stack trace text to append
    */
   @Override
   public void append (CharSequence charSequence) {
@@ -59,9 +60,9 @@ public class StringStackTraceAccumulator implements StackTraceAccumulator {
   }
 
   /**
-   * Returns the collected trace text.
+   * Returns all accumulated trace lines as a single string.
    *
-   * @return accumulated trace content
+   * @return the complete rendered stack trace
    */
   @Override
   public String toString () {

@@ -36,36 +36,36 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * Extends SAX document-level callbacks with support for creating element extenders dynamically.
+ * SAX document-level event sink that also acts as a factory for {@link ElementExtender} instances used to handle individual elements.
  */
 public interface DocumentExtender extends SAXExtender {
 
   /**
-   * Notifies the start of the document.
+   * Called when the parser encounters the start of the document.
    *
-   * @throws SAXException if processing fails
+   * @throws SAXException if an error occurs while processing the document start
    */
   void startDocument ()
     throws SAXException;
 
   /**
-   * Notifies the end of the document.
+   * Called when the parser encounters the end of the document.
    *
-   * @throws SAXException if processing fails
+   * @throws SAXException if an error occurs while processing the document end
    */
   void endDocument ()
     throws SAXException;
 
   /**
-   * Factory for creating an {@link ElementExtender} for the encountered element.
+   * Returns an {@link ElementExtender} responsible for handling the element described by the supplied arguments.
    *
-   * @param parent       current parent extender
-   * @param namespaceURI element namespace URI
-   * @param localName    element local name
-   * @param qName        qualified element name
-   * @param atts         element attributes
-   * @return a non-null extender able to process the element
-   * @throws Exception if instantiation or configuration fails
+   * @param parent       the currently active parent extender on the element stack
+   * @param namespaceURI the namespace URI of the element
+   * @param localName    the local name of the element
+   * @param qName        the qualified name of the element
+   * @param atts         the attributes of the element
+   * @return a non-null {@link ElementExtender} for the element
+   * @throws Exception if the extender cannot be created or configured
    */
   ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
     throws Exception;

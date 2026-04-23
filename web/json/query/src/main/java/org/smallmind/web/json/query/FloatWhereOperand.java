@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Float literal operand.
+ * A where operand that holds a single float literal value.
  */
 @XmlRootElement(name = "float", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   private Float value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public FloatWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided float value.
+   * Constructs an operand wrapping the given float.
    *
    * @param value float literal
    */
@@ -64,10 +64,10 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
-   * Convenience factory for a float operand.
+   * Factory method that wraps a float in a {@code FloatWhereOperand}.
    *
    * @param value float literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static FloatWhereOperand instance (Float value) {
 
@@ -75,6 +75,8 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
+   * Returns the element type for float operands.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#FLOAT}
    */
   @Override
@@ -95,9 +99,9 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
-   * Returns the float value.
+   * Returns the stored float value.
    *
-   * @return float literal or {@code null}
+   * @return float literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
-   * Returns the serialized float value.
+   * Returns the float value used during serialization.
    *
-   * @return float literal or {@code null}
+   * @return float literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Float getValue () {
@@ -118,7 +122,7 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   /**
-   * Sets the float value.
+   * Sets the float value for this operand.
    *
    * @param value float literal
    */

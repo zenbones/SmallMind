@@ -38,17 +38,17 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 /**
- * BeanPostProcessor that auto-registers Jersey resources and {@link ResourceConfigExtension}s with the application ResourceConfig.
+ * Spring {@link BeanPostProcessor} that automatically registers JAX-RS resource beans and {@link ResourceConfigExtension}s with the Jersey {@link ResourceConfig}.
  */
 public class JerseyPostProcessor extends ResourceConfig implements BeanPostProcessor {
 
   /**
-   * Registers beans annotated with {@link Path} and applies {@link ResourceConfigExtension} instances.
+   * Registers the bean with Jersey if it carries a {@link Path} annotation, or applies it if it is a {@link ResourceConfigExtension}.
    *
-   * @param bean     bean instance post initialization
-   * @param beanName bean name
-   * @return the original bean
-   * @throws BeansException if an error occurs during registration
+   * @param bean     fully initialized bean instance
+   * @param beanName name of the bean in the Spring context
+   * @return the unmodified bean
+   * @throws BeansException if registration fails
    */
   @Override
   public synchronized Object postProcessAfterInitialization (Object bean, String beanName)

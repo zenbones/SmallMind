@@ -35,21 +35,39 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Quantity;
 
 /**
- * Base contract for meter implementations that can receive updates and produce recorded quantities.
+ * Base contract for all metric meter implementations in the Claxon registry.
+ *
+ * <p>A {@code Meter} accepts a stream of {@code long} measurements via
+ * {@link #update(long)} and, when polled by the registry, produces a snapshot
+ * of the accumulated data as an array of named {@link Quantity} values via
+ * {@link #record()}. Implementations are responsible for their own internal
+ * aggregation strategy (e.g., running totals, moving averages, histograms).</p>
+ *
+ * <p>Concrete meter types include {@link Gauge}, {@link Histogram},
+ * {@link Speedometer}, {@link Tachometer}, {@link Tally}, and {@link Trace}.</p>
  */
 public interface Meter {
 
   /**
-   * Updates the meter with a new value.
+   * Incorporates a new measurement into the meter's internal aggregate.
    *
-   * @param value value to incorporate
+   * <p>The interpretation of {@code value} depends on the concrete implementation.
+   * For example, a {@link Tally} treats it as a delta to add to a counter, while a
+   * {@link Tachometer} ignores the value entirely and simply counts each call as one event.</p>
+   *
+   * @param value the measurement to incorporate
    */
   void update (long value);
 
   /**
-   * Captures the current measurements for emission.
+   * Captures the meter's current state as an array of named {@link Quantity} values
+   * suitable for emission to a monitoring back end.
    *
-   * @return array of quantities representing the current state
+   * <p>Implementations define both the number and names of the returned quantities.
+   * The array must not be {@code null}, but may be empty if the meter has no data to report.</p>
+   *
+   * @return a non-null array of {@link Quantity} instances representing the current
+   * state of this meter
    */
   Quantity[] record ();
 }

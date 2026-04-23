@@ -35,18 +35,34 @@ package org.smallmind.phalanx.wire.transport.jms;
 import jakarta.jms.Session;
 
 /**
- * JMS-specific acknowledge modes backed by {@link Session} constants.
+ * Standard JMS acknowledge modes drawn directly from {@link Session} constants.
+ *
+ * <p>Implements {@link AcknowledgeMode} so that a {@link MessagePolicy} can reference
+ * any of these values when creating sessions via {@link ConnectionManager}.
  */
 public enum JmsAcknowledgeMode implements AcknowledgeMode {
 
-  AUTO_ACKNOWLEDGE(Session.AUTO_ACKNOWLEDGE), CLIENT_ACKNOWLEDGE(Session.CLIENT_ACKNOWLEDGE), DUPS_OK_ACKNOWLEDGE(Session.DUPS_OK_ACKNOWLEDGE);
+  /**
+   * Session automatically acknowledges each received message; maps to {@link Session#AUTO_ACKNOWLEDGE}.
+   */
+  AUTO_ACKNOWLEDGE(Session.AUTO_ACKNOWLEDGE),
+
+  /**
+   * Application must explicitly call {@code Message.acknowledge()}; maps to {@link Session#CLIENT_ACKNOWLEDGE}.
+   */
+  CLIENT_ACKNOWLEDGE(Session.CLIENT_ACKNOWLEDGE),
+
+  /**
+   * Lazy acknowledgement allowing duplicate delivery; maps to {@link Session#DUPS_OK_ACKNOWLEDGE}.
+   */
+  DUPS_OK_ACKNOWLEDGE(Session.DUPS_OK_ACKNOWLEDGE);
 
   private final int jmsValue;
 
   /**
-   * Associates the JMS acknowledge mode value.
+   * Creates a constant that wraps the given JMS session acknowledge-mode integer.
    *
-   * @param jmsValue JMS constant value
+   * @param jmsValue integer acknowledge-mode constant from {@link Session}
    */
   JmsAcknowledgeMode (int jmsValue) {
 
@@ -54,9 +70,10 @@ public enum JmsAcknowledgeMode implements AcknowledgeMode {
   }
 
   /**
-   * Returns the JMS acknowledge mode value.
+   * Returns the JMS acknowledge-mode integer for use with
+   * {@link jakarta.jms.Connection#createSession(boolean, int)}.
    *
-   * @return JMS acknowledge mode
+   * @return JMS acknowledge-mode constant
    */
   public int getJmsValue () {
 

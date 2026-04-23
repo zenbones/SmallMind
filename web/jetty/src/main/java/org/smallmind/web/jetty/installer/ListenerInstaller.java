@@ -37,7 +37,7 @@ import java.util.EventListener;
 import java.util.Map;
 
 /**
- * Describes a servlet {@link EventListener} to register with a Jetty context, along with optional context parameters.
+ * Describes a servlet {@link EventListener} to be registered with a Jetty context, along with optional servlet context initialization parameters.
  */
 public class ListenerInstaller extends JettyInstaller {
 
@@ -46,7 +46,7 @@ public class ListenerInstaller extends JettyInstaller {
   private Map<String, String> contextParameters;
 
   /**
-   * Identifies this installer as targeting servlet listeners.
+   * Returns the installer type for this class.
    *
    * @return {@link JettyInstallerType#LISTENER}
    */
@@ -57,11 +57,11 @@ public class ListenerInstaller extends JettyInstaller {
   }
 
   /**
-   * Instantiates or returns the provided servlet listener.
+   * Returns the listener instance, instantiating {@code listenerClass} if no instance was supplied directly.
    *
-   * @return the listener instance to register
-   * @throws NoSuchMethodException     if the listener class lacks a no-argument constructor
-   * @throws InstantiationException    if the listener cannot be instantiated
+   * @return the {@link EventListener} to register
+   * @throws NoSuchMethodException     if the listener class has no accessible no-arg constructor
+   * @throws InstantiationException    if the listener class cannot be instantiated
    * @throws IllegalAccessException    if the constructor is inaccessible
    * @throws InvocationTargetException if the constructor throws an exception
    */
@@ -72,9 +72,9 @@ public class ListenerInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies a concrete listener instance.
+   * Sets a concrete listener instance to register.
    *
-   * @param eventListener the listener to register
+   * @param eventListener the listener instance
    */
   public void setEventListener (EventListener eventListener) {
 
@@ -82,9 +82,9 @@ public class ListenerInstaller extends JettyInstaller {
   }
 
   /**
-   * Supplies the listener class used when an instance is not directly provided.
+   * Sets the listener class to instantiate when no instance is provided directly.
    *
-   * @param listenerClass the listener implementation class
+   * @param listenerClass implementation class for the listener
    */
   public void setListenerClass (Class<? extends EventListener> listenerClass) {
 
@@ -92,9 +92,9 @@ public class ListenerInstaller extends JettyInstaller {
   }
 
   /**
-   * Retrieves the context initialization parameters applied alongside the listener.
+   * Returns the servlet context initialization parameters to apply alongside this listener.
    *
-   * @return map of context parameters or {@code null} if none
+   * @return map of context parameters, or {@code null} if none configured
    */
   public Map<String, String> getContextParameters () {
 
@@ -102,9 +102,9 @@ public class ListenerInstaller extends JettyInstaller {
   }
 
   /**
-   * Sets context initialization parameters to accompany this listener.
+   * Sets servlet context initialization parameters to apply when this listener is registered.
    *
-   * @param contextParameters parameters to apply to the servlet context
+   * @param contextParameters parameters to add to the servlet context
    */
   public void setContextParameters (Map<String, String> contextParameters) {
 

@@ -39,19 +39,43 @@ import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
 /**
- * Aggregate that counts occurrences and calculates rate over a sliding time window.
+ * Thread-safe {@link Aggregate} that accumulates a running count and derives a time-normalised
+ * rate from it each time {@link #getMeasurements()} is called.
+ *
+ * <p>Counts are maintained by a {@link LongAdder} for high-throughput, contention-free
+ * increments. On each call to {@link #getMeasurements()} the elapsed nanoseconds since the
+ * previous reading are measured and used to project the raw count onto the configured window,
+ * yielding a rate expressed in units of {@code count per window}.</p>
+ *
+ * <p>Negative deltas are rejected by {@link #add(long)} to prevent accidental counter
+ * corruption; use {@link #update(long)} only with non-negative values.</p>
  */
 public class Paced implements Aggregate {
 
+  /**
+   * Source of monotonic timestamps used to compute elapsed time between {@link #getMeasurements()} calls.
+   */
   private final Clock clock;
+
+  /**
+   * Lock-free counter accumulating all increments since the last {@link #getMeasurements()} call.
+   */
   private final LongAdder adder = new LongAdder();
+
+  /**
+   * The configured window duration expressed in nanoseconds, used to scale raw counts into rates.
+   */
   private final double nanosecondsInWindow;
+
+  /**
+   * Monotonic timestamp (nanoseconds) of the most recent {@link #getMeasurements()} call.
+   */
   private long markTime;
 
   /**
-   * Creates a paced aggregate using a one-second window.
+   * Constructs a paced aggregate with a one-second reporting window.
    *
-   * @param clock clock providing monotonic time
+   * @param clock source of monotonic time used to compute elapsed intervals
    */
   public Paced (Clock clock) {
 
@@ -59,10 +83,10 @@ public class Paced implements Aggregate {
   }
 
   /**
-   * Creates a paced aggregate using the supplied window duration.
+   * Constructs a paced aggregate with a custom reporting window.
    *
-   * @param clock       clock providing monotonic time
-   * @param windowStint window duration
+   * @param clock       source of monotonic time used to compute elapsed intervals
+   * @param windowStint duration of the normalisation window; must be positive
    */
   public Paced (Clock clock, Stint windowStint) {
 
@@ -72,16 +96,19 @@ public class Paced implements Aggregate {
     markTime = clock.monotonicTime();
   }
 
+  /**
+   * Increments the counter by one.
+   */
   public void inc () {
 
     add(1);
   }
 
   /**
-   * Adds a non-negative delta to the count.
+   * Adds a non-negative delta to the running counter.
    *
-   * @param delta amount to add
-   * @throws IllegalArgumentException when delta is negative
+   * @param delta the amount to add; must be {@code >= 0}
+   * @throws IllegalArgumentException if {@code delta} is negative
    */
   public void add (long delta) {
 
@@ -93,9 +120,10 @@ public class Paced implements Aggregate {
   }
 
   /**
-   * Updates the count by the given value.
+   * Adds the supplied value to the running counter via {@link #add(long)}.
    *
-   * @param value value to add
+   * @param value the measurement to add; must be {@code >= 0}
+   * @throws IllegalArgumentException if {@code value} is negative
    */
   @Override
   public void update (long value) {
@@ -104,9 +132,16 @@ public class Paced implements Aggregate {
   }
 
   /**
-   * Returns the total count and calculated rate for the last window, then resets the counters.
+   * Returns the count and time-normalised rate accumulated since the last call, then resets
+   * the counter and advances the time mark.
    *
-   * @return array containing count and rate per window
+   * <p>The returned array always has exactly two elements:</p>
+   * <ol>
+   *   <li>index 0 — raw count of events recorded since the previous call</li>
+   *   <li>index 1 — rate expressed in events per configured window duration</li>
+   * </ol>
+   *
+   * @return a two-element {@code double[]} containing {@code [count, rate]}
    */
   public synchronized double[] getMeasurements () {
 

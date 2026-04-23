@@ -35,12 +35,13 @@ package org.smallmind.nutsnbolts.property;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Exception thrown when property expansion fails due to parsing errors, missing mappings, or decryption issues.
+ * Signals that a property expansion operation has failed, for example due to a missing placeholder
+ * mapping, a circular reference, an unclosed delimiter, or a decryption error.
  */
 public class PropertyExpanderException extends FormattedException {
 
   /**
-   * Creates the exception without a message.
+   * Constructs an exception with no detail message.
    */
   public PropertyExpanderException () {
 
@@ -48,10 +49,10 @@ public class PropertyExpanderException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs an exception with a formatted detail message.
    *
-   * @param message the format string
-   * @param args    arguments applied to the format string
+   * @param message a {@link java.util.Formatter}-style format string describing the failure
+   * @param args    arguments substituted into the format string
    */
   public PropertyExpanderException (String message, Object... args) {
 
@@ -59,11 +60,11 @@ public class PropertyExpanderException extends FormattedException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs an exception with a formatted detail message and a cause.
    *
-   * @param throwable the underlying cause
-   * @param message   the format string
-   * @param args      arguments applied to the format string
+   * @param throwable the underlying cause of the expansion failure
+   * @param message   a {@link java.util.Formatter}-style format string describing the failure
+   * @param args      arguments substituted into the format string
    */
   public PropertyExpanderException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +72,9 @@ public class PropertyExpanderException extends FormattedException {
   }
 
   /**
-   * Creates the exception with the supplied cause.
+   * Constructs an exception that wraps an existing throwable with no additional message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the underlying cause of the expansion failure
    */
   public PropertyExpanderException (Throwable throwable) {
 

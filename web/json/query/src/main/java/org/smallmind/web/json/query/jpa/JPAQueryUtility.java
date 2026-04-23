@@ -56,18 +56,18 @@ import org.smallmind.web.json.query.WherePath;
 import org.smallmind.web.json.query.WildcardUtility;
 
 /**
- * Utility for translating JSON where/sort structures into JPA Criteria predicates and orders.
+ * Translates JSON query where and sort structures into JPA Criteria API predicates and order clauses.
  */
 public class JPAQueryUtility {
 
   /**
-   * Translates a {@link Where} into a JPA {@link Predicate} wrapped in a product.
+   * Converts a {@link Where} clause into a JPA {@link Predicate} wrapped in a {@link Product}.
    *
-   * @param criteriaBuilder           JPA criteria builder
-   * @param where                     where clause
-   * @param fieldTransformer          transformer that resolves field names to JPA paths
-   * @param allowNonTerminalWildcards whether wildcards may appear mid-string in LIKE patterns
-   * @return product containing roots and predicate, or {@link NoneProduct} if no criteria
+   * @param criteriaBuilder           JPA criteria builder used to construct predicates
+   * @param where                     where clause to translate; {@code null} yields {@link NoneProduct}
+   * @param fieldTransformer          maps entity/field names to JPA {@link Path} objects
+   * @param allowNonTerminalWildcards {@code true} to permit wildcards in non-terminal positions of LIKE patterns
+   * @return product containing the involved roots and the resulting predicate, or {@link NoneProduct} when the clause is empty
    */
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -89,7 +89,7 @@ public class JPAQueryUtility {
   }
 
   /**
-   * Recursively walks conjunctions to build nested predicates.
+   * Recursively translates a {@link WhereConjunction} and its children into a single compound {@link Predicate}.
    */
   private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -130,7 +130,7 @@ public class JPAQueryUtility {
   }
 
   /**
-   * Translates a single field criterion into a JPA predicate, adding its root to the root set.
+   * Translates a single {@link WhereField} criterion into a JPA {@link Predicate} and registers its root.
    */
   private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, boolean allowNonTerminalWildcards) {
 
@@ -165,6 +165,14 @@ public class JPAQueryUtility {
     };
   }
 
+  /**
+   * Converts a {@link Sort} clause into an array of JPA {@link Order} objects wrapped in a {@link Product}.
+   *
+   * @param criteriaBuilder  JPA criteria builder used to construct order expressions
+   * @param sort             sort specification to translate; {@code null} or empty yields {@link NoneProduct}
+   * @param fieldTransformer maps entity/field names to JPA {@link Path} objects
+   * @return product containing the involved roots and the resulting order array, or {@link NoneProduct} when the sort is empty
+   */
   public static Product<Root<?>, Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {

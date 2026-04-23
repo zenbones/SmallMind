@@ -50,14 +50,18 @@ import java.util.NoSuchElementException;
  */
 
 /**
- * Iterates over a JVM method descriptor string and yields parameter type descriptors one at a time.
+ * Parses the parameter section of a JVM method descriptor and provides an {@link Iterable} that
+ * yields individual parameter type descriptors (e.g. {@code I}, {@code Ljava/lang/String;}).
  */
 public class ParameterIterable implements Iterable<String> {
 
   private final String encrypted;
 
   /**
-   * @param encrypted the substring of a method descriptor containing only parameter descriptors
+   * Constructs an iterable over the parameter portion of a JVM method descriptor.
+   *
+   * @param encrypted the parameter descriptor string, i.e. the content between the opening and closing
+   *                  parentheses of a method descriptor
    */
   public ParameterIterable (String encrypted) {
 
@@ -65,7 +69,9 @@ public class ParameterIterable implements Iterable<String> {
   }
 
   /**
-   * @return a new iterator that walks the descriptor
+   * Returns a new iterator positioned at the start of the parameter descriptor string.
+   *
+   * @return an iterator that yields parameter descriptors one at a time
    */
   public Iterator<String> iterator () {
 
@@ -73,14 +79,16 @@ public class ParameterIterable implements Iterable<String> {
   }
 
   /**
-   * Iterator that parses the parameter descriptor incrementally.
+   * Stateful iterator that advances through the parameter descriptor string, yielding one descriptor per call.
    */
   private class ParameterIterator implements Iterator<String> {
 
     private int index = 0;
 
     /**
-     * @return {@code true} if additional parameter descriptors remain
+     * Returns {@code true} if there are more parameter descriptors to parse.
+     *
+     * @return {@code true} while the current position has not yet reached the end of the descriptor string
      */
     public boolean hasNext () {
 
@@ -88,11 +96,11 @@ public class ParameterIterable implements Iterable<String> {
     }
 
     /**
-     * Parses and returns the next parameter descriptor.
+     * Parses and returns the next parameter type descriptor from the descriptor string.
      *
-     * @return the next descriptor (e.g., {@code I}, {@code [Ljava/lang/String;})
-     * @throws NoSuchElementException        if no parameters remain
-     * @throws ByteCodeManipulationException if the descriptor contains unsupported syntax
+     * @return the next descriptor token, e.g. {@code I} for {@code int} or {@code Ljava/lang/String;} for {@link String}
+     * @throws NoSuchElementException        if the end of the descriptor string has already been reached
+     * @throws ByteCodeManipulationException if an unrecognised character is encountered in the descriptor
      */
     public String next () {
 
@@ -146,11 +154,11 @@ public class ParameterIterable implements Iterable<String> {
     }
 
     /**
-     * Builds an array descriptor given the base type and depth.
+     * Prepends the appropriate number of {@code [} characters to a base type descriptor to form an array descriptor.
      *
-     * @param baseType   the primitive or object descriptor
-     * @param arrayDepth the number of array dimensions
-     * @return the fully formed descriptor
+     * @param baseType   the base primitive or object descriptor, e.g. {@code I} or {@code Ljava/lang/String;}
+     * @param arrayDepth the number of array dimensions; zero means a non-array type is returned unchanged
+     * @return the fully qualified array descriptor, e.g. {@code [[I} for a two-dimensional int array
      */
     private String assembleType (String baseType, int arrayDepth) {
 
@@ -170,9 +178,9 @@ public class ParameterIterable implements Iterable<String> {
     }
 
     /**
-     * Removal is not supported.
+     * Not supported; parameter descriptors may not be removed from the underlying string.
      *
-     * @throws UnsupportedOperationException always
+     * @throws UnsupportedOperationException always, since removal is not supported
      */
     public void remove () {
 

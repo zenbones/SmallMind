@@ -40,7 +40,9 @@ import java.nio.file.Paths;
 import org.smallmind.nutsnbolts.io.PathUtility;
 
 /**
- * Applies cleanup rules to rollover log files to manage disk usage.
+ * Scans the parent directory of an active log file for rolled files that share its base name,
+ * then applies a set of {@link CleanupRule} instances to identify and delete files that exceed
+ * configured retention limits.
  */
 public class Cleanup {
 
@@ -48,16 +50,16 @@ public class Cleanup {
   private char separator = '-';
 
   /**
-   * Creates a cleanup manager with no rules and default separator.
+   * Constructs a cleanup manager with no rules and a default {@code '-'} separator.
    */
   public Cleanup () {
 
   }
 
   /**
-   * Creates a cleanup manager with the supplied rules.
+   * Constructs a cleanup manager with the given rules and a default {@code '-'} separator.
    *
-   * @param rules rules to enforce during cleanup
+   * @param rules the cleanup rules to apply during each vacuum pass
    */
   public Cleanup (CleanupRule<?>... rules) {
 
@@ -65,10 +67,10 @@ public class Cleanup {
   }
 
   /**
-   * Creates a cleanup manager with a custom separator and rules.
+   * Constructs a cleanup manager with an explicit separator and cleanup rules.
    *
-   * @param separator separator between base name and rollover suffix
-   * @param rules     rules to enforce during cleanup
+   * @param separator the character that separates the base file name from the rollover suffix
+   * @param rules     the cleanup rules to apply during each vacuum pass
    */
   public Cleanup (char separator, CleanupRule<?>... rules) {
 
@@ -77,9 +79,9 @@ public class Cleanup {
   }
 
   /**
-   * Sets the separator used to split base names from rollover suffixes.
+   * Replaces the separator used to distinguish base file names from rollover suffixes.
    *
-   * @param separator separator character
+   * @param separator the new separator character
    */
   public void setSeparator (char separator) {
 
@@ -87,9 +89,9 @@ public class Cleanup {
   }
 
   /**
-   * Sets the cleanup rules to apply.
+   * Replaces the set of cleanup rules applied during each vacuum pass.
    *
-   * @param rules rules to enforce
+   * @param rules the new cleanup rules to enforce
    */
   public void setRules (CleanupRule<?>[] rules) {
 
@@ -97,11 +99,14 @@ public class Cleanup {
   }
 
   /**
-   * Executes cleanup rules against rollover files adjacent to the given log file.
+   * Iterates over rolled files in the same directory as {@code logPath}, passes each candidate to
+   * every rule's {@code willCleanup} method (deleting immediately on the first {@code true} result),
+   * and then calls {@code finish()} on each rule copy to perform any deferred deletions.
+   * Each rule is copied before the pass so that accumulated state from a previous call does not interfere.
    *
-   * @param logPath active log file path
-   * @throws IOException     if file operations fail
-   * @throws LoggerException if a rule signals an error
+   * @param logPath the path of the active (non-rolled) log file used to derive the base-name filter
+   * @throws IOException     if directory listing, attribute reading, or file deletion fails
+   * @throws LoggerException if a cleanup rule signals a configuration error
    */
   public void vacuum (Path logPath)
     throws IOException, LoggerException {

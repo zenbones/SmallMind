@@ -42,13 +42,15 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
- * Document-level SAX extender that constructs a {@link Template} from an options XML description.
+ * Document-level SAX extender that drives parsing of an options XML descriptor and populates a {@link Template} with the declared options.
  */
 public class OptionsDocumentExtender extends AbstractDocumentExtender {
 
   private final Template template;
 
   /**
+   * Constructs an extender that will populate the supplied template during parsing.
+   *
    * @param template template to populate from the parsed document
    */
   public OptionsDocumentExtender (Template template) {
@@ -57,7 +59,9 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
   }
 
   /**
-   * @return template being populated
+   * Returns the template being populated during parsing.
+   *
+   * @return {@link Template} that receives options as elements are processed
    */
   public Template getTemplate () {
 
@@ -65,9 +69,15 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
   }
 
   /**
-   * Creates the appropriate element extender based on the incoming element name.
+   * Instantiates the appropriate element extender for the current XML element by mapping the element's qualified name to a class in this package.
    *
-   * @throws Exception if the extender class cannot be located or constructed
+   * @param parent       parent SAX extender in the processing hierarchy
+   * @param namespaceURI namespace URI of the starting element
+   * @param localName    local name of the starting element
+   * @param qName        qualified name used to derive the extender class name
+   * @param atts         attributes of the starting element
+   * @return newly constructed {@link ElementExtender} for the element
+   * @throws Exception if the derived extender class cannot be found or instantiated
    */
   @Override
   public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
@@ -77,9 +87,10 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
   }
 
   /**
-   * Adds parsed options to the template once a child {@link OptionsElementExtender} completes.
+   * Transfers the options collected by a completed {@link OptionsElementExtender} into the template.
    *
-   * @throws SAXException wrapping {@link CommandLineException} if template population fails
+   * @param elementExtender completed child extender; only processed when it is an {@link OptionsElementExtender}
+   * @throws SAXException wrapping a {@link CommandLineException} if the options fail template validation
    */
   @Override
   public void completedChildElement (ElementExtender elementExtender)

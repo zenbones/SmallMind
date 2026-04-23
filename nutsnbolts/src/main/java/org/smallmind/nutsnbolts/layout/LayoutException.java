@@ -35,12 +35,13 @@ package org.smallmind.nutsnbolts.layout;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception thrown when layout calculations encounter invalid state or inputs.
+ * Unchecked exception thrown when the layout engine detects misconfigured elements,
+ * invalid measurement constraints, or improper component placement.
  */
 public class LayoutException extends FormattedRuntimeException {
 
   /**
-   * Creates the exception without a message.
+   * Creates a {@code LayoutException} with no detail message.
    */
   public LayoutException () {
 
@@ -48,10 +49,10 @@ public class LayoutException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Creates a {@code LayoutException} with a {@link String#format}-style message.
    *
-   * @param message the format string describing the error
-   * @param args    arguments applied to the format string
+   * @param message the format string describing the layout error
+   * @param args    arguments substituted into the format string
    */
   public LayoutException (String message, Object... args) {
 

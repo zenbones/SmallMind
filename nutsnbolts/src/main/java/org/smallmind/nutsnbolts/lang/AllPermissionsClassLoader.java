@@ -38,8 +38,7 @@ import java.security.PermissionCollection;
 import java.security.SecureClassLoader;
 
 /**
- * {@link SecureClassLoader} that grants {@link AllPermission} to every loaded class.
- * Useful for sandboxed environments that need to bypass permission checks in controlled scenarios.
+ * A {@link SecureClassLoader} that grants {@link AllPermission} to every class it loads, bypassing all security checks.
  */
 public class AllPermissionsClassLoader extends SecureClassLoader {
 
@@ -54,9 +53,9 @@ public class AllPermissionsClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Creates a loader that delegates to the provided parent while granting all permissions.
+   * Creates an {@code AllPermissionsClassLoader} that delegates class resolution to the given parent loader.
    *
-   * @param classLoader the parent loader to delegate class resolution to
+   * @param classLoader the parent class loader to which normal resolution is delegated
    */
   public AllPermissionsClassLoader (ClassLoader classLoader) {
 
@@ -64,10 +63,10 @@ public class AllPermissionsClassLoader extends SecureClassLoader {
   }
 
   /**
-   * Returns a shared permission collection granting {@link AllPermission} regardless of code source.
+   * Returns a permission collection containing {@link AllPermission}, ignoring the supplied code source.
    *
-   * @param codesource the code source for which permissions are requested
-   * @return a permission collection containing an {@link AllPermission} entry
+   * @param codesource the code source of the class being loaded; not used in this implementation
+   * @return a permission collection that grants all permissions
    */
   @Override
   protected PermissionCollection getPermissions (CodeSource codesource) {

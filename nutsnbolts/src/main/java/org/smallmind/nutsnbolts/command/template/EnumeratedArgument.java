@@ -33,14 +33,16 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Argument whose value must match one of a predefined set of strings.
+ * Argument definition that restricts the supplied value to one of a fixed set of allowed strings.
  */
 public class EnumeratedArgument extends Argument {
 
   private final String[] values;
 
   /**
-   * @param values allowed argument values
+   * Constructs an enumerated argument with the given allowed values.
+   *
+   * @param values ordered array of strings that are accepted as valid argument values
    */
   public EnumeratedArgument (String[] values) {
 
@@ -48,6 +50,8 @@ public class EnumeratedArgument extends Argument {
   }
 
   /**
+   * Returns {@link ArgumentType#ENUMERATED}.
+   *
    * @return {@link ArgumentType#ENUMERATED}
    */
   @Override
@@ -57,6 +61,8 @@ public class EnumeratedArgument extends Argument {
   }
 
   /**
+   * Returns the array of strings that constitute the valid values for this argument.
+   *
    * @return allowed values in declaration order
    */
   public String[] getValues () {
@@ -65,10 +71,10 @@ public class EnumeratedArgument extends Argument {
   }
 
   /**
-   * Tests whether an argument value is within the allowed set.
+   * Tests whether the supplied string equals one of the allowed values using exact string matching.
    *
-   * @param argument candidate value
-   * @return {@code true} if the argument matches
+   * @param argument candidate value to check
+   * @return {@code true} if {@code argument} is among the allowed values, {@code false} otherwise
    */
   public boolean matches (String argument) {
 

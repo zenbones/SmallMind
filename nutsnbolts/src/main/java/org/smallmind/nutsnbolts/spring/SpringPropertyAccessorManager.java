@@ -36,14 +36,14 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
- * Manages a per-application {@link SpringPropertyAccessor} instance.
+ * Stores and retrieves the application-scoped {@link SpringPropertyAccessor} through a {@link PerApplicationContext}.
  */
 public class SpringPropertyAccessorManager implements PerApplicationDataManager {
 
   /**
-   * Registers the accessor in the per-application context.
+   * Stores the given accessor in the per-application context so it can be retrieved globally.
    *
-   * @param springPropertyAccessor accessor to register
+   * @param springPropertyAccessor the accessor to register for the current application
    */
   public static void register (SpringPropertyAccessor springPropertyAccessor) {
 
@@ -51,9 +51,9 @@ public class SpringPropertyAccessorManager implements PerApplicationDataManager 
   }
 
   /**
-   * Retrieves the accessor from the per-application context.
+   * Retrieves the {@link SpringPropertyAccessor} previously registered for the current application.
    *
-   * @return the registered accessor or {@code null} if none is registered
+   * @return the registered accessor, or {@code null} if none has been registered
    */
   public static SpringPropertyAccessor getSpringPropertyAccessor () {
 

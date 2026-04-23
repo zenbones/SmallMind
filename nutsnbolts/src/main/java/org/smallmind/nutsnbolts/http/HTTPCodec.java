@@ -36,17 +36,17 @@ import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.util.Tuple;
 
 /**
- * Utility for encoding Tuples as query strings and parsing query strings back to Tuples.
+ * Encodes key/value tuples as {@code application/x-www-form-urlencoded} query strings and decodes them back.
  */
 public class HTTPCodec {
 
   /**
-   * Builds an application/x-www-form-urlencoded query string from a tuple.
+   * Serializes a tuple of key/value pairs as a URL-encoded query string, optionally leaving specified keys unencoded.
    *
    * @param tuple       ordered key/value pairs to encode
-   * @param ignoredKeys optional keys that should be emitted verbatim without encoding
-   * @return encoded query string
-   * @throws UnsupportedEncodingException if encoding fails
+   * @param ignoredKeys keys whose names and values are emitted verbatim without percent-encoding
+   * @return {@code application/x-www-form-urlencoded} query string
+   * @throws UnsupportedEncodingException if URL encoding of any key or value fails
    */
   public static String urlEncode (Tuple<String, String> tuple, String... ignoredKeys)
     throws UnsupportedEncodingException {
@@ -69,11 +69,11 @@ public class HTTPCodec {
   }
 
   /**
-   * Determines whether a tuple key should bypass encoding.
+   * Returns {@code true} when the given key appears in the list of keys to leave unencoded.
    *
    * @param key         key to test
-   * @param ignoredKeys optional array of unencoded keys
-   * @return {@code true} if the key should be emitted verbatim
+   * @param ignoredKeys array of keys that must not be encoded; may be {@code null} or empty
+   * @return {@code true} if {@code key} is in {@code ignoredKeys}
    */
   private static boolean isIgnoredKey (String key, String[] ignoredKeys) {
 
@@ -90,11 +90,11 @@ public class HTTPCodec {
   }
 
   /**
-   * Parses an application/x-www-form-urlencoded query string into a tuple.
+   * Parses an {@code application/x-www-form-urlencoded} query string and returns all key/value pairs as a tuple.
    *
-   * @param queryString query portion of a URL
-   * @return tuple containing decoded keys and values (in order)
-   * @throws UnsupportedEncodingException if the input is not valid percent-encoding
+   * @param queryString the query string to decode (without a leading {@code ?})
+   * @return ordered tuple of decoded key/value pairs
+   * @throws UnsupportedEncodingException if the string is not valid percent-encoded form data
    */
   public static Tuple<String, String> urlDecode (String queryString)
     throws UnsupportedEncodingException {
@@ -120,11 +120,11 @@ public class HTTPCodec {
   }
 
   /**
-   * Decodes an individual {@code key=value} pair and appends it to the tuple.
+   * Decodes a single {@code key=value} segment and appends the pair to the accumulating tuple.
    *
-   * @param tuple       destination tuple
-   * @param pairBuilder buffer containing the pair
-   * @throws UnsupportedEncodingException if the pair is malformed or not encoded
+   * @param tuple       tuple to receive the decoded pair
+   * @param pairBuilder buffer holding exactly one {@code key=value} segment
+   * @throws UnsupportedEncodingException if the segment does not contain {@code =} or the encoding is invalid
    */
   private static void decodeTuple (Tuple<String, String> tuple, StringBuilder pairBuilder)
     throws UnsupportedEncodingException {

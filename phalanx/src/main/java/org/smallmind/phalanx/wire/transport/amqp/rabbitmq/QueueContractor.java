@@ -36,22 +36,27 @@ import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
 /**
- * Strategy for declaring queues of a particular type.
+ * Strategy interface for declaring RabbitMQ queues of a specific {@link QueueType}.
+ * Implementations encapsulate the broker-specific queue declaration arguments (e.g. queue type
+ * arguments for classic versus quorum queues) and expose a uniform {@link #declare} method for
+ * the transport to call.
  */
 public interface QueueContractor {
 
   /**
-   * @return the type of queue this contractor declares.
+   * Returns the {@link QueueType} that this contractor declares.
+   *
+   * @return the queue type handled by this contractor
    */
   QueueType getQueueType ();
 
   /**
-   * Declares a queue using the provided channel.
+   * Declares a queue on the given channel with the specified name and auto-delete behaviour.
    *
-   * @param channel    channel to declare on.
-   * @param queueName  queue name.
-   * @param autoDelete whether the queue should auto-delete when unused.
-   * @throws IOException if the broker rejects the declaration.
+   * @param channel    an open RabbitMQ channel on which the queue is declared
+   * @param queueName  name of the queue to declare
+   * @param autoDelete {@code true} if the broker should delete the queue when it has no consumers
+   * @throws IOException if the broker rejects the queue declaration
    */
   void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException;

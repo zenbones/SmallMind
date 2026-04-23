@@ -33,7 +33,8 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Units used by {@link FileSizeRolloverRule} to express size thresholds.
+ * Unit of measurement used to express file-size thresholds for rollover rules, providing a byte multiplier that
+ * converts a human-readable quantity into a raw byte count.
  */
 public enum FileSizeQuantifier {
 
@@ -42,7 +43,9 @@ public enum FileSizeQuantifier {
   private final int multiplier;
 
   /**
-   * @param multiplier number of bytes represented by this unit
+   * Constructs a quantifier constant with the given byte multiplier.
+   *
+   * @param multiplier the number of bytes that one unit of this quantifier represents
    */
   FileSizeQuantifier (int multiplier) {
 
@@ -50,9 +53,10 @@ public enum FileSizeQuantifier {
   }
 
   /**
-   * Returns the multiplier in bytes.
+   * Returns the number of bytes represented by one unit of this quantifier, for use when converting a
+   * human-specified size into bytes.
    *
-   * @return byte multiplier
+   * @return the byte multiplier for this unit
    */
   public int getMultiplier () {
 

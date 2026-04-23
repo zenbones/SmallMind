@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * UUID variant values as defined by RFC 4122.
+ * Enumeration of UUID variant values as specified in RFC 4122, each identified by its numeric bit field.
  */
 public enum UUIDVariant {
 
@@ -45,7 +45,9 @@ public enum UUIDVariant {
   private final int variant;
 
   /**
-   * @param variant numeric variant bits
+   * Assigns the numeric variant bit field for this constant.
+   *
+   * @param variant the integer value of the variant bits
    */
   UUIDVariant (int variant) {
 
@@ -53,7 +55,9 @@ public enum UUIDVariant {
   }
 
   /**
-   * @return variant field integer value
+   * Returns the integer value of this variant's bit field as encoded in a UUID.
+   *
+   * @return the variant bit field value
    */
   public int getVariant () {
 

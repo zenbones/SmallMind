@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 
 /**
- * Describes a keystore or truststore resource and provides access to its bytes for Jetty SSL configuration.
+ * Holds the location and password of a keystore or truststore and reads its raw bytes for use with Jetty SSL configuration.
  */
 public class SSLStore {
 
@@ -50,11 +50,11 @@ public class SSLStore {
   private String password;
 
   /**
-   * Loads the configured resource and returns its raw bytes.
+   * Resolves the configured resource location and reads its entire contents into a byte array.
    *
-   * @return the contents of the keystore or truststore resource
-   * @throws IOException       if reading the resource fails
-   * @throws ResourceException if the resource location cannot be resolved
+   * @return the raw bytes of the keystore or truststore
+   * @throws IOException       if reading the resource input stream fails
+   * @throws ResourceException if the resource location cannot be parsed or resolved
    */
   public byte[] getBytes ()
     throws IOException, ResourceException {
@@ -76,9 +76,9 @@ public class SSLStore {
   }
 
   /**
-   * Retrieves the configured resource location, e.g. a classpath or filesystem path.
+   * Returns the resource identifier used to locate the keystore or truststore.
    *
-   * @return the resource identifier
+   * @return the resource location string
    */
   public String getResource () {
 
@@ -86,9 +86,9 @@ public class SSLStore {
   }
 
   /**
-   * Sets the location of the keystore or truststore to load.
+   * Sets the resource identifier pointing to the keystore or truststore to load.
    *
-   * @param resource the resource identifier understood by {@link ResourceParser}
+   * @param resource the resource location understood by {@link ResourceParser}
    */
   public void setResource (String resource) {
 
@@ -96,7 +96,7 @@ public class SSLStore {
   }
 
   /**
-   * Retrieves the password used to unlock the configured store.
+   * Returns the password used to open the store.
    *
    * @return the store password
    */
@@ -106,9 +106,9 @@ public class SSLStore {
   }
 
   /**
-   * Sets the password used to open the configured store.
+   * Sets the password used to open the keystore or truststore.
    *
-   * @param password the keystore or truststore password
+   * @param password the store password
    */
   public void setPassword (String password) {
 

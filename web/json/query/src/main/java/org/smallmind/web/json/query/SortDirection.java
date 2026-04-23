@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Direction for sort fields.
+ * Enumeration of sort directions for use in {@link SortField}.
  */
 public enum SortDirection {
 

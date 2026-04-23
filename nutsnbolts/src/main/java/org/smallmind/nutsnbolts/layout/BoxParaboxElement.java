@@ -33,16 +33,16 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * {@link ParaboxElement} wrapper around another {@link Box}, enabling nested layouts to be treated
- * as linear parts.
+ * A {@link ParaboxElement} that wraps a nested {@link Box}, allowing child boxes to participate
+ * in measurement and layout as {@link LinearPart}s along a single axis.
  */
 public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearPart {
 
   /**
-   * Creates a new wrapper for the given box and constraint.
+   * Constructs an element that wraps the given nested box with the specified constraint.
    *
-   * @param box        the nested box
-   * @param constraint the constraint governing the box's sizing and alignment
+   * @param box        the nested box to wrap
+   * @param constraint the grow/shrink constraint applied to the nested box during layout
    */
   public BoxParaboxElement (Box<?> box, Constraint constraint) {
 
@@ -50,7 +50,9 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code false} because this element wraps a nested {@link Box}, not a native component.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean isNativeComponent () {
@@ -59,7 +61,9 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@link Dimensionality#LINE} because nested boxes are laid out along a single axis.
+   *
+   * @return {@link Dimensionality#LINE}
    */
   @Override
   public Dimensionality getDimensionality () {
@@ -68,7 +72,11 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the nested box to compute its minimum measurement along the given axis.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching
+   * @return the nested box's minimum size along the axis
    */
   @Override
   public double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -77,7 +85,11 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the nested box to compute its preferred measurement along the given axis.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching
+   * @return the nested box's preferred size along the axis
    */
   @Override
   public double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor) {
@@ -86,7 +98,11 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the nested box to compute its maximum measurement along the given axis.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching
+   * @return the nested box's maximum size along the axis
    */
   @Override
   public double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -95,7 +111,11 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the full measurement as the baseline for a nested box, since boxes do not define a text baseline.
+   *
+   * @param bias        the axis of measurement (unused for boxes)
+   * @param measurement the allocated size along the axis
+   * @return {@code measurement}, indicating a bottom-of-box baseline
    */
   @Override
   public double getBaseline (Bias bias, double measurement) {
@@ -104,12 +124,12 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   /**
-   * Lays out the nested box along the provided axis using the supplied space.
+   * Triggers the nested box's layout pass for the given axis, position, and available space.
    *
    * @param bias        the axis being laid out
-   * @param position    the start position along the axis
-   * @param measurement the available measurement along the axis
-   * @param tailor      the layout tailor used to size contained elements
+   * @param position    the starting offset along the axis
+   * @param measurement the total space allocated to the nested box along the axis
+   * @param tailor      the layout tailor coordinating the full two-axis layout pass
    */
   @Override
   public void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor) {

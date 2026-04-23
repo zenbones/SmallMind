@@ -40,9 +40,10 @@ import com.mongodb.client.MongoCursor;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 /**
- * Iterable wrapper that decodes {@link ThrongDocument} results into entity instances on iteration.
+ * Lazy {@link Iterable} over query results that decodes each raw {@link ThrongDocument} into a typed entity
+ * on demand using the supplied codec.
  *
- * @param <T> entity type
+ * @param <T> the entity type yielded by iteration
  */
 public class ThrongIterable<T> implements Iterable<T> {
 
@@ -50,10 +51,10 @@ public class ThrongIterable<T> implements Iterable<T> {
   private final ThrongEntityCodec<T> codec;
 
   /**
-   * Constructs a new iterable over the provided driver iterable using the supplied codec.
+   * Constructs an iterable backed by the given driver find result and entity codec.
    *
-   * @param findIterable driver iterable that yields {@link ThrongDocument} values
-   * @param codec        codec for translating documents into entities
+   * @param findIterable the driver iterable that yields raw {@link ThrongDocument} values
+   * @param codec        the codec used to decode each document into an entity instance
    */
   public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
 
@@ -62,9 +63,9 @@ public class ThrongIterable<T> implements Iterable<T> {
   }
 
   /**
-   * Materializes all results into a list of entities.
+   * Drains the entire result set into a {@link List}.
    *
-   * @return list of decoded entity instances
+   * @return a list of all decoded entity instances
    */
   public List<T> asList () {
 
@@ -76,7 +77,9 @@ public class ThrongIterable<T> implements Iterable<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an iterator that decodes {@link ThrongDocument} values into typed entities one at a time.
+   *
+   * @return an iterator over the decoded entities
    */
   @Override
   public Iterator<T> iterator () {
@@ -85,16 +88,16 @@ public class ThrongIterable<T> implements Iterable<T> {
   }
 
   /**
-   * Iterator that decodes results one-by-one from the driver cursor.
+   * Cursor-backed iterator that translates each {@link ThrongDocument} to an entity via the enclosing codec.
    */
   private class ThrongIterator implements Iterator<T> {
 
     private final MongoCursor<ThrongDocument> mongoCursor;
 
     /**
-     * Creates a new iterator that wraps the given driver cursor.
+     * Constructs an iterator wrapping the given driver cursor.
      *
-     * @param mongoCursor cursor over {@link ThrongDocument} results
+     * @param mongoCursor the driver cursor over raw {@link ThrongDocument} values
      */
     public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
 
@@ -102,7 +105,9 @@ public class ThrongIterable<T> implements Iterable<T> {
     }
 
     /**
-     * {@inheritDoc}
+     * Returns {@code true} if the underlying cursor has more documents.
+     *
+     * @return {@code true} when more results are available
      */
     @Override
     public boolean hasNext () {
@@ -111,7 +116,9 @@ public class ThrongIterable<T> implements Iterable<T> {
     }
 
     /**
-     * {@inheritDoc}
+     * Advances the cursor and returns the next decoded entity.
+     *
+     * @return the next entity decoded from the cursor
      */
     @Override
     public T next () {

@@ -33,15 +33,15 @@
 package org.smallmind.nutsnbolts.security.kms;
 
 /**
- * No-op decryptor that simply returns the provided value unchanged.
+ * No-op {@link Decryptor} implementation that returns its input unchanged, useful for plaintext or test environments.
  */
 public class NoopDecryptor implements Decryptor {
 
   /**
-   * Returns the input string unchanged.
+   * Returns the supplied string unmodified without performing any decryption.
    *
-   * @param encrypted text to "decrypt"
-   * @return the original text
+   * @param encrypted the string passed as input (treated as already plaintext)
+   * @return the same string that was passed in
    */
   @Override
   public String decrypt (String encrypted) {

@@ -42,12 +42,15 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 /**
- * Codec that bridges {@link ThrongDocument} instances to and from the MongoDB driver's streaming API.
+ * MongoDB driver {@link Codec} implementation that reads and writes {@link ThrongDocument} instances by
+ * delegating all BSON streaming to {@link BsonUtility}.
  */
 public class ThrongDocumentCodec implements Codec<ThrongDocument> {
 
   /**
-   * {@inheritDoc}
+   * Returns the class this codec handles.
+   *
+   * @return {@code ThrongDocument.class}
    */
   @Override
   public Class<ThrongDocument> getEncoderClass () {
@@ -56,12 +59,12 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
   }
 
   /**
-   * Decodes the current BSON value into a {@link ThrongDocument}, expecting the root to be a document node.
+   * Decodes the current BSON value into a {@link ThrongDocument}, requiring the root node to be a document.
    *
-   * @param reader         the source reader
-   * @param decoderContext decoder context from the driver
+   * @param reader         the BSON reader positioned at the value to decode
+   * @param decoderContext the decoder context provided by the driver
    * @return the decoded {@link ThrongDocument}
-   * @throws DocumentParsingException if the root BSON type is not a document
+   * @throws DocumentParsingException if the root BSON value is not a document type
    */
   @Override
   public ThrongDocument decode (BsonReader reader, DecoderContext decoderContext) {
@@ -77,12 +80,12 @@ public class ThrongDocumentCodec implements Codec<ThrongDocument> {
   }
 
   /**
-   * Encodes the supplied {@link ThrongDocument} to the writer.
+   * Encodes the given {@link ThrongDocument} to the supplied writer.
    *
-   * @param writer         destination writer
-   * @param document       document to encode
-   * @param encoderContext driver encoder context
-   * @throws DocumentParsingException if an unsupported BSON type is encountered
+   * @param writer         the destination BSON writer
+   * @param document       the document to encode
+   * @param encoderContext the encoder context provided by the driver
+   * @throws DocumentParsingException if the document contains an unsupported BSON type
    */
   @Override
   public void encode (BsonWriter writer, ThrongDocument document, EncoderContext encoderContext)

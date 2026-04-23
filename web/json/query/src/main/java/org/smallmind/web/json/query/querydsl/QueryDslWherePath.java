@@ -38,7 +38,7 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WherePath;
 
 /**
- * QueryDSL implementation of {@link WherePath}, capturing the root and field path for a predicate.
+ * QueryDSL implementation of {@link WherePath} that holds an entity root, a full field path, and the field name.
  */
 public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
 
@@ -47,9 +47,9 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   private final String field;
 
   /**
-   * Derives the field name from an existing path and uses its root.
+   * Constructs a path by deriving the root and field name from the path's own root and string representation.
    *
-   * @param path querydsl path
+   * @param path existing QueryDSL path whose root and field name are extracted automatically
    */
   public QueryDslWherePath (Path<?> path) {
 
@@ -57,10 +57,10 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   /**
-   * Constructs a path by appending the given field to the provided durable root path.
+   * Constructs a path by appending the named field to the given durable root.
    *
-   * @param path  root durable path
-   * @param field field name to append
+   * @param path  durable root path
+   * @param field field name to append to the root
    */
   public QueryDslWherePath (Path<? extends Durable<?>> path, String field) {
 
@@ -68,11 +68,11 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   /**
-   * Constructs a path with explicit root, path, and field components.
+   * Constructs a path with all three components supplied explicitly.
    *
-   * @param root  root path
-   * @param path  full path
-   * @param field field name
+   * @param root  entity root path
+   * @param path  full field path
+   * @param field terminal field name
    */
   public QueryDslWherePath (Path<?> root, Path<?> path, String field) {
 
@@ -82,7 +82,9 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   /**
-   * @return querydsl root path
+   * Returns the entity root path.
+   *
+   * @return QueryDSL root path
    */
   @Override
   public Path<?> getRoot () {
@@ -91,7 +93,9 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   /**
-   * @return full querydsl path
+   * Returns the full QueryDSL path to the field.
+   *
+   * @return QueryDSL field path
    */
   @Override
   public Path<?> getPath () {
@@ -100,7 +104,9 @@ public class QueryDslWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   /**
-   * @return name of the terminal field
+   * Returns the terminal field name within the root entity.
+   *
+   * @return field name
    */
   @Override
   public String getField () {

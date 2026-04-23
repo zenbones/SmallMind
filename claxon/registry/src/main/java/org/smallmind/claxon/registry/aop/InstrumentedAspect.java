@@ -43,18 +43,54 @@ import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
 /**
- * Aspect that applies instrumentation around annotated methods or constructors.
+ * AspectJ aspect that transparently wraps methods and constructors annotated with
+ * {@link Instrumented} to record execution timing into the Claxon metrics registry.
+ *
+ * <p>The around-advice intercepts every join point matched by the pointcut expression
+ * {@code (execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)},
+ * covering both ordinary method executions and constructor initialisations.</p>
+ *
+ * <p>When the annotation's {@link Instrumented#active()} flag is {@code false} the advice
+ * passes through to the original join point immediately with no measurement overhead.
+ * Otherwise it performs the following steps on each invocation:</p>
+ * <ol>
+ *   <li>Resolves the effective caller class (from {@link Instrumented#caller()} or the
+ *       join-point declaring type).</li>
+ *   <li>Builds the complete tag array by combining static {@link ConstantTag}s with dynamic
+ *       {@link ParameterTag}s whose values are extracted from the actual invocation arguments
+ *       via {@code AOPUtility.getParameterValue}.</li>
+ *   <li>Instantiates the configured {@link InstrumentedParser} via its no-arg constructor and
+ *       calls {@link InstrumentedParser#parse(String)} with the annotation's JSON string to
+ *       obtain a {@link MeterBuilder}.</li>
+ *   <li>Delegates execution to {@link Instrument#with} which looks up or creates the meter,
+ *       records timing in the configured {@link java.util.concurrent.TimeUnit}, and returns
+ *       the join-point result.</li>
+ * </ol>
  */
 @Aspect
 public class InstrumentedAspect {
 
   /**
-   * Wraps instrumented join points, building meters from the declared parser and recording execution time.
+   * Around-advice that measures and records the execution time of any method or constructor
+   * annotated with {@link Instrumented}.
    *
-   * @param thisJoinPoint the intercepted join point
-   * @param instrumented  instrumentation annotation with configuration
-   * @return result of the intercepted method/constructor
-   * @throws Throwable propagated from the join point or parsing/reflective failures
+   * <p>If {@link Instrumented#active()} is {@code false}, the join point is executed directly
+   * and its result is returned without any metrics overhead.</p>
+   *
+   * <p>When active, the tag array is assembled in declaration order: all
+   * {@link Instrumented#constants()} entries appear first, followed by all
+   * {@link Instrumented#parameters()} entries. The parser is instantiated fresh on each
+   * invocation via the no-arg constructor of {@link Instrumented#parser()}.</p>
+   *
+   * @param thisJoinPoint the AspectJ join point representing the intercepted method or
+   *                      constructor invocation; used to obtain the declaring type, source
+   *                      location, and actual arguments
+   * @param instrumented  the {@link Instrumented} annotation instance bound to this join point,
+   *                      providing all configuration for the meter and tag assembly
+   * @return the value returned by the intercepted method or constructor (may be {@code null}
+   * for {@code void} methods)
+   * @throws Throwable any exception thrown by the intercepted join point, by the
+   *                   {@link InstrumentedParser}, or by the reflective instantiation of the parser
    */
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
   public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)

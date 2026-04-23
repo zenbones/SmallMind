@@ -40,17 +40,18 @@ import org.bson.codecs.EncoderContext;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 /**
- * Utilities for translating between entity instances and BSON documents while honoring lifecycle callbacks.
+ * Bridges entity instances and {@link BsonDocument} values through an entity codec while firing lifecycle callbacks.
  */
 public class TranslationUtility {
 
   /**
-   * Decodes a BSON document into an entity using the supplied codec, invoking lifecycle callbacks when present.
+   * Decodes the given BSON document into an entity instance using the supplied codec, invoking any registered
+   * {@code @PreLoad} and {@code @PostLoad} lifecycle methods at the appropriate points.
    *
-   * @param entityCodec  codec for the entity
-   * @param bsonDocument BSON document to decode
-   * @param <T>          entity type
-   * @return decoded entity instance, possibly {@code null}
+   * @param entityCodec  the codec for the entity type
+   * @param bsonDocument the BSON document to decode
+   * @param <T>          the entity type
+   * @return the decoded entity instance, or {@code null} if the codec returns null
    */
   public static <T> T fromBson (ThrongEntityCodec<T> entityCodec, BsonDocument bsonDocument) {
 
@@ -68,12 +69,13 @@ public class TranslationUtility {
   }
 
   /**
-   * Encodes an entity into a BSON document, running lifecycle callbacks before and after persistence.
+   * Encodes the given entity instance into a {@link BsonDocument} using the supplied codec, invoking any registered
+   * {@code @PrePersist} and {@code @PostPersist} lifecycle methods before and after encoding.
    *
-   * @param entity      entity instance to encode
-   * @param entityCodec codec for the entity
-   * @param <T>         entity type
-   * @return resulting BSON document
+   * @param entity      the entity instance to encode
+   * @param entityCodec the codec for the entity type
+   * @param <T>         the entity type
+   * @return the BSON document produced by the codec
    */
   public static <T> BsonDocument toBson (T entity, ThrongEntityCodec<T> entityCodec) {
 

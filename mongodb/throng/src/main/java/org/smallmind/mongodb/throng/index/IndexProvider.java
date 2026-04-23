@@ -38,7 +38,9 @@ package org.smallmind.mongodb.throng.index;
 public interface IndexProvider {
 
   /**
-   * @return the set of index definitions that should exist for the collection
+   * Returns the set of index definitions that should exist for the collection.
+   *
+   * @return the index definitions for this provider's collection
    */
   ThrongIndexes provideIndexes ();
 }

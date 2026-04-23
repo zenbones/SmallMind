@@ -35,7 +35,7 @@ package org.smallmind.web.jersey.spring;
 import org.glassfish.jersey.server.ResourceConfig;
 
 /**
- * ResourceConfigExtension that sets a single Jersey configuration property.
+ * {@link ResourceConfigExtension} that sets a single named property on the Jersey {@link ResourceConfig}.
  */
 public class ResourceConfigProperty extends ResourceConfigExtension {
 
@@ -43,7 +43,7 @@ public class ResourceConfigProperty extends ResourceConfigExtension {
   private Object value;
 
   /**
-   * Returns the property name to set.
+   * Returns the property name.
    *
    * @return property key
    */
@@ -53,7 +53,7 @@ public class ResourceConfigProperty extends ResourceConfigExtension {
   }
 
   /**
-   * Sets the property name to apply.
+   * Sets the property name.
    *
    * @param name property key
    */
@@ -83,9 +83,9 @@ public class ResourceConfigProperty extends ResourceConfigExtension {
   }
 
   /**
-   * Applies the configured property to the resource configuration.
+   * Calls {@link ResourceConfig#property(String, Object)} with the configured name and value.
    *
-   * @param resourceConfig Jersey resource configuration
+   * @param resourceConfig the Jersey resource configuration to modify
    */
   @Override
   public void apply (ResourceConfig resourceConfig) {

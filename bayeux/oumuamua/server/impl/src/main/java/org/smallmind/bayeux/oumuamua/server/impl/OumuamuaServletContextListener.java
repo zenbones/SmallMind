@@ -38,18 +38,22 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Bootstraps the Oumuamua server within a servlet context.
+ * Servlet context lifecycle listener that publishes a pre-configured {@link OumuamuaServer} into
+ * the servlet context so that the {@link OumuamuaServlet} can find it, and shuts it down when the
+ * context is destroyed.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaServletContextListener<V extends Value<V>> implements ServletContextListener {
 
   private OumuamuaServer<V> oumuamuaServer;
 
   /**
-   * Provides a preconstructed server instance.
+   * Injects the server instance that will be placed into the servlet context on initialization.
+   * Intended for dependency-injection frameworks that construct this listener externally.
    *
-   * @param oumuamuaServer server to install in the context
+   * @param oumuamuaServer the fully configured server to use; must be set before the context
+   *                       initializes
    */
   public void setOumuamuaServer (OumuamuaServer<V> oumuamuaServer) {
 
@@ -57,9 +61,10 @@ public class OumuamuaServletContextListener<V extends Value<V>> implements Servl
   }
 
   /**
-   * Starts the server and exposes it in the servlet context.
+   * Stores the server under the {@link Server#ATTRIBUTE} key in the servlet context so that
+   * {@link OumuamuaServlet} can retrieve it during its own initialization.
    *
-   * @param servletContextEvent context initialization event
+   * @param servletContextEvent the initialization event carrying the servlet context
    */
   @Override
   public void contextInitialized (ServletContextEvent servletContextEvent) {
@@ -68,9 +73,10 @@ public class OumuamuaServletContextListener<V extends Value<V>> implements Servl
   }
 
   /**
-   * Cleans up the server when the context is destroyed.
+   * Shuts down the server and releases its resources when the servlet context is being destroyed.
    *
-   * @param servletContextEvent destruction event
+   * @param servletContextEvent the destruction event; the context attribute is not cleared because
+   *                            the context itself is being torn down
    */
   @Override
   public void contextDestroyed (ServletContextEvent servletContextEvent) {

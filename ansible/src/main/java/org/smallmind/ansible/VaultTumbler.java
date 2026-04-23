@@ -153,7 +153,7 @@ public class VaultTumbler {
    *
    * @param original plaintext bytes to encrypt; may be empty but must not be {@code null}
    * @return a {@link VaultCake} containing the salt (for key re-derivation on decryption),
-   *         the HMAC-SHA256 tag (for authentication), and the AES-CTR ciphertext
+   * the HMAC-SHA256 tag (for authentication), and the AES-CTR ciphertext
    * @throws VaultCodecException if the JCA provider rejects the key or algorithm parameters,
    *                             or if the cipher operation itself fails
    */

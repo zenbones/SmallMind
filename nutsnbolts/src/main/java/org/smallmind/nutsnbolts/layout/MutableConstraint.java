@@ -33,21 +33,22 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Mutable variant of {@link Constraint} that allows fluent adjustment of grow and shrink weights.
+ * A fluent, mutable subtype of {@link Constraint} that allows grow and shrink weights to be
+ * configured via chained setter calls; obtain an instance via {@link Constraint#create()}.
  */
 public class MutableConstraint extends Constraint {
 
   /**
-   * Constructs a mutable constraint with default weights.
+   * Constructs a mutable constraint with grow and shrink weights of zero.
    */
   protected MutableConstraint () {
 
   }
 
   /**
-   * Convenience to enable growth using a default weight.
+   * Sets the grow weight to {@code 0.5}, enabling this element to accept surplus space.
    *
-   * @return this constraint for chaining
+   * @return this constraint for method chaining
    */
   public MutableConstraint mayGrow () {
 
@@ -55,10 +56,10 @@ public class MutableConstraint extends Constraint {
   }
 
   /**
-   * Sets the grow weight.
+   * Sets the grow weight to the given value.
    *
-   * @param grow the grow factor
-   * @return this constraint for chaining
+   * @param grow the grow factor; must be non-negative
+   * @return this constraint for method chaining
    */
   public MutableConstraint setGrow (double grow) {
 
@@ -68,9 +69,9 @@ public class MutableConstraint extends Constraint {
   }
 
   /**
-   * Convenience to enable shrinkage using a default weight.
+   * Sets the shrink weight to {@code 0.5}, enabling this element to yield space under contraction.
    *
-   * @return this constraint for chaining
+   * @return this constraint for method chaining
    */
   public MutableConstraint mayShrink () {
 
@@ -78,10 +79,10 @@ public class MutableConstraint extends Constraint {
   }
 
   /**
-   * Sets the shrink weight.
+   * Sets the shrink weight to the given value.
    *
-   * @param shrink the shrink factor
-   * @return this constraint for chaining
+   * @param shrink the shrink factor; must be non-negative
+   * @return this constraint for method chaining
    */
   public MutableConstraint setShrink (double shrink) {
 

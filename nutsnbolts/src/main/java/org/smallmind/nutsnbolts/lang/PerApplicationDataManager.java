@@ -33,7 +33,8 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Marker interface for components that manage per-application data stored in {@link PerApplicationContext}.
+ * Marker interface whose implementing class serves as the key for data stored in a
+ * {@link PerApplicationContext}.
  */
 public interface PerApplicationDataManager {
 

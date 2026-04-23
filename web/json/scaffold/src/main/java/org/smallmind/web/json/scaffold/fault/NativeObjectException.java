@@ -35,15 +35,16 @@ package org.smallmind.web.json.scaffold.fault;
 import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 
 /**
- * Checked exception used to embed a textual representation of an originating stack trace
- * when native object serialization fails.
+ * Checked exception used to record the textual stack trace of an originating throwable when native
+ * object serialization fails.
  */
 public class NativeObjectException extends Exception {
 
   /**
-   * Wraps the supplied throwable by capturing its stack trace as the exception message.
+   * Creates the exception using the string representation of the supplied throwable's stack trace as
+   * the message.
    *
-   * @param throwable original cause whose stack trace is preserved
+   * @param throwable original cause whose stack trace is captured
    */
   public NativeObjectException (Throwable throwable) {
 

@@ -35,13 +35,25 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Event emitted when suite execution is cancelled.
+ * Event fired when suite execution is explicitly cancelled via
+ * {@link org.smallmind.sleuth.runner.SleuthRunner#cancel()}.
+ * <p>
+ * Cancellation is triggered automatically when the runner's {@code stopOnError} or
+ * {@code stopOnFailure} policy fires, or when the Surefire provider calls
+ * {@link org.smallmind.sleuth.maven.surefire.SleuthProvider#cancel()}. Once cancelled,
+ * the runner stops dispatching new suites and the Surefire integration maps this event to
+ * a {@code testSetCompleted} notification.
+ *
+ * @see org.smallmind.sleuth.runner.SleuthRunner#cancel()
+ * @see FatalSleuthEvent
  */
 public class CancelledSleuthEvent extends SleuthEvent {
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
+   * Constructs a cancellation event attributed to the given class and method.
+   *
+   * @param className  fully qualified name of the class at which cancellation was detected; must not be {@code null}
+   * @param methodName name of the method at which cancellation was detected; may be {@code null}
    */
   public CancelledSleuthEvent (String className, String methodName) {
 
@@ -49,6 +61,8 @@ public class CancelledSleuthEvent extends SleuthEvent {
   }
 
   /**
+   * Returns {@link SleuthEventType#CANCELLED}.
+   *
    * @return {@link SleuthEventType#CANCELLED}
    */
   @Override
@@ -58,7 +72,9 @@ public class CancelledSleuthEvent extends SleuthEvent {
   }
 
   /**
-   * @return bright red to indicate cancellation
+   * Returns bright red, matching the visual severity of other terminal events such as failures.
+   *
+   * @return {@link AnsiColor#BRIGHT_RED}
    */
   @Override
   public AnsiColor getColor () {

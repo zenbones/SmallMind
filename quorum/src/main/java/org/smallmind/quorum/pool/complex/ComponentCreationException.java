@@ -35,12 +35,17 @@ package org.smallmind.quorum.pool.complex;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
 /**
- * Indicates a failure occurred while creating a pooled component instance.
+ * Signals a failure that occurred while attempting to create a new pooled component instance.
+ * <p>
+ * Thrown by {@link ComponentPinManager} when the underlying factory call fails, when a
+ * creation timeout expires, or when an in-progress creation worker is aborted. Extends
+ * {@link ComponentPoolException} so callers that catch the base class will also handle this
+ * subclass.
  */
 public class ComponentCreationException extends ComponentPoolException {
 
   /**
-   * Creates the exception with no additional context.
+   * Creates the exception with no message or cause.
    */
   public ComponentCreationException () {
 
@@ -48,10 +53,10 @@ public class ComponentCreationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Creates the exception with a formatted message and no cause.
    *
-   * @param message message template
-   * @param args    template arguments
+   * @param message a {@link String#format}-style template
+   * @param args    arguments substituted into the template
    */
   public ComponentCreationException (String message, Object... args) {
 
@@ -59,11 +64,11 @@ public class ComponentCreationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Creates the exception with both a cause and a formatted message.
    *
-   * @param throwable underlying issue
-   * @param message   message template
-   * @param args      template arguments
+   * @param throwable the underlying cause
+   * @param message   a {@link String#format}-style template
+   * @param args      arguments substituted into the template
    */
   public ComponentCreationException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +76,9 @@ public class ComponentCreationException extends ComponentPoolException {
   }
 
   /**
-   * Creates the exception with a cause.
+   * Creates the exception wrapping an existing cause with no additional message.
    *
-   * @param throwable underlying issue
+   * @param throwable the underlying cause
    */
   public ComponentCreationException (Throwable throwable) {
 

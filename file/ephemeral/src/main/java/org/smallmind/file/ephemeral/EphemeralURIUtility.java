@@ -36,16 +36,25 @@ import java.net.URI;
 import java.nio.file.Path;
 
 /**
- * URI helpers for validating and converting URIs associated with the ephemeral provider.
+ * Static utility methods for validating and converting URIs associated with the ephemeral
+ * file system provider. This class is not intended to be instantiated.
  */
 public class EphemeralURIUtility {
 
   /**
-   * Ensures the supplied URI conforms to the expected scheme and is limited to a root path.
+   * Validates that the supplied URI is a well-formed root URI for the ephemeral provider.
+   * A conforming URI must:
+   * <ul>
+   *   <li>have the given scheme (case-insensitive)</li>
+   *   <li>have no authority component</li>
+   *   <li>have a path component equal to exactly {@code "/"}</li>
+   *   <li>have no query component</li>
+   *   <li>have no fragment component</li>
+   * </ul>
    *
-   * @param scheme the scheme the URI must match
-   * @param uri    the URI to check
-   * @throws IllegalArgumentException if the URI contains unsupported components
+   * @param scheme the expected URI scheme
+   * @param uri    the URI to validate
+   * @throws IllegalArgumentException if any of the above constraints are violated
    */
   public static void checkUri (String scheme, URI uri) {
 
@@ -65,12 +74,14 @@ public class EphemeralURIUtility {
   }
 
   /**
-   * Resolves an ephemeral path from a URI belonging to the provider.
+   * Converts a URI into a {@link Path} within the given ephemeral file system. The URI must
+   * be absolute, hierarchical, and have no authority, fragment, or query components. Its
+   * scheme must match the file system's provider scheme.
    *
-   * @param ephemeralFileSystem the file system handling the path
-   * @param uri                 the URI to convert
-   * @return the resulting path
-   * @throws IllegalArgumentException when the URI is invalid for this provider
+   * @param ephemeralFileSystem the file system that will interpret the URI
+   * @param uri                 the URI to convert; must be absolute and hierarchical
+   * @return the resulting {@link Path}
+   * @throws IllegalArgumentException if the URI does not conform to the above requirements
    */
   public static Path fromUri (EphemeralFileSystem ephemeralFileSystem, URI uri) {
 

@@ -37,17 +37,33 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.web.json.scaffold.fault.Fault;
 
 /**
- * Utility methods for encoding and decoding Java types into neutral or JVM-native signature formats.
+ * Encodes and decodes Java types to and from wire-level signature strings.
+ *
+ * <p>Two signature formats are supported:
+ * <ul>
+ *   <li><b>Neutral encoding</b> — a transport-portable format based on {@link BuiltInType}
+ *       codes, used for comparing signatures across JVM boundaries.</li>
+ *   <li><b>Native encoding/decoding</b> — standard JVM descriptor notation (e.g., {@code I},
+ *       {@code [Ljava/lang/String;}), suitable for use with reflection and bytecode tooling.</li>
+ * </ul>
+ * Decoded class lookups are cached in a {@link ConcurrentHashMap} to avoid repeated class loading.</p>
  */
 public class SignatureUtility {
 
   private static final ConcurrentHashMap<String, Class<?>> SIGNATURE_MAP = new ConcurrentHashMap<>();
 
   /**
-   * Encodes the supplied class into a portable signature string that can be compared across JVM boundaries.
+   * Encodes a Java class into the transport-portable neutral signature format.
    *
-   * @param clazz class to encode; {@code null} maps to void
-   * @return neutral signature representing the type
+   * <p>Primitives, the well-known reference types {@link String}, {@link LocalDateTime},
+   * {@link Fault}, and {@link Object}, and array types each map to a specific
+   * {@link BuiltInType} code. All other reference types encode as {@code !SimpleClassName}.
+   * Array dimensionality is represented by bracket notation prepended to the element-type code.
+   * {@code null}, {@code void}, and {@link Void} all encode as the void code.</p>
+   *
+   * @param clazz the class to encode; {@code null}, {@code void}, and {@link Void} map to
+   *              the void neutral code
+   * @return the neutral signature string for {@code clazz}; never {@code null}
    */
   public static String neutralEncode (Class<?> clazz) {
 
@@ -107,10 +123,17 @@ public class SignatureUtility {
   }
 
   /**
-   * Encodes the supplied class into the JVM descriptor format.
+   * Encodes a Java class into JVM descriptor notation.
    *
-   * @param clazz class to encode; {@code null} maps to void
-   * @return native descriptor string such as {@code I} or {@code [Ljava/lang/String;}
+   * <p>Array classes are prefixed with one {@code [} per dimension. Primitive types map to their
+   * single-character JVM descriptors ({@code Z}, {@code B}, {@code S}, {@code I}, {@code J},
+   * {@code F}, {@code D}, {@code C}). Reference types encode as {@code L<binary-name>;}.
+   * {@code null}, {@code void}, and {@link Void} encode as {@code "V"}.</p>
+   *
+   * @param clazz the class to encode; {@code null}, {@code void}, and {@link Void} map to
+   *              {@code "V"}
+   * @return the JVM descriptor string for {@code clazz} (e.g., {@code "I"} or
+   * {@code "[Ljava/lang/String;"}); never {@code null}
    */
   public static String nativeEncode (Class<?> clazz) {
 
@@ -153,11 +176,18 @@ public class SignatureUtility {
   }
 
   /**
-   * Decodes a JVM descriptor into a {@link Class} instance, caching lookups for repeated types.
+   * Resolves a JVM descriptor string produced by {@link #nativeEncode(Class)} back to its
+   * {@link Class}.
    *
-   * @param type descriptor string as produced by {@link #nativeEncode(Class)}
-   * @return resolved class
-   * @throws ClassNotFoundException if the type cannot be resolved
+   * <p>Single-character primitive descriptors ({@code V}, {@code Z}, {@code B}, {@code C},
+   * {@code S}, {@code I}, {@code J}, {@code F}, {@code D}) resolve directly to their Java
+   * primitive or wrapper types. Object descriptors ({@code L...;}) and array descriptors
+   * ({@code [}) are resolved via {@link #getObjectType(String)} with caching.</p>
+   *
+   * @param type the JVM descriptor string to decode
+   * @return the {@link Class} corresponding to {@code type}; never {@code null}
+   * @throws ClassNotFoundException if the descriptor refers to an unknown reference type or
+   *                                its first character is not a recognized JVM type code
    */
   public static Class<?> nativeDecode (String type)
     throws ClassNotFoundException {
@@ -179,11 +209,16 @@ public class SignatureUtility {
   }
 
   /**
-   * Resolves or loads an object type by name, caching results to avoid repeated class loading.
+   * Resolves a class by its fully qualified name or array descriptor, caching the result.
    *
-   * @param type fully qualified class name or array descriptor
-   * @return resolved class
-   * @throws ClassNotFoundException if the class cannot be found
+   * <p>The first call for a given {@code type} string invokes {@link Class#forName(String)}
+   * and caches the result; subsequent calls return the cached value without triggering
+   * class loading.</p>
+   *
+   * @param type the fully qualified class name or JVM array descriptor (with {@code /}
+   *             already replaced by {@code .})
+   * @return the resolved {@link Class}; never {@code null}
+   * @throws ClassNotFoundException if the class cannot be found by the current class loader
    */
   private static Class<?> getObjectType (String type)
     throws ClassNotFoundException {

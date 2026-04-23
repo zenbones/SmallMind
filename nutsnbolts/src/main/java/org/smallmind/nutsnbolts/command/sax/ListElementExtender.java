@@ -37,13 +37,15 @@ import org.smallmind.nutsnbolts.command.template.ListArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
 /**
- * Parses a {@code <list>} argument element into a {@link ListArgument}.
+ * SAX element extender for the {@code <list>} element that creates a {@link ListArgument} whose description is taken from the element's text content.
  */
 public class ListElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private ListArgument listArgument;
 
   /**
+   * Returns the compiled argument as an {@link Argument} reference.
+   *
    * @return compiled {@link ListArgument}
    */
   @Override
@@ -53,7 +55,9 @@ public class ListElementExtender extends AbstractElementExtender implements Argu
   }
 
   /**
-   * @return list argument captured from the element content
+   * Returns the strongly typed list argument assembled from the element content.
+   *
+   * @return {@link ListArgument} with the description string from the element body
    */
   public ListArgument getListArgument () {
 
@@ -61,7 +65,12 @@ public class ListElementExtender extends AbstractElementExtender implements Argu
   }
 
   /**
-   * Finalizes the argument value using the element content.
+   * Constructs the {@link ListArgument} using the element's text content as the description.
+   *
+   * @param namespaceURI   namespace URI of the closing element
+   * @param localName      local name of the closing element
+   * @param qName          qualified name of the closing element
+   * @param contentBuilder text content accumulated within the element
    */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {

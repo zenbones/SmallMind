@@ -41,7 +41,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.util.StringValueResolver;
 
 /**
- * Resolves String placeholders using a {@link PropertyExpander} and a backing property map.
+ * A Spring {@link StringValueResolver} that expands property placeholders using a {@link PropertyExpander} and a loaded property map.
  */
 public class PropertyPlaceholderStringValueResolver implements StringValueResolver {
 
@@ -49,8 +49,11 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
   private final Map<String, Object> propertyMap;
 
   /**
-   * @param propertyExpander the expander to apply
-   * @param propertyMap      the backing properties for resolution
+   * Creates a resolver backed by the given expander and property map.
+   *
+   * @param propertyExpander the expander used to resolve placeholders
+   * @param propertyMap      the property map consulted during expansion
+   * @throws BeansException if the resolver cannot be initialized
    */
   public PropertyPlaceholderStringValueResolver (PropertyExpander propertyExpander, Map<String, Object> propertyMap)
     throws BeansException {
@@ -60,7 +63,9 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
   }
 
   /**
-   * @return the set of known property keys
+   * Returns an unmodifiable view of the known property keys available for resolution.
+   *
+   * @return the set of property keys
    */
   public Set<String> getKeySet () {
 
@@ -68,11 +73,11 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
   }
 
   /**
-   * Resolves the supplied string value by expanding placeholders.
+   * Expands all placeholders in the supplied string using the configured expander and property map.
    *
-   * @param property the string to resolve
-   * @return the expanded string
-   * @throws BeansException if expansion fails
+   * @param property the string containing placeholders to resolve
+   * @return the fully expanded string
+   * @throws BeansException if placeholder expansion fails
    */
   public String resolveStringValue (String property)
     throws BeansException {

@@ -36,35 +36,38 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Rule that determines whether a rollover file should be cleaned up.
+ * Rule that evaluates rolled-over log files and decides which of them should be deleted during a cleanup pass,
+ * for example to enforce a maximum file count or a maximum age policy.
  *
- * @param <C> concrete type for copying
+ * @param <C> the concrete self type, used so that {@link #copy()} returns a correctly typed instance
  */
 public interface CleanupRule<C extends CleanupRule<C>> {
 
   /**
-   * Creates a copy of the rule for reuse in a cleanup run.
+   * Returns a fresh copy of this rule with the same configuration, suitable for use in a new cleanup run without
+   * carrying over any accumulated state from a previous run.
    *
-   * @return copy of this rule
+   * @return a new instance of this rule with identical settings
    */
   C copy ();
 
   /**
-   * Evaluates whether the given file should be deleted.
+   * Evaluates whether the given file should be deleted as part of the current cleanup pass.
    *
-   * @param possiblePath candidate file
-   * @return {@code true} if the file should be cleaned up
-   * @throws IOException     on IO failure
-   * @throws LoggerException on rule evaluation error
+   * @param possiblePath the path to the candidate rollover file to evaluate
+   * @return {@code true} if the file should be cleaned up (deleted)
+   * @throws IOException     if an I/O error occurs while inspecting the file
+   * @throws LoggerException if the rule encounters an internal error during evaluation
    */
   boolean willCleanup (Path possiblePath)
     throws IOException, LoggerException;
 
   /**
-   * Finalizes state after a cleanup run.
+   * Called after all candidate files have been evaluated, allowing the rule to perform any final bookkeeping or
+   * deferred operations required to complete the cleanup pass.
    *
-   * @throws IOException     on IO failure
-   * @throws LoggerException on rule cleanup error
+   * @throws IOException     if an I/O error occurs during finalization
+   * @throws LoggerException if the rule encounters an internal error during finalization
    */
   void finish ()
     throws IOException, LoggerException;

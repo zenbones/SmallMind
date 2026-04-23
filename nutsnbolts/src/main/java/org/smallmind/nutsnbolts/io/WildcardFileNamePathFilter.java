@@ -36,14 +36,18 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 /**
- * Path filter that matches file names (not directories) using a glob-like pattern.
+ * A {@link PathFilter} that accepts paths whose file-name element matches a glob-style wildcard pattern
+ * translated to a regular expression by {@link RegExTranslator}.
  */
 public class WildcardFileNamePathFilter implements PathFilter {
 
   private final Pattern namePattern;
 
   /**
-   * @param name glob-like pattern (supports '*' and '?')
+   * Constructs a filter that matches path file names against the given glob pattern.
+   *
+   * @param name a glob pattern using {@code *} (any characters except {@code /}) and
+   *             {@code ?} (any single character except {@code /})
    */
   public WildcardFileNamePathFilter (String name) {
 
@@ -51,7 +55,10 @@ public class WildcardFileNamePathFilter implements PathFilter {
   }
 
   /**
-   * Accepts paths whose file names match the supplied pattern.
+   * Returns {@code true} if the final name element of {@code path} matches the configured pattern.
+   *
+   * @param path the path to test
+   * @return {@code true} when the file name matches; {@code false} otherwise
    */
   @Override
   public boolean accept (Path path) {

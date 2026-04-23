@@ -42,14 +42,20 @@ import org.smallmind.quorum.namespace.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 
 /**
- * Creates LDAP {@link DirContext} instances and utilities for ensuring LDAP contexts exist.
+ * {@link ContextCreator} implementation that opens LDAP directory contexts using the Sun LDAP
+ * provider, and provides a utility for ensuring that all intermediate DN nodes exist.
+ * <p>
+ * The provider URL is constructed from the {@link NamingConnectionDetails} as
+ * {@code ldap[s]://host:port/rootNamespace}. When TLS is requested the URL scheme is switched to
+ * {@code ldaps} and the {@link Context#SECURITY_PROTOCOL} environment property is set to
+ * {@code ssl}. Authentication uses {@code simple} security and the configured credentials.
  */
 public class LdapContextCreator extends ContextCreator {
 
   /**
-   * Constructs the creator with LDAP connection details.
+   * Creates a creator that will open LDAP contexts using the supplied connection details.
    *
-   * @param connectionDetails LDAP connection parameters
+   * @param connectionDetails LDAP server address, port, TLS flag, root DN, and credentials
    */
   public LdapContextCreator (NamingConnectionDetails connectionDetails) {
 
@@ -57,11 +63,18 @@ public class LdapContextCreator extends ContextCreator {
   }
 
   /**
-   * Ensures that a full LDAP DN path exists by creating intermediate subcontexts if necessary.
+   * Ensures that every component of {@code namingPath} exists as a subcontext under
+   * {@code dirContext}, creating any missing intermediate nodes from the root inward.
+   * <p>
+   * The path is split on commas; components are iterated from the last (most general) to the
+   * first (most specific), accumulating a candidate DN and calling {@link DirContext#lookup}
+   * on it. A {@link NameNotFoundException} triggers a {@link DirContext#createSubcontext} call
+   * for that node.
    *
-   * @param dirContext directory context to use
-   * @param namingPath DN to ensure exists
-   * @throws NamingException if creation fails
+   * @param dirContext the directory context relative to which the path is resolved
+   * @param namingPath a comma-separated LDAP DN whose nodes should all exist
+   * @throws NamingException if any lookup or subcontext creation fails for a reason other than
+   *                         the node not yet existing
    */
   public static void insureContext (DirContext dirContext, String namingPath)
     throws NamingException {
@@ -85,9 +98,12 @@ public class LdapContextCreator extends ContextCreator {
   }
 
   /**
-   * Returns the configured LDAP root namespace.
+   * Returns the LDAP root DN configured in the connection details.
+   * <p>
+   * This is the base DN appended to the provider URL and used as the starting point for all
+   * relative name resolution.
    *
-   * @return root DN
+   * @return the root distinguished name; never {@code null}
    */
   public String getRoot () {
 
@@ -95,10 +111,15 @@ public class LdapContextCreator extends ContextCreator {
   }
 
   /**
-   * Builds the initial LDAP directory context using the configured connection settings.
+   * Opens and returns a new {@link InitialDirContext} connected to the configured LDAP server.
+   * <p>
+   * The environment is built from the {@link NamingConnectionDetails}: TLS is enabled by using
+   * the {@code ldaps} scheme and setting {@link Context#SECURITY_PROTOCOL} to {@code ssl}.
+   * Authentication is always {@code simple} using the configured principal and credential.
    *
-   * @return initialized {@link DirContext}
-   * @throws NamingException if connection fails
+   * @return a new {@link DirContext} bound to the LDAP server at the configured root DN
+   * @throws NamingException if the server is unreachable, the credentials are rejected, or the
+   *                         JNDI environment is misconfigured
    */
   public DirContext getInitialContext ()
     throws NamingException {

@@ -45,17 +45,18 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Iterates over all class {@link TypeElement}s reachable from a given {@link TypeMirror}, including generic parameters.
+ * Iterates over all class {@link TypeElement}s reachable from a given {@link TypeMirror}, descending into
+ * array component types and generic type arguments.
  */
 public class TypeElementIterable implements Iterable<TypeElement> {
 
   private final LinkedList<TypeElement> typeElementList = new LinkedList<>();
 
   /**
-   * Collects type elements present in the supplied mirror.
+   * Collects all class type elements reachable from the given type mirror.
    *
-   * @param processingEnvironment current processing environment
-   * @param typeMirror            the starting type mirror
+   * @param processingEnvironment the current annotation processing environment
+   * @param typeMirror            the starting type mirror to inspect
    */
   public TypeElementIterable (ProcessingEnvironment processingEnvironment, TypeMirror typeMirror) {
 
@@ -63,10 +64,10 @@ public class TypeElementIterable implements Iterable<TypeElement> {
   }
 
   /**
-   * Recursively inspects a type mirror, collecting declared types and their arguments.
+   * Recursively pushes class type elements from a type mirror into the collection, handling arrays and declared types.
    *
-   * @param processingEnvironment current processing environment
-   * @param typeMirror            type to inspect
+   * @param processingEnvironment the current annotation processing environment
+   * @param typeMirror            the type mirror to inspect
    */
   private void pushTypeMirror (ProcessingEnvironment processingEnvironment, TypeMirror typeMirror) {
 
@@ -87,10 +88,10 @@ public class TypeElementIterable implements Iterable<TypeElement> {
   }
 
   /**
-   * Recursively inspects a type element and any type parameters.
+   * Recursively pushes class type elements from a type element and its type parameters into the collection.
    *
-   * @param processingEnvironment current processing environment
-   * @param typeElement           element to inspect
+   * @param processingEnvironment the current annotation processing environment
+   * @param typeElement           the type element to inspect
    */
   private void pushTypeElement (ProcessingEnvironment processingEnvironment, TypeElement typeElement) {
 
@@ -104,7 +105,7 @@ public class TypeElementIterable implements Iterable<TypeElement> {
   }
 
   /**
-   * @return iterator over all collected type elements
+   * @return an iterator over the collected class type elements
    */
   @Override
   public Iterator<TypeElement> iterator () {

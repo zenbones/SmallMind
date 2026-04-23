@@ -44,16 +44,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 
 /**
- * File system utilities for copying and deleting directory trees with filtering.
+ * File system utilities for recursively copying and deleting directory trees with optional path filtering.
  */
 public class FileUtility {
 
   private static final FileAttribute<?>[] NO_FILE_ATTRIBUTES = new FileAttribute[0];
 
   /**
-   * @param source      source path to copy
-   * @param destination destination path
-   * @return builder for configuring a copy operation
+   * Creates a fluent builder for a recursive copy from {@code source} to {@code destination}.
+   *
+   * @param source      root path or file to copy
+   * @param destination destination directory or file
+   * @return a new {@link CopyTreeConfigurationBuilder}
    */
   public static CopyTreeConfigurationBuilder copyBuilder (Path source, Path destination) {
 
@@ -61,8 +63,10 @@ public class FileUtility {
   }
 
   /**
-   * @param target root path to delete
-   * @return builder for configuring a delete operation
+   * Creates a fluent builder for recursively deleting {@code target}.
+   *
+   * @param target root path or file to delete
+   * @return a new {@link DeleteTreeConfigurationBuilder}
    */
   public static DeleteTreeConfigurationBuilder deleteBuilder (Path target) {
 
@@ -70,11 +74,11 @@ public class FileUtility {
   }
 
   /**
-   * Determines if a directory contains any entries.
+   * Returns {@code true} when the given directory contains no entries.
    *
-   * @param directory path to check
-   * @return {@code true} if no children are present
-   * @throws IOException if the directory cannot be read
+   * @param directory the directory to inspect
+   * @return {@code true} if the directory has no children
+   * @throws IOException if the directory stream cannot be opened
    */
   public static boolean isDirectoryEmpty (Path directory)
     throws IOException {
@@ -86,13 +90,13 @@ public class FileUtility {
   }
 
   /**
-   * Recursively copies a path to a destination with optional filters and inclusion of the source root.
+   * Recursively copies {@code source} to {@code destination}, applying optional path filters.
    *
-   * @param source                 source file or directory
-   * @param destination            destination path
-   * @param includeSourceDirectory {@code true} to retain the source directory name under destination
-   * @param pathFilters            optional filters applied to each visited path
-   * @throws IOException if copying fails
+   * @param source                 the source file or directory to copy
+   * @param destination            the destination path
+   * @param includeSourceDirectory {@code true} to reproduce the source directory node at the destination
+   * @param pathFilters            zero or more filters; a path is copied only when all filters accept it
+   * @throws IOException if traversal or any copy operation fails
    */
   public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter... pathFilters)
     throws IOException {
@@ -101,14 +105,14 @@ public class FileUtility {
   }
 
   /**
-   * Recursively copies a path to a destination applying filters and file attributes for created dirs/files.
+   * Recursively copies {@code source} to {@code destination} with optional path filters and directory attributes.
    *
-   * @param source                 source file or directory
-   * @param destination            destination path
-   * @param includeSourceDirectory {@code true} to retain the source directory name under destination
-   * @param pathFilters            optional filters applied to each visited path
-   * @param directoryAttributes    attributes to apply when creating directories
-   * @throws IOException if copying fails
+   * @param source                 the source file or directory to copy
+   * @param destination            the destination path
+   * @param includeSourceDirectory {@code true} to reproduce the source directory node at the destination
+   * @param pathFilters            filters applied to each visited path; may be {@code null} or empty
+   * @param directoryAttributes    attributes applied when creating new destination directories
+   * @throws IOException if traversal or any copy operation fails
    */
   public static void copyTree (Path source, Path destination, boolean includeSourceDirectory, PathFilter[] pathFilters, FileAttribute<?>... directoryAttributes)
     throws IOException {
@@ -172,13 +176,13 @@ public class FileUtility {
   }
 
   /**
-   * Recursively deletes a path, optionally retaining the root and optionally failing on non-empty directories.
+   * Recursively deletes {@code target} with control over root inclusion, non-empty-directory behavior, and per-path filtering.
    *
-   * @param target                        root to delete
-   * @param includeTargetDirectory        {@code true} to delete the root directory itself
-   * @param throwErrorOnDirectoryNotEmpty {@code true} to raise when a directory is not empty
-   * @param pathFilters                   optional filters applied to paths before deletion
-   * @throws IOException if deletion fails
+   * @param target                        the root path to delete
+   * @param includeTargetDirectory        {@code true} to also remove the root directory after its contents are gone
+   * @param throwErrorOnDirectoryNotEmpty {@code true} to propagate {@code DirectoryNotEmptyException}; {@code false} to skip
+   * @param pathFilters                   zero or more filters; a path is deleted only when all filters accept it
+   * @throws IOException if traversal or any deletion fails
    */
   public static void deleteTree (Path target, boolean includeTargetDirectory, boolean throwErrorOnDirectoryNotEmpty, PathFilter... pathFilters)
     throws IOException {
@@ -222,11 +226,11 @@ public class FileUtility {
   }
 
   /**
-   * Ensures the directory hierarchy exists, guarding against null attribute arrays.
+   * Creates the directory hierarchy for {@code path}, working around a JDK bug with null attribute arrays.
    *
-   * @param path           directory path to create
-   * @param fileAttributes optional attributes to apply
-   * @throws IOException if creation fails
+   * @param path           the directory path to create, including any missing ancestors
+   * @param fileAttributes attributes to apply to newly created directories; may be {@code null} or empty
+   * @throws IOException if the directories cannot be created
    */
   private static void createDirectories (Path path, FileAttribute<?>... fileAttributes)
     throws IOException {
@@ -240,12 +244,12 @@ public class FileUtility {
   }
 
   /**
-   * Applies all provided filters to the path.
+   * Returns {@code true} when all provided filters accept the path, or when no filters are specified.
    *
-   * @param path        path to test
-   * @param pathFilters filters to evaluate
-   * @return {@code true} if all filters accept or none provided
-   * @throws IOException if a filter fails
+   * @param path        the path to test
+   * @param pathFilters the filters to evaluate; may be {@code null} or empty
+   * @return {@code true} if every filter accepts {@code path}
+   * @throws IOException if any filter throws during evaluation
    */
   private static boolean filter (Path path, PathFilter... pathFilters)
     throws IOException {

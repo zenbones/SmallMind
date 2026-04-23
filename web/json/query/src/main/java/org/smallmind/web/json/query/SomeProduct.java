@@ -35,10 +35,10 @@ package org.smallmind.web.json.query;
 import java.util.Set;
 
 /**
- * Non-empty query product wrapping a translated value and its participating roots.
+ * Non-empty query translation result pairing a set of entity roots with a translated value such as a predicate or order specifiers.
  *
- * @param <R> root type
- * @param <T> translated value type
+ * @param <R> root type (e.g., a JPA or QueryDSL entity root)
+ * @param <T> translated value type (e.g., {@code Predicate} or {@code OrderSpecifier[]})
  */
 public class SomeProduct<R, T> implements Product<R, T> {
 
@@ -46,10 +46,10 @@ public class SomeProduct<R, T> implements Product<R, T> {
   private final T value;
 
   /**
-   * Creates a product containing the given roots and value.
+   * Creates a non-empty product with the given roots and translated value.
    *
-   * @param rootSet participating roots
-   * @param value   translated value (e.g., predicate)
+   * @param rootSet set of entity roots involved in the translation
+   * @param value   translated query value
    */
   public SomeProduct (Set<R> rootSet, T value) {
 
@@ -58,7 +58,9 @@ public class SomeProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return {@code false} because this product is non-empty
+   * Indicates that this product contains a result.
+   *
+   * @return {@code false} always, since this product is non-empty
    */
   @Override
   public boolean isEmpty () {
@@ -67,7 +69,9 @@ public class SomeProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return roots involved in producing the value
+   * Returns the entity roots that were referenced during translation.
+   *
+   * @return set of entity roots
    */
   public Set<R> getRootSet () {
 
@@ -75,7 +79,9 @@ public class SomeProduct<R, T> implements Product<R, T> {
   }
 
   /**
-   * @return translated value
+   * Returns the translated query value.
+   *
+   * @return predicate, order specifiers, or other translated result
    */
   public T getValue () {
 

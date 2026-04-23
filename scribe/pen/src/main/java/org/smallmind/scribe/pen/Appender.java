@@ -35,97 +35,99 @@ package org.smallmind.scribe.pen;
 import java.util.List;
 
 /**
- * Destination for publishing log records.
+ * Named, filterable destination that receives {@link Record} objects and writes them to an output target such as a
+ * file, console, or remote sink.
  */
 public interface Appender {
 
   /**
-   * Returns the appender name.
+   * Returns the name assigned to this appender.
    *
-   * @return name or {@code null}
+   * @return the appender name, or {@code null} if none has been set
    */
   String getName ();
 
   /**
-   * Sets the appender name.
+   * Assigns a human-readable name to this appender.
    *
-   * @param name name to assign
+   * @param name the name to assign
    */
   void setName (String name);
 
   /**
-   * Convenience setter for a single filter.
+   * Replaces the entire filter list with a single filter, discarding any previously configured filters.
    *
-   * @param filter filter to install
+   * @param filter the sole filter to install
    */
   void setFilter (Filter filter);
 
   /**
-   * Clears all configured filters.
+   * Removes all filters from this appender so that every record passes through unconditionally.
    */
   void clearFilters ();
 
   /**
-   * Adds a filter that can veto records.
+   * Appends a filter to the existing filter chain; records must be accepted by every filter to be published.
    *
-   * @param filter filter to add
+   * @param filter the filter to add
    */
   void addFilter (Filter filter);
 
   /**
-   * Returns the current filters.
+   * Returns all filters currently installed on this appender.
    *
-   * @return array of filters
+   * @return an array of filters, never {@code null}
    */
   Filter[] getFilters ();
 
   /**
-   * Replaces all filters with the supplied list.
+   * Replaces all currently installed filters with the contents of the supplied list.
    *
-   * @param filterList filters to install
+   * @param filterList the filters to install; {@code null} elements are ignored by implementations
    */
   void setFilters (List<Filter> filterList);
 
   /**
-   * Returns the configured error handler.
+   * Returns the error handler that is invoked when a publishing failure occurs.
    *
-   * @return error handler or {@code null}
+   * @return the configured {@link ErrorHandler}, or {@code null} if none is set
    */
   ErrorHandler getErrorHandler ();
 
   /**
-   * Sets the error handler invoked when publishing fails.
+   * Sets the error handler to be invoked when this appender encounters a publishing failure.
    *
-   * @param errorHandler handler to use
+   * @param errorHandler the handler to use; may be {@code null} to revert to default stack-trace behaviour
    */
   void setErrorHandler (ErrorHandler errorHandler);
 
   /**
-   * Indicates whether the appender will accept records.
+   * Returns whether this appender is currently accepting and publishing records.
    *
-   * @return {@code true} when active
+   * @return {@code true} if the appender is active and will process records
    */
   boolean isActive ();
 
   /**
-   * Activates or deactivates the appender.
+   * Enables or disables record processing for this appender.
    *
-   * @param active {@code true} to activate
+   * @param active {@code true} to activate the appender, {@code false} to silence it
    */
   void setActive (boolean active);
 
   /**
-   * Publishes the supplied record.
+   * Publishes the supplied record to this appender's output target after passing it through all installed filters.
    *
-   * @param record record to publish
+   * @param record the log record to publish
    */
   void publish (Record<?> record);
 
   /**
-   * Handles an error using the configured error handler, if present.
+   * Reports a logger-level error to the configured {@link ErrorHandler}, or prints the stack trace if no handler is
+   * set.
    *
-   * @param loggerName origin logger name
-   * @param throwable  throwable to report
+   * @param loggerName the name of the logger where the error originated
+   * @param throwable  the failure to report
    */
   default void handleError (String loggerName, Throwable throwable) {
 
@@ -139,10 +141,11 @@ public interface Appender {
   }
 
   /**
-   * Handles an error using the configured error handler, if present.
+   * Reports a record-level publishing error to the configured {@link ErrorHandler}, or prints the stack trace if no
+   * handler is set.
    *
-   * @param record    origin record
-   * @param throwable throwable to report
+   * @param record    the record that was being processed when the error occurred
+   * @param throwable the failure to report
    */
   default void handleError (Record<?> record, Throwable throwable) {
 
@@ -156,10 +159,10 @@ public interface Appender {
   }
 
   /**
-   * Closes the appender and releases resources.
+   * Shuts down this appender, flushing any buffered output and releasing all held resources.
    *
-   * @throws InterruptedException if shutdown is interrupted
-   * @throws LoggerException      if closure fails
+   * @throws InterruptedException if the calling thread is interrupted while waiting for shutdown to complete
+   * @throws LoggerException      if an error occurs during closure
    */
   void close ()
     throws InterruptedException, LoggerException;

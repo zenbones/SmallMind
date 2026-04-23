@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.xml.sax;
 import org.xml.sax.Attributes;
 
 /**
- * Minimal element extender that records the element local name and text content.
+ * Minimal {@link ElementExtender} that captures an element's local name and accumulates its text content for later retrieval.
  */
 public class BasicElementExtender extends AbstractElementExtender {
 
@@ -43,7 +43,9 @@ public class BasicElementExtender extends AbstractElementExtender {
   private StringBuilder contentBuilder;
 
   /**
-   * @return local name of the processed element
+   * Returns the local name of the element that was processed.
+   *
+   * @return the element local name
    */
   public String getLocalName () {
 
@@ -51,7 +53,9 @@ public class BasicElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * @return accumulated character content
+   * Returns the accumulated character content of the element.
+   *
+   * @return the element text content as a string
    */
   public String getContent () {
 
@@ -59,7 +63,12 @@ public class BasicElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Captures the element local name.
+   * Records the local name of the starting element.
+   *
+   * @param namespaceURI the element namespace URI
+   * @param localName    the element local name
+   * @param qName        the qualified element name
+   * @param atts         the element attributes
    */
   @Override
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
@@ -68,7 +77,12 @@ public class BasicElementExtender extends AbstractElementExtender {
   }
 
   /**
-   * Stores the character content gathered for the element.
+   * Stores the accumulated character content delivered at the end of the element.
+   *
+   * @param namespaceURI   the element namespace URI
+   * @param localName      the element local name
+   * @param qName          the qualified element name
+   * @param contentBuilder the accumulated text content of the element
    */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {

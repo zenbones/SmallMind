@@ -33,48 +33,51 @@
 package org.smallmind.phalanx.wire.signal;
 
 /**
- * Codec abstraction for serializing and deserializing wire signals.
+ * Strategy interface for encoding {@link Signal} objects to bytes and decoding them back,
+ * along with a helper for converting raw decoded values to typed instances.
  */
 public interface SignalCodec {
 
   /**
-   * Returns the MIME content type produced by this codec.
+   * Returns the MIME content type string that describes the format produced by {@link #encode}.
    *
-   * @return content type string
+   * @return the content type (e.g., {@code application/json} or {@code application/octet-stream})
    */
   String getContentType ();
 
   /**
-   * Encodes the provided signal into a byte array.
+   * Encodes {@code signal} into a byte array using the format specific to this codec.
    *
-   * @param signal signal to encode
-   * @return serialized bytes
-   * @throws Exception if encoding fails
+   * @param signal the signal to encode; must not be {@code null}
+   * @return a non-null byte array containing the encoded signal
+   * @throws Exception if an error occurs during encoding
    */
   byte[] encode (Signal signal)
     throws Exception;
 
   /**
-   * Decodes the supplied byte buffer into a signal of the given class.
+   * Decodes the signal stored in the specified region of {@code buffer} into an instance of
+   * {@code signalClass}.
    *
-   * @param buffer      byte buffer containing the encoded signal
-   * @param offset      offset into the buffer to start decoding
-   * @param len         length of the payload to decode
-   * @param signalClass target signal class
-   * @param <S>         signal type
-   * @return decoded signal instance
-   * @throws Exception if decoding fails
+   * @param buffer      the byte array containing the encoded signal
+   * @param offset      the start offset within {@code buffer}
+   * @param len         the number of bytes to read
+   * @param signalClass the expected concrete type of the signal
+   * @param <S>         the signal type parameter
+   * @return the decoded signal, cast to {@code signalClass}
+   * @throws Exception if decoding or type conversion fails
    */
   <S extends Signal> S decode (byte[] buffer, int offset, int len, Class<S> signalClass)
     throws Exception;
 
   /**
-   * Extracts a typed object from a decoded value when an adapter or converter is required.
+   * Converts a raw decoded value (e.g., a tree-model node or an untyped map) into an instance
+   * of {@code clazz} using whatever conversion mechanism the codec provides.
    *
-   * @param value decoded value
-   * @param clazz target type
-   * @param <T>   target type parameter
-   * @return converted object instance
+   * @param value the raw value to convert; may be {@code null}
+   * @param clazz the target type; must not be {@code null}
+   * @param <T>   the target type parameter
+   * @return the converted object, or {@code null} if {@code value} is {@code null}
    */
   <T> T extractObject (Object value, Class<T> clazz);
 }

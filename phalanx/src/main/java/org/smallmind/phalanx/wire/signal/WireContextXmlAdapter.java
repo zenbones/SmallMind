@@ -45,15 +45,20 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * JAXB adapter that marshals and unmarshals {@link WireContext} arrays as JSON payloads.
+ * JAXB {@link XmlAdapter} that converts between a JSON array node and a {@link WireContext}
+ * array; known context types are resolved via {@link org.smallmind.phalanx.wire.WireContextManager}
+ * and unknown types are preserved as {@link ProtoWireContext} instances.
  */
 public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
   /**
-   * Converts a JSON array representation into concrete {@link WireContext} instances.
+   * Converts a JSON array node into an array of {@link WireContext} instances.
+   * Each array element must be a single-entry JSON object whose key is the context type tag;
+   * registered types are deserialized to their concrete class while unregistered types are
+   * wrapped in a {@link ProtoWireContext}.
    *
-   * @param node JSON array node containing encoded contexts
-   * @return array of reconstructed contexts or empty when none are present
+   * @param node the JSON array node to convert, or {@code null}
+   * @return a (possibly empty) array of reconstructed {@link WireContext} objects
    */
   @Override
   public WireContext[] unmarshal (JsonNode node) {
@@ -84,10 +89,12 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
   }
 
   /**
-   * Serializes an array of {@link WireContext} objects into a JSON array node.
+   * Converts an array of {@link WireContext} objects into a JSON array node where each element
+   * is a single-key object mapping the context type tag to its JSON representation.
+   * {@link ProtoWireContext} instances are re-emitted verbatim using their original tag and raw payload.
    *
-   * @param wireContexts contexts to serialize
-   * @return JSON representation or {@code null} when none are provided
+   * @param wireContexts the contexts to serialize; may be {@code null} or empty
+   * @return a JSON array node, or {@code null} if {@code wireContexts} is {@code null} or empty
    */
   @Override
   public JsonNode marshal (WireContext[] wireContexts) {

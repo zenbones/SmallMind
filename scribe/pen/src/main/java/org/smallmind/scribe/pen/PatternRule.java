@@ -33,30 +33,31 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Rule used by pattern-based formatters to render portions of a record.
+ * Single composable rule used by pattern-based formatters to extract and render one fragment of a log record,
+ * optionally surrounded by a static header and footer.
  */
 public interface PatternRule {
 
   /**
-   * Returns optional header text emitted before the converted fragment.
+   * Returns the static text that is emitted immediately before the converted fragment, if any.
    *
-   * @return header string or {@code null}
+   * @return the header string, or {@code null} if there is no header
    */
   String getHeader ();
 
   /**
-   * Returns optional footer text emitted after the converted fragment.
+   * Returns the static text that is emitted immediately after the converted fragment, if any.
    *
-   * @return footer string or {@code null}
+   * @return the footer string, or {@code null} if there is no footer
    */
   String getFooter ();
 
   /**
-   * Converts the record and timestamp into a formatted fragment.
+   * Extracts and formats the portion of the record that this rule is responsible for rendering.
    *
-   * @param record    log record
-   * @param timestamp timestamp helper
-   * @return formatted fragment
+   * @param record    the log record from which to extract information
+   * @param timestamp the timestamp strategy to use when formatting date/time values
+   * @return the formatted fragment; never {@code null}
    */
   String convert (Record<?> record, Timestamp timestamp);
 }

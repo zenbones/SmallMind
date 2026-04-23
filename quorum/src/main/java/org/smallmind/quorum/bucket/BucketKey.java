@@ -33,9 +33,13 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Marker interface describing keys that identify child buckets.
+ * Marker type for keys that identify child buckets in a {@link TokenBucket} hierarchy.
+ * <p>
+ * Concrete key types must implement meaningful {@code equals} and {@code hashCode}
+ * so that {@link TokenBucket#add(BucketKey, BucketFactory)} and the internal child
+ * lookup can correctly match keys across calls.
  *
- * @param <T> type associated with the bucket hierarchy
+ * @param <T> the type of value associated with the bucket this key identifies
  */
 public interface BucketKey<T> {
 

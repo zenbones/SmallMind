@@ -35,19 +35,26 @@ package org.smallmind.quorum.pool.complex.event;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
- * Event indicating an error occurred within a component pool.
+ * Event fired when an error occurs within a complex component pool.
+ * <p>
+ * Delivered to {@link ComponentPoolEventListener#reportErrorOccurred} when a component
+ * instance terminates unexpectedly — for example due to a communication failure that causes
+ * {@link org.smallmind.quorum.namespace.pool.JavaContextComponentInstance} to call
+ * {@link org.smallmind.quorum.pool.complex.ComponentPool#terminateInstance} and report the
+ * error. Carries a reference to the originating pool and the exception that triggered the
+ * error.
  *
- * @param <C> component type managed by the pool
+ * @param <C> the type of component managed by the originating pool
  */
 public class ErrorReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
 
   private final Exception exception;
 
   /**
-   * Creates the event with the originating pool and error.
+   * Creates an error event for the given pool.
    *
-   * @param componentPool pool that experienced the error
-   * @param exception     encountered exception
+   * @param componentPool the pool in which the error occurred
+   * @param exception     the exception that caused the error
    */
   public ErrorReportingComponentPoolEvent (ComponentPool<C> componentPool, Exception exception) {
 
@@ -57,9 +64,9 @@ public class ErrorReportingComponentPoolEvent<C> extends ComponentPoolEvent<C> {
   }
 
   /**
-   * Returns the exception that triggered the event.
+   * Returns the exception that caused this error event.
    *
-   * @return exception
+   * @return the exception
    */
   public Exception getException () {
 

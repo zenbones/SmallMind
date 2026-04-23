@@ -36,15 +36,17 @@ import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
 /**
- * Encapsulates a unit of work to perform against a RabbitMQ {@link Channel}.
+ * Functional interface that encapsulates a single unit of work to perform against an open
+ * RabbitMQ {@link Channel}.  Implementations declare queues, exchanges, bindings, or perform
+ * any other channel-scoped AMQP operation.
  */
 public interface ChannelOperation {
 
   /**
-   * Execute the operation.
+   * Executes the operation against the provided channel.
    *
-   * @param channel open channel to operate on.
-   * @throws IOException if the underlying AMQP call fails.
+   * @param channel an open RabbitMQ channel to operate on
+   * @throws IOException if the underlying AMQP operation fails
    */
   void execute (Channel channel)
     throws IOException;

@@ -36,14 +36,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * OutputStream that forwards all writes to a set of delegate streams.
+ * {@link OutputStream} that multiplexes every write operation to a fixed array of delegate streams simultaneously.
  */
 public class MultiOutputStream extends OutputStream {
 
   private final OutputStream[] streams;
 
   /**
-   * @param streams delegate output streams
+   * Constructs a multi-output stream that writes to all supplied delegates.
+   *
+   * @param streams the delegate output streams to receive each write
    */
   public MultiOutputStream (OutputStream[] streams) {
 
@@ -51,7 +53,10 @@ public class MultiOutputStream extends OutputStream {
   }
 
   /**
-   * Writes a single byte to each delegate.
+   * Writes the low eight bits of {@code b} to every delegate stream.
+   *
+   * @param b the byte value to write
+   * @throws IOException if any delegate stream throws
    */
   public void write (int b)
     throws IOException {
@@ -62,7 +67,10 @@ public class MultiOutputStream extends OutputStream {
   }
 
   /**
-   * Writes the entire buffer to each delegate.
+   * Writes all bytes from {@code buffer} to every delegate stream.
+   *
+   * @param buffer the data to write
+   * @throws IOException if any delegate stream throws
    */
   public void write (byte[] buffer)
     throws IOException {
@@ -73,7 +81,12 @@ public class MultiOutputStream extends OutputStream {
   }
 
   /**
-   * Writes a slice of the buffer to each delegate.
+   * Writes {@code len} bytes from {@code buffer} starting at {@code off} to every delegate stream.
+   *
+   * @param buffer source data array
+   * @param off    starting index in {@code buffer}
+   * @param len    number of bytes to write
+   * @throws IOException if any delegate stream throws
    */
   public void write (byte[] buffer, int off, int len)
     throws IOException {

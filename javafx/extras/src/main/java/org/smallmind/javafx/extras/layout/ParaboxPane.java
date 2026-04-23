@@ -50,8 +50,11 @@ import org.smallmind.nutsnbolts.layout.Perimeter;
 import org.smallmind.nutsnbolts.layout.SerialBox;
 
 /**
- * JavaFX {@link Region} that bridges to the generic {@link ParaboxLayout} system, allowing declarative layout
- * definitions using serial and parallel boxes.
+ * A JavaFX {@link Region} that bridges to the generic parabox layout system. Layout is defined
+ * declaratively by assembling {@link SerialBox} and {@link ParallelBox} instances and assigning
+ * them as the horizontal and vertical root boxes. The pane delegates all size calculations and
+ * child placement to an internal {@link ParaboxLayout} and synchronises scene-graph membership
+ * with the layout's component registrations.
  */
 public class ParaboxPane extends Region implements ParaboxContainer<Node> {
 
@@ -60,7 +63,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   private final ParaboxLayout paraboxLayout;
 
   /**
-   * Constructs a pane with default platform perimeter insets.
+   * Creates a pane using the default platform frame perimeter (10 px on all sides).
    */
   public ParaboxPane () {
 
@@ -68,9 +71,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Constructs a pane with explicit insets surrounding its content.
+   * Creates a pane with the supplied explicit padding instead of the default frame perimeter.
    *
-   * @param insets the padding to apply around the layout
+   * @param insets the padding to apply around the layout content; must not be {@code null}
    */
   public ParaboxPane (Insets insets) {
 
@@ -78,7 +81,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the JavaFX-specific platform adapter
+   * Returns the JavaFX platform adapter that provides default gaps and orientation to the layout
+   * engine.
+   *
+   * @return the platform instance; never {@code null}
    */
   @Override
   public ParaboxPlatform getPlatform () {
@@ -87,7 +93,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Removes all components managed by the layout.
+   * Removes all components from the layout and clears the scene graph accordingly.
    */
   public void removeAll () {
 
@@ -95,9 +101,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Removes the supplied node from the layout if present.
+   * Removes the specified node from the layout and the scene graph, if present.
    *
-   * @param node the component to remove
+   * @param node the node to remove; must not be {@code null}
    */
   public void remove (Node node) {
 
@@ -105,7 +111,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the minimum width calculated by the parabox layout
+   * Returns the layout engine's computed minimum width.
+   *
+   * @param v ignored (height hint)
+   * @return minimum width in pixels
    */
   @Override
   protected double computeMinWidth (double v) {
@@ -114,7 +123,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the minimum height calculated by the parabox layout
+   * Returns the layout engine's computed minimum height.
+   *
+   * @param v ignored (width hint)
+   * @return minimum height in pixels
    */
   @Override
   protected double computeMinHeight (double v) {
@@ -123,7 +135,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the preferred width calculated by the parabox layout
+   * Returns the layout engine's computed preferred width.
+   *
+   * @param v ignored (height hint)
+   * @return preferred width in pixels
    */
   @Override
   protected double computePrefWidth (double v) {
@@ -132,7 +147,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the preferred height calculated by the parabox layout
+   * Returns the layout engine's computed preferred height.
+   *
+   * @param v ignored (width hint)
+   * @return preferred height in pixels
    */
   @Override
   protected double computePrefHeight (double v) {
@@ -141,7 +159,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return an unconstrained maximum width value
+   * Returns {@link Double#MAX_VALUE}, allowing the pane to grow without bound in width.
+   *
+   * @param v ignored
+   * @return {@link Double#MAX_VALUE}
    */
   @Override
   protected double computeMaxWidth (double v) {
@@ -150,7 +171,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return an unconstrained maximum height value
+   * Returns {@link Double#MAX_VALUE}, allowing the pane to grow without bound in height.
+   *
+   * @param v ignored
+   * @return {@link Double#MAX_VALUE}
    */
   @Override
   protected double computeMaxHeight (double v) {
@@ -159,7 +183,8 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Applies the parabox layout to child nodes using the current bounds.
+   * Executes the parabox layout pass, positioning and sizing all registered child nodes within
+   * the pane's current bounds.
    */
   @Override
   protected void layoutChildren () {
@@ -168,11 +193,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Wraps a JavaFX {@link Node} in a parabox element so it can participate in the layout.
+   * Wraps {@code node} in a {@link JavaFxParaboxElement} so it can be managed by the layout engine.
    *
-   * @param node       the node to wrap
-   * @param constraint the layout constraint applied to the node
-   * @return a parabox element backed by the provided node
+   * @param node       the node to wrap; must not be {@code null}
+   * @param constraint the sizing and positioning constraint to apply; must not be {@code null}
+   * @return a new parabox element backed by the node
    */
   @Override
   public ParaboxElement<Node> constructElement (Node node, Constraint constraint) {
@@ -181,9 +206,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Adds the component to the JavaFX scene graph if not already present.
+   * Adds {@code node} to the JavaFX scene graph as a child of this pane if it is not already
+   * present.
    *
-   * @param node the node to add
+   * @param node the node to add; must not be {@code null}
    */
   @Override
   public void nativelyAddComponent (Node node) {
@@ -196,9 +222,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Removes the component from the JavaFX scene graph.
+   * Removes {@code component} from the JavaFX scene graph.
    *
-   * @param component the node to remove
+   * @param component the node to remove; must not be {@code null}
    */
   @Override
   public void nativelyRemoveComponent (Node component) {
@@ -207,7 +233,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the root horizontal box driving layout calculations
+   * Returns the root horizontal box that drives horizontal layout calculations.
+   *
+   * @return the horizontal box, or {@code null} if none has been set
    */
   public Box getHorizontalBox () {
 
@@ -215,10 +243,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Sets the root horizontal box driving layout calculations.
+   * Sets the root horizontal box and triggers a layout update.
    *
-   * @param horizontalBox the horizontal box definition
-   * @return this pane for chaining
+   * @param horizontalBox the horizontal layout definition; must not be {@code null}
+   * @return this pane for method chaining
    */
   public ParaboxPane setHorizontalBox (Box horizontalBox) {
 
@@ -228,7 +256,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * @return the root vertical box driving layout calculations
+   * Returns the root vertical box that drives vertical layout calculations.
+   *
+   * @return the vertical box, or {@code null} if none has been set
    */
   public Box getVerticalBox () {
 
@@ -236,10 +266,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Sets the root vertical box driving layout calculations.
+   * Sets the root vertical box and triggers a layout update.
    *
-   * @param verticalBox the vertical box definition
-   * @return this pane for chaining
+   * @param verticalBox the vertical layout definition; must not be {@code null}
+   * @return this pane for method chaining
    */
   public ParaboxPane setVerticalBox (Box verticalBox) {
 
@@ -249,9 +279,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Convenience creation of a parallel box using default alignment.
+   * Creates a {@link ParallelBox} with the default alignment.
    *
-   * @return the created parallel box
+   * @return a new parallel box
    */
   public ParallelBox parallelBox () {
 
@@ -259,10 +289,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Convenience creation of a parallel box using the provided alignment.
+   * Creates a {@link ParallelBox} with the given alignment applied to all contained elements.
    *
-   * @param alignment alignment applied to contained elements
-   * @return the created parallel box
+   * @param alignment the alignment strategy; must not be {@code null}
+   * @return a new parallel box
    */
   public ParallelBox parallelBox (Alignment alignment) {
 
@@ -270,9 +300,9 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Convenience creation of a serial box with default spacing.
+   * Creates a {@link SerialBox} with the default gap and justification.
    *
-   * @return the created serial box
+   * @return a new serial box
    */
   public SerialBox serialBox () {
 
@@ -280,10 +310,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box optionally marked greedy for expansion.
+   * Creates a {@link SerialBox} with the default gap and the given greediness hint.
    *
-   * @param greedy whether the box should consume extra space
-   * @return the created serial box
+   * @param greedy {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (boolean greedy) {
 
@@ -291,10 +321,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with the supplied gap.
+   * Creates a {@link SerialBox} with the given named gap constant.
    *
-   * @param gap gap between children
-   * @return the created serial box
+   * @param gap the gap between child elements; must not be {@code null}
+   * @return a new serial box
    */
   public SerialBox serialBox (Gap gap) {
 
@@ -302,11 +332,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with the supplied gap and greediness.
+   * Creates a {@link SerialBox} with the given named gap and greediness hint.
    *
-   * @param gap    gap between children
-   * @param greedy whether the box should consume extra space
-   * @return the created serial box
+   * @param gap    the gap between child elements; must not be {@code null}
+   * @param greedy {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (Gap gap, boolean greedy) {
 
@@ -314,10 +344,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with the supplied gap size.
+   * Creates a {@link SerialBox} with the given numeric pixel gap.
    *
-   * @param gap gap size between children
-   * @return the created serial box
+   * @param gap gap in pixels between child elements
+   * @return a new serial box
    */
   public SerialBox serialBox (double gap) {
 
@@ -325,11 +355,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with the supplied gap size and greediness.
+   * Creates a {@link SerialBox} with the given numeric pixel gap and greediness hint.
    *
-   * @param gap    gap size between children
-   * @param greedy whether the box should consume extra space
-   * @return the created serial box
+   * @param gap    gap in pixels between child elements
+   * @param greedy {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (double gap, boolean greedy) {
 
@@ -337,10 +367,10 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box using the supplied justification.
+   * Creates a {@link SerialBox} with the given justification strategy.
    *
-   * @param justification justification strategy
-   * @return the created serial box
+   * @param justification how remaining space is distributed among child elements; must not be {@code null}
+   * @return a new serial box
    */
   public SerialBox serialBox (Justification justification) {
 
@@ -348,11 +378,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with justification and greediness hints.
+   * Creates a {@link SerialBox} with the given justification and greediness hint.
    *
-   * @param justification justification strategy
-   * @param greedy        whether the box should consume extra space
-   * @return the created serial box
+   * @param justification how remaining space is distributed; must not be {@code null}
+   * @param greedy        {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (Justification justification, boolean greedy) {
 
@@ -360,11 +390,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with a {@link Gap} and justification.
+   * Creates a {@link SerialBox} with the given named gap and justification.
    *
-   * @param gap           gap between children
-   * @param justification justification strategy
-   * @return the created serial box
+   * @param gap           the gap between child elements; must not be {@code null}
+   * @param justification how remaining space is distributed; must not be {@code null}
+   * @return a new serial box
    */
   public SerialBox serialBox (Gap gap, Justification justification) {
 
@@ -372,12 +402,12 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with a {@link Gap}, justification, and greediness hint.
+   * Creates a {@link SerialBox} with the given named gap, justification, and greediness hint.
    *
-   * @param gap           gap between children
-   * @param justification justification strategy
-   * @param greedy        whether the box should consume extra space
-   * @return the created serial box
+   * @param gap           the gap between child elements; must not be {@code null}
+   * @param justification how remaining space is distributed; must not be {@code null}
+   * @param greedy        {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (Gap gap, Justification justification, boolean greedy) {
 
@@ -385,11 +415,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with a numeric gap and justification.
+   * Creates a {@link SerialBox} with the given numeric pixel gap and justification.
    *
-   * @param gap           numeric gap size
-   * @param justification justification strategy
-   * @return the created serial box
+   * @param gap           gap in pixels between child elements
+   * @param justification how remaining space is distributed; must not be {@code null}
+   * @return a new serial box
    */
   public SerialBox serialBox (double gap, Justification justification) {
 
@@ -397,12 +427,12 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   }
 
   /**
-   * Creates a serial box with a numeric gap, justification, and greediness hint.
+   * Creates a {@link SerialBox} with the given numeric pixel gap, justification, and greediness hint.
    *
-   * @param gap           numeric gap size
-   * @param justification justification strategy
-   * @param greedy        whether the box should consume extra space
-   * @return the created serial box
+   * @param gap           gap in pixels between child elements
+   * @param justification how remaining space is distributed; must not be {@code null}
+   * @param greedy        {@code true} if the box should expand to consume available space
+   * @return a new serial box
    */
   public SerialBox serialBox (double gap, Justification justification, boolean greedy) {
 

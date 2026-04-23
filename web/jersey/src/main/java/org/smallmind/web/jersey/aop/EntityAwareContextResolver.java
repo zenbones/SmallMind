@@ -39,8 +39,8 @@ import org.glassfish.jersey.server.validation.ValidationConfig;
 import org.glassfish.jersey.server.validation.internal.InjectingConstraintValidatorFactory;
 
 /**
- * Supplies a Jersey {@link ValidationConfig} that is aware of entity argument names used by resource proxies.
- * The resolver installs an {@link EntityParameterNameProvider} so validation errors reference parameter names consistently.
+ * Jersey {@link ContextResolver} that configures bean validation to use {@link EntityParameterNameProvider} so
+ * constraint violation messages reference {@link EntityParam} names.
  */
 public class EntityAwareContextResolver implements ContextResolver<ValidationConfig> {
 
@@ -48,9 +48,9 @@ public class EntityAwareContextResolver implements ContextResolver<ValidationCon
   private ResourceContext resourceContext;
 
   /**
-   * Builds a validation configuration that uses dependency-injected constraint validators and entity-aware parameter names.
+   * Produces a {@link ValidationConfig} with injected constraint validators and entity-aware parameter naming.
    *
-   * @param type class for which the context is requested (ignored)
+   * @param type the class requesting context (not used)
    * @return configured {@link ValidationConfig}
    */
   @Override

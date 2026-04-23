@@ -35,18 +35,20 @@ package org.smallmind.nutsnbolts.email;
 import jakarta.mail.Authenticator;
 
 /**
- * Encapsulates the authentication strategy and credentials required to connect to a mail server.
- * Instances carry the {@link AuthType} to use and any credential data needed by that strategy.
+ * Value object that pairs an {@link AuthType} with the credentials required by that strategy, and can produce the corresponding Jakarta Mail {@link Authenticator}.
  */
 public class Authentication {
 
+  /**
+   * Shared singleton representing the absence of authentication.
+   */
   public static final Authentication NONE = new Authentication(AuthType.NONE);
 
   private AuthType type;
   private String[] data;
 
   /**
-   * Creates an empty authentication descriptor. Configure via setters before use.
+   * Creates an unconfigured authentication descriptor; use {@link #setType} and {@link #setData} before calling {@link #getAuthenticator}.
    */
   public Authentication () {
 
@@ -59,9 +61,9 @@ public class Authentication {
   }
 
   /**
-   * Selects the authentication mechanism to use.
+   * Sets the authentication mechanism to use when connecting to the mail server.
    *
-   * @param type authentication type
+   * @param type the desired authentication strategy
    */
   public void setType (AuthType type) {
 
@@ -69,9 +71,9 @@ public class Authentication {
   }
 
   /**
-   * Sets credential data used by the {@link AuthType} (e.g., username/password).
+   * Sets the credential values passed to the selected {@link AuthType} (for example, {@code [username, password]} for {@link AuthType#LOGIN}).
    *
-   * @param data ordered credentials expected by the auth type
+   * @param data ordered credential strings expected by the authentication type
    */
   public void setData (String[] data) {
 
@@ -79,9 +81,9 @@ public class Authentication {
   }
 
   /**
-   * Builds a Jakarta Mail {@link Authenticator} for the configured authentication type.
+   * Builds a Jakarta Mail {@link Authenticator} for the configured authentication type and credentials.
    *
-   * @return authenticator or {@code null} when {@link AuthType#NONE}
+   * @return a configured {@link Authenticator}, or {@code null} when the type is {@link AuthType#NONE}
    */
   public Authenticator getAuthenticator () {
 

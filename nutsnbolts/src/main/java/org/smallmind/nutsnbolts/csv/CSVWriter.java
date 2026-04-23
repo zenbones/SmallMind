@@ -37,7 +37,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Writes rows of comma-separated values, handling quoting and escaping.
+ * Writes records as comma-separated values to an output stream, quoting fields that contain commas, quotes, or newline characters and enforcing a fixed field count per record.
  */
 public class CSVWriter implements AutoCloseable {
 
@@ -47,12 +47,12 @@ public class CSVWriter implements AutoCloseable {
   private final int lineLength;
 
   /**
-   * Creates a writer that immediately emits the header row.
+   * Creates a writer that immediately emits the supplied values as a header row and uses the header count as the required field count for subsequent records.
    *
-   * @param outputStream destination stream
-   * @param headers      header values (establishing the expected field count)
-   * @throws IOException       if writing fails
-   * @throws CSVParseException if header count is invalid
+   * @param outputStream destination stream to write to
+   * @param headers      header field values to write as the first row
+   * @throws IOException       if writing the header row fails
+   * @throws CSVParseException if the header array length is inconsistent with this writer's field count
    */
   public CSVWriter (OutputStream outputStream, String... headers)
     throws IOException, CSVParseException {
@@ -64,10 +64,10 @@ public class CSVWriter implements AutoCloseable {
   }
 
   /**
-   * Creates a writer expecting a fixed number of fields per row.
+   * Creates a writer that enforces the specified number of fields per record without writing a header row.
    *
-   * @param outputStream destination stream
-   * @param lineLength   required number of fields
+   * @param outputStream destination stream to write to
+   * @param lineLength   required number of fields for every record written by this writer
    */
   public CSVWriter (OutputStream outputStream, int lineLength) {
 
@@ -76,11 +76,11 @@ public class CSVWriter implements AutoCloseable {
   }
 
   /**
-   * Writes a single CSV record.
+   * Writes a single record to the stream, separating fields with commas, quoting fields that require it, and appending a newline.
    *
-   * @param fields field values to write
-   * @throws IOException       if writing fails
-   * @throws CSVParseException if the number of fields does not match {@code lineLength}
+   * @param fields field values to write; must contain exactly {@code lineLength} elements
+   * @throws IOException       if writing to the underlying stream fails
+   * @throws CSVParseException if the number of supplied fields does not equal the writer's required field count
    */
   public void write (String... fields)
     throws IOException, CSVParseException {
@@ -111,10 +111,10 @@ public class CSVWriter implements AutoCloseable {
   }
 
   /**
-   * Doubles any embedded quotes within a field.
+   * Returns a copy of the field with every embedded double-quote character escaped as two consecutive double-quotes.
    *
-   * @param field field to escape
-   * @return field with quotes escaped
+   * @param field the field value to escape
+   * @return the field with all {@code "} characters replaced by {@code ""}
    */
   private String doubleAllQuotes (String field) {
 
@@ -126,10 +126,10 @@ public class CSVWriter implements AutoCloseable {
   }
 
   /**
-   * Determines if a field must be surrounded by quotes when written.
+   * Returns {@code true} if the field contains any character that requires the value to be wrapped in double-quotes when written.
    *
-   * @param field field to examine
-   * @return {@code true} if the field contains a special character
+   * @param field the field value to inspect
+   * @return {@code true} if the field must be quoted
    */
   private boolean mustBeQuoted (String field) {
 
@@ -143,7 +143,9 @@ public class CSVWriter implements AutoCloseable {
   }
 
   /**
-   * Closes the underlying stream.
+   * Closes the underlying output stream and releases any associated I/O resources.
+   *
+   * @throws IOException if closing the stream fails
    */
   public void close ()
     throws IOException {

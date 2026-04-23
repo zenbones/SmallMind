@@ -49,7 +49,8 @@ import org.smallmind.scribe.pen.adapter.ParameterAdapter;
 import org.smallmind.scribe.pen.adapter.Parameters;
 
 /**
- * Logger adapter that routes scribe logging calls to Log4j2.
+ * Scribe {@link LoggerAdapter} that delegates to a Log4j2 {@link Logger} with additivity disabled,
+ * iterating appenders directly rather than propagating events up the logger hierarchy.
  */
 public class Log4JLoggerAdapter implements LoggerAdapter {
 
@@ -59,9 +60,10 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   private boolean autoFillLoggerContext = false;
 
   /**
-   * Creates an adapter around a Log4j2 {@link Logger}.
+   * Builds an adapter around the given Log4j2 {@link Logger}, sets additivity to {@code false} to prevent
+   * event propagation up the logger hierarchy, and initialises empty filter and enhancer queues.
    *
-   * @param logger the Log4j2 logger to delegate to
+   * @param logger the Log4j2 logger that will receive all delegated log events
    */
   public Log4JLoggerAdapter (Logger logger) {
 
@@ -74,7 +76,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the logger name.
+   * Returns the name of the underlying Log4j2 logger.
    *
    * @return the logger name
    */
@@ -85,9 +87,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Supplies the parameter adapter used to store contextual values.
+   * Returns the shared {@link ParameterAdapter} used to supply MDC-style contextual parameters to records.
    *
-   * @return the shared {@link ParameterAdapter}
+   * @return the singleton {@link Parameters} instance
    */
   @Override
   public ParameterAdapter getParameterAdapter () {
@@ -96,9 +98,10 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Indicates whether logger context should be auto-populated.
+   * Returns whether this adapter automatically populates caller context into the {@link LoggerContext}
+   * before evaluating filters.
    *
-   * @return {@code true} when context auto-fill is enabled
+   * @return {@code true} if auto-fill is enabled
    */
   @Override
   public boolean getAutoFillLoggerContext () {
@@ -107,9 +110,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Toggles automatic population of logger context data.
+   * Enables or disables automatic population of caller context into the {@link LoggerContext}.
    *
-   * @param autoFillLoggerContext {@code true} to capture context data automatically
+   * @param autoFillLoggerContext {@code true} to capture class and method name automatically
    */
   @Override
   public void setAutoFillLoggerContext (boolean autoFillLoggerContext) {
@@ -118,9 +121,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Registers a filter that can veto log records.
+   * Appends a filter to the filter chain; all registered filters must allow a record before it is published.
    *
-   * @param filter filter to add
+   * @param filter the filter to add
    */
   @Override
   public void addFilter (Filter filter) {
@@ -129,7 +132,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured filters.
+   * Removes all filters from this adapter so that no filter-based veto can block publishing.
    */
   @Override
   public void clearFilters () {
@@ -138,9 +141,10 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Adds an appender by wrapping it in a Log4j2 appender wrapper.
+   * Wraps the scribe appender in a {@link Log4JAppenderWrapper} and registers it on the underlying
+   * Log4j2 logger.
    *
-   * @param appender appender to register
+   * @param appender the scribe appender to add
    */
   @Override
   public void addAppender (Appender appender) {
@@ -149,7 +153,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all appenders currently attached to the Log4j2 logger.
+   * Removes and detaches every appender currently registered on the underlying Log4j2 logger.
    */
   @Override
   public void clearAppenders () {
@@ -160,9 +164,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Registers an enhancer to mutate records prior to publishing.
+   * Registers an enhancer that will mutate each record after filters pass and before appenders receive it.
    *
-   * @param enhancer enhancer to add
+   * @param enhancer the enhancer to add
    */
   @Override
   public void addEnhancer (Enhancer enhancer) {
@@ -171,7 +175,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Removes all configured enhancers.
+   * Removes all registered enhancers so that records are published without any mutation step.
    */
   @Override
   public void clearEnhancers () {
@@ -180,9 +184,10 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Returns the effective log level.
+   * Returns the scribe-level equivalent of the Log4j2 logger's current level, defaulting to
+   * {@link Level#INFO} when the Log4j2 logger has no level set.
    *
-   * @return the scribe level equivalent of the Log4j2 level
+   * @return the effective threshold level
    */
   @Override
   public Level getLevel () {
@@ -191,9 +196,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Sets the level on the underlying Log4j2 logger.
+   * Translates the given scribe level to its Log4j2 equivalent and sets it on the underlying logger.
    *
-   * @param level the threshold level
+   * @param level the scribe threshold level to apply
    */
   @Override
   public void setLevel (Level level) {
@@ -202,12 +207,13 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a formatted message via Log4j2 if permitted by level and filters.
+   * Logs a message using a format template via Log4j2 appenders if the level meets the threshold and
+   * all filters allow it; enhancers are applied before appenders receive the record.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
    * @param message   message template
-   * @param args      message arguments
+   * @param args      arguments substituted into the message template
    */
   @Override
   public void logMessage (Level level, Throwable throwable, String message, Object... args) {
@@ -228,11 +234,12 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs an arbitrary object via Log4j2 if permitted by level and filters.
+   * Logs the string representation of an arbitrary object via Log4j2 appenders if the level meets the
+   * threshold and all filters allow it; enhancers are applied before appenders receive the record.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param object    object whose {@code toString()} will be logged
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param object    object whose {@link Object#toString()} result is used as the message; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Object object) {
@@ -253,11 +260,13 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Logs a lazily supplied message via Log4j2 if permitted by level and filters.
+   * Logs a lazily evaluated message via Log4j2 appenders if the level meets the threshold and all filters
+   * allow it; the supplier is not invoked when the level check fails, and enhancers are applied before
+   * appenders receive the record.
    *
-   * @param level     the level to log at
-   * @param throwable optional throwable to attach
-   * @param supplier  supplier that produces the message when logging proceeds
+   * @param level     severity level for the record
+   * @param throwable optional throwable to associate with the record, or {@code null}
+   * @param supplier  supplier invoked to produce the message string; {@code null} is tolerated
    */
   @Override
   public void logMessage (Level level, Throwable throwable, Supplier<String> supplier) {
@@ -278,10 +287,11 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Evaluates whether logging should proceed based on filters and context.
+   * Creates and optionally fills a {@link LoggerContext}, then evaluates all scribe filters against a
+   * probe record, returning the context when all pass or {@code null} when any veto.
    *
-   * @param level the level of the candidate record
-   * @return prepared logger context if logging should continue, otherwise {@code null}
+   * @param level the level of the candidate record used to build the probe
+   * @return a populated {@link LoggerContext} if logging should proceed, or {@code null} if any filter vetoes it
    */
   private LoggerContext willLog (Level level) {
 
@@ -306,9 +316,9 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
   }
 
   /**
-   * Runs all enhancers against the supplied record.
+   * Passes the record through every registered enhancer in insertion order.
    *
-   * @param record record to enhance
+   * @param record the record to enhance before it is dispatched to Log4j2 appenders
    */
   private void enhanceRecord (Record<LogEvent> record) {
 

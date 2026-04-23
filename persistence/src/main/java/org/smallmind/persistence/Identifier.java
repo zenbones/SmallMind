@@ -35,9 +35,11 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 
 /**
- * Marker interface for strongly typed identifiers used by durables.
+ * Marker interface for strongly typed durable identifiers. Implementations must be
+ * serializable, comparable, and provide a static {@code fromString(String)} method
+ * to support identifier parsing in {@link AbstractManagedDao#getIdFromString(String)}.
  *
- * @param <I> the identifier value type
+ * @param <I> the concrete identifier type
  */
 public interface Identifier<I> extends Serializable, Comparable<I> {
 

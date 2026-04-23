@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Comparator;
 
 /**
- * Comparator that orders dotted strings segment-by-segment using {@link AlphaNumericComparator}.
- * Can optionally reverse the segment order (compare from the rightmost segment).
+ * Comparator for dot-separated strings that compares segments one at a time using {@link AlphaNumericComparator},
+ * with optional right-to-left segment ordering.
  */
 public class DotNotationComparator implements Comparator<String> {
 
@@ -45,7 +45,7 @@ public class DotNotationComparator implements Comparator<String> {
   private final boolean reversed;
 
   /**
-   * Compares from left-to-right by default.
+   * Constructs a comparator that compares segments from left to right.
    */
   public DotNotationComparator () {
 
@@ -53,7 +53,9 @@ public class DotNotationComparator implements Comparator<String> {
   }
 
   /**
-   * @param reversed when {@code true}, compares segments from the rightmost side first
+   * Constructs a comparator with configurable segment traversal direction.
+   *
+   * @param reversed {@code true} to compare segments from the rightmost side first; {@code false} for left-to-right
    */
   public DotNotationComparator (boolean reversed) {
 
@@ -61,12 +63,12 @@ public class DotNotationComparator implements Comparator<String> {
   }
 
   /**
-   * Splits both strings on dots and compares each segment alphanumerically; if all common segments match,
-   * the string with more segments sorts after the shorter one.
+   * Splits both strings on dots and compares each corresponding segment using alphanumeric ordering;
+   * when all shared segments are equal, the string with fewer segments sorts first.
    *
-   * @param string1 first dotted string
-   * @param string2 second dotted string
-   * @return comparison result per {@link Comparator} contract
+   * @param string1 the first dot-separated string
+   * @param string2 the second dot-separated string
+   * @return a negative integer, zero, or positive integer per the {@link Comparator} contract
    */
   @Override
   public int compare (String string1, String string2) {

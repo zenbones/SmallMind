@@ -36,14 +36,16 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * {@link Iterable} with no elements; always returns an empty iterator.
+ * An {@link Iterable} that always produces an empty iterator, useful as a null-object placeholder for absent collections.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class EmptyIterable<T> implements Iterable<T> {
 
   /**
-   * @return iterator that yields no elements
+   * Returns an iterator that contains no elements.
+   *
+   * @return an empty iterator
    */
   public Iterator<T> iterator () {
 
@@ -53,7 +55,9 @@ public class EmptyIterable<T> implements Iterable<T> {
   private static class EmptyIterator<T> implements Iterator<T> {
 
     /**
-     * Always indicates no remaining elements.
+     * Always returns {@code false} because this iterator contains no elements.
+     *
+     * @return {@code false}
      */
     public synchronized boolean hasNext () {
 
@@ -61,8 +65,9 @@ public class EmptyIterable<T> implements Iterable<T> {
     }
 
     /**
-     * Always throws because the iterator is empty.
+     * Always throws {@link NoSuchElementException} because this iterator contains no elements.
      *
+     * @return never returns normally
      * @throws NoSuchElementException always
      */
     public synchronized T next () {
@@ -71,7 +76,7 @@ public class EmptyIterable<T> implements Iterable<T> {
     }
 
     /**
-     * Removal is unsupported.
+     * Always throws {@link UnsupportedOperationException} because removal is not supported.
      *
      * @throws UnsupportedOperationException always
      */

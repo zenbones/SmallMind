@@ -36,16 +36,18 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 /**
- * Adapts an {@link Enumeration} to both {@link Iterator} and {@link Iterable}.
+ * Adapter that wraps an {@link Enumeration} and exposes it as both an {@link Iterator} and an {@link Iterable}.
  *
- * @param <T> element type
+ * @param <T> the element type
  */
 public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
 
   private final Enumeration<T> internalEnumeration;
 
   /**
-   * @param internalEnumeration enumeration to wrap
+   * Constructs an adapter for the given enumeration.
+   *
+   * @param internalEnumeration the enumeration to wrap
    */
   public EnumerationIterator (Enumeration<T> internalEnumeration) {
 
@@ -53,7 +55,9 @@ public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * @return {@code true} if the wrapped enumeration has remaining elements
+   * Returns {@code true} if the underlying enumeration has more elements.
+   *
+   * @return {@code true} if there are more elements; {@code false} otherwise
    */
   public boolean hasNext () {
 
@@ -61,7 +65,9 @@ public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Returns the next element from the wrapped enumeration.
+   * Returns the next element from the underlying enumeration.
+   *
+   * @return the next element
    */
   public T next () {
 
@@ -69,7 +75,7 @@ public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * Removal is unsupported for enumeration-backed iteration.
+   * Always throws {@link UnsupportedOperationException} because enumeration-backed iteration does not support removal.
    *
    * @throws UnsupportedOperationException always
    */
@@ -79,7 +85,9 @@ public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
   }
 
   /**
-   * @return this instance, allowing use in enhanced for-loops
+   * Returns this instance as an iterator, enabling use in enhanced for-loops.
+   *
+   * @return this iterator
    */
   public Iterator<T> iterator () {
 

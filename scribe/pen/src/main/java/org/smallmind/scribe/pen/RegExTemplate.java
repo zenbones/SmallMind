@@ -36,14 +36,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
- * Template that matches logger names using a regular expression.
+ * A {@link Template} that matches logger names against a regular expression with the highest possible
+ * priority ({@code Integer.MAX_VALUE}); the compiled {@link Pattern} is stored in an
+ * {@link java.util.concurrent.atomic.AtomicReference} to guarantee single initialization.
  */
 public class RegExTemplate extends Template {
 
   private final AtomicReference<Pattern> loggerPatternRef = new AtomicReference<Pattern>();
 
   /**
-   * Creates an uninitialized regex template; set the expression before use.
+   * Constructs an uninitialized template; {@link #setExpression(String)} must be called exactly
+   * once before this template is used.
    */
   public RegExTemplate () {
 
@@ -51,9 +54,9 @@ public class RegExTemplate extends Template {
   }
 
   /**
-   * Creates a template with a specific regex expression.
+   * Constructs a template that matches logger names against the given regular expression.
    *
-   * @param expression regular expression used to match logger names
+   * @param expression the regular expression to compile and match against logger names
    */
   public RegExTemplate (String expression) {
 
@@ -63,12 +66,12 @@ public class RegExTemplate extends Template {
   }
 
   /**
-   * Creates a template with level, context behavior, and regex expression.
+   * Constructs a template with an explicit log level, context-fill behavior, and regular expression.
    *
-   * @param level                 default level
-   * @param autoFillLoggerContext whether to auto-fill logger context
-   * @param expression            regular expression used to match logger names
-   * @throws LoggerException if initialization fails
+   * @param level                 the default {@link Level} for loggers matched by this template
+   * @param autoFillLoggerContext {@code true} to automatically capture the caller's context on each record
+   * @param expression            the regular expression to compile and match against logger names
+   * @throws LoggerException if internal initialization fails
    */
   public RegExTemplate (Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
@@ -79,15 +82,16 @@ public class RegExTemplate extends Template {
   }
 
   /**
-   * Creates a template with filters, appenders, enhancers, level, context behavior, and regex expression.
+   * Constructs a fully specified template with filters, appenders, enhancers, level, context behavior,
+   * and a regular expression.
    *
-   * @param filters               filters to apply
-   * @param appenders             appenders to attach
-   * @param enhancers             enhancers to apply
-   * @param level                 default level
-   * @param autoFillLoggerContext whether to auto-fill logger context
-   * @param expression            regular expression used to match logger names
-   * @throws LoggerException if initialization fails
+   * @param filters               filters applied before a record is forwarded to appenders
+   * @param appenders             appenders that receive matching records
+   * @param enhancers             enhancers that decorate records before they are appended
+   * @param level                 the default {@link Level} for loggers matched by this template
+   * @param autoFillLoggerContext {@code true} to automatically capture the caller's context on each record
+   * @param expression            the regular expression to compile and match against logger names
+   * @throws LoggerException if internal initialization fails
    */
   public RegExTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLoggerContext, String expression)
     throws LoggerException {
@@ -98,10 +102,10 @@ public class RegExTemplate extends Template {
   }
 
   /**
-   * Sets the regex expression to match logger names, only if not already initialized.
+   * Compiles and stores the regular expression; may only be called once.
    *
-   * @param expression regular expression used to match logger names
-   * @throws LoggerRuntimeException if the pattern was already set
+   * @param expression the regular expression to compile and use for matching logger names
+   * @throws LoggerRuntimeException if this template has already been initialized with an expression
    */
   public void setExpression (String expression) {
 
@@ -111,11 +115,12 @@ public class RegExTemplate extends Template {
   }
 
   /**
-   * Matches the provided logger name against the configured regex.
+   * Returns {@code Integer.MAX_VALUE} when the full logger name matches the configured regular expression,
+   * giving this template the highest possible priority, or {@link Template#NO_MATCH} for non-matching names.
    *
-   * @param loggerName logger name to evaluate
-   * @return {@code Integer.MAX_VALUE} for a match, otherwise {@link Template#NO_MATCH}
-   * @throws LoggerRuntimeException if the pattern was never initialized
+   * @param loggerName the logger name to evaluate
+   * @return {@code Integer.MAX_VALUE} on a full regex match; {@link Template#NO_MATCH} otherwise
+   * @throws LoggerRuntimeException if this template was never initialized with an expression
    */
   public int matchLogger (String loggerName) {
 

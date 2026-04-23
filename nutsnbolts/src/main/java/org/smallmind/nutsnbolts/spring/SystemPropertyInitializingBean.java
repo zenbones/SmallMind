@@ -43,7 +43,8 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.PriorityOrdered;
 
 /**
- * Initializes JVM system properties early in the Spring lifecycle, with optional override and debug logging.
+ * A {@link BeanFactoryPostProcessor} that installs configured entries as JVM system properties early in the Spring lifecycle,
+ * with optional override control and debug logging of selected keys.
  */
 public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
@@ -54,7 +55,9 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   private int order;
 
   /**
-   * {@inheritDoc}
+   * Returns the priority order used to sequence this post-processor relative to others.
+   *
+   * @return the ordering value
    */
   @Override
   public int getOrder () {
@@ -63,9 +66,9 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   }
 
   /**
-   * Sets the priority order.
+   * Sets the priority order used to sequence this post-processor relative to others.
    *
-   * @param order priority value
+   * @param order the ordering value
    */
   public void setOrder (int order) {
 
@@ -73,9 +76,9 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   }
 
   /**
-   * Controls whether configured properties override existing system or environment values.
+   * Controls whether entries from the configured map should overwrite existing system or environment values.
    *
-   * @param override {@code true} to override existing values
+   * @param override {@code true} to overwrite any pre-existing value; {@code false} to skip entries that already exist
    */
   public void setOverride (boolean override) {
 
@@ -83,9 +86,9 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   }
 
   /**
-   * Adds properties to be applied as system properties.
+   * Supplies the properties that will be set as JVM system properties during post-processing.
    *
-   * @param propertyMap properties to set
+   * @param propertyMap map of system property keys to values
    */
   public void setPropertyMap (Map<String, String> propertyMap) {
 
@@ -93,10 +96,10 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   }
 
   /**
-   * Enables debug logging for keys matching the supplied patterns.
+   * Configures dot-notation patterns used to select property keys for debug logging.
    *
-   * @param debugPatterns include/exclude patterns
-   * @throws DotNotationException if a pattern is invalid
+   * @param debugPatterns include/exclude patterns; patterns prefixed with {@code -} are exclusions
+   * @throws DotNotationException if any pattern cannot be compiled
    */
   public void setDebugKeys (String[] debugPatterns)
     throws DotNotationException {
@@ -105,10 +108,10 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
   }
 
   /**
-   * Applies configured system properties and logs selected keys when enabled.
+   * Applies entries from the configured map as JVM system properties and, when debug logging is active, prints the matched keys to standard output.
    *
-   * @param beanFactory the bean factory (unused)
-   * @throws BeansException if property setting fails
+   * @param beanFactory the bean factory provided by Spring (not used directly)
+   * @throws BeansException if any system property cannot be set
    */
   @Override
   // We exist as a post processor merely to get into the first 'special' initialization phase

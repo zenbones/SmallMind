@@ -33,14 +33,15 @@
 package org.smallmind.nutsnbolts.retry;
 
 /**
- * Callback invoked by {@link Retry} during each retry attempt.
+ * Callback interface representing a single operation attempt invoked by {@link Retry}.
  */
 public interface RetryCall {
 
   /**
-   * Executes the operation. Throwing any {@link Throwable} signals failure for the current attempt.
+   * Performs the operation for one attempt; throwing any {@link Throwable} signals failure
+   * and causes {@link Retry} to schedule another attempt if retries remain.
    *
-   * @throws Throwable when the operation fails
+   * @throws Throwable if the operation fails for this attempt
    */
   void execute ()
     throws Throwable;

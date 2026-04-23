@@ -43,8 +43,9 @@ import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * A Log4j2 {@link LogEvent} that also implements the scribe {@link RecordWrapper} interface,
- * allowing scribe metadata to be attached to native Log4j2 events.
+ * Log4j2 {@link Log4jLogEvent} subclass that simultaneously implements the scribe {@link RecordWrapper}
+ * interface, allowing a single object to be appended by Log4j2 appenders while carrying scribe-specific
+ * level, context, and parameter metadata.
  */
 public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper<LogEvent> {
 
@@ -53,15 +54,16 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
   private final Level level;
 
   /**
-   * Constructs a subverted Log4j2 event with scribe metadata.
+   * Builds a Log4j2 {@link Log4jLogEvent} whose level is translated from the scribe level, wraps the
+   * message and arguments in a {@link FormattedMessage}, and creates the inner {@link Log4JRecord} view.
    *
-   * @param loggerName      originating logger name
-   * @param loggerClassName class name of the logger
-   * @param level           scribe level for the event
-   * @param loggerContext   captured context, possibly {@code null}
-   * @param throwable       throwable to attach
-   * @param message         message template
-   * @param args            message arguments
+   * @param loggerName      the name of the originating logger
+   * @param loggerClassName the fully-qualified class name of the logger
+   * @param level           the scribe severity level for this event
+   * @param loggerContext   the captured caller context, or {@code null} if not available
+   * @param throwable       the throwable to attach to the record, or {@code null}
+   * @param message         the raw message template
+   * @param args            arguments substituted into the message template
    */
   public Log4JRecordSubverter (String loggerName, String loggerClassName, Level level, LoggerContext loggerContext, Throwable throwable, String message, Object... args) {
 
@@ -74,9 +76,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
   }
 
   /**
-   * Returns the scribe record wrapper for this Log4j2 event.
+   * Returns the inner scribe {@link Record} view of this Log4j2 event.
    *
-   * @return the wrapped record
+   * @return the inner {@link Log4JRecord} that wraps this object
    */
   public Record<LogEvent> getRecord () {
 
@@ -84,7 +86,8 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
   }
 
   /**
-   * Scribe record view over the subverted Log4j2 event.
+   * Scribe {@link org.smallmind.scribe.pen.Record} view over the enclosing {@link Log4JRecordSubverter},
+   * capturing a global sequence number and the originating thread id at construction time.
    */
   private class Log4JRecord extends ParameterAwareRecord<LogEvent> {
 
@@ -93,9 +96,10 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     private final long sequenceNumber;
 
     /**
-     * Creates a record view around the Log4j2 event.
+     * Builds the scribe record view, capturing the current thread id and a global sequence number
+     * from {@link SequenceGenerator} at construction time.
      *
-     * @param logEvent Log4j2 event to expose
+     * @param logEvent the Log4j2 event that this object wraps
      */
     public Log4JRecord (LogEvent logEvent) {
 
@@ -106,9 +110,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the underlying Log4j2 event.
+     * Returns the Log4j2 {@link LogEvent} that this scribe view wraps.
      *
-     * @return the native event
+     * @return the native Log4j2 event
      */
     @Override
     public LogEvent getNativeLogEntry () {
@@ -117,7 +121,7 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the logger name from the event.
+     * Returns the logger name stored in the underlying Log4j2 event.
      *
      * @return the logger name
      */
@@ -128,9 +132,10 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the scribe level associated with the record.
+     * Returns the scribe severity level of the enclosing subverter, which may differ from the
+     * Log4j2 level due to translation.
      *
-     * @return the level
+     * @return the scribe severity level
      */
     @Override
     public Level getLevel () {
@@ -139,9 +144,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the throwable attached to the event, if any.
+     * Returns the throwable attached to the underlying Log4j2 event.
      *
-     * @return the throwable, or {@code null}
+     * @return the throwable, or {@code null} if none was set
      */
     @Override
     public Throwable getThrown () {
@@ -150,7 +155,7 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the formatted message from the event.
+     * Returns the fully formatted message produced by the Log4j2 event's {@link FormattedMessage}.
      *
      * @return the formatted message text
      */
@@ -161,9 +166,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the captured logger context.
+     * Returns the {@link LoggerContext} captured when the enclosing subverter was constructed.
      *
-     * @return context information, possibly {@code null}
+     * @return the logger context, or {@code null} if none was provided
      */
     @Override
     public LoggerContext getLoggerContext () {
@@ -172,9 +177,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the id of the thread that produced the record.
+     * Returns the id of the thread that was executing when this record view was constructed.
      *
-     * @return the thread id
+     * @return the originating thread id
      */
     @Override
     public long getThreadID () {
@@ -183,9 +188,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the name of the thread that produced the record.
+     * Returns the thread name stored in the underlying Log4j2 event.
      *
-     * @return the thread name
+     * @return the originating thread name
      */
     @Override
     public String getThreadName () {
@@ -194,9 +199,10 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns a sequence number assigned by the scribe generator.
+     * Returns the monotonically increasing sequence number assigned by {@link SequenceGenerator}
+     * at construction time of this record view.
      *
-     * @return the sequence number
+     * @return the global sequence number for this event
      */
     @Override
     public long getSequenceNumber () {
@@ -205,9 +211,9 @@ public class Log4JRecordSubverter extends Log4jLogEvent implements RecordWrapper
     }
 
     /**
-     * Returns the timestamp of the event.
+     * Returns the creation timestamp stored in the underlying Log4j2 event.
      *
-     * @return epoch milliseconds
+     * @return epoch milliseconds recorded by Log4j2 at event creation
      */
     @Override
     public long getMillis () {

@@ -51,9 +51,10 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 
 /**
- * Channel implementation that manages subscribers, listener callbacks, and delivery behavior.
+ * Concrete Bayeux channel that tracks subscribed sessions, channel-scoped listeners,
+ * reflection/streaming flags, and a time-to-live for idle cleanup.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed implements Channel<V> {
 
@@ -72,13 +73,17 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   private int persistentListenerCount;
 
   /**
-   * Creates a channel for the given route.
+   * Creates a channel bound to the given route with reflection and streaming settings derived from
+   * the server configuration.
    *
-   * @param onSubscribedCallback   callback invoked when a session subscribes
-   * @param onUnsubscribedCallback callback invoked when a session unsubscribes
-   * @param timeToLiveMilliseconds idle timeout before removal
-   * @param route                  bound route
-   * @param root                   server adapter
+   * @param onSubscribedCallback   invoked with this channel and the session whenever a new
+   *                               subscription is recorded
+   * @param onUnsubscribedCallback invoked with this channel and the session whenever a subscription
+   *                               is removed
+   * @param timeToLiveMilliseconds how long the channel may remain quiescent before it becomes
+   *                               eligible for removal
+   * @param route                  the Bayeux route this channel represents
+   * @param root                   server-level facade used for codec, backbone, and config access
    */
   public OumuamuaChannel (BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, long timeToLiveMilliseconds, DefaultRoute route, ChannelRoot<V> root) {
 
@@ -95,9 +100,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Notifies listeners of a new subscription.
+   * Fires the server-level subscription callback and all channel-scoped {@link SessionListener}s.
    *
-   * @param session subscribing session
+   * @param session the session that just subscribed
    */
   private void onSubscribed (Session<V> session) {
 
@@ -111,9 +116,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Notifies listeners that a session unsubscribed.
+   * Fires the server-level unsubscription callback and all channel-scoped {@link SessionListener}s.
    *
-   * @param session unsubscribing session
+   * @param session the session that just unsubscribed
    */
   private void onUnsubscribed (Session<V> session) {
 
@@ -127,11 +132,12 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Allows listeners to modify a delivery packet before dispatch.
+   * Runs a delivery packet through every channel-scoped {@link PacketListener}, allowing each one
+   * to transform or veto the delivery.
    *
-   * @param sender originating session
-   * @param packet delivery packet
-   * @return possibly transformed packet, or {@code null} to halt delivery
+   * @param sender the session originating the delivery, or {@code null} for server-side publishes
+   * @param packet the delivery packet; only {@link PacketType#DELIVERY} packets are processed
+   * @return the (possibly transformed) packet, or {@code null} if a listener vetoed delivery
    */
   private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
@@ -149,9 +155,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Registers a listener for channel events.
+   * Appends a listener to the channel's listener chain; persistent listeners also reset the
+   * quiescent timestamp so the channel is not removed while they remain registered.
    *
-   * @param listener listener to add
+   * @param listener the listener to add; ignored if the channel has been terminated
    */
   @Override
   public synchronized void addListener (Listener<V> listener) {
@@ -165,9 +172,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Removes a listener from the channel.
+   * Removes a previously added listener; starts the idle timer when no persistent listeners or
+   * subscribers remain.
    *
-   * @param listener listener to remove
+   * @param listener the listener to remove; no-op if not present
    */
   @Override
   public synchronized void removeListener (Listener<V> listener) {
@@ -180,7 +188,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return route associated with this channel
+   * Returns the Bayeux route this channel is registered under.
+   *
+   * @return the immutable route; never {@code null}
    */
   @Override
   public Route getRoute () {
@@ -189,7 +199,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return whether the channel is marked persistent
+   * Indicates whether the channel has been pinned and will not be pruned by the idle sweep.
+   *
+   * @return {@code true} if the channel is persistent
    */
   @Override
   public synchronized boolean isPersistent () {
@@ -198,9 +210,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Marks the channel as persistent or ephemeral.
+   * Controls whether the channel survives idle cleanup.
    *
-   * @param persistent {@code true} to persist beyond inactivity
+   * @param persistent {@code true} to exempt the channel from TTL-based removal
    */
   @Override
   public synchronized void setPersistent (boolean persistent) {
@@ -209,7 +221,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return whether deliveries are reflected back to the sender
+   * Indicates whether deliveries are reflected back to the publishing session.
+   *
+   * @return {@code true} if the sender also receives its own messages
    */
   @Override
   public boolean isReflecting () {
@@ -218,9 +232,9 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Configures whether the channel reflects messages back to the publisher.
+   * Sets whether published messages are echoed back to the publishing session.
    *
-   * @param reflecting reflection flag
+   * @param reflecting {@code true} to enable self-delivery for the publisher
    */
   @Override
   public void setReflecting (boolean reflecting) {
@@ -229,7 +243,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return whether the channel streams messages
+   * Indicates whether messages on this channel are pushed directly over the active connection
+   * rather than being queued for long polling.
+   *
+   * @return {@code true} if streaming delivery is enabled
    */
   @Override
   public boolean isStreaming () {
@@ -238,9 +255,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Configures streaming behavior for the channel.
+   * Controls whether messages bypass the long-poll queue and are sent immediately over the
+   * active connection.
    *
-   * @param streaming streaming flag
+   * @param streaming {@code true} to enable streaming delivery
    */
   @Override
   public void setStreaming (boolean streaming) {
@@ -249,10 +267,12 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Subscribes the provided session to the channel.
+   * Adds the session to the subscriber map and resets the idle timer; fires the subscription
+   * callback if this is the first time the session subscribes.
    *
-   * @param session session to subscribe
-   * @return {@code true} if subscription succeeded
+   * @param session the session to subscribe
+   * @return {@code true} if the subscription was accepted; {@code false} if the channel has been
+   * terminated
    */
   @Override
   public synchronized boolean subscribe (Session<V> session) {
@@ -271,9 +291,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Removes the session subscription if present.
+   * Removes the session from the subscriber map and fires the unsubscription callback; starts the
+   * idle timer if no subscribers or persistent listeners remain.
    *
-   * @param session session to unsubscribe
+   * @param session the session to unsubscribe; no-op if the session is not currently subscribed
    */
   @Override
   public synchronized void unsubscribe (Session<V> session) {
@@ -290,10 +311,11 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Indicates whether the channel can be removed due to idleness.
+   * Determines whether the channel has been idle long enough to be pruned from the tree.
    *
-   * @param now current timestamp
-   * @return {@code true} if the channel should be pruned
+   * @param now the current epoch millisecond timestamp to compare against the quiescent start time
+   * @return {@code true} if the channel is non-persistent, has no active subscribers or persistent
+   * listeners, and has exceeded its configured time-to-live
    */
   @Override
   public synchronized boolean isRemovable (long now) {
@@ -302,9 +324,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Marks the channel terminal, removes all subscribers, and notifies listeners.
+   * Irreversibly closes the channel: flags it terminal, clears all subscribers, fires the
+   * unsubscription callback for each evicted session, and sets the quiescent timestamp.
    *
-   * @return this channel instance
+   * @return this instance, allowing the caller to chain the terminated channel into a callback
    */
   public synchronized OumuamuaChannel<V> terminate () {
 
@@ -325,11 +348,15 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Delivers a packet to all subscribed sessions while applying listener hooks and reflection rules.
+   * Pushes the packet to every subscribed session, skipping sessions that have already received
+   * it during this delivery wave and honoring the reflection setting for the sender.
    *
-   * @param sender       originating session
-   * @param packet       packet to deliver
-   * @param sessionIdSet set tracking recipients to avoid duplicates
+   * @param sender       the session that published the packet, or {@code null} for server-sourced
+   *                     deliveries; excluded from delivery unless reflection is enabled
+   * @param packet       the packet to deliver; frozen before channel-listener processing so that
+   *                     listener changes are scoped to this channel's delivery stream
+   * @param sessionIdSet accumulates ids of sessions already delivered to, preventing duplicates
+   *                     when wildcard channels overlap
    */
   @Override
   public void deliver (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
@@ -349,9 +376,10 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Publishes data on this channel through the server backbone.
+   * Constructs a delivery message carrying {@code data} and forwards it through the server
+   * backbone so that all nodes in the cluster deliver it to their subscribers.
    *
-   * @param data payload to send
+   * @param data the payload to publish; wrapped in a Bayeux message with the channel path set
    */
   @Override
   public void publish (ObjectValue<V> data) {

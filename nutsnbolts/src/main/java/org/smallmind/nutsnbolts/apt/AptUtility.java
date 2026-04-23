@@ -44,17 +44,17 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Helper methods for common annotation-processing operations such as locating annotations and extracting typed values.
+ * Utility methods for common annotation-processing tasks such as locating annotation mirrors and extracting typed values.
  */
 public class AptUtility {
 
   /**
-   * Finds the annotation mirror of the specified type on an element.
+   * Finds the annotation mirror of the specified type on an element, returning {@code null} if not present.
    *
    * @param processingEnv        processing environment providing type utilities
-   * @param element              element being inspected
-   * @param annotationTypeMirror annotation type to match
-   * @return matching annotation mirror or {@code null} if absent
+   * @param element              element whose annotations are inspected
+   * @param annotationTypeMirror annotation type to match against each annotation mirror
+   * @return matching {@link AnnotationMirror}, or {@code null} if not found
    */
   public static AnnotationMirror extractAnnotationMirror (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationTypeMirror) {
 
@@ -69,12 +69,12 @@ public class AptUtility {
   }
 
   /**
-   * Locates an annotation whose own annotation type is annotated by the supplied annotation type.
+   * Finds the first annotation on an element whose annotation type is itself annotated by the given meta-annotation type.
    *
    * @param processingEnv        processing environment providing type utilities
-   * @param element              element being inspected
-   * @param annotationTypeMirror annotation type that must be present on the candidate annotation
-   * @return first matching annotation mirror or {@code null} if none
+   * @param element              element whose annotations are inspected
+   * @param annotationTypeMirror meta-annotation type that must appear on the candidate annotation's own type
+   * @return first matching {@link AnnotationMirror}, or {@code null} if none found
    */
   public static AnnotationMirror extractAnnotationMirrorAnnotatedBy (ProcessingEnvironment processingEnv, Element element, TypeMirror annotationTypeMirror) {
 
@@ -91,14 +91,14 @@ public class AptUtility {
   }
 
   /**
-   * Extracts a named value from an annotation, returning a default if the value is not present.
+   * Extracts a named element value from an annotation mirror, resolving enum constants by name and falling back to a default when the element is absent.
    *
-   * @param annotationMirror annotation to inspect
-   * @param valueName        name of the value to retrieve
-   * @param clazz            expected value type; if an enum the value is resolved by name
-   * @param defaultValue     fallback when the value is not set
-   * @param <T>              value type
-   * @return extracted value or {@code defaultValue} when missing
+   * @param annotationMirror annotation whose element values are searched
+   * @param valueName        name of the annotation element to retrieve
+   * @param clazz            expected runtime type; enum types are resolved via {@link Enum#valueOf}
+   * @param defaultValue     value returned when the element is not explicitly set
+   * @param <T>              declared return type
+   * @return extracted value cast to {@code T}, or {@code defaultValue} when the element is not present
    */
   public static <T> T extractAnnotationValue (AnnotationMirror annotationMirror, String valueName, Class<T> clazz, T defaultValue) {
 
@@ -119,14 +119,14 @@ public class AptUtility {
   }
 
   /**
-   * Extracts a named value from an annotation, consulting default values from the processing environment.
+   * Extracts a named element value from an annotation mirror, including default values provided by the processing environment.
    *
-   * @param processingEnvironment processing utilities used to materialize defaults
-   * @param annotationMirror      annotation to inspect
-   * @param valueName             name of the value to retrieve
-   * @param clazz                 expected value type; if an enum the value is resolved by name
-   * @param <T>                   value type
-   * @return extracted value or {@code null} when the value is unavailable
+   * @param processingEnvironment processing environment used to retrieve element values with defaults
+   * @param annotationMirror      annotation whose element values are searched
+   * @param valueName             name of the annotation element to retrieve
+   * @param clazz                 expected runtime type; enum types are resolved via {@link Enum#valueOf}
+   * @param <T>                   declared return type
+   * @return extracted value cast to {@code T}, or {@code null} when the element cannot be resolved
    */
   public static <T> T extractAnnotationValueWithDefault (ProcessingEnvironment processingEnvironment, AnnotationMirror annotationMirror, String valueName, Class<T> clazz) {
 
@@ -147,13 +147,13 @@ public class AptUtility {
   }
 
   /**
-   * Reads a list-typed annotation value into a strongly typed list.
+   * Extracts a list-typed annotation element value, casting each item to the given type.
    *
-   * @param annotationMirror annotation to inspect
-   * @param valueName        name of the value to retrieve
-   * @param itemClass        expected class of each list element
+   * @param annotationMirror annotation whose element values are searched
+   * @param valueName        name of the annotation element whose value is a list
+   * @param itemClass        expected runtime type of each list item
    * @param <T>              list element type
-   * @return list of extracted values (empty if the value is not present)
+   * @return strongly typed list of extracted values, or an empty list if the element is absent
    */
   public static <T> List<T> extractAnnotationValueAsList (AnnotationMirror annotationMirror, String valueName, Class<T> itemClass) {
 
@@ -170,11 +170,11 @@ public class AptUtility {
   }
 
   /**
-   * Converts a list of {@link TypeMirror}s to their corresponding {@link TypeElement}s.
+   * Converts a list of {@link TypeMirror}s to their corresponding {@link TypeElement}s in the same order.
    *
-   * @param processingEnv  processing environment providing type utilities
-   * @param typeMirrorList list of type mirrors, possibly {@code null}
-   * @return list of concrete type elements in the same order as the input
+   * @param processingEnv  processing environment used to resolve mirrors to elements
+   * @param typeMirrorList list of type mirrors to convert; {@code null} is treated as an empty list
+   * @return ordered list of {@link TypeElement}s corresponding to the input mirrors
    */
   public static List<TypeElement> toConcreteList (ProcessingEnvironment processingEnv, List<TypeMirror> typeMirrorList) {
 

@@ -44,7 +44,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
- * Represents an array-valued operand in a where clause, preserving the element type via hints.
+ * A where operand that holds an array of values, with a type hint describing the element kind.
  */
 @XmlRootElement(name = "array", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -56,17 +56,17 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   private Hint hint;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public ArrayWhereOperand () {
 
   }
 
   /**
-   * Constructs an operand with an explicit hint describing the element type and a raw JSON array node.
+   * Constructs an operand from a pre-built hint and raw JSON array.
    *
-   * @param hint  element type hint
-   * @param value JSON array holding operand values
+   * @param hint  type hint describing the element kind
+   * @param value JSON array node containing the operand values
    */
   public ArrayWhereOperand (Hint hint, ArrayNode value) {
 
@@ -75,10 +75,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Constructs an operand by inferring a hint and serializing the provided array elements.
+   * Constructs an operand by inspecting the array's component type and serializing the elements.
    *
-   * @param array typed array to be wrapped as an operand
-   * @throws QueryProcessingException if the array component type cannot be mapped to an operand
+   * @param array typed array to wrap as an operand
+   * @throws QueryProcessingException if the component type cannot be mapped to a supported hint
    */
   public ArrayWhereOperand (Object[] array) {
 
@@ -129,10 +129,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Convenience factory for an array operand.
+   * Factory method that wraps an array in an {@code ArrayWhereOperand}.
    *
-   * @param value array content
-   * @return the constructed operand
+   * @param value the array to wrap
+   * @return a new operand backed by the array
    */
   public static ArrayWhereOperand instance (Object[] value) {
 
@@ -140,10 +140,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Resolves the logical element type of the array based on the hint.
+   * Derives the logical element type from the stored hint.
    *
-   * @return element type for downstream translation
-   * @throws UnknownSwitchCaseException if the hint cannot be mapped to a supported element type
+   * @return element type corresponding to the hint's component or enum kind
+   * @throws UnknownSwitchCaseException if the hint type or component type is unrecognized
    */
   @Override
   @XmlTransient
@@ -161,7 +161,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Identifies this operand as representing an array.
+   * Returns the operand type discriminator for this class.
    *
    * @return {@link OperandType#ARRAY}
    */
@@ -173,11 +173,11 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Converts the stored JSON array into a strongly typed Java array based on the hint.
+   * Deserializes the backing JSON array into a typed Java array using the stored hint.
    *
-   * @return typed array value or {@code null} if no value is set
-   * @throws QueryProcessingException   if the hint references an enum class that cannot be found
-   * @throws UnknownSwitchCaseException if the hint type or component type is unsupported
+   * @return typed Java array, or {@code null} if no value has been set
+   * @throws QueryProcessingException   if an enum class referenced by the hint cannot be loaded
+   * @throws UnknownSwitchCaseException if the hint type or component type is unrecognized
    */
   @XmlTransient
   public Object[] get () {
@@ -307,9 +307,9 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Returns the hint describing the array element type.
+   * Returns the hint that describes the array element type.
    *
-   * @return element hint
+   * @return element type hint
    */
   @XmlElement(name = "hint")
   public Hint getHint () {
@@ -318,9 +318,9 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Sets the hint describing the array element type.
+   * Sets the hint that describes the array element type.
    *
-   * @param hint element hint
+   * @param hint element type hint
    */
   public void setHint (Hint hint) {
 
@@ -328,9 +328,9 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Returns the raw JSON array value backing this operand.
+   * Returns the raw JSON array backing this operand.
    *
-   * @return JSON array node or {@code null}
+   * @return JSON array node, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public ArrayNode getValue () {
@@ -339,7 +339,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   }
 
   /**
-   * Sets the raw JSON array value backing this operand.
+   * Sets the raw JSON array backing this operand.
    *
    * @param value JSON array node
    */

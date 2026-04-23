@@ -42,17 +42,20 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
 
 /**
- * A {@link Region} that hosts a single {@link ImageView} and resizes it to fill the available space while preserving
- * the pane's layout semantics.
+ * A {@link Region} that manages a single {@link ImageView} child and stretches it to fill the
+ * pane's bounds on every layout pass. The hosted image view is exposed as an observable property
+ * so that it can be swapped at runtime; swapping automatically removes the old view from the
+ * scene graph and adds the replacement.
  */
 public class ImageViewPane extends Region {
 
   private final ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<>();
 
   /**
-   * Creates a pane hosting the provided image view.
+   * Creates a pane hosting the supplied image view. The view is immediately added to the scene
+   * graph as a managed child.
    *
-   * @param imageView the image view to manage
+   * @param imageView the image view to display; may be {@code null} to start with an empty pane
    */
   public ImageViewPane (ImageView imageView) {
 
@@ -73,7 +76,10 @@ public class ImageViewPane extends Region {
   }
 
   /**
-   * @return the property representing the contained {@link ImageView}
+   * Returns the observable property that holds the currently hosted {@link ImageView}. Setting
+   * a new value on this property replaces the displayed image and updates the scene graph.
+   *
+   * @return the image-view property; never {@code null}
    */
   public ObjectProperty<ImageView> imageViewProperty () {
 
@@ -81,7 +87,9 @@ public class ImageViewPane extends Region {
   }
 
   /**
-   * @return the managed {@link ImageView}
+   * Returns the currently hosted {@link ImageView}.
+   *
+   * @return the image view, or {@code null} if none has been set
    */
   public ImageView getImageView () {
 
@@ -89,9 +97,10 @@ public class ImageViewPane extends Region {
   }
 
   /**
-   * Replaces the hosted image view, removing the old one from the scene graph.
+   * Replaces the currently hosted image view. The previous view is removed from the scene graph
+   * and the new one is added automatically.
    *
-   * @param imageView the new image view to display
+   * @param imageView the new image view to display; may be {@code null} to clear the pane
    */
   public void setImageView (ImageView imageView) {
 
@@ -99,7 +108,8 @@ public class ImageViewPane extends Region {
   }
 
   /**
-   * Resizes and positions the hosted image view to occupy the full pane bounds.
+   * Resizes and repositions the hosted image view to exactly fill the pane's current bounds,
+   * centred horizontally and vertically.
    */
   @Override
   protected void layoutChildren () {

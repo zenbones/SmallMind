@@ -35,17 +35,15 @@ package org.smallmind.nutsnbolts.util;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Thread-safe status gate around a {@link ComponentStatus} value.
- *
- * Callers can update the current status directly or wait until the status enters or leaves a supplied set without
- * adding their own polling loop.
+ * Thread-safe holder for a {@link ComponentStatus} that allows callers to set the status or block until
+ * it enters or leaves a specified set of values.
  */
 public class ComponentModulator {
 
   private final AtomicReference<ComponentStatus> statusRef;
 
   /**
-   * Creates a modulator with an initial status of {@link ComponentStatus#STOPPED}.
+   * Constructs a modulator with an initial status of {@link ComponentStatus#STOPPED}.
    */
   public ComponentModulator () {
 
@@ -53,9 +51,9 @@ public class ComponentModulator {
   }
 
   /**
-   * Creates a modulator with the given initial status.
+   * Constructs a modulator with the specified initial status.
    *
-   * @param status initial component status
+   * @param status the initial component status
    */
   public ComponentModulator (ComponentStatus status) {
 
@@ -65,7 +63,7 @@ public class ComponentModulator {
   /**
    * Returns the current status without blocking.
    *
-   * @return current component status
+   * @return the current component status
    */
   public final ComponentStatus get () {
 
@@ -73,10 +71,10 @@ public class ComponentModulator {
   }
 
   /**
-   * Replaces the current status and wakes any threads waiting in {@link #awaitIn(ComponentStatus...)} or
-   * {@link #awaitNotIn(ComponentStatus...)}.
+   * Sets the current status unconditionally and notifies all threads waiting in
+   * {@link #awaitIn(ComponentStatus...)} or {@link #awaitNotIn(ComponentStatus...)}.
    *
-   * @param status replacement status
+   * @param status the new component status
    */
   public final synchronized void set (ComponentStatus status) {
 
@@ -86,13 +84,12 @@ public class ComponentModulator {
   }
 
   /**
-   * Atomically changes the current status when it matches the expected value.
+   * Atomically sets the status to {@code newStatus} if the current status equals {@code expectedStatus},
+   * notifying waiting threads only on a successful update.
    *
-   * Waiting threads are notified only when the update succeeds.
-   *
-   * @param expectedStatus status required for the update to proceed
-   * @param newStatus replacement status to install on success
-   * @return {@code true} when the status changed
+   * @param expectedStatus the status that must be current for the update to proceed
+   * @param newStatus      the replacement status to install on success
+   * @return {@code true} if the status was updated; {@code false} if the current status did not match
    */
   public final synchronized boolean compareAndSet (ComponentStatus expectedStatus, ComponentStatus newStatus) {
 
@@ -103,15 +100,15 @@ public class ComponentModulator {
     } else {
 
       return false;
-      }
+    }
   }
 
   /**
-   * Waits until the current status matches one of the supplied values.
+   * Blocks the calling thread until the current status is one of the supplied values.
    *
-   * @param statuses acceptable statuses
-   * @return the matching current status
-   * @throws InterruptedException if the waiting thread is interrupted
+   * @param statuses the set of acceptable statuses to wait for
+   * @return the current status at the moment it matched one of the supplied values
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public final synchronized ComponentStatus awaitIn (ComponentStatus... statuses)
     throws InterruptedException {
@@ -126,11 +123,11 @@ public class ComponentModulator {
   }
 
   /**
-   * Waits until the current status no longer matches any of the supplied values.
+   * Blocks the calling thread until the current status is not any of the supplied values.
    *
-   * @param statuses statuses to avoid
-   * @return the first current status that is not in the supplied set
-   * @throws InterruptedException if the waiting thread is interrupted
+   * @param statuses the set of statuses that should no longer be current
+   * @return the current status at the moment it differed from all supplied values
+   * @throws InterruptedException if the thread is interrupted while waiting
    */
   public final synchronized ComponentStatus awaitNotIn (ComponentStatus... statuses)
     throws InterruptedException {
@@ -145,10 +142,10 @@ public class ComponentModulator {
   }
 
   /**
-   * Tests whether the current status matches one of the supplied values.
+   * Returns the current status if it matches one of the supplied values, or {@code null} if it does not.
    *
-   * @param statuses candidate statuses
-   * @return the current status when it matches, otherwise {@code null}
+   * @param statuses the candidate statuses to check against
+   * @return the current status if it is in the supplied set, otherwise {@code null}
    */
   private ComponentStatus isIn (ComponentStatus... statuses) {
 
@@ -165,10 +162,10 @@ public class ComponentModulator {
   }
 
   /**
-   * Tests whether the current status differs from all of the supplied values.
+   * Returns the current status if it does not match any of the supplied values, or {@code null} if it does.
    *
-   * @param statuses statuses to reject
-   * @return the current status when it differs from every supplied value, otherwise {@code null}
+   * @param statuses the statuses to test against
+   * @return the current status if it differs from every supplied value, otherwise {@code null}
    */
   private ComponentStatus notIn (ComponentStatus... statuses) {
 

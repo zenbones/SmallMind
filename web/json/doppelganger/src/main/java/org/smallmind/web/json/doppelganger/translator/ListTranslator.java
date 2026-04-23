@@ -44,14 +44,22 @@ import org.smallmind.web.json.scaffold.property.ListMutator;
 import org.smallmind.web.json.scaffold.property.PropertyException;
 
 /**
- * Translator for {@link java.util.List} properties, delegating element conversion to {@link ListMutator}.
+ * Translator for {@link java.util.List}-typed properties whose element type has a generated view representation.
  */
 public class ListTranslator implements Translator {
 
   private static final String LIST_MUTATOR_NAME = ListMutator.class.getCanonicalName();
 
   /**
-   * Emits code to convert an entity list into a view list using {@link ListMutator#toViewType(Class, Class, java.util.List)}.
+   * Emits a call to {@link ListMutator#toViewType(Class, Class, java.util.List)} that converts the entity list to a view list.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityInstanceName         variable name of the source entity instance
+   * @param entityFieldName            the logical field name on the entity
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified parameterized view list type name
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
@@ -70,7 +78,14 @@ public class ListTranslator implements Translator {
   }
 
   /**
-   * Emits code to convert a view list back into an entity list.
+   * Emits a call to {@link ListMutator#toEntityType(java.util.List)} that converts the view list back to an entity list.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified parameterized view list type name
+   * @param viewFieldName              the name of the view field
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)
@@ -83,11 +98,11 @@ public class ListTranslator implements Translator {
   }
 
   /**
-   * Extracts the element type name from a parameterized list type string (e.g., {@code java.util.List<com.foo.Bar>}).
+   * Parses the element type name out of a parameterized list type string such as {@code java.util.List<com.foo.BarOutView>}.
    *
-   * @param qualifiedListTypeName fully qualified parameterized list name
-   * @return the element type name
-   * @throws PropertyException if the name cannot be parsed
+   * @param qualifiedListTypeName the fully qualified parameterized list type string
+   * @return the type name of the list's element type
+   * @throws PropertyException if angle brackets are absent or malformed
    */
   private String extractViewTypeName (String qualifiedListTypeName) {
 

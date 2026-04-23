@@ -33,8 +33,25 @@
 package org.smallmind.quorum.pool.complex;
 
 /**
- * Represents a countdown fuse that coordinates delayed destruction of pooled components.
- * Each fuse is ordered and can be ignited, aborted, or freed based on pool state.
+ * A time-delayed trigger that initiates deconstruction of a pooled component when a
+ * configured limit expires.
+ * <p>
+ * Each fuse is associated with a single {@link ComponentPin} via a
+ * {@link DeconstructionCoordinator}. A fuse becomes active when its ignition time is set by
+ * calling {@link #setIgnitionTime(long)}, which simultaneously registers it with the
+ * {@link DeconstructionQueue}. The queue's background thread polls every second and calls
+ * {@link #ignite()} on any fuse whose time has elapsed.
+ * <p>
+ * Fuses are assigned a monotonically increasing ordinal at construction time, used to break
+ * ties when two fuses have the same ignition time.
+ * <p>
+ * Concrete subclasses implement:
+ * <ul>
+ *   <li>{@link #isPrejudicial()} — whether ignition should force-terminate a component
+ *       that is still checked out;</li>
+ *   <li>{@link #free()} — called when the component is returned to the free queue;</li>
+ *   <li>{@link #serve()} — called when the component is handed to a caller.</li>
+ * </ul>
  */
 public abstract class DeconstructionFuse {
 
@@ -45,10 +62,13 @@ public abstract class DeconstructionFuse {
   private long ignitionTime;
 
   /**
-   * Creates a fuse that will register itself with the provided queue and coordinator.
+   * Registers this fuse with the given queue and coordinator, and obtains a unique ordinal
+   * for ordering within the queue.
    *
-   * @param deconstructionQueue       queue tracking pending fuses
-   * @param deconstructionCoordinator coordinator invoked when a fuse ignites
+   * @param deconstructionQueue       the queue that will call {@link #ignite()} when the fuse
+   *                                  expires
+   * @param deconstructionCoordinator the coordinator that orchestrates multi-fuse interactions
+   *                                  and ultimately triggers pin removal
    */
   public DeconstructionFuse (DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
@@ -59,26 +79,35 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Indicates whether triggering this fuse should be treated as prejudicial destruction.
+   * Returns whether igniting this fuse should trigger prejudicial (forced) removal of the
+   * component, even when it is currently checked out by a caller.
    *
-   * @return {@code true} if the component should be destroyed with prejudice
+   * @return {@code true} for a prejudicial fuse (e.g. processing timeout);
+   * {@code false} for a non-prejudicial fuse (e.g. idle or lease timeout)
    */
   public abstract boolean isPrejudicial ();
 
   /**
-   * Releases any resources held by the fuse.
+   * Responds to the component being placed back on the free queue.
+   * <p>
+   * Typical implementations either schedule ignition (idle-timeout fuses) or cancel any
+   * pending ignition (processing-timeout fuses).
    */
   public abstract void free ();
 
   /**
-   * Activates the fuse's serve behavior (e.g., check state or schedule).
+   * Responds to the component being handed to a caller.
+   * <p>
+   * Typical implementations either schedule ignition (processing-timeout fuses) or cancel
+   * any pending ignition (idle-timeout fuses).
    */
   public abstract void serve ();
 
   /**
-   * Returns the ordering value assigned to the fuse.
+   * Returns the ordinal assigned to this fuse at construction time, used to impose a
+   * deterministic ordering among fuses registered at the same millisecond.
    *
-   * @return ordinal position
+   * @return the unique ordinal value
    */
   public int getOrdinal () {
 
@@ -86,9 +115,10 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Returns the time at which the fuse is scheduled to ignite.
+   * Returns the wall-clock time (milliseconds since the epoch) at which this fuse is
+   * scheduled to ignite.
    *
-   * @return ignition timestamp in milliseconds
+   * @return the ignition timestamp in milliseconds
    */
   public long getIgnitionTime () {
 
@@ -96,9 +126,12 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Sets the ignition time and registers the fuse with the queue.
+   * Sets the ignition time and registers this fuse with the {@link DeconstructionQueue}.
+   * <p>
+   * If the fuse was previously registered, calling this method again will add a second entry
+   * to the queue; callers should call {@link #abort()} first to remove any prior registration.
    *
-   * @param ignitionTime timestamp in milliseconds
+   * @param ignitionTime the absolute wall-clock time in milliseconds at which to ignite
    */
   public void setIgnitionTime (long ignitionTime) {
 
@@ -107,7 +140,8 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Cancels the fuse before it ignites.
+   * Removes this fuse from the {@link DeconstructionQueue}, cancelling a scheduled ignition.
+   * Safe to call when the fuse is not currently queued.
    */
   public void abort () {
 
@@ -115,7 +149,8 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Notifies the coordinator that the fuse should ignite.
+   * Notifies the {@link DeconstructionCoordinator} that this fuse has expired, passing
+   * {@link #isPrejudicial()} to govern whether the resulting pin removal is forced.
    */
   public void ignite () {
 
@@ -123,9 +158,10 @@ public abstract class DeconstructionFuse {
   }
 
   /**
-   * Exposes the stack trace associated with the owning component.
+   * Returns the existential stack trace held by the coordinator, providing context about
+   * which thread acquired the component associated with this fuse.
    *
-   * @return stack trace for diagnostic purposes
+   * @return the stack trace elements of the acquiring thread, or {@code null} if not tracked
    */
   public StackTraceElement[] getExistentialStackTrace () {
 

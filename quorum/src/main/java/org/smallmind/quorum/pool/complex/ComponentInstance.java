@@ -35,32 +35,50 @@ package org.smallmind.quorum.pool.complex;
 import org.smallmind.nutsnbolts.lang.Existential;
 
 /**
- * Represents a pooled component instance with validation and lifecycle hooks.
+ * Contract for an object that wraps a pooled component and manages its health and lifecycle.
+ * <p>
+ * The complex pool stores {@code ComponentInstance} objects rather than raw components.
+ * Each instance owns the underlying resource and is responsible for reporting its health via
+ * {@link #validate()}, exposing the resource to callers via {@link #serve()}, and releasing
+ * all resources when the pool is done with it via {@link #close()}.
+ * <p>
+ * Extends {@link Existential} so that the pool can optionally capture and expose a stack trace
+ * identifying the thread that acquired the component.
  *
- * @param <C> component type provided
+ * @param <C> the type of the underlying component managed by this instance
  */
 public interface ComponentInstance<C> extends Existential {
 
   /**
-   * Validates the instance for continued use.
+   * Tests whether this instance is still healthy and fit for use.
+   * <p>
+   * Called by the pool before handing the instance to a caller when
+   * {@link ComplexPoolConfig#isTestOnAcquire()} is enabled, and immediately after creation
+   * when {@link ComplexPoolConfig#isTestOnCreate()} is enabled. A return value of {@code false}
+   * causes the pool to discard the instance and attempt to obtain a different one.
    *
-   * @return {@code true} if the instance is healthy
+   * @return {@code true} if the instance is healthy; {@code false} if it should be discarded
    */
   boolean validate ();
 
   /**
-   * Provides the underlying component for use.
+   * Returns the underlying component, performing any per-use setup required by the
+   * implementation (for example, capturing an existential stack trace).
    *
-   * @return component instance
-   * @throws Exception if the component cannot be served
+   * @return the component ready for use by the caller
+   * @throws Exception if the component cannot be prepared for use
    */
   C serve ()
     throws Exception;
 
   /**
-   * Closes and cleans up the instance.
+   * Permanently releases all resources held by this instance.
+   * <p>
+   * Called by the pool when the instance is being removed from service — whether due to
+   * a failed validation check, a deconstruction fuse igniting, or the pool shutting down.
+   * After this method returns the pool will never call any other method on this instance.
    *
-   * @throws Exception if cleanup fails
+   * @throws Exception if resource cleanup fails
    */
   void close ()
     throws Exception;

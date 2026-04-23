@@ -40,12 +40,20 @@ import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 /**
- * Translator for simple fields that require no conversion beyond direct access.
+ * Translator for properties that require no type conversion, emitting direct getter and field references.
  */
 public class NoopTranslator implements Translator {
 
   /**
-   * Emits a direct getter call for the entity field.
+   * Emits a direct call to the entity getter for the field.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityInstanceName         variable name of the source entity instance
+   * @param entityFieldName            the logical field name on the entity
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name (unused)
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
@@ -58,7 +66,14 @@ public class NoopTranslator implements Translator {
   }
 
   /**
-   * Emits the view-side value directly when setting the entity.
+   * Emits the view field name directly as the value passed to the entity setter.
+   *
+   * @param writer                     destination for generated source
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityFieldTypeMirror      the type mirror of the entity field (unused)
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name (unused)
+   * @param viewFieldName              the name of the view field to pass through
+   * @throws IOException if writing to the source file fails
    */
   @Override
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String viewFieldName)

@@ -41,19 +41,21 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
 /**
- * Utility methods for composing and encoding {@link Packet} instances.
+ * Static helpers for composing, freezing, and JSON-encoding {@link Packet} instances.
  */
 public class PacketUtility {
 
   /**
-   * Merges two packets, optionally filtering out a route and prepending merged messages.
+   * Merges the messages from {@code otherPacket} into {@code basePacket}, optionally excluding messages
+   * whose channel matches {@code filteredRoute} and optionally inserting the merged messages immediately
+   * after the first base message rather than appending them at the end.
    *
-   * @param basePacket    base packet to merge into
-   * @param otherPacket   packet whose messages are merged
-   * @param filteredRoute route to exclude when merging, or {@code null} to include all
-   * @param prepend       {@code true} to insert messages immediately after the first base message
+   * @param basePacket    packet whose metadata (type, sender, route) governs the result
+   * @param otherPacket   packet supplying additional messages to merge in
+   * @param filteredRoute channel path to exclude from {@code otherPacket}, or {@code null} to include all messages
+   * @param prepend       when {@code true}, inserts other messages after position 0 of base; when {@code false}, appends them
    * @param <V>           value type
-   * @return merged packet, or the base packet if no messages remain after filtering
+   * @return a new merged packet, or {@code basePacket} unchanged when all other messages were filtered out
    */
   public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute, boolean prepend) {
 
@@ -91,11 +93,12 @@ public class PacketUtility {
   }
 
   /**
-   * Wraps all messages in the packet with copy-on-write doubles to prevent mutation.
+   * Produces a new packet whose messages are each wrapped in a {@link MessageDouble}, preventing
+   * downstream consumers from mutating the originals while still allowing overlay reads.
    *
-   * @param packet packet to freeze
+   * @param packet the packet whose messages should be frozen
    * @param <V>    value type
-   * @return packet containing wrapped messages
+   * @return new packet with the same metadata as {@code packet} but with immutability-shielded messages
    */
   public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
 
@@ -110,12 +113,12 @@ public class PacketUtility {
   }
 
   /**
-   * Encodes a packet to its JSON string representation.
+   * Serializes all messages in {@code packet} to a JSON array string.
    *
-   * @param packet packet to encode
+   * @param packet the packet whose messages are to be serialized
    * @param <V>    value type
-   * @return encoded packet string
-   * @throws IOException if encoding fails
+   * @return JSON array string containing every message in the packet
+   * @throws IOException if encoding any message to the output fails
    */
   public static <V extends Value<V>> String encode (Packet<V> packet)
     throws IOException {

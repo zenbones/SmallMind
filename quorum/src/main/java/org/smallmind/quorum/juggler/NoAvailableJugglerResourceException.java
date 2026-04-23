@@ -33,16 +33,21 @@
 package org.smallmind.quorum.juggler;
 
 /**
- * Thrown when all available juggling resources have been exhausted or blacklisted.
+ * Thrown by {@link Juggler#pickResource()} when every managed pin has been blacklisted
+ * and no resource can be returned to the caller.
+ * <p>
+ * The exception is constructed with the most recent blacklist cause as its primary cause; all
+ * earlier blacklist causes are attached as suppressed exceptions so callers can inspect the
+ * full failure history via {@link Throwable#getSuppressed()}.
  */
 public class NoAvailableJugglerResourceException extends JugglerResourceException {
 
   /**
-   * Creates the exception with a root cause and formatted message.
+   * Creates the exception with the most recent blacklist cause and a descriptive message.
    *
-   * @param throwable originating cause
-   * @param message   message format string
-   * @param args      optional format arguments
+   * @param throwable the exception from the most recently blacklisted resource
+   * @param message   {@link java.util.Formatter}-style format string describing why no resource is available
+   * @param args      arguments referenced by the format string
    */
   public NoAvailableJugglerResourceException (Throwable throwable, String message, Object... args) {
 

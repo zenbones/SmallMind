@@ -38,8 +38,10 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.scribe.slf4j.ScribeLoggerFactory;
 
 /**
- * SLF4J binder that exposes the scribe-based {@link ILoggerFactory}.
- * This integrates the scribe logger implementation into the SLF4J discovery mechanism.
+ * SLF4J {@link LoggerFactoryBinder} placed in the {@code org.slf4j.impl} package to satisfy
+ * the SLF4J 1.x static binding contract; routes all SLF4J logger requests to the scribe
+ * framework via {@link ScribeLoggerFactory} and registers {@code "org.slf4j."} as a logging
+ * package prefix so that call-site resolution skips SLF4J frames.
  */
 public class StaticLoggerBinder implements LoggerFactoryBinder {
 
@@ -53,7 +55,8 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
   }
 
   /**
-   * Creates a binder that delegates logger creation to {@link ScribeLoggerFactory}.
+   * Constructs the binder and initialises the {@link ScribeLoggerFactory} that will
+   * serve all subsequent {@link #getLoggerFactory()} calls.
    */
   public StaticLoggerBinder () {
 
@@ -61,9 +64,9 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
   }
 
   /**
-   * Provides the singleton binder instance expected by SLF4J.
+   * Returns the process-wide singleton required by the SLF4J static binding mechanism.
    *
-   * @return the static binder
+   * @return the single {@code StaticLoggerBinder} instance
    */
   public static StaticLoggerBinder getSingleton () {
 
@@ -71,9 +74,9 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
   }
 
   /**
-   * Returns the factory that produces scribe-backed SLF4J loggers.
+   * Returns the {@link ILoggerFactory} that creates scribe-backed {@link org.slf4j.Logger} adapters.
    *
-   * @return the logger factory instance
+   * @return the logger factory bound to this implementation
    */
   public ILoggerFactory getLoggerFactory () {
 
@@ -81,9 +84,9 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
   }
 
   /**
-   * Returns the fully qualified class name of the bound logger factory.
+   * Reports the fully-qualified class name of the bound factory for SLF4J internal diagnostics.
    *
-   * @return the logger factory class name
+   * @return the canonical name of {@link ScribeLoggerFactory}
    */
   public String getLoggerFactoryClassStr () {
 

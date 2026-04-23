@@ -33,15 +33,16 @@
 package org.smallmind.nutsnbolts.reflection;
 
 /**
- * Validator that treats empty strings as {@code null} values.
+ * {@link OverlayNullifierValidator} implementation that considers a string to be equivalent to
+ * {@code null} when it is empty.
  */
 public class EmptyStringNullifierValidator implements OverlayNullifierValidator<EmptyStringNullifier, String> {
 
   /**
-   * Returns {@code true} when the supplied string is empty.
+   * Returns {@code true} when the supplied string contains no characters.
    *
-   * @param string the value being tested
-   * @return {@code true} if the value should be considered {@code null}
+   * @param string the string value to evaluate; must not be {@code null}
+   * @return {@code true} if the string is empty and should be treated as {@code null}
    */
   @Override
   public boolean equivalentToNull (String string) {

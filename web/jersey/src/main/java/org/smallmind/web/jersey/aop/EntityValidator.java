@@ -40,7 +40,8 @@ import jakarta.validation.executable.ExecutableValidator;
 import org.hibernate.validator.HibernateValidator;
 
 /**
- * Provides executable validation utilities that integrate with {@link EntityParameterNameProvider}.
+ * Utility that performs Hibernate Validator executable validation with {@link EntityParameterNameProvider}-aware
+ * parameter naming.
  */
 public class EntityValidator {
 
@@ -52,13 +53,13 @@ public class EntityValidator {
   }
 
   /**
-   * Validates the supplied method parameters and throws {@link EntityValidationException} on violations.
+   * Validates the arguments of a method invocation and throws if any constraint is violated.
    *
-   * @param object     the object whose method is being invoked
+   * @param object     the object whose method is being called
    * @param method     the method under validation
-   * @param parameters invocation arguments
+   * @param parameters the arguments passed to the method
    * @param <T>        type of the target object
-   * @throws EntityValidationException when constraint violations are present
+   * @throws EntityValidationException if any parameter constraint is violated
    */
   public static <T> void validateParameters (T object, Method method, Object[] parameters) {
 
@@ -70,13 +71,13 @@ public class EntityValidator {
   }
 
   /**
-   * Validates the return value of a method call.
+   * Validates the return value of a method and throws if any constraint is violated.
    *
-   * @param object      the object whose method was invoked
-   * @param method      the executed method
-   * @param returnValue value returned by the method
+   * @param object      the object whose method was called
+   * @param method      the method that produced the return value
+   * @param returnValue the value returned by the method
    * @param <T>         type of the target object
-   * @throws EntityValidationException when constraint violations are present
+   * @throws EntityValidationException if any return value constraint is violated
    */
   public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
 

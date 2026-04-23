@@ -37,9 +37,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Helper runnable that creates a component instance on a worker thread while allowing timeout aborts.
+ * Offloads component creation onto a dedicated thread so that the caller can enforce a
+ * timeout via {@link #abort()}.
+ * <p>
+ * Usage pattern: construct the worker, start it on a daemon thread, join that thread for the
+ * desired timeout duration, then call {@link #abort()}. If the worker finished before the
+ * timeout, {@code abort()} returns {@code false} and {@link #getComponentInstance()} returns
+ * the result. If the creation was still in progress, {@code abort()} returns {@code true} and
+ * the worker, once it finishes, will close any instance it managed to create and log a warning.
+ * <p>
+ * A three-value state machine guards the transition between completion states:
+ * {@code null} (running), {@code COMPLETED}, {@code ABORTED} (caller timed out), and
+ * {@code TERMINATED} (factory threw).
  *
- * @param <C> component type
+ * @param <C> the type of component being created
  */
 public class ComponentCreationWorker<C> implements Runnable {
 
@@ -53,9 +64,9 @@ public class ComponentCreationWorker<C> implements Runnable {
   private Exception exception;
 
   /**
-   * Creates a worker tied to the provided pool.
+   * Creates a worker that will call the factory belonging to {@code componentPool}.
    *
-   * @param componentPool owning pool
+   * @param componentPool the pool whose {@link ComponentInstanceFactory} will be invoked
    */
   public ComponentCreationWorker (ComponentPool<C> componentPool) {
 
@@ -63,9 +74,10 @@ public class ComponentCreationWorker<C> implements Runnable {
   }
 
   /**
-   * Returns the component instance created by the worker, or {@code null} if none.
+   * Returns the component instance created by this worker, or {@code null} if creation has
+   * not yet finished or if it failed.
    *
-   * @return created component instance
+   * @return the created {@link ComponentInstance}, or {@code null}
    */
   public ComponentInstance<C> getComponentInstance () {
 
@@ -73,10 +85,20 @@ public class ComponentCreationWorker<C> implements Runnable {
   }
 
   /**
-   * Requests abortion of the creation process. If work already finished and failed, the cause is thrown.
+   * Attempts to abort this worker before it delivers a result.
+   * <p>
+   * If the worker has not yet completed, this method transitions its state to
+   * {@code ABORTED} and returns {@code true} immediately. Any instance the factory
+   * subsequently produces will be closed and a warning will be logged.
+   * <p>
+   * If the worker has already finished (successfully or with an error) this method waits
+   * for the worker thread to finish, then returns {@code false}. If the worker terminated
+   * with an exception, that exception is re-thrown so the caller can propagate it.
    *
-   * @return {@code true} if the creation was aborted before completion, {@code false} otherwise
-   * @throws Exception if the worker terminated with an exception before aborting
+   * @return {@code true} if the abort pre-empted a successful completion; {@code false} if
+   * the worker had already finished when this method was called
+   * @throws Exception the exception thrown by the factory if the worker terminated with one
+   *                   before the abort attempt
    */
   public boolean abort ()
     throws Exception {
@@ -95,8 +117,17 @@ public class ComponentCreationWorker<C> implements Runnable {
   }
 
   /**
-   * Performs creation using the pool's factory and records completion/abort state.
+   * Invokes the pool's factory to create a component instance.
+   * <p>
+   * On successful creation the state is set to {@code COMPLETED}. If an
+   * {@code ABORTED} signal arrived first, the newly created instance is closed
+   * immediately and a warning is logged.
+   * <p>
+   * On factory failure the state is set to {@code TERMINATED} and the exception
+   * is stored for retrieval by a subsequent call to {@link #abort()}, unless the
+   * abort already occurred (in which case the exception is only logged).
    */
+  @Override
   public void run () {
 
     try {

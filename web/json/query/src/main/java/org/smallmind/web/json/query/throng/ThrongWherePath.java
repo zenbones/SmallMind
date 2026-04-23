@@ -35,14 +35,16 @@ package org.smallmind.web.json.query.throng;
 import org.smallmind.web.json.query.WherePath;
 
 /**
- * Throng implementation of {@link WherePath} that only exposes the field name (root/path unsupported).
+ * Throng (MongoDB) implementation of {@link WherePath} that exposes only the field name; root and path access are unsupported.
  */
 public class ThrongWherePath extends WherePath<Void, Void> {
 
   private final String field;
 
   /**
-   * @param field the name of the field represented by this path
+   * Creates a path that holds only the given field name.
+   *
+   * @param field field name for use in Throng filter expressions
    */
   public ThrongWherePath (String field) {
 
@@ -50,8 +52,9 @@ public class ThrongWherePath extends WherePath<Void, Void> {
   }
 
   /**
-   * Unsupported for Throng queries.
+   * Not supported for Throng queries.
    *
+   * @return nothing
    * @throws UnsupportedOperationException always
    */
   @Override
@@ -61,8 +64,9 @@ public class ThrongWherePath extends WherePath<Void, Void> {
   }
 
   /**
-   * Unsupported for Throng queries.
+   * Not supported for Throng queries.
    *
+   * @return nothing
    * @throws UnsupportedOperationException always
    */
   @Override
@@ -72,6 +76,8 @@ public class ThrongWherePath extends WherePath<Void, Void> {
   }
 
   /**
+   * Returns the field name.
+   *
    * @return field name
    */
   @Override

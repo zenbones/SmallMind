@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.json;
 import org.smallmind.nutsnbolts.http.HttpMethod;
 
 /**
- * JAXB adapter binding HTTP method names to the {@link HttpMethod} enum.
+ * JAXB adapter that converts HTTP method name strings to and from the {@link HttpMethod} enum.
  */
 public class HttpMethodEnumXmlAdapter extends EnumXmlAdapter<HttpMethod> {
 

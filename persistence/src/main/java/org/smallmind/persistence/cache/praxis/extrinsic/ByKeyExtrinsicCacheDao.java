@@ -47,15 +47,18 @@ import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
 /**
- * Cache DAO for external caches that require CAS semantics and store vectors by durable key.
- * Vectors reference instances through their keys to minimize payload size across processes.
+ * Cache DAO for extrinsic (out-of-process) caches that require compare-and-swap (CAS) semantics.
+ * Vectors are stored as key-based structures to minimize serialized size across process boundaries.
+ *
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
   /**
-   * Creates an extrinsic cache DAO using the provided cache domain.
+   * Creates a DAO backed by the provided cache domain.
    *
-   * @param cacheDomain cache domain supplying instance and vector caches
+   * @param cacheDomain the cache domain supplying instance and vector caches
    */
   public ByKeyExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
@@ -63,12 +66,14 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Persists a durable to the instance cache according to the requested update mode.
+   * Stores a durable in the instance cache according to the requested update mode.
+   * In {@code SOFT} mode an existing cached value takes precedence; in {@code HARD} mode the value is always overwritten.
    *
-   * @param durableClass managed durable class
-   * @param durable      durable instance to cache
-   * @param mode         update mode that controls overwrite behavior
-   * @return cached durable (existing or provided) or {@code null} when durable is null
+   * @param durableClass the managed durable class
+   * @param durable      the durable to cache; ignored when {@code null}
+   * @param mode         controls whether to overwrite an existing cache entry
+   * @return the cached durable (existing or provided), or {@code null} when {@code durable} is {@code null}
+   * @throws UnknownSwitchCaseException when an unrecognized {@link UpdateMode} is encountered
    */
   public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
@@ -94,10 +99,11 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Adds or updates a durable within a cached vector using CAS operations.
+   * Adds or updates a durable within a cached vector using optimistic CAS operations.
+   * The loop retries until the CAS succeeds or the vector no longer exists.
    *
-   * @param vectorKey cache key describing the vector
-   * @param durable   durable to insert or update
+   * @param vectorKey the cache key identifying the vector
+   * @param durable   the durable to insert or update; ignored when {@code null}
    */
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
 
@@ -121,10 +127,11 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Removes a durable from a cached vector using CAS, deleting the vector when it becomes empty or singular.
+   * Removes a durable from a cached vector using optimistic CAS operations, deleting the vector entirely
+   * when it is singular.
    *
-   * @param vectorKey cache key describing the vector
-   * @param durable   durable to remove
+   * @param vectorKey the cache key identifying the vector
+   * @param durable   the durable to remove; ignored when {@code null}
    */
   public void removeFromVector (VectorKey<D> vectorKey, D durable) {
 
@@ -151,11 +158,12 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Converts an arbitrary vector implementation into the ByKey-based extrinsic form expected by this DAO.
+   * Converts an arbitrary vector implementation into the key-based extrinsic form required by this DAO,
+   * leaving the vector unchanged when it is already the correct type.
    *
-   * @param managedClass durable class stored in the vector
-   * @param vector       incoming vector to migrate
-   * @return vector compatible with this DAO's storage expectations
+   * @param managedClass the durable class stored in the vector
+   * @param vector       the vector to migrate
+   * @return the original vector when already compatible, or a new key-based equivalent
    */
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
@@ -177,12 +185,12 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Creates a single-element vector backed by a durable key.
+   * Creates a new single-element vector that references the supplied durable by key.
    *
-   * @param vectorKey         cache key describing the target vector
-   * @param durable           durable to reference
-   * @param timeToLiveSeconds TTL for the vector
-   * @return new singular vector
+   * @param vectorKey         the cache key describing the target vector
+   * @param durable           the durable to reference
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @return a new singular key-based vector
    */
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
@@ -190,15 +198,15 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
   }
 
   /**
-   * Creates a multi-element vector backed by durable keys.
+   * Creates a new multi-element extrinsic vector from the provided durables.
    *
-   * @param vectorKey         cache key describing the target vector
-   * @param elementIter       iterable of durables to include
-   * @param comparator        comparator used for ordered vectors; {@code null} for natural ordering
-   * @param maxSize           maximum number of elements to retain
-   * @param timeToLiveSeconds TTL for the vector
-   * @param ordered           whether to maintain sorted order
-   * @return new extrinsic vector
+   * @param vectorKey         the cache key describing the target vector
+   * @param elementIter       the durables to include
+   * @param comparator        comparator for ordered vectors; {@code null} uses natural ordering
+   * @param maxSize           maximum number of elements to retain; zero or negative means unbounded
+   * @param timeToLiveSeconds the TTL for the vector in seconds
+   * @param ordered           {@code true} to maintain elements in sorted order
+   * @return a new {@link ByKeyExtrinsicVector}
    */
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 

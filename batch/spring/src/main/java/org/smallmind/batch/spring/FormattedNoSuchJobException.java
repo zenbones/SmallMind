@@ -35,15 +35,19 @@ package org.smallmind.batch.spring;
 import org.springframework.batch.core.launch.NoSuchJobException;
 
 /**
- * Runtime exception thrown when an expected job or execution cannot be located.
+ * {@link NoSuchJobException} variant thrown when a named job or job execution cannot be
+ * located in the repository.
+ * <p>
+ * Accepts a {@link String#format}-style message so that throw sites can embed diagnostic
+ * context (e.g. logical names or execution ids) without a separate formatting step.
  */
 public class FormattedNoSuchJobException extends NoSuchJobException {
 
   /**
-   * Builds an exception with a formatted message.
+   * Constructs the exception with a formatted message.
    *
-   * @param message format string, or {@code null} for a default message
-   * @param args arguments applied to the format string
+   * @param message {@link String#format} pattern; if {@code null}, a default message is used
+   * @param args    arguments substituted into {@code message}
    */
   public FormattedNoSuchJobException (String message, Object... args) {
 
@@ -51,11 +55,11 @@ public class FormattedNoSuchJobException extends NoSuchJobException {
   }
 
   /**
-   * Builds an exception with a formatted message and root cause.
+   * Constructs the exception with a formatted message and an underlying cause.
    *
-   * @param throwable the underlying cause
-   * @param message format string, or {@code null} for a default message
-   * @param args arguments applied to the format string
+   * @param throwable the root cause
+   * @param message   {@link String#format} pattern; if {@code null}, a default message is used
+   * @param args      arguments substituted into {@code message}
    */
   public FormattedNoSuchJobException (Throwable throwable, String message, Object... args) {
 

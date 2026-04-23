@@ -33,24 +33,25 @@
 package org.smallmind.nutsnbolts.resource;
 
 /**
- * Contract for factories that know how to create {@link Resource} instances for specific schemes.
+ * Service-provider contract for factories that construct {@link Resource} instances for
+ * one or more named schemes.
  */
 public interface ResourceGenerator {
 
   /**
-   * Returns the set of schemes this generator can resolve.
+   * Returns the collection of scheme names that this generator is capable of handling.
    *
-   * @return supported schemes
+   * @return the supported scheme names wrapped in a {@link ResourceSchemes} instance
    */
   ResourceSchemes getValidSchemes ();
 
   /**
-   * Creates a new {@link Resource} for the supplied scheme and path.
+   * Creates a new {@link Resource} for the given scheme and path.
    *
-   * @param scheme resource scheme requested
-   * @param path   raw path component (without the scheme)
-   * @return a resource instance ready for use
-   * @throws ResourceException if the scheme is unsupported or the resource cannot be constructed
+   * @param scheme the scheme portion of the resource identifier that this generator was selected to handle
+   * @param path   the raw path component of the identifier, without the scheme prefix
+   * @return a fully constructed {@link Resource} ready for use
+   * @throws ResourceException if the scheme is not supported by this generator or the resource cannot be constructed
    */
   Resource createResource (String scheme, String path)
     throws ResourceException;

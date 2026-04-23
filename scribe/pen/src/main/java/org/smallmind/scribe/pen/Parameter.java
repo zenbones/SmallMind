@@ -35,7 +35,8 @@ package org.smallmind.scribe.pen;
 import java.io.Serializable;
 
 /**
- * Immutable key/value pair used to carry contextual logging data.
+ * Immutable, serializable key/value pair that attaches structured contextual data to a {@link Record}, enabling
+ * appenders and formatters to include application-specific metadata alongside the log message.
  */
 public class Parameter implements Serializable {
 
@@ -43,10 +44,10 @@ public class Parameter implements Serializable {
   private final Serializable value;
 
   /**
-   * Creates a parameter instance.
+   * Constructs an immutable parameter with the given key and value.
    *
-   * @param key   parameter name
-   * @param value value to associate
+   * @param key   the name that identifies this parameter; must not be {@code null}
+   * @param value the serializable value to associate with the key; may be {@code null}
    */
   public Parameter (String key, Serializable value) {
 
@@ -55,9 +56,9 @@ public class Parameter implements Serializable {
   }
 
   /**
-   * Returns the parameter key.
+   * Returns the name that identifies this parameter.
    *
-   * @return key
+   * @return the parameter key; never {@code null}
    */
   public String getKey () {
 
@@ -65,9 +66,9 @@ public class Parameter implements Serializable {
   }
 
   /**
-   * Returns the parameter value.
+   * Returns the value associated with this parameter.
    *
-   * @return value
+   * @return the parameter value; may be {@code null}
    */
   public Serializable getValue () {
 

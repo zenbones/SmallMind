@@ -56,9 +56,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Session implementation that tracks state, transport, and queued long-poll messages.
+ * Bayeux session that carries a unique snowflake id, manages its own lifecycle state machine,
+ * and multiplexes inbound deliveries between a long-poll deque and direct streaming depending on
+ * the active transport.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed implements Session<V> {
 
@@ -79,14 +81,20 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private long lastContactTimestamp;
 
   /**
-   * Constructs a session bound to the supplied connection.
+   * Creates a session associated with the given connection, inheriting the long-polling mode from
+   * the transport.
    *
-   * @param onConnectedCallback        callback invoked when the session reaches CONNECTED
-   * @param onDisconnectedCallback     callback invoked when the session disconnects
-   * @param connection                 initial connection
-   * @param maxLongPollQueueSize       maximum queued responses for long polling
-   * @param maxIdleTimeoutMilliseconds idle timeout before termination
-   * @param overflowLogLevel           log level for long-poll overflow
+   * @param onConnectedCallback        invoked with this session when its state transitions to
+   *                                   {@link SessionState#CONNECTED}
+   * @param onDisconnectedCallback     invoked with this session when its state transitions to
+   *                                   {@link SessionState#DISCONNECTED}
+   * @param connection                 the transport connection backing this session
+   * @param maxLongPollQueueSize       maximum number of packets that may wait in the long-poll
+   *                                   deque before the oldest entry is dropped
+   * @param maxIdleTimeoutMilliseconds time without contact after which the session is eligible for
+   *                                   removal
+   * @param overflowLogLevel           log level used when the long-poll queue overflows; use
+   *                                   {@code null} to suppress overflow logging
    */
   public OumuamuaSession (Consumer<Session<V>> onConnectedCallback, Consumer<Session<V>> onDisconnectedCallback, Connection<V> connection, int maxLongPollQueueSize, long maxIdleTimeoutMilliseconds, Level overflowLogLevel) {
 
@@ -105,11 +113,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Applies session listeners to an outbound packet, allowing transformation or rejection.
+   * Passes the packet through all session-scoped {@link Session.PacketListener}s; only response
+   * and delivery packets are processed.
    *
-   * @param sender originating session
-   * @param packet packet to process
-   * @return potentially modified packet, or {@code null} to cancel delivery
+   * @param sender the session originating the packet, or {@code null} for server-side packets
+   * @param packet the packet to process; the matching listener method is selected by packet type
+   * @return the (possibly transformed) packet, or {@code null} if a listener vetoed it
    */
   private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
@@ -131,9 +140,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Adds a session listener.
+   * Appends a listener to the session's listener chain.
    *
-   * @param listener listener to register
+   * @param listener the listener to register
    */
   @Override
   public void addListener (Listener<V> listener) {
@@ -142,9 +151,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Removes a session listener.
+   * Removes a listener from the session's listener chain.
    *
-   * @param listener listener to remove
+   * @param listener the listener to remove; no-op if not present
    */
   @Override
   public void removeListener (Listener<V> listener) {
@@ -153,7 +162,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return session identifier
+   * Returns the unique hex-encoded snowflake id assigned to this session at creation.
+   *
+   * @return the immutable session identifier; never {@code null}
    */
   @Override
   public String getId () {
@@ -162,7 +173,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return maximum size of the long-poll queue
+   * Returns the capacity of the long-poll delivery deque before oldest entries are dropped.
+   *
+   * @return the maximum number of packets that may be queued for long polling
    */
   @Override
   public int getMaxLongPollQueueSize () {
@@ -171,9 +184,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Replaces the underlying connection, typically after reconnection.
+   * Atomically replaces the underlying connection so that subsequent deliveries use the new
+   * transport; called when a client reconnects and the existing session is reused.
    *
-   * @param connection new connection
+   * @param connection the new connection to associate with this session
    */
   public void hijack (Connection<V> connection) {
 
@@ -181,7 +195,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Invoked during cleanup to notify the connection.
+   * Delegates the cleanup notification to the currently associated connection so that transport
+   * resources (e.g., open HTTP responses) can be released.
    */
   public void onCleanup () {
 
@@ -193,7 +208,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return {@code true} when the connection transport is local
+   * Indicates whether the session's transport communicates within the same JVM rather than over
+   * a network connection.
+   *
+   * @return {@code true} if the transport is local
    */
   @Override
   public boolean isLocal () {
@@ -202,7 +220,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return whether the session is currently using long polling
+   * Indicates whether this session is currently operating in long-polling mode.
+   *
+   * @return {@code true} if packets are queued for long-poll retrieval
    */
   @Override
   public boolean isLongPolling () {
@@ -211,9 +231,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Sets long-polling mode explicitly.
+   * Overrides the long-polling mode detected from the transport, allowing the ack extension or
+   * other mechanism to force queued delivery.
    *
-   * @param longPolling {@code true} when the session should long-poll
+   * @param longPolling {@code true} to route deliveries through the long-poll deque
    */
   @Override
   public void setLongPolling (boolean longPolling) {
@@ -222,7 +243,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return current session state
+   * Returns the current lifecycle state of the session.
+   *
+   * @return one of {@link SessionState#INITIALIZED}, {@link SessionState#HANDSHOOK},
+   * {@link SessionState#CONNECTED}, or {@link SessionState#DISCONNECTED}
    */
   @Override
   public synchronized SessionState getState () {
@@ -231,7 +255,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Marks the session as handshook.
+   * Advances the session state to {@link SessionState#HANDSHOOK} after a successful handshake.
    */
   @Override
   public synchronized void completeHandshake () {
@@ -240,7 +264,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Marks the session connected and invokes the connected callback.
+   * Advances the session state to {@link SessionState#CONNECTED} and fires the connected callback.
    */
   @Override
   public synchronized void completeConnection () {
@@ -250,7 +274,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Marks the session disconnected and invokes the disconnected callback.
+   * Advances the session state to {@link SessionState#DISCONNECTED} and fires the disconnected
+   * callback.
    */
   @Override
   public synchronized void completeDisconnect () {
@@ -260,7 +285,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * @return transport currently associated with the session
+   * Returns the transport backing the currently active connection.
+   *
+   * @return the current {@link Transport}; never {@code null}
    */
   public Transport<V> getTransport () {
 
@@ -268,7 +295,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Updates the last-contact timestamp if not disconnected.
+   * Records the current time as the last-contact timestamp, resetting the idle timer; does nothing
+   * if the session is already disconnected.
    */
   public synchronized void contact () {
 
@@ -278,10 +306,10 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Checks whether the session has exceeded its idle timeout.
+   * Determines whether the session has been idle beyond its configured maximum.
    *
-   * @param now current timestamp
-   * @return {@code true} if the session should be removed
+   * @param now the current epoch millisecond timestamp to compare against the last-contact time
+   * @return {@code true} if the elapsed time since last contact exceeds the idle timeout
    */
   public synchronized boolean isRemovable (long now) {
 
@@ -289,11 +317,11 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Applies listeners to response packets.
+   * Passes a response packet through the session-scoped listener chain.
    *
-   * @param sender originating session
-   * @param packet packet to process
-   * @return processed packet or {@code null} to cancel
+   * @param sender the session generating the response
+   * @param packet the response packet to process
+   * @return the (possibly transformed) packet, or {@code null} if a listener vetoed it
    */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
@@ -302,9 +330,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Sends the packet using the active connection.
+   * Writes the packet immediately to the underlying connection without queuing.
    *
-   * @param packet packet to dispatch
+   * @param packet the packet to send over the current connection
    */
   @Override
   public void dispatch (Packet<V> packet) {
@@ -313,12 +341,14 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Polls the long-poll queue for the next packet, waiting up to the provided timeout.
+   * Retrieves the next pending long-poll packet, blocking until one is available or the timeout
+   * elapses.  The packet is run through the listener chain before being returned.
    *
-   * @param timeout wait duration
-   * @param unit    unit for timeout
-   * @return packet or {@code null} if none available before timeout
-   * @throws InterruptedException if interrupted while waiting
+   * @param timeout maximum time to wait
+   * @param unit    unit for {@code timeout}
+   * @return the next packet from the deque, processed by session listeners, or {@code null} if the
+   * timeout expires before a packet arrives
+   * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
   public Packet<V> poll (long timeout, TimeUnit unit)
@@ -351,11 +381,16 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Delivers a packet to this session, enqueueing or streaming based on configuration.
+   * Routes an inbound delivery packet to this session: streaming channels with non-long-polling
+   * transports bypass the queue and write directly; all other packets are enqueued in the
+   * long-poll deque, dropping the oldest entry and logging if the queue is full.
+   * Silently ignores the packet if the session is not in the {@link SessionState#CONNECTED} state.
    *
-   * @param fromChannel channel originating the delivery
-   * @param sender      session that published the packet
-   * @param packet      packet to deliver
+   * @param fromChannel the channel the packet was delivered through; its streaming flag drives
+   *                    the dispatch path
+   * @param sender      the session that published the packet, or {@code null} for server-side
+   *                    delivery
+   * @param packet      the already-frozen delivery packet
    */
   @Override
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {

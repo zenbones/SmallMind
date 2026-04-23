@@ -35,15 +35,15 @@ package org.smallmind.web.json.query;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
 /**
- * Marshals {@link WhereOperator} enums to lowercase strings for XML representation.
+ * JAXB adapter that marshals {@link WhereOperator} constants to their lowercase string names.
  */
 public class WhereOperatorEnumXmlAdapter extends EnumXmlAdapter<WhereOperator> {
 
   /**
-   * Converts a {@link WhereOperator} to its lowercase string form.
+   * Converts a {@link WhereOperator} value to its lowercase string representation.
    *
-   * @param enumeration operator value
-   * @return lowercase enum name
+   * @param enumeration operator to marshal
+   * @return lowercase name of the enum constant
    */
   @Override
   public String marshal (WhereOperator enumeration) {

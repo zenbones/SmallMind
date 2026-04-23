@@ -33,14 +33,15 @@
 package org.smallmind.persistence.orm.aop;
 
 /**
- * Indicates an inconsistency or misuse of session boundaries.
+ * {@link SessionError} raised when a non-transactional boundary is opened, closed, or encountered in an
+ * inconsistent state, such as ending a boundary that was never started.
  */
 public class SessionBoundaryError extends SessionError {
 
   /**
    * Creates a session boundary error with no message.
    *
-   * @param closure remaining boundary depth
+   * @param closure the number of remaining boundaries still open at the time of this error
    */
   public SessionBoundaryError (int closure) {
 
@@ -50,7 +51,7 @@ public class SessionBoundaryError extends SessionError {
   /**
    * Creates a session boundary error with a formatted message.
    *
-   * @param closure remaining boundary depth
+   * @param closure the number of remaining boundaries still open at the time of this error
    * @param message the message template
    * @param args    arguments referenced by the format specifiers in the message
    */
@@ -60,10 +61,10 @@ public class SessionBoundaryError extends SessionError {
   }
 
   /**
-   * Creates a session boundary error with a cause and formatted message.
+   * Creates a session boundary error with a cause and a formatted message.
    *
-   * @param closure   remaining boundary depth
-   * @param throwable the cause
+   * @param closure   the number of remaining boundaries still open at the time of this error
+   * @param throwable the underlying cause
    * @param message   the message template
    * @param args      arguments referenced by the format specifiers in the message
    */
@@ -73,10 +74,10 @@ public class SessionBoundaryError extends SessionError {
   }
 
   /**
-   * Creates a session boundary error with a cause.
+   * Creates a session boundary error with a cause and no message.
    *
-   * @param closure   remaining boundary depth
-   * @param throwable the cause
+   * @param closure   the number of remaining boundaries still open at the time of this error
+   * @param throwable the underlying cause
    */
   public SessionBoundaryError (int closure, Throwable throwable) {
 

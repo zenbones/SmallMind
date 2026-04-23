@@ -33,16 +33,56 @@
 package org.smallmind.memcached.cubby.command;
 
 /**
- * Enumerates the set mutation variants supported by memcached.
+ * Enumerates the mutation variants available for the memcached meta-set
+ * ({@code ms}) command, corresponding to the {@code M} flag values defined
+ * by the memcached meta-protocol.
+ *
+ * <ul>
+ *   <li>{@link #ADD} — store only if the key does not already exist ({@code E}).</li>
+ *   <li>{@link #APPEND} — append the value to the end of an existing item ({@code A}).</li>
+ *   <li>{@link #PREPEND} — prepend the value to the beginning of an existing item ({@code P}).</li>
+ *   <li>{@link #REPLACE} — store only if the key already exists ({@code R}).</li>
+ *   <li>{@link #SET} — unconditionally store the value ({@code S}).</li>
+ * </ul>
+ *
+ * <p>Each constant carries the single-character protocol token that is embedded
+ * in the {@code M} flag of the {@code ms} command line by
+ * {@link SetCommand#construct(org.smallmind.memcached.cubby.translator.KeyTranslator)}.</p>
  */
 public enum SetMode {
 
-  ADD('E'), APPEND('A'), PREPEND('P'), REPLACE('R'), SET('S');
+  /**
+   * Store the value only if the key does not already exist. Protocol token: {@code E}.
+   */
+  ADD('E'),
+
+  /**
+   * Append the value to the tail of an existing item. Protocol token: {@code A}.
+   */
+  APPEND('A'),
+
+  /**
+   * Prepend the value to the head of an existing item. Protocol token: {@code P}.
+   */
+  PREPEND('P'),
+
+  /**
+   * Store the value only if the key already exists. Protocol token: {@code R}.
+   */
+  REPLACE('R'),
+
+  /**
+   * Unconditionally store the value. Protocol token: {@code S}.
+   */
+  SET('S');
 
   private final char token;
 
   /**
-   * @param token protocol token representing the set mode
+   * Constructs a {@code SetMode} constant with its protocol token.
+   *
+   * @param token the single character used in the {@code ms} command line
+   *              to indicate the desired mutation variant
    */
   SetMode (char token) {
 
@@ -50,7 +90,10 @@ public enum SetMode {
   }
 
   /**
-   * @return protocol token for the mode
+   * Returns the single-character protocol token embedded in the {@code M} flag
+   * of the memcached meta-set command line.
+   *
+   * @return the protocol token representing this set mode
    */
   public char getToken () {
 

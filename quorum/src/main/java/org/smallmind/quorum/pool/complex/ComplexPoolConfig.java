@@ -38,8 +38,22 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.quorum.pool.PoolConfig;
 
 /**
- * Configuration for the complex component pool, including lifecycle validation, sizing,
- * and deconstruction timing.
+ * Extended configuration for the complex component pool, adding lifecycle validation, size
+ * pre-warming, deconstruction timeouts, and metrics control on top of the base
+ * {@link PoolConfig} properties.
+ * <p>
+ * All fields are stored in atomic references so that live changes are visible across threads
+ * without additional synchronization. Every setter validates its argument and throws
+ * {@link IllegalArgumentException} for negative values. Setters return {@code this} for
+ * fluent chaining.
+ * <p>
+ * <strong>Deconstruction:</strong> when any of {@code maxLeaseTimeSeconds},
+ * {@code maxIdleTimeSeconds}, or {@code maxProcessingTimeSeconds} is greater than zero, the pool
+ * attaches {@link DeconstructionFuse} instances to each pin. {@link #requiresDeconstruction()}
+ * reflects this condition.
+ * <p>
+ * <strong>Defaults:</strong> all flags {@code false}; all numeric limits {@code 0}
+ * (disabled / unbounded).
  */
 public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
 
@@ -55,16 +69,20 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   private final AtomicInteger maxProcessingTimeSeconds = new AtomicInteger(0);
 
   /**
-   * Creates a configuration with default values.
+   * Creates a configuration with all defaults.
    */
   public ComplexPoolConfig () {
 
   }
 
   /**
-   * Copy constructor that pulls values from another pool config.
+   * Copy constructor that applies all base-class and, when applicable, all complex-specific
+   * properties from {@code poolConfig}.
+   * <p>
+   * Complex-specific values are copied only when {@code poolConfig} is itself a
+   * {@link ComplexPoolConfig} (checked via assignability to avoid class-loader issues).
    *
-   * @param poolConfig configuration to copy
+   * @param poolConfig the source configuration; must not be {@code null}
    */
   public ComplexPoolConfig (PoolConfig<?> poolConfig) {
 
@@ -94,9 +112,11 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Indicates whether any deconstruction fuse is required based on configured limits.
+   * Returns {@code true} when at least one deconstruction timeout — lease, idle, or processing —
+   * is configured with a positive value, indicating that the pool should attach
+   * {@link DeconstructionFuse} instances to its pins.
    *
-   * @return {@code true} if lease, idle, or processing limits are set
+   * @return {@code true} if any deconstruction limit is active
    */
   public boolean requiresDeconstruction () {
 
@@ -104,9 +124,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Indicates whether lease time reporting is enabled.
+   * Returns whether the pool fires lease-time events and Claxon metrics when a component
+   * is returned.
    *
-   * @return {@code true} if lease time metrics are emitted
+   * @return {@code true} if per-component lease-time reporting is enabled
    */
   public boolean isReportLeaseTimeNanos () {
 
@@ -114,10 +135,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Enables or disables reporting of lease times in nanoseconds.
+   * Enables or disables per-component lease-time reporting via events and Claxon metrics.
    *
-   * @param reportLeaseTimeNanos whether to emit lease time metrics
-   * @return this configuration instance
+   * @param reportLeaseTimeNanos {@code true} to enable reporting
+   * @return this configuration instance for fluent chaining
    */
   public ComplexPoolConfig setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
@@ -127,9 +148,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Indicates whether existential stack trace capture is enabled.
+   * Returns whether the pool captures the stack trace of the thread that acquired each
+   * component, enabling later diagnosis of leaked or long-held components.
    *
-   * @return {@code true} if existential tracking is on
+   * @return {@code true} if existential stack-trace capture is enabled
    */
   public boolean isExistentiallyAware () {
 
@@ -137,10 +159,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Enables or disables existential tracking of component stack traces.
+   * Enables or disables stack-trace capture at component-acquisition time.
    *
-   * @param existentiallyAware {@code true} to capture stack traces
-   * @return this configuration instance
+   * @param existentiallyAware {@code true} to capture stack traces on acquire
+   * @return this configuration instance for fluent chaining
    */
   public ComplexPoolConfig setExistentiallyAware (boolean existentiallyAware) {
 
@@ -150,9 +172,9 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Indicates whether components are validated immediately after creation.
+   * Returns whether newly created components are validated before being placed into service.
    *
-   * @return {@code true} if validation is enabled on create
+   * @return {@code true} if validation on creation is enabled
    */
   public boolean isTestOnCreate () {
 
@@ -160,10 +182,13 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets whether components should be validated immediately after creation.
+   * Enables or disables validation of newly created components.
+   * <p>
+   * When enabled, a component that fails validation after creation causes a
+   * {@link ComponentValidationException} and the component is discarded.
    *
    * @param testOnCreate {@code true} to validate on creation
-   * @return this configuration instance
+   * @return this configuration instance for fluent chaining
    */
   public ComplexPoolConfig setTestOnCreate (boolean testOnCreate) {
 
@@ -173,9 +198,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Indicates whether components are validated when acquired from the pool.
+   * Returns whether components are validated when they are taken from the free queue for
+   * a caller.
    *
-   * @return {@code true} if validation is enabled on acquire
+   * @return {@code true} if validation on acquire is enabled
    */
   public boolean isTestOnAcquire () {
 
@@ -183,10 +209,13 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets whether components should be validated on acquisition from the pool.
+   * Enables or disables validation of components at acquisition time.
+   * <p>
+   * When enabled, a component that fails validation is removed and a different component is
+   * sought; creation of a new instance may be triggered if the free queue is exhausted.
    *
-   * @param testOnAcquire {@code true} to validate before handing out
-   * @return this configuration instance
+   * @param testOnAcquire {@code true} to validate before handing a component to a caller
+   * @return this configuration instance for fluent chaining
    */
   public ComplexPoolConfig setTestOnAcquire (boolean testOnAcquire) {
 
@@ -196,9 +225,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the configured initial pool size.
+   * Returns the number of component instances to create eagerly during
+   * {@link ComponentPool#startup()}.
    *
-   * @return number of instances to pre-create
+   * @return the initial pool size; {@code 0} means no eager creation
    */
   public int getInitialPoolSize () {
 
@@ -206,11 +236,11 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the initial number of components to create during startup.
+   * Sets the number of component instances to create eagerly during pool startup.
    *
    * @param initialPoolSize number of instances to pre-create; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code initialPoolSize} is negative
    */
   public ComplexPoolConfig setInitialPoolSize (int initialPoolSize) {
 
@@ -224,9 +254,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the minimum pool size.
+   * Returns the minimum number of instances the pool attempts to maintain at all times.
+   * <p>
+   * When a component is terminated the pool replaces it if doing so would keep the count at
+   * or above this floor.
    *
-   * @return minimum number of components to retain
+   * @return the minimum pool size; {@code 0} disables the floor
    */
   public int getMinPoolSize () {
 
@@ -234,11 +267,11 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the minimum number of components to maintain in the pool.
+   * Sets the minimum pool size floor.
    *
-   * @param minPoolSize minimum pool size; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @param minPoolSize minimum number of instances to retain; must be non-negative
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code minPoolSize} is negative
    */
   public ComplexPoolConfig setMinPoolSize (int minPoolSize) {
 
@@ -252,9 +285,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the creation timeout in milliseconds.
+   * Returns the maximum time in milliseconds the pool will wait for a new component instance
+   * to be constructed before abandoning the attempt.
+   * <p>
+   * A value of {@code 0} means there is no timeout; the factory call blocks indefinitely.
    *
-   * @return creation timeout
+   * @return the creation timeout in milliseconds; {@code 0} for no timeout
    */
   public long getCreationTimeoutMillis () {
 
@@ -262,11 +298,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the timeout in milliseconds for creating a new component instance.
+   * Sets the creation timeout.
    *
-   * @param creationTimeoutMillis timeout in milliseconds; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @param creationTimeoutMillis timeout in milliseconds; must be non-negative; {@code 0}
+   *                              disables the timeout
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code creationTimeoutMillis} is negative
    */
   public ComplexPoolConfig setCreationTimeoutMillis (long creationTimeoutMillis) {
 
@@ -280,9 +317,11 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the maximum lease time in seconds.
+   * Returns the maximum wall-clock time in seconds that a component may remain leased to a
+   * caller before the pool's {@link MaxLeaseTimeDeconstructionFuse} ignites and triggers
+   * reclamation.
    *
-   * @return lease timeout in seconds
+   * @return the max lease time in seconds; {@code 0} means no lease limit
    */
   public int getMaxLeaseTimeSeconds () {
 
@@ -290,11 +329,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the maximum lease time (seconds) before a component must be reclaimed.
+   * Sets the maximum lease time limit.
    *
-   * @param maxLeaseTimeSeconds max lease in seconds; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @param maxLeaseTimeSeconds max lease duration in seconds; must be non-negative; {@code 0}
+   *                            disables the limit
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code maxLeaseTimeSeconds} is negative
    */
   public ComplexPoolConfig setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
 
@@ -308,9 +348,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the maximum idle time in seconds.
+   * Returns the maximum time in seconds a component may sit on the free queue without being
+   * requested before the pool's {@link MaxIdleTimeDeconstructionFuse} ignites and retires it.
    *
-   * @return idle timeout in seconds
+   * @return the max idle time in seconds; {@code 0} means no idle limit
    */
   public int getMaxIdleTimeSeconds () {
 
@@ -318,11 +359,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the maximum idle time (seconds) before a component is deconstructed.
+   * Sets the maximum idle time limit.
    *
-   * @param maxIdleTimeSeconds max idle in seconds; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @param maxIdleTimeSeconds max idle duration in seconds; must be non-negative; {@code 0}
+   *                           disables the limit
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code maxIdleTimeSeconds} is negative
    */
   public ComplexPoolConfig setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
@@ -336,9 +378,14 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Retrieves the maximum processing time in seconds.
+   * Returns the maximum time in seconds a component may be actively processing (checked out)
+   * before the pool's {@link MaxProcessingTimeDeconstructionFuse} ignites and forcibly
+   * terminates it.
+   * <p>
+   * Unlike the lease and idle limits this limit is <em>prejudicial</em>: the fuse fires even
+   * if the caller has not yet returned the component.
    *
-   * @return processing timeout in seconds
+   * @return the max processing time in seconds; {@code 0} means no processing limit
    */
   public int getMaxProcessingTimeSeconds () {
 
@@ -346,11 +393,12 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * Sets the maximum processing time (seconds) an element can be checked out before being timed out.
+   * Sets the maximum processing time limit.
    *
-   * @param maxProcessingTimeSeconds max processing time in seconds; must be non-negative
-   * @return this configuration instance
-   * @throws IllegalArgumentException if the value is negative
+   * @param maxProcessingTimeSeconds max processing duration in seconds; must be non-negative;
+   *                                 {@code 0} disables the limit
+   * @return this configuration instance for fluent chaining
+   * @throws IllegalArgumentException if {@code maxProcessingTimeSeconds} is negative
    */
   public ComplexPoolConfig setMaxProcessingTimeSeconds (int maxProcessingTimeSeconds) {
 

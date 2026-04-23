@@ -33,7 +33,15 @@
 package org.smallmind.memcached.cubby;
 
 /**
- * Generates monotonically increasing opaque tokens suitable for CAS identifiers.
+ * Thread-safe generator that produces monotonically increasing opaque token strings.
+ *
+ * <p>Tokens are used as correlation identifiers on in-flight memcached requests, allowing
+ * asynchronous responses to be matched back to their originating commands. Internally the
+ * generator maintains a 32-byte counter whose digits are drawn from a printable ASCII alphabet
+ * of 89 characters, yielding a very large token space (89<sup>32</sup>) before wrapping.</p>
+ *
+ * <p>Each call to {@link #next()} is synchronized so the generator is safe for concurrent use
+ * from multiple threads.</p>
  */
 public class TokenGenerator {
 
@@ -42,9 +50,14 @@ public class TokenGenerator {
   private final byte[] counter = new byte[32];
 
   /**
-   * Produces the next token value.
+   * Returns the next token in the monotonically increasing sequence.
    *
-   * @return next token string
+   * <p>The returned string is composed of characters from the printable ASCII alphabet used
+   * by this generator. Its length grows as the counter overflows lower-order positions, up to
+   * a maximum of 32 characters. After the counter space is exhausted it wraps back to the
+   * first token.</p>
+   *
+   * @return the next unique token string; never {@code null} or empty
    */
   public synchronized String next () {
 

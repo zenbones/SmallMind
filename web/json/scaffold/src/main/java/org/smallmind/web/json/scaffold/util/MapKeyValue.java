@@ -35,7 +35,7 @@ package org.smallmind.web.json.scaffold.util;
 import jakarta.xml.bind.annotation.XmlElement;
 
 /**
- * Simple key/value holder used for marshaling maps through JAXB/Jackson.
+ * Simple key/value pair holder used to marshal map entries through JAXB/Jackson.
  */
 public class MapKeyValue<K, V> {
 
@@ -50,7 +50,7 @@ public class MapKeyValue<K, V> {
   }
 
   /**
-   * Creates a map entry with the supplied key and value.
+   * Creates an entry with the supplied key and value.
    *
    * @param key   entry key
    * @param value entry value

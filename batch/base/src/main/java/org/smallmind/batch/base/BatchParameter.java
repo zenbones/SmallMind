@@ -33,9 +33,15 @@
 package org.smallmind.batch.base;
 
 /**
- * Base wrapper for a typed batch parameter value and its job identity flag.
+ * Type-safe envelope for a single batch job parameter, combining a value with a job-instance
+ * identity flag.
+ * <p>
+ * Each concrete subclass pins {@code T} to a specific {@link ParameterType} so the job factory
+ * can select the correct Spring Batch {@code JobParameter} variant. The {@code identifying} flag
+ * governs whether the value is included in the unique key that distinguishes one job instance
+ * from another.
  *
- * @param <T> the wrapped parameter type
+ * @param <T> the Java type of the enclosed parameter value
  */
 public abstract class BatchParameter<T> {
 
@@ -43,10 +49,10 @@ public abstract class BatchParameter<T> {
   private final boolean identifying;
 
   /**
-   * Constructs a batch parameter wrapper.
+   * Stores the parameter value and identity flag.
    *
-   * @param value       the parameter value to be supplied to a job
-   * @param identifying {@code true} if the parameter participates in the identity of a job instance
+   * @param value       the value to deliver to the batch job
+   * @param identifying {@code true} if this value forms part of the job-instance key
    */
   public BatchParameter (T value, boolean identifying) {
 
@@ -55,14 +61,15 @@ public abstract class BatchParameter<T> {
   }
 
   /**
-   * Identifies the underlying parameter type so that it can be translated to Spring Batch.
+   * Returns the discriminant that the job factory uses to select the correct Spring Batch
+   * parameter builder method.
    *
-   * @return the declared {@link ParameterType}
+   * @return the {@link ParameterType} declared by the concrete subclass
    */
   public abstract ParameterType getType ();
 
   /**
-   * Provides the raw value stored for the parameter.
+   * Returns the raw parameter value supplied at construction time.
    *
    * @return the parameter value
    */
@@ -72,9 +79,9 @@ public abstract class BatchParameter<T> {
   }
 
   /**
-   * Indicates whether this parameter should be treated as part of the job instance identity.
+   * Returns whether this parameter is part of the job-instance identity key.
    *
-   * @return {@code true} if identifying, otherwise {@code false}
+   * @return {@code true} if identifying, {@code false} otherwise
    */
   public boolean isIdentifying () {
 

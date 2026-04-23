@@ -42,9 +42,13 @@ import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Base runnable that pulls work items from a {@link WorkQueue} and processes them.
+ * Abstract base class for runnable workers that pull items from a {@link WorkQueue} and process them.
  *
- * @param <T> type of work handled
+ * <p>Subclasses implement {@link #engageWork} to define the per-item processing logic and {@link #close}
+ * to release any resources held between work items.  The run loop records idle-time metrics via Claxon
+ * and logs errors without terminating the loop so that transient failures do not kill the worker thread.</p>
+ *
+ * @param <T> the type of work item this worker consumes
  */
 public abstract class Worker<T> implements Runnable {
 
@@ -56,9 +60,9 @@ public abstract class Worker<T> implements Runnable {
   private Thread runnableThread;
 
   /**
-   * Creates a worker bound to the provided work queue.
+   * Constructs a worker that will drain items from the given queue.
    *
-   * @param workQueue queue supplying work items
+   * @param workQueue the queue from which this worker reads work items
    */
   public Worker (WorkQueue<T> workQueue) {
 
@@ -66,26 +70,28 @@ public abstract class Worker<T> implements Runnable {
   }
 
   /**
-   * Executes the unit of work received from the queue.
+   * Processes a single work item dequeued from the work queue.
    *
-   * @param transfer the queued item to process
-   * @throws Throwable if processing fails
+   * @param transfer the work item to process
+   * @throws Throwable if processing the item fails; the error is caught by the run loop and logged
    */
   public abstract void engageWork (T transfer)
     throws Throwable;
 
   /**
-   * Cleans up any resources held by the worker before shutdown.
+   * Releases resources held by this worker; called once during {@link #stop}.
    *
-   * @throws Exception if cleanup fails
+   * @throws Exception if resource cleanup fails
    */
   public abstract void close ()
     throws Exception;
 
   /**
-   * Requests cooperative termination of the worker thread and waits for exit.
+   * Signals the worker to stop, closes its resources, interrupts the worker thread, and blocks until the run loop exits.
    *
-   * @throws Exception if closing resources fails
+   * <p>If {@code stop} has already been called the method still awaits the exit latch before returning.</p>
+   *
+   * @throws Exception if {@link #close} throws
    */
   public void stop ()
     throws Exception {
@@ -101,7 +107,12 @@ public abstract class Worker<T> implements Runnable {
   }
 
   /**
-   * Continuously polls the queue for work until stopped, tracking idle time metrics and forwarding errors to the logger.
+   * Runs the work-polling loop until {@link #stop} is called.
+   *
+   * <p>On each iteration the loop polls the queue with a one-second timeout.  When an item is
+   * received, the elapsed idle time is recorded via Claxon and {@link #engageWork} is invoked.
+   * Interrupted exceptions that occur while the worker is not stopping are logged and the loop
+   * continues.  All other throwables are logged without stopping the loop.</p>
    */
   @Override
   public void run () {

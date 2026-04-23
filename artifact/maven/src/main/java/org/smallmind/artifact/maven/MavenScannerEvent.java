@@ -109,7 +109,7 @@ public class MavenScannerEvent extends EventObject {
    * has never been successfully resolved.
    *
    * @return array of current artifacts, one per monitored coordinate in registration order;
-   *         individual entries may be {@code null}
+   * individual entries may be {@code null}
    */
   public Artifact[] getArtifacts () {
 

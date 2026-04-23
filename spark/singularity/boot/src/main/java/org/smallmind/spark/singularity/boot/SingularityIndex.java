@@ -43,8 +43,14 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Serializable index of all files included in a Singularity bundle along with mappings that connect nested jar entries to their source jars.
- * The index is written into the assembled jar and consumed by {@link SingularityClassLoader} to resolve resources.
+ * Serializable manifest of the contents of a Singularity bundle. The Maven plugin builds an instance at packaging
+ * time, writes it to {@code META-INF/singularity/index/singularity.idx}, and {@link SingularityClassLoader} reads it
+ * at boot to learn how to form a URL for each class and resource.
+ * <p>The index distinguishes two populations:
+ * <ul>
+ *   <li>Bare files laid down directly in the outer jar (boot classes, user classes, indexed resources).</li>
+ *   <li>Entries drawn from bundled libraries, each pointing back to the nested jar that supplied it.</li>
+ * </ul>
  */
 public class SingularityIndex implements Serializable {
 
@@ -52,10 +58,10 @@ public class SingularityIndex implements Serializable {
   private final HashSet<String> fileNameSet = new HashSet<>();
 
   /**
-   * Records that a specific nested entry originated from a particular jar file.
+   * Records that an entry observed inside a bundled library jar should be served from that jar at runtime.
    *
-   * @param entryName the nested entry name inside the jar
-   * @param jarName   the jar file that contains the entry
+   * @param entryName the path of the entry as it appears inside the library jar
+   * @param jarName   the filename of the library jar under {@code META-INF/singularity/lib/}
    */
   public void addInverseJarEntry (String entryName, String jarName) {
 
@@ -63,9 +69,9 @@ public class SingularityIndex implements Serializable {
   }
 
   /**
-   * Adds the path for a file that should be exposed directly from the assembled archive.
+   * Records a file laid down directly inside the outer Singularity jar.
    *
-   * @param fileName normalized file path within the bundle
+   * @param fileName resource-style path (forward slashes) of the file relative to the jar root
    */
   public void addFileName (String fileName) {
 
@@ -73,10 +79,10 @@ public class SingularityIndex implements Serializable {
   }
 
   /**
-   * Produces an iterable that yields {@link URLEntry} instances for direct jar-based resource URLs.
+   * Exposes every directly stored file as a {@link URLEntry} whose URL uses the standard {@code jar:} protocol.
    *
-   * @param parentJarUrlPart the outer jar URL used as the base for the generated resource URLs
-   * @return an iterable over URL entries pointing to conventional jar URLs
+   * @param parentJarUrlPart the external form of the enclosing jar's URL, used as the prefix for each entry
+   * @return an {@link Iterable} that yields one URL entry per file, in arbitrary iteration order
    */
   public Iterable<URLEntry> getJarURLEntryIterable (String parentJarUrlPart) {
 
@@ -84,10 +90,11 @@ public class SingularityIndex implements Serializable {
   }
 
   /**
-   * Produces an iterable that yields {@link URLEntry} instances for nested jar URLs using the {@code singularity:} protocol.
+   * Exposes every library-jar entry as a {@link URLEntry} whose URL uses the {@code singularity:} protocol so that
+   * the custom connection can resolve it through the nested jar.
    *
-   * @param parentJarUrlPart the outer jar URL used as the base for the generated nested URLs
-   * @return an iterable over URL entries pointing to nested jars via the custom protocol
+   * @param parentJarUrlPart the external form of the enclosing jar's URL, used as the prefix for each entry
+   * @return an {@link Iterable} that yields one URL entry per library-sourced resource, in arbitrary iteration order
    */
   public Iterable<URLEntry> getSingularityURLEntryIterable (String parentJarUrlPart) {
 
@@ -100,9 +107,9 @@ public class SingularityIndex implements Serializable {
     private final String parentJarUrlPart;
 
     /**
-     * Creates an iterator that resolves stored file names to standard jar URLs using the provided parent jar prefix.
+     * Captures the parent jar URL that will prefix each {@code jar:}-protocol URL produced by this iterator.
      *
-     * @param parentJarUrlPart the base jar URL used to build resource locations
+     * @param parentJarUrlPart external form of the outer jar URL
      */
     public JarURLIterator (String parentJarUrlPart) {
 
@@ -110,7 +117,9 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * @return this iterator instance
+     * Lets this type serve as its own iterator.
+     *
+     * @return {@code this}
      */
     @Override
     public Iterator<URLEntry> iterator () {
@@ -119,7 +128,9 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * @return {@code true} when additional entries remain
+     * Indicates whether another file name remains to be converted into a {@link URLEntry}.
+     *
+     * @return {@code true} when at least one unvisited file name remains
      */
     @Override
     public boolean hasNext () {
@@ -128,10 +139,11 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * Builds the next {@link URLEntry} addressing the current file via a jar URL.
+     * Produces the next {@link URLEntry} using a standard {@code jar:} URL that references the file in the outer jar.
      *
-     * @return the next URL entry
-     * @throws RuntimeException if the generated URL is malformed
+     * @return a URL entry whose name is the file path and whose URL targets that file inside the outer jar
+     * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the
+     *                          composed URL is not well formed
      */
     @Override
     public URLEntry next () {
@@ -147,7 +159,7 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * Unsupported remove operation because the backing collection is immutable for iteration purposes.
+     * Removal is not meaningful because the backing set is treated as immutable once the index has been written.
      *
      * @throws UnsupportedOperationException always
      */
@@ -164,9 +176,9 @@ public class SingularityIndex implements Serializable {
     private final String parentJarUrlPart;
 
     /**
-     * Creates an iterator that resolves inverse entry mappings to {@code singularity:} URLs.
+     * Captures the parent jar URL that will prefix each {@code singularity:}-protocol URL produced by this iterator.
      *
-     * @param parentJarUrlPart the base jar URL used to build nested resource locations
+     * @param parentJarUrlPart external form of the outer jar URL
      */
     public SingularityURLIterator (String parentJarUrlPart) {
 
@@ -174,7 +186,9 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * @return this iterator instance
+     * Lets this type serve as its own iterator.
+     *
+     * @return {@code this}
      */
     @Override
     public Iterator<URLEntry> iterator () {
@@ -183,7 +197,9 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * @return {@code true} when further nested entries remain
+     * Indicates whether another inverse-mapped entry remains to be converted into a {@link URLEntry}.
+     *
+     * @return {@code true} when at least one unvisited mapping remains
      */
     @Override
     public boolean hasNext () {
@@ -192,10 +208,12 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * Builds the next {@link URLEntry} addressing an inner entry via the {@code singularity:} protocol.
+     * Produces the next {@link URLEntry} using a {@code singularity:} URL that points through the outer jar to the
+     * specific library jar and, from there, to the requested entry.
      *
-     * @return the next nested URL entry
-     * @throws RuntimeException if the generated URL is malformed
+     * @return a URL entry whose name is the entry path and whose URL targets that entry inside its bundled jar
+     * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the
+     *                          composed URL is not well formed
      */
     @Override
     public URLEntry next () {
@@ -211,7 +229,7 @@ public class SingularityIndex implements Serializable {
     }
 
     /**
-     * Unsupported remove operation because the backing collection is immutable for iteration purposes.
+     * Removal is not meaningful because the backing map is treated as immutable once the index has been written.
      *
      * @throws UnsupportedOperationException always
      */
@@ -223,7 +241,11 @@ public class SingularityIndex implements Serializable {
   }
 
   /**
-   * Simple pair that associates an entry name with its resolved {@link URL}.
+   * Immutable pairing of an entry's logical name (the key used by class/resource lookup) with the {@link URL} at
+   * which its bytes can be fetched.
+   *
+   * @param entryName the logical entry name (class path or resource path)
+   * @param entryURL  the URL at which the entry's bytes can be read
    */
   public record URLEntry(String entryName, URL entryURL) {
 

@@ -35,7 +35,8 @@ package org.smallmind.nutsnbolts.reflection;
 import java.lang.reflect.Method;
 
 /**
- * Represents a method signature by name and parameter type names.
+ * Captures a method's identity as a name plus an ordered array of fully-qualified parameter type names,
+ * suitable for use as a map key or equality check across class loaders.
  */
 public class Operation {
 
@@ -43,9 +44,9 @@ public class Operation {
   private final String[] signatureNames;
 
   /**
-   * Creates an operation representation from a reflected method.
+   * Constructs an operation from a reflected method, extracting its name and parameter type names.
    *
-   * @param method the method to describe
+   * @param method the reflected method whose identity should be captured
    */
   public Operation (Method method) {
 
@@ -61,10 +62,10 @@ public class Operation {
   }
 
   /**
-   * Creates an operation representation from explicit values.
+   * Constructs an operation from an explicit name and parameter type name array.
    *
-   * @param operationName  the method name
-   * @param signatureNames fully qualified parameter type names in declaration order
+   * @param operationName  the name of the method
+   * @param signatureNames the fully qualified names of the method's parameters, in declaration order
    */
   public Operation (String operationName, String[] signatureNames) {
 
@@ -73,7 +74,9 @@ public class Operation {
   }
 
   /**
-   * @return the name of the operation
+   * Returns the method name captured by this operation.
+   *
+   * @return the method name
    */
   public String getOperationName () {
 
@@ -81,7 +84,9 @@ public class Operation {
   }
 
   /**
-   * @return the parameter type names for this operation
+   * Returns the fully-qualified parameter type names for this operation in declaration order.
+   *
+   * @return array of parameter type names; empty when the method takes no parameters
    */
   public String[] getSignatureNames () {
 
@@ -89,9 +94,9 @@ public class Operation {
   }
 
   /**
-   * Computes a hash over the operation name and signature for use in hash collections.
+   * Computes a hash code combining the operation name and all parameter type names.
    *
-   * @return a hash code for this operation
+   * @return an integer hash code suitable for use in hash-based collections
    */
   public int hashCode () {
 
@@ -106,10 +111,10 @@ public class Operation {
   }
 
   /**
-   * Compares operations by name and ordered parameter type names.
+   * Compares this operation to another object by method name and parameter type names in order.
    *
-   * @param o the object to compare
-   * @return {@code true} if the operations represent the same signature
+   * @param o the object to compare with this operation
+   * @return {@code true} if {@code o} is an {@code Operation} with the same name and signature
    */
   public boolean equals (Object o) {
 

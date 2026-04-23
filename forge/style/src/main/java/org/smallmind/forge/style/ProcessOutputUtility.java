@@ -40,17 +40,24 @@ import java.util.concurrent.TimeUnit;
 import com.sun.jdi.connect.TransportTimeoutException;
 
 /**
- * Runs a process and buffers its standard output for later parsing.
+ * Utility for launching a subprocess and buffering its entire standard output for subsequent
+ * parsing. The process must complete within 3 seconds after its output stream is fully consumed;
+ * callers receive a {@link ByteArrayOutputStream} containing the captured bytes.
  */
 public class ProcessOutputUtility {
 
   /**
-   * Execute a command and capture its standard output.
+   * Execute {@code commands} as a subprocess, capture its standard output, and return the buffer.
    *
-   * @param commandDir the working directory for the process
-   * @param commands   the command and arguments to run
-   * @return the buffered standard output
-   * @throws IOException if the process cannot be started, its output cannot be read, or it fails to finish in time
+   * <p>The process is started with {@code commandDir} as its working directory. Standard output is
+   * read to completion before waiting for the process to exit. If the process has not exited
+   * within 3 seconds after the output stream closes, a {@link TransportTimeoutException} is thrown.
+   *
+   * @param commandDir working directory for the subprocess
+   * @param commands   the command and its arguments
+   * @return a {@link ByteArrayOutputStream} containing the full captured standard output
+   * @throws IOException      if the process cannot be started or its output stream cannot be read
+   * @throws RuntimeException wrapping {@link InterruptedException} if the wait for process exit is interrupted
    */
   public static ByteArrayOutputStream buffer (Path commandDir, String... commands)
     throws IOException {

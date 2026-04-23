@@ -46,7 +46,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring {@link FactoryBean} that constructs an asymmetric key from raw text and stores it as a singleton.
+ * Spring {@link FactoryBean} that parses raw key text into an asymmetric {@link Key} and exposes it as a singleton bean.
  */
 public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingBean {
 
@@ -58,7 +58,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   private String raw;
 
   /**
-   * @param algorithm asymmetric algorithm of the supplied key
+   * Sets the asymmetric algorithm that the supplied key material belongs to.
+   *
+   * @param algorithm the algorithm identifying the type of key being loaded
    */
   public void setAlgorithm (AsymmetricAlgorithm algorithm) {
 
@@ -66,7 +68,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * @param spec the encoding of the supplied key material
+   * Sets the encoding format of the supplied raw key material.
+   *
+   * @param spec the key encoding format (e.g., OPENSSH, PKCS8, X509)
    */
   public void setSpec (AsymmetricKeySpec spec) {
 
@@ -74,7 +78,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * @param provider the security provider to use, or {@code null} for default
+   * Sets the security provider to use when constructing the key, or {@code null} to use the JVM default.
+   *
+   * @param provider the security provider, or {@code null} for {@link SecurityProvider#DEFAULT}
    */
   public void setProvider (SecurityProvider provider) {
 
@@ -82,7 +88,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * @param keyType whether the key is public or private
+   * Sets whether the raw key material represents a public or private key.
+   *
+   * @param keyType the key type indicator
    */
   public void setKeyType (AsymmetricKeyType keyType) {
 
@@ -90,7 +98,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * @param raw the raw text of the key
+   * Sets the raw encoded key text to parse.
+   *
+   * @param raw the encoded key text in the format specified by {@link #setSpec(AsymmetricKeySpec)}
    */
   public void setRaw (String raw) {
 
@@ -98,7 +108,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * {@inheritDoc}
+   * Returns {@code true} because this factory always produces the same singleton key instance.
+   *
+   * @return {@code true}
    */
   @Override
   public boolean isSingleton () {
@@ -107,7 +119,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link Key}{@code .class}
    */
   @Override
   public Class<?> getObjectType () {
@@ -116,13 +130,13 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * Builds the key using the configured parameters once properties are set.
+   * Constructs the key from the configured algorithm, encoding, provider, and raw text after all properties have been set.
    *
-   * @throws IOException                   if the raw key cannot be parsed
-   * @throws NoSuchProviderException       if the provider is unknown
-   * @throws NoSuchAlgorithmException      if the algorithm is unavailable
-   * @throws InvalidKeySpecException       if the key spec is invalid
-   * @throws InappropriateKeySpecException if the key spec cannot represent the key type
+   * @throws IOException                   if the raw key text cannot be parsed
+   * @throws NoSuchProviderException       if the configured security provider is not registered
+   * @throws NoSuchAlgorithmException      if the configured algorithm is not available
+   * @throws InvalidKeySpecException       if the key spec derived from the raw text is invalid
+   * @throws InappropriateKeySpecException if the configured encoding is not compatible with the configured key type
    */
   @Override
   public void afterPropertiesSet ()
@@ -132,7 +146,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   }
 
   /**
-   * @return the constructed key
+   * Returns the asymmetric key constructed during {@link #afterPropertiesSet()}.
+   *
+   * @return the constructed {@link Key}
    */
   @Override
   public Key getObject () {

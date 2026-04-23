@@ -36,7 +36,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Segmented byte array storage used by {@link ByteArrayIOStream}, tracking a moving limit bookmark.
+ * Grows-on-demand byte storage composed of fixed-size segments, tracking a limit bookmark
+ * that marks the logical end of data written by {@link ByteArrayIOStream}.
  */
 public class ByteArrayIOBuffer {
 
@@ -45,7 +46,7 @@ public class ByteArrayIOBuffer {
   private final int allocation;
 
   /**
-   * Creates an empty buffer with the specified segment allocation size.
+   * Creates an empty buffer whose segments each hold the specified number of bytes.
    *
    * @param allocation number of bytes per segment
    */
@@ -57,9 +58,9 @@ public class ByteArrayIOBuffer {
   }
 
   /**
-   * Copy constructor that deep copies segment data and bookmarks.
+   * Creates an independent deep copy of an existing buffer, duplicating all segment data and the limit bookmark.
    *
-   * @param segmentBuffer buffer to clone
+   * @param segmentBuffer the buffer to clone
    */
   public ByteArrayIOBuffer (ByteArrayIOBuffer segmentBuffer) {
 
@@ -76,7 +77,9 @@ public class ByteArrayIOBuffer {
   }
 
   /**
-   * @return allocation (segment size) in bytes
+   * Returns the fixed capacity of each segment in bytes.
+   *
+   * @return bytes per segment
    */
   public int getAllocation () {
 
@@ -84,7 +87,9 @@ public class ByteArrayIOBuffer {
   }
 
   /**
-   * @return list of byte-array segments comprising the buffer
+   * Returns the mutable list of fixed-size byte-array segments that back this buffer.
+   *
+   * @return ordered list of segments
    */
   public ArrayList<byte[]> getSegmentList () {
 
@@ -92,7 +97,9 @@ public class ByteArrayIOBuffer {
   }
 
   /**
-   * @return bookmark representing the logical end-of-stream
+   * Returns the bookmark that marks the position one past the last byte of data in the buffer.
+   *
+   * @return the limit bookmark
    */
   public ByteArrayIOBookmark getLimitBookmark () {
 
@@ -100,9 +107,9 @@ public class ByteArrayIOBuffer {
   }
 
   /**
-   * Clears all segments and rewinds the limit bookmark.
+   * Discards all segments and resets the limit bookmark to position zero.
    *
-   * @throws IOException not thrown currently; kept for interface symmetry
+   * @throws IOException not currently thrown; declared for interface symmetry
    */
   public void clear ()
     throws IOException {

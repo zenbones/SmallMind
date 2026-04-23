@@ -41,7 +41,25 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Monitors inactive hosts and attempts periodic reconnection, re-enabling routing when successful.
+ * Background daemon that periodically probes offline memcached hosts and triggers reconnection
+ * when a host becomes reachable again.
+ *
+ * <p>{@code ServerDefibrillator} runs as a daemon thread launched by {@link ConnectionCoordinator}
+ * during startup. On each iteration it sleeps for the configured
+ * {@link CubbyConfiguration#getResuscitationSeconds() resuscitation interval}, then iterates the
+ * {@link ServerPool} looking for hosts whose {@link HostControl#isActive()} flag is {@code false}.
+ * For each inactive host it opens a plain TCP socket to verify reachability. If the connection
+ * succeeds the host is added to a reconnection queue; after all inactive hosts have been probed the
+ * queue is drained by calling {@link ConnectionCoordinator#reconnect(MemcachedHost)} for each
+ * candidate.</p>
+ *
+ * <p>A fresh {@link InetSocketAddress} is constructed for each probe so that DNS changes
+ * (e.g., a load balancer rotating its backend address) are picked up automatically. The resolved
+ * address is stored back into the {@link MemcachedHost} via
+ * {@link MemcachedHost#regenerate(InetSocketAddress)} before reconnection.</p>
+ *
+ * <p>Shutdown is cooperative: {@link #stop()} signals the loop via a {@link CountDownLatch} and
+ * blocks until the run loop confirms termination via a second latch.</p>
  */
 public class ServerDefibrillator implements Runnable {
 
@@ -54,11 +72,11 @@ public class ServerDefibrillator implements Runnable {
   private final int readTimeoutMilliseconds;
 
   /**
-   * Creates a new defibrillator.
+   * Constructs a defibrillator bound to the given coordinator and pool.
    *
-   * @param connectionCoordinator coordinator used to rebuild connections
-   * @param configuration         runtime configuration including timeouts
-   * @param serverPool            hosts to monitor
+   * @param connectionCoordinator the coordinator used to rebuild connections for recovered hosts
+   * @param configuration         runtime configuration supplying timeout and interval values
+   * @param serverPool            the pool of hosts to monitor for inactive entries
    */
   public ServerDefibrillator (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, ServerPool serverPool) {
 
@@ -71,9 +89,9 @@ public class ServerDefibrillator implements Runnable {
   }
 
   /**
-   * Requests shutdown and waits for the monitoring loop to terminate.
+   * Signals the monitoring loop to stop and waits until the run loop has fully terminated.
    *
-   * @throws InterruptedException if interrupted while awaiting termination
+   * @throws InterruptedException if the calling thread is interrupted while awaiting termination
    */
   public void stop ()
     throws InterruptedException {
@@ -83,7 +101,12 @@ public class ServerDefibrillator implements Runnable {
   }
 
   /**
-   * Periodically probes inactive hosts and reconnects any that respond.
+   * Executes the host-monitoring loop. On each iteration the thread sleeps for the configured
+   * resuscitation interval, then probes all inactive hosts via a plain TCP connection attempt.
+   * Hosts that respond successfully are reconnected through the {@link ConnectionCoordinator}.
+   *
+   * <p>The loop exits when {@link #stop()} is called or the thread is interrupted. In both cases
+   * {@link #terminatedLatch} is counted down to unblock any caller waiting in {@link #stop()}.</p>
    */
   @Override
   public void run () {

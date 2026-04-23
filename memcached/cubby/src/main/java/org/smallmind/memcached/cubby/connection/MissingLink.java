@@ -33,7 +33,18 @@
 package org.smallmind.memcached.cubby.connection;
 
 /**
- * Couples a serialized command with its callback while in-flight on the connection.
+ * An immutable pairing that binds a serialized command ({@link CommandBuffer}) to the
+ * {@link RequestCallback} that must be notified when the server's response arrives.
+ *
+ * <p>Instances travel through two queues inside {@link NIOCubbyConnection}: they are first
+ * placed on the <em>request queue</em> where the write side of the NIO loop picks them up and
+ * sends the bytes to the server, then immediately moved to the <em>response queue</em> so the
+ * read side can correlate the incoming response with the waiting callback. Because memcached
+ * answers requests in order, the two queues stay synchronized and no additional correlation
+ * identifier is needed.</p>
+ *
+ * <p>The callback may be {@code null} for server-initiated maintenance commands (such as
+ * keep-alive NOOPs) where no client is waiting for a result.</p>
  */
 public class MissingLink {
 
@@ -41,10 +52,11 @@ public class MissingLink {
   private final CommandBuffer commandBuffer;
 
   /**
-   * Constructs a link entry for the given request.
+   * Creates a new link coupling the given callback to its outgoing command.
    *
-   * @param requestCallback callback expecting the response
-   * @param commandBuffer   serialized command buffer
+   * @param requestCallback callback to invoke when the matching response is received;
+   *                        may be {@code null} if no caller is waiting for the result
+   * @param commandBuffer   the serialized wire-format bytes of the command to send
    */
   public MissingLink (RequestCallback requestCallback, CommandBuffer commandBuffer) {
 
@@ -53,7 +65,9 @@ public class MissingLink {
   }
 
   /**
-   * @return callback to notify when a response arrives
+   * Returns the callback to notify when the server's response for this command is parsed.
+   *
+   * @return the associated {@link RequestCallback}, or {@code null} if no caller is waiting
    */
   public RequestCallback getRequestCallback () {
 
@@ -61,7 +75,9 @@ public class MissingLink {
   }
 
   /**
-   * @return serialized command buffer
+   * Returns the buffered, serialized command that will be written to the socket channel.
+   *
+   * @return the {@link CommandBuffer} containing the raw request bytes and sequence index
    */
   public CommandBuffer getCommandBuffer () {
 

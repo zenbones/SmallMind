@@ -41,8 +41,9 @@ import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 /**
- * Native record implementation used by the indigenous logger backend.
- * Captures message details, context, and sequence metadata for a log event.
+ * Native log-event record for the indigenous scribe backend that captures the originating thread id and name,
+ * a global sequence number, and the creation timestamp at construction time, and resolves the formatted message
+ * on demand via {@link MessageTranslator}.
  */
 public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> implements RecordWrapper<IndigenousRecord> {
 
@@ -58,13 +59,14 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   private LoggerContext loggerContext;
 
   /**
-   * Constructs a new record representing a log event.
+   * Builds a record for a log event, capturing the current thread id and name, a global sequence number
+   * from {@link SequenceGenerator}, and the current wall-clock time at construction.
    *
-   * @param loggerName name of the logger emitting the record
-   * @param level      severity level
-   * @param throwable  optional throwable to attach
-   * @param message    message template
-   * @param args       message arguments
+   * @param loggerName the name of the logger emitting this record
+   * @param level      the severity level of the event
+   * @param throwable  optional throwable associated with the event, or {@code null}
+   * @param message    message template to be resolved by {@link MessageTranslator}
+   * @param args       arguments substituted into the message template
    */
   public IndigenousRecord (String loggerName, Level level, Throwable throwable, String message, Object... args) {
 
@@ -82,9 +84,10 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns this record for compatibility with downstream handlers.
+   * Returns the scribe {@link Record} view of this object; since this class is both record and wrapper,
+   * the method returns {@code this}.
    *
-   * @return this record instance
+   * @return this instance as a {@link Record}
    */
   @Override
   public Record<IndigenousRecord> getRecord () {
@@ -93,9 +96,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the native representation of the log entry.
+   * Returns the native log-entry object; for the indigenous backend this is the record itself.
    *
-   * @return this record instance
+   * @return this instance as the native log entry
    */
   @Override
   public IndigenousRecord getNativeLogEntry () {
@@ -104,7 +107,7 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the logger name that produced the record.
+   * Returns the name of the logger that created this record.
    *
    * @return the logger name
    */
@@ -115,9 +118,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the severity level for this record.
+   * Returns the severity level assigned to this record at construction time.
    *
-   * @return the log level
+   * @return the severity level
    */
   @Override
   public Level getLevel () {
@@ -126,9 +129,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the throwable attached to this record, if any.
+   * Returns the throwable associated with this record.
    *
-   * @return the throwable or {@code null}
+   * @return the throwable, or {@code null} if none was provided
    */
   @Override
   public Throwable getThrown () {
@@ -137,9 +140,10 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the translated message string after applying arguments.
+   * Returns the fully formatted message by passing the template and arguments through
+   * {@link MessageTranslator#translateMessage}.
    *
-   * @return the formatted message
+   * @return the resolved message string
    */
   @Override
   public String getMessage () {
@@ -148,9 +152,10 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns logger context data if populated.
+   * Returns the logger context attached to this record, which may contain caller class and method
+   * information if auto-fill was enabled.
    *
-   * @return the logger context, or {@code null} if none was provided
+   * @return the associated {@link LoggerContext}, or {@code null} if none has been set
    */
   @Override
   public LoggerContext getLoggerContext () {
@@ -159,9 +164,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Assigns context captured at log time.
+   * Associates a {@link LoggerContext} with this record; called by the adapter immediately after construction.
    *
-   * @param loggerContext context to associate with the record
+   * @param loggerContext the context to attach to this record
    */
   public void setLoggerContext (LoggerContext loggerContext) {
 
@@ -169,9 +174,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the identifier of the thread that produced the record.
+   * Returns the id of the thread that was executing when this record was constructed.
    *
-   * @return the thread id
+   * @return the originating thread id
    */
   @Override
   public long getThreadID () {
@@ -180,9 +185,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the name of the thread that produced the record.
+   * Returns the name of the thread that was executing when this record was constructed.
    *
-   * @return the thread name
+   * @return the originating thread name
    */
   @Override
   public String getThreadName () {
@@ -191,9 +196,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the monotonically increasing sequence number assigned to the event.
+   * Returns the monotonically increasing sequence number assigned by {@link SequenceGenerator} at construction time.
    *
-   * @return the sequence number
+   * @return the global sequence number for this event
    */
   @Override
   public long getSequenceNumber () {
@@ -202,9 +207,9 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
   }
 
   /**
-   * Returns the timestamp in milliseconds when the record was created.
+   * Returns the wall-clock time in epoch milliseconds recorded when this object was constructed.
    *
-   * @return the epoch millis of the record
+   * @return the creation timestamp in milliseconds since the epoch
    */
   @Override
   public long getMillis () {

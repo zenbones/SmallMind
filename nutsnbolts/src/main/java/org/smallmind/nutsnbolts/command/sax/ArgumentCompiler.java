@@ -35,12 +35,14 @@ package org.smallmind.nutsnbolts.command.sax;
 import org.smallmind.nutsnbolts.command.template.Argument;
 
 /**
- * Produces an {@link Argument} instance during SAX parsing.
+ * Contract for SAX element extenders that produce a fully configured {@link Argument} upon element completion.
  */
 public interface ArgumentCompiler {
 
   /**
-   * @return compiled argument instance
+   * Returns the {@link Argument} instance assembled from the parsed element content.
+   *
+   * @return compiled argument; never {@code null} after the element has been fully processed
    */
   Argument getArgument ();
 }

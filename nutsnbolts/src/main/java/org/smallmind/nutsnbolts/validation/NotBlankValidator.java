@@ -36,7 +36,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Validator for {@link NotBlank} ensuring the string is either null or contains non-whitespace characters.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link NotBlank} constraint that rejects strings consisting solely of whitespace.
  */
 public class NotBlankValidator implements ConstraintValidator<NotBlank, String> {
 
@@ -45,7 +45,7 @@ public class NotBlankValidator implements ConstraintValidator<NotBlank, String> 
   /**
    * Stores the constraint annotation (currently unused).
    *
-   * @param constraintAnnotation annotation instance
+   * @param constraintAnnotation the annotation instance driving this validation
    */
   @Override
   public void initialize (NotBlank constraintAnnotation) {
@@ -54,11 +54,11 @@ public class NotBlankValidator implements ConstraintValidator<NotBlank, String> 
   }
 
   /**
-   * Validates that the string is not blank; {@code null} values are treated as valid.
+   * Returns {@code true} if the value is {@code null} or contains at least one non-whitespace character.
    *
-   * @param value   candidate string
-   * @param context validation context (unused)
-   * @return {@code true} if value is null or contains non-whitespace characters
+   * @param value   the candidate string to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or non-blank
    */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {

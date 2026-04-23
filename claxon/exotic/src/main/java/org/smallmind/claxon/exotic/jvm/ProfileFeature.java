@@ -39,23 +39,74 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.feature.Feature;
 
 /**
- * Feature that reports JVM memory and GC profile metrics, optionally tagging with hostname and rate-limiting emissions.
+ * Claxon {@link Feature} that reports a comprehensive set of JVM memory and garbage-collection
+ * profile metrics on each recording cycle.
+ *
+ * <p>The following quantities are emitted per cycle:
+ * <ul>
+ *   <li>{@code totalMemorySize} — total physical memory of the host OS in bytes</li>
+ *   <li>{@code freeMemorySize} — free physical memory of the host OS in bytes</li>
+ *   <li>{@code userMemoryPercent} — percentage of physical memory in use</li>
+ *   <li>{@code heapMemoryMax} — JVM maximum heap size in bytes</li>
+ *   <li>{@code heapMemoryUsed} — JVM heap memory currently used in bytes</li>
+ *   <li>{@code processCPUTime} — JVM process CPU time in nanoseconds</li>
+ *   <li>{@code compilationTime} — total JIT compilation time in milliseconds</li>
+ *   <li>{@code youngGenerationHeapSize} — estimated young-generation heap size in bytes
+ *       (heap used minus tenured max)</li>
+ *   <li>{@code youngCollectionCount} — young-generation GC collection count</li>
+ *   <li>{@code youngCollectionTime} — young-generation GC time in milliseconds</li>
+ *   <li>{@code oldCollectionCount} — old-generation GC collection count</li>
+ *   <li>{@code oldCollectionTime} — old-generation GC time in milliseconds</li>
+ *   <li>{@code edenMemoryUsed} — eden space used memory in bytes</li>
+ *   <li>{@code survivorMemoryUsed} — survivor space used memory in bytes</li>
+ *   <li>{@code tenuredMemoryUsed} — tenured space used memory in bytes</li>
+ * </ul>
+ *
+ * <p>An optional minimum recording delay can be configured to throttle emissions; when the
+ * delay has not elapsed since the last successful recording, {@link #record()} returns
+ * {@code null}. An optional hostname tag can be automatically prepended to the tag list.
  */
 public class ProfileFeature implements Feature {
 
+  /**
+   * The combined tag array used when this feature is recorded, optionally including a
+   * {@code host} tag with the local hostname.
+   */
   private final Tag[] tags;
+
+  /**
+   * The meter name under which quantities are reported.
+   */
   private final String name;
+
+  /**
+   * The minimum number of milliseconds that must elapse between successive emissions, or
+   * {@code null} to disable throttling.
+   */
   private final Long minimumRecordingDelayMilliseconds;
+
+  /**
+   * The wall-clock timestamp (in milliseconds) of the most recent successful
+   * {@link #record()} call, or {@code -1} if {@link #record()} has never been called.
+   */
   private long lastRecordingTimestamp = -1;
 
   /**
-   * Creates a JVM profile feature.
+   * Constructs a JVM profile feature with optional hostname tagging and emission throttling.
    *
-   * @param name                              meter name
-   * @param minimumRecordingDelayMilliseconds optional minimum delay between emissions (ms)
-   * @param addHostNameTag                    whether to add the host name tag
-   * @param tags                              additional tags to include
-   * @throws UnknownHostException when the host name cannot be resolved
+   * <p>When {@code addHostNameTag} is {@code true}, the local hostname is resolved via
+   * {@link InetAddress#getLocalHost()} and prepended to the tag list as {@code host=<name>}.
+   *
+   * @param name                              the meter name under which quantities are reported
+   * @param minimumRecordingDelayMilliseconds the minimum number of milliseconds between
+   *                                          successive emissions; {@code null} disables
+   *                                          throttling
+   * @param addHostNameTag                    {@code true} to prepend a {@code host} tag
+   *                                          containing the local hostname
+   * @param tags                              additional tags to attach to every emission; may
+   *                                          be empty
+   * @throws UnknownHostException if {@code addHostNameTag} is {@code true} and the local
+   *                              hostname cannot be resolved
    */
   public ProfileFeature (String name, Long minimumRecordingDelayMilliseconds, boolean addHostNameTag, Tag... tags)
     throws UnknownHostException {
@@ -82,7 +133,9 @@ public class ProfileFeature implements Feature {
   }
 
   /**
-   * @return feature name
+   * Returns the meter name under which this feature's quantities are reported.
+   *
+   * @return the meter name supplied at construction time
    */
   @Override
   public String getName () {
@@ -91,7 +144,10 @@ public class ProfileFeature implements Feature {
   }
 
   /**
-   * @return tags associated with this feature
+   * Returns the tags attached to every emission from this feature, potentially including the
+   * automatically added {@code host} tag.
+   *
+   * @return the tag array; never {@code null} but may be empty
    */
   @Override
   public Tag[] getTags () {
@@ -100,9 +156,17 @@ public class ProfileFeature implements Feature {
   }
 
   /**
-   * Records JVM memory and GC metrics unless the minimum delay has not elapsed.
+   * Samples the current JVM state and returns an array of metric quantities, or {@code null}
+   * if the minimum recording delay has not yet elapsed since the last emission.
    *
-   * @return array of JVM quantities or {@code null} when throttled
+   * <p>When throttling is active ({@link #minimumRecordingDelayMilliseconds} is non-null and
+   * a prior recording exists), the method compares the current time against the last recording
+   * timestamp. If the elapsed time is less than the configured minimum delay, {@code null} is
+   * returned and no state is updated. Otherwise all fifteen quantities listed in the class
+   * Javadoc are sampled and returned, and the last-recording timestamp is updated.
+   *
+   * @return an array of fifteen {@link Quantity} objects representing the current JVM profile,
+   * or {@code null} when the emission is suppressed by the throttle
    */
   @Override
   public Quantity[] record () {

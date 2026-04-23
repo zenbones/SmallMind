@@ -39,18 +39,18 @@ import org.smallmind.nutsnbolts.resource.ResourceTypeResourceGenerator;
 import org.springframework.core.convert.converter.Converter;
 
 /**
- * Spring converter that turns a String into a {@link Resource} using the Nutsnbolts resource parser.
+ * A Spring {@link Converter} that parses a resource location string into a Nutsnbolts {@link Resource}.
  */
 public class ResourceConverter implements Converter<String, Resource> {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeResourceGenerator());
 
   /**
-   * Parses the supplied string into a {@link Resource}.
+   * Parses the given resource location string into a {@link Resource} using the Nutsnbolts resource parser.
    *
-   * @param s resource location
-   * @return the parsed resource
-   * @throws RuntimeBeansException if the resource cannot be parsed
+   * @param s the resource location string to parse
+   * @return the resolved {@link Resource}
+   * @throws RuntimeBeansException if the location cannot be parsed into a resource
    */
   public Resource convert (String s) {
 

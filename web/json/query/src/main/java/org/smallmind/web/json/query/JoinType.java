@@ -33,7 +33,7 @@
 package org.smallmind.web.json.query;
 
 /**
- * Join types available when translating queries to joinable data sources.
+ * Specifies the SQL join strategy to use when translating a query to a joinable data source.
  */
 public enum JoinType {
 

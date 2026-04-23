@@ -38,7 +38,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a DAO delete method so {@link CachedWithAspect} can react by cleaning up cache entries.
+ * Marks a DAO method as a delete operation so {@link CachedWithAspect} can apply post-delete
+ * cache cleanup in addition to the standard {@code delete} pointcut.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

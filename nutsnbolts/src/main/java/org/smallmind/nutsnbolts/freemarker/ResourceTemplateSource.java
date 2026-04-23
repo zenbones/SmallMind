@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 
 /**
- * Wraps a {@link Resource} for use as a FreeMarker template source.
+ * Handle for a FreeMarker template backed by the {@link Resource} abstraction, lazily opening the resource stream on first request and used by {@link ResourceTemplateLoader}.
  */
 public class ResourceTemplateSource {
 
@@ -46,7 +46,9 @@ public class ResourceTemplateSource {
   private InputStream inputStream;
 
   /**
-   * @param resource resource supplying template content
+   * Constructs a source backed by the given resource; the stream is not opened until {@link #getInputStream} is first called.
+   *
+   * @param resource the resource that supplies the template content
    */
   public ResourceTemplateSource (Resource resource) {
 
@@ -54,7 +56,9 @@ public class ResourceTemplateSource {
   }
 
   /**
-   * @return underlying resource
+   * Returns the underlying resource that supplies the template content.
+   *
+   * @return the wrapped {@link Resource}
    */
   public Resource getResource () {
 
@@ -62,10 +66,10 @@ public class ResourceTemplateSource {
   }
 
   /**
-   * Lazily obtains an input stream from the underlying resource.
+   * Returns an input stream for reading the template, opening it on first call and returning the same stream on subsequent calls.
    *
-   * @return input stream ready for reading
-   * @throws ResourceException if the stream cannot be opened
+   * @return input stream ready for reading the template content
+   * @throws ResourceException if the resource's stream cannot be opened
    */
   public synchronized InputStream getInputStream ()
     throws ResourceException {
@@ -78,9 +82,9 @@ public class ResourceTemplateSource {
   }
 
   /**
-   * Closes the resource stream if it was opened.
+   * Closes the resource input stream if it was previously opened.
    *
-   * @throws IOException if closure fails
+   * @throws IOException if closing the stream fails
    */
   public synchronized void close ()
     throws IOException {
@@ -91,9 +95,9 @@ public class ResourceTemplateSource {
   }
 
   /**
-   * Computes a hash based on the wrapped resource.
+   * Returns a hash code derived from the underlying resource.
    *
-   * @return hash value for collections
+   * @return hash code of the wrapped resource
    */
   @Override
   public int hashCode () {
@@ -102,10 +106,10 @@ public class ResourceTemplateSource {
   }
 
   /**
-   * Compares sources by their underlying resource.
+   * Returns {@code true} when the other object is a {@link ResourceTemplateSource} wrapping an equal resource.
    *
-   * @param obj object to compare
-   * @return {@code true} when resources match
+   * @param obj the object to compare with this source
+   * @return {@code true} if both sources wrap equal resources
    */
   @Override
   public boolean equals (Object obj) {

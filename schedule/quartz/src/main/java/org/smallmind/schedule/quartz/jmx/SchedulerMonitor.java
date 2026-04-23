@@ -36,18 +36,19 @@ import javax.management.StandardMBean;
 import org.quartz.Scheduler;
 
 /**
- * StandardMBean implementation that bridges a Quartz {@link Scheduler} to the
- * {@link SchedulerMXBean} management interface, enabling JMX clients to
- * control and inspect scheduler state.
+ * {@link StandardMBean} implementation that adapts a Quartz {@link Scheduler}
+ * to the {@link SchedulerMXBean} management interface. Register an instance of
+ * this class with an MBean server to expose scheduler lifecycle operations to
+ * JMX clients.
  */
 public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
 
   private final Scheduler scheduler;
 
   /**
-   * Creates a monitor for the provided scheduler instance.
+   * Constructs a monitor wrapping the given scheduler.
    *
-   * @param scheduler the Quartz scheduler to manage
+   * @param scheduler the Quartz scheduler instance to expose via JMX
    */
   public SchedulerMonitor (Scheduler scheduler) {
 
@@ -57,7 +58,7 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
   }
 
   /**
-   * Start the scheduler.
+   * Starts the scheduler.
    *
    * @throws Exception if the scheduler cannot be started
    */
@@ -69,7 +70,7 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
   }
 
   /**
-   * Place the scheduler into standby mode.
+   * Suspends trigger firing by placing the scheduler into standby mode.
    *
    * @throws Exception if standby cannot be entered
    */
@@ -81,10 +82,12 @@ public class SchedulerMonitor extends StandardMBean implements SchedulerMXBean {
   }
 
   /**
-   * Determine the current status of the scheduler.
+   * Determines the scheduler's current state by querying standby, started,
+   * and shutdown flags in that order of precedence.
    *
-   * @return {@link SchedulerStatus} describing current state
-   * @throws Exception if status cannot be determined
+   * @return {@link SchedulerStatus#STANDBY}, {@link SchedulerStatus#STARTED},
+   * {@link SchedulerStatus#SHUTDOWN}, or {@link SchedulerStatus#UNKNOWN}
+   * @throws Exception if the scheduler state cannot be read
    */
   @Override
   public SchedulerStatus status ()

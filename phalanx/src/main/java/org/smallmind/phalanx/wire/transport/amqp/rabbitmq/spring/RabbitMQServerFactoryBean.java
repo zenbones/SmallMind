@@ -39,7 +39,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that expands a server pattern/spread into an array of {@link RabbitMQServer} instances.
+ * Spring factory bean that expands a host pattern and numeric spread into an array of {@link RabbitMQServer} instances.
  */
 public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>, InitializingBean {
 
@@ -48,12 +48,12 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   private String serverSpread;
 
   /**
-   * Pattern describing hosts (and optional ports). Use '#' as a placeholder to be replaced by spread values.
-   * <p>
-   * Examples:
-   * host-#.example.com:5672 with spread "1-3" yields host-1.example.com:5672 ... host-3.example.com:5672
+   * Sets the host pattern used to generate server addresses.
+   * Use {@code #} as a placeholder for values produced by the spread.
+   * Include an optional {@code :port} suffix to specify a non-default port.
+   * Example: {@code broker-#.example.com:5672} with spread {@code "1-3"} produces three servers.
    *
-   * @param serverPattern host/port pattern.
+   * @param serverPattern host/port pattern string.
    */
   public void setServerPattern (String serverPattern) {
 
@@ -61,9 +61,10 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   }
 
   /**
-   * Spread string parsed by {@link Spread#calculate(String)} to generate placeholder substitutions.
+   * Sets the spread string used to generate placeholder substitutions for the server pattern.
+   * Parsed by {@link Spread#calculate(String)}; examples: {@code "1-3"}, {@code "1,3,5"}.
    *
-   * @param serverSpread spread definition (e.g., "1-3,5").
+   * @param serverSpread spread definition string.
    */
   public void setServerSpread (String serverSpread) {
 
@@ -71,9 +72,9 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   }
 
   /**
-   * Parses the pattern/spread and creates the server array.
+   * Builds the server array by expanding the pattern with each value from the spread.
    *
-   * @throws SpreadParserException if the spread cannot be parsed.
+   * @throws SpreadParserException if the spread string cannot be parsed.
    */
   @Override
   public void afterPropertiesSet ()
@@ -107,7 +108,9 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   }
 
   /**
-   * @return generated array of {@link RabbitMQServer} entries.
+   * Returns the generated array of {@link RabbitMQServer} entries.
+   *
+   * @return server array built from the pattern and spread.
    */
   @Override
   public RabbitMQServer[] getObject () {
@@ -116,7 +119,9 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   }
 
   /**
-   * @return the object type produced by this factory.
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link RabbitMQServer} array class.
    */
   @Override
   public Class<?> getObjectType () {
@@ -125,7 +130,9 @@ public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>,
   }
 
   /**
-   * @return true because this factory produces a singleton array instance.
+   * Returns whether this factory produces a singleton.
+   *
+   * @return {@code true} because the array instance is created once and reused.
    */
   @Override
   public boolean isSingleton () {

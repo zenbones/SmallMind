@@ -37,20 +37,52 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Computes a simple arithmetic average across updates, batching work to reduce contention.
+ * Thread-safe {@link Aggregate} that computes a simple arithmetic mean across all recorded values.
+ *
+ * <p>Updates that arrive while the accumulator lock is held are staged in a non-blocking
+ * {@link ConcurrentLinkedQueue} and folded in lazily by the next thread that acquires the lock
+ * (via {@link #sweep()}). This design keeps writers wait-free in the common case while still
+ * guaranteeing that no value is lost.</p>
+ *
+ * <p>{@link #getAverage()} drains the queue, computes the mean, resets the accumulators, and
+ * returns the result — making each call return the average over values recorded since the
+ * previous call.</p>
  */
 public class Averaged implements Aggregate {
 
+  /**
+   * Guards {@link #accumulatedValue} and {@link #accumulatedCount} and coordinates {@link #sweep()}.
+   */
   private final ReentrantLock lock = new ReentrantLock();
+
+  /**
+   * Staging area for values that could not be immediately accumulated due to lock contention.
+   */
   private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
+
+  /**
+   * Number of values currently waiting in {@link #valueQueue}.
+   */
   private final AtomicInteger size = new AtomicInteger();
+
+  /**
+   * Running sum of all accumulated values since the last {@link #getAverage()} call.
+   */
   private long accumulatedValue;
+
+  /**
+   * Number of values that have been folded into {@link #accumulatedValue}.
+   */
   private int accumulatedCount;
 
   /**
-   * Adds a value to the average, processing immediately when the lock is available or queuing otherwise.
+   * Records a new value into the running sum.
    *
-   * @param value value to include
+   * <p>If the accumulator lock can be acquired immediately, the value is added directly and
+   * any queued values are drained first via {@link #sweep()}. Otherwise the value is enqueued
+   * for deferred processing.</p>
+   *
+   * @param value the measurement to include in the average
    */
   @Override
   public void update (long value) {
@@ -71,7 +103,12 @@ public class Averaged implements Aggregate {
   }
 
   /**
-   * Processes any queued updates that could not be acquired due to contention.
+   * Drains up to the number of values that were queued at the time of the call into the
+   * running accumulators.
+   *
+   * <p>This method must be called with {@link #lock} held. It processes at most {@code cap}
+   * entries (the queue depth sampled before iteration begins) to avoid unbounded looping when
+   * producers are active.</p>
    */
   public void sweep () {
 
@@ -94,9 +131,14 @@ public class Averaged implements Aggregate {
   }
 
   /**
-   * Returns the arithmetic average for all processed values and resets the accumulator.
+   * Returns the arithmetic mean of all values recorded since the last invocation and resets
+   * the internal accumulators to prepare for the next collection window.
    *
-   * @return average of recorded values
+   * <p>This method acquires the accumulator lock, flushes any queued values via {@link #sweep()},
+   * computes the mean, zeroes the accumulators, and releases the lock.</p>
+   *
+   * @return the arithmetic mean of all recorded values; {@link Double#NaN} if no values were
+   * recorded (division by zero)
    */
   public double getAverage () {
 

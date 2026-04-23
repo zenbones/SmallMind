@@ -44,7 +44,9 @@ import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
 /**
- * Logging blueprint that connects the scribe API to Log4j2.
+ * {@link LoggingBlueprint} that bridges scribe to Log4j2; registers the {@code "org.apache.log4j."}
+ * package prefix at class-load time and manufactures {@link Log4JLoggerAdapter} instances backed
+ * by named Log4j2 loggers.
  */
 public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
 
@@ -54,10 +56,10 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
   }
 
   /**
-   * Creates a logger adapter backed by a Log4j2 logger.
+   * Returns a new {@link Log4JLoggerAdapter} wrapping the Log4j2 logger retrieved by the given name.
    *
    * @param name the logger name
-   * @return a {@link LoggerAdapter} using Log4j2
+   * @return a fresh adapter backed by the named Log4j2 logger
    */
   @Override
   public LoggerAdapter getLoggingAdapter (String name) {
@@ -66,13 +68,14 @@ public class Log4JLoggingBlueprint extends LoggingBlueprint<LogEvent> {
   }
 
   /**
-   * Builds a Log4j2 record representing an error condition.
+   * Constructs a FATAL-level {@link Log4JRecordSubverter} for error reporting, filling the logger context
+   * with caller information before returning the wrapped scribe record.
    *
-   * @param loggerName the logger name
-   * @param throwable  throwable to attach
-   * @param message    message template
-   * @param args       message arguments
-   * @return the constructed record
+   * @param loggerName the name of the logger from which the error originates
+   * @param throwable  the throwable to attach to the record
+   * @param message    message template describing the error condition
+   * @param args       arguments substituted into the message template
+   * @return a fully populated scribe record ready for delivery to appenders
    */
   @Override
   public Record<LogEvent> errorRecord (String loggerName, Throwable throwable, String message, Object... args) {

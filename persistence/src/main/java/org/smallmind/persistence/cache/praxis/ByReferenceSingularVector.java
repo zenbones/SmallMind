@@ -41,20 +41,21 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 
 /**
- * Singular {@link DurableVector} that directly references a durable instance.
+ * Singular {@link DurableVector} that holds a direct object reference to a single durable instance.
+ * Unlike key-based singular vectors, no DAO lookup is performed on access.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private D durable;
 
   /**
-   * Creates a singular vector referencing the provided durable.
+   * Creates a singular vector holding the provided durable instance.
    *
-   * @param durable           durable instance to store
-   * @param timeToLiveSeconds TTL for the vector
+   * @param durable           the durable to store
+   * @param timeToLiveSeconds the TTL for this vector in seconds
    */
   public ByReferenceSingularVector (D durable, int timeToLiveSeconds) {
 
@@ -64,7 +65,9 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * @return copy of this vector retaining the durable reference and TTL
+   * Returns a copy of this vector retaining the same durable reference and TTL.
+   *
+   * @return a new {@link ByReferenceSingularVector} with the same state
    */
   public DurableVector<I, D> copy () {
 
@@ -72,7 +75,9 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * @return {@code true} because this vector always stores one element
+   * Returns {@code true} because this vector always holds exactly one element.
+   *
+   * @return {@code true}
    */
   public boolean isSingular () {
 
@@ -80,10 +85,10 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * Replaces the stored durable when it differs from the current one.
+   * Replaces the stored durable when the supplied instance differs from the current one.
    *
-   * @param durable durable to store
-   * @return {@code true} when the reference is updated
+   * @param durable the durable to store
+   * @return {@code true} when the stored reference is updated
    */
   public synchronized boolean add (D durable) {
 
@@ -97,10 +102,11 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * Removal is unsupported for singular vectors.
+   * Removal is not supported for singular vectors.
    *
    * @param durable unused
-   * @return never returns; always throws {@link UnsupportedOperationException}
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
    */
   public boolean remove (D durable) {
 
@@ -108,7 +114,9 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * @return current durable reference
+   * Returns the stored durable instance.
+   *
+   * @return the current durable reference
    */
   public synchronized D head () {
 
@@ -116,7 +124,9 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * @return singleton list containing the stored durable
+   * Returns a singleton list containing the stored durable.
+   *
+   * @return an unmodifiable single-element list
    */
   public synchronized List<D> asBestEffortLazyList () {
 
@@ -124,7 +134,9 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   }
 
   /**
-   * @return iterator that yields the stored durable once
+   * Returns an iterator that yields the stored durable exactly once.
+   *
+   * @return a single-element iterator
    */
   public synchronized Iterator<D> iterator () {
 

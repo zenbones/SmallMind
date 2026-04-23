@@ -36,7 +36,11 @@ import javax.naming.Name;
 import javax.naming.directory.DirContext;
 
 /**
- * Simple tuple of a {@link DirContext} and a {@link Name} within that context.
+ * Tuple associating a {@link DirContext} with a translated {@link Name} that is valid within it.
+ * <p>
+ * Produced by {@link org.smallmind.quorum.namespace.backingStore.NameTranslator#fromInternalNameToExternalContext}
+ * after resolving the backing-store context for a given internal name. The pair is then used by
+ * {@link JavaContext} to forward JNDI operations to the correct context using the correct name.
  */
 public class ContextNamePair {
 
@@ -44,10 +48,10 @@ public class ContextNamePair {
   private final Name name;
 
   /**
-   * Constructs the pair.
+   * Creates a pair of the given context and name.
    *
-   * @param dirContext context containing the name
-   * @param name       name within the context
+   * @param dirContext the directory context in which {@code name} is valid
+   * @param name       the translated name to be used against {@code dirContext}
    */
   public ContextNamePair (DirContext dirContext, Name name) {
 
@@ -56,9 +60,9 @@ public class ContextNamePair {
   }
 
   /**
-   * Returns the context for this pair.
+   * Returns the directory context held by this pair.
    *
-   * @return directory context
+   * @return the {@link DirContext}; never {@code null}
    */
   public DirContext getContext () {
 
@@ -66,9 +70,9 @@ public class ContextNamePair {
   }
 
   /**
-   * Returns the name within the context.
+   * Returns the name held by this pair.
    *
-   * @return name
+   * @return the {@link Name}; never {@code null}
    */
   public Name getName () {
 

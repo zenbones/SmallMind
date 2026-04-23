@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.command;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals an error while parsing or validating command line arguments.
+ * Signals an error encountered while parsing or validating command line arguments.
  */
 public class CommandLineException extends FormattedException {
 
   /**
-   * Constructs an empty exception.
+   * Constructs an exception with no detail message.
    */
   public CommandLineException () {
 
@@ -48,8 +48,10 @@ public class CommandLineException extends FormattedException {
   }
 
   /**
-   * @param message formatted error message
-   * @param args    message parameters
+   * Constructs an exception with a formatted detail message.
+   *
+   * @param message format string for the detail message
+   * @param args    arguments referenced by the format string
    */
   public CommandLineException (String message, Object... args) {
 
@@ -57,9 +59,11 @@ public class CommandLineException extends FormattedException {
   }
 
   /**
+   * Constructs an exception with a cause and a formatted detail message.
+   *
    * @param throwable underlying cause
-   * @param message   formatted error message
-   * @param args      message parameters
+   * @param message   format string for the detail message
+   * @param args      arguments referenced by the format string
    */
   public CommandLineException (Throwable throwable, String message, Object... args) {
 
@@ -67,6 +71,8 @@ public class CommandLineException extends FormattedException {
   }
 
   /**
+   * Constructs an exception wrapping an existing throwable with no additional detail message.
+   *
    * @param throwable underlying cause
    */
   public CommandLineException (Throwable throwable) {

@@ -39,18 +39,51 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Provides access to memory pool usage (eden, survivor, tenured), defaulting to zero usage when unavailable.
+ * Discovers and caches references to the JVM's eden, survivor, and tenured (old) memory pool
+ * MXBeans, and provides live usage snapshots for each.
+ *
+ * <p>Pool MXBeans are identified by name at construction time. When a pool cannot be
+ * identified (e.g. because a non-generational GC such as ZGC or Shenandoah is in use),
+ * the corresponding supplier returns a zeroed {@link MemoryUsage} sentinel rather than
+ * throwing.
+ *
+ * <p>Recognised pool names:
+ * <ul>
+ *   <li>Eden: PS Eden Space, Par Eden Space, G1 Eden Space</li>
+ *   <li>Survivor: PS Survivor Space, Par Survivor Space, G1 Survivor Space</li>
+ *   <li>Tenured / old: PS Old Gen, CMS Old Gen, G1 Old Gen, Shenandoah, ZHeap</li>
+ * </ul>
  */
 public class MemoryPools {
 
+  /**
+   * A zeroed {@link MemoryUsage} instance returned when a memory pool is unavailable on the
+   * current JVM.
+   */
   private static final MemoryUsage ZERO_MEMORY_USAGE = new MemoryUsage(0, 0, 0, 0);
 
+  /**
+   * Supplier that returns the current usage of the eden memory pool, or
+   * {@link #ZERO_MEMORY_USAGE} when the pool is unavailable.
+   */
   private final Supplier<MemoryUsage> edenMemoryPool;
+
+  /**
+   * Supplier that returns the current usage of the survivor memory pool, or
+   * {@link #ZERO_MEMORY_USAGE} when the pool is unavailable.
+   */
   private final Supplier<MemoryUsage> survivorMemoryPool;
+
+  /**
+   * Supplier that returns the current usage of the tenured (old) memory pool, or
+   * {@link #ZERO_MEMORY_USAGE} when the pool is unavailable.
+   */
   private final Supplier<MemoryUsage> tenuredMemoryPool;
 
   /**
-   * Discovers memory pools from the JVM and wires suppliers for their usages.
+   * Discovers memory pool MXBeans from {@link ManagementFactory} and wires usage suppliers
+   * for the eden, survivor, and tenured pools. Unrecognised or missing pools fall back to a
+   * supplier that returns {@link #ZERO_MEMORY_USAGE}.
    */
   public MemoryPools () {
 
@@ -73,7 +106,10 @@ public class MemoryPools {
   }
 
   /**
-   * @return eden space usage or zero when unavailable
+   * Returns the current memory usage of the eden space pool.
+   *
+   * @return a live {@link MemoryUsage} snapshot, or a zeroed instance when the eden pool is
+   * unavailable on this JVM
    */
   public MemoryUsage getEdenMemoryUsage () {
 
@@ -81,7 +117,10 @@ public class MemoryPools {
   }
 
   /**
-   * @return survivor space usage or zero when unavailable
+   * Returns the current memory usage of the survivor space pool.
+   *
+   * @return a live {@link MemoryUsage} snapshot, or a zeroed instance when the survivor pool
+   * is unavailable on this JVM
    */
   public MemoryUsage getSurvivorMemoryUsage () {
 
@@ -89,7 +128,10 @@ public class MemoryPools {
   }
 
   /**
-   * @return tenured space usage or zero when unavailable
+   * Returns the current memory usage of the tenured (old) generation pool.
+   *
+   * @return a live {@link MemoryUsage} snapshot, or a zeroed instance when the tenured pool
+   * is unavailable on this JVM
    */
   public MemoryUsage getTenuredMemoryUsage () {
 

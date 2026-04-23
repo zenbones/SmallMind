@@ -40,17 +40,30 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Issues an authentication request carrying SASL credentials.
+ * Command that transmits SASL credentials to a memcached server during
+ * connection setup.
+ *
+ * <p>This command is handled exclusively by the connection-establishment
+ * phase and is intentionally outside the normal request/response routing
+ * cycle. Calling {@link #getKey()} will therefore always throw
+ * {@link CubbyOperationException}, and {@link #process(Response)} always
+ * returns {@code null} because the authentication response is consumed
+ * directly by the connection layer rather than propagated as a
+ * {@link Result}.</p>
+ *
+ * <p>The wire format reuses the {@code ms} (meta-set) command with the
+ * placeholder key {@code "unused"}, encoding the username and password as
+ * a space-separated value payload.</p>
  */
 public class AuthenticationCommand extends Command {
 
   private Authentication authentication;
 
   /**
-   * Sets the credentials to send.
+   * Supplies the credentials to be sent to the server.
    *
-   * @param authentication username/password pair
-   * @return this command for chaining
+   * @param authentication the username/password pair to authenticate with
+   * @return this command instance, for method chaining
    */
   public AuthenticationCommand setAuthentication (Authentication authentication) {
 
@@ -60,7 +73,13 @@ public class AuthenticationCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Not supported for authentication commands.
+   *
+   * <p>Authentication is performed outside the normal routing cycle and has
+   * no meaningful cache key. This method always throws to prevent incorrect usage.</p>
+   *
+   * @throws CubbyOperationException always, because authentication commands
+   *                                 cannot participate in key-based routing
    */
   @Override
   public String getKey ()
@@ -71,6 +90,11 @@ public class AuthenticationCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Builds an {@code ms} (meta-set) command line with the placeholder key
+   * {@code "unused"} and a value payload of {@code "<username> <password>"}
+   * encoded as UTF-8. The resulting byte array includes the command header,
+   * the value bytes, and a terminating CRLF.</p>
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -94,6 +118,12 @@ public class AuthenticationCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Authentication responses are consumed by the connection layer directly
+   * and are not surfaced as a {@link Result}. This method always returns
+   * {@code null}.</p>
+   *
+   * @return {@code null} in all cases
    */
   @Override
   public Result process (Response response) {

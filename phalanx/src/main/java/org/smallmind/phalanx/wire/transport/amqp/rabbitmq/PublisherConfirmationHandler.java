@@ -40,7 +40,9 @@ import com.rabbitmq.client.ConfirmListener;
 public interface PublisherConfirmationHandler {
 
   /**
-   * @return a listener to attach to the channel for publisher confirmations.
+   * Creates and returns a {@link ConfirmListener} to attach to a channel for publisher acknowledgement callbacks.
+   *
+   * @return confirm listener instance.
    */
   ConfirmListener generateConfirmListener ();
 }

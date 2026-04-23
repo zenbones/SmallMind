@@ -43,7 +43,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Creates or retrieves an RMI registry, optionally using custom socket factories, and exposes it as a singleton bean.
+ * A Spring {@link FactoryBean} that locates an existing RMI registry or creates a new one,
+ * optionally using custom client and server socket factories, and exposes the result as a singleton {@link Registry} bean.
  */
 public class RMIRegistryFactoryBean implements FactoryBean<Registry>, InitializingBean {
 
@@ -54,9 +55,9 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   private int port;
 
   /**
-   * Sets the host name or address where the registry should be located or created.
+   * Sets the host where the registry should be located or created; when {@code null} the local host is assumed.
    *
-   * @param host the host of the registry to locate or create (optional)
+   * @param host the host name or IP address, or {@code null} for localhost
    */
   public void setHost (String host) {
 
@@ -64,7 +65,7 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Sets the port on which the registry is expected to listen.
+   * Sets the port number on which the RMI registry listens.
    *
    * @param port the registry port
    */
@@ -74,9 +75,9 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Supplies an optional client socket factory to use when connecting to or creating the registry.
+   * Supplies an optional custom client socket factory for registry connections; must be paired with a server factory when set.
    *
-   * @param clientSocketFactory optional client socket factory
+   * @param clientSocketFactory the client socket factory, or {@code null} to use the default
    */
   public void setClientSocketFactory (RMIClientSocketFactory clientSocketFactory) {
 
@@ -84,9 +85,9 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Supplies an optional server socket factory to use when creating the registry.
+   * Supplies an optional custom server socket factory for registry creation; must be paired with a client factory when set.
    *
-   * @param serverSocketFactory optional server socket factory
+   * @param serverSocketFactory the server socket factory, or {@code null} to use the default
    */
   public void setServerSocketFactory (RMIServerSocketFactory serverSocketFactory) {
 
@@ -94,10 +95,10 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Returns the RMI registry instance created or discovered during initialization.
+   * Returns the {@link Registry} instance obtained or created during initialization.
    *
-   * @return the resolved {@link Registry} instance
-   * @throws Exception if the registry cannot be supplied
+   * @return the registry singleton
+   * @throws Exception if the object cannot be returned
    */
   @Override
   public Registry getObject ()
@@ -107,7 +108,7 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Returns the factory product type.
+   * Returns {@link Registry} as the type of object produced by this factory.
    *
    * @return the {@link Registry} class
    */
@@ -118,7 +119,7 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Indicates that this factory always exposes a singleton instance.
+   * Confirms that this factory always produces a single shared registry instance.
    *
    * @return {@code true} always
    */
@@ -129,10 +130,11 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
   }
 
   /**
-   * Locates an existing RMI registry or creates a new one using the configured host, port, and optional socket factories.
+   * Attempts to locate an existing registry at the configured host and port; if none is reachable and the host is local,
+   * creates a new registry using the configured socket factories (both must be either set or null together).
    *
-   * @throws UnknownHostException if the configured host cannot be resolved
-   * @throws RemoteException      if the registry cannot be reached or created remotely
+   * @throws UnknownHostException if the configured host name cannot be resolved
+   * @throws RemoteException      if the registry cannot be reached on a remote host or cannot be created
    */
   @Override
   public void afterPropertiesSet ()

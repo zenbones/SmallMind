@@ -35,7 +35,7 @@ package org.smallmind.web.jetty.option;
 import java.util.Map;
 
 /**
- * Defines mappings from request paths to filesystem document roots for serving static content.
+ * Configuration option that maps named request sub-paths to filesystem directories for serving static file content.
  */
 public class DocumentRootOption {
 
@@ -43,9 +43,9 @@ public class DocumentRootOption {
   private String documentPath = "/document";
 
   /**
-   * Retrieves the map of request paths to filesystem locations.
+   * Returns the map of request sub-path keys to filesystem directory values.
    *
-   * @return mapping of request subpaths to document roots
+   * @return the document roots mapping
    */
   public Map<String, String> getDocumentRoots () {
 
@@ -53,9 +53,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * Sets the map of request paths to filesystem locations to expose.
+   * Sets the map of request sub-paths to filesystem directories to expose.
    *
-   * @param documentRoots mapping of request subpaths to document roots
+   * @param documentRoots mapping of sub-path keys to filesystem directory values
    */
   public void setDocumentRoots (Map<String, String> documentRoots) {
 
@@ -63,9 +63,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * Retrieves the base path under the application context for document root mappings.
+   * Returns the base context sub-path under which all document roots are mounted.
    *
-   * @return the base document path
+   * @return the base document path segment
    */
   public String getDocumentPath () {
 
@@ -73,9 +73,9 @@ public class DocumentRootOption {
   }
 
   /**
-   * Sets the base path under the application context for document root mappings.
+   * Sets the base context sub-path under which all document roots are mounted.
    *
-   * @param documentPath the base document path
+   * @param documentPath the base document path segment
    */
   public void setDocumentPath (String documentPath) {
 

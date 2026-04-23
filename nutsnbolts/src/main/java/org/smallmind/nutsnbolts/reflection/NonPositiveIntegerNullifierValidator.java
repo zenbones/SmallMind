@@ -33,15 +33,16 @@
 package org.smallmind.nutsnbolts.reflection;
 
 /**
- * Validator that nullifies integer values that are zero or negative.
+ * {@link OverlayNullifierValidator} implementation that considers any integer that is zero or negative
+ * to be equivalent to {@code null} during overlay processing.
  */
 public class NonPositiveIntegerNullifierValidator implements OverlayNullifierValidator<NonPositiveIntegerNullifier, Integer> {
 
   /**
    * Returns {@code true} when the supplied integer is less than or equal to zero.
    *
-   * @param integer the value being evaluated
-   * @return {@code true} if the value should be treated as {@code null}
+   * @param integer the integer value to test; must not be {@code null}
+   * @return {@code true} if the value is zero or negative and should be treated as {@code null}
    */
   @Override
   public boolean equivalentToNull (Integer integer) {

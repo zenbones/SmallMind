@@ -35,7 +35,7 @@ package org.smallmind.persistence.cache.aop;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Concrete {@link Classifier} implementation usable in code to synthesize classifier metadata.
+ * Programmatic {@link Classifier} implementation that can be constructed in code rather than as an annotation literal.
  */
 public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements Classifier {
 
@@ -43,9 +43,9 @@ public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements 
   private final boolean asParameter;
 
   /**
-   * Creates a literal classifier with a fixed value.
+   * Creates a classifier with a fixed literal value and {@code asParameter} defaulting to {@code false}.
    *
-   * @param value classifier text
+   * @param value literal classifier text
    */
   public ClassifierLiteral (String value) {
 
@@ -53,10 +53,10 @@ public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements 
   }
 
   /**
-   * Creates a classifier literal, optionally marked as a parameter reference.
+   * Creates a classifier with explicit value and parameter-reference flag.
    *
-   * @param value       classifier text or parameter name
-   * @param asParameter {@code true} when {@code value} denotes a method parameter
+   * @param value       literal classifier text or method parameter name
+   * @param asParameter {@code true} when {@code value} names a method parameter
    */
   public ClassifierLiteral (String value, boolean asParameter) {
 
@@ -65,7 +65,9 @@ public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements 
   }
 
   /**
-   * @return classifier value or parameter name
+   * Returns the classifier text or parameter name.
+   *
+   * @return classifier string
    */
   @Override
   public String value () {
@@ -74,7 +76,9 @@ public class ClassifierLiteral extends AnnotationLiteral<Classifier> implements 
   }
 
   /**
-   * @return {@code true} when the classifier should be obtained from a method parameter
+   * Returns whether the classifier should be read from a method parameter at runtime.
+   *
+   * @return {@code true} when {@link #value()} is a parameter name
    */
   @Override
   public boolean asParameter () {

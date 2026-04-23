@@ -37,32 +37,54 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 /**
- * Translates between jailed paths and paths on a backing native file system.
+ * Strategy interface responsible for bidirectional translation between jailed paths and
+ * paths on a backing native file system.
+ *
+ * <p>Implementations determine how the jail boundary is established (for example, a fixed
+ * root directory or a root derived from a thread-bound context) and must ensure that any
+ * path escaping the jail boundary is rejected.
+ *
+ * @see AbstractJailedPathTranslator
+ * @see RootedPathTranslator
+ * @see ContextSensitiveRootedPathTranslator
  */
 public interface JailedPathTranslator {
 
   /**
-   * @return the native file system being constrained
+   * Returns the native file system that backs the jail.
+   *
+   * <p>All file-system operations delegated by {@link JailedFileSystemProvider} ultimately
+   * operate on paths within this file system.
+   *
+   * @return the native {@link FileSystem} being constrained by the jail
    */
   FileSystem getNativeFileSystem ();
 
   /**
-   * Wraps a native path as a jailed path visible to clients.
+   * Converts a native path from the backing file system into the jailed path representation
+   * visible to clients of the jail.
    *
-   * @param jailedFileSystem the jail file system
-   * @param nativePath       the native path to wrap
-   * @return the jailed path
-   * @throws IOException if translation fails
+   * <p>Implementations must verify that {@code nativePath} falls within the jail boundary
+   * and throw {@link SecurityException} (or an {@link IOException}) if it does not.
+   *
+   * @param jailedFileSystem the {@link JailedFileSystem} for which the jailed path will be created
+   * @param nativePath       the native path to translate into the jail
+   * @return the corresponding jailed {@link Path}
+   * @throws IOException       if an I/O error occurs during translation
+   * @throws SecurityException if the native path lies outside the jail boundary
    */
   Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)
     throws IOException;
 
   /**
-   * Converts a jailed path back to the native representation.
+   * Converts a jailed path back into the native path representation on the backing file system.
    *
-   * @param jailedPath the jailed path
-   * @return the native path
-   * @throws IOException if translation fails
+   * <p>The returned path is suitable for direct use with the native {@link FileSystem}'s
+   * provider and will reflect the full, absolute location on the underlying storage.
+   *
+   * @param jailedPath the jailed {@link Path} to translate into a native path
+   * @return the corresponding native {@link Path} on the backing file system
+   * @throws IOException if an I/O error occurs during translation
    */
   Path unwrapPath (Path jailedPath)
     throws IOException;

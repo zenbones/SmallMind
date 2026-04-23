@@ -33,12 +33,12 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * {@link Error} used to wrap failures that occur during static initialization.
+ * {@link Error} thrown to propagate a failure that occurred inside a static initializer block.
  */
 public class StaticInitializationError extends FormattedError {
 
   /**
-   * Creates the error without a message.
+   * Constructs the error with no detail message or cause.
    */
   public StaticInitializationError () {
 
@@ -46,10 +46,10 @@ public class StaticInitializationError extends FormattedError {
   }
 
   /**
-   * Creates the error with a formatted message.
+   * Constructs the error with a formatted detail message.
    *
-   * @param message the format string, or {@code null}
-   * @param args    arguments applied to the format string
+   * @param message the format string for the detail message, or {@code null}
+   * @param args    arguments substituted into the format string
    */
   public StaticInitializationError (String message, Object... args) {
 
@@ -57,11 +57,11 @@ public class StaticInitializationError extends FormattedError {
   }
 
   /**
-   * Creates the error with a cause and formatted message.
+   * Constructs the error with a cause and a formatted detail message.
    *
    * @param throwable the underlying cause
-   * @param message   the format string, or {@code null}
-   * @param args      arguments applied to the format string
+   * @param message   the format string for the detail message, or {@code null}
+   * @param args      arguments substituted into the format string
    */
   public StaticInitializationError (Throwable throwable, String message, Object... args) {
 
@@ -69,7 +69,7 @@ public class StaticInitializationError extends FormattedError {
   }
 
   /**
-   * Creates the error with the supplied cause.
+   * Constructs the error with a cause and no detail message.
    *
    * @param throwable the underlying cause
    */

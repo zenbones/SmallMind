@@ -41,7 +41,24 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseParser;
 
 /**
- * Reads and parses responses from the memcached socket channel.
+ * Reads raw bytes from a memcached {@link SocketChannel} and incrementally parses them into
+ * complete {@link Response} objects.
+ *
+ * <p>Because NIO reads may deliver partial responses, this class maintains an
+ * {@link ExposedByteArrayOutputStream} as an accumulation buffer that preserves unprocessed
+ * bytes between read cycles. A fixed-size {@link ByteBuffer} is used for each channel read;
+ * any bytes not yet consumed by the parser are compacted back into the accumulation buffer
+ * via {@link #shiftRemaining()}. This approach avoids allocating new byte arrays on every
+ * read while still handling arbitrarily fragmented network delivery.</p>
+ *
+ * <p>The typical call pattern from the NIO selector loop is:
+ * <ol>
+ *   <li>{@link #read()} — fills the buffer from the channel; returns {@code true} if data
+ *       was received.</li>
+ *   <li>{@link #extract()} — called repeatedly until it returns {@code null}, yielding one
+ *       fully parsed {@link Response} per call.</li>
+ * </ol>
+ * </p>
  */
 public class ResponseReader {
 
@@ -52,9 +69,10 @@ public class ResponseReader {
   private Response partialResponse;
 
   /**
-   * Creates a reader for the provided channel.
+   * Creates a reader bound to the given channel, using an 8192-byte read buffer and a
+   * 1024-byte initial accumulation stream.
    *
-   * @param socketChannel channel to read from
+   * @param socketChannel the non-blocking channel from which server responses are read
    */
   public ResponseReader (SocketChannel socketChannel) {
 
@@ -65,10 +83,19 @@ public class ResponseReader {
   }
 
   /**
-   * Attempts to read from the channel into the internal buffer.
+   * Attempts a single non-blocking read from the channel into the internal read buffer.
    *
-   * @return {@code true} if data was read and parsing should be attempted
-   * @throws IOException if the socket is closed or an I/O error occurs
+   * <p>If the channel returns {@code -1} the server has closed the connection and a
+   * {@link ServerClosedException} is thrown. If at least one byte was read the buffer is
+   * flipped and a {@link JoinedBuffer} is created that presents both any accumulated leftover
+   * bytes and the freshly read bytes as a single logical view, returning {@code true} to
+   * signal that {@link #extract()} should be called. If no bytes are available yet
+   * {@code false} is returned.</p>
+   *
+   * @return {@code true} if bytes were read and parsing should proceed; {@code false} if the
+   * channel had no data ready
+   * @throws IOException if the server closed the connection ({@link ServerClosedException})
+   *                     or another I/O error occurs during the read
    */
   public boolean read ()
     throws IOException {
@@ -89,11 +116,14 @@ public class ResponseReader {
   }
 
   /**
-   * Shifts remaining unread bytes to the start of the accumulation buffer.
+   * Moves any bytes not yet consumed by the parser into the accumulation stream for the next
+   * read cycle, then resets the read buffer for the next channel read.
    *
-   * <p>Clears buffers when fully consumed; otherwise preserves unread data for the next read cycle.</p>
+   * <p>If all bytes in the read buffer have been consumed both buffers are simply cleared.
+   * If unconsumed bytes remain they are written to the accumulation stream and the read buffer
+   * is cleared so the next channel read starts at position zero.</p>
    *
-   * @throws IOException if writing to the accumulation stream fails
+   * @throws IOException if writing remaining bytes to the accumulation stream fails
    */
   private void shiftRemaining ()
     throws IOException {
@@ -116,10 +146,21 @@ public class ResponseReader {
   }
 
   /**
-   * Parses a complete response from the buffered data if available.
+   * Attempts to parse one complete {@link Response} from the bytes currently available in the
+   * joined buffer.
    *
-   * @return parsed response or {@code null} when incomplete
-   * @throws IOException if parsing fails or I/O errors occur
+   * <p>The method first scans for a CRLF line terminator using {@link #findLineEnd(JoinedBuffer)}.
+   * If no terminator is found the unprocessed bytes are shifted to the accumulation buffer and
+   * {@code null} is returned. Once a header line is available it is parsed by
+   * {@link ResponseParser}. If the response includes a value body the method additionally
+   * checks that the full body (plus the trailing CRLF) is present; if not, the partial response
+   * is saved and {@code null} is returned so the caller will try again after the next
+   * {@link #read()}.</p>
+   *
+   * @return a fully parsed {@link Response}, or {@code null} if insufficient data is available
+   * and the caller should wait for more bytes from the channel
+   * @throws IOException if the response header cannot be parsed or an I/O error occurs while
+   *                     reading from the accumulation stream
    */
   public Response extract ()
     throws IOException {
@@ -179,10 +220,13 @@ public class ResponseReader {
   }
 
   /**
-   * Locates the CRLF terminating the current response line.
+   * Scans the joined buffer starting at the current position for a CRLF ({@code \r\n})
+   * sequence that marks the end of a memcached response header line.
    *
-   * @param joinedBuffer buffer to scan
-   * @return number of bytes up to and including the line terminator, or -1 if not found
+   * @param joinedBuffer the buffer to scan; its position is not modified by this method
+   * @return the number of bytes from the current buffer position up to and including the
+   * {@code \n} of the CRLF terminator, or {@code -1} if no complete CRLF sequence
+   * is found within the available data
    */
   private int findLineEnd (JoinedBuffer joinedBuffer) {
 

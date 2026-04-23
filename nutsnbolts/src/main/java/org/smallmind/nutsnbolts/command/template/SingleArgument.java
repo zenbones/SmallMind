@@ -33,14 +33,16 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Argument that accepts a single value.
+ * Argument definition for an option that accepts exactly one value.
  */
 public class SingleArgument extends Argument {
 
   private final String description;
 
   /**
-   * @param description hint describing the expected value
+   * Constructs a single argument with a human-readable description of the expected value.
+   *
+   * @param description hint text describing the value the option expects, used in help output
    */
   public SingleArgument (String description) {
 
@@ -48,6 +50,8 @@ public class SingleArgument extends Argument {
   }
 
   /**
+   * Returns {@link ArgumentType#SINGLE}.
+   *
    * @return {@link ArgumentType#SINGLE}
    */
   @Override
@@ -57,7 +61,9 @@ public class SingleArgument extends Argument {
   }
 
   /**
-   * @return description string for help output
+   * Returns the hint text describing the value the option expects.
+   *
+   * @return description string for use in help output
    */
   public String getDescription () {
 

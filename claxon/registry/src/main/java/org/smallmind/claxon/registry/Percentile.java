@@ -39,25 +39,40 @@ import org.smallmind.web.json.doppelganger.View;
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
 /**
- * Represents a percentile value with a human-friendly name for serialization.
+ * Represents a named percentile measurement used within histogram and other statistical
+ * meters. The {@code name} field provides a human-readable label (e.g., {@code "p95"},
+ * {@code "p99"}) while the {@code value} field holds the corresponding fractional quantile
+ * (e.g., {@code 0.95}, {@code 0.99}). Instances are typically configured via JSON and
+ * passed to a meter builder to govern which quantiles are emitted.
  */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class Percentile {
 
+  /**
+   * Human-readable label for this percentile (e.g., {@code "p95"}).
+   */
   @View(idioms = @Idiom(visibility = IN))
   private String name;
+
+  /**
+   * Fractional quantile value in the range [0.0, 1.0] (e.g., {@code 0.95} for the 95th percentile).
+   */
   @View(idioms = @Idiom(visibility = IN))
   private double value;
 
+  /**
+   * No-argument constructor required by the JSON doppelganger framework for reflective
+   * instantiation during deserialization.
+   */
   public Percentile () {
 
   }
 
   /**
-   * Constructs a percentile with the supplied name and numeric value.
+   * Constructs a percentile with the specified label and quantile value.
    *
-   * @param name  label for the percentile (e.g., "p95")
-   * @param value percentile measurement
+   * @param name  human-readable label for the percentile (e.g., {@code "p95"})
+   * @param value fractional quantile value in [0.0, 1.0] (e.g., {@code 0.95})
    */
   public Percentile (String name, double value) {
 
@@ -66,7 +81,9 @@ public class Percentile {
   }
 
   /**
-   * @return the percentile name
+   * Returns the human-readable label for this percentile.
+   *
+   * @return the percentile name (e.g., {@code "p95"})
    */
   public String getName () {
 
@@ -74,9 +91,9 @@ public class Percentile {
   }
 
   /**
-   * Sets the percentile name.
+   * Sets the human-readable label for this percentile.
    *
-   * @param name label such as p99
+   * @param name the percentile label (e.g., {@code "p99"})
    */
   public void setName (String name) {
 
@@ -84,7 +101,9 @@ public class Percentile {
   }
 
   /**
-   * @return the percentile measurement
+   * Returns the fractional quantile value for this percentile.
+   *
+   * @return the quantile in [0.0, 1.0] (e.g., {@code 0.95} for the 95th percentile)
    */
   public double getValue () {
 
@@ -92,9 +111,9 @@ public class Percentile {
   }
 
   /**
-   * Sets the percentile measurement.
+   * Sets the fractional quantile value for this percentile.
    *
-   * @param value numeric percentile
+   * @param value the quantile in [0.0, 1.0] (e.g., {@code 0.99} for the 99th percentile)
    */
   public void setValue (double value) {
 

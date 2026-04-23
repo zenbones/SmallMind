@@ -40,14 +40,15 @@ import java.time.temporal.IsoFields;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Rollover rule that triggers when the current time crosses a configured boundary (minute/hour/day/etc.).
+ * A {@link RolloverRule} that triggers file rotation when the wall-clock time has crossed a calendar
+ * boundary (such as top-of-minute, top-of-hour, or top-of-day) since the file was last modified.
  */
 public class TimestampRolloverRule implements RolloverRule {
 
   private TimestampQuantifier timestampQuantifier;
 
   /**
-   * Creates a rule that rolls at the top of each day.
+   * Constructs a rule that triggers rollover at the start of each new calendar day.
    */
   public TimestampRolloverRule () {
 
@@ -55,9 +56,9 @@ public class TimestampRolloverRule implements RolloverRule {
   }
 
   /**
-   * Creates a rule with the specified time boundary.
+   * Constructs a rule that triggers rollover when the specified calendar boundary is crossed.
    *
-   * @param timestampQuantifier boundary quantifier
+   * @param timestampQuantifier the calendar boundary that determines when rollover occurs
    */
   public TimestampRolloverRule (TimestampQuantifier timestampQuantifier) {
 
@@ -67,9 +68,9 @@ public class TimestampRolloverRule implements RolloverRule {
   }
 
   /**
-   * Returns the configured time boundary that triggers rollover.
+   * Returns the calendar boundary used to decide when the file should be rolled over.
    *
-   * @return timestamp quantifier
+   * @return the current {@link TimestampQuantifier}
    */
   public TimestampQuantifier getTimestampQuantifier () {
 
@@ -77,9 +78,9 @@ public class TimestampRolloverRule implements RolloverRule {
   }
 
   /**
-   * Sets the time boundary that triggers rollover.
+   * Replaces the calendar boundary that triggers rollover.
    *
-   * @param timestampQuantifier boundary quantifier
+   * @param timestampQuantifier the new {@link TimestampQuantifier} to use
    */
   public void setTimestampQuantifier (TimestampQuantifier timestampQuantifier) {
 
@@ -87,12 +88,13 @@ public class TimestampRolloverRule implements RolloverRule {
   }
 
   /**
-   * Determines whether the file should roll based on the last modification time.
+   * Returns {@code true} if the current date-time has crossed the configured calendar boundary
+   * relative to the file's last modification time; ignores {@code fileSize} and {@code bytesToBeWritten}.
    *
-   * @param fileSize              current file size (ignored)
-   * @param lastModifiedTimeified last modified timestamp in milliseconds
-   * @param bytesToBeWritten      pending bytes (ignored)
-   * @return {@code true} if the current time has crossed the configured boundary
+   * @param fileSize              the current size of the log file in bytes (not used by this rule)
+   * @param lastModifiedTimeified the last modification time of the log file in milliseconds since epoch
+   * @param bytesToBeWritten      the number of bytes about to be written (not used by this rule)
+   * @return {@code true} if the relevant calendar field differs between now and the last modification time
    */
   public boolean willRollover (long fileSize, long lastModifiedTimeified, long bytesToBeWritten) {
 

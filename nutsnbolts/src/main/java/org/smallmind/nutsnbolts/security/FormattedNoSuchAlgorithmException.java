@@ -35,12 +35,12 @@ package org.smallmind.nutsnbolts.security;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * {@link NoSuchAlgorithmException} variant supporting formatted messages.
+ * Extension of {@link NoSuchAlgorithmException} that accepts {@link String#format}-style message templates.
  */
 public class FormattedNoSuchAlgorithmException extends NoSuchAlgorithmException {
 
   /**
-   * Creates an exception with no detail message.
+   * Constructs an exception with no detail message.
    */
   public FormattedNoSuchAlgorithmException () {
 
@@ -48,10 +48,10 @@ public class FormattedNoSuchAlgorithmException extends NoSuchAlgorithmException 
   }
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a {@link String#format}-style detail message.
    *
-   * @param message a {@link java.util.Formatter}-style message
-   * @param args    values interpolated into the message
+   * @param message a format string following {@link java.util.Formatter} conventions, or {@code null}
+   * @param args    arguments substituted into the format string
    */
   public FormattedNoSuchAlgorithmException (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class FormattedNoSuchAlgorithmException extends NoSuchAlgorithmException 
   }
 
   /**
-   * Creates an exception with a formatted detail message and a cause.
+   * Constructs an exception with a {@link String#format}-style detail message and an underlying cause.
    *
-   * @param throwable the underlying cause
-   * @param message   a {@link java.util.Formatter}-style message
-   * @param args      values interpolated into the message
+   * @param throwable the underlying cause of this exception
+   * @param message   a format string following {@link java.util.Formatter} conventions, or {@code null}
+   * @param args      arguments substituted into the format string
    */
   public FormattedNoSuchAlgorithmException (Throwable throwable, String message, Object... args) {
 
@@ -71,9 +71,9 @@ public class FormattedNoSuchAlgorithmException extends NoSuchAlgorithmException 
   }
 
   /**
-   * Creates an exception with a cause and no detail message.
+   * Constructs an exception with an underlying cause and no detail message.
    *
-   * @param throwable the underlying cause
+   * @param throwable the underlying cause of this exception
    */
   public FormattedNoSuchAlgorithmException (Throwable throwable) {
 

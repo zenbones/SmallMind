@@ -40,9 +40,10 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * {@link ChannelOperation} that prunes idle, non-persistent channels from the tree.
+ * {@link ChannelOperation} that terminates and removes a channel from its branch when the channel
+ * reports itself removable at the reference timestamp.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class IdleChannelOperation<V extends Value<V>> implements ChannelOperation<V> {
 
@@ -51,11 +52,14 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
   private final long now;
 
   /**
-   * Creates an operation that removes idle channels older than the supplied timestamp.
+   * Creates an operation that will prune channels whose idle period exceeds their TTL relative to
+   * the given reference time.
    *
-   * @param now                 reference time used to determine idleness
-   * @param idleChannelLogLevel log level for termination events
-   * @param channelCallback     callback invoked when a channel is removed
+   * @param now                 the epoch millisecond timestamp passed to
+   *                            {@link Channel#isRemovable(long)}
+   * @param idleChannelLogLevel log level at which channel termination events are recorded
+   * @param channelCallback     invoked with each channel that is removed; forwarded to
+   *                            {@link ChannelBranch#removeChannel(java.util.function.Consumer)}
    */
   public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 
@@ -65,9 +69,11 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
   }
 
   /**
-   * Removes the channel from the supplied branch when it has expired.
+   * Checks the channel at the given branch and removes it when it is removable; logs the
+   * termination event and silently absorbs any {@link ChannelStateException} (which would indicate
+   * a now-persistent channel that should not be removed).
    *
-   * @param channelBranch branch to inspect
+   * @param channelBranch the branch to inspect; no-op if the branch carries no channel
    */
   @Override
   public void operate (ChannelBranch<V> channelBranch) {

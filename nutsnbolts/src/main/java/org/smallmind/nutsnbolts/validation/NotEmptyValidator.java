@@ -39,16 +39,16 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Validator for {@link NotEmpty} supporting arrays, collections, and maps.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link NotEmpty} constraint that checks arrays, {@link java.util.Collection}s, and {@link java.util.Map}s for emptiness.
  */
 public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> {
 
   private NotEmpty constraintAnnotation;
 
   /**
-   * Stores the constraint annotation (unused).
+   * Stores the constraint annotation (currently unused).
    *
-   * @param constraintAnnotation annotation instance
+   * @param constraintAnnotation the annotation instance driving this validation
    */
   @Override
   public void initialize (NotEmpty constraintAnnotation) {
@@ -57,11 +57,12 @@ public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> 
   }
 
   /**
-   * Validates that the value is non-empty for supported container types; {@code null} is considered valid.
+   * Returns {@code true} if the value is {@code null} or contains at least one element.
+   * Unsupported types that are non-null will return {@code false}.
    *
-   * @param value   candidate container
-   * @param context validation context (unused)
-   * @return {@code true} if the value is null or contains at least one element
+   * @param value   the candidate container to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or non-empty
    */
   @Override
   public boolean isValid (Object value, ConstraintValidatorContext context) {

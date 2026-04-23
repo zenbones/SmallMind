@@ -36,16 +36,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * LRU cache map backed by {@link LinkedHashMap}, evicting the eldest entry when the maximum size is exceeded.
+ * A size-bounded {@link LinkedHashMap} that evicts the eldest entry whenever the map exceeds its configured maximum size,
+ * providing LRU cache semantics.
+ *
+ * @param <K> the key type
+ * @param <V> the value type
  */
 public class LRUMap<K, V> extends LinkedHashMap<K, V> {
 
   private final int maximumSize;
 
   /**
-   * Constructs an LRU map with insertion order and a default initial capacity/load factor.
+   * Constructs an LRU map with insertion-order iteration, a default initial capacity of 100, and a load factor of 0.75.
    *
-   * @param maximumSize maximum entries to retain before evicting eldest
+   * @param maximumSize the maximum number of entries to retain before the eldest is evicted
    */
   public LRUMap (int maximumSize) {
 
@@ -53,10 +57,10 @@ public class LRUMap<K, V> extends LinkedHashMap<K, V> {
   }
 
   /**
-   * Constructs an LRU map allowing access-order iteration.
+   * Constructs an LRU map with a configurable iteration order, a default initial capacity of 100, and a load factor of 0.75.
    *
-   * @param accessOrder {@code true} for access order, {@code false} for insertion order
-   * @param maximumSize maximum entries to retain
+   * @param accessOrder {@code true} for access-order iteration; {@code false} for insertion-order iteration
+   * @param maximumSize the maximum number of entries to retain before the eldest is evicted
    */
   public LRUMap (boolean accessOrder, int maximumSize) {
 
@@ -64,7 +68,12 @@ public class LRUMap<K, V> extends LinkedHashMap<K, V> {
   }
 
   /**
-   * Full constructor delegating to {@link LinkedHashMap}.
+   * Constructs an LRU map with full control over capacity, load factor, iteration order, and maximum size.
+   *
+   * @param initialCapacity the initial capacity of the underlying hash table
+   * @param loadFactor      the load factor of the underlying hash table
+   * @param accessOrder     {@code true} for access-order iteration; {@code false} for insertion-order iteration
+   * @param maximumSize     the maximum number of entries to retain before the eldest is evicted
    */
   public LRUMap (int initialCapacity, float loadFactor, boolean accessOrder, int maximumSize) {
 
@@ -74,7 +83,10 @@ public class LRUMap<K, V> extends LinkedHashMap<K, V> {
   }
 
   /**
-   * Evicts when the current size exceeds {@code maximumSize}.
+   * Returns {@code true} to trigger eviction of the eldest entry whenever the map size exceeds the configured maximum.
+   *
+   * @param eldest the candidate entry for eviction
+   * @return {@code true} if the size exceeds {@code maximumSize}
    */
   protected boolean removeEldestEntry (Map.Entry<K, V> eldest) {
 

@@ -35,16 +35,16 @@ package org.smallmind.web.jersey.proxy;
 import java.net.URISyntaxException;
 
 /**
- * Factory methods for creating {@link JsonTarget} instances with varying protocol, host, and context options.
+ * Convenience factory for constructing {@link JsonTarget} instances from protocol, host, port, and context components.
  */
 public class JsonTargetFactory {
 
   /**
-   * Creates a target using the HTTP protocol and default port.
+   * Creates a target using HTTP and the default port with no context path.
    *
-   * @param host host name
-   * @return configured JsonTarget
-   * @throws URISyntaxException if the URI cannot be built
+   * @param host target host name
+   * @return configured {@link JsonTarget}
+   * @throws URISyntaxException if the URI cannot be constructed
    */
   public static JsonTarget manufacture (String host)
     throws URISyntaxException {
@@ -53,12 +53,12 @@ public class JsonTargetFactory {
   }
 
   /**
-   * Creates a target using the given protocol and default port.
+   * Creates a target using the specified protocol and the protocol's default port with no context path.
    *
-   * @param protocol http or https
-   * @param host     host name
-   * @return configured JsonTarget
-   * @throws URISyntaxException if the URI cannot be built
+   * @param protocol HTTP or HTTPS
+   * @param host     target host name
+   * @return configured {@link JsonTarget}
+   * @throws URISyntaxException if the URI cannot be constructed
    */
   public static JsonTarget manufacture (HttpProtocol protocol, String host)
     throws URISyntaxException {
@@ -67,13 +67,13 @@ public class JsonTargetFactory {
   }
 
   /**
-   * Creates a target specifying protocol and port.
+   * Creates a target using the specified protocol and port with no context path.
    *
-   * @param protocol http or https
-   * @param host     host name
+   * @param protocol HTTP or HTTPS
+   * @param host     target host name
    * @param port     port number
-   * @return configured JsonTarget
-   * @throws URISyntaxException if the URI cannot be built
+   * @return configured {@link JsonTarget}
+   * @throws URISyntaxException if the URI cannot be constructed
    */
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port)
     throws URISyntaxException {
@@ -82,14 +82,14 @@ public class JsonTargetFactory {
   }
 
   /**
-   * Creates a target specifying protocol, port, and optional context path.
+   * Creates a target using the specified protocol, port, and context path.
    *
-   * @param protocol http or https
-   * @param host     host name
-   * @param port     port number (0 to omit)
-   * @param context  optional context path
-   * @return configured JsonTarget
-   * @throws URISyntaxException if the URI cannot be built
+   * @param protocol HTTP or HTTPS
+   * @param host     target host name
+   * @param port     port number; pass {@code 0} to omit from the URI
+   * @param context  optional context path prefix; pass {@code null} to omit
+   * @return configured {@link JsonTarget}
+   * @throws URISyntaxException if the URI cannot be constructed
    */
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws URISyntaxException {

@@ -36,87 +36,157 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Minimal client abstraction used by implementations such as Cubby and in-memory clients.
+ * Common abstraction over memcached client implementations used throughout the SmallMind persistence
+ * and caching layers.
+ *
+ * <p>This interface normalises the surface area exposed by real memcached clients (such as the
+ * Cubby NIO client) and the {@link InMemoryMemcachedClient} used in tests, allowing higher-level
+ * components to be written against a single, stable API. Every operation that interacts with the
+ * cache server declares {@code throws Exception} so that implementations can propagate
+ * client-specific checked exceptions without requiring this interface to depend on any particular
+ * client library.</p>
+ *
+ * <p>CAS (compare-and-swap) variants are provided alongside their unconditional counterparts to
+ * support optimistic-locking patterns.</p>
  */
 public interface ProxyMemcachedClient {
 
   /**
-   * @return default request timeout in milliseconds
+   * Returns the default timeout applied to cache operations when the caller does not specify one.
+   *
+   * @return the default request timeout in milliseconds
    */
   long getDefaultTimeout ();
 
   /**
-   * Wraps a value and CAS token.
+   * Wraps a value and its associated CAS token in an implementation-specific {@link ProxyCASResponse}.
    *
-   * @param cas   compare-and-swap token
-   * @param value decoded value
-   * @param <T>   value type
-   * @return CAS response wrapper
+   * @param cas   the compare-and-swap token to associate with the value
+   * @param value the cached value to wrap
+   * @param <T>   the value type
+   * @return a {@link ProxyCASResponse} holding both the value and the token
    */
   <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
 
   /**
-   * Retrieves a value by key.
+   * Retrieves the cached value for the given key.
+   *
+   * @param key the cache key
+   * @param <T> the expected value type
+   * @return the cached value, or {@code null} if the key is absent or expired
+   * @throws Exception if the cache operation fails
    */
   <T> T get (String key)
     throws Exception;
 
   /**
-   * Retrieves multiple values by key.
+   * Retrieves cached values for a collection of keys in a single bulk operation.
+   *
+   * @param keys the cache keys to look up
+   * @param <T>  the expected value type
+   * @return a map of keys to their cached values; absent or expired keys are omitted
+   * @throws Exception if the cache operation fails
    */
   <T> Map<String, T> get (Collection<String> keys)
     throws Exception;
 
   /**
-   * Retrieves a value along with its CAS token.
+   * Retrieves the cached value for the given key together with its CAS token.
+   *
+   * @param key the cache key
+   * @param <T> the expected value type
+   * @return a {@link ProxyCASResponse} containing the value and its token, or {@code null} when
+   * the key is absent or expired
+   * @throws Exception if the cache operation fails
    */
   <T> ProxyCASResponse<T> casGet (String key)
     throws Exception;
 
   /**
-   * Stores a value with an expiration.
+   * Stores a value unconditionally, replacing any existing entry.
+   *
+   * @param key        the cache key
+   * @param expiration the time-to-live in seconds; {@code 0} means no expiration
+   * @param value      the value to store
+   * @param <T>        the value type
+   * @return {@code true} if the value was stored successfully
+   * @throws Exception if the cache operation fails
    */
   <T> boolean set (String key, int expiration, T value)
     throws Exception;
 
   /**
-   * Stores a value conditionally using a CAS token.
+   * Stores a value only if the supplied CAS token still matches the server's current token for
+   * the key, providing an optimistic-lock write.
+   *
+   * @param key        the cache key
+   * @param expiration the time-to-live in seconds; {@code 0} means no expiration
+   * @param value      the new value to store
+   * @param cas        the CAS token obtained from a prior {@link #casGet(String)} call
+   * @param <T>        the value type
+   * @return {@code true} if the value was stored; {@code false} on a CAS mismatch
+   * @throws Exception if the cache operation fails
    */
   <T> boolean casSet (String key, int expiration, T value, long cas)
     throws Exception;
 
   /**
-   * Deletes the entry for the key.
+   * Removes the entry for the given key unconditionally.
+   *
+   * @param key the cache key to delete
+   * @return {@code true} if the entry was deleted or did not exist
+   * @throws Exception if the cache operation fails
    */
   boolean delete (String key)
     throws Exception;
 
   /**
-   * Deletes the entry only if the CAS token matches.
+   * Removes the entry for the given key only if the supplied CAS token matches.
+   *
+   * @param key the cache key to delete
+   * @param cas the CAS token that must match the stored entry
+   * @return {@code true} if the entry was deleted or was already absent/expired; {@code false}
+   * on a CAS mismatch
+   * @throws Exception if the cache operation fails
    */
   boolean casDelete (String key, long cas)
     throws Exception;
 
   /**
-   * Updates a key's expiration without returning the value.
+   * Updates the expiration of an existing cache entry without returning its value.
+   *
+   * @param key        the cache key whose expiration should be refreshed
+   * @param expiration the new time-to-live in seconds
+   * @return {@code true} if the entry existed and was touched; {@code false} if absent or expired
+   * @throws Exception if the cache operation fails
    */
   boolean touch (String key, int expiration)
     throws Exception;
 
   /**
-   * Retrieves and updates the expiration for a key.
+   * Retrieves the cached value and atomically updates its expiration.
+   *
+   * @param key        the cache key
+   * @param expiration the new time-to-live in seconds
+   * @param <T>        the expected value type
+   * @return the cached value, or {@code null} if the key is absent or expired
+   * @throws Exception if the cache operation fails
    */
   <T> T getAndTouch (String key, int expiration)
     throws Exception;
 
   /**
-   * Clears all entries.
+   * Removes all entries from the cache.
+   *
+   * @throws Exception if the cache operation fails
    */
   void clear ()
     throws Exception;
 
   /**
-   * Shuts down the client and releases resources.
+   * Shuts down the client and releases all associated resources.
+   *
+   * @throws Exception if an error occurs during shutdown
    */
   void shutdown ()
     throws Exception;

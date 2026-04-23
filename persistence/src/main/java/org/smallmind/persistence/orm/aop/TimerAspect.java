@@ -45,19 +45,22 @@ import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 
 /**
- * Times methods annotated with {@link Timer} on classes annotated with {@link Timed}, recording metrics via Claxon.
+ * AspectJ aspect that intercepts methods annotated with {@link Timer} on {@link Timed}-annotated classes,
+ * measures their wall-clock execution time, and publishes the duration to a Claxon speedometer meter
+ * tagged with the durable type, method name, and metric source.
  */
 @Aspect
 public class TimerAspect {
 
   /**
-   * Wraps timed methods, measuring execution duration and publishing to a speedometer meter tagged with durable and method name.
+   * Around advice that times the intercepted method when timing is enabled on the declaring class.
+   * Timing is suppressed if the method throws.
    *
-   * @param thisJoinPoint join point representing the invocation
-   * @param timed         type-level timing configuration
-   * @param durableDao    the DAO instance to derive metric source and durable class
-   * @return the method result
-   * @throws Throwable if the underlying method throws
+   * @param thisJoinPoint the join point representing the intercepted method call
+   * @param timed         the {@link Timed} annotation from the declaring class
+   * @param durableDao    the DAO instance, used to obtain the metric source label and managed entity class
+   * @return the value returned by the intercepted method
+   * @throws Throwable if the intercepted method itself throws
    */
   @Around(value = "@within(timed) && execution(@Timer * * (..)) && this(durableDao)", argNames = "thisJoinPoint, timed, durableDao")
   public Object aroundTimerMethod (ProceedingJoinPoint thisJoinPoint, Timed timed, AbstractVectorAwareManagedDao durableDao)

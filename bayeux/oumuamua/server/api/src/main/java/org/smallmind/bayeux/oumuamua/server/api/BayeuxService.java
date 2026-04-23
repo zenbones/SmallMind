@@ -36,20 +36,20 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Service contract for handling Bayeux messages routed to the server.
+ * Handler for Bayeux messages addressed to a specific set of server-side service channels.
  *
  * @param <V> concrete {@link Value} implementation used to represent JSON payloads
  */
 public interface BayeuxService<V extends Value<V>> {
 
   /**
-   * Creates a basic response message that mirrors request metadata and binds to the route.
+   * Builds a minimal response message pre-filled with the channel path, request id, and session id.
    *
-   * @param route   the route being processed
-   * @param server  the hosting server instance
-   * @param session the client session issuing the request
-   * @param request the incoming message that triggered the response
-   * @return a new response message pre-populated with channel, id, and session identifiers
+   * @param route   route whose path is written into the {@code channel} field
+   * @param server  server whose codec creates the message
+   * @param session session whose id is written into the {@code clientId} field
+   * @param request originating request whose id is copied into the {@code id} field
+   * @return new message ready for additional field population and dispatch
    */
   default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
 
@@ -59,21 +59,21 @@ public interface BayeuxService<V extends Value<V>> {
   }
 
   /**
-   * Provides the channel routes this service is bound to handle.
+   * Returns the routes this service is registered to handle.
    *
-   * @return an array of bound routes
+   * @return non-empty array of bound routes
    */
   Route[] getBoundRoutes ();
 
   /**
-   * Processes an incoming message for the given route.
+   * Handles an incoming message and returns a response packet for the client.
    *
-   * @param protocol the transport protocol in use
-   * @param route    the target route
-   * @param server   the owning server
-   * @param session  the current client session
-   * @param request  the incoming message
-   * @return a packet response to send back to the client
+   * @param protocol active transport protocol
+   * @param route    route the message was addressed to
+   * @param server   hosting server
+   * @param session  session that sent the request
+   * @param request  incoming Bayeux message
+   * @return packet containing one or more response messages to deliver to the session
    */
   Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

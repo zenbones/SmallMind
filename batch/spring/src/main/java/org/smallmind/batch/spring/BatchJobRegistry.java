@@ -45,7 +45,15 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
- * Spring-based {@link JobRegistry} implementation that discovers jobs from the application context.
+ * {@link JobRegistry} implementation that discovers {@link Job} beans from the Spring
+ * {@link ApplicationContext}.
+ * <p>
+ * Job names are collected during {@link BeanFactoryPostProcessor#postProcessBeanFactory} by
+ * scanning all bean definitions for assignability to {@link Job}. The actual bean references
+ * are resolved lazily via the context captured on {@link ContextRefreshedEvent}.
+ * <p>
+ * Manual {@link #register} and {@link #unregister} operations are intentionally unsupported;
+ * jobs must be declared as Spring beans.
  */
 public class BatchJobRegistry implements JobRegistry, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
@@ -53,10 +61,10 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   private ApplicationContext applicationContext;
 
   /**
-   * Retrieves a job bean by name from the application context.
+   * Returns the {@link Job} bean registered under the given name.
    *
-   * @param name the bean name corresponding to a {@link Job}
-   * @return the resolved job instance
+   * @param name the Spring bean name of the job
+   * @return the resolved job instance; never {@code null}
    */
   @Override
   public Job getJob (String name) {
@@ -65,9 +73,9 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   }
 
   /**
-   * Returns all discovered job names.
+   * Returns all job names discovered during bean factory post-processing.
    *
-   * @return an unmodifiable collection of job names
+   * @return an unmodifiable view of the set of discovered job names
    */
   @Override
   public Collection<String> getJobNames () {
@@ -76,9 +84,9 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   }
 
   /**
-   * Unsupported operation because jobs are discovered from the Spring context.
+   * Not supported; jobs must be declared as Spring beans.
    *
-   * @param job the job instance to register
+   * @param job ignored
    * @throws UnsupportedOperationException always
    */
   @Override
@@ -88,9 +96,9 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   }
 
   /**
-   * Unsupported operation because jobs are discovered from the Spring context.
+   * Not supported; jobs must be declared as Spring beans.
    *
-   * @param jobName the job name to unregister
+   * @param jobName ignored
    * @throws UnsupportedOperationException always
    */
   @Override
@@ -100,9 +108,9 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   }
 
   /**
-   * Stores the refreshed application context so jobs can be retrieved later.
+   * Captures the refreshed application context so that {@link #getJob} can retrieve beans.
    *
-   * @param event the context refreshed event
+   * @param event the context-refreshed event carrying the live application context
    */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
@@ -111,10 +119,11 @@ public class BatchJobRegistry implements JobRegistry, ApplicationListener<Contex
   }
 
   /**
-   * Captures all {@link Job} bean names during bean factory post processing.
+   * Scans all registered bean definitions and records the names of any beans assignable to
+   * {@link Job}.
    *
-   * @param configurableListableBeanFactory the bean factory being processed
-   * @throws BeansException if the bean factory cannot be inspected
+   * @param configurableListableBeanFactory the bean factory under construction
+   * @throws BeansException if bean metadata cannot be read
    */
   @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)

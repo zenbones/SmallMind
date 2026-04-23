@@ -38,15 +38,18 @@ import org.smallmind.claxon.registry.meter.GaugeBuilder;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 /**
- * Produces a {@link GaugeBuilder} from JSON. No properties are currently parsed.
+ * {@link InstrumentedParser} implementation for {@link Gauge} meters that produces a
+ * {@link GaugeBuilder} from a JSON configuration string. Because a gauge has no
+ * configurable properties, the JSON input is not examined and may safely be {@code null}
+ * or empty.
  */
 public class GaugeParser implements InstrumentedParser<Gauge> {
 
   /**
-   * Returns a new gauge builder.
+   * Produces a new {@link GaugeBuilder} without inspecting the supplied JSON.
    *
-   * @param json ignored configuration
-   * @return gauge builder
+   * @param json JSON configuration string; ignored because gauges have no configurable properties
+   * @return a freshly constructed {@link GaugeBuilder}
    */
   @Override
   public MeterBuilder<Gauge> parse (String json) {

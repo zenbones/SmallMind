@@ -38,7 +38,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Long literal operand.
+ * A where operand that holds a single long literal value.
  */
 @XmlRootElement(name = "long", namespace = "http://org.smallmind/web/json/query")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
@@ -47,14 +47,14 @@ public class LongWhereOperand extends WhereOperand<Long> {
   private Long value;
 
   /**
-   * No-arg constructor for JAXB/Jackson.
+   * No-arg constructor for JAXB/Jackson deserialization.
    */
   public LongWhereOperand () {
 
   }
 
   /**
-   * Creates an operand with the provided long value.
+   * Constructs an operand wrapping the given long.
    *
    * @param value long literal
    */
@@ -64,10 +64,10 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
-   * Convenience factory for a long operand.
+   * Factory method that wraps a long in a {@code LongWhereOperand}.
    *
    * @param value long literal
-   * @return operand instance
+   * @return new operand instance
    */
   public static LongWhereOperand instance (Long value) {
 
@@ -75,6 +75,8 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
+   * Returns the element type for long operands.
+   *
    * @return {@link ElementType#NUMBER}
    */
   @Override
@@ -85,6 +87,8 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
+   * Returns the operand type discriminator for this class.
+   *
    * @return {@link OperandType#LONG}
    */
   @Override
@@ -95,9 +99,9 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
-   * Returns the long value.
+   * Returns the stored long value.
    *
-   * @return long literal or {@code null}
+   * @return long literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
@@ -107,9 +111,9 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
-   * Returns the serialized long value.
+   * Returns the long value used during serialization.
    *
-   * @return long literal or {@code null}
+   * @return long literal, or {@code null} if not set
    */
   @XmlElement(name = "value", required = true)
   public Long getValue () {
@@ -118,7 +122,7 @@ public class LongWhereOperand extends WhereOperand<Long> {
   }
 
   /**
-   * Sets the long value.
+   * Sets the long value for this operand.
    *
    * @param value long literal
    */

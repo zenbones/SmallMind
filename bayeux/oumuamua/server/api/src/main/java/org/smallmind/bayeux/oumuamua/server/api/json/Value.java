@@ -36,27 +36,32 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * Base representation for JSON value types used by the server codec.
+ * Root abstraction for all JSON value kinds used within the Bayeux server codec pipeline.
  *
- * @param <V> concrete value subtype
+ * @param <V> self-referential concrete value subtype, enabling fluent builder returns
  */
 public interface Value<V extends Value<V>> {
 
   /**
-   * @return the factory capable of producing values of this type
+   * Returns the factory associated with this value's codec, used to create companion values
+   * of the same concrete type family.
+   *
+   * @return value factory for this codec binding
    */
   ValueFactory<V> getFactory ();
 
   /**
-   * @return the enum type describing this value
+   * Returns the JSON kind of this value.
+   *
+   * @return one of the {@link ValueType} constants identifying the value's JSON type
    */
   ValueType getType ();
 
   /**
-   * Encodes the value to the provided writer.
+   * Serializes this value as JSON to the given writer.
    *
    * @param writer destination writer
-   * @throws IOException if writing fails
+   * @throws IOException if an I/O error occurs while writing
    */
   void encode (Writer writer)
     throws IOException;

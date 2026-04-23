@@ -59,7 +59,13 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 
 /**
- * JMS implementation of {@link org.smallmind.phalanx.wire.transport.RequestTransport} supporting talk, whisper, and shout semantics.
+ * JMS-based request transport that supports all three vocal modes: talk (queue point-to-point),
+ * whisper (topic addressed to a specific instance), and shout (topic broadcast).
+ *
+ * <p>Outbound requests are serialised as {@link InvocationSignal} payloads in JMS
+ * {@link BytesMessage} objects and placed on the appropriate queue or topic.  Responses
+ * arrive on a dedicated response topic, filtered by this transport's unique caller id, and
+ * are decoded by a pool of {@link ResponseListener} instances.
  */
 public class JmsRequestTransport extends AbstractRequestTransport {
 
@@ -73,18 +79,21 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   /**
-   * Builds a JMS request transport with clustered request/response resources.
+   * Constructs a JMS request transport, creating clustered connection managers, message-handler
+   * pools, and response listeners.
    *
-   * @param routingFactories      factories supplying JMS destinations and connection factories
-   * @param messagePolicy         producer configuration
-   * @param reconnectionPolicy    reconnection behavior for JMS connections
-   * @param signalCodec           codec used to encode requests and decode responses
-   * @param clusterSize           number of connection sets to create
-   * @param concurrencyLimit      maximum concurrent message handlers per queue/topic
-   * @param maximumMessageLength  maximum response size to buffer
-   * @param defaultTimeoutSeconds fallback timeout for request/response calls
-   * @throws JMSException       if JMS resources cannot be created
-   * @throws TransportException if transport setup fails
+   * @param routingFactories      group of {@link ManagedObjectFactory} instances for request
+   *                              queues, request topics, and response topics
+   * @param messagePolicy         producer settings (delivery mode, TTL, priority, etc.)
+   * @param reconnectionPolicy    reconnection timing and attempt limits
+   * @param signalCodec           codec used to serialise {@link InvocationSignal} objects and
+   *                              deserialise {@link org.smallmind.phalanx.wire.signal.ResultSignal} objects
+   * @param clusterSize           number of independent connection managers to create per channel
+   * @param concurrencyLimit      number of message-handler slots per channel pool
+   * @param maximumMessageLength  maximum byte length of any single response payload
+   * @param defaultTimeoutSeconds default request timeout in seconds when no explicit timeout is set
+   * @throws JMSException       if any JMS resource cannot be created
+   * @throws TransportException if transport initialisation fails
    */
   public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds)
     throws JMSException, TransportException {
@@ -127,7 +136,10 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the snowflake-generated caller identifier that uniquely distinguishes this transport
+   * instance and is used as a JMS message-selector on the response topic.
+   *
+   * @return unique caller id string
    */
   @Override
   public String getCallerId () {
@@ -136,7 +148,15 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Encodes and transmits an invocation via queue (talk) or topic (whisper/shout), returning results when applicable.
+   * Encodes the invocation as an {@link InvocationSignal}, sends it on the queue (talk mode)
+   * or topic (whisper/shout mode), and returns the decoded result for two-way calls.
+   *
+   * @param voice     vocal-mode descriptor carrying conversation type and addressing info
+   * @param route     target service route (service name, function, version)
+   * @param arguments invocation arguments keyed by parameter name
+   * @param contexts  optional wire context entries to propagate with the message
+   * @return result object for request-reply conversations, or {@code null} for in-only calls
+   * @throws Throwable if encoding, transmission, or result decoding fails
    */
   @Override
   public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
@@ -163,7 +183,11 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Borrows a message handler from the supplied pool, waiting until available or transport is closed.
+   * Polls the handler pool until a {@link MessageHandler} is available or the transport is closed.
+   *
+   * @param messageHandlerQueue pool from which to borrow a handler
+   * @return a borrowed {@link MessageHandler}
+   * @throws Throwable if the transport is closed before a handler becomes available
    */
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
     throws Throwable {
@@ -185,7 +209,17 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Constructs and populates a JMS message for the invocation.
+   * Builds and populates a JMS {@link BytesMessage} for the given invocation parameters.
+   *
+   * @param messageHandler handler used to create the message
+   * @param inOnly         {@code true} for fire-and-forget calls (caller id is not stamped)
+   * @param serviceGroup   service group header value
+   * @param instanceId     instance id header value, or {@code null} for non-whisper calls
+   * @param route          target route header value
+   * @param arguments      invocation arguments to encode
+   * @param contexts       wire contexts to encode
+   * @return populated JMS {@link Message} ready to send
+   * @throws Throwable if the message cannot be created or encoded
    */
   private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
@@ -215,7 +249,9 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   }
 
   /**
-   * Closes all JMS resources and listeners.
+   * Stops and closes all request connection managers and response listeners.  Idempotent.
+   *
+   * @throws Exception if any resource cannot be stopped or closed
    */
   @Override
   public void close ()

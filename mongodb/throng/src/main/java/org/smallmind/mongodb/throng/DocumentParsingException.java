@@ -35,15 +35,15 @@ package org.smallmind.mongodb.throng;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Exception raised when a BSON document cannot be read or written because its structure or type is not understood.
+ * Thrown when a BSON document cannot be parsed because it contains an unrecognised or unsupported node type.
  */
 public class DocumentParsingException extends FormattedRuntimeException {
 
   /**
-   * Creates a new parsing exception with the formatted message.
+   * Constructs the exception with a printf-style formatted message.
    *
-   * @param message the message template
-   * @param args    arguments applied to the template
+   * @param message format string for the error message
+   * @param args    arguments substituted into the format string
    */
   public DocumentParsingException (String message, Object... args) {
 

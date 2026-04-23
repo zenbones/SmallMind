@@ -52,8 +52,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
  * Aggregates all metadata extracted from a single {@link Doppelganger} annotation, including properties,
- * constraints, imports, pledges, and polymorphic/hierarchy declarations. Acts as the source of truth while
- * generating view classes for different purposes and directions.
+ * constraints, imports, implementations, pledges, and polymorphic/hierarchy declarations.
  */
 public class DoppelgangerInformation {
 
@@ -70,17 +69,18 @@ public class DoppelgangerInformation {
   private final boolean serializable;
 
   /**
-   * Parses Doppelganger annotations on a class and populates property/idiom maps.
+   * Parses all sub-annotations of the given {@link Doppelganger} annotation and populates the property guides,
+   * constraint lists, import/implementation maps, pledges, and polymorphic or hierarchy registrations.
    *
-   * @param processingEnvironment           current annotation processing environment
-   * @param usefulTypeMirrors               cached type mirrors for common annotations
-   * @param doppelgangerAnnotationProcessor processor that may recurse into referenced types
-   * @param classElement                    the annotated class
-   * @param visibilityTracker               tracker that records purposes/visibility per class
-   * @param classTracker                    tracker that records polymorphic and hierarchy relationships
-   * @param doppelgangerAnnotationMirror    the mirror of the {@link Doppelganger} annotation on the class
-   * @throws IOException         if nested type processing fails
-   * @throws DefinitionException if the annotation configuration is invalid
+   * @param processingEnvironment           the current annotation processing environment
+   * @param usefulTypeMirrors               cached type mirrors for commonly referenced annotation types
+   * @param doppelgangerAnnotationProcessor the processor used to recurse into referenced types
+   * @param classElement                    the class carrying the {@link Doppelganger} annotation
+   * @param visibilityTracker               records purpose/visibility information for later pledge fulfillment checks
+   * @param classTracker                    records polymorphic and hierarchy class relationships
+   * @param doppelgangerAnnotationMirror    the annotation mirror of the {@link Doppelganger} annotation
+   * @throws IOException         if processing a referenced type requires source generation that fails
+   * @throws DefinitionException if any annotation configuration is invalid
    */
   public DoppelgangerInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DoppelgangerAnnotationProcessor doppelgangerAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror doppelgangerAnnotationMirror)
     throws IOException, DefinitionException {
@@ -236,14 +236,14 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Reconstructs a {@link TypeMirror} from the type and parameter values stored in a property annotation.
+   * Reconstructs the {@link TypeMirror} for a property from the {@code type} sub-annotation of a {@link Real} or {@link Virtual} annotation.
    *
-   * @param classElement             the annotated class containing the field
-   * @param fieldName                name of the field being described
-   * @param processingEnvironment    current processing environment
-   * @param propertyAnnotationMirror the mirror of the property annotation containing the type definition
-   * @return the resolved type mirror representing the property type
-   * @throws DefinitionException if the type definition is malformed
+   * @param classElement             the class containing the field
+   * @param fieldName                name of the field whose type is being resolved
+   * @param processingEnvironment    the current processing environment
+   * @param propertyAnnotationMirror the annotation mirror of the property annotation holding the type definition
+   * @return the resolved type mirror
+   * @throws DefinitionException if the type definition is malformed or uses illegal type arguments
    */
   private TypeMirror extractType (TypeElement classElement, String fieldName, ProcessingEnvironment processingEnvironment, AnnotationMirror propertyAnnotationMirror)
     throws DefinitionException {
@@ -272,11 +272,11 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Retrieves the field element with the given name from the class, if it exists.
+   * Finds and returns the field element with the given name declared directly on the class.
    *
    * @param classElement the class to search
-   * @param fieldName    field name to locate
-   * @return the matching field element, or {@code null} when not present
+   * @param fieldName    the field name to find
+   * @return the matching field element, or {@code null} if no such field exists
    */
   private Element extractFieldElement (TypeElement classElement, String fieldName) {
 
@@ -291,10 +291,10 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Updates the {@link VisibilityTracker} with the properties discovered in this annotation.
+   * Records all discovered property purposes and visibilities into the {@link VisibilityTracker}.
    *
    * @param classElement      the annotated class
-   * @param visibilityTracker tracker to update with new visibility information
+   * @param visibilityTracker the tracker to update with in and out guide entries
    */
   public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {
 
@@ -307,7 +307,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return explicit root element name configured on the annotation, or an empty string for default naming
+   * @return the explicit XML root element name, or empty string to use the decapitalized class name
    */
   public String getName () {
 
@@ -315,7 +315,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return namespace configured for generated XML root elements
+   * @return the XML namespace configured for generated root elements
    */
   public String getNamespace () {
 
@@ -323,7 +323,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return optional comment text to attach to generated views
+   * @return the comment text to embed in generated view classes, or empty when none
    */
   public String getComment () {
 
@@ -331,7 +331,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return whether generated views should implement {@link java.io.Serializable}
+   * @return {@code true} if generated view classes should implement {@link java.io.Serializable}
    */
   public boolean isSerializable () {
 
@@ -339,11 +339,11 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Retrieves additional imports that should be applied to a generated view.
+   * Returns the additional import strings that apply to a generated view for the given direction and purpose.
    *
-   * @param direction the direction (in/out) of the view
-   * @param purpose   the purpose identifier
-   * @return array of fully qualified import strings
+   * @param direction the view direction
+   * @param purpose   the idiom purpose identifier
+   * @return array of fully qualified import strings, or an empty array if none apply
    */
   public String[] getImports (Direction direction, String purpose) {
 
@@ -353,11 +353,11 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Retrieves any additional interfaces the generated view should implement.
+   * Returns the additional interface type mirrors that a generated view should implement for the given direction and purpose.
    *
-   * @param direction the direction (in/out) of the view
-   * @param purpose   the purpose identifier
-   * @return array of interface type mirrors
+   * @param direction the view direction
+   * @param purpose   the idiom purpose identifier
+   * @return array of interface type mirrors, or an empty array if none apply
    */
   public TypeMirror[] getImplementations (Direction direction, String purpose) {
 
@@ -367,7 +367,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return all constraining idioms configured on the annotated class
+   * @return all class-level constraining idioms declared on the annotated class
    */
   public Iterable<IdiomInformation> constrainingIdioms () {
 
@@ -375,7 +375,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return guide describing inbound properties grouped by purpose
+   * @return the guide describing inbound properties grouped by purpose
    */
   public DirectionalGuide getInDirectionalGuide () {
 
@@ -383,7 +383,7 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * @return guide describing outbound properties grouped by purpose
+   * @return the guide describing outbound properties grouped by purpose
    */
   public DirectionalGuide getOutDirectionalGuide () {
 
@@ -391,10 +391,10 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Marks a purpose/direction as fulfilled to detect unused pledges.
+   * Records that a view for the given purpose and direction has been generated.
    *
-   * @param purpose   the purpose that has been generated
-   * @param direction the direction in which it has been generated
+   * @param purpose   the purpose that has been fulfilled
+   * @param direction the direction in which it has been fulfilled
    */
   public void denotePurpose (String purpose, Direction direction) {
 
@@ -402,12 +402,12 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Determines which pledged purposes remain unfulfilled for a given direction.
+   * Returns the purposes that have been pledged but not yet fulfilled for the given direction.
    *
    * @param classElement      the annotated class
-   * @param visibilityTracker tracker holding pledged/realized purposes
-   * @param direction         direction to test
-   * @return iterable of purposes still lacking generated output
+   * @param visibilityTracker the tracker holding pledged purposes
+   * @param direction         the direction being evaluated
+   * @return iterable of purpose strings still needing view generation
    */
   public Iterable<String> unfulfilledPurposes (TypeElement classElement, VisibilityTracker visibilityTracker, Direction direction) {
 
@@ -415,11 +415,11 @@ public class DoppelgangerInformation {
   }
 
   /**
-   * Calculates pledged purposes that were unnecessary because actual properties already satisfied visibility.
+   * Returns pledged purposes for the given direction that were unnecessary because real properties already provided fulfillment.
    *
    * @param classElement      the annotated class
-   * @param visibilityTracker tracker holding pledged/realized purposes
-   * @param direction         direction to test
+   * @param visibilityTracker the tracker holding fulfilled purposes
+   * @param direction         the direction being evaluated
    * @return array of overwrought purpose names
    */
   public String[] overwroughtPurposes (TypeElement classElement, VisibilityTracker visibilityTracker, Direction direction) {
@@ -441,16 +441,19 @@ public class DoppelgangerInformation {
     return purposes;
   }
 
+  /**
+   * Composite key combining a {@link Direction} and a purpose string for use in import and implementation maps.
+   */
   private static class IdiomKey {
 
     private final Direction direction;
     private final String purpose;
 
     /**
-     * Builds a key combining direction and purpose for lookup in maps.
+     * Constructs a key from the given direction and purpose.
      *
-     * @param direction direction in which a view is generated
-     * @param purpose   idiom purpose identifier (empty for default)
+     * @param direction the view direction component
+     * @param purpose   the idiom purpose component (may be empty for the default idiom)
      */
     public IdiomKey (Direction direction, String purpose) {
 
@@ -459,7 +462,7 @@ public class DoppelgangerInformation {
     }
 
     /**
-     * @return the direction component of the key
+     * @return the direction component of this key
      */
     public Direction getDirection () {
 
@@ -467,7 +470,7 @@ public class DoppelgangerInformation {
     }
 
     /**
-     * @return the purpose component of the key (may be empty)
+     * @return the purpose component of this key
      */
     public String getPurpose () {
 
@@ -475,9 +478,9 @@ public class DoppelgangerInformation {
     }
 
     /**
-     * Computes a composite hash from direction and purpose.
+     * Computes a hash code based on direction and purpose.
      *
-     * @return hash code for the key
+     * @return the combined hash code
      */
     @Override
     public int hashCode () {
@@ -486,10 +489,10 @@ public class DoppelgangerInformation {
     }
 
     /**
-     * Compares keys for equality based on direction and purpose.
+     * Returns whether this key equals another object by comparing direction and purpose.
      *
-     * @param obj object to compare
-     * @return {@code true} when both direction and purpose match
+     * @param obj the object to compare
+     * @return {@code true} if the other object is an {@link IdiomKey} with the same direction and purpose
      */
     @Override
     public boolean equals (Object obj) {

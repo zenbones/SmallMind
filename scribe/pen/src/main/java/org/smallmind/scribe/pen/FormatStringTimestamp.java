@@ -35,14 +35,16 @@ package org.smallmind.scribe.pen;
 import java.time.LocalDateTime;
 
 /**
- * Timestamp implementation that uses {@link String#format(String, Object...)} with a format string.
+ * A {@link Timestamp} implementation that produces date-time strings by passing a {@link LocalDateTime}
+ * directly to {@link String#format(String, Object...)}, using a {@code %t} conversion-letter format
+ * string; the default format is {@code "%tY-%tm-%td"} (year-month-day).
  */
 public class FormatStringTimestamp implements Timestamp {
 
   private String format;
 
   /**
-   * Constructs a timestamp with a default date-only format.
+   * Constructs a timestamp using the default date-only format {@code "%tY-%tm-%td"}.
    */
   public FormatStringTimestamp () {
 
@@ -50,9 +52,9 @@ public class FormatStringTimestamp implements Timestamp {
   }
 
   /**
-   * Constructs a timestamp with the supplied format string.
+   * Constructs a timestamp using the given {@link String#format} format string.
    *
-   * @param format format string compatible with {@link String#format(String, Object...)}
+   * @param format a format string whose conversion letters reference the {@link LocalDateTime} argument
    */
   public FormatStringTimestamp (String format) {
 
@@ -60,9 +62,9 @@ public class FormatStringTimestamp implements Timestamp {
   }
 
   /**
-   * Retrieves the current format string.
+   * Returns the current {@link String#format} format string.
    *
-   * @return format string used for timestamp rendering
+   * @return the format string used to render timestamps
    */
   public String getFormat () {
 
@@ -70,9 +72,9 @@ public class FormatStringTimestamp implements Timestamp {
   }
 
   /**
-   * Sets the format string.
+   * Replaces the {@link String#format} format string used to render timestamps.
    *
-   * @param format format string compatible with {@link String#format(String, Object...)}
+   * @param format the new format string; must be compatible with a {@link LocalDateTime} argument
    */
   public void setFormat (String format) {
 
@@ -80,10 +82,11 @@ public class FormatStringTimestamp implements Timestamp {
   }
 
   /**
-   * Formats the supplied date using {@link String#format(String, Object...)}.
+   * Formats the given {@link LocalDateTime} by calling {@link String#format(String, Object...)}
+   * with the configured format string and {@code date} as the sole argument.
    *
-   * @param date date to format
-   * @return formatted timestamp
+   * @param date the date to format
+   * @return the formatted timestamp string
    */
   public String getTimestamp (LocalDateTime date) {
 

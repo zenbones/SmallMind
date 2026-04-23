@@ -40,10 +40,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Supported operating systems and their associated behaviors for deployment artifacts.
+ * Supported target operating systems for application deployment, each encapsulating the
+ * platform-specific behavior for setting file execute permissions and the filename extension
+ * used by service control wrapper scripts.
  */
 public enum OperatingSystem {
 
+  /**
+   * Linux deployment target; applies POSIX permission mode 755 and uses {@code .sh} script extensions.
+   */
   LINUX("linux", ".sh") {
     @Override
     public void makeExecutable (Path path)
@@ -52,6 +57,9 @@ public enum OperatingSystem {
       Files.setPosixFilePermissions(path, PERMISSIONS_755);
     }
   },
+  /**
+   * Windows deployment target; execute-bit setting is a no-op and service scripts use {@code .bat} extensions.
+   */
   WINDOWS("windows", ".bat") {
     @Override
     public void makeExecutable (Path path) {
@@ -78,6 +86,12 @@ public enum OperatingSystem {
     PERMISSIONS_755.add(PosixFilePermission.OTHERS_EXECUTE);
   }
 
+  /**
+   * Initialise the enum constant with its short code and script extension.
+   *
+   * @param code           identifier used in CLI arguments (e.g. {@code linux})
+   * @param batchExtension filename extension for service control scripts (e.g. {@code .sh})
+   */
   OperatingSystem (String code, String batchExtension) {
 
     this.code = code;
@@ -85,10 +99,10 @@ public enum OperatingSystem {
   }
 
   /**
-   * Resolve an operating system from its short code.
+   * Look up an operating system by its short code.
    *
-   * @param code the string representation (e.g. {@code linux} or {@code windows})
-   * @return the matching operating system, or {@code null} if the code is not recognized
+   * @param code platform identifier, e.g. {@code linux} or {@code windows}
+   * @return the matching constant, or {@code null} if no constant carries that code
    */
   public static OperatingSystem fromCode (String code) {
 
@@ -103,16 +117,21 @@ public enum OperatingSystem {
   }
 
   /**
-   * Ensure the supplied file is executable on the target operating system.
+   * Apply the platform-appropriate execute permissions to {@code path}.
    *
-   * @param path the file that should be executable
-   * @throws IOException if permissions cannot be set
+   * <p>On Linux, sets POSIX permission mode 755 (owner rwx, group rx, others rx). On Windows,
+   * this method is a no-op because the OS does not use POSIX file permissions.
+   *
+   * @param path the file to make executable
+   * @throws IOException if the permission change cannot be applied (Linux only)
    */
   public abstract void makeExecutable (Path path)
     throws IOException;
 
   /**
-   * @return the identifier used to select the operating system (e.g. {@code linux})
+   * Returns the short identifier for this platform as used in CLI arguments.
+   *
+   * @return platform code, e.g. {@code linux} or {@code windows}
    */
   public String getCode () {
 
@@ -120,7 +139,9 @@ public enum OperatingSystem {
   }
 
   /**
-   * @return the batch/script extension associated with the operating system
+   * Returns the filename extension used by service control scripts on this platform.
+   *
+   * @return script extension, e.g. {@code .sh} on Linux or {@code .bat} on Windows
    */
   public String getBatchExtension () {
 

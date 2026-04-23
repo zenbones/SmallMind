@@ -38,33 +38,33 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Strategy for emitting conversion logic between entity fields and generated view fields during source generation.
+ * Strategy interface for emitting the conversion expressions between an entity field and a generated view field.
  */
 public interface Translator {
 
   /**
-   * Writes the right-hand side of a view field assignment when constructing a view instance from an entity.
+   * Writes the expression placed on the right-hand side of a view field assignment when constructing a view from an entity.
    *
    * @param writer                     destination for generated source
-   * @param processingEnvironment      current processing environment
-   * @param entityInstanceName         variable name holding the source entity
-   * @param entityFieldName            field name on the entity
-   * @param entityFieldTypeMirror      entity field type
-   * @param viewFieldQualifiedTypeName fully qualified view field type name
-   * @throws IOException if writing fails
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityInstanceName         variable name of the source entity instance
+   * @param entityFieldName            the logical field name on the entity
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @throws IOException if writing to the source file fails
    */
   void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName)
     throws IOException;
 
   /**
-   * Writes the code inside a setter call that transfers a view property back to the entity.
+   * Writes the expression placed inside a setter call that transfers a view field value back to the entity.
    *
    * @param writer                     destination for generated source
-   * @param processingEnvironment      current processing environment
-   * @param entityFieldTypeMirror      entity field type
-   * @param viewFieldQualifiedTypeName fully qualified view field type name
-   * @param dtoFieldName               name of the view field
-   * @throws IOException if writing fails
+   * @param processingEnvironment      the current annotation processing environment
+   * @param entityFieldTypeMirror      the type mirror of the entity field
+   * @param viewFieldQualifiedTypeName the fully qualified view field type name
+   * @param dtoFieldName               the name of the view field whose value is being transferred
+   * @throws IOException if writing to the source file fails
    */
   void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String viewFieldQualifiedTypeName, String dtoFieldName)
     throws IOException;

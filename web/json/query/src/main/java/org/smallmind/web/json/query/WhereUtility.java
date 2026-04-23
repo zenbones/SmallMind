@@ -35,16 +35,16 @@ package org.smallmind.web.json.query;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Traversal utilities for walking where clause structures with a {@link WhereVisitor}.
+ * Utility methods for depth-first traversal of where clause trees using a {@link WhereVisitor}.
  */
 public class WhereUtility {
 
   /**
-   * Traverses the root conjunction of a {@link Where} using the supplied visitor.
+   * Traverses the entire predicate tree rooted at the given {@link Where} clause.
    *
-   * @param visitor visitor callback
-   * @param where   where clause to traverse
-   * @throws Exception if the visitor throws or traversal fails
+   * @param visitor visitor whose callbacks are invoked for each node
+   * @param where   where clause whose root conjunction is traversed
+   * @throws Exception if the visitor throws or traversal encounters an error
    */
   public static void walk (WhereVisitor visitor, Where where)
     throws Exception {
@@ -53,11 +53,11 @@ public class WhereUtility {
   }
 
   /**
-   * Traverses one or more criteria depth-first, invoking the visitor for each node.
+   * Depth-first traversal of the supplied criteria, invoking the visitor for each conjunction and field node.
    *
-   * @param visitor       visitor callback
-   * @param whereCriteria criteria to traverse
-   * @throws UnknownSwitchCaseException if an unknown criterion type is encountered
+   * @param visitor       visitor whose callbacks are invoked for each node
+   * @param whereCriteria one or more criteria to traverse
+   * @throws UnknownSwitchCaseException if a criterion with an unrecognized type is encountered
    * @throws Exception                  if the visitor throws
    */
   public static void walk (WhereVisitor visitor, WhereCriterion... whereCriteria)

@@ -47,9 +47,19 @@ import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
 
 /**
- * Coordinates discovery and execution of Sleuth test suites and methods.
+ * Top-level coordinator for Sleuth test discovery and execution.
  * <p>
- * The runner manages event listeners, cancellation, and orchestrates suite/test execution across a thread pool.
+ * A single {@code SleuthRunner} instance manages the full lifecycle of a test run: listener
+ * registration, cancellation, and execution. On each call to {@link #execute execute(...)}, the runner
+ * discovers annotated test classes using a chain of both native and TestNG translators, builds a
+ * priority-ordered dependency graph of suites, and dispatches them concurrently via a
+ * {@link SleuthThreadPool}. Execution blocks until all suites complete or the run is cancelled via
+ * {@link #cancel()}.
+ * <p>
+ * This class is thread-safe with respect to listener management and cancellation.
+ *
+ * @see SuiteRunner
+ * @see SleuthEventListener
  */
 public class SleuthRunner {
 
@@ -57,9 +67,12 @@ public class SleuthRunner {
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
   /**
-   * Registers a listener to receive Sleuth events.
+   * Registers a listener to receive all Sleuth events emitted during a run.
+   * <p>
+   * Listeners are notified synchronously on the thread that fires the event. Add listeners before
+   * calling {@link #execute execute(...)}.
    *
-   * @param listener listener to add
+   * @param listener listener to register; must not be {@code null}
    */
   public void addListener (SleuthEventListener listener) {
 
@@ -68,8 +81,10 @@ public class SleuthRunner {
 
   /**
    * Removes a previously registered listener.
+   * <p>
+   * Removing a listener that was never registered has no effect.
    *
-   * @param listener listener to remove
+   * @param listener listener to remove; must not be {@code null}
    */
   public void removeListener (SleuthEventListener listener) {
 
@@ -77,9 +92,11 @@ public class SleuthRunner {
   }
 
   /**
-   * Fires an event to all registered listeners.
+   * Dispatches an event to every registered listener in registration order.
+   * <p>
+   * Called internally by suite and test runners at each lifecycle transition.
    *
-   * @param sleuthEvent event to dispatch
+   * @param sleuthEvent event to broadcast; must not be {@code null}
    */
   public void fire (SleuthEvent sleuthEvent) {
 
@@ -89,7 +106,12 @@ public class SleuthRunner {
   }
 
   /**
-   * Requests cancellation of the currently running test run.
+   * Signals that the current test run should stop as soon as possible.
+   * <p>
+   * After cancellation, {@link #isRunning()} returns {@code false} and no further suites or tests
+   * are dispatched. In-flight runners complete their current method and then call {@link TestController#complete()}
+   * without starting new work. A {@link org.smallmind.sleuth.runner.event.CancelledSleuthEvent} is
+   * fired when the execute call detects the cancellation before the latch is awaited.
    */
   public void cancel () {
 
@@ -97,7 +119,7 @@ public class SleuthRunner {
   }
 
   /**
-   * @return {@code true} while execution has not been cancelled
+   * @return {@code true} while the run has not been cancelled; {@code false} once {@link #cancel()} is called
    */
   public boolean isRunning () {
 
@@ -105,13 +127,17 @@ public class SleuthRunner {
   }
 
   /**
-   * Executes the supplied classes as test suites.
+   * Executes the supplied classes as test suites, blocking until all suites finish or the run is cancelled.
+   * <p>
+   * Delegates to {@link #execute(String[], int, boolean, boolean, Iterable)} after wrapping the array
+   * in a list.
    *
-   * @param groups        optional list of groups to include; {@code null} runs suites honoring annotation defaults, empty array means all
-   * @param threadCount   number of threads to permit; values {@literal <}= 0 map to unbounded
-   * @param stopOnError   whether to halt on unexpected errors
-   * @param stopOnFailure whether to halt on assertion failures
-   * @param classes       classes to execute
+   * @param groups        group names to include; {@code null} uses annotation defaults; empty array runs all suites
+   * @param threadCount   maximum parallel suite/test threads per tier; values {@literal <=} 0 are treated as
+   *                      {@link Integer#MAX_VALUE}
+   * @param stopOnError   when {@code true}, unexpected errors cancel the remaining run
+   * @param stopOnFailure when {@code true}, assertion failures cancel the remaining run
+   * @param classes       test classes to execute; classes with no recognised annotations are skipped
    */
   public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Class<?>... classes) {
 
@@ -119,13 +145,19 @@ public class SleuthRunner {
   }
 
   /**
-   * Executes the supplied iterable of suite classes.
+   * Executes the supplied iterable of test classes as suites, blocking until all finish or the run is cancelled.
+   * <p>
+   * Each class is processed by an {@link AnnotationProcessor} configured with both the native and
+   * TestNG translators. Enabled classes whose groups intersect the requested set are added to a
+   * {@link DependencyAnalysis}; the resulting {@link DependencyQueue} is consumed in a loop that
+   * dispatches each suite to the {@link SleuthThreadPool}. The method blocks on a
+   * {@link CountDownLatch} until all suite runners have decremented it.
    *
-   * @param groups        optional list of groups to include; {@code null} uses defaults, empty array means all
-   * @param threadCount   number of threads to permit; values {@literal <}= 0 map to unbounded
-   * @param stopOnError   whether to halt on unexpected errors
-   * @param stopOnFailure whether to halt on assertion failures
-   * @param classIterable classes to execute
+   * @param groups        group names to include; {@code null} uses annotation defaults; empty array runs all
+   * @param threadCount   maximum parallel threads per tier; values {@literal <=} 0 become {@link Integer#MAX_VALUE}
+   * @param stopOnError   when {@code true}, unexpected errors cancel the remaining run
+   * @param stopOnFailure when {@code true}, assertion failures cancel the remaining run
+   * @param classIterable classes to execute; {@code null} is treated as an empty set
    */
   public void execute (String[] groups, int threadCount, boolean stopOnError, boolean stopOnFailure, Iterable<Class<?>> classIterable) {
 
@@ -173,11 +205,15 @@ public class SleuthRunner {
   }
 
   /**
-   * Checks whether any of our configured groups intersect with the requested set.
+   * Determines whether a suite's groups intersect the requested group filter.
+   * <p>
+   * Returns {@code true} when the requested set is empty (all suites run), or when at least one
+   * element of the suite's own groups array matches an element of the requested set.
+   * Returns {@code false} when a non-empty filter is active but the suite belongs to no groups.
    *
-   * @param ours   groups defined on the suite or test
-   * @param theirs requested groups from the command line/configuration
-   * @return {@code true} if execution should proceed
+   * @param ours   group names declared on the suite annotation; may be {@code null} or empty
+   * @param theirs requested group names from the run configuration; may be {@code null} or empty
+   * @return {@code true} if the suite should be included in this run
    */
   private boolean inGroups (String[] ours, String[] theirs) {
 

@@ -42,20 +42,26 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
- * Entry point used by Singularity bundles to bootstrap the nested class loader and delegate to the real application main.
+ * Bootstrap class declared as the jar's {@code Main-Class}. When executed it installs a {@link SingularityClassLoader}
+ * as the context class loader and then reflectively dispatches to the real application main, whose fully qualified
+ * name is carried in the manifest's {@code Singularity-Class} attribute.
  */
 public class SingularityEntryPoint {
 
   /**
-   * Initializes the {@link SingularityClassLoader} from the enclosing jar, then locates and invokes the application main
-   * defined by the {@code Singularity-Class} manifest attribute.
+   * Bootstraps the Singularity runtime and relinquishes control to the user-supplied main class.
    *
-   * @param args arguments passed to the application
-   * @throws IOException               if the jar cannot be read
-   * @throws ClassNotFoundException    if the target main class cannot be resolved
-   * @throws NoSuchMethodException     if the target class does not expose a {@code main(String[])} method
-   * @throws IllegalAccessException    if the main method is not accessible
-   * @throws InvocationTargetException if the main method throws an exception
+   * <p>The jar hosting this class is opened via its {@link CodeSource}, the {@link SingularityClassLoader} is built
+   * from its manifest and index, and the class named by the manifest's {@code Singularity-Class} attribute has its
+   * {@code main(String[])} method invoked. A reference to this entry point itself is silently ignored so that the
+   * bootstrap never recurses.
+   *
+   * @param args command-line arguments to forward unchanged to the application's main method
+   * @throws IOException               if the enclosing jar cannot be opened or its manifest read
+   * @throws ClassNotFoundException    if the class named by {@code Singularity-Class} cannot be resolved
+   * @throws NoSuchMethodException     if that class does not expose a {@code public static void main(String[])}
+   * @throws IllegalAccessException    if the main method cannot be invoked due to access restrictions
+   * @throws InvocationTargetException if the invoked main method throws; the underlying cause is the application's exception
    */
   public static void main (String... args)
     throws IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {

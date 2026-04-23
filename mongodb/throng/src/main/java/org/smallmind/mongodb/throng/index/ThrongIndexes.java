@@ -45,7 +45,9 @@ public class ThrongIndexes {
   private final LinkedList<CompoundIndex> compoundIndexList = new LinkedList<>();
 
   /**
-   * @return single-field index declarations
+   * Returns all single-field index declarations accumulated in this container.
+   *
+   * @return array of single-field index definitions
    */
   public IndexedField[] getIndexedFields () {
 
@@ -53,7 +55,9 @@ public class ThrongIndexes {
   }
 
   /**
-   * @return compound index declarations
+   * Returns all compound index declarations accumulated in this container.
+   *
+   * @return array of compound index definitions
    */
   public CompoundIndex[] getCompoundIndexes () {
 

@@ -38,30 +38,29 @@ import java.util.Set;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Describes an object (typically a {@link Where}) that can expose the set of field permits it references
- * and validate them against allowed/required/excluded/dependent constraints.
+ * Implemented by objects (such as {@link Where} and {@link Sort}) that expose the set of field permits they reference and can validate those against configured rules.
  *
- * @param <W> self type for fluent validation
+ * @param <W> self type enabling fluent chaining of {@link #validate}
  */
 public interface WherePermissible<W extends WherePermissible<W>> {
 
   /**
-   * Returns the set of target permits referenced by this instance.
+   * Collects and returns the complete set of field permits referenced by this instance.
    *
-   * @return set of permits
-   * @throws Exception if traversal fails
+   * @return set of target permits
+   * @throws Exception if traversal of the underlying structure fails
    */
   Set<WherePermit> getTargetSet ()
     throws Exception;
 
   /**
-   * Validates this instance against the provided permit rules.
+   * Validates this instance against the given permit rules, enforcing allowed, required, excluded, and dependency constraints.
    *
-   * @param permits permit rules to enforce
-   * @return {@code this} for chaining
-   * @throws WhereValidationException   if any rule is violated (missing required, present excluded, or failed dependency)
-   * @throws UnknownSwitchCaseException if an unexpected permit type is encountered
-   * @throws Exception                  if computing target permits fails
+   * @param permits permit rules to enforce against the target set
+   * @return {@code this} for fluent chaining
+   * @throws WhereValidationException   if a required field is absent, an excluded field is present, or a dependency is unmet
+   * @throws UnknownSwitchCaseException if an unrecognized permit type is encountered
+   * @throws Exception                  if computing the target set fails
    */
   default W validate (WherePermit... permits)
     throws Exception {

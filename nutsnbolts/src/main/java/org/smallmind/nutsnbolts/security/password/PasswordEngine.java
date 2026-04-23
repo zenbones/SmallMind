@@ -38,32 +38,33 @@ import java.security.spec.InvalidKeySpecException;
 import org.smallmind.nutsnbolts.security.InvalidPasswordException;
 
 /**
- * Interface for password hashing/verification utilities.
+ * Service interface for password hashing and verification, abstracting the underlying key-derivation algorithm.
  */
 public interface PasswordEngine {
 
   /**
-   * Hashes the password, usually using a secure random salt and returns the salt+hash encoded as Base64.
+   * Hashes the plaintext password, typically with a secure random salt, and returns an encoded string
+   * suitable for persistent storage.
    *
-   * @param password the plain-text password
-   * @return hashed string generally containing salt concatenated with the derived key
-   * @throws IOException              if encoding fails
-   * @throws NoSuchAlgorithmException if the algorithm is unavailable
-   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @param password the plaintext password to hash; must not be {@code null} or empty
+   * @return an encoded string (commonly Base64) containing the salt concatenated with the derived key
+   * @throws IOException              if encoding of the result fails
+   * @throws NoSuchAlgorithmException if the required key-derivation algorithm is not available
+   * @throws InvalidKeySpecException  if the key derivation parameters are invalid
    * @throws InvalidPasswordException if the password is {@code null} or empty
    */
   String encrypt (String password)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidPasswordException;
 
   /**
-   * Checks whether the supplied password matches a stored salt+hash.
+   * Verifies that the candidate password matches the encoded string previously produced by {@link #encrypt(String)}.
    *
-   * @param password candidate password
-   * @param stored   Normally a Base64 salt+hash string produced by {@link #encrypt(String)}
-   * @return {@code true} if the password matches
-   * @throws IOException              if decoding fails
-   * @throws NoSuchAlgorithmException if PBKDF2 algorithm is unavailable
-   * @throws InvalidKeySpecException  if key derivation parameters are invalid
+   * @param password the candidate plaintext password to check
+   * @param stored   the encoded salt+hash string previously returned by {@link #encrypt(String)}
+   * @return {@code true} if the candidate password matches the stored value, {@code false} otherwise
+   * @throws IOException              if decoding of the stored value fails
+   * @throws NoSuchAlgorithmException if the required key-derivation algorithm is not available
+   * @throws InvalidKeySpecException  if the key derivation parameters are invalid
    */
   boolean match (String password, String stored)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException;

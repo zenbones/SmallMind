@@ -37,7 +37,7 @@ import java.util.EventListener;
 import java.util.Map;
 
 /**
- * Describes a servlet context listener to register within a Grizzly application context.
+ * Descriptor for a servlet context listener to be registered in a Grizzly web application context.
  */
 public class ListenerInstaller extends GrizzlyInstaller {
 
@@ -46,6 +46,8 @@ public class ListenerInstaller extends GrizzlyInstaller {
   private Map<String, String> contextParameters;
 
   /**
+   * Returns the installer type discriminator.
+   *
    * @return {@link GrizzlyInstallerType#LISTENER}
    */
   @Override
@@ -55,11 +57,11 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * Instantiates or returns the configured listener.
+   * Returns the listener to install, constructing it from the configured class if no instance was set.
    *
-   * @return listener to install
-   * @throws NoSuchMethodException     if the default constructor cannot be found
-   * @throws InstantiationException    if the listener cannot be constructed
+   * @return listener instance ready for registration
+   * @throws NoSuchMethodException     if the no-arg constructor cannot be located
+   * @throws InstantiationException    if the listener class cannot be instantiated
    * @throws IllegalAccessException    if the constructor is not accessible
    * @throws InvocationTargetException if the constructor throws an exception
    */
@@ -70,6 +72,8 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets a pre-built listener instance to use instead of constructing one from a class.
+   *
    * @param eventListener concrete listener instance
    */
   public void setEventListener (EventListener eventListener) {
@@ -78,7 +82,9 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param listenerClass listener implementation class to instantiate
+   * Sets the listener class to instantiate when no listener instance has been provided.
+   *
+   * @param listenerClass listener implementation class
    */
   public void setListenerClass (Class<? extends EventListener> listenerClass) {
 
@@ -86,7 +92,9 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return context initialization parameters to add when registering the listener
+   * Returns optional context initialization parameters to add when registering the listener.
+   *
+   * @return parameter map, or {@code null} if none
    */
   public Map<String, String> getContextParameters () {
 
@@ -94,7 +102,9 @@ public class ListenerInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param contextParameters additional context parameters for the web application
+   * Sets additional context initialization parameters to register alongside the listener.
+   *
+   * @param contextParameters context parameters for the web application
    */
   public void setContextParameters (Map<String, String> contextParameters) {
 

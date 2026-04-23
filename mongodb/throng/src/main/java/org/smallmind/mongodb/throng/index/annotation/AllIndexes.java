@@ -37,15 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
 /**
  * Container annotation that aggregates multiple {@link Indexes} declarations on an entity type.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface AllIndexes {
 
   /**
-   * @return array of compound index definitions to apply
+   * The compound index definitions grouped under this container annotation.
+   *
+   * @return array of compound index definitions
    */
   Indexes[] value ();
 }

@@ -38,18 +38,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as a whisper, targeting a specific instance and optionally overriding timeouts.
+ * Routes a method invocation directly to a specific named service instance rather than
+ * through normal load-balanced dispatch. The calling convention is otherwise identical to
+ * {@link InOut}: the caller blocks for a response subject to the effective timeout.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Whisper {
 
-  // Any positive value (> 0) will override the default service timeout seconds
-
   /**
-   * Timeout in seconds for the whisper conversation; values greater than zero override defaults.
+   * Per-method timeout in seconds; any value greater than zero overrides the service-level
+   * default. Defaults to {@code 0}, meaning the service default applies.
    *
-   * @return whisper timeout seconds
+   * @return positive override timeout in seconds, or {@code 0} (the default) to use the service default
    */
   long timeoutSeconds () default 0;
 }

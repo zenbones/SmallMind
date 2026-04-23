@@ -38,15 +38,18 @@ import org.smallmind.claxon.registry.meter.Tally;
 import org.smallmind.claxon.registry.meter.TallyBuilder;
 
 /**
- * Produces a {@link TallyBuilder} from JSON. No properties are currently parsed.
+ * {@link InstrumentedParser} implementation for {@link Tally} meters that produces a
+ * {@link TallyBuilder} from a JSON configuration string. Because a tally has no
+ * configurable properties, the JSON input is not examined and may safely be {@code null}
+ * or empty.
  */
 public class TallyParser implements InstrumentedParser<Tally> {
 
   /**
-   * Returns a new tally builder.
+   * Produces a new {@link TallyBuilder} without inspecting the supplied JSON.
    *
-   * @param json ignored configuration
-   * @return tally builder
+   * @param json JSON configuration string; ignored because tallies have no configurable properties
+   * @return a freshly constructed {@link TallyBuilder}
    */
   @Override
   public MeterBuilder<Tally> parse (String json) {

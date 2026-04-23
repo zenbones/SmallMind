@@ -37,18 +37,25 @@ import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 /**
- * Simple {@link ParameterExtractor} that always returns a constant value.
+ * {@link ParameterExtractor} that always returns a fixed, pre-configured constant value,
+ * regardless of the invoked method or its arguments.
  *
- * @param <T> extracted parameter type
+ * <p>Use this when a routing or context parameter is known at configuration time and does
+ * not depend on runtime invocation details, such as a static tenant identifier or a
+ * hard-coded routing key.</p>
+ *
+ * @param <T> the type of the constant parameter value
  */
 public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
 
   private final T parameter;
 
   /**
-   * Creates the extractor with the provided static value.
+   * Constructs an extractor that always returns the given constant value.
    *
-   * @param parameter value to return for every extraction
+   * @param parameter the value returned by every
+   *                  {@link #getParameter(Method, HashMap, WireContext...)} call;
+   *                  may be {@code null}
    */
   public StaticParameterExtractor (T parameter) {
 
@@ -56,7 +63,13 @@ public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the constant value supplied at construction time.
+   *
+   * @param method       ignored
+   * @param argumentMap  ignored
+   * @param wireContexts ignored
+   * @return the constant parameter value; may be {@code null}
+   * @throws MissingInstanceIdException never thrown by this implementation
    */
   @Override
   public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)

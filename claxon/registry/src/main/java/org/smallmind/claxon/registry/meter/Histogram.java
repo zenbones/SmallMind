@@ -41,22 +41,45 @@ import org.smallmind.claxon.registry.aggregate.Stratified;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
- * Meter backed by an HdrHistogram that reports count, rate, min, max, mean, and configurable percentiles.
+ * A {@link Meter} backed by an HdrHistogram that reports count, rate, minimum,
+ * maximum, mean, and an optional set of configurable percentiles over a rolling
+ * collection window.
+ *
+ * <p>Values are accumulated in a {@link Stratified} aggregate that manages
+ * time-windowed HdrHistogram intervals. On each call to {@link #record()}, the
+ * current interval snapshot is consumed and converted into a fixed set of base
+ * quantities ({@code "count"}, {@code "rate"}, {@code "minimum"}, {@code "maximum"},
+ * {@code "mean"}) followed by one quantity per configured {@link Percentile}.</p>
  */
 public class Histogram implements Meter {
 
+  /**
+   * Time-windowed HdrHistogram aggregate used to collect and snapshot recorded values.
+   */
   private final Stratified stratified;
+
+  /**
+   * Percentile definitions whose values are appended to the base quantities on each
+   * {@link #record()} call; may be {@code null} or empty if no percentiles are desired.
+   */
   private final Percentile[] percentiles;
 
   /**
-   * Creates a histogram meter.
+   * Creates a new {@code Histogram} meter with the specified HdrHistogram parameters
+   * and resolution window.
    *
-   * @param clock                          clock supplying monotonic time
-   * @param lowestDiscernibleValue         smallest value to track
-   * @param highestTrackableValue          largest value to track
-   * @param numberOfSignificantValueDigits histogram precision
-   * @param resolutionStint                collection window for histogram intervals
-   * @param percentiles                    optional percentiles to report
+   * @param clock                          clock supplying monotonic time for the rolling window
+   * @param lowestDiscernibleValue         the smallest value the histogram is able to distinguish;
+   *                                       must be a positive integer
+   * @param highestTrackableValue          the largest value the histogram is configured to track
+   *                                       without overflow
+   * @param numberOfSignificantValueDigits the number of significant decimal digits of precision
+   *                                       maintained by the histogram (1–5)
+   * @param resolutionStint                the duration of each rolling histogram interval; controls
+   *                                       the granularity of the rate calculation
+   * @param percentiles                    zero or more {@link Percentile} definitions specifying
+   *                                       which percentile values to include in each recording;
+   *                                       may be omitted entirely
    */
   public Histogram (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint resolutionStint, Percentile... percentiles) {
 
@@ -66,9 +89,9 @@ public class Histogram implements Meter {
   }
 
   /**
-   * Records a value in the histogram.
+   * Records {@code value} in the underlying HdrHistogram.
    *
-   * @param value value to record
+   * @param value the non-negative value to record
    */
   @Override
   public void update (long value) {
@@ -77,9 +100,22 @@ public class Histogram implements Meter {
   }
 
   /**
-   * Produces quantities for count, rate, min, max, mean, and configured percentiles.
+   * Produces a snapshot of the current histogram interval and converts it into
+   * named {@link Quantity} instances.
    *
-   * @return array of histogram-derived quantities
+   * <p>The returned array always contains the following quantities in order:
+   * <ol>
+   *   <li>{@code "count"} — total number of recorded values ({@link QuantityType#COUNT})</li>
+   *   <li>{@code "rate"} — count scaled by the interval time factor to express events per second</li>
+   *   <li>{@code "minimum"} — lowest recorded value in the interval</li>
+   *   <li>{@code "maximum"} — highest recorded value in the interval</li>
+   *   <li>{@code "mean"} — arithmetic mean of all recorded values in the interval</li>
+   * </ol>
+   * followed by one entry for each {@link Percentile} configured at construction time,
+   * using the percentile's name and the value at that percentile boundary.</p>
+   *
+   * @return an array of {@link Quantity} values representing the histogram snapshot;
+   * length equals 5 plus the number of configured percentiles
    */
   @Override
   public Quantity[] record () {

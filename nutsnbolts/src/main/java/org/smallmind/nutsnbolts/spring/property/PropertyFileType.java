@@ -38,17 +38,17 @@ import java.util.Properties;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Supported property file types and their handlers.
+ * Enumerates the supported property file formats and provides the corresponding {@link PropertyHandler} for each.
  */
 public enum PropertyFileType {
 
   PROPERTIES(new String[] {"properties"}) {
     /**
-     * Loads Java properties files.
+     * Loads the given stream as a Java {@code .properties} file and returns a handler over its entries.
      *
-     * @param inputStream the source stream
-     * @return handler over the parsed properties
-     * @throws IOException if loading fails
+     * @param inputStream the input stream of the properties file
+     * @return a {@link PropertyHandler} over the loaded entries
+     * @throws IOException if the stream cannot be read
      */
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
@@ -63,10 +63,10 @@ public enum PropertyFileType {
   },
   YAML(new String[] {"yaml", "yml"}) {
     /**
-     * Loads YAML property files.
+     * Parses the given stream as a YAML file and returns a handler that flattens its structure into property entries.
      *
-     * @param inputStream the source stream
-     * @return handler over the parsed YAML content
+     * @param inputStream the input stream of the YAML file
+     * @return a {@link PropertyHandler} over the flattened entries
      */
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream) {
@@ -79,7 +79,9 @@ public enum PropertyFileType {
   private final String[] extensions;
 
   /**
-   * @param extensions file extensions associated with this type
+   * Initializes the enum constant with the file extensions it recognizes.
+   *
+   * @param extensions file extensions (without leading dot) that map to this type
    */
   PropertyFileType (String[] extensions) {
 
@@ -87,10 +89,10 @@ public enum PropertyFileType {
   }
 
   /**
-   * Resolves the file type for a given extension.
+   * Returns the {@link PropertyFileType} whose recognized extensions include the given value, or {@code null} if none matches.
    *
-   * @param extension file extension without dot
-   * @return matching type or {@code null} if none
+   * @param extension a file extension without a leading dot
+   * @return the matching type, or {@code null} if no type claims this extension
    */
   public static PropertyFileType forExtension (String extension) {
 
@@ -107,17 +109,19 @@ public enum PropertyFileType {
   }
 
   /**
-   * Creates a handler capable of reading this file type from the given stream.
+   * Creates a {@link PropertyHandler} capable of reading this file format from the given input stream.
    *
-   * @param inputStream the source stream
-   * @return property handler
-   * @throws IOException if reading fails
+   * @param inputStream the source input stream
+   * @return a property handler for the entries in the stream
+   * @throws IOException if the stream cannot be read
    */
   public abstract PropertyHandler<?> getPropertyHandler (InputStream inputStream)
     throws IOException;
 
   /**
-   * @return the extensions associated with this file type
+   * Returns the file extensions recognized by this property file type.
+   *
+   * @return array of extension strings (without leading dot)
    */
   public String[] getExtensions () {
 

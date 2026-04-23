@@ -35,86 +35,87 @@ package org.smallmind.scribe.pen;
 import java.io.Serializable;
 
 /**
- * Abstraction of a log record with a native backing entry.
+ * Serializable envelope for a single logging event, carrying the message, severity level, call-site context,
+ * thread identity, timing information, and an optional native backing entry of type {@code N}.
  *
- * @param <N> native record type
+ * @param <N> the type of the underlying native log-entry object wrapped by this record
  */
 public interface Record<N> extends Serializable {
 
   /**
-   * Returns the native backing record.
+   * Returns the underlying native log-entry object that this record wraps, if any.
    *
-   * @return native log entry
+   * @return the native log entry, or {@code null} if there is no native backing object
    */
   N getNativeLogEntry ();
 
   /**
-   * Returns the originating logger name.
+   * Returns the name of the logger that produced this record.
    *
-   * @return logger name
+   * @return the logger name; never {@code null}
    */
   String getLoggerName ();
 
   /**
-   * Returns the severity level for this record.
+   * Returns the severity level assigned to this record.
    *
-   * @return log level
+   * @return the {@link Level} of this record; never {@code null}
    */
   Level getLevel ();
 
   /**
-   * Returns the throwable attached to this record, if any.
+   * Returns the throwable that was attached to this record at creation time, if any.
    *
-   * @return throwable or {@code null}
+   * @return the associated {@link Throwable}, or {@code null} if no exception was logged
    */
   Throwable getThrown ();
 
   /**
-   * Returns the formatted message.
+   * Returns the formatted log message for this record.
    *
-   * @return message text
+   * @return the message text; may be empty but never {@code null}
    */
   String getMessage ();
 
   /**
-   * Returns contextual parameters captured for this record.
+   * Returns the array of contextual key/value parameters carried by this record.
    *
-   * @return array of parameters
+   * @return the parameters array; never {@code null}, but may be empty
    */
   Parameter[] getParameters ();
 
   /**
-   * Returns the logger context captured when the record was created.
+   * Returns the call-site context that identifies where in the source code this record was created.
    *
-   * @return logger context or {@code null}
+   * @return the {@link LoggerContext}, or {@code null} if context capture was not performed
    */
   LoggerContext getLoggerContext ();
 
   /**
-   * Returns the originating thread id.
+   * Returns the identifier of the thread that created this record.
    *
-   * @return thread id
+   * @return the thread ID
    */
   long getThreadID ();
 
   /**
-   * Returns the originating thread name.
+   * Returns the name of the thread that created this record.
    *
-   * @return thread name
+   * @return the thread name; may be {@code null} if the thread had no name
    */
   String getThreadName ();
 
   /**
-   * Returns the monotonically increasing sequence number of the record.
+   * Returns the monotonically increasing sequence number assigned to this record within the logging session.
    *
-   * @return sequence number
+   * @return the sequence number
    */
   long getSequenceNumber ();
 
   /**
-   * Returns the creation time in epoch milliseconds.
+   * Returns the wall-clock time at which this record was created, expressed as milliseconds since the Unix epoch.
    *
-   * @return record timestamp
+   * @return the creation timestamp in epoch milliseconds
    */
   long getMillis ();
 }

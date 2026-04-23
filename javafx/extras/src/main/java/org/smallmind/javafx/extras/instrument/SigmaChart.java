@@ -40,7 +40,11 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedAreaChart;
 
 /**
- * Stacked area chart that visualizes latency dispersion percentiles over time.
+ * A {@link StackedAreaChart} that visualises latency distribution percentiles over a sliding
+ * wall-clock time window. Each series represents the incremental gap between adjacent percentile
+ * thresholds (median, 75th, 95th, 98th, 99th, 99.9th), so stacking them produces a filled view of
+ * the full latency spread. Data points outside the visible window are trimmed on each update.
+ * All data updates are marshalled onto the JavaFX application thread automatically.
  */
 public class SigmaChart extends StackedAreaChart<Long, Number> {
 
@@ -51,9 +55,9 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   private final AtomicBoolean hasData = new AtomicBoolean(false);
 
   /**
-   * Creates the chart showing the supplied span.
+   * Creates a chart whose time axis spans the given number of milliseconds into the past from now.
    *
-   * @param spanInMilliseconds the width of the time window
+   * @param spanInMilliseconds width of the visible time window in milliseconds; must be positive
    */
   public SigmaChart (long spanInMilliseconds) {
 
@@ -76,7 +80,9 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   }
 
   /**
-   * @return property indicating whether updates are paused
+   * Returns the property controlling whether chart updates are paused.
+   *
+   * @return the paused property; never {@code null}
    */
   public BooleanProperty pausedProperty () {
 
@@ -84,7 +90,9 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   }
 
   /**
-   * @return whether updates are paused
+   * Returns whether the chart is currently paused.
+   *
+   * @return {@code true} if the time axis has stopped advancing
    */
   public boolean isPaused () {
 
@@ -92,9 +100,9 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   }
 
   /**
-   * Toggles whether the chart accepts new data.
+   * Pauses or resumes time-axis advancement and data acceptance.
    *
-   * @param paused {@code true} to halt updates
+   * @param paused {@code true} to halt the time axis; {@code false} to resume
    */
   public void setPaused (boolean paused) {
 
@@ -102,11 +110,13 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   }
 
   /**
-   * Adds a dispersion sample to the chart across all percentile series, removing stale data beyond the visible window.
-   * Execution is marshalled to the JavaFX application thread.
+   * Appends a percentile dispersion sample to the chart. Each series receives the incremental
+   * difference between adjacent percentile boundaries so that stacking produces the full
+   * distribution spread. Data points older than the current lower time-axis bound are trimmed.
+   * Execution is dispatched to the JavaFX application thread via {@link Platform#runLater}.
    *
-   * @param milliseconds the timestamp for the sample
-   * @param dispersion   percentile data to plot
+   * @param milliseconds epoch time in milliseconds for the sample
+   * @param dispersion   percentile data to plot; must not be {@code null}
    */
   public void addDispersion (final long milliseconds, final Dispersion dispersion) {
 
@@ -140,7 +150,8 @@ public class SigmaChart extends StackedAreaChart<Long, Number> {
   }
 
   /**
-   * Stops the underlying time axis scheduler.
+   * Stops the underlying {@link TimeAxis} scheduled executor, preventing further axis updates.
+   * Should be called when the chart is no longer needed to release background threads.
    */
   public void stop () {
 

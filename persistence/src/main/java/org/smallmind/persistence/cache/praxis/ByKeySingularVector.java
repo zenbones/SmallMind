@@ -45,11 +45,11 @@ import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
 
 /**
- * {@link DurableVector} implementation that represents a single durable referenced by a {@link DurableKey}.
- * The durable is loaded lazily from the backing {@link ORMDao} whenever accessed.
+ * Singular {@link DurableVector} that references a single durable by a {@link DurableKey} and resolves
+ * it lazily through the backing {@link ORMDao} on every access.
  *
- * @param <I> identifier type
- * @param <D> durable type
+ * @param <I> the identifier type, which must be {@link Serializable} and {@link Comparable}
+ * @param <D> the durable type
  */
 public class ByKeySingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
@@ -58,10 +58,10 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   private DurableKey<I, D> durableKey;
 
   /**
-   * Creates a singular vector pointing at the supplied durable key.
+   * Creates a singular vector pointing at the durable identified by the given key.
    *
-   * @param durableKey        key referencing the durable
-   * @param timeToLiveSeconds TTL for the vector
+   * @param durableKey        the key referencing the single durable
+   * @param timeToLiveSeconds the TTL for this vector in seconds
    */
   public ByKeySingularVector (DurableKey<I, D> durableKey, int timeToLiveSeconds) {
 
@@ -71,9 +71,10 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Lazily resolves the {@link ORMDao} used to load the durable.
+   * Lazily resolves and caches the {@link ORMDao} used to load the referenced durable.
    *
-   * @return ORM DAO for the managed durable
+   * @return the ORM DAO for the managed durable class
+   * @throws CacheOperationException when no DAO is registered for the durable class
    */
   private ORMDao<I, D, ?, ?> getORMDao () {
 
@@ -87,9 +88,10 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Hydrates the durable instance from its key.
+   * Hydrates and returns the durable referenced by the stored key.
    *
-   * @return durable referenced by this vector
+   * @return the resolved durable
+   * @throws CacheOperationException when the durable cannot be found in the backing store
    */
   private D getDurable () {
 
@@ -104,9 +106,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Creates a copy of this singular vector, preserving the referenced key and TTL.
+   * Creates a copy of this vector preserving the referenced key and TTL.
    *
-   * @return copied singular vector
+   * @return a new {@link ByKeySingularVector} with the same key and TTL
    */
   public DurableVector<I, D> copy () {
 
@@ -114,7 +116,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return {@code true} because this vector always contains a single element
+   * Returns {@code true} because this vector always holds exactly one element.
+   *
+   * @return {@code true}
    */
   public boolean isSingular () {
 
@@ -122,10 +126,10 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Replaces the referenced durable when it differs from the current entry.
+   * Replaces the referenced key when the supplied durable differs from the currently referenced one.
    *
-   * @param durable durable to store
-   * @return {@code true} when the reference changes
+   * @param durable the durable to store
+   * @return {@code true} when the stored key is updated
    */
   public synchronized boolean add (D durable) {
 
@@ -139,10 +143,11 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Removal is unsupported for singular vectors because they always reference one durable.
+   * Removal is not supported for singular vectors.
    *
    * @param durable unused
-   * @return never returns; always throws {@link UnsupportedOperationException}
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
    */
   public boolean remove (D durable) {
 
@@ -150,9 +155,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * Returns the referenced durable.
+   * Returns the durable referenced by this vector.
    *
-   * @return hydrated durable
+   * @return the resolved durable
    */
   public synchronized D head () {
 
@@ -160,7 +165,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return singleton list containing the referenced durable
+   * Returns a singleton list containing the referenced durable.
+   *
+   * @return an unmodifiable single-element list
    */
   public synchronized List<D> asBestEffortLazyList () {
 
@@ -168,7 +175,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   /**
-   * @return iterator that yields the referenced durable once
+   * Returns an iterator that yields the referenced durable exactly once.
+   *
+   * @return a single-element iterator
    */
   public synchronized Iterator<D> iterator () {
 

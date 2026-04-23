@@ -33,21 +33,21 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Simple two-element container.
+ * Immutable record holding two typed elements, commonly used as a key/value pair or a heterogeneous two-tuple.
  *
- * @param <K> first element type
- * @param <V> second element type
+ * @param <K> type of the first element
+ * @param <V> type of the second element
  */
 public record Pair<K, V>(K first, V second) {
 
   /**
-   * Factory method mirroring the constructor.
+   * Creates a new pair with the supplied elements.
    *
    * @param first  first element
    * @param second second element
-   * @param <K>    first element type
-   * @param <V>    second element type
-   * @return new pair containing the supplied elements
+   * @param <K>    type of the first element
+   * @param <V>    type of the second element
+   * @return a new {@code Pair} containing both elements
    */
   public static <K, V> Pair<K, V> of (K first, V second) {
 

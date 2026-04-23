@@ -35,16 +35,17 @@ package org.smallmind.persistence.database;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Application-wide registry for a {@link Sequence} implementation.
+ * Static registry that holds a single application-wide {@link Sequence} provider and delegates
+ * value generation to it.
  */
 public class SequenceManager {
 
   private static final AtomicReference<Sequence> SEQUENCE_REFERENCE = new AtomicReference<Sequence>();
 
   /**
-   * Registers the given sequence as the active provider.
+   * Sets the active {@link Sequence} provider, replacing any previously registered instance.
    *
-   * @param sequence sequence implementation
+   * @param sequence the sequence implementation to register
    */
   public static void register (Sequence sequence) {
 
@@ -52,7 +53,7 @@ public class SequenceManager {
   }
 
   /**
-   * Delegates to the registered {@link Sequence} to obtain the next value.
+   * Delegates to the registered {@link Sequence} to obtain the next value for the named sequence.
    *
    * @param name logical sequence name
    * @return next sequence value

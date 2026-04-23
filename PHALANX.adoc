@@ -1,1818 +1,815 @@
-[[phalanx, Phalanx]]
-= Phalanx
+= SmallMind Phalanx: Broker-Backed RPC For Plain Java Interfaces
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+:icons: font
+:sectanchors:
+:sectlinks:
 
-[partintro]
-Phalanx is Smallmind's explicit wire and worker module for transport-neutral Java invocation and small background worker pools.
-It gives you five practical surfaces:
+== The Problem This Solves
 
-* interface-first wire contracts and proxy generation in `org.smallmind.phalanx.wire`
-* serializable invocation and result payloads plus codecs in `org.smallmind.phalanx.wire.signal`
-* transport SPI plus mock, JMS, RabbitMQ, and Kafka integrations
-* optional Spring bean helpers and a thin JMX monitor
-* reusable worker queues and lifecycle primitives in `org.smallmind.phalanx.worker`
+Two JVM processes need to talk, and the call site wants to look like an
+ordinary Java method invocation. The obvious options all require
+boilerplate the call site should not be writing:
 
-Phalanx stays aligned with Smallmind's library-safe design priorities:
+* hand-written producer/consumer code that serialises arguments, routes by
+  string tag, correlates replies, and materialises exceptions;
+* a REST client generated from an external schema, with its own stub
+  generation and transport coupling;
+* a service mesh or gRPC runtime that commits the service topology and
+  wire format before the first call is placed.
 
-* explicit service registration and bootstrap
-* caller-owned transport topology, timeouts, and dependency choice
-* thin broker integrations over the native client libraries
-* optional Spring usage that complements manual assembly
-* reusable worker primitives that stay independent of the wire stack
+`smallmind-phalanx` is the piece in the middle. A Java interface plus a
+handful of annotations becomes a JDK dynamic proxy on the client side and a
+message-broker endpoint on the server side. One argument-named payload is
+produced per call, one correlated reply is consumed, and server-side
+exceptions arrive back at the caller as throwables.
 
-Audience: developers who want Java-to-Java remote invocation over explicit transports, or who want a small worker abstraction without adopting a larger execution framework.
-Versioning: examples use `${smallmind.version}` for Smallmind artifacts; keep related Smallmind modules on the same version unless you intentionally need to split them.
+What the module owns:
 
-== Quick Navigation
+* encoding each call as an `InvocationSignal`, dispatching it by voice
+  (load-balanced, directed, or broadcast), and waiting for the correlated
+  `ResultSignal`;
+* reflecting the target interface to dispatch the inbound signal;
+* carrying thread-local `WireContext` values across the wire and
+  re-establishing them on the server thread;
+* broker wiring for RabbitMQ, Kafka, JMS, and an in-process mock router.
 
-* <<phalanx-reading-paths,Reading Paths>>
-* <<phalanx-at-a-glance,At A Glance>>
-* <<phalanx-why-use,Why Use Phalanx>>
-* <<phalanx-choose,Choosing The Right Surface>>
-* <<phalanx-layout,Project Layout>>
-* <<phalanx-install,Installation>>
-* <<phalanx-first-run,First Run In 10 Minutes>>
-* <<phalanx-quick-start,Quick Start>>
-* <<phalanx-example-catalog,Example Catalog>>
-* <<phalanx-call-flow,Call Flow>>
-* <<phalanx-contracts,Wire Contract Model>>
-* <<phalanx-proxies,Client Proxies And Extractors>>
-* <<phalanx-serialization,Serialization, Typing, And Adapters>>
-* <<phalanx-contexts,Wire Context Propagation>>
-* <<phalanx-spi,Transport SPI And Custom Transport Notes>>
-* <<phalanx-transport-matrix,Transport Matrix>>
-* <<phalanx-mock,Mock Transport>>
-* <<phalanx-jms,JMS Transport>>
-* <<phalanx-rabbitmq,RabbitMQ Transport>>
-* <<phalanx-kafka,Kafka Transport>>
-* <<phalanx-spring,Spring Integration>>
-* <<phalanx-worker,Worker Package>>
-* <<phalanx-ops,Metrics, Logging, And JMX>>
-* <<phalanx-api-index,API Index>>
-* <<phalanx-defaults,Defaults Reference>>
-* <<phalanx-edge-cases,Behavioral Edge Cases>>
-* <<phalanx-troubleshooting,Troubleshooting>>
-* <<phalanx-minimal-checklist,Minimal Checklist>>
-* <<phalanx-verification,Verification Checklist>>
+What stays with the caller:
 
-[[phalanx-reading-paths, Reading Paths]]
-== Reading Paths
+* the actual `ConnectionFactory` (RabbitMQ), `KafkaServer[]` list, or JMS
+  connection factory;
+* choosing a `SignalCodec` — `JsonSignalCodec` (Jackson 3) or
+  `JavaSerializationSignalCodec`;
+* choosing a concurrency limit and default timeout on each transport pair;
+* supplying a `ParameterExtractor` for the service group — and, for
+  `@Whisper` interfaces, one for the target instance id.
 
-If you are new to the module, this order keeps the adoption path short and the mental model clear:
-
-1. <<phalanx-why-use,Why Use Phalanx>>
-2. <<phalanx-install,Installation>>
-3. <<phalanx-first-run,First Run In 10 Minutes>>
-4. <<phalanx-quick-start,Quick Start>>
-5. <<phalanx-contracts,Wire Contract Model>>
-6. <<phalanx-choose,Choosing The Right Surface>>
-
-If you already know you only want a specific runtime, jump to:
-
-* <<phalanx-mock,Mock Transport>> for tests and local end-to-end checks
-* <<phalanx-jms,JMS Transport>> when you already own a JMS provider and destinations
-* <<phalanx-rabbitmq,RabbitMQ Transport>> when your deployment model is exchange and queue driven
-* <<phalanx-kafka,Kafka Transport>> when topic naming and broker fan-out should remain visible
-
-If you only care about background execution primitives, skip directly to:
-
-* <<phalanx-worker,Worker Package>>
-* <<phalanx-defaults,Defaults Reference>>
-* <<phalanx-troubleshooting,Troubleshooting>>
-
-If you are implementing or auditing a custom transport, start here:
-
-* <<phalanx-call-flow,Call Flow>>
-* <<phalanx-serialization,Serialization, Typing, And Adapters>>
-* <<phalanx-spi,Transport SPI And Custom Transport Notes>>
-* <<phalanx-edge-cases,Behavioral Edge Cases>>
-
-[[phalanx-at-a-glance, At A Glance]]
+[[at-a-glance]]
 == At A Glance
 
-=== Integration Model In One Minute
-
-1. Define a Java service interface and annotate every transported parameter with `@Argument`.
-2. Let unannotated methods behave as ordinary request/response talk calls, or use `@InOnly`, `@Whisper`, or `@Shout` when the routing pattern differs.
-3. Implement the service as a `WiredService` and register it with a `ResponseTransport`.
-4. Choose a `SignalCodec`: `JsonSignalCodec` for normal use, `JavaSerializationSignalCodec` only for trusted Java-only boundaries.
-5. Generate a proxy with `WireProxyFactory` or `WireProxyFactoryBean`.
-6. Supply a required service-group extractor, and optionally instance-id and timeout extractors.
-7. If you need ambient metadata, define a `WireContext`, register its handle, and push it into `ContextFactory` before invoking the proxy.
-8. Close request transports, response transports, and worker managers explicitly.
-
-[cols="1,2,4",options="header"]
+[cols="1,2",options="header"]
 |===
-|Artifact |Primary packages |Purpose
+| Concern | Entry point
 
-|`org.smallmind:smallmind-phalanx`
-|`wire`, `wire.signal`, `wire.transport`, `wire.spring`, `worker`
-|Explicit named-argument remote invocation and lightweight worker execution with caller-selected transports and optional Spring/JMX integration
+| Declare a remotely callable method | `@InOut(timeoutSeconds = N)`, `@InOnly`, `@Whisper(timeoutSeconds = N)`, or `@Shout` on the method; `@Argument("name")` on every parameter
+| Rename a method on the wire | `@CallAs("wire-name")`
+| Build the client-side proxy | `WireProxyFactory.generateProxy(transport, version, name, iface, groupExtractor, instanceIdExtractor, timeoutExtractor)`
+| Expose the implementation | `responseTransport.register(Interface.class, wiredService)`; the implementation must implement `WiredService`
+| Unit-test without a broker | `MockMessageRouter` + `MockRequestTransport` + `MockResponseTransport`
+| Run over RabbitMQ | `RabbitMQConnector`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`, a `QueueContractor` pair, `NameConfiguration`
+| Run over Kafka | `KafkaRequestTransport`, `KafkaResponseTransport`, `KafkaConnector`, `KafkaServer...`
+| Run over JMS (Jakarta Messaging 3.x) | `JmsRequestTransport`, `JmsResponseTransport`, `RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`
+| Flow a tenant/user/trace value through every call | Subclass `WireContext`, `@Wire(adapter = ...)`, `WireContextManager.register("handle", Cls)`, push with `ContextFactory.pushContext(...)`
+| Convert a non-trivial domain type on the wire | `@Wire(adapter = MyAdapter.class)` on the type; extend `WireAdapter<V,B>` (`getValueType`, `marshal`, `unmarshal`)
+| Reuse the worker pool outside the wire layer | `org.smallmind.phalanx.worker.WorkManager` with `TransferringWorkQueue` or `BlockingWorkQueue`
 |===
 
-[cols="1,2,4",options="header"]
-|===
-|Package |Start here |What it covers
+== Conceptual Model
 
-|`org.smallmind.phalanx.wire`
-|`Argument`, `InOnly`, `Whisper`, `Shout`, `ParameterExtractor`, `StaticParameterExtractor`, `WireProxyFactory`
-|Contract annotations, proxy assembly, extractor strategies, adapters, and core exceptions
+The wire layer uses a small vocabulary that the rest of the doc depends on.
 
-|`org.smallmind.phalanx.wire.signal`
-|`InvocationSignal`, `ResultSignal`, `Route`, `Function`, `JsonSignalCodec`
-|Transport payloads, codecs, route metadata, and wire-context support
+**Service interface**::
+    Any Java interface whose methods carry a dispatch annotation
+    (`@InOut`, `@InOnly`, `@Whisper`, `@Shout`) and whose parameters all
+    carry `@Argument`. It does not extend any marker interface.
+    `WireInvocationHandler` validates both constraints when the proxy is
+    created.
 
-|`org.smallmind.phalanx.wire.transport`
-|`RequestTransport`, `ResponseTransport`, `WiredService`, `WireInvocationCircuit`
-|Transport interfaces, service registration, callback completion, and invocation dispatch
+**Signal**::
+    The serialised form of one request (`InvocationSignal`) or one reply
+    (`ResultSignal`). A `SignalCodec` owns the byte encoding. Two codecs
+    ship: `JsonSignalCodec` (Jackson 3) and `JavaSerializationSignalCodec`.
 
-|`org.smallmind.phalanx.wire.transport.mock`
-|`MockMessageRouter`, `MockRequestTransport`, `MockResponseTransport`
-|In-memory transport for tests and focused local checks
+**Route**::
+    The `(version, serviceName, function)` tuple inside every invocation
+    signal. Version and name come from the proxy configuration. The
+    function carries the Java method name (or the `@CallAs` override), its
+    parameter types, and its return type.
 
-|`org.smallmind.phalanx.wire.transport.jms`
-|`RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`, `JmsRequestTransport`, `JmsResponseTransport`
-|JMS queue/topic transport with selectors and explicit connection management
+**Voice**::
+    The routing-plus-conversation pair for a single call. A `Voice` combines
+    a `VocalMode` — `TALK` (load-balanced within a service group), `WHISPER`
+    (directed at one instance), or `SHOUT` (broadcast to every instance) —
+    with a `Conversation` (`OneWayConversation` for fire-and-forget,
+    `TwoWayConversation` for request/reply with a timeout). The three
+    concrete voices are `Talking`, `Whispering`, and `Shouting`.
+    `WireInvocationHandler` picks the right one from the method's
+    annotations.
 
-|`org.smallmind.phalanx.wire.transport.amqp.rabbitmq`
-|`RabbitMQConnector`, `NameConfiguration`, `QueueContractor`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`
-|RabbitMQ transport with explicit exchange and queue naming plus queue-type selection
+**Wire context**::
+    A subclass of abstract `WireContext` (which extends the nutsnbolts
+    `Context`). Pushed onto the thread-local `ContextFactory` stack by the
+    caller, attached to every outbound invocation signal, re-pushed on the
+    server thread for the duration of the dispatch, and visible to the
+    service implementation via `ContextFactory.getContext`.
 
-|`org.smallmind.phalanx.wire.transport.kafka`
-|`KafkaRequestTransport`, `KafkaResponseTransport`, `TopicNames`
-|Kafka topic-based transport with derived topic names and caller-specific response topics
+**Wired service**::
+    The server-side wrapper around a service implementation.
+    `WiredService.getServiceName()` and `getVersion()` supply the routing
+    key, and `setResponseTransport(...)` gives the wrapper a back-channel
+    to reply. `ResponseTransport.register(Class, WiredService)` binds the
+    wrapper to an interface.
 
-|`org.smallmind.phalanx.wire.spring`
-|`WireProxyFactoryBean`, `StaticParameterExtractorFactoryBean`, `WireContextInitializingBean`
-|Optional Spring bean helpers for explicit assembly
+**Transport pair**::
+    `RequestTransport` on the client, `ResponseTransport` on the server.
+    Both sides share a `SignalCodec` and matching configuration (service
+    group, `NameConfiguration` for RabbitMQ, or `nodeName`/`serviceGroup`
+    for Kafka). Each pair is independent; a JVM can host many.
 
-|`org.smallmind.phalanx.worker`
-|`WorkManager`, `Worker`, `BlockingWorkQueue`, `TransferringWorkQueue`
-|Standalone worker-pool and queue abstractions reused by broker integrations and usable on their own
-|===
-
-[[phalanx-why-use, Why Use Phalanx]]
-== Why Use Phalanx
-
-Use Phalanx when you want shared Java contracts and explicit transport control without handing runtime ownership to a framework.
-
-What it does well:
-
-* keeps remote method shape in ordinary Java interfaces instead of generated stubs
-* uses named arguments, so wire contracts are more stable than position-only payloads
-* keeps service version, service name, service group, and instance targeting explicit
-* lets the same contract and proxy model work across mock, JMS, RabbitMQ, and Kafka transports
-* integrates with Nutsnbolts `ContextFactory` when you need contextual metadata on the wire
-* provides a small worker abstraction that is useful even when you never use the wire stack
-
-Phalanx is a strong fit when:
-
-* caller and callee already share Java code or compatible Java contracts
-* you want broker choice to stay separate from contract design
-* you need request/response, fire-and-forget, targeted instance calls, and group broadcast in one model
-* you need a library-safe worker pool instead of a framework-owned executor stack
-
-Phalanx is especially effective for message-oriented transports and Java-to-Java contracts that stay explicit across broker choices.
-
-[[phalanx-choose, Choosing The Right Surface]]
-== Choosing The Right Surface
-
-[cols="2,2,4",options="header"]
-|===
-|Problem |Use |Why
-
-|Validate a wire contract in process
-|`MockRequestTransport` plus `MockResponseTransport`
-|Exercises the real proxy, codec, and invocation circuit without requiring an external broker
-
-|Use an existing JMS provider and destination model
-|`JmsRequestTransport` plus `JmsResponseTransport`
-|Talk uses a queue, whisper and shout use a topic, and selectors carry service-group and instance targeting
-
-|Use RabbitMQ with explicit exchange and queue naming
-|`RabbitMQRequestTransport` plus `RabbitMQResponseTransport`
-|Routing stays visible through exchanges, queue names, queue contractors, and response worker configuration
-
-|Use Kafka topics for every path
-|`KafkaRequestTransport` plus `KafkaResponseTransport`
-|Talk, shout, whisper, and response traffic are all explicit topics derived from `TopicNames`
-
-|Need only worker execution primitives
-|`WorkManager`, `Worker`, `WorkQueue`
-|These types are usable independently of the wire stack and do not require a broker
-|===
-
-[[phalanx-layout, Project Layout]]
-== Project Layout
-
-[cols="1,2,3",options="header"]
-|===
-|Path |Artifact |Notes
-
-|`phalanx/`
-|`org.smallmind:smallmind-phalanx`
-|Single published jar containing wire contracts, transports, Spring helpers, JMX monitor, and worker package
-|===
-
-[[phalanx-install, Installation]]
 == Installation
 
-Add the module to the code that owns the service contract or the transport assembly.
+The module is a single artifact; the transport-client dependencies it
+declares are `optional`, so you only drag in the broker client for the
+transport you actually use.
 
 [source,xml]
 ----
 <dependency>
-  <groupId>org.smallmind</groupId>
-  <artifactId>smallmind-phalanx</artifactId>
-  <version>${smallmind.version}</version>
+    <groupId>org.smallmind</groupId>
+    <artifactId>smallmind-phalanx</artifactId>
+    <version>${project.version}</version>
 </dependency>
 ----
 
-=== Optional Runtime Surfaces
+Add the matching runtime dependencies:
 
-[cols="2,4",options="header"]
+[cols="1,2",options="header"]
 |===
-|Feature |What else you supply
+| Transport | Required runtime dependency
 
-|Core wire contracts and worker package
-|No extra broker client beyond `smallmind-phalanx`
-
-|Mock transport
-|Nothing beyond `smallmind-phalanx`
-
-|JMS transport
-|A JMS provider and explicit destination/connection wiring
-
-|RabbitMQ transport
-|`com.rabbitmq:amqp-client` plus broker addresses and credentials
-
-|Kafka transport
-|`org.apache.kafka:kafka-clients`, `org.smallmind:kafka-utility`, and Kafka bootstrap server definitions
-
-|Spring helper beans
-|No extra runtime choice beyond the main module; the helper classes simply expose the Spring Beans integration already carried by the artifact
+| RabbitMQ | `com.rabbitmq:amqp-client`
+| Kafka    | `org.apache.kafka:kafka-clients` (and `org.smallmind:kafka-utility` which the module already declares as `optional`)
+| JMS      | any Jakarta Messaging 3.x provider; the API is compiled against `jakarta.jms:jakarta.jms-api`
+| Mock     | nothing; in-process only
 |===
 
-=== Direct Integration Dependencies Used By The Module
+Runtime environment:
 
-The `phalanx/pom.xml` shows that the module itself depends directly on Jackson, Scribe, Claxon, Nutsnbolts, Quorum, Spring Beans, and Smallmind's web JSON scaffold.
-For most users that means:
+* Java 25 — the parent pom sets `maven.compiler.release` to `25`.
+* Spring Beans 7.x — used by the classes under `wire/spring/` and
+  `transport/amqp/rabbitmq/spring/`; the rest of the module is Spring-free.
+* Jackson 3.x — required by `JsonSignalCodec`.
+* Jakarta 3.x APIs (`jakarta.jms`, `jakarta.xml.bind`, `jakarta.ws.rs`).
 
-* JSON serialization is already wired through `JsonSignalCodec`
-* wire faults and non-native error payloads use the Smallmind web JSON fault model
-* metrics are emitted through Claxon
-* logging uses Scribe's `LoggerManager`
-* JMS JNDI helpers can reuse Quorum pooling abstractions
+Logging is routed through `scribe-pen`; `LoggerManager.getLogger(...)` is
+the internal entry point.
 
-RabbitMQ and Kafka client libraries remain optional so applications keep control of those runtime choices.
-
-[[phalanx-first-run, First Run In 10 Minutes]]
-== First Run In 10 Minutes
-
-The safest first integration is:
-
-1. start with the mock transport
-2. keep one shared service interface and annotate every parameter with `@Argument`
-3. use `JsonSignalCodec`
-4. use a static service-group extractor first
-5. add whisper only after you have a real instance id from `ResponseTransport.register(...)`
-6. close both transports explicitly when the owning component shuts down
-
-That path proves the contract, serialization, context propagation, exception flow, and proxy behavior before you add broker-specific concerns.
-
-[[phalanx-quick-start, Quick Start]]
 == Quick Start
 
-The example below is the smallest realistic end-to-end path.
-It uses the mock transport so the same proxy and dispatch stack is exercised without external infrastructure.
+A complete end-to-end example against the mock router. No broker is
+needed, nothing is thread-local except the `WireContext` stack, and the
+example fits in one file.
 
-=== 1. Define The Shared Service Interface
-
-[source,java]
-----
-import org.smallmind.phalanx.wire.Argument;
-import org.smallmind.phalanx.wire.InOnly;
-import org.smallmind.phalanx.wire.Whisper;
-
-public interface GreetingService {
-
-  String echo (@Argument("name") String name);
-
-  @InOnly
-  void warmCache (@Argument("name") String name);
-
-  @Whisper(timeoutSeconds = 5)
-  String identify (@Argument("probe") String probe);
-}
-----
-
-`echo(...)` is an ordinary talk request/response method because it has no conversation annotation.
-`warmCache(...)` is one-way.
-`identify(...)` targets a specific instance id.
-
-=== 2. Implement The Service As A `WiredService`
+Declare the interface:
 
 [source,java]
 ----
-import org.smallmind.phalanx.wire.transport.ResponseTransport;
-import org.smallmind.phalanx.wire.transport.WiredService;
+public interface CalculatorService {
 
-public class GreetingEndpoint implements GreetingService, WiredService {
+    @InOut(timeoutSeconds = 5)
+    Integer add (@Argument("a") int a, @Argument("b") int b);
 
-  @Override
-  public int getVersion () {
-
-    return 1;
-  }
-
-  @Override
-  public String getServiceName () {
-
-    return "GreetingService";
-  }
-
-  @Override
-  public void setResponseTransport (ResponseTransport responseTransport) {
-
-    // Built-in transports do not call this hook automatically.
-  }
-
-  @Override
-  public String echo (String name) {
-
-    return "hello " + name;
-  }
-
-  @Override
-  public void warmCache (String name) {
-
-  }
-
-  @Override
-  public String identify (String probe) {
-
-    return "probe=" + probe;
-  }
+    @InOnly
+    void logCalculation (@Argument("operation") String operation);
 }
 ----
 
-=== 3. Wire The Mock Transport, Register The Endpoint, And Create A Proxy
+Implement it, including the `WiredService` metadata that
+`ResponseTransport.register` requires:
 
 [source,java]
 ----
-import org.smallmind.phalanx.wire.StaticParameterExtractor;
-import org.smallmind.phalanx.wire.signal.JsonSignalCodec;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.spring.WireProxyFactory;
-import org.smallmind.phalanx.wire.transport.mock.MockMessageRouter;
-import org.smallmind.phalanx.wire.transport.mock.MockRequestTransport;
-import org.smallmind.phalanx.wire.transport.mock.MockResponseTransport;
+public class CalculatorServiceImpl implements CalculatorService, WiredService {
 
-MockMessageRouter messageRouter = new MockMessageRouter();
-SignalCodec signalCodec = new JsonSignalCodec();
+    public Integer add (int a, int b) { return a + b; }
 
-MockRequestTransport requestTransport =
-  new MockRequestTransport(messageRouter, signalCodec, 15);
-MockResponseTransport responseTransport =
-  new MockResponseTransport(messageRouter, signalCodec);
-
-String instanceId =
-  responseTransport.register(GreetingService.class, new GreetingEndpoint());
-
-GreetingService greetingService =
-  (GreetingService)WireProxyFactory.generateProxy(
-    requestTransport,
-    1,
-    "GreetingService",
-    GreetingService.class,
-    new StaticParameterExtractor<>("default"),
-    new StaticParameterExtractor<>(instanceId),
-    null
-  );
-
-try {
-  String reply = greetingService.echo("Ada");
-  greetingService.warmCache("Ada");
-  String targetedReply = greetingService.identify("health");
-} finally {
-  requestTransport.close();
-  responseTransport.close();
-}
-----
-
-That example covers the contract rules you need most often:
-
-* the proxy is generated from the interface, not the implementation
-* service version and service name are supplied explicitly
-* service-group routing is required even in the mock transport
-* whisper calls need an instance-id extractor
-* request and response transports are ordinary objects with explicit lifecycle
-
-[[phalanx-example-catalog, Example Catalog]]
-== Example Catalog
-
-Use the later sections that match the next thing you need to solve:
-
-* <<phalanx-proxies,Dynamic routing and timeout extractors>>
-* <<phalanx-serialization,Custom wire adapters and signature hints>>
-* <<phalanx-contexts,Context propagation across the wire>>
-* <<phalanx-jms,JMS transport assembly>>
-* <<phalanx-rabbitmq,RabbitMQ transport assembly>>
-* <<phalanx-kafka,Kafka transport assembly>>
-* <<phalanx-spring,Spring bean wiring>>
-* <<phalanx-worker,Standalone worker-pool usage>>
-
-[[phalanx-call-flow, Call Flow]]
-== Call Flow
-
-The normal request/response path has eight steps:
-
-1. The caller invokes a method on a proxy created by `WireProxyFactory`.
-2. `WireInvocationHandler` validates interface metadata, turns arguments into a named map, collects matching `WireContext` instances from `ContextFactory`, and constructs a `Voice`.
-3. The `RequestTransport` encodes an `InvocationSignal` and publishes transport-specific envelope metadata such as service group, caller id, message id, and correlation id.
-4. The `ResponseTransport` receives the request and delegates to `WireInvocationCircuit`.
-5. `WireInvocationCircuit` locates a registered service by `(version, serviceName)`, resolves the target `Function`, and asks `MethodInvoker` to build the ordered argument array.
-6. `MethodInvoker` pushes incoming contexts into `ContextFactory`, invokes the target method, and pops those contexts in a `finally` block.
-7. The result or fault is wrapped as a `ResultSignal` and sent back through a `ResponseTransmitter` unless the call is one-way.
-8. The request side callback unwraps the `ResultSignal`, converts the payload back to the declared return type, rethrows the underlying Java exception when possible, or throws `FaultWrappingException` when only a neutral fault payload is available.
-
-=== Signal Versus Envelope
-
-One design detail matters when you are debugging or implementing a custom transport:
-
-* `InvocationSignal` carries `inOnly`, `Route`, named arguments, and contexts.
-* Service group, instance id, caller id, message id, correlation id, clock, and content type live in transport-specific envelope metadata.
-
-That is why broker transports use headers, selectors, routing keys, or topic names for voice-based routing instead of putting everything inside the serialized signal.
-
-[IMPORTANT]
-====
-If you build a custom transport, you must preserve at least these transport-side values:
-
-* caller id for routing responses back to the originating request transport
-* message id plus correlation id for request/response matching
-* service group for talk, shout, and whisper routing
-* instance id for whisper routing
-====
-
-[[phalanx-contracts, Wire Contract Model]]
-== Wire Contract Model
-
-=== Core Terms
-
-[cols="1,4",options="header"]
-|===
-|Term |Meaning
-
-|Service name
-|Logical service identifier carried in `Route.service`
-
-|Version
-|Integer protocol version carried in `Route.version`
-
-|Function
-|Method descriptor made up of wire name, result signature, native return type, and parameter signature
-
-|Service group
-|Transport-side grouping key used to choose the queue, topic, or routing path for a call
-
-|Instance id
-|Transport-side target identifier used by whisper calls
-
-|Talk
-|The ordinary call path; unannotated methods use it by default
-
-|Whisper
-|A targeted call to one specific response transport instance
-
-|Shout
-|A one-way broadcast-oriented call to a service group
-|===
-
-=== Annotation Reference
-
-[cols="1,3,4",options="header"]
-|===
-|Annotation |Where it applies |Effect
-
-|`@Argument("name")`
-|Method parameters on the shared service interface
-|Required for every transported parameter; the value becomes the key in `InvocationSignal.arguments`
-
-|`@Argument(type = "Hint")`
-|Method parameters
-|Overrides the neutral signature label for the parameter; useful when simple type names would collide
-
-|`@CallAs("wireName")`
-|Method
-|Changes the wire-level function name without renaming the Java method
-
-|`@Result("Hint")`
-|Method
-|Overrides the neutral result signature label used for signature matching; it does not change actual serialization
-
-|`@InOnly`
-|Method
-|Marks the call as one-way talk traffic; the method must return `void` and declare no checked exceptions
-
-|`@InOut(timeoutSeconds = ...)`
-|Method
-|Marks a talk call as request/response and can express a timeout override in the contract
-
-|`@Whisper(timeoutSeconds = ...)`
-|Method
-|Targets a specific instance id and can express a timeout override
-
-|`@Shout`
-|Method
-|Broadcast-oriented one-way invocation to the whole service group
-
-|`@Wire(adapter = ...)`
-|Type
-|Causes arguments of that type to be marshalled and unmarshalled through a `WireAdapter`
-|===
-
-[IMPORTANT]
-====
-Put the parameter annotations on the interface used for proxy generation and service registration.
-The built-in proxy and dispatch path does not infer parameter names from implementation classes or Java compiler metadata.
-====
-
-=== Default Semantics
-
-If a method has no conversation annotation:
-
-* it is treated as talk traffic
-* it is request/response (`IN_OUT`)
-* it uses the request transport's default timeout unless a timeout extractor overrides it
-
-That means `@InOut` is optional unless you want the timeout choice to be visible on the method itself.
-
-=== Service Metadata Contracts
-
-Two interfaces exist in the module:
-
-* `Service`: metadata-only contract exposing `getServiceName()` and `getVersion()`
-* `WiredService`: responder contract exposing the same metadata plus `setResponseTransport(...)`
-
-Built-in response transports require `WiredService` in `register(...)`.
-
-[NOTE]
-====
-The built-in `register(...)` implementations use `getVersion()` and `getServiceName()`, but they do not call `setResponseTransport(...)`.
-If your endpoint relies on that hook, call it yourself during assembly before or after registration.
-====
-
-=== Proxy-Time Extractors
-
-`WireInvocationHandler` depends on up to three extractor strategies:
-
-[cols="1,2,4",options="header"]
-|===
-|Extractor |Required |Purpose
-
-|`ParameterExtractor<String>` for service group
-|Yes
-|Resolves the destination group for every call
-
-|`ParameterExtractor<String>` for instance id
-|Only for whisper methods
-|Resolves the target instance id at invocation time
-
-|`ParameterExtractor<Long>` for timeout
-|No
-|Overrides method annotation or request-transport default when it returns a positive or non-null value
-|===
-
-Timeout precedence is:
-
-1. timeout extractor result, if non-null
-2. `@Whisper(timeoutSeconds = ...)` or `@InOut(timeoutSeconds = ...)`, if present and positive
-3. request transport default timeout
-
-[[phalanx-proxies, Client Proxies And Extractors]]
-== Client Proxies And Extractors
-
-`WireProxyFactory.generateProxy(...)` gives you a JDK dynamic proxy, so the normal request-side assembly is explicit and small.
-The method parameters are:
-
-* request transport
-* service version
-* service name
-* service interface
-* service-group extractor
-* instance-id extractor
-* timeout extractor
-
-=== Example: Service Group Derived From An Argument
-
-[source,java]
-----
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import org.smallmind.phalanx.wire.Argument;
-import org.smallmind.phalanx.wire.MissingInstanceIdException;
-import org.smallmind.phalanx.wire.ParameterExtractor;
-import org.smallmind.phalanx.wire.Whisper;
-import org.smallmind.phalanx.wire.signal.WireContext;
-
-public interface QuoteService {
-
-  Quote price (
-    @Argument("tenant") String tenant,
-    @Argument("sku") String sku
-  );
-
-  @Whisper(timeoutSeconds = 3)
-  HealthStatus health (
-    @Argument("tenant") String tenant,
-    @Argument("instanceHint") String instanceHint
-  );
-}
-
-public class TenantServiceGroupExtractor implements ParameterExtractor<String> {
-
-  @Override
-  public String getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts) {
-
-    return "pricing-" + argumentMap.get("tenant");
-  }
-}
-
-public class ArgumentInstanceIdExtractor implements ParameterExtractor<String> {
-
-  @Override
-  public String getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
-    throws MissingInstanceIdException {
-
-    String instanceId = (String)argumentMap.get("instanceHint");
-
-    if ((instanceId == null) || instanceId.isEmpty()) {
-      throw new MissingInstanceIdException("No instance id supplied for %s", method.getName());
+    public void logCalculation (String operation) {
+        System.out.println("Performed: " + operation);
     }
 
-    return instanceId;
-  }
+    @Override public String getServiceName ()          { return "CalculatorService"; }
+    @Override public int    getVersion     ()          { return 1; }
+    @Override public void   setResponseTransport (ResponseTransport transport) { }
 }
 ----
 
-That is the intended shape of extractor logic: ordinary code inspecting the method, the named argument map, and any contexts attached to the call.
-There is no registry, expression language, or container-owned routing layer in front of it.
-
-=== Example: Proxy Creation With Mixed Static And Dynamic Routing
+Wire both sides through a shared `MockMessageRouter`:
 
 [source,java]
 ----
-QuoteService quoteService =
-  (QuoteService)WireProxyFactory.generateProxy(
-    requestTransport,
-    2,
-    "QuoteService",
-    QuoteService.class,
-    new TenantServiceGroupExtractor(),
-    new ArgumentInstanceIdExtractor(),
-    null
-  );
+MockMessageRouter router = new MockMessageRouter();
+JsonSignalCodec   codec  = new JsonSignalCodec();
+
+MockResponseTransport server = new MockResponseTransport(router, codec);
+server.register(CalculatorService.class, new CalculatorServiceImpl());      <1>
+
+MockRequestTransport client = new MockRequestTransport(router, codec, 30);  <2>
+
+CalculatorService calculator = (CalculatorService)WireProxyFactory.generateProxy(
+    client,
+    1,                                           <3>
+    "CalculatorService",                         <4>
+    CalculatorService.class,
+    new StaticParameterExtractor<>("default"),   <5>
+    null,                                        <6>
+    null                                         <7>
+);
+
+Integer sum = calculator.add(5, 3);              // returns 8
+calculator.logCalculation("5 + 3");              // returns immediately
+----
+<1> `register` returns the response transport's instance id — hold on to it
+    if the client proxy will issue `@Whisper` calls targeted at this node.
+<2> `30` is the default `@InOut` timeout in seconds for methods that don't
+    supply one.
+<3> Protocol version written into every outbound `Route`.
+<4> Logical service name; must match `WiredService.getServiceName()`.
+<5> The service-group extractor is required. `StaticParameterExtractor`
+    returns the same constant for every call.
+<6> Instance-id extractor; required only if the interface contains any
+    `@Whisper` method, `null` otherwise.
+<7> Per-call timeout extractor; optional. When it returns non-null, it
+    overrides both the annotation and the transport default.
+
+== Defining A Service Interface
+
+Each method picks exactly one dispatch annotation. `WireInvocationHandler`
+resolves them in the order `@Shout`, `@Whisper`, `@InOnly`, `@InOut` — the
+first annotation found wins, so combining them (for example
+`@Whisper` + `@InOut`) has no extra effect.
+
+**`@InOut(timeoutSeconds = N)` — request/reply (load-balanced)**::
+The caller blocks until the remote implementation returns or the effective
+timeout elapses. `timeoutSeconds` is a required attribute; values ≤ 0 fall
+back to the request transport's default timeout.
+
+**`@InOnly` — fire-and-forget**::
+The method must return `void` and must not declare a `throws` list;
+`WireInvocationHandler` rejects both at invocation time. Server-side
+exceptions are logged and swallowed — the caller has no way to observe
+them.
+
+**`@Whisper(timeoutSeconds = N)` — directed request/reply**::
+Delivered to a single instance whose id is supplied by the proxy's
+instance-id extractor. Whisper is itself request/reply; do not also mark
+the method `@InOut`. `timeoutSeconds` defaults to `0` ("use the transport
+default"). If the interface contains any `@Whisper` methods and no
+instance-id extractor was supplied to `WireProxyFactory.generateProxy`,
+proxy creation fails with `ServiceDefinitionException`.
+
+**`@Shout` — broadcast**::
+Delivered to every subscriber of the service group. Shouts collect no
+responses; a return value, if declared, is discarded. Use `void` to make
+the intent obvious.
+
+**`@Argument("name")` — per-parameter, required on every parameter**::
+The name must be unique within the method. Missing annotations cause a
+`ServiceDefinitionException` at proxy-creation time. An optional
+`type()` attribute overrides the automatically inferred type tag; leave it
+empty for normal use.
+
+**`@CallAs("wire-name")` — method-level, optional**::
+Overrides the function name carried in the wire signal. The Java method
+name on the caller side is unchanged.
+
+Example:
+
+[source,java]
+----
+public interface OrderService {
+
+    @InOut(timeoutSeconds = 30)
+    Order createOrder (@Argument("order") Order order) throws InvalidOrderException;  <1>
+
+    @CallAs("cancel-order")
+    @InOut(timeoutSeconds = 5)
+    void cancelOrder (@Argument("orderId") String orderId);
+
+    @Whisper(timeoutSeconds = 5)
+    Status probe (@Argument("component") String component);
+
+    @Shout
+    void clearCache (@Argument("namespace") String namespace);
+
+    @InOnly
+    void notifyWarehouse (@Argument("orderId") String orderId);  <2>
+}
+----
+<1> Checked exceptions declared on an `@InOut` or `@Whisper` method are
+    materialised on the caller side; see <<error-propagation>>.
+<2> `@InOnly` methods can declare no exceptions.
+
+== Creating The Proxy
+
+`WireProxyFactory.generateProxy` builds a JDK dynamic `Proxy` whose calls
+are dispatched by `WireInvocationHandler`. The return value is typed as
+`java.lang.reflect.Proxy`; cast it to the service interface.
+
+[source,java]
+----
+public static Proxy generateProxy (
+    RequestTransport             transport,
+    int                          version,
+    String                       serviceName,
+    Class<?>                     serviceInterface,
+    ParameterExtractor<String>   serviceGroupExtractor,    // required
+    ParameterExtractor<String>   instanceIdExtractor,      // required if @Whisper
+    ParameterExtractor<Long>     timeoutExtractor          // optional
+) throws Exception
 ----
 
-=== Object Methods On Proxies
+A `ParameterExtractor<T>` receives the `Method`, the resolved argument map,
+and any attached `WireContext` instances; it returns a single value. Two
+typical implementations:
 
-`toString()`, `hashCode()`, and `equals(Object)` are part of the proxy invocation map even when they are not declared on the service interface.
-Calling them on a live wire proxy is therefore a remote invocation, not local proxy-only behavior.
+* `StaticParameterExtractor<>(value)` — always returns the same constant,
+  suitable for fixed service groups.
+* A custom extractor that reads a `WireContext` (for example, a
+  `TenantContext` that picks the service group dynamically based on tenant).
 
-[[phalanx-serialization, Serialization, Typing, And Adapters]]
-== Serialization, Typing, And Adapters
+== Registering An Implementation
 
-=== Choosing A Codec
+On the server side, the implementation must implement `WiredService`:
 
-Two codecs ship with the module:
+[source,java]
+----
+public interface WiredService {
+    int    getVersion     ();                                // routing discriminator
+    String getServiceName ();                                // routing key
+    void   setResponseTransport (ResponseTransport transport) throws Exception;
+}
+----
 
-[cols="1,4",options="header"]
+Register the implementation with the response transport. The transport
+stores a `(version, serviceName) -> MethodInvoker` mapping; subsequent
+calls to `register` with the same `(version, serviceName)` are no-ops.
+
+[source,java]
+----
+String instanceId = responseTransport.register(OrderService.class, new OrderServiceImpl());
+----
+
+`register` returns the response transport's instance id — the value a
+client-side `instanceIdExtractor` must resolve for `@Whisper` calls
+targeted at this node.
+
+Lifecycle control on `ResponseTransport`:
+
+[cols="1,3",options="header"]
 |===
-|Codec |Use it when
-
-|`JsonSignalCodec`
-|You want the normal default: portable JSON payloads, Jackson-based conversion, and optional verbose logging
-
-|`JavaSerializationSignalCodec`
-|You control both sides, trust the boundary, and deliberately want built-in Java serialization semantics
-|===
-
-`JsonSignalCodec` is the usual choice.
-It handles object conversion through the Smallmind JSON scaffold and keeps payloads inspectable when debugging.
-
-[WARNING]
-====
-`JavaSerializationSignalCodec` should be treated as a trusted Java-only option, not a general integration default.
-It depends on Java object serialization on both sides of the boundary.
-====
-
-=== Example: Explicit Wire Names And Type Hints
-
-[source,java]
-----
-import org.smallmind.phalanx.wire.Argument;
-import org.smallmind.phalanx.wire.CallAs;
-import org.smallmind.phalanx.wire.Result;
-
-public interface ReservationService {
-
-  @CallAs("reserve")
-  @Result("ReservationReceipt")
-  Receipt reserve (
-    @Argument(value = "request", type = "ReservationRequest") ReservationRequest request
-  );
-}
-----
-
-Use those hints when wire-level compatibility matters more than the current Java type name.
-This is especially useful when multiple modules define classes with the same simple name.
-
-=== Example: `@Wire` Adapter For Parameter Marshalling
-
-`@Wire` adapters apply to arguments.
-They let you transport a domain type through a simpler serializable value without hard-wiring that decision into the service contract.
-
-[source,java]
-----
-import org.smallmind.phalanx.wire.Argument;
-import org.smallmind.phalanx.wire.Wire;
-import org.smallmind.phalanx.wire.WireAdapter;
-
-@Wire(adapter = MoneyWireAdapter.class)
-public class Money {
-
-  private final String currency;
-  private final long minorUnits;
-
-  public Money (String currency, long minorUnits) {
-
-    this.currency = currency;
-    this.minorUnits = minorUnits;
-  }
-
-  public String getCurrency () {
-
-    return currency;
-  }
-
-  public long getMinorUnits () {
-
-    return minorUnits;
-  }
-
-  public static Money parse (String value) {
-
-    String[] parts = value.split(":", 2);
-
-    return new Money(parts[0], Long.parseLong(parts[1]));
-  }
-
-  @Override
-  public String toString () {
-
-    return currency + ":" + minorUnits;
-  }
-}
-
-public class MoneyWireAdapter extends WireAdapter<String, Money> {
-
-  @Override
-  public Class<String> getValueType () {
-
-    return String.class;
-  }
-
-  @Override
-  public Money unmarshal (String obj) {
-
-    return Money.parse(obj);
-  }
-
-  @Override
-  public String marshal (Money obj) {
-
-    return obj.toString();
-  }
-}
-
-public interface PricingAdminService {
-
-  void updatePrice (
-    @Argument("sku") String sku,
-    @Argument("price") Money price
-  );
-}
-----
-
-Adapter rules worth knowing:
-
-* the adapter class must have a public no-argument constructor
-* the adapter's value type must be serializable
-* adapter instances are cached per adapter class
-* adapters are used for arguments, not for return values
-
-=== Result And Fault Serialization Rules
-
-Results still have to be serializable or convertible by the chosen codec.
-On the error path, the client receives:
-
-* the original Java throwable when the remote side could preserve it as a native Java payload
-* `FaultWrappingException` when only a neutral Smallmind fault payload is available
-
-[[phalanx-contexts, Wire Context Propagation]]
-== Wire Context Propagation
-
-Wire contexts are the explicit way to move ambient metadata across the invocation boundary.
-They integrate with Nutsnbolts `ContextFactory`, so request code pushes a context locally and service code reads it locally after transport.
-
-=== Setup Rules
-
-1. Ensure a `PerApplicationContext` exists before you register context handles.
-2. Define a context type that extends `WireContext`.
-3. Give it a stable handle by using `@XmlRootElement(name = "...")` or by deliberately relying on the simple class name.
-4. Register the handle/class pair with `WireContextManager.register(...)`.
-5. Push the context on the caller side with `ContextFactory.pushContext(...)`.
-6. Read it from `ContextFactory` inside the service implementation.
-
-[IMPORTANT]
-====
-`WireContextManager` stores registrations in `PerApplicationContext`.
-If you call `WireContextManager.register(...)` before initializing `PerApplicationContext`, registration fails.
-====
-
-=== Example: Defining And Registering A Context
-
-[source,java]
-----
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.phalanx.wire.WireContextManager;
-import org.smallmind.phalanx.wire.signal.WireContext;
-
-@XmlRootElement(name = "requestScope")
-public class RequestScopeContext extends WireContext {
-
-  private String requestId;
-
-  public RequestScopeContext () {
-
-  }
-
-  public RequestScopeContext (String requestId) {
-
-    this.requestId = requestId;
-  }
-
-  @XmlElement(name = "requestId", required = true)
-  public String getRequestId () {
-
-    return requestId;
-  }
-
-  public void setRequestId (String requestId) {
-
-    this.requestId = requestId;
-  }
-}
-
-new PerApplicationContext();
-WireContextManager.register("requestScope", RequestScopeContext.class);
-----
-
-The handle passed to `register(...)` should match the context name that will appear on the wire.
-With the example above, `requestScope` matches the `@XmlRootElement` name.
-
-=== Example: Push On The Caller, Read On The Service Side
-
-[source,java]
-----
-import org.smallmind.nutsnbolts.context.ContextFactory;
-
-ContextFactory.pushContext(new RequestScopeContext("req-101"));
-try {
-  greetingService.echo("Ada");
-} finally {
-  ContextFactory.popContext(RequestScopeContext.class);
-}
-
-public class GreetingEndpoint implements GreetingService, WiredService {
-
-  @Override
-  public String echo (String name) {
-
-    RequestScopeContext requestScope =
-      ContextFactory.getContext(RequestScopeContext.class);
-
-    return requestScope.getRequestId() + ":hello " + name;
-  }
-}
-----
-
-=== Unknown Context Handles
-
-If the receiving side has not registered a context handle, the payload is preserved as `ProtoWireContext`.
-That means the data is not lost, but typed lookup through `ContextFactory.getContext(...)` will not work until the receiving side knows the handle.
-
-[[phalanx-spi, Transport SPI And Custom Transport Notes]]
-== Transport SPI And Custom Transport Notes
-
-Phalanx is transport-neutral because the core wire layer is built around small transport contracts.
-
-=== Main SPI Types
-
-[cols="1,4",options="header"]
-|===
-|Type |Role
-
-|`RequestTransport`
-|Sends an invocation and completes callbacks when a `ResultSignal` arrives
-
-|`ResponseTransport`
-|Registers services, exposes instance id and lifecycle, and receives incoming requests
-
-|`ResponseTransmitter`
-|Sends a `ResultSignal` back to the caller after invocation completes
-
-|`WireInvocationCircuit`
-|Routes an `InvocationSignal` to the correct registered service and method
-
-|`MethodInvoker`
-|Converts named arguments back into ordered Java arguments and manages `WireContext` push/pop
+| Method | Effect
+
+| `play()`  | Resume request consumption (if previously `pause()`d).
+| `pause()` | Suspend request consumption; already-dispatched work continues. Talk queue only; whisper/shout continue uninterrupted.
+| `close()` | Stop the transport, shut the worker pool down, release broker resources.
+| `getState()` | Returns the current `TransportState` (`PLAYING`, `PAUSED`, `CLOSED`).
 |===
 
-=== Reuse `AbstractRequestTransport` When Building A New Request Transport
+== Transports
 
-`AbstractRequestTransport` already handles the tricky part of synchronous request/response behavior:
+Each transport ships a matched `RequestTransport` and `ResponseTransport`.
+Construct and configure the pair explicitly — nothing is auto-wired.
 
-* timeout selection
-* callback correlation
-* early-arriving responses that show up before the waiting callback is installed
+=== Mock (in-process)
 
-If you are implementing a new request transport, extending `AbstractRequestTransport` is usually the right starting point.
-
-=== Example: Skeleton For A Custom Request Transport
-
-[source,java]
-----
-import java.util.Map;
-import org.smallmind.phalanx.wire.ConversationType;
-import org.smallmind.phalanx.wire.Voice;
-import org.smallmind.phalanx.wire.signal.InvocationSignal;
-import org.smallmind.phalanx.wire.signal.Route;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.signal.WireContext;
-import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
-
-public class CustomRequestTransport extends AbstractRequestTransport {
-
-  private final String callerId = "caller-1";
-  private final SignalCodec signalCodec;
-
-  public CustomRequestTransport (SignalCodec signalCodec, long defaultTimeoutSeconds) {
-
-    super(defaultTimeoutSeconds);
-
-    this.signalCodec = signalCodec;
-  }
-
-  @Override
-  public String getCallerId () {
-
-    return callerId;
-  }
-
-  @Override
-  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
-    throws Throwable {
-
-    String messageId = nextMessageId();
-    boolean inOnly =
-      voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
-
-    byte[] payload =
-      signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts));
-
-    publish(messageId, voice, payload);
-
-    return acquireResult(signalCodec, route, voice, messageId, inOnly);
-  }
-
-  @Override
-  public void close () {
-
-  }
-
-  private String nextMessageId () {
-
-    return Long.toString(System.nanoTime());
-  }
-
-  private void publish (String messageId, Voice<?, ?> voice, byte[] payload) {
-
-  }
-}
-----
-
-The point is not the dummy ids.
-The point is the division of responsibility: Phalanx owns the signal model and callback semantics, while your transport owns the actual envelope and delivery.
-
-=== Example: Response-Side Dispatch Hook
-
-On the responder side, the hand-off normally looks like this:
+`org.smallmind.phalanx.wire.transport.mock`. Message routing happens inside
+a single `MockMessageRouter`; the mock server dispatches inline on the
+listener thread, so there is no worker pool.
 
 [source,java]
 ----
-invocationCircuit.handle(
-  this,
-  signalCodec,
-  callerId,
-  messageId,
-  invocationSignal
+MockMessageRouter     router = new MockMessageRouter();
+JsonSignalCodec       codec  = new JsonSignalCodec();
+MockRequestTransport  client = new MockRequestTransport(router, codec, 30);
+MockResponseTransport server = new MockResponseTransport(router, codec);
+----
+
+The third argument to `MockRequestTransport` is the default `@InOut`
+timeout in seconds.
+
+=== RabbitMQ
+
+`org.smallmind.phalanx.wire.transport.amqp.rabbitmq`.
+
+`RabbitMQConnector` wraps a RabbitMQ `ConnectionFactory` and a list of
+broker `Address` objects. It has no setters — configure authentication,
+virtual host, and automatic-recovery flags on the `ConnectionFactory`
+before handing it over.
+
+[source,java]
+----
+ConnectionFactory factory = new ConnectionFactory();
+factory.setUsername("guest");
+factory.setPassword("guest");
+factory.setVirtualHost("/");
+factory.setAutomaticRecoveryEnabled(true);
+
+RabbitMQConnector connector = new RabbitMQConnector(
+    factory,
+    new Address("localhost", 5672)
 );
 ----
 
-That one call handles service lookup, argument reconstruction, method invocation, context propagation, fault wrapping, and `ResultSignal` transmission through the supplied `ResponseTransmitter`.
+A `QueueContractor` declares the AMQP queues the transport uses.
+`ClassicQueueContractor` and `QuorumQueueContractor` are the two built-in
+implementations — pick one per queue role (the response transport takes
+two: an `enduringQueueContractor` for talk queues and an
+`ephemeralQueueContractor` for shout and whisper queues).
 
-[[phalanx-transport-matrix, Transport Matrix]]
-== Transport Matrix
+`NameConfiguration` supplies the suffix tokens used when composing queue
+and exchange names. The out-of-the-box suffixes are `requestExchange`,
+`responseExchange`, `responseQueue`, `shoutQueue`, `talkQueue`, and
+`whisperQueue`; both sides of a deployment must use identical names.
 
-[cols="1,2,3,3",options="header"]
+[source,java]
+----
+NameConfiguration names      = new NameConfiguration();
+QueueContractor  ephemeral   = new ClassicQueueContractor();
+QueueContractor  enduring    = new QuorumQueueContractor();
+
+RabbitMQRequestTransport client = new RabbitMQRequestTransport(
+    connector, ephemeral, names, codec,
+    /* clusterSize              */ 4,
+    /* concurrencyLimit         */ 8,
+    /* defaultTimeoutSeconds    */ 30L,
+    /* messageTTLSeconds        */ 60,
+    /* autoAcknowledge          */ true,
+    /* publisherConfirmationHandler */ null
+);
+
+RabbitMQResponseTransport server = new RabbitMQResponseTransport(
+    connector, enduring, ephemeral, names,
+    InvocationWorker.class, codec,
+    /* serviceGroup             */ "default",
+    /* clusterSize              */ 4,
+    /* concurrencyLimit         */ 8,
+    /* messageTTLSeconds        */ 60,
+    /* autoAcknowledge          */ true,
+    /* publisherConfirmationHandler */ null
+);
+----
+
+`clusterSize` sets how many distinct `RequestMessageRouter` (or
+`ResponseMessageRouter`) instances are created — each owns its own channel
+— while `concurrencyLimit` sets how many handler slots the pool round-
+robins through. The pool always has `max(clusterSize, concurrencyLimit)`
+slots.
+
+=== Kafka
+
+`org.smallmind.phalanx.wire.transport.kafka`. There is no `Properties`-
+based configuration surface; brokers are passed as `KafkaServer` instances
+and `KafkaConnector` (from `smallmind-kafka-utility`) handles producer,
+consumer, and startup-check mechanics.
+
+Topic names are derived by `TopicNames` from a fixed prefix of `"wire"`:
+
+[cols="1,2",options="header"]
 |===
-|Transport |Routing model |Good fit |Important caveat
+| Role | Topic
 
-|Mock
-|In-memory talk queue, whisper topic, response topic
-|Tests and local end-to-end checks
-|Shout is simplified and pause/play does not mirror broker-backed transports exactly
-
-|JMS
-|Request queue for talk, request topic for shout/whisper, response topic for replies
-|Existing JMS broker deployments with explicit destination ownership
-|You must supply destination factories and a realistic maximum message length
-
-|RabbitMQ
-|Exchanges and queues derived from `NameConfiguration` plus queue contractors
-|AMQP deployments where queue names and queue types matter operationally
-|Queue durability and queue type are caller decisions, not framework defaults
-
-|Kafka
-|Derived topics for talk, shout, whisper, and responses
-|Topic-centric deployments and explicit client/broker diagnostics
-|Caller-specific response topics and whisper topics are part of the model
+| shout       | `wire-shout-<serviceGroup>`
+| talk        | `wire-talk-<serviceGroup>`
+| whisper     | `wire-whisper-<serviceGroup>-<instanceId>`
+| response    | `wire-response-<callerId>`
 |===
 
-[[phalanx-mock, Mock Transport]]
-== Mock Transport
-
-The mock transport is the fastest path to a meaningful test because it runs the actual proxy, codec, and invocation circuit without a broker.
-
-=== Example: Spring Wiring With The Shipped `mock-wire.xml`
-
-The module ships a concrete Spring resource at `spring/org/smallmind/phalanx/wire/mock-wire.xml`.
-Its style is intentionally explicit:
-
-[source,xml]
-----
-<bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
-
-<bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
-  <property name="verbose" value="true"/>
-  <property name="verboseLogLevel" value="DEBUG"/>
-</bean>
-
-<bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport">
-  <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
-  <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
-  <constructor-arg index="2" name="defaultTimeoutSeconds" value="15"/>
-</bean>
-
-<bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport">
-  <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
-  <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
-</bean>
-----
-
-=== Runtime Notes
-
-* No external infrastructure is required.
-* `register(...)` returns the mock responder's instance id, so whisper can still be exercised realistically.
-* The same `WireInvocationHandler`, `WireInvocationCircuit`, `SignalCodec`, and exception flow used by broker transports are exercised.
-
-[IMPORTANT]
-====
-The mock transport is intentionally a test transport, not a full broker simulation.
-Two differences matter in practice:
-
-* shout traffic is routed through the talk queue path instead of a true fan-out channel
-* `pause()` and `play()` only gate talk requests; whisper traffic is still wired through its topic listener
-====
-
-[[phalanx-jms, JMS Transport]]
-== JMS Transport
-
-Use the JMS transport when you already have a JMS provider, own your destinations, and want Phalanx to stay a thin adapter over that setup.
-
-=== What You Supply
-
-The JMS transport expects three explicit destination/connection factories wrapped in `RoutingFactories`:
-
-* request queue factory for talk traffic
-* request topic factory for shout and whisper traffic
-* response topic factory for replies
-
-You also supply:
-
-* `MessagePolicy` for producer settings such as delivery mode, TTL, and priority
-* `ReconnectionPolicy` for reconnection delay and attempt limits
-* cluster size, concurrency limit, maximum message length, and default timeout
-
-=== Example: Core JMS Assembly
+The whisper topic is per-instance and is deleted from the broker when the
+response transport is closed; the other three must exist at startup, so
+enable topic auto-creation or pre-create them.
 
 [source,java]
 ----
-import org.smallmind.phalanx.wire.signal.JsonSignalCodec;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.transport.jms.DeliveryMode;
-import org.smallmind.phalanx.wire.transport.jms.JmsRequestTransport;
-import org.smallmind.phalanx.wire.transport.jms.JmsResponseTransport;
-import org.smallmind.phalanx.wire.transport.jms.MessagePolicy;
-import org.smallmind.phalanx.wire.transport.jms.ReconnectionPolicy;
-import org.smallmind.phalanx.wire.transport.jms.RoutingFactories;
+KafkaServer[] servers = { new KafkaServer("localhost", 9092) };
 
-SignalCodec signalCodec = new JsonSignalCodec();
-
-RoutingFactories routingFactories =
-  new RoutingFactories(
-    requestQueueFactory,
-    requestTopicFactory,
-    responseTopicFactory
-  );
-
-MessagePolicy messagePolicy = new MessagePolicy();
-messagePolicy.setDeliveryMode(DeliveryMode.PERSISTENT);
-messagePolicy.setTimeToLiveSeconds(30);
-
-ReconnectionPolicy reconnectionPolicy = new ReconnectionPolicy();
-reconnectionPolicy.setReconnectionDelayMilliseconds(1000);
-reconnectionPolicy.setReconnectionAttempts(-1);
-
-JmsRequestTransport requestTransport =
-  new JmsRequestTransport(
-    routingFactories,
-    messagePolicy,
-    reconnectionPolicy,
-    signalCodec,
-    2,
-    8,
-    1024 * 1024,
-    15
-  );
-
-JmsResponseTransport responseTransport =
-  new JmsResponseTransport(
-    routingFactories,
-    messagePolicy,
-    reconnectionPolicy,
-    signalCodec,
-    "default",
-    2,
-    8,
-    1024 * 1024
-  );
-----
-
-=== Common JMS Wiring Pattern
-
-A common choice is to build each `ManagedObjectFactory` from `JndiManagedObjectFactory` plus `JmsConnectionDetails`.
-That keeps destination lookup explicit instead of burying it in the transport itself.
-
-=== JMS-Specific Notes
-
-* talk traffic consumes from the request queue selected by `serviceGroup`
-* shout and whisper traffic consume from the request topic selected by `serviceGroup`, with whisper adding an `instanceId` selector
-* responses are published to the response topic and filtered back to the request side by `callerId`
-* `maximumMessageLength` must be large enough for the largest encoded request or reply you expect
-* `clusterSize` controls how many listener/connection sets are created; `concurrencyLimit` controls worker concurrency for invocation handling
-
-[[phalanx-rabbitmq, RabbitMQ Transport]]
-== RabbitMQ Transport
-
-Use the RabbitMQ transport when exchange names, queue names, queue types, and broker topology are part of your operational design.
-
-=== What You Supply
-
-RabbitMQ assembly is still intentionally explicit.
-You choose:
-
-* broker addresses and credentials through `RabbitMQConnector`
-* queue naming through `NameConfiguration`
-* queue durability and type through `QueueContractor`
-* message TTL, auto-acknowledgement, publisher-confirmation handling, cluster size, and concurrency
-
-=== Example: Explicit RabbitMQ Assembly
-
-[source,java]
-----
-import com.rabbitmq.client.Address;
-import com.rabbitmq.client.ConnectionFactory;
-import org.smallmind.phalanx.wire.signal.JsonSignalCodec;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.ClassicQueueContractor;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.InvocationWorker;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.NameConfiguration;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.QueueContractor;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.QuorumQueueContractor;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQConnector;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQRequestTransport;
-import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQResponseTransport;
-
-ConnectionFactory connectionFactory = new ConnectionFactory();
-connectionFactory.setUsername("app");
-connectionFactory.setPassword("secret");
-
-RabbitMQConnector connector =
-  new RabbitMQConnector(
-    connectionFactory,
-    new Address("rabbit-1.example.net", 5672),
-    new Address("rabbit-2.example.net", 5672)
-  );
-
-NameConfiguration nameConfiguration = new NameConfiguration();
-QueueContractor enduringQueueContractor = new QuorumQueueContractor(3);
-QueueContractor ephemeralQueueContractor = new ClassicQueueContractor();
-SignalCodec signalCodec = new JsonSignalCodec();
-
-RabbitMQRequestTransport requestTransport =
-  new RabbitMQRequestTransport(
-    connector,
-    ephemeralQueueContractor,
-    nameConfiguration,
-    signalCodec,
-    2,
-    8,
-    15,
-    30,
-    false,
-    null
-  );
-
-RabbitMQResponseTransport responseTransport =
-  new RabbitMQResponseTransport(
-    connector,
-    enduringQueueContractor,
-    ephemeralQueueContractor,
-    nameConfiguration,
-    InvocationWorker.class,
-    signalCodec,
-    "default",
-    2,
-    8,
-    30,
-    false,
-    null
-  );
-----
-
-=== RabbitMQ-Specific Notes
-
-* `NameConfiguration` lets you rename the request exchange, response exchange, and queue name bases instead of accepting the shipped defaults
-* `ClassicQueueContractor` declares classic queues; `QuorumQueueContractor` declares durable quorum queues with an explicit replication count
-* request transports use an ephemeral queue contractor because request-side reply handling is caller specific
-* response transports use separate enduring and ephemeral queue contractors so you can make service queues durable without forcing the same choice on response plumbing
-* `register(...)` returns the responder's instance id for whisper routing
-
-[[phalanx-kafka, Kafka Transport]]
-== Kafka Transport
-
-Use the Kafka transport when you want topic-based routing and you are comfortable treating response paths and whisper paths as named Kafka topics rather than hidden callback infrastructure.
-
-=== Example: Topic-Based Assembly
-
-[source,java]
-----
-import org.smallmind.kafka.utility.KafkaServer;
-import org.smallmind.phalanx.wire.signal.JsonSignalCodec;
-import org.smallmind.phalanx.wire.signal.SignalCodec;
-import org.smallmind.phalanx.wire.transport.kafka.InvocationWorker;
-import org.smallmind.phalanx.wire.transport.kafka.KafkaRequestTransport;
-import org.smallmind.phalanx.wire.transport.kafka.KafkaResponseTransport;
-
-KafkaServer[] servers = new KafkaServer[] {
-  new KafkaServer("kafka-1.example.net", 9092),
-  new KafkaServer("kafka-2.example.net", 9092)
-};
-
-SignalCodec signalCodec = new JsonSignalCodec();
-
-KafkaRequestTransport requestTransport =
-  new KafkaRequestTransport(
-    "pricing-client",
-    signalCodec,
-    8,
-    15,
-    10,
+KafkaRequestTransport client = new KafkaRequestTransport(
+    /* nodeName                 */ "orders-api",
+    codec,
+    /* concurrencyLimit         */ 8,
+    /* defaultTimeoutSeconds    */ 30L,
+    /* startupGracePeriodSeconds */ 15,
     servers
-  );
+);
 
-KafkaResponseTransport responseTransport =
-  new KafkaResponseTransport(
-    "pricing-node-a",
-    "default",
+KafkaResponseTransport server = new KafkaResponseTransport(
+    /* nodeName                 */ "orders-worker",
+    /* serviceGroup             */ "default",
     InvocationWorker.class,
-    signalCodec,
-    8,
-    10,
+    codec,
+    /* concurrencyLimit         */ 8,
+    /* startupGracePeriodSeconds */ 15,
     servers
-  );
+);
 ----
 
-=== Derived Topic Names
+`startupGracePeriodSeconds` is the number of seconds `KafkaConnector` will
+retry the broker connectivity check before throwing
+`KafkaConnectionException`.
 
-`KafkaRequestTransport` and `KafkaResponseTransport` both use `TopicNames("wire")`, so the main topic shapes are:
+=== JMS
 
-* `wire-talk-<serviceGroup>`
-* `wire-shout-<serviceGroup>`
-* `wire-whisper-<serviceGroup>-<instanceId>`
-* `wire-response-<callerId>`
+`org.smallmind.phalanx.wire.transport.jms`. The transport targets Jakarta
+Messaging 3.x (`jakarta.jms`). Configuration is split across three
+collaborators:
 
-=== Kafka-Specific Notes
-
-* `nodeName` becomes part of Kafka client names, so choose something useful in diagnostics
-* the request side consumes from a caller-specific response topic automatically
-* the response side creates separate ingesters for talk, shout, and whisper traffic
-* on close, `KafkaResponseTransport` deletes its whisper topic
-* if your Kafka cluster does not auto-create topics, you must provision the required topic set yourself or provide equivalent topic-management outside the transport
-
-[[phalanx-spring, Spring Integration]]
-== Spring Integration
-
-Phalanx ships optional bean helpers, not auto-configuration.
-They exist to make explicit wiring more convenient, not to take ownership of runtime policy.
-
-=== Core Spring Helpers
-
-[cols="1,4",options="header"]
-|===
-|Type |Purpose
-
-|`WireProxyFactoryBean`
-|Creates the same proxy you would build with `WireProxyFactory.generateProxy(...)`
-
-|`StaticParameterExtractorFactoryBean`
-|Creates a singleton `StaticParameterExtractor<?>`
-
-|`WireContextInitializingBean`
-|Registers a `WireContext` handle/class pair during bean initialization
-|===
-
-=== JMS And RabbitMQ Spring Helper Types
-
-The module also includes a few narrow Spring-facing holders and factories:
-
-* JMS reference beans such as `ConnectionFactoryReference`, `QueueReference`, `TopicReference`, and `DestinationReference`
-* RabbitMQ factories such as `RabbitMQConnectorFactoryBean` and `RabbitMQServerFactoryBean`
-
-These are assembly conveniences, not a framework layer.
-
-=== Example: Proxy And Context Wiring In Spring XML
-
-[source,xml]
-----
-<bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
-
-<bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
-  <property name="verbose" value="false"/>
-</bean>
-
-<bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport">
-  <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
-  <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
-  <constructor-arg index="2" name="defaultTimeoutSeconds" value="15"/>
-</bean>
-
-<bean id="serviceGroupExtractor" class="org.smallmind.phalanx.wire.spring.StaticParameterExtractorFactoryBean">
-  <property name="parameter" value="default"/>
-</bean>
-
-<bean id="requestScopeContext" class="org.smallmind.phalanx.wire.spring.WireContextInitializingBean">
-  <property name="handle" value="requestScope"/>
-  <property name="contextClass" value="example.RequestScopeContext"/>
-</bean>
-
-<bean id="greetingService" class="org.smallmind.phalanx.wire.spring.WireProxyFactoryBean">
-  <property name="requestTransport" ref="mockRequestTransport"/>
-  <property name="serviceInterface" value="example.GreetingService"/>
-  <property name="serviceName" value="GreetingService"/>
-  <property name="version" value="1"/>
-  <property name="serviceGroupExtractor" ref="serviceGroupExtractor"/>
-</bean>
-----
-
-The important part is not the XML syntax.
-The important part is that every dependency and every routing rule is still explicit.
-
-[[phalanx-worker, Worker Package]]
-== Worker Package
-
-The worker package is useful even if you never touch the wire layer.
-It gives you a small, explicit worker-pool abstraction with caller-owned queue choice and lifecycle.
-
-=== Main Types
-
-* `WorkManager<W extends Worker<T>, T>`
-* `Worker<T>`
-* `WorkerFactory<W, T>`
-* `WorkQueue<T>`
-* `BlockingWorkQueue<T>`
-* `TransferringWorkQueue<T>`
-* `WorkManagerException`
-
-=== Model
-
-`WorkManager` owns:
-
-* a worker class
-* a concurrency limit
-* a `WorkQueue`
-
-On `startUp(...)`, it creates daemon threads and asks a `WorkerFactory` to build one worker per slot.
-On `execute(...)`, it keeps offering work until the queue accepts it.
-On `shutDown()`, it calls `stop()` on each worker and waits for them to exit.
-
-=== Queue Choices
-
-[cols="1,4",options="header"]
-|===
-|Queue |Behavior
-
-|`TransferringWorkQueue`
-|Backed by `LinkedTransferQueue`; favors direct hand-off to waiting workers and is the default when no queue is supplied
-
-|`BlockingWorkQueue`
-|Backed by `LinkedBlockingQueue`; use it when buffering is preferable to direct hand-off
-|===
-
-=== Example: Standalone Worker Pool
+* `RoutingFactories` — `ManagedObjectFactory` instances for the request
+  queue, request topic, and response topic. Each factory provides a JMS
+  `ConnectionFactory` and a `Destination`. The `jndi/` subpackage contains
+  JNDI-backed implementations.
+* `MessagePolicy` — delivery mode, priority, TTL, and related
+  producer-side settings; combined with `DeliveryMode` and
+  `JmsAcknowledgeMode` enums.
+* `ReconnectionPolicy` — reconnection timing and attempt limits applied by
+  the `ConnectionManager` on broker failure.
 
 [source,java]
 ----
-import org.smallmind.phalanx.worker.BlockingWorkQueue;
-import org.smallmind.phalanx.worker.WorkManager;
-import org.smallmind.phalanx.worker.WorkQueue;
-import org.smallmind.phalanx.worker.Worker;
+JmsRequestTransport client = new JmsRequestTransport(
+    routingFactories, messagePolicy, reconnectionPolicy, codec,
+    /* clusterSize           */ 4,
+    /* concurrencyLimit      */ 8,
+    /* maximumMessageLength  */ 1 << 20,
+    /* defaultTimeoutSeconds */ 30L
+);
 
-public class AuditWorker extends Worker<String> {
+JmsResponseTransport server = new JmsResponseTransport(
+    routingFactories, messagePolicy, reconnectionPolicy, codec,
+    InvocationWorker.class,
+    /* serviceGroup           */ "default",
+    /* clusterSize            */ 4,
+    /* concurrencyLimit       */ 8,
+    /* maximumMessageLength   */ 1 << 20,
+    /* transactedSession      */ false,
+    /* acknowledgeMode        */ JmsAcknowledgeMode.AUTO_ACKNOWLEDGE
+);
+----
 
-  public AuditWorker (WorkQueue<String> workQueue) {
+A JNDI-less Spring assembly is available via the `transport/jms/spring/`
+helper beans.
 
-    super(workQueue);
-  }
+== Wire Contexts
 
-  @Override
-  public void engageWork (String transfer) {
+Wire contexts are thread-local values that must follow every call into
+remote services without polluting method signatures. Typical examples are
+a tenant id, an authenticated principal, a trace/correlation id, or a
+request-scoped feature-flag snapshot.
 
-    System.out.println(transfer);
-  }
+=== Defining A Context Type
 
-  @Override
-  public void close () {
+Subclass `WireContext` and attach a `@Wire(adapter = ...)` annotation
+naming the adapter that serialises it:
 
-  }
+[source,java]
+----
+@Wire(adapter = TenantContextAdapter.class)
+public class TenantContext extends WireContext {
+
+    private final String tenantId;
+
+    public TenantContext (String tenantId) { this.tenantId = tenantId; }
+
+    public String getTenantId () { return tenantId; }
 }
+----
 
-WorkManager<AuditWorker, String> workManager =
-  new WorkManager<>(AuditWorker.class, 4, new BlockingWorkQueue<>(1000));
+=== Defining The Adapter
 
-workManager.startUp(AuditWorker::new);
+`WireAdapter<V, B>` maps a wire value `V` to a business type `B`. The
+abstract methods are `getValueType()`, `marshal(B) -> V`, and
+`unmarshal(V) -> B`.
+
+[source,java]
+----
+public class TenantContextAdapter extends WireAdapter<String, TenantContext> {
+
+    @Override public Class<String>   getValueType ()                         { return String.class; }
+    @Override public String          marshal       (TenantContext context)   { return context.getTenantId(); }
+    @Override public TenantContext   unmarshal     (String tenantId)         { return new TenantContext(tenantId); }
+}
+----
+
+=== Registering And Using
+
+Register the handle at application startup, on both sides of the wire:
+
+[source,java]
+----
+WireContextManager.register("tenant", TenantContext.class);
+----
+
+Push before calling, pop in `finally`:
+
+[source,java]
+----
+ContextFactory.pushContext(new TenantContext("customer-123"));
 try {
-  workManager.execute("audit:order:101");
+    orderService.createOrder(order);
 } finally {
-  workManager.shutDown();
+    ContextFactory.popContext(TenantContext.class);
 }
 ----
 
-=== Worker Runtime Notes
+Read on the server side:
 
-* worker threads are daemons
-* `execute(...)` blocks until a queue accepts the work item
-* workers poll in one-second intervals
-* exceptions from `engageWork(...)` are logged and do not kill the worker loop
-* `stop()` calls `close()`, interrupts the worker thread, and waits for exit
+[source,java]
+----
+TenantContext tenant = ContextFactory.getContext(TenantContext.class);
+String tenantId      = tenant.getTenantId();
+----
 
-[[phalanx-ops, Metrics, Logging, And JMX]]
-== Metrics, Logging, And JMX
+`MethodInvoker` pushes the invocation's contexts before calling the
+service method and pops them immediately afterward, so nested outbound
+calls inside the same service method see the same contexts.
 
-=== Metrics
+[[error-propagation]]
+== Error Propagation
 
-The transports and worker package emit Claxon metrics.
-Common high-level event tags include:
+Server-side exceptions are handled inside `WireInvocationCircuit.handle`:
 
-* `Acquire Request Transport`
-* `Construct Message`
-* `Request Transit Time`
-* `Response Transit Time`
-* `Complete Callback`
-* `Acquire Result`
-* `Acquire Worker`
-* `Worker Idle`
+* **Request/reply calls (`@InOut`, `@Whisper`).** The exception is wrapped
+  into a `Fault` (from `web-json-scaffold`) and sent back in a
+  `ResultSignal` with `error = true`. The request transport unwraps the
+  fault on the caller side and the declared checked exception (or a
+  `FaultWrappingException` for unchecked ones) escapes the caller's proxy
+  method. `TransportException` is reserved for transport-layer problems —
+  notably, results that are not `Serializable` are rejected with a
+  `TransportException` before transmission.
 
-Invocation paths also add service and method tags on some transports.
-Treat the exact tag set as transport-specific operational detail rather than a guaranteed public compatibility contract.
+* **Fire-and-forget calls (`@InOnly`, `@Shout`).** The exception is logged
+  via `LoggerManager` and no response is transmitted. The caller cannot
+  observe server-side failure.
 
-=== Logging
+Framework-thrown conditions worth catching at the call site:
 
-Transport and worker code log through Scribe's `LoggerManager`.
-`JsonSignalCodec` has two operational knobs:
+`TransportTimeoutException`::
+    Request/reply did not complete within the effective timeout.
 
-* `verbose`
-* `verboseLogLevel`
+`TransportException`::
+    A transport-level or serialisation-level failure. Most commonly
+    returned when the server-side result is not `Serializable`.
 
-When `verbose=true`, full JSON payloads are logged.
-That is excellent for local debugging and often unacceptable for production payloads carrying sensitive data.
+`ServiceDefinitionException`::
+    Raised at proxy-creation or registration time when the interface is
+    malformed: missing `@Argument`, `@InOnly` with a non-void return or a
+    declared `throws`, `@Whisper` without an instance-id extractor, or a
+    service group/instance id that the registered wrapper does not match.
 
-=== JMX
+`MissingInvocationException` / `MismatchedArgumentException`::
+    The method being invoked is not part of the registered interface, or
+    the argument shape disagrees with what the interface advertised.
 
-`ResponseTransportMonitor` wraps any `ResponseTransport` as `ResponseTransportMXBean`.
-It exposes:
+== Timeouts
 
-* `getState()`
-* `play()`
-* `pause()`
+Timeouts apply to request/reply voices only: `@InOut` and `@Whisper`. For
+a single call, the effective timeout is resolved in this order:
 
-It is a thin delegate layer, not a second lifecycle system.
+1. `timeoutExtractor.getParameter(...)` on the proxy, if it returns
+   non-null.
+2. The annotation's `timeoutSeconds`, if > 0.
+3. The request transport's `defaultTimeoutSeconds` constructor argument.
 
-[[phalanx-api-index, API Index]]
-== API Index
+There is no cancellation. On timeout the framework fails the caller's
+callback and discards any late response it later receives for that
+correlation id. The server-side invocation continues to completion.
+Design services to be idempotent when the caller might retry.
 
-This index is organized by package and focuses on the public types you are most likely to use directly.
+== Threading And Lifecycle
 
-[cols="1,3,4",options="header"]
+**Client side.** Calls are synchronous. The calling thread blocks inside
+`RequestTransport.transmit` until the correlated `ResultSignal` arrives or
+the timeout fires, for request/reply voices; for fire-and-forget voices
+the method returns as soon as the signal is queued for dispatch. The
+request transport allocates no thread pool of its own.
+
+**Server side.** The RabbitMQ and Kafka response transports extend
+`WorkManager<InvocationWorker, ...>`. The `concurrencyLimit` constructor
+argument sets the number of worker threads; there is no default. Workers
+drain a shared `WorkQueue` and dispatch through the
+`WireInvocationCircuit`. The mock response transport dispatches inline on
+the listener thread and has no pool.
+
+**Context propagation across threads.** A `WireContext` lives on the
+pushing thread's `ContextFactory` stack. On the server side
+`MethodInvoker` pushes the call's contexts, invokes the method, and pops
+them immediately afterward; service code running in the same thread can
+therefore rely on `ContextFactory.getContext(...)`. Contexts do *not*
+propagate into arbitrary threads spawned from service code — spawn-and-
+propagate is the caller's responsibility.
+
+**Shutdown.** Call `close()` on each transport. The response transport
+runs `WorkManager.shutDown()` internally and each worker's `stop()`
+method is called in sequence (exceptions are logged, not re-thrown). To
+drain cleanly: stop issuing requests on the client, close the request
+transport, let the response transport's workers complete in-flight work,
+then close the response transport.
+
+== Worker Pool Primitives
+
+`org.smallmind.phalanx.worker` is a small, self-contained worker-pool
+abstraction. The RabbitMQ and Kafka response transports build on it;
+nothing in the package depends on the wire layer, so it can be reused on
+its own.
+
+[cols="1,3",options="header"]
 |===
-|Package |Start here |Focus
+| Type | Role
 
-|`org.smallmind.phalanx.wire`
-|`Argument`, `InOnly`, `InOut`, `Whisper`, `Shout`, `ParameterExtractor`, `StaticParameterExtractor`, `Wire`, `WireAdapter`
-|Contract annotations, extractor strategies, adapters, and core wire exceptions
-
-|`org.smallmind.phalanx.wire.signal`
-|`SignalCodec`, `JsonSignalCodec`, `JavaSerializationSignalCodec`, `Route`, `Function`, `InvocationSignal`, `ResultSignal`, `WireContext`, `ProtoWireContext`
-|Payload model, codecs, route metadata, and context propagation types
-
-|`org.smallmind.phalanx.wire.transport`
-|`RequestTransport`, `ResponseTransport`, `WiredService`, `WireInvocationCircuit`, `TransportState`
-|Transport contracts, service registration, dispatch, and lifecycle
-
-|`org.smallmind.phalanx.wire.transport.mock`
-|`MockMessageRouter`, `MockRequestTransport`, `MockResponseTransport`
-|In-memory testing transport
-
-|`org.smallmind.phalanx.wire.transport.jms`
-|`RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`, `JmsRequestTransport`, `JmsResponseTransport`
-|JMS integration, producer policy, reconnection handling, and responder/requester transports
-
-|`org.smallmind.phalanx.wire.transport.jms.jndi`
-|`JmsConnectionDetails`, `JndiManagedObjectFactory`
-|JNDI-based JMS destination and connection wiring
-
-|`org.smallmind.phalanx.wire.transport.amqp.rabbitmq`
-|`RabbitMQConnector`, `NameConfiguration`, `QueueContractor`, `ClassicQueueContractor`, `QuorumQueueContractor`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`
-|RabbitMQ connection wiring, queue policy, and transport implementations
-
-|`org.smallmind.phalanx.wire.transport.kafka`
-|`KafkaRequestTransport`, `KafkaResponseTransport`, `TopicNames`, `AlreadyClosedException`
-|Kafka transport assembly and derived topic naming
-
-|`org.smallmind.phalanx.wire.spring`
-|`WireProxyFactory`, `WireProxyFactoryBean`, `StaticParameterExtractorFactoryBean`, `WireContextInitializingBean`
-|Optional Spring assembly helpers
-
-|`org.smallmind.phalanx.wire.jmx`
-|`ResponseTransportMonitor`, `ResponseTransportMXBean`
-|JMX wrapper for response-transport lifecycle
-
-|`org.smallmind.phalanx.worker`
-|`WorkManager`, `Worker`, `WorkQueue`, `BlockingWorkQueue`, `TransferringWorkQueue`, `WorkerFactory`
-|Standalone worker execution primitives
-|===
-
-[[phalanx-defaults, Defaults Reference]]
-== Defaults Reference
-
-=== Wire And Proxy Defaults
-
-[cols="1,2",options="header"]
-|===
-|Setting |Default
-
-|Unannotated service method conversation
-|Talk plus request/response
-
-|Transport timeout when no method or extractor supplies one
-|Constructor-supplied request transport default
-
-|Shout conversation
-|Always one-way
-
-|Unknown incoming context handle
-|Deserialized as `ProtoWireContext`
+| `WorkManager<W, T>`       | Owns the worker pool's full lifecycle: creates workers via a `WorkerFactory`, wraps them in daemon threads, dispatches work through `execute(T)`, stops them via `shutDown()`. Concurrent `startUp`/`shutDown` calls spin-wait for the transition in flight. Claxon records acquire-worker latency.
+| `Worker<T>`               | `Runnable` subclass that drains the queue and processes one item at a time.
+| `WorkerFactory<W, T>`     | Produces `Worker` instances bound to the shared queue.
+| `WorkQueue<T>`            | Handoff between producer and workers.
+| `TransferringWorkQueue`   | `SynchronousQueue`-style handoff — the producer blocks until a worker takes the item. Used as the default by `WorkManager`'s no-queue constructor.
+| `BlockingWorkQueue`       | Bounded-buffer handoff for cases where some producer burstiness is expected.
+| `WorkManagerException`    | Thrown by `execute(...)` when the manager is not in the `STARTED` state.
 |===
 
-=== Codec Defaults
-
-[cols="1,2",options="header"]
-|===
-|Setting |Default
-
-|`JsonSignalCodec.verbose`
-|`false`
-
-|`JsonSignalCodec.verboseLogLevel`
-|`DEBUG`
-
-|`JavaSerializationSignalCodec` content type
-|`application/octet-stream`
-|===
-
-=== JMS Defaults
-
-[cols="1,2",options="header"]
-|===
-|Setting |Default
-
-|Acknowledge mode
-|`AUTO_ACKNOWLEDGE`
-
-|Delivery mode
-|`NON_PERSISTENT`
-
-|Disable message id
-|`false`
-
-|Disable message timestamp
-|`false`
-
-|TTL seconds
-|`0`
-
-|Priority
-|`4`
-
-|Reconnection delay
-|`500` ms
-
-|Reconnection attempts
-|`-1` (unlimited)
-|===
-
-=== RabbitMQ Defaults
-
-[cols="1,2",options="header"]
-|===
-|Setting |Default
-
-|`RabbitMQServer.port`
-|`5672`
-
-|`NameConfiguration.requestExchange`
-|`requestExchange`
-
-|`NameConfiguration.responseExchange`
-|`responseExchange`
-
-|`NameConfiguration.responseQueue`
-|`responseQueue`
-
-|`NameConfiguration.shoutQueue`
-|`shoutQueue`
-
-|`NameConfiguration.talkQueue`
-|`talkQueue`
-
-|`NameConfiguration.whisperQueue`
-|`whisperQueue`
-
-|`ClassicQueueContractor`
-|Classic queue, non-durable, non-exclusive
-|===
-
-=== Worker Defaults
-
-[cols="1,2",options="header"]
-|===
-|Setting |Default
-
-|`WorkManager` queue when omitted
-|`TransferringWorkQueue`
-
-|Worker thread type
-|Daemon threads
-
-|Worker poll interval
-|1 second
-|===
-
-[[phalanx-edge-cases, Behavioral Edge Cases]]
-== Behavioral Edge Cases
-
-These are the details most likely to surprise an integrator reading only the type names.
-
-* Every transported parameter on the service interface must have `@Argument`; implementation-only annotations do not rescue an under-annotated interface.
-* `@InOnly` is validated strictly: the method must return `void` and declare no exception list.
-* `@Shout` is one-way in the transport model, but the proxy layer does not reject a non-void signature; callers should still expect no response.
-* `@Wire` adapters apply to arguments, not to return values.
-* Built-in `register(...)` implementations do not call `WiredService.setResponseTransport(...)`.
-* `toString()`, `hashCode()`, and `equals(Object)` on a wire proxy are remote invocations.
-* Custom type neutral signatures use simple names by default, so distinct classes with the same simple name can collide unless you supply type hints.
-* Unknown context handles become `ProtoWireContext` instead of failing deserialization immediately.
-* Results still need to be serializable or codec-convertible.
-* When the remote side cannot preserve a native Java throwable, the caller receives `FaultWrappingException` rather than the original exception type.
-* `AbstractRequestTransport` supports early-arriving responses by storing a synchronous callback placeholder before the waiting code starts.
-* In the mock transport, shout shares the talk queue path and pause/play only gates talk traffic.
-* `WireContextManager.register(...)` depends on `PerApplicationContext`; without it, registration fails before any message is sent.
-
-[[phalanx-troubleshooting, Troubleshooting]]
 == Troubleshooting
 
-[cols="2,3,4",options="header"]
-|===
-|Symptom |Likely cause |What to check
+**Every call times out.**
+Verify `responseTransport.register(Interface.class, wiredService)` was
+called, that `wiredService.getServiceName()` and `getVersion()` exactly
+match the arguments passed to `WireProxyFactory.generateProxy`, and that
+both sides share the same `NameConfiguration` (RabbitMQ) or
+node-name/service-group (Kafka). Enable debug logging on
+`org.smallmind.phalanx` to see outbound and inbound routes.
 
-|`ServiceDefinitionException` mentioning `@Argument`
-|A parameter on the service interface lacks `@Argument`
-|Check the interface used by proxy generation and registration, not only the implementation class
+**`ServiceDefinitionException` thrown at proxy creation.**
+The interface has a method whose parameters are not all annotated with
+`@Argument`, an `@InOnly` method that returns non-`void` or declares a
+`throws` list, or the interface contains `@Whisper` methods but no
+instance-id extractor was supplied to `WireProxyFactory.generateProxy`.
 
-|`ServiceDefinitionException` on a whisper method
-|No instance-id extractor was supplied
-|Pass a non-null instance-id extractor when whisper methods are possible
+**`TransportException` on an otherwise normal call.**
+Most often: the server-side return value is not `Serializable`.
+`WireInvocationCircuit` rejects non-`Serializable` results before sending
+the reply. Make the type serializable or return a serializable projection.
 
-|`TransportTimeoutException`
-|No matching responder, wrong service metadata, wrong routing, or response delivery failure
-|Check service name, version, service group, instance id, timeout policy, and whether the method is intentionally one-way
+**Wire contexts are missing on the server.**
+The handle must be registered on both sides with
+`WireContextManager.register("handle", Class)`; a mismatch causes the
+server to drop the context silently. Also verify the context was pushed
+before the call and popped in a `finally` block, and that the context
+class's no-arg constructor or adapter is reachable from the server
+classloader.
 
-|`MissingInvocationException`
-|Route or function metadata does not match a registered service method
-|Check `@CallAs`, service version, service name, and signature changes across caller and responder
+**Kafka calls hang after a topic rename or service-group change.**
+Phalanx uses `wire-*-<serviceGroup>` topic names. Renaming the group
+without restarting both sides leaves the server subscribed to the old
+topic while the client publishes to the new one. Coordinate the rollover.
 
-|`MismatchedArgumentException`
-|Incoming argument names no longer line up with the registered method
-|Check renamed `@Argument` values and mixed client/server versions
+== Limitations
 
-|`FaultWrappingException`
-|The remote side returned a neutral fault instead of a native Java throwable payload
-|Inspect the remote exception and codec choice; native throwable replay is not guaranteed across every boundary
+No request cancellation::
+    A transmitted request runs to completion on the server even when the
+    caller has already timed out. Design retries with idempotency in mind.
 
-|`TransportException` about a non-serializable argument or result
-|An argument or return value cannot be encoded by the chosen codec and has no valid adapter path
-|Check argument classes, result classes, and any `@Wire` adapter value types
+Single reply per request/reply call::
+    Streaming replies are not supported; return a collection-valued type
+    if the caller needs several values.
 
-|`MissingPerApplicationContextException` during context registration
-|`PerApplicationContext` was not initialized before `WireContextManager.register(...)`
-|Create `new PerApplicationContext()` before registering wire-context handles
+Shout has no collection or consensus::
+    `@Shout` fans out but does not collect responses and does not
+    coordinate subscribers. It is not a distributed-transaction primitive.
 
-|Context not visible inside the service
-|Context was not pushed on the caller side or the handle was not registered on the responder side
-|Check `WireContextManager.register(...)`, `ContextFactory.pushContext(...)`, and whether the handle matches the serialized context name
+Results must be `Serializable`::
+    `WireInvocationCircuit` rejects non-`Serializable` returns with a
+    `TransportException`, independent of which `SignalCodec` is in use.
 
-|JMS message-length failure
-|`maximumMessageLength` is too small
-|Increase the configured maximum for request and response listeners
+`@InOnly` methods cannot declare checked exceptions::
+    Fire-and-forget contracts cannot participate in checked-exception
+    propagation. Move the exception-declaring signature to `@InOut` or
+    `@Whisper`.
 
-|Kafka `AlreadyClosedException`
-|A Kafka transport was used after close
-|Check shutdown ordering and whether the transport is shared across components
+No automatic retries::
+    The transport does not retry failed sends. Wrap the call at the
+    application layer if retries are required.
 
-|Mock tests pass but broker runtime behaves differently
-|The mock transport intentionally simplifies broker behavior
-|Validate shout fan-out, pause/play behavior, selectors, and durability with the real transport
-|===
+== Dependencies
 
-[[phalanx-minimal-checklist, Minimal Checklist]]
-== Minimal Checklist
+Compile-scope dependencies declared by the module (see `phalanx/pom.xml`):
 
-* annotate every transported parameter on the shared service interface with `@Argument`
-* keep `serviceName` and `version` identical between proxy and responder
-* always supply a service-group extractor
-* supply an instance-id extractor whenever whisper methods exist
-* choose `JsonSignalCodec` unless you have a deliberate reason to use Java serialization
-* initialize `PerApplicationContext` before registering `WireContext` handles
-* register every `WireContext` handle on the receiving side before traffic starts
-* make sure arguments and results are serializable or intentionally adapted
-* close request transports, response transports, and worker managers explicitly
+* `smallmind-nutsnbolts` — `Context`, `ContextFactory`, `SnowflakeId`, and
+  the other utility types the wire layer depends on.
+* `smallmind-quorum` — connection-management helpers used by the
+  transports.
+* `claxon-registry` — latency and throughput metrics emitted from the
+  work manager and transports.
+* `scribe-pen`, `scribe-ink-indigenous` — logging.
+* `web-jersey`, `web-json-scaffold` — `Fault`, `FaultElement`, and
+  `FaultWrappingException` used for cross-wire error propagation.
+* `jackson-core`, `jackson-databind` (Jackson 3.x) — `JsonSignalCodec`.
+* `jakarta.jms-api`, `jakarta.xml.bind-api`, `jakarta.ws.rs-api` —
+  Jakarta API surfaces compiled against.
+* `spring-beans` — used by the Spring integration beans
+  (`WireProxyFactoryBean`, `WireContextInitializingBean`,
+  `StaticParameterExtractorFactoryBean`).
 
-[[phalanx-verification, Verification Checklist]]
-== Verification Checklist
+Optional dependencies, required only for the corresponding transport:
 
-For a focused integration check, cover these cases:
-
-1. basic talk request/response with primitive and object arguments
-2. one-way method using `@InOnly`
-3. targeted whisper call using the instance id returned by `register(...)`
-4. exception propagation, including what happens when only a neutral fault payload is available
-5. context propagation through a `WireContext`, if your service depends on it
-6. shout behavior, if your contract uses `@Shout`
-7. `pause()` and `play()` behavior on the chosen response transport
-8. explicit close behavior of both request and response transports
-9. any transport-specific configuration such as JMS selectors, RabbitMQ queue type, or Kafka topic naming
-
-For the smallest realistic test pattern, the shipped `MockWireTest` is the right starting point.
+* `com.rabbitmq:amqp-client` — RabbitMQ transport.
+* `org.apache.kafka:kafka-clients` + `org.smallmind:kafka-utility` —
+  Kafka transport.
+* A Jakarta Messaging 3.x provider — JMS transport.

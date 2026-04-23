@@ -33,15 +33,16 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Evaluates whether a record should be logged.
+ * Veto point in the logging pipeline that inspects a {@link Record} and decides whether it should be passed on to an
+ * appender or discarded.
  */
 public interface Filter {
 
   /**
-   * Determines if the given record is eligible for logging.
+   * Evaluates the supplied record and returns whether it should proceed through the logging pipeline.
    *
-   * @param record candidate record
-   * @return {@code true} if logging should proceed
+   * @param record the candidate log record to evaluate
+   * @return {@code true} if the record should be logged; {@code false} to suppress it
    */
   boolean willLog (Record<?> record);
 }

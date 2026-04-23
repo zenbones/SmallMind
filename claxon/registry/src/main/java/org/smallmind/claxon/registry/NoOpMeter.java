@@ -35,24 +35,32 @@ package org.smallmind.claxon.registry;
 import org.smallmind.claxon.registry.meter.Meter;
 
 /**
- * Meter implementation that discards updates and produces empty readings.
- * Used when no registry is available to avoid null checks.
+ * A singleton {@link Meter} implementation that silently discards every update and always
+ * returns an empty {@link Quantity} array from {@link #record()}.
+ *
+ * <p>{@code NoOpMeter} is substituted by {@link ClaxonRegistry} whenever a meter cannot be
+ * registered — for example when the configured {@link NamingStrategy} returns {@code null}
+ * for the requesting class — so that calling code can interact with the {@link Meter} API
+ * without null-checking.
  */
 public class NoOpMeter implements Meter {
 
+  /**
+   * The single shared instance.
+   */
   private static final NoOpMeter INSTANCE = new NoOpMeter();
 
   /**
-   * Hidden constructor for singleton usage.
+   * Private constructor enforcing the singleton pattern.
    */
   private NoOpMeter () {
 
   }
 
   /**
-   * Returns the singleton instance.
+   * Returns the singleton {@code NoOpMeter} instance.
    *
-   * @return the no-op meter
+   * @return the shared no-op meter
    */
   public static NoOpMeter instance () {
 
@@ -60,9 +68,9 @@ public class NoOpMeter implements Meter {
   }
 
   /**
-   * Ignores the supplied value.
+   * Accepts but silently discards the supplied value; no state is updated.
    *
-   * @param value ignored update
+   * @param value the value to record — ignored
    */
   @Override
   public void update (long value) {
@@ -70,9 +78,9 @@ public class NoOpMeter implements Meter {
   }
 
   /**
-   * Returns an empty quantity set because no data is tracked.
+   * Returns an empty {@link Quantity} array because this meter tracks no data.
    *
-   * @return empty quantity array
+   * @return a zero-length {@link Quantity} array
    */
   @Override
   public Quantity[] record () {

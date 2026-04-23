@@ -52,7 +52,9 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   private final ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer;
 
   /**
-   * @param throngPropertiesMultiplexer multiplexer describing subtype codecs
+   * Constructs the codec from the given polymorphic multiplexer.
+   *
+   * @param throngPropertiesMultiplexer the multiplexer that maps discriminator values to subtype codecs
    */
   public ThrongPropertiesMultiplexerCodec (ThrongPropertiesMultiplexer<T> throngPropertiesMultiplexer) {
 
@@ -60,7 +62,9 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the base class of the polymorphic hierarchy.
+   *
+   * @return the base entity class handled by this codec
    */
   @Override
   public Class<T> getEncoderClass () {
@@ -69,7 +73,9 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   /**
-   * @return whether {@code null} values are preserved
+   * Returns whether null values are written as BSON null rather than omitted during encoding.
+   *
+   * @return {@code true} if null values are persisted
    */
   public boolean isStoreNulls () {
 
@@ -77,7 +83,9 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the combined index definitions from all registered subtype codecs.
+   *
+   * @return merged index definitions for the polymorphic hierarchy
    */
   @Override
   public ThrongIndexes provideIndexes () {
@@ -86,9 +94,13 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   /**
-   * Decodes a polymorphic value by reading the discriminator key and delegating to the subtype codec.
+   * Decodes a polymorphic value by reading the discriminator key field and delegating to the matching subtype codec.
    *
-   * @throws ThrongRuntimeException if the discriminator field is missing or unknown
+   * @param reader         BSON reader positioned within the document
+   * @param decoderContext decoder context
+   * @return decoded instance cast to the base type, or {@code null} when the value is null
+   * @throws ThrongRuntimeException if the discriminator field name does not match the expected key, or no codec is
+   *                                registered for the discriminator value
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -115,7 +127,11 @@ public class ThrongPropertiesMultiplexerCodec<T> implements Codec<T>, IndexProvi
   }
 
   /**
-   * Encodes a polymorphic value by writing the discriminator key and delegating to the subtype codec.
+   * Encodes a polymorphic value by writing the discriminator key followed by the subtype properties.
+   *
+   * @param writer         destination BSON writer
+   * @param value          polymorphic instance to encode
+   * @param encoderContext encoder context
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {

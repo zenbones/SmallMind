@@ -57,10 +57,12 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
   private final SignalCodec signalCodec;
 
   /**
+   * Creates a worker wired to decode and execute RabbitMQ invocation messages.
+   *
    * @param workQueue           queue supplying incoming RabbitMQ messages.
-   * @param responseTransmitter transport used to publish responses.
-   * @param invocationCircuit   circuit that invokes target services.
-   * @param signalCodec         codec for decoding invocation signals.
+   * @param responseTransmitter transport used to publish results back to callers.
+   * @param invocationCircuit   circuit that routes invocations to service implementations.
+   * @param signalCodec         codec for decoding {@link org.smallmind.phalanx.wire.signal.InvocationSignal} payloads.
    */
   public InvocationWorker (WorkQueue<RabbitMQMessage> workQueue, ResponseTransmitter responseTransmitter, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 

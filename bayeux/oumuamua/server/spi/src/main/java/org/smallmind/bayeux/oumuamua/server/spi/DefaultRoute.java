@@ -38,7 +38,8 @@ import org.smallmind.bayeux.oumuamua.server.api.Segment;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 /**
- * Default {@link Route} implementation backed by a validated path string.
+ * Standard {@link Route} implementation that parses and validates a Bayeux channel path,
+ * exposing segment-level access and wildcard matching for channel resolution.
  */
 public class DefaultRoute implements Route {
 
@@ -64,10 +65,12 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Constructs a route for the supplied path and validates its segments.
+   * Parses {@code path} into segments and validates its conformance to Bayeux channel rules.
    *
-   * @param path channel path beginning with '/'
-   * @throws InvalidPathException if the path does not conform to channel rules
+   * @param path channel path; must begin with {@code '/'} and contain at least one segment
+   * @throws InvalidPathException if the path is null, empty, missing a leading slash,
+   *                              contains empty segments, has illegal characters, or
+   *                              uses a malformed wildcard expression
    */
   public DefaultRoute (String path)
     throws InvalidPathException {
@@ -78,7 +81,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return the full path string
+   * Returns the full channel path string as provided at construction.
+   *
+   * @return path string beginning with {@code '/'}
    */
   public String getPath () {
 
@@ -86,7 +91,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return number of segments contained in the path
+   * Returns the total number of segments in this route.
+   *
+   * @return segment count; always at least 1
    */
   public int size () {
 
@@ -94,7 +101,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return index of the last segment
+   * Returns the zero-based index of the last segment.
+   *
+   * @return index of the trailing segment
    */
   public int lastIndex () {
 
@@ -102,7 +111,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return {@code true} if the final segment is a single-level wildcard
+   * Indicates whether the final segment is a single-level wildcard ({@code *}).
+   *
+   * @return {@code true} if the last segment equals {@code *}
    */
   public boolean isWild () {
 
@@ -110,7 +121,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return {@code true} if the final segment is a deep wildcard
+   * Indicates whether the final segment is a deep wildcard ({@code **}).
+   *
+   * @return {@code true} if the last segment equals {@code **}
    */
   public boolean isDeepWild () {
 
@@ -118,7 +131,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return {@code true} if this path represents a meta channel
+   * Indicates whether this path belongs to the {@code /meta} namespace.
+   *
+   * @return {@code true} if the first segment is {@code meta}
    */
   public boolean isMeta () {
 
@@ -126,7 +141,9 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * @return {@code true} if this path represents a service channel
+   * Indicates whether this path belongs to the {@code /service} namespace.
+   *
+   * @return {@code true} if the first segment is {@code service}
    */
   public boolean isService () {
 
@@ -134,10 +151,11 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Compares the path to a set of provided segments, honoring wildcards.
+   * Tests whether this route matches the given sequence of segment names, respecting
+   * single-level ({@code *}) and deep ({@code **}) wildcards in {@code matchingSegments}.
    *
-   * @param matchingSegments segments to test against
-   * @return {@code true} if the supplied segments match this route
+   * @param matchingSegments ordered segment names to test; a {@code **} entry matches all remaining segments
+   * @return {@code true} if every supplied segment matches the corresponding segment of this route
    */
   @Override
   public boolean matches (String... matchingSegments) {
@@ -166,11 +184,13 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Tests whether the segment at the given index matches the supplied name.
+   * Tests whether the segment at {@code index} exactly equals {@code name} by comparing
+   * characters directly against the underlying path string.
    *
-   * @param index segment index
-   * @param name  comparison text
-   * @return {@code true} if the segment matches exactly
+   * @param index zero-based segment index within this route
+   * @param name  character sequence to compare; {@code null} always returns {@code false}
+   * @return {@code true} if the segment text equals {@code name} character-for-character
+   * @throws IndexOutOfBoundsException if {@code index} is negative or greater than {@link #lastIndex()}
    */
   protected boolean matches (int index, CharSequence name) {
 
@@ -197,10 +217,11 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Provides a segment view for the given index.
+   * Returns a {@link Segment} view backed by this route for the given index.
    *
-   * @param index requested segment index
-   * @return segment implementation
+   * @param index zero-based segment index
+   * @return segment wrapping the path characters at that position
+   * @throws IndexOutOfBoundsException if {@code index} is negative or greater than {@link #lastIndex()}
    */
   @Override
   public Segment getSegment (int index) {
@@ -226,7 +247,8 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Segment implementation that references the parent route.
+   * {@link Segment} view into a single path segment of its enclosing {@link DefaultRoute},
+   * delegating character access and matching directly to the parent path string.
    */
   public class RouteSegment extends Segment {
 
@@ -238,10 +260,10 @@ public class DefaultRoute implements Route {
     }
 
     /**
-     * Delegates to the parent route for matching.
+     * Delegates matching to {@link DefaultRoute#matches(int, CharSequence)} for this segment's index.
      *
-     * @param charSequence value to match
-     * @return {@code true} if the segment matches the supplied text
+     * @param charSequence character sequence to compare against this segment
+     * @return {@code true} if the segment text equals {@code charSequence} character-for-character
      */
     @Override
     public boolean matches (CharSequence charSequence) {
@@ -250,7 +272,9 @@ public class DefaultRoute implements Route {
     }
 
     /**
-     * @return length of this segment
+     * Returns the number of characters in this segment.
+     *
+     * @return character count, excluding any delimiter slashes
      */
     @Override
     public int length () {
@@ -259,10 +283,11 @@ public class DefaultRoute implements Route {
     }
 
     /**
-     * Retrieves a character within the segment.
+     * Returns the character at {@code pos} within this segment.
      *
-     * @param pos character position
-     * @return character at the position
+     * @param pos zero-based position within the segment
+     * @return the character at that position
+     * @throws StringIndexOutOfBoundsException if {@code pos} is out of bounds for this segment
      */
     @Override
     public char charAt (int pos) {
@@ -279,11 +304,12 @@ public class DefaultRoute implements Route {
     }
 
     /**
-     * Returns a subsequence of the segment.
+     * Returns the sub-sequence of this segment between {@code start} (inclusive) and {@code end} (exclusive).
      *
-     * @param start start offset
-     * @param end   end offset (exclusive)
-     * @return requested subsequence
+     * @param start start offset within the segment, inclusive
+     * @param end   end offset within the segment, exclusive
+     * @return subsequence as a {@link String}
+     * @throws StringIndexOutOfBoundsException if {@code start} or {@code end} is out of range
      */
     @Override
     public CharSequence subSequence (int start, int end) {
@@ -300,7 +326,9 @@ public class DefaultRoute implements Route {
     }
 
     /**
-     * @return string representation of this segment
+     * Returns the full text of this segment as a plain string.
+     *
+     * @return segment text extracted from the parent path, without surrounding slashes
      */
     @Override
     public String toString () {

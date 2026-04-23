@@ -33,12 +33,14 @@
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
 /**
- * String JSON value wrapper.
+ * JSON string value within the Bayeux value hierarchy.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
  */
 public interface StringValue<V extends Value<V>> extends Value<V> {
 
   /**
-   * Identifies this value as a string.
+   * Returns {@link ValueType#STRING}, identifying this value as a JSON string.
    *
    * @return {@link ValueType#STRING}
    */
@@ -48,7 +50,9 @@ public interface StringValue<V extends Value<V>> extends Value<V> {
   }
 
   /**
-   * @return the underlying text content
+   * Returns the raw string content of this value.
+   *
+   * @return text content, never {@code null}
    */
   String asText ();
 }

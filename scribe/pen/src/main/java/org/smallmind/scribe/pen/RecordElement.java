@@ -33,7 +33,8 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Elements of a log record that can be included when formatting.
+ * Enumeration of the distinct pieces of information carried by a {@link Record} that a formatter can choose to
+ * include in its output.
  */
 public enum RecordElement {
 

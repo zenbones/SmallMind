@@ -33,9 +33,18 @@
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 /**
- * RabbitMQ queue types supported by the transport.
+ * Enumerates the RabbitMQ queue types supported by the wire transport.  The selected type is
+ * passed to the appropriate {@link QueueContractor} implementation when queues are declared.
  */
 public enum QueueType {
 
-  CLASSIC, QUORUM
+  /**
+   * Standard RabbitMQ queue backed by the classic (non-replicated) queue implementation.
+   */
+  CLASSIC,
+
+  /**
+   * Replicated, fault-tolerant queue backed by the RabbitMQ quorum queue implementation.
+   */
+  QUORUM
 }

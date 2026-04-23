@@ -33,14 +33,16 @@
 package org.smallmind.nutsnbolts.command.template;
 
 /**
- * Argument that accepts multiple values in a delimited list.
+ * Argument definition for an option that accepts a variable-length sequence of values in a single invocation.
  */
 public class ListArgument extends Argument {
 
   private final String description;
 
   /**
-   * @param description hint describing the expected list format
+   * Constructs a list argument with a human-readable description of the expected values.
+   *
+   * @param description hint text describing the expected list format, used in help output
    */
   public ListArgument (String description) {
 
@@ -48,6 +50,8 @@ public class ListArgument extends Argument {
   }
 
   /**
+   * Returns {@link ArgumentType#LIST}.
+   *
    * @return {@link ArgumentType#LIST}
    */
   @Override
@@ -57,7 +61,9 @@ public class ListArgument extends Argument {
   }
 
   /**
-   * @return description string for help output
+   * Returns the hint text describing the expected list format.
+   *
+   * @return description string for use in help output
    */
   public String getDescription () {
 

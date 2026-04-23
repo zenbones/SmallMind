@@ -35,7 +35,14 @@ package org.smallmind.sleuth.runner;
 import java.util.HashMap;
 
 /**
- * Thread-local context map shared across test executions within a thread and its children.
+ * Thread-local key/value store accessible to test code running on Sleuth-managed threads.
+ * <p>
+ * The backing map is stored in an {@link InheritableThreadLocal} so that values written by a suite
+ * runner thread are visible to child test runner threads without requiring explicit coordination.
+ * All methods are static; instantiation is not intended.
+ * <p>
+ * Typical usage is to share fixtures or configuration between {@code @BeforeSuite} setup code and
+ * the test methods that depend on it.
  */
 public class TestContext {
 
@@ -49,10 +56,10 @@ public class TestContext {
   };
 
   /**
-   * Retrieves a value by key without casting.
+   * Retrieves the value associated with {@code key} without type casting.
    *
-   * @param key context key
-   * @return stored value or {@code null} if absent
+   * @param key lookup key; must not be {@code null}
+   * @return the associated value, or {@code null} if no mapping exists
    */
   public static Object get (String key) {
 
@@ -60,13 +67,13 @@ public class TestContext {
   }
 
   /**
-   * Retrieves and casts a value by key.
+   * Retrieves and casts the value associated with {@code key} to the requested type.
    *
-   * @param key   context key
-   * @param clazz expected type
-   * @param <T>   inferred type parameter
-   * @return value cast to the requested type or {@code null} if absent
-   * @throws ClassCastException if the value is not of the expected type
+   * @param key   lookup key; must not be {@code null}
+   * @param clazz expected type of the stored value; must not be {@code null}
+   * @param <T>   inferred return type
+   * @return the value cast to {@code T}, or {@code null} if no mapping exists
+   * @throws ClassCastException if the stored value is not assignable to {@code clazz}
    */
   public static <T> T get (String key, Class<T> clazz) {
 
@@ -74,10 +81,10 @@ public class TestContext {
   }
 
   /**
-   * Stores or replaces a context value.
+   * Stores or replaces the value for {@code key}.
    *
-   * @param key   context key
-   * @param value value to associate
+   * @param key   storage key; must not be {@code null}
+   * @param value value to associate; may be {@code null}
    */
   public static void put (String key, Object value) {
 
@@ -85,10 +92,12 @@ public class TestContext {
   }
 
   /**
-   * Stores a context value only if the key is not already present.
+   * Stores a value for {@code key} only if the key is not already present.
+   * <p>
+   * Equivalent to a conditional put that does not overwrite an existing mapping.
    *
-   * @param key   context key
-   * @param value value to associate when absent
+   * @param key   storage key; must not be {@code null}
+   * @param value value to associate when the key is absent; may be {@code null}
    */
   public static void putIfAbsent (String key, Object value) {
 

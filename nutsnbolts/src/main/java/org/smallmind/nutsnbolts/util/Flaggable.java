@@ -33,18 +33,18 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Simple wrapper combining a boolean flag with an associated value.
+ * A record pairing a boolean flag with an associated value, useful for conveying both a result and a status signal.
  *
- * @param <T>     value type
- * @param flagged whether the flag is set
- * @param value   associated payload
+ * @param <T>     the type of the associated value
+ * @param flagged {@code true} if the flag is set; {@code false} otherwise
+ * @param value   the payload value associated with the flag
  */
 public record Flaggable<T>(boolean flagged, T value) {
 
   /**
-   * Creates an unflagged instance with the provided value.
+   * Constructs an unflagged instance carrying the given value.
    *
-   * @param value wrapped value
+   * @param value the value to wrap with the flag set to {@code false}
    */
   public Flaggable (T value) {
 

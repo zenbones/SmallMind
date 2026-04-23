@@ -37,17 +37,35 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
+/**
+ * Spring {@link FactoryBean} that constructs a {@link DateTimeFormatter} from a pattern string.
+ * Declare this bean in a Spring context and inject the resulting formatter wherever a
+ * {@code DateTimeFormatter} is required; call {@link #setPattern(String)} before the context
+ * is refreshed so that {@link #afterPropertiesSet()} can compile the formatter.
+ */
 public class DateTimeFormatterFactoryBean implements InitializingBean, FactoryBean<DateTimeFormatter> {
 
   private DateTimeFormatter formatter;
   private String pattern;
 
+  /**
+   * Reports the type of object produced by this factory.
+   *
+   * @return {@link DateTimeFormatter}{@code .class}
+   */
   @Override
   public @Nullable Class<?> getObjectType () {
 
     return DateTimeFormatter.class;
   }
 
+  /**
+   * Returns the compiled formatter after the Spring context has been initialised.
+   *
+   * @return the {@link DateTimeFormatter} built from the configured pattern, or {@code null}
+   * if {@link #afterPropertiesSet()} has not yet been called
+   * @throws Exception never thrown by this implementation
+   */
   @Override
   public @Nullable DateTimeFormatter getObject ()
     throws Exception {
@@ -55,11 +73,23 @@ public class DateTimeFormatterFactoryBean implements InitializingBean, FactoryBe
     return formatter;
   }
 
+  /**
+   * Sets the date/time format pattern used to construct the formatter.
+   * Must be called before the Spring context is refreshed.
+   *
+   * @param pattern a {@link DateTimeFormatter} pattern string (e.g. {@code "yyyy-MM-dd HH:mm:ss"})
+   */
   public void setPattern (String pattern) {
 
     this.pattern = pattern;
   }
 
+  /**
+   * Compiles the configured pattern into a {@link DateTimeFormatter}.
+   * Called automatically by the Spring container after all properties have been set.
+   *
+   * @throws Exception if the pattern is invalid
+   */
   @Override
   public void afterPropertiesSet ()
     throws Exception {

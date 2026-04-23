@@ -38,17 +38,31 @@ import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Message consumer that forwards strings to a Scribe logger at a configured level.
+ * {@link Consumer}{@code <String>} implementation that forwards each string to a Scribe
+ * {@link Logger} at a configurable log {@link Level}.
+ *
+ * <p>Instances of this class are intended to be used as the output consumer for a
+ * {@link MessageEmitter}, bridging the emitter's text output to the Scribe logging framework.
+ * The logger is obtained from {@link LoggerManager} either for this class itself or for a
+ * caller-supplied class.
  */
 public class ScribeLoggerConsumer implements Consumer<String> {
 
+  /**
+   * The Scribe {@link Logger} to which messages are forwarded.
+   */
   private final Logger logger;
+
+  /**
+   * The {@link Level} at which each message is logged.
+   */
   private final Level level;
 
   /**
-   * Creates a consumer that logs via the default logger for this class.
+   * Creates a consumer that logs messages using the logger registered for
+   * {@link ScribeLoggerConsumer} itself.
    *
-   * @param level log level to use
+   * @param level the {@link Level} at which messages will be logged; must not be {@code null}
    */
   public ScribeLoggerConsumer (Level level) {
 
@@ -56,10 +70,14 @@ public class ScribeLoggerConsumer implements Consumer<String> {
   }
 
   /**
-   * Creates a consumer that logs via the provided caller's logger.
+   * Creates a consumer that logs messages using the logger registered for the specified caller
+   * class.
    *
-   * @param caller class whose logger should be used
-   * @param level  log level to use
+   * <p>When {@code caller} is {@code null}, the logger for {@link ScribeLoggerConsumer} is
+   * used instead.
+   *
+   * @param caller the class whose Scribe logger will be used; may be {@code null}
+   * @param level  the {@link Level} at which messages will be logged; must not be {@code null}
    */
   public ScribeLoggerConsumer (Class<?> caller, Level level) {
 
@@ -69,9 +87,9 @@ public class ScribeLoggerConsumer implements Consumer<String> {
   }
 
   /**
-   * Logs the message at the configured level.
+   * Logs the supplied message at the configured level via the Scribe logger.
    *
-   * @param message message to log
+   * @param message the metric message to log; must not be {@code null}
    */
   @Override
   public void accept (String message) {

@@ -33,14 +33,14 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Mutable boolean switch with convenience toggling.
+ * Mutable boolean holder with a convenience toggle operation, useful for tracking simple on/off state within closures or algorithms.
  */
 public class Switch {
 
   private boolean state;
 
   /**
-   * Constructs a switch initialized to {@code false}.
+   * Constructs a switch with its initial state set to {@code false}.
    */
   public Switch () {
 
@@ -48,9 +48,9 @@ public class Switch {
   }
 
   /**
-   * Constructs a switch with the provided initial state.
+   * Constructs a switch with the specified initial state.
    *
-   * @param state initial on/off value
+   * @param state {@code true} to start in the on position; {@code false} to start off
    */
   public Switch (boolean state) {
 
@@ -58,7 +58,7 @@ public class Switch {
   }
 
   /**
-   * Inverts the current state.
+   * Inverts the current state from on to off, or from off to on.
    */
   public void flip () {
 
@@ -66,9 +66,9 @@ public class Switch {
   }
 
   /**
-   * Sets the current state explicitly.
+   * Explicitly sets the current state.
    *
-   * @param state new on/off value
+   * @param state {@code true} to turn on; {@code false} to turn off
    */
   public void setState (boolean state) {
 
@@ -76,7 +76,9 @@ public class Switch {
   }
 
   /**
-   * @return {@code true} if the switch is on
+   * Returns {@code true} if the switch is currently in the on position.
+   *
+   * @return {@code true} when the state is on
    */
   public boolean isOn () {
 

@@ -40,7 +40,8 @@ import jakarta.ws.rs.core.Context;
 import org.smallmind.web.json.scaffold.util.Page;
 
 /**
- * Adds HTTP Content-Range headers for {@link Page}-returning resource methods annotated with {@link PageRange}.
+ * JAX-RS response filter that adds a {@code Content-Range} header and adjusts the HTTP status for resource methods
+ * annotated with {@link PageRange} that return a {@link Page}.
  */
 public class PageRangeResponseFilter implements ContainerResponseFilter {
 
@@ -52,10 +53,11 @@ public class PageRangeResponseFilter implements ContainerResponseFilter {
   ResourceInfo resourceInfo;
 
   /**
-   * Populates Content-Range headers based on the {@link Page} metadata and sets an appropriate status code.
+   * Inspects the response entity and, when applicable, writes a {@code Content-Range} records header and sets the
+   * status to 200 (complete), 206 (partial), or 416 (out of range).
    *
-   * @param requestContext  request context (unused)
-   * @param responseContext response context to adjust
+   * @param requestContext  the current container request context (unused)
+   * @param responseContext the current container response context to modify
    */
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {

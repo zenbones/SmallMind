@@ -38,14 +38,16 @@ import java.util.Map;
 import org.smallmind.scribe.pen.Parameter;
 
 /**
- * Simple map of parameters with a helper to expose them as {@link Parameter} objects.
+ * A {@link HashMap} from string keys to serializable values that represents the set of contextual parameters
+ * attached to a log record, with a convenience method to convert the map contents into a typed array.
  */
 public class RecordParameters extends HashMap<String, Serializable> {
 
   /**
-   * Converts the stored entries into an array of {@link Parameter}s.
+   * Converts every entry in this map into a {@link Parameter} and returns them as an array; the order of
+   * entries in the returned array follows the map's iteration order.
    *
-   * @return parameters array
+   * @return an array of {@link Parameter} objects corresponding to the current map entries; never {@code null}
    */
   public Parameter[] asParameters () {
 

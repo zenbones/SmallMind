@@ -43,7 +43,11 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
 /**
- * File visitor used to copy compiled classes into the Singularity build directory while recording entries in the index.
+ * {@link SimpleFileVisitor} used while walking the project's compiled {@code classes} directory. Every directory is
+ * mirrored below the Singularity build root and every file is copied into it, with the file's relative path
+ * simultaneously registered with a {@link SingularityIndex} so that the boot loader can serve it.
+ * <p>The source root is captured on the first directory visit, which is assumed to be the top of the tree passed to
+ * {@link Files#walkFileTree}.
  */
 public class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
@@ -52,8 +56,10 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
   private Path sourcePath;
 
   /**
-   * @param singularityIndex index that should be populated with visited files
-   * @param targetPath       destination directory for the copied files
+   * Captures the index to update and the directory under which copied files should be placed.
+   *
+   * @param singularityIndex index that should learn about every file copied by this visitor
+   * @param targetPath       destination root; subdirectories are created beneath it as the walk progresses
    */
   public CopyFileVisitor (SingularityIndex singularityIndex, Path targetPath) {
 
@@ -62,12 +68,13 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
   }
 
   /**
-   * Creates the target directory structure before descending further.
+   * Ensures the destination directory exists before files inside the source directory are visited. The first
+   * directory encountered is remembered as the anchor for all relative path calculations.
    *
-   * @param dir   current directory being visited
-   * @param attrs attributes for the directory
-   * @return continue traversal
-   * @throws IOException if directories cannot be created
+   * @param dir   the directory about to be visited
+   * @param attrs filesystem attributes of {@code dir} (unused)
+   * @return {@link FileVisitResult#CONTINUE} to keep walking
+   * @throws IOException if the mirrored directory cannot be created
    */
   @Override
   public FileVisitResult preVisitDirectory (final Path dir, final BasicFileAttributes attrs)
@@ -83,12 +90,12 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
   }
 
   /**
-   * Copies a single file into the target path and records it in the Singularity index.
+   * Copies a single file into the mirrored target directory and registers its resource-style path with the index.
    *
-   * @param file  file being visited
-   * @param attrs attributes for the file
-   * @return continue traversal
-   * @throws IOException if the file cannot be copied
+   * @param file  the file being visited
+   * @param attrs filesystem attributes of {@code file} (unused)
+   * @return {@link FileVisitResult#CONTINUE} to keep walking
+   * @throws IOException if the file cannot be copied to its destination
    */
   @Override
   public FileVisitResult visitFile (final Path file, final BasicFileAttributes attrs)

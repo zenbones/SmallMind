@@ -35,13 +35,21 @@ package org.smallmind.sleuth.runner;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Runtime exception indicating configuration errors in test dependencies.
+ * Runtime exception indicating a structural problem in a test dependency configuration.
+ * <p>
+ * Thrown by {@link DependencyAnalysis} when the dependency graph contains a cycle or when a node
+ * names a prerequisite that does not correspond to any registered dependency. The message is
+ * formatted using {@link FormattedRuntimeException}'s printf-style constructor.
+ *
+ * @see DependencyAnalysis
  */
 public class TestDependencyException extends FormattedRuntimeException {
 
   /**
-   * @param message formatted error message
-   * @param args    format arguments
+   * Constructs an exception with a formatted message.
+   *
+   * @param message printf-style format string; must not be {@code null}
+   * @param args    format arguments substituted into {@code message}
    */
   public TestDependencyException (String message, Object... args) {
 

@@ -35,7 +35,15 @@ package org.smallmind.sleuth.runner.annotation;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Runtime literal implementation of {@link AfterSuite} for frameworks that need annotation instances.
+ * Concrete {@link AfterSuite} annotation instance for programmatic construction at runtime.
+ * <p>
+ * Annotation literals provide a live object implementing an annotation type without requiring
+ * source-level annotations. This class is used by {@link AnnotationTranslator} implementations
+ * that map foreign after-suite semantics — for example TestNG's {@code @AfterClass} — onto the
+ * Sleuth lifecycle model without modifying the test class.
+ *
+ * @see AfterSuite
+ * @see AnnotationTranslator
  */
 public class AfterSuiteLiteral extends AnnotationLiteral<AfterSuite> implements AfterSuite {
 

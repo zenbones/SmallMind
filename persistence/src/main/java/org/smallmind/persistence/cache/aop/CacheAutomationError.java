@@ -35,12 +35,12 @@ package org.smallmind.persistence.cache.aop;
 import org.smallmind.nutsnbolts.lang.FormattedError;
 
 /**
- * Error raised when cache automation metadata is misconfigured or invocation fails during AOP processing.
+ * Thrown when cache AOP annotation metadata is invalid or a cache automation operation fails at runtime.
  */
 public class CacheAutomationError extends FormattedError {
 
   /**
-   * Constructs a cache automation error without additional context.
+   * Constructs an error with no message.
    */
   public CacheAutomationError () {
 
@@ -48,10 +48,10 @@ public class CacheAutomationError extends FormattedError {
   }
 
   /**
-   * Constructs a cache automation error with a formatted message.
+   * Constructs an error with a {@link String#format}-style message.
    *
-   * @param message error message pattern
-   * @param args    arguments applied to the message pattern
+   * @param message format string
+   * @param args    arguments substituted into the format string
    */
   public CacheAutomationError (String message, Object... args) {
 
@@ -59,11 +59,11 @@ public class CacheAutomationError extends FormattedError {
   }
 
   /**
-   * Constructs a cache automation error that wraps a cause and formatted message.
+   * Constructs an error that wraps a cause and carries a formatted message.
    *
    * @param throwable underlying cause
-   * @param message   error message pattern
-   * @param args      arguments applied to the message pattern
+   * @param message   format string
+   * @param args      arguments substituted into the format string
    */
   public CacheAutomationError (Throwable throwable, String message, Object... args) {
 
@@ -71,7 +71,7 @@ public class CacheAutomationError extends FormattedError {
   }
 
   /**
-   * Constructs a cache automation error that wraps an underlying cause.
+   * Constructs an error that wraps a cause with no additional message.
    *
    * @param throwable underlying cause
    */

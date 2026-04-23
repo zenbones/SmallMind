@@ -48,9 +48,11 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Long-poll transport connection that emits packets via servlet async contexts.
+ * {@link OumuamuaConnection} for the long-polling transport that writes Bayeux responses
+ * directly to servlet {@link AsyncContext} instances rather than maintaining a persistent
+ * socket.
  *
- * @param <V> value representation
+ * @param <V> the concrete {@link Value} type used by the server's JSON codec
  */
 public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnection<V> {
 
@@ -59,10 +61,11 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   private final String connectionId;
 
   /**
-   * Creates a new connection bound to the provided transport and server.
+   * Constructs a connection associated with the given transport and server, generating a
+   * unique snowflake-encoded connection identifier.
    *
-   * @param longPollingTransport owning transport
-   * @param server               hosting server
+   * @param longPollingTransport the {@link LongPollingTransport} that owns this connection
+   * @param server               the hosting {@link OumuamuaServer}
    */
   public LongPollingConnection (LongPollingTransport<V> longPollingTransport, OumuamuaServer<V> server) {
 
@@ -73,7 +76,9 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * @return connection identifier
+   * Returns the unique hex-encoded snowflake identifier assigned at construction.
+   *
+   * @return the connection's unique identifier
    */
   @Override
   public String getId () {
@@ -82,7 +87,9 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * @return underlying transport
+   * Returns the {@link LongPollingTransport} that owns this connection.
+   *
+   * @return the owning long-polling transport
    */
   @Override
   public Transport<V> getTransport () {
@@ -91,10 +98,11 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * Not supported because long-polling writes directly to the async response.
+   * Not supported; long-polling connections write responses through {@link AsyncContext}
+   * instances rather than via a persistent channel.
    *
-   * @param packet packet to deliver
-   * @throws UnsupportedOperationException always thrown
+   * @param packet the packet that cannot be delivered through this path
+   * @throws UnsupportedOperationException always
    */
   @Override
   public void deliver (Packet<V> packet) {
@@ -103,11 +111,12 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * Encodes and writes the packet to the servlet response, notifying the protocol of delivery.
+   * Encodes a packet, writes it to the response output stream of the given async context,
+   * flushes the buffer, and notifies the protocol of the delivery.
    *
-   * @param asyncContext async context to write to
-   * @param packet       packet to emit
-   * @throws IOException if writing the response fails
+   * @param asyncContext the servlet {@link AsyncContext} whose response receives the packet
+   * @param packet       the {@link Packet} to encode and write
+   * @throws IOException if writing to or flushing the response output stream fails
    */
   private void emit (AsyncContext asyncContext, Packet<V> packet)
     throws IOException {
@@ -123,10 +132,13 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * Processes inbound messages and writes responses using the async context.
+   * Processes an array of decoded inbound Bayeux messages and writes the corresponding
+   * response(s) to the async context. Single-message requests are emitted individually;
+   * multi-message batches are collected and emitted as a single response packet. The async
+   * context is always completed in the finally block regardless of outcome.
    *
-   * @param asyncContext async context associated with the request
-   * @param messages     decoded inbound messages
+   * @param asyncContext the servlet {@link AsyncContext} for the current poll request
+   * @param messages     the decoded inbound {@link Message} array; may be {@code null} or empty
    */
   public void onMessages (AsyncContext asyncContext, Message<V>[] messages) {
 
@@ -159,7 +171,8 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
   }
 
   /**
-   * No-op cleanup hook for compatibility.
+   * No-op implementation; long-polling connections hold no persistent resources requiring
+   * cleanup.
    */
   @Override
   public void onCleanup () {

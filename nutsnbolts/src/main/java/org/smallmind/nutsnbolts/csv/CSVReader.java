@@ -40,7 +40,7 @@ import java.io.Reader;
 import java.util.LinkedList;
 
 /**
- * Reads comma-separated values from a stream, handling quoted fields and optional headers.
+ * Low-level CSV reader that parses quoted and unquoted fields from a character or byte stream, with optional header row consumption and per-field whitespace trimming.
  */
 public class CSVReader implements AutoCloseable {
 
@@ -56,11 +56,11 @@ public class CSVReader implements AutoCloseable {
   private boolean trimFields;
 
   /**
-   * Creates a reader over an input stream without headers.
+   * Creates a reader wrapping the given input stream, treating no line as a header row.
    *
-   * @param stream CSV byte stream
-   * @throws IOException       if the stream cannot be read
-   * @throws CSVParseException if parsing fails
+   * @param stream CSV byte stream to read
+   * @throws IOException       if the underlying stream cannot be opened
+   * @throws CSVParseException if the initial read fails
    */
   public CSVReader (InputStream stream)
     throws IOException, CSVParseException {
@@ -69,12 +69,12 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Creates a reader over an input stream, optionally using the first line as headers.
+   * Creates a reader wrapping the given input stream, optionally consuming the first line as a header row.
    *
-   * @param stream     CSV byte stream
-   * @param useHeaders whether to read the first line as headers
-   * @throws IOException       if the stream cannot be read
-   * @throws CSVParseException if parsing fails
+   * @param stream     CSV byte stream to read
+   * @param useHeaders {@code true} to read and retain the first line as column headers
+   * @throws IOException       if the underlying stream cannot be opened
+   * @throws CSVParseException if the initial read or header parsing fails
    */
   public CSVReader (InputStream stream, boolean useHeaders)
     throws IOException, CSVParseException {
@@ -83,11 +83,11 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Creates a reader over a character reader without headers.
+   * Creates a reader wrapping the given character reader, treating no line as a header row.
    *
-   * @param reader CSV character stream
-   * @throws IOException       if the stream cannot be read
-   * @throws CSVParseException if parsing fails
+   * @param reader CSV character stream to read
+   * @throws IOException       if the underlying reader cannot be opened
+   * @throws CSVParseException if the initial read fails
    */
   public CSVReader (Reader reader)
     throws IOException, CSVParseException {
@@ -96,12 +96,12 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Creates a reader over a character reader, optionally using the first line as headers.
+   * Creates a reader wrapping the given character reader, optionally consuming the first line as a header row.
    *
-   * @param reader     CSV character stream
-   * @param useHeaders whether to read the first line as headers
-   * @throws IOException       if the stream cannot be read
-   * @throws CSVParseException if parsing fails
+   * @param reader     CSV character stream to read
+   * @param useHeaders {@code true} to read and retain the first line as column headers
+   * @throws IOException       if the underlying reader cannot be opened
+   * @throws CSVParseException if the initial read or header parsing fails
    */
   public CSVReader (Reader reader, boolean useHeaders)
     throws IOException, CSVParseException {
@@ -118,10 +118,10 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Controls whether returned field values are trimmed.
+   * Enables or disables stripping of leading and trailing whitespace from each field value returned by {@link #readLine()}.
    *
-   * @param trimFields {@code true} to trim whitespace
-   * @return this reader for chaining
+   * @param trimFields {@code true} to strip whitespace from field values
+   * @return this reader, to allow fluent chaining
    */
   public synchronized CSVReader setTrimFields (boolean trimFields) {
 
@@ -131,7 +131,9 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * @return header fields or {@code null} if headers were not requested
+   * Returns the header fields consumed from the first row, or {@code null} if this reader was not constructed with header support.
+   *
+   * @return array of header field values, or {@code null}
    */
   public synchronized String[] getHeaders () {
 
@@ -139,11 +141,12 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Retrieves a field by header name from a parsed row.
+   * Returns the value from a parsed record corresponding to the named header column.
    *
-   * @param header header name to look up
-   * @param fields parsed row fields
-   * @return field value or {@code null} if the header is not present
+   * @param header column name to look up in the header row
+   * @param fields array of field values for the current record, as returned by {@link #readLine()}
+   * @return the field value at the header's position, or {@code null} if the header name is not found
+   * @throws IllegalStateException if this reader was not constructed with header support
    */
   public synchronized String getField (String header, String[] fields) {
 
@@ -161,11 +164,11 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Reads the next record from the stream using the configured trim setting.
+   * Reads and returns the next record from the underlying stream, applying the configured trim setting.
    *
-   * @return array of fields or {@code null} at end of stream
-   * @throws IOException       if reading fails
-   * @throws CSVParseException if the CSV is malformed
+   * @return array of field values for the next record, or {@code null} when the end of the stream is reached
+   * @throws IOException       if a read error occurs on the underlying stream
+   * @throws CSVParseException if the CSV structure is invalid, such as an unterminated quoted field
    */
   public synchronized String[] readLine ()
     throws IOException, CSVParseException {
@@ -174,12 +177,12 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Internal line reader that respects the supplied trimming preference.
+   * Reads and parses the next CSV record from the stream, honouring the supplied trimming flag and handling multi-line quoted fields.
    *
-   * @param trimFields whether to strip whitespace from fields
-   * @return parsed fields or {@code null} at end of stream
-   * @throws IOException       if reading fails
-   * @throws CSVParseException if CSV structure is invalid
+   * @param trimFields {@code true} to strip leading and trailing whitespace from each field
+   * @return array of field values, or {@code null} at end of stream
+   * @throws IOException       if a read error occurs on the underlying reader
+   * @throws CSVParseException if the CSV structure is invalid, such as an unterminated quoted field or misplaced quote
    */
   private synchronized String[] readLine (boolean trimFields)
     throws IOException, CSVParseException {
@@ -248,7 +251,10 @@ public class CSVReader implements AutoCloseable {
   }
 
   /**
-   * Adds the current field buffer to the accumulating list, trimming if configured.
+   * Flushes the current field buffer into the field list, optionally trimming whitespace, and resets the buffer for the next field.
+   *
+   * @param fieldList  accumulating list of parsed fields for the current record
+   * @param trimFields {@code true} to strip leading and trailing whitespace from the buffered value
    */
   private void appendField (LinkedList<String> fieldList, boolean trimFields) {
 
@@ -256,6 +262,11 @@ public class CSVReader implements AutoCloseable {
     fieldBuilder.setLength(0);
   }
 
+  /**
+   * Closes the underlying buffered reader and releases any associated I/O resources.
+   *
+   * @throws IOException if closing the reader fails
+   */
   public synchronized void close ()
     throws IOException {
 

@@ -36,7 +36,14 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 /**
- * Immutable definition of a memcached host including its name and network address.
+ * Describes a single memcached node within the cluster, capturing its logical name and network
+ * coordinates.
+ *
+ * <p>The {@code name} field is used by the {@link org.smallmind.memcached.cubby.locator.KeyLocator}
+ * as a stable identifier for consistent-hashing ring placement. The hostname and port are
+ * combined into an {@link InetSocketAddress} at construction time and may be refreshed by
+ * {@link #regenerate(InetSocketAddress)} after a successful reconnect probe, accommodating
+ * downstream load-balancer address changes.</p>
  */
 public class MemcachedHost {
 
@@ -46,11 +53,11 @@ public class MemcachedHost {
   private SocketAddress address;
 
   /**
-   * Constructs a host definition.
+   * Constructs a host descriptor and immediately resolves the initial socket address.
    *
-   * @param name     unique name used for routing
-   * @param hostName hostname or IP address
-   * @param port     memcached port
+   * @param name     a unique logical name used as the key in routing tables
+   * @param hostName the DNS hostname or IP address of the memcached server
+   * @param port     the TCP port on which the memcached server listens
    */
   public MemcachedHost (String name, String hostName, int port) {
 
@@ -62,9 +69,11 @@ public class MemcachedHost {
   }
 
   /**
-   * Creates a fresh socket address for the host.
+   * Creates a fresh {@link InetSocketAddress} from the stored hostname and port, triggering a
+   * new DNS resolution. Used by the {@link ServerDefibrillator} when probing whether a
+   * previously offline host has become reachable again.
    *
-   * @return constructed socket address
+   * @return a newly constructed socket address for this host
    */
   protected InetSocketAddress constructAddress () {
 
@@ -72,10 +81,12 @@ public class MemcachedHost {
   }
 
   /**
-   * Updates the stored address after a reconnect attempt.
+   * Replaces the stored socket address with one obtained from a successful probe. This allows
+   * the host to track an updated address when the underlying load balancer has changed the
+   * endpoint behind the hostname.
    *
-   * @param address new socket address
-   * @return this host for chaining
+   * @param address the new socket address to record
+   * @return this instance for convenient use in call chains
    */
   protected MemcachedHost regenerate (InetSocketAddress address) {
 
@@ -85,7 +96,9 @@ public class MemcachedHost {
   }
 
   /**
-   * @return host routing name
+   * Returns the logical name assigned to this host, used as a stable identifier in routing tables.
+   *
+   * @return the host name, never {@code null}
    */
   public String getName () {
 
@@ -93,7 +106,10 @@ public class MemcachedHost {
   }
 
   /**
-   * @return current socket address for the host
+   * Returns the current socket address of this host. The address is set at construction time
+   * and may be updated by {@link #regenerate(InetSocketAddress)} after a reconnect probe.
+   *
+   * @return the current {@link SocketAddress}, never {@code null}
    */
   public SocketAddress getAddress () {
 

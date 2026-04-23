@@ -45,20 +45,46 @@ import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
 /**
- * Dynamic MBean representing a meter; attributes correspond to meter quantities.
+ * JMX {@link DynamicMBean} that represents a single Claxon meter, exposing its quantities as
+ * readable {@code double}-valued attributes.
+ *
+ * <p>The set of attribute names is fixed at construction time and is derived from the
+ * {@link Quantity} array supplied to the constructor. Attributes are stored in a
+ * {@link ConcurrentHashMap} and may be updated concurrently by the JMX emitter. Attribute
+ * values default to {@code 0} when they have not yet been written. Operation invocation is
+ * not supported and always throws {@link UnsupportedOperationException}.
  */
 public class MeterDynamicMbean implements DynamicMBean {
 
+  /**
+   * Immutable JMX metadata describing this MBean's class name, description, and attribute
+   * definitions; constructed once during initialisation.
+   */
   private final MBeanInfo mBeanInfo;
+
+  /**
+   * Set of valid attribute names derived from the quantities supplied at construction time;
+   * used to validate get and set requests.
+   */
   private final HashSet<String> attributeNameSet = new HashSet<>();
+
+  /**
+   * Concurrent map from attribute name to its current {@code double} value; updated by
+   * {@link #setAttribute(Attribute)} and {@link #setAttributes(AttributeList)}.
+   */
   private final ConcurrentHashMap<String, Double> valueMap = new ConcurrentHashMap<>();
 
   /**
-   * Builds an MBean definition from the meter name, tags, and quantities.
+   * Constructs a dynamic MBean whose attributes correspond to the provided quantities.
    *
-   * @param name       meter name
-   * @param tags       associated tags for description purposes
-   * @param quantities quantities defining the exposed attributes
+   * <p>The MBean description is built from the meter name and tags for human-readable
+   * identification in JMX consoles. Each quantity becomes a read-only {@code double}-typed
+   * attribute.
+   *
+   * @param name       the meter name included in the MBean description
+   * @param tags       the tags included in the MBean description; may be {@code null} or empty
+   * @param quantities the quantities that define the exposed attributes; may be {@code null}
+   *                   or empty
    */
   public MeterDynamicMbean (String name, Tag[] tags, Quantity[] quantities) {
 
@@ -93,11 +119,14 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * Returns the value of a single attribute or throws if unknown.
+   * Returns the current value of the named attribute.
    *
-   * @param attribute attribute name
-   * @return attribute value (defaults to 0 when unset)
-   * @throws AttributeNotFoundException when the attribute is not defined
+   * <p>If the attribute has not been set yet, {@code 0} is returned as the default value.
+   *
+   * @param attribute the name of the attribute to retrieve
+   * @return the current attribute value as a {@link Double}, or {@code 0} when unset
+   * @throws AttributeNotFoundException if {@code attribute} is not among the attributes
+   *                                    defined at construction time
    */
   @Override
   public Object getAttribute (String attribute)
@@ -114,11 +143,16 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * Sets a single attribute value, accepting numeric or string representations.
+   * Sets the value of a single named attribute.
    *
-   * @param attribute attribute to set
-   * @throws AttributeNotFoundException     when the attribute is not defined
-   * @throws InvalidAttributeValueException when the value cannot be converted to double
+   * <p>The attribute value may be supplied as any {@link Number} subtype (in which case
+   * {@link Number#doubleValue()} is used) or as a {@link String} parseable by
+   * {@link Double#parseDouble(String)}.
+   *
+   * @param attribute the attribute to set, identified by name and carrying a new value
+   * @throws AttributeNotFoundException     if the attribute name is not defined for this MBean
+   * @throws InvalidAttributeValueException if the attribute value cannot be converted to a
+   *                                        {@code double}
    */
   @Override
   public void setAttribute (Attribute attribute)
@@ -138,10 +172,14 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * Returns a list of the requested attributes that currently have values.
+   * Returns the values of the requested attributes that are currently stored.
    *
-   * @param attributes attribute names
-   * @return list of attributes with values
+   * <p>Attributes that have not yet been written are omitted from the result rather than
+   * defaulting to zero, matching standard JMX conventions for bulk retrieval.
+   *
+   * @param attributes array of attribute names whose values should be returned
+   * @return an {@link AttributeList} containing an {@link Attribute} entry for each requested
+   * name that has a stored value
    */
   @Override
   public AttributeList getAttributes (String[] attributes) {
@@ -161,10 +199,16 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * Sets multiple attributes, ignoring unknown names and returning those applied.
+   * Sets multiple attribute values in a single call, silently skipping entries that are not
+   * {@link Attribute} instances, have unknown names, or carry values that cannot be stored as
+   * {@code double}.
    *
-   * @param attributes attributes to set
-   * @return list of attributes that were applied
+   * <p>Only attributes whose values are primitive {@code double}, {@link Double}, or
+   * {@link String} are accepted; all others are ignored without throwing.
+   *
+   * @param attributes the attributes to set
+   * @return an {@link AttributeList} containing only the attributes that were successfully
+   * stored
    */
   @Override
   public AttributeList setAttributes (AttributeList attributes) {
@@ -190,9 +234,13 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * Invoking operations is not supported.
+   * Operation invocation is not supported by this MBean.
    *
-   * @throws UnsupportedOperationException always
+   * @param actionName the name of the operation to invoke
+   * @param params     the operation parameters (ignored)
+   * @param signature  the operation signature (ignored)
+   * @return nothing; always throws
+   * @throws UnsupportedOperationException always, since no operations are defined
    */
   @Override
   public Object invoke (String actionName, Object[] params, String[] signature) {
@@ -201,7 +249,9 @@ public class MeterDynamicMbean implements DynamicMBean {
   }
 
   /**
-   * @return metadata describing this MBean
+   * Returns the static metadata that describes this MBean to the JMX infrastructure.
+   *
+   * @return the {@link MBeanInfo} built at construction time
    */
   @Override
   public MBeanInfo getMBeanInfo () {

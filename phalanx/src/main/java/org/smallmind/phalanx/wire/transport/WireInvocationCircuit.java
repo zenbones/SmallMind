@@ -48,19 +48,26 @@ import org.smallmind.web.json.scaffold.fault.FaultElement;
 import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
 /**
- * Routes incoming invocation signals to registered service implementations and returns results.
+ * Routes incoming wire invocation signals to registered service implementations and transmits results back to callers.
+ *
+ * <p>Services are registered by interface and version; each incoming {@link InvocationSignal} is matched
+ * against the registry, the target method is invoked reflectively, and the outcome (or a fault on error)
+ * is forwarded through the supplied {@link ResponseTransmitter}.  Fire-and-forget (in-only) invocations
+ * suppress response transmission and log errors instead.</p>
  */
 public class WireInvocationCircuit {
 
   private final ConcurrentHashMap<ServiceKey, MethodInvoker> invokerMap = new ConcurrentHashMap<>();
 
   /**
-   * Registers a service interface and implementation for handling incoming calls.
+   * Registers a service implementation so that incoming invocation signals targeting its interface can be dispatched.
    *
-   * @param serviceInterface interface describing remote methods
-   * @param targetService    wrapper containing the implementation instance and version
-   * @throws NoSuchMethodException      if a method cannot be reflected
-   * @throws ServiceDefinitionException if annotation metadata is invalid
+   * <p>If a service with the same version and name is already registered the call is a no-op.</p>
+   *
+   * @param serviceInterface the interface whose methods are exposed remotely
+   * @param targetService    wrapper that carries the implementing object, service name, and version
+   * @throws NoSuchMethodException      if reflective method lookup against {@code serviceInterface} fails
+   * @throws ServiceDefinitionException if required annotation metadata on {@code serviceInterface} is missing or malformed
    */
   public void register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
@@ -69,13 +76,18 @@ public class WireInvocationCircuit {
   }
 
   /**
-   * Handles an invocation by locating the target method, invoking it, and transmitting the outcome.
+   * Dispatches an invocation signal to the appropriate service method and transmits the result.
    *
-   * @param transmitter      transmitter used to send responses
-   * @param signalCodec      codec used to decode and encode payloads
-   * @param callerId         identifier for the caller
-   * @param messageId        correlation id for the invocation
-   * @param invocationSignal incoming invocation signal
+   * <p>Partial function descriptors are resolved to their complete form before invocation.  On success
+   * the return value is sent via {@code transmitter}; on failure a {@link Fault} is sent instead.
+   * For in-only invocations errors are only logged and no response is transmitted.  Any throwable
+   * escaping the transmission step is caught and logged to prevent thread termination.</p>
+   *
+   * @param transmitter      transmitter through which the response or fault is sent to the caller
+   * @param signalCodec      codec used to deserialise invocation arguments from the signal payload
+   * @param callerId         transport-level identifier of the originating caller
+   * @param messageId        correlation identifier used to match this response to the original request
+   * @param invocationSignal the incoming signal describing the service, function, arguments, and contexts
    */
   public void handle (ResponseTransmitter transmitter, SignalCodec signalCodec, String callerId, String messageId, InvocationSignal invocationSignal) {
 
@@ -131,17 +143,22 @@ public class WireInvocationCircuit {
     }
   }
 
+  /**
+   * Composite map key that identifies a registered service by its numeric version and logical name.
+   *
+   * @param version integer version discriminator for the service
+   * @param service logical service name
+   */
   private record ServiceKey(int version, String service) {
 
-    /**
-     * Composite key for locating a service implementation by version and name.
-     */
     private ServiceKey {
 
     }
 
     /**
-     * @return service name represented by this key.
+     * Returns the logical service name component of this key.
+     *
+     * @return service name
      */
     @Override
     public String service () {
@@ -150,7 +167,9 @@ public class WireInvocationCircuit {
     }
 
     /**
-     * @return service version represented by this key.
+     * Returns the version component of this key.
+     *
+     * @return service version
      */
     @Override
     public int version () {
@@ -159,7 +178,9 @@ public class WireInvocationCircuit {
     }
 
     /**
-     * Generates a hash combining service and version to support map lookups.
+     * Returns a hash code derived from both the service name and version.
+     *
+     * @return combined hash code
      */
     @Override
     public int hashCode () {
@@ -168,7 +189,10 @@ public class WireInvocationCircuit {
     }
 
     /**
-     * Keys are equal when both service name and version match.
+     * Returns {@code true} when {@code obj} is a {@code ServiceKey} with the same service name and version.
+     *
+     * @param obj the object to compare
+     * @return {@code true} if the keys are equal
      */
     @Override
     public boolean equals (Object obj) {

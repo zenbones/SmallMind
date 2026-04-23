@@ -40,16 +40,20 @@ import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /**
- * Parses tachometer configuration from JSON into a {@link TachometerBuilder}.
+ * {@link InstrumentedParser} implementation for {@link Tachometer} meters that deserializes
+ * a JSON configuration string into a configured {@link TachometerBuilder}. Only properties
+ * that are present (non-null) in the parsed JSON are applied to the builder; absent properties
+ * retain their builder defaults.
  */
 public class TachometerParser implements InstrumentedParser<Tachometer> {
 
   /**
-   * Parses the JSON string and produces a configured builder.
+   * Deserializes the supplied JSON into a {@link TachometerProperties} object and transfers
+   * each non-null property onto a new {@link TachometerBuilder}.
    *
-   * @param json JSON configuration
-   * @return configured tachometer builder
-   * @throws IOException when parsing fails
+   * @param json JSON configuration string describing tachometer properties
+   * @return a {@link TachometerBuilder} configured according to the supplied JSON
+   * @throws IOException if the JSON string cannot be parsed or is malformed
    */
   @Override
   public MeterBuilder<Tachometer> parse (String json)

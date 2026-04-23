@@ -42,20 +42,24 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ValueType;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 
 /**
- * Implements the Bayeux timesync extension for latency/offset calculation between client and server.
+ * Server-side implementation of the Bayeux {@code timesync} extension that captures client timing
+ * data on incoming handshake and connect requests and echoes it back with a server-side timestamp
+ * so clients can compute round-trip latency and clock offset.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
  */
 public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
 
   private static final String TIME_SYNC_VALUE_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.timesync.value";
 
   /**
-   * Records timing data supplied by the client on handshake/connect requests.
+   * Extracts {@code ext.timesync} data ({@code tc}, {@code l}, {@code o}) from each message in
+   * handshake or connect requests and stores the most recent measurement on the session, replacing
+   * any previously stored value only when the incoming client timestamp is strictly newer.
    *
-   * @param sender originating session
-   * @param packet incoming packet
-   * @return the original packet
+   * @param sender the session submitting the request
+   * @param packet the inbound handshake or connect packet
+   * @return {@code packet} unchanged
    */
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
@@ -98,11 +102,13 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
   }
 
   /**
-   * Adds timesync response data for the matching request message.
+   * Populates {@code ext.timesync} on the response message whose id matches the stored measurement,
+   * including the original {@code tc}, the server receipt timestamp {@code ts}, the elapsed server
+   * processing time {@code p}, and the computed adjustment {@code a}.
    *
-   * @param sender originating session
-   * @param packet outgoing packet
-   * @return the original packet
+   * @param sender the session the response is being sent to
+   * @param packet the outbound handshake or connect packet
+   * @return {@code packet} unchanged
    */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
@@ -137,7 +143,8 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
   }
 
   /**
-   * Captures timing metrics sent by the client.
+   * Immutable snapshot of a single client timesync measurement, augmented with the server-side
+   * receipt timestamp captured at construction time.
    */
   private static class TimeSync {
 
@@ -148,12 +155,13 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     private final long o;
 
     /**
-     * Captures a measurement based on client supplied values and the current server timestamp.
+     * Records a client timesync measurement and snapshots the current server wall-clock time as
+     * the receipt timestamp {@code ts}.
      *
-     * @param id message identifier
-     * @param tc client timestamp
-     * @param l  network latency estimate
-     * @param o  client clock offset
+     * @param id the id of the message that carried the timesync data
+     * @param tc the client-side timestamp (milliseconds since epoch) when the message was sent
+     * @param l  the client's current best-estimate of one-way network latency in milliseconds
+     * @param o  the client's current best-estimate of its clock offset from the server in milliseconds
      */
     public TimeSync (String id, long tc, long l, long o) {
 
@@ -166,7 +174,9 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     }
 
     /**
-     * @return associated message id
+     * Returns the id of the message that carried this timesync measurement.
+     *
+     * @return Bayeux message id string
      */
     public String getId () {
 
@@ -174,7 +184,9 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     }
 
     /**
-     * @return server timestamp recorded when the message was received
+     * Returns the server wall-clock time captured when this measurement was constructed.
+     *
+     * @return server receipt timestamp in milliseconds since epoch
      */
     public long getTs () {
 
@@ -182,7 +194,9 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     }
 
     /**
-     * @return client timestamp
+     * Returns the client-side timestamp supplied with the timesync request.
+     *
+     * @return client timestamp in milliseconds since epoch
      */
     public long getTc () {
 
@@ -190,7 +204,9 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     }
 
     /**
-     * @return estimated network latency
+     * Returns the client's estimate of one-way network latency supplied with the timesync request.
+     *
+     * @return latency estimate in milliseconds
      */
     public long getL () {
 
@@ -198,7 +214,10 @@ public class TimesyncExtension<V extends Value<V>> extends AbstractServerPacketL
     }
 
     /**
-     * @return client clock offset
+     * Returns the client's estimate of its clock offset from the server supplied with the timesync
+     * request.
+     *
+     * @return clock offset in milliseconds (positive means client is ahead of server)
      */
     public long getO () {
 

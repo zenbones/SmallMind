@@ -35,15 +35,16 @@ package org.smallmind.nutsnbolts.reflection.type;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Thrown when generic type information cannot be resolved to a concrete class.
+ * Thrown when a generic type argument (such as a wildcard or unresolvable type variable) cannot be
+ * converted to a concrete {@link Class} during type resolution.
  */
 public class UnexpectedGenericDeclaration extends FormattedRuntimeException {
 
   /**
-   * Creates an exception with a formatted detail message.
+   * Constructs an exception with a formatted detail message describing the problematic type declaration.
    *
-   * @param message a {@link java.util.Formatter}-style message describing the unexpected declaration
-   * @param args    values interpolated into the message
+   * @param message a {@link java.util.Formatter}-style format string describing the unexpected declaration
+   * @param args    arguments substituted into the format string
    */
   public UnexpectedGenericDeclaration (String message, Object... args) {
 

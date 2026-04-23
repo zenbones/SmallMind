@@ -33,17 +33,24 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Strategy interface used to select a bucket key for a given input.
+ * Strategy that determines which child bucket in a {@link TokenBucket} hierarchy should govern a given input.
+ * <p>
+ * When a parent bucket has registered child buckets via
+ * {@link TokenBucket#add(BucketKey, BucketFactory)}, this selector is consulted on every
+ * {@link TokenBucket#allowed(Object)} call to identify the key whose child must also
+ * permit the input before the parent deducts tokens. Returning {@code null} bypasses
+ * the child-lookup step for that input.
  *
- * @param <T> type of value examined by the selector
+ * @param <T> the type of value inspected to produce a key
  */
 public interface BucketSelector<T> {
 
   /**
-   * Returns the child bucket key for the provided input.
+   * Determines the child-bucket key that should apply to {@code input}.
    *
-   * @param input incoming value
-   * @return the key representing the bucket that should govern the input
+   * @param input the value being evaluated for rate-limiting
+   * @return the {@link BucketKey} identifying the child bucket that must also permit {@code input},
+   * or {@code null} if no child constraint applies
    */
   BucketKey<T> selection (T input);
 }

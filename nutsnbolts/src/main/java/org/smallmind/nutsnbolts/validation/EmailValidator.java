@@ -37,8 +37,8 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * Bean Validation validator that checks strings against a basic email pattern.
- * Supports validating a single address or multiple addresses separated by a configured delimiter.
+ * {@link jakarta.validation.ConstraintValidator} for the {@link Email} constraint that validates strings against a basic email-address pattern.
+ * Supports validating a single address or a delimited list of addresses when the {@link Email#separator()} is configured.
  */
 public class EmailValidator implements ConstraintValidator<Email, String> {
 
@@ -47,10 +47,10 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
   private Email constraintAnnotation;
 
   /**
-   * Tests a single string against the email pattern.
+   * Returns {@code true} if the supplied string matches the email-address pattern.
    *
-   * @param possibility candidate email
-   * @return {@code true} when the pattern matches
+   * @param possibility the candidate string to test
+   * @return {@code true} when the string is a valid email address
    */
   public static boolean isAnEmail (String possibility) {
 
@@ -58,9 +58,9 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
   }
 
   /**
-   * Stores the constraint annotation for later use (separator configuration).
+   * Stores the constraint annotation so that the configured separator is available during validation.
    *
-   * @param constraintAnnotation annotation instance being used for validation
+   * @param constraintAnnotation the annotation instance driving this validation
    */
   @Override
   public void initialize (Email constraintAnnotation) {
@@ -69,11 +69,12 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
   }
 
   /**
-   * Validates that the value is a properly formatted email address (or list of addresses when a separator is defined).
+   * Validates that the value is a properly formatted email address, or a separator-delimited list of valid addresses.
+   * A {@code null} value is considered valid.
    *
-   * @param value   candidate string; {@code null} is considered valid
-   * @param context validation context (unused)
-   * @return {@code true} when the value meets the email format requirements
+   * @param value   the candidate string to validate
+   * @param context the constraint validator context (unused)
+   * @return {@code true} if the value is {@code null} or satisfies the email format requirements
    */
   @Override
   public boolean isValid (String value, ConstraintValidatorContext context) {

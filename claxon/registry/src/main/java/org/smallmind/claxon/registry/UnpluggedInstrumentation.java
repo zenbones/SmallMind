@@ -38,15 +38,20 @@ import org.smallmind.nutsnbolts.util.SansResultExecutable;
 import org.smallmind.nutsnbolts.util.WithResultExecutable;
 
 /**
- * No-op instrumentation that executes the provided work without recording metrics.
+ * No-operation {@link Instrumentation} implementation that executes any supplied work
+ * without recording metrics. This is the instrumentation equivalent of a null object: all
+ * measurement methods are safe no-ops, all delegate methods pass through to the wrapped
+ * executable, and no meters are registered with any registry. It is typically used when
+ * instrumentation is disabled or when a registry has not yet been configured.
  */
 public class UnpluggedInstrumentation implements Instrumentation {
 
   /**
-   * Returns this instance because no configuration is needed for the no-op implementation.
+   * Returns this instance unchanged; no time-unit conversion is meaningful for a no-op
+   * implementation.
    *
    * @param timeUnit ignored
-   * @return this instrumentation
+   * @return this {@code UnpluggedInstrumentation} instance
    */
   @Override
   public Instrumentation as (TimeUnit timeUnit) {
@@ -55,12 +60,14 @@ public class UnpluggedInstrumentation implements Instrumentation {
   }
 
   /**
-   * Returns the measured object without performing any tracking.
+   * Returns the measured object without registering a meter or attaching any tracking
+   * callback.
    *
-   * @param measured    the object being measured
-   * @param measurement measurement function
-   * @param <T>         measured type
-   * @return the measured object
+   * @param measured    the object to be measured
+   * @param measurement a function that would ordinarily extract a long value from the object;
+   *                    ignored by this implementation
+   * @param <T>         the type of the measured object
+   * @return the {@code measured} object, unmodified
    */
   @Override
   public <T> T track (T measured, Function<T, Long> measurement) {
@@ -69,9 +76,9 @@ public class UnpluggedInstrumentation implements Instrumentation {
   }
 
   /**
-   * Ignores the supplied value.
+   * Accepts a measurement value and discards it without recording.
    *
-   * @param value unused
+   * @param value the value that would ordinarily be recorded; ignored
    */
   @Override
   public void update (long value) {
@@ -79,10 +86,10 @@ public class UnpluggedInstrumentation implements Instrumentation {
   }
 
   /**
-   * Ignores the supplied value and time unit.
+   * Accepts a measurement value and its time unit and discards both without recording.
    *
-   * @param value         unused
-   * @param valueTimeUnit unused
+   * @param value         the value that would ordinarily be recorded; ignored
+   * @param valueTimeUnit the time unit of the value; ignored
    */
   @Override
   public void update (long value, TimeUnit valueTimeUnit) {
@@ -90,10 +97,11 @@ public class UnpluggedInstrumentation implements Instrumentation {
   }
 
   /**
-   * Executes the code without recording timing.
+   * Executes the supplied {@link SansResultExecutable} without recording any timing
+   * information.
    *
-   * @param sansResultExecutable executable to run
-   * @throws Throwable propagated from the executable
+   * @param sansResultExecutable the executable to run
+   * @throws Throwable any exception propagated from {@link SansResultExecutable#execute()}
    */
   @Override
   public void on (SansResultExecutable sansResultExecutable)
@@ -103,12 +111,13 @@ public class UnpluggedInstrumentation implements Instrumentation {
   }
 
   /**
-   * Executes the code without recording timing and returns its result.
+   * Executes the supplied {@link WithResultExecutable} without recording any timing
+   * information and returns its result.
    *
-   * @param withResultExecutable executable to run
-   * @param <T>                  result type
-   * @return the executable result
-   * @throws Throwable propagated from the executable
+   * @param withResultExecutable the executable to run
+   * @param <T>                  the return type of the executable
+   * @return the value returned by {@link WithResultExecutable#execute()}
+   * @throws Throwable any exception propagated from {@link WithResultExecutable#execute()}
    */
   @Override
   public <T> T on (WithResultExecutable<T> withResultExecutable)

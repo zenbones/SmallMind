@@ -33,15 +33,16 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Signals an invalid channel state transition or usage.
+ * Thrown when a channel operation is attempted in an incompatible state, such as trying
+ * to remove a persistent channel.
  */
 public class ChannelStateException extends OumuamuaException {
 
   /**
-   * Constructs the exception with a formatted detail message.
+   * Constructs the exception with a {@link String#format}-style detail message.
    *
-   * @param message message pattern describing the state error
-   * @param args    optional arguments to format into the message
+   * @param message format string describing the state violation
+   * @param args    arguments substituted into the format string
    */
   public ChannelStateException (String message, Object... args) {
 

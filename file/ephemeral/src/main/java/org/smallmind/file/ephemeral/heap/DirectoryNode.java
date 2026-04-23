@@ -41,17 +41,30 @@ import java.util.LinkedList;
 import org.smallmind.file.ephemeral.EphemeralPath;
 
 /**
- * Represents an in-memory directory in the ephemeral heap, maintaining children and aggregating size information.
+ * Represents an in-memory directory node in the ephemeral heap file-system tree.
+ *
+ * <p>A {@code DirectoryNode} maintains a map of named child {@link HeapNode} instances and
+ * provides synchronized access to those children. Its reported {@link #size()} is the
+ * recursive sum of every descendant's size. The root of the tree is represented by an
+ * instance whose parent is {@code null}.
+ *
+ * @see HeapNode
+ * @see FileNode
  */
 public class DirectoryNode extends HeapNode {
 
+  /**
+   * Map of child node names to their corresponding heap nodes.
+   * All access must be performed while holding the monitor of this {@code DirectoryNode}.
+   */
   private final HashMap<String, HeapNode> children = new HashMap<>();
 
   /**
-   * Creates a directory node.
+   * Creates a new directory node.
    *
-   * @param parent the parent directory, or {@code null} when this is the root
-   * @param name   the directory name
+   * @param parent the parent directory that contains this node, or {@code null} when this
+   *               node is the root of the file-system tree
+   * @param name   the simple name of this directory
    */
   public DirectoryNode (DirectoryNode parent, String name) {
 
@@ -59,7 +72,9 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * @return {@link HeapNodeType#DIRECTORY}
+   * Returns the type identifier for this node.
+   *
+   * @return {@link HeapNodeType#DIRECTORY}, always
    */
   @Override
   public HeapNodeType getType () {
@@ -68,7 +83,9 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * @return {@code true} when the directory holds no children
+   * Returns whether this directory currently has no children.
+   *
+   * @return {@code true} if the directory contains no child nodes; {@code false} otherwise
    */
   public synchronized boolean isEmpty () {
 
@@ -76,7 +93,7 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Removes all children from this directory.
+   * Removes all child nodes from this directory, leaving it empty.
    */
   public synchronized void clear () {
 
@@ -84,10 +101,10 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Tests whether a child name exists.
+   * Tests whether a child with the given name exists in this directory.
    *
-   * @param name the name to check
-   * @return {@code true} if a child with the supplied name exists
+   * @param name the simple name to look up
+   * @return {@code true} if a child with that name exists; {@code false} otherwise
    */
   public synchronized boolean exists (String name) {
 
@@ -95,10 +112,10 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Returns a child node by name.
+   * Retrieves a child node by name.
    *
-   * @param name the child name
-   * @return the node or {@code null} if absent
+   * @param name the simple name of the child to retrieve
+   * @return the {@link HeapNode} associated with the name, or {@code null} if no such child exists
    */
   public synchronized HeapNode get (String name) {
 
@@ -106,10 +123,10 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Adds or replaces a child node.
+   * Adds or replaces a child node in this directory, keyed by the node's own name.
    *
-   * @param heapNode the node to add
-   * @return this directory for chaining
+   * @param heapNode the child node to store; its {@link HeapNode#getName()} is used as the key
+   * @return this directory node, to allow method chaining
    */
   public synchronized DirectoryNode put (HeapNode heapNode) {
 
@@ -119,10 +136,10 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Removes the child with the provided name.
+   * Removes the child with the given name from this directory.
    *
-   * @param name the child name
-   * @return the removed node or {@code null} if no such child exists
+   * @param name the simple name of the child to remove
+   * @return the removed {@link HeapNode}, or {@code null} if no child with that name existed
    */
   public synchronized HeapNode remove (String name) {
 
@@ -130,11 +147,16 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Builds an iterator of child paths that satisfy the provided filter.
+   * Returns an iterator over the paths of child nodes that are accepted by the given filter.
    *
-   * @param path   the parent path to resolve each child against
-   * @param filter optional filter to apply to children
-   * @return an iterator over accepted child paths
+   * <p>Each child name is resolved against the supplied {@code path} to produce a candidate
+   * {@link Path}. The filter's {@link DirectoryStream.Filter#accept(Object)} method is called
+   * for each candidate; any {@link IOException} thrown by the filter is silently suppressed and
+   * the candidate is excluded from the results.
+   *
+   * @param path   the parent {@link EphemeralPath} against which each child name is resolved
+   * @param filter the filter used to decide which child paths to include
+   * @return an iterator over the accepted child paths, in no guaranteed order
    */
   public synchronized Iterator<Path> iterator (EphemeralPath path, DirectoryStream.Filter<? super Path> filter) {
 
@@ -157,7 +179,12 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * @return the aggregated size of all children
+   * Returns the aggregate size of all descendant nodes.
+   *
+   * <p>The value is computed on every call by summing the {@link HeapNode#size()} of each
+   * direct child; for child directories the computation recurses. There is no caching.
+   *
+   * @return the total number of bytes consumed by the contents of this directory tree
    */
   @Override
   public synchronized long size () {

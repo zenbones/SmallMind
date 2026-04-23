@@ -33,12 +33,13 @@
 package org.smallmind.nutsnbolts.lang;
 
 /**
- * Thrown when code encounters an unexpected switch case value.
+ * Thrown when a switch statement or expression encounters a value that does not match any
+ * expected case, signaling an unhandled code path.
  */
 public class UnknownSwitchCaseException extends FormattedRuntimeException {
 
   /**
-   * Creates the exception without a message.
+   * Constructs the exception with no detail message or cause.
    */
   public UnknownSwitchCaseException () {
 
@@ -46,10 +47,10 @@ public class UnknownSwitchCaseException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates the exception with a formatted message.
+   * Constructs the exception with a formatted detail message.
    *
-   * @param message the format string describing the unknown case
-   * @param args    arguments applied to the format string
+   * @param message the format string describing the unrecognized case
+   * @param args    arguments substituted into the format string
    */
   public UnknownSwitchCaseException (String message, Object... args) {
 
@@ -57,11 +58,11 @@ public class UnknownSwitchCaseException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates the exception with a cause and formatted message.
+   * Constructs the exception with a cause and a formatted detail message.
    *
    * @param throwable the underlying cause
-   * @param message   the format string, or {@code null}
-   * @param args      arguments applied to the format string
+   * @param message   the format string for the detail message, or {@code null}
+   * @param args      arguments substituted into the format string
    */
   public UnknownSwitchCaseException (Throwable throwable, String message, Object... args) {
 
@@ -69,7 +70,7 @@ public class UnknownSwitchCaseException extends FormattedRuntimeException {
   }
 
   /**
-   * Creates the exception with the supplied cause.
+   * Constructs the exception with a cause and no detail message.
    *
    * @param throwable the underlying cause
    */

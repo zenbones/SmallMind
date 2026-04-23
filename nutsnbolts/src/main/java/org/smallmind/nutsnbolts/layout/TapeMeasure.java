@@ -33,13 +33,22 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Enum representing the type of measurement requested from a {@link ParaboxElement}.
+ * Identifies which of the three sizing measurements — minimum, preferred, or maximum — should be
+ * retrieved from a {@link ParaboxElement} during measurement and layout passes.
  */
 public enum TapeMeasure {
 
+  /**
+   * Retrieves the minimum measurement, reflecting the smallest size at which the element remains usable.
+   */
   MINIMUM {
     /**
-     * {@inheritDoc}
+     * Returns the element's effective minimum measurement along the given axis.
+     *
+     * @param bias    the axis of measurement
+     * @param element the element to measure
+     * @param tailor  the layout tailor used for caching
+     * @return the minimum size
      */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
@@ -47,9 +56,18 @@ public enum TapeMeasure {
       return element.getMinimumMeasurement(bias, tailor);
     }
   },
+
+  /**
+   * Retrieves the preferred measurement, reflecting the element's ideal natural size.
+   */
   PREFERRED {
     /**
-     * {@inheritDoc}
+     * Returns the element's preferred measurement along the given axis.
+     *
+     * @param bias    the axis of measurement
+     * @param element the element to measure
+     * @param tailor  the layout tailor used for caching
+     * @return the preferred size
      */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
@@ -57,9 +75,18 @@ public enum TapeMeasure {
       return element.getPreferredMeasurement(bias, tailor);
     }
   },
+
+  /**
+   * Retrieves the maximum measurement, reflecting the largest size the element should occupy.
+   */
   MAXIMUM {
     /**
-     * {@inheritDoc}
+     * Returns the element's effective maximum measurement along the given axis.
+     *
+     * @param bias    the axis of measurement
+     * @param element the element to measure
+     * @param tailor  the layout tailor used for caching
+     * @return the maximum size
      */
     @Override
     public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
@@ -69,12 +96,12 @@ public enum TapeMeasure {
   };
 
   /**
-   * Retrieves the specified measurement from the element along the given axis.
+   * Retrieves the appropriate measurement from the given element along the specified axis.
    *
    * @param bias    the axis of measurement
-   * @param element the element to measure
-   * @param tailor  the layout tailor to use for caching
-   * @return the measured size
+   * @param element the element whose measurement is requested
+   * @param tailor  the layout tailor used to cache repeated measurements
+   * @return the measurement value corresponding to this constant
    */
   public abstract double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor);
 }

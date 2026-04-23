@@ -37,105 +37,143 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
 /**
  * Describes index creation options that mirror the MongoDB driver's {@code IndexOptions}.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
 public @interface IndexOptions {
 
   /**
-   * @return whether the index build runs in the background
+   * Whether the index build runs in the background without blocking other operations.
+   *
+   * @return {@code true} for a background build
    */
   boolean background () default false;
 
   /**
-   * @return whether the index enforces uniqueness
+   * Whether the index enforces a uniqueness constraint on the indexed field(s).
+   *
+   * @return {@code true} for a unique index
    */
   boolean unique () default false;
 
   /**
-   * @return explicit name for the index
+   * An explicit name for the index; MongoDB generates a name when this is empty.
+   *
+   * @return the index name, or an empty string to use the generated name
    */
   String name () default "";
 
   /**
-   * @return whether documents missing the indexed field are omitted
+   * Whether documents that do not contain the indexed field are excluded from the index.
+   *
+   * @return {@code true} for a sparse index
    */
   boolean sparse () default false;
 
   /**
-   * @return TTL for documents in seconds
+   * Number of seconds after which documents in the collection expire; {@code 0} disables TTL.
+   *
+   * @return the TTL in seconds
    */
   long expireAfterSeconds () default 0;
 
   /**
-   * @return index version
+   * The index version number; {@code 0} lets the server choose the version.
+   *
+   * @return the index version
    */
   int version () default 0;
 
   /**
-   * @return weighting document for text indexes (JSON format)
+   * Weighting document for text indexes in JSON format; empty string uses the default weights.
+   *
+   * @return the weights JSON string
    */
   String weights () default "";
 
   /**
-   * @return language for text index string processing
+   * Default language used for text index stemming and stop words; empty string uses the server default.
+   *
+   * @return the default language
    */
   String defaultLanguage () default "";
 
   /**
-   * @return field name that overrides the default language
+   * Field name whose value overrides the default language for text indexing; empty string disables the override.
+   *
+   * @return the language override field name
    */
   String languageOverride () default "";
 
   /**
-   * @return text index version
+   * Version of the text index; {@code 0} lets the server choose.
+   *
+   * @return the text index version
    */
   int textVersion () default 0;
 
   /**
-   * @return 2dsphere index version
+   * Version of the 2dsphere index; {@code 0} lets the server choose.
+   *
+   * @return the 2dsphere index version
    */
   int sphereVersion () default 0;
 
   /**
-   * @return number of precision bits for geo indexes
+   * Number of precision bits for legacy 2d geo indexes; {@code 0} uses the server default.
+   *
+   * @return the precision bits
    */
   int bits () default 0;
 
   /**
-   * @return minimum boundary for geo indexes
+   * Minimum longitude/latitude boundary for legacy 2d geo indexes.
+   *
+   * @return the lower geo boundary
    */
   double min () default -360;
 
   /**
-   * @return maximum boundary for geo indexes
+   * Maximum longitude/latitude boundary for legacy 2d geo indexes.
+   *
+   * @return the upper geo boundary
    */
   double max () default 360;
 
   /**
-   * @return storage engine options as JSON
+   * Storage engine options as a JSON document; empty string uses the default options.
+   *
+   * @return the storage engine options JSON
    */
   String storageEngine () default "";
 
   /**
-   * @return partial filter expression in JSON
+   * Partial filter expression as a JSON document that restricts which documents are included in the index.
+   *
+   * @return the partial filter expression JSON
    */
   String partialFilterExpression () default "";
 
   /**
-   * @return collation settings for the index
+   * Collation settings applied to this index.
+   *
+   * @return the collation configuration
    */
   Collation collation () default @Collation();
 
   /**
-   * @return wildcard projection document as JSON
+   * Wildcard projection document as JSON, controlling which fields a wildcard index covers.
+   *
+   * @return the wildcard projection JSON
    */
   String wildcardProjection () default "";
 
   /**
-   * @return whether the index remains hidden from the query planner
+   * Whether the index is hidden from the query planner, allowing it to be evaluated without affecting queries.
+   *
+   * @return {@code true} for a hidden index
    */
   boolean hidden () default false;
 }

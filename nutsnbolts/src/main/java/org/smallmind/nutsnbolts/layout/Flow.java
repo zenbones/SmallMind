@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.layout;
 
 /**
- * Describes the direction in which children are laid out.
+ * Specifies the ordering direction in which elements are laid out within a box along the layout axis.
  */
 public enum Flow {
 

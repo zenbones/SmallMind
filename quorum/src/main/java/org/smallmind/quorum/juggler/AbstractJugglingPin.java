@@ -35,14 +35,21 @@ package org.smallmind.quorum.juggler;
 import java.lang.reflect.Method;
 
 /**
- * Convenience base implementation that provides no-op lifecycle hooks and overloads without reflection arguments.
+ * Skeletal {@link JugglingPin} implementation that provides no-op lifecycle bodies
+ * and convenience zero-argument overloads.
+ * <p>
+ * Subclasses override only the methods relevant to their resource type. The no-argument
+ * overloads ({@link #start()}, {@link #stop()}, {@link #close()}) delegate to their
+ * reflective counterparts with a {@code null} method reference, allowing callers to
+ * trigger the lifecycle without supplying a hook method.
  *
- * @param <R> resource type managed by the pin
+ * @param <R> the type of resource wrapped by this pin
  */
 public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
 
   /**
-   * Starts the resource without invoking a specific lifecycle method.
+   * Starts the resource without invoking any additional lifecycle hook.
+   * Delegates to {@link #start(Method, Object...) start(null)}.
    */
   public final void start () {
 
@@ -50,10 +57,11 @@ public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
   }
 
   /**
-   * Starts the resource invoking an optional lifecycle method. Subclasses should override to provide behavior.
+   * No-op start implementation. Subclasses override this to perform resource initialisation
+   * and optionally invoke {@code method} on the resource.
    *
-   * @param method lifecycle method to call on the resource, or {@code null} to ignore
-   * @param args   arguments passed to the lifecycle method
+   * @param method lifecycle hook to call after starting, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   @Override
   public void start (Method method, Object... args) {
@@ -61,7 +69,8 @@ public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
   }
 
   /**
-   * Stops the resource without invoking a specific lifecycle method.
+   * Stops the resource without invoking any additional lifecycle hook.
+   * Delegates to {@link #stop(Method, Object...) stop(null)}.
    */
   public final void stop () {
 
@@ -69,10 +78,11 @@ public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
   }
 
   /**
-   * Stops the resource invoking an optional lifecycle method. Subclasses should override to provide behavior.
+   * No-op stop implementation. Subclasses override this to quiesce the resource
+   * and optionally invoke {@code method} on it before halting.
    *
-   * @param method lifecycle method to call on the resource, or {@code null} to ignore
-   * @param args   arguments passed to the lifecycle method
+   * @param method lifecycle hook to call before stopping, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   @Override
   public void stop (Method method, Object... args) {
@@ -80,7 +90,8 @@ public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
   }
 
   /**
-   * Closes the resource without invoking a specific lifecycle method.
+   * Closes the resource without invoking any additional lifecycle hook.
+   * Delegates to {@link #close(Method, Object...) close(null)}.
    */
   public final void close () {
 
@@ -88,10 +99,11 @@ public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
   }
 
   /**
-   * Closes the resource invoking an optional lifecycle method. Subclasses should override to provide behavior.
+   * No-op close implementation. Subclasses override this to release all resources held
+   * by the pin and optionally invoke {@code method} on the resource prior to disposal.
    *
-   * @param method lifecycle method to call on the resource, or {@code null} to ignore
-   * @param args   arguments passed to the lifecycle method
+   * @param method lifecycle hook to call before closing, or {@code null} to skip
+   * @param args   arguments forwarded to {@code method}; ignored when {@code method} is {@code null}
    */
   @Override
   public void close (Method method, Object... args) {

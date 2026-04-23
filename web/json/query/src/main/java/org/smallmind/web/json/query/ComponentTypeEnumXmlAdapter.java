@@ -35,15 +35,15 @@ package org.smallmind.web.json.query;
 import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
 /**
- * Marshals {@link ComponentType} enums to lowercase strings for XML representation.
+ * JAXB adapter that serializes {@link ComponentType} constants as lowercase strings.
  */
 public class ComponentTypeEnumXmlAdapter extends EnumXmlAdapter<ComponentType> {
 
   /**
-   * Converts a {@link ComponentType} to its lowercase name for XML output.
+   * Converts a {@link ComponentType} constant to its lowercase string representation.
    *
-   * @param enumeration the component type
-   * @return lowercase enum name
+   * @param enumeration component type to marshal
+   * @return lowercase name of the constant
    */
   @Override
   public String marshal (ComponentType enumeration) {

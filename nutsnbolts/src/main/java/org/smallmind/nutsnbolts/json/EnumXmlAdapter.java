@@ -37,16 +37,16 @@ import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.util.EnumUtility;
 
 /**
- * Base JAXB adapter that marshals enum values to their string form and unmarshals from human readable text.
+ * Abstract JAXB adapter base class that converts enum constants to and from their string names, with name normalization on unmarshal.
  *
- * @param <E> concrete enum type
+ * @param <E> the concrete enum type handled by this adapter
  */
 public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
 
   private final Class<E> enumClass;
 
   /**
-   * Resolves the enum type parameter for use during unmarshalling.
+   * Reflectively resolves the concrete enum type from the generic superclass signature for use during unmarshalling.
    */
   public EnumXmlAdapter () {
 
@@ -54,10 +54,10 @@ public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<Strin
   }
 
   /**
-   * Converts text to the target enum type, applying {@link EnumUtility#toEnumName(String)} normalization.
+   * Converts a string to the corresponding enum constant, normalizing the value via {@link EnumUtility#toEnumName(String)} before lookup.
    *
-   * @param value the textual representation
-   * @return the matching enum, or {@code null} when {@code value} is {@code null}
+   * @param value the string representation of the enum constant
+   * @return the matching enum constant, or {@code null} when {@code value} is {@code null}
    */
   @Override
   public E unmarshal (String value) {
@@ -66,10 +66,10 @@ public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<Strin
   }
 
   /**
-   * Marshals an enum to its string representation.
+   * Converts an enum constant to its string representation via {@link Enum#toString()}.
    *
-   * @param enumeration the enum instance
-   * @return the enum name, or {@code null} when {@code enumeration} is {@code null}
+   * @param enumeration the enum constant to marshal
+   * @return the string representation, or {@code null} when {@code enumeration} is {@code null}
    */
   @Override
   public String marshal (E enumeration) {

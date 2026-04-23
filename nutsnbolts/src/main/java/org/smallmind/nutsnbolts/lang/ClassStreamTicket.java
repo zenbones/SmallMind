@@ -37,8 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Wraps an {@link InputStream} representing class bytes along with their modification timestamp.
- * Implements {@link Closeable} so callers can ensure the stream is released.
+ * Pairs an {@link InputStream} of class bytes with the last-modified timestamp of the source, and implements {@link Closeable} to ensure the stream is properly released.
  */
 public class ClassStreamTicket implements Closeable {
 
@@ -46,10 +45,10 @@ public class ClassStreamTicket implements Closeable {
   private final long timeStamp;
 
   /**
-   * Creates a ticket for a class stream.
+   * Creates a ticket wrapping the given class byte stream and its associated modification timestamp.
    *
-   * @param inputStream the stream to the class bytes
-   * @param timeStamp   the associated modification timestamp
+   * @param inputStream the stream supplying the raw class bytes
+   * @param timeStamp   the last-modified time of the class source, in milliseconds since the epoch
    */
   public ClassStreamTicket (InputStream inputStream, long timeStamp) {
 
@@ -58,9 +57,9 @@ public class ClassStreamTicket implements Closeable {
   }
 
   /**
-   * Returns the underlying class byte stream.
+   * Returns the stream of raw class bytes.
    *
-   * @return the open input stream
+   * @return the open {@link InputStream} for the class data
    */
   public InputStream getInputStream () {
 
@@ -68,9 +67,9 @@ public class ClassStreamTicket implements Closeable {
   }
 
   /**
-   * Returns the modification time associated with the stream.
+   * Returns the last-modified timestamp associated with the class source.
    *
-   * @return the timestamp in milliseconds
+   * @return the modification time in milliseconds since the epoch
    */
   public long getTimeStamp () {
 
@@ -78,9 +77,9 @@ public class ClassStreamTicket implements Closeable {
   }
 
   /**
-   * Closes the underlying stream.
+   * Closes the underlying class byte stream.
    *
-   * @throws IOException if the stream cannot be closed
+   * @throws IOException if an I/O error occurs while closing the stream
    */
   @Override
   public void close ()

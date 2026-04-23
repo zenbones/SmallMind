@@ -33,8 +33,8 @@
 package org.smallmind.web.grizzly.option;
 
 /**
- * Aggregate configuration for a single Grizzly web application context including static resources, REST, SOAP, Spring
- * and WebSocket options.
+ * Aggregates all feature options for a single Grizzly servlet context, including static resources, JAX-RS, SOAP,
+ * Spring support, and WebSocket.
  */
 public class WebApplicationOption {
 
@@ -47,7 +47,9 @@ public class WebApplicationOption {
   private String soapPath = "/soap";
 
   /**
-   * @return configuration for serving static resources from the classpath
+   * Returns the option for serving static resources from the classpath.
+   *
+   * @return class loader resource option, or {@code null} if not configured
    */
   public ClassLoaderResourceOption getClassLoaderResourceOption () {
 
@@ -55,7 +57,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param classLoaderResourceOption configuration for serving static resources from the classpath
+   * Sets the option for serving static resources from the classpath.
+   *
+   * @param classLoaderResourceOption static class loader resource configuration
    */
   public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
 
@@ -63,7 +67,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return configuration for serving static documents from the filesystem
+   * Returns the option for serving static files from the filesystem.
+   *
+   * @return document root option, or {@code null} if not configured
    */
   public DocumentRootOption getDocumentRootOption () {
 
@@ -71,7 +77,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param documentRootOption configuration for serving static documents from the filesystem
+   * Sets the option for serving static files from the filesystem.
+   *
+   * @param documentRootOption filesystem document root configuration
    */
   public void setDocumentRootOption (DocumentRootOption documentRootOption) {
 
@@ -79,7 +87,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return JAX-RS option defining the REST base path
+   * Returns the JAX-RS configuration for the Jersey servlet mapping.
+   *
+   * @return JAX-RS option, or {@code null} if REST is not enabled
    */
   public JaxRSOption getJaxRSOption () {
 
@@ -87,7 +97,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param jaxRSOption JAX-RS option defining the REST base path
+   * Sets the JAX-RS configuration for the Jersey servlet mapping.
+   *
+   * @param jaxRSOption JAX-RS REST path configuration
    */
   public void setJaxRSOption (JaxRSOption jaxRSOption) {
 
@@ -95,7 +107,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return marker option enabling Spring request context support
+   * Returns the Spring support marker option.
+   *
+   * @return Spring support option, or {@code null} if Spring request context is not enabled
    */
   public SpringSupportOption getSpringSupportOption () {
 
@@ -103,7 +117,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param springSupportOption marker option enabling Spring request context support
+   * Sets the Spring support marker option.
+   *
+   * @param springSupportOption marker enabling Spring request context listener registration
    */
   public void setSpringSupportOption (SpringSupportOption springSupportOption) {
 
@@ -111,7 +127,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return WebSocket deployment options
+   * Returns the WebSocket deployment option.
+   *
+   * @return WebSocket option, or {@code null} if WebSocket is not enabled
    */
   public WebSocketOption getWebSocketOption () {
 
@@ -119,7 +137,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param webSocketOption WebSocket deployment options
+   * Sets the WebSocket deployment option.
+   *
+   * @param webSocketOption WebSocket feature configuration
    */
   public void setWebSocketOption (WebSocketOption webSocketOption) {
 
@@ -127,7 +147,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return servlet context path for the application
+   * Returns the servlet context path for this application.
+   *
+   * @return context path
    */
   public String getContextPath () {
 
@@ -135,7 +157,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param contextPath servlet context path for the application
+   * Sets the servlet context path for this application.
+   *
+   * @param contextPath servlet context path
    */
   public void setContextPath (String contextPath) {
 
@@ -143,7 +167,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @return base path under which SOAP services will be exposed
+   * Returns the base URI path under which SOAP services will be exposed.
+   *
+   * @return SOAP base path
    */
   public String getSoapPath () {
 
@@ -151,7 +177,9 @@ public class WebApplicationOption {
   }
 
   /**
-   * @param soapPath base path under which SOAP services will be exposed
+   * Sets the base URI path under which SOAP services will be exposed.
+   *
+   * @param soapPath SOAP base path
    */
   public void setSoapPath (String soapPath) {
 

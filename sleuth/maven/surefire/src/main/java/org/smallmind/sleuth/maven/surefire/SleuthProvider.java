@@ -51,9 +51,26 @@ import static java.lang.System.setErr;
 import static java.lang.System.setOut;
 
 /**
- * Surefire {@link org.apache.maven.surefire.api.provider.SurefireProvider} implementation that drives the Sleuth runner.
+ * Surefire {@link org.apache.maven.surefire.api.provider.SurefireProvider} implementation that
+ * integrates the Sleuth test runner into the Maven Surefire plugin.
  * <p>
- * It discovers test suites, configures the {@link SleuthRunner}, and forwards events/output back to the Surefire reporting infrastructure.
+ * This class is the entry point for Maven-driven test execution. It is responsible for:
+ * <ol>
+ *   <li>Scanning the classpath for test suite classes via {@link #getSuites()}.</li>
+ *   <li>Redirecting {@code System.out} and {@code System.err} to {@link ForwardingPrintStream}
+ *       instances so all test output is routed through the Surefire reporting pipeline.</li>
+ *   <li>Reading provider properties ({@code groups}, {@code threadCount}, {@code testFailureIgnore})
+ *       and the {@code groups} system property to configure the run.</li>
+ *   <li>Registering a {@link SurefireSleuthEventListener} that translates Sleuth events into
+ *       Surefire {@link org.apache.maven.surefire.api.report.RunListener} calls.</li>
+ *   <li>Delegating execution to {@link SleuthRunner#execute} and collecting the {@link RunResult}.</li>
+ *   <li>Rethrowing any fatal throwable captured by the listener as a {@link TestSetFailedException}.</li>
+ * </ol>
+ * The {@code groups} property accepts a comma-separated list of group names. The sentinel value
+ * {@code all} causes all groups to be included (equivalent to passing no group filter).
+ *
+ * @see SurefireSleuthEventListener
+ * @see SleuthRunner
  */
 public class SleuthProvider extends AbstractProvider {
 
@@ -62,9 +79,10 @@ public class SleuthProvider extends AbstractProvider {
   private TestsToRun testsToRun;
 
   /**
-   * Builds the provider with the Maven-provided execution parameters.
+   * Constructs the provider with the Maven-supplied execution parameters.
    *
-   * @param providerParameters Surefire parameters including scan results, classloaders, and reporter factories
+   * @param providerParameters Surefire parameters including classpath scan results, classloaders,
+   *                           reporter factories, and plugin configuration; must not be {@code null}
    */
   public SleuthProvider (ProviderParameters providerParameters) {
 
@@ -72,9 +90,12 @@ public class SleuthProvider extends AbstractProvider {
   }
 
   /**
-   * Scans the classpath for test suites recognized by Sleuth.
+   * Scans the test classpath for suite classes recognized by Sleuth and caches the result.
+   * <p>
+   * The result is cached in {@code testsToRun} so that {@link #invoke(Object)} can reuse it
+   * without re-scanning when called in the same VM.
    *
-   * @return iterable of suites to execute
+   * @return iterable of test suite classes to execute; never {@code null}
    */
   @Override
   public Iterable<Class<?>> getSuites () {
@@ -85,7 +106,8 @@ public class SleuthProvider extends AbstractProvider {
   }
 
   /**
-   * Requests cancellation of the currently running suite set.
+   * Requests cancellation of the currently executing suite set by delegating to
+   * {@link SleuthRunner#cancel()}.
    */
   @Override
   public void cancel () {
@@ -94,12 +116,24 @@ public class SleuthProvider extends AbstractProvider {
   }
 
   /**
-   * Executes the discovered suites and reports results back to Surefire.
+   * Executes all discovered suites and returns the aggregated {@link RunResult}.
+   * <p>
+   * If {@code testsToRun} was not populated by a prior call to {@link #getSuites()}, it is
+   * resolved from the {@code forkTestSet} argument or by re-scanning the classpath. Provider
+   * properties are read in this priority order:
+   * <ol>
+   *   <li>{@code groups} system property (overrides provider property)</li>
+   *   <li>{@code groups} provider property</li>
+   *   <li>{@code threadCount} / {@code threadcount} provider property (default: unbounded)</li>
+   *   <li>{@code testFailureIgnore} provider property (default: stop on error and failure)</li>
+   * </ol>
    *
-   * @param forkTestSet optional set supplied by the forked VM
-   * @return aggregated {@link RunResult}
-   * @throws TestSetFailedException when a fatal failure halts execution
-   * @throws ReporterException      when a reporter cannot be created or accepts output
+   * @param forkTestSet when running in a forked VM, either a {@link TestsToRun} or a {@link Class}
+   *                    supplied by the forking process; may be {@code null}
+   * @return aggregated run result including pass, failure, error, and skip counts; never {@code null}
+   * @throws TestSetFailedException if a {@link org.smallmind.sleuth.runner.event.FatalSleuthEvent}
+   *                                was captured during execution
+   * @throws ReporterException      if the reporter factory cannot create or close the listener
    */
   @Override
   public RunResult invoke (Object forkTestSet)
@@ -180,10 +214,15 @@ public class SleuthProvider extends AbstractProvider {
   }
 
   /**
-   * Parses a comma-separated list of groups, honoring {@code all} as a sentinel.
+   * Parses a comma-separated groups string into an array of group names.
+   * <p>
+   * Returns {@code null} when the input is absent or blank. Returns an empty array when any
+   * element equals {@code "all"}, which serves as a sentinel meaning "include all groups". Otherwise
+   * returns the individual group names in input order.
    *
-   * @param groupsParameter raw groups string
-   * @return {@code null} when no value is provided, empty array for {@code all}, otherwise the parsed group names
+   * @param groupsParameter raw comma-separated groups string; may be {@code null} or empty
+   * @return {@code null} when no value is provided; empty array for the {@code all} sentinel;
+   * otherwise an array of individual group names
    */
   private String[] parseGroups (String groupsParameter) {
 

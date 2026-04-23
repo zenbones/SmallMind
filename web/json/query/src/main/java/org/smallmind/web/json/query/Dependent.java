@@ -33,22 +33,28 @@
 package org.smallmind.web.json.query;
 
 /**
- * Declares that one field in a where clause requires another field to also be present.
+ * Declares that querying a given field requires another field to also appear in the where clause.
  */
 public @interface Dependent {
 
   /**
-   * @return the entity alias to which this dependency applies (optional)
+   * Entity alias the dependent field belongs to; empty string denotes the default root.
+   *
+   * @return entity alias
    */
   String entity () default "";
 
   /**
-   * @return the dependent field name
+   * Name of the field that triggers the dependency when queried.
+   *
+   * @return dependent field name
    */
   String field ();
 
   /**
-   * @return the required field specification
+   * Specification of the field that must accompany the dependent field.
+   *
+   * @return required field specification
    */
   Requirement requirement ();
 }

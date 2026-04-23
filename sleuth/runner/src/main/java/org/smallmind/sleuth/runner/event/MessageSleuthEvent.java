@@ -35,17 +35,25 @@ package org.smallmind.sleuth.runner.event;
 import org.smallmind.nutsnbolts.util.AnsiColor;
 
 /**
- * Base class for events that include a descriptive message.
+ * Intermediate base class for {@link TimedSleuthEvent} subtypes that carry a human-readable
+ * reason string rather than a throwable.
+ * <p>
+ * The current concrete subclass is {@link SkippedSleuthEvent}, which uses the message to
+ * explain why the test was bypassed (e.g., "Skipped due to prior error[...]").
+ *
+ * @see SkippedSleuthEvent
  */
 public abstract class MessageSleuthEvent extends TimedSleuthEvent {
 
   private final String message;
 
   /**
-   * @param className  originating class
-   * @param methodName originating method
-   * @param elapsed    elapsed execution time in milliseconds
-   * @param message    descriptive message
+   * Constructs a message event with the given identity, elapsed time, and reason string.
+   *
+   * @param className  fully qualified name of the class that produced the event; must not be {@code null}
+   * @param methodName name of the method that produced the event; may be {@code null} for suite-level events
+   * @param elapsed    wall-clock time in milliseconds from the point at which processing began to the skip decision
+   * @param message    human-readable explanation of why this event was produced; must not be {@code null}
    */
   public MessageSleuthEvent (String className, String methodName, long elapsed, String message) {
 
@@ -55,7 +63,9 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
-   * @return descriptive message carried by the event
+   * Returns the human-readable explanation attached to this event.
+   *
+   * @return reason message; never {@code null}
    */
   public String getMessage () {
 
@@ -63,7 +73,10 @@ public abstract class MessageSleuthEvent extends TimedSleuthEvent {
   }
 
   /**
-   * @return colored string representation including the message payload
+   * Returns a human-readable, ANSI-colored string showing the event type, class, method, elapsed time,
+   * and the message.
+   *
+   * @return formatted event description; never {@code null}
    */
   @Override
   public String toString () {

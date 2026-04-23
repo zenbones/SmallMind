@@ -50,6 +50,8 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   private int heartbeatSeconds;
 
   /**
+   * Sets the broker endpoints used to establish connections.
+   *
    * @param servers array of broker endpoints.
    */
   public void setServers (RabbitMQServer[] servers) {
@@ -58,7 +60,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @param username username for broker authentication.
+   * Sets the username for broker authentication.
+   *
+   * @param username broker authentication username.
    */
   public void setUsername (String username) {
 
@@ -66,7 +70,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @param password password for broker authentication.
+   * Sets the password for broker authentication.
+   *
+   * @param password broker authentication password.
    */
   public void setPassword (String password) {
 
@@ -74,7 +80,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @param heartbeatSeconds desired heartbeat interval in seconds.
+   * Sets the heartbeat interval sent to the broker.
+   *
+   * @param heartbeatSeconds heartbeat interval in seconds.
    */
   public void setHeartbeatSeconds (int heartbeatSeconds) {
 
@@ -82,7 +90,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @return the connector type produced by this factory.
+   * Returns the type of object produced by this factory.
+   *
+   * @return {@link RabbitMQConnector} class.
    */
   @Override
   public Class<?> getObjectType () {
@@ -91,10 +101,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @return the connector type produced by this factory.
-   */
-  /**
-   * @return true because the connector is shared.
+   * Returns whether the produced object is a singleton.
+   *
+   * @return {@code true} because the connector is shared.
    */
   @Override
   public boolean isSingleton () {
@@ -103,7 +112,9 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * @return the constructed {@link RabbitMQConnector}.
+   * Returns the constructed {@link RabbitMQConnector}.
+   *
+   * @return configured connector instance.
    */
   @Override
   public RabbitMQConnector getObject () {
@@ -112,7 +123,7 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * Initializes the connector after properties are set by building the connection factory and address list.
+   * Builds the {@link ConnectionFactory} and address list, then creates the connector.
    */
   @Override
   public void afterPropertiesSet () {

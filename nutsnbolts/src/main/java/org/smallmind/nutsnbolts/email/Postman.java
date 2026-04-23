@@ -56,8 +56,7 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 /**
- * Service that converts {@link Mail} descriptors into Jakarta Mail messages and delivers them.
- * Supports plain SMTP and SMTPS, optional authentication, FreeMarker interpolation, and attachments.
+ * Mail delivery service that converts {@link Mail} descriptors into Jakarta Mail messages and transmits them via SMTP or SMTPS, with optional authentication and optional FreeMarker template interpolation in the message body.
  */
 public class Postman {
 
@@ -66,17 +65,17 @@ public class Postman {
   private Configuration freemarkerConf;
 
   /**
-   * Creates an unconfigured postman. Callers must set up a {@link Session} manually before sending.
+   * Creates an unconfigured postman; callers are responsible for providing a {@link Session} before invoking {@link #send}.
    */
   public Postman () {
 
   }
 
   /**
-   * Creates a postman configured for unsecured SMTP without authentication.
+   * Creates a postman configured for unauthenticated, unencrypted SMTP.
    *
-   * @param host smtp host
-   * @param port smtp port
+   * @param host SMTP server host name or IP address
+   * @param port SMTP server port
    */
   public Postman (String host, int port) {
 
@@ -84,11 +83,11 @@ public class Postman {
   }
 
   /**
-   * Creates a postman configured for unsecured SMTP with authentication.
+   * Creates a postman configured for authenticated, unencrypted SMTP.
    *
-   * @param host           smtp host
-   * @param port           smtp port
-   * @param authentication authentication strategy and credentials
+   * @param host           SMTP server host name or IP address
+   * @param port           SMTP server port
+   * @param authentication authentication strategy and credentials for the server
    */
   public Postman (String host, int port, Authentication authentication) {
 
@@ -96,11 +95,11 @@ public class Postman {
   }
 
   /**
-   * Creates a postman configured for SMTP, optionally enabling STARTTLS, without authentication.
+   * Creates a postman configured for unauthenticated SMTP with optional TLS.
    *
-   * @param host   smtp host
-   * @param port   smtp port
-   * @param secure {@code true} to enable TLS
+   * @param host   SMTP server host name or IP address
+   * @param port   SMTP server port
+   * @param secure {@code true} to enable STARTTLS (SMTPS); {@code false} for plain SMTP
    */
   public Postman (String host, int port, boolean secure) {
 
@@ -108,12 +107,12 @@ public class Postman {
   }
 
   /**
-   * Creates a postman configured for SMTP/SMTPS with optional authentication.
+   * Creates a postman configured for SMTP or SMTPS with optional authentication.
    *
-   * @param host           smtp host
-   * @param port           smtp port
-   * @param authentication authentication strategy and credentials
-   * @param secure         {@code true} to enable TLS
+   * @param host           SMTP server host name or IP address
+   * @param port           SMTP server port
+   * @param authentication authentication strategy and credentials for the server
+   * @param secure         {@code true} to use SMTPS (STARTTLS); {@code false} for plain SMTP
    */
   public Postman (String host, int port, Authentication authentication, boolean secure) {
 
@@ -123,10 +122,10 @@ public class Postman {
   }
 
   /**
-   * Sends a mail message without template interpolation.
+   * Sends the given mail message without FreeMarker template interpolation.
    *
-   * @param mail message to send
-   * @throws MailDeliveryException if creation or transport fails
+   * @param mail the message to send
+   * @throws MailDeliveryException if the message cannot be constructed or delivered
    */
   public void send (Mail mail)
     throws MailDeliveryException {
@@ -135,11 +134,11 @@ public class Postman {
   }
 
   /**
-   * Sends a mail message, optionally interpolating FreeMarker expressions in the body.
+   * Sends the given mail message, optionally processing the body through the FreeMarker template engine before transmission.
    *
-   * @param mail             message to send
-   * @param interpolationMap values available to the template engine; {@code null} disables templating
-   * @throws MailDeliveryException if message creation or transport fails
+   * @param mail             the message to send
+   * @param interpolationMap model values made available to the FreeMarker template; pass {@code null} to skip interpolation
+   * @throws MailDeliveryException if the message cannot be constructed, templated, or delivered
    */
   public void send (Mail mail, HashMap<String, Object> interpolationMap)
     throws MailDeliveryException {
@@ -224,12 +223,12 @@ public class Postman {
   }
 
   /**
-   * Adds recipients parsed from a comma-separated string to the message.
+   * Parses a comma-separated address string and adds each trimmed address as a recipient of the given type to the message.
    *
-   * @param message   message being composed
-   * @param type      recipient type
-   * @param addresses comma-separated addresses
-   * @throws MessagingException if addresses are invalid or cannot be added
+   * @param message   the message under construction
+   * @param type      the recipient type ({@code TO}, {@code CC}, or {@code BCC})
+   * @param addresses comma-separated list of RFC 822 addresses
+   * @throws MessagingException if any address is syntactically invalid or cannot be added to the message
    */
   private void addRecipients (Message message, Message.RecipientType type, String addresses)
     throws MessagingException {
@@ -240,7 +239,7 @@ public class Postman {
   }
 
   /**
-   * Wrapper key used to cache templates by the SHA-256 hash of their source.
+   * Immutable key used to cache compiled FreeMarker templates, keyed by the SHA-256 hash of their source text.
    */
   private record SHA256Key(byte[] hash) {
 

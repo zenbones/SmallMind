@@ -43,12 +43,31 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
 
 /**
- * Configuration holder for Cubby clients, covering codec selection, routing, authentication and
- * timeout behavior.
+ * Aggregates all tunable parameters for a {@link CubbyMemcachedClient} instance.
+ *
+ * <p>Settings cover value serialization ({@link CubbyCodec}), key routing ({@link KeyLocator}),
+ * key normalization ({@link KeyTranslator}), optional SASL authentication, and various timeout and
+ * connection-pool knobs. Every setter returns {@code this} to support a fluent builder style.</p>
+ *
+ * <p>Two pre-built constants are provided for common scenarios:
+ * <ul>
+ *   <li>{@link #DEFAULT} &ndash; plain Java-serialization codec, simple rendezvous hashing, no auth.</li>
+ *   <li>{@link #OPTIMAL} &ndash; large-value compression, Maglev consistent hashing, and large-key
+ *       hashing for production deployments.</li>
+ * </ul>
+ * </p>
  */
 public class CubbyConfiguration {
 
+  /**
+   * A ready-to-use configuration with sensible defaults suitable for development and testing.
+   */
   public static final CubbyConfiguration DEFAULT = new CubbyConfiguration();
+
+  /**
+   * A ready-to-use configuration tuned for production: compressed large values, Maglev consistent
+   * hashing for minimal key remapping on topology changes, and hashed oversized keys.
+   */
   public static final CubbyConfiguration OPTIMAL = new CubbyConfiguration()
                                                      .setCodec(new LargeValueCompressingCodec(new ObjectStreamCubbyCodec()))
                                                      .setKeyLocator(new MaglevKeyLocator())
@@ -66,7 +85,10 @@ public class CubbyConfiguration {
   private int connectionsPerHost = 1;
 
   /**
-   * @return the codec used to serialize values
+   * Returns the codec used to serialize values before storing them in memcached and to
+   * deserialize the raw bytes retrieved from the server.
+   *
+   * @return the configured {@link CubbyCodec}
    */
   public CubbyCodec getCodec () {
 
@@ -74,10 +96,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the codec used to serialize and deserialize values.
+   * Sets the codec used for value serialization and deserialization.
    *
-   * @param codec codec implementation
-   * @return this configuration for chaining
+   * @param codec the codec implementation to use; must not be {@code null}
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setCodec (CubbyCodec codec) {
 
@@ -87,7 +109,9 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return the key locator responsible for mapping keys to hosts
+   * Returns the key locator responsible for mapping a cache key to a specific host in the pool.
+   *
+   * @return the configured {@link KeyLocator}
    */
   public KeyLocator getKeyLocator () {
 
@@ -95,10 +119,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the key locator responsible for routing requests.
+   * Sets the key locator used for consistent-hashing or other routing strategies.
    *
-   * @param keyLocator locator implementation
-   * @return this configuration for chaining
+   * @param keyLocator the locator implementation; must not be {@code null}
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setKeyLocator (KeyLocator keyLocator) {
 
@@ -108,7 +132,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return the key translator used to normalize keys before routing
+   * Returns the key translator that normalizes or hashes keys before they are used for routing
+   * or sent to the server.
+   *
+   * @return the configured {@link KeyTranslator}
    */
   public KeyTranslator getKeyTranslator () {
 
@@ -116,10 +143,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the key translator used to normalize and constrain keys.
+   * Sets the key translator applied to every key before routing or wire transmission.
    *
-   * @param keyTranslator translator implementation
-   * @return this configuration for chaining
+   * @param keyTranslator the translator implementation; must not be {@code null}
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setKeyTranslator (KeyTranslator keyTranslator) {
 
@@ -129,7 +156,9 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return configured authentication credentials, or {@code null} when unauthenticated
+   * Returns the SASL authentication credentials, or {@code null} if no authentication is required.
+   *
+   * @return the configured {@link Authentication}, or {@code null}
    */
   public Authentication getAuthentication () {
 
@@ -137,10 +166,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the authentication credentials used for SASL.
+   * Sets the SASL authentication credentials forwarded to the server during connection setup.
    *
-   * @param authentication username/password pair
-   * @return this configuration for chaining
+   * @param authentication the username/password pair; pass {@code null} to disable authentication
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setAuthentication (Authentication authentication) {
 
@@ -150,7 +179,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return default request timeout in milliseconds
+   * Returns the default per-request timeout applied when no explicit timeout is provided to an
+   * operation. A value of {@code 0} indicates no timeout.
+   *
+   * @return the default request timeout in milliseconds
    */
   public long getDefaultRequestTimeoutMilliseconds () {
 
@@ -158,10 +190,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the default request timeout.
+   * Sets the default per-request timeout used when the caller does not supply an explicit one.
    *
-   * @param defaultRequestTimeoutMilliseconds timeout in milliseconds
-   * @return this configuration for chaining
+   * @param defaultRequestTimeoutMilliseconds timeout in milliseconds; {@code 0} disables the timeout
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setDefaultRequestTimeoutMilliseconds (long defaultRequestTimeoutMilliseconds) {
 
@@ -171,7 +203,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return connection establishment timeout in milliseconds
+   * Returns the maximum time allowed for a TCP connection to be established before the attempt
+   * is considered failed.
+   *
+   * @return the connection establishment timeout in milliseconds
    */
   public long getConnectionTimeoutMilliseconds () {
 
@@ -179,10 +214,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the connection establishment timeout.
+   * Sets the maximum time allowed for a TCP connection to be established.
    *
-   * @param connectionTimeoutMilliseconds timeout in milliseconds
-   * @return this configuration for chaining
+   * @param connectionTimeoutMilliseconds timeout in milliseconds; must be positive
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setConnectionTimeoutMilliseconds (long connectionTimeoutMilliseconds) {
 
@@ -192,7 +227,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return read timeout in milliseconds
+   * Returns the socket read timeout, i.e., the maximum time the client will wait for data
+   * from the server on an established connection.
+   *
+   * @return the read timeout in milliseconds
    */
   public long getReadTimeoutMilliseconds () {
 
@@ -200,10 +238,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the read timeout.
+   * Sets the socket read timeout applied to established connections.
    *
-   * @param readTimeoutMilliseconds timeout in milliseconds
-   * @return this configuration for chaining
+   * @param readTimeoutMilliseconds timeout in milliseconds; must be positive
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setReadTimeoutMilliseconds (long readTimeoutMilliseconds) {
 
@@ -213,7 +251,9 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return keep-alive heartbeat interval in seconds
+   * Returns the interval between keep-alive probes sent on idle connections.
+   *
+   * @return the keep-alive heartbeat interval in seconds
    */
   public long getKeepAliveSeconds () {
 
@@ -221,10 +261,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the keep-alive heartbeat interval.
+   * Sets the interval at which keep-alive probes are sent on idle connections.
    *
-   * @param keepAliveSeconds heartbeat interval in seconds
-   * @return this configuration for chaining
+   * @param keepAliveSeconds heartbeat interval in seconds; must be positive
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setKeepAliveSeconds (long keepAliveSeconds) {
 
@@ -234,7 +274,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return delay between reconnection attempts in seconds
+   * Returns the delay between successive reconnection attempts made by the
+   * {@link ServerDefibrillator} for hosts that have gone offline.
+   *
+   * @return the reconnection retry interval in seconds
    */
   public long getResuscitationSeconds () {
 
@@ -244,8 +287,8 @@ public class CubbyConfiguration {
   /**
    * Sets the delay between reconnection attempts for unhealthy hosts.
    *
-   * @param resuscitationSeconds delay in seconds
-   * @return this configuration for chaining
+   * @param resuscitationSeconds retry interval in seconds; must be positive
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setResuscitationSeconds (long resuscitationSeconds) {
 
@@ -255,7 +298,10 @@ public class CubbyConfiguration {
   }
 
   /**
-   * @return number of connections to create per host
+   * Returns the number of independent {@link ConnectionCoordinator} instances (and therefore
+   * independent TCP connections) that will be created per memcached host.
+   *
+   * @return the number of connections per host
    */
   public int getConnectionsPerHost () {
 
@@ -263,10 +309,11 @@ public class CubbyConfiguration {
   }
 
   /**
-   * Sets the number of connections to create per host.
+   * Sets the number of independent connections to maintain per host. Increasing this value
+   * can improve throughput under high concurrency by reducing lock contention.
    *
-   * @param connectionsPerHost number of connections per host
-   * @return this configuration for chaining
+   * @param connectionsPerHost number of connections per host; must be at least 1
+   * @return this configuration instance for method chaining
    */
   public CubbyConfiguration setConnectionsPerHost (int connectionsPerHost) {
 

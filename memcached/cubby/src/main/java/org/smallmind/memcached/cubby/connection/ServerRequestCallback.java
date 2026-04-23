@@ -37,12 +37,22 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Callback used for server-originated maintenance requests where no client waits on the response.
+ * A {@link RequestCallback} implementation used for internally generated maintenance commands
+ * such as keep-alive NOOPs, where no external caller is waiting for the server's response.
+ *
+ * <p>Successful responses are silently discarded. I/O errors are logged at the error level
+ * via the application's logging infrastructure so that connection-level anomalies are still
+ * visible without propagating an exception to any client thread.</p>
  */
 public class ServerRequestCallback implements RequestCallback {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Silently discards the response, as no caller is waiting for the result of a
+   * server-initiated maintenance command.</p>
+   *
+   * @param response the parsed server response; ignored by this implementation
    */
   @Override
   public void setResult (Response response) {
@@ -51,6 +61,11 @@ public class ServerRequestCallback implements RequestCallback {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Logs the exception at the error level. Because no client thread is blocked on this
+   * callback, the error cannot be propagated and is instead recorded for diagnostic purposes.</p>
+   *
+   * @param ioException the I/O error that occurred while processing the maintenance command
    */
   @Override
   public void setException (IOException ioException) {

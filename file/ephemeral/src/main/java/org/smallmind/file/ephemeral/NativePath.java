@@ -42,7 +42,11 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
 /**
- * Path adapter that delegates to a native platform path while reporting the ephemeral file system.
+ * {@link Path} adapter that wraps a native platform path while reporting an
+ * {@link EphemeralFileSystem} as its owning file system. All structural operations
+ * (navigation, comparison, string conversion) are delegated to the underlying native path.
+ * When a {@link NativePath} is encountered by {@link EphemeralFileSystemProvider} the
+ * operation is forwarded directly to the native provider, bypassing the ephemeral heap.
  */
 public class NativePath implements Path {
 
@@ -50,8 +54,12 @@ public class NativePath implements Path {
   private final Path nativePath;
 
   /**
-   * @param ephemeralFileSystem the ephemeral file system to expose
-   * @param nativePath          the underlying platform path to delegate to
+   * Wraps a native path so that it appears to belong to the given ephemeral file system.
+   *
+   * @param ephemeralFileSystem the ephemeral file system to expose via
+   *                            {@link #getFileSystem()}; must not be {@code null}
+   * @param nativePath          the underlying platform path to delegate all operations to;
+   *                            must not be {@code null}
    */
   public NativePath (EphemeralFileSystem ephemeralFileSystem, Path nativePath) {
 
@@ -60,7 +68,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * @return the native file system backing this path
+   * Returns the native file system that backs the underlying path.
+   *
+   * @return the native {@link FileSystem}; never {@code null}
    */
   public FileSystem getNativeFileSystem () {
 
@@ -68,7 +78,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * @return the underlying platform path
+   * Returns the underlying platform {@link Path} that this adapter wraps.
+   *
+   * @return the native path; never {@code null}
    */
   public Path getNativePath () {
 
@@ -76,7 +88,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the ephemeral file system associated with this path.
+   *
+   * @return the {@link EphemeralFileSystem} supplied at construction time; never {@code null}
    */
   @Override
   public FileSystem getFileSystem () {
@@ -85,7 +99,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the native path.
+   *
+   * @return {@code true} if the native path is absolute
    */
   @Override
   public boolean isAbsolute () {
@@ -94,7 +110,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the root component of the native path wrapped in a {@link NativePath}.
+   *
+   * @return the root path adapter
    */
   @Override
   public Path getRoot () {
@@ -103,7 +121,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the file name component of the native path wrapped in a {@link NativePath}.
+   *
+   * @return the file name path adapter
    */
   @Override
   public Path getFileName () {
@@ -112,7 +132,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the parent of the native path wrapped in a {@link NativePath}.
+   *
+   * @return the parent path adapter
    */
   @Override
   public Path getParent () {
@@ -121,7 +143,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the native path.
+   *
+   * @return the number of name elements in the native path
    */
   @Override
   public int getNameCount () {
@@ -130,7 +154,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the name element at the given index from the native path, wrapped in a
+   * {@link NativePath}.
+   *
+   * @param index the zero-based element index
+   * @return the name element adapter
    */
   @Override
   public Path getName (int index) {
@@ -139,7 +167,12 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a sub-sequence of name elements from the native path, wrapped in a
+   * {@link NativePath}.
+   *
+   * @param beginIndex the start index (inclusive)
+   * @param endIndex   the end index (exclusive)
+   * @return the sub-path adapter
    */
   @Override
   public Path subpath (int beginIndex, int endIndex) {
@@ -148,7 +181,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Tests whether this path starts with {@code other}. If {@code other} is a
+   * {@link NativePath} its underlying native path is used for the comparison.
+   *
+   * @param other the candidate prefix path
+   * @return {@code true} if this path starts with {@code other}
    */
   @Override
   public boolean startsWith (Path other) {
@@ -157,7 +194,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Tests whether this path ends with {@code other}. If {@code other} is a
+   * {@link NativePath} its underlying native path is used for the comparison.
+   *
+   * @param other the candidate suffix path
+   * @return {@code true} if this path ends with {@code other}
    */
   @Override
   public boolean endsWith (Path other) {
@@ -166,7 +207,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the normalized form of the native path, wrapped in a {@link NativePath}.
+   *
+   * @return the normalized path adapter
    */
   @Override
   public Path normalize () {
@@ -175,7 +218,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves {@code other} against the native path. If {@code other} is a {@link NativePath}
+   * its underlying native path is used; the result is wrapped in a new {@link NativePath}.
+   *
+   * @param other the path to resolve
+   * @return the resolved path adapter
    */
   @Override
   public Path resolve (Path other) {
@@ -184,7 +231,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Constructs a relative path between this path and {@code other} using native path
+   * semantics. The result is wrapped in a new {@link NativePath}.
+   *
+   * @param other the target path
+   * @return the relative path adapter
    */
   @Override
   public Path relativize (Path other) {
@@ -193,7 +244,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Delegates to the native path's {@link Path#toUri()} implementation.
+   *
+   * @return the URI of the native path
    */
   @Override
   public URI toUri () {
@@ -202,7 +255,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the absolute form of the native path, wrapped in a {@link NativePath}.
+   *
+   * @return the absolute path adapter
    */
   @Override
   public Path toAbsolutePath () {
@@ -211,7 +266,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves the real (canonical) form of the native path, wrapped in a {@link NativePath}.
+   *
+   * @param options link options passed through to the native path
+   * @return the real path adapter
+   * @throws IOException if the native path cannot be resolved
    */
   @Override
   public Path toRealPath (LinkOption... options)
@@ -221,7 +280,14 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Registers the native path with the given watch service for the specified events.
+   * Delegates entirely to the native path.
+   *
+   * @param watcher   the watch service to register with
+   * @param events    the event kinds to watch for
+   * @param modifiers optional modifiers
+   * @return the resulting {@link WatchKey}
+   * @throws IOException if registration fails
    */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
@@ -231,7 +297,11 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Compares this path to {@code other} using native path ordering. If {@code other} is a
+   * {@link NativePath} its underlying native path is used for the comparison.
+   *
+   * @param other the path to compare to
+   * @return a negative integer, zero, or positive integer per the native path contract
    */
   @Override
   public int compareTo (Path other) {
@@ -240,7 +310,9 @@ public class NativePath implements Path {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the string representation of the native path.
+   *
+   * @return the native path string; never {@code null}
    */
   @Override
   public String toString () {

@@ -37,37 +37,31 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines a single component of a cache key used by {@link VectorCalculator}.
+ * Embedded annotation that describes one segment of a cache vector key, referencing either
+ * a method parameter, a durable field, or a literal constant.
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Key {
 
   /**
-   * Name of the method parameter or field contributing to the key.
-   *
-   * @return parameter or field identifier, or literal value when {@link #constant()} is true
+   * Parameter or bean-property name that supplies the key value, or the literal constant itself when {@link #constant()} is {@code true}.
+   * Defaults to {@code "id"}.
    */
   String value () default "id";
 
   /**
-   * Alternate label to embed within the generated key segment.
-   *
-   * @return alias applied to the key component
+   * Optional label embedded in the cache key segment in place of the raw value name.
    */
   String alias () default "";
 
   /**
-   * Indicates whether {@link #value()} represents a literal constant instead of a parameter or field name.
-   *
-   * @return {@code true} when the key component is a constant
+   * When {@code true}, {@link #value()} is used as a literal string constant rather than a parameter or field name.
    */
   boolean constant () default false;
 
   /**
-   * Specifies whether a null value is allowed for this key component.
-   *
-   * @return {@code true} if the key may include a null value
+   * When {@code true}, a {@code null} value for this key component is permitted; otherwise a null causes an error.
    */
   boolean nullable () default false;
 }

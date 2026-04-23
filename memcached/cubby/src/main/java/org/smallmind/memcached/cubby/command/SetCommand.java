@@ -41,7 +41,24 @@ import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.memcached.cubby.translator.KeyTranslator;
 
 /**
- * Implements the memcached set, add, replace, append and prepend operations along with CAS support.
+ * Command that implements the memcached meta-set ({@code ms}) operation,
+ * covering unconditional set, add-only, replace-only, append, and prepend
+ * mutations along with optional CAS protection.
+ *
+ * <p>The specific mutation variant is selected via {@link #setMode(SetMode)}.
+ * When no mode is supplied and the CAS token is {@code 0} the command
+ * automatically promotes itself to an add-only ({@code E}) operation and
+ * requests the resulting CAS token, which is the convention used by the
+ * Cubby client for optimistic upserts.</p>
+ *
+ * <p>Append and prepend operations support optional <em>vivification</em>:
+ * when {@link #setVivify(boolean) vivify} is {@code true} and the key is
+ * absent, the server creates it with the supplied value and applies the
+ * configured expiration as the initial TTL.</p>
+ *
+ * <p>The resulting byte array from {@link #construct(KeyTranslator)} contains
+ * the {@code ms} command header, the value payload, and a trailing CRLF as
+ * required by the meta-protocol.</p>
  */
 public class SetCommand extends Command {
 
@@ -65,10 +82,10 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Assigns the cache key.
+   * Sets the cache key to write.
    *
-   * @param key cache key
-   * @return this command for chaining
+   * @param key the key to store the value under
+   * @return this command instance, for method chaining
    */
   public SetCommand setKey (String key) {
 
@@ -78,10 +95,10 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Supplies the serialized value payload.
+   * Supplies the pre-serialized value payload to store in the cache.
    *
-   * @param value encoded value bytes
-   * @return this command for chaining
+   * @param value the encoded value bytes to write
+   * @return this command instance, for method chaining
    */
   public SetCommand setValue (byte[] value) {
 
@@ -91,10 +108,12 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Sets the operation mode (set/add/replace/append/prepend).
+   * Selects the mutation variant (set, add, replace, append, or prepend).
+   * When not set and the CAS token is {@code 0}, the command defaults to
+   * an add-only upsert mode.
    *
-   * @param mode set mode token
-   * @return this command for chaining
+   * @param mode the {@link SetMode} describing the desired mutation semantics
+   * @return this command instance, for method chaining
    */
   public SetCommand setMode (SetMode mode) {
 
@@ -104,10 +123,14 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Adds a CAS token to guard the mutation.
+   * Supplies a CAS token so the mutation is applied only when the server-side
+   * version of the item matches the token, providing optimistic-concurrency
+   * protection. A token of {@code 0} is treated as a sentinel that triggers
+   * add-only semantics.
    *
-   * @param cas compare-and-swap token
-   * @return this command for chaining
+   * @param cas the compare-and-swap token obtained from a previous read,
+   *            or {@code 0} to request add-only upsert behavior
+   * @return this command instance, for method chaining
    */
   public SetCommand setCas (Long cas) {
 
@@ -117,10 +140,13 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Sets the expiration in seconds for the value.
+   * Sets the time-to-live for the stored item. For append and prepend
+   * operations this value is used as the initial TTL when vivification
+   * creates a new key; for all other modes it sets (or refreshes) the
+   * item's expiration.
    *
-   * @param expiration expiration time in seconds
-   * @return this command for chaining
+   * @param expiration the time-to-live in seconds
+   * @return this command instance, for method chaining
    */
   public SetCommand setExpiration (Integer expiration) {
 
@@ -130,10 +156,14 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Enables creation of a previously absent key when appending or prepending.
+   * Enables <em>vivification</em> for append and prepend operations: when
+   * {@code true} and the target key does not exist, the server creates it
+   * with the supplied value and expiration rather than silently discarding
+   * the write.
    *
-   * @param vivify {@code true} to create the key if missing
-   * @return this command for chaining
+   * @param vivify {@code true} to create a missing key during append/prepend;
+   *               {@code false} to leave absent keys untouched
+   * @return this command instance, for method chaining
    */
   public SetCommand setVivify (boolean vivify) {
 
@@ -143,10 +173,11 @@ public class SetCommand extends Command {
   }
 
   /**
-   * Attaches an opaque token echoed by the server in responses.
+   * Attaches an opaque correlation token that the server echoes back verbatim
+   * in its response, allowing callers to correlate pipelined replies.
    *
-   * @param opaqueToken token to include
-   * @return this command for chaining
+   * @param opaqueToken an arbitrary string token to include in the request
+   * @return this command instance, for method chaining
    */
   public SetCommand setOpaqueToken (String opaqueToken) {
 
@@ -157,6 +188,13 @@ public class SetCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Builds the {@code ms} meta-set command line followed by the value bytes
+   * and a trailing CRLF. The flags appended depend on the configured mode, CAS
+   * token, expiration, vivify setting, and opaque token. A CAS value of {@code 0}
+   * with no explicit mode (or with {@link SetMode#SET}) causes the command to be
+   * promoted to add-only ({@link SetMode#ADD}) with the {@code c} flag so the
+   * server returns the resulting CAS token.</p>
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -208,6 +246,14 @@ public class SetCommand extends Command {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Response codes {@code EX} (CAS mismatch), {@code NF} (not found, for
+   * replace-only), and {@code NS} (not stored, for add-only) all indicate that
+   * the write did not take effect and return an unsuccessful result.
+   * {@code HD} indicates that the item was stored successfully.</p>
+   *
+   * @throws UnexpectedResponseException if the response code is none of
+   *                                     {@code EX}, {@code NF}, {@code NS}, or {@code HD}
    */
   @Override
   public Result process (Response response)

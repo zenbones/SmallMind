@@ -38,7 +38,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that a method is one-way and should not expect a response or declared exceptions.
+ * Marks a service method as fire-and-forget: the caller sends the request but never waits
+ * for a reply. Methods carrying this annotation must return {@code void}, and any declared
+ * checked exceptions are not propagated over the wire. Use {@link InOut} for methods that
+ * require a response.
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

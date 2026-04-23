@@ -47,8 +47,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 /**
- * Pluggable SAX {@link ContentHandler} that delegates element processing to {@link ElementExtender} instances produced by a {@link DocumentExtender}.
- * Provides static helper methods to parse an {@link InputSource} with optional validation.
+ * SAX {@link ContentHandler} that dispatches element events to pluggable {@link ElementExtender} instances supplied by a {@link DocumentExtender}.
+ * Static {@code parse} helpers configure and execute a full SAX parse with optional schema validation.
  */
 public class ExtensibleSAXParser implements ContentHandler {
 
@@ -58,9 +58,9 @@ public class ExtensibleSAXParser implements ContentHandler {
   private boolean documentTerminated;
 
   /**
-   * Creates a parser bound to the supplied document extender.
+   * Creates a parser bound to the given document extender.
    *
-   * @param documentExtender factory/handler for document-level events
+   * @param documentExtender the document extender that drives document- and element-level event handling
    */
   private ExtensibleSAXParser (DocumentExtender documentExtender) {
 
@@ -73,14 +73,14 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * Parses the input source using validation and the provided resolvers.
+   * Parses the supplied XML input with schema validation enabled, delegating events to the given document extender.
    *
-   * @param documentExtender document extender to drive parsing
-   * @param inputSource      XML input
-   * @param entityResolver   resolver for external entities
-   * @throws IOException                  on I/O failure
-   * @throws SAXException                 on SAX parsing errors
-   * @throws ParserConfigurationException if the parser cannot be created
+   * @param documentExtender the document extender that handles document- and element-level events
+   * @param inputSource      the XML input to parse
+   * @param entityResolver   the entity resolver used to locate external entities
+   * @throws IOException                  if an I/O error occurs while reading the input
+   * @throws SAXException                 if a SAX parsing error occurs
+   * @throws ParserConfigurationException if the SAX parser cannot be configured
    */
   public static void parse (DocumentExtender documentExtender, InputSource inputSource, EntityResolver entityResolver)
     throws IOException, SAXException, ParserConfigurationException {
@@ -89,15 +89,15 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * Parses the input source with optional validation.
+   * Parses the supplied XML input with optional schema validation, delegating events to the given document extender.
    *
-   * @param documentExtender document extender to drive parsing
-   * @param inputSource      XML input
-   * @param entityResolver   resolver for external entities
-   * @param validating       whether to perform schema/DTD validation
-   * @throws IOException                  on I/O failure
-   * @throws SAXException                 on SAX parsing errors
-   * @throws ParserConfigurationException if the parser cannot be created
+   * @param documentExtender the document extender that handles document- and element-level events
+   * @param inputSource      the XML input to parse
+   * @param entityResolver   the entity resolver used to locate external entities
+   * @param validating       {@code true} to enable schema/DTD validation
+   * @throws IOException                  if an I/O error occurs while reading the input
+   * @throws SAXException                 if a SAX parsing error occurs
+   * @throws ParserConfigurationException if the SAX parser cannot be configured
    */
   public static void parse (DocumentExtender documentExtender, InputSource inputSource, EntityResolver entityResolver, boolean validating)
     throws IOException, SAXException, ParserConfigurationException {
@@ -106,15 +106,15 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * Internal helper that wires the content handler and kicks off parsing.
+   * Builds, configures, and runs a SAX parser for the supplied input.
    *
-   * @param documentExtender document extender to drive parsing
-   * @param inputSource      XML input
-   * @param entityResolver   resolver for external entities
-   * @param validating       whether validation is enabled
-   * @throws IOException                  on I/O failure
-   * @throws SAXException                 on SAX parsing errors
-   * @throws ParserConfigurationException if the parser cannot be created
+   * @param documentExtender the document extender that handles document- and element-level events
+   * @param inputSource      the XML input to parse
+   * @param entityResolver   the entity resolver used to locate external entities
+   * @param validating       {@code true} to enable schema/DTD validation
+   * @throws IOException                  if an I/O error occurs while reading the input
+   * @throws SAXException                 if a SAX parsing error occurs
+   * @throws ParserConfigurationException if the SAX parser cannot be configured
    */
   private static void internalParse (DocumentExtender documentExtender, InputSource inputSource, EntityResolver entityResolver, boolean validating)
     throws IOException, SAXException, ParserConfigurationException {
@@ -142,7 +142,9 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * @return {@code true} once {@link #endDocument()} has been invoked
+   * Returns whether the document end event has been received.
+   *
+   * @return {@code true} once {@link #endDocument()} has been called
    */
   public boolean isDocumentTerminated () {
 
@@ -150,14 +152,18 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op; the document locator is not used by this implementation.
+   *
+   * @param locator the document locator provided by the parser (ignored)
    */
   public void setDocumentLocator (Locator locator) {
 
   }
 
   /**
-   * {@inheritDoc}
+   * Forwards the document-start event to the document extender and pushes it onto the extender stack.
+   *
+   * @throws SAXException if the document extender signals an error
    */
   public void startDocument ()
     throws SAXException {
@@ -167,7 +173,9 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Clears the extender stack, forwards the document-end event to the document extender, and marks the document as terminated.
+   *
+   * @throws SAXException if the document extender signals an error
    */
   public void endDocument ()
     throws SAXException {
@@ -179,7 +187,13 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Obtains an {@link ElementExtender} from the document extender, wires it into the stack, and forwards the element-start event.
+   *
+   * @param namespaceURI the namespace URI of the element
+   * @param localName    the local name of the element
+   * @param qName        the qualified name of the element
+   * @param atts         the attributes of the element
+   * @throws SAXException if no extender is available or an extender signals an error
    */
   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
     throws SAXException {
@@ -204,7 +218,12 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Pops the current extender and content buffer, forwards the element-end event to the extender, and notifies the parent extender.
+   *
+   * @param namespaceURI the namespace URI of the element
+   * @param localName    the local name of the element
+   * @param qName        the qualified name of the element
+   * @throws SAXException if an extender signals an error
    */
   public void endElement (String namespaceURI, String localName, String qName)
     throws SAXException {
@@ -220,7 +239,12 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Appends the supplied characters to the content buffer of the current element.
+   *
+   * @param ch     the characters reported by the parser
+   * @param start  the start index within {@code ch}
+   * @param length the number of characters to use from {@code ch}
+   * @throws SAXException never thrown by this implementation
    */
   public void characters (char[] ch, int start, int length)
     throws SAXException {
@@ -229,7 +253,12 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * Appends ignorable whitespace to the content buffer of the current element.
+   *
+   * @param ch     the whitespace characters reported by the parser
+   * @param start  the start index within {@code ch}
+   * @param length the number of characters to use from {@code ch}
+   * @throws SAXException never thrown by this implementation
    */
   public void ignorableWhitespace (char[] ch, int start, int length)
     throws SAXException {
@@ -238,7 +267,11 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op; processing instructions are not handled by this implementation.
+   *
+   * @param target the processing instruction target (ignored)
+   * @param data   the processing instruction data (ignored)
+   * @throws SAXException never thrown by this implementation
    */
   public void processingInstruction (String target, String data)
     throws SAXException {
@@ -246,7 +279,10 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op; skipped entities are not handled by this implementation.
+   *
+   * @param name the name of the skipped entity (ignored)
+   * @throws SAXException never thrown by this implementation
    */
   public void skippedEntity (String name)
     throws SAXException {
@@ -254,7 +290,11 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op; namespace prefix mappings are not tracked by this implementation.
+   *
+   * @param prefix the namespace prefix being mapped (ignored)
+   * @param uri    the namespace URI associated with the prefix (ignored)
+   * @throws SAXException never thrown by this implementation
    */
   public void startPrefixMapping (String prefix, String uri)
     throws SAXException {
@@ -262,7 +302,10 @@ public class ExtensibleSAXParser implements ContentHandler {
   }
 
   /**
-   * {@inheritDoc}
+   * No-op; namespace prefix mapping ends are not tracked by this implementation.
+   *
+   * @param prefix the namespace prefix whose mapping has ended (ignored)
+   * @throws SAXException never thrown by this implementation
    */
   public void endPrefixMapping (String prefix)
     throws SAXException {

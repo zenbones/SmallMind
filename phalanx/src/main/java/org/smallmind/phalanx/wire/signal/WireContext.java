@@ -36,10 +36,12 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import org.smallmind.nutsnbolts.context.Context;
 
-@XmlAccessorType(XmlAccessType.PROPERTY)
 /**
- * Base class for contextual metadata propagated with wire calls.
+ * Abstract base for contextual metadata objects propagated alongside wire invocations;
+ * subclasses carry domain-specific data (e.g., security tokens, trace identifiers) that
+ * cross service boundaries transparently.
  */
+@XmlAccessorType(XmlAccessType.PROPERTY)
 public abstract class WireContext implements Context {
 
 }

@@ -33,14 +33,15 @@
 package org.smallmind.nutsnbolts.reflection;
 
 /**
- * Placeholder used when proxying {@link Object} to ensure base methods can be overridden.
+ * Concrete stand-in for {@link Object} that makes its base methods ({@code hashCode}, {@code equals},
+ * {@code toString}) visible to the ASM proxy generator so they can be overridden in generated subclasses.
  */
 public class ObjectImpersonator {
 
   /**
-   * Delegates to {@link Object#hashCode()}.
+   * Delegates to the superclass {@link Object#hashCode()} implementation.
    *
-   * @return the object's hash code
+   * @return this object's identity hash code
    */
   public int hashCode () {
 
@@ -48,10 +49,10 @@ public class ObjectImpersonator {
   }
 
   /**
-   * Delegates to {@link Object#equals(Object)}.
+   * Delegates to the superclass {@link Object#equals(Object)} implementation.
    *
-   * @param obj the object to compare
-   * @return {@code true} if the objects are equal
+   * @param obj the reference object with which to compare
+   * @return {@code true} if this object is the same as {@code obj}; {@code false} otherwise
    */
   public boolean equals (Object obj) {
 
@@ -59,9 +60,9 @@ public class ObjectImpersonator {
   }
 
   /**
-   * Delegates to {@link Object#toString()}.
+   * Delegates to the superclass {@link Object#toString()} implementation.
    *
-   * @return a string representation of the object
+   * @return a string representation consisting of the class name and identity hash code
    */
   public String toString () {
 

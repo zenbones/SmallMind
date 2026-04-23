@@ -43,9 +43,11 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
 /**
- * Object value wrapper that supports overlay mutations while preserving the original backing object.
+ * Overlay {@link ObjectValue} that layers a mutable outer object on top of an immutable inner object,
+ * tracking explicit removals separately so that the merged view always reflects the intended state
+ * without modifying the original.
  *
- * @param <V> concrete value type used in messages
+ * @param <V> the concrete {@link Value} subtype carried by this object
  */
 public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
 
@@ -54,9 +56,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   private HashSet<String> removedSet;
 
   /**
-   * Wraps an existing object value for copy-on-write style updates.
+   * Wraps {@code innerObjectValue} as the read-through backing object.
    *
-   * @param innerObjectValue underlying object to wrap
+   * @param innerObjectValue original object whose fields are exposed through this view; never modified
    */
   public MergingObjectValue (ObjectValue<V> innerObjectValue) {
 
@@ -64,7 +66,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * @return factory associated with the underlying object
+   * Returns the {@link ValueFactory} associated with the inner object.
+   *
+   * @return value factory for creating new values of type {@code V}
    */
   @Override
   public ValueFactory<V> getFactory () {
@@ -73,7 +77,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * @return number of visible fields
+   * Returns the number of fields visible in the merged view, accounting for additions and removals.
+   *
+   * @return distinct field count across inner and outer objects, excluding removed fields
    */
   @Override
   public int size () {
@@ -82,7 +88,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * @return {@code true} when no fields are visible
+   * Reports whether the merged view contains no visible fields.
+   *
+   * @return {@code true} when the effective field count is zero
    */
   @Override
   public boolean isEmpty () {
@@ -91,7 +99,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * @return iterator over visible field names
+   * Returns an iterator over the names of all fields visible in the merged view.
+   *
+   * @return iterator of field name strings reflecting the current merged state
    */
   @Override
   public Iterator<String> fieldNames () {
@@ -100,9 +110,10 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Computes the merged set of field names considering removals and additions.
+   * Computes the effective set of field names by unioning inner and outer fields, then excluding
+   * any names that have been explicitly removed.
    *
-   * @return set of field names
+   * @return mutable set of currently visible field names
    */
   private HashSet<String> fieldNameSet () {
 
@@ -124,10 +135,13 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Retrieves a field value, creating wrappers for nested structures when necessary.
+   * Retrieves the value for {@code field} from the merged view, giving priority to the outer overlay.
+   * Nested objects and arrays read from the inner object are promoted into the overlay as
+   * {@link MergingObjectValue} and {@link CopyOnWriteArrayValue} wrappers respectively so that
+   * future mutations remain isolated.
    *
-   * @param field field name
-   * @return value or {@code null} if removed or missing
+   * @param field name of the field to look up
+   * @return the effective value, or {@code null} if the field is absent or has been removed
    */
   @Override
   public Value<V> get (String field) {
@@ -172,11 +186,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Puts or replaces a field in the overlay object.
+   * Stores {@code value} under {@code field} in the outer overlay, creating the overlay lazily,
+   * and also removes the field from the removal set if it was previously deleted.
    *
-   * @param field field name
-   * @param value value to store
-   * @return this object
+   * @param field name of the field to set
+   * @param value value to associate with the field
+   * @return this object for chaining
    */
   @Override
   public <U extends Value<V>> ObjectValue<V> put (String field, U value) {
@@ -191,10 +206,12 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Removes a field from both overlay and base objects.
+   * Removes {@code field} from the merged view by deleting it from the overlay and recording it in
+   * the removal set so that the inner object's copy is suppressed.
    *
-   * @param field field name to remove
-   * @return removed value if present
+   * @param field name of the field to remove
+   * @return the previously effective value (from the overlay if present, otherwise from the inner object),
+   * or {@code null} if the field was not visible
    */
   @Override
   public Value<V> remove (String field) {
@@ -213,9 +230,9 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Removes all visible fields.
+   * Clears the merged view by discarding the outer overlay and marking every inner field as removed.
    *
-   * @return this object
+   * @return this object for chaining
    */
   @Override
   public ObjectValue<V> removeAll () {
@@ -234,10 +251,11 @@ public class MergingObjectValue<V extends Value<V>> implements ObjectValue<V> {
   }
 
   /**
-   * Encodes the merged view of overlay and base objects.
+   * Writes the merged JSON object representation to {@code writer}, emitting overlay fields first
+   * and then any inner fields not shadowed by the overlay or suppressed by the removal set.
    *
-   * @param writer destination writer
-   * @throws IOException if encoding fails
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
    */
   @Override
   public void encode (Writer writer)

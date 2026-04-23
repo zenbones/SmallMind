@@ -33,13 +33,29 @@
 package org.smallmind.sleuth.runner.annotation;
 
 /**
- * Strategy for translating a specific annotation model into Sleuth {@link AnnotationDictionary} metadata.
+ * Strategy for scanning a class and translating its annotations into Sleuth lifecycle metadata.
+ * <p>
+ * Implementations understand a specific annotation dialect — Sleuth native annotations, TestNG
+ * annotations, etc. — and produce an {@link AnnotationDictionary} that normalises those
+ * annotations into the lifecycle model used by the runner. Multiple translators are registered
+ * with an {@link AnnotationProcessor}, which tries each in order until one returns a populated
+ * dictionary.
+ *
+ * @see NativeAnnotationTranslator
+ * @see TestNGAnnotationTranslator
+ * @see AnnotationProcessor
  */
 public interface AnnotationTranslator {
 
   /**
-   * @param clazz class to inspect
-   * @return populated annotation dictionary (may be empty but non-null)
+   * Inspects the supplied class for supported annotations and builds a lifecycle dictionary.
+   * <p>
+   * The returned dictionary may be empty (i.e., {@link AnnotationDictionary#isImplemented()}
+   * returns {@code false}) when no supported annotations are present. Implementations must
+   * never return {@code null}.
+   *
+   * @param clazz class to inspect; never {@code null}
+   * @return populated or empty annotation dictionary; never {@code null}
    */
   AnnotationDictionary process (Class<?> clazz);
 }

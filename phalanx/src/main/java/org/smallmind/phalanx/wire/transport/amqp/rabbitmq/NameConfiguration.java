@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 /**
- * Holds queue and exchange names for RabbitMQ transports.
+ * Holds the logical name suffixes for RabbitMQ exchanges and queues used by the phalanx transports.
  */
 public class NameConfiguration {
 
@@ -45,7 +45,9 @@ public class NameConfiguration {
   private String whisperQueue = "whisperQueue";
 
   /**
-   * @return name of the request exchange.
+   * Returns the suffix applied to the request exchange name.
+   *
+   * @return request exchange name suffix.
    */
   public String getRequestExchange () {
 
@@ -53,7 +55,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param requestExchange name of the request exchange.
+   * Sets the suffix applied to the request exchange name.
+   *
+   * @param requestExchange request exchange name suffix.
    */
   public void setRequestExchange (String requestExchange) {
 
@@ -61,7 +65,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @return name of the response exchange.
+   * Returns the suffix applied to the response exchange name.
+   *
+   * @return response exchange name suffix.
    */
   public String getResponseExchange () {
 
@@ -69,7 +75,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param responseExchange name of the response exchange.
+   * Sets the suffix applied to the response exchange name.
+   *
+   * @param responseExchange response exchange name suffix.
    */
   public void setResponseExchange (String responseExchange) {
 
@@ -77,7 +85,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @return name of the response queue.
+   * Returns the suffix applied to the response queue name.
+   *
+   * @return response queue name suffix.
    */
   public String getResponseQueue () {
 
@@ -85,7 +95,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param responseQueue name of the response queue.
+   * Sets the suffix applied to the response queue name.
+   *
+   * @param responseQueue response queue name suffix.
    */
   public void setResponseQueue (String responseQueue) {
 
@@ -93,7 +105,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @return name of the shout queue.
+   * Returns the suffix applied to the shout queue name.
+   *
+   * @return shout queue name suffix.
    */
   public String getShoutQueue () {
 
@@ -101,7 +115,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param shoutQueue name of the shout queue.
+   * Sets the suffix applied to the shout queue name.
+   *
+   * @param shoutQueue shout queue name suffix.
    */
   public void setShoutQueue (String shoutQueue) {
 
@@ -109,7 +125,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @return name of the talk queue.
+   * Returns the suffix applied to the talk queue name.
+   *
+   * @return talk queue name suffix.
    */
   public String getTalkQueue () {
 
@@ -117,7 +135,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param talkQueue name of the talk queue.
+   * Sets the suffix applied to the talk queue name.
+   *
+   * @param talkQueue talk queue name suffix.
    */
   public void setTalkQueue (String talkQueue) {
 
@@ -125,7 +145,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @return name of the whisper queue.
+   * Returns the suffix applied to the whisper queue name.
+   *
+   * @return whisper queue name suffix.
    */
   public String getWhisperQueue () {
 
@@ -133,7 +155,9 @@ public class NameConfiguration {
   }
 
   /**
-   * @param whisperQueue name of the whisper queue.
+   * Sets the suffix applied to the whisper queue name.
+   *
+   * @param whisperQueue whisper queue name suffix.
    */
   public void setWhisperQueue (String whisperQueue) {
 

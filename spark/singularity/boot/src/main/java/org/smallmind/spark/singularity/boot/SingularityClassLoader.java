@@ -58,8 +58,12 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
- * Custom class loader capable of resolving classes and resources from a Singularity bundle that packages nested jars and
- * class files using the {@code singularity:} URL scheme.
+ * Class loader that resolves classes and resources out of a Singularity bundle. The bundle packages application
+ * classes, boot classes, and every runtime dependency (as nested jars under {@code META-INF/singularity/lib/}) into
+ * a single outer jar, and is navigated via the serialized {@link SingularityIndex} written at build time.
+ * <p>On first touch the loader installs a {@link SingularityJarURLStreamHandlerFactory} so that {@code singularity:}
+ * URLs generated from the index can be opened. Classes in certain JDK-shadowed namespaces (XML/W3C, for example) are
+ * refused so that platform-provided implementations are used instead.
  */
 public class SingularityClassLoader extends ClassLoader {
 
@@ -88,14 +92,15 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Creates a class loader pre-populated with URLs derived from the provided manifest and Singularity index.
+   * Reads the Singularity index from the jar and materializes the URL table used to resolve every class and resource
+   * that the bundle provides.
    *
-   * @param parent         optional parent class loader
-   * @param manifest       manifest from the enclosing jar
-   * @param jarURL         URL of the enclosing jar file
-   * @param jarInputStream stream of the jar content positioned at the beginning
-   * @throws IOException            if the Singularity index cannot be found or read
-   * @throws ClassNotFoundException if required classes cannot be loaded while bootstrapping
+   * @param parent         optional parent class loader; {@code null} delegates to the system loader for fallthrough
+   * @param manifest       the outer jar's manifest, consulted for package metadata and the optional {@code Sealed} attribute
+   * @param jarURL         the URL of the outer jar, used both to anchor generated entry URLs and to seal packages
+   * @param jarInputStream an open stream over the outer jar; advanced until the index entry is located and read
+   * @throws IOException            if the {@code META-INF/singularity/index/singularity.idx} entry cannot be located or deserialized
+   * @throws ClassNotFoundException if deserializing the index references a class that cannot be loaded
    */
   public SingularityClassLoader (ClassLoader parent, Manifest manifest, URL jarURL, JarInputStream jarInputStream)
     throws IOException, ClassNotFoundException {
@@ -160,12 +165,13 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Attempts to load the requested class from the Singularity bundle before delegating to the parent/system loader.
+   * Resolves a class, preferring bundled definitions and falling back to the parent loader (or the system loader
+   * when no parent is configured).
    *
-   * @param name    fully qualified class name
-   * @param resolve whether the class should be linked after loading
-   * @return the resolved {@link Class}
-   * @throws ClassNotFoundException if the class cannot be located by this loader or its parents
+   * @param name    fully qualified binary class name
+   * @param resolve {@code true} to link the class after loading
+   * @return the loaded {@link Class}
+   * @throws ClassNotFoundException if no definition is available from this loader, its parent, or the system loader
    */
   @Override
   protected synchronized Class<?> loadClass (String name, boolean resolve)
@@ -193,11 +199,14 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Locates and defines a class from the mapped Singularity resources if the namespace is operable.
+   * Reads the class bytes from the bundle and defines the class, taking care to construct a {@link CodeSource} whose
+   * URL survives the quirks of {@code javax.crypto.JarVerifier} when the entry lives behind a {@code singularity:}
+   * URL.
    *
-   * @param name fully qualified class name
-   * @return the defined class
-   * @throws ClassNotFoundException if the class data cannot be located or defined
+   * @param name fully qualified binary class name
+   * @return the newly defined class
+   * @throws ClassNotFoundException if the class is not mapped by this loader, lives in a reserved namespace, or
+   *                                cannot be read, deserialized, or defined for any reason
    */
   @Override
   protected Class<?> findClass (String name)
@@ -264,10 +273,12 @@ public class SingularityClassLoader extends ClassLoader {
   */
 
   /**
-   * Determines whether the class should be resolved by this loader based on allow and deny namespace lists.
+   * Decides whether a class name falls within the subset this loader is allowed to resolve.
+   * <p>Names matching an entry in the allow list are admitted unconditionally; names matching an entry in the deny
+   * list are refused so that the platform's own copy is used; everything else is admitted.
    *
-   * @param name fully qualified class name
-   * @return {@code true} if the namespace can be handled, {@code false} otherwise
+   * @param name fully qualified binary class name
+   * @return {@code true} if this loader is willing to define the class, {@code false} if it must defer
    */
   private boolean isOperableNamespace (String name) {
 
@@ -288,9 +299,10 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Ensures that the package for the specified class is defined with the correct manifest metadata and sealing.
+   * Defines the enclosing package the first time a class from that package is loaded, applying specification and
+   * implementation metadata from the outer jar's manifest and the optional seal base.
    *
-   * @param name fully qualified class name
+   * @param name fully qualified binary class name; its enclosing package is the text preceding the last dot
    */
   private synchronized void definePackage (String name) {
 
@@ -304,11 +316,11 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Reads an entire class stream into a byte array.
+   * Slurps a stream of class bytes into a single byte array.
    *
-   * @param classInputStream stream containing the class bytes
-   * @return the class data as a byte array
-   * @throws IOException if the stream cannot be read completely
+   * @param classInputStream stream over the raw class file bytes
+   * @return every byte read from the stream, ready to hand to {@link ClassLoader#defineClass}
+   * @throws IOException if reading from the stream fails
    */
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
@@ -324,10 +336,10 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Resolves a single resource from the Singularity URL map.
+   * Looks up a single resource in the index, normalizing an optional leading slash.
    *
-   * @param name resource name, optionally prefixed with a slash
-   * @return the resource URL or {@code null} if not found
+   * @param name resource name, with or without a leading {@code '/'}
+   * @return the URL recorded for that resource, or {@code null} if the name is empty or unknown
    */
   @Override
   protected URL findResource (String name) {
@@ -351,10 +363,11 @@ public class SingularityClassLoader extends ClassLoader {
   */
 
   /**
-   * Resolves all matching resources from the Singularity URL map.
+   * Enumerates matching resources. For names ending in a slash this method behaves as a directory listing: every
+   * indexed file that begins with the given prefix (excluding directory placeholders) is returned.
    *
-   * @param name resource name or directory prefix
-   * @return an enumeration of matching resource URLs, possibly empty
+   * @param name resource name or directory-style prefix
+   * @return an {@link Enumeration} of matching URLs, possibly empty
    */
   @Override
   protected Enumeration<URL> findResources (String name) {
@@ -397,9 +410,10 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Enumeration wrapper used when a single value must be exposed as an {@link Enumeration}.
+   * Single-shot {@link Enumeration} used when exactly one resource must be exposed to an API that requires an
+   * enumeration.
    *
-   * @param <T> value type
+   * @param <T> the element type
    */
   private static class SingleEnumeration<T> implements Enumeration<T> {
 
@@ -407,7 +421,9 @@ public class SingularityClassLoader extends ClassLoader {
     private boolean used = false;
 
     /**
-     * @param value the sole element to enumerate
+     * Stores the sole value to hand out.
+     *
+     * @param value the only element the enumeration will ever return
      */
     private SingleEnumeration (T value) {
 
@@ -415,7 +431,9 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     /**
-     * @return {@code true} until the value has been consumed
+     * Reports whether the value is still available.
+     *
+     * @return {@code true} until {@link #nextElement()} has consumed the value
      */
     @Override
     public synchronized boolean hasMoreElements () {
@@ -424,8 +442,10 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     /**
-     * @return the single value
-     * @throws NoSuchElementException if the value has already been returned
+     * Returns the value once, then refuses further calls.
+     *
+     * @return the single element supplied at construction
+     * @throws NoSuchElementException on every call after the first
      */
     @Override
     public synchronized T nextElement () {
@@ -441,9 +461,9 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   /**
-   * Simple {@link Enumeration} backed by an array.
+   * {@link Enumeration} view over a fixed-size array.
    *
-   * @param <T> value type
+   * @param <T> the element type
    */
   private static class ArrayEnumeration<T> implements Enumeration<T> {
 
@@ -451,7 +471,9 @@ public class SingularityClassLoader extends ClassLoader {
     private int index = 0;
 
     /**
-     * @param values array backing the enumeration
+     * Wraps the supplied array; the array is not copied, so callers must not mutate it afterward.
+     *
+     * @param values backing array whose elements will be returned in order
      */
     private ArrayEnumeration (T[] values) {
 
@@ -459,7 +481,9 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     /**
-     * @return {@code true} while unread elements remain
+     * Reports whether additional elements remain.
+     *
+     * @return {@code true} while the cursor has not yet reached the end of the array
      */
     @Override
     public boolean hasMoreElements () {
@@ -468,7 +492,9 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     /**
-     * @return the next element in sequence
+     * Advances the cursor and returns the next element.
+     *
+     * @return the next array element in order
      */
     @Override
     public T nextElement () {

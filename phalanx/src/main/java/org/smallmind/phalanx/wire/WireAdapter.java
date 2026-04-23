@@ -33,43 +33,46 @@
 package org.smallmind.phalanx.wire;
 
 /**
- * Adapter that marshals between transported values and business objects.
+ * Abstract adapter responsible for converting between a wire transport representation ({@code V})
+ * and a domain business object ({@code B}).
+ * Subclasses provide type-specific marshal and unmarshal logic used during
+ * serialization and deserialization of wire messages.
  *
- * @param <V> transport representation type
- * @param <B> business object type
+ * @param <V> the serialized transport value type
+ * @param <B> the domain business object type
  */
 public abstract class WireAdapter<V, B> {
 
   /**
-   * Protected constructor to limit instantiation to subclasses.
+   * Constructs a new {@code WireAdapter}; accessible only by subclasses.
    */
   protected WireAdapter () {
 
   }
 
   /**
-   * Returns the transport value type this adapter handles.
+   * Returns the class representing the serialized transport value type {@code V}.
    *
-   * @return class of the serialized form
+   * @return the {@link Class} of the transport value
    */
   public abstract Class<V> getValueType ();
 
   /**
-   * Converts the transported value into the business object.
+   * Converts a serialized transport value into its corresponding domain business object.
    *
-   * @param obj serialized value
-   * @return unmarshalled business object
-   * @throws Exception if conversion fails
+   * @param obj the serialized transport value to convert; may be {@code null} if the transport permits it
+   * @return the unmarshalled domain business object
+   * @throws Exception if the conversion cannot be completed
    */
   public abstract B unmarshal (V obj)
     throws Exception;
 
   /**
-   * Converts the business object into the transport value representation.
+   * Converts a domain business object into its serialized transport value representation.
    *
-   * @param obj business object to marshal
-   * @return serialized value
-   * @throws Exception if conversion fails
+   * @param obj the domain business object to convert; may be {@code null} if the transport permits it
+   * @return the serialized transport value
+   * @throws Exception if the conversion cannot be completed
    */
   public abstract V marshal (B obj)
     throws Exception;

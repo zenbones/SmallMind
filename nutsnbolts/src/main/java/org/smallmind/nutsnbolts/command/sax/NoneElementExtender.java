@@ -37,13 +37,15 @@ import org.smallmind.nutsnbolts.command.template.NoneArgument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
 /**
- * Builds a {@link NoneArgument} representing an option that takes no arguments.
+ * SAX element extender for the {@code <none>} element that produces the singleton {@link NoneArgument} representing an option that accepts no value.
  */
 public class NoneElementExtender extends AbstractElementExtender implements ArgumentCompiler {
 
   private NoneArgument noneArgument;
 
   /**
+   * Returns the compiled argument as an {@link Argument} reference.
+   *
    * @return singleton {@link NoneArgument}
    */
   @Override
@@ -53,7 +55,9 @@ public class NoneElementExtender extends AbstractElementExtender implements Argu
   }
 
   /**
-   * @return cached {@link NoneArgument} instance
+   * Returns the singleton none-argument instance produced when the element closed.
+   *
+   * @return {@link NoneArgument} singleton, or {@code null} before the element has ended
    */
   public NoneArgument getNoneArgument () {
 
@@ -61,7 +65,12 @@ public class NoneElementExtender extends AbstractElementExtender implements Argu
   }
 
   /**
-   * Produces the none-argument value at the end of the element.
+   * Retrieves the singleton {@link NoneArgument} instance when the element ends.
+   *
+   * @param namespaceURI   namespace URI of the closing element
+   * @param localName      local name of the closing element
+   * @param qName          qualified name of the closing element
+   * @param contentBuilder text content accumulated within the element (unused)
    */
   @Override
   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {

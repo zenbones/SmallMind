@@ -46,17 +46,17 @@ import tools.jackson.databind.node.JsonNodeType;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * JAXB adapter that serializes polymorphic types by wrapping them in a single-key object whose key
- * corresponds to {@link XmlRootElement#name()}.
+ * JAXB adapter that serializes polymorphic types by wrapping their JSON representation in a
+ * single-key object whose key is the {@link XmlRootElement#name()} of the concrete subclass.
  *
- * @param <T> polymorphic base type
+ * @param <T> polymorphic base type handled by this adapter
  */
 public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
 
   private final Class<?> baseClass;
 
   /**
-   * Resolves the polymorphic base class from the generic type parameter.
+   * Resolves the polymorphic base class from the generic type argument of this adapter.
    */
   public PolymorphicXmlAdapter () {
 
@@ -64,12 +64,12 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
   }
 
   /**
-   * Deserializes a single-field JSON object into the appropriate subclass, using the field name as
-   * the polymorphic discriminator.
+   * Deserializes a single-entry JSON object into the appropriate subclass by treating the entry key
+   * as the polymorphic discriminator.
    *
-   * @param node JSON node representing the polymorphic value
+   * @param node JSON node expected to be a single-field object
    * @return instantiated subclass
-   * @throws JAXBProcessingException if the payload is improperly formatted or cannot be resolved
+   * @throws JAXBProcessingException if the node is malformed or the discriminator key cannot be resolved
    */
   @Override
   public T unmarshal (JsonNode node) {
@@ -109,11 +109,11 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
   }
 
   /**
-   * Serializes a subclass instance by wrapping it in an object keyed by its {@link XmlRootElement#name()}.
+   * Serializes a subclass instance into a single-entry object keyed by its {@link XmlRootElement#name()}.
    *
-   * @param value value to serialize
-   * @return JSON node containing the wrapped value
-   * @throws JAXBProcessingException if the subclass lacks the required annotation
+   * @param value subclass instance to serialize
+   * @return JSON node wrapping the payload under the subclass root-element key
+   * @throws JAXBProcessingException if the subclass is missing the {@link XmlRootElement} annotation
    */
   @Override
   public JsonNode marshal (T value) {

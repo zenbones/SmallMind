@@ -49,7 +49,9 @@ import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.zip.CompressionType;
 
 /**
- * Deploys the packaged Tanuki wrapper application artifact to the configured distribution repository.
+ * Mojo goal {@code deploy-wrapper} that uploads the aggregated Tanuki wrapper archive produced by
+ * {@link GenerateWrapperMojo} to the project's distribution repository, using an {@code app} (or
+ * {@code classifier-app}) classifier so that it coexists with the primary project artifact.
  */
 @Mojo(name = "deploy-wrapper", defaultPhase = LifecyclePhase.DEPLOY, threadSafe = true)
 public class DeployWrapperMojo extends AbstractMojo {
@@ -74,9 +76,11 @@ public class DeployWrapperMojo extends AbstractMojo {
   private ArtifactDeployer artifactDeployer;
 
   /**
-   * Deploys the assembled wrapper archive unless skipped.
+   * Resolves the archive filename from the configuration, creates a classified artifact for it, and hands it to the
+   * Maven deployer.
    *
-   * @throws MojoExecutionException if deployment fails or configuration is invalid
+   * @throws MojoExecutionException if the {@code compression} value is not a known {@link CompressionType}, or if
+   *                                the deployer reports an {@link ArtifactDeploymentException}
    */
   public void execute ()
     throws MojoExecutionException {

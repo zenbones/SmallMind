@@ -33,17 +33,29 @@
 package org.smallmind.memcached.utility;
 
 /**
- * CAS-aware wrapper containing a value and its associated token.
+ * Pairs a decoded cached value with the CAS (compare-and-swap) token returned by the server.
+ *
+ * <p>Instances are returned by {@link ProxyMemcachedClient#casGet(String)} and are used by
+ * callers that need to perform optimistic-lock updates via
+ * {@link ProxyMemcachedClient#casSet(String, int, Object, long)} or
+ * {@link ProxyMemcachedClient#casDelete(String, long)}.</p>
+ *
+ * @param <T> the type of the cached value
  */
 public interface ProxyCASResponse<T> {
 
   /**
-   * @return decoded value
+   * Returns the decoded cached value associated with the key.
+   *
+   * @return the cached value; may be {@code null} if the server explicitly stored a null
    */
   T getValue ();
 
   /**
-   * @return compare-and-swap token
+   * Returns the CAS token that must be supplied in a subsequent conditional write to
+   * verify that no concurrent modification has occurred.
+   *
+   * @return the server-issued compare-and-swap token
    */
   long getCas ();
 }

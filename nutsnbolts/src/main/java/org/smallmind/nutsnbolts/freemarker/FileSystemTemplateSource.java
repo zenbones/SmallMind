@@ -38,7 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Represents a file-system-based FreeMarker template source, deferring stream creation until requested.
+ * Handle for a file-system-based FreeMarker template, lazily opening the underlying {@link InputStream} on first request and used by {@link FileSystemTemplateLoader}.
  */
 public class FileSystemTemplateSource {
 
@@ -46,6 +46,8 @@ public class FileSystemTemplateSource {
   private InputStream inputStream;
 
   /**
+   * Constructs a source backed by the specified file-system path; the stream is not opened until {@link #getInputStream} is first called.
+   *
    * @param templatePath path to the template file
    */
   public FileSystemTemplateSource (Path templatePath) {
@@ -54,7 +56,9 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * @return path to the underlying template file
+   * Returns the file-system path of the template file.
+   *
+   * @return the template's {@link Path}
    */
   public Path getTemplatePath () {
 
@@ -62,8 +66,10 @@ public class FileSystemTemplateSource {
   }
 
   /**
+   * Returns the last-modified time of the template file in milliseconds since the epoch.
+   *
    * @return last-modified timestamp in milliseconds
-   * @throws IOException if file metadata cannot be read
+   * @throws IOException if the file's metadata cannot be read
    */
   public long getLastModified ()
     throws IOException {
@@ -72,7 +78,9 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * @return {@code true} if the path points to a regular file
+   * Returns {@code true} if the path refers to an existing regular file.
+   *
+   * @return {@code true} if the template file exists
    */
   public boolean exists () {
 
@@ -80,9 +88,9 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * Opens or returns a cached input stream to the template.
+   * Returns an input stream for reading the template, opening it on first call and returning the same stream on subsequent calls.
    *
-   * @return input stream positioned at the start of the file
+   * @return input stream positioned at the start of the template file
    * @throws IOException if the file cannot be opened
    */
   public synchronized InputStream getInputStream ()
@@ -96,9 +104,9 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * Closes the input stream if it was opened.
+   * Closes the input stream if it was previously opened.
    *
-   * @throws IOException if closure fails
+   * @throws IOException if closing the stream fails
    */
   public synchronized void close ()
     throws IOException {
@@ -109,9 +117,9 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * Computes a hash based on the underlying file path.
+   * Returns a hash code derived from the underlying file path.
    *
-   * @return hash value for collections
+   * @return hash code of the template path
    */
   @Override
   public int hashCode () {
@@ -120,10 +128,10 @@ public class FileSystemTemplateSource {
   }
 
   /**
-   * Compares sources by underlying path.
+   * Returns {@code true} when the other object is a {@link FileSystemTemplateSource} pointing to the same file-system path.
    *
-   * @param obj object to compare
-   * @return {@code true} when the template paths match
+   * @param obj the object to compare with this source
+   * @return {@code true} if both sources refer to the same path
    */
   @Override
   public boolean equals (Object obj) {

@@ -37,18 +37,18 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Simple command-line utility that prints generated key pairs in common formats.
+ * Command-line utility that generates an asymmetric key pair and prints it in standard PEM formats.
  */
 public class AsymmetricKeyGenerator {
 
   /**
-   * Generates a key pair for the supplied algorithm and writes the public key in OpenSSH format and
-   * the private key in PKCS8 PEM format to standard out.
+   * Generates a key pair for the named algorithm and writes the public key in OpenSSH format and the
+   * private key in PKCS8 PEM format to standard output.
    *
-   * @param args expects a single argument containing the asymmetric algorithm name (e.g., {@code RSA})
+   * @param args a single-element array whose first element is the {@link AsymmetricAlgorithm} name (e.g., {@code RSA})
    * @throws IOException                   if key encoding fails
-   * @throws NoSuchAlgorithmException      if the requested algorithm is not available
-   * @throws InappropriateKeySpecException if the key cannot be serialized using the expected spec
+   * @throws NoSuchAlgorithmException      if the requested algorithm is not available in the current JVM
+   * @throws InappropriateKeySpecException if the generated key cannot be serialized in the expected spec format
    */
   public static void main (String... args)
     throws IOException, NoSuchAlgorithmException, InappropriateKeySpecException {

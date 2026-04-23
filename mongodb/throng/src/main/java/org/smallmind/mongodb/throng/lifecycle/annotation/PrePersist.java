@@ -37,13 +37,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a no-arg instance method to run before an entity is persisted to BSON.
+ * Only applicable to {@code @Entity} classes.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-// public method () {}
-// Only usable in @Entity classes
-/**
- * Marks an instance method to run before an entity is persisted to BSON.
- */
 public @interface PrePersist {
 
 }

@@ -33,37 +33,40 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Transport responsible for receiving requests and returning results.
+ * Contract for the server-side transport that receives inbound invocation requests,
+ * dispatches them to registered {@link WiredService} implementations, and returns results
+ * to the caller via the response channel.
  */
 public interface ResponseTransport {
 
   /**
-   * Returns the instance id this transport represents.
+   * Returns the unique instance id assigned to this transport, used by callers to address
+   * whisper (point-to-point) requests to a specific node.
    *
-   * @return unique instance identifier
+   * @return unique instance identifier for this transport node
    */
   String getInstanceId ();
 
   /**
-   * Registers a target service for invocation handling.
+   * Registers a {@link WiredService} implementation to handle inbound requests for the given interface.
    *
-   * @param serviceInterface service interface exposed by the transport
-   * @param targetService    service implementation wrapper
-   * @return correlation id or registration token
-   * @throws Exception if registration fails
+   * @param serviceInterface interface that identifies which inbound requests to route here
+   * @param targetService    wired service wrapper around the implementation
+   * @return a registration token or subscription id returned by the underlying broker
+   * @throws Exception if registration with the underlying transport fails
    */
   String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception;
 
   /**
-   * Retrieves the current transport state.
+   * Returns the current lifecycle state of this transport.
    *
-   * @return current state
+   * @return current {@link TransportState}
    */
   TransportState getState ();
 
   /**
-   * Starts consuming and processing requests.
+   * Activates request consumption; the transport begins dispatching inbound requests.
    *
    * @throws Exception if activation fails
    */
@@ -71,7 +74,8 @@ public interface ResponseTransport {
     throws Exception;
 
   /**
-   * Temporarily suspends request handling.
+   * Suspends request consumption without closing the transport; inbound requests are held or discarded
+   * depending on the underlying broker.
    *
    * @throws Exception if suspension fails
    */
@@ -79,7 +83,7 @@ public interface ResponseTransport {
     throws Exception;
 
   /**
-   * Shuts down the transport and releases resources.
+   * Shuts down this transport, stops consuming requests, and releases all associated resources.
    *
    * @throws Exception if shutdown fails
    */

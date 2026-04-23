@@ -35,18 +35,27 @@ package org.smallmind.quorum.pool.complex;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Fuse that triggers when a component remains idle longer than the configured limit.
+ * A {@link DeconstructionFuse} that fires when a component has been idle on the free queue
+ * longer than {@link ComplexPoolConfig#getMaxIdleTimeSeconds()}.
+ * <p>
+ * The fuse is scheduled whenever the component is returned to the free queue ({@link #free()}).
+ * It is cancelled when the component is taken by a caller ({@link #serve()}), because idle
+ * time only accumulates while the component is not in use.
+ * <p>
+ * Idle-timeout removal is <em>non-prejudicial</em>: the fuse will only ignite when the
+ * component is sitting idle and will not force-remove a component that is currently being
+ * processed by a caller.
  */
 public class MaxIdleTimeDeconstructionFuse extends DeconstructionFuse {
 
   private final ComponentPool<?> componentPool;
 
   /**
-   * Creates the fuse for idle timeout tracking.
+   * Creates the fuse for idle-timeout tracking.
    *
-   * @param componentPool             owning pool
-   * @param deconstructionQueue       queue for scheduling ignition
-   * @param deconstructionCoordinator coordinator invoked on ignition
+   * @param componentPool             the pool whose configuration supplies the idle timeout
+   * @param deconstructionQueue       the queue that will fire this fuse when the time elapses
+   * @param deconstructionCoordinator the coordinator that acts when this fuse ignites
    */
   public MaxIdleTimeDeconstructionFuse (ComponentPool<?> componentPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
@@ -56,7 +65,10 @@ public class MaxIdleTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Idle timeout is not prejudicial.
+   * Returns {@code false} because an idle-timeout ignition should not force-remove a
+   * component that is currently checked out by a caller.
+   *
+   * @return {@code false}
    */
   @Override
   public boolean isPrejudicial () {
@@ -65,7 +77,10 @@ public class MaxIdleTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Schedules ignition when the component becomes free, based on the idle timeout.
+   * Schedules ignition when the component is placed on the free queue.
+   * <p>
+   * The ignition time is set to the current time plus the configured idle timeout,
+   * registering the fuse with the {@link DeconstructionQueue}.
    */
   @Override
   public void free () {
@@ -74,7 +89,10 @@ public class MaxIdleTimeDeconstructionFuse extends DeconstructionFuse {
   }
 
   /**
-   * Cancels any pending idle ignition while the component is in use.
+   * Cancels any pending ignition when the component is taken by a caller.
+   * <p>
+   * Idle time only accumulates when the component is sitting on the free queue, so the
+   * timer is always reset when the component becomes active.
    */
   @Override
   public void serve () {

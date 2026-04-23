@@ -84,7 +84,9 @@ public class CompoundIndex {
   }
 
   /**
-   * @return array of indexed elements that make up the compound index
+   * Returns the indexed elements that make up this compound index.
+   *
+   * @return array of indexed elements
    */
   public IndexedElement[] getIndexedElements () {
 
@@ -92,7 +94,9 @@ public class CompoundIndex {
   }
 
   /**
-   * @return options applied to this compound index
+   * Returns the options applied to this compound index.
+   *
+   * @return the index options
    */
   public IndexOptions getIndexOptions () {
 

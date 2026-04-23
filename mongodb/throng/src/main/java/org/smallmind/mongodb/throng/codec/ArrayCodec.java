@@ -43,9 +43,10 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 /**
- * Codec that converts Java array types to and from BSON arrays while delegating element encoding to a component codec.
+ * Driver {@link Codec} that converts a typed Java array to and from a BSON array, delegating individual element
+ * encoding and decoding to a component codec.
  *
- * @param <T> the array type being encoded/decoded
+ * @param <T> the array type (e.g. {@code String[]})
  */
 public class ArrayCodec<T> implements Codec<T> {
 
@@ -55,12 +56,12 @@ public class ArrayCodec<T> implements Codec<T> {
   private final boolean storeNulls;
 
   /**
-   * Constructs an array codec.
+   * Constructs the codec for a specific array type.
    *
-   * @param arrayClass     the array class being handled (e.g. {@code String[].class})
-   * @param componentClass the component type contained in the array
-   * @param itemCodec      codec for encoding/decoding each array element
-   * @param storeNulls     whether {@code null} array values should be written explicitly
+   * @param arrayClass     the array class to handle (e.g. {@code String[].class})
+   * @param componentClass the component type of the array (e.g. {@code String.class})
+   * @param itemCodec      the codec used to encode and decode each array element
+   * @param storeNulls     {@code true} to write a BSON null when the array value itself is {@code null}
    */
   public ArrayCodec (Class<T> arrayClass, Class<?> componentClass, Codec<?> itemCodec, boolean storeNulls) {
 
@@ -71,7 +72,9 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the array class this codec handles.
+   *
+   * @return the array class
    */
   @Override
   public Class<T> getEncoderClass () {
@@ -80,11 +83,12 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   /**
-   * Decodes a BSON array into a Java array of the configured component type.
+   * Decodes the current BSON array into a Java array of the configured component type, or returns {@code null}
+   * when the current BSON value is null.
    *
-   * @param reader         source reader positioned at the array
-   * @param decoderContext decoder context
-   * @return decoded Java array or {@code null} when the BSON value is {@code null}
+   * @param reader         the BSON reader positioned at the array
+   * @param decoderContext the decoder context from the driver
+   * @return the decoded Java array, or {@code null}
    */
   @Override
   public T decode (BsonReader reader, DecoderContext decoderContext) {
@@ -114,11 +118,12 @@ public class ArrayCodec<T> implements Codec<T> {
   }
 
   /**
-   * Encodes a Java array into a BSON array using the configured element codec.
+   * Encodes the given Java array as a BSON array using the element codec; writes BSON null if the value is
+   * {@code null} and null storage is enabled.
    *
-   * @param writer         destination writer
-   * @param value          array to encode
-   * @param encoderContext encoder context
+   * @param writer         the destination BSON writer
+   * @param value          the array to encode
+   * @param encoderContext the encoder context from the driver
    */
   @Override
   public void encode (BsonWriter writer, T value, EncoderContext encoderContext) {
@@ -140,13 +145,13 @@ public class ArrayCodec<T> implements Codec<T> {
   // Due to the fact that object is not of type 'capture of ?'
 
   /**
-   * Performs encoding of a single element using the provided codec, sidestepping wildcard capture limitations.
+   * Re-encodes a single array element using the provided codec, working around Java's wildcard capture restriction.
    *
-   * @param writer         destination writer
-   * @param codec          codec to use for the value
-   * @param stuff          element to encode
-   * @param encoderContext encoder context
-   * @param <U>            element type
+   * @param writer         the destination BSON writer
+   * @param codec          the codec to use for the element
+   * @param stuff          the element value to encode
+   * @param encoderContext the encoder context from the driver
+   * @param <U>            the element type
    */
   protected <U> void reEncode (BsonWriter writer, Codec<U> codec, Object stuff, EncoderContext encoderContext) {
 

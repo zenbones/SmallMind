@@ -43,10 +43,11 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Base Quartz job that wraps {@link ProxyJob} semantics with Quartz's
- * {@link InterruptableJob} lifecycle. The implementation tracks execution
- * timing, success/failure state, processed count, and any thrown errors,
- * logging outcomes on completion.
+ * Abstract Quartz job that adapts {@link ProxyJob} semantics to Quartz's
+ * {@link InterruptableJob} lifecycle. Manages execution timing, thread
+ * registration for interrupt support, status tracking, and structured
+ * completion logging. Subclasses implement only {@link #proceed()} and
+ * optionally {@link #cleanup()}.
  */
 public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
 
@@ -59,8 +60,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   private int count = 0;
 
   /**
-   * Creates a new proxy job with initial success status and empty error
-   * collection.
+   * Initializes state to {@link SuccessOrFailure#SUCCESS} with an empty error list.
    */
   public QuartzProxyJob () {
 
@@ -68,10 +68,10 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Default enabled flag. Subclasses can override to provide conditional
-   * enablement logic.
+   * Returns {@code true} unconditionally. Override to gate execution on
+   * external configuration or runtime conditions.
    *
-   * @return {@code true} indicating the job should run
+   * @return {@code true}, indicating the job should run by default
    */
   @Override
   public boolean isEnabled () {
@@ -80,10 +80,10 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Current execution status. Defaults to {@link SuccessOrFailure#SUCCESS}
-   * and is updated when errors or interruptions occur.
+   * Current job outcome, initialized to {@link SuccessOrFailure#SUCCESS} and
+   * updated if errors or an interrupt are encountered during execution.
    *
-   * @return the job status for the most recent execution
+   * @return the most recently recorded {@link SuccessOrFailure} value
    */
   @Override
   public SuccessOrFailure getJobStatus () {
@@ -92,9 +92,9 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Timestamp when execution began.
+   * Time at which the most recent {@link #execute(JobExecutionContext)} call began.
    *
-   * @return start time, or {@code null} if the job has not run
+   * @return start timestamp, or {@code null} if the job has not yet run
    */
   @Override
   public LocalDateTime getStartTime () {
@@ -103,9 +103,9 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Timestamp when execution completed.
+   * Time at which the most recent {@link #execute(JobExecutionContext)} call finished.
    *
-   * @return stop time, or {@code null} if the job has not run
+   * @return stop timestamp, or {@code null} if the job has not yet run
    */
   @Override
   public LocalDateTime getStopTime () {
@@ -114,7 +114,7 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Increment the processed count by one in a thread-safe manner.
+   * Atomically increments the processed-item count by one.
    */
   @Override
   public synchronized void incCount () {
@@ -123,9 +123,9 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Increment the processed count by the provided value.
+   * Adds an arbitrary amount to the processed-item count in a single operation.
    *
-   * @param additional number of units to add to the current count
+   * @param additional number of items to add; must be non-negative
    */
   public synchronized void addToCount (int additional) {
 
@@ -133,9 +133,9 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Retrieves the processed count captured for the execution.
+   * Current processed-item count for the running or most recent execution.
    *
-   * @return current count value
+   * @return item count
    */
   @Override
   public synchronized int getCount () {
@@ -144,9 +144,9 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Returns any errors recorded during execution.
+   * Errors recorded during the current or most recent execution.
    *
-   * @return array of {@link Throwable}s or {@code null} when none exist
+   * @return array of {@link Throwable}s, or {@code null} if no errors were recorded
    */
   @Override
   public synchronized Throwable[] getThrowables () {
@@ -165,9 +165,11 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Records a throwable and marks the job as failed.
+   * Records an error and unconditionally marks this job as
+   * {@link SuccessOrFailure#FAILURE}. Delegates to
+   * {@link #setThrowable(Throwable, boolean)} with {@code isFailure = true}.
    *
-   * @param throwable the error encountered during execution
+   * @param throwable error to record
    */
   @Override
   public synchronized void setThrowable (Throwable throwable) {
@@ -176,11 +178,11 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Records a throwable and optionally marks the job as failed. All recorded
-   * errors are logged immediately.
+   * Records an error and optionally marks this job as failed. The error is
+   * logged immediately regardless of the {@code isFailure} flag.
    *
-   * @param throwable the error encountered during execution
-   * @param isFailure {@code true} to mark job status as {@link SuccessOrFailure#FAILURE}
+   * @param throwable the error to record
+   * @param isFailure {@code true} to transition status to {@link SuccessOrFailure#FAILURE}
    */
   public synchronized void setThrowable (Throwable throwable, boolean isFailure) {
 
@@ -194,8 +196,8 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Attempts to interrupt the executing thread for this job when Quartz
-   * requests cancellation.
+   * Interrupts the thread currently executing this job, if one is registered.
+   * Has no effect when the job is not actively running.
    */
   @Override
   public void interrupt () {
@@ -208,12 +210,16 @@ public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
   }
 
   /**
-   * Quartz entry point. Captures start/stop timestamps, tracks the executing
-   * thread to support interruption, delegates to {@link #proceed()}, and logs
-   * outcome information. Errors are recorded via {@link #setThrowable(Throwable)}
-   * and cleanup is attempted in all cases.
+   * Quartz entry point. Records start and stop times, registers the executing
+   * thread so that {@link #interrupt()} can reach it, delegates to
+   * {@link #proceed()}, and logs a structured completion message. An
+   * {@link InterruptedException} transitions status to
+   * {@link SuccessOrFailure#INTERRUPTED}; any other exception is forwarded to
+   * {@link #setThrowable(Throwable)}. {@link #cleanup()} is always invoked in
+   * the finally block, and any exception it raises is logged without
+   * propagation.
    *
-   * @param jobExecutionContext Quartz execution context for the fired trigger
+   * @param jobExecutionContext context provided by Quartz for the fired trigger
    */
   @Override
   public void execute (JobExecutionContext jobExecutionContext) {

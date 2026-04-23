@@ -42,8 +42,8 @@ import org.smallmind.web.json.scaffold.fault.Fault;
 import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
 /**
- * Global exception mapper that delegates to supplied mappers, preserves WebApplicationException responses,
- * and converts unhandled errors into JSON {@link Fault} payloads.
+ * Catch-all JAX-RS exception mapper that tries registered delegate mappers first, passes through
+ * {@link WebApplicationException} responses, and converts everything else into a JSON {@link Fault} with HTTP 500.
  */
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
@@ -51,9 +51,9 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
   private final boolean logUnclassifiedErrors;
 
   /**
-   * Constructs a mapper that does not log unclassified errors.
+   * Constructs a mapper with no delegate mappers and unclassified-error logging disabled.
    *
-   * @param mappers optional mapper overrides to try first
+   * @param mappers zero or more {@link ConcreteExceptionMapper} instances to consult before the default handling
    */
   public ThrowableExceptionMapper (ExceptionMapper... mappers) {
 
@@ -61,10 +61,10 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
   }
 
   /**
-   * Constructs a mapper with control over unclassified error logging.
+   * Constructs a mapper with optional delegate mappers and configurable logging of unhandled exceptions.
    *
-   * @param logUnclassifiedErrors whether to log exceptions that are not handled elsewhere
-   * @param mappers               optional mapper overrides to try first
+   * @param logUnclassifiedErrors {@code true} to log exceptions that fall through to the default handler
+   * @param mappers               zero or more {@link ConcreteExceptionMapper} instances to consult first
    */
   public ThrowableExceptionMapper (boolean logUnclassifiedErrors, ExceptionMapper... mappers) {
 
@@ -73,11 +73,11 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
   }
 
   /**
-   * Produces a response for the given throwable, consulting custom mappers, honoring WebApplicationException responses,
-   * and falling back to a {@link Fault} payload.
+   * Converts a throwable to a JAX-RS response by delegating to registered mappers, returning existing
+   * {@link WebApplicationException} responses, or producing a 500 JSON fault.
    *
-   * @param throwable exception thrown during request processing
-   * @return HTTP response representing the error
+   * @param throwable the exception to map
+   * @return the HTTP response representing the error
    */
   @Override
   public Response toResponse (Throwable throwable) {

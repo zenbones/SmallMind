@@ -1,16 +1,18 @@
 package org.smallmind.license;
 
 /**
- * Supported line ending styles that may be applied when writing generated notice content.
+ * Enumerates the line-ending styles that can be applied when writing generated notice content.
  */
 public enum LineEndings {
 
   /**
-   * Always use a single line feed ({@code \n}) regardless of platform.
+   * Always emit a Unix line feed ({@code \n}), regardless of the host operating system.
    */
   UNIX,
+
   /**
-   * Use the platform default line separator as returned from {@code System.getProperty("line.separator")}.
+   * Emit the host platform's default line separator as returned by
+   * {@code System.getProperty("line.separator")}.
    */
   SYSTEM
 }

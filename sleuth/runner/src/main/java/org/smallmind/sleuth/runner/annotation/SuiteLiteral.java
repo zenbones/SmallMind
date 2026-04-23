@@ -35,7 +35,16 @@ package org.smallmind.sleuth.runner.annotation;
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 /**
- * Runtime literal implementation of {@link Suite}.
+ * Concrete {@link Suite} annotation instance for programmatic construction at runtime.
+ * <p>
+ * Annotation literals provide a live object implementing an annotation type, enabling
+ * {@link AnnotationTranslator} implementations to synthesise suite metadata without compile-time
+ * annotations. For example, {@link TestNGAnnotationTranslator} creates a {@code SuiteLiteral}
+ * from a TestNG class-level {@code @Test} annotation to map its groups, priority, and dependency
+ * configuration into Sleuth terms.
+ *
+ * @see Suite
+ * @see AnnotationTranslator
  */
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
@@ -46,7 +55,8 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   private String[] groups;
 
   /**
-   * Constructs a default enabled suite with no dependencies.
+   * Constructs a default suite literal representing an enabled suite with priority zero and no
+   * group membership, ordering constraints, or dependencies.
    */
   public SuiteLiteral () {
 
@@ -56,11 +66,13 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @param groups       groups the suite belongs to
-   * @param priority     execution priority
-   * @param executeAfter suites to execute after (soft requirement)
-   * @param dependsOn    suites this suite depends on
-   * @param enabled      whether the suite should run
+   * Constructs a fully specified suite literal.
+   *
+   * @param groups       group names the suite belongs to; may be {@code null} for no groups
+   * @param priority     scheduling priority; lower values execute first
+   * @param executeAfter names of suites that must finish before this one starts (soft ordering)
+   * @param dependsOn    names of suites that must succeed before this one starts (hard dependency)
+   * @param enabled      {@code false} to unconditionally exclude this suite from execution
    */
   public SuiteLiteral (String[] groups, int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
@@ -72,7 +84,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @return configured group names
+   * @return group names this suite belongs to; may be {@code null}
    */
   @Override
   public String[] groups () {
@@ -81,7 +93,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @return priority value used for ordering
+   * @return scheduling priority value; lower values run first
    */
   @Override
   public int priority () {
@@ -90,7 +102,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @return suite names that must complete before this one
+   * @return names of suites that must complete (regardless of outcome) before this one starts
    */
   @Override
   public String[] executeAfter () {
@@ -99,7 +111,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @return suite names that must succeed before this one
+   * @return names of suites that must succeed before this one starts
    */
   @Override
   public String[] dependsOn () {
@@ -108,7 +120,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   /**
-   * @return whether the suite is enabled
+   * @return {@code true} if this suite participates in execution; {@code false} to exclude it
    */
   @Override
   public boolean enabled () {

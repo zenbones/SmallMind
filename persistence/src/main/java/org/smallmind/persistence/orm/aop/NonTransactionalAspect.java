@@ -38,13 +38,17 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 
 /**
- * Aspect that establishes and tears down non-transactional boundaries around annotated types and methods.
+ * AspectJ aspect that opens and closes non-transactional session boundaries around join points
+ * marked with {@link NonTransactional} at either the type or member level.
  */
 @Aspect
 public class NonTransactionalAspect {
 
   /**
-   * Starts a non-transactional boundary for any execution within a @NonTransactional class (unless overridden on the method).
+   * Opens a non-transactional boundary before executing any method or constructor within a
+   * {@code @NonTransactional} class that is not itself annotated with {@code @NonTransactional}.
+   *
+   * @param nonTransactional the class-level annotation providing boundary configuration
    */
   @Before(value = "@within(nonTransactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(NonTransactional)", argNames = "nonTransactional")
   public void beforeNonTransactionalClass (NonTransactional nonTransactional) {
@@ -53,7 +57,10 @@ public class NonTransactionalAspect {
   }
 
   /**
-   * Starts a non-transactional boundary for an explicitly annotated constructor or method.
+   * Opens a non-transactional boundary before executing an explicitly {@code @NonTransactional}-annotated
+   * method or constructor.
+   *
+   * @param nonTransactional the member-level annotation providing boundary configuration
    */
   @Before(value = "(execution(@NonTransactional * * (..)) || initialization(@NonTransactional new(..))) && @annotation(nonTransactional)", argNames = "nonTransactional")
   public void beforeNonTransactionalMethod (NonTransactional nonTransactional) {
@@ -62,7 +69,8 @@ public class NonTransactionalAspect {
   }
 
   /**
-   * Ends the boundary after successful execution within a @NonTransactional class.
+   * Closes the non-transactional boundary after a successful return from a method or constructor
+   * within a {@code @NonTransactional} class.
    */
   @AfterReturning(value = "@within(NonTransactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(NonTransactional)")
   public void afterReturnFromNonTransactionalClass () {
@@ -71,7 +79,7 @@ public class NonTransactionalAspect {
   }
 
   /**
-   * Ends the boundary after successful execution of an explicitly annotated member.
+   * Closes the non-transactional boundary after a successful return from an explicitly annotated member.
    */
   @AfterReturning(value = "(execution(@NonTransactional * * (..)) || initialization(@NonTransactional new(..))) && @annotation(NonTransactional)")
   public void afterReturnFromNonTransactionalMethod () {
@@ -80,7 +88,10 @@ public class NonTransactionalAspect {
   }
 
   /**
-   * Ends the boundary when an exception escapes from a @NonTransactional class.
+   * Closes the non-transactional boundary after an exception propagates out of a method or constructor
+   * within a {@code @NonTransactional} class.
+   *
+   * @param throwable the exception that escaped the boundary
    */
   @AfterThrowing(value = "@within(NonTransactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(NonTransactional)", throwing = "throwable")
   public void afterThrowFromNonTransactionalClass (Throwable throwable) {
@@ -89,7 +100,9 @@ public class NonTransactionalAspect {
   }
 
   /**
-   * Ends the boundary when an exception escapes from an explicitly annotated member.
+   * Closes the non-transactional boundary after an exception propagates out of an explicitly annotated member.
+   *
+   * @param throwable the exception that escaped the boundary
    */
   @AfterThrowing(value = "(execution(@NonTransactional * * (..)) || initialization(@NonTransactional new(..))) && @annotation(NonTransactional)", throwing = "throwable")
   public void afterThrowFromNonTransactionalMethod (Throwable throwable) {

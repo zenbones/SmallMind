@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.security.x509;
 import java.math.BigInteger;
 
 /**
- * Holds the modulus and exponent extracted from an RSA key.
+ * Immutable value object holding the modulus and exponent extracted from an RSA public or private key.
  */
 public class RSAKeyFactors {
 
@@ -43,8 +43,10 @@ public class RSAKeyFactors {
   private final BigInteger exponent;
 
   /**
-   * @param modulus  the RSA modulus
-   * @param exponent the public or private exponent
+   * Constructs an RSA key factor pair from the given modulus and exponent.
+   *
+   * @param modulus  the RSA modulus ({@code n})
+   * @param exponent the public exponent ({@code e}) or private exponent ({@code d})
    */
   public RSAKeyFactors (BigInteger modulus, BigInteger exponent) {
 
@@ -53,7 +55,9 @@ public class RSAKeyFactors {
   }
 
   /**
-   * @return the modulus component
+   * Returns the RSA modulus component of the key.
+   *
+   * @return the modulus {@code n}
    */
   public BigInteger getModulus () {
 
@@ -61,7 +65,9 @@ public class RSAKeyFactors {
   }
 
   /**
-   * @return the exponent component
+   * Returns the exponent component of the key.
+   *
+   * @return the public exponent {@code e} or private exponent {@code d} depending on the key type
    */
   public BigInteger getExponent () {
 

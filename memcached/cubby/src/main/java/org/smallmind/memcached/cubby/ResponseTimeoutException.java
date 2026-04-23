@@ -35,14 +35,16 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 /**
- * Raised when a request is issued successfully but no response arrives before the timeout.
+ * Raised when a request was dispatched to a memcached server but no response was
+ * received within the configured response-wait deadline. Distinguishes a slow or
+ * unresponsive server from a connection-level timeout.
  */
 public class ResponseTimeoutException extends FormattedIOException {
 
   /**
-   * Constructs the exception with a formatted message.
+   * Constructs the exception with a formatted detail message.
    *
-   * @param message message format string
+   * @param message a format string for the exception message
    * @param args    arguments applied to the format string
    */
   public ResponseTimeoutException (String message, Object... args) {

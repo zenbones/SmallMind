@@ -35,7 +35,9 @@ package org.smallmind.memcached.cubby;
 import org.smallmind.nutsnbolts.lang.FormattedIOException;
 
 /**
- * Thrown when routing cannot identify an active memcached host for a request.
+ * Thrown when the client's routing layer cannot identify any active, reachable memcached
+ * host to service a request. This typically means every configured server is either
+ * down or has been removed from the pool.
  */
 public class NoAvailableHostException extends FormattedIOException {
 

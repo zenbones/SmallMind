@@ -37,15 +37,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
 /**
  * Identifies the primary identifier field for an entity.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface Id {
 
   /**
-   * @return persisted name of the id field, defaults to the Java field name when empty
+   * The name under which the id field is persisted in the BSON document; defaults to {@code "_id"}.
+   *
+   * @return the persisted id field name
    */
   String value () default "_id";
 }

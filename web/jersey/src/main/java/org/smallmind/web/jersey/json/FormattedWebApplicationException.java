@@ -38,16 +38,16 @@ import jakarta.ws.rs.core.Response;
 import org.smallmind.web.json.scaffold.fault.Fault;
 
 /**
- * WebApplicationException that wraps a {@link Fault} and serializes it as JSON.
+ * {@link WebApplicationException} that carries a {@link Fault} payload serialized as {@code application/json}.
  */
 public class FormattedWebApplicationException extends WebApplicationException {
 
   /**
-   * Builds a fault from a formatted message.
+   * Constructs the exception from a formatted message string, building the {@link Fault} with {@code String.format}.
    *
-   * @param status  HTTP status to return
-   * @param message message template
-   * @param args    template arguments
+   * @param status  HTTP status code for the response
+   * @param message format string for the fault message, or {@code null}
+   * @param args    arguments referenced by the format string
    */
   public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
@@ -55,10 +55,10 @@ public class FormattedWebApplicationException extends WebApplicationException {
   }
 
   /**
-   * Builds a fault from an underlying exception.
+   * Constructs the exception from a throwable, wrapping it in a {@link Fault} without native serialization.
    *
-   * @param status    HTTP status to return
-   * @param throwable underlying cause
+   * @param status    HTTP status code for the response
+   * @param throwable the underlying cause to wrap
    */
   public FormattedWebApplicationException (Response.Status status, Throwable throwable) {
 
@@ -66,10 +66,10 @@ public class FormattedWebApplicationException extends WebApplicationException {
   }
 
   /**
-   * Builds an exception from a preconstructed {@link Fault}.
+   * Constructs the exception directly from a pre-built {@link Fault}.
    *
-   * @param status HTTP status to return
-   * @param fault  fault payload to send
+   * @param status HTTP status code for the response
+   * @param fault  fault object to use as the JSON response entity
    */
   public FormattedWebApplicationException (Response.Status status, Fault fault) {
 

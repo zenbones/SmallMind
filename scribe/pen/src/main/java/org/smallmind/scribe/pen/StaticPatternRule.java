@@ -33,16 +33,18 @@
 package org.smallmind.scribe.pen;
 
 /**
- * Pattern rule that emits a static literal string.
+ * Pattern rule that unconditionally emits a fixed literal string, independent of the log record
+ * being formatted. Used by {@link PatternFormatter} to represent the literal text segments and
+ * the {@code %%} escape between conversion tokens.
  */
 public class StaticPatternRule implements PatternRule {
 
   private final String staticField;
 
   /**
-   * Creates a rule that always returns the given literal.
+   * Constructs a rule that always emits the given literal text.
    *
-   * @param staticField literal text to emit
+   * @param staticField the literal string to return on every call to {@link #convert}
    */
   public StaticPatternRule (String staticField) {
 
@@ -50,7 +52,7 @@ public class StaticPatternRule implements PatternRule {
   }
 
   /**
-   * Static rules do not produce headers.
+   * Returns {@code null} because static rules carry no conditional header text.
    *
    * @return always {@code null}
    */
@@ -60,7 +62,7 @@ public class StaticPatternRule implements PatternRule {
   }
 
   /**
-   * Static rules do not produce footers.
+   * Returns {@code null} because static rules carry no conditional footer text.
    *
    * @return always {@code null}
    */
@@ -70,7 +72,11 @@ public class StaticPatternRule implements PatternRule {
   }
 
   /**
-   * Returns the static literal regardless of record contents.
+   * Returns the fixed literal string this rule was constructed with, ignoring the record and timestamp entirely.
+   *
+   * @param record    the log record being formatted (unused)
+   * @param timestamp the timestamp provider (unused)
+   * @return the literal text supplied at construction time
    */
   public String convert (Record<?> record, Timestamp timestamp) {
 

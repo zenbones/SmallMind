@@ -36,16 +36,19 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.Level;
 
 /**
- * Utility for translating between scribe {@link Level} values and JUL {@link java.util.logging.Level}.
+ * Stateless utility class that converts between scribe {@link Level} values and JUL
+ * {@link java.util.logging.Level} constants, mapping FATAL to SEVERE and ALL/FINEST/FINER to TRACE.
  */
 public class JDKLevelTranslator {
 
   /**
-   * Converts a JUL level into the corresponding scribe level.
+   * Translates a JUL {@link java.util.logging.Level} to its scribe {@link Level} equivalent, mapping
+   * {@code ALL}, {@code FINEST}, and {@code FINER} to {@link Level#TRACE} and {@code SEVERE} to
+   * {@link Level#ERROR}.
    *
-   * @param level JUL level value
-   * @return the matching scribe level, or {@code null} if none provided
-   * @throws UnknownSwitchCaseException if the level is not recognized
+   * @param level the JUL level to translate; {@code null} returns {@code null}
+   * @return the corresponding scribe level, or {@code null} if {@code level} is {@code null}
+   * @throws UnknownSwitchCaseException if the JUL level is not one of the known constants
    */
   public static Level getLevel (java.util.logging.Level level) {
 
@@ -75,11 +78,12 @@ public class JDKLevelTranslator {
   }
 
   /**
-   * Converts a scribe level into the corresponding JUL level.
+   * Translates a scribe {@link Level} to its JUL {@link java.util.logging.Level} equivalent, mapping
+   * both {@link Level#FATAL} and {@link Level#ERROR} to {@link java.util.logging.Level#SEVERE}.
    *
-   * @param level scribe level value
-   * @return the matching JUL level
-   * @throws UnknownSwitchCaseException if the level is not recognized
+   * @param level the scribe level to translate
+   * @return the corresponding JUL level
+   * @throws UnknownSwitchCaseException if the scribe level is not a recognised switch case
    */
   public static java.util.logging.Level getJDKLevel (Level level) {
 

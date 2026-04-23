@@ -36,14 +36,15 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 /**
- * Simple wrapper around a {@link BsonDocument} that provides fluent helpers for Throng operations.
+ * Thin wrapper around a {@link BsonDocument} used as the document class for Throng driver operations,
+ * providing a fluent field-addition API.
  */
 public class ThrongDocument {
 
   private final BsonDocument bsonDocument;
 
   /**
-   * Creates an empty underlying {@link BsonDocument}.
+   * Creates an instance backed by a new empty {@link BsonDocument}.
    */
   public ThrongDocument () {
 
@@ -51,9 +52,9 @@ public class ThrongDocument {
   }
 
   /**
-   * Wraps the supplied {@link BsonDocument}.
+   * Creates an instance wrapping the provided {@link BsonDocument}.
    *
-   * @param bsonDocument backing document instance
+   * @param bsonDocument the document to wrap
    */
   public ThrongDocument (BsonDocument bsonDocument) {
 
@@ -61,9 +62,9 @@ public class ThrongDocument {
   }
 
   /**
-   * Exposes the raw {@link BsonDocument}.
+   * Returns the underlying {@link BsonDocument}.
    *
-   * @return the backing document
+   * @return the wrapped BSON document
    */
   public BsonDocument getBsonDocument () {
 
@@ -71,11 +72,11 @@ public class ThrongDocument {
   }
 
   /**
-   * Adds a key/value pair to the document and returns this wrapper for chaining.
+   * Puts the given key/value pair into the document and returns this instance for method chaining.
    *
-   * @param key   field name
-   * @param value field value
-   * @return this instance for fluent chaining
+   * @param key   the field name
+   * @param value the field value
+   * @return this {@link ThrongDocument} instance
    */
   public ThrongDocument add (String key, BsonValue value) {
 

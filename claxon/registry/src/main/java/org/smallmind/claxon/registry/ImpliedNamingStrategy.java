@@ -36,24 +36,45 @@ import java.util.Map;
 import org.smallmind.nutsnbolts.util.DotNotation;
 
 /**
- * A naming strategy that infers a meter prefix by matching the caller's class name against dot-notated patterns.
+ * A {@link NamingStrategy} that maps a caller class to a short metric prefix by finding
+ * the most specific {@link DotNotation} pattern in a configured prefix map.
+ *
+ * <p>Each entry in the prefix map associates a {@link DotNotation} pattern with a string
+ * prefix. When {@link #from(Class)} is called, every pattern is evaluated against the
+ * fully qualified name of the caller class using
+ * {@link DotNotation#calculateValue(String, int)}. The entry whose pattern yields the
+ * highest positive score is selected and its associated prefix string is returned as the
+ * meter name. If no pattern scores positively, or if the prefix map is empty or
+ * {@code null}, {@code null} is returned, which causes the registry to substitute a
+ * {@link NoOpMeter}.
+ *
+ * <p>This is the default {@link NamingStrategy} used by {@link ClaxonConfiguration}.
+ *
+ * @see ObviousNamingStrategy
  */
 public class ImpliedNamingStrategy implements NamingStrategy {
 
+  /**
+   * Map of {@link DotNotation} patterns to their associated metric name prefixes.
+   * May be {@code null} when no prefixes have been configured.
+   */
   private Map<DotNotation, String> prefixMap;
 
   /**
-   * Creates a strategy with no predefined prefixes.
+   * Creates a strategy with no prefix map configured. All calls to {@link #from(Class)}
+   * will return {@code null} until {@link #setPrefixMap(Map)} is called.
    */
   public ImpliedNamingStrategy () {
 
   }
 
   /**
-   * Supplies a map of {@link DotNotation} patterns to prefixes for later lookup.
+   * Supplies the map of {@link DotNotation} patterns to metric name prefixes used by
+   * this strategy.
    *
-   * @param prefixMap map of patterns to prefixes
-   * @return this strategy for chaining
+   * @param prefixMap a map whose keys are {@link DotNotation} patterns and whose values
+   *                  are the metric name prefixes to return for matching callers
+   * @return this strategy instance to support fluent chaining
    */
   public ImpliedNamingStrategy setPrefixMap (Map<DotNotation, String> prefixMap) {
 
@@ -63,10 +84,18 @@ public class ImpliedNamingStrategy implements NamingStrategy {
   }
 
   /**
-   * Resolves a prefix for the given caller based on the configured pattern map.
+   * Evaluates all configured patterns against the fully qualified name of {@code caller}
+   * and returns the prefix associated with the most specifically matching pattern.
    *
-   * @param caller the class requesting a name
-   * @return a prefix when a pattern matches, otherwise {@code null}
+   * <p>Pattern specificity is measured by the score returned from
+   * {@link DotNotation#calculateValue(String, int)}; a higher score indicates a more
+   * specific match. When two patterns score equally, the one encountered first in map
+   * iteration order wins. {@code null} is returned when the map is empty, unset, or when
+   * no pattern produces a positive score.
+   *
+   * @param caller the class for which a metric name prefix is requested
+   * @return the prefix string for the best-matching pattern, or {@code null} if no
+   * pattern matches
    */
   @Override
   public String from (Class<?> caller) {

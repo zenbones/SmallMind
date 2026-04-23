@@ -35,8 +35,8 @@ package org.smallmind.nutsnbolts.util;
 import java.util.regex.Pattern;
 
 /**
- * Parses glob-like dot notation patterns (with '.' separators, '*' and '?' wildcards) into regexes and assigns bitmask values per segment.
- * Useful for matching hierarchical names such as package-like identifiers.
+ * Compiles glob-style dot-notation patterns (using {@code .} separators and {@code *}/{@code ?} wildcards)
+ * into regular expressions and computes a bitmask value reflecting the number and kind of segments matched.
  */
 public class DotNotation {
 
@@ -54,17 +54,17 @@ public class DotNotation {
   private int value;
 
   /**
-   * Creates an uninitialized instance. Call {@link #setNotation(String)} before use.
+   * Constructs an uninitialized instance; {@link #setNotation(String)} must be called before use.
    */
   public DotNotation () {
 
   }
 
   /**
-   * Parses the provided pattern on construction.
+   * Constructs a {@code DotNotation} by immediately parsing the given pattern.
    *
-   * @param notation dot-notation pattern to translate
-   * @throws DotNotationException if the pattern is invalid
+   * @param notation the dot-notation pattern to compile
+   * @throws DotNotationException if the pattern is malformed
    */
   public DotNotation (String notation)
     throws DotNotationException {
@@ -72,13 +72,20 @@ public class DotNotation {
     setNotation(notation);
   }
 
+  /**
+   * Returns the compiled {@link Pattern} produced by parsing the most recent notation, or {@code null} if none was set.
+   *
+   * @return the compiled regex pattern
+   */
   public Pattern getPattern () {
 
     return pattern;
   }
 
   /**
-   * @return bitmask value accumulated while parsing the pattern
+   * Returns the bitmask value accumulated during parsing, where each distinct segment contributes a power-of-two bit.
+   *
+   * @return the segment bitmask value
    */
   public int getValue () {
 
@@ -86,10 +93,10 @@ public class DotNotation {
   }
 
   /**
-   * Parses and compiles a dot-notation pattern into an internal {@link Pattern}.
+   * Parses the given dot-notation pattern, compiles it into a {@link Pattern}, and stores the resulting bitmask value.
    *
-   * @param notation pattern containing identifiers, '.' separators, and wildcards
-   * @return this for chaining
+   * @param notation the pattern to parse, consisting of Java identifier segments separated by dots and optional wildcards
+   * @return this instance for method chaining
    * @throws DotNotationException if the pattern is malformed
    */
   public DotNotation setNotation (String notation)
@@ -104,17 +111,24 @@ public class DotNotation {
     return this;
   }
 
+  /**
+   * Returns this notation's bitmask value when the given name matches the compiled pattern, or {@code initial} otherwise.
+   *
+   * @param name    the name to test against the compiled pattern
+   * @param initial the value to return when the pattern is unset or the name does not match
+   * @return the notation's bitmask value on a match, or {@code initial} on no match
+   */
   public int calculateValue (String name, int initial) {
 
     return (pattern == null) ? initial : pattern.matcher(name).matches() ? value : initial;
   }
 
   /**
-   * Converts dot notation into a regex string and accompanying bitmask value.
+   * Translates a dot-notation pattern string into a {@link RegexConversion} holding the compiled regex and bitmask value.
    *
-   * @param notation pattern containing '.', '*', and '?' wildcards
-   * @return regex conversion results
-   * @throws DotNotationException if validation fails
+   * @param notation the pattern to translate, using Java identifier segments, dots, and {@code *}/{@code ?} wildcards
+   * @return a {@link RegexConversion} with the regex string and the computed bitmask value
+   * @throws DotNotationException if the pattern violates structural rules such as consecutive dots or misplaced wildcards
    */
   private RegexConversion createRegex (String notation)
     throws DotNotationException {
@@ -210,18 +224,22 @@ public class DotNotation {
     return new RegexConversion(patternBuilder.toString(), value);
   }
 
+  /**
+   * Holds the results of converting a dot-notation pattern: the compiled regex string and the segment bitmask value.
+   *
+   * @param regex the regex string derived from the dot-notation pattern
+   * @param value the bitmask value accumulated from the pattern's segments
+   */
   private record RegexConversion(String regex, int value) {
 
-    /**
-     * @param regex compiled regex string
-     * @param value bitmask value associated with the parsed segments
-     */
     private RegexConversion {
 
     }
 
     /**
-     * @return bitmask value representing matched segments
+     * Returns the bitmask value accumulated from the parsed dot-notation segments.
+     *
+     * @return the segment bitmask value
      */
     @Override
     public int value () {

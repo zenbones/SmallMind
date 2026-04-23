@@ -36,20 +36,33 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 
 /**
- * Convenience helpers for working with Kafka message headers used by the wire transport.
+ * Utility class providing constants for the well-known Kafka header keys used by the
+ * wire-protocol transport pair, and a helper for extracting header values from consumer records.
  */
 public class HeaderUtility {
 
+  /**
+   * Header key carrying the unique message identifier assigned by the sender.
+   */
   public static final String MESSAGE_ID = "messageId";
+
+  /**
+   * Header key carrying the caller identifier used to derive the response topic name.
+   */
   public static final String CALLER_ID = "callerId";
+
+  /**
+   * Header key carrying the correlation identifier that ties a response back to its originating request.
+   */
   public static final String CORRELATION_ID = "correlationId";
 
   /**
-   * Retrieves the first matching header value from the provided record.
+   * Returns the UTF-8 decoded value of the first header in {@code record} whose key equals
+   * {@code headerName}.
    *
-   * @param record     the record containing headers.
-   * @param headerName the header key to search for.
-   * @return the header value as a string, or {@code null} if not present.
+   * @param record     the consumer record whose headers are searched
+   * @param headerName the exact key to look up
+   * @return the string value of the first matching header, or {@code null} if no such header exists
    */
   public static String getHeader (ConsumerRecord<Long, byte[]> record, String headerName) {
 

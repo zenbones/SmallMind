@@ -40,7 +40,8 @@ import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- * Routing information that identifies the target service, version, and function.
+ * Serializable routing address that combines a service name, API version, and target
+ * {@link Function} descriptor to fully identify the endpoint of a wire invocation.
  */
 @XmlRootElement(name = "address", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -51,18 +52,18 @@ public class Route implements Serializable {
   private int version;
 
   /**
-   * Default constructor for JAXB.
+   * No-argument constructor required by JAXB.
    */
   public Route () {
 
   }
 
   /**
-   * Creates a populated route.
+   * Creates a fully populated route.
    *
-   * @param version  service version
-   * @param service  service name
-   * @param function function identifier
+   * @param version  the integer version of the target service API
+   * @param service  the logical name of the target service
+   * @param function the function descriptor identifying which operation to invoke
    */
   public Route (int version, String service, Function function) {
 
@@ -72,9 +73,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Returns the target service version.
+   * Returns the integer API version of the target service.
    *
-   * @return version number
+   * @return the service version number
    */
   @XmlElement(name = "version", required = true)
   public int getVersion () {
@@ -83,9 +84,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Sets the target service version.
+   * Sets the integer API version of the target service.
    *
-   * @param version version number
+   * @param version the service version number
    */
   public void setVersion (int version) {
 
@@ -93,9 +94,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Returns the service name.
+   * Returns the logical name of the target service.
    *
-   * @return service name
+   * @return the service name
    */
   @XmlElement(name = "service", required = true)
   public String getService () {
@@ -104,9 +105,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Sets the service name.
+   * Sets the logical name of the target service.
    *
-   * @param service service name
+   * @param service the service name
    */
   public void setService (String service) {
 
@@ -114,9 +115,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Returns the function descriptor.
+   * Returns the {@link Function} descriptor that identifies the operation to invoke.
    *
-   * @return function
+   * @return the function descriptor
    */
   @XmlElementRef
   public Function getFunction () {
@@ -125,9 +126,9 @@ public class Route implements Serializable {
   }
 
   /**
-   * Sets the function descriptor.
+   * Sets the {@link Function} descriptor that identifies the operation to invoke.
    *
-   * @param function function to route
+   * @param function the function descriptor
    */
   public void setFunction (Function function) {
 

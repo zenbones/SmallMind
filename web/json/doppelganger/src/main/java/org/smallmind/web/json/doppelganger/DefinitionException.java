@@ -35,16 +35,15 @@ package org.smallmind.web.json.doppelganger;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
 /**
- * Signals problems encountered while interpreting a {@link Doppelganger} definition
- * (misconfigured annotations, missing methods, invalid purposes, etc.) during annotation processing.
+ * Signals an invalid or inconsistent {@link Doppelganger} annotation configuration encountered during processing.
  */
 public class DefinitionException extends FormattedException {
 
   /**
-   * Creates a definition exception with a formatted message.
+   * Constructs a definition exception with a formatted message.
    *
-   * @param message the printf-style format string describing the problem
-   * @param args    arguments to insert into the formatted message
+   * @param message printf-style format string describing the problem
+   * @param args    arguments substituted into the format string
    */
   public DefinitionException (String message, Object... args) {
 
@@ -52,11 +51,11 @@ public class DefinitionException extends FormattedException {
   }
 
   /**
-   * Creates a definition exception that wraps a lower-level cause.
+   * Constructs a definition exception that wraps a lower-level cause.
    *
    * @param throwable the underlying cause
-   * @param message   the printf-style format string describing the problem
-   * @param args      arguments to insert into the formatted message
+   * @param message   printf-style format string describing the problem
+   * @param args      arguments substituted into the format string
    */
   public DefinitionException (Throwable throwable, String message, Object... args) {
 

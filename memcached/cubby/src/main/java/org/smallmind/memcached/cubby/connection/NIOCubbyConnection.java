@@ -59,7 +59,20 @@ import org.smallmind.memcached.cubby.translator.KeyTranslator;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * NIO-based implementation of a memcached connection managing read/write loops and health checks.
+ * NIO-based implementation of {@link CubbyConnection} that manages a single non-blocking TCP
+ * connection to one memcached host.
+ *
+ * <p>This class runs an internal selector loop (via {@link Runnable#run()}) on a dedicated
+ * thread. Client threads submit commands through {@link #send(Command, Long)}, which enqueues
+ * a {@link MissingLink} on the request queue and wakes the selector. The selector loop drains
+ * the queue through a {@link RequestWriter}, moves each entry to the response queue, and uses
+ * a {@link ResponseReader} to parse replies and deliver them to the corresponding
+ * {@link RequestCallback}.</p>
+ *
+ * <p>Keep-alive NOOP commands are issued automatically after periods of inactivity to detect
+ * broken connections. If the selector key becomes persistently invalid, or if any unrecoverable
+ * I/O error is encountered, the loop terminates and the {@link ConnectionCoordinator} is
+ * notified so that the host can be marked unavailable.</p>
  */
 public class NIOCubbyConnection implements CubbyConnection {
 
@@ -83,11 +96,13 @@ public class NIOCubbyConnection implements CubbyConnection {
   private ResponseReader responseReader;
 
   /**
-   * Creates a new non-blocking connection to the supplied host.
+   * Constructs a new non-blocking connection to the given host using settings drawn from
+   * the supplied configuration.
    *
-   * @param connectionCoordinator coordinator to notify about connectivity changes
-   * @param configuration         connection-related settings
-   * @param memcachedHost         destination host
+   * @param connectionCoordinator coordinator to notify when the connection is unexpectedly lost
+   * @param configuration         source of timeout values, key translator, and authentication
+   *                              credentials
+   * @param memcachedHost         the remote host to connect to
    */
   public NIOCubbyConnection (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, MemcachedHost memcachedHost) {
 
@@ -102,11 +117,20 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * Opens the socket channel, configures NIO structures and authenticates if required.
+   * Opens the non-blocking socket channel, registers it with a new {@link Selector}, and, if
+   * authentication credentials are configured, performs an authentication handshake before
+   * returning.
    *
-   * @throws InterruptedException    if interrupted while waiting for connection establishment
-   * @throws IOException             if the socket cannot be opened or registered
-   * @throws CubbyOperationException if authentication dispatch fails
+   * <p>The method polls for connection completion at 100 ms intervals up to the configured
+   * connection timeout. If the channel is still pending after the timeout a
+   * {@link ConnectionTimeoutException} is thrown.</p>
+   *
+   * @throws InterruptedException    if the calling thread is interrupted while polling for
+   *                                 connection completion or while awaiting authentication
+   * @throws IOException             if the socket channel cannot be opened, configured, or
+   *                                 registered with the selector
+   * @throws CubbyOperationException if the authentication command cannot be dispatched or
+   *                                 processed
    */
   @Override
   public void start ()
@@ -143,9 +167,11 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * Signals termination and waits for the selector loop to finish before closing resources.
+   * Signals the I/O loop to stop and waits for it to release the termination latch before
+   * closing the selector and socket channel.
    *
-   * @throws InterruptedException if interrupted while waiting for shutdown
+   * @throws InterruptedException if the calling thread is interrupted while waiting for the
+   *                              I/O loop to finish
    */
   @Override
   public void stop ()
@@ -158,9 +184,12 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * Closes selector and socket resources, optionally notifying the coordinator of an unexpected loss.
+   * Closes the selector and socket channel, guarding against duplicate execution with a
+   * compare-and-set flag. If the shutdown was caused by an unexpected error the
+   * {@link ConnectionCoordinator} is notified so that the host can be taken out of rotation.
    *
-   * @param unexpected whether the shutdown was triggered by an error
+   * @param unexpected {@code true} if this shutdown was triggered by an unrecoverable I/O or
+   *                   protocol error rather than a normal {@link #stop()} call
    */
   private void shutdown (boolean unexpected) {
 
@@ -187,6 +216,21 @@ public class NIOCubbyConnection implements CubbyConnection {
 
   /**
    * {@inheritDoc}
+   *
+   * <p>Serializes the command via the configured {@link KeyTranslator}, wraps it in a
+   * {@link MissingLink} with a {@link ClientRequestCallback}, places it on the request queue,
+   * and wakes the selector. The calling thread then blocks on
+   * {@link ClientRequestCallback#getResult(long)} until a response arrives or the timeout
+   * elapses.</p>
+   *
+   * @param command        the memcached command to dispatch; must not be {@code null}
+   * @param timeoutSeconds wait limit in milliseconds, or {@code null} to use the configured
+   *                       default; {@code 0L} means wait indefinitely
+   * @return the parsed server response
+   * @throws InterruptedException    if the calling thread is interrupted while waiting
+   * @throws IOException             if a network error occurs
+   * @throws CubbyOperationException if the command cannot be constructed or the connection
+   *                                 is in an invalid state
    */
   @Override
   public Response send (Command command, Long timeoutSeconds)
@@ -204,10 +248,16 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * Retrieves the next pending request awaiting a response.
+   * Removes and returns the next {@link MissingLink} from the response queue.
    *
-   * @return pairing of callback and buffer
-   * @throws CubbyOperationException if the connection state is out of sync
+   * <p>The response queue must always have an entry ready when the read side of the selector
+   * loop receives a complete response. If the queue is empty the connection state is considered
+   * desynchronized and a {@link CubbyOperationException} is thrown.</p>
+   *
+   * @return the next in-flight link whose callback should receive the parsed response
+   * @throws CubbyOperationException if the response queue is unexpectedly empty, indicating
+   *                                 that the request and response queues have become
+   *                                 desynchronized
    */
   private MissingLink retrieveMissingLink ()
     throws CubbyOperationException {
@@ -222,7 +272,19 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * Main selector loop handling read/write readiness, keep-alive probes and response dispatch.
+   * Runs the NIO selector loop that drives all I/O on this connection.
+   *
+   * <p>Each iteration of the loop selects with a one-second timeout. If no keys become ready
+   * within that window the idle counter is incremented; once it exceeds {@code keepAliveSeconds}
+   * a NOOP command is enqueued to probe the server. When a key is both readable and writable
+   * the read path is processed before the write path to ensure responses are matched before
+   * new requests are drained. An {@link InvalidSelectionKeyException} is raised after three
+   * consecutive encounters with an invalid key, causing the loop to terminate and the host to
+   * be disconnected. Any {@link IOException} or {@link CubbyOperationException} also terminates
+   * the loop and triggers an unexpected shutdown.</p>
+   *
+   * <p>The termination latch is always counted down in the {@code finally} block so that
+   * {@link #stop()} never deadlocks even if an exception escapes the loop.</p>
    */
   @Override
   public void run () {

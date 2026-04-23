@@ -43,7 +43,6 @@ import jakarta.xml.bind.annotation.XmlTransient;
 
 /**
  * JAXB-ready representation of binary content that can be encoded and optionally encrypted for transport.
- * Supports round-tripping byte arrays via the configured {@link Encoding} (and {@link Encryption}, if present).
  */
 @XmlRootElement(name = "binary", namespace = "http://org.smallmind/nutsnbolts/json")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -56,16 +55,16 @@ public class BinaryData implements Serializable {
   private String data;
 
   /**
-   * Creates an empty instance for frameworks that require a no-arg constructor.
+   * Creates an empty instance for use by JAXB and other frameworks requiring a no-arg constructor.
    */
   public BinaryData () {
 
   }
 
   /**
-   * Creates encoded binary content.
+   * Creates an instance by encoding the supplied bytes with the given {@link Encoding}.
    *
-   * @param encoding the codec to convert raw bytes into a string
+   * @param encoding the strategy used to convert raw bytes to a string representation
    * @param bytes    the raw bytes to encode
    * @throws Exception if the encoding operation fails
    */
@@ -78,10 +77,10 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Creates encoded binary content and records the associated content type.
+   * Creates an instance by encoding the supplied bytes and recording the associated MIME content type.
    *
-   * @param contentType MIME-style content type describing the payload
-   * @param encoding    the codec to convert raw bytes into a string
+   * @param contentType the MIME-style content type describing the payload
+   * @param encoding    the strategy used to convert raw bytes to a string representation
    * @param bytes       the raw bytes to encode
    * @throws Exception if the encoding operation fails
    */
@@ -94,12 +93,12 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Creates encoded content that is first encrypted with the supplied key.
+   * Creates an instance by encrypting a string payload with the given key and then encoding the ciphertext.
    *
-   * @param encoding   the codec to convert encrypted bytes to a string
-   * @param encryption the cipher to apply to the payload
-   * @param key        the key used for encryption/decryption
-   * @param original   the clear-text payload
+   * @param encoding   the strategy used to convert encrypted bytes to a string
+   * @param encryption the cipher applied to the UTF-8 bytes of the original string
+   * @param key        the key used for encryption
+   * @param original   the clear-text string to encrypt and store
    * @throws Exception if encryption or encoding fails
    */
   public BinaryData (Encoding encoding, Encryption encryption, Key key, String original)
@@ -112,7 +111,7 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Decodes the stored string into its original bytes using the configured {@link Encoding}.
+   * Decodes the stored string back into its original bytes using the configured {@link Encoding}.
    *
    * @return the decoded bytes
    * @throws Exception if decoding fails
@@ -124,11 +123,12 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Decrypts the stored payload using the configured {@link Encryption}.
+   * Decodes and then decrypts the stored payload using the configured {@link Encryption} and the supplied key.
    *
-   * @param key the decryption key corresponding to the encryption used
+   * @param key the decryption key corresponding to the encryption used when this instance was constructed
    * @return the decrypted bytes
-   * @throws Exception if decryption fails or no encryption was configured
+   * @throws IllegalStateException if no encryption was configured on this instance
+   * @throws Exception             if decryption or decoding fails
    */
   public byte[] decrypt (Key key)
     throws Exception {
@@ -141,9 +141,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Indicates whether this payload has been encrypted.
+   * Returns whether this payload was encrypted before storage.
    *
-   * @return {@code true} when an {@link Encryption} has been applied
+   * @return {@code true} when an {@link Encryption} cipher has been applied; {@code false} otherwise
    */
   @XmlTransient
   public boolean isEncrypted () {
@@ -152,7 +152,7 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Returns the encoding used to serialize the binary payload.
+   * Returns the encoding strategy used to represent the binary payload as a string.
    *
    * @return the encoding
    */
@@ -163,7 +163,7 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Sets the encoding used to serialize the binary payload.
+   * Sets the encoding strategy used to represent the binary payload as a string.
    *
    * @param encoding the encoding strategy
    */
@@ -173,9 +173,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Returns the encryption algorithm applied to the payload, if any.
+   * Returns the encryption algorithm applied to this payload, or {@code null} if unencrypted.
    *
-   * @return the encryption algorithm or {@code null} if unencrypted
+   * @return the encryption algorithm, or {@code null}
    */
   @XmlElement(name = "encryption")
   public Encryption getEncryption () {
@@ -184,9 +184,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Sets the encryption metadata for this instance.
+   * Sets the encryption algorithm associated with this payload.
    *
-   * @param encryption the encryption algorithm that secured the payload
+   * @param encryption the encryption algorithm that was used to secure the payload
    */
   public void setEncryption (Encryption encryption) {
 
@@ -194,9 +194,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Returns the logical name associated with the payload.
+   * Returns the logical name associated with this payload, or {@code null} if not set.
    *
-   * @return payload name, possibly {@code null}
+   * @return the payload name
    */
   @XmlElement(name = "name")
   public String getName () {
@@ -205,10 +205,10 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Assigns a logical name to the payload.
+   * Sets a logical name for this payload, returning this instance to allow method chaining.
    *
-   * @param name a human readable identifier
-   * @return this instance for chaining
+   * @param name a human-readable identifier for the payload
+   * @return this instance
    */
   public BinaryData setName (String name) {
 
@@ -218,9 +218,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Returns the MIME-style content type of the payload.
+   * Returns the MIME-style content type of this payload, or {@code null} if not set.
    *
-   * @return content type, possibly {@code null}
+   * @return the content type
    */
   @XmlElement(name = "contentType")
   public String getContentType () {
@@ -229,10 +229,10 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Sets the MIME-style content type of the payload.
+   * Sets the MIME-style content type of this payload, returning this instance to allow method chaining.
    *
-   * @param contentType payload content type
-   * @return this instance for chaining
+   * @param contentType the content type describing the payload
+   * @return this instance
    */
   public BinaryData setContentType (String contentType) {
 
@@ -242,9 +242,9 @@ public class BinaryData implements Serializable {
   }
 
   /**
-   * Returns the encoded payload string.
+   * Returns the encoded (and possibly encrypted) payload as a string.
    *
-   * @return encoded payload
+   * @return the encoded payload string
    */
   @XmlElement(name = "data", required = true)
   public String getData () {
@@ -255,7 +255,7 @@ public class BinaryData implements Serializable {
   /**
    * Sets the encoded payload string.
    *
-   * @param data encoded payload
+   * @param data the encoded string representation of the binary payload
    */
   public void setData (String data) {
 

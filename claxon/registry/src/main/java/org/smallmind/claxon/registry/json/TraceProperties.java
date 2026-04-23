@@ -41,18 +41,35 @@ import org.smallmind.web.json.doppelganger.View;
 import static org.smallmind.web.json.doppelganger.Visibility.IN;
 
 /**
- * JSON-mapped properties for configuring a trace meter.
+ * JSON-mapped configuration properties for a trace meter. Instances of this class are
+ * populated by the JSON doppelganger framework and subsequently consumed by
+ * {@link TraceParser} to build a configured trace meter. Default values mirror the
+ * typical exponentially-weighted moving-average windows (1-, 5-, and 15-minute) used
+ * by many monitoring systems.
  */
 @Doppelganger(namespace = "http://org.smallmind/claxon/registry")
 public class TraceProperties {
 
+  /**
+   * The {@link TimeUnit} applied to all {@link Window} values when constructing the trace
+   * meter. Defaults to {@link TimeUnit#MINUTES}. Serialized and deserialized via
+   * {@link TimeUnitEnumXmlAdapter}.
+   */
   @View(adapter = TimeUnitEnumXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
+
+  /**
+   * The set of named time windows for which the trace meter maintains moving-average
+   * statistics. Defaults to three standard windows: {@code m1} (1 minute),
+   * {@code m5} (5 minutes), and {@code m15} (15 minutes).
+   */
   @View(idioms = @Idiom(visibility = IN))
   private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
   /**
-   * @return time unit applied to window definitions
+   * Returns the time unit applied to all window value definitions.
+   *
+   * @return the configured {@link TimeUnit}; never {@code null} unless explicitly set to {@code null}
    */
   public TimeUnit getWindowTimeUnit () {
 
@@ -60,9 +77,10 @@ public class TraceProperties {
   }
 
   /**
-   * Sets the time unit applied to window definitions.
+   * Sets the time unit applied to all window value definitions.
    *
-   * @param windowTimeUnit window time unit
+   * @param windowTimeUnit the {@link TimeUnit} to use for window durations; {@code null} retains
+   *                       the builder default
    */
   public void setWindowTimeUnit (TimeUnit windowTimeUnit) {
 
@@ -70,7 +88,9 @@ public class TraceProperties {
   }
 
   /**
-   * @return array of configured windows
+   * Returns the array of named time windows configured for the trace meter.
+   *
+   * @return array of {@link Window} definitions; never {@code null} unless explicitly set to {@code null}
    */
   public Window[] getWindows () {
 
@@ -78,9 +98,9 @@ public class TraceProperties {
   }
 
   /**
-   * Replaces the configured windows.
+   * Replaces the set of named time windows for the trace meter.
    *
-   * @param windows window definitions
+   * @param windows array of {@link Window} definitions; {@code null} retains the builder default
    */
   public void setWindows (Window[] windows) {
 

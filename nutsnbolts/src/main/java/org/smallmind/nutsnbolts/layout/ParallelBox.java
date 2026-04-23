@@ -35,8 +35,9 @@ package org.smallmind.nutsnbolts.layout;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Box that stacks elements in parallel along the axis opposite the provided {@link Bias}, aligning them
- * according to the specified {@link Alignment}. Growth and shrink factors still apply along the original bias.
+ * A {@link Box} that places all its elements at the same position along the layout axis, sizing each
+ * independently along that axis and aligning them according to the configured {@link Alignment}.
+ * Optional measurement overrides clamp all elements to a uniform minimum, preferred, or maximum size.
  */
 public class ParallelBox extends Box<ParallelBox> {
 
@@ -48,9 +49,9 @@ public class ParallelBox extends Box<ParallelBox> {
   // Lays out items one after another, in the direction *opposite* to the Bias, but with growth/shrink values still in the bias direction
 
   /**
-   * Creates a parallel box with default leading alignment.
+   * Creates a parallel box with {@link Alignment#LEADING} as the default alignment.
    *
-   * @param layout the owning layout
+   * @param layout the owning {@link ParaboxLayout}
    */
   protected ParallelBox (ParaboxLayout layout) {
 
@@ -58,10 +59,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Creates a parallel box with the given alignment.
+   * Creates a parallel box with the specified alignment.
    *
-   * @param layout    the owning layout
-   * @param alignment alignment applied when distributing elements
+   * @param layout    the owning {@link ParaboxLayout}
+   * @param alignment the alignment applied to each element within the available space
    */
   protected ParallelBox (ParaboxLayout layout, Alignment alignment) {
 
@@ -71,9 +72,9 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Returns the alignment for this box.
+   * Returns the alignment used to position each element within the box's available space.
    *
-   * @return the alignment
+   * @return the current alignment
    */
   public Alignment getAlignment () {
 
@@ -81,10 +82,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Sets the alignment for this box.
+   * Sets the alignment used to position each element within the box's available space.
    *
-   * @param alignment the alignment to use
-   * @return this box for chaining
+   * @param alignment the alignment to apply
+   * @return this box for method chaining
    */
   public ParallelBox setAlignment (Alignment alignment) {
 
@@ -94,7 +95,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * @return override for minimum measurement, if any
+   * Returns the minimum measurement override applied to all children, or {@code null} if each child
+   * reports its own minimum.
+   *
+   * @return the minimum override, or {@code null}
    */
   public Double getMinimumOverrideMeasurement () {
 
@@ -102,10 +106,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Sets an override for the minimum measurement applied to all children.
+   * Sets an override that clamps every child's minimum measurement to the given value.
    *
-   * @param minimumOverrideMeasurement override value, or {@code null} to use child minimums
-   * @return this box for chaining
+   * @param minimumOverrideMeasurement the override value, or {@code null} to use each child's own minimum
+   * @return this box for method chaining
    */
   public ParallelBox setMinimumOverrideMeasurement (Double minimumOverrideMeasurement) {
 
@@ -115,7 +119,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * @return override for preferred measurement, if any
+   * Returns the preferred measurement override applied to all children, or {@code null} if each child
+   * reports its own preferred size.
+   *
+   * @return the preferred override, or {@code null}
    */
   public Double getPreferredOverrideMeasurement () {
 
@@ -123,10 +130,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Sets an override for the preferred measurement applied to all children.
+   * Sets an override that clamps every child's preferred measurement to the given value.
    *
-   * @param preferredOverrideMeasurement override value, or {@code null} to use child preferred measurements
-   * @return this box for chaining
+   * @param preferredOverrideMeasurement the override value, or {@code null} to use each child's own preferred size
+   * @return this box for method chaining
    */
   public ParallelBox setPreferredOverrideMeasurement (Double preferredOverrideMeasurement) {
 
@@ -136,7 +143,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * @return override for maximum measurement, if any
+   * Returns the maximum measurement override applied to all children, or {@code null} if each child
+   * reports its own maximum.
+   *
+   * @return the maximum override, or {@code null}
    */
   public Double getMaximumOverrideMeasurement () {
 
@@ -144,10 +154,10 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Sets an override for the maximum measurement applied to all children.
+   * Sets an override that clamps every child's maximum measurement to the given value.
    *
-   * @param maximumOverrideMeasurement override value, or {@code null} to use child maximums
-   * @return this box for chaining
+   * @param maximumOverrideMeasurement the override value, or {@code null} to use each child's own maximum
+   * @return this box for method chaining
    */
   public ParallelBox setMaximumOverrideMeasurement (Double maximumOverrideMeasurement) {
 
@@ -157,7 +167,11 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the minimum size this box requires along the given axis, using the minimum override if set.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the minimum size along the axis
    */
   @Override
   public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -166,7 +180,11 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the preferred size this box requests along the given axis, using the preferred override if set.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the preferred size along the axis
    */
   @Override
   public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
@@ -175,7 +193,11 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the maximum size this box can occupy along the given axis, using the maximum override if set.
+   *
+   * @param bias   the axis of measurement
+   * @param tailor the layout tailor for recursive measurement caching; may be {@code null}
+   * @return the maximum size along the axis
    */
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
@@ -184,13 +206,15 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * Computes the measurement along the specified axis, taking into account optional overrides and baseline alignment.
+   * Computes the aggregate measurement for this box along the given axis by determining the maximum
+   * ascent and descent across all elements, applying any measurement override and accounting for
+   * baseline alignment.
    *
    * @param bias                        the axis along which to measure
-   * @param tapeMeasure                 which measurement to compute
-   * @param unbiasedMeasurementOverride optional override applied uniformly
-   * @param tailor                      layout tailor used for caching
-   * @return the required measurement
+   * @param tapeMeasure                 the category of measurement to compute
+   * @param unbiasedMeasurementOverride optional fixed value to substitute for each element's natural measurement; {@code null} uses element's own measurement
+   * @param tailor                      the layout tailor for recursive caching; may be {@code null}
+   * @return the combined ascent-plus-descent measurement for this box
    */
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, LayoutTailor tailor) {
 
@@ -217,7 +241,13 @@ public class ParallelBox extends Box<ParallelBox> {
   }
 
   /**
-   * {@inheritDoc}
+   * Lays out each element at the container's starting position, sizing it within the available
+   * measurement and positioning it according to the configured alignment.
+   *
+   * @param bias                 the axis along which to position elements
+   * @param containerPosition    the starting offset along the axis
+   * @param containerMeasurement the total space available along the axis
+   * @param tailor               the {@link LayoutTailor} coordinating the full layout pass
    */
   @Override
   public synchronized void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor) {

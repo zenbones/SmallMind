@@ -33,40 +33,47 @@
 package org.smallmind.phalanx.wire.transport;
 
 /**
- * Enumerates metric tags used by Claxon instrumentation within the wire transports.
- * Each value exposes a human-readable display string for emitted measurements.
+ * Enumeration of Claxon instrumentation tags emitted at key points in the wire transport pipeline.
+ * Each constant carries a human-readable display string used when recording measurements.
  */
 public enum ClaxonTag {
 
   /**
-   * Measures time taken to acquire a request transport.
+   * Recorded when a request transport instance is acquired from the pool or registry.
    */
   ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"),
+
   /**
-   * Marks the construction of a transport message payload.
+   * Recorded when a transport message payload is constructed prior to sending.
    */
   CONSTRUCT_MESSAGE("Construct Message"),
+
   /**
-   * Captures time spent by a request in transit to a responder.
+   * Recorded to capture elapsed time while a request is in transit to the responder.
    */
   REQUEST_TRANSIT_TIME("Request Transit Time"),
+
   /**
-   * Captures time spent by a response returning to the caller.
+   * Recorded to capture elapsed time while a response travels back to the caller.
    */
   RESPONSE_TRANSIT_TIME("Response Transit Time"),
+
   /**
-   * Marks completion of a response callback.
+   * Recorded when a pending response callback is completed by an inbound result signal.
    */
   COMPLETE_CALLBACK("Complete Callback"),
+
   /**
-   * Measures time spent waiting for a result to be delivered.
+   * Recorded to measure time spent waiting for a result to be delivered to the caller.
    */
   ACQUIRE_RESULT("Acquire Result");
 
   private final String display;
 
   /**
-   * @param display human-readable text for the tag when emitted.
+   * Constructs the enum constant with its display string.
+   *
+   * @param display human-readable label emitted with measurements
    */
   ClaxonTag (String display) {
 
@@ -74,9 +81,9 @@ public enum ClaxonTag {
   }
 
   /**
-   * Human-readable tag value suitable for metrics output.
+   * Returns the human-readable display string for this tag.
    *
-   * @return the display string for the tag.
+   * @return display label suitable for metrics output
    */
   public String getDisplay () {
 

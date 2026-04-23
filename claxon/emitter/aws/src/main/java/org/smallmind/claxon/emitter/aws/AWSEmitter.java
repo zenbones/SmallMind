@@ -43,18 +43,31 @@ import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
 /**
- * Push emitter that sends metrics to AWS CloudWatch under a given namespace.
+ * Push emitter that publishes Claxon metrics to AWS CloudWatch under a configurable namespace.
+ *
+ * <p>Each call to {@link #record(String, Tag[], Quantity[])} converts the provided
+ * {@link Tag} array into CloudWatch {@link Dimension} objects and each {@link Quantity}
+ * into a {@link MetricDatum}, then submits the entire batch in a single
+ * {@code PutMetricData} API call timestamped at the current instant.
  */
 public class AWSEmitter extends PushEmitter {
 
+  /**
+   * The CloudWatch client used to publish metric data.
+   */
   private final CloudWatchClient client;
+
+  /**
+   * The CloudWatch namespace under which all metrics are published.
+   */
   private final String namespace;
 
   /**
-   * Creates an AWS emitter using an existing CloudWatch client and namespace.
+   * Creates an AWS emitter that publishes to the specified CloudWatch namespace using the
+   * provided client.
    *
-   * @param client    CloudWatch client
-   * @param namespace CloudWatch namespace for metrics
+   * @param client    a pre-configured {@link CloudWatchClient} used for all API calls
+   * @param namespace the CloudWatch namespace that groups the emitted metrics
    */
   public AWSEmitter (CloudWatchClient client, String namespace) {
 
@@ -63,11 +76,18 @@ public class AWSEmitter extends PushEmitter {
   }
 
   /**
-   * Transforms quantities and tags into CloudWatch metric data and publishes them.
+   * Converts the supplied quantities and tags into CloudWatch metric data and publishes them
+   * in a single {@code PutMetricData} request.
    *
-   * @param meterName  meter name (used for dimension grouping)
-   * @param tags       tags translated to dimensions
-   * @param quantities quantities to send
+   * <p>Tags are translated to CloudWatch {@link Dimension} objects, and each
+   * {@link Quantity} becomes a separate {@link MetricDatum} with unit {@link StandardUnit#NONE}
+   * and a timestamp of the current instant. All dimensions are applied to every datum.
+   *
+   * @param meterName  the meter name; used to organise dimensions rather than as a metric name
+   * @param tags       zero or more tags that are translated to CloudWatch dimensions; may be
+   *                   {@code null} or empty
+   * @param quantities one or more measured values to publish; each becomes a distinct metric
+   *                   datum whose name is taken from {@link Quantity#getName()}
    */
   @Override
   public void record (String meterName, Tag[] tags, Quantity[] quantities) {

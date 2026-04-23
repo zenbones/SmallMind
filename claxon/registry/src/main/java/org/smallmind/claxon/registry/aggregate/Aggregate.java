@@ -33,14 +33,19 @@
 package org.smallmind.claxon.registry.aggregate;
 
 /**
- * Represents an aggregation strategy that can accept raw updates and maintain derived statistics.
+ * Common contract for all aggregation strategies in the Claxon metrics registry.
+ *
+ * <p>Implementations receive raw {@code long} measurements via {@link #update} and internally
+ * maintain whatever derived statistics they need (averages, rates, histograms, etc.).
+ * Consumers retrieve those statistics through implementation-specific accessor methods.</p>
  */
 public interface Aggregate {
 
   /**
-   * Incorporates a new value into the aggregate.
+   * Incorporates a new measurement into this aggregate's internal state.
    *
-   * @param value value to add
+   * @param value the raw measurement to record; semantics (e.g. nanoseconds, bytes, count)
+   *              are defined by the calling context
    */
   void update (long value);
 }

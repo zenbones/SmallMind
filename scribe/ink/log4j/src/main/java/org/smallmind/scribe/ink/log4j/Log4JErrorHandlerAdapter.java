@@ -38,16 +38,18 @@ import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Record;
 
 /**
- * Adapts a Log4j2 {@link org.apache.logging.log4j.core.ErrorHandler} to the scribe {@link ErrorHandler} contract.
+ * Scribe {@link ErrorHandler} that delegates error reporting to a Log4j2
+ * {@link org.apache.logging.log4j.core.ErrorHandler}, passing the native {@link LogEvent} when
+ * a record is available or {@code null} when only a logger name is provided.
  */
 public class Log4JErrorHandlerAdapter implements ErrorHandler {
 
   private final org.apache.logging.log4j.core.ErrorHandler errorHandler;
 
   /**
-   * Creates an adapter around the provided Log4j2 error handler.
+   * Builds an adapter that delegates error reporting to the given Log4j2 error handler.
    *
-   * @param errorHandler native error handler
+   * @param errorHandler the native Log4j2 error handler to delegate to
    */
   public Log4JErrorHandlerAdapter (org.apache.logging.log4j.core.ErrorHandler errorHandler) {
 
@@ -55,9 +57,9 @@ public class Log4JErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Returns the wrapped Log4j2 error handler.
+   * Returns the native Log4j2 error handler that this adapter wraps.
    *
-   * @return the native error handler
+   * @return the wrapped Log4j2 error handler
    */
   public org.apache.logging.log4j.core.ErrorHandler getNativeErrorHandler () {
 
@@ -65,12 +67,13 @@ public class Log4JErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Handles an error originating from a logger.
+   * Reports an error from the named logger to the native Log4j2 error handler with a {@code null}
+   * event reference since no record is available.
    *
-   * @param loggerName   name of the logger that produced the error
-   * @param throwable    throwable to report
+   * @param loggerName   the name of the logger where the error originated
+   * @param throwable    the throwable to report
    * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param args         arguments substituted into the message template
    */
   @Override
   public void process (String loggerName, Throwable throwable, String errorMessage, Object... args) {
@@ -79,12 +82,13 @@ public class Log4JErrorHandlerAdapter implements ErrorHandler {
   }
 
   /**
-   * Handles an error originating from a record, delegating to the Log4j2 handler with the native event.
+   * Reports an error associated with a record to the native Log4j2 error handler, casting the
+   * record's native log entry to a {@link LogEvent} and passing it alongside the translated message.
    *
-   * @param record       record that triggered the error handling
-   * @param throwable    throwable to report
+   * @param record       the record associated with the error
+   * @param throwable    the throwable to report
    * @param errorMessage message template describing the error
-   * @param args         arguments applied to the message template
+   * @param args         arguments substituted into the message template
    */
   @Override
   public void process (Record<?> record, Throwable throwable, String errorMessage, Object... args) {

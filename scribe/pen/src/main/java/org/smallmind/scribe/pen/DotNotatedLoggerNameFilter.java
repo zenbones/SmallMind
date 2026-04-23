@@ -42,7 +42,9 @@ import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
 /**
- * Filter that enables logging for specific logger names matched via dot-notation patterns, while passing through higher-level events.
+ * A {@link Filter} that selectively enables logging for logger names that match dot-notation patterns
+ * while automatically passing through any record whose level meets or exceeds a configurable threshold.
+ * Matched class names are cached in a concurrent queue to avoid redundant pattern evaluation.
  */
 public class DotNotatedLoggerNameFilter implements Filter {
 
@@ -54,9 +56,9 @@ public class DotNotatedLoggerNameFilter implements Filter {
   private Level passThroughLevel;
 
   /**
-   * Creates a filter with default pass-through level INFO.
+   * Constructs a filter with a pass-through level of {@link Level#INFO} and no initial patterns.
    *
-   * @throws LoggerException if pattern initialization fails
+   * @throws LoggerException if internal initialization fails
    */
   public DotNotatedLoggerNameFilter ()
     throws LoggerException {
@@ -65,10 +67,11 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Creates a filter with a specific pass-through level.
+   * Constructs a filter that automatically passes records at or above {@code passThroughLevel}
+   * and applies no initial dot-notation patterns.
    *
-   * @param passThroughLevel minimum level that always passes
-   * @throws LoggerException if pattern initialization fails
+   * @param passThroughLevel the minimum level at which records pass regardless of logger name
+   * @throws LoggerException if internal initialization fails
    */
   public DotNotatedLoggerNameFilter (Level passThroughLevel)
     throws LoggerException {
@@ -77,11 +80,11 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Creates a filter with a pass-through level and initial patterns.
+   * Constructs a filter with an explicit pass-through level and a set of initial dot-notation patterns.
    *
-   * @param passThroughLevel minimum level that always passes
-   * @param patterns         logger name patterns to enable
-   * @throws LoggerException if pattern initialization fails
+   * @param passThroughLevel the minimum level at which records pass regardless of logger name
+   * @param patterns         initial dot-notation patterns used to match logger names; may be {@code null}
+   * @throws LoggerException if any pattern in {@code patterns} cannot be parsed
    */
   public DotNotatedLoggerNameFilter (Level passThroughLevel, List<String> patterns)
     throws LoggerException {
@@ -100,9 +103,9 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Retrieves the configured pass-through level.
+   * Returns the level at or above which records are automatically allowed through without pattern matching.
    *
-   * @return minimum level that always passes
+   * @return the current pass-through level
    */
   public synchronized Level getPassThroughLevel () {
 
@@ -110,9 +113,10 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Sets the level at which records automatically pass through the filter.
+   * Replaces the pass-through level; records at or above this level will always be logged
+   * regardless of whether their logger name matches any pattern.
    *
-   * @param passThroughLevel minimum level that always passes
+   * @param passThroughLevel the new minimum level for unconditional pass-through
    */
   public synchronized void setPassThroughLevel (Level passThroughLevel) {
 
@@ -120,10 +124,10 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Replaces all patterns used to enable logging for matching class names.
+   * Replaces the entire set of active dot-notation patterns, clearing any previously cached class-name matches.
    *
-   * @param patterns dot-notation patterns
-   * @throws LoggerException if any pattern is invalid
+   * @param patterns the new list of dot-notation patterns to install
+   * @throws LoggerException if any pattern in the list cannot be parsed by {@link org.smallmind.nutsnbolts.util.DotNotation}
    */
   public synchronized void setPatterns (List<String> patterns)
     throws LoggerException {
@@ -140,10 +144,11 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Determines whether logging is enabled for the given class name.
+   * Returns {@code true} if the given class name is already in the match cache or is matched by
+   * at least one of the configured dot-notation patterns, adding it to the cache on first match.
    *
-   * @param className logger name to test
-   * @return {@code true} if matched or previously cached, otherwise {@code false}
+   * @param className the logger name to test; returns {@code false} if {@code null}
+   * @return {@code true} if the class name is enabled; {@code false} otherwise
    */
   public boolean isClassNameOn (String className) {
 
@@ -151,11 +156,12 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Searches for a pattern match, optionally caching successful matches.
+   * Evaluates all configured patterns against the class name under the read lock, optionally
+   * inserting the name into the cache when a match is found.
    *
-   * @param className  logger name to test
-   * @param addIfFound whether to cache the match
-   * @return {@code true} if a pattern matches; otherwise {@code false}
+   * @param className  the logger name to test against the pattern map
+   * @param addIfFound {@code true} to add the name to the cache upon a successful match
+   * @return {@code true} if at least one pattern matches; {@code false} otherwise
    */
   private boolean noCachedMatch (String className, boolean addIfFound) {
 
@@ -182,11 +188,13 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Adds or removes a pattern at runtime and updates cached matches accordingly.
+   * Dynamically adds or removes a single dot-notation pattern from the active set, updating the
+   * class-name cache accordingly; when a pattern is removed, cached names that no longer match
+   * any remaining pattern are evicted from the cache.
    *
-   * @param protoPattern pattern to add or remove
-   * @param isOn         {@code true} to add, {@code false} to remove
-   * @throws LoggerException if the pattern cannot be parsed when adding
+   * @param protoPattern the dot-notation pattern string to add or remove
+   * @param isOn         {@code true} to add the pattern; {@code false} to remove it
+   * @throws LoggerException if {@code isOn} is {@code true} and the pattern cannot be parsed
    */
   public void setDebugCategory (String protoPattern, boolean isOn)
     throws LoggerException {
@@ -210,10 +218,11 @@ public class DotNotatedLoggerNameFilter implements Filter {
   }
 
   /**
-   * Evaluates whether the record should be logged based on level and pattern matches.
+   * Returns {@code true} if the record's level meets or exceeds the pass-through level, or if
+   * the record's logger name matches one of the configured dot-notation patterns.
    *
-   * @param record record to evaluate
-   * @return {@code true} if the record passes the level threshold or matches a configured pattern
+   * @param record the log record to evaluate
+   * @return {@code true} if the record should be logged; {@code false} otherwise
    */
   public boolean willLog (Record<?> record) {
 

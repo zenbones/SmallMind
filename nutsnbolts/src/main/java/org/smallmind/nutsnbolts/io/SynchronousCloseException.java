@@ -35,7 +35,8 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 
 /**
- * Signals that an I/O operation was attempted on a stream or buffer that was synchronously closed.
+ * Signals that an I/O operation was attempted on a stream or channel that was closed by another thread
+ * while a blocking operation was in progress.
  */
 public class SynchronousCloseException extends IOException {
 

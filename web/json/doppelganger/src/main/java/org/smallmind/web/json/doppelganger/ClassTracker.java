@@ -39,8 +39,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 /**
- * Tracks polymorphic and hierarchical relationships discovered while parsing {@link Doppelganger} annotations.
- * The tracker helps determine generated adapter configuration and whether classes are already compiled.
+ * Tracks polymorphic and hierarchy relationships discovered while processing {@link Doppelganger} annotations,
+ * and caches whether generated view classes are already compiled on the classpath.
  */
 public class ClassTracker {
 
@@ -51,10 +51,10 @@ public class ClassTracker {
   private final HashMap<TypeElement, TypeElement> hierarchyBaseClassMap = new HashMap<>();
 
   /**
-   * Registers a class annotated with {@link Polymorphic} and its subclasses.
+   * Registers a polymorphic base class and indexes all of its declared subclasses.
    *
-   * @param typeElement            the polymorphic base class
-   * @param polymorphicInformation parsed information for the annotation
+   * @param typeElement            the polymorphic base class element
+   * @param polymorphicInformation parsed metadata from the {@link Polymorphic} annotation
    */
   public void addPolymorphic (TypeElement typeElement, PolymorphicInformation polymorphicInformation) {
 
@@ -65,10 +65,11 @@ public class ClassTracker {
   }
 
   /**
-   * Determines whether the provided element participates in a polymorphic graph.
+   * Returns whether the given type element is part of any registered polymorphic relationship,
+   * either as a base class or as a subclass.
    *
-   * @param typeElement the class element to inspect
-   * @return {@code true} when the class is a polymorphic base or subclass
+   * @param typeElement the type element to test
+   * @return {@code true} if the element is a polymorphic base or subclass
    */
   public boolean isPolymorphic (TypeElement typeElement) {
 
@@ -76,10 +77,10 @@ public class ClassTracker {
   }
 
   /**
-   * Checks if a polymorphic base has any registered subclasses.
+   * Returns whether a registered polymorphic base class has at least one declared subclass.
    *
-   * @param typeElement the base class
-   * @return {@code true} when at least one subclass was declared
+   * @param typeElement the polymorphic base class element
+   * @return {@code true} if at least one subclass was declared
    */
   public boolean hasPolymorphicSubClasses (TypeElement typeElement) {
 
@@ -94,10 +95,10 @@ public class ClassTracker {
   }
 
   /**
-   * Returns the list of polymorphic subclasses for a base class.
+   * Returns the list of declared polymorphic subclasses for the given base class.
    *
-   * @param typeElement the base class
-   * @return an immutable list of subclass elements (may be empty)
+   * @param typeElement the polymorphic base class element
+   * @return list of subclass elements, or an empty list if none are registered
    */
   public List<TypeElement> getPolymorphicSubclasses (TypeElement typeElement) {
 
@@ -112,10 +113,10 @@ public class ClassTracker {
   }
 
   /**
-   * Indicates whether the polymorphic base requires an attribute-based discriminator.
+   * Returns whether the polymorphic discriminator for the given base class should be emitted as an XML attribute.
    *
-   * @param typeElement the polymorphic base
-   * @return {@code true} if the generated adapter should use attributes instead of elements
+   * @param typeElement the polymorphic base class element
+   * @return {@code true} if the attribute-based discriminator style is requested
    */
   public boolean usePolymorphicAttribute (TypeElement typeElement) {
 
@@ -130,10 +131,10 @@ public class ClassTracker {
   }
 
   /**
-   * Checks if a class is a known polymorphic subclass.
+   * Returns whether the given type element is a registered polymorphic subclass.
    *
-   * @param typeElement the class to check
-   * @return {@code true} if a polymorphic base was recorded for the class
+   * @param typeElement the type element to test
+   * @return {@code true} if a polymorphic base has been recorded for this element
    */
   public boolean hasPolymorphicBaseClass (TypeElement typeElement) {
 
@@ -141,10 +142,10 @@ public class ClassTracker {
   }
 
   /**
-   * Resolves the polymorphic base class for a subclass.
+   * Returns the polymorphic base class for the given subclass element.
    *
-   * @param subClassElement the subclass
-   * @return the polymorphic base class, or {@code null} when not registered
+   * @param subClassElement the subclass element
+   * @return the base class element, or {@code null} if not registered
    */
   public TypeElement getPolymorphicBaseClass (TypeElement subClassElement) {
 
@@ -152,10 +153,10 @@ public class ClassTracker {
   }
 
   /**
-   * Registers a class annotated with {@link Hierarchy} and its subclasses.
+   * Registers a hierarchy base class and indexes all of its declared subclasses.
    *
-   * @param typeElement          the base of the hierarchy
-   * @param hierarchyInformation parsed hierarchy metadata
+   * @param typeElement          the hierarchy base class element
+   * @param hierarchyInformation parsed metadata from the {@link Hierarchy} annotation
    */
   public void addHierarchy (TypeElement typeElement, HierarchyInformation hierarchyInformation) {
 
@@ -166,10 +167,10 @@ public class ClassTracker {
   }
 
   /**
-   * Checks if a hierarchy base has any subclasses.
+   * Returns whether a registered hierarchy base class has at least one declared subclass.
    *
-   * @param typeElement the base class
-   * @return {@code true} when at least one subclass exists
+   * @param typeElement the hierarchy base class element
+   * @return {@code true} if at least one subclass was declared
    */
   public boolean hasHierarchySubClasses (TypeElement typeElement) {
 
@@ -184,10 +185,10 @@ public class ClassTracker {
   }
 
   /**
-   * Returns the subclasses registered under a hierarchy base.
+   * Returns the list of declared hierarchy subclasses for the given base class.
    *
-   * @param typeElement the base class
-   * @return an immutable list of subclasses (may be empty)
+   * @param typeElement the hierarchy base class element
+   * @return list of subclass elements, or an empty list if none are registered
    */
   public List<TypeElement> getHierarchySubclasses (TypeElement typeElement) {
 
@@ -202,10 +203,10 @@ public class ClassTracker {
   }
 
   /**
-   * Checks if a class is a member of a registered hierarchy.
+   * Returns whether the given type element is a registered hierarchy subclass.
    *
-   * @param typeElement the class to test
-   * @return {@code true} if a hierarchy base was recorded for the class
+   * @param typeElement the type element to test
+   * @return {@code true} if a hierarchy base has been recorded for this element
    */
   public boolean hasHierarchyBaseClass (TypeElement typeElement) {
 
@@ -213,10 +214,10 @@ public class ClassTracker {
   }
 
   /**
-   * Indicates whether a view class for the supplied type has already been compiled and available on the classpath.
+   * Returns whether a generated view for the given type element already exists on the classpath.
    *
-   * @param typeElement the class or interface to check
-   * @return {@code true} if a compiled type exists
+   * @param typeElement the type element to check
+   * @return {@code true} if the type's qualified name resolves to a loadable class
    */
   public boolean isPreCompiled (TypeElement typeElement) {
 
@@ -224,13 +225,13 @@ public class ClassTracker {
   }
 
   /**
-   * Indicates whether a generated view with a given purpose/direction/type name is already available.
+   * Returns whether the generated view for the given purpose, direction, and type already exists on the classpath.
    *
-   * @param processingEnvironment current annotation processing environment
+   * @param processingEnvironment the current annotation processing environment
    * @param purpose               the view purpose suffix
    * @param direction             the view direction suffix
-   * @param typeElement           the originating class
-   * @return {@code true} if the generated view class can be loaded
+   * @param typeElement           the originating annotated type
+   * @return {@code true} if the computed view class name resolves to a loadable class
    */
   public boolean isPreCompiled (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
@@ -238,10 +239,10 @@ public class ClassTracker {
   }
 
   /**
-   * Attempts to load a class by its fully qualified name and caches the result.
+   * Attempts to load a class by fully qualified name and caches whether it is present on the classpath.
    *
-   * @param qualifiedName the class name to resolve
-   * @return {@code true} if the class is present on the classpath
+   * @param qualifiedName the fully qualified class name to probe
+   * @return {@code true} if the class can be loaded
    */
   private boolean isPreCompiled (String qualifiedName) {
 

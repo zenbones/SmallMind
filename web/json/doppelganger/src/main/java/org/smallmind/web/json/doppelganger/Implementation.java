@@ -33,24 +33,24 @@
 package org.smallmind.web.json.doppelganger;
 
 /**
- * Declares extra interfaces that should be added to generated view classes for selected purposes/visibilities.
+ * Declares additional interfaces that generated view classes should implement for selected purposes and visibilities.
  */
 public @interface Implementation {
 
   /**
-   * @return the visibility to which these implementations apply (IN/OUT/BOTH)
+   * @return visibility controlling which view directions receive the interface implementations
    */
   // the visibility of these implementations (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
   /**
-   * @return list of purposes that should receive the additional interfaces (empty applies to default)
+   * @return purpose identifiers that scope which views receive the implementations; empty applies to the default idiom
    */
   // the name(s) of the idioms to which these implementations apply
   String[] purposes () default {};
 
   /**
-   * @return interfaces to add to the generated {@code implements} clause
+   * @return interface classes to add to the {@code implements} clause of the generated view
    */
   // The interfaces to be adopted into the implements clause of the generated classes
   Class<?>[] value ();

@@ -35,15 +35,15 @@ package org.smallmind.batch.base;
 import java.time.LocalDateTime;
 
 /**
- * {@link LocalDateTime} implementation of {@link BatchParameter}.
+ * {@link BatchParameter} specialisation that carries a {@link LocalDateTime} value.
  */
 public class DateBatchParameter extends BatchParameter<LocalDateTime> {
 
   /**
-   * Creates a date parameter wrapper.
+   * Wraps a date/time value as a batch parameter.
    *
-   * @param value       the date to pass to the batch job
-   * @param identifying whether the value should contribute to job identity
+   * @param value       the date/time to forward to the batch job
+   * @param identifying {@code true} if the date should form part of the job-instance key
    */
   public DateBatchParameter (LocalDateTime value, boolean identifying) {
 

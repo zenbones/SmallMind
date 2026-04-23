@@ -38,17 +38,32 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
- * Entry point for code that wants to emit metrics without wiring the registry explicitly.
- * Uses {@link PerApplicationContext} to hold a {@link ClaxonRegistry} and produces {@link Instrumentation} instances.
+ * Static façade that allows application code to obtain {@link Instrumentation} instances
+ * without holding an explicit reference to a {@link ClaxonRegistry}.
+ *
+ * <p>A registry must be installed via {@link #register(ClaxonRegistry)} before
+ * {@link #with(Class, MeterBuilder, Tag...)} can return active instrumentation.
+ * Until a registry is installed — or after it has been removed — every call to
+ * {@code with} returns an {@link UnpluggedInstrumentation} that silently discards all
+ * metric updates, ensuring that instrumented code paths never throw a
+ * {@link NullPointerException} due to a missing registry.
+ *
+ * <p>The registry is stored in a {@link PerApplicationContext} so that multi-application
+ * environments (e.g., OSGi, application servers) can maintain independent registries per
+ * application classloader.
  */
 public class Instrument implements PerApplicationDataManager {
 
+  /**
+   * Shared no-op instrumentation returned when no registry has been installed.
+   */
   private static final UnpluggedInstrumentation UNPLUGGED_INSTRUMENTATION = new UnpluggedInstrumentation();
 
   /**
-   * Registers the supplied registry in the per-application context so that subsequent instrumentation calls can find it.
+   * Installs {@code registry} as the per-application {@link ClaxonRegistry} so that
+   * subsequent calls to {@link #with} can resolve meters through it.
    *
-   * @param registry the registry to register
+   * @param registry the registry to install for the current application context
    */
   public static void register (ClaxonRegistry registry) {
 
@@ -56,9 +71,10 @@ public class Instrument implements PerApplicationDataManager {
   }
 
   /**
-   * Retrieves the registry previously registered for the current application.
+   * Returns the {@link ClaxonRegistry} currently installed for the active application
+   * context, or {@code null} if none has been installed.
    *
-   * @return the current {@link ClaxonRegistry}, or {@code null} if none is registered
+   * @return the installed {@link ClaxonRegistry}, or {@code null}
    */
   public static ClaxonRegistry getRegistry () {
 
@@ -66,13 +82,18 @@ public class Instrument implements PerApplicationDataManager {
   }
 
   /**
-   * Creates instrumentation for a caller using the given meter builder and tags.
-   * If no registry has been registered, returns a no-op instrumentation to avoid failures.
+   * Creates an {@link Instrumentation} that routes metric updates through the currently
+   * installed registry for the given caller class, builder, and tags.
    *
-   * @param caller  the calling class to use for naming
-   * @param builder the meter builder describing how to build the meter
-   * @param tags    optional tags to associate with the meter
-   * @return an active instrumentation if a registry exists, otherwise a no-op instrumentation
+   * <p>If no registry is installed, an {@link UnpluggedInstrumentation} is returned
+   * instead; it accepts all calls without performing any measurement, so call-site
+   * code does not need to guard against a missing registry.
+   *
+   * @param caller  the class that is requesting instrumentation, used for meter naming
+   * @param builder the meter builder that describes the type of meter to create
+   * @param tags    optional tags to associate with the meter; may be empty
+   * @return a {@link WorkingInstrumentation} backed by the active registry, or
+   * an {@link UnpluggedInstrumentation} if no registry is installed
    */
   public static Instrumentation with (Class<?> caller, MeterBuilder<? extends Meter> builder, Tag... tags) {
 

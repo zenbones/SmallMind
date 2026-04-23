@@ -36,7 +36,7 @@ import java.util.Map;
 import jakarta.servlet.Servlet;
 
 /**
- * Describes a servlet to be installed into a Grizzly web application context.
+ * Descriptor for a servlet to be registered in a Grizzly web application context.
  */
 public class ServletInstaller extends GrizzlyInstaller {
 
@@ -49,6 +49,8 @@ public class ServletInstaller extends GrizzlyInstaller {
   private Boolean asyncSupported;
 
   /**
+   * Returns the installer type discriminator.
+   *
    * @return {@link GrizzlyInstallerType#SERVLET}
    */
   @Override
@@ -58,7 +60,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return display name used when registering the servlet
+   * Returns the display name used when registering the servlet.
+   *
+   * @return servlet display name
    */
   public String getDisplayName () {
 
@@ -66,7 +70,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param displayName friendly registration name for the servlet
+   * Sets the display name used when registering the servlet.
+   *
+   * @param displayName friendly registration name
    */
   public void setDisplayName (String displayName) {
 
@@ -74,11 +80,11 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * Instantiates the servlet if only a class was provided, otherwise returns the supplied instance.
+   * Returns the servlet to deploy, instantiating from the configured class if no instance was set.
    *
-   * @return servlet instance to deploy
-   * @throws InstantiationException if the servlet cannot be constructed
-   * @throws IllegalAccessException if the constructor is not accessible
+   * @return servlet instance ready for deployment
+   * @throws InstantiationException if the servlet class cannot be instantiated
+   * @throws IllegalAccessException if the servlet class or no-arg constructor is not accessible
    */
   public Servlet getServlet ()
     throws InstantiationException, IllegalAccessException {
@@ -87,6 +93,8 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets a pre-built servlet instance to use instead of constructing one from a class.
+   *
    * @param servlet concrete servlet instance
    */
   public void setServlet (Servlet servlet) {
@@ -95,7 +103,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param servletClass servlet implementation class to instantiate
+   * Sets the servlet class to instantiate when no servlet instance has been provided.
+   *
+   * @param servletClass servlet implementation class
    */
   public void setServletClass (Class<? extends Servlet> servletClass) {
 
@@ -103,7 +113,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return init parameters to set on the servlet registration
+   * Returns the init parameters to set on the servlet registration.
+   *
+   * @return init parameter map, or {@code null} if none
    */
   public Map<String, String> getInitParameters () {
 
@@ -111,6 +123,8 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets the init parameters to pass to the servlet registration.
+   *
    * @param initParameters servlet init parameters
    */
   public void setInitParameters (Map<String, String> initParameters) {
@@ -119,7 +133,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return mapping pattern to use when registering the servlet
+   * Returns the URL pattern to map this servlet to.
+   *
+   * @return URL pattern, or {@code null} to default to {@code /*}
    */
   public String getUrlPattern () {
 
@@ -127,6 +143,8 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
+   * Sets the URL pattern to map this servlet to.
+   *
    * @param urlPattern URL mapping for the servlet
    */
   public void setUrlPattern (String urlPattern) {
@@ -135,7 +153,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return desired load-on-startup order; {@code null} leaves it unset
+   * Returns the load-on-startup order for this servlet.
+   *
+   * @return load-on-startup value, or {@code null} if not specified
    */
   public Integer getLoadOnStartup () {
 
@@ -143,7 +163,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param loadOnStartup servlet load-on-startup order
+   * Sets the load-on-startup order for this servlet.
+   *
+   * @param loadOnStartup startup order value
    */
   public void setLoadOnStartup (Integer loadOnStartup) {
 
@@ -151,7 +173,10 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @return whether the servlet supports async; {@code null} leaves container default
+   * Returns whether the servlet declares async support.
+   *
+   * @return {@code Boolean.TRUE} if async is supported, {@code Boolean.FALSE} if not, or {@code null} to leave the
+   * container default
    */
   public Boolean getAsyncSupported () {
 
@@ -159,7 +184,9 @@ public class ServletInstaller extends GrizzlyInstaller {
   }
 
   /**
-   * @param asyncSupported flag indicating async support
+   * Sets whether the servlet declares async support.
+   *
+   * @param asyncSupported async-support flag, or {@code null} to use the container default
    */
   public void setAsyncSupported (Boolean asyncSupported) {
 

@@ -33,12 +33,17 @@
 package org.smallmind.phalanx.wire.transport.jms.spring;
 
 /**
- * Spring reference for a JMS topic destination.
+ * Spring bean reference that identifies a JMS topic destination by logical name and JNDI path.
+ *
+ * <p>Extends {@link DestinationReference} to carry selector and durability settings in addition
+ * to the name and path inherited from {@link ManagedObjectReference}.
  */
 public class TopicReference extends DestinationReference {
 
   /**
-   * {@inheritDoc}
+   * Returns {@link DestinationType#TOPIC} to indicate that this reference describes a topic.
+   *
+   * @return {@link DestinationType#TOPIC}
    */
   @Override
   public DestinationType getDestinationType () {

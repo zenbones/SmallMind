@@ -33,7 +33,10 @@
 package org.smallmind.forge.deploy;
 
 /**
- * Console-based progress indicator that prints percentage or a simple ASCII bar.
+ * Console progress indicator that tracks completion of a fixed-size unit of work. Supports two
+ * rendering modes controlled by {@code emulateGraphics}: a single-line rewriting ASCII bar, or a
+ * multi-line percentage report. Output is emitted only when the completion segment advances.
+ * Both {@link #close()} and {@link #update(long)} are {@code synchronized}.
  */
 public class TextProgressBar {
 
@@ -46,12 +49,13 @@ public class TextProgressBar {
   private int previousSegment = -1;
 
   /**
-   * Create a progress bar for a fixed amount of work.
+   * Create a progress bar for a bounded amount of work.
    *
-   * @param total           the total number of units to complete
-   * @param measure         the text label describing the units (e.g. {@code bytes})
-   * @param segmentPercent  the percentage increment that triggers an update
-   * @param emulateGraphics when {@code true}, renders a single-line ASCII bar; otherwise prints line by line percentages
+   * @param total           total number of units to complete; serves as the 100% baseline
+   * @param measure         label appended to each progress line describing the unit (e.g. {@code bytes})
+   * @param segmentPercent  percentage increment between successive console updates
+   * @param emulateGraphics {@code true} to overwrite a single console line with an ASCII bar;
+   *                        {@code false} to emit one percentage-complete line per segment
    */
   public TextProgressBar (long total, String measure, int segmentPercent, boolean emulateGraphics) {
 
@@ -65,7 +69,10 @@ public class TextProgressBar {
   }
 
   /**
-   * Finish rendering the progress bar, emitting a line break if rendering was graphical.
+   * Finalize the progress bar display.
+   *
+   * <p>In graphics-emulation mode, emits a trailing newline so subsequent console output begins on
+   * a fresh line. Subsequent calls after the first are no-ops.
    */
   public synchronized void close () {
 
@@ -78,10 +85,13 @@ public class TextProgressBar {
   }
 
   /**
-   * Update the displayed progress.
+   * Advance the displayed progress to {@code current} units completed.
    *
-   * @param current the amount of work completed so far
-   * @throws IllegalArgumentException if {@code current} exceeds {@code total}
+   * <p>Output is written only when the completion segment changes, avoiding redundant console
+   * writes. When {@code current} equals {@code total} the bar is automatically marked as done.
+   *
+   * @param current units of work completed so far; must not exceed {@code total}
+   * @throws IllegalArgumentException if {@code current} is greater than {@code total}
    */
   public synchronized void update (long current) {
 

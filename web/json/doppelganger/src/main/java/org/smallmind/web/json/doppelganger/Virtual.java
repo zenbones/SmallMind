@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
- * Declares a virtual (non-existent) field to be injected into generated views with specified metadata.
+ * Declares a synthetic field that has no corresponding entity field and is injected into the generated view with specified type and metadata.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
@@ -57,37 +57,37 @@ public @interface Virtual {
   Class<? extends XmlAdapter> adapter () default NullXmlAdapter.class;
 
   /**
-   * @return type hint for tools (mapped to {@link org.smallmind.web.json.scaffold.util.As})
+   * @return type hint class for tools that process the generated view (mapped to {@code @As})
    */
   // a type hint for tools which may process generated classes
   Class<?> as () default Void.class;
 
   /**
-   * @return explicit type definition for the virtual field
+   * @return the explicit type definition for the virtual field
    */
   // the type information for the generated property
   Type type ();
 
   /**
-   * @return the logical field name to use in generated views
+   * @return the logical field name to use in the generated view
    */
   // the field name of the generated property
   String field ();
 
   /**
-   * @return XML element name override for this property
+   * @return XML element name override for this property, defaulting to the field name
    */
   // the xml element name
   String name () default "";
 
   /**
-   * @return whether the property is required in the default idiom
+   * @return whether this property is required in the default idiom
    */
   // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
 
   /**
-   * @return comment text to attach to the generated property
+   * @return comment text to embed in a generated {@code @Comment} annotation on this property
    */
   // The text for a generated @Comment annotation
   String comment () default "";
