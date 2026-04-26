@@ -514,6 +514,7 @@ Prefer source-backed statements over inferred behavior.
 - generic framework-style prose that ignores this project's specific integration model
 - writing around the code instead of documenting what the code actually does
 - marketing language where the style should be factual and operational
+- trite or clichéd phrasing that sounds generated rather than considered ("every service eventually", "out of the box", "at its core", etc.)
 - defining a module mainly by what it is not, or using negative, dismissive, or exaggerated
   contrast language
 - vague statements about convenience that hide ownership boundaries
