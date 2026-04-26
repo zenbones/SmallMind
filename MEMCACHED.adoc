@@ -35,8 +35,7 @@ cluster is a one-bean change.
 
 === Why This Package Exists
 
-Memcached is a simple key/value store, but every Java service that talks to
-it ends up re-implementing the same scaffolding around that simplicity:
+Memcached is a simple key/value store, but clients must contend with a layer of scaffolding around that simplicity, resolving many of the same concerns:
 
 1. A cross-client abstraction so the application code does not depend on a
    specific driver (`spymemcached`, `XMemcached`, `Folsom`, …). That

@@ -28,8 +28,8 @@ moment, which members of a group are available to serve the next request.
 
 == Why Quorum Exists
 
-Nearly every non-trivial server-side Java application eventually confronts
-the same set of problems:
+Many server-side Java applications eventually confront
+a set of common problems in clustering and distribution:
 
 . A downstream service (database, LDAP directory, message broker, remote API)
   is expensive to connect to, so connections must be reused.

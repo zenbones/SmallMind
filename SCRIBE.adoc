@@ -49,8 +49,7 @@ implementation present at class-load time.
 
 === Why this package exists
 
-Most Java logging decisions are forced on a service before anyone knows what the service
-actually needs. You add SLF4J because the library you imported needed it. You add Log4J
+There are many fine Java logging frameworks available, but this deciison is one often made by libraries that foist those decisions on their clients. You add SLF4J because the library you imported needed it. You add Log4J
 because the platform team standardized on it. You add `java.util.logging` because the
 Servlet container used it. Years later you have three logging frameworks, two bridges,
 a `logback.xml`, a `log4j2.xml`, and a `logging.properties`, and no single configuration

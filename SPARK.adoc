@@ -65,7 +65,7 @@ turn split into an API/runtime half and a Maven-plugin half:
 
 === Why This Package Exists
 
-Every Java service eventually meets three problems:
+Java services that wish to distribute themselves in robust self-executing formats must answer some common issues:
 
 1. **Shipping**. How does the artifact reach a deployed host? A plain
    jar is useless without its classpath. An uber-jar works, but most

@@ -27,7 +27,7 @@ without it.
 
 === Why this package exists
 
-Every non-trivial Java service accumulates the same set of utility classes:
+It's generally useful to accumulate a common set of utility classes:
 a GNU-style command-line parser, a thread-local stack of "current caller"
 information, converters between `Date` / `Calendar` / `ZonedDateTime`, a
 Base64 codec that pre-dates `java.util.Base64`, a classloader that can

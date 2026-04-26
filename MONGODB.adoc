@@ -38,8 +38,7 @@ together with the list of `@Entity` classes it should recognize.
 
 === Why This Package Exists
 
-The MongoDB Java driver is a complete, general-purpose API. Every
-service that uses it ends up writing the same glue:
+The MongoDB Java driver is a complete, general-purpose API. However, many clients of that service will end up writing the same glue:
 
 1. Walk a property file or Spring XML of broker hosts, convert them
    into `ServerAddress` instances, and feed the resulting array to
