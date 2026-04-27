@@ -381,8 +381,9 @@ declares as `optional`. An application that uses them must explicitly depend on 
   (additivity disabled). Use when the deployment standardizes on Log4J.
 
 | `scribe-slf4j`
-| `StaticLoggerBinder`, `ScribeLoggerFactory`, `ScribeMDCAdapter` — registers Scribe as
-  SLF4J's backend so `org.slf4j.Logger` calls flow into the Scribe pipeline.
+| `ScribeSLF4JServiceProvider`, `ScribeLoggerFactory`, `ScribeLoggerAdapter`,
+  `ScribeMDCAdapter` — registers Scribe as SLF4J's backend so `org.slf4j.Logger` calls
+  flow into the Scribe pipeline.
 
 | `scribe-apache`
 | `CommonsLogWrapper` — a Commons Logging `Log` implementation that delegates to Scribe.
@@ -1324,10 +1325,10 @@ the same pattern.
 [[slf4j-binding]]
 == SLF4J Binding
 
-The `scribe-slf4j` artifact installs Scribe as SLF4J's provider. The binding
-classes — `org.slf4j.impl.StaticLoggerBinder`, `org.slf4j.impl.StaticMDCBinder`,
-`ScribeLoggerFactory`, `ScribeLoggerAdapter`, `ScribeMDCAdapter` — are discovered by
-SLF4J's `LoggerFactory` initialization.
+The `scribe-slf4j` artifact installs Scribe as SLF4J's provider. `ScribeSLF4JServiceProvider`
+implements the SLF4J 2.0 `SLF4JServiceProvider` contract and is discovered via
+`META-INF/services`; it wires together `ScribeLoggerFactory`, `ScribeLoggerAdapter`,
+`ScribeMDCAdapter`, and `ScribeMarkerFactory` for SLF4J's `LoggerFactory` initialization.
 
 With `scribe-slf4j` on the classpath, this code:
 

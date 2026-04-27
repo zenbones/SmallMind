@@ -30,48 +30,64 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.slf4j.impl;
+package org.smallmind.scribe.slf4j;
 
-import org.slf4j.spi.MDCAdapter;
-import org.smallmind.scribe.slf4j.ScribeMDCAdapter;
+import org.slf4j.IMarkerFactory;
+import org.slf4j.Marker;
 
 /**
- * SLF4J MDC binder placed in the {@code org.slf4j.impl} package to satisfy the SLF4J 1.x
- * static binding contract; supplies a {@link ScribeMDCAdapter} that maps MDC operations to the
- * scribe {@link org.smallmind.scribe.pen.adapter.Parameters} thread-local store.
+ * Stub SLF4J {@link IMarkerFactory}. Scribe does not support SLF4J {@link Marker}
+ * semantics; all methods return {@code null} or {@code false} so that the SLF4J
+ * contract is satisfied without error while marker-bearing log calls are silently
+ * discarded by {@link ScribeLoggerAdapter} (which extends {@code MarkerIgnoringBase}).
  */
-public class StaticMDCBinder {
-
-  public static final StaticMDCBinder SINGLETON = new StaticMDCBinder();
-
-  private final MDCAdapter mdcAdapter;
+public class ScribeMarkerFactory implements IMarkerFactory {
 
   /**
-   * Constructs the binder and creates the single {@link ScribeMDCAdapter} instance
-   * that will serve all {@link #getMDCA()} calls.
+   * Always returns {@code null}; markers are not supported by Scribe.
+   *
+   * @param name ignored
+   * @return {@code null}
    */
-  public StaticMDCBinder () {
+  @Override
+  public Marker getMarker (String name) {
 
-    mdcAdapter = new ScribeMDCAdapter();
+    return null;
   }
 
   /**
-   * Returns the process-wide singleton required by the SLF4J static MDC binding mechanism.
+   * Always returns {@code false}; no markers are tracked by this factory.
    *
-   * @return the single {@code StaticMDCBinder} instance
+   * @param name ignored
+   * @return {@code false}
    */
-  public static StaticMDCBinder getSingleton () {
+  @Override
+  public boolean exists (String name) {
 
-    return SINGLETON;
+    return false;
   }
 
   /**
-   * Returns the {@link MDCAdapter} that delegates MDC operations to the scribe parameter store.
+   * Always returns {@code false}; no markers are tracked by this factory.
    *
-   * @return the MDC adapter for this binding
+   * @param name ignored
+   * @return {@code false}
    */
-  public MDCAdapter getMDCA () {
+  @Override
+  public boolean detachMarker (String name) {
 
-    return mdcAdapter;
+    return false;
+  }
+
+  /**
+   * Always returns {@code null}; detached markers are not supported by Scribe.
+   *
+   * @param name ignored
+   * @return {@code null}
+   */
+  @Override
+  public Marker getDetachedMarker (String name) {
+
+    return null;
   }
 }
