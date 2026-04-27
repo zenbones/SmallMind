@@ -215,7 +215,8 @@ public class NIOCubbyConnection implements CubbyConnection {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes and dispatches a command to the memcached server, then blocks until the
+   * corresponding response is received or the timeout expires.
    *
    * <p>Serializes the command via the configured {@link KeyTranslator}, wraps it in a
    * {@link MissingLink} with a {@link ClientRequestCallback}, places it on the request queue,

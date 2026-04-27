@@ -46,7 +46,12 @@ public enum JWTEncryptionAlgorithm {
 
   HS256("HS256") {
     /**
-     * {@inheritDoc}
+     * Produces a signature over the given prologue bytes using the supplied private key.
+     *
+     * @param privateKey the key used to generate the signature
+     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @return the raw signature bytes
+     * @throws Exception if the signing operation fails
      */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
@@ -56,7 +61,13 @@ public enum JWTEncryptionAlgorithm {
     }
 
     /**
-     * {@inheritDoc}
+     * Verifies a JWT signature against the supplied public key and token segments.
+     *
+     * @param publicKey the key used to verify the signature
+     * @param pieces    the JWT segments required by the underlying verifier
+     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @return {@code true} if the signature is valid
+     * @throws Exception if the verification operation fails
      */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
@@ -67,7 +78,12 @@ public enum JWTEncryptionAlgorithm {
   },
   RS256("RS256") {
     /**
-     * {@inheritDoc}
+     * Produces a signature over the given prologue bytes using the supplied private key.
+     *
+     * @param privateKey the key used to generate the signature
+     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @return the raw signature bytes
+     * @throws Exception if the signing operation fails
      */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
@@ -77,7 +93,13 @@ public enum JWTEncryptionAlgorithm {
     }
 
     /**
-     * {@inheritDoc}
+     * Verifies a JWT signature against the supplied public key and token segments.
+     *
+     * @param publicKey the key used to verify the signature
+     * @param pieces    the JWT segments required by the underlying verifier
+     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @return {@code true} if the signature is valid
+     * @throws Exception if the verification operation fails
      */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
@@ -88,7 +110,12 @@ public enum JWTEncryptionAlgorithm {
   },
   EDDSA("EdDSA") {
     /**
-     * {@inheritDoc}
+     * Produces a signature over the given prologue bytes using the supplied private key.
+     *
+     * @param privateKey the key used to generate the signature
+     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @return the raw signature bytes
+     * @throws Exception if the signing operation fails
      */
     @Override
     public byte[] sign (PrivateKey privateKey, String prologue)
@@ -98,7 +125,13 @@ public enum JWTEncryptionAlgorithm {
     }
 
     /**
-     * {@inheritDoc}
+     * Verifies a JWT signature against the supplied public key and token segments.
+     *
+     * @param publicKey the key used to verify the signature
+     * @param pieces    the JWT segments required by the underlying verifier
+     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @return {@code true} if the signature is valid
+     * @throws Exception if the verification operation fails
      */
     @Override
     public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)

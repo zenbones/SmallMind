@@ -58,7 +58,10 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
   }
 
   /**
-   * {@inheritDoc}
+   * Obtains the resource for active use.
+   *
+   * @return the live resource instance
+   * @throws JugglerResourceException if the resource is unavailable or fails to be obtained
    */
   @Override
   public P obtain ()
@@ -73,7 +76,10 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
   }
 
   /**
-   * {@inheritDoc}
+   * Attempts to recover the resource after it has been blacklisted due to a failure.
+   *
+   * @return {@code true} if the resource is healthy and ready to return to service;
+   * {@code false} if it remains unusable
    */
   @Override
   public boolean recover () {
@@ -89,7 +95,10 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
   }
 
   /**
-   * {@inheritDoc}
+   * Returns a human-readable label identifying this pin and its underlying provider,
+   * used in log messages and diagnostics.
+   *
+   * @return description string; never {@code null}
    */
   @Override
   public String describe () {

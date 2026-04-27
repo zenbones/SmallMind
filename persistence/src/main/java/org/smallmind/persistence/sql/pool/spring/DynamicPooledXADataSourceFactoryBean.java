@@ -61,7 +61,12 @@ public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataS
   }
 
   /**
-   * {@inheritDoc}
+   * Is the object managed by this factory a singleton? That is, will getObject() always return
+   * the same object (a reference that can be cached)? NOTE: If a FactoryBean indicates to hold a
+   * singleton object, the object returned from getObject() might get cached by the owning
+   * BeanFactory.
+   *
+   * @return whether the exposed object is a singleton
    */
   @Override
   public boolean isSingleton () {
@@ -70,7 +75,11 @@ public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataS
   }
 
   /**
-   * {@inheritDoc}
+   * Return the type of object that this FactoryBean creates, or null if not known in advance.
+   * This allows one to check for specific types of beans without instantiating objects, for
+   * example on autowiring.
+   *
+   * @return the type of object that this FactoryBean creates, or null if not known at the time of the call
    */
   @Override
   public Class<?> getObjectType () {
@@ -79,7 +88,11 @@ public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataS
   }
 
   /**
-   * {@inheritDoc}
+   * Return an instance (possibly shared or independent) of the object managed by this factory.
+   * As with a BeanFactory, this allows support for both the Singleton and Prototype design
+   * pattern.
+   *
+   * @return an instance of the bean (can be null)
    */
   @Override
   public XADataSource getObject () {

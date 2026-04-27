@@ -54,7 +54,7 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   }
 
   /**
-   * {@inheritDoc}
+   * @return base name used for all contextual pools
    */
   @Override
   public String getBaseName () {
@@ -63,7 +63,10 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   }
 
   /**
-   * {@inheritDoc}
+   * Constructs a full pool name for a given context portion.
+   *
+   * @param contextualPart context identifier (may be null for default)
+   * @return full pool name
    */
   @Override
   public String getPoolName (String contextualPart) {
@@ -72,7 +75,11 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   }
 
   /**
-   * {@inheritDoc}
+   * Extracts the context portion from a full pool name.
+   *
+   * @param poolName pool name to parse
+   * @return extracted context or {@code null} if none
+   * @throws ComponentPoolException if the pool name does not match the expected format
    */
   @Override
   public String getContextualPartFromPoolName (String poolName)

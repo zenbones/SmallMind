@@ -112,7 +112,9 @@ public class ClientRequestCallback implements RequestCallback {
   }
 
   /**
-   * {@inheritDoc}
+   * Delivers the successfully parsed server response to this callback.
+   *
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
    *
    * <p>Stores the response and releases the latch, unblocking any thread waiting in
    * {@link #getResult(long)}.</p>
@@ -126,7 +128,9 @@ public class ClientRequestCallback implements RequestCallback {
   }
 
   /**
-   * {@inheritDoc}
+   * Delivers an I/O exception that occurred while writing the command or reading its response.
+   *
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
    *
    * <p>Stores the exception and releases the latch so that {@link #getResult(long)} can
    * propagate it to the waiting client thread.</p>

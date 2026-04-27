@@ -115,10 +115,17 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the object bound to {@code name}.
+   * <p>
+   * If the backing store returns a directory context of the same class as the current context,
+   * it is wrapped in a new {@link JavaContext} (or {@link PooledJavaContext} when pooling is
+   * enabled).
    *
+   * @param name the internal name to look up
+   * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the name is not bound or the backing store lookup fails
    */
   public Object lookup (Name name)
     throws NamingException {
@@ -132,10 +139,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the object bound to the string name {@code name}.
    *
+   * @param name the slash-delimited internal name to look up
+   * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the name is not bound or the backing store lookup fails
    */
   public Object lookup (String name)
     throws NamingException {
@@ -149,10 +159,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to {@code name} in the backing store.
    *
+   * @param name the internal name to bind
+   * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the bind fails for any other reason
    */
   public void bind (Name name, Object obj)
     throws NamingException {
@@ -166,10 +179,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to the string name {@code name} in the backing store.
    *
+   * @param name the slash-delimited internal name to bind
+   * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the bind fails for any other reason
    */
   public void bind (String name, Object obj)
     throws NamingException {
@@ -183,10 +199,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to {@code name}, replacing any existing binding.
    *
+   * @param name the internal name to rebind
+   * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj)
     throws NamingException {
@@ -200,10 +219,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to the string name {@code name}, replacing any existing binding.
    *
+   * @param name the slash-delimited internal name to rebind
+   * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj)
     throws NamingException {
@@ -217,10 +239,12 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Removes the binding for {@code name} from the backing store.
    *
+   * @param name the internal name whose binding is to be removed
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the unbind fails for any other reason
    */
   public void unbind (Name name)
     throws NamingException {
@@ -234,10 +258,12 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Removes the binding for the string name {@code name} from the backing store.
    *
+   * @param name the slash-delimited internal name whose binding is to be removed
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the unbind fails for any other reason
    */
   public void unbind (String name)
     throws NamingException {
@@ -251,10 +277,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Renames the entry at {@code oldName} to {@code newName} in the backing store.
    *
+   * @param oldName the current internal name of the entry
+   * @param newName the new internal name for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rename fails for any other reason
    */
   public void rename (Name oldName, Name newName)
     throws NamingException {
@@ -268,10 +297,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Renames the entry at the string name {@code oldName} to the string name {@code newName}.
    *
+   * @param oldName the slash-delimited current internal name
+   * @param newName the slash-delimited new internal name
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rename fails for any other reason
    */
   public void rename (String oldName, String newName)
     throws NamingException {
@@ -285,10 +317,17 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an enumeration of the names and class names of all bindings under {@code name}.
+   * <p>
+   * The returned enumeration translates each element on the fly; directory context class names
+   * are replaced with {@code JavaContext}.
    *
+   * @param name the internal name of the context to list
+   * @return a {@link JavaNamingEnumeration} of {@link NameClassPair}s, or {@code null} if the
+   * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (Name name)
     throws NamingException {
@@ -302,10 +341,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an enumeration of the names and class names of all bindings under the string name
+   * {@code name}.
    *
+   * @param name the slash-delimited internal name of the context to list
+   * @return a {@link JavaNamingEnumeration} of {@link NameClassPair}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (String name)
     throws NamingException {
@@ -319,10 +362,17 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an enumeration of the name-object bindings under {@code name}.
+   * <p>
+   * The returned enumeration translates each element on the fly; directory context objects are
+   * wrapped in new {@link JavaContext} instances.
    *
+   * @param name the internal name of the context whose bindings to list
+   * @return a {@link JavaNamingEnumeration} of {@link Binding}s, or {@code null} if the backing
+   * store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (Name name)
     throws NamingException {
@@ -336,10 +386,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an enumeration of the name-object bindings under the string name {@code name}.
    *
+   * @param name the slash-delimited internal name of the context whose bindings to list
+   * @return a {@link JavaNamingEnumeration} of {@link Binding}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (String name)
     throws NamingException {
@@ -353,10 +406,12 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Destroys the subcontext identified by {@code name}.
    *
+   * @param name the internal name of the subcontext to destroy
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if destruction fails for any other reason
    */
   public void destroySubcontext (Name name)
     throws NamingException {
@@ -370,10 +425,12 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Destroys the subcontext identified by the string name {@code name}.
    *
+   * @param name the slash-delimited internal name of the subcontext to destroy
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if destruction fails for any other reason
    */
   public void destroySubcontext (String name)
     throws NamingException {
@@ -387,10 +444,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a new subcontext with the given name and returns it wrapped in a
+   * {@link JavaContext}.
    *
+   * @param name the internal name of the subcontext to create
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if creation fails for any other reason
    */
   public Context createSubcontext (Name name)
     throws NamingException {
@@ -404,10 +465,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a new subcontext with the string name {@code name} and returns it wrapped in a
+   * {@link JavaContext}.
    *
+   * @param name the slash-delimited internal name of the subcontext to create
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if creation fails for any other reason
    */
   public Context createSubcontext (String name)
     throws NamingException {
@@ -421,10 +486,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the object bound to {@code name} without following link references.
+   * <p>
+   * If the result is a directory context it is wrapped in a new {@link JavaContext}.
    *
+   * @param name the internal name to look up
+   * @return the bound object or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the lookup fails
    */
   public Object lookupLink (Name name)
     throws NamingException {
@@ -438,10 +508,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Looks up the object bound to the string name {@code name} without following link references.
    *
+   * @param name the slash-delimited internal name to look up
+   * @return the bound object or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the lookup fails
    */
   public Object lookupLink (String name)
     throws NamingException {
@@ -455,10 +528,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the {@link NameParser} associated with this context.
+   * <p>
+   * The {@code name} parameter is accepted for API compatibility but is not used.
    *
+   * @param name not used
+   * @return the {@link JavaNameParser} held by this context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException never thrown by this implementation
    */
   public NameParser getNameParser (Name name)
     throws NamingException {
@@ -472,10 +550,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the {@link NameParser} associated with this context.
+   * <p>
+   * The {@code name} parameter is accepted for API compatibility but is not used.
    *
+   * @param name not used
+   * @return the {@link JavaNameParser} held by this context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException never thrown by this implementation
    */
   public NameParser getNameParser (String name)
     throws NamingException {
@@ -489,10 +572,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Composes two names by appending {@code name} to a clone of {@code prefix}.
    *
+   * @param name   the name to append
+   * @param prefix the prefix to prepend
+   * @return a new {@link Name} equal to {@code prefix + name}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if composition fails
    */
   public Name composeName (Name name, Name prefix)
     throws NamingException {
@@ -506,10 +593,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Composes two string names and returns the result as a slash-delimited string.
    *
+   * @param name   the name portion to append
+   * @param prefix the prefix portion to prepend
+   * @return the composed name string
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if parsing or composition fails
    */
   public String composeName (String name, String prefix)
     throws NamingException {
@@ -557,10 +648,16 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the fully qualified name of this context in the {@code java:} namespace.
+   * <p>
+   * Delegates to the backing context's {@link DirContext#getNameInNamespace()} and converts the
+   * result from its external form back to the internal form using the name translator.
    *
+   * @return the internal qualified name string
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing context's {@code getNameInNamespace} throws or if the
+   *                         returned string cannot be translated
    */
   public String getNameInNamespace ()
     throws NamingException {
@@ -574,10 +671,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns all attributes associated with the entry at {@code name}.
    *
+   * @param name the internal name of the entry
+   * @return all attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (Name name)
     throws NamingException {
@@ -591,10 +691,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns all attributes associated with the entry at the string name {@code name}.
    *
+   * @param name the slash-delimited internal name of the entry
+   * @return all attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (String name)
     throws NamingException {
@@ -608,10 +711,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the specified attributes associated with the entry at {@code name}.
    *
+   * @param name    the internal name of the entry
+   * @param attrIds the identifiers of the attributes to return; {@code null} returns all
+   *                attributes
+   * @return the requested attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (Name name, String[] attrIds)
     throws NamingException {
@@ -625,10 +733,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the specified attributes associated with the entry at the string name {@code name}.
    *
+   * @param name    the slash-delimited internal name of the entry
+   * @param attrIds the identifiers of the attributes to return
+   * @return the requested attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public Attributes getAttributes (String name, String[] attrIds)
     throws NamingException {
@@ -642,10 +754,16 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Modifies the attributes of the entry at {@code name} using the given operation code and
+   * attribute set.
    *
+   * @param name   the internal name of the entry to modify
+   * @param mod_op the modification operation ({@link DirContext#ADD_ATTRIBUTE},
+   *               {@link DirContext#REPLACE_ATTRIBUTE}, or {@link DirContext#REMOVE_ATTRIBUTE})
+   * @param attrs  the attributes to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -659,10 +777,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Modifies the attributes of the entry at the string name {@code name} using the given
+   * operation code and attribute set.
    *
+   * @param name   the slash-delimited internal name of the entry to modify
+   * @param mod_op the modification operation
+   * @param attrs  the attributes to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the modification fails for any other reason
    */
   public void modifyAttributes (String name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -676,10 +799,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Applies an ordered sequence of modification items to the entry at {@code name}.
    *
+   * @param name the internal name of the entry to modify
+   * @param mods the ordered modifications to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, ModificationItem[] mods)
     throws NamingException {
@@ -693,10 +819,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Applies an ordered sequence of modification items to the entry at the string name
+   * {@code name}.
    *
+   * @param name the slash-delimited internal name of the entry to modify
+   * @param mods the ordered modifications to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the modification fails for any other reason
    */
   public void modifyAttributes (String name, ModificationItem[] mods)
     throws NamingException {
@@ -710,10 +840,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to {@code name} in the backing store, associating the given attributes.
    *
+   * @param name  the internal name to bind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the bind fails for any other reason
    */
   public void bind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -727,10 +861,14 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to the string name {@code name}, associating the given attributes.
    *
+   * @param name  the slash-delimited internal name to bind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the bind fails for any other reason
    */
   public void bind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -744,10 +882,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to {@code name}, replacing any existing binding and associating the given
+   * attributes.
    *
+   * @param name  the internal name to rebind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -761,10 +904,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Binds {@code obj} to the string name {@code name}, replacing any existing binding and
+   * associating the given attributes.
    *
+   * @param name  the slash-delimited internal name to rebind
+   * @param obj   the object to bind
+   * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -778,10 +926,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a subcontext with the given name and initial attributes, returning it wrapped in a
+   * {@link JavaContext}.
    *
+   * @param name  the internal name of the subcontext to create
+   * @param attrs the initial attributes to associate with the new subcontext
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if creation fails for any other reason
    */
   public DirContext createSubcontext (Name name, Attributes attrs)
     throws NamingException {
@@ -795,10 +948,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a subcontext with the string name {@code name} and initial attributes, returning it
+   * wrapped in a {@link JavaContext}.
    *
+   * @param name  the slash-delimited internal name of the subcontext to create
+   * @param attrs the initial attributes to associate with the new subcontext
+   * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if creation fails for any other reason
    */
   public DirContext createSubcontext (String name, Attributes attrs)
     throws NamingException {
@@ -812,10 +970,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the schema context associated with the entry at {@code name}.
    *
+   * @param name the internal name of the entry
+   * @return the schema context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchema (Name name)
     throws NamingException {
@@ -829,10 +990,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the schema context associated with the entry at the string name {@code name}.
    *
+   * @param name the slash-delimited internal name of the entry
+   * @return the schema context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchema (String name)
     throws NamingException {
@@ -846,10 +1010,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the schema class definition context for the entry at {@code name}.
    *
+   * @param name the internal name of the entry
+   * @return the schema class definition context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (Name name)
     throws NamingException {
@@ -863,10 +1030,13 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the schema class definition context for the entry at the string name {@code name}.
    *
+   * @param name the slash-delimited internal name of the entry
+   * @return the schema class definition context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (String name)
     throws NamingException {
@@ -880,10 +1050,18 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under {@code name} for entries matching {@code matchingAttributes}, returning only
+   * the requested attributes.
    *
+   * @param name               the internal base name for the search
+   * @param matchingAttributes the attributes to match; may be empty
+   * @param attributesToReturn the attribute identifiers to include in each result; {@code null}
+   *                           returns all attributes
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -897,10 +1075,16 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under the string name {@code name} for entries matching {@code matchingAttributes},
+   * returning only the requested attributes.
    *
+   * @param name               the slash-delimited internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @param attributesToReturn the attribute identifiers to include in each result
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -914,10 +1098,16 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under {@code name} for entries matching all attributes in
+   * {@code matchingAttributes}.
    *
+   * @param name               the internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
     throws NamingException {
@@ -931,10 +1121,15 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under the string name {@code name} for entries matching all attributes in
+   * {@code matchingAttributes}.
    *
+   * @param name               the slash-delimited internal base name for the search
+   * @param matchingAttributes the attributes to match
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
     throws NamingException {
@@ -948,10 +1143,17 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under {@code name} using the RFC 2254 filter string {@code filter} and the given
+   * search controls.
    *
+   * @param name   the internal base name for the search
+   * @param filter the RFC 2254 search filter string
+   * @param cons   the search controls (scope, size limit, time limit, etc.)
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
     throws NamingException {
@@ -965,10 +1167,16 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under the string name {@code name} using the RFC 2254 filter string {@code filter}
+   * and the given search controls.
    *
+   * @param name   the slash-delimited internal base name for the search
+   * @param filter the RFC 2254 search filter string
+   * @param cons   the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
     throws NamingException {
@@ -982,10 +1190,19 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under {@code name} using a parameterised filter expression and the given search
+   * controls.
    *
+   * @param name       the internal base name for the search
+   * @param filterExpr the RFC 2254 filter expression, which may contain substitution variables
+   *                   ({@code {0}}, {@code {1}}, etc.)
+   * @param filterArgs the values to substitute into the filter expression
+   * @param cons       the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null} if the
+   * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {
@@ -999,10 +1216,17 @@ public class PooledJavaContext extends JavaContext {
   }
 
   /**
-   * {@inheritDoc}
+   * Searches under the string name {@code name} using a parameterised filter expression and the
+   * given search controls.
    *
+   * @param name       the slash-delimited internal base name for the search
+   * @param filterExpr the RFC 2254 filter expression with optional substitution variables
+   * @param filterArgs the values to substitute into the filter expression
+   * @param cons       the search controls
+   * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
+   * @throws NamingException if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {

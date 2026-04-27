@@ -105,7 +105,13 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves the log writer for this DataSource object. The log writer is a character output
+   * stream to which all logging and tracing messages for this data source will be printed
+   * including messages printed by the methods of this interface. When a DataSource object is
+   * created, the log writer is initially null; in other words, the default is for logging to
+   * be disabled.
+   *
+   * @return the log writer for this data source or null if logging is disabled
    */
   public PrintWriter getLogWriter () {
 
@@ -113,7 +119,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the log writer for this DataSource object to the given java.io.PrintWriter object.
+   * The log writer is a character output stream to which all logging and tracing messages for
+   * this data source will be printed. When a DataSource object is created the log writer is
+   * initially null; in other words, the default is for logging to be disabled.
+   *
+   * @param out the new log writer; to disable logging, set to null
    */
   public void setLogWriter (PrintWriter out) {
 
@@ -121,7 +132,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Gets the maximum time in seconds that this data source can wait while attempting to connect
+   * to a database. A value of zero means that the timeout is the default system timeout if there
+   * is one; otherwise, it means that there is no timeout. When a DataSource object is created,
+   * the login timeout is initially zero.
+   *
+   * @return the data source login time limit
    */
   @Override
   public int getLoginTimeout () {
@@ -130,7 +146,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the maximum time in seconds that this data source will wait while attempting to connect
+   * to a database. A value of zero specifies that the timeout is the default system timeout if
+   * there is one; otherwise, it specifies that there is no timeout. When a DataSource object is
+   * created, the login timeout is initially zero.
+   *
+   * @param seconds the data source login time limit
    */
   public void setLoginTimeout (int seconds) {
 
@@ -138,7 +159,11 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Returns true if this either implements the interface argument or is directly or indirectly
+   * a wrapper for an object that does. Returns false otherwise.
+   *
+   * @param clazz a Class defining an interface
+   * @return true if this implements the interface or directly or indirectly wraps an object that does
    */
   public boolean isWrapperFor (Class<?> clazz) {
 
@@ -146,7 +171,14 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an object that implements the given interface to allow access to non-standard methods,
+   * or standard methods not exposed by the proxy. If the receiver implements the interface then the
+   * result is the receiver or a proxy for the receiver. If the receiver is a wrapper and the
+   * wrapped object implements the interface then the result is the wrapped object or a proxy for
+   * the wrapped object.
+   *
+   * @param clazz a Class defining an interface that the result must implement
+   * @return an object that implements the interface
    */
   public <T> T unwrap (Class<T> clazz) {
 

@@ -71,7 +71,11 @@ public class DataSourcePooledConnection extends AbstractPooledConnection<DataSou
   }
 
   /**
-   * {@inheritDoc}
+   * Creates a {@link ConnectionEvent} representing either a normal close or error condition for
+   * this connection.
+   *
+   * @param sqlException optional SQL error (null for normal close)
+   * @return constructed connection event
    */
   @Override
   public ConnectionEvent getConnectionEvent (SQLException sqlException) {

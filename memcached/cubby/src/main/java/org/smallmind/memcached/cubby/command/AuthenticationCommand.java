@@ -89,12 +89,21 @@ public class AuthenticationCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes this command into its wire-protocol byte representation, ready
+   * to be written to the memcached server socket.
    *
    * <p>Builds an {@code ms} (meta-set) command line with the placeholder key
    * {@code "unused"} and a value payload of {@code "<username> <password>"}
    * encoded as UTF-8. The resulting byte array includes the command header,
    * the value bytes, and a terminating CRLF.</p>
+   *
+   * @param keyTranslator translator used to sanitize and encode the cache key
+   *                      into a protocol-safe form
+   * @return the fully assembled command bytes, including any trailing CRLF and
+   * value payload where applicable
+   * @throws IOException             if an I/O error occurs during encoding
+   * @throws CubbyOperationException if the command cannot be constructed due to
+   *                                 invalid or missing configuration
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -117,12 +126,14 @@ public class AuthenticationCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Interprets the server {@link Response} for this command and returns a
+   * normalized {@link Result} describing the outcome.
    *
    * <p>Authentication responses are consumed by the connection layer directly
    * and are not surfaced as a {@link Result}. This method always returns
    * {@code null}.</p>
    *
+   * @param response the decoded server response corresponding to this command
    * @return {@code null} in all cases
    */
   @Override

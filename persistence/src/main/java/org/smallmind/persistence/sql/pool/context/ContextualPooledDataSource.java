@@ -108,7 +108,9 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
   }
 
   /**
-   * {@inheritDoc}
+   * Initializes the underlying pool; must be called before use.
+   *
+   * @throws ComponentPoolException if startup fails
    */
   @Override
   public void startup ()
@@ -120,7 +122,9 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
   }
 
   /**
-   * {@inheritDoc}
+   * Shuts down the underlying pool and releases resources.
+   *
+   * @throws ComponentPoolException if shutdown fails
    */
   @Override
   public void shutdown ()

@@ -43,7 +43,12 @@ import org.smallmind.quorum.juggler.JugglingPinFactory;
 public class PooledConnectionJugglingPinFactory<P extends PooledConnection> implements JugglingPinFactory<ConnectionPoolDataSource, P> {
 
   /**
-   * {@inheritDoc}
+   * Constructs a new {@link JugglingPin} that wraps the given provider.
+   *
+   * @param dataSource            the provider instance from which the pin's resource is derived
+   * @param pooledConnectionClass the runtime class of the resource, supplied so implementations
+   *                              may perform reflective or proxy-based resource creation
+   * @return a fully constructed pin ready for lifecycle management by the {@link org.smallmind.quorum.juggler.Juggler}
    */
   @Override
   public JugglingPin<P> createJugglingPin (ConnectionPoolDataSource dataSource, Class<P> pooledConnectionClass) {

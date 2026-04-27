@@ -63,7 +63,12 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
   }
 
   /**
-   * {@inheritDoc}
+   * Return the type of object that this FactoryBean creates, or null if not known in advance.
+   * This allows one to check for specific types of beans without instantiating objects, for
+   * example on autowiring.
+   *
+   * @return the type of object that this FactoryBean creates, or null if not known at the time
+   * of the call
    */
   @Override
   public @Nullable Class<?> getObjectType () {
@@ -72,7 +77,12 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
   }
 
   /**
-   * {@inheritDoc}
+   * Return an instance (possibly shared or independent) of the object managed by this factory.
+   * As with a BeanFactory, this allows support for both the Singleton and Prototype design
+   * pattern.
+   *
+   * @return an instance of the bean (can be null)
+   * @throws Exception in case of creation errors
    */
   @Override
   public @Nullable TaskExecutorAdapter getObject () {

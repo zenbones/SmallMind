@@ -75,7 +75,11 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   /**
-   * {@inheritDoc}
+   * Called once before {@link #startup()} to allow the factory to establish any external
+   * connections or one-time resources required for subsequent
+   * {@link #createInstance(org.smallmind.quorum.pool.complex.ComponentPool)} calls.
+   *
+   * @throws JugglerResourceCreationException if initialization fails
    */
   @Override
   public void initialize ()
@@ -85,7 +89,8 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   /**
-   * {@inheritDoc}
+   * Called after {@link #initialize()} and before the pool begins serving components.
+   * May be used to warm connections, register listeners, or perform any other startup work.
    */
   @Override
   public void startup () {
@@ -126,7 +131,8 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   /**
-   * {@inheritDoc}
+   * Called when the pool begins its shutdown sequence, before {@link #deconstruct()}.
+   * Implementations should stop accepting new requests and quiesce any background activity.
    */
   @Override
   public void shutdown () {
@@ -135,7 +141,8 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   }
 
   /**
-   * {@inheritDoc}
+   * Called after all component instances have been closed and the pool has fully stopped,
+   * to release any resources held by the factory itself.
    */
   @Override
   public void deconstruct () {

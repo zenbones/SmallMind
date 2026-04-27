@@ -55,7 +55,7 @@ public class DriverManagerDataSourceFactory implements DataSourceFactory<DataSou
   }
 
   /**
-   * {@inheritDoc}
+   * @return pooled connection class supplied by the data source
    */
   @Override
   public Class<PooledConnection> getPooledConnectionClass () {
@@ -64,7 +64,7 @@ public class DriverManagerDataSourceFactory implements DataSourceFactory<DataSou
   }
 
   /**
-   * {@inheritDoc}
+   * @return data source class that can be constructed
    */
   @Override
   public Class<DataSource> getDataSourceClass () {

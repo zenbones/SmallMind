@@ -174,7 +174,11 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   /**
-   * {@inheritDoc}
+   * Performs one-time initialisation of the routing data structures for the given server pool.
+   *
+   * <p>This method is called once by the client after all hosts have been registered in the
+   * pool. Implementations may pre-compute expensive structures (e.g. hash permutation tables)
+   * that need only be built once per pool configuration.</p>
    *
    * <p>Computes the prime-sized lookup table dimension, then derives a per-host permutation
    * array for every host in the pool (including inactive ones, so that they are available
@@ -215,7 +219,11 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   /**
-   * {@inheritDoc}
+   * Refreshes the routing structures to reflect the current availability of hosts in the pool.
+   *
+   * <p>This method is called whenever a host transitions between active and inactive states.
+   * Implementations should check whether the active host set has actually changed before
+   * rebuilding their routing tables to avoid unnecessary work.</p>
    *
    * <p>Acquires the write lock and rebuilds the routing map only when the active host set has
    * changed since the last build. Change detection compares the pool's current active hosts
@@ -238,7 +246,10 @@ public class MaglevKeyLocator implements KeyLocator {
   }
 
   /**
-   * {@inheritDoc}
+   * Resolves the {@link MemcachedHost} that should handle the request for the given key.
+   *
+   * <p>This method is called on every cache operation and must be efficient. Implementations
+   * should use a read lock or equivalent mechanism to allow concurrent lookups.</p>
    *
    * <p>Acquires the read lock and hashes the key using SipHash-1-3 to obtain a slot index
    * into the Maglev lookup table, then resolves the winning host name via the server pool.

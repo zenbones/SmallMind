@@ -47,8 +47,12 @@ import org.hibernate.usertype.UserType;
 public class CurrencyUserType implements UserType<Currency> {
 
   /**
-   * {@inheritDoc}
+   * Are objects of this type mutable? That is, do instances of this type participate in dirty
+   * checking? This is not the same as asking whether the type is immutable.
+   * <p>
    * Currencies are immutable so the value never changes.
+   *
+   * @return boolean
    */
   @Override
   public boolean isMutable () {
@@ -57,7 +61,7 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * {@inheritDoc}
+   * The class returned by nullSafeGet().
    *
    * @return {@link Currency}.class
    */
@@ -68,7 +72,8 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the JDBC type code for the column mapped by this type. The type code is one of the
+   * codes defined in java.sql.Types.
    *
    * @return {@link Types#CHAR}
    */
@@ -79,7 +84,9 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * {@inheritDoc}
+   * Return a deep copy of the persistent state, stopping at entities and at collections. It is
+   * not necessary to copy immutable objects, or null values, in which case it is safe to simply
+   * return the argument.
    *
    * @param value the value to copy
    * @return the same immutable instance
@@ -91,7 +98,9 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieve an instance of the mapped class from a JDBC ResultSet. Implementors should handle
+   * possibility of null values.
+   * <p>
    * Reads a three-letter ISO currency code from the configured column position and
    * resolves it to a {@link Currency} instance.
    *
@@ -111,9 +120,12 @@ public class CurrencyUserType implements UserType<Currency> {
   }
 
   /**
-   * {@inheritDoc}
-   * Writes the {@link Currency#getCurrencyCode() ISO currency code} for the value at the configured
-   * column position, or writes SQL {@code NULL} when the value is {@code null}.
+   * Write an instance of the mapped class to a PreparedStatement. Implementors should handle
+   * possibility of null values. A multi-column type should be written to parameters starting
+   * from index.
+   * <p>
+   * Writes the {@link Currency#getCurrencyCode() ISO currency code} for the value at the
+   * configured column position, or writes SQL {@code NULL} when the value is {@code null}.
    *
    * @param st       the prepared statement to write to
    * @param value    the currency value to persist

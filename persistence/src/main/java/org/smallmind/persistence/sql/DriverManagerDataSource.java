@@ -81,7 +81,13 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Attempts to establish a connection with the data source that this DataSource object
+   * represents.
+   *
+   * @param user     the database user on whose behalf the connection is being made
+   * @param password the user's password
+   * @return a connection to the data source
+   * @throws SQLException if a database access error occurs
    */
   public Connection getConnection (String user, String password)
     throws SQLException {
@@ -96,7 +102,9 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves the log writer for this DataSource object.
+   *
+   * @return the log writer for this data source or null if logging is disabled
    */
   @Override
   public PrintWriter getLogWriter () {
@@ -105,7 +113,9 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the log writer for this DataSource object to the given java.io.PrintWriter object.
+   *
+   * @param logWriter the new log writer; to disable logging, set to null
    */
   public void setLogWriter (PrintWriter logWriter) {
 
@@ -113,7 +123,10 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Gets the maximum time in seconds that this data source can wait while attempting to connect
+   * to a database.
+   *
+   * @return the data source login time limit
    */
   @Override
   public int getLoginTimeout () {
@@ -133,7 +146,11 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns true if this either implements the interface argument or is directly or indirectly
+   * a wrapper for an object that does. Returns false otherwise.
+   *
+   * @param iface a Class defining an interface
+   * @return true if this implements the interface or directly or indirectly wraps an object that does
    */
   public boolean isWrapperFor (Class<?> iface) {
 
@@ -141,7 +158,14 @@ public class DriverManagerDataSource implements DataSource {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns an object that implements the given interface to allow access to non-standard methods,
+   * or standard methods not exposed by the proxy. If the receiver implements the interface then the
+   * result is the receiver or a proxy for the receiver. If the receiver is a wrapper and the
+   * wrapped object implements the interface then the result is the wrapped object or a proxy for
+   * the wrapped object.
+   *
+   * @param iface a Class defining an interface that the result must implement
+   * @return an object that implements the interface
    */
   public <T> T unwrap (Class<T> iface) {
 

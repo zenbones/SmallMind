@@ -54,7 +54,9 @@ public class SymmetricJWTKeyMaster implements JWTKeyMaster {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the JWT signing algorithm associated with the key held by this master.
+   *
+   * @return the encryption/signing algorithm
    */
   @Override
   public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
@@ -63,7 +65,9 @@ public class SymmetricJWTKeyMaster implements JWTKeyMaster {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the cryptographic key used for signing or verification.
+   *
+   * @return the signing or verification key
    */
   @Override
   public Key getKey () {

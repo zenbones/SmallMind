@@ -93,7 +93,12 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   }
 
   /**
-   * {@inheritDoc}
+   * Obtains a pooled connection from the underlying data source using the supplied credentials.
+   *
+   * @param user     the database user on whose behalf the connection is being made
+   * @param password the user's password
+   * @return pooled connection instance
+   * @throws SQLException if connection acquisition fails
    */
   public P getPooledConnection (String user, String password)
     throws SQLException {
@@ -126,7 +131,10 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the log writer for this DataSource object to the given java.io.PrintWriter object.
+   *
+   * @param out the new log writer; to disable logging, set to null
+   * @throws SQLException if a database access error occurs
    */
   public void setLogWriter (PrintWriter out)
     throws SQLException {
@@ -135,7 +143,11 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   }
 
   /**
-   * {@inheritDoc}
+   * Gets the maximum time in seconds that this data source can wait while attempting to connect
+   * to a database.
+   *
+   * @return the data source login time limit
+   * @throws SQLException if a database access error occurs
    */
   public int getLoginTimeout ()
     throws SQLException {
@@ -144,7 +156,11 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the maximum time in seconds that this data source will wait while attempting to connect
+   * to a database.
+   *
+   * @param seconds the data source login time limit
+   * @throws SQLException if a database access error occurs
    */
   public void setLoginTimeout (int seconds)
     throws SQLException {

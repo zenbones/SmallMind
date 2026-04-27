@@ -49,7 +49,10 @@ public class StringBatchParameter extends BatchParameter<String> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the discriminant that the job factory uses to select the correct Spring Batch
+   * parameter builder method.
+   *
+   * @return the {@link ParameterType} declared by the concrete subclass
    */
   @Override
   public ParameterType getType () {

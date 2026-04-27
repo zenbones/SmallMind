@@ -47,7 +47,9 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class ServerRequestCallback implements RequestCallback {
 
   /**
-   * {@inheritDoc}
+   * Delivers the successfully parsed server response to this callback.
+   *
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
    *
    * <p>Silently discards the response, as no caller is waiting for the result of a
    * server-initiated maintenance command.</p>
@@ -60,7 +62,9 @@ public class ServerRequestCallback implements RequestCallback {
   }
 
   /**
-   * {@inheritDoc}
+   * Delivers an I/O exception that occurred while writing the command or reading its response.
+   *
+   * <p>This method is called by the I/O loop thread and must return quickly without blocking.</p>
    *
    * <p>Logs the exception at the error level. Because no client thread is blocked on this
    * callback, the error cannot be propagated and is instead recorded for diagnostic purposes.</p>

@@ -64,7 +64,12 @@ public class ArithmeticCommand extends Command {
   private Long cas;
 
   /**
-   * {@inheritDoc}
+   * Returns the cache key targeted by this command, used by the connection layer
+   * to route the command to the correct server node.
+   *
+   * @return the cache key associated with this command
+   * @throws CubbyOperationException if the key cannot be determined or is not
+   *                                 applicable for this command type
    */
   @Override
   public String getKey () {
@@ -173,11 +178,20 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes this command into its wire-protocol byte representation, ready
+   * to be written to the memcached server socket.
    *
    * <p>Builds the {@code ma} meta-arithmetic command line. If the configured
    * {@code delta} is negative its absolute value is used and the {@code mode}
    * is flipped accordingly before serialization.</p>
+   *
+   * @param keyTranslator translator used to sanitize and encode the cache key
+   *                      into a protocol-safe form
+   * @return the fully assembled command bytes, including any trailing CRLF and
+   * value payload where applicable
+   * @throws IOException             if an I/O error occurs during encoding
+   * @throws CubbyOperationException if the command cannot be constructed due to
+   *                                 invalid or missing configuration
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -214,13 +228,17 @@ public class ArithmeticCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Interprets the server {@link Response} for this command and returns a
+   * normalized {@link Result} describing the outcome.
    *
    * <p>Interprets the server response for the arithmetic operation.
    * Response codes {@code EX}, {@code NF}, and {@code NS} indicate the operation
    * did not complete (expired, not found, or not stored); {@code HD} indicates
    * success and carries the resulting counter value.</p>
    *
+   * @param response the decoded server response corresponding to this command
+   * @return a {@link Result} encapsulating success status, returned value bytes,
+   * and the CAS token
    * @throws UnexpectedResponseException if the response code is none of
    *                                     {@code EX}, {@code NF}, {@code NS}, or {@code HD}
    */

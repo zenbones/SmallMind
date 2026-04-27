@@ -103,7 +103,11 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   }
 
   /**
-   * {@inheritDoc}
+   * Returns the runtime class of the concrete configuration subclass.
+   * <p>
+   * Used by the fluent setters to cast {@code this} to {@code P} before returning.
+   *
+   * @return the concrete configuration class
    */
   @Override
   public Class<ComplexPoolConfig> getConfigurationClass () {

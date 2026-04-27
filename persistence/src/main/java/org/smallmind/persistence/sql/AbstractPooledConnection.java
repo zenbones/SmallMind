@@ -181,7 +181,10 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
   }
 
   /**
-   * {@inheritDoc}
+   * Retrieves the log writer from the owning data source.
+   *
+   * @return the log writer of the underlying data source
+   * @throws SQLException if a database access error occurs
    */
   public PrintWriter getLogWriter ()
     throws SQLException {

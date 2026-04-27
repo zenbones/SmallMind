@@ -50,7 +50,9 @@ public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotatio
   private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embedded.class};
 
   /**
-   * {@inheritDoc}
+   * DAO interfaces or base classes that identify beans participating in the scan.
+   *
+   * @return managed DAO types that should trigger entity discovery
    */
   @Override
   public Class<? extends ManagedDao<?, ?>>[] getDaoImplementations () {
@@ -59,7 +61,9 @@ public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotatio
   }
 
   /**
-   * {@inheritDoc}
+   * Annotations that mark classes as persistent entities.
+   *
+   * @return annotation types to search for
    */
   @Override
   public Class<? extends Annotation>[] getTargetAnnotations () {

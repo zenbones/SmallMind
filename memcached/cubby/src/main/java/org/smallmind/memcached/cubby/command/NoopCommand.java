@@ -58,7 +58,12 @@ public class NoopCommand extends Command {
   private String key;
 
   /**
-   * {@inheritDoc}
+   * Returns the cache key targeted by this command, used by the connection layer
+   * to route the command to the correct server node.
+   *
+   * @return the cache key associated with this command
+   * @throws CubbyOperationException if the key cannot be determined or is not
+   *                                 applicable for this command type
    */
   @Override
   public String getKey () {
@@ -81,7 +86,8 @@ public class NoopCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes this command into its wire-protocol byte representation, ready
+   * to be written to the memcached server socket.
    *
    * <p>Returns the pre-computed, immutable {@code "mn\r\n"} byte sequence.
    * The {@code keyTranslator} parameter is not used because the noop command
@@ -97,11 +103,15 @@ public class NoopCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Interprets the server {@link Response} for this command and returns a
+   * normalized {@link Result} describing the outcome.
    *
    * <p>The only valid response to a noop is {@code MN}. Any other response code
    * indicates a protocol error.</p>
    *
+   * @param response the decoded server response corresponding to this command
+   * @return a {@link Result} encapsulating success status, returned value bytes,
+   * and the CAS token
    * @throws UnexpectedResponseException if the response code is not {@code MN}
    */
   @Override

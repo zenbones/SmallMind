@@ -68,7 +68,12 @@ public class GetCommand extends Command {
   private Integer expiration;
 
   /**
-   * {@inheritDoc}
+   * Returns the cache key targeted by this command, used by the connection layer
+   * to route the command to the correct server node.
+   *
+   * @return the cache key associated with this command
+   * @throws CubbyOperationException if the key cannot be determined or is not
+   *                                 applicable for this command type
    */
   @Override
   public String getKey () {
@@ -150,12 +155,21 @@ public class GetCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Serializes this command into its wire-protocol byte representation, ready
+   * to be written to the memcached server socket.
    *
    * <p>Builds the {@code mg} meta-get command line, appending the {@code v}
    * flag when the value body is requested, the {@code c} flag when a CAS token
    * is wanted, the {@code T} flag when a new expiration is supplied, and the
    * {@code O} flag when an opaque token is present.</p>
+   *
+   * @param keyTranslator translator used to sanitize and encode the cache key
+   *                      into a protocol-safe form
+   * @return the fully assembled command bytes, including any trailing CRLF and
+   * value payload where applicable
+   * @throws IOException             if an I/O error occurs during encoding
+   * @throws CubbyOperationException if the command cannot be constructed due to
+   *                                 invalid or missing configuration
    */
   @Override
   public byte[] construct (KeyTranslator keyTranslator)
@@ -180,7 +194,8 @@ public class GetCommand extends Command {
   }
 
   /**
-   * {@inheritDoc}
+   * Interprets the server {@link Response} for this command and returns a
+   * normalized {@link Result} describing the outcome.
    *
    * <p>An {@code EN} (not found) response, or a response where the read lease
    * was won or also-won, are treated as cache misses and return an unsuccessful
@@ -189,6 +204,9 @@ public class GetCommand extends Command {
    * ({@link #setValue(boolean) setValue(false)}), a {@code HD} response
    * represents a successful touch.</p>
    *
+   * @param response the decoded server response corresponding to this command
+   * @return a {@link Result} encapsulating success status, returned value bytes,
+   * and the CAS token
    * @throws UnexpectedResponseException if the response code does not match
    *                                     any expected code for this command configuration
    */
