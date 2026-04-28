@@ -103,6 +103,7 @@ public interface Connection<V extends Value<V>> {
             hijackSession(session);
           }
 
+          updateSession(session);
           packet = cycle(meta, route, server, session, message);
         }
       } catch (IOException | InterruptedException | InvalidPathException | MetaProcessingException exception) {
@@ -116,8 +117,8 @@ public interface Connection<V extends Value<V>> {
   }
 
   /**
-   * Updates the session, delegates to {@link #respond}, and triggers disconnect handling when
-   * the session transitions to disconnected as a result of processing.
+   * Delegates to {@link #respond} and triggers disconnect handling when the session transitions
+   * to disconnected as a result of processing.
    *
    * @param meta    meta operation identified from the message channel
    * @param route   resolved {@link Route} for the message
@@ -134,7 +135,6 @@ public interface Connection<V extends Value<V>> {
 
     Packet<V> packet;
 
-    updateSession(session);
     packet = respond(meta, route, server, session, request);
 
     if (SessionState.DISCONNECTED.equals(session.getState())) {

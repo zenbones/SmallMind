@@ -49,6 +49,7 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
+import org.smallmind.nutsnbolts.util.Pair;
 
 /**
  * Single node in the channel path hierarchy, holding an optional {@link Channel} and a map of
@@ -59,7 +60,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
  */
 public class ChannelBranch<V extends Value<V>> {
 
-  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock(true);
   private final ConcurrentHashMap<Segment, ChannelBranch<V>> childMap = new ConcurrentHashMap<>();
   private final ChannelBranch<V> parent;
   private Channel<V> channel;
@@ -130,12 +131,7 @@ public class ChannelBranch<V extends Value<V>> {
    */
   protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
-    ChannelBranch<V> child;
-    Segment segment;
-
-    if ((child = childMap.get(segment = route.getSegment(index))) == null) {
-      childMap.put(segment, child = new ChannelBranch<>(this));
-    }
+    ChannelBranch<V> child = childMap.computeIfAbsent(route.getSegment(index), segment -> new ChannelBranch<>(this));
 
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
   }
@@ -210,23 +206,77 @@ public class ChannelBranch<V extends Value<V>> {
   public ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
+    Pair<OumuamuaChannel<V>, Set<Session<V>>> terminatedPair = null;
+
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel != null) {
         if (channel.isPersistent()) {
-          throw new ChannelStateException("Attempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
+          throw new ChannelStateException("Attempt to remove persistent channel(%s)", channel.getRoute().getPath());
         } else {
-          channelCallback.accept(((OumuamuaChannel<V>)channel).terminate());
+          terminatedPair = ((OumuamuaChannel<V>)channel).terminate();
 
           channel = null;
         }
       }
-
-      return this;
     } finally {
       channelChangeLock.writeLock().unlock();
     }
+
+    if (terminatedPair != null) {
+      channelCallback.accept(terminatedPair.first());
+      for (Session<V> unsubscribedSession : terminatedPair.second()) {
+        terminatedPair.first().onUnsubscribed(unsubscribedSession);
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Re-verifies removability under the branch write lock and, if the channel still qualifies,
+   * terminates and nulls it out; the callback is invoked outside the lock to prevent deadlock
+   * with callers that may acquire the tree-level lock inside the callback (e.g. to recreate the
+   * channel).  No-op if the channel has since acquired a subscriber or been made persistent.
+   *
+   * @param now             the epoch millisecond timestamp passed to {@link Channel#isRemovable(long)};
+   *                        must be the same value used for the outer removability check so that
+   *                        a channel that just became idle is not evicted before its full TTL elapses
+   * @param channelCallback invoked with the terminated channel after the write lock is released;
+   *                        only called if a channel was present and still removable at {@code now}
+   * @return this branch instance, allowing callers to chain further inspection
+   * @throws ChannelStateException if the channel is marked persistent; the channel is left intact
+   */
+  public ChannelBranch<V> removeChannelIfStillRemovable (long now, Consumer<Channel<V>> channelCallback)
+    throws ChannelStateException {
+
+    Pair<OumuamuaChannel<V>, Set<Session<V>>> terminatedPair = null;
+
+    channelChangeLock.writeLock().lock();
+
+    try {
+      if (channel != null) {
+        if (channel.isPersistent()) {
+          throw new ChannelStateException("Attempt to remove persistent channel(%s)", channel.getRoute().getPath());
+        } else if (channel.isRemovable(now)) {
+          terminatedPair = ((OumuamuaChannel<V>)channel).terminate();
+
+          channel = null;
+        }
+      }
+    } finally {
+      channelChangeLock.writeLock().unlock();
+    }
+
+    if (terminatedPair != null) {
+      channelCallback.accept(terminatedPair.first());
+      for (Session<V> unsubscribedSession : terminatedPair.second()) {
+        terminatedPair.first().onUnsubscribed(unsubscribedSession);
+      }
+    }
+
+    return this;
   }
 
   /**
@@ -251,7 +301,7 @@ public class ChannelBranch<V extends Value<V>> {
 
         deepWildBranch.deliverToChannel(sender, packet, sessionIdSet);
       }
-      if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
+      if ((nextBranch = childMap.get(packet.getRoute().getSegment(index))) != null) {
         nextBranch.deliver(sender, index + 1, packet, sessionIdSet);
       }
     } else if (parent != null) {

@@ -36,7 +36,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,7 +69,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final ConcurrentLinkedQueue<Session.Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final AtomicReference<SessionState> stateRef = new AtomicReference<>(SessionState.INITIALIZED);
   private final AtomicReference<Connection<V>> connectionRef = new AtomicReference<>();
-  private final AtomicInteger longPollQueueSize = new AtomicInteger(0);
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
   private final AtomicBoolean longPolling = new AtomicBoolean(false);
@@ -78,6 +76,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final long maxIdleTimeoutMilliseconds;
   private final int maxLongPollQueueSize;
+  private int longPollQueueSize = 0;
   private long lastContactTimestamp;
 
   /**
@@ -275,13 +274,29 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   /**
    * Advances the session state to {@link SessionState#DISCONNECTED} and fires the disconnected
-   * callback.
+   * callback; idempotent — if the session is already disconnected the callback is not fired a
+   * second time.  Always signals any thread blocked in {@link #poll(long, TimeUnit)} so that it
+   * wakes immediately rather than waiting for its full timeout after the session is gone.  Callers
+   * that need to atomically test idle expiry and disconnect in one step should use
+   * {@link #checkAndDisconnect(long)} instead.
    */
   @Override
-  public synchronized void completeDisconnect () {
+  public void completeDisconnect () {
 
-    stateRef.set(SessionState.DISCONNECTED);
-    onDisconnectedCallback.accept(this);
+    synchronized (this) {
+      if (!SessionState.DISCONNECTED.equals(stateRef.get())) {
+        stateRef.set(SessionState.DISCONNECTED);
+        onDisconnectedCallback.accept(this);
+      }
+    }
+
+    longPollLock.lock();
+
+    try {
+      notEmptyCondition.signalAll();
+    } finally {
+      longPollLock.unlock();
+    }
   }
 
   /**
@@ -309,11 +324,33 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
    * Determines whether the session has been idle beyond its configured maximum.
    *
    * @param now the current epoch millisecond timestamp to compare against the last-contact time
-   * @return {@code true} if the elapsed time since last contact exceeds the idle timeout
+   * @return {@code true} if the elapsed time since last contact meets or exceeds the idle timeout
    */
   public synchronized boolean isRemovable (long now) {
 
     return (now - lastContactTimestamp) >= maxIdleTimeoutMilliseconds;
+  }
+
+  /**
+   * Atomically checks whether the session has been idle beyond its configured maximum and, if so,
+   * transitions it to the {@link SessionState#DISCONNECTED} state in the same synchronized block;
+   * this prevents a {@link #contact} call arriving between a separate removability check and a
+   * separate disconnect call from causing a live session to be incorrectly evicted.
+   *
+   * @param now the current epoch millisecond timestamp passed to {@link #isRemovable(long)}
+   * @return {@code true} if the session was idle and has just been disconnected; {@code false} if
+   * the session was already disconnected or has not yet exceeded its idle timeout
+   */
+  public synchronized boolean checkAndDisconnect (long now) {
+
+    if ((!SessionState.DISCONNECTED.equals(stateRef.get())) && isRemovable(now)) {
+      completeDisconnect();
+
+      return true;
+    } else {
+
+      return false;
+    }
   }
 
   /**
@@ -347,7 +384,8 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
    * @param timeout maximum time to wait
    * @param unit    unit for {@code timeout}
    * @return the next packet from the deque, processed by session listeners, or {@code null} if the
-   * timeout expires before a packet arrives
+   * timeout expires or the session transitions to {@link SessionState#DISCONNECTED} before a packet
+   * arrives
    * @throws InterruptedException if the calling thread is interrupted while waiting
    */
   @Override
@@ -367,12 +405,12 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
             remainingNanoseconds = notEmptyCondition.awaitNanos(remainingNanoseconds);
           }
         } else {
-          longPollQueueSize.decrementAndGet();
+          --longPollQueueSize;
 
           // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
           return onProcessing(enqueuedPair.first(), enqueuedPair.second());
         }
-      } while (remainingNanoseconds > 0);
+      } while ((remainingNanoseconds > 0) && (!SessionState.DISCONNECTED.equals(stateRef.get())));
 
       return null;
     } finally {
@@ -382,8 +420,9 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
   /**
    * Routes an inbound delivery packet to this session: streaming channels with non-long-polling
-   * transports bypass the queue and write directly; all other packets are enqueued in the
-   * long-poll deque, dropping the oldest entry and logging if the queue is full.
+   * transports bypass the queue and write directly; sessions with the long-poll flag set enqueue
+   * the packet in the long-poll deque, dropping the oldest entry and logging if the queue is full;
+   * all remaining packets (non-streaming, long-poll flag not set) are also written directly.
    * Silently ignores the packet if the session is not in the {@link SessionState#CONNECTED} state.
    *
    * @param fromChannel the channel the packet was delivered through; its streaming flag drives
@@ -396,24 +435,27 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void deliver (Channel<V> fromChannel, Session<V> sender, Packet<V> packet) {
 
     if (SessionState.CONNECTED.equals(stateRef.get())) {
+
+      Connection<V> connection = connectionRef.get();
+
       // ignore the ack extension (or other forced long polling), *if* the protocol does not require long polling
-      if (fromChannel.isStreaming() && (!connectionRef.get().getTransport().getProtocol().isLongPolling())) {
+      if (fromChannel.isStreaming() && (!connection.getTransport().getProtocol().isLongPolling())) {
 
         Packet<V> processedPacket;
 
         // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
         if ((processedPacket = onProcessing(sender, packet)) != null) {
-          connectionRef.get().deliver(processedPacket);
+          connection.deliver(processedPacket);
         }
       } else if (longPolling.get()) {
         longPollLock.lock();
 
         try {
-          if (longPollQueueSize.incrementAndGet() > maxLongPollQueueSize) {
+          if (++longPollQueueSize > maxLongPollQueueSize) {
             LoggerManager.getLogger(OumuamuaSession.class).log(overflowLogLevel, "Session(%s) overflowed the long poll queue", getId());
 
             if (longPollDeque.pollFirst() != null) {
-              longPollQueueSize.decrementAndGet();
+              --longPollQueueSize;
             }
           }
 
@@ -428,7 +470,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
 
         // No need to re-freeze these packets, as they were frozen upon entering this session, and will be seen only by this connection
         if ((processedPacket = onProcessing(sender, packet)) != null) {
-          connectionRef.get().deliver(processedPacket);
+          connection.deliver(processedPacket);
         }
       }
     }

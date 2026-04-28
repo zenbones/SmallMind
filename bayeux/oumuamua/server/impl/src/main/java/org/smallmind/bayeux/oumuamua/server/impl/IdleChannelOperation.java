@@ -59,7 +59,7 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
    *                            {@link Channel#isRemovable(long)}
    * @param idleChannelLogLevel log level at which channel termination events are recorded
    * @param channelCallback     invoked with each channel that is removed; forwarded to
-   *                            {@link ChannelBranch#removeChannel(java.util.function.Consumer)}
+   *                            {@link ChannelBranch#removeChannelIfStillRemovable(long, java.util.function.Consumer)}
    */
   public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 
@@ -69,9 +69,13 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
   }
 
   /**
-   * Checks the channel at the given branch and removes it when it is removable; logs the
-   * termination event and silently absorbs any {@link ChannelStateException} (which would indicate
-   * a now-persistent channel that should not be removed).
+   * Checks the channel at the given branch and, if it appears removable, delegates to
+   * {@link ChannelBranch#removeChannelIfStillRemovable(long, java.util.function.Consumer)} which
+   * re-verifies removability under the branch write lock before terminating; this two-step approach
+   * avoids acquiring the write lock unnecessarily while still closing the window where a subscriber
+   * could join between the outer check and the removal.  Logs the termination event and silently
+   * absorbs any {@link ChannelStateException} (which would indicate a now-persistent channel that
+   * should not be removed).
    *
    * @param channelBranch the branch to inspect; no-op if the branch carries no channel
    */
@@ -84,7 +88,7 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
       try {
         LoggerManager.getLogger(IdleChannelOperation.class).log(idleChannelLogLevel, "Idle channel termination(%s)", channel.getRoute().getPath());
 
-        channelBranch.removeChannel(channelCallback);
+        channelBranch.removeChannelIfStillRemovable(now, channelCallback);
       } catch (ChannelStateException channelStateException) {
         LoggerManager.getLogger(IdleChannelOperation.class).error(channelStateException);
       }

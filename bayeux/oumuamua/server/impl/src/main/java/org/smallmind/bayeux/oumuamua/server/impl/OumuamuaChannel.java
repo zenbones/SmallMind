@@ -49,6 +49,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
+import org.smallmind.nutsnbolts.util.Pair;
 
 /**
  * Concrete Bayeux channel that tracks subscribed sessions, channel-scoped listeners,
@@ -120,7 +121,7 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
    *
    * @param session the session that just unsubscribed
    */
-  private void onUnsubscribed (Session<V> session) {
+  protected void onUnsubscribed (Session<V> session) {
 
     onUnsubscribedCallback.accept(this, session);
 
@@ -275,17 +276,26 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
    * terminated
    */
   @Override
-  public synchronized boolean subscribe (Session<V> session) {
+  public boolean subscribe (Session<V> session) {
 
-    if (terminal) {
+    Session<V> subcribedSession = null;
 
-      return false;
+    synchronized (this) {
+      if (terminal) {
+
+        return false;
+      } else {
+        if (sessionMap.putIfAbsent(session.getId(), session) == null) {
+          subcribedSession = session;
+        }
+
+        quiescentTimestamp = 0;
+      }
     }
-    if (sessionMap.putIfAbsent(session.getId(), session) == null) {
-      onSubscribed(session);
-    }
 
-    quiescentTimestamp = 0;
+    if (subcribedSession != null) {
+      onSubscribed(subcribedSession);
+    }
 
     return true;
   }
@@ -297,16 +307,20 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
    * @param session the session to unsubscribe; no-op if the session is not currently subscribed
    */
   @Override
-  public synchronized void unsubscribe (Session<V> session) {
+  public void unsubscribe (Session<V> session) {
 
-    Session<V> unsubscribedSession;
+    Session<V> unsubscribedSession = null;
 
-    if ((unsubscribedSession = sessionMap.remove(session.getId())) != null) {
-      onUnsubscribed(unsubscribedSession);
-
-      if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
-        quiescentTimestamp = System.currentTimeMillis();
+    synchronized (this) {
+      if ((unsubscribedSession = sessionMap.remove(session.getId())) != null) {
+        if (sessionMap.isEmpty() && (persistentListenerCount <= 0)) {
+          quiescentTimestamp = System.currentTimeMillis();
+        }
       }
+    }
+
+    if (unsubscribedSession != null) {
+      onUnsubscribed(unsubscribedSession);
     }
   }
 
@@ -324,27 +338,26 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Irreversibly closes the channel: flags it terminal, clears all subscribers, fires the
-   * unsubscription callback for each evicted session, and sets the quiescent timestamp.
+   * Irreversibly closes the channel: flags it terminal, clears all subscribers, and sets the
+   * quiescent timestamp when no persistent listeners remain.  The caller is responsible for
+   * firing the unsubscription callback for each session in the returned set.
    *
-   * @return this instance, allowing the caller to chain the terminated channel into a callback
+   * @return a {@link org.smallmind.nutsnbolts.util.Pair} of this channel and the set of sessions
+   * that were subscribed at the time of termination; the caller must iterate the set and invoke
+   * {@link #onUnsubscribed(Session)} for each entry
    */
-  public synchronized OumuamuaChannel<V> terminate () {
+  public synchronized Pair<OumuamuaChannel<V>, Set<Session<V>>> terminate () {
 
     HashSet<Session<V>> unsubscribedSet = new HashSet<>(sessionMap.values());
 
     terminal = true;
     sessionMap.clear();
 
-    for (Session<V> unsubscribedSession : unsubscribedSet) {
-      onUnsubscribed(unsubscribedSession);
-    }
-
     if (persistentListenerCount <= 0) {
       quiescentTimestamp = System.currentTimeMillis();
     }
 
-    return this;
+    return Pair.of(this, unsubscribedSet);
   }
 
   /**

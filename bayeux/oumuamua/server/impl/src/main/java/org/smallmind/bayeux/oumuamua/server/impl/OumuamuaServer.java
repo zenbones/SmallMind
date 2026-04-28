@@ -33,7 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Queue;
@@ -77,7 +76,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
   private final ExecutorService executorService;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
-  private final HashMap<String, Protocol<V>> protocolMap = new HashMap<>();
+  private final ConcurrentHashMap<String, Protocol<V>> protocolMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<Route, BayeuxService<V>> serviceMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<ChannelInitializer<V>> initializerList = new ConcurrentLinkedQueue<>();

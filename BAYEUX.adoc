@@ -842,6 +842,15 @@ the session forward once, and `SessionState.lt` / `lte` /
 `gte` / `ge` make it natural to gate operations on lifecycle
 position without hard-coding ordinals.
 
+`completeDisconnect()` is idempotent — calling it on an already-disconnected
+session is a no-op and will not fire the disconnected callback a second time.
+It always signals any thread blocked in `poll()` so that long-poll connections
+drain promptly when a session ends.
+
+`poll()` returns `null` when either the timeout expires *or* the session
+transitions to `DISCONNECTED` while the caller is waiting, whichever comes
+first.
+
 `dispatch` bypasses the session's packet listeners and hands the
 packet straight to the transport. `deliver` is the normal fan-out
 entry point — it runs the packet through the session's listener chain,
@@ -1162,8 +1171,12 @@ live status panels, auctions with deadline counters, etc.
   already-initialised instance.
 * The idle channel sifter walks the tree every
   `idleChannelCycleMinutes` minutes and removes any channel whose
-  `isRemovable(now)` returns `true` — non-persistent and
-  past its `channelTimeToLiveMinutes` window since last activity.
+  `isRemovable(now)` returns `true` — non-persistent and past its
+  `channelTimeToLiveMinutes` window since last activity. The actual
+  removal is a two-phase operation: the sifter checks removability
+  without the branch write lock, then re-verifies under the lock before
+  terminating, closing the window where a subscriber could join between
+  the outer check and the removal.
 * Persistent channels are never removed automatically; `removeChannel`
   on a persistent channel throws `ChannelStateException`. Clear
   the flag first if removal is intended.
@@ -1174,11 +1187,13 @@ live status panels, auctions with deadline counters, etc.
   `/meta/handshake`, `/meta/connect`, and
   `/meta/disconnect` (or the idle inspector).
 * The idle session inspector runs every
-  `idleSessionCycleMinutes` minutes and disconnects sessions
-  whose last activity is older than
-  `sessionMaxIdleTimeoutSeconds`. A disconnected session
-  fires its `Server.SessionListener.onDisconnected` and is
-  removed from the session map.
+  `idleSessionCycleMinutes` minutes. For each candidate it atomically
+  checks the idle timeout and transitions the session to
+  `DISCONNECTED` in a single synchronized step, preventing a
+  concurrent `contact()` call from keeping a session alive after
+  eviction has already begun. A disconnected session fires its
+  `Server.SessionListener.onDisconnected` and is removed from the
+  session map.
 * Each session carries a long-poll queue sized by
   `maxLongPollQueueSize`. When the queue overflows, the oldest
   pending packet is dropped; a log line is emitted at the configured
@@ -1260,17 +1275,27 @@ a per-channel `ChannelInitializer`.
 === Thread Safety
 
 * `OumuamuaServer` is safe for concurrent calls on every public
-  method. The session map and service map are `ConcurrentHashMap`;
-  the listener and initializer lists are `ConcurrentLinkedQueue`;
-  the channel tree is internally synchronised.
+  method. The session map, protocol map, and service map are
+  `ConcurrentHashMap`; the listener and initializer lists are
+  `ConcurrentLinkedQueue`; the channel tree is internally synchronised.
 * `OumuamuaSession` is safe for concurrent queue operations
   (long-poll producer/consumer) and for concurrent listener additions.
-* `OumuamuaChannel` uses copy-on-write semantics for its
-  subscriber list so that a fan-out in progress is not disturbed by a
-  concurrent subscribe or unsubscribe.
+  `completeDisconnect()` is idempotent — calling it on an already-disconnected
+  session is a no-op — and it signals any thread blocked in `poll()` so that
+  the thread wakes immediately rather than waiting for its full timeout.
+* `OumuamuaChannel` protects its subscriber map with a per-channel
+  monitor, but subscription and unsubscription callbacks (`onSubscribed`,
+  `onUnsubscribed`) are invoked *outside* that monitor so that callbacks
+  which re-enter the server do not deadlock. Channel termination via
+  `terminate()` similarly returns the set of evicted sessions to the
+  caller for post-lock callback dispatch.
+* `AbstractAttributed` uses a `ConcurrentHashMap` directly; no additional
+  synchronization is applied, and `getAttributeNames()` returns an
+  unmodifiable snapshot.
 * `AckExtension` uses a `ConcurrentSkipListMap` per session
   for the unacknowledged packet queue, so the per-session replay logic
   is safe against concurrent delivery and concurrent acknowledgement.
+  On queue overflow the oldest (lowest-id) entries are evicted first.
 * `KafkaBackbone`'s producer is thread-safe by design. Each
   consumer worker owns its consumer instance.
 * The default executor is a virtual-thread-per-task executor, meaning

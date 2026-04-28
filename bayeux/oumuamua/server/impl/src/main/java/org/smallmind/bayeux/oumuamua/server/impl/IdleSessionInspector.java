@@ -84,9 +84,10 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
   /**
    * Worker loop: sleeps for the configured cycle duration, then iterates all active sessions and
-   * for each one that has exceeded its idle timeout calls {@link OumuamuaSession#completeDisconnect},
-   * removes it from the registry via the iterator, departs it from all channels, and triggers
-   * connection cleanup; repeats until {@link #stop()} is called.
+   * for each one that has exceeded its idle timeout atomically checks and transitions it to the
+   * disconnected state via {@link OumuamuaSession#checkAndDisconnect}, removes it from the registry
+   * via the iterator, departs it from all channels, and triggers connection cleanup; repeats until
+   * {@link #stop()} is called.
    */
   @Override
   public void run () {
@@ -101,10 +102,9 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
           OumuamuaSession<V> session = sessionIterator.next();
 
-          if (session.isRemovable(now)) {
+          if (session.checkAndDisconnect(now)) {
             LoggerManager.getLogger(IdleSessionInspector.class).log(idleSessionLogLevel, "Idle session termination(%s)", session.getId());
 
-            session.completeDisconnect();
             sessionIterator.remove();
             server.departChannels(session);
             session.onCleanup();
@@ -112,7 +112,7 @@ public class IdleSessionInspector<V extends Value<V>> implements Runnable {
         }
       }
     } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+      LoggerManager.getLogger(IdleSessionInspector.class).error(interruptedException);
     } finally {
       exitLatch.countDown();
     }

@@ -238,7 +238,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
                 LoggerManager.getLogger(AckExtension.class).log(overflowLogLevel, "Session(%s) overflowed the ack queue", sender.getId());
 
                 do {
-                  if ((unacknowledgedEntry = unacknowledgedMap.pollLastEntry()) != null) {
+                  if ((unacknowledgedEntry = unacknowledgedMap.pollFirstEntry()) != null) {
                     accumulatedSize = ackSize.accumulateAndGet(unacknowledgedEntry.getValue().getMessages().length, (x, y) -> x - y);
                   }
                 } while ((unacknowledgedEntry != null) && (accumulatedSize > maxAckQueueSize));

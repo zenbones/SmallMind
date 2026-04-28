@@ -32,13 +32,12 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.bayeux.oumuamua.server.api.Attributed;
 
 /**
- * Synchronized {@link Attributed} base implementation backed by a {@link ConcurrentHashMap},
+ * {@link Attributed} base implementation backed by a {@link ConcurrentHashMap},
  * providing thread-safe attribute storage for Bayeux sessions and channels.
  */
 public class AbstractAttributed implements Attributed {
@@ -46,14 +45,14 @@ public class AbstractAttributed implements Attributed {
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
 
   /**
-   * Returns a defensive snapshot of all currently stored attribute names.
+   * Returns an unmodifiable snapshot of all currently stored attribute names.
    *
-   * @return new {@link HashSet} containing the attribute names at the time of the call
+   * @return unmodifiable {@link Set} containing the attribute names at the time of the call
    */
   @Override
-  public synchronized Set<String> getAttributeNames () {
+  public Set<String> getAttributeNames () {
 
-    return new HashSet<>(attributeMap.keySet());
+    return Set.copyOf(attributeMap.keySet());
   }
 
   /**
@@ -63,7 +62,7 @@ public class AbstractAttributed implements Attributed {
    * @return the associated value, or {@code null} if no mapping exists
    */
   @Override
-  public synchronized Object getAttribute (String name) {
+  public Object getAttribute (String name) {
 
     return attributeMap.get(name);
   }
@@ -75,7 +74,7 @@ public class AbstractAttributed implements Attributed {
    * @param value value to associate with the name
    */
   @Override
-  public synchronized void setAttribute (String name, Object value) {
+  public void setAttribute (String name, Object value) {
 
     attributeMap.put(name, value);
   }
@@ -87,7 +86,7 @@ public class AbstractAttributed implements Attributed {
    * @return the value that was associated with the name, or {@code null} if none existed
    */
   @Override
-  public synchronized Object removeAttribute (String name) {
+  public Object removeAttribute (String name) {
 
     return attributeMap.remove(name);
   }
