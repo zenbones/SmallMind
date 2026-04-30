@@ -160,7 +160,7 @@ public class JsonUtility {
         return JsonNodeFactory.instance.booleanNode(((BsonBoolean)bsonValue).getValue());
       case STRING:
 
-        return JsonNodeFactory.instance.textNode(((BsonString)bsonValue).getValue());
+        return JsonNodeFactory.instance.stringNode(((BsonString)bsonValue).getValue());
       default:
         throw new BSONParsingException("Unknown bson type(%s)", bsonValue.getBsonType().name());
     }
@@ -204,7 +204,7 @@ public class JsonUtility {
         reader.readNull();
         return JsonNodeFactory.instance.nullNode();
       case STRING:
-        return JsonNodeFactory.instance.textNode(reader.readString());
+        return JsonNodeFactory.instance.stringNode(reader.readString());
       case BOOLEAN:
         return JsonNodeFactory.instance.booleanNode(reader.readBoolean());
       case DOUBLE:
