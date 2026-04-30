@@ -125,7 +125,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the name is not bound or the backing store lookup fails
+   * @throws NamingException        if the name is not bound or the backing store lookup fails
    */
   public Object lookup (Name name)
     throws NamingException {
@@ -145,7 +145,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the bound object, or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the name is not bound or the backing store lookup fails
+   * @throws NamingException        if the name is not bound or the backing store lookup fails
    */
   public Object lookup (String name)
     throws NamingException {
@@ -165,7 +165,7 @@ public class PooledJavaContext extends JavaContext {
    * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the bind fails for any other reason
+   * @throws NamingException        if the bind fails for any other reason
    */
   public void bind (Name name, Object obj)
     throws NamingException {
@@ -185,7 +185,7 @@ public class PooledJavaContext extends JavaContext {
    * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the bind fails for any other reason
+   * @throws NamingException        if the bind fails for any other reason
    */
   public void bind (String name, Object obj)
     throws NamingException {
@@ -205,7 +205,7 @@ public class PooledJavaContext extends JavaContext {
    * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rebind fails for any other reason
+   * @throws NamingException        if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj)
     throws NamingException {
@@ -225,7 +225,7 @@ public class PooledJavaContext extends JavaContext {
    * @param obj  the object to bind
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rebind fails for any other reason
+   * @throws NamingException        if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj)
     throws NamingException {
@@ -244,7 +244,7 @@ public class PooledJavaContext extends JavaContext {
    * @param name the internal name whose binding is to be removed
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the unbind fails for any other reason
+   * @throws NamingException        if the unbind fails for any other reason
    */
   public void unbind (Name name)
     throws NamingException {
@@ -263,7 +263,7 @@ public class PooledJavaContext extends JavaContext {
    * @param name the slash-delimited internal name whose binding is to be removed
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the unbind fails for any other reason
+   * @throws NamingException        if the unbind fails for any other reason
    */
   public void unbind (String name)
     throws NamingException {
@@ -283,7 +283,7 @@ public class PooledJavaContext extends JavaContext {
    * @param newName the new internal name for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rename fails for any other reason
+   * @throws NamingException        if the rename fails for any other reason
    */
   public void rename (Name oldName, Name newName)
     throws NamingException {
@@ -303,7 +303,7 @@ public class PooledJavaContext extends JavaContext {
    * @param newName the slash-delimited new internal name
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rename fails for any other reason
+   * @throws NamingException        if the rename fails for any other reason
    */
   public void rename (String oldName, String newName)
     throws NamingException {
@@ -327,7 +327,7 @@ public class PooledJavaContext extends JavaContext {
    * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the list operation fails
+   * @throws NamingException        if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (Name name)
     throws NamingException {
@@ -348,7 +348,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link NameClassPair}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the list operation fails
+   * @throws NamingException        if the list operation fails
    */
   public NamingEnumeration<NameClassPair> list (String name)
     throws NamingException {
@@ -372,7 +372,7 @@ public class PooledJavaContext extends JavaContext {
    * store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the list-bindings operation fails
+   * @throws NamingException        if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (Name name)
     throws NamingException {
@@ -392,7 +392,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link Binding}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the list-bindings operation fails
+   * @throws NamingException        if the list-bindings operation fails
    */
   public NamingEnumeration<Binding> listBindings (String name)
     throws NamingException {
@@ -411,7 +411,7 @@ public class PooledJavaContext extends JavaContext {
    * @param name the internal name of the subcontext to destroy
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if destruction fails for any other reason
+   * @throws NamingException        if destruction fails for any other reason
    */
   public void destroySubcontext (Name name)
     throws NamingException {
@@ -430,7 +430,7 @@ public class PooledJavaContext extends JavaContext {
    * @param name the slash-delimited internal name of the subcontext to destroy
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if destruction fails for any other reason
+   * @throws NamingException        if destruction fails for any other reason
    */
   public void destroySubcontext (String name)
     throws NamingException {
@@ -451,7 +451,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if creation fails for any other reason
+   * @throws NamingException        if creation fails for any other reason
    */
   public Context createSubcontext (Name name)
     throws NamingException {
@@ -472,7 +472,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if creation fails for any other reason
+   * @throws NamingException        if creation fails for any other reason
    */
   public Context createSubcontext (String name)
     throws NamingException {
@@ -494,7 +494,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the bound object or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the lookup fails
+   * @throws NamingException        if the lookup fails
    */
   public Object lookupLink (Name name)
     throws NamingException {
@@ -514,7 +514,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the bound object or a {@link JavaContext} wrapping a nested directory context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the lookup fails
+   * @throws NamingException        if the lookup fails
    */
   public Object lookupLink (String name)
     throws NamingException {
@@ -536,7 +536,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the {@link JavaNameParser} held by this context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException never thrown by this implementation
+   * @throws NamingException        never thrown by this implementation
    */
   public NameParser getNameParser (Name name)
     throws NamingException {
@@ -558,7 +558,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the {@link JavaNameParser} held by this context
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException never thrown by this implementation
+   * @throws NamingException        never thrown by this implementation
    */
   public NameParser getNameParser (String name)
     throws NamingException {
@@ -579,7 +579,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a new {@link Name} equal to {@code prefix + name}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if composition fails
+   * @throws NamingException        if composition fails
    */
   public Name composeName (Name name, Name prefix)
     throws NamingException {
@@ -600,7 +600,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the composed name string
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if parsing or composition fails
+   * @throws NamingException        if parsing or composition fails
    */
   public String composeName (String name, String prefix)
     throws NamingException {
@@ -656,8 +656,8 @@ public class PooledJavaContext extends JavaContext {
    * @return the internal qualified name string
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing context's {@code getNameInNamespace} throws or if the
-   *                         returned string cannot be translated
+   * @throws NamingException        if the backing context's {@code getNameInNamespace} throws or if the
+   *                                returned string cannot be translated
    */
   public String getNameInNamespace ()
     throws NamingException {
@@ -677,7 +677,7 @@ public class PooledJavaContext extends JavaContext {
    * @return all attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public Attributes getAttributes (Name name)
     throws NamingException {
@@ -697,7 +697,7 @@ public class PooledJavaContext extends JavaContext {
    * @return all attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public Attributes getAttributes (String name)
     throws NamingException {
@@ -719,7 +719,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the requested attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public Attributes getAttributes (Name name, String[] attrIds)
     throws NamingException {
@@ -740,7 +740,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the requested attributes for the entry
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public Attributes getAttributes (String name, String[] attrIds)
     throws NamingException {
@@ -763,7 +763,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs  the attributes to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the modification fails for any other reason
+   * @throws NamingException        if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -785,7 +785,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs  the attributes to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the modification fails for any other reason
+   * @throws NamingException        if the modification fails for any other reason
    */
   public void modifyAttributes (String name, int mod_op, Attributes attrs)
     throws NamingException {
@@ -805,7 +805,7 @@ public class PooledJavaContext extends JavaContext {
    * @param mods the ordered modifications to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the modification fails for any other reason
+   * @throws NamingException        if the modification fails for any other reason
    */
   public void modifyAttributes (Name name, ModificationItem[] mods)
     throws NamingException {
@@ -826,7 +826,7 @@ public class PooledJavaContext extends JavaContext {
    * @param mods the ordered modifications to apply
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the modification fails for any other reason
+   * @throws NamingException        if the modification fails for any other reason
    */
   public void modifyAttributes (String name, ModificationItem[] mods)
     throws NamingException {
@@ -847,7 +847,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the bind fails for any other reason
+   * @throws NamingException        if the bind fails for any other reason
    */
   public void bind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -868,7 +868,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the bind fails for any other reason
+   * @throws NamingException        if the bind fails for any other reason
    */
   public void bind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -890,7 +890,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rebind fails for any other reason
+   * @throws NamingException        if the rebind fails for any other reason
    */
   public void rebind (Name name, Object obj, Attributes attrs)
     throws NamingException {
@@ -912,7 +912,7 @@ public class PooledJavaContext extends JavaContext {
    * @param attrs the attributes to associate with the binding
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the rebind fails for any other reason
+   * @throws NamingException        if the rebind fails for any other reason
    */
   public void rebind (String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -934,7 +934,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if creation fails for any other reason
+   * @throws NamingException        if creation fails for any other reason
    */
   public DirContext createSubcontext (Name name, Attributes attrs)
     throws NamingException {
@@ -956,7 +956,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a new {@link JavaContext} wrapping the created backing-store subcontext
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if creation fails for any other reason
+   * @throws NamingException        if creation fails for any other reason
    */
   public DirContext createSubcontext (String name, Attributes attrs)
     throws NamingException {
@@ -976,7 +976,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the schema context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public DirContext getSchema (Name name)
     throws NamingException {
@@ -996,7 +996,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the schema context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public DirContext getSchema (String name)
     throws NamingException {
@@ -1016,7 +1016,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the schema class definition context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (Name name)
     throws NamingException {
@@ -1036,7 +1036,7 @@ public class PooledJavaContext extends JavaContext {
    * @return the schema class definition context from the backing store
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the backing-store operation fails
+   * @throws NamingException        if the backing-store operation fails
    */
   public DirContext getSchemaClassDefinition (String name)
     throws NamingException {
@@ -1061,7 +1061,7 @@ public class PooledJavaContext extends JavaContext {
    * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -1084,7 +1084,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
     throws NamingException {
@@ -1107,7 +1107,7 @@ public class PooledJavaContext extends JavaContext {
    * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
     throws NamingException {
@@ -1129,7 +1129,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
     throws NamingException {
@@ -1153,7 +1153,7 @@ public class PooledJavaContext extends JavaContext {
    * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
     throws NamingException {
@@ -1176,7 +1176,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
     throws NamingException {
@@ -1202,7 +1202,7 @@ public class PooledJavaContext extends JavaContext {
    * backing store returns {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {
@@ -1226,7 +1226,7 @@ public class PooledJavaContext extends JavaContext {
    * @return a {@link JavaNamingEnumeration} of {@link SearchResult}s, or {@code null}
    * @throws CommunicationException after firing a context-aborted event if the backing store
    *                                becomes unreachable
-   * @throws NamingException if the search fails
+   * @throws NamingException        if the search fails
    */
   public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
     throws NamingException {

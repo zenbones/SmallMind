@@ -230,7 +230,7 @@ public enum Meta {
             }
 
             initial = false;
-          } while ((connected = SessionState.CONNECTED.equals(session.getState()))  && ((remainingMilliseconds = (timeoutAdvised ? longPollTimeoutMilliseconds + connectStartTime : ((enqueuedMessageList == null) || enqueuedMessageList.isEmpty()) ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
+          } while ((connected = SessionState.CONNECTED.equals(session.getState())) && ((remainingMilliseconds = (timeoutAdvised ? longPollTimeoutMilliseconds + connectStartTime : ((enqueuedMessageList == null) || enqueuedMessageList.isEmpty()) ? sessionConnectIntervalMilliseconds + connectStartTime : longPollTimeoutMilliseconds + firstPollTime) - System.currentTimeMillis()) > 0));
 
           if (enqueuedMessageList == null) {
             messages = new Message[] {responseMessage};
