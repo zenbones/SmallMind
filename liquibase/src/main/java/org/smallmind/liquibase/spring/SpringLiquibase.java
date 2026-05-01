@@ -107,6 +107,8 @@ public class SpringLiquibase implements InitializingBean {
   private OutputStream previewStream;
   private ChangeLog[] changeLogs;
   private LiquibaseDataType[] dataTypes;
+  private String databaseChangeLogTableName = "DATABASECHANGELOG";
+  private String databaseChangeLogLockTableName = "DATABASECHANGELOGLOCK";
   private String contexts;
   private String outputDir;
 
@@ -230,6 +232,30 @@ public class SpringLiquibase implements InitializingBean {
   }
 
   /**
+   * Overrides the name of the Liquibase change log tracking table.
+   *
+   * <p>Defaults to {@code "DATABASECHANGELOG"} when not set.</p>
+   *
+   * @param databaseChangeLogTableName table name to use; {@code null} restores the Liquibase default
+   */
+  public void setDatabaseChangeLogTableName (String databaseChangeLogTableName) {
+
+    this.databaseChangeLogTableName = databaseChangeLogTableName;
+  }
+
+  /**
+   * Overrides the name of the Liquibase change log lock table.
+   *
+   * <p>Defaults to {@code "DATABASECHANGELOGLOCK"} when not set.</p>
+   *
+   * @param databaseChangeLogLockTableName table name to use; {@code null} restores the Liquibase default
+   */
+  public void setDatabaseChangeLogLockTableName (String databaseChangeLogLockTableName) {
+
+    this.databaseChangeLogLockTableName = databaseChangeLogLockTableName;
+  }
+
+  /**
    * Sets the comma-delimited list of Liquibase contexts used to filter change sets.
    *
    * <p>Only change sets matching at least one of the supplied contexts (or change sets with no
@@ -300,6 +326,9 @@ public class SpringLiquibase implements InitializingBean {
         try (JdbcConnection connection = new JdbcConnection(dataSource.getConnection())) {
 
           Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(connection);
+
+          database.setDatabaseChangeLogTableName(databaseChangeLogTableName);
+          database.setDatabaseChangeLogLockTableName(databaseChangeLogLockTableName);
 
           switch (goal) {
             case PREVIEW:
