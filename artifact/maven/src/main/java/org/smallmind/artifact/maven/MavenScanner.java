@@ -53,7 +53,7 @@ import org.smallmind.scribe.pen.LoggerManager;
  * Polling component that monitors a set of Maven coordinates for artifact changes and notifies
  * registered listeners when an update is detected.
  *
- * <h3>Lifecycle</h3>
+ * <h2>Lifecycle</h2>
  * <ol>
  *   <li>Construct a scanner and register at least one {@link MavenScannerListener} via
  *       {@link #addMavenScannerListener}.</li>
@@ -63,20 +63,20 @@ import org.smallmind.scribe.pen.LoggerManager;
  *   <li>Call {@link #stop()} to signal the worker and block until it exits cleanly.</li>
  * </ol>
  *
- * <h3>Change detection</h3>
+ * <h2>Change detection</h2>
  * <p>Each scan cycle resolves every monitored coordinate against the configured Maven repositories.
  * The resolved artifact is wrapped in an {@link ArtifactTag} that records the file's current
  * last-modified time and compared to the tag stored from the previous cycle.  Release artifacts
  * are compared by identity only; snapshot artifacts are also compared by file timestamp so that
  * a re-deployed snapshot triggers a notification even when the version string is unchanged.
  *
- * <h3>Notification</h3>
+ * <h2>Notification</h2>
  * <p>When at least one coordinate has changed, the scanner resolves all transitive compile-scope
  * dependencies of the changed artifacts, assembles a {@link GatingClassLoader} over the resulting
  * file set, and delivers a {@link MavenScannerEvent} to every registered listener.  Scans that
  * detect no changes produce no notification.
  *
- * <h3>Error handling</h3>
+ * <h2>Error handling</h2>
  * <p>Resolution errors during periodic scans (after the initial one) are logged and swallowed so
  * that a transient network failure does not terminate the scanner.  The stored tags are left
  * unchanged, meaning a failed scan is treated as if nothing changed.

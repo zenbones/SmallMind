@@ -50,7 +50,6 @@ import org.smallmind.memcached.cubby.response.Response;
  *   <li>{@link ServerRequestCallback} — used for internally generated maintenance commands
  *       (e.g. keep-alive NOOPs) where no client is waiting.</li>
  * </ul>
- * </p>
  */
 public interface RequestCallback {
 

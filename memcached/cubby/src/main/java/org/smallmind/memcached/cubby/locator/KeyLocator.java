@@ -53,7 +53,6 @@ import org.smallmind.memcached.cubby.ServerPool;
  *   <li>{@link MaglevKeyLocator} — a consistent Maglev hash that minimises key remapping
  *       when the host set changes.</li>
  * </ul>
- * </p>
  */
 public interface KeyLocator {
 

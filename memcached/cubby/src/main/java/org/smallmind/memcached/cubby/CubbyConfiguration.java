@@ -55,7 +55,6 @@ import org.smallmind.memcached.cubby.translator.LargeKeyHashingTranslator;
  *   <li>{@link #OPTIMAL} &ndash; large-value compression, Maglev consistent hashing, and large-key
  *       hashing for production deployments.</li>
  * </ul>
- * </p>
  */
 public class CubbyConfiguration {
 

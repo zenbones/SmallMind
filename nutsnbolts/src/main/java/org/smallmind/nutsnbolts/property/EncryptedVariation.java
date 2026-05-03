@@ -44,7 +44,7 @@ public class EncryptedVariation {
   private final String prefix;
 
   /**
-   * Constructs an encrypted variation with the default encrypted prefix {@code "!{"}.
+   * Constructs an encrypted variation with the default encrypted prefix {@code "!&#123;"}.
    *
    * @param decryptor the decryptor that will be applied to resolved values bearing this prefix
    * @throws PropertyExpanderException if the default prefix would be invalid

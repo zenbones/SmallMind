@@ -39,10 +39,9 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
  * {@link org.smallmind.sleuth.runner.SleuthRunner#cancel()}.
  * <p>
  * Cancellation is triggered automatically when the runner's {@code stopOnError} or
- * {@code stopOnFailure} policy fires, or when the Surefire provider calls
- * {@link org.smallmind.sleuth.maven.surefire.SleuthProvider#cancel()}. Once cancelled,
- * the runner stops dispatching new suites and the Surefire integration maps this event to
- * a {@code testSetCompleted} notification.
+ * {@code stopOnFailure} policy fires, or when the Surefire provider calls cancel() on the
+ * SleuthProvider. Once cancelled, the runner stops dispatching new suites and the
+ * Surefire integration maps this event to a {@code testSetCompleted} notification.
  *
  * @see org.smallmind.sleuth.runner.SleuthRunner#cancel()
  * @see FatalSleuthEvent

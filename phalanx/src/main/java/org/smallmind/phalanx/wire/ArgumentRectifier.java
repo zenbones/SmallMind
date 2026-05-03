@@ -54,7 +54,7 @@ import org.smallmind.phalanx.wire.transport.ArgumentInfo;
  *       {@link org.smallmind.phalanx.wire.signal.InvocationSignal}, applying {@link WireAdapter}
  *       unmarshalling and resolving types via the signal codec.</li>
  * </ul>
- * All {@link WireAdapter} instances are cached by class to avoid repeated instantiation.</p>
+ * All {@link WireAdapter} instances are cached by class to avoid repeated instantiation.
  */
 public class ArgumentRectifier {
 

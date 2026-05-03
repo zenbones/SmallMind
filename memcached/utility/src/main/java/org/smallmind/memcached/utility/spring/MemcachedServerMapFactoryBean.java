@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached.cubby.spring;
+package org.smallmind.memcached.utility.spring;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -112,7 +112,7 @@ public class Histogram implements Meter {
    *   <li>{@code "mean"} — arithmetic mean of all recorded values in the interval</li>
    * </ol>
    * followed by one entry for each {@link Percentile} configured at construction time,
-   * using the percentile's name and the value at that percentile boundary.</p>
+   * using the percentile's name and the value at that percentile boundary.
    *
    * @return an array of {@link Quantity} values representing the histogram snapshot;
    * length equals 5 plus the number of configured percentiles

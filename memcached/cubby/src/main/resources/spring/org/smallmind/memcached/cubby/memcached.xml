@@ -12,7 +12,7 @@
       </bean>
     </property>
     <property name="servers">
-      <bean class="org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean">
+      <bean class="org.smallmind.memcached.utility.spring.MemcachedServerMapFactoryBean">
         <property name="serverPattern" value="${memcached.server_pattern}"/>
         <property name="serverSpread" value="${memcached.server_spread}"/>
       </bean>

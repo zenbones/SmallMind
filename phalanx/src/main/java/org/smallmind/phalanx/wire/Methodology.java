@@ -51,7 +51,7 @@ import org.smallmind.phalanx.wire.transport.SyntheticArgument;
  *       present on the method in the service interface.</li>
  * </ol>
  * Construction throws {@link ServiceDefinitionException} when the number of resolved argument
- * names does not match the method's actual parameter count.</p>
+ * names does not match the method's actual parameter count.
  */
 public class Methodology {
 

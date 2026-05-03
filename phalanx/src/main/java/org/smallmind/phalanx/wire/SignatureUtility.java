@@ -46,7 +46,7 @@ import org.smallmind.web.json.scaffold.fault.Fault;
  *   <li><b>Native encoding/decoding</b> — standard JVM descriptor notation (e.g., {@code I},
  *       {@code [Ljava/lang/String;}), suitable for use with reflection and bytecode tooling.</li>
  * </ul>
- * Decoded class lookups are cached in a {@link ConcurrentHashMap} to avoid repeated class loading.</p>
+ * Decoded class lookups are cached in a {@link ConcurrentHashMap} to avoid repeated class loading.
  */
 public class SignatureUtility {
 

@@ -44,7 +44,7 @@ import org.springframework.beans.factory.InitializingBean;
  * specification into an ordered array of {@link MemcachedServer} instances.
  *
  * <p>The pattern syntax mirrors that of
- * {@link org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean} and supports two
+ * {@link org.smallmind.memcached.utility.spring.MemcachedServerMapFactoryBean} and supports two
  * forms:</p>
  * <ul>
  *   <li><em>Single server</em> &ndash; a plain {@code host} or {@code host:port} string with no

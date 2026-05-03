@@ -63,8 +63,6 @@ public class NoopCommand extends Command {
    * to route the command to the correct server node.
    *
    * @return the cache key associated with this command
-   * @throws CubbyOperationException if the key cannot be determined or is not
-   *                                 applicable for this command type
    */
   @Override
   public String getKey () {

@@ -55,7 +55,6 @@ import java.nio.channels.SocketChannel;
  *       the buffer is full and no more commands should be added this cycle.</li>
  *   <li>{@link #write()} — flips and drains the buffer to the channel.</li>
  * </ol>
- * </p>
  */
 public class RequestWriter {
 

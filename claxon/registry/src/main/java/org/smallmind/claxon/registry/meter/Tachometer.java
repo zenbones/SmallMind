@@ -92,7 +92,6 @@ public class Tachometer implements Meter {
    *   <li>{@code "count"} — total number of events recorded ({@link QuantityType#COUNT})</li>
    *   <li>{@code "rate"} — events per unit time over the configured sliding window</li>
    * </ol>
-   * </p>
    *
    * @return an array of exactly two {@link Quantity} values: {@code count} and {@code rate}
    */

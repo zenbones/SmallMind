@@ -1139,7 +1139,7 @@ Spread examples (handed to
 [source,xml]
 ----
 <bean id="memcachedServerMap"
-      class="org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean">
+      class="org.smallmind.memcached.utility.spring.MemcachedServerMapFactoryBean">
   <property name="serverPattern" value="cache-#.internal:11211"/>
   <property name="serverSpread"  value="1-3"/>
 </bean>
@@ -1216,7 +1216,7 @@ Implements `InitializingBean` (start on refresh) and `DisposableBean`
                            http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <bean id="memcachedServerMap"
-        class="org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean">
+        class="org.smallmind.memcached.utility.spring.MemcachedServerMapFactoryBean">
     <property name="serverPattern" value="cache-#.internal"/>
     <property name="serverSpread"  value="1-3"/>
   </bean>

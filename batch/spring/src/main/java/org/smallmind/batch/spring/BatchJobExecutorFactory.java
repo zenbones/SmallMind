@@ -82,7 +82,6 @@ public class BatchJobExecutorFactory implements InitializingBean, FactoryBean<Ta
    * pattern.
    *
    * @return an instance of the bean (can be null)
-   * @throws Exception in case of creation errors
    */
   @Override
   public @Nullable TaskExecutorAdapter getObject () {

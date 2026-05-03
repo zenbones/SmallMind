@@ -116,7 +116,7 @@ public class ServerPool {
    *       currently {@linkplain HostControl#isActive() active}.</li>
    * </ul>
    * This is used by the {@link org.smallmind.memcached.cubby.locator.KeyLocator} to detect
-   * whether the active topology has changed and the routing table requires rebuilding.</p>
+   * whether the active topology has changed and the routing table requires rebuilding.
    *
    * @param hostList the candidate host list to compare against the current pool state
    * @return {@code true} if the pool exactly represents the supplied list of active hosts

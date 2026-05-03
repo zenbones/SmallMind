@@ -37,7 +37,7 @@ package org.smallmind.memcached.utility;
  *
  * <p>Instances are produced by factory beans such as
  * {@link org.smallmind.memcached.utility.spring.MemcachedServerFactoryBean} and
- * {@link org.smallmind.memcached.cubby.spring.MemcachedServerMapFactoryBean}, and are consumed
+ * {@link org.smallmind.memcached.utility.spring.MemcachedServerMapFactoryBean}, and are consumed
  * by client factory beans to open connections to the cluster.</p>
  */
 public class MemcachedServer {

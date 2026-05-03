@@ -58,7 +58,6 @@ import org.smallmind.memcached.cubby.response.ResponseParser;
  *   <li>{@link #extract()} — called repeatedly until it returns {@code null}, yielding one
  *       fully parsed {@link Response} per call.</li>
  * </ol>
- * </p>
  */
 public class ResponseReader {
 

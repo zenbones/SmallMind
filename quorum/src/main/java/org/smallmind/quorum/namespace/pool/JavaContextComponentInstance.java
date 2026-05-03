@@ -47,11 +47,10 @@ import org.smallmind.scribe.pen.LoggerManager;
  * {@link ComponentPool} by listening for context lifecycle events.
  * <p>
  * When the caller logically closes the context (non-forced), the {@link PooledJavaContext} fires
- * a {@link org.smallmind.quorum.namespace.event.JavaContextEvent#contextClosed} event and this
- * instance returns itself to the pool via {@link ComponentPool#returnInstance}. When the context
- * detects a {@link javax.naming.CommunicationException} it fires an abort event and this instance
- * calls {@link ComponentPool#terminateInstance} followed by
- * {@link ComponentPool#reportErrorOccurred}.
+ * a {@link org.smallmind.quorum.namespace.event.JavaContextEvent} event and this instance returns
+ * itself to the pool via {@link ComponentPool#returnInstance}. When the context detects a
+ * {@link javax.naming.CommunicationException} it fires an abort event and this instance calls
+ * {@link ComponentPool#terminateInstance} followed by {@link ComponentPool#reportErrorOccurred}.
  * <p>
  * {@link #close()} uses an {@link AtomicBoolean} guard to ensure the underlying context is
  * physically closed and the pool is notified at most once even under concurrent calls.
