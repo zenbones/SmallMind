@@ -45,6 +45,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.PacketUtility;
 import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
+import org.smallmind.bayeux.oumuamua.server.spi.meta.Reconnect;
 
 /**
  * Represents a logical connection capable of processing inbound Bayeux messages and producing packets.
@@ -103,7 +104,9 @@ public interface Connection<V extends Value<V>> {
 
           packet = cycle(meta, route, server, session, message);
         }
-      } catch (IOException | InterruptedException | InvalidPathException | MetaProcessingException exception) {
+      } catch (MetaProcessingException exception) {
+        packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), Reconnect.HANDSHAKE));
+      } catch (IOException | InterruptedException | InvalidPathException exception) {
         packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
       }
 
