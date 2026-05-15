@@ -32,49 +32,95 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/*
- -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
-
- -Dorg.smallmind.file.ephemeral.configuration.roots=/opt/epicenter
-*/
-
-@Test
+@Test(groups = "unit")
 public class EphemeralFileSystemTest {
 
-  @Test
-  public void test ()
-    throws Exception {
+  private EphemeralFileSystem ephemeralFileSystem;
 
-    EphemeralFileSystemProvider.waitForInitialization(30, TimeUnit.SECONDS);
+  @BeforeClass
+  public void beforeClass () {
 
-    Path ps = Paths.get("C:\\Users\\david\\Documents\\response.txt");
-    System.out.println(Files.isRegularFile(ps));
-    System.out.println(Files.readString(ps, StandardCharsets.UTF_8));
-    System.out.println(".........................................");
-    Path pe = Paths.get("/opt/epicenter/twimble/farkle");
-    System.out.println(pe.getClass());
-    Path pes = pe.resolve("sparkle.txt");
-    System.out.println(pes.getClass());
-    Files.createDirectories(pe);
-    try (SeekableByteChannel bc = Files.newByteChannel(pe.resolve("sparkle.txt"), Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
-      ByteBuffer bb = ByteBuffer.allocate(1024);
-      bb.put("Hello out there!".getBytes(StandardCharsets.UTF_8));
-      bb.flip();
-      bc.write(bb);
+    EphemeralFileSystemProvider provider = new EphemeralFileSystemProvider("ephemeral");
+
+    ephemeralFileSystem = (EphemeralFileSystem)provider.getFileSystem(URI.create("ephemeral:///"));
+  }
+
+  @AfterMethod
+  public void afterMethod () {
+
+    ephemeralFileSystem.clear();
+  }
+
+  public void testGetPathReturnsEphemeralPath () {
+
+    Assert.assertTrue(ephemeralFileSystem.getPath("/opt/whatsit/twimble/farkle") instanceof EphemeralPath);
+  }
+
+  public void testCreateDirectoriesWriteAndRead ()
+    throws IOException {
+
+    Path directory = ephemeralFileSystem.getPath("/opt/whatsit/twimble/farkle");
+
+    Files.createDirectories(directory);
+    Assert.assertTrue(Files.isDirectory(directory));
+
+    Path file = ephemeralFileSystem.getPath("/opt/whatsit/twimble/farkle/sparkle.txt");
+    byte[] payload = "Hello out there!".getBytes(StandardCharsets.UTF_8);
+
+    try (SeekableByteChannel byteChannel = Files.newByteChannel(file, Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
+
+      ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+
+      byteBuffer.put(payload);
+      byteBuffer.flip();
+      byteChannel.write(byteBuffer);
     }
-    System.out.println(new String(Files.readAllBytes(pe.resolve("sparkle.txt"))));
-    ((EphemeralFileSystem)FileSystems.getDefault()).clear();
+
+    Assert.assertTrue(Files.isRegularFile(file));
+    Assert.assertEquals(Files.readAllBytes(file), payload);
+    Assert.assertEquals(Files.readString(file, StandardCharsets.UTF_8), "Hello out there!");
+  }
+
+  public void testWriteStringAndReadStringRoundTrip ()
+    throws IOException {
+
+    Path directory = ephemeralFileSystem.getPath("/opt/whatsit/notes");
+    Path file = ephemeralFileSystem.getPath("/opt/whatsit/notes/greeting.txt");
+
+    Files.createDirectories(directory);
+    Files.writeString(file, "Hello out there!", StandardCharsets.UTF_8);
+
+    Assert.assertEquals(Files.readString(file, StandardCharsets.UTF_8), "Hello out there!");
+  }
+
+  public void testClearRemovesAllEntries ()
+    throws IOException {
+
+    Path directory = ephemeralFileSystem.getPath("/opt/whatsit/twimble");
+    Path file = ephemeralFileSystem.getPath("/opt/whatsit/twimble/spark.txt");
+
+    Files.createDirectories(directory);
+    Files.writeString(file, "hello", StandardCharsets.UTF_8);
+
+    Assert.assertTrue(Files.isRegularFile(file));
+
+    ephemeralFileSystem.clear();
+
+    Assert.assertFalse(Files.exists(file));
+    Assert.assertFalse(Files.exists(directory));
   }
 }
