@@ -33,7 +33,6 @@
 package org.smallmind.memcached.cubby.command;
 
 import java.nio.charset.StandardCharsets;
-import org.smallmind.memcached.cubby.CubbyOperationException;
 import org.smallmind.memcached.cubby.UnexpectedResponseException;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;

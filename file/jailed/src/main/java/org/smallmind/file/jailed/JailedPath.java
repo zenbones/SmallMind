@@ -277,7 +277,7 @@ public class JailedPath implements Path {
 
       int segmentLength = segments[segmentIndex].length();
 
-      if (hasRoot || translatedTextBuilder.length() > 0) {
+      if (hasRoot || (!translatedTextBuilder.isEmpty())) {
         translatedTextBuilder.append(SEPARATOR);
         translatedSegments[prologueSegmentCount + segmentIndex] = new Segment(translatedTextBuilder.length(), translatedTextBuilder.length() + segmentLength);
       } else {
@@ -463,7 +463,7 @@ public class JailedPath implements Path {
 
     if (!(other instanceof JailedPath)) {
       throw new ProviderMismatchException();
-    } else if (((!other.isAbsolute()) || hasRoot) && (segments.length >= other.getNameCount())) {
+    } else if (((!other.isAbsolute()) || (hasRoot && (segments.length == other.getNameCount()))) && (segments.length >= other.getNameCount())) {
 
       int segmentIndex = segments.length - other.getNameCount();
 
