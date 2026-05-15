@@ -34,19 +34,23 @@ package org.smallmind.file.ephemeral;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 /**
  * {@link BasicFileAttributes} implementation that tracks timestamps and type information for
- * nodes held in the ephemeral heap. The file key is an immutable, globally unique hex-encoded
- * identifier generated via {@link SnowflakeId} at construction time.
+ * nodes held in the ephemeral heap. The file key is a globally unique hex-encoded identifier
+ * generated via {@link SnowflakeId} lazily on the first call to {@link #fileKey()} and cached
+ * thereafter; lazy generation avoids loading {@code SecureRandom} (and the {@code java.security}
+ * stack it pulls in) during construction, which would otherwise be fatal when this class is
+ * instantiated while {@link java.nio.file.FileSystems} is still resolving its default provider.
  */
 public class EphemeralBasicFileAttributes implements BasicFileAttributes {
 
-  private final String id = SnowflakeId.newInstance().generateHexEncoding();
   private final HeapNode heapNode;
+  private final AtomicReference<String> idRef = new AtomicReference<>();
   private final boolean regularFile;
   private final boolean directory;
   private final boolean symbolicLink;
@@ -197,13 +201,25 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   }
 
   /**
-   * Returns a unique, immutable object that identifies the file. The key is a hex-encoded
-   * Snowflake identifier assigned at construction time.
+   * Returns a unique object that identifies the file. The key is a hex-encoded Snowflake
+   * identifier installed on the first invocation of this method and returned unchanged on
+   * every subsequent call. Once the {@link AtomicReference} is populated the fast path is
+   * a single volatile read with no allocation; on the initial miss, threads that race to
+   * install their newly generated identifier do so via
+   * {@link AtomicReference#compareAndSet compare-and-set} and then re-read, so every caller
+   * agrees on the single installed value regardless of which thread won.
    *
    * @return a non-{@code null} hex string that is unique across all attribute instances
    */
   @Override
   public Object fileKey () {
+
+    String id;
+
+    if ((id = idRef.get()) == null) {
+      idRef.compareAndSet(null, SnowflakeId.newInstance().generateHexEncoding());
+      id = idRef.get();
+    }
 
     return id;
   }

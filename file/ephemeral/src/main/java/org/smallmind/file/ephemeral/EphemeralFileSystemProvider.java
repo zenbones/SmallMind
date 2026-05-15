@@ -61,6 +61,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /*
  -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
@@ -80,9 +81,14 @@ import java.util.concurrent.TimeoutException;
  * <ul>
  *   <li>No-arg: uses the {@code "ephemeral"} scheme and no native delegation.</li>
  *   <li>{@link #EphemeralFileSystemProvider(FileSystemProvider)}: mirrors the scheme of an
- *       existing provider and stores a reference to that provider's root file system for
- *       native delegation.</li>
- *   <li>{@link #EphemeralFileSystemProvider(String)}: uses a custom scheme.</li>
+ *       existing provider and retains a reference to it; the underlying native
+ *       {@link FileSystem} is resolved lazily on first use rather than during construction,
+ *       because this constructor is invoked from within
+ *       {@code FileSystems$DefaultFileSystemHolder.<clinit>} when installed as the JVM
+ *       default, and any call back into {@link java.nio.file.FileSystems#getDefault()} on
+ *       that thread would observe a partially-initialised holder.</li>
+ *   <li>{@link #EphemeralFileSystemProvider(String)}: uses a custom scheme with no native
+ *       delegation.</li>
  * </ul>
  *
  * <p>All operations that accept a {@link Path} verify that the path's file system is an
@@ -94,8 +100,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
   private static final CountDownLatch INITIALIZATION_LATCH = new CountDownLatch(1);
   private final EphemeralFileSystem ephemeralFileSystem;
+  private final AtomicReference<FileSystem> nativeFileSystemRef = new AtomicReference<>();
   private final String scheme;
-  private FileSystem nativeFileSystem;
+  private FileSystemProvider fileSystemProvider;
 
   /**
    * Creates a provider using the default {@code "ephemeral"} URI scheme.
@@ -106,16 +113,22 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Creates a provider that mirrors the URI scheme of the given native provider and stores
-   * a reference to that provider's root file system for delegation of non-ephemeral paths.
+   * Creates a provider that mirrors the URI scheme of the given native provider and retains
+   * a reference to it for delegation of non-ephemeral paths. The native {@link FileSystem}
+   * itself is <em>not</em> resolved here; it is fetched on demand by
+   * {@link #getNativeFileSystem()}. Deferring the {@code getFileSystem} call keeps this
+   * constructor free of any callback into {@link java.nio.file.FileSystems#getDefault()},
+   * which is essential when the provider is being instantiated by
+   * {@code FileSystems$DefaultFileSystemHolder.<clinit>} on the same thread.
    *
-   * @param fileSystemProvider the provider whose scheme to mirror; must not be {@code null}
+   * @param fileSystemProvider the provider whose scheme to mirror and whose file system to
+   *                           use for native delegation; must not be {@code null}
    */
   public EphemeralFileSystemProvider (FileSystemProvider fileSystemProvider) {
 
     this(fileSystemProvider.getScheme());
 
-    nativeFileSystem = fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///"));
+    this.fileSystemProvider = fileSystemProvider;
   }
 
   /**
@@ -171,12 +184,29 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Returns the native file system used for delegating non-ephemeral paths, or {@code null}
-   * when no native provider was configured.
+   * Returns the native {@link FileSystem} used for delegating non-ephemeral paths. The
+   * underlying call to {@code fileSystemProvider.getFileSystem(URI)} is made at most once;
+   * the resolved instance is published into an {@link AtomicReference} and reused on every
+   * subsequent invocation. Once cached the fast path is a single volatile read with no
+   * further provider interaction; on the initial miss, threads that race install their
+   * resolution via {@link AtomicReference#compareAndSet compare-and-set} and then re-read,
+   * so every caller observes the same {@link FileSystem}. Performing this resolution lazily
+   * (rather than during construction) is what keeps the constructor safe to invoke from
+   * within {@code FileSystems$DefaultFileSystemHolder.<clinit>}.
    *
-   * @return the native {@link FileSystem}, or {@code null}
+   * @return the native {@link FileSystem}; never {@code null}
+   * @throws NullPointerException if this provider was constructed without a native provider
+   *                              (i.e., via the no-arg or {@link #EphemeralFileSystemProvider(String)}
+   *                              constructors)
    */
   public FileSystem getNativeFileSystem () {
+
+    FileSystem nativeFileSystem;
+
+    if ((nativeFileSystem = nativeFileSystemRef.get()) == null) {
+      nativeFileSystemRef.compareAndSet(null, fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///")));
+      nativeFileSystem = nativeFileSystemRef.get();
+    }
 
     return nativeFileSystem;
   }

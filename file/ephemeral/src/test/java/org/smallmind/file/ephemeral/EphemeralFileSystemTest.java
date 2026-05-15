@@ -44,6 +44,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.testng.annotations.Test;
 
+/*
+ -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
+
+ -Dorg.smallmind.file.ephemeral.configuration.roots=/opt/epicenter
+*/
+
 @Test
 public class EphemeralFileSystemTest {
 
