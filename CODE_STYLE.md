@@ -246,6 +246,18 @@ Other rules:
 - Avoid component-scanning, auto-registration, and auto-configuration habits unless the module already depends on that model.
 - Preserve third-party types in signatures when those types carry important integration meaning.
 
+### Maven POM Ordering
+
+Within every `<dependencies>` block — including the parent pom's `<dependencyManagement>` and each module's own dependency list — dependencies are sorted alphabetically by `groupId`, then by `artifactId`. Treat the `groupId` as a sequence of dot-separated segments and compare segment-by-segment: a shorter `groupId` sorts before a longer one that shares the same prefix.
+
+Examples of the segment-by-segment ordering:
+
+- `org.apache.httpcomponents.client5` precedes `org.apache.httpcomponents.core5` (third segment `client5` < `core5`).
+- `org.apache.maven` precedes `org.apache.maven.plugin-tools` (shorter `groupId` first when prefixes match).
+- `org.springframework` precedes `org.springframework.amqp`, which precedes `org.springframework.batch`.
+
+Insert new dependencies at their alphabetical slot rather than appending to the end of the block. Test-scope and compile-scope entries are interleaved by `groupId`, not segregated into separate blocks. The same rule applies to the managed-dependency list in the parent pom and to per-module `<dependencies>` blocks.
+
 ## Documentation Style
 
 When code changes affect public behavior:

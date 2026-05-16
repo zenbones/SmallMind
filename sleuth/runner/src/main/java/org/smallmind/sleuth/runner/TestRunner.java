@@ -34,6 +34,7 @@ package org.smallmind.sleuth.runner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import org.smallmind.sleuth.runner.annotation.AfterTest;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
@@ -55,16 +56,25 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
  * from a suite-level failure or from the dependency queue), the test body is skipped and a
  * {@link SkippedSleuthEvent} is emitted instead.
  * <p>
- * Assertion errors ({@link AssertionError}) are reported as
- * {@link org.smallmind.sleuth.runner.event.SleuthEventType#FAILURE}; all other exceptions are
- * reported as {@link org.smallmind.sleuth.runner.event.SleuthEventType#ERROR}. Either may trigger
- * run cancellation if the corresponding stop flag is set. {@link #complete()} is always called in
- * a {@code finally} block to ensure latches and semaphores are correctly released.
+ * If the {@code expectedExceptions} list contains at least one {@link Exception} subtype and the
+ * test method returns normally, an {@link ExpectedExceptionNotThrownException} is raised and the
+ * test is reported as {@link org.smallmind.sleuth.runner.event.SleuthEventType#FAILURE}.
+ * When the test method throws, the exception is categorized against the {@code expectedExceptions}
+ * list (non-{@link Exception} entries are ignored). A throw matching a listed {@link Exception}
+ * type produces {@link org.smallmind.sleuth.runner.event.SleuthEventType#SUCCESS}. A throw that
+ * fails to match any listed {@link Exception} type, or an {@link AssertionError}, produces
+ * {@link org.smallmind.sleuth.runner.event.SleuthEventType#FAILURE}. All other uncategorized
+ * exceptions produce {@link org.smallmind.sleuth.runner.event.SleuthEventType#ERROR}.
+ * Failures and errors may trigger run cancellation if the corresponding stop flag is set.
+ * {@link #complete()} is always called in a {@code finally} block to ensure latches and
+ * semaphores are correctly released.
  *
  * @see SuiteRunner
  * @see SleuthRunner
  */
 public class TestRunner implements TestController {
+
+  private enum EXCEPTIONAL {IGNORED, EXPECTED, UNEXPECTED}
 
   private final SleuthRunner sleuthRunner;
   private final AnnotationProcessor annotationProcessor;
@@ -113,10 +123,14 @@ public class TestRunner implements TestController {
    * <p>
    * The test identifier is updated so output can be attributed to this test. Before-test methods
    * are invoked first; if any produce a culprit the test body is skipped. The test method is then
-   * invoked via reflection; on success a {@link SuccessSleuthEvent} is fired. An {@link AssertionError}
-   * fires a {@link FailureSleuthEvent}; any other exception fires an {@link ErrorSleuthEvent}. In
-   * both error cases the culprit is set so after-test hooks see it. After-test methods run regardless
-   * of test outcome. The final culprit is stored on the dependency node for downstream tests.
+   * invoked via reflection. If it returns normally and {@link #expectsException()} is true, a
+   * {@link FailureSleuthEvent} is fired for the missing throw; otherwise a {@link SuccessSleuthEvent}
+   * is fired. If it throws, {@link #categorizeExpectedException} determines the outcome: a matching
+   * listed {@link Exception} type fires a {@link SuccessSleuthEvent}; a non-matching listed
+   * {@link Exception} type or an {@link AssertionError} fires a {@link FailureSleuthEvent}; all
+   * other exceptions fire an {@link ErrorSleuthEvent}. In failure and error cases the culprit is
+   * set so after-test hooks see it. After-test methods run regardless of test outcome. The final
+   * culprit is stored on the dependency node for downstream tests.
    * <p>
    * {@link #complete()} is always called in a {@code finally} block.
    */
@@ -144,19 +158,42 @@ public class TestRunner implements TestController {
 
         try {
           testMethodDependency.getValue().invoke(instance);
-          sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds));
-        } catch (InvocationTargetException invocationTargetException) {
-          culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), invocationTargetException.getCause());
-          if (invocationTargetException.getCause() instanceof AssertionError) {
+          if (expectsException()) {
+
+            ExpectedExceptionNotThrownException expectedExceptionNotThrownException = new ExpectedExceptionNotThrownException(Arrays.toString(testMethodDependency.getExpectedExceptions()));
+
+            culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), expectedExceptionNotThrownException);
+
             if (stopOnFailure) {
               sleuthRunner.cancel();
             }
-            sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
+
+            sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, expectedExceptionNotThrownException));
           } else {
-            if (stopOnError) {
-              sleuthRunner.cancel();
+            sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds));
+          }
+        } catch (InvocationTargetException invocationTargetException) {
+
+          Throwable targetException = invocationTargetException.getCause();
+          EXCEPTIONAL exceptional;
+
+          if (EXCEPTIONAL.EXPECTED.equals(exceptional = categorizeExpectedException(targetException))) {
+            sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds));
+          } else {
+
+            culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), targetException);
+
+            if (EXCEPTIONAL.UNEXPECTED.equals(exceptional) || targetException instanceof AssertionError) {
+              if (stopOnFailure) {
+                sleuthRunner.cancel();
+              }
+              sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, targetException));
+            } else {
+              if (stopOnError) {
+                sleuthRunner.cancel();
+              }
+              sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, targetException));
             }
-            sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
           }
         } catch (Exception exception) {
           if (stopOnError) {
@@ -175,6 +212,64 @@ public class TestRunner implements TestController {
     } finally {
 
       complete();
+    }
+  }
+
+  private boolean expectsException () {
+
+    if ((testMethodDependency.getExpectedExceptions() == null) || (testMethodDependency.getExpectedExceptions().length == 0)) {
+
+      return false;
+    } else {
+      for (Class<?> expectedException : testMethodDependency.getExpectedExceptions()) {
+        if (Exception.class.isAssignableFrom(expectedException)) {
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+  }
+
+  /**
+   * Categorizes a thrown exception against the node's {@code expectedExceptions} list.
+   * <p>
+   * Returns {@link EXCEPTIONAL#IGNORED} when the list is empty or {@code null}, meaning no
+   * expected-exception contract is in effect and the caller applies normal exception handling.
+   * <p>
+   * For each entry in the list: entries that are not subtypes of {@link Exception} are silently
+   * ignored and do not affect enforcement. For entries that are subtypes of {@link Exception}: if
+   * the thrown throwable is an instance of the entry, returns {@link EXCEPTIONAL#EXPECTED}
+   * immediately. If the entry does not match, the check is considered <em>enforced</em>.
+   * After the loop, if any real {@link Exception} entry was seen but none matched, returns
+   * {@link EXCEPTIONAL#UNEXPECTED}, treated as a test failure. If no {@link Exception} entry
+   * was present, returns {@link EXCEPTIONAL#IGNORED} and normal exception handling applies.
+   *
+   * @param actuallyThrown the exception thrown by the test method; must not be {@code null}
+   * @return the categorization of the thrown exception relative to the expected-exception contract
+   */
+  private EXCEPTIONAL categorizeExpectedException (Throwable actuallyThrown) {
+
+    if ((testMethodDependency.getExpectedExceptions() == null) || (testMethodDependency.getExpectedExceptions().length == 0)) {
+
+      return EXCEPTIONAL.IGNORED;
+    } else {
+
+      boolean enforced = false;
+
+      for (Class<?> expectedException : testMethodDependency.getExpectedExceptions()) {
+        if (Exception.class.isAssignableFrom(expectedException)) {
+          if (expectedException.isAssignableFrom(actuallyThrown.getClass())) {
+
+            return EXCEPTIONAL.EXPECTED;
+          } else {
+            enforced = true;
+          }
+        }
+      }
+
+      return enforced ? EXCEPTIONAL.UNEXPECTED : EXCEPTIONAL.IGNORED;
     }
   }
 

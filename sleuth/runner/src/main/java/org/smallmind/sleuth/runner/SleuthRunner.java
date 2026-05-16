@@ -180,7 +180,7 @@ public class SleuthRunner {
 
           if ((annotationDictionary = annotationProcessor.process(clazz)) != null) {
             if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().groups(), groups))) {
-              suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().executeAfter(), annotationDictionary.getSuite().dependsOn()));
+              suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().executeAfter(), annotationDictionary.getSuite().dependsOn(), null));
             }
           }
         }

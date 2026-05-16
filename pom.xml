@@ -138,6 +138,7 @@
     <maven.resolver.transport.http.version>1.9.26</maven.resolver.transport.http.version>
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
+    <mockito.version>5.23.0</mockito.version>
     <mongodb.driver.version>5.6.2</mongodb.driver.version>
     <mongodb.bson.version>5.6.2</mongodb.bson.version>
     <msgpack.version>0.9.11</msgpack.version>
@@ -771,6 +772,11 @@
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-core</artifactId>
         <version>${liquibase.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mongodb</groupId>

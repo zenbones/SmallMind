@@ -166,13 +166,18 @@ NOTE: Groups are declared on the suite, not on individual tests. This is deliber
 [cols="1,1,1,4", options="header"]
 |===
 | Attribute | Type | Default | Purpose
-| `priority`     | `int`       | `0`    | Intra-suite ordering tier. Lower tiers run first.
-| `executeAfter` | `String[]`  | `{}`   | Method names in the same suite that must complete before this test starts. Soft ordering.
-| `dependsOn`    | `String[]`  | `{}`   | Method names in the same suite that must succeed before this test starts. Hard dependency.
-| `enabled`      | `boolean`   | `true` | When `false`, the test is unconditionally excluded.
+| `priority`           | `int`       | `0`    | Intra-suite ordering tier. Lower tiers run first.
+| `executeAfter`       | `String[]`  | `{}`   | Method names in the same suite that must complete before this test starts. Soft ordering.
+| `dependsOn`          | `String[]`  | `{}`   | Method names in the same suite that must succeed before this test starts. Hard dependency.
+| `expectedExceptions` | `Class<?>[]`| `{}`   | Exception types the test method is expected to throw. If the method throws one of the listed types, the test is reported as `SUCCESS`. If the list is non-empty and the method throws nothing, or throws a type not on the list, the outcome is determined by enforcement rules (see below).
+| `enabled`            | `boolean`   | `true` | When `false`, the test is unconditionally excluded.
 |===
 
-A `@Test` method must take no arguments. Return values are ignored. An `AssertionError` escaping the method produces a `FAILURE` event; any other exception produces an `ERROR` event. The two are reported distinctly because one represents a broken expectation and the other represents broken code (or broken environment) — they deserve different triage.
+A `@Test` method must take no arguments. Return values are ignored.
+
+When `expectedExceptions` is empty (the default), an `AssertionError` escaping the method produces a `FAILURE` event; any other exception produces an `ERROR` event. The two are reported distinctly because one represents a broken expectation and the other represents broken code (or broken environment) — they deserve different triage.
+
+When `expectedExceptions` is non-empty, entries that are not subtypes of `Exception` are silently ignored. For entries that are subtypes of `Exception`: if the thrown exception is an instance of a listed type, the test is reported as `SUCCESS`. If at least one `Exception`-subtype entry was present but none matched, the test is reported as `FAILURE`. If the list contains no `Exception`-subtype entries at all (e.g., only `Error` types), it is treated as absent and normal exception handling applies.
 
 === Lifecycle annotations
 
@@ -247,7 +252,7 @@ A complete run looks like this:
 . Each `TestRunner`:
 .. Invokes `@BeforeTest` methods. Any failure becomes the initial culprit for the test body.
 .. Fires `StartSleuthEvent`. If a culprit exists (from setup or from a failed `dependsOn` prerequisite), fires `SkippedSleuthEvent` and proceeds to teardown.
-.. Otherwise invokes the `@Test` method. Success → `SuccessSleuthEvent`. `AssertionError` → `FailureSleuthEvent`. Any other exception → `ErrorSleuthEvent`.
+.. Otherwise invokes the `@Test` method. If it returns normally and the `expectedExceptions` list contains at least one `Exception` subtype, a `FailureSleuthEvent` is fired for the missing throw; otherwise `SuccessSleuthEvent`. If it throws, the exception is checked against `expectedExceptions`: a matching `Exception`-subtype entry → `SuccessSleuthEvent`; a non-matching `Exception`-subtype entry or an `AssertionError` → `FailureSleuthEvent`; any other exception → `ErrorSleuthEvent`.
 .. Invokes `@AfterTest` methods regardless of outcome.
 .. Calls `complete()`.
 . When the global latch reaches zero, `execute()` returns. If the run was cancelled mid-flight a `CancelledSleuthEvent` is fired in lieu of awaiting the latch.
@@ -374,7 +379,7 @@ Sleuth bundles a second `AnnotationTranslator` that recognizes TestNG's annotati
 | `@AfterClass`          | `@AfterSuite`             |
 | `@BeforeMethod`        | `@BeforeTest`             |
 | `@AfterMethod`         | `@AfterTest`              |
-| Method-level `@Test`   | `@Test`                   | Maps `priority`, `dependsOnMethods`, `enabled`.
+| Method-level `@Test`   | `@Test`                   | Maps `priority`, `dependsOnMethods`, `enabled`, `expectedExceptions`.
 |===
 
 The native translator runs first, so if a class carries both dialects (unusual, but legal) the Sleuth annotations win. TestNG's `@BeforeTest` and `@AfterTest` (which operate on TestNG's XML `<test>` tag, not on individual methods) are intentionally not mapped — there is no equivalent concept in Sleuth.
@@ -471,7 +476,7 @@ An `AnnotationDictionary` holds the `Suite` (class-level) plus up to five `Annot
 
 === `Dependency`, `DependencyAnalysis`, `DependencyQueue`
 
-The dependency engine is fully generic: `Dependency<A, T>` parameterizes over the annotation type (`Suite` or `Test`) and the payload type (`Class<?>` or `Method`). The engine has no knowledge of Sleuth-specific semantics; it operates only on `name`, `priority`, `executeAfter`, `dependsOn`, and `children`.
+The dependency engine is fully generic: `Dependency<A, T>` parameterizes over the annotation type (`Suite` or `Test`) and the payload type (`Class<?>` or `Method`). The engine has no knowledge of Sleuth-specific semantics; it operates only on `name`, `priority`, `executeAfter`, `dependsOn`, `expectedExceptions`, and `children`.
 
 `DependencyAnalysis.calculate()` does two things:
 

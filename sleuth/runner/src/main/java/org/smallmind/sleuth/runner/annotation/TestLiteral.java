@@ -46,6 +46,7 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
  */
 public class TestLiteral extends AnnotationLiteral<Test> implements Test {
 
+  private final Class<?>[] expectedExceptions;
   private final String[] executeAfter;
   private final String[] dependsOn;
   private final boolean enabled;
@@ -54,16 +55,19 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   /**
    * Constructs a fully specified test literal.
    *
-   * @param priority     scheduling priority within the suite; lower values execute first
-   * @param executeAfter names of methods that must finish before this test starts (soft ordering)
-   * @param dependsOn    names of methods that must succeed before this test starts (hard dependency)
-   * @param enabled      {@code false} to unconditionally exclude this test from execution
+   * @param priority           scheduling priority within the suite; lower values execute first
+   * @param executeAfter       names of methods that must finish before this test starts (soft ordering)
+   * @param dependsOn          names of methods that must succeed before this test starts (hard dependency)
+   * @param expectedExceptions exception types the test method is expected to throw; the test fails if none or a
+   *                           different exception is thrown
+   * @param enabled            {@code false} to unconditionally exclude this test from execution
    */
-  public TestLiteral (int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
+  public TestLiteral (int priority, String[] executeAfter, String[] dependsOn, Class<?>[] expectedExceptions, boolean enabled) {
 
     this.priority = priority;
     this.executeAfter = executeAfter;
     this.dependsOn = dependsOn;
+    this.expectedExceptions = expectedExceptions;
     this.enabled = enabled;
   }
 
@@ -92,6 +96,15 @@ public class TestLiteral extends AnnotationLiteral<Test> implements Test {
   public String[] dependsOn () {
 
     return dependsOn;
+  }
+
+  /**
+   * @return exception types this test is expected to throw; the test fails if none or a different exception is thrown
+   */
+  @Override
+  public Class<?>[] expectedExceptions () {
+
+    return expectedExceptions;
   }
 
   /**

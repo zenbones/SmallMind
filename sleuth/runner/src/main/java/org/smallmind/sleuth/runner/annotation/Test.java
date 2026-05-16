@@ -87,6 +87,14 @@ public @interface Test {
   String[] dependsOn () default {};
 
   /**
+   * The list of exceptions that a test method is expected to throw. If no exception is thrown, or a different
+   * exception than one on this list is thrown, this test will be marked a failure.
+   *
+   * @return the value
+   */
+  Class[] expectedExceptions () default {};
+
+  /**
    * Whether this test participates in any run.
    * <p>
    * When {@code false}, the test is unconditionally excluded regardless of suite configuration.

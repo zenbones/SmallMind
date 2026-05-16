@@ -67,6 +67,7 @@ public class Dependency<A extends Annotation, T> {
   private A annotation;
   private T value;
   private Culprit culprit;
+  private Class<?>[] expectedExceptions;
   private String[] priorityOn;
   private String[] executeAfter;
   private String[] dependsOn;
@@ -97,12 +98,14 @@ public class Dependency<A extends Annotation, T> {
    * @param annotation   annotation instance that declared this dependency; may be {@code null}
    * @param value        payload associated with this node (e.g., the class or method to execute)
    * @param priority     scheduling priority; lower values are scheduled before higher values
-   * @param executeAfter names of nodes that must finish (regardless of outcome) before this one starts;
-   *                     may be {@code null} or empty
-   * @param dependsOn    names of nodes that must succeed before this one starts; failure of any
-   *                     named node propagates its culprit here; may be {@code null} or empty
+   * @param executeAfter       names of nodes that must finish (regardless of outcome) before this one starts;
+   *                           may be {@code null} or empty
+   * @param dependsOn          names of nodes that must succeed before this one starts; failure of any
+   *                           named node propagates its culprit here; may be {@code null} or empty
+   * @param expectedExceptions exception types this node's payload is expected to throw; the test fails if
+   *                           none or a different exception is thrown; may be {@code null} or empty
    */
-  public Dependency (String name, A annotation, T value, int priority, String[] executeAfter, String[] dependsOn) {
+  public Dependency (String name, A annotation, T value, int priority, String[] executeAfter, String[] dependsOn, Class<?>[] expectedExceptions) {
 
     this.name = name;
     this.annotation = annotation;
@@ -110,6 +113,7 @@ public class Dependency<A extends Annotation, T> {
     this.priority = priority;
     this.executeAfter = executeAfter;
     this.dependsOn = dependsOn;
+    this.expectedExceptions = expectedExceptions;
 
     completed = true;
   }
@@ -117,8 +121,9 @@ public class Dependency<A extends Annotation, T> {
   /**
    * Fills in the details of a placeholder node from a fully defined node with the same name.
    * <p>
-   * After alignment the node is marked complete. Only the annotation, value, priority, and
-   * {@code dependsOn} fields are copied; children accumulated during graph construction are preserved.
+   * After alignment the node is marked complete. Only the annotation, value, priority,
+   * {@code dependsOn}, and {@code expectedExceptions} fields are copied; children accumulated
+   * during graph construction are preserved.
    *
    * @param dependency fully defined source node to copy details from; must not be {@code null}
    */
@@ -128,6 +133,7 @@ public class Dependency<A extends Annotation, T> {
     this.value = dependency.getValue();
     this.priority = dependency.getPriority();
     this.dependsOn = dependency.getDependsOn();
+    this.expectedExceptions = dependency.expectedExceptions;
 
     completed = true;
   }
@@ -200,6 +206,15 @@ public class Dependency<A extends Annotation, T> {
   public String[] getDependsOn () {
 
     return dependsOn;
+  }
+
+  /**
+   * @return exception types this node's payload is expected to throw; the test fails if none or a
+   * different exception is thrown; may be {@code null} or empty
+   */
+  public Class<?>[] getExpectedExceptions () {
+
+    return expectedExceptions;
   }
 
   /**

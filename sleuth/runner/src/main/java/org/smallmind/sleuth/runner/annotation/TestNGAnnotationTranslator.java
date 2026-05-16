@@ -95,7 +95,7 @@ public class TestNGAnnotationTranslator implements AnnotationTranslator {
           annotationDictionary.addAfterTestMethod(method, new AfterTestLiteral());
         }
         if (annotation instanceof Test) {
-          annotationDictionary.addTestMethod(method, new TestLiteral(((Test)annotation).priority(), new String[0], ((Test)annotation).dependsOnMethods(), ((Test)annotation).enabled()));
+          annotationDictionary.addTestMethod(method, new TestLiteral(((Test)annotation).priority(), new String[0], ((Test)annotation).dependsOnMethods(), ((Test)annotation).expectedExceptions(), ((Test)annotation).enabled()));
         }
       }
     }

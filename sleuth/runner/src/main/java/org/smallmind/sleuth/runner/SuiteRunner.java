@@ -146,7 +146,7 @@ public class SuiteRunner implements TestController {
       if ((testMethodology = annotationDictionary.getTestMethodology()) != null) {
         for (Pair<Method, Test> testPair : testMethodology) {
           if (testPair.second().enabled()) {
-            testMethodAnalysis.add(new Dependency<>(testPair.first().getName(), testPair.second(), testPair.first(), testPair.second().priority(), testPair.second().executeAfter(), testPair.second().dependsOn()));
+            testMethodAnalysis.add(new Dependency<>(testPair.first().getName(), testPair.second(), testPair.first(), testPair.second().priority(), testPair.second().executeAfter(), testPair.second().dependsOn(), testPair.second().expectedExceptions()));
           }
         }
       }
