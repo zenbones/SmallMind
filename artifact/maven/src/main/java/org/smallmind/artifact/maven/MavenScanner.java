@@ -47,6 +47,7 @@ import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
 import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
+import org.smallmind.nutsnbolts.util.ComponentTimeoutException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -93,8 +94,8 @@ public class MavenScanner {
   private final MavenRepository mavenRepository;
   private final MavenCoordinate[] mavenCoordinates;
   private final ArtifactTag[] artifactTags;
+  private volatile ComponentStatus status = ComponentStatus.STOPPED;
   private ScannerWorker scannerWorker;
-  private ComponentStatus status = ComponentStatus.STOPPED;
 
   /**
    * Creates a scanner backed by the Maven settings found in {@code ~/.m2/settings.xml}.
@@ -141,7 +142,7 @@ public class MavenScanner {
    * @throws IllegalArgumentException if {@code cycleStint} or {@code mavenCoordinates} is
    *                                  {@code null}
    */
-  private MavenScanner (MavenRepository mavenRepository, Stint cycleStint, MavenCoordinate... mavenCoordinates) {
+  protected MavenScanner (MavenRepository mavenRepository, Stint cycleStint, MavenCoordinate... mavenCoordinates) {
 
     if (cycleStint == null) {
       throw new IllegalArgumentException("Must provide a cycle duration");
@@ -200,12 +201,22 @@ public class MavenScanner {
    *                                       initial scan
    */
   public synchronized void start ()
-    throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
+    throws InterruptedException, ComponentTimeoutException, DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
+
+    int attempts = 0;
+
+    while (status == ComponentStatus.STOPPING) {
+      Thread.sleep(1000);
+      if (++attempts > 10) {
+        throw new ComponentTimeoutException("Component has timed out awaiting the stopped state");
+      }
+    }
 
     if (status.equals(ComponentStatus.STOPPED)) {
 
       Thread workerThread;
 
+      status = ComponentStatus.STARTING;
       updateArtifact();
 
       workerThread = new Thread(scannerWorker = new ScannerWorker());
@@ -225,14 +236,23 @@ public class MavenScanner {
    * @throws InterruptedException if the calling thread is interrupted while waiting for the
    *                              worker to exit
    */
-  public synchronized void stop ()
+  public void stop ()
     throws InterruptedException {
 
-    if (status.equals(ComponentStatus.STARTED)) {
-      if (scannerWorker != null) {
-        scannerWorker.stop();
-      }
+    ScannerWorker workerToBeStopped = null;
 
+    synchronized (this) {
+      if (status.equals(ComponentStatus.STARTED)) {
+        status = ComponentStatus.STOPPING;
+
+        if (scannerWorker != null) {
+          workerToBeStopped = scannerWorker;
+        }
+      }
+    }
+
+    if (workerToBeStopped != null) {
+      workerToBeStopped.stop();
       status = ComponentStatus.STOPPED;
     }
   }
@@ -259,44 +279,47 @@ public class MavenScanner {
   private synchronized void updateArtifact ()
     throws DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
 
-    DefaultRepositorySystemSession session = mavenRepository.generateSession();
-    MavenScannerEvent event;
-    HashMap<Artifact, Artifact> artifactDeltaMap = new HashMap<>();
-    HashSet<Artifact> dependentArtifactSet = new HashSet<>();
-    LinkedList<ClassGate> classGateList = new LinkedList<>();
+    if (status.equals(ComponentStatus.STARTED) || status.equals(ComponentStatus.STARTING)) {
 
-    for (int index = 0; index < mavenCoordinates.length; index++) {
+      DefaultRepositorySystemSession session = mavenRepository.generateSession();
+      MavenScannerEvent event;
+      HashMap<Artifact, Artifact> artifactDeltaMap = new HashMap<>();
+      HashSet<Artifact> dependentArtifactSet = new HashSet<>();
+      LinkedList<ClassGate> classGateList = new LinkedList<>();
 
-      ArtifactTag currentArtifactTag = new ArtifactTag(mavenRepository.acquireArtifact(session, mavenCoordinates[index]));
+      for (int index = 0; index < mavenCoordinates.length; index++) {
 
-      if (!currentArtifactTag.equals(artifactTags[index])) {
+        ArtifactTag currentArtifactTag = new ArtifactTag(mavenRepository.acquireArtifact(session, mavenCoordinates[index]));
 
-        Artifact[] dependentArtifacts = mavenRepository.resolve(session, currentArtifactTag.getArtifact());
+        if (!currentArtifactTag.equals(artifactTags[index])) {
 
-        for (Artifact dependentArtifact : dependentArtifacts) {
-          if (dependentArtifactSet.add(dependentArtifact)) {
-            classGateList.add(new ClasspathClassGate(dependentArtifact.getFile().getAbsolutePath()));
+          Artifact[] dependentArtifacts = mavenRepository.resolve(session, currentArtifactTag.getArtifact());
+
+          for (Artifact dependentArtifact : dependentArtifacts) {
+            if (dependentArtifactSet.add(dependentArtifact)) {
+              classGateList.add(new ClasspathClassGate(dependentArtifact.getFile().getAbsolutePath()));
+            }
           }
+
+          artifactDeltaMap.put(currentArtifactTag.getArtifact(), (artifactTags[index] == null) ? null : artifactTags[index].getArtifact());
+          artifactTags[index] = currentArtifactTag;
         }
-
-        artifactDeltaMap.put(currentArtifactTag.getArtifact(), (artifactTags[index] == null) ? null : artifactTags[index].getArtifact());
-        artifactTags[index] = currentArtifactTag;
       }
-    }
 
-    if (!classGateList.isEmpty()) {
+      if (!classGateList.isEmpty()) {
 
-      GatingClassLoader gatingClassLoader;
-      ClassGate[] classGates;
+        GatingClassLoader gatingClassLoader;
+        ClassGate[] classGates;
 
-      classGates = new ClassGate[classGateList.size()];
-      classGateList.toArray(classGates);
+        classGates = new ClassGate[classGateList.size()];
+        classGateList.toArray(classGates);
 
-      gatingClassLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, classGates);
-      event = new MavenScannerEvent(this, artifactDeltaMap, artifactTags, gatingClassLoader);
+        gatingClassLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, classGates);
+        event = new MavenScannerEvent(this, artifactDeltaMap, artifactTags, gatingClassLoader);
 
-      for (MavenScannerListener listener : listenerList) {
-        listener.artifactChange(event);
+        for (MavenScannerListener listener : listenerList) {
+          listener.artifactChange(event);
+        }
       }
     }
   }

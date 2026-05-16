@@ -253,9 +253,8 @@ public class MavenRepository {
    * non-optional dependency that lacks a local file, {@link #acquireArtifact} is called to
    * download it.
    *
-   * <p>The resulting array may contain the root artifact itself when it appears as a dependency
-   * of another node, but duplicate artifacts across different branches of the graph are deduplicated
-   * via an intermediate {@link HashSet}.
+   * <p>The resulting array always includes the root artifact.  Duplicate artifacts that appear
+   * across different branches of the graph are deduplicated via an intermediate {@link HashSet}.
    *
    * @param session  session produced by {@link #generateSession()}
    * @param artifact root artifact for which to collect and resolve the full dependency closure;
@@ -276,7 +275,7 @@ public class MavenRepository {
     Artifact[] artifacts;
     DependencyNode dependencyNode;
 
-    dependencyNode = repositorySystem.collectDependencies(session, new CollectRequest().setRoot(new Dependency(artifact, "compile"))).getRoot();
+    dependencyNode = repositorySystem.collectDependencies(session, new CollectRequest().setRoot(new Dependency(artifact, "compile")).setRepositories(remoteRepositoryList)).getRoot();
     dependencyNode.accept(new DependencyVisitor() {
 
       @Override

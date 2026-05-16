@@ -100,12 +100,12 @@ public class ArtifactTag {
    * file timestamps produce different hash codes, supporting correct behavior in hash-based
    * collections used by {@link MavenScanner}.
    *
-   * @return combined hash code of the artifact and the modification time
+   * @return hash code of the artifact, additionally XOR'd with the modification time for snapshots
    */
   @Override
   public int hashCode () {
 
-    return artifact.hashCode() ^ (int)lastModTime;
+    return artifact.isSnapshot() ? artifact.hashCode() ^ (int)lastModTime : artifact.hashCode();
   }
 
   /**
