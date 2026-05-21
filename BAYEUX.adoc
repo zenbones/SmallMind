@@ -469,7 +469,7 @@ channel.publish(payload);
 
 | `Route`
 | Parsed channel path. Exposes `size()`,
-  `getSegment(int)`, `matches(String...)`, and the
+  `getSegment(int)`, `matchesPrefix(String...)`, and the
   `isMeta()`/`isService()`/`isWild()`/
   `isDeepWild()`/`isDeliverable()` predicates.
 
@@ -497,12 +497,15 @@ channel.publish(payload);
 
 | `SecurityPolicy<V>`
 | Veto points on handshake, channel creation, subscribe, and publish. All
-  four methods default to
-  `SecurityRejection.noReason()`, so overriding one lets an
-  application add a check without also disclaiming the others.
+  four methods default to `SecurityRejection.noReason()`, a non-`null`
+  deny sentinel, so inheriting without overriding yields a fully closed
+  policy. Each operation must be explicitly opened by overriding the
+  matching method to return `null`.
 
 | `SecurityRejection`
-| Carries a rejection `String` reason, or `null` to allow.
+| Any non-`null` `SecurityRejection` denies; a `SecurityPolicy` method
+  must return `null` to allow. `noReason()` denies without explanation;
+  `reason(String)` denies with an explanation propagated to the client.
 
 | `ChannelInitializer<V>`
 | A piece of configuration that runs the first time a given channel is
@@ -942,12 +945,17 @@ public interface SecurityPolicy<V extends Value<V>> {
 }
 ----
 
-All four methods default to `SecurityRejection.noReason()`, which
-means "allow". An application only needs to override the hooks it cares
-about; the rest remain permissive. Returning a populated
-`SecurityRejection` aborts the operation and propagates the reason
-back to the client in the `error` field of the matching meta
-response.
+All four methods default to `SecurityRejection.noReason()`, a non-`null`
+deny sentinel. The call sites treat any non-`null` rejection as a denial,
+so inheriting `SecurityPolicy` without overriding any method yields a
+fully closed policy. To permit an operation, an implementation must
+explicitly override the matching method and return `null`. Returning
+`SecurityRejection.reason(String)` denies the operation and propagates
+the reason back to the client in the `error` field of the matching meta
+response; returning `SecurityRejection.noReason()` denies without an
+explanation. The built-in `OpenSecurityPolicy` overrides all four methods
+to return `null` and is supplied as the default when no policy is wired
+in.
 
 == Wiring It Up Without Spring
 
@@ -1069,11 +1077,12 @@ implementation speaks Kafka.
 ----
 <property name="backbone">
   <bean class="org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaBackbone">
-    <constructor-arg name="nodeName"                 value="app-node-1"/>  <1>
-    <constructor-arg name="concurrencyLimit"         value="1"/>           <2>
-    <constructor-arg name="startupGracePeriodSeconds" value="10"/>         <3>
-    <constructor-arg name="topicName"                value="oumuamua"/>    <4>
-    <constructor-arg name="servers">                                        <5>
+    <constructor-arg name="nodeName"                  value="app-node-1"/>  <1>
+    <constructor-arg name="concurrencyLimit"          value="1"/>           <2>
+    <constructor-arg name="startupGracePeriodSeconds" value="10"/>          <3>
+    <constructor-arg name="consumerType"              value="CLASSIC"/>     <4>
+    <constructor-arg name="topicName"                 value="oumuamua"/>    <5>
+    <constructor-arg name="servers">                                         <6>
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="kafka-1:9094,kafka-2:9094"/>
       </bean>
@@ -1088,10 +1097,13 @@ implementation speaks Kafka.
     node. One is enough unless inbound volume is very high.
 <3> How long `startUp` will wait for the broker to become reachable
     before giving up.
-<4> The effective Kafka topic is `oumuamua-{topicName}`. Use a
+<4> The Kafka group protocol for the backbone's consumers. Use
+    `CLASSIC` for brokers that do not support KIP-848; use `GROUP`
+    for Kafka 3.7 and later with the new consumer protocol enabled.
+<5> The effective Kafka topic is `oumuamua-{topicName}`. Use a
     different `topicName` per Bayeux cluster if more than one
     independent cluster shares the broker.
-<5> Bootstrap servers. `KafkaServerFactoryBean` resolves
+<6> Bootstrap servers. `KafkaServerFactoryBean` resolves
     comma-separated host:port patterns into the producer/consumer
     `bootstrap.servers` property.
 
@@ -1263,10 +1275,14 @@ per subscriber, not one cross-subscriber invalidation.
 === Reflecting / Streaming Path Patterns
 
 `OumuamuaConfiguration.setReflectingPaths(String[])` and
-`setStreamingPaths(String[])` take an array of paths — each
-segment in the path is matched against the corresponding
-`Route` segment, with `"*"` allowed per segment. The paths
-are parsed at configuration time and consulted by
+`setStreamingPaths(String[])` take an array of paths; each path
+is treated as a *prefix* tested against the route of a newly
+created channel via `Route.matchesPrefix(String...)`. A configured
+path matches every route whose leading segments line up with it —
+`"*"` matches any single segment in that position and `"**"`, when
+used as the final entry, consumes all remaining route segments. A
+candidate longer than the route never matches. The paths are parsed
+at configuration time and consulted by
 `OumuamuaServer.isReflecting(Route)` /
 `isStreaming(Route)` whenever a new channel is created, so
 newly created channels automatically inherit the broad rules without

@@ -204,33 +204,40 @@ public class KafkaConnector {
 
   /**
    * Creates a {@link Consumer} that reads {@code Long} keys and byte-array values with manual
-   * offset commits ({@code enable.auto.commit=false}) and resets to the latest offset on first
-   * assignment.  If {@code topics} are provided the consumer subscribes immediately.
+   * offset commits ({@code enable.auto.commit=false}).  A consumer group with no prior committed
+   * offset starts reading at the latest available record.  When {@code consumerType} is
+   * {@link KafkaConsumerType#CLASSIC}, {@code heartbeat.interval.ms} and
+   * {@code session.timeout.ms} are also configured; those properties are broker-managed under
+   * {@link KafkaConsumerType#GROUP} and must not be set from the client side.  If
+   * {@code topics} are provided the consumer subscribes immediately.
    *
-   * @param clientId consumer client identifier reported to the broker
-   * @param groupId  consumer group this instance belongs to
-   * @param topics   zero or more topic names to subscribe to; passing {@code null} or an empty
-   *                 array leaves the consumer unsubscribed
+   * @param consumerType selects the Kafka group protocol; must match what the broker supports
+   * @param instanceId   static member identity ({@code group.instance.id}); allows the broker
+   *                     to recognize this consumer across restarts and avoid unnecessary rebalances
+   * @param clientId     consumer client identifier reported to the broker
+   * @param groupId      consumer group this instance belongs to
+   * @param topics       zero or more topic names to subscribe to; passing {@code null} or an
+   *                     empty array leaves the consumer unsubscribed
    * @return a configured {@link Consumer}; the caller is responsible for closing it
    */
-  public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String... topics) {
+  public Consumer<Long, byte[]> createConsumer (KafkaConsumerType consumerType, String instanceId, String clientId, String groupId, String... topics) {
 
     Properties props = new Properties();
 
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
     props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-    // props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
-    props.put(ConsumerConfig.GROUP_PROTOCOL_CONFIG, "consumer");
+    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
+    props.put(ConsumerConfig.GROUP_PROTOCOL_CONFIG, consumerType.getCode());
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
-    // Can't be set when the group protocol is set to 'consumer'
-    // props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-    // props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-    // Can't be set when the group protocol is set to 'consumer'
-    // props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 15000);
-    // props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 45000);
+    if (KafkaConsumerType.CLASSIC.equals(consumerType)) {
+      // Can't be set when the group protocol is set to 'consumer'
+      props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+      props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 45000);
+    }
+
     props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000);
     props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
     props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);

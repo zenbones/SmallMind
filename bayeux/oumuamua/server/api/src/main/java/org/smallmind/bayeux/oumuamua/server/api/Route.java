@@ -96,12 +96,18 @@ public interface Route {
   boolean isService ();
 
   /**
-   * Tests whether the given path segments match this route.
+   * Tests whether the supplied segments form a valid prefix of this route's path.
+   * The candidate may be no longer than the route ({@link #size()} segments); a
+   * shorter sequence matches whenever it aligns with the leading segments of the
+   * route. Within the candidate, {@code "*"} matches any single segment at that
+   * position and {@code "**"} matches all remaining segments of the route.
    *
-   * @param segments path segments to evaluate against this route's pattern
-   * @return {@code true} if the segments satisfy the route's matching rules
+   * @param segments ordered segments forming a candidate prefix; a {@code "**"}
+   *                 entry consumes all remaining route segments
+   * @return {@code true} if {@code segments} is a valid (possibly wildcard-bearing)
+   *         prefix of this route
    */
-  boolean matches (String... segments);
+  boolean matchesPrefix (String... segments);
 
   /**
    * Returns whether user messages can be published and delivered on this route.

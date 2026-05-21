@@ -85,6 +85,7 @@
     <cometd.version>9.0.0</cometd.version>
     <commons.logging.version>1.3.5</commons.logging.version>
     <commons.net.version>3.10.0</commons.net.version>
+    <docker.java.version>3.7.1</docker.java.version>
     <dogstatsd.client.version>4.4.5</dogstatsd.client.version>
     <ehcache.version>3.11.1</ehcache.version>
     <freemarker.version>2.3.34</freemarker.version>
@@ -187,6 +188,7 @@
     <module>scribe</module>
     <module>sleuth</module>
     <module>spark</module>
+    <module>testbench</module>
     <module>web</module>
   </modules>
   <dependencyManagement>
@@ -200,6 +202,16 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>${jackson.annotations.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java</artifactId>
+        <version>${docker.java.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java-transport-httpclient5</artifactId>
+        <version>${docker.java.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
@@ -975,6 +987,31 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>testbench-condition</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>testbench-docker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>testbench-foundation</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>testbench-groundwater</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>testbench-logger</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>web-grizzly</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -1167,7 +1204,7 @@
           <version>${maven.surefire.plugin.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
-            <groups>unit</groups>
+            <groups>integration,unit</groups>
           </configuration>
           <dependencies>
             <dependency>

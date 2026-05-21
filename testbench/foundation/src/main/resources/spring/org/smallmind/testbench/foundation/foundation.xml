@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="perApplicationContext" class="org.smallmind.nutsnbolts.lang.PerApplicationContext"/>
+
+  <bean id="contextRefreshedAnnouncer" class="org.smallmind.nutsnbolts.spring.SpringContextRefreshedAnnouncer">
+    <property name="applicationName" value="Epicenter"/>
+  </bean>
+
+  <bean id="securityProviders" class="org.smallmind.nutsnbolts.security.SecurityProviderInitializingBean" depends-on="perApplicationContext">
+    <property name="providers">
+      <list>
+        <bean class="org.bouncycastle.jce.provider.BouncyCastleProvider"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="systemProperties" class="org.smallmind.nutsnbolts.spring.SystemPropertyInitializingBean" depends-on="securityProviders">
+    <property name="order" value="1"/>
+    <property name="debugKeys" value="*"/>
+    <property name="propertyMap">
+      <map>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="allProperties" class="org.smallmind.nutsnbolts.spring.PropertyPlaceholderConfigurer">
+    <property name="order" value="3"/>
+    <property name="ignoreResourceNotFound" value="true"/>
+    <property name="ignoreUnresolvableProperties" value="false"/>
+    <property name="systemPropertyMode" value="OVERRIDE"/>
+    <property name="searchSystemEnvironment" value="true"/>
+    <property name="locations">
+      <list>
+        <value>classpath:org/smallmind/testbench/foundation/global.yaml</value>
+        <value>file:${user.home}/.m2/local.yaml</value>
+      </list>
+    </property>
+  </bean>
+</beans>

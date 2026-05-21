@@ -580,7 +580,7 @@ public enum Meta {
       if ((!session.getId().equals(request.getSessionId())) || session.getState().lt(SessionState.HANDSHOOK)) {
 
         return new Packet<>(PacketType.RESPONSE, request.getSessionId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Handshake required", Reconnect.HANDSHAKE));
-      } else if (session.getState().lt(SessionState.CONNECTED)) {
+      } else if (session.getState().lt(SessionState.CONNECTED) && (!server.allowsImplicitConnection())) {
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructPublishErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Connection required", Reconnect.RETRY));
       } else if (route.getPath().startsWith("/meta/")) {
@@ -591,6 +591,12 @@ public enum Meta {
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
         SecurityRejection rejection;
         Channel<V> channel;
+
+        // If we're here without a connection, it's because we're explicitly allowing implicit connections, which makes no sense in terms of the bayeux protocol,
+        // but cometd does it anyway, and the client expects it...
+        if (session.getState().lt(SessionState.CONNECTED)) {
+          session.completeConnection();
+        }
 
         try {
           if ((channel = server.findChannel(route.getPath())) == null) {

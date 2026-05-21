@@ -56,6 +56,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaConsumerType;
 import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.ComponentModulator;
 import org.smallmind.nutsnbolts.util.ComponentStateException;
@@ -82,6 +83,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final ComponentModulator componentModulator = new ComponentModulator();
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
+  private final KafkaConsumerType consumerType;
   private final String nodeName;
   private final String topicName;
   private final String prefixedTopicName;
@@ -96,15 +98,17 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    *                                  and used to skip locally-originating records on consumption
    * @param concurrencyLimit          number of parallel consumer worker threads spawned at {@link #startUp}
    * @param startupGracePeriodSeconds maximum seconds to wait for at least one broker to become reachable
+   * @param consumerType              Kafka group protocol for the backbone's consumer workers
    * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
    * @param servers                   one or more Kafka bootstrap broker addresses
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    */
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaConsumerType consumerType, String topicName, KafkaServer... servers)
     throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
+    this.consumerType = consumerType;
     this.topicName = topicName;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
@@ -126,7 +130,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    */
   private Consumer<Long, byte[]> createConsumer (int index) {
 
-    return connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
+    return connector.createConsumer(consumerType, nodeName, "oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
   }
 
   /**

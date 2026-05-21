@@ -345,7 +345,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     Route[] boundRoutes;
 
-    if ((boundRoutes = service.getBoundRoutes()) != null) {
+    if ((boundRoutes = service.boundRoutes()) != null) {
       for (Route boundRoute : boundRoutes) {
         serviceMap.put(boundRoute, service);
       }

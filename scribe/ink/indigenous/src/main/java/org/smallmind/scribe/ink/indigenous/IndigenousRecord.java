@@ -78,7 +78,7 @@ public class IndigenousRecord extends ParameterAwareRecord<IndigenousRecord> imp
 
     millis = System.currentTimeMillis();
 
-    threadId = Thread.currentThread().getId();
+    threadId = Thread.currentThread().threadId();
     threadName = Thread.currentThread().getName();
     sequenceNumber = SequenceGenerator.next();
   }

@@ -33,8 +33,11 @@
 package org.smallmind.bayeux.oumuamua.server.api;
 
 /**
- * Value returned by {@link SecurityPolicy} to signal whether an operation is permitted;
- * {@link #noReason()} signals allow, while {@link #reason(String)} signals deny with an explanation.
+ * Value returned by {@link SecurityPolicy} to describe a denial. Any non-{@code null}
+ * {@link SecurityRejection} signals deny; a {@link SecurityPolicy} method must return {@code null}
+ * to permit the operation. {@link #noReason()} is the shared sentinel deny rejection that carries
+ * no human-readable explanation, while {@link #reason(String)} carries an explanation propagated to
+ * the client.
  */
 public class SecurityRejection {
 
@@ -52,9 +55,9 @@ public class SecurityRejection {
   }
 
   /**
-   * Returns the shared sentinel instance that indicates the operation is permitted.
+   * Returns the shared sentinel deny rejection that carries no human-readable explanation.
    *
-   * @return allow sentinel with no rejection reason
+   * @return deny sentinel with no rejection reason
    */
   public static SecurityRejection noReason () {
 

@@ -69,9 +69,11 @@ public class CopyOnWriteArrayValue<V extends Value<V>> implements ArrayValue<V> 
    */
   private ArrayValue<V> fill () {
 
-    outerArrayValue = innerArrayValue.getFactory().arrayValue();
-    for (int index = 0; index < innerArrayValue.size(); index++) {
-      outerArrayValue.add(innerArrayValue.get(index));
+    if (outerArrayValue == null) {
+      outerArrayValue = innerArrayValue.getFactory().arrayValue();
+      for (int index = 0; index < innerArrayValue.size(); index++) {
+        outerArrayValue.add(innerArrayValue.get(index));
+      }
     }
 
     return outerArrayValue;

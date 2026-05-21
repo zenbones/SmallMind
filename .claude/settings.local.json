@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q test)",
+      "Bash(unzip -l C:/Users/david/.m2/repository/org/smallmind/scribe-pen/4.9.0/scribe-pen-4.9.0.jar)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl -am org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report -Dgroups=unit -Dsurefire.useFile=false)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn dependency:get -Dartifact=org.jacoco:jacoco-maven-plugin:LATEST)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl -am org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.14:report -Dgroups=unit -Dsurefire.useFile=false)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.14:report -Dgroups=unit -Dsurefire.useFile=false --offline)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.14:report -Dsurefire.useFile=false)",
+      "Bash(awk -F, 'NR>1 { *)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi -am -q test -Dgroups=unit -DfailIfNoTests=false)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi -am test -Dgroups=unit -DfailIfNoTests=false)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/impl -am test-compile)"
+    ]
+  }
+}

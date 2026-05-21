@@ -76,10 +76,10 @@ public class PacketUtility {
 
       if (prepend) {
 
-        int prolog = Math.max(basePacket.getMessages().length, 1);
+        int prologLength = Math.min(basePacket.getMessages().length, 1);
 
-        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, prolog);
-        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, prolog, otherPacketMessageList.size());
+        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, prologLength);
+        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, prologLength, otherPacketMessageList.size());
         if (basePacket.getMessages().length > 1) {
           System.arraycopy(basePacket.getMessages(), 1, mergedMessages, otherPacketMessageList.size() + 1, basePacket.getMessages().length - 1);
         }

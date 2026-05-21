@@ -50,6 +50,7 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaConsumerType;
 import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
@@ -105,11 +106,12 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
    * @param signalCodec               codec for encoding {@link ResultSignal}s and decoding {@link org.smallmind.phalanx.wire.signal.InvocationSignal}s
    * @param concurrencyLimit          thread count applied to both the ingesters and the invocation worker pool
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
+   * @param consumerType              Kafka group protocol for the whisper, talk, and shout consumer threads
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while starting ingesters or the worker pool
    */
-  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaServer... servers)
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaConsumerType consumerType, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(workerClass, concurrencyLimit);
@@ -122,9 +124,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, whisperTopicName = topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, responseCallback, concurrencyLimit).startUp();
-    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
-    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, responseCallback, concurrencyLimit).startUp();
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, whisperTopicName = topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, consumerType, responseCallback, concurrencyLimit).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, consumerType, responseCallback, concurrencyLimit).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, consumerType, responseCallback, concurrencyLimit).startUp();
 
     startUp(this);
   }

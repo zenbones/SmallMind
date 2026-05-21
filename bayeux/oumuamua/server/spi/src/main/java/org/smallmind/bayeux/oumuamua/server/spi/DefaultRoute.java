@@ -151,23 +151,28 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Tests whether this route matches the given sequence of segment names, respecting
-   * single-level ({@code *}) and deep ({@code **}) wildcards in {@code matchingSegments}.
+   * Tests whether {@code prefixSegments} forms a valid prefix of this route's path,
+   * respecting single-level ({@code "*"}) and deep ({@code "**"}) wildcards in the
+   * candidate. The candidate must contain no more segments than the route; a shorter
+   * candidate matches whenever each of its segments aligns with the corresponding
+   * leading segment of the route. A {@code "**"} entry short-circuits the comparison
+   * and consumes every remaining route segment. A {@code null} candidate never matches.
    *
-   * @param matchingSegments ordered segment names to test; a {@code **} entry matches all remaining segments
-   * @return {@code true} if every supplied segment matches the corresponding segment of this route
+   * @param prefixSegments ordered segments forming a candidate prefix; a {@code "**"}
+   *                       entry consumes all remaining route segments
+   * @return {@code true} if {@code prefixSegments} is a valid prefix of this route
    */
   @Override
-  public boolean matches (String... matchingSegments) {
+  public boolean matchesPrefix (String... prefixSegments) {
 
-    if ((matchingSegments == null) || (matchingSegments.length > (segments.length + 1))) {
+    if ((prefixSegments == null) || (prefixSegments.length > (segments.length + 1))) {
 
       return false;
     } else {
 
       int index = 0;
 
-      for (String matchingSegment : matchingSegments) {
+      for (String matchingSegment : prefixSegments) {
         if ("**".equals(matchingSegment)) {
 
           return true;

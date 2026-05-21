@@ -427,9 +427,13 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * Configures channel paths that should reflect messages back to the publisher.
+   * Configures path prefixes selecting channels that should reflect messages back
+   * to the publisher. Each supplied path is decomposed into segments and tested as
+   * a prefix against the route of a newly created channel via
+   * {@link Route#matchesPrefix(String...)}; a {@code "*"} entry matches any single
+   * segment and a {@code "**"} entry matches all remaining segments.
    *
-   * @param paths raw channel path patterns
+   * @param paths raw channel path prefixes; each is parsed into segments at configuration time
    */
   public void setReflectingPaths (String[] paths) {
 
@@ -447,7 +451,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
    */
   public boolean isReflecting (Route route) {
 
-    return matchesPaths(parsedReflectingPaths, route);
+    return matchesPrefixablePaths(parsedReflectingPaths, route);
   }
 
   /**
@@ -469,9 +473,13 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * Configures paths that should always stream data.
+   * Configures path prefixes selecting channels that should always stream data.
+   * Each supplied path is decomposed into segments and tested as a prefix against
+   * the route of a newly created channel via {@link Route#matchesPrefix(String...)};
+   * a {@code "*"} entry matches any single segment and a {@code "**"} entry matches
+   * all remaining segments.
    *
-   * @param paths raw channel path patterns
+   * @param paths raw channel path prefixes; each is parsed into segments at configuration time
    */
   public void setStreamingPaths (String[] paths) {
 
@@ -489,7 +497,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
    */
   public boolean isStreaming (Route route) {
 
-    return matchesPaths(parsedStreamingPaths, route);
+    return matchesPrefixablePaths(parsedStreamingPaths, route);
   }
 
   /**
@@ -514,17 +522,21 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * Tests whether the route matches any of the provided patterns.
+   * Tests whether any of the parsed path patterns is a valid prefix of the
+   * route's path, delegating each comparison to {@link Route#matchesPrefix(String...)}.
+   * Each entry in {@code paths} is treated as a candidate prefix; the route is
+   * considered to match as soon as one such candidate aligns with its leading
+   * segments, with {@code "*"} and {@code "**"} wildcards honored per segment.
    *
-   * @param paths parsed path patterns
-   * @param route route to evaluate
-   * @return {@code true} if the route matches a pattern
+   * @param paths parsed path patterns to test as candidate prefixes of the route
+   * @param route route whose path is examined for a matching prefix
+   * @return {@code true} if at least one pattern is a valid prefix of the route
    */
-  public boolean matchesPaths (String[][] paths, Route route) {
+  private boolean matchesPrefixablePaths (String[][] paths, Route route) {
 
     if ((route != null) && (paths != null)) {
-      for (String[] reflectingPath : paths) {
-        if (route.matches(reflectingPath)) {
+      for (String[] prefixablePath : paths) {
+        if (route.matchesPrefix(prefixablePath)) {
 
           return true;
         }

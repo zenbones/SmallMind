@@ -1,0 +1,8 @@
+# log properties
+log:
+  level:
+    default: DEBUG
+
+# wire properties
+wire:
+  default_timeout_seconds: 15

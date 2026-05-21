@@ -36,8 +36,11 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
 /**
- * Access-control extension point consulted at each security-sensitive step of the Bayeux lifecycle;
- * all default implementations allow every operation.
+ * Access-control extension point consulted at each security-sensitive step of the Bayeux lifecycle.
+ * Any non-{@code null} return from a check signals denial; only {@code null} permits the operation.
+ * The default methods return {@link SecurityRejection#noReason()} (a non-{@code null} deny sentinel),
+ * so an implementor who inherits without overriding produces a completely closed policy. Opening a
+ * given operation requires an explicit override that returns {@code null}.
  *
  * @param <V> concrete {@link Value} implementation used for message payloads
  */
@@ -48,7 +51,8 @@ public interface SecurityPolicy<V extends Value<V>> {
    *
    * @param session session attempting to handshake
    * @param message the {@code /meta/handshake} message
-   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
    */
   default SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
@@ -61,7 +65,8 @@ public interface SecurityPolicy<V extends Value<V>> {
    * @param session session requesting channel creation
    * @param path    channel path that would be created
    * @param message the Bayeux message that triggered the creation attempt
-   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
    */
   default SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
@@ -74,7 +79,8 @@ public interface SecurityPolicy<V extends Value<V>> {
    * @param session session requesting the subscription
    * @param channel channel being subscribed to
    * @param message the {@code /meta/subscribe} message
-   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
    */
   default SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
@@ -87,7 +93,8 @@ public interface SecurityPolicy<V extends Value<V>> {
    * @param session session attempting to publish
    * @param channel channel being published to
    * @param message the publish message
-   * @return {@link SecurityRejection#noReason()} to allow, or a rejection describing the denial
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
    */
   default SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 

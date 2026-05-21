@@ -139,9 +139,18 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
         AsyncContext asyncContext = request.startAsync();
         ServletInputStream inputStream = request.getInputStream();
+        OumuamuaReadListener<V> readListener;
 
         asyncContext.setTimeout(0);
-        inputStream.setReadListener(new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
+        inputStream.setReadListener(readListener = new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
+
+        executorService.submit(() -> {
+          try {
+            readListener.onDataAvailable();
+          } catch (IOException ioException) {
+            readListener.onError(ioException);
+          }
+        });
       }
     }
   }

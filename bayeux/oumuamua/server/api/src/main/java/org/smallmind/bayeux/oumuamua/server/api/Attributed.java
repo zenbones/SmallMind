@@ -58,7 +58,7 @@ public interface Attributed {
    * Stores a value under the given name, replacing any existing value.
    *
    * @param name  attribute key
-   * @param value value to store; may be {@code null}
+   * @param value value to store; must be non-null
    */
   void setAttribute (String name, Object value);
 

@@ -45,6 +45,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaConsumerType;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -63,6 +64,7 @@ public class KafkaMessageIngester {
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final KafkaConnector connector;
   private final java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback;
+  private final KafkaConsumerType consumerType;
   private final String nodeName;
   private final String groupId;
   private final String topicName;
@@ -77,15 +79,17 @@ public class KafkaMessageIngester {
    * @param groupId          Kafka consumer group identifier; governs offset coordination among workers
    * @param topicName        topic to subscribe to when the ingester is in the playing state
    * @param connector        factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
+   * @param consumerType     Kafka group protocol applied to each worker consumer
    * @param callback         invoked for every record polled from the topic
    * @param concurrencyLimit number of parallel consumer worker threads to maintain
    */
-  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
+  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, KafkaConsumerType consumerType, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
 
     this.nodeName = nodeName;
     this.groupId = groupId;
     this.topicName = topicName;
     this.connector = connector;
+    this.consumerType = consumerType;
     this.callback = callback;
     this.concurrencyLimit = concurrencyLimit;
   }
@@ -101,7 +105,7 @@ public class KafkaMessageIngester {
    */
   private Consumer<Long, byte[]> createConsumer (int index, boolean paused) {
 
-    return connector.createConsumer("wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, paused ? null : topicName);
+    return connector.createConsumer(consumerType, nodeName, "wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, paused ? null : topicName);
   }
 
   /**

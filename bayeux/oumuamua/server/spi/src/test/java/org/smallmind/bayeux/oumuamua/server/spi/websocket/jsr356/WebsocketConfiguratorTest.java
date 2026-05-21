@@ -1,0 +1,109 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356;
+
+import java.util.List;
+import jakarta.websocket.Extension;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
+import org.mockito.Mockito;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+@Test(groups = "unit")
+public class WebsocketConfiguratorTest {
+
+  private ServerEndpointConfig.Configurator internal;
+  private WebsocketConfigurator configurator;
+
+  @BeforeMethod
+  public void beforeMethod () {
+
+    internal = Mockito.mock(ServerEndpointConfig.Configurator.class);
+    configurator = new WebsocketConfigurator(internal);
+  }
+
+  public void testCheckOriginDelegatesToInternal () {
+
+    Mockito.when(internal.checkOrigin("https://example.com")).thenReturn(true);
+
+    Assert.assertTrue(configurator.checkOrigin("https://example.com"));
+
+    Mockito.verify(internal).checkOrigin("https://example.com");
+  }
+
+  public void testCheckOriginRejectsWhenInternalRejects () {
+
+    Mockito.when(internal.checkOrigin("https://evil.com")).thenReturn(false);
+
+    Assert.assertFalse(configurator.checkOrigin("https://evil.com"));
+  }
+
+  public void testGetNegotiatedSubprotocolDelegatesToInternal () {
+
+    List<String> supported = List.of("bayeux");
+    List<String> requested = List.of("bayeux");
+
+    Mockito.when(internal.getNegotiatedSubprotocol(supported, requested)).thenReturn("bayeux");
+
+    Assert.assertEquals(configurator.getNegotiatedSubprotocol(supported, requested), "bayeux");
+
+    Mockito.verify(internal).getNegotiatedSubprotocol(supported, requested);
+  }
+
+  public void testGetNegotiatedExtensionsDelegatesToInternal () {
+
+    List<Extension> installed = List.of();
+    List<Extension> requested = List.of();
+
+    Mockito.when(internal.getNegotiatedExtensions(installed, requested)).thenReturn(List.of());
+
+    List<Extension> result = configurator.getNegotiatedExtensions(installed, requested);
+
+    Assert.assertNotNull(result);
+    Mockito.verify(internal).getNegotiatedExtensions(installed, requested);
+  }
+
+  public void testModifyHandshakeDelegatesToInternal () {
+
+    ServerEndpointConfig config = Mockito.mock(ServerEndpointConfig.class);
+    HandshakeRequest request = Mockito.mock(HandshakeRequest.class);
+    HandshakeResponse response = Mockito.mock(HandshakeResponse.class);
+
+    configurator.modifyHandshake(config, request, response);
+
+    Mockito.verify(internal).modifyHandshake(config, request, response);
+  }
+}

@@ -63,7 +63,7 @@ public interface BayeuxService<V extends Value<V>> {
    *
    * @return non-empty array of bound routes
    */
-  Route[] getBoundRoutes ();
+  Route[] boundRoutes ();
 
   /**
    * Handles an incoming message and returns a response packet for the client.
