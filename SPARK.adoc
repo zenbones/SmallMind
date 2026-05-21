@@ -91,10 +91,14 @@ Java services that wish to distribute themselves in robust self-executing format
    meantime.
 
 `smallmind-spark` solves (1) with `singularity` and (2) and (3) with
-`tanukisoft`. The two can be used independently or together — the most
-common production pattern is a Singularity jar running under a
-Tanukisoft wrapper — and each is a Maven packaging type so adopting
-either is a one-line POM change.
+`tanukisoft`. The two are independent answers to different problems
+and target different deployment shapes — a Singularity jar is the
+deliverable when the application ships as a single executable jar
+invoked with `java -jar`, while a Tanukisoft distribution is the
+deliverable when the application ships as an OS-managed service with
+a `lib/` directory, a control surface, and a watchdog. Each is a
+Maven packaging type, so adopting either is a one-line POM change.
+Pick whichever matches the deployment surface.
 
 === What It Does, Concretely
 
@@ -576,10 +580,13 @@ Build-time assembly::
     archive that can be dropped on a host.
 
 Nothing about the runtime layer assumes a Singularity jar; the two
-subprojects are independent. Their natural composition is: build the
-application as `<packaging>singularity</packaging>`, then reference the
-resulting single jar as the only entry in the wrapper's classpath — but
-this is a deployment choice, not a code coupling.
+subprojects are independent. They are also not intended to be
+stacked: Singularity exists to fold a classpath into one deliverable
+when the goal is a single executable jar. A Tanukisoft distribution
+is already a multi-file tree where every dependency lives in `lib/`,
+so the problem Singularity solves does not arise. Choose whichever
+distribution shape matches the artifact the application is meant to
+ship as.
 
 [[singularity-reference]]
 == Singularity Reference
@@ -1423,26 +1430,37 @@ public class PlainWrapperListener extends AbstractWrapperListener {
 <2> Called on the wrapper's stop thread when the OS or an operator
     asks for shutdown.
 
-=== Composing Singularity And Tanukisoft
+=== Choosing Between Singularity And Tanukisoft
 
-The two subprojects can be stacked in one of two shapes.
+Each packaging type targets a different deployment shape. Pick one
+per project; the two are not layers.
 
-*Stack A — one Maven module per shape.* Build `my-service-jar` with
-`<packaging>singularity</packaging>`, then a sibling `my-service-app`
-with `<packaging>tanukisoft</packaging>` that takes `my-service-jar`
-as its only runtime dependency. The wrapper's `lib/` contains exactly
-one jar — the Singularity jar — and the `mainClass` /
-`wrapperListener` are both inside it.
+Use `<packaging>singularity</packaging>` when the deliverable is a
+single executable jar invoked with `java -jar`. Typical fits include
+command-line tools, batch jobs, ad-hoc utilities, and any
+self-contained application shipped to developers or operators as one
+file. Each dependency jar is preserved verbatim under
+`META-INF/singularity/lib/` and resolved through
+`SingularityClassLoader`, so signed jars, `META-INF/services/`
+descriptors, and per-jar manifests stay intact — the namespace
+collapse and resource-merge problems that arise when a shaded
+uber-jar flattens every dependency into one tree do not apply.
 
-*Stack B — plain Tanuki, no Singularity.* For the common case where
-the application has ordinary dependency management, the plain
-`tanukisoft` packaging already gives you a complete runnable
-distribution. No need to add Singularity on top.
+Use `<packaging>tanukisoft</packaging>` when the deliverable is a
+long-running service supervised by the host operating system.
+Typical fits include daemons, web services, and any application
+that must register as a Windows service, systemd unit, Upstart job,
+or launchd task. The generated tree has the `bin/` + `lib/` +
+`conf/` layout an ops team expects, with native wrapper binaries,
+rendered launch scripts, and a watchdog.
 
-Stack A is worth the extra module only if the Singularity jar is
-itself a distribution surface — for example, the same jar is also
-handed to developers for local `java -jar` use, or the jar is signed
-and that signature must survive end-to-end.
+The two are not intended to be combined. Singularity exists for the
+single-file case — pay the custom-classloader cost so the
+deliverable can be one jar. Once a Tanukisoft tree is on the table
+that case is gone: the wrapper already builds a classpath from every
+jar in `lib/`, and nesting a Singularity jar there only hides the
+dependencies from the ordinary jar-level tooling an operator expects
+to use against them.
 
 [[behavioral-reference]]
 == Behavioral Reference

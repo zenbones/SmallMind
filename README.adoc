@@ -36,5 +36,5 @@ The following documentation covers each functional area of the framework:
 * link:SCHEDULE.adoc[Schedule] — Job scheduling via Quartz
 * link:SCRIBE.adoc[Scribe] — Logging infrastructure built on SLF4J and Log4j 2
 * link:SLEUTH.adoc[Sleuth] — Distributed tracing and observability
-* link:SPARK.adoc[Spark] — Lightweight in-process event and messaging bus
+* link:SPARK.adoc[Spark] — Self-executing jar packaging (Singularity) and OS service distributions (Tanukisoft)
 * link:WEB.adoc[Web] — Web layer support including REST (Jersey), Jetty, and WebSocket
