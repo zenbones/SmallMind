@@ -61,6 +61,6 @@ public class ClassicQueueContractor implements QueueContractor {
   public void declare (Channel channel, String queueName, boolean autoDelete)
     throws IOException {
 
-    channel.queueDeclare(queueName, true, false, autoDelete, null);
+    channel.queueDeclare(queueName, false, false, autoDelete, null);
   }
 }
