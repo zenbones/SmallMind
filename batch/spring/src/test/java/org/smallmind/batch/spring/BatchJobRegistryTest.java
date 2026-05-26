@@ -43,10 +43,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class BatchJobRegistryTest {
 
-  private static abstract class AbstractJob implements Job {
-
-  }
-
   public void testRegisterIsUnsupported () {
 
     try {
@@ -113,5 +109,9 @@ public class BatchJobRegistryTest {
     } catch (UnsupportedOperationException expected) {
       // expected
     }
+  }
+
+  private static abstract class AbstractJob implements Job {
+
   }
 }

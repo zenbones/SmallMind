@@ -158,7 +158,6 @@ public class KafkaBackboneReconnectIntegrationTest extends AbstractBayeuxIntegra
    * {@code nodeName} is set to a synthetic value distinct from the local node so the consumer's
    * loopback filter does not drop the record.
    */
-  @SuppressWarnings("unchecked")
   private byte[] buildValidBackboneRecord ()
     throws Exception {
 

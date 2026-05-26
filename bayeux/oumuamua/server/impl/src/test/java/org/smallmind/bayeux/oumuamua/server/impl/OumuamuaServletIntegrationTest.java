@@ -112,10 +112,10 @@ public class OumuamuaServletIntegrationTest extends AbstractBayeuxIntegrationTes
     throws IOException, InterruptedException {
 
     HttpRequest request = HttpRequest.newBuilder()
-      .uri(URI.create(serverUrl()))
-      .header("Content-Type", "application/json;charset=UTF-8")
-      .POST(HttpRequest.BodyPublishers.noBody())
-      .build();
+                            .uri(URI.create(serverUrl()))
+                            .header("Content-Type", "application/json;charset=UTF-8")
+                            .POST(HttpRequest.BodyPublishers.noBody())
+                            .build();
 
     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -126,10 +126,10 @@ public class OumuamuaServletIntegrationTest extends AbstractBayeuxIntegrationTes
     throws IOException, InterruptedException {
 
     HttpRequest request = HttpRequest.newBuilder()
-      .uri(URI.create(serverUrl()))
-      .header("Content-Type", "application/json;charset=UTF-8")
-      .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
-      .build();
+                            .uri(URI.create(serverUrl()))
+                            .header("Content-Type", "application/json;charset=UTF-8")
+                            .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                            .build();
 
     return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
   }

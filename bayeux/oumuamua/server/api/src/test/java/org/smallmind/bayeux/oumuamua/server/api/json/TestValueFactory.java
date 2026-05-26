@@ -46,6 +46,13 @@ import java.util.Map;
  */
 public final class TestValueFactory implements ValueFactory<TestValueFactory.TestValue> {
 
+  /**
+   * Self-referential value bound for the test factory.
+   */
+  public interface TestValue extends Value<TestValue> {
+
+  }
+
   @Override
   public ObjectValue<TestValue> objectValue () {
 
@@ -97,13 +104,6 @@ public final class TestValueFactory implements ValueFactory<TestValueFactory.Tes
   public TestMessage message () {
 
     return new TestMessage(this);
-  }
-
-  /**
-   * Self-referential value bound for the test factory.
-   */
-  public interface TestValue extends Value<TestValue> {
-
   }
 
   /**

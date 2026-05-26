@@ -47,7 +47,6 @@ public interface Option<T> extends Serializable {
    * @param <T> element type
    * @return the shared {@link None} instance
    */
-  @SuppressWarnings("unchecked")
   static <T> None<T> none () {
 
     return (None<T>)None.NONE;

@@ -49,14 +49,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WebSocketTransportTest {
 
-  private static final class StubEndpoint extends Endpoint {
-
-    @Override
-    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
-
-    }
-  }
-
   private WebsocketConfiguration configuration;
   private WebsocketProtocol<OrthodoxValue> protocol;
   private WebSocketTransport<OrthodoxValue> transport;
@@ -114,7 +106,6 @@ public class WebSocketTransportTest {
     Assert.assertNull(transport.getAttribute("key"));
   }
 
-  @SuppressWarnings("unchecked")
   public void testInitRegistersEndpointWithContainer ()
     throws Exception {
 
@@ -131,7 +122,6 @@ public class WebSocketTransportTest {
     Mockito.verify(container).addEndpoint(Mockito.any(ServerEndpointConfig.class));
   }
 
-  @SuppressWarnings("unchecked")
   public void testInitRegistersServerAsUserProperty ()
     throws Exception {
 
@@ -151,7 +141,6 @@ public class WebSocketTransportTest {
     Assert.assertSame(captor.getValue().getUserProperties().get(WebSocketTransport.ATTRIBUTE), transport);
   }
 
-  @SuppressWarnings("unchecked")
   public void testInitNormalizesUrlWithLeadingSlash ()
     throws Exception {
 
@@ -174,7 +163,6 @@ public class WebSocketTransportTest {
     Assert.assertEquals(captor.getValue().getPath(), "/cometd");
   }
 
-  @SuppressWarnings("unchecked")
   public void testInitStripsWildcardSuffix ()
     throws Exception {
 
@@ -197,7 +185,6 @@ public class WebSocketTransportTest {
     Assert.assertEquals(captor.getValue().getPath(), "/cometd");
   }
 
-  @SuppressWarnings("unchecked")
   public void testInitPropagatesConfiguredSubProtocol ()
     throws Exception {
 
@@ -221,5 +208,13 @@ public class WebSocketTransportTest {
 
     Mockito.verify(container).addEndpoint(captor.capture());
     Assert.assertEquals(captor.getValue().getSubprotocols(), java.util.List.of("bayeux"), "Configured sub-protocol must be propagated to the registered endpoint");
+  }
+
+  private static final class StubEndpoint extends Endpoint {
+
+    @Override
+    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
+
+    }
   }
 }

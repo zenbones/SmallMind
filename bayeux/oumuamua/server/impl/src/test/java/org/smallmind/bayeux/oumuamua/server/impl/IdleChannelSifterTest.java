@@ -49,7 +49,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class IdleChannelSifterTest {
 
-  @SuppressWarnings("unchecked")
   public void testStopAllowsRunToExitPromptly ()
     throws InterruptedException {
 
@@ -68,7 +67,6 @@ public class IdleChannelSifterTest {
     Assert.assertFalse(runner.isAlive(), "run() did not exit within 2 seconds of stop()");
   }
 
-  @SuppressWarnings("unchecked")
   public void testCycleRemovesIdleChannel ()
     throws Exception {
 
@@ -104,7 +102,6 @@ public class IdleChannelSifterTest {
     Assert.assertNotNull(channel);
   }
 
-  @SuppressWarnings("unchecked")
   public void testCycleKeepsActiveChannel ()
     throws Exception {
 

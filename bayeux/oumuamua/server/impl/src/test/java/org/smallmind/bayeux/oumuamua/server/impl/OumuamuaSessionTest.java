@@ -62,7 +62,6 @@ public class OumuamuaSessionTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -173,7 +172,7 @@ public class OumuamuaSessionTest {
   public void testDeliverIgnoredWhenNotConnected () {
 
     OumuamuaSession<OrthodoxValue> s = session();
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     s.deliver(channel, null, deliveryPacket("/foo"));
     Mockito.verify(connection, Mockito.never()).deliver(Mockito.any());
@@ -185,7 +184,7 @@ public class OumuamuaSessionTest {
 
     s.completeHandshake();
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(true);
 
@@ -200,7 +199,7 @@ public class OumuamuaSessionTest {
     s.completeConnection();
     s.completeDisconnect();
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(true);
 
@@ -214,7 +213,7 @@ public class OumuamuaSessionTest {
 
     s.completeConnection();
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(true);
 
@@ -230,7 +229,7 @@ public class OumuamuaSessionTest {
 
     s.completeConnection();
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(false);
 
@@ -248,7 +247,7 @@ public class OumuamuaSessionTest {
     s.completeConnection();
     s.setLongPolling(true);
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(false);
 
@@ -300,7 +299,7 @@ public class OumuamuaSessionTest {
     s.completeConnection();
     s.setLongPolling(true);
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(false);
 
@@ -363,8 +362,8 @@ public class OumuamuaSessionTest {
 
     OumuamuaSession<OrthodoxValue> s = session();
 
-    @SuppressWarnings("unchecked") Connection<OrthodoxValue> other = Mockito.mock(Connection.class);
-    @SuppressWarnings("unchecked") Transport<OrthodoxValue> otherTransport = Mockito.mock(Transport.class);
+    Connection<OrthodoxValue> other = Mockito.mock(Connection.class);
+    Transport<OrthodoxValue> otherTransport = Mockito.mock(Transport.class);
 
     Mockito.when(other.getTransport()).thenReturn(otherTransport);
 
@@ -390,7 +389,7 @@ public class OumuamuaSessionTest {
 
     s.completeConnection();
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(true);
 
@@ -428,7 +427,7 @@ public class OumuamuaSessionTest {
     s.completeConnection();
     s.setLongPolling(true);
 
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(false);
 

@@ -46,7 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class IdleSessionInspectorTest {
 
-  @SuppressWarnings("unchecked")
   public void testStopAllowsRunToExitPromptly ()
     throws InterruptedException {
 
@@ -61,7 +60,6 @@ public class IdleSessionInspectorTest {
     Assert.assertFalse(runner.isAlive(), "run() did not exit within 2 seconds of stop()");
   }
 
-  @SuppressWarnings("unchecked")
   public void testIdleSessionIsRemovedAndDeparted ()
     throws InterruptedException {
 
@@ -99,7 +97,6 @@ public class IdleSessionInspectorTest {
     Assert.assertTrue(sessions.isEmpty(), "iterator.remove() should have cleared the session list");
   }
 
-  @SuppressWarnings("unchecked")
   public void testNonIdleSessionIsLeftAlone ()
     throws InterruptedException {
 

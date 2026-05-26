@@ -80,7 +80,6 @@ public class ServerListenerIntegrationTest extends AbstractBayeuxIntegrationTest
     super.afterClass();
   }
 
-  @SuppressWarnings("unchecked")
   private void registerRecorder () {
 
     Server<OrthodoxValue> server = applicationContext().getBean(Server.class);

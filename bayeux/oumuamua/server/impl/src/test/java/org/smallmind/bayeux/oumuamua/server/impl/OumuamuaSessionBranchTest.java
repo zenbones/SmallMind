@@ -68,7 +68,6 @@ public class OumuamuaSessionBranchTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -116,7 +115,6 @@ public class OumuamuaSessionBranchTest {
     Assert.assertNotNull(sess.getId(), "Session must be constructible with a null overflow log level");
   }
 
-  @SuppressWarnings("unchecked")
   public void testConstructorAdoptsLongPollingFromTransport () {
 
     Connection<OrthodoxValue> longPollConnection = Mockito.mock(Connection.class);
@@ -219,7 +217,6 @@ public class OumuamuaSessionBranchTest {
     Assert.assertEquals(calls.get(), 0, "Listener must not be invoked for REQUEST packets");
   }
 
-  @SuppressWarnings("unchecked")
   public void testDeliverPacketListenerOnDeliveryInvokedForDeliveryPacket ()
     throws Exception {
 
@@ -255,7 +252,6 @@ public class OumuamuaSessionBranchTest {
     Mockito.verify(connection).deliver(Mockito.any());
   }
 
-  @SuppressWarnings("unchecked")
   public void testDeliverVetoedByDeliveryListenerSkipsConnection ()
     throws Exception {
 
@@ -287,7 +283,6 @@ public class OumuamuaSessionBranchTest {
     Mockito.verify(connection, Mockito.never()).deliver(Mockito.any());
   }
 
-  @SuppressWarnings("unchecked")
   public void testStreamingChannelOnLongPollingTransportFallsThroughToLongPoll ()
     throws Exception {
 
@@ -332,7 +327,6 @@ public class OumuamuaSessionBranchTest {
     Mockito.verify(connection).onCleanup();
   }
 
-  @SuppressWarnings("unchecked")
   public void testLongPollQueueOverflowEvictsOldest ()
     throws Exception {
 
@@ -365,7 +359,6 @@ public class OumuamuaSessionBranchTest {
 
     OumuamuaSession<OrthodoxValue> sess = session(4);
 
-    @SuppressWarnings("unchecked")
     Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(channel.isStreaming()).thenReturn(false);

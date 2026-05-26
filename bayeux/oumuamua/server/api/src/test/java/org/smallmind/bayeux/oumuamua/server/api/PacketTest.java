@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PacketTest {
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public void testSingleMessageConstructorWrapsInArray () {
 
     Packet packet = new Packet(PacketType.REQUEST, null, null, (Message)null);
@@ -48,7 +48,7 @@ public class PacketTest {
     Assert.assertNull(packet.getMessages()[0]);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public void testSingleMessageConstructorGetters () {
 
     Packet packet = new Packet(PacketType.REQUEST, "s1", null, (Message)null);
@@ -58,7 +58,7 @@ public class PacketTest {
     Assert.assertNull(packet.getRoute());
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public void testMultiMessageConstructorGetters () {
 
     Message[] messages = new Message[3];
@@ -69,7 +69,7 @@ public class PacketTest {
     Assert.assertNull(packet.getSenderId());
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public void testSenderIdNullIsStored () {
 
     Packet packet = new Packet(PacketType.DELIVERY, null, null, (Message)null);
@@ -77,7 +77,7 @@ public class PacketTest {
     Assert.assertNull(packet.getSenderId());
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public void testRouteIsStored () {
 
     Route route = new Route() {

@@ -53,7 +53,6 @@ public class MetaStaticsTest {
   private Server<OrthodoxValue> server;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     server = Mockito.mock(Server.class);

@@ -63,7 +63,6 @@ public class ConnectionTest {
   private Server<OrthodoxValue> server;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -72,7 +71,6 @@ public class ConnectionTest {
     Mockito.when(server.getCodec()).thenReturn(codec);
   }
 
-  @SuppressWarnings("unchecked")
   private Message<OrthodoxValue> messageWith (String channel, String sessionId) {
 
     Message<OrthodoxValue> message = codec.create();
@@ -102,7 +100,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testInvalidClientIdYieldsErrorPacket () {
 
     Mockito.when(server.getSession("unknown-id")).thenReturn(null);
@@ -116,7 +113,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testInvalidSessionTypeYieldsErrorPacket () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -132,7 +128,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testDisconnectedSessionYieldsErrorPacket () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -148,7 +143,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testHandshakeWithDisconnectedCreatedSessionYieldsErrorPacket () {
 
     Session<OrthodoxValue> newSession = Mockito.mock(Session.class);
@@ -164,7 +158,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testHandshakeWithValidSessionAndSuppressedServerRequestProducesNoResponse () {
 
     Session<OrthodoxValue> newSession = Mockito.mock(Session.class);
@@ -180,7 +173,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.size(), 0, "Suppressed server request must not produce a response packet");
   }
 
-  @SuppressWarnings("unchecked")
   public void testConnectMetaTriggersHijackSession () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -199,7 +191,6 @@ public class ConnectionTest {
     Assert.assertTrue(conn.wasUpdated(), "CONNECT must call updateSession");
   }
 
-  @SuppressWarnings("unchecked")
   public void testDisconnectMetaDoesNotTriggerHijackSession () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -218,7 +209,6 @@ public class ConnectionTest {
     Assert.assertTrue(conn.wasUpdated(), "DISCONNECT must still call updateSession");
   }
 
-  @SuppressWarnings("unchecked")
   public void testSubscribeMetaTriggersHijackSession () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -237,7 +227,6 @@ public class ConnectionTest {
     Assert.assertTrue(conn.wasUpdated(), "SUBSCRIBE must call updateSession");
   }
 
-  @SuppressWarnings("unchecked")
   public void testPublishMetaUsesPathBasedRoute () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -256,7 +245,6 @@ public class ConnectionTest {
     Assert.assertTrue(conn.wasUpdated(), "PUBLISH must still call updateSession");
   }
 
-  @SuppressWarnings("unchecked")
   public void testInvalidPathInPublishYieldsErrorPacket () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -272,7 +260,6 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testCycleInvokesOnDisconnectWhenSessionLeftDisconnected () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
@@ -297,7 +284,6 @@ public class ConnectionTest {
     private final AtomicBoolean hijacked = new AtomicBoolean(false);
     private final AtomicBoolean updated = new AtomicBoolean(false);
     private final AtomicBoolean disconnected = new AtomicBoolean(false);
-    @SuppressWarnings("unchecked")
     private final Transport<OrthodoxValue> transport = Mockito.mock(Transport.class);
 
     StubConnection (Session<OrthodoxValue> createdSession, boolean validateResult) {

@@ -59,7 +59,6 @@ public class TimesyncExtensionTest {
   private Map<String, Object> attrs;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     factory = new OrthodoxValueFactory();

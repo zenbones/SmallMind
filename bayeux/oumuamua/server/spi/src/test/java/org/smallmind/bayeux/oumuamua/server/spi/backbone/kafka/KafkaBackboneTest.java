@@ -95,7 +95,6 @@ public class KafkaBackboneTest {
   private OrthodoxValueFactory factory;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -180,7 +179,6 @@ public class KafkaBackboneTest {
     Mockito.verify(constructedConnector).createProducer("oumuamua-producer-" + TOPIC + "-" + NODE_NAME);
   }
 
-  @SuppressWarnings("unchecked")
   public void testPublishSendsSerializedRecordToPrefixedTopic ()
     throws Exception {
 
@@ -207,13 +205,12 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.timeout(2000).times(1))
-               .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
     } finally {
       backbone.shutDown();
     }
   }
 
-  @SuppressWarnings("unchecked")
   public void testWorkerDeliversRemoteRecordAndSkipsLocal ()
     throws Exception {
 
@@ -280,11 +277,11 @@ public class KafkaBackboneTest {
     throws Exception {
 
     Mockito.when(consumer.poll(Mockito.any()))
-             .thenThrow(new RuntimeException("simulated transient failure"))
-             .thenAnswer(invocation -> {
-               Thread.sleep(100);
-               return ConsumerRecords.empty();
-             });
+      .thenThrow(new RuntimeException("simulated transient failure"))
+      .thenAnswer(invocation -> {
+        Thread.sleep(100);
+        return ConsumerRecords.empty();
+      });
 
     KafkaBackbone<OrthodoxValue> backbone = createBackbone();
 
@@ -294,7 +291,7 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.timeout(2000).times(2))
-               .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
       Mockito.verify(consumer, Mockito.atLeastOnce()).unsubscribe();
       Mockito.verify(consumer, Mockito.atLeastOnce()).close();
     } finally {
@@ -340,7 +337,7 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.times(1))
-               .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaConsumerType.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
     } finally {
       backbone.shutDown();
     }

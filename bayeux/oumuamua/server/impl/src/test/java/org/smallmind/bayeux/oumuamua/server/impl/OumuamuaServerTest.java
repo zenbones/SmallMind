@@ -78,7 +78,6 @@ public class OumuamuaServerTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     protocol = Mockito.mock(Protocol.class);
@@ -268,7 +267,6 @@ public class OumuamuaServerTest {
     Assert.assertEquals(server.getMinimumBayeuxVersion(), "1.0");
   }
 
-  @SuppressWarnings("unchecked")
   private OumuamuaSession<OrthodoxValue> newSession (OumuamuaServer<OrthodoxValue> server) {
 
     Connection<OrthodoxValue> connection = Mockito.mock(Connection.class);
@@ -396,7 +394,6 @@ public class OumuamuaServerTest {
     server.deliver(null, nullRoutePacket, false);
   }
 
-  @SuppressWarnings("unchecked")
   public void testForwardWithNullRouteIsNoOp ()
     throws Exception {
 
@@ -411,7 +408,6 @@ public class OumuamuaServerTest {
     Mockito.verify(channel, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.any());
   }
 
-  @SuppressWarnings("unchecked")
   public void testForwardWithNonNullRouteDeliversToChannel ()
     throws Exception {
 
@@ -430,7 +426,6 @@ public class OumuamuaServerTest {
     Assert.assertEquals(newServer().getMessageLogLevel(), Level.TRACE);
   }
 
-  @SuppressWarnings("unchecked")
   public void testStartCallsBackboneStartUpThenStopShutsItDown ()
     throws Exception {
 
@@ -450,7 +445,6 @@ public class OumuamuaServerTest {
   }
 
   @Test(expectedExceptions = ServletException.class)
-  @SuppressWarnings("unchecked")
   public void testStartWrapsBackboneStartUpFailureInServletException ()
     throws Exception {
 
@@ -465,7 +459,6 @@ public class OumuamuaServerTest {
     server.start(servletConfig);
   }
 
-  @SuppressWarnings("unchecked")
   public void testStopLogsAndContinuesWhenBackboneShutDownFails ()
     throws Exception {
 

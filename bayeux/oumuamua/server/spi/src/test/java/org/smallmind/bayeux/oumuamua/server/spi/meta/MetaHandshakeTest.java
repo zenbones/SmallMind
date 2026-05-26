@@ -47,7 +47,6 @@ import org.smallmind.bayeux.oumuamua.server.api.SessionState;
 import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.BooleanValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
-import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
@@ -68,7 +67,6 @@ public class MetaHandshakeTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -112,7 +110,6 @@ public class MetaHandshakeTest {
   public void testSecurityRejectionWithReasonProducesUnauthorizedError ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -130,7 +127,6 @@ public class MetaHandshakeTest {
   public void testSecurityRejectionWithoutReasonProducesUnauthorizedError ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -277,7 +273,6 @@ public class MetaHandshakeTest {
   public void testErrorResponseAdvertisesAllServerTransports ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     Protocol<OrthodoxValue> alt = Mockito.mock(Protocol.class);
 
     Mockito.when(alt.getTransportNames()).thenReturn(new String[] {"long-polling"});

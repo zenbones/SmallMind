@@ -53,7 +53,6 @@ public class IdleChannelOperationTest {
   private ChannelTree<OrthodoxValue> tree;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     server = Mockito.mock(Server.class);

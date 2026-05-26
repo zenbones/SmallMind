@@ -66,6 +66,39 @@ public class EmitterResourceHttpScrapeTest {
   private PrometheusEmitter emitter;
   private EmitterResource resource;
 
+  private static String mangle (String original) {
+
+    StringBuilder builder = new StringBuilder();
+    boolean lastWasLower = false;
+
+    for (int index = 0; index < original.length(); index++) {
+
+      char ch = original.charAt(index);
+
+      if ((ch >= 'a') && (ch <= 'z')) {
+        builder.append(ch);
+        lastWasLower = true;
+      } else if ((ch >= 'A') && (ch <= 'Z')) {
+        if (lastWasLower) {
+          builder.append('_');
+        }
+        builder.append(Character.toLowerCase(ch));
+        lastWasLower = false;
+      } else if ((ch >= '0') && (ch <= '9')) {
+        if (index == 0) {
+          builder.append('_');
+        }
+        builder.append(ch);
+        lastWasLower = false;
+      } else {
+        builder.append('_');
+        lastWasLower = false;
+      }
+    }
+
+    return builder.toString();
+  }
+
   @BeforeMethod
   public void setUp () {
 
@@ -147,38 +180,5 @@ public class EmitterResourceHttpScrapeTest {
     Assert.fail("Did not see a populated Prometheus scrape body within " + timeoutMillis + " ms");
 
     return null;
-  }
-
-  private static String mangle (String original) {
-
-    StringBuilder builder = new StringBuilder();
-    boolean lastWasLower = false;
-
-    for (int index = 0; index < original.length(); index++) {
-
-      char ch = original.charAt(index);
-
-      if ((ch >= 'a') && (ch <= 'z')) {
-        builder.append(ch);
-        lastWasLower = true;
-      } else if ((ch >= 'A') && (ch <= 'Z')) {
-        if (lastWasLower) {
-          builder.append('_');
-        }
-        builder.append(Character.toLowerCase(ch));
-        lastWasLower = false;
-      } else if ((ch >= '0') && (ch <= '9')) {
-        if (index == 0) {
-          builder.append('_');
-        }
-        builder.append(ch);
-        lastWasLower = false;
-      } else {
-        builder.append('_');
-        lastWasLower = false;
-      }
-    }
-
-    return builder.toString();
   }
 }

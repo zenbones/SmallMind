@@ -61,7 +61,6 @@ public class ChannelTreeTest {
   private List<Channel<OrthodoxValue>> created;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -81,7 +80,6 @@ public class ChannelTreeTest {
     }, null);
   }
 
-  @SuppressWarnings("unchecked")
   private Session<OrthodoxValue> mockSession (String id) {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);

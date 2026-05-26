@@ -48,39 +48,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ChannelDefaultsTest {
 
-  public void testIsWildDelegatesToRoute () {
-
-    Assert.assertTrue(channelWith(true, false, false, false).isWild());
-    Assert.assertFalse(channelWith(false, false, false, false).isWild());
-  }
-
-  public void testIsDeepWildDelegatesToRoute () {
-
-    Assert.assertTrue(channelWith(false, true, false, false).isDeepWild());
-    Assert.assertFalse(channelWith(false, false, false, false).isDeepWild());
-  }
-
-  public void testIsMetaDelegatesToRoute () {
-
-    Assert.assertTrue(channelWith(false, false, true, false).isMeta());
-    Assert.assertFalse(channelWith(false, false, false, false).isMeta());
-  }
-
-  public void testIsServiceDelegatesToRoute () {
-
-    Assert.assertTrue(channelWith(false, false, false, true).isService());
-    Assert.assertFalse(channelWith(false, false, false, false).isService());
-  }
-
-  public void testIsDeliverableDelegatesToRoute () {
-
-    Assert.assertTrue(channelWith(false, false, false, false).isDeliverable());
-    Assert.assertFalse(channelWith(true, false, false, false).isDeliverable());
-    Assert.assertFalse(channelWith(false, true, false, false).isDeliverable());
-    Assert.assertFalse(channelWith(false, false, true, false).isDeliverable());
-    Assert.assertFalse(channelWith(false, false, false, true).isDeliverable());
-  }
-
   private static StubChannel channelWith (boolean wild, boolean deepWild, boolean meta, boolean service) {
 
     return new StubChannel(new Route() {
@@ -139,6 +106,39 @@ public class ChannelDefaultsTest {
         return false;
       }
     });
+  }
+
+  public void testIsWildDelegatesToRoute () {
+
+    Assert.assertTrue(channelWith(true, false, false, false).isWild());
+    Assert.assertFalse(channelWith(false, false, false, false).isWild());
+  }
+
+  public void testIsDeepWildDelegatesToRoute () {
+
+    Assert.assertTrue(channelWith(false, true, false, false).isDeepWild());
+    Assert.assertFalse(channelWith(false, false, false, false).isDeepWild());
+  }
+
+  public void testIsMetaDelegatesToRoute () {
+
+    Assert.assertTrue(channelWith(false, false, true, false).isMeta());
+    Assert.assertFalse(channelWith(false, false, false, false).isMeta());
+  }
+
+  public void testIsServiceDelegatesToRoute () {
+
+    Assert.assertTrue(channelWith(false, false, false, true).isService());
+    Assert.assertFalse(channelWith(false, false, false, false).isService());
+  }
+
+  public void testIsDeliverableDelegatesToRoute () {
+
+    Assert.assertTrue(channelWith(false, false, false, false).isDeliverable());
+    Assert.assertFalse(channelWith(true, false, false, false).isDeliverable());
+    Assert.assertFalse(channelWith(false, true, false, false).isDeliverable());
+    Assert.assertFalse(channelWith(false, false, true, false).isDeliverable());
+    Assert.assertFalse(channelWith(false, false, false, true).isDeliverable());
   }
 
   private static class StubChannel implements Channel<TestValueFactory.TestValue> {

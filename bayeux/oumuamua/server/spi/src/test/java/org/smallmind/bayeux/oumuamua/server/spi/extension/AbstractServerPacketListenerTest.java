@@ -51,15 +51,10 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class AbstractServerPacketListenerTest {
 
-  private static final class PassThroughListener extends AbstractServerPacketListener<OrthodoxValue> {
-
-  }
-
   private PassThroughListener listener;
   private Session<OrthodoxValue> session;
   private Route route;
 
-  @SuppressWarnings("unchecked")
   @BeforeMethod
   public void beforeMethod () {
 
@@ -68,7 +63,6 @@ public class AbstractServerPacketListenerTest {
     route = Mockito.mock(Route.class);
   }
 
-  @SuppressWarnings("unchecked")
   private Packet<OrthodoxValue> newPacket (PacketType packetType) {
 
     return new Packet<>(packetType, "sender-id", route, new Message[0]);
@@ -129,5 +123,9 @@ public class AbstractServerPacketListenerTest {
   public void testOnDeliveryAcceptsNullPacket () {
 
     Assert.assertNull(listener.onDelivery(session, null));
+  }
+
+  private static final class PassThroughListener extends AbstractServerPacketListener<OrthodoxValue> {
+
   }
 }

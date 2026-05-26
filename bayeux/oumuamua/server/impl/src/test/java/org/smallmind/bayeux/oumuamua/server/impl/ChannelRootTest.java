@@ -50,7 +50,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ChannelRootTest {
 
-  @SuppressWarnings("unchecked")
   private Server<OrthodoxValue> mockServer () {
 
     return Mockito.mock(Server.class);
@@ -59,7 +58,7 @@ public class ChannelRootTest {
   public void testGetBackboneDelegates () {
 
     Server<OrthodoxValue> server = mockServer();
-    @SuppressWarnings("unchecked") Backbone<OrthodoxValue> backbone = Mockito.mock(Backbone.class);
+    Backbone<OrthodoxValue> backbone = Mockito.mock(Backbone.class);
 
     Mockito.when(server.getBackbone()).thenReturn(backbone);
 
@@ -104,9 +103,9 @@ public class ChannelRootTest {
     throws Exception {
 
     Server<OrthodoxValue> server = mockServer();
-    @SuppressWarnings("unchecked") Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
     DefaultRoute route = new DefaultRoute("/foo");
-    @SuppressWarnings("unchecked") Message<OrthodoxValue> message = Mockito.mock(Message.class);
+    Message<OrthodoxValue> message = Mockito.mock(Message.class);
     Packet<OrthodoxValue> packet = new Packet<>(PacketType.DELIVERY, null, route, message);
 
     new ChannelRoot<>(server).forward(channel, packet);

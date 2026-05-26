@@ -40,14 +40,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WebsocketConfigurationTest {
 
-  private static final class StubEndpoint extends Endpoint {
-
-    @Override
-    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
-
-    }
-  }
-
   public void testConstructorStoresMandatoryFields () {
 
     WebsocketConfiguration config = new WebsocketConfiguration(StubEndpoint.class, "/cometd/*");
@@ -159,5 +151,13 @@ public class WebsocketConfigurationTest {
     config.setExtensions(null);
 
     Assert.assertNull(config.getExtensions());
+  }
+
+  private static final class StubEndpoint extends Endpoint {
+
+    @Override
+    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
+
+    }
   }
 }

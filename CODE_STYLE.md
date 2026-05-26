@@ -141,6 +141,7 @@ This is a deliberate house-style quirk. Apply it consistently:
 - When multiple annotations apply, stack them vertically with no blank lines between them.
 - Javadoc precedes the first annotation.
 - The only routine exception is parameter or type-use annotations, which appear inline with the thing they annotate (for example `@Nullable String name`).
+- Do not use `@SuppressWarnings`. Compiler diagnostics — especially the `"unchecked"` family that surfaces JVM type-erasure consequences — stay visible. Until runtime erasure is resolved, we accept those warnings rather than hide them; narrow the cast or parameterize the helper when an honest alternative exists.
 
 ### Method Body Structure
 

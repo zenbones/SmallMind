@@ -49,54 +49,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WebsocketProtocolTest {
 
-  private static final class StubEndpoint extends Endpoint {
-
-    @Override
-    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
-
-    }
-  }
-
-  private static final class CountingProtocolListener implements Protocol.ProtocolListener<OrthodoxValue> {
-
-    private final AtomicInteger receiptCount = new AtomicInteger();
-    private final AtomicInteger publishCount = new AtomicInteger();
-    private final AtomicInteger deliveryCount = new AtomicInteger();
-
-    @Override
-    public void onReceipt (Message<OrthodoxValue>[] incomingMessages) {
-
-      receiptCount.incrementAndGet();
-    }
-
-    @Override
-    public void onPublish (Message<OrthodoxValue> originatingMessage, Message<OrthodoxValue> outgoingMessage) {
-
-      publishCount.incrementAndGet();
-    }
-
-    @Override
-    public void onDelivery (Packet<OrthodoxValue> outgoingPacket) {
-
-      deliveryCount.incrementAndGet();
-    }
-
-    int receipts () {
-
-      return receiptCount.get();
-    }
-
-    int publishes () {
-
-      return publishCount.get();
-    }
-
-    int deliveries () {
-
-      return deliveryCount.get();
-    }
-  }
-
   private WebsocketProtocol<OrthodoxValue> protocol;
 
   @BeforeMethod
@@ -154,7 +106,6 @@ public class WebsocketProtocolTest {
     new WebsocketProtocol<OrthodoxValue>(5000L, config, null);
   }
 
-  @SuppressWarnings("unchecked")
   public void testConstructorWithListenersRegistersEach () {
 
     WebsocketConfiguration config = new WebsocketConfiguration(StubEndpoint.class, "/ws");
@@ -170,7 +121,6 @@ public class WebsocketProtocolTest {
     Assert.assertEquals(listenerB.receipts(), 1);
   }
 
-  @SuppressWarnings("unchecked")
   public void testOnReceiptFansOutToAllRegisteredListeners () {
 
     CountingProtocolListener listenerA = new CountingProtocolListener();
@@ -188,7 +138,6 @@ public class WebsocketProtocolTest {
     Assert.assertEquals(listenerA.deliveries(), 0);
   }
 
-  @SuppressWarnings("unchecked")
   public void testOnPublishFansOutToAllRegisteredListeners () {
 
     CountingProtocolListener listener = new CountingProtocolListener();
@@ -203,7 +152,6 @@ public class WebsocketProtocolTest {
     Assert.assertEquals(listener.deliveries(), 0);
   }
 
-  @SuppressWarnings("unchecked")
   public void testOnDeliveryFansOutToAllRegisteredListeners () {
 
     CountingProtocolListener listener = new CountingProtocolListener();
@@ -218,7 +166,6 @@ public class WebsocketProtocolTest {
     Assert.assertEquals(listener.publishes(), 0);
   }
 
-  @SuppressWarnings("unchecked")
   public void testRemoveListenerStopsFanout () {
 
     CountingProtocolListener listener = new CountingProtocolListener();
@@ -232,7 +179,6 @@ public class WebsocketProtocolTest {
     Assert.assertEquals(listener.receipts(), 1);
   }
 
-  @SuppressWarnings("unchecked")
   public void testRemoveUnregisteredListenerIsNoOp () {
 
     CountingProtocolListener never = new CountingProtocolListener();
@@ -241,5 +187,53 @@ public class WebsocketProtocolTest {
     protocol.onReceipt(new Message[0]);
 
     Assert.assertEquals(never.receipts(), 0);
+  }
+
+  private static final class StubEndpoint extends Endpoint {
+
+    @Override
+    public void onOpen (jakarta.websocket.Session session, jakarta.websocket.EndpointConfig config) {
+
+    }
+  }
+
+  private static final class CountingProtocolListener implements Protocol.ProtocolListener<OrthodoxValue> {
+
+    private final AtomicInteger receiptCount = new AtomicInteger();
+    private final AtomicInteger publishCount = new AtomicInteger();
+    private final AtomicInteger deliveryCount = new AtomicInteger();
+
+    @Override
+    public void onReceipt (Message<OrthodoxValue>[] incomingMessages) {
+
+      receiptCount.incrementAndGet();
+    }
+
+    @Override
+    public void onPublish (Message<OrthodoxValue> originatingMessage, Message<OrthodoxValue> outgoingMessage) {
+
+      publishCount.incrementAndGet();
+    }
+
+    @Override
+    public void onDelivery (Packet<OrthodoxValue> outgoingPacket) {
+
+      deliveryCount.incrementAndGet();
+    }
+
+    int receipts () {
+
+      return receiptCount.get();
+    }
+
+    int publishes () {
+
+      return publishCount.get();
+    }
+
+    int deliveries () {
+
+      return deliveryCount.get();
+    }
   }
 }

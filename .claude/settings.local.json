@@ -13,7 +13,12 @@
       "Bash(awk -F, 'NR>1 { *)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi -am -q test -Dgroups=unit -DfailIfNoTests=false)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi -am test -Dgroups=unit -DfailIfNoTests=false)",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/impl -am test-compile)"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/impl -am test-compile)",
+      "Bash(awk --version)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am -q compile -DskipTests)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am compile -DskipTests)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl file/ephemeral -am compile -DskipTests)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl -am test-compile)"
     ]
   }
 }

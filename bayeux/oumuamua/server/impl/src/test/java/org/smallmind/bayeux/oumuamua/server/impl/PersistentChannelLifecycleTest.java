@@ -61,7 +61,6 @@ public class PersistentChannelLifecycleTest {
   private OumuamuaServer<OrthodoxValue> server;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod ()
     throws OumuamuaException {
 

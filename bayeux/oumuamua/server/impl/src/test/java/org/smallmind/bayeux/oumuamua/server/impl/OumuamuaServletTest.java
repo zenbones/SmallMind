@@ -42,7 +42,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
-import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -153,7 +152,6 @@ public class OumuamuaServletTest {
   }
 
   @Test(expectedExceptions = ServletException.class, expectedExceptionsMessageRegExp = ".*http protocol.*")
-  @SuppressWarnings("unchecked")
   public void testInitThrowsWhenServletProtocolMissing ()
     throws ServletException {
 
@@ -169,7 +167,6 @@ public class OumuamuaServletTest {
   }
 
   @Test(expectedExceptions = ServletException.class, expectedExceptionsMessageRegExp = ".*long polling.*")
-  @SuppressWarnings("unchecked")
   public void testInitThrowsWhenLongPollingTransportMissing ()
     throws ServletException {
 

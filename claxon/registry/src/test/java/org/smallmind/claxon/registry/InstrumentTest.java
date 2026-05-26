@@ -40,6 +40,38 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class InstrumentTest {
 
+  private static void runInFreshContext (Runnable runnable) {
+
+    Throwable[] propagated = new Throwable[1];
+
+    Thread thread = new Thread(() -> {
+      try {
+        new PerApplicationContext();
+        runnable.run();
+      } catch (Throwable t) {
+        propagated[0] = t;
+      }
+    });
+
+    thread.start();
+    try {
+      thread.join();
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(interrupted);
+    }
+
+    if (propagated[0] != null) {
+      if (propagated[0] instanceof RuntimeException) {
+        throw (RuntimeException)propagated[0];
+      } else if (propagated[0] instanceof Error) {
+        throw (Error)propagated[0];
+      } else {
+        throw new RuntimeException(propagated[0]);
+      }
+    }
+  }
+
   public void testWithReturnsUnpluggedBeforeAnyRegistryIsRegistered () {
 
     runInFreshContext(() -> {
@@ -81,38 +113,6 @@ public class InstrumentTest {
       });
     } finally {
       registry.stop();
-    }
-  }
-
-  private static void runInFreshContext (Runnable runnable) {
-
-    Throwable[] propagated = new Throwable[1];
-
-    Thread thread = new Thread(() -> {
-      try {
-        new PerApplicationContext();
-        runnable.run();
-      } catch (Throwable t) {
-        propagated[0] = t;
-      }
-    });
-
-    thread.start();
-    try {
-      thread.join();
-    } catch (InterruptedException interrupted) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(interrupted);
-    }
-
-    if (propagated[0] != null) {
-      if (propagated[0] instanceof RuntimeException) {
-        throw (RuntimeException)propagated[0];
-      } else if (propagated[0] instanceof Error) {
-        throw (Error)propagated[0];
-      } else {
-        throw new RuntimeException(propagated[0]);
-      }
     }
   }
 }

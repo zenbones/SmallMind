@@ -58,7 +58,6 @@ public class OumuamuaConfigurationOutViewTest {
   private OrthodoxCodec codec;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -134,7 +133,6 @@ public class OumuamuaConfigurationOutViewTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   public void testInstanceCopiesListeners () {
 
     Server.Listener<OrthodoxValue> listener = Mockito.mock(Server.Listener.class);

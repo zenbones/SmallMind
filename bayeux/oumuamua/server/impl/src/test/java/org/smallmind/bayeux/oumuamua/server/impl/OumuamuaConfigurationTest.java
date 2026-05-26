@@ -194,7 +194,6 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getCodec(), codec);
   }
 
-  @SuppressWarnings("unchecked")
   public void testSetAndGetProtocols () {
 
     org.smallmind.bayeux.oumuamua.server.api.Protocol<OrthodoxValue> protocol =
@@ -206,7 +205,6 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getProtocols()[0], protocol);
   }
 
-  @SuppressWarnings("unchecked")
   public void testSetAndGetServices () {
 
     org.smallmind.bayeux.oumuamua.server.api.BayeuxService<OrthodoxValue> service =
@@ -218,7 +216,6 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getServices()[0], service);
   }
 
-  @SuppressWarnings("unchecked")
   public void testSetAndGetListeners () {
 
     org.smallmind.bayeux.oumuamua.server.api.Server.Listener<OrthodoxValue> listener =
@@ -230,7 +227,6 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getListeners()[0], listener);
   }
 
-  @SuppressWarnings("unchecked")
   public void testSetAndGetBackbone () {
 
     org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone<OrthodoxValue> backbone =
@@ -241,7 +237,6 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getBackbone(), backbone);
   }
 
-  @SuppressWarnings("unchecked")
   public void testSetAndGetSecurityPolicy () {
 
     org.smallmind.bayeux.oumuamua.server.api.SecurityPolicy<OrthodoxValue> policy =

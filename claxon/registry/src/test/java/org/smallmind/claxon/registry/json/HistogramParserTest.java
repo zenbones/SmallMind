@@ -117,8 +117,8 @@ public class HistogramParserTest {
 
     FakeClock clock = new FakeClock();
     Histogram histogram = new HistogramParser()
-      .parse("{\"highestTrackableValue\":10000000000,\"numberOfSignificantValueDigits\":2}")
-      .build(clock);
+                            .parse("{\"highestTrackableValue\":10000000000,\"numberOfSignificantValueDigits\":2}")
+                            .build(clock);
 
     histogram.update(5_000_000_000L);
     clock.advanceNanos(NANOS_PER_SECOND);
@@ -135,8 +135,8 @@ public class HistogramParserTest {
 
     FakeClock clock = new FakeClock();
     Histogram histogramFromJson = new HistogramParser()
-      .parse("{\"resolutionStint\":{\"time\":2,\"timeUnit\":\"SECONDS\"}}")
-      .build(clock);
+                                    .parse("{\"resolutionStint\":{\"time\":2,\"timeUnit\":\"SECONDS\"}}")
+                                    .build(clock);
     Histogram histogramDefault = new HistogramParser().parse("{}").build(clock);
 
     histogramFromJson.update(10);

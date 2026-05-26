@@ -94,7 +94,6 @@ public class StreamingPathIntegrationTest extends AbstractBayeuxIntegrationTest 
     super.afterClass();
   }
 
-  @SuppressWarnings("unchecked")
   private Server<OrthodoxValue> oumuamuaServer () {
 
     return applicationContext().getBean(Server.class);

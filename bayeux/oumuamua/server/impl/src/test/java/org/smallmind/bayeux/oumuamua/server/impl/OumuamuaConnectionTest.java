@@ -37,7 +37,6 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
-import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -50,7 +49,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class OumuamuaConnectionTest {
 
-  @SuppressWarnings("unchecked")
   private OumuamuaConnection<OrthodoxValue> connection (String protocolName, String transportName) {
 
     Transport<OrthodoxValue> transport = Mockito.mock(Transport.class);
@@ -63,7 +61,6 @@ public class OumuamuaConnectionTest {
     return new TestConnection(transport);
   }
 
-  @SuppressWarnings("unchecked")
   private OumuamuaSession<OrthodoxValue> mockSession (String protocolName, String transportName) {
 
     OumuamuaSession<OrthodoxValue> session = Mockito.mock(OumuamuaSession.class);
@@ -106,7 +103,6 @@ public class OumuamuaConnectionTest {
 
     OumuamuaConnection<OrthodoxValue> conn = connection("websocket", "websocket");
 
-    @SuppressWarnings("unchecked")
     OumuamuaSession<OrthodoxValue> session = Mockito.mock(OumuamuaSession.class);
 
     conn.hijackSession(session);
@@ -118,7 +114,6 @@ public class OumuamuaConnectionTest {
 
     OumuamuaConnection<OrthodoxValue> conn = connection("websocket", "websocket");
 
-    @SuppressWarnings("unchecked")
     OumuamuaSession<OrthodoxValue> session = Mockito.mock(OumuamuaSession.class);
 
     conn.updateSession(session);

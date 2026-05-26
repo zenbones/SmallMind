@@ -37,8 +37,6 @@ import java.io.StringWriter;
 import org.smallmind.bayeux.oumuamua.server.api.json.ArrayValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
-import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxDoubleValue;
-import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxLongValue;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

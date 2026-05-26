@@ -64,7 +64,6 @@ public class MetaConnectTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -213,7 +212,6 @@ public class MetaConnectTest {
     Assert.assertEquals(((NumberValue<OrthodoxValue>)packet.getMessages()[0].getAdvice().get(Advice.INTERVAL.getField())).asLong(), 0L);
   }
 
-  @SuppressWarnings("unchecked")
   public void testLongPollingPrependsResponseAndAppendsQueuedMessages ()
     throws Exception {
 

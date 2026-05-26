@@ -79,7 +79,6 @@ public class WebSocketEndpointTest {
   private WebSocketTransport<OrthodoxValue> transport;
   private WebSocketContainer container;
 
-  @SuppressWarnings("unchecked")
   @BeforeMethod
   public void beforeMethod () {
 
@@ -131,7 +130,7 @@ public class WebSocketEndpointTest {
     Mockito.verify(container).setDefaultMaxTextMessageBufferSize(65_536);
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings("rawtypes")
   public void testOnOpenRegistersWholeMessageHandler () {
 
     Mockito.when(transport.getMaxIdleTimeoutMilliseconds()).thenReturn(-1L);
@@ -251,7 +250,6 @@ public class WebSocketEndpointTest {
     Mockito.verify(websocketSession, Mockito.never()).getAsyncRemote();
   }
 
-  @SuppressWarnings("unchecked")
   public void testDeliverUsesSyncSendWhenNoAsyncTimeout ()
     throws Exception {
 
@@ -273,7 +271,6 @@ public class WebSocketEndpointTest {
     Mockito.verify(wsProtocol).onDelivery(packet);
   }
 
-  @SuppressWarnings("unchecked")
   public void testDeliverUsesAsyncSendWhenTimeoutConfigured ()
     throws Exception {
 

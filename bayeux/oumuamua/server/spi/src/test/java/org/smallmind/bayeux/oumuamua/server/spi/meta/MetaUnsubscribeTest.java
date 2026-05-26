@@ -59,7 +59,6 @@ public class MetaUnsubscribeTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -159,7 +158,6 @@ public class MetaUnsubscribeTest {
   public void testPresentChannelIsUnsubscribed ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(server.findChannel("/foo")).thenReturn(channel);

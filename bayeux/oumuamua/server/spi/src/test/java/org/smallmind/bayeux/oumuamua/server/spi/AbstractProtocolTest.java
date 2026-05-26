@@ -64,7 +64,6 @@ public class AbstractProtocolTest {
     return new OrthodoxMessage(null, factory);
   }
 
-  @SuppressWarnings("unchecked")
   private Message<OrthodoxValue>[] messages (int count) {
 
     Message<OrthodoxValue>[] array = new Message[count];
@@ -132,6 +131,7 @@ public class AbstractProtocolTest {
     RecordingProtocolListener listener = new RecordingProtocolListener();
 
     protocol.addListener(new Protocol.Listener<>() {
+
     });
     protocol.addListener(listener);
     protocol.onReceipt(messages(1));
@@ -216,7 +216,6 @@ public class AbstractProtocolTest {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void onPublish (Message<OrthodoxValue> originatingMessage, Message<OrthodoxValue> outgoingMessage) {
 
       publishCalls.add(new Message[] {originatingMessage, outgoingMessage});

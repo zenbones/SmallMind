@@ -54,7 +54,6 @@ public class ChannelBranchTest {
   private ChannelTree<OrthodoxValue> tree;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     server = Mockito.mock(Server.class);
@@ -113,7 +112,7 @@ public class ChannelBranchTest {
 
     Channel<OrthodoxValue> channel = create("/foo/bar", 60_000L);
 
-    @SuppressWarnings("unchecked") Session<OrthodoxValue> session = Mockito.mock(Session.class);
+    Session<OrthodoxValue> session = Mockito.mock(Session.class);
     Mockito.when(session.getId()).thenReturn("s1");
 
     channel.subscribe(session);
@@ -203,7 +202,7 @@ public class ChannelBranchTest {
 
     Channel<OrthodoxValue> channel = create("/active/channel", 60_000L);
 
-    @SuppressWarnings("unchecked") Session<OrthodoxValue> session = Mockito.mock(Session.class);
+    Session<OrthodoxValue> session = Mockito.mock(Session.class);
     Mockito.when(session.getId()).thenReturn("s1");
     channel.subscribe(session);
 

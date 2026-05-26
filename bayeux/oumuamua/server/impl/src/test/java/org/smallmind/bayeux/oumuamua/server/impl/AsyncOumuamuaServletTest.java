@@ -144,7 +144,6 @@ public class AsyncOumuamuaServletTest {
   }
 
   @Test(expectedExceptions = ServletException.class, expectedExceptionsMessageRegExp = ".*http protocol.*")
-  @SuppressWarnings("unchecked")
   public void testInitWithoutHttpProtocolThrows ()
     throws Exception {
 
@@ -160,7 +159,6 @@ public class AsyncOumuamuaServletTest {
   }
 
   @Test(expectedExceptions = ServletException.class, expectedExceptionsMessageRegExp = ".*long polling transport.*")
-  @SuppressWarnings("unchecked")
   public void testInitWithoutLongPollingTransportThrows ()
     throws Exception {
 
@@ -182,7 +180,6 @@ public class AsyncOumuamuaServletTest {
     Assert.assertEquals(servlet.getServletInfo(), "");
   }
 
-  @SuppressWarnings("unchecked")
   private OumuamuaServer<OrthodoxValue> initServletWithMocks ()
     throws Exception {
 
@@ -213,7 +210,6 @@ public class AsyncOumuamuaServletTest {
     Mockito.verify(server).stop();
   }
 
-  @SuppressWarnings("unchecked")
   public void testDoPostInstallsReadListenerOnValidPost ()
     throws Exception {
 
@@ -235,7 +231,6 @@ public class AsyncOumuamuaServletTest {
     Mockito.verify(inputStream, Mockito.timeout(2000)).setReadListener(Mockito.any(ReadListener.class));
   }
 
-  @SuppressWarnings("unchecked")
   public void testReadListenerOnErrorCompletesAsyncContext ()
     throws Exception {
 
@@ -264,7 +259,6 @@ public class AsyncOumuamuaServletTest {
     Mockito.verify(asyncContext).complete();
   }
 
-  @SuppressWarnings("unchecked")
   public void testReadListenerOverflowThrowsIOException ()
     throws Exception {
 

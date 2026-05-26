@@ -62,7 +62,6 @@ public class KafkaBackboneLifecycleIntegrationTest extends AbstractBayeuxIntegra
 
   @BeforeClass
   @Override
-  @SuppressWarnings("unchecked")
   public void beforeClass ()
     throws Exception {
 

@@ -42,13 +42,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ObviousNamingStrategyTest {
 
-  public static class Outer {
-
-    public static class Inner {
-
-    }
-  }
-
   public void testEmptyWhiteListReturnsNull () {
 
     Assert.assertNull(new ObviousNamingStrategy().from(String.class));
@@ -91,5 +84,12 @@ public class ObviousNamingStrategyTest {
     ObviousNamingStrategy strategy = new ObviousNamingStrategy();
 
     Assert.assertSame(strategy.setWhiteListSet(new HashSet<>()), strategy);
+  }
+
+  public static class Outer {
+
+    public static class Inner {
+
+    }
   }
 }

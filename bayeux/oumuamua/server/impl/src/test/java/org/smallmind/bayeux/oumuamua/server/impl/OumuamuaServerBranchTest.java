@@ -72,7 +72,6 @@ public class OumuamuaServerBranchTest {
   private Protocol<OrthodoxValue> protocol;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     protocol = Mockito.mock(Protocol.class);
@@ -245,7 +244,6 @@ public class OumuamuaServerBranchTest {
     server.deliver(null, deliveryPacket("/deliver/vetoed"), false);
   }
 
-  @SuppressWarnings("unchecked")
   public void testDeliverWithClusteredTruePublishesThroughBackbone ()
     throws Exception {
 
@@ -261,7 +259,6 @@ public class OumuamuaServerBranchTest {
     Mockito.verify(backbone).publish(Mockito.any());
   }
 
-  @SuppressWarnings("unchecked")
   public void testForwardWithBackbonePublishes ()
     throws Exception {
 
@@ -279,7 +276,6 @@ public class OumuamuaServerBranchTest {
     Mockito.verify(backbone).publish(Mockito.any());
   }
 
-  @SuppressWarnings("unchecked")
   public void testForwardVetoedByPacketListenerSkipsDelivery ()
     throws Exception {
 

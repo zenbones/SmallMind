@@ -87,7 +87,6 @@ public class ChannelPacketListenerIntegrationTest extends AbstractBayeuxIntegrat
     super.afterClass();
   }
 
-  @SuppressWarnings("unchecked")
   private void attachListenerInitializer () {
 
     Server<OrthodoxValue> server = applicationContext().getBean(Server.class);

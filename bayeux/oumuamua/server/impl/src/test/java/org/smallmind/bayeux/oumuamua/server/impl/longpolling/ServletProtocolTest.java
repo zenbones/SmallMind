@@ -99,7 +99,6 @@ public class ServletProtocolTest {
     new ServletProtocol<OrthodoxValue>(5000L, null);
   }
 
-  @SuppressWarnings("unchecked")
   public void testConstructorRegistersSuppliedListeners () {
 
     Protocol.ProtocolListener<OrthodoxValue> first = new Protocol.ProtocolListener<OrthodoxValue>() {

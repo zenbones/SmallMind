@@ -153,7 +153,6 @@ public class EphemeralWatchKey implements WatchKey {
    * {@code false} if the key was already signalled, is invalid, or the event
    * kind is not subscribed
    */
-  @SuppressWarnings("unchecked")
   public synchronized boolean fire (WatchEvent.Kind<?> firedEvent, EphemeralPath context) {
 
     if (valid) {

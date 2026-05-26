@@ -70,7 +70,6 @@ public class MetaPublishTest {
   private Route route;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod ()
     throws Exception {
 
@@ -175,7 +174,6 @@ public class MetaPublishTest {
   public void testCanCreateRejectionProducesUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -193,7 +191,6 @@ public class MetaPublishTest {
   public void testCanPublishRejectionProducesUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -210,7 +207,6 @@ public class MetaPublishTest {
   public void testCanCreateRejectionWithoutReasonProducesPlainUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -227,7 +223,6 @@ public class MetaPublishTest {
   public void testCanPublishRejectionWithoutReasonProducesPlainUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -241,7 +236,6 @@ public class MetaPublishTest {
     Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.anyBoolean());
   }
 
-  @SuppressWarnings("unchecked")
   public void testSuccessfulPublishDeliversAndEchoesRequest ()
     throws Exception {
 

@@ -33,7 +33,6 @@
 package org.smallmind.testbench.condition;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;

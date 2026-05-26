@@ -80,7 +80,6 @@ public class BayeuxServiceIntegrationTest extends AbstractBayeuxIntegrationTest 
     super.afterClass();
   }
 
-  @SuppressWarnings("unchecked")
   private void registerEchoService ()
     throws IOException {
 

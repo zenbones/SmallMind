@@ -42,7 +42,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class OumuamuaServletContextListenerTest {
 
-  @SuppressWarnings("unchecked")
   public void testContextInitializedStoresServerUnderAttribute () {
 
     OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);
@@ -58,7 +57,6 @@ public class OumuamuaServletContextListenerTest {
     Mockito.verify(servletContext).setAttribute(Server.ATTRIBUTE, server);
   }
 
-  @SuppressWarnings("unchecked")
   public void testContextDestroyedStopsServer () {
 
     OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);

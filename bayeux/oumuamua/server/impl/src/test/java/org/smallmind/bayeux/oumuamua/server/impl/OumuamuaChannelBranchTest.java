@@ -65,7 +65,6 @@ public class OumuamuaChannelBranchTest {
   private ChannelRoot<OrthodoxValue> root;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());
@@ -83,7 +82,6 @@ public class OumuamuaChannelBranchTest {
     }, 60_000L, new DefaultRoute(path), root);
   }
 
-  @SuppressWarnings("unchecked")
   private Session<OrthodoxValue> mockSession (String id) {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);

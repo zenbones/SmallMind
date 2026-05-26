@@ -60,7 +60,6 @@ public class BayeuxServiceDefaultsTest {
   private BayeuxService<OrthodoxValue> service;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     codec = new OrthodoxCodec(new JaxbDeserializer<>());

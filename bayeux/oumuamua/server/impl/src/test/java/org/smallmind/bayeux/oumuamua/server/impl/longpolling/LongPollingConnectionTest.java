@@ -34,7 +34,6 @@ package org.smallmind.bayeux.oumuamua.server.impl.longpolling;
 
 import jakarta.servlet.AsyncContext;
 import org.mockito.Mockito;
-import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
@@ -49,7 +48,6 @@ public class LongPollingConnectionTest {
   private OumuamuaServer<OrthodoxValue> server;
   private LongPollingConnection<OrthodoxValue> connection;
 
-  @SuppressWarnings("unchecked")
   @BeforeMethod
   public void beforeMethod () {
 
@@ -89,7 +87,6 @@ public class LongPollingConnectionTest {
     Mockito.verify(asyncContext).complete();
   }
 
-  @SuppressWarnings("unchecked")
   public void testOnMessagesWithEmptyArrayCompletesAsyncContext () {
 
     AsyncContext asyncContext = Mockito.mock(AsyncContext.class);

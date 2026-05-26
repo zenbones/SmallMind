@@ -94,10 +94,10 @@ public class Dependency<A extends Annotation, T> {
   /**
    * Creates a fully specified, complete dependency node.
    *
-   * @param name         unique name identifying this node within the graph; must not be {@code null}
-   * @param annotation   annotation instance that declared this dependency; may be {@code null}
-   * @param value        payload associated with this node (e.g., the class or method to execute)
-   * @param priority     scheduling priority; lower values are scheduled before higher values
+   * @param name               unique name identifying this node within the graph; must not be {@code null}
+   * @param annotation         annotation instance that declared this dependency; may be {@code null}
+   * @param value              payload associated with this node (e.g., the class or method to execute)
+   * @param priority           scheduling priority; lower values are scheduled before higher values
    * @param executeAfter       names of nodes that must finish (regardless of outcome) before this one starts;
    *                           may be {@code null} or empty
    * @param dependsOn          names of nodes that must succeed before this one starts; failure of any

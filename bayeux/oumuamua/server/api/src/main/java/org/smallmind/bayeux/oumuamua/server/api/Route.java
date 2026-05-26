@@ -105,7 +105,7 @@ public interface Route {
    * @param segments ordered segments forming a candidate prefix; a {@code "**"}
    *                 entry consumes all remaining route segments
    * @return {@code true} if {@code segments} is a valid (possibly wildcard-bearing)
-   *         prefix of this route
+   * prefix of this route
    */
   boolean matchesPrefix (String... segments);
 

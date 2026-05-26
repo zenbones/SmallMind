@@ -51,7 +51,6 @@ public class RemovedSessionOperationTest {
   private Session<OrthodoxValue> session;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod () {
 
     Server<OrthodoxValue> server = Mockito.mock(Server.class);
@@ -109,9 +108,7 @@ public class RemovedSessionOperationTest {
 
   public void testOperateInvokesUnsubscribeWithCapturedSession () {
 
-    @SuppressWarnings("unchecked")
     ChannelBranch<OrthodoxValue> branch = Mockito.mock(ChannelBranch.class);
-    @SuppressWarnings("unchecked")
     Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
 
     Mockito.when(branch.getChannel()).thenReturn(channel);

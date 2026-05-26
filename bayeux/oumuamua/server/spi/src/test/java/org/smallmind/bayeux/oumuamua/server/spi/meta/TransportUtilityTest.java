@@ -44,7 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class TransportUtilityTest {
 
-  @SuppressWarnings("unchecked")
   private Server<OrthodoxValue> server (Protocol<OrthodoxValue>... protocols) {
 
     Server<OrthodoxValue> server = Mockito.mock(Server.class);
@@ -59,7 +58,6 @@ public class TransportUtilityTest {
     return server;
   }
 
-  @SuppressWarnings("unchecked")
   private Protocol<OrthodoxValue> protocol (String name, String... transportNames) {
 
     Protocol<OrthodoxValue> protocol = Mockito.mock(Protocol.class);
@@ -108,7 +106,6 @@ public class TransportUtilityTest {
     Assert.assertEquals(names[0], "websocket");
   }
 
-  @SuppressWarnings("unchecked")
   public void testUnresolvedProtocolNameIsSkipped () {
 
     Protocol<OrthodoxValue> real = protocol("real", "websocket");

@@ -177,7 +177,6 @@ public class RegistryCollectionCycleTest {
     Assert.assertEquals(recording.findQuantity("value").getValue(), 99.0);
   }
 
-
   private static final class RecordingPushEmitter extends PushEmitter {
 
     private final List<Recording> recordings = new ArrayList<>();

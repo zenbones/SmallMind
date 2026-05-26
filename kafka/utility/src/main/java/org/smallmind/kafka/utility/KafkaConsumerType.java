@@ -42,14 +42,18 @@ package org.smallmind.kafka.utility;
  */
 public enum KafkaConsumerType {
 
-  /** Classic client-side rebalance protocol ({@code group.protocol=classic}).
+  /**
+   * Classic client-side rebalance protocol ({@code group.protocol=classic}).
    * {@link KafkaConnector#createConsumer} additionally sets
-   * {@code heartbeat.interval.ms=3000} and {@code session.timeout.ms=45000}. */
+   * {@code heartbeat.interval.ms=3000} and {@code session.timeout.ms=45000}.
+   */
   CLASSIC("classic"),
 
-  /** KIP-848 new consumer group protocol ({@code group.protocol=group}).
+  /**
+   * KIP-848 new consumer group protocol ({@code group.protocol=group}).
    * {@code heartbeat.interval.ms} and {@code session.timeout.ms} are not set
-   * client-side; the broker manages them under this protocol. */
+   * client-side; the broker manages them under this protocol.
+   */
   GROUP("group");
 
   private final String code;

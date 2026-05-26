@@ -61,7 +61,6 @@ public class MetaServiceTest {
   private Route route;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod ()
     throws Exception {
 
@@ -103,7 +102,6 @@ public class MetaServiceTest {
   public void testProcessDelegatesToRegisteredService ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     BayeuxService<OrthodoxValue> service = Mockito.mock(BayeuxService.class);
     Message<OrthodoxValue> incoming = request();
     Packet<OrthodoxValue> serviceResponse = new Packet<>(PacketType.RESPONSE, "alice", route, codec.create());
@@ -120,7 +118,6 @@ public class MetaServiceTest {
   public void testProcessReturnsServicePacketUnchanged ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     BayeuxService<OrthodoxValue> service = Mockito.mock(BayeuxService.class);
     Packet<OrthodoxValue> serviceResponse = new Packet<>(PacketType.RESPONSE, "alice", route, codec.create());
 

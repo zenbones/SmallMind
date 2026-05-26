@@ -63,7 +63,6 @@ public class MetaSubscribeTest {
   private Channel<OrthodoxValue> channel;
 
   @BeforeMethod
-  @SuppressWarnings("unchecked")
   public void beforeMethod ()
     throws Exception {
 
@@ -195,7 +194,6 @@ public class MetaSubscribeTest {
   public void testCanCreateRejectionWithReasonProducesUnauthorizedWithReason ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -213,7 +211,6 @@ public class MetaSubscribeTest {
   public void testCanCreateRejectionWithoutReasonProducesPlainUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -243,7 +240,6 @@ public class MetaSubscribeTest {
   public void testCanSubscribeRejectionProducesUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
@@ -261,7 +257,6 @@ public class MetaSubscribeTest {
   public void testCanSubscribeRejectionWithoutReasonProducesPlainUnauthorized ()
     throws Exception {
 
-    @SuppressWarnings("unchecked")
     SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
 
     Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
