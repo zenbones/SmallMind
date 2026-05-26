@@ -1137,10 +1137,11 @@ from gauges (Datadog, Prometheus) inspect the type; emitters that don't
 The Prometheus text exposition format restricts metric and label names to
 `[a-zA-Z_:][a-zA-Z0-9_:]*`. `PrometheusEmitter.mangle(...)` normalises the
 meter name, quantity name, and tag keys as follows: prepend `_` when the
-first character is a digit, insert `_` at camelCase boundaries
-(`upperToLower`, `lowerToUpper`), and substitute every non-alphanumeric
-character with `_`. Tag *values* are not mangled, but they are quoted in the
-output (`label="value"`).
+first character is a digit, insert `_` at every lower-to-upper transition
+while lowercasing the uppercase character itself (so `httpRequests`
+becomes `http_requests`), and substitute every non-alphanumeric character
+with `_`. Tag *values* are not mangled, but they are quoted in the output
+(`label="value"`).
 
 === Prometheus buffering
 

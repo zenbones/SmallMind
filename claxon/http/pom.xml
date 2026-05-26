@@ -17,6 +17,16 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>claxon-emitter-prometheus</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>

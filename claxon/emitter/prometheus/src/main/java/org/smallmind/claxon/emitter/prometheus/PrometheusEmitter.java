@@ -222,8 +222,9 @@ public class PrometheusEmitter extends PullEmitter<String> {
    *
    * <p>Prometheus metric and label names must match {@code [a-zA-Z_:][a-zA-Z0-9_:]*}. This
    * method enforces a simplified subset: it prepends an underscore when the first character is
-   * a digit, inserts an underscore at upper-to-lower and lower-to-upper transitions, and
-   * substitutes any other non-alphanumeric character with an underscore.
+   * a digit, inserts an underscore at lower-to-upper transitions (lowercasing the original
+   * uppercase character in the process), and substitutes any other non-alphanumeric character
+   * with an underscore.
    *
    * @param outputBuilder the {@link StringBuilder} to append the mangled name to
    * @param original      the original name to normalise
@@ -261,15 +262,9 @@ public class PrometheusEmitter extends PullEmitter<String> {
           if (Letter.LOWER.equals(priorState)) {
             outputBuilder.append('_');
           }
-          outputBuilder.append(singleChar);
+          outputBuilder.append(Character.toLowerCase(singleChar));
           break;
-        case LOWER:
-          if (Letter.UPPER.equals(priorState)) {
-            outputBuilder.append('_');
-          }
-          outputBuilder.append(singleChar);
-          break;
-        case DIGIT:
+        case LOWER, DIGIT:
           outputBuilder.append(singleChar);
           break;
         default:

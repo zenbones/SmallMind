@@ -110,7 +110,7 @@ public class EmitterResource {
     if ((emitter = registry.getEmitter(name)) == null) {
       throw new UnknownEmitterException(name);
     } else if (!EmitterMethod.PULL.equals(emitter.getEmitterMethod())) {
-      throw new InvalidEmitterException("Invalid collection method(%s) for emitter(%s)");
+      throw new InvalidEmitterException("Invalid collection method(%s) for emitter(%s)", emitter.getEmitterMethod(), name);
     } else {
 
       return Response.ok(((PullEmitter<?>)emitter).emit()).build();

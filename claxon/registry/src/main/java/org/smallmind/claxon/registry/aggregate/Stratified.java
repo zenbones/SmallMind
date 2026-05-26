@@ -181,7 +181,7 @@ public class Stratified implements Aggregate {
     now = clock.monotonicTime();
     writeRecorder = recorder;
 
-    timeFactor = (now - markTime) / nanosecondsInWindow;
+    timeFactor = nanosecondsInWindow / (now - markTime);
     markTime = now;
 
     return new HistogramTime(readRecorder.getIntervalHistogram(), timeFactor);

@@ -1,0 +1,188 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.claxon.registry;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.claxon.registry.meter.Tally;
+import org.smallmind.claxon.registry.meter.TallyBuilder;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+@Test(groups = "unit")
+public class WorkingInstrumentationTest {
+
+  private FakeClock clock;
+  private ClaxonRegistry registry;
+
+  @BeforeMethod
+  public void setUp () {
+
+    clock = new FakeClock();
+
+    ClaxonConfiguration configuration = new ClaxonConfiguration();
+
+    configuration.setClock(clock);
+    configuration.setNamingStrategy(caller -> caller.getName());
+    registry = new ClaxonRegistry(configuration);
+  }
+
+  @AfterMethod
+  public void tearDown ()
+    throws InterruptedException {
+
+    registry.stop();
+  }
+
+  public void testUpdatePropagatesToMeter () {
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.update(5);
+    instrumentation.update(3);
+
+    Tally tally = (Tally)registry.register(WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertEquals(tally.record()[0].getValue(), 8.0);
+  }
+
+  public void testOnSansResultRecordsElapsedTimeInDefaultMillisecondUnit ()
+    throws Throwable {
+
+    long fiveMillisInNanos = TimeUnit.MILLISECONDS.toNanos(5);
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.on(() -> clock.advanceNanos(fiveMillisInNanos));
+
+    Tally tally = (Tally)registry.register(WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertEquals(tally.record()[0].getValue(), 5.0);
+  }
+
+  public void testAsConvertsRecordedDurationIntoChosenUnit ()
+    throws Throwable {
+
+    long twoSecondsInNanos = TimeUnit.SECONDS.toNanos(2);
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.as(TimeUnit.MICROSECONDS).on(() -> clock.advanceNanos(twoSecondsInNanos));
+
+    Tally tally = (Tally)registry.register(WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertEquals(tally.record()[0].getValue(), 2_000_000.0);
+  }
+
+  public void testOnWithResultReturnsExecutableValueAndRecordsDuration ()
+    throws Throwable {
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    String result = instrumentation.on(() -> {
+      clock.advanceNanos(TimeUnit.MILLISECONDS.toNanos(7));
+      return "hello";
+    });
+
+    Tally tally = (Tally)registry.register(WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertEquals(result, "hello");
+    Assert.assertEquals(tally.record()[0].getValue(), 7.0);
+  }
+
+  public void testOnWithResultNullExecutableReturnsNullAndDoesNotRegisterMeter ()
+    throws Throwable {
+
+    AtomicInteger strategyCallCount = new AtomicInteger();
+
+    registry.getConfiguration().setNamingStrategy(caller -> {
+      strategyCallCount.incrementAndGet();
+      return caller.getName();
+    });
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertNull(instrumentation.on((org.smallmind.nutsnbolts.util.WithResultExecutable<String>)null));
+    Assert.assertEquals(strategyCallCount.get(), 0);
+  }
+
+  public void testOnSansResultNullExecutableIsNoOpAndDoesNotRegisterMeter ()
+    throws Throwable {
+
+    AtomicInteger strategyCallCount = new AtomicInteger();
+
+    registry.getConfiguration().setNamingStrategy(caller -> {
+      strategyCallCount.incrementAndGet();
+      return caller.getName();
+    });
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.on((org.smallmind.nutsnbolts.util.SansResultExecutable)null);
+
+    Assert.assertEquals(strategyCallCount.get(), 0);
+  }
+
+  public void testNoOpMeterPathStillRunsExecutable ()
+    throws Throwable {
+
+    AtomicBoolean ran = new AtomicBoolean();
+
+    registry.getConfiguration().setNamingStrategy(caller -> null);
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.on(() -> ran.set(true));
+
+    Assert.assertTrue(ran.get());
+  }
+
+  public void testUpdateWithExplicitTimeUnitConvertsToInstrumentationUnit () {
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    instrumentation.as(TimeUnit.MILLISECONDS).update(3, TimeUnit.SECONDS);
+
+    Tally tally = (Tally)registry.register(WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertEquals(tally.record()[0].getValue(), 3000.0);
+  }
+
+  public void testAsReturnsSameInstance () {
+
+    WorkingInstrumentation instrumentation = new WorkingInstrumentation(registry, WorkingInstrumentationTest.class, new TallyBuilder());
+
+    Assert.assertSame(instrumentation.as(TimeUnit.SECONDS), instrumentation);
+  }
+}

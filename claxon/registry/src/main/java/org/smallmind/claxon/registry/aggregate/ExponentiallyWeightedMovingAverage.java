@@ -162,10 +162,12 @@ public class ExponentiallyWeightedMovingAverage {
       }
     }
 
-    if (markTime == 0) {
-      average = ((double)accumulated) / n;
-    } else {
-      average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / n) - average);
+    if (n > 0) {
+      if (markTime == 0) {
+        average = ((double)accumulated) / n;
+      } else {
+        average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / n) - average);
+      }
     }
 
     markTime = now;
