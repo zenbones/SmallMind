@@ -98,7 +98,7 @@ public class ScribeLiquibaseLogger extends AbstractLogger {
    * @return the corresponding {@link org.smallmind.scribe.pen.Level}, or {@code null}
    * when {@code level} is {@code null}
    */
-  private org.smallmind.scribe.pen.Level translateLevel (java.util.logging.Level level) {
+  static org.smallmind.scribe.pen.Level translateLevel (java.util.logging.Level level) {
 
     if (level == null) {
       return null;
