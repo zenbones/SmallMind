@@ -38,7 +38,7 @@ package org.smallmind.memcached.cubby;
  * <p>Tokens are used as correlation identifiers on in-flight memcached requests, allowing
  * asynchronous responses to be matched back to their originating commands. Internally the
  * generator maintains a 32-byte counter whose digits are drawn from a printable ASCII alphabet
- * of 89 characters, yielding a very large token space (89<sup>32</sup>) before wrapping.</p>
+ * of 90 characters, yielding a very large token space (90<sup>32</sup>) before wrapping.</p>
  *
  * <p>Each call to {@link #next()} is synchronized so the generator is safe for concurrent use
  * from multiple threads.</p>
