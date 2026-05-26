@@ -75,17 +75,19 @@ public class EphemeralWatchService implements WatchService {
   private final EphemeralFileStore ephemeralFileStore;
 
   /**
-   * The single heap event listener that forwards all heap events to {@link #fire}. Shared
-   * across all registered paths.
-   */
-  private final HeapEventListener heapEventListener;
-
-  /**
    * Maps each watched {@link EphemeralPath} to the ordered list of
    * {@link EphemeralWatchKey} instances registered for it. When the list becomes empty the
    * entry is removed and the heap listener is detached from the file store.
    */
   private final HashMap<EphemeralPath, LinkedList<EphemeralWatchKey>> watchKeyMap = new HashMap<>();
+
+  /**
+   * Maps each watched {@link EphemeralPath} to the {@link HeapEventListener} that the service
+   * has attached to that node in the {@link EphemeralFileStore}. One listener is created per
+   * watched path so that the listener can carry its own watched-path identity when forwarding
+   * heap events to {@link #fire}.
+   */
+  private final HashMap<EphemeralPath, HeapEventListener> heapListenerMap = new HashMap<>();
 
   /**
    * Queue of signalled keys available for consumption. Keys are added here when they
@@ -104,8 +106,9 @@ public class EphemeralWatchService implements WatchService {
   /**
    * Creates a watch service backed by the provided ephemeral file store.
    *
-   * <p>A shared {@link EphemeralHeapEventListener} is created immediately and will be
-   * registered with the file store on a per-path basis as watch keys are added.
+   * <p>The service creates an {@link EphemeralHeapEventListener} per watched path the first
+   * time a key is registered for that path, and detaches the listener when the last key for
+   * that path is unregistered.
    *
    * @param ephemeralFileStore the {@link EphemeralFileStore} whose heap this service will
    *                           monitor; must not be {@code null}
@@ -113,8 +116,6 @@ public class EphemeralWatchService implements WatchService {
   public EphemeralWatchService (EphemeralFileStore ephemeralFileStore) {
 
     this.ephemeralFileStore = ephemeralFileStore;
-
-    heapEventListener = new EphemeralHeapEventListener(this);
   }
 
   /**
@@ -158,10 +159,11 @@ public class EphemeralWatchService implements WatchService {
   /**
    * Registers an {@link EphemeralWatchKey} with this service.
    *
-   * <p>If this is the first key registered for the key's path, a new list is created in
-   * the internal map and the shared {@link EphemeralHeapEventListener} is attached to that
-   * path in the {@link EphemeralFileStore}. The key is then appended to the list regardless
-   * of whether other keys for the same path already exist.
+   * <p>If this is the first key registered for the key's path, a new list is created in the
+   * internal map, a fresh {@link EphemeralHeapEventListener} carrying the watched path is
+   * constructed and recorded, and the listener is attached to the {@link EphemeralFileStore}
+   * node at that path. The key is then appended to the list regardless of whether other keys
+   * for the same path already exist.
    *
    * @param ephemeralWatchKey the key to register; must not be {@code null}
    * @throws ClosedWatchServiceException if this service has already been closed
@@ -180,8 +182,12 @@ public class EphemeralWatchService implements WatchService {
       LinkedList<EphemeralWatchKey> watchKeyList;
 
       if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) == null) {
+
+        HeapEventListener listener = new EphemeralHeapEventListener(this, ephemeralWatchKey.getPath());
+
         watchKeyMap.put(ephemeralWatchKey.getPath(), watchKeyList = new LinkedList<>());
-        ephemeralFileStore.registerHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+        heapListenerMap.put(ephemeralWatchKey.getPath(), listener);
+        ephemeralFileStore.registerHeapListener(ephemeralWatchKey.getPath(), listener);
       }
 
       watchKeyList.add(ephemeralWatchKey);
@@ -210,8 +216,13 @@ public class EphemeralWatchService implements WatchService {
     if ((watchKeyList = watchKeyMap.get(ephemeralWatchKey.getPath())) != null) {
       if (watchKeyList.remove(ephemeralWatchKey)) {
         if (watchKeyList.isEmpty()) {
+
+          HeapEventListener listener = heapListenerMap.remove(ephemeralWatchKey.getPath());
+
           watchKeyMap.remove(ephemeralWatchKey.getPath());
-          ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), heapEventListener);
+          if (listener != null) {
+            ephemeralFileStore.unregisterHeapListener(ephemeralWatchKey.getPath(), listener);
+          }
         }
 
         watchKeyQueue.remove(ephemeralWatchKey);
@@ -220,29 +231,39 @@ public class EphemeralWatchService implements WatchService {
   }
 
   /**
-   * Dispatches a file-system change event to all keys registered for the given path.
+   * Dispatches a file-system change event to all keys registered for the given watched path.
    *
-   * <p>For each key in the path's list, {@link EphemeralWatchKey#fire(WatchEvent.Kind)} is
-   * called. If the key transitions to the signalled state as a result (i.e. it was not
-   * previously signalled), it is added to the ready queue so it can be returned by the
-   * next {@code poll} or {@code take} call.
+   * <p>The relative {@link WatchEvent#context() context} of the generated event is computed
+   * by {@linkplain EphemeralPath#relativize relativizing} {@code changedPath} against
+   * {@code watchedPath}; when the two paths are equal the context is {@code null}, indicating
+   * a change that occurred on the watched directory itself rather than on one of its entries.
+   * For each key registered against {@code watchedPath},
+   * {@link EphemeralWatchKey#fire(WatchEvent.Kind, EphemeralPath)} is called. If a key
+   * transitions to the signalled state as a result (i.e. it was not previously signalled),
+   * it is added to the ready queue so it can be returned by the next {@code poll} or
+   * {@code take} call.
    *
    * <p>This method is a no-op when the service has been closed.
    *
-   * @param path  the {@link EphemeralPath} whose registered keys should be notified;
-   *              must not be {@code null}
-   * @param event the {@link WatchEvent.Kind} describing the change that occurred;
-   *              must not be {@code null}
+   * @param watchedPath the {@link EphemeralPath} identifying the directory whose registered
+   *                    keys should be notified; must not be {@code null}
+   * @param event       the {@link WatchEvent.Kind} describing the change that occurred;
+   *                    must not be {@code null}
+   * @param changedPath the {@link EphemeralPath} of the entry whose change triggered the
+   *                    event; must not be {@code null}
    */
-  public synchronized void fire (EphemeralPath path, WatchEvent.Kind<?> event) {
+  public synchronized void fire (EphemeralPath watchedPath, WatchEvent.Kind<?> event, EphemeralPath changedPath) {
 
     if (!closed) {
 
       LinkedList<EphemeralWatchKey> watchKeyList;
 
-      if ((watchKeyList = watchKeyMap.get(path)) != null) {
+      if ((watchKeyList = watchKeyMap.get(watchedPath)) != null) {
+
+        EphemeralPath context = watchedPath.equals(changedPath) ? null : (EphemeralPath)watchedPath.relativize(changedPath);
+
         for (EphemeralWatchKey watchKey : watchKeyList) {
-          if (watchKey.fire(event)) {
+          if (watchKey.fire(event, context)) {
             watchKeyQueue.add(watchKey);
           }
         }

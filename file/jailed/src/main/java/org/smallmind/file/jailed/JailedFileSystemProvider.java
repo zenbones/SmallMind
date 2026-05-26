@@ -350,7 +350,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public boolean isSameFile (Path path, Path path2)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path));
+    return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path2));
   }
 
   /**

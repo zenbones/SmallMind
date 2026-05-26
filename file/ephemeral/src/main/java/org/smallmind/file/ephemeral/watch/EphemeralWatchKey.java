@@ -133,27 +133,33 @@ public class EphemeralWatchKey implements WatchKey {
    * Attempts to enqueue a fired event if it matches one of the subscribed event kinds.
    *
    * <p>When the key is valid and the fired event kind matches a subscribed kind (by both
-   * class identity and name), a new {@link EphemeralWatchEvent} is added to the internal
-   * queue. If the key has not yet been signalled, it is marked as signalled and this
-   * method returns {@code true} to indicate that the service should add the key to its
-   * ready queue. Subsequent firings while the key is already signalled return {@code false}.
+   * class identity and name), a new {@link EphemeralWatchEvent} carrying the supplied
+   * {@code context} is added to the internal queue. If the key has not yet been signalled,
+   * it is marked as signalled and this method returns {@code true} to indicate that the
+   * service should add the key to its ready queue. Subsequent firings while the key is
+   * already signalled return {@code false}.
    *
    * <p>If the key is invalid, or the event kind does not match any subscription, this
    * method returns {@code false} without modifying any state.
    *
    * @param firedEvent the {@link WatchEvent.Kind} of the change that occurred;
    *                   must not be {@code null}
+   * @param context    the entry path relative to the watched directory, attached as the
+   *                   {@link WatchEvent#context() context} of the generated event;
+   *                   may be {@code null} when the change occurred on the watched
+   *                   directory itself
    * @return {@code true} if the key was just transitioned to the signalled state and
    * the calling service should enqueue it in its ready queue;
    * {@code false} if the key was already signalled, is invalid, or the event
    * kind is not subscribed
    */
-  public synchronized boolean fire (WatchEvent.Kind<?> firedEvent) {
+  @SuppressWarnings("unchecked")
+  public synchronized boolean fire (WatchEvent.Kind<?> firedEvent, EphemeralPath context) {
 
     if (valid) {
       for (WatchEvent.Kind<?> event : events) {
         if (event.getClass().equals(firedEvent.getClass()) && event.name().equals(firedEvent.name())) {
-          eventQueue.add(new EphemeralWatchEvent<>(firedEvent, 1, null));
+          eventQueue.add(new EphemeralWatchEvent<EphemeralPath>((WatchEvent.Kind<EphemeralPath>)firedEvent, 1, context));
 
           if (!signalled) {
             signalled = true;

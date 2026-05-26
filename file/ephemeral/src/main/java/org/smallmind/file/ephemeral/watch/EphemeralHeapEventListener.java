@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral.watch;
 
+import org.smallmind.file.ephemeral.EphemeralPath;
 import org.smallmind.file.ephemeral.heap.HeapEvent;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 
@@ -39,12 +40,13 @@ import org.smallmind.file.ephemeral.heap.HeapEventListener;
  * Bridges heap-level file system events to the {@link EphemeralWatchService} so that
  * registered watch-key clients receive {@link java.nio.file.WatchEvent} notifications.
  *
- * <p>An instance of this listener is created by {@link EphemeralWatchService} and attached
- * to the underlying {@link org.smallmind.file.ephemeral.EphemeralFileStore} heap for each
- * path that has at least one active watch key. When the heap raises a
- * {@link HeapEvent}, this listener translates it into the corresponding
- * {@link java.nio.file.WatchEvent.Kind} and delegates to
- * {@link EphemeralWatchService#fire(org.smallmind.file.ephemeral.EphemeralPath, java.nio.file.WatchEvent.Kind)}.
+ * <p>One instance is created by {@link EphemeralWatchService} per watched path and attached
+ * to the heap node at that path in the underlying
+ * {@link org.smallmind.file.ephemeral.EphemeralFileStore}. The listener knows its watched
+ * path and forwards every heap event bubbled through that node to the service together with
+ * the path of the actually changed entry. The service then computes the
+ * {@link java.nio.file.WatchEvent#context() context} as the entry path relative to the
+ * watched directory.
  */
 public class EphemeralHeapEventListener implements HeapEventListener {
 
@@ -54,29 +56,36 @@ public class EphemeralHeapEventListener implements HeapEventListener {
   private final EphemeralWatchService watchService;
 
   /**
-   * Creates a listener bound to the given watch service.
+   * The path of the directory at which this listener was registered. Used by the service to
+   * route incoming events to the correct set of {@link EphemeralWatchKey}s and to compute the
+   * relative {@link java.nio.file.WatchEvent#context() context} of each fired event.
+   */
+  private final EphemeralPath watchedPath;
+
+  /**
+   * Creates a listener bound to the given watch service and watched path.
    *
    * @param watchService the {@link EphemeralWatchService} that will receive forwarded events;
    *                     must not be {@code null}
+   * @param watchedPath  the path of the directory at which this listener is registered;
+   *                     must not be {@code null}
    */
-  public EphemeralHeapEventListener (EphemeralWatchService watchService) {
+  public EphemeralHeapEventListener (EphemeralWatchService watchService, EphemeralPath watchedPath) {
 
     this.watchService = watchService;
+    this.watchedPath = watchedPath;
   }
 
   /**
-   * Handles a heap event by translating it into a {@link java.nio.file.WatchEvent.Kind} and
-   * forwarding it to the bound {@link EphemeralWatchService}.
-   *
-   * <p>The event kind is obtained via {@code heapEvent.getType().getKind()}, and the affected
-   * path is obtained via {@code heapEvent.getPath()}. Both are passed directly to
-   * {@link EphemeralWatchService#fire(org.smallmind.file.ephemeral.EphemeralPath, java.nio.file.WatchEvent.Kind)}.
+   * Handles a heap event by forwarding it to the bound {@link EphemeralWatchService} with the
+   * listener's own watched path as the routing key and the heap event's affected path as the
+   * changed-entry path.
    *
    * @param heapEvent the event emitted by the in-memory heap; must not be {@code null}
    */
   @Override
   public void handle (HeapEvent heapEvent) {
 
-    watchService.fire(heapEvent.getPath(), heapEvent.getType().getKind());
+    watchService.fire(watchedPath, heapEvent.getType().getKind(), heapEvent.getPath());
   }
 }

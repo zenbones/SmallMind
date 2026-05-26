@@ -189,12 +189,15 @@ Heap tree::
     exposed to clients through `EphemeralSeekableByteChannel`.
 
 Heap event / watch translation::
-    Mutations to the heap tree raise `HeapEvent` objects that bubble up
-    through each node's parent chain. An `EphemeralHeapEventListener`
-    registered on behalf of a `WatchKey` translates bubbled heap events
-    into `StandardWatchEventKinds` (`ENTRY_CREATE`, `ENTRY_DELETE`,
-    `ENTRY_MODIFY`). The standard NIO `WatchService` contract is then
-    honoured end-to-end, entirely in heap.
+    Mutations to the heap tree raise `HeapEvent` objects whose path is
+    the *changed* entry. Each event bubbles up the heap-node parent
+    chain. An `EphemeralHeapEventListener` is installed per watched
+    directory and carries that directory's path. When bubbling reaches
+    the listener, it forwards the event to the
+    `EphemeralWatchService`, which computes the `WatchEvent`
+    `context()` as `watchedPath.relativize(changedPath)` so that the
+    standard NIO `WatchService` contract is honoured end-to-end,
+    entirely in heap.
 
 [[installation]]
 == Installation
@@ -431,10 +434,12 @@ heap events back to NIO's `WatchService`:
 | `EphemeralWatchService`
 | `WatchService` implementation. Keeps a path → `List<EphemeralWatchKey>`
   map and a `LinkedBlockingQueue` of signalled keys. The first key
-  registered against a path installs a shared
-  `EphemeralHeapEventListener` on that path's directory node; the last
-  key cancelled removes it. Polls in 500&nbsp;ms increments when
-  `timeout >= 500&nbsp;ms` so that closure mid-wait is detected
+  registered against a path causes a fresh `EphemeralHeapEventListener`
+  bound to that watched path to be installed on the path's directory
+  node; the last key cancelled removes it. `fire(watchedPath, kind,
+  changedPath)` relativizes the changed path against the watched path
+  to produce the `WatchEvent` context. Polls in 500&nbsp;ms increments
+  when `timeout >= 500&nbsp;ms` so that closure mid-wait is detected
   promptly.
 
 | `EphemeralWatchKey`
@@ -447,9 +452,11 @@ heap events back to NIO's `WatchService`:
 | `WatchEvent<?>` record: kind, count, context.
 
 | `EphemeralHeapEventListener`
-| Bridge from `HeapEvent` to `EphemeralWatchService.fire(...)`. Translates
-  a heap event's type to a `WatchEvent.Kind` and dispatches to the keys
-  watching the event's path.
+| Bridge from `HeapEvent` to `EphemeralWatchService.fire(...)`. Each
+  instance is created with the path it was registered on; on every
+  bubbled event it forwards its own watched path, the heap event's
+  type translated to a `WatchEvent.Kind`, and the heap event's
+  changed path so the service can produce the relative context.
 |===
 
 [[ephemeral-configuration]]
@@ -674,12 +681,16 @@ public void watch (Path root)
   }
 }
 ----
-<1> Registration installs a shared `EphemeralHeapEventListener` on the
-    directory's `DirectoryNode`. The first registration per path
-    attaches the listener; the last cancel detaches it.
-<2> Any mutation that bubbles through the watched directory
-    (`ENTRY_CREATE`, `ENTRY_DELETE`, `ENTRY_MODIFY`) fires the listener,
-    which forwards the event to the service and then to the key.
+<1> Registration creates a fresh `EphemeralHeapEventListener` bound to
+    the watched path and attaches it to the directory's `DirectoryNode`.
+    The first registration per path attaches the listener; the last
+    cancel detaches it.
+<2> Any mutation whose `HeapEvent` bubbles through the watched directory
+    fires the listener, which forwards the event to the service together
+    with the changed path. The service translates the event type to a
+    `WatchEvent.Kind` (`ENTRY_CREATE`, `ENTRY_DELETE`, `ENTRY_MODIFY`)
+    and dispatches to the registered keys with
+    `watchedPath.relativize(changedPath)` as the context.
 <3> `take()` polls the service's ready queue in 500&nbsp;ms increments
     so that a mid-wait `close()` raises `ClosedWatchServiceException`
     promptly rather than hanging.
@@ -1117,8 +1128,15 @@ before calling `close()`.
 
 === Ephemeral: watch-service cadence and closure
 
-* Registrations install a shared heap listener on first register per
-  path and remove it on last cancel.
+* Registrations install a per-watched-path heap listener on first
+  register per path and remove it on last cancel.
+* Heap mutations performed through the file store and the seekable
+  byte channel (`createDirectory`, `delete`, `copy`, `move`,
+  `newByteChannel` with `CREATE` / `CREATE_NEW` / `TRUNCATE_EXISTING`,
+  channel `write` / `truncate`) bubble events up to ancestor watchers,
+  including watchers registered on directories above the changed
+  entry. The `WatchEvent.context()` is the path relative to the
+  watched directory.
 * Polling: `poll(timeout, unit)` with a timeout shorter than 500&nbsp;ms
   delegates to the underlying `LinkedBlockingQueue.poll`. With a longer
   timeout, the service polls in 500&nbsp;ms increments, checking

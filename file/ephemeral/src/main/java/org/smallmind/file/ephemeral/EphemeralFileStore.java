@@ -59,7 +59,9 @@ import java.util.Map;
 import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 import org.smallmind.file.ephemeral.heap.FileNode;
+import org.smallmind.file.ephemeral.heap.HeapEvent;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
+import org.smallmind.file.ephemeral.heap.HeapEventType;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
@@ -644,7 +646,11 @@ public class EphemeralFileStore extends FileStore {
               if (((DirectoryNode)parentNode).exists(path.getNames()[path.getNameCount() - 1])) {
                 throw new FileAlreadyExistsException(path.toString());
               } else {
-                ((DirectoryNode)parentNode).put(new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]));
+
+                DirectoryNode createdDirectory = new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]);
+
+                ((DirectoryNode)parentNode).put(createdDirectory);
+                createdDirectory.bubble(new HeapEvent(this, path, HeapEventType.CREATE));
               }
               break;
             default:
@@ -682,12 +688,14 @@ public class EphemeralFileStore extends FileStore {
         switch (heapNode.getType()) {
           case FILE:
             heapNode.getParent().remove(heapNode.getName());
+            heapNode.bubble(new HeapEvent(this, path, HeapEventType.DELETE));
             break;
           case DIRECTORY:
             if (!((DirectoryNode)heapNode).isEmpty()) {
               throw new DirectoryNotEmptyException(path.toString());
             } else {
               heapNode.getParent().remove(heapNode.getName());
+              heapNode.bubble(new HeapEvent(this, path, HeapEventType.DELETE));
             }
             break;
           default:
@@ -756,16 +764,24 @@ public class EphemeralFileStore extends FileStore {
                   if (!replaceExisting) {
                     throw new FileAlreadyExistsException(target.toString());
                   } else {
+
                     // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                    targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                    FileNode replacedFile = new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
+
+                    targetNode.getParent().put(replacedFile);
+                    replacedFile.bubble(new HeapEvent(this, target, HeapEventType.MODIFY));
                   }
                   break;
                 case DIRECTORY:
                   if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
                     throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
                   } else {
+
                     // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                    ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                    FileNode copiedFile = new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
+
+                    ((DirectoryNode)targetNode).put(copiedFile);
+                    copiedFile.bubble(new HeapEvent(this, (EphemeralPath)target.resolve(sourceNode.getName()), HeapEventType.CREATE));
                   }
                   break;
                 default:
@@ -776,8 +792,12 @@ public class EphemeralFileStore extends FileStore {
                 case FILE:
                   throw new NoSuchFileException(target.toString());
                 case DIRECTORY:
+
                   // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                  ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer())));
+                  FileNode createdFile = new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
+
+                  ((DirectoryNode)parentOfTargetNode).put(createdFile);
+                  createdFile.bubble(new HeapEvent(this, target, HeapEventType.CREATE));
                   break;
                 default:
                   throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -797,8 +817,16 @@ public class EphemeralFileStore extends FileStore {
                   } else if (!replaceExisting) {
                     throw new FileAlreadyExistsException(target.toString());
                   } else {
-                    targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
+
+                    DirectoryNode renamedDirectory = new DirectoryNode(targetNode.getParent(), sourceNode.getName());
+
+                    targetNode.getParent().put(renamedDirectory);
                     targetNode.getParent().remove(targetNode.getName());
+
+                    EphemeralPath renamedPath = (EphemeralPath)target.getParent().resolve(sourceNode.getName());
+
+                    renamedDirectory.bubble(new HeapEvent(this, renamedPath, HeapEventType.CREATE));
+                    targetNode.bubble(new HeapEvent(this, target, HeapEventType.DELETE));
                   }
                   break;
                 default:
@@ -809,7 +837,11 @@ public class EphemeralFileStore extends FileStore {
                 case FILE:
                   throw new NoSuchFileException(target.toString());
                 case DIRECTORY:
-                  ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
+
+                  DirectoryNode createdDirectory = new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName());
+
+                  ((DirectoryNode)parentOfTargetNode).put(createdDirectory);
+                  createdDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
                   break;
                 default:
                   throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -882,14 +914,22 @@ public class EphemeralFileStore extends FileStore {
                   if (!replaceExisting) {
                     throw new FileAlreadyExistsException(target.toString());
                   } else {
-                    targetNode.getParent().put(new FileNode(targetNode.getParent(), targetNode.getName(), ((FileNode)sourceNode).getSegmentBuffer()));
+
+                    FileNode replacedFile = new FileNode(targetNode.getParent(), targetNode.getName(), ((FileNode)sourceNode).getSegmentBuffer());
+
+                    targetNode.getParent().put(replacedFile);
+                    replacedFile.bubble(new HeapEvent(this, target, HeapEventType.MODIFY));
                   }
                   break;
                 case DIRECTORY:
                   if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
                     throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
                   } else {
-                    ((DirectoryNode)targetNode).put(new FileNode((DirectoryNode)targetNode, sourceNode.getName(), ((FileNode)sourceNode).getSegmentBuffer()));
+
+                    FileNode movedFile = new FileNode((DirectoryNode)targetNode, sourceNode.getName(), ((FileNode)sourceNode).getSegmentBuffer());
+
+                    ((DirectoryNode)targetNode).put(movedFile);
+                    movedFile.bubble(new HeapEvent(this, (EphemeralPath)target.resolve(sourceNode.getName()), HeapEventType.CREATE));
                   }
                   break;
                 default:
@@ -900,7 +940,11 @@ public class EphemeralFileStore extends FileStore {
                 case FILE:
                   throw new NoSuchFileException(target.toString());
                 case DIRECTORY:
-                  ((DirectoryNode)parentOfTargetNode).put(new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], ((FileNode)sourceNode).getSegmentBuffer()));
+
+                  FileNode createdFile = new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], ((FileNode)sourceNode).getSegmentBuffer());
+
+                  ((DirectoryNode)parentOfTargetNode).put(createdFile);
+                  createdFile.bubble(new HeapEvent(this, target, HeapEventType.CREATE));
                   break;
                 default:
                   throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -920,8 +964,14 @@ public class EphemeralFileStore extends FileStore {
                   } else if (!replaceExisting) {
                     throw new FileAlreadyExistsException(target.toString());
                   } else {
-                    targetNode.getParent().put(new DirectoryNode(targetNode.getParent(), sourceNode.getName()));
+
+                    DirectoryNode renamedDirectory = new DirectoryNode(targetNode.getParent(), sourceNode.getName());
+
+                    targetNode.getParent().put(renamedDirectory);
                     targetNode.getParent().remove(targetNode.getName());
+
+                    renamedDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
+                    targetNode.bubble(new HeapEvent(this, target, HeapEventType.DELETE));
                   }
                   break;
                 default:
@@ -932,7 +982,11 @@ public class EphemeralFileStore extends FileStore {
                 case FILE:
                   throw new NoSuchFileException(target.toString());
                 case DIRECTORY:
-                  ((DirectoryNode)parentOfTargetNode).put(new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName()));
+
+                  DirectoryNode movedDirectory = new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName());
+
+                  ((DirectoryNode)parentOfTargetNode).put(movedDirectory);
+                  movedDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
                   break;
                 default:
                   throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
@@ -944,6 +998,7 @@ public class EphemeralFileStore extends FileStore {
         }
 
         sourceNode.getParent().remove(sourceNode.getName());
+        sourceNode.bubble(new HeapEvent(this, source, HeapEventType.DELETE));
       }
     }
   }
@@ -1069,6 +1124,7 @@ public class EphemeralFileStore extends FileStore {
                   FileNode fileNode;
 
                   ((DirectoryNode)parentNode).put(fileNode = new FileNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1], blockSize));
+                  fileNode.bubble(new HeapEvent(this, path, HeapEventType.CREATE));
 
                   return new EphemeralSeekableByteChannel(this, fileNode, path, false, false, deleteOnClose);
                 default:
@@ -1084,6 +1140,7 @@ public class EphemeralFileStore extends FileStore {
               case FILE:
                 if (truncateExisting) {
                   ((FileNode)heapNode).getSegmentBuffer().clear();
+                  heapNode.bubble(new HeapEvent(this, path, HeapEventType.MODIFY));
                 }
 
                 return new EphemeralSeekableByteChannel(this, (FileNode)heapNode, path, false, append, deleteOnClose);

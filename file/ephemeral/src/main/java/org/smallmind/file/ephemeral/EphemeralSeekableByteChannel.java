@@ -40,6 +40,8 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.attribute.FileTime;
 import org.smallmind.file.ephemeral.heap.FileNode;
+import org.smallmind.file.ephemeral.heap.HeapEvent;
+import org.smallmind.file.ephemeral.heap.HeapEventType;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 /**
@@ -154,6 +156,8 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
         fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
         fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
+
+        fileNode.bubble(new HeapEvent(this, filePath, HeapEventType.MODIFY));
       }
 
       return bytesWritten;
@@ -229,6 +233,8 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
     fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
     fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
+
+    fileNode.bubble(new HeapEvent(this, filePath, HeapEventType.MODIFY));
 
     return this;
   }
