@@ -67,7 +67,7 @@ import org.smallmind.scribe.pen.LoggerManager;
  *   <li>Enforcing the minimum and maximum pool sizes.</li>
  *   <li>Optionally validating components on acquire ({@link ComplexPoolConfig#isTestOnAcquire()})
  *       and on creation ({@link ComplexPoolConfig#isTestOnCreate()}).</li>
- *   <li>Applying a creation timeout via a {@link ComponentCreationWorker} daemon thread when
+ *   <li>Applying a creation timeout via a {@link ComponentCreationWorker} virtual thread when
  *       {@link ComplexPoolConfig#getCreationTimeoutMillis()} is positive.</li>
  *   <li>Replacing terminated components up to the minimum pool size.</li>
  *   <li>Emitting Claxon metrics for free size, processing size, and acquisition timeouts.</li>
@@ -264,7 +264,7 @@ public class ComponentPinManager<C> {
    * when configured.
    * <p>
    * When a creation timeout is configured, the factory call is delegated to a
-   * {@link ComponentCreationWorker} daemon thread. The calling thread joins for the timeout
+   * {@link ComponentCreationWorker} virtual thread. The calling thread joins for the timeout
    * duration; if the worker has not yet finished, {@link ComponentCreationWorker#abort()} is
    * called, which either aborts the in-progress creation (returning {@code true}) or retrieves
    * the worker's exception.
@@ -287,9 +287,7 @@ public class ComponentPinManager<C> {
         Thread workerThread;
 
         creationWorker = new ComponentCreationWorker<>(componentPool);
-        workerThread = new Thread(creationWorker);
-        workerThread.setDaemon(true);
-        workerThread.start();
+        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start(creationWorker);
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
