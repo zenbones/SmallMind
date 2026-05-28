@@ -30,28 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.mongodb.throng;
 
-import java.time.format.DateTimeFormatter;
+import com.mongodb.MongoWriteException;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteError;
+import org.bson.BsonDocument;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-/**
- * A static bootstrap utility that configures the Scribe logging system for use in automated tests,
- * installing a console appender with a {@link PatternFormatter} and {@link Level#DEBUG} threshold.
- */
-public class TestLoggerConfiguration {
+@Test(groups = "unit")
+public class DuplicateKeyUtilityTest {
 
-  /**
-   * Registers a {@link DefaultTemplate} at {@link Level#DEBUG} with auto-filled logger context and a
-   * {@link PatternFormatter} that emits timestamp, level, class, method, line, thread, and message
-   * (including exception principal and stack trace) to standard output via a {@link ConsoleAppender}.
-   */
-  public static void setup () {
+  public void testErrorCode11000IsIdentifiedAsDuplicateKey () {
 
-    DateFormatTimestamp fullTimeStamp = new DateFormatTimestamp(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-    PatternFormatter patternFormatter = new PatternFormatter(fullTimeStamp, "%d %n %+5l (%.1C.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s");
-    ConsoleAppender consoleAppender = new ConsoleAppender(patternFormatter);
-    DefaultTemplate defaultTemplate = new DefaultTemplate(Level.DEBUG, true, consoleAppender);
+    MongoWriteException exception = new MongoWriteException(new WriteError(11000, "duplicate key error", new BsonDocument()), new ServerAddress());
 
-    defaultTemplate.register();
+    Assert.assertTrue(DuplicateKeyUtility.idDuplicateKeyException(exception));
+  }
+
+  public void testOtherErrorCodeIsNotIdentifiedAsDuplicateKey () {
+
+    MongoWriteException exception = new MongoWriteException(new WriteError(11001, "bulk write error", new BsonDocument()), new ServerAddress());
+
+    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+  }
+
+  public void testUnrelatedWriteErrorCodeIsNotIdentifiedAsDuplicateKey () {
+
+    MongoWriteException exception = new MongoWriteException(new WriteError(66, "immutable field", new BsonDocument()), new ServerAddress());
+
+    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
   }
 }

@@ -73,22 +73,6 @@ public class ScribeLiquibaseLogger extends AbstractLogger {
   }
 
   /**
-   * Forwards a Liquibase log event to the Scribe logger after translating the level.
-   *
-   * <p>If {@code level} is {@code null}, {@link #translateLevel(Level)} returns {@code null}
-   * and the Scribe logger silently discards the entry.</p>
-   *
-   * @param level   the JUL severity level supplied by Liquibase; may be {@code null}
-   * @param message the log message to emit; may be {@code null}
-   * @param e       an optional exception to attach to the log entry; may be {@code null}
-   */
-  @Override
-  public void log (Level level, String message, Throwable e) {
-
-    scribeLogger.log(translateLevel(level), e, message);
-  }
-
-  /**
    * Translates a {@link java.util.logging.Level} value to the corresponding Scribe level.
    *
    * <p>Unknown non-null levels default to {@code INFO} to ensure log events are never silently
@@ -123,5 +107,21 @@ public class ScribeLiquibaseLogger extends AbstractLogger {
     } else {
       return org.smallmind.scribe.pen.Level.INFO;
     }
+  }
+
+  /**
+   * Forwards a Liquibase log event to the Scribe logger after translating the level.
+   *
+   * <p>If {@code level} is {@code null}, {@link #translateLevel(Level)} returns {@code null}
+   * and the Scribe logger silently discards the entry.</p>
+   *
+   * @param level   the JUL severity level supplied by Liquibase; may be {@code null}
+   * @param message the log message to emit; may be {@code null}
+   * @param e       an optional exception to attach to the log entry; may be {@code null}
+   */
+  @Override
+  public void log (Level level, String message, Throwable e) {
+
+    scribeLogger.log(translateLevel(level), e, message);
   }
 }

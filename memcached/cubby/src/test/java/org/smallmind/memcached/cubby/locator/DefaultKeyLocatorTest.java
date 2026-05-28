@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class DefaultKeyLocatorTest {
 
-  public void testFindUsesSortedNamesIndexedByPositiveModuloOfHashCode ()
+  public void testFindUsesSortedNamesIndexedByFloorModOfHashCode ()
     throws Exception {
 
     MemcachedHost alpha = new MemcachedHost("alpha", "host-a", 11211);
@@ -57,21 +57,42 @@ public class DefaultKeyLocatorTest {
 
     for (String key : probes) {
 
-      int index = key.hashCode() % sorted.length;
+      int index = Math.floorMod(key.hashCode(), sorted.length);
 
-      if (index >= 0) {
-        Assert.assertEquals(locator.find(pool, key).getName(), sorted[index], key);
-      }
+      Assert.assertEquals(locator.find(pool, key).getName(), sorted[index], key);
     }
+  }
+
+  public void testKeyWithNegativeHashCodeRoutesWithoutException ()
+    throws Exception {
+
+    MemcachedHost alpha = new MemcachedHost("alpha", "host-a", 11211);
+    MemcachedHost bravo = new MemcachedHost("bravo", "host-b", 11211);
+    MemcachedHost charlie = new MemcachedHost("charlie", "host-c", 11211);
+    ServerPool pool = new ServerPool(alpha, bravo, charlie);
+
+    DefaultKeyLocator locator = new DefaultKeyLocator();
+    locator.installRouting(pool);
+
+    // "AaAaAaAa".hashCode() == -542905984; with three hosts -542905984 % 3 == -1, which
+    // the old % operator turned into an ArrayIndexOutOfBoundsException.
+    String negKey = "AaAaAaAa";
+
+    Assert.assertTrue(negKey.hashCode() < 0, "Precondition: key must have a negative hashCode");
+
+    String[] sorted = {"alpha", "bravo", "charlie"};
+    int expectedIndex = Math.floorMod(negKey.hashCode(), sorted.length);
+
+    Assert.assertEquals(locator.find(pool, negKey).getName(), sorted[expectedIndex]);
   }
 
   public void testFindIsStableForSameKeyAcrossCalls ()
     throws Exception {
 
     ServerPool pool = new ServerPool(
-                                      new MemcachedHost("a", "ha", 11211),
-                                      new MemcachedHost("b", "hb", 11211),
-                                      new MemcachedHost("c", "hc", 11211));
+      new MemcachedHost("a", "ha", 11211),
+      new MemcachedHost("b", "hb", 11211),
+      new MemcachedHost("c", "hc", 11211));
 
     DefaultKeyLocator locator = new DefaultKeyLocator();
     locator.installRouting(pool);

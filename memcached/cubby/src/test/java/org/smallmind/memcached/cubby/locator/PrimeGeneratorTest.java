@@ -38,6 +38,22 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PrimeGeneratorTest {
 
+  private static boolean isReferenceTrialPrime (int n) {
+
+    if (n < 2) {
+
+      return false;
+    }
+    for (int divisor = 2; (long)divisor * divisor <= n; divisor++) {
+      if (n % divisor == 0) {
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public void testValuesAtOrBelowOneReturnTwo () {
 
     Assert.assertEquals(PrimeGenerator.nextPrime(0), 2);
@@ -78,21 +94,5 @@ public class PrimeGeneratorTest {
       Assert.assertTrue(prime > n, "Prime " + prime + " not greater than " + n);
       Assert.assertTrue(isReferenceTrialPrime(prime), prime + " was not actually prime");
     }
-  }
-
-  private static boolean isReferenceTrialPrime (int n) {
-
-    if (n < 2) {
-
-      return false;
-    }
-    for (int divisor = 2; (long)divisor * divisor <= n; divisor++) {
-      if (n % divisor == 0) {
-
-        return false;
-      }
-    }
-
-    return true;
   }
 }

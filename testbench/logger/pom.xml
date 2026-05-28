@@ -13,11 +13,6 @@
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>scribe-ink-indigenous</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>

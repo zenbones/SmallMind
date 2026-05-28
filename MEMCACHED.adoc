@@ -1521,34 +1521,6 @@ codebase receives that `MemcachedCache` — never `CubbyMemcachedClient`
 directly — which is why `ProxyMemcachedClient` exists and why swapping
 between the in-memory and the Cubby backend is a one-bean change.
 
-== Testing
-
-The module ships one integration test, `CubbyTest` in
-`memcached-cubby/src/test/java/org/smallmind/memcached/cubby`. It is
-annotated with TestNG group `experimental` because it requires a
-running memcached on `localhost:11211`; CI does not execute it by
-default. Run it locally with:
-
-[source,bash]
-----
-# start memcached however you normally do
-memcached -p 11211 &
-
-# run the test explicitly
-mvn -pl memcached/cubby test -Dgroups=experimental
-----
-
-The test covers: noop, basic set/get with opaque tokens, CAS set/get,
-add, replace, append, prepend, large key + large value round-trip
-(exercising `LargeKeyHashingTranslator` and
-`LargeValueCompressingCodec`), increment from initial, increment,
-implicit decrement via negative delta, explicit decrement via
-`ArithmeticMode.DECREMENT`, and CAS-guarded increment.
-
-Unit tests of application code that _uses_ the cache should use
-`InMemoryMemcachedClient` as the double, not Cubby against a real
-server.
-
 == Comparison With Other Java Memcached Clients
 
 Three other Java memcached clients are in common use. Cubby is not

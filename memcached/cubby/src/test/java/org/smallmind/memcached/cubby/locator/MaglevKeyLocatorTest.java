@@ -126,8 +126,8 @@ public class MaglevKeyLocatorTest {
 
     Assert.assertTrue(reassignedKeysOwnedByRemovedHost > 0, "Keys previously routed to removed host must move");
     Assert.assertTrue(reassignedKeysOwnedByOtherHosts < reassignedKeysOwnedByRemovedHost,
-                       "Maglev should not redistribute keys that did not previously own the removed host (other-host moves="
-                         + reassignedKeysOwnedByOtherHosts + ", removed-host moves=" + reassignedKeysOwnedByRemovedHost + ")");
+      "Maglev should not redistribute keys that did not previously own the removed host (other-host moves="
+        + reassignedKeysOwnedByOtherHosts + ", removed-host moves=" + reassignedKeysOwnedByRemovedHost + ")");
   }
 
   public void testEmptyPoolThrowsNoAvailableHostException () {

@@ -37,6 +37,14 @@
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
+    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
+    <dependency>
+      <groupId>org.glassfish.jersey.connectors</groupId>
+      <artifactId>jersey-apache-connector</artifactId>
+      <version>3.1.11</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
@@ -92,6 +100,12 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-quorum</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>testbench-condition</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

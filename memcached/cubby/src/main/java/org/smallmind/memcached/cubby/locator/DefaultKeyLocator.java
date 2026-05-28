@@ -167,7 +167,7 @@ public class DefaultKeyLocator implements KeyLocator {
         throw new NoAvailableHostException();
       } else {
 
-        return serverPool.get(routingArray[key.hashCode() % routingArray.length]).getMemcachedHost();
+        return serverPool.get(routingArray[Math.floorMod(key.hashCode(), routingArray.length)]).getMemcachedHost();
       }
     } finally {
       lock.readLock().unlock();

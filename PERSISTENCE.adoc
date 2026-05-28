@@ -166,6 +166,9 @@ POM. A consumer must explicitly pull in the subset it uses.
 
 | The connection pool
 | `smallmind-quorum`, `spring-beans`
+
+| JDBC availability check in integration tests
+| `testbench-condition`
 |===
 
 The module is AspectJ-woven at build time. Consumers that declare
@@ -1167,6 +1170,24 @@ The `sql.pool.spring` package adds Spring factory beans that build a
 `DataSourceManager.getDataSource(key)` retrieves it. Used by runtime
 components that need a data source but were not given one by
 constructor injection.
+
+=== DataSourceAvailableTestCondition
+
+`org.smallmind.persistence.sql.testbench.DataSourceAvailableTestCondition`
+implements `TestCondition` from `testbench-condition`. It polls a JDBC
+datasource until a connection attempt succeeds, which is the normal
+readiness gate when an integration test starts a containerized database.
+
+The constructor accepts the same four arguments as `DriverManagerDataSource`:
+`driverClassName`, `jdbcUrl`, `userName`, and `password`. Each `test()` call
+attempts `getConnection()` on a `DriverManagerDataSource` built from those
+coordinates. Success returns `null`. Failure returns a
+`MessageTestConditionFailure` and prints a counter to standard output so
+the waiting is visible in build logs.
+
+`testbench-condition` is declared optional in the `persistence` POM.
+Consumers that use `DataSourceAvailableTestCondition` must add it explicitly
+with `test` scope.
 
 [[sequences]]
 == Sequence Generation

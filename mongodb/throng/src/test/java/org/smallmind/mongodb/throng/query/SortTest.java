@@ -30,40 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.testbench.condition;
+package org.smallmind.mongodb.throng.query;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import org.smallmind.persistence.sql.DriverManagerDataSource;
+import com.mongodb.MongoClientSettings;
+import org.bson.BsonDocument;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-public class MysqlAvailableTestCondition implements TestCondition {
+@Test(groups = "unit")
+public class SortTest {
 
-  private final DriverManagerDataSource dataSource;
-  private int count = 0;
+  public void testAscendingFieldIsEncodedAsOne () {
 
-  public MysqlAvailableTestCondition (String driverClassName, String jdbcUrl, String userName, String password)
-    throws SQLException {
+    BsonDocument doc = (BsonDocument)Sort.on().asc("name").toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
 
-    dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, userName, password);
+    Assert.assertEquals(doc.getInt32("name").getValue(), 1);
   }
 
-  @Override
-  public TestConditionFailure test ()
-    throws Exception {
+  public void testDescendingFieldIsEncodedAsNegativeOne () {
 
-    if (count == 0) {
-      System.out.print("Waiting for Mysql...");
-    }
+    BsonDocument doc = (BsonDocument)Sort.on().desc("age").toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
 
-    try (Connection connection = dataSource.getConnection()) {
-      System.out.println();
+    Assert.assertEquals(doc.getInt32("age").getValue(), -1);
+  }
 
-      return null;
-    } catch (Exception exception) {
+  public void testMultipleSortFieldsAreAllPresent () {
 
-      System.out.print((++count) + "...");
-      exception.getStackTrace();
-      return new MessageTestConditionFailure("Could not start Mysql");
-    }
+    BsonDocument doc = (BsonDocument)Sort.on().asc("lastName").desc("score").asc("createdAt")
+                                       .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+
+    Assert.assertEquals(doc.getInt32("lastName").getValue(), 1);
+    Assert.assertEquals(doc.getInt32("score").getValue(), -1);
+    Assert.assertEquals(doc.getInt32("createdAt").getValue(), 1);
   }
 }

@@ -39,7 +39,9 @@ import org.testng.annotations.Test;
 public class ScribeLiquibaseLoggerTest {
 
   // Represents a JUL Level value not covered by any named constant, verifying the default mapping.
-  private static final java.util.logging.Level UNNAMED_JUL_LEVEL = new java.util.logging.Level("UNNAMED", 350) {};
+  private static final java.util.logging.Level UNNAMED_JUL_LEVEL = new java.util.logging.Level("UNNAMED", 350) {
+
+  };
 
   public void testNullLevelTranslatesToNull () {
 

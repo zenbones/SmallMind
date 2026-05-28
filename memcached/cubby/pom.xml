@@ -17,6 +17,13 @@
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
+    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
+    <dependency>
+      <groupId>org.glassfish.jersey.connectors</groupId>
+      <artifactId>jersey-apache-connector</artifactId>
+      <version>3.1.11</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>memcached-utility</artifactId>
@@ -29,8 +36,23 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>scribe-ink-indigenous</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>testbench-groundwater</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>testbench-logger</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

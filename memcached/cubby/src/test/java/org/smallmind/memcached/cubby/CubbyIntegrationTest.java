@@ -34,6 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import or.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
 import org.smallmind.memcached.cubby.command.GetCommand;
@@ -43,14 +44,15 @@ import org.smallmind.memcached.cubby.command.SetCommand;
 import org.smallmind.memcached.cubby.command.SetMode;
 import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
-import org.smallmind.scribe.pen.TestLoggerConfiguration;
+import org.smallmind.testbench.docker.DockerApplication;
+import org.smallmind.testbench.groundwater.AbstractGroundwaterTest;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "experimental")
-public class CubbyTest {
+@Test(groups = "integration")
+public class CubbyIntegrationTest extends AbstractGroundwaterTest {
 
   private static final String LARGE_KEY = "0123456789".repeat(30);
   private static final String LARGE_VALUE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(650);
@@ -59,11 +61,19 @@ public class CubbyTest {
   private CubbyMemcachedClient client;
   private Long setCas;
 
+  public CubbyIntegrationTest () {
+
+    super(DockerApplication.MEMCACHED);
+  }
+
   @BeforeClass
+  @Override
   public void beforeClass ()
     throws Exception {
 
     TestLoggerConfiguration.setup();
+
+    super.beforeClass();
 
     client = new CubbyMemcachedClient(configuration, new MemcachedHost("0", "localhost", 11211));
     client.start();
@@ -77,10 +87,12 @@ public class CubbyTest {
   }
 
   @AfterClass
+  @Override
   public void afterClass ()
     throws Exception {
 
     client.stop();
+    super.afterClass();
   }
 
   @Test

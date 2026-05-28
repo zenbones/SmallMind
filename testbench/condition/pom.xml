@@ -35,11 +35,6 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-persistence</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>testbench-docker</artifactId>
       <scope>compile</scope>
     </dependency>
