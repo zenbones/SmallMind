@@ -55,6 +55,7 @@ import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 import org.smallmind.mongodb.throng.mapping.annotation.Embedded;
 import org.smallmind.mongodb.throng.mapping.annotation.Entity;
 import org.smallmind.mongodb.throng.query.Filter;
+import org.smallmind.mongodb.throng.query.Pipeline;
 import org.smallmind.mongodb.throng.query.Query;
 import org.smallmind.mongodb.throng.query.Updates;
 
@@ -235,6 +236,44 @@ public class ThrongClient {
     ThrongEntityCodec<T> entityCodec = getCodec(entityClass);
 
     return new UpdateResult(mongoDatabase.getCollection(entityCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).updateMany(filter.toBsonDocument(BsonDocument.class, codecRegistry), updates.toBsonDocument(BsonDocument.class, codecRegistry), updateOptions));
+  }
+
+  /**
+   * Executes an aggregation pipeline against the entity's collection and returns a lazy iterable of the
+   * resulting documents decoded as instances of the same entity type. Use this variant when the pipeline
+   * preserves the source entity schema (typically with {@code $match}, {@code $sort}, {@code $project},
+   * {@code $skip}, {@code $limit}, and {@code $unwind} stages).
+   *
+   * @param entityClass the entity class identifying both the source collection and the target decode type
+   * @param pipeline    the pipeline carrying the ordered list of aggregation stages
+   * @param <T>         the entity type
+   * @return a {@link ThrongIterable} over the entities produced by the pipeline
+   */
+  public <T> ThrongIterable<T> aggregate (Class<T> entityClass, Pipeline pipeline) {
+
+    return aggregate(entityClass, entityClass, pipeline);
+  }
+
+  /**
+   * Executes an aggregation pipeline against the source entity's collection and decodes each resulting
+   * document as an instance of the result entity type. Use this variant when the pipeline reshapes
+   * documents (for example {@code $group} producing rolled-up records) and the desired decode shape
+   * differs from the source entity. The result class must be registered with this client at construction
+   * time so that its codec is available.
+   *
+   * @param sourceClass entity class identifying the source collection for the pipeline
+   * @param resultClass entity class identifying the decode shape applied to each pipeline output document
+   * @param pipeline    the pipeline carrying the ordered list of aggregation stages
+   * @param <S>         the source entity type
+   * @param <R>         the result entity type
+   * @return a {@link ThrongIterable} over the result instances produced by the pipeline
+   */
+  public <S, R> ThrongIterable<R> aggregate (Class<S> sourceClass, Class<R> resultClass, Pipeline pipeline) {
+
+    ThrongEntityCodec<S> sourceCodec = getCodec(sourceClass);
+    ThrongEntityCodec<R> resultCodec = getCodec(resultClass);
+
+    return new ThrongIterable<>(mongoDatabase.getCollection(sourceCodec.getCollection()).withCodecRegistry(codecRegistry).withDocumentClass(ThrongDocument.class).aggregate(pipeline.toBsonList()), resultCodec);
   }
 
   /**

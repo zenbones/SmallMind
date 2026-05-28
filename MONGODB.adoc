@@ -131,15 +131,18 @@ List<Order> open = throng.find(Order.class,
 
 * It does not wrap `MongoClient` or `MongoCollection`. `ThrongClient`
   is a single, non-transactional façade over a `MongoDatabase`;
-  applications that need transactions, change streams, or aggregation
-  pipelines should use the driver `MongoClient` directly and keep
-  `ThrongClient` for CRUD.
+  applications that need transactions or change streams should use the
+  driver `MongoClient` directly and keep `ThrongClient` for CRUD and
+  aggregation.
 * It does not own the `MongoClient` lifecycle from inside
   `ThrongClient`. The `MongoClient` passed in is owned by the caller
   (typically `MongoClientFactoryBean`'s `destroy()`).
-* It does not supply an aggregation DSL. Anything beyond
-  `find/count/update/delete` is the driver's job, reached through the
-  raw `MongoClient`.
+* It supplies a small aggregation DSL (`Pipeline`) covering the common
+  pipeline stages (`$match`, `$sort`, `$project`, `$skip`, `$limit`,
+  `$count`, `$unwind`, `$lookup`, `$group`) plus a raw-stage escape
+  hatch. Anything else (`$facet`, `$bucket`, `$graphLookup`, change
+  streams, transactions) is the driver's job, reached through the raw
+  `MongoClient`.
 * It does not offer a reactive or async surface. Both modules target
   the synchronous driver.
 * It does not ship connection-string parsing
@@ -785,6 +788,16 @@ CRUD surface:
 
 | `DeleteResult delete(Class<T>, Filter, DeleteOptions)`
 | Calls `deleteMany` with the supplied filter.
+
+| `ThrongIterable<T> aggregate(Class<T>, Pipeline)`
+| Runs the pipeline against the entity's collection and decodes each
+  output document back into the same entity type. Use when the pipeline
+  preserves the source schema.
+
+| `ThrongIterable<R> aggregate(Class<S>, Class<R>, Pipeline)`
+| Runs the pipeline against the source entity's collection and decodes
+  each output document into a separately registered result entity type.
+  Use when the pipeline reshapes documents (for example `$group` rollups).
 |===
 
 [NOTE]
@@ -1116,6 +1129,85 @@ Supported operators: `set`, `unset`, `setOnInsert`, `inc`, `mul`,
 `rename`. Each call appends to an ordered list; `toBsonDocument`
 combines the list via
 `com.mongodb.client.model.Updates.combine(...)`.
+
+==== `Pipeline`
+
+A `Pipeline` is an ordered list of aggregation stages, built with the
+same fluent style as `Filter`, `Sort`, `Updates`, and `Projections`.
+Stage builders accept the existing DSL types directly so a pipeline
+can reuse a filter or sort already prepared elsewhere.
+
+[source,java]
+----
+Pipeline pipeline = Pipeline.begin()
+    .match(Filter.where("status").eq("OPEN"))                              <1>
+    .sort(Sort.on().desc("placedAt"))                                      <2>
+    .project(Projections.with().include("customer_id", "status", "total")) <3>
+    .skip(20)
+    .limit(10);
+
+List<Order> page = throng.aggregate(Order.class, pipeline).asList();       <4>
+----
+<1> `$match` — reuses the standard `Filter` DSL.
+<2> `$sort` — reuses the standard `Sort` DSL.
+<3> `$project` — reuses the standard `Projections` DSL.
+<4> The pipeline output preserves the `Order` shape, so the
+    single-class `aggregate` decodes each result back into an `Order`
+    instance.
+
+Supported stages:
+
+[cols="1,3",options="header"]
+|===
+| Method | MongoDB stage
+
+| `match(Filter)` | `$match`
+| `sort(Sort)` | `$sort`
+| `project(Projections)` | `$project`
+| `limit(int)` | `$limit`
+| `skip(long)` | `$skip`
+| `count(String)` | `$count` into the named field
+| `unwind(String)` | `$unwind` of the supplied field path (use the `$` prefix)
+| `lookup(String, String, String, String)` | `$lookup` left outer join
+| `group(Object, BsonField...)` | `$group` with accumulators from `com.mongodb.client.model.Accumulators`
+| `stage(Bson)` | escape hatch — appends the supplied stage document verbatim
+|===
+
+For pipelines that reshape documents (most commonly `$group`), pair
+the source entity with a separate result entity whose mapping matches
+the output:
+
+[source,java]
+----
+@Entity("category_rollups")
+public class CategoryRollup {
+  @Id  private String id;     // receives the group key
+  @Property private Integer total;
+  @Property private Integer count;
+  /* getters/setters/no-arg */
+}
+
+ThrongClient throng = new ThrongClient(
+    mongoClient, "orders-db",
+    new ThrongOptions(false, true, true),
+    Order.class, CategoryRollup.class);                                    <1>
+
+List<CategoryRollup> rollups = throng.aggregate(
+    Order.class, CategoryRollup.class,                                     <2>
+    Pipeline.begin()
+            .group("$category",
+                   Accumulators.sum("total", "$amount"),
+                   Accumulators.sum("count", 1))
+            .sort(Sort.on().desc("total"))).asList();
+----
+<1> Both entity classes must be registered with the client up front so
+    each has a codec.
+<2> The first class identifies the source collection; the second
+    identifies the decode shape applied to each pipeline output document.
+
+The result entity's `@Id` field receives the value of `_id` from each
+output document — including `null` when the pipeline uses `group(null, …)`
+to roll up the entire collection into a single bucket.
 
 === Iteration
 

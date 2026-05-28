@@ -34,30 +34,31 @@ package org.smallmind.mongodb.throng;
 
 import java.util.LinkedList;
 import java.util.List;
-import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoIterable;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 /**
- * Lazy {@link Iterable} over query results that decodes each raw {@link ThrongDocument} into a typed entity
- * on demand using the supplied codec. The returned {@link ThrongIterator} is {@link AutoCloseable}, so callers
- * iterating directly should use try-with-resources to release the underlying server-side cursor.
+ * Lazy {@link Iterable} over driver results that decodes each raw {@link ThrongDocument} into a typed entity
+ * on demand using the supplied codec. Backed by any {@link MongoIterable}, so the same wrapper serves both
+ * {@code find} and {@code aggregate} call sites. The returned {@link ThrongIterator} is {@link AutoCloseable},
+ * so callers iterating directly should use try-with-resources to release the underlying server-side cursor.
  *
  * @param <T> the entity type yielded by iteration
  */
 public class ThrongIterable<T> implements Iterable<T> {
 
-  private final FindIterable<ThrongDocument> findIterable;
+  private final MongoIterable<ThrongDocument> mongoIterable;
   private final ThrongEntityCodec<T> codec;
 
   /**
-   * Constructs an iterable backed by the given driver find result and entity codec.
+   * Constructs an iterable backed by the given driver result and entity codec.
    *
-   * @param findIterable the driver iterable that yields raw {@link ThrongDocument} values
-   * @param codec        the codec used to decode each document into an entity instance
+   * @param mongoIterable the driver iterable that yields raw {@link ThrongDocument} values
+   * @param codec         the codec used to decode each document into an entity instance
    */
-  public ThrongIterable (FindIterable<ThrongDocument> findIterable, ThrongEntityCodec<T> codec) {
+  public ThrongIterable (MongoIterable<ThrongDocument> mongoIterable, ThrongEntityCodec<T> codec) {
 
-    this.findIterable = findIterable;
+    this.mongoIterable = mongoIterable;
     this.codec = codec;
   }
 
@@ -88,6 +89,6 @@ public class ThrongIterable<T> implements Iterable<T> {
   @Override
   public ThrongIterator<T> iterator () {
 
-    return new ThrongIterator<>(findIterable.iterator(), codec);
+    return new ThrongIterator<>(mongoIterable.iterator(), codec);
   }
 }

@@ -34,6 +34,7 @@ package org.smallmind.mongodb.throng.mapping;
 
 import java.lang.reflect.InvocationTargetException;
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -117,10 +118,16 @@ public class ThrongEntityCodec<T> extends ThrongPropertiesCodec<T> {
       throw new ThrongRuntimeException("The expected 'id' field(%s) does not match the actual(%s)", idProperty.getName(), idName);
     } else {
 
-      Object idValue = idProperty.getCodec().decode(reader, decoderContext);
-      ThrongLifecycle<T> events;
+      Object idValue;
 
-      instance = super.decode(reader, decoderContext);
+      if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+        reader.readNull();
+        idValue = null;
+      } else {
+        idValue = idProperty.getCodec().decode(reader, decoderContext);
+      }
+
+      instance = decodeNonNull(reader, decoderContext);
       reader.readEndDocument();
 
       try {

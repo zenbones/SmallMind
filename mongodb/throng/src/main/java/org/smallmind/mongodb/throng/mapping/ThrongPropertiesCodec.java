@@ -110,28 +110,44 @@ public class ThrongPropertiesCodec<T> implements Codec<T>, IndexProvider {
 
       return null;
     } else {
-      try {
 
-        T instance = throngProperties.getEntityClass().getConstructor().newInstance();
+      return decodeNonNull(reader, decoderContext);
+    }
+  }
 
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+  /**
+   * Decodes the remaining fields of a BSON document into a freshly constructed instance, without checking
+   * whether the current value is a top-level null. Intended for use by subclasses that have already verified
+   * the document boundary and need to continue field-by-field decoding.
+   *
+   * @param reader         BSON reader positioned inside a document, before the next field's type
+   * @param decoderContext decoder context
+   * @return the constructed and populated instance
+   * @throws ThrongRuntimeException if the no-arg constructor is unavailable or reflection cannot set a field
+   */
+  protected T decodeNonNull (BsonReader reader, DecoderContext decoderContext) {
 
-          ThrongProperty throngProperty;
+    try {
 
-          if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
-            if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
-              reader.readNull();
-              throngProperty.getFieldAccessor().set(instance, null);
-            } else {
-              throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
-            }
+      T instance = throngProperties.getEntityClass().getConstructor().newInstance();
+
+      while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+
+        ThrongProperty throngProperty;
+
+        if ((throngProperty = throngProperties.getByPropertyName(reader.readName())) != null) {
+          if (BsonType.NULL.equals(reader.getCurrentBsonType())) {
+            reader.readNull();
+            throngProperty.getFieldAccessor().set(instance, null);
+          } else {
+            throngProperty.getFieldAccessor().set(instance, throngProperty.getCodec().decode(reader, decoderContext));
           }
         }
-
-        return instance;
-      } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
-        throw new ThrongRuntimeException(exception);
       }
+
+      return instance;
+    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
+      throw new ThrongRuntimeException(exception);
     }
   }
 
