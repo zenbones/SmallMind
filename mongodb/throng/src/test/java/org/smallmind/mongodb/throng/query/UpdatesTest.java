@@ -151,4 +151,14 @@ public class UpdatesTest {
     Assert.assertTrue(doc.containsKey("$pop"));
     Assert.assertEquals(doc.getDocument("$pop").getInt32("items").getValue(), 1);
   }
+
+  public void testConflictingSetAndUnsetOnSameFieldYieldsBothClauses () {
+
+    BsonDocument doc = (BsonDocument)Updates.of().set("status", "OPEN").unset("status").toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+
+    Assert.assertTrue(doc.containsKey("$set"));
+    Assert.assertTrue(doc.containsKey("$unset"));
+    Assert.assertTrue(doc.getDocument("$set").containsKey("status"));
+    Assert.assertTrue(doc.getDocument("$unset").containsKey("status"));
+  }
 }

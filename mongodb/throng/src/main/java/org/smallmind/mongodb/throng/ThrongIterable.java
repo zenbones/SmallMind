@@ -32,16 +32,15 @@
  */
 package org.smallmind.mongodb.throng;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
 import org.smallmind.mongodb.throng.mapping.ThrongEntityCodec;
 
 /**
  * Lazy {@link Iterable} over query results that decodes each raw {@link ThrongDocument} into a typed entity
- * on demand using the supplied codec.
+ * on demand using the supplied codec. The returned {@link ThrongIterator} is {@link AutoCloseable}, so callers
+ * iterating directly should use try-with-resources to release the underlying server-side cursor.
  *
  * @param <T> the entity type yielded by iteration
  */
@@ -63,7 +62,8 @@ public class ThrongIterable<T> implements Iterable<T> {
   }
 
   /**
-   * Drains the entire result set into a {@link List}.
+   * Drains the entire result set into a {@link List}. The underlying cursor is fully consumed and
+   * therefore released by the driver before this method returns.
    *
    * @return a list of all decoded entity instances
    */
@@ -71,59 +71,23 @@ public class ThrongIterable<T> implements Iterable<T> {
 
     LinkedList<T> list = new LinkedList<>();
 
-    iterator().forEachRemaining(list::add);
+    try (ThrongIterator<T> iterator = iterator()) {
+      iterator.forEachRemaining(list::add);
+    }
 
     return list;
   }
 
   /**
    * Returns an iterator that decodes {@link ThrongDocument} values into typed entities one at a time.
+   * The returned iterator is {@link AutoCloseable} and should be closed once iteration is complete to
+   * release the underlying server-side cursor.
    *
    * @return an iterator over the decoded entities
    */
   @Override
-  public Iterator<T> iterator () {
+  public ThrongIterator<T> iterator () {
 
-    return new ThrongIterator(findIterable.iterator());
-  }
-
-  /**
-   * Cursor-backed iterator that translates each {@link ThrongDocument} to an entity via the enclosing codec.
-   */
-  private class ThrongIterator implements Iterator<T> {
-
-    private final MongoCursor<ThrongDocument> mongoCursor;
-
-    /**
-     * Constructs an iterator wrapping the given driver cursor.
-     *
-     * @param mongoCursor the driver cursor over raw {@link ThrongDocument} values
-     */
-    public ThrongIterator (MongoCursor<ThrongDocument> mongoCursor) {
-
-      this.mongoCursor = mongoCursor;
-    }
-
-    /**
-     * Returns {@code true} if the underlying cursor has more documents.
-     *
-     * @return {@code true} when more results are available
-     */
-    @Override
-    public boolean hasNext () {
-
-      return mongoCursor.hasNext();
-    }
-
-    /**
-     * Advances the cursor and returns the next decoded entity.
-     *
-     * @return the next entity decoded from the cursor
-     */
-    @Override
-    public T next () {
-
-      return TranslationUtility.fromBson(codec, mongoCursor.next().getBsonDocument());
-    }
+    return new ThrongIterator<>(findIterable.iterator(), codec);
   }
 }

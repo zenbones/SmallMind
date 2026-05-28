@@ -30,43 +30,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.utility.spring;
 
-import com.mongodb.MongoWriteException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteError;
-import org.bson.BsonDocument;
+import com.mongodb.MongoCredential;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
-public class DuplicateKeyUtilityTest {
+public class MongoCredentialFactoryBeanTest {
 
-  public void testErrorCode11000IsIdentifiedAsDuplicateKey () {
+  public void testIsSingletonReturnsTrue () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11000, "duplicate key error", new BsonDocument()), new ServerAddress());
-
-    Assert.assertTrue(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertTrue(new MongoCredentialFactoryBean().isSingleton());
   }
 
-  public void testOtherErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testGetObjectTypeReturnsMongoCredentialClass () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11001, "bulk write error", new BsonDocument()), new ServerAddress());
-
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertEquals(new MongoCredentialFactoryBean().getObjectType(), MongoCredential.class);
   }
 
-  public void testUnrelatedWriteErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testAfterPropertiesSetBuildsScramSha1Credential () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(66, "immutable field", new BsonDocument()), new ServerAddress());
+    MongoCredentialFactoryBean bean = new MongoCredentialFactoryBean();
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    bean.setUser("app-service");
+    bean.setPassword("hunter2");
+    bean.setSource("admin");
+    bean.afterPropertiesSet();
+
+    MongoCredential credential = bean.getObject();
+
+    Assert.assertNotNull(credential);
+    Assert.assertEquals(credential.getMechanism(), "SCRAM-SHA-1");
+    Assert.assertEquals(credential.getUserName(), "app-service");
+    Assert.assertEquals(credential.getSource(), "admin");
+    Assert.assertEquals(credential.getPassword(), "hunter2".toCharArray());
   }
 
-  public void testZeroErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testGetObjectBeforeAfterPropertiesSetReturnsNull () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(0, "no error", new BsonDocument()), new ServerAddress());
+    MongoCredentialFactoryBean bean = new MongoCredentialFactoryBean();
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertNull(bean.getObject());
   }
 }

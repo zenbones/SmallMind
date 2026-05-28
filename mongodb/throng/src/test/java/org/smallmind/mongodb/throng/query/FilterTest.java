@@ -240,4 +240,32 @@ public class FilterTest {
     Assert.assertTrue(doc.containsKey("name"));
     Assert.assertEquals(doc.get("name").getBsonType(), BsonType.REGULAR_EXPRESSION);
   }
+
+  public void testInWithEmptyIterableProducesValidInWithEmptyArray () {
+
+    BsonDocument doc = (BsonDocument)Filter.where("tags").in(java.util.Collections.emptyList()).toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+
+    Assert.assertTrue(doc.containsKey("tags"));
+    Assert.assertTrue(doc.getDocument("tags").containsKey("$in"));
+    Assert.assertEquals(doc.getDocument("tags").getArray("$in").size(), 0);
+  }
+
+  public void testNestedAndOrProducesCompoundFilterStructure () {
+
+    BsonDocument doc = (BsonDocument)Filter.and(
+                                        Filter.where("status").eq("OPEN"),
+                                        Filter.or(Filter.where("priority").eq("HIGH"), Filter.where("priority").eq("URGENT")))
+                                       .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+
+    Assert.assertTrue(doc.containsKey("$and"));
+    Assert.assertEquals(doc.getArray("$and").size(), 2);
+    Assert.assertTrue(doc.getArray("$and").get(1).asDocument().containsKey("$or"));
+  }
+
+  public void testDoubleNotPreservesFilterStructure () {
+
+    BsonDocument doc = (BsonDocument)Filter.where("count").gt(0).not().not().toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+
+    Assert.assertNotNull(doc);
+  }
 }

@@ -73,4 +73,25 @@ public class UpdateResultTest {
 
     Assert.assertEquals(result.getModifiedPlusInsertedCount(), 1L);
   }
+
+  public void testGetUpsertedIdReturnsConfiguredBsonValueWhenSet () {
+
+    UpdateResult result = new UpdateResult(com.mongodb.client.result.UpdateResult.acknowledged(0L, 0L, new BsonInt32(42)));
+
+    Assert.assertEquals(((BsonInt32)result.getUpsertedId()).getValue(), 42);
+  }
+
+  public void testGetUpsertedIdReturnsNullWhenNoUpsertOccurred () {
+
+    UpdateResult result = new UpdateResult(com.mongodb.client.result.UpdateResult.acknowledged(5L, 3L, null));
+
+    Assert.assertNull(result.getUpsertedId());
+  }
+
+  public void testGetModifiedCountDelegatesToDriverResult () {
+
+    UpdateResult result = new UpdateResult(com.mongodb.client.result.UpdateResult.acknowledged(5L, 4L, null));
+
+    Assert.assertEquals(result.getModifiedCount(), 4L);
+  }
 }

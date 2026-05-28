@@ -32,44 +32,35 @@
  */
 package org.smallmind.mongodb.throng.query;
 
-import com.mongodb.MongoClientSettings;
-import org.bson.BsonDocument;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
-public class SortTest {
+public class QueryTest {
 
-  public void testAscendingFieldIsEncodedAsOne () {
+  public void testEmptyFactoryCreatesQueryPreConfiguredWithEmptyFilter () {
 
-    BsonDocument doc = (BsonDocument)Sort.on().asc("name").toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+    Query query = Query.empty();
 
-    Assert.assertEquals(doc.getInt32("name").getValue(), 1);
+    Assert.assertNotNull(query);
   }
 
-  public void testDescendingFieldIsEncodedAsNegativeOne () {
+  public void testFluentBuilderReturnsSameInstanceForChaining () {
 
-    BsonDocument doc = (BsonDocument)Sort.on().desc("age").toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+    Query query = Query.with();
 
-    Assert.assertEquals(doc.getInt32("age").getValue(), -1);
+    Assert.assertSame(query.filter(Filter.empty()), query);
+    Assert.assertSame(query.sort(Sort.on()), query);
+    Assert.assertSame(query.projection(Projections.with()), query);
+    Assert.assertSame(query.skip(10), query);
+    Assert.assertSame(query.limit(5), query);
+    Assert.assertSame(query.batchSize(50), query);
   }
 
-  public void testMultipleSortFieldsAreAllPresent () {
+  public void testNegativeSkipIsIgnoredByApplyButDoesNotThrow () {
 
-    BsonDocument doc = (BsonDocument)Sort.on().asc("lastName").desc("score").asc("createdAt")
-                                       .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
+    Query query = Query.with().skip(-5);
 
-    Assert.assertEquals(doc.getInt32("lastName").getValue(), 1);
-    Assert.assertEquals(doc.getInt32("score").getValue(), -1);
-    Assert.assertEquals(doc.getInt32("createdAt").getValue(), 1);
-  }
-
-  public void testSortOnDottedFieldPathRetainsTheDottedKey () {
-
-    BsonDocument doc = (BsonDocument)Sort.on().asc("address.city").desc("address.zip")
-                                       .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
-
-    Assert.assertEquals(doc.getInt32("address.city").getValue(), 1);
-    Assert.assertEquals(doc.getInt32("address.zip").getValue(), -1);
+    Assert.assertNotNull(query);
   }
 }

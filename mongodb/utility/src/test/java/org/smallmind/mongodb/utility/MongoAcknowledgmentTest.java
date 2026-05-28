@@ -30,43 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.utility;
 
-import com.mongodb.MongoWriteException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteError;
-import org.bson.BsonDocument;
+import com.mongodb.WriteConcern;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
-public class DuplicateKeyUtilityTest {
+public class MongoAcknowledgmentTest {
 
-  public void testErrorCode11000IsIdentifiedAsDuplicateKey () {
+  public void testZeroMapsToUnacknowledgedAndIsNotJournable () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11000, "duplicate key error", new BsonDocument()), new ServerAddress());
-
-    Assert.assertTrue(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertSame(MongoAcknowledgment.ZERO.getWriteConcern(), WriteConcern.UNACKNOWLEDGED);
+    Assert.assertFalse(MongoAcknowledgment.ZERO.isJournable());
   }
 
-  public void testOtherErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testOneMapsToW1AndIsJournable () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11001, "bulk write error", new BsonDocument()), new ServerAddress());
-
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertSame(MongoAcknowledgment.ONE.getWriteConcern(), WriteConcern.W1);
+    Assert.assertTrue(MongoAcknowledgment.ONE.isJournable());
   }
 
-  public void testUnrelatedWriteErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testTwoMapsToW2AndIsJournable () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(66, "immutable field", new BsonDocument()), new ServerAddress());
-
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertSame(MongoAcknowledgment.TWO.getWriteConcern(), WriteConcern.W2);
+    Assert.assertTrue(MongoAcknowledgment.TWO.isJournable());
   }
 
-  public void testZeroErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testThreeMapsToW3AndIsJournable () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(0, "no error", new BsonDocument()), new ServerAddress());
+    Assert.assertSame(MongoAcknowledgment.THREE.getWriteConcern(), WriteConcern.W3);
+    Assert.assertTrue(MongoAcknowledgment.THREE.isJournable());
+  }
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+  public void testMajorityMapsToMajorityAndIsJournable () {
+
+    Assert.assertSame(MongoAcknowledgment.MAJORITY.getWriteConcern(), WriteConcern.MAJORITY);
+    Assert.assertTrue(MongoAcknowledgment.MAJORITY.isJournable());
   }
 }

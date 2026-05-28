@@ -96,10 +96,6 @@ public class MongoWriteConcern implements FactoryBean<WriteConcern> {
 
     WriteConcern writeConcern = acknowledgment.getWriteConcern();
 
-    if (acknowledgment.isJournable()) {
-      writeConcern.withJournal(journaled);
-    }
-
-    return writeConcern;
+    return acknowledgment.isJournable() ? writeConcern.withJournal(journaled) : writeConcern;
   }
 }

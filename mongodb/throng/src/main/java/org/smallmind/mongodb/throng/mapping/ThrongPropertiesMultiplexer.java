@@ -77,8 +77,8 @@ public class ThrongPropertiesMultiplexer<T> implements IndexProvider {
     key = polymorphic.key().isEmpty() ? "java/object" : polymorphic.key();
 
     for (Class<?> polymorphicClass : polymorphic.value()) {
-      if (!polymorphicClass.isAssignableFrom(entityClass)) {
-        throw new ThrongMappingException("The declared polymorphic class(%s) is not assignable from the declaring type(%s)", polymorphicClass.getName(), entityClass.getName());
+      if (!entityClass.isAssignableFrom(polymorphicClass)) {
+        throw new ThrongMappingException("The declared polymorphic class(%s) is not a subtype of the declaring type(%s)", polymorphicClass.getName(), entityClass.getName());
       } else {
         polymorphicCodecMap.put(polymorphicClass.getName(), new ThrongPropertiesCodec<>(new ThrongProperties<>(polymorphicClass, codecRegistry, embeddedReferences, storeNulls)));
       }

@@ -30,43 +30,61 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.mongodb.throng;
+package org.smallmind.mongodb.throng.mapping;
 
-import com.mongodb.MongoWriteException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteError;
-import org.bson.BsonDocument;
+import org.smallmind.mongodb.throng.ThrongRuntimeException;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
-public class DuplicateKeyUtilityTest {
+public class CodecUtilityTest {
 
-  public void testErrorCode11000IsIdentifiedAsDuplicateKey () {
+  public void testGetReifiedTypeReturnsConcreteFieldTypeWhenNotGeneric () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11000, "duplicate key error", new BsonDocument()), new ServerAddress());
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(SimpleHolder.class, "name");
 
-    Assert.assertTrue(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Class<?> reified = CodecUtility.getReifiedType(SimpleHolder.class, accessor);
+
+    Assert.assertEquals(reified, String.class);
   }
 
-  public void testOtherErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public void testGetReifiedTypeFailsWhenTypeVariableCannotBeResolved () {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(11001, "bulk write error", new BsonDocument()), new ServerAddress());
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(GenericHolder.class, "value");
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    Assert.assertThrows(ThrongRuntimeException.class, () -> CodecUtility.getReifiedType(GenericHolder.class, accessor));
   }
 
-  public void testUnrelatedWriteErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public static class SimpleHolder {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(66, "immutable field", new BsonDocument()), new ServerAddress());
+    private String name;
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
   }
 
-  public void testZeroErrorCodeIsNotIdentifiedAsDuplicateKey () {
+  public static class GenericHolder<T> {
 
-    MongoWriteException exception = new MongoWriteException(new WriteError(0, "no error", new BsonDocument()), new ServerAddress());
+    private T value;
 
-    Assert.assertFalse(DuplicateKeyUtility.idDuplicateKeyException(exception));
+    public T getValue () {
+
+      return value;
+    }
+
+    public void setValue (T value) {
+
+      this.value = value;
+    }
   }
+
 }
