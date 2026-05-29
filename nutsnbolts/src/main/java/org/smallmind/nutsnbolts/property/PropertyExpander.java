@@ -149,7 +149,7 @@ public class PropertyExpander {
         }
       } while (arabesqueCount > 0);
 
-      if (parsePos >= markerPos) {
+      if (parsePos > markerPos) {
         encounteredKeySet.clear();
       }
       markerPos = parsePos;

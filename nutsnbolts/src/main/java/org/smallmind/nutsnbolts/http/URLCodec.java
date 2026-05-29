@@ -240,12 +240,14 @@ public class URLCodec {
 
               int codePoint = Character.toCodePoint(singleChar, lowSurrogate);
 
-              writeHexString(encodedBuilder, (codePoint >> 18) | 0x1E);
+              writeHexString(encodedBuilder, (codePoint >> 18) | 0xF0);
               writeHexString(encodedBuilder, ((codePoint >> 12) & 0x3F) | 0x80);
               writeHexString(encodedBuilder, ((codePoint >> 6) & 0x3F) | 0x80);
               writeHexString(encodedBuilder, (codePoint & 0x3f) | 0x80);
             }
           }
+        } else if (Character.isLowSurrogate(singleChar)) {
+          throw new UnsupportedEncodingException("Not able to URL encode");
         } else if (singleChar <= 0x007F) {
           writeHexString(encodedBuilder, singleChar);
         } else if (singleChar <= 0x07FF) {

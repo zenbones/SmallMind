@@ -326,6 +326,8 @@ public class ParallelBox extends Box<ParallelBox> {
               throw new UnknownSwitchCaseException(alignment.name());
           }
         }
+
+        index++;
       }
     }
   }

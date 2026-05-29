@@ -58,6 +58,7 @@ public class RegExTranslator {
       switch (pattern.charAt(index)) {
         case '$':
           patternBuilder.append("\\$");
+          break;
         case '.':
           patternBuilder.append("\\.");
           break;

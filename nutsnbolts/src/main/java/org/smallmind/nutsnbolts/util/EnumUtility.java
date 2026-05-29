@@ -63,31 +63,41 @@ public class EnumUtility {
     StringBuilder fieldBuilder = new StringBuilder();
     LetterState prevState = LetterState.NONE;
     int stateCount = 0;
+    boolean separatorPending = false;
 
     for (int count = 0; count < anyCase.length(); count++) {
 
+      char currentChar = anyCase.charAt(count);
       LetterState state;
 
-      if (Character.isWhitespace(anyCase.charAt(count))) {
+      if (Character.isWhitespace(currentChar)) {
         state = LetterState.WHITESPACE;
-      } else if (Character.isDigit(anyCase.charAt(count))) {
+      } else if (Character.isDigit(currentChar)) {
         state = LetterState.DIGIT;
-      } else if (Character.isLetter(anyCase.charAt(count))) {
-        state = Character.isUpperCase(anyCase.charAt(count)) ? LetterState.UPPER_LETTER : LetterState.LOWER_LETTER;
+      } else if (Character.isLetter(currentChar)) {
+        state = Character.isUpperCase(currentChar) ? LetterState.UPPER_LETTER : LetterState.LOWER_LETTER;
       } else {
         state = LetterState.OTHER;
       }
 
-      if (!(state.equals(LetterState.WHITESPACE) || ((count > 0) && (anyCase.charAt(count) == '_') && (fieldBuilder.charAt(fieldBuilder.length() - 1) == '_')))) {
-        if ((count > 0) && (!state.equals(prevState)) && (anyCase.charAt(count) != '_') && (fieldBuilder.charAt(fieldBuilder.length() - 1) != '_') && (!(prevState.equals(LetterState.UPPER_LETTER) && state.equals(LetterState.LOWER_LETTER))) && ((!state.equals(LetterState.DIGIT)) || prefixDigits)) {
-          fieldBuilder.append('_');
+      if (!state.equals(LetterState.WHITESPACE)) {
+        // Queue a separator on every transition that would have demanded one, instead of emitting it eagerly.
+        // A trailing run of OTHER characters leaves the flag set and is never flushed, so no dangling underscore appears.
+        if ((count > 0) && (!state.equals(prevState)) && (currentChar != '_') && (!(prevState.equals(LetterState.UPPER_LETTER) && state.equals(LetterState.LOWER_LETTER))) && ((!state.equals(LetterState.DIGIT)) || prefixDigits)) {
+          separatorPending = true;
         }
+
         if (!state.equals(LetterState.OTHER)) {
+          if (separatorPending && (fieldBuilder.length() > 0)) {
+            fieldBuilder.append('_');
+          }
+          separatorPending = false;
+
           if (prevState.equals(LetterState.UPPER_LETTER) && state.equals(LetterState.LOWER_LETTER) && stateCount > 0) {
             fieldBuilder.insert(fieldBuilder.length() - 1, '_');
           }
 
-          fieldBuilder.append(state.equals(LetterState.LOWER_LETTER) ? Character.toUpperCase(anyCase.charAt(count)) : anyCase.charAt(count));
+          fieldBuilder.append(state.equals(LetterState.LOWER_LETTER) ? Character.toUpperCase(currentChar) : currentChar);
         }
       }
 

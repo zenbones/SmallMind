@@ -63,7 +63,7 @@ public class MutableConstraint extends Constraint {
    */
   public MutableConstraint setGrow (double grow) {
 
-    setGrow(grow);
+    this.grow = grow;
 
     return this;
   }
@@ -75,7 +75,7 @@ public class MutableConstraint extends Constraint {
    */
   public MutableConstraint mayShrink () {
 
-    return mayShrink();
+    return setShrink(0.5D);
   }
 
   /**
@@ -86,6 +86,8 @@ public class MutableConstraint extends Constraint {
    */
   public MutableConstraint setShrink (double shrink) {
 
-    return setShrink(shrink);
+    this.shrink = shrink;
+
+    return this;
   }
 }

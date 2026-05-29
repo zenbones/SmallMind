@@ -129,7 +129,7 @@ public class OptionSet {
    */
   public synchronized boolean containsOption (String name, Character flag) {
 
-    return optionMap.containsKey(name) || optionMap.containsKey((flag == null) ? null : flag.toString());
+    return optionMap.containsKey(name) || ((flag != null) && optionMap.containsKey(flag.toString()));
   }
 
   /**
@@ -166,16 +166,12 @@ public class OptionSet {
     LinkedList<String> argumentList;
 
     if ((argumentList = optionMap.get(name)) == null) {
-      argumentList = optionMap.get((flag == null) ? null : flag.toString());
-    }
-
-    if (argumentList != null) {
-      if (!argumentList.isEmpty()) {
-        return argumentList.getFirst();
+      if (flag != null) {
+        argumentList = optionMap.get(flag.toString());
       }
     }
 
-    return null;
+    return ((argumentList == null) || argumentList.isEmpty()) ? null : argumentList.getFirst();
   }
 
   /**
@@ -210,18 +206,14 @@ public class OptionSet {
   public synchronized String[] getArguments (String name, Character flag) {
 
     LinkedList<String> argumentList;
-    String[] arguments = null;
 
     if ((argumentList = optionMap.get(name)) == null) {
-      argumentList = optionMap.get((flag == null) ? null : flag.toString());
+      if (flag != null) {
+        argumentList = optionMap.get(flag.toString());
+      }
     }
 
-    if (argumentList != null) {
-      arguments = new String[argumentList.size()];
-      argumentList.toArray(arguments);
-    }
-
-    return arguments;
+    return (argumentList == null) ? null : argumentList.toArray(new String[0]);
   }
 
   /**
@@ -266,5 +258,9 @@ public class OptionSet {
     }
 
     return lineBuilder.append(']').toString();
+  }
+
+  private record OptionKey(String name, String value) {
+
   }
 }

@@ -50,18 +50,19 @@ public class ThrowableUtility {
     if (headThrowable == null) {
 
       return tailThrowable;
-    } else if (tailThrowable == null) {
-
-      return headThrowable;
     } else {
+      if (tailThrowable != null) {
 
-      Throwable currentThrowable = headThrowable;
+        Throwable currentThrowable = headThrowable;
 
-      while (currentThrowable.getCause() != null) {
-        currentThrowable = currentThrowable.getCause();
+        while (currentThrowable.getCause() != null) {
+          currentThrowable = currentThrowable.getCause();
+        }
+
+        currentThrowable.initCause(tailThrowable);
       }
 
-      return currentThrowable.initCause(tailThrowable);
+      return headThrowable;
     }
   }
 }

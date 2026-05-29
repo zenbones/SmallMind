@@ -35,8 +35,21 @@ package org.smallmind.nutsnbolts.util;
 import java.util.Comparator;
 
 /**
- * Comparator for dot-separated strings that compares segments one at a time using {@link AlphaNumericComparator},
- * with optional right-to-left segment ordering.
+ * Comparator for dot-separated strings that compares segments one at a time using {@link AlphaNumericComparator}.
+ *
+ * <p>By default, segments are compared left-to-right, so the leftmost segment is the most significant sort key.
+ * When constructed with {@code reversed = true}, segments are instead compared right-to-left, making the
+ * rightmost segment the most significant key &mdash; useful for sorting domain-like values where the suffix
+ * (such as a TLD) should group together regardless of prefix. In reversed mode, segments of unequal-length
+ * inputs are aligned at the right: when {@code "a.foo.com"} is compared against {@code "z.com"}, the
+ * rightmost {@code "com"} segments are compared first.
+ *
+ * <p>The {@code reversed} flag only changes the segment iteration order; it does <strong>not</strong> invert
+ * the sign of the comparison result. The natural ordering of individual segments still applies via
+ * {@link AlphaNumericComparator}, which sorts digits before letters and compares letters case-insensitively.
+ *
+ * <p>This comparator does not accept null arguments and throws {@link NullPointerException} if either input
+ * is null.
  */
 public class DotNotationComparator implements Comparator<String> {
 
@@ -45,7 +58,7 @@ public class DotNotationComparator implements Comparator<String> {
   private final boolean reversed;
 
   /**
-   * Constructs a comparator that compares segments from left to right.
+   * Constructs a comparator that compares segments left-to-right, treating the leftmost segment as the most significant.
    */
   public DotNotationComparator () {
 
@@ -55,7 +68,9 @@ public class DotNotationComparator implements Comparator<String> {
   /**
    * Constructs a comparator with configurable segment traversal direction.
    *
-   * @param reversed {@code true} to compare segments from the rightmost side first; {@code false} for left-to-right
+   * @param reversed {@code true} to iterate segments right-to-left, treating the rightmost segment as the most significant;
+   *                 {@code false} for the default left-to-right iteration order. This flag changes <em>which</em> segment
+   *                 is compared first when looking for a difference; it does not invert the sign of the comparison result.
    */
   public DotNotationComparator (boolean reversed) {
 
@@ -63,12 +78,15 @@ public class DotNotationComparator implements Comparator<String> {
   }
 
   /**
-   * Splits both strings on dots and compares each corresponding segment using alphanumeric ordering;
-   * when all shared segments are equal, the string with fewer segments sorts first.
+   * Splits both strings on dots and compares corresponding segments using alphanumeric ordering until a
+   * difference is found. In default (left-to-right) mode segments are compared in their natural index order;
+   * in reversed mode the rightmost segments are compared first, with unequal-length inputs right-aligned.
+   * When all overlapping segments are equal, the string with fewer segments sorts before the longer one.
    *
-   * @param string1 the first dot-separated string
-   * @param string2 the second dot-separated string
+   * @param string1 the first dot-separated string; must not be null
+   * @param string2 the second dot-separated string; must not be null
    * @return a negative integer, zero, or positive integer per the {@link Comparator} contract
+   * @throws NullPointerException if either argument is null
    */
   @Override
   public int compare (String string1, String string2) {

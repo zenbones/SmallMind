@@ -52,17 +52,12 @@ public class CloseableProxyFactory {
    * @return a dynamic proxy implementing {@code clazz}
    * @throws NoSuchMethodException if the {@code close} method cannot be resolved on {@code instance}
    */
-  public static <C extends Closeable> C createProxy (Class<C> clazz, C instance, CloseListener listener)
-    throws NoSuchMethodException {
+  public static <C extends Closeable> C createProxy (Class<C> clazz, C instance, CloseListener listener) {
 
     return clazz.cast(Proxy.newProxyInstance(instance.getClass().getClassLoader(), new Class[] {clazz}, new CloseableInvocationHandler(instance, listener)));
   }
 
-  private static class CloseableInvocationHandler implements InvocationHandler {
-
-    private final Method closeMethod;
-    private final Closeable closeable;
-    private final CloseListener listener;
+  private record CloseableInvocationHandler(Closeable closeable, CloseListener listener) implements InvocationHandler {
 
     /**
      * Constructs the handler, resolving the {@code close} method for later comparison.
@@ -71,38 +66,33 @@ public class CloseableProxyFactory {
      * @param listener  the listener to invoke after close returns
      * @throws NoSuchMethodException if the {@code close} method cannot be found on {@code closeable}
      */
-    public CloseableInvocationHandler (Closeable closeable, CloseListener listener)
-      throws NoSuchMethodException {
+    private CloseableInvocationHandler {
 
-      this.closeable = closeable;
-      this.listener = listener;
-
-      closeMethod = closeable.getClass().getMethod("close");
     }
 
-    /**
-     * Delegates the method call to the wrapped instance and, if the called method is {@code close},
-     * fires the registered {@link CloseListener}.
-     *
-     * @param proxy  the proxy instance
-     * @param method the method that was invoked
-     * @param args   the arguments passed to the method
-     * @return the value returned by the underlying method
-     * @throws Throwable if the underlying method throws
-     */
-    @Override
-    public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
+      /**
+       * Delegates the method call to the wrapped instance and, if the called method is {@code close},
+       * fires the registered {@link CloseListener}.
+       *
+       * @param proxy  the proxy instance
+       * @param method the method that was invoked
+       * @param args   the arguments passed to the method
+       * @return the value returned by the underlying method
+       * @throws Throwable if the underlying method throws
+       */
+      @Override
+      public Object invoke (Object proxy, Method method, Object[] args)
+        throws Throwable {
 
-      Object value;
+        Object value;
 
-      value = method.invoke(closeable, args);
+        value = method.invoke(closeable, args);
 
-      if (closeMethod.equals(method)) {
-        listener.postClose(new CloseEvent(closeable));
+        if ("close".equals(method.getName()) && (method.getParameterCount() == 0) && method.getReturnType().equals(Void.TYPE)) {
+          listener.postClose(new CloseEvent(closeable));
+        }
+
+        return value;
       }
-
-      return value;
     }
-  }
 }

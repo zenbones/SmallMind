@@ -267,7 +267,7 @@ public class CommandLineParser {
 
     if ((currentString != null) && (!currentString.isEmpty())) {
       argumentBuilder = new StringBuilder(currentString);
-    } else if (args[argCounter.incAndGet()].charAt(0) != '-') {
+    } else if ((argCounter.get() < (args.length - 1)) && (args[argCounter.incAndGet()].charAt(0) != '-')) {
       argumentBuilder = new StringBuilder(args[argCounter.get()]);
     } else {
       throw new CommandLineException("Missing argument for option marked as requiring arguments");

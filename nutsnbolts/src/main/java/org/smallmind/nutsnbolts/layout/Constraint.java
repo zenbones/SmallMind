@@ -43,8 +43,8 @@ public class Constraint {
   private static final Constraint IMMUTABLE_SHRINK_INSTANCE = new Constraint(0.0D, 0.5D);
   private static final Constraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new Constraint(0.5D, 0.5D);
 
-  private double grow;
-  private double shrink;
+  protected double grow;
+  protected double shrink;
 
   /**
    * Creates a rigid constraint with grow and shrink factors both set to zero.
@@ -126,16 +126,6 @@ public class Constraint {
   }
 
   /**
-   * Sets the grow weight for this constraint.
-   *
-   * @param grow the grow factor to apply; zero means this element does not grow
-   */
-  private void setGrow (double grow) {
-
-    this.grow = grow;
-  }
-
-  /**
    * Returns the shrink weight that controls how space is reclaimed from this element when space is scarce.
    *
    * @return the shrink factor; zero means this element does not shrink
@@ -143,15 +133,5 @@ public class Constraint {
   public double getShrink () {
 
     return shrink;
-  }
-
-  /**
-   * Sets the shrink weight for this constraint.
-   *
-   * @param shrink the shrink factor to apply; zero means this element does not shrink
-   */
-  private void setShrink (double shrink) {
-
-    this.shrink = shrink;
   }
 }

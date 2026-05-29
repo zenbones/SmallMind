@@ -18,7 +18,22 @@
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am -q compile -DskipTests)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am compile -DskipTests)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl file/ephemeral -am compile -DskipTests)",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl -am test-compile)"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl bayeux/oumuamua/server/api,bayeux/oumuamua/server/spi,bayeux/oumuamua/server/impl -am test-compile)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test -Dgroups=unit org.jacoco:jacoco-maven-plugin:0.8.12:report)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -Dtest=CommandLineParserTest test)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -Dtest=ContextFactoryTest test -q)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -q dependency:build-classpath -Dmdep.outputFile=/tmp/nutsnbolts_cp.txt '-Dmdep.pathSeparator=;' -DincludeScope=test)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Eclipse Adoptium//**)",
+      "Bash(\"/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn\" -v)",
+      "Bash(\"/c/Program Files/GraalVM/graalvm-community-openjdk-25+37.1/bin/java\" -cp \"nutsnbolts/target/test-classes;nutsnbolts/target/classes;$\\(cat /tmp/nutsnbolts_cp.txt\\)\" org.testng.TestNG -testclass org.smallmind.nutsnbolts.context.ContextFactoryTest)",
+      "Bash(\"/c/Program Files/GraalVM/graalvm-community-openjdk-25+37.1/bin/java\" -cp \"nutsnbolts/target/test-classes;nutsnbolts/target/classes;$\\(cat /tmp/nutsnbolts_cp.txt\\)\" org.testng.TestNG -testclass org.smallmind.nutsnbolts.csv.CSVParserTest)",
+      "Bash(\"/c/Program Files/GraalVM/graalvm-community-openjdk-25+37.1/bin/java\" -cp \"nutsnbolts/target/test-classes;nutsnbolts/target/classes;$\\(cat /tmp/nutsnbolts_cp.txt\\)\" org.testng.TestNG -testclass org.smallmind.nutsnbolts.csv.CSVReaderTest)",
+      "Bash(\"/c/Program Files/GraalVM/graalvm-community-openjdk-25+37.1/bin/java\" -cp \"nutsnbolts/target/test-classes;nutsnbolts/target/classes;$\\(cat /tmp/nutsnbolts_cp.txt\\)\" org.testng.TestNG -testclass org.smallmind.nutsnbolts.property.PropertyExpanderTest)",
+      "Bash(bash /tmp/check_subpkgs.sh)",
+      "Bash(python /tmp/analyze.py)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am -DskipTests=false -Dgroups=integration,unit org.jacoco:jacoco-maven-plugin:0.8.13:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.13:report)",
+      "Bash(git -C /c/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind diff --cached --stat nutsnbolts/)"
     ]
   }
 }

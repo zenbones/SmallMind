@@ -42,7 +42,7 @@ import java.lang.reflect.Method;
  */
 public class Setter implements Serializable {
 
-  private final Class attributeClass;
+  private final Class<?> attributeClass;
   private final Method method;
   private final String attributeName;
 
@@ -90,7 +90,7 @@ public class Setter implements Serializable {
    *
    * @return the raw {@link Class} of the setter's parameter
    */
-  public Class getAttributeClass () {
+  public Class<?> getAttributeClass () {
 
     return attributeClass;
   }

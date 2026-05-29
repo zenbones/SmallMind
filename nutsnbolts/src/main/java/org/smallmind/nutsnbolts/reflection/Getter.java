@@ -44,7 +44,7 @@ public class Getter implements Serializable {
 
   private static final Object[] NO_PARAMETERS = new Object[0];
 
-  private final Class attributeClass;
+  private final Class<?> attributeClass;
   private final Method method;
   private final String attributeName;
   private final boolean is;
@@ -66,7 +66,7 @@ public class Getter implements Serializable {
     if (method.getName().startsWith("get") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3))) {
       attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
       is = false;
-    } else if (!method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
+    } else if (method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
       attributeName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
       is = true;
     } else {
@@ -109,7 +109,7 @@ public class Getter implements Serializable {
    *
    * @return the raw {@link Class} of the getter's return value
    */
-  public Class getAttributeClass () {
+  public Class<?> getAttributeClass () {
 
     return attributeClass;
   }

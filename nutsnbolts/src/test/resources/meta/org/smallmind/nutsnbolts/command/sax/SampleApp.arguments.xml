@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options xmlns="http://www.smallmind.org/schema/nutsnbolts/command"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.smallmind.org/schema/nutsnbolts/command http://www.smallmind.org/schema/nutsnbolts/smallmind-command-1.0.xsd">
+  <option name="input" flag="i" required="true">
+    <arguments>
+      <single>path</single>
+    </arguments>
+  </option>
+  <option name="verbose" flag="v">
+    <arguments>
+      <none/>
+    </arguments>
+  </option>
+  <option name="files" flag="f">
+    <arguments>
+      <list>paths</list>
+    </arguments>
+  </option>
+  <option name="level" flag="l">
+    <arguments>
+      <enumerated>
+        <value>low</value>
+        <value>medium</value>
+        <value>high</value>
+      </enumerated>
+    </arguments>
+  </option>
+</options>

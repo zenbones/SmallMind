@@ -609,7 +609,7 @@ public class ByteArrayIOStream implements Closeable {
           throw new IndexOutOfBoundsException();
         } else if (len > 0) {
 
-          for (int index = off; index < len; index++) {
+          for (int index = off; index < off + len; index++) {
             write(bytes[index]);
           }
         }

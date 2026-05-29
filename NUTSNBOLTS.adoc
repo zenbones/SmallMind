@@ -182,7 +182,8 @@ and reused across every other SmallMind artifact. It exists so that:
 
 | Common collections the JDK does not ship (bag, bloom filter, LRU map)
 | `org.smallmind.nutsnbolts.util`
-| `Bag` / `HashBag`, `BloomFilter`, `LRUMap`, `AlphaNumericComparator`
+| `Bag` / `HashBag`, `BloomFilter`, `LRUMap`, `AlphaNumericComparator`,
+  `SemanticVersionComparator`, `DotNotationComparator`
 
 | Use Spring with SmallMind `Resource`, extension loaders, and placeholder configs
 | `org.smallmind.nutsnbolts.spring`
@@ -637,9 +638,25 @@ the writer advance independently against the same buffer.
     Callback mechanism to observe `close()` on resources whose
     lifecycle is managed elsewhere.
 
-`PathUtility`, `CopyTreeConfigurationBuilder`::
-    Recursive tree copy, safe path manipulation, and configuration
-    objects for copy-with-exclusions.
+`ByteBufferInputStream`, `MultiOutputStream`, `MarkableInputStream`::
+    `InputStream` view over a `ByteBuffer`'s remaining bytes, an
+    `OutputStream` that fans every write out to a fixed array of
+    delegate streams, and a wrapper that adds `mark` / `reset` support
+    to any `InputStream` that doesn't natively offer it.
+
+`FileUtility`, `PathUtility`, `CopyTreeConfigurationBuilder`,
+`DeleteTreeConfigurationBuilder`::
+    Recursive tree copy, recursive delete (with optional
+    `DirectoryNotEmptyException` propagation), `isDirectoryEmpty`, and
+    builders for copy/delete configuration including per-path filters
+    and directory-creation attributes.
+
+`RegExTranslator`, `ExtensionFileFilter`, `WildcardFileNameFileFilter`,
+`WildcardFileNamePathFilter`, `PathFilter`, `TimeFilter`::
+    Glob-to-regex translation (where `*` and `?` do not cross `/`,
+    while `**` does), file/path filters that consume those patterns,
+    and a `PathFilter` that accepts paths whose last-modified time
+    satisfies a `time.TimeArithmetic` predicate.
 
 *Example.*
 
@@ -664,9 +681,10 @@ try (ByteArrayIOStream pipe = new ByteArrayIOStream(8 * 1024)) {
 *Package:* `org.smallmind.nutsnbolts.csv`
 
 `CSVParser` reads a stream line-by-line, emits `startDocument`, one
-`handleLine(String[])` per record, and `endDocument` to a
+`handleFields(String[])` per record, and `endDocument` to a
 `CSVLineHandler`. The low-level `CSVReader` handles quoting, embedded
-delimiters, and escape characters. Optional flags for "skip header"
+delimiters, multi-line quoted fields, and `""` as the escape for a
+literal quote inside a quoted field. Optional flags for "skip header"
 and "trim fields".
 
 *Why it exists.* CSV is ubiquitous but error-prone (quoted fields
@@ -691,7 +709,7 @@ parser.setLineHandler(new CSVLineHandler() {
 
 parser.parse(Files.newInputStream(Paths.get("data.csv")));
 ----
-<1> Skip the header row. Otherwise the first `handleLine` call delivers
+<1> Skip the header row. Otherwise the first `handleFields` call delivers
     the column titles.
 
 [[pkg-xml-json]]
@@ -719,10 +737,12 @@ These two subpackages hold the shared implementations.
 
 [source,java]
 ----
-String xml = XMLUtility.toString(document, 3);                    // <1>
+String xml = XMLUtility.toString(document, true);                 // <1>
 ----
-<1> Indents by 3 spaces per level. `XMLUtility.encode(String)` is the
-    quick-escape for embedding text in XML content.
+<1> Indents using three spaces per nesting level when the boolean flag
+    is `true`; the single-argument overload emits an unindented form.
+    `XMLUtility.encode(String)` is the quick-escape for embedding text
+    in XML content (it replaces `&`, `<`, and `>`).
 
 *Example — JAXB adapter on a field.*
 
@@ -769,12 +789,33 @@ CompressionType.ZIP.walk(Paths.get("bundle.zip"), entry -> {
 `ClassPathTemplateLoader`, `FileSystemTemplateLoader`, and
 `ResourceTemplateLoader` plug into FreeMarker's `TemplateLoader`
 contract so templates can come from the classpath, a filesystem
-path, or a SmallMind `Resource`.
+path, or a SmallMind `Resource`. The matching `*TemplateSource`
+classes wrap the underlying handle (input stream, file path, or
+`Resource`) and are what the loader hands back to FreeMarker on each
+`findTemplateSource` call.
 
 *Why it exists.* FreeMarker ships loaders, but they assume certain
 deployment layouts. A classpath loader that searches with the
 context classloader, respects JAR entries, and caches last-modified
 times is a routine need.
+
+*Key constructors.*
+
+`ClassPathTemplateLoader`::
+    Three constructor shapes: no-argument (uses the context
+    classloader and absolute resource names), single-`ClassLoader`
+    (custom classloader, absolute names), or single-`Class` /
+    `Class + boolean relative`. With `relative = true` the loader
+    prefixes every requested name with the anchor class's package
+    path, so a template colocated with its consumer can be loaded by
+    its short name.
+
+`FileSystemTemplateLoader`::
+    Either no-argument (template names are treated as absolute file
+    paths, with a leading slash inserted because FreeMarker strips
+    them as a security measure) or with a base `Path` that template
+    names are resolved against. `setBasePath` switches the root at
+    runtime.
 
 [[pkg-email]]
 === email — Jakarta Mail wrapper
@@ -859,8 +900,13 @@ postman.send(mail, model);
 
 `http` wraps `HttpURLConnection` for simple GET/PUT/POST/DELETE cases
 (`HttpTransmitter`, `HttpPipe`, `HttpMethod`) and provides the common
-codec utilities used during HTTP plumbing — `Base64Codec`,
-`URLCodec`, `HTMLUtility` for HTML entity escaping.
+codec utilities used during HTTP plumbing — `Base64Codec` (standard,
+URL-safe, and custom-alphabet variants), `URLCodec` (RFC-3986
+percent-encoding with optional `+`-for-space), `HTTPCodec` for
+`application/x-www-form-urlencoded` query strings, and `HTMLUtility`
+which converts newlines to `<br>` and renders `Throwable` stack traces
+as HTML. For escaping `&` / `<` / `>` see `XMLUtility.encode` in the
+`xml` package.
 
 `net` contains `InetAddressComparator`, which orders IP addresses by
 their byte representation rather than string-wise (lexicographic
@@ -916,6 +962,12 @@ is why this utility exists.
 `HashAlgorithm`::
     Enum of supported message digests (`MD5`, `SHA_1`, `SHA_256`,
     `SHA_512`).
+
+`HexCodec`::
+    Lowercase hexadecimal encoding (with zero-padding for byte values
+    below `0x10`) and decoding (accepting both upper and lower case,
+    rejecting odd-length and non-hex input). Used by `SnowflakeId` and
+    available standalone.
 
 `SymmetricAlgorithm`, `AsymmetricAlgorithm`::
     Enums for cipher selection.
@@ -983,11 +1035,21 @@ boolean ok = EncryptionUtility.verify(
 *Package:* `org.smallmind.nutsnbolts.time`
 
 `TimeUtility` converts legacy types (`Date`, `Calendar`, epoch
-milliseconds) to `ZonedDateTime` and parses/formats ISO-8601 strings
-in all four common shapes (date-only, local, offset, zoned) using
-the corresponding `java.time.format.DateTimeFormatter`. `Stint` is a
-date-range value type. `Day` and `Month` are enums. `CalendarUtility`
-has `Calendar`-era arithmetic.
+milliseconds, `LocalDateTime`) to `ZonedDateTime` and parses/formats
+ISO-8601 strings in all four common shapes (date-only, local, offset,
+zoned) using the corresponding `java.time.format.DateTimeFormatter`,
+auto-detecting the shape from the input.
+
+`Stint` is an immutable duration value (a non-negative `long` paired
+with a `TimeUnit`); `StintUtility.convertToDouble` converts between
+units with sub-unit precision preserved when going from finer to
+coarser units. `TimeArithmetic` pairs a reference `ZonedDateTime` with
+a `TimeOperation` (`BEFORE`, `BEFORE_OR_ON`, `ON_OR_AFTER`, `AFTER`)
+to test arbitrary `Instant` values against a single reference point —
+used by `io.TimeFilter` for filesystem tree walks. `Day` and `Month`
+are enums; `CalendarUtility` provides integer-driven calendar
+arithmetic (days in month, day of week via Zeller's congruence,
+simplified `% 4` leap-year rule).
 
 *Why it exists.* Java's `Date` → `java.time` migration is only mostly
 done in real codebases. A single utility that turns any legacy value
@@ -1094,10 +1156,27 @@ instances at runtime:
     Runtime factory for synthetic annotation proxies — useful for
     programmatic service discovery and metadata injection.
 
-`ArrayStackTraceAccumulator`, `WrappedException`,
-`UnknownSwitchCaseException`, `FormattedException`::
-    Exception helpers. `WrappedException` adapts a checked exception
-    into an unchecked one for propagation through functional APIs.
+`FormattedException` / `FormattedRuntimeException`::
+    Checked and unchecked exception base classes whose detail messages
+    are built via `String.format(message, args)`. Subclasses across the
+    repository (such as `CSVParseException`, `SpreadParserException`,
+    `DotNotationException`, `MutationException`) inherit this pattern
+    so callers can write
+    `throw new FooException("Bad id(%s)", id)` instead of pre-formatting.
+
+`WrappedException`::
+    Adapts a checked exception into a `RuntimeException` for
+    propagation through functional APIs, with a `convert(Class<E>)`
+    accessor that casts the wrapped cause back to its original type.
+
+`UnknownSwitchCaseException`::
+    Convenience throw for default branches of exhaustive switches,
+    naming the unhandled case.
+
+`StackTraceAccumulator` / `ArrayStackTraceAccumulator` / `StackTraceUtility`::
+    Pluggable sink for stack-trace lines plus a static
+    `obtainStackTraceAsString(Throwable)` helper used by
+    `http.HTMLUtility.convertThrowable` and elsewhere.
 
 *`reflection`* provides field introspection (`FieldAccessor`,
 `FieldUtility`), annotation filtering (`AnnotationFilter`), bytecode
@@ -1268,30 +1347,118 @@ is most likely to reach for:
     `LinkedHashMap`-backed bounded cache with access-order eviction.
 
 `AlphaNumericComparator`::
-    Human-friendly sort order where `"item-10"` sorts after
-    `"item-2"` instead of between `"item-1"` and `"item-20"`.
+    Char-by-char sort where digits sort before letters and letters
+    compare case-insensitively. Note that the comparison is per
+    character, not per numeric run, so `"a10"` sorts before `"a2"`.
 
 `SemanticVersionComparator`::
-    Sorts SemVer-style strings correctly.
+    Sorts dot-separated numeric version strings segment-by-segment as
+    integers (so `"1.10.0"` correctly sorts after `"1.2.0"`). Null and
+    empty inputs sort first.
+
+`DotNotationComparator`::
+    Comparator for dot-separated strings (paths, domain names, log
+    categories) that compares each segment using
+    `AlphaNumericComparator`. The `reversed` constructor flag changes
+    segment iteration order to right-to-left, useful when the rightmost
+    segment is the most significant key (such as the TLD of a domain
+    name); it does *not* invert the sign of the comparison result.
 
 `SnowflakeId`, `SnowflakeVariant`, `SnowflakeVersion`::
-    Snowflake-style identifier generation.
+    Eighteen-byte identifiers combining a millisecond timestamp, the
+    host MAC address (or random fallback), the JVM process id, and a
+    per-millisecond counter. Supports hex, dotted, and compact
+    alphanumeric encodings, with `Comparable` ordering by timestamp.
 
-`Pair<L,R>`, `Tuple`, `Counter`, `Mutation`, `Option` / `Some` / `None`::
-    Value primitives and functional-programming helpers.
+`Pair<L,R>`::
+    Immutable two-element record. `Pair.of(a, b)` is the typical
+    constructor.
+
+`Tuple<K,V>`::
+    Ordered, duplicate-allowing collection of key/value pairs with
+    iterator support and fail-fast concurrent-modification detection.
+
+`Counter`::
+    Mutable `int` counter with pre- and post-variants of
+    `incAndGet` / `getAndInc` / `decAndGet` / `getAndDec` /
+    `addAndGet` / `getAndAdd` / `subtractAndGet` / `getAndSubtract`.
+    Not thread-safe — for that, use `AtomicInteger`.
+
+`Mutation<T,R>` / `MutationUtility`::
+    A `Function`-like functional interface whose `apply` is allowed to
+    throw checked exceptions. `MutationUtility` runs a `Mutation` over
+    arrays, iterators, iterables, and collections to produce arrays,
+    lists, sets, maps, or `Bag`s, wrapping any thrown exception in a
+    `MutationException`.
+
+`Option` / `Some` / `None`::
+    Lightweight option-type helpers for codebases that prefer to model
+    presence/absence explicitly without `java.util.Optional`.
 
 `AnsiColor`::
     Terminal color escape sequences.
 
 `Bytes`::
-    Byte-array helpers (hex conversion, padding, comparisons).
+    Big-endian conversion between primitive `long` / `int` / `short`
+    values and fixed-width byte arrays, used by `SnowflakeId` and
+    elsewhere to pack numeric identifiers. For hex encoding see
+    `HexCodec` in the `security` package.
 
 `SelfDestructiveMap<K,V>`::
     A map whose entries expire after a configurable TTL; uses
     `SelfDestructiveKey` under the hood.
 
+`NumberComparator`::
+    Cross-type numeric comparator that normalises across `BigDecimal`,
+    `BigInteger`, floating-point, and integral primitive wrappers
+    before comparing. Throws `FormattedRuntimeException` when handed a
+    `Number` subtype it does not recognise.
+
+`DirectionalComparator<T>` / `NaturalDirectionalComparator<T>`::
+    Abstract base that carries a sort `Direction` (`ASCENDING` /
+    `DESCENDING`), and a concrete subclass that delegates to
+    `Comparable.compareTo`.
+
+`DotNotation`::
+    Compiles a glob-style dotted pattern (segments joined by `.`, with
+    `*` and `?` as wildcards) into a `Pattern`, and computes a bitmask
+    value reflecting which segments matched. Rejects malformed input
+    such as leading or trailing dots, consecutive dots, or wildcards
+    mid-segment via `DotNotationException`.
+
+`Spread` / `NumericSpread` / `AlphaSpread`::
+    Expand comma-delimited range expressions such as `"1,3..5,9"` or
+    `"a,c..e,z"` into arrays. `Spread` dispatches to the numeric or
+    alphabetic variant based on the first character. Errors are
+    surfaced as `SpreadParserException`.
+
+`MagicHash`::
+    XOR-shift hash mixer that reduces clustering and improves bit
+    distribution for `int` hash codes. Useful when building custom
+    hash tables over inputs whose natural hash code clusters in the
+    low bits.
+
+`MartianBase34`::
+    Encodes non-negative `long` values into a 34-character custom
+    alphabet, applying a per-`Group` additive mix constant. Three
+    `Group` constants (`FIRST`, `SECOND`, `THIRD`) carry distinct mix
+    values. Best used with explicit digit widths that comfortably
+    accommodate the mix constant — auto-width selection may produce
+    encoded strings whose decode does not round-trip cleanly.
+
+`MacAddress` / `MacAddressException`::
+    Reads the host MAC address from the first non-loopback network
+    interface. Used by `SnowflakeId` to embed a machine identifier in
+    every generated id.
+
 `LocaleUtility`, `StringUtility`, `EnumUtility`, `ArrayUtility`::
-    Assorted helpers.
+    Assorted helpers. `EnumUtility.toEnumName` converts free-form text
+    into upper snake-case enum constant names with configurable
+    digit-prefix handling. `StringUtility` covers display/camel-case
+    conversion, Java-identifier validation, and ellipsis trimming.
+    `ArrayUtility` clones, concatenates, and linear-searches generic
+    arrays. `LocaleUtility.forCountryISO3Code` looks up a `Locale` by
+    its three-letter ISO country code.
 
 *Example — LRU cache.*
 

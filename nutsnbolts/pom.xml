@@ -12,6 +12,11 @@
   <description>Nuts'n'Bolts Utilities</description>
   <dependencies>
     <dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>jakarta.mail</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
       <scope>compile</scope>
