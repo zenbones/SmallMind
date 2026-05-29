@@ -324,8 +324,9 @@ and `APACHE` alongside its classes.
     enabled) participate in rule evaluation.
 <4> A human-readable id used in log messages and error reports; must be
     unique across rules within the same configuration block.
-<5> Glob-pattern exclusions. See <<rule-excludes-caveat>> for current
-    behavior.
+<5> Glob-pattern exclusions. Files whose names match any pattern here are
+    skipped even when they would otherwise match `fileTypes`. See
+    <<rule-glob-semantics>> for the glob syntax.
 <6> References the built-in JavaDoc stencil by its fully qualified class
     name.
 <7> Notice text file, resolved against the reactor root. The file is read
@@ -351,8 +352,9 @@ For every configured rule, the goal:
 3. Walks the main source directory, the script-source directory, and —
    depending on `includeResources` and `includeTests` — main and test
    resource directories.
-4. For each file whose name matches the rule's glob patterns, scans the
-   top for a notice block in the rule's stencil, removes it if present,
+4. For each file whose name matches one of the rule's `fileTypes`
+   patterns and matches none of its `excludes` patterns, scans the top
+   for a notice block in the rule's stencil, removes it if present,
    writes the new notice if one was supplied, and copies the remainder
    of the file unchanged.
 
@@ -489,7 +491,7 @@ with opening line `/*`, per-line prefix `" * "`, blank-line prefix
 `" *"`, and closing line `" */"`. No blank lines are inserted before or
 after, and no leading file lines are skipped.
 
-[[rule-excludes-caveat]]
+[[rule-glob-semantics]]
 === Rule Glob Semantics
 
 File-type and exclude patterns use a minimal glob syntax translated into
@@ -810,27 +812,6 @@ this plugin does not.
 [[limitations-and-known-issues]]
 == Limitations And Known Issues
 
-Rule excludes are not wired through to the filesystem walk::
-    `SourceNoticeMojo.execute()` constructs an `excludeFilters` array
-    from `Rule.getExcludes()` but never passes it to
-    `updateNotice(...)`. The method signature declares
-    `PathFilter... excludeFilters` as varargs, so every call-site is
-    invoking it with an empty exclude list. In the current build,
-    configuring `<excludes>` inside a rule has no effect: files that
-    match an include pattern are rewritten regardless of whether they
-    also match an exclude pattern. The author's `//TODO: Excludes,
-    Seek/Process Optimization` comment in `SourceNoticeMojo`
-    acknowledges this.
-
-Rule `<excludes>` element must be present, even when empty::
-    `Rule.getExcludes()` defaults to `null` when the element is omitted,
-    and `SourceNoticeMojo.execute()` dereferences the getter
-    unconditionally: `new PathFilter[rule.getExcludes().length]`. A rule
-    configured without an `<excludes>` element therefore fails with
-    `NullPointerException`. Workaround: always declare at least an
-    empty `<excludes/>` element inside every rule until the upstream
-    null guard is added.
-
 No multi-segment path globs::
     Globs apply to the file name component only. There is no way to
     match, for example, only files under `src/main/java/com/example/`;
@@ -904,11 +885,6 @@ Shebang or XML declaration got rewritten under the notice::
     The stencil has no `skipLinePattern`. Add one that matches the
     required leading line (e.g. `^#!.*$`, `^<\?xml.*\?>$`). Skipped
     lines are forwarded verbatim above the notice on emission.
-
-`NullPointerException` from `SourceNoticeMojo`::
-    Most often caused by a rule that omits the `<excludes>` element.
-    See <<limitations-and-known-issues>>. Configure an empty
-    `<excludes/>` block as a workaround.
 
 == See Also
 

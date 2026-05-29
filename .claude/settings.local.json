@@ -33,7 +33,8 @@
       "Bash(bash /tmp/check_subpkgs.sh)",
       "Bash(python /tmp/analyze.py)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts -am -DskipTests=false -Dgroups=integration,unit org.jacoco:jacoco-maven-plugin:0.8.13:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.13:report)",
-      "Bash(git -C /c/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind diff --cached --stat nutsnbolts/)"
+      "Bash(git -C /c/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind diff --cached --stat nutsnbolts/)",
+      "Bash(git -C \"C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind\" diff --stat)"
     ]
   }
 }

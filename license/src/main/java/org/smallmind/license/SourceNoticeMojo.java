@@ -28,8 +28,9 @@ import org.smallmind.license.stencil.Stencil;
  * <p>Bound to the {@code process-sources} lifecycle phase under the goal name
  * {@code generate-notice-headers}. For each configured {@link Rule}, the mojo walks the project's
  * source, script, and optionally resource directories and rewrites every file whose name matches
- * the rule's file-type patterns. Existing notices are detected and replaced atomically by writing
- * to a temporary file and then moving it over the original.
+ * one of the rule's file-type patterns and matches none of its exclude patterns. Existing notices
+ * are detected and replaced atomically by writing to a temporary file and then moving it over the
+ * original.
  *
  * <p>Notices are formatted using the {@link org.smallmind.license.stencil.Stencil} identified by
  * {@link Rule#getStencilId()}. The built-in {@link JavaDocStencil} is always available; additional
@@ -135,12 +136,13 @@ public class SourceNoticeMojo extends AbstractMojo {
   @Parameter(defaultValue = "false")
   private boolean verbose;
 
-  //TODO: Excludes, Seek/Process Optimization
+  //TODO: Seek/Process Optimization
 
   /**
    * Applies each configured rule to the project's source, script, and optionally resource
-   * directories. For each matching file, an existing notice is detected and removed; if the rule
-   * supplies a notice file, the new notice is then written using the rule's stencil.
+   * directories. For each file whose name matches a rule's {@code fileTypes} pattern and does not
+   * match any of its {@code excludes} patterns, an existing notice is detected and removed; if the
+   * rule supplies a notice file, the new notice is then written using the rule's stencil.
    *
    * @throws MojoExecutionException if a rule specifies no file types, supplies no notice when
    *                                removal is disabled, or references an unknown stencil id
@@ -216,21 +218,21 @@ public class SourceNoticeMojo extends AbstractMojo {
           if (stencil.getId().equals(rule.getStencilId())) {
             stenciled = true;
 
-            updateNotice(stencil, noticeArray, buffer, project.getBuild().getSourceDirectory(), includeFilters);
-            updateNotice(stencil, noticeArray, buffer, project.getBuild().getScriptSourceDirectory(), includeFilters);
+            updateNotice(stencil, noticeArray, buffer, project.getBuild().getSourceDirectory(), includeFilters, excludeFilters);
+            updateNotice(stencil, noticeArray, buffer, project.getBuild().getScriptSourceDirectory(), includeFilters, excludeFilters);
 
             if (includeResources) {
               for (Resource resource : project.getBuild().getResources()) {
-                updateNotice(stencil, noticeArray, buffer, resource.getDirectory(), includeFilters);
+                updateNotice(stencil, noticeArray, buffer, resource.getDirectory(), includeFilters, excludeFilters);
               }
             }
 
             if (includeTests) {
-              updateNotice(stencil, noticeArray, buffer, project.getBuild().getTestSourceDirectory(), includeFilters);
+              updateNotice(stencil, noticeArray, buffer, project.getBuild().getTestSourceDirectory(), includeFilters, excludeFilters);
 
               if (includeResources) {
                 for (Resource testResource : project.getBuild().getTestResources()) {
-                  updateNotice(stencil, noticeArray, buffer, testResource.getDirectory(), includeFilters);
+                  updateNotice(stencil, noticeArray, buffer, testResource.getDirectory(), includeFilters, excludeFilters);
                 }
               }
             }
@@ -410,16 +412,16 @@ public class SourceNoticeMojo extends AbstractMojo {
       if ((skipPattern == null) || (!skipPattern.matcher(singleLine).matches())) {
         switch (noticeState) {
           case FIRST:
-            if (singleLine.length() > 0) {
+            if (!singleLine.isEmpty()) {
               noticeState = singleLine.equals(stencil.getFirstLine()) ? NoticeState.LAST : NoticeState.TERMINATED;
             }
             break;
           case LAST:
             if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
               noticeState = NoticeState.COMPLETED;
-            } else if ((singleLine.length() > 0) && (!(singleLine.equals(stencil.getBlankLinePrefix()) || ((stencil.getLinePrefix() != null) && singleLine.startsWith(stencil.getLinePrefix()))))) {
+            } else if ((!singleLine.isEmpty()) && (!(singleLine.equals(stencil.getBlankLinePrefix()) || ((stencil.getLinePrefix() != null) && singleLine.startsWith(stencil.getLinePrefix()))))) {
               noticeState = NoticeState.TERMINATED;
-            } else if ((singleLine.length() == 0) && (stencil.getBlankLinePrefix() == null)) {
+            } else if ((singleLine.isEmpty()) && (stencil.getBlankLinePrefix() == null)) {
               noticeState = NoticeState.TERMINATED;
             }
             break;
@@ -432,10 +434,10 @@ public class SourceNoticeMojo extends AbstractMojo {
       }
     }
 
-    if (noticeState.equals(NoticeState.COMPLETED) || ((singleLine != null) && (singleLine.length() == 0))) {
+    if (noticeState.equals(NoticeState.COMPLETED) || ((singleLine != null) && (singleLine.isEmpty()))) {
       do {
         singleLine = fileReader.readLine();
-      } while ((singleLine != null) && (singleLine.length() == 0));
+      } while ((singleLine != null) && (singleLine.isEmpty()));
     }
 
     return singleLine;
@@ -464,7 +466,7 @@ public class SourceNoticeMojo extends AbstractMojo {
     }
 
     for (String noticeLine : noticeArray) {
-      if (noticeLine.length() == 0) {
+      if (noticeLine.isEmpty()) {
         if (stencil.getBlankLinePrefix() != null) {
           fileWriter.write(stencil.getBlankLinePrefix());
         }
