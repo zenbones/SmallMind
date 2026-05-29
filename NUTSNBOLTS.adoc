@@ -1585,9 +1585,12 @@ URL, failed URL connection). Callers should handle both.
 
 `GatingClassLoader` can compare a class's last-modified timestamp
 against a `gracePeriodSeconds` tolerance to detect stale definitions
-for reloadable extensions. A grace period of `0` disables the check.
-Stale detection is not automatic reloading; the loader throws, and it
-is up to the host to drop and recreate the loader.
+for reloadable extensions. A negative grace period disables the check
+entirely; a value of `0` keeps the check enabled with no fresh window,
+so the source is consulted on every subsequent `loadClass` call.
+Stale detection is not automatic reloading; the loader throws
+`StaleClassLoaderException`, and it is up to the host to drop and
+recreate the loader.
 
 === Naive TLS implementations
 
