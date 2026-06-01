@@ -37,6 +37,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.json.SortDirection;
 
 /**
  * Describes a single field to sort on, including an optional entity alias and the sort direction.
@@ -155,7 +156,7 @@ public class SortField {
    * @return sort direction
    */
   @XmlElement(name = "direction", required = true)
-  @XmlJavaTypeAdapter(SortDirectionEnumXmlAdapter.class)
+  @XmlJavaTypeAdapter(org.smallmind.nutsnbolts.json.SortDirectionEnumXmlAdapter.class)
   public SortDirection getDirection () {
 
     return direction;

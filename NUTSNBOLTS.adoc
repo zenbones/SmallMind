@@ -724,7 +724,11 @@ parser.parse(Files.newInputStream(Paths.get("data.csv")));
 `json` provides JAXB `XmlAdapter`s for types that JAXB does not
 marshal out of the box: `LocalDateTime`, `ZonedDateTime`, `Currency`,
 `Timestamp`, enums (via a generic adapter pattern), and the
-`BinaryData` wrapper for encoded and encrypted byte payloads.
+`BinaryData` wrapper for encoded and encrypted byte payloads. The
+shared `SortDirection` enum (`ASC` / `DESC`) and its companion
+`SortDirectionEnumXmlAdapter` (which marshals the enum constants in
+lowercase) also live here so query and persistence layers can use one
+on-the-wire vocabulary.
 
 *Why they exist.* Java's XML stack is low-level: serialising a DOM
 back to a string is a half-dozen lines every time, and XML External

@@ -60,13 +60,9 @@ public class NaturalDirectionalComparator<T extends Comparable<T>> extends Direc
    */
   public int compare (T t1, T t2) {
 
-    switch (getDirection()) {
-      case DESCENDING:
-        return t1.compareTo(t2);
-      case ASCENDING:
-        return t1.compareTo(t2) * -1;
-      default:
-        throw new UnknownSwitchCaseException(getDirection().name());
-    }
+    return switch (getDirection()) {
+      case DESCENDING -> t1.compareTo(t2);
+      case ASCENDING -> t1.compareTo(t2) * -1;
+    };
   }
 }

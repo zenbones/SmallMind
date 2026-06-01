@@ -30,24 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.query;
-
-import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
+package org.smallmind.nutsnbolts.json;
 
 /**
- * JAXB adapter that marshals {@link SortDirection} constants to their lowercase string names.
+ * Compact sort direction indicator — {@code ASC} for ascending, {@code DESC} for descending.
+ * Shared across query and persistence layers.
  */
-public class SortDirectionEnumXmlAdapter extends EnumXmlAdapter<SortDirection> {
+public enum SortDirection {
 
-  /**
-   * Converts a {@link SortDirection} value to its lowercase string representation.
-   *
-   * @param enumeration sort direction to marshal
-   * @return lowercase name of the enum constant
-   */
-  @Override
-  public String marshal (SortDirection enumeration) {
-
-    return super.marshal(enumeration).toLowerCase();
-  }
+  ASC, DESC
 }

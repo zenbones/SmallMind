@@ -854,6 +854,9 @@ or a MongoDB criterion document. The module lives under
 
 `Sort` + `SortField` + `SortDirection` (`ASC`, `DESC`)::
     Ordered list of field sorts, same naming model as `WhereField`.
+    `SortDirection` and its companion `SortDirectionEnumXmlAdapter` live
+    in `org.smallmind.nutsnbolts.json` so the enum and its lowercase JAXB
+    marshaling can be shared across query and persistence layers.
 
 `WhereVisitor`, `WhereUtility.walk(visitor, where)`::
     Visitor infrastructure for tree traversal.
