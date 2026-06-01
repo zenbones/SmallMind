@@ -1080,7 +1080,7 @@ implementation speaks Kafka.
     <constructor-arg name="nodeName"                  value="app-node-1"/>  <1>
     <constructor-arg name="concurrencyLimit"          value="1"/>           <2>
     <constructor-arg name="startupGracePeriodSeconds" value="10"/>          <3>
-    <constructor-arg name="consumerType"              value="CLASSIC"/>     <4>
+    <constructor-arg name="groupProtocol"             value="CLASSIC"/>     <4>
     <constructor-arg name="topicName"                 value="oumuamua"/>    <5>
     <constructor-arg name="servers">                                         <6>
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
@@ -1098,7 +1098,7 @@ implementation speaks Kafka.
 <3> How long `startUp` will wait for the broker to become reachable
     before giving up.
 <4> The Kafka group protocol for the backbone's consumers. Use
-    `CLASSIC` for brokers that do not support KIP-848; use `GROUP`
+    `CLASSIC` for brokers that do not support KIP-848; use `CONSUMER`
     for Kafka 3.7 and later with the new consumer protocol enabled.
 <5> The effective Kafka topic is `oumuamua-{topicName}`. Use a
     different `topicName` per Bayeux cluster if more than one

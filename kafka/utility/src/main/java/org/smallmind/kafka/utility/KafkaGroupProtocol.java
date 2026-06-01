@@ -37,10 +37,10 @@ package org.smallmind.kafka.utility;
  * {@link org.apache.kafka.clients.consumer.ConsumerConfig#GROUP_PROTOCOL_CONFIG}.
  * The choice also determines which additional consumer properties
  * {@link KafkaConnector#createConsumer} sets: {@link #CLASSIC} enables
- * client-side heartbeat and session-timeout settings; {@link #GROUP} omits
+ * client-side heartbeat and session-timeout settings; {@link #CONSUMER} omits
  * them because the broker manages those values under the new protocol.
  */
-public enum KafkaConsumerType {
+public enum KafkaGroupProtocol {
 
   /**
    * Classic client-side rebalance protocol ({@code group.protocol=classic}).
@@ -54,11 +54,11 @@ public enum KafkaConsumerType {
    * {@code heartbeat.interval.ms} and {@code session.timeout.ms} are not set
    * client-side; the broker manages them under this protocol.
    */
-  GROUP("group");
+  CONSUMER("consumer");
 
   private final String code;
 
-  KafkaConsumerType (String code) {
+  KafkaGroupProtocol (String code) {
 
     this.code = code;
   }

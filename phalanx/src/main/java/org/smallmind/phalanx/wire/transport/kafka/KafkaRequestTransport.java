@@ -48,7 +48,7 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
-import org.smallmind.kafka.utility.KafkaConsumerType;
+import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
@@ -94,12 +94,12 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
    * @param concurrencyLimit          number of parallel response consumer threads
    * @param defaultTimeoutSeconds     seconds a caller waits for a response when no explicit timeout is provided
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
-   * @param consumerType              Kafka group protocol for the response consumer threads
+   * @param groupProtocol              Kafka group protocol for the response consumer threads
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while the response ingester is starting
    */
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaConsumerType consumerType, KafkaServer... servers)
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(defaultTimeoutSeconds);
@@ -110,7 +110,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, consumerType, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, groupProtocol, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
   }
 
   /**

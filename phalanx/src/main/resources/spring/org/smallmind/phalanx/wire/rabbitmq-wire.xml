@@ -60,7 +60,7 @@
     <constructor-arg index="2" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="3" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
     <constructor-arg index="4" name="startupGracePeriodSeconds" value="10"/>
-    <constructor-arg index="5" name="consumerType" value="GROUP"/>
+    <constructor-arg index="5" name="groupProtocol" value="CONSUMER"/>
     <constructor-arg index="6" name="servers">
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="localhost:9094"/>
@@ -76,7 +76,7 @@
     <constructor-arg index="3" name="signalCodec" ref="jsonSignalCodec"/>
     <constructor-arg index="4" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="5" name="startupGracePeriodSeconds" value="10"/>
-    <constructor-arg index="6" name="consumerType" value="GROUP"/>
+    <constructor-arg index="6" name="groupProtocol" value="CONSUMER"/>
     <constructor-arg index="7" name="servers">
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="localhost:9094"/>

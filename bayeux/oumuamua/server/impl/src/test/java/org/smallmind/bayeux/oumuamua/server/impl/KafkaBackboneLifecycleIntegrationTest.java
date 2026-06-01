@@ -34,7 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.impl;
 
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka.KafkaBackbone;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
-import org.smallmind.kafka.utility.KafkaConsumerType;
+import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -71,7 +71,7 @@ public class KafkaBackboneLifecycleIntegrationTest extends AbstractBayeuxIntegra
       LIFECYCLE_NODE,
       1,
       GRACE_PERIOD_SECONDS,
-      KafkaConsumerType.CLASSIC,
+      KafkaGroupProtocol.CLASSIC,
       LIFECYCLE_TOPIC,
       new KafkaServer("localhost", 9094));
 
