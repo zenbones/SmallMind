@@ -47,9 +47,9 @@ public class MutationUtilityTest {
   public void testToArrayTransformsEveryElement ()
     throws MutationException {
 
-    String[] result = MutationUtility.toArray(new Integer[]{1, 2, 3}, String.class, STRINGIFY);
+    String[] result = MutationUtility.toArray(new Integer[] {1, 2, 3}, String.class, STRINGIFY);
 
-    Assert.assertEquals(result, new String[]{"v1", "v2", "v3"});
+    Assert.assertEquals(result, new String[] {"v1", "v2", "v3"});
   }
 
   public void testToArrayWithNullInputReturnsNull ()

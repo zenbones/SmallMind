@@ -63,6 +63,42 @@ public class Pipeline {
     return new Pipeline();
   }
 
+  private static Bson asDeferredBson (Filter filter) {
+
+    return new Bson() {
+
+      @Override
+      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+
+        return (BsonDocument)filter.toBsonDocument(documentClass, codecRegistry);
+      }
+    };
+  }
+
+  private static Bson asDeferredBson (Sort sort) {
+
+    return new Bson() {
+
+      @Override
+      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+
+        return (BsonDocument)sort.toBsonDocument(documentClass, codecRegistry);
+      }
+    };
+  }
+
+  private static Bson asDeferredBson (Projections projections) {
+
+    return new Bson() {
+
+      @Override
+      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+
+        return (BsonDocument)projections.toBsonDocument(documentClass, codecRegistry);
+      }
+    };
+  }
+
   /**
    * Appends a {@code $match} stage that filters documents by the supplied filter.
    *
@@ -176,8 +212,8 @@ public class Pipeline {
    * supplied accumulator fields. Use {@link com.mongodb.client.model.Accumulators} factories to build
    * each {@link BsonField} (for example {@code Accumulators.sum("total", "$amount")}).
    *
-   * @param idExpression  the group key expression; {@code null} groups everything into a single bucket
-   * @param accumulators  accumulator fields produced by {@link com.mongodb.client.model.Accumulators}
+   * @param idExpression the group key expression; {@code null} groups everything into a single bucket
+   * @param accumulators accumulator fields produced by {@link com.mongodb.client.model.Accumulators}
    * @return this builder for chaining
    */
   public Pipeline group (Object idExpression, BsonField... accumulators) {
@@ -210,41 +246,5 @@ public class Pipeline {
   public List<Bson> toBsonList () {
 
     return stages;
-  }
-
-  private static Bson asDeferredBson (Filter filter) {
-
-    return new Bson() {
-
-      @Override
-      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-
-        return (BsonDocument)filter.toBsonDocument(documentClass, codecRegistry);
-      }
-    };
-  }
-
-  private static Bson asDeferredBson (Sort sort) {
-
-    return new Bson() {
-
-      @Override
-      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-
-        return (BsonDocument)sort.toBsonDocument(documentClass, codecRegistry);
-      }
-    };
-  }
-
-  private static Bson asDeferredBson (Projections projections) {
-
-    return new Bson() {
-
-      @Override
-      public <TDocument> BsonDocument toBsonDocument (Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-
-        return (BsonDocument)projections.toBsonDocument(documentClass, codecRegistry);
-      }
-    };
   }
 }

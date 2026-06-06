@@ -98,7 +98,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    *                                  and used to skip locally-originating records on consumption
    * @param concurrencyLimit          number of parallel consumer worker threads spawned at {@link #startUp}
    * @param startupGracePeriodSeconds maximum seconds to wait for at least one broker to become reachable
-   * @param groupProtocol              Kafka group protocol for the backbone's consumer workers
+   * @param groupProtocol             Kafka group protocol for the backbone's consumer workers
    * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
    * @param servers                   one or more Kafka bootstrap broker addresses
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period

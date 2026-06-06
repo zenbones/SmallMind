@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.Tally;
@@ -57,7 +58,7 @@ public class ClaxonRegistryTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.stop();
   }

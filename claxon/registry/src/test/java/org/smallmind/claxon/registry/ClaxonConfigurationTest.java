@@ -122,7 +122,7 @@ public class ClaxonConfigurationTest {
   public void testNullArgumentConstructorRetainsDefaults () {
 
     ClaxonConfiguration defaults = new ClaxonConfiguration();
-    ClaxonConfiguration constructed = new ClaxonConfiguration(null, null, null, null, null, null);
+    ClaxonConfiguration constructed = new ClaxonConfiguration(null, null, null, null, null, null, null);
 
     Assert.assertSame(constructed.getClock(), defaults.getClock());
     Assert.assertEquals(constructed.getCollectionStint().getTime(), defaults.getCollectionStint().getTime());

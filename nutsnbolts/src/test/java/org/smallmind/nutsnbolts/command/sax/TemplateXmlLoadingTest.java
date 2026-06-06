@@ -46,6 +46,22 @@ import org.xml.sax.InputSource;
 @Test(groups = "integration")
 public class TemplateXmlLoadingTest {
 
+  private static Template loadTemplateNonValidating (Class<?> entryClass)
+    throws Exception {
+
+    Template template = new Template(entryClass);
+    OptionsDocumentExtender extender = new OptionsDocumentExtender(template);
+
+    try (InputStream stream = TemplateXmlLoadingTest.class.getClassLoader()
+                                .getResourceAsStream(entryClass.getCanonicalName().replace('.', '/') + ".arguments.xml")) {
+
+      Assert.assertNotNull(stream, "Arguments fixture missing from classpath");
+      ExtensibleSAXParser.parse(extender, new InputSource(stream), XMLEntityResolver.getInstance(), false);
+    }
+
+    return template;
+  }
+
   public void testTemplateFromXmlParsesEveryArgumentType ()
     throws Exception {
 
@@ -85,21 +101,5 @@ public class TemplateXmlLoadingTest {
     Template template = loadTemplateNonValidating(SampleApp.class);
 
     CommandLineParser.parseCommands(template, new String[] {"--input", "/x", "--level", "extreme"});
-  }
-
-  private static Template loadTemplateNonValidating (Class<?> entryClass)
-    throws Exception {
-
-    Template template = new Template(entryClass);
-    OptionsDocumentExtender extender = new OptionsDocumentExtender(template);
-
-    try (InputStream stream = TemplateXmlLoadingTest.class.getClassLoader()
-                                .getResourceAsStream(entryClass.getCanonicalName().replace('.', '/') + ".arguments.xml")) {
-
-      Assert.assertNotNull(stream, "Arguments fixture missing from classpath");
-      ExtensibleSAXParser.parse(extender, new InputSource(stream), XMLEntityResolver.getInstance(), false);
-    }
-
-    return template;
   }
 }

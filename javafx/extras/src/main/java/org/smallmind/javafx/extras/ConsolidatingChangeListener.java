@@ -35,7 +35,8 @@ package org.smallmind.javafx.extras;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -46,25 +47,28 @@ import org.smallmind.scribe.pen.LoggerManager;
  * A debouncing wrapper around a {@link ChangeListener} that consolidates rapid bursts of change
  * notifications into a single delivery after a configurable quiet period. While the quiet window
  * is open each new change supersedes the previous one so only the most recent state is forwarded.
- * Delivery is always dispatched on the JavaFX application thread. A shared daemon thread polls for
- * expired entries every 50 ms.
+ * Delivery is always dispatched on the JavaFX application thread. A shared single-thread
+ * {@link ScheduledExecutorService} checks for expired entries on a daemon thread every 250 ms.
  *
  * @param <T> the type of the observed value
  */
 public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
 
-  private static final CountDownLatch stopLatch = new CountDownLatch(1);
   private static final ConcurrentSkipListMap<ConsolidatingKey, LooseChange<?>> LOOSE_CHANGE_MAP = new ConcurrentSkipListMap<>();
+  private static final ScheduledExecutorService CONSOLIDATION_EXECUTOR = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+    Thread thread = new Thread(runnable, "javafx-consolidating-change");
+
+    thread.setDaemon(true);
+
+    return thread;
+  });
   private final ChangeListener<T> innerChangeListener;
   private final long consolidationTimeMillis;
   private int generation;
 
   static {
-
-    Thread thread = new Thread(new ConsolidationWorker());
-
-    thread.setDaemon(true);
-    thread.start();
+    CONSOLIDATION_EXECUTOR.scheduleWithFixedDelay(ConsolidatingChangeListener::dispatchExpired, 250, 250, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -83,6 +87,47 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
+   * Drains expired entries from the pending-change map once and dispatches the latest generation for
+   * each listener on the JavaFX application thread. For each expired entry whose generation matches
+   * the listener's current generation, the change is dispatched synchronously on the JavaFX
+   * application thread. Any failure of the pass is logged so that it cannot cancel future runs.
+   * Invoked every 250 ms by the shared {@link ScheduledExecutorService}.
+   */
+  private static void dispatchExpired () {
+
+    try {
+
+      NavigableMap<ConsolidatingKey, LooseChange<?>> expiredKeyMap;
+
+      if (!(expiredKeyMap = LOOSE_CHANGE_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
+
+        Map.Entry<ConsolidatingKey, LooseChange<?>> entry;
+
+        while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
+          synchronized (entry.getKey().getListener()) {
+            if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
+
+              final ConsolidatingKey key = entry.getKey();
+              final LooseChange<?> change = entry.getValue();
+
+              PlatformUtil.runAndWait(new Runnable() {
+
+                @Override
+                public void run () {
+
+                  key.getListener().getInnerChangeListener().changed(change.observableValue(), change.initialValue(), change.currentValue());
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (Exception exception) {
+      LoggerManager.getLogger(ConsolidatingChangeListener.class).error(exception);
+    }
+  }
+
+  /**
    * Returns the delegate listener that ultimately receives consolidated change notifications.
    *
    * @return the inner listener; never {@code null}
@@ -94,7 +139,8 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
 
   /**
    * Returns the current generation counter. The counter is incremented each time {@link #changed}
-   * is called; the worker thread uses it to detect whether a queued entry is still the latest.
+   * is called; the scheduled {@link #dispatchExpired} pass uses it to detect whether a queued entry
+   * is still the latest.
    *
    * @return the current generation number
    */
@@ -131,55 +177,6 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
   }
 
   /**
-   * Background worker that drains expired entries from the pending-change map and dispatches
-   * the latest generation for each listener on the JavaFX application thread.
-   */
-  private static class ConsolidationWorker implements Runnable {
-
-    /**
-     * Polls every 50 ms for changes whose quiet window has expired. For each expired entry, if the
-     * entry's generation matches the listener's current generation, the change is dispatched
-     * synchronously on the JavaFX application thread.
-     */
-    @Override
-    public void run () {
-
-      try {
-        while (!stopLatch.await(50, TimeUnit.MILLISECONDS)) {
-
-          NavigableMap<ConsolidatingKey, LooseChange<?>> expiredKeyMap;
-
-          if (!(expiredKeyMap = LOOSE_CHANGE_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
-
-            Map.Entry<ConsolidatingKey, LooseChange<?>> entry;
-
-            while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
-              synchronized (entry.getKey().getListener()) {
-                if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
-
-                  final ConsolidatingKey key = entry.getKey();
-                  final LooseChange<?> change = entry.getValue();
-
-                  PlatformUtil.runAndWait(new Runnable() {
-
-                    @Override
-                    public void run () {
-
-                      key.getListener().getInnerChangeListener().changed(change.observableValue(), change.initialValue(), change.currentValue());
-                    }
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ConsolidatingChangeListener.class).error(interruptedException);
-      }
-    }
-  }
-
-  /**
    * Ordering key used to schedule and retrieve pending change notifications in the shared
    * skip-list map. Keys are ordered first by expiration time, then by listener identity.
    *
@@ -192,7 +189,7 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     private final int generation;
 
     /**
-     * Creates a sentinel key with an expiration of zero, used as the exclusive upper bound
+     * Creates a sentinel key whose expiration is the current time, used as the exclusive upper bound
      * argument when querying the map for entries whose quiet window has elapsed.
      */
     private ConsolidatingKey () {

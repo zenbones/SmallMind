@@ -33,6 +33,7 @@
 package org.smallmind.claxon.registry;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.claxon.registry.meter.Tally;
@@ -62,7 +63,7 @@ public class WorkingInstrumentationTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.stop();
   }

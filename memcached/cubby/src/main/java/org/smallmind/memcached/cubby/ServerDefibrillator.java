@@ -36,38 +36,32 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.LinkedList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
  * Background daemon that periodically probes offline memcached hosts and triggers reconnection
  * when a host becomes reachable again.
  *
- * <p>{@code ServerDefibrillator} runs as a daemon thread launched by {@link ConnectionCoordinator}
- * during startup. On each iteration it sleeps for the configured
- * {@link CubbyConfiguration#getResuscitationSeconds() resuscitation interval}, then iterates the
- * {@link ServerPool} looking for hosts whose {@link HostControl#isActive()} flag is {@code false}.
- * For each inactive host it opens a plain TCP socket to verify reachability. If the connection
- * succeeds the host is added to a reconnection queue; after all inactive hosts have been probed the
- * queue is drained by calling {@link ConnectionCoordinator#reconnect(MemcachedHost)} for each
- * candidate.</p>
+ * <p>{@code ServerDefibrillator} runs as a periodic task scheduled by {@link ConnectionCoordinator}
+ * on the configured {@link CubbyConfiguration#getResuscitationSeconds() resuscitation interval}.
+ * On each run it iterates the {@link ServerPool} looking for hosts whose
+ * {@link HostControl#isActive()} flag is {@code false}. For each inactive host it opens a plain TCP
+ * socket to verify reachability. If the connection succeeds the host is added to a reconnection
+ * queue; after all inactive hosts have been probed the queue is drained by calling
+ * {@link ConnectionCoordinator#reconnect(MemcachedHost)} for each candidate.</p>
  *
  * <p>A fresh {@link InetSocketAddress} is constructed for each probe so that DNS changes
  * (e.g., a load balancer rotating its backend address) are picked up automatically. The resolved
  * address is stored back into the {@link MemcachedHost} via
  * {@link MemcachedHost#regenerate(InetSocketAddress)} before reconnection.</p>
  *
- * <p>Shutdown is cooperative: {@link #stop()} signals the loop via a {@link CountDownLatch} and
- * blocks until the run loop confirms termination via a second latch.</p>
+ * <p>Lifecycle is owned by {@link ConnectionCoordinator}, which schedules this task on start and
+ * shuts the scheduler down on stop.</p>
  */
 public class ServerDefibrillator implements Runnable {
 
-  private final CountDownLatch finishedLatch = new CountDownLatch(1);
-  private final CountDownLatch terminatedLatch = new CountDownLatch(1);
   private final ConnectionCoordinator connectionCoordinator;
   private final ServerPool serverPool;
-  private final long resuscitationSeconds;
   private final int connectionTimeoutMilliseconds;
   private final int readTimeoutMilliseconds;
 
@@ -75,7 +69,7 @@ public class ServerDefibrillator implements Runnable {
    * Constructs a defibrillator bound to the given coordinator and pool.
    *
    * @param connectionCoordinator the coordinator used to rebuild connections for recovered hosts
-   * @param configuration         runtime configuration supplying timeout and interval values
+   * @param configuration         runtime configuration supplying timeout values
    * @param serverPool            the pool of hosts to monitor for inactive entries
    */
   public ServerDefibrillator (ConnectionCoordinator connectionCoordinator, CubbyConfiguration configuration, ServerPool serverPool) {
@@ -85,69 +79,47 @@ public class ServerDefibrillator implements Runnable {
 
     this.connectionTimeoutMilliseconds = (int)configuration.getConnectionTimeoutMilliseconds();
     this.readTimeoutMilliseconds = (int)configuration.getReadTimeoutMilliseconds();
-    this.resuscitationSeconds = configuration.getResuscitationSeconds();
   }
 
   /**
-   * Signals the monitoring loop to stop and waits until the run loop has fully terminated.
-   *
-   * @throws InterruptedException if the calling thread is interrupted while awaiting termination
-   */
-  public void stop ()
-    throws InterruptedException {
-
-    finishedLatch.countDown();
-    terminatedLatch.await();
-  }
-
-  /**
-   * Executes the host-monitoring loop. On each iteration the thread sleeps for the configured
-   * resuscitation interval, then probes all inactive hosts via a plain TCP connection attempt.
-   * Hosts that respond successfully are reconnected through the {@link ConnectionCoordinator}.
-   *
-   * <p>The loop exits when {@link #stop()} is called or the thread is interrupted. In both cases
-   * {@link #terminatedLatch} is counted down to unblock any caller waiting in {@link #stop()}.</p>
+   * Performs a single monitoring pass: probes all inactive hosts via a plain TCP connection attempt
+   * and reconnects those that respond through the {@link ConnectionCoordinator}. Any unexpected
+   * failure of the pass is logged so that it cannot cancel future runs.
    */
   @Override
   public void run () {
 
     try {
-      while (!finishedLatch.await(resuscitationSeconds, TimeUnit.SECONDS)) {
 
-        LinkedList<MemcachedHost> reconnectionList = new LinkedList<>();
+      LinkedList<MemcachedHost> reconnectionList = new LinkedList<>();
 
-        for (HostControl hostControl : serverPool.values()) {
-          if (!hostControl.isActive()) {
-            try (Socket socket = new Socket()) {
+      for (HostControl hostControl : serverPool.values()) {
+        if (!hostControl.isActive()) {
+          try (Socket socket = new Socket()) {
 
-              // In case disconnection was due to a change in downstream load balancing
-              InetSocketAddress constructedAddress;
+            // In case disconnection was due to a change in downstream load balancing
+            InetSocketAddress constructedAddress;
 
-              socket.setSoTimeout(readTimeoutMilliseconds);
-              socket.connect(constructedAddress = hostControl.getMemcachedHost().constructAddress(), connectionTimeoutMilliseconds);
-              reconnectionList.add(hostControl.getMemcachedHost().regenerate(constructedAddress));
-            } catch (IOException ioException) {
-              // do nothing
-            }
-          }
-        }
-
-        if (!reconnectionList.isEmpty()) {
-          for (MemcachedHost memcachedHost : reconnectionList) {
-            try {
-              connectionCoordinator.reconnect(memcachedHost);
-            } catch (IOException | CubbyOperationException exception) {
-              LoggerManager.getLogger(ServerDefibrillator.class).error(exception);
-            }
+            socket.setSoTimeout(readTimeoutMilliseconds);
+            socket.connect(constructedAddress = hostControl.getMemcachedHost().constructAddress(), connectionTimeoutMilliseconds);
+            reconnectionList.add(hostControl.getMemcachedHost().regenerate(constructedAddress));
+          } catch (IOException ioException) {
+            // do nothing
           }
         }
       }
-    } catch (InterruptedException interruptedException) {
-      finishedLatch.countDown();
-      LoggerManager.getLogger(ServerDefibrillator.class).error(interruptedException);
-    } finally {
-      LoggerManager.getLogger(ServerDefibrillator.class).info("%s stopping...", ServerDefibrillator.class.getName());
-      terminatedLatch.countDown();
+
+      if (!reconnectionList.isEmpty()) {
+        for (MemcachedHost memcachedHost : reconnectionList) {
+          try {
+            connectionCoordinator.reconnect(memcachedHost);
+          } catch (IOException | CubbyOperationException exception) {
+            LoggerManager.getLogger(ServerDefibrillator.class).error(exception);
+          }
+        }
+      }
+    } catch (Exception exception) {
+      LoggerManager.getLogger(ServerDefibrillator.class).error(exception);
     }
   }
 }

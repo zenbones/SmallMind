@@ -124,17 +124,19 @@ against.
 | Class | Role
 
 | `ClaxonRegistry`
-| Central hub. Constructs a daemon `CollectionWorker` on creation, caches meters
-  keyed by `(caller class, tag array)`, maintains a `MeasurableTracker` for
+| Central hub. Schedules a daemon collection task on a single-thread
+  `ScheduledExecutorService` at creation, caches meters keyed by
+  `(caller class, tag array)`, maintains a `MeasurableTracker` for
   weakly-referenced tracked objects, dispatches readings to every bound
   `Emitter` on every collection interval, and owns graceful shutdown via
   `stop()`.
 
 | `ClaxonConfiguration`
-| Configuration bag. Supplies the `Clock`, the collection `Stint`, the optional
-  `Feature[]`, the three tag levels (registry-wide, per-meter, per-call), and
-  the `NamingStrategy`. `calculateTags(name, instanceTags...)` is the method
-  that merges the three tag levels in order on each emission.
+| Configuration bag. Supplies the `Clock`, the collection `Stint`, the
+  termination `Stint` (the bounded wait `stop()` allows the collection worker),
+  the optional `Feature[]`, the three tag levels (registry-wide, per-meter,
+  per-call), and the `NamingStrategy`. `calculateTags(name, instanceTags...)`
+  is the method that merges the three tag levels in order on each emission.
 
 | `Instrument`
 | Static façade over the registry. `Instrument.register(registry)` installs a
@@ -503,6 +505,11 @@ Collection stint::
     carry scalar-plus-unit durations without losing precision. Default is 2
     seconds.
 
+Termination stint::
+    The bounded time `stop()` waits for the background collection worker to
+    terminate before throwing a `TimeoutException`. Default is 10 seconds; when
+    set to `null` the registry falls back to five times the collection stint.
+
 Naming strategy::
     The function that maps a caller class to a meter name. The registry asks
     the strategy exactly once per `(caller, tags)` key and caches the answer —
@@ -627,8 +634,8 @@ public class Startup {
 }
 ----
 <1> Constructs a registry with all defaults: `SystemClock`, a 2-second
-    collection stint, no features, no tags, an `ImpliedNamingStrategy` with no
-    prefix map.
+    collection stint, a 10-second termination stint, no features, no tags, an
+    `ImpliedNamingStrategy` with no prefix map.
 <2> Binds an emitter. `MessageEmitter` without a consumer prints every reading
     to `System.out`.
 <3> Installs the registry in the per-application context so that
@@ -935,6 +942,9 @@ Emitter emitter = new DataDogEmitter(
 registry.bind("datadog", emitter);
 ----
 
+The constructor accepts an optional trailing `Tag... constantTags` varargs
+parameter; the four-argument form above simply omits it.
+
 === Pushing to AWS CloudWatch
 
 `AWSEmitter` takes a pre-built `CloudWatchClient` and a namespace. For a
@@ -1069,10 +1079,10 @@ tradeoff deliberately.
 
 === Collection loop
 
-The `ClaxonRegistry.CollectionWorker` thread loops until `finishLatch` is
-counted down by `stop()`. Each iteration:
+`ClaxonRegistry.collect()` is scheduled on a single-thread
+`ScheduledExecutorService` with `scheduleWithFixedDelay`, so it runs once per
+`collectionStint` (measured from the end of the previous pass). Each pass:
 
-. Waits at most `collectionStint` on the latch.
 . Calls `measurableTracker.sweepAndUpdate()` — drains the weak-reference
   queue and pushes fresh measurements into every surviving tracked object's
   meter.
@@ -1081,10 +1091,12 @@ counted down by `stop()`. Each iteration:
 . For each cached meter, calls `record()`; if the result is non-null and
   non-empty, dispatches it to every bound emitter.
 
-Exceptions raised by an individual emitter are caught, logged via
-`scribe-pen`, and do not interrupt the loop. An `InterruptedException` from
-the latch causes the worker to exit cleanly after releasing `exitLatch`, at
-which point `stop()` returns.
+Exceptions raised by an individual emitter are caught and logged via
+`scribe-pen`; any other failure of the pass is caught and logged as a whole, so
+a single bad collection cannot cancel future runs. `stop()` calls `shutdown()`
+on the executor and then `awaitTermination` bounded by the configured
+termination stint; if the in-flight pass does not finish within that window,
+`stop()` throws a `TimeoutException`.
 
 === Thread safety
 
@@ -1224,6 +1236,10 @@ AOP failures::
 | `new Stint(2, SECONDS)`
 | `ClaxonConfiguration` field initialiser
 
+| `ClaxonConfiguration.terminationStint`
+| `new Stint(10, SECONDS)`
+| `ClaxonConfiguration` field initialiser
+
 | `ClaxonConfiguration.registryTags`
 | empty `Tag[]`
 | `ClaxonConfiguration` field initialiser
@@ -1295,14 +1311,16 @@ Registry lifecycle::
     Construct once at startup; call `initializeInstrumentation()` before any
     `Instrument.with(...)` call runs. Call `stop()` during shutdown so the
     collection worker exits cleanly and any in-flight emitter receives a
-    final flush opportunity. `ClaxonRegistryFactoryBean.destroy()` does this
-    for Spring contexts.
+    final flush opportunity. `stop()` shuts the executor down and waits up to
+    the configured termination stint for the in-flight pass to finish, throwing
+    `TimeoutException` if it does not; it also propagates `InterruptedException`
+    if the caller is interrupted while waiting. `ClaxonRegistryFactoryBean.destroy()`
+    does this for Spring contexts.
 
 Background thread naming::
-    The worker thread is created via `new Thread(runnable)` with no name
-    assigned. Thread dumps show it as `Thread-N`; if you need identifiable
-    names, wrap the registry with your own lifecycle that renames the thread
-    after construction.
+    The collection executor's worker is created through a `ThreadFactory` that
+    names it `claxon-collection` and marks it a daemon, so it appears under that
+    name in thread dumps.
 
 Choosing between push and pull::
     CloudWatch, Datadog, JMX, and the message emitter are push. Prometheus

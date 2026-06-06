@@ -40,7 +40,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -55,9 +56,12 @@ import org.smallmind.scribe.pen.LoggerManager;
  * once per full rotation before any pin is repeated.
  * <p>
  * Failed pins are moved into a timestamp-keyed blacklist map. If {@code recoveryCheckSeconds} is
- * greater than zero, a daemon thread scans this map every three seconds and calls
- * {@link JugglingPin#recover()} on any entry whose timestamp has aged past the threshold; recovered
- * pins are silently returned to the target list.
+ * greater than zero, a daemon task scheduled on a single-thread {@link ScheduledExecutorService}
+ * scans this map every three seconds and calls {@link JugglingPin#recover()} on any entry that has
+ * been blacklisted for at least {@code recoveryCheckSeconds}; recovered pins are silently returned
+ * to the target list. Note the two distinct intervals: the scan runs on a fixed three-second poll
+ * cadence, while {@code recoveryCheckSeconds} is the minimum age an entry must reach before it is
+ * eligible.
  * <p>
  * All public methods are {@code synchronized} on the juggler instance. The blacklist map is a
  * {@link ConcurrentSkipListMap} so the recovery worker can read it without holding the juggler lock,
@@ -74,7 +78,7 @@ public class Juggler<P, R> implements BlackList<R> {
   private final Class<P> providerClass;
   private final Class<R> resourceClass;
   private final int recoveryCheckSeconds;
-  private ProviderRecoveryWorker recoveryWorker = null;
+  private ScheduledExecutorService recoveryExecutor = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
   private ConcurrentSkipListMap<Long, BlacklistEntry<R>> blacklistMap;
@@ -88,7 +92,8 @@ public class Juggler<P, R> implements BlackList<R> {
    *
    * @param providerClass        the runtime class of the provider, used for typed array creation
    * @param resourceClass        the runtime class of the resource, forwarded to the factory
-   * @param recoveryCheckSeconds seconds between blacklist recovery scans; {@code 0} disables recovery
+   * @param recoveryCheckSeconds minimum seconds a pin must remain blacklisted before it becomes
+   *                             eligible for recovery; {@code 0} disables recovery
    * @param jugglingPinFactory   factory that constructs a pin from each provider
    * @param provider             provider instance to replicate across all slots
    * @param size                 number of pins (and therefore concurrent resource handles) to manage
@@ -106,7 +111,8 @@ public class Juggler<P, R> implements BlackList<R> {
    *
    * @param providerClass        the runtime class of the provider, used when building error messages
    * @param resourceClass        the runtime class of the resource, forwarded to the factory
-   * @param recoveryCheckSeconds seconds between blacklist recovery scans; {@code 0} disables recovery
+   * @param recoveryCheckSeconds minimum seconds a pin must remain blacklisted before it becomes
+   *                             eligible for recovery; {@code 0} disables recovery
    * @param jugglingPinFactory   factory that constructs a pin from each provider
    * @param providers            provider instances to wrap, one pin per element
    */
@@ -180,8 +186,8 @@ public class Juggler<P, R> implements BlackList<R> {
    * Starts all pins, calling {@code method} on each resource if non-null.
    * <p>
    * Any pin that throws during start is immediately blacklisted and removed from active circulation.
-   * If {@code recoveryCheckSeconds} is positive, a daemon recovery thread is started after all pins
-   * have been processed.
+   * If {@code recoveryCheckSeconds} is positive, a daemon recovery task is scheduled on a
+   * single-thread {@link ScheduledExecutorService} after all pins have been processed.
    * <p>
    * This method is a no-op unless the juggler is in the {@code INITIALIZED} state.
    *
@@ -192,7 +198,6 @@ public class Juggler<P, R> implements BlackList<R> {
 
     if (status.equals(ComponentStatus.INITIALIZED)) {
 
-      Thread recoveryThread;
       Iterator<JugglingPin<R>> sourcePinIter = sourcePins.iterator();
 
       while (sourcePinIter.hasNext()) {
@@ -212,9 +217,15 @@ public class Juggler<P, R> implements BlackList<R> {
       }
 
       if (recoveryCheckSeconds > 0) {
-        recoveryThread = new Thread(recoveryWorker = new ProviderRecoveryWorker(recoveryCheckSeconds));
-        recoveryThread.setDaemon(true);
-        recoveryThread.start();
+        recoveryExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+          Thread thread = new Thread(runnable, "quorum-juggler-recovery");
+
+          thread.setDaemon(true);
+
+          return thread;
+        });
+        recoveryExecutor.scheduleWithFixedDelay(this::recoverProviders, 3, 3, TimeUnit.SECONDS);
       }
 
       status = ComponentStatus.STARTED;
@@ -231,7 +242,7 @@ public class Juggler<P, R> implements BlackList<R> {
    * single {@link NoAvailableJugglerResourceException} with all failures attached as suppressed
    * exceptions.
    *
-   * @return a live resource obtained from the least-recently-used available pin
+   * @return a live resource obtained from a randomly selected available pin
    * @throws NoAvailableJugglerResourceException if every pin has been blacklisted and no resource
    *                                             can be returned
    * @throws IllegalStateException               if the juggler is not in the initialized or started state
@@ -331,7 +342,7 @@ public class Juggler<P, R> implements BlackList<R> {
   /**
    * Stops all active pins, calling {@code method} on each resource if non-null.
    * <p>
-   * The recovery worker, if running, is signalled to stop and awaited before any pins are touched.
+   * The recovery executor, if running, is shut down and awaited before any pins are touched.
    * Exceptions thrown during stop are logged and swallowed so that all pins receive the stop call.
    * Pins in the target list are drained into the source list first so that both lists are visited.
    * <p>
@@ -343,9 +354,12 @@ public class Juggler<P, R> implements BlackList<R> {
   public synchronized void shutdown (Method method, Object... args) {
 
     if (status.equals(ComponentStatus.STARTED)) {
-      if (recoveryWorker != null) {
+      if (recoveryExecutor != null) {
         try {
-          recoveryWorker.abort();
+          recoveryExecutor.shutdown();
+          if (!recoveryExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+            LoggerManager.getLogger(Juggler.class).error("Recovery worker did not terminate propmptly (%d, %s)", 5, TimeUnit.SECONDS.name());
+          }
         } catch (InterruptedException interruptedException) {
           LoggerManager.getLogger(Juggler.class).error(interruptedException);
         }
@@ -360,7 +374,7 @@ public class Juggler<P, R> implements BlackList<R> {
       }
       while (!targetPins.isEmpty()) {
 
-        JugglingPin<R> pin = targetPins.remove(0);
+        JugglingPin<R> pin = targetPins.removeFirst();
 
         try {
           pin.stop(method, args);
@@ -411,82 +425,40 @@ public class Juggler<P, R> implements BlackList<R> {
   }
 
   /**
-   * Daemon thread that periodically scans the blacklist and attempts to recover failed pins.
+   * Scans the front of the blacklist map for entries that have aged past {@code recoveryCheckSeconds}
+   * and attempts to recover each. Each qualifying entry is offered to {@link JugglingPin#recover()};
+   * if that returns {@code true} the pin is removed from the blacklist and added to the target list
+   * inside a {@code synchronized} block. A fatal log message is emitted if the pin cannot be found in
+   * the map at promotion time, which indicates a race that should never occur. Any unexpected failure
+   * of the scan is logged so that it cannot cancel future runs.
    * <p>
-   * The worker wakes every three seconds and inspects all blacklist entries whose recorded timestamp
-   * is older than {@code recoveryCheckMillis}. For each such entry it calls
-   * {@link JugglingPin#recover()}; if that returns {@code true} the pin is removed from the blacklist
-   * and added to the juggler's target list inside a {@code synchronized} block. A fatal log message
-   * is emitted if the pin cannot be found in the map at promotion time, which indicates a race that
-   * should never occur.
+   * Invoked every three seconds by the background {@link ScheduledExecutorService} when
+   * {@code recoveryCheckSeconds} is positive.
    */
-  private class ProviderRecoveryWorker implements Runnable {
+  private void recoverProviders () {
 
-    private final CountDownLatch terminationLatch;
-    private final CountDownLatch exitLatch;
-    private final long recoveryCheckMillis;
+    try {
 
-    /**
-     * Creates a worker that checks for recoverable pins on the given interval.
-     *
-     * @param recoveryCheckSeconds interval in seconds between blacklist recovery scans
-     */
-    public ProviderRecoveryWorker (int recoveryCheckSeconds) {
+      Map.Entry<Long, BlacklistEntry<R>> firstEntry;
+      long recoveryCheckMillis = recoveryCheckSeconds * 1000L;
 
-      terminationLatch = new CountDownLatch(1);
-      exitLatch = new CountDownLatch(1);
-      recoveryCheckMillis = recoveryCheckSeconds * 1000L;
-    }
+      while (((firstEntry = blacklistMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
+        if (firstEntry.getValue().jugglingPin().recover()) {
+          synchronized (this) {
 
-    /**
-     * Signals the worker to stop and blocks until its thread has exited.
-     *
-     * @throws InterruptedException if the calling thread is interrupted while waiting for the
-     *                              worker to finish
-     */
-    public void abort ()
-      throws InterruptedException {
+            JugglingPin<R> recoveredPin;
 
-      terminationLatch.countDown();
-      exitLatch.await();
-    }
-
-    /**
-     * Main loop: waits up to three seconds on the termination latch, then scans the front of the
-     * blacklist map for entries that have aged past {@code recoveryCheckMillis}. Each qualifying entry
-     * is offered to {@link JugglingPin#recover()}; successful recoveries are promoted to the target
-     * list under the juggler lock. The loop exits cleanly when the termination latch fires or if the
-     * thread is interrupted.
-     */
-    @Override
-    public void run () {
-
-      try {
-        while (!terminationLatch.await(3, TimeUnit.SECONDS)) {
-
-          Map.Entry<Long, BlacklistEntry<R>> firstEntry;
-
-          while (((firstEntry = blacklistMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
-            if (firstEntry.getValue().jugglingPin().recover()) {
-              synchronized (Juggler.this) {
-
-                JugglingPin<R> recoveredPin;
-
-                if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).jugglingPin()) != null) {
-                  targetPins.add(recoveredPin);
-                  LoggerManager.getLogger(Juggler.class).warn("Recovered resource(%s) from black list", recoveredPin.describe());
-                } else {
-                  LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", providerClass.getSimpleName());
-                }
-              }
+            if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).jugglingPin()) != null) {
+              targetPins.add(recoveredPin);
+              LoggerManager.getLogger(Juggler.class).warn("Recovered resource(%s) from black list", recoveredPin.describe());
+            } else {
+              LoggerManager.getLogger(Juggler.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", providerClass.getSimpleName());
             }
           }
         }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ProviderRecoveryWorker.class).error(interruptedException);
       }
-
-      exitLatch.countDown();
+    } catch (Exception exception) {
+      LoggerManager.getLogger(Juggler.class).error(exception);
     }
   }
 }

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import org.smallmind.claxon.registry.feature.Feature;
@@ -80,7 +81,7 @@ public class RegistryCollectionCycleTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.stop();
   }
@@ -130,7 +131,7 @@ public class RegistryCollectionCycleTest {
   }
 
   public void testStopDrainsWorkerThread ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.register(RegistryCollectionCycleTest.class, new TallyBuilder()).update(1L);
 

@@ -41,22 +41,22 @@ public class HexCodecTest {
 
   public void testEncodeIsLowercase () {
 
-    Assert.assertEquals(HexCodec.hexEncode(new byte[]{(byte)0xAB, (byte)0xCD}), "abcd");
+    Assert.assertEquals(HexCodec.hexEncode(new byte[] {(byte)0xAB, (byte)0xCD}), "abcd");
   }
 
   public void testEncodeZeroPadsByteValuesBelow16 () {
 
-    Assert.assertEquals(HexCodec.hexEncode(new byte[]{0x00, 0x01, 0x0F}), "00010f");
+    Assert.assertEquals(HexCodec.hexEncode(new byte[] {0x00, 0x01, 0x0F}), "00010f");
   }
 
   public void testEncodeHandlesNegativeBytesAsUnsigned () {
 
-    Assert.assertEquals(HexCodec.hexEncode(new byte[]{(byte)0xFF, (byte)0x80}), "ff80");
+    Assert.assertEquals(HexCodec.hexEncode(new byte[] {(byte)0xFF, (byte)0x80}), "ff80");
   }
 
   public void testEncodeSliceUsesOffsetAndLength () {
 
-    Assert.assertEquals(HexCodec.hexEncode(new byte[]{0x01, 0x02, 0x03, 0x04, 0x05}, 1, 3), "020304");
+    Assert.assertEquals(HexCodec.hexEncode(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05}, 1, 3), "020304");
   }
 
   public void testRoundTripPreservesAllByteValues ()
@@ -74,7 +74,7 @@ public class HexCodecTest {
   public void testDecodeAcceptsBothCases ()
     throws UnsupportedEncodingException {
 
-    Assert.assertEquals(HexCodec.hexDecode("AbCdEf"), new byte[]{(byte)0xAB, (byte)0xCD, (byte)0xEF});
+    Assert.assertEquals(HexCodec.hexDecode("AbCdEf"), new byte[] {(byte)0xAB, (byte)0xCD, (byte)0xEF});
   }
 
   @Test(expectedExceptions = UnsupportedEncodingException.class)

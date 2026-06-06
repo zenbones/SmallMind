@@ -85,6 +85,7 @@ public class ProxyGeneratorTest {
   public void testClassProxyRoutesObjectMethodsThroughHandler () {
 
     RecordingHandler recordingHandler = new RecordingHandler(null) {
+
       @Override
       public Object invoke (Object proxy, java.lang.reflect.Method method, Object[] args) {
 
@@ -110,6 +111,7 @@ public class ProxyGeneratorTest {
   public void testHandlerThrowableSurfacesAsUndeclaredThrowable () {
 
     RecordingHandler recordingHandler = new RecordingHandler(null) {
+
       @Override
       public Object invoke (Object proxy, java.lang.reflect.Method method, Object[] args)
         throws Throwable {
@@ -125,7 +127,7 @@ public class ProxyGeneratorTest {
       Assert.fail("Expected handler exception to surface");
     } catch (RuntimeException runtimeException) {
       Assert.assertTrue(runtimeException instanceof IllegalStateException
-        || runtimeException.getCause() instanceof IllegalStateException, "Unexpected exception " + runtimeException);
+                          || runtimeException.getCause() instanceof IllegalStateException, "Unexpected exception " + runtimeException);
     }
   }
 

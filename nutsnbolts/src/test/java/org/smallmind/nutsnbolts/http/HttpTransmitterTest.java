@@ -56,6 +56,20 @@ public class HttpTransmitterTest {
   private RecordingHandler handler;
   private String baseUrl;
 
+  private static String readAll (HttpPipe pipe)
+    throws IOException {
+
+    byte[] buffer = new byte[256];
+    ByteArrayOutputStream accumulator = new ByteArrayOutputStream();
+    int bytesRead;
+
+    while ((bytesRead = pipe.read(buffer)) >= 0) {
+      accumulator.write(buffer, 0, bytesRead);
+    }
+
+    return accumulator.toString(StandardCharsets.UTF_8);
+  }
+
   @BeforeClass
   public void startServer ()
     throws IOException {
@@ -182,20 +196,6 @@ public class HttpTransmitterTest {
     HttpPipe pipe = HttpTransmitter.emitGetRequest(URI.create(baseUrl + "/echo").toURL(), true).connect();
 
     pipe.connect();
-  }
-
-  private static String readAll (HttpPipe pipe)
-    throws IOException {
-
-    byte[] buffer = new byte[256];
-    ByteArrayOutputStream accumulator = new ByteArrayOutputStream();
-    int bytesRead;
-
-    while ((bytesRead = pipe.read(buffer)) >= 0) {
-      accumulator.write(buffer, 0, bytesRead);
-    }
-
-    return accumulator.toString(StandardCharsets.UTF_8);
   }
 
   private static class RecordingHandler implements HttpHandler {

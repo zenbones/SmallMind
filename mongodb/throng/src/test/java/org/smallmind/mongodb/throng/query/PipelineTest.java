@@ -47,6 +47,11 @@ public class PipelineTest {
 
   private static final CodecRegistry REGISTRY = MongoClientSettings.getDefaultCodecRegistry();
 
+  private static BsonDocument renderStage (Pipeline pipeline, int index) {
+
+    return pipeline.toBsonList().get(index).toBsonDocument(BsonDocument.class, REGISTRY);
+  }
+
   public void testBeginProducesEmptyStageList () {
 
     Assert.assertTrue(Pipeline.begin().toBsonList().isEmpty());
@@ -167,10 +172,10 @@ public class PipelineTest {
   public void testFluentChainAccumulatesStagesInDeclaredOrder () {
 
     Pipeline pipeline = Pipeline.begin()
-                            .match(Filter.where("status").eq("active"))
-                            .sort(Sort.on().desc("placedAt"))
-                            .skip(20)
-                            .limit(10);
+                          .match(Filter.where("status").eq("active"))
+                          .sort(Sort.on().desc("placedAt"))
+                          .skip(20)
+                          .limit(10);
 
     List<Bson> bsonList = pipeline.toBsonList();
 
@@ -187,10 +192,5 @@ public class PipelineTest {
 
     Assert.assertEquals(pipeline.toBsonList().size(), 1);
     Assert.assertThrows(UnsupportedOperationException.class, () -> renderStage(pipeline, 0));
-  }
-
-  private static BsonDocument renderStage (Pipeline pipeline, int index) {
-
-    return pipeline.toBsonList().get(index).toBsonDocument(BsonDocument.class, REGISTRY);
   }
 }

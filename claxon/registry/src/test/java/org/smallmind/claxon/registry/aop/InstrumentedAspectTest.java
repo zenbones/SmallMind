@@ -35,6 +35,7 @@ package org.smallmind.claxon.registry.aop;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
@@ -92,7 +93,7 @@ public class InstrumentedAspectTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     try {
       registry.stop();

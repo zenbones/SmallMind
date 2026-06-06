@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -506,8 +507,8 @@ public class ComponentPinManager<C> {
 
       try {
         deconstructionQueue.shutdown();
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
+      } catch (InterruptedException | TimeoutException exception) {
+        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
 
       statusRef.set(ComponentStatus.STOPPED);

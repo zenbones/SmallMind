@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import java.util.concurrent.TimeoutException;
 import org.smallmind.claxon.registry.meter.TallyBuilder;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.testng.Assert;
@@ -85,7 +86,7 @@ public class InstrumentTest {
   }
 
   public void testWithReturnsWorkingAfterRegister ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     ClaxonRegistry registry = new ClaxonRegistry(new ClaxonConfiguration());
 
@@ -101,7 +102,7 @@ public class InstrumentTest {
   }
 
   public void testGetRegistryReturnsRegisteredInstance ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     ClaxonRegistry registry = new ClaxonRegistry(new ClaxonConfiguration());
 

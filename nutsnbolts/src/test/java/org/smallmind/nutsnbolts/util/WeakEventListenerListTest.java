@@ -40,10 +40,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WeakEventListenerListTest {
 
-  private interface SampleListener extends EventListener {
-
-  }
-
   private static int countLive (WeakEventListenerList<?> list) {
 
     int count = 0;
@@ -55,6 +51,10 @@ public class WeakEventListenerListTest {
     }
 
     return count;
+  }
+
+  private interface SampleListener extends EventListener {
+
   }
 
   public void testNewListIsEmpty () {

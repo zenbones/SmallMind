@@ -41,6 +41,9 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class GatingClassLoaderTest {
 
+  @SuppressWarnings("unused")
+  private static String unused = "marker-" + new String("x".getBytes(StandardCharsets.UTF_8));
+
   public void testParentDelegationLoadsKnownClass ()
     throws ClassNotFoundException {
 
@@ -99,7 +102,4 @@ public class GatingClassLoaderTest {
       Assert.assertEquals(bytes[3] & 0xff, 0xBE);
     }
   }
-
-  @SuppressWarnings("unused")
-  private static String unused = "marker-" + new String("x".getBytes(StandardCharsets.UTF_8));
 }

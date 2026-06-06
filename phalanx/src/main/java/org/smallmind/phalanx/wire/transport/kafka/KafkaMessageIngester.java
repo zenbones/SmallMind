@@ -79,7 +79,7 @@ public class KafkaMessageIngester {
    * @param groupId          Kafka consumer group identifier; governs offset coordination among workers
    * @param topicName        topic to subscribe to when the ingester is in the playing state
    * @param connector        factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
-   * @param groupProtocol     Kafka group protocol applied to each worker consumer
+   * @param groupProtocol    Kafka group protocol applied to each worker consumer
    * @param callback         invoked for every record polled from the topic
    * @param concurrencyLimit number of parallel consumer worker threads to maintain
    */

@@ -33,7 +33,6 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.security.KeyStore;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -42,6 +41,20 @@ import org.testng.annotations.Test;
 public class ClassVerifierTest {
 
   private static final String KEYSTORE_PASSWORD = "changeit";
+
+  private static byte[] buildEmptyKeystoreBytes ()
+    throws Exception {
+
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+
+    keyStore.load(null, KEYSTORE_PASSWORD.toCharArray());
+
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+    keyStore.store(buffer, KEYSTORE_PASSWORD.toCharArray());
+
+    return buffer.toByteArray();
+  }
 
   public void testUnsignedClassReturnsFalse ()
     throws Exception {
@@ -57,20 +70,6 @@ public class ClassVerifierTest {
     SecureStore store = new InMemorySecureStore(buildEmptyKeystoreBytes());
 
     Assert.assertFalse(ClassVerifier.verifySignature(ClassVerifierTest.class, store, null, "any-alias"));
-  }
-
-  private static byte[] buildEmptyKeystoreBytes ()
-    throws Exception {
-
-    KeyStore keyStore = KeyStore.getInstance("JKS");
-
-    keyStore.load(null, KEYSTORE_PASSWORD.toCharArray());
-
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-    keyStore.store(buffer, KEYSTORE_PASSWORD.toCharArray());
-
-    return buffer.toByteArray();
   }
 
   private static class InMemorySecureStore extends SecureStore {

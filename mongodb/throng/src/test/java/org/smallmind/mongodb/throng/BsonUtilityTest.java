@@ -51,10 +51,10 @@ public class BsonUtilityTest {
   public void testWriteAndReadFlatDocumentPreservesScalarFields () {
 
     BsonDocument original = new BsonDocument()
-                                .append("name", new BsonString("alice"))
-                                .append("age", new BsonInt32(30))
-                                .append("balance", new BsonInt64(123456789L))
-                                .append("active", new BsonBoolean(true));
+                              .append("name", new BsonString("alice"))
+                              .append("age", new BsonInt32(30))
+                              .append("balance", new BsonInt64(123456789L))
+                              .append("active", new BsonBoolean(true));
 
     BsonDocument result = roundTrip(original);
 

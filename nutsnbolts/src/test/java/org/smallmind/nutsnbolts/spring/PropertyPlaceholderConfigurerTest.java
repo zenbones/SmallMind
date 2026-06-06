@@ -46,38 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PropertyPlaceholderConfigurerTest {
 
-  @BeforeMethod
-  public void installPerApplicationContext () {
-
-    new PerApplicationContext();
-  }
-
-  public static class TargetBean {
-
-    private String host;
-    private int port;
-
-    public String getHost () {
-
-      return host;
-    }
-
-    public void setHost (String host) {
-
-      this.host = host;
-    }
-
-    public int getPort () {
-
-      return port;
-    }
-
-    public void setPort (int port) {
-
-      this.port = port;
-    }
-  }
-
   private static Path writePropertiesFile (Path directory, String name, String content)
     throws Exception {
 
@@ -86,6 +54,12 @@ public class PropertyPlaceholderConfigurerTest {
     Files.writeString(file, content, StandardCharsets.UTF_8);
 
     return file;
+  }
+
+  @BeforeMethod
+  public void installPerApplicationContext () {
+
+    new PerApplicationContext();
   }
 
   public void testOrderRoundTripsThroughAccessor () {
@@ -206,5 +180,31 @@ public class PropertyPlaceholderConfigurerTest {
     configurer.setIgnoreResourceNotFound(true);
 
     configurer.postProcessBeanFactory(beanFactory);
+  }
+
+  public static class TargetBean {
+
+    private String host;
+    private int port;
+
+    public String getHost () {
+
+      return host;
+    }
+
+    public void setHost (String host) {
+
+      this.host = host;
+    }
+
+    public int getPort () {
+
+      return port;
+    }
+
+    public void setPort (int port) {
+
+      this.port = port;
+    }
   }
 }

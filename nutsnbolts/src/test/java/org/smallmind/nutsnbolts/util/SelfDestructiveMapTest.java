@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.testng.Assert;
@@ -41,24 +42,8 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class SelfDestructiveMapTest {
 
-  private static class Bomb implements SelfDestructive {
-
-    private final AtomicBoolean destroyed = new AtomicBoolean();
-
-    @Override
-    public void destroy (Stint stint) {
-
-      destroyed.set(true);
-    }
-
-    public boolean isDestroyed () {
-
-      return destroyed.get();
-    }
-  }
-
   public void testGetReturnsValueWhilePresent ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     SelfDestructiveMap<String, Bomb> map = new SelfDestructiveMap<>(new Stint(10, TimeUnit.SECONDS), new Stint(50, TimeUnit.MILLISECONDS));
 
@@ -73,7 +58,7 @@ public class SelfDestructiveMapTest {
   }
 
   public void testValueExpiresAfterTimeout ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     SelfDestructiveMap<String, Bomb> map = new SelfDestructiveMap<>(new Stint(100, TimeUnit.MILLISECONDS), new Stint(20, TimeUnit.MILLISECONDS));
 
@@ -94,7 +79,7 @@ public class SelfDestructiveMapTest {
   }
 
   public void testPutIfAbsentRespectsExistingValue ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     SelfDestructiveMap<String, Bomb> map = new SelfDestructiveMap<>(new Stint(10, TimeUnit.SECONDS), new Stint(50, TimeUnit.MILLISECONDS));
 
@@ -107,6 +92,22 @@ public class SelfDestructiveMapTest {
       Assert.assertSame(map.get("k"), first);
     } finally {
       map.shutdown();
+    }
+  }
+
+  private static class Bomb implements SelfDestructive {
+
+    private final AtomicBoolean destroyed = new AtomicBoolean();
+
+    @Override
+    public void destroy (Stint stint) {
+
+      destroyed.set(true);
+    }
+
+    public boolean isDestroyed () {
+
+      return destroyed.get();
     }
   }
 }

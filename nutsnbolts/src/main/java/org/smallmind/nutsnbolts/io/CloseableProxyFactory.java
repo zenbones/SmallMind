@@ -70,29 +70,29 @@ public class CloseableProxyFactory {
 
     }
 
-      /**
-       * Delegates the method call to the wrapped instance and, if the called method is {@code close},
-       * fires the registered {@link CloseListener}.
-       *
-       * @param proxy  the proxy instance
-       * @param method the method that was invoked
-       * @param args   the arguments passed to the method
-       * @return the value returned by the underlying method
-       * @throws Throwable if the underlying method throws
-       */
-      @Override
-      public Object invoke (Object proxy, Method method, Object[] args)
-        throws Throwable {
+    /**
+     * Delegates the method call to the wrapped instance and, if the called method is {@code close},
+     * fires the registered {@link CloseListener}.
+     *
+     * @param proxy  the proxy instance
+     * @param method the method that was invoked
+     * @param args   the arguments passed to the method
+     * @return the value returned by the underlying method
+     * @throws Throwable if the underlying method throws
+     */
+    @Override
+    public Object invoke (Object proxy, Method method, Object[] args)
+      throws Throwable {
 
-        Object value;
+      Object value;
 
-        value = method.invoke(closeable, args);
+      value = method.invoke(closeable, args);
 
-        if ("close".equals(method.getName()) && (method.getParameterCount() == 0) && method.getReturnType().equals(Void.TYPE)) {
-          listener.postClose(new CloseEvent(closeable));
-        }
-
-        return value;
+      if ("close".equals(method.getName()) && (method.getParameterCount() == 0) && method.getReturnType().equals(Void.TYPE)) {
+        listener.postClose(new CloseEvent(closeable));
       }
+
+      return value;
     }
+  }
 }

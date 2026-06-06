@@ -45,7 +45,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("a,b,c"))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a", "b", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a", "b", "c"});
       Assert.assertNull(reader.readLine());
     }
   }
@@ -55,7 +55,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("\"a\",\"b\",\"c\""))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a", "b", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a", "b", "c"});
     }
   }
 
@@ -64,7 +64,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("\"a,b\",c"))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a,b", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a,b", "c"});
     }
   }
 
@@ -73,7 +73,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("\"a\"\"b\",c"))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a\"b", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a\"b", "c"});
     }
   }
 
@@ -95,7 +95,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("a,,c"))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a", "", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a", "", "c"});
     }
   }
 
@@ -106,7 +106,7 @@ public class CSVReaderTest {
 
       reader.setTrimFields(true);
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a", "b", "c"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a", "b", "c"});
     }
   }
 
@@ -115,7 +115,7 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("name,age\nAlice,30\nBob,25"), true)) {
 
-      Assert.assertEquals(reader.getHeaders(), new String[]{"name", "age"});
+      Assert.assertEquals(reader.getHeaders(), new String[] {"name", "age"});
 
       String[] firstRow = reader.readLine();
 
@@ -148,9 +148,9 @@ public class CSVReaderTest {
 
     try (CSVReader reader = new CSVReader(new StringReader("a,b\nc,d\ne,f"))) {
 
-      Assert.assertEquals(reader.readLine(), new String[]{"a", "b"});
-      Assert.assertEquals(reader.readLine(), new String[]{"c", "d"});
-      Assert.assertEquals(reader.readLine(), new String[]{"e", "f"});
+      Assert.assertEquals(reader.readLine(), new String[] {"a", "b"});
+      Assert.assertEquals(reader.readLine(), new String[] {"c", "d"});
+      Assert.assertEquals(reader.readLine(), new String[] {"e", "f"});
       Assert.assertNull(reader.readLine());
     }
   }

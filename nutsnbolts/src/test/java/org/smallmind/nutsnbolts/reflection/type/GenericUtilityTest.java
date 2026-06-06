@@ -47,7 +47,8 @@ public class GenericUtilityTest {
 
   public void testGetClassReturnsNullForUnknownTypeKind () {
 
-    Assert.assertNull(GenericUtility.getClass(new java.lang.reflect.Type () {
+    Assert.assertNull(GenericUtility.getClass(new java.lang.reflect.Type() {
+
     }));
   }
 

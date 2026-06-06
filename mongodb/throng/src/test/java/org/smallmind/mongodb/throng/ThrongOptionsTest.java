@@ -83,9 +83,9 @@ public class ThrongOptionsTest {
   public void testFluentSetterChainAppliesAllValues () {
 
     ThrongOptions options = new ThrongOptions(false, false, false)
-                                .setStoreNulls(true)
-                                .setCreateIndexes(true)
-                                .setIncludeCollation(true);
+                              .setStoreNulls(true)
+                              .setCreateIndexes(true)
+                              .setIncludeCollation(true);
 
     Assert.assertTrue(options.isStoreNulls());
     Assert.assertTrue(options.isCreateIndexes());

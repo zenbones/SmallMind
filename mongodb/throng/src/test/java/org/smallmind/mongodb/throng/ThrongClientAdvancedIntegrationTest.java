@@ -45,8 +45,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertOneOptions;
-import org.bson.Document;
 import or.smallmind.testbench.logger.TestLoggerConfiguration;
+import org.bson.Document;
 import org.smallmind.mongodb.throng.index.IndexType;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PostLoad;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PostPersist;
@@ -93,18 +93,18 @@ public class ThrongClientAdvancedIntegrationTest extends AbstractGroundwaterTest
     mongoClient = MongoClients.create("mongodb://root:secret@localhost:27017/?authSource=admin");
 
     throngClient = new ThrongClient(
-                       mongoClient,
-                       "throng_adv_test",
-                       new ThrongOptions(false, true, true),
-                       IndexedOrder.class,
-                       LifecycleOrder.class,
-                       NullableOrder.class,
-                       OrderWithEmbedded.class, Address.class,
-                       OrderWithArray.class,
-                       UniqueIdOrder.class,
-                       Garage.class, Vehicle.class, Car.class, Truck.class,
-                       AllIndexTypes.class,
-                       BatchedOrder.class);
+      mongoClient,
+      "throng_adv_test",
+      new ThrongOptions(false, true, true),
+      IndexedOrder.class,
+      LifecycleOrder.class,
+      NullableOrder.class,
+      OrderWithEmbedded.class, Address.class,
+      OrderWithArray.class,
+      UniqueIdOrder.class,
+      Garage.class, Vehicle.class, Car.class, Truck.class,
+      AllIndexTypes.class,
+      BatchedOrder.class);
   }
 
   @AfterClass
@@ -552,7 +552,7 @@ public class ThrongClientAdvancedIntegrationTest extends AbstractGroundwaterTest
   @Entity("indexed_orders")
   @org.smallmind.mongodb.throng.index.annotation.Indexes(
     value = {@org.smallmind.mongodb.throng.index.annotation.Index(value = "status"),
-             @org.smallmind.mongodb.throng.index.annotation.Index(value = "placedAt", type = IndexType.DESCENDING)},
+      @org.smallmind.mongodb.throng.index.annotation.Index(value = "placedAt", type = IndexType.DESCENDING)},
     options = @org.smallmind.mongodb.throng.index.annotation.IndexOptions(name = "status_placedAt_idx"))
   public static class IndexedOrder {
 

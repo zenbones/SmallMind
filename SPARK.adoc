@@ -136,7 +136,7 @@ Pick whichever matches the deployment surface.
 
 * **Provides an `AbstractWrapperListener`** that subclasses can extend
   to hook the wrapper's start / stop callbacks to their own
-  application lifecycle — with a built-in keep-alive thread so slow
+  application lifecycle — with a built-in keep-alive signaller so slow
   startups do not trip the wrapper's watchdog.
 
 * **Provides `SpringContextWrapperListener` and
@@ -263,7 +263,7 @@ Pick whichever matches the deployment surface.
 | Write a custom wrapper listener (non-Spring or custom context
   factory)
 | Subclass `AbstractWrapperListener` and implement `startup` / `shutdown`
-| Built-in keep-alive thread signals the watchdog while `startup`
+| Built-in keep-alive signaller pings the watchdog while `startup`
   runs.
 
 | Control the Spring context factory in a non-trivial way (programmatic
@@ -560,9 +560,9 @@ Bridge::
     the one-time setup each wrapped application needs: a CLI bootstrap
     that reads the configured listener class name from the first
     argument and reflectively creates it; a Property-Expander pass
-    over the remaining arguments; a daemon thread that calls
-    `WrapperManager.signalStarting(int)` on a loop so a slow `startup`
-    is not killed by the watchdog.
+    over the remaining arguments; a daemon-backed scheduled task that
+    calls `WrapperManager.signalStarting(int)` on a fixed delay so a
+    slow `startup` is not killed by the watchdog.
 
 Spring specialization::
     `SpringContextWrapperListener` extends `AbstractWrapperListener` and
@@ -870,10 +870,11 @@ The full set of parameters, in the order a user typically cares about:
     Long name, used in the wrapper's `wrapper.displayname` and in
     Windows service registration.
 
-`applicationDescription` (default: `"<class> generated project"`)::
+`applicationDescription` (default: `${project.description}`)::
     Description, used in `wrapper.description` and in Windows
-    service registration. Override for an informative service
-    description rather than the placeholder default.
+    service registration. When `project.description` is unset it falls
+    back to a generated placeholder string; override for an informative
+    service description.
 
 `applicationDir` (default: `application`)::
     Name of the subdirectory of `${project.build.directory}` into
@@ -992,12 +993,15 @@ The full set of parameters, in the order a user typically cares about:
     placeholders in `wrapper.conf` resolve at runtime), and hands the
     listener to `WrapperManager.start`.
 +
-On `start(String[])`, spawns a daemon `SignalWorker` thread that
-loops for up to `wrapper.startup.timeout` seconds (default 30,
-minimum 10, fail-safe ceiling 180) calling
-`WrapperManager.signalStarting(timeout)` every `timeout - 2`
-seconds. That keeps the wrapper's watchdog from killing the JVM
-during slow context refreshes.
+On `start(String[])`, opens a single-thread `ScheduledExecutorService`
+(daemon worker named `spark-wrapper-signal`) in a try-with-resources
+block and schedules a keep-alive task that calls
+`WrapperManager.signalStarting(timeout)` every `timeout - 2` seconds
+(`wrapper.startup.timeout`, default 30, minimum 10). That keeps the
+wrapper's watchdog from killing the JVM during slow context refreshes.
+Once the 180-second fail-safe ceiling passes the task stops signalling
+and cancels its own future; when `startup` returns or throws the
+try-with-resources `close()` shuts the executor down.
 +
 Converts uncaught exceptions from `startup` or `shutdown` into exit
 code `2` (`STACK_TRACE_ERROR_CODE`). Implements `controlEvent` to
@@ -1569,28 +1573,31 @@ eviction policy and no size cap.
   value was prepended by `main` after consulting
   `WrapperManager.getProperties().getProperty("wrapper.startup.timeout")`
   and defaulting to 30).
-. Creates a `CountDownLatch` with count 1 and a `SignalWorker`
-  configured with that timeout.
-. Runs `SignalWorker` as a daemon thread, then invokes
+. Opens a single-thread `ScheduledExecutorService` whose worker is a
+  daemon named `spark-wrapper-signal`, declared in a try-with-resources
+  block so it is shut down the moment `startup` returns or throws.
+. Schedules the keep-alive task with
+  `scheduleWithFixedDelay(..., startupTimeoutSeconds - 2,
+  startupTimeoutSeconds - 2, SECONDS)`, then invokes
   `startup(trimmedArgs)` on the current thread.
-. In a `finally`, counts the latch down so `SignalWorker` can exit.
 
-`SignalWorker.run`:
+The scheduled keep-alive task, on each firing:
 
 [source,text]
 ----
-startMillis = now
-while (now - startMillis < 180_000
-    && !completedLatch.await(startupTimeoutSeconds - 2, SECONDS)):
+if (now - startMillis < 180_000):            // FAIL_SAFE_TIMEOUT_SECONDS
   WrapperManager.signalStarting(startupTimeoutSeconds)
+else:
+  signalFuture.cancel(false)                 // stop rescheduling
 ----
 
 The invariant: the wrapper's watchdog grants `startupTimeoutSeconds`
 of patience on each `signalStarting` call, so as long as the
 application signals at least once per `startupTimeoutSeconds - 2`
-seconds, the wrapper does not kill the JVM. `SignalWorker` therefore
-races `startup` completion against the wake-up interval, keeping the
-wrapper patient until startup returns.
+seconds, the wrapper does not kill the JVM. The task keeps the
+wrapper patient until either `startup` returns — at which point the
+try-with-resources `close()` shuts the executor down and the periodic
+task is cancelled — or the fail-safe ceiling is reached.
 
 Tuning hints:
 
@@ -1599,9 +1606,11 @@ Tuning hints:
   routinely takes more than 30 seconds to reach "ready". Values
   below 10 are rejected.
 * The 180-second fail-safe ceiling (`FAIL_SAFE_TIMEOUT_SECONDS`) is
-  a hard stop — `SignalWorker` exits even if `startup` is still
-  running — so very-long-startup applications should invest in
-  eager module loading or bean warmup before `startup` returns.
+  a hard stop — once it passes the task stops signalling and cancels
+  itself even while `startup` is still running, after which the
+  wrapper is free to time out and stop the JVM — so very-long-startup
+  applications should invest in eager module loading or bean warmup
+  before `startup` returns.
 
 === Exit Codes
 
@@ -1796,7 +1805,7 @@ java -cp … org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener 
 In that mode:
 
 * Property expansion (`${…}`) on `args` still runs.
-* The keep-alive loop still runs — `WrapperManager.signalStarting`
+* The keep-alive task still runs — `WrapperManager.signalStarting`
   just becomes a no-op when `isControlledByNativeWrapper()` is
   `false`.
 * Ctrl-C reaches `controlEvent` and triggers

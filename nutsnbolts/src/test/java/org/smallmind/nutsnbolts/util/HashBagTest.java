@@ -33,7 +33,6 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import org.testng.Assert;
 import org.testng.annotations.Test;

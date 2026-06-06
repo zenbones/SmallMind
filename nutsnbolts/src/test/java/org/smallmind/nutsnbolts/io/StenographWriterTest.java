@@ -40,17 +40,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class StenographWriterTest {
 
-  private static class RecordingListener implements StenographEventListener {
-
-    private final List<String> received = new ArrayList<>();
-
-    @Override
-    public void flush (StenographEvent stenographEvent) {
-
-      received.add(stenographEvent.getOutput());
-    }
-  }
-
   public void testWriteThenFlushDispatchesAccumulatedTextAndSourceMatches ()
     throws Exception {
 
@@ -131,5 +120,16 @@ public class StenographWriterTest {
     writer.flush();
 
     Assert.assertSame(capturedSource[0], writer);
+  }
+
+  private static class RecordingListener implements StenographEventListener {
+
+    private final List<String> received = new ArrayList<>();
+
+    @Override
+    public void flush (StenographEvent stenographEvent) {
+
+      received.add(stenographEvent.getOutput());
+    }
   }
 }

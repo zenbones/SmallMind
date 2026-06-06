@@ -40,7 +40,7 @@ public class MartianBase34Test {
 
   public void testRoundTripFirstGroupWithSafeDigitWidth () {
 
-    for (long value : new long[]{0L, 1L, 42L, 1234L, 99999L}) {
+    for (long value : new long[] {0L, 1L, 42L, 1234L, 99999L}) {
 
       String encoded = MartianBase34.base10To34(value, 5, MartianBase34.Group.FIRST);
 
@@ -51,7 +51,7 @@ public class MartianBase34Test {
 
   public void testRoundTripSecondGroupWithSafeDigitWidth () {
 
-    for (long value : new long[]{0L, 7L, 555L, 100000L}) {
+    for (long value : new long[] {0L, 7L, 555L, 100000L}) {
 
       String encoded = MartianBase34.base10To34(value, 5, MartianBase34.Group.SECOND);
 
@@ -61,7 +61,7 @@ public class MartianBase34Test {
 
   public void testRoundTripThirdGroupWithSafeDigitWidth () {
 
-    for (long value : new long[]{0L, 1234567L, 9999999L}) {
+    for (long value : new long[] {0L, 1234567L, 9999999L}) {
 
       String encoded = MartianBase34.base10To34(value, 9, MartianBase34.Group.THIRD);
 

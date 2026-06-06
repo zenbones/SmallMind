@@ -41,6 +41,36 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PerApplicationContextTest {
 
+  private static void runIsolated (ThrowingRunnable body)
+    throws Throwable {
+
+    Throwable[] caught = new Throwable[1];
+
+    Thread thread = new Thread(() -> {
+      try {
+        body.run();
+      } catch (Throwable throwable) {
+        caught[0] = throwable;
+      }
+    });
+
+    thread.setDaemon(true);
+    thread.setName("perapp-test-isolated");
+    thread.start();
+    thread.join();
+
+    if (caught[0] != null) {
+      throw caught[0];
+    }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingRunnable {
+
+    void run ()
+      throws Throwable;
+  }
+
   public void testConstructorAttachesAndReusesContextOnSameThread ()
     throws Throwable {
 
@@ -172,36 +202,6 @@ public class PerApplicationContextTest {
       Object outcome = result.take();
       Assert.assertEquals(outcome, "installed");
     });
-  }
-
-  private static void runIsolated (ThrowingRunnable body)
-    throws Throwable {
-
-    Throwable[] caught = new Throwable[1];
-
-    Thread thread = new Thread(() -> {
-      try {
-        body.run();
-      } catch (Throwable throwable) {
-        caught[0] = throwable;
-      }
-    });
-
-    thread.setDaemon(true);
-    thread.setName("perapp-test-isolated");
-    thread.start();
-    thread.join();
-
-    if (caught[0] != null) {
-      throw caught[0];
-    }
-  }
-
-  @FunctionalInterface
-  private interface ThrowingRunnable {
-
-    void run ()
-      throws Throwable;
   }
 
   public static class SampleManager implements PerApplicationDataManager {

@@ -200,7 +200,7 @@ public class ByteArrayIOStreamTest {
     stream.asOutputStream().write('y');
     stream.asOutputStream().write('z');
 
-    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[]{'x', 'y', 'z'});
+    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[] {'x', 'y', 'z'});
   }
 
   public void testToStringReturnsBufferedContentAsUtf8 ()
@@ -220,10 +220,10 @@ public class ByteArrayIOStreamTest {
 
     ByteArrayIOStream stream = new ByteArrayIOStream();
 
-    stream.asOutputStream().write(new byte[]{1, 2, 3, 4, 5}, 0, 5);
+    stream.asOutputStream().write(new byte[] {1, 2, 3, 4, 5}, 0, 5);
 
     Assert.assertEquals(stream.size(), 5);
-    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[]{1, 2, 3, 4, 5});
+    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[] {1, 2, 3, 4, 5});
   }
 
   public void testArrayWriteFromNonZeroOffsetCopiesCorrectSlice ()
@@ -231,10 +231,10 @@ public class ByteArrayIOStreamTest {
 
     ByteArrayIOStream stream = new ByteArrayIOStream();
 
-    stream.asOutputStream().write(new byte[]{1, 2, 3, 4, 5}, 1, 3);
+    stream.asOutputStream().write(new byte[] {1, 2, 3, 4, 5}, 1, 3);
 
     Assert.assertEquals(stream.size(), 3);
-    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[]{2, 3, 4});
+    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[] {2, 3, 4});
   }
 
   public void testArrayWriteOfTrailingSliceCopiesCorrectLength ()
@@ -242,16 +242,16 @@ public class ByteArrayIOStreamTest {
 
     ByteArrayIOStream stream = new ByteArrayIOStream();
 
-    stream.asOutputStream().write(new byte[]{1, 2, 3, 4, 5}, 3, 2);
+    stream.asOutputStream().write(new byte[] {1, 2, 3, 4, 5}, 3, 2);
 
     Assert.assertEquals(stream.size(), 2);
-    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[]{4, 5});
+    Assert.assertEquals(stream.asInputStream().readAvailable(), new byte[] {4, 5});
   }
 
   @Test(expectedExceptions = IndexOutOfBoundsException.class)
   public void testArrayWriteWithOffsetPlusLengthBeyondInputIsRejected ()
     throws IOException {
 
-    new ByteArrayIOStream().asOutputStream().write(new byte[]{1, 2, 3}, 1, 5);
+    new ByteArrayIOStream().asOutputStream().write(new byte[] {1, 2, 3}, 1, 5);
   }
 }

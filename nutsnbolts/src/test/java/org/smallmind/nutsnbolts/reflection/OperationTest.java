@@ -39,21 +39,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class OperationTest {
 
-  static class Fixture {
-
-    public void noArgs () {
-
-    }
-
-    public void oneArg (String value) {
-
-    }
-
-    public void twoArgs (String value, int count) {
-
-    }
-  }
-
   private static Method findMethod (String name, Class<?>... parameters)
     throws NoSuchMethodException {
 
@@ -129,5 +114,20 @@ public class OperationTest {
 
     Assert.assertNotEquals(operation, "foo");
     Assert.assertNotEquals(operation, null);
+  }
+
+  static class Fixture {
+
+    public void noArgs () {
+
+    }
+
+    public void oneArg (String value) {
+
+    }
+
+    public void twoArgs (String value, int count) {
+
+    }
   }
 }

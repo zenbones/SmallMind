@@ -121,11 +121,11 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S4", "parts", 999), new InsertOneOptions());
 
     List<Sale> topTwo = throngClient.aggregate(
-                           Sale.class,
-                           Pipeline.begin()
-                                   .match(Filter.where("category").eq("tools"))
-                                   .sort(Sort.on().desc("amount"))
-                                   .limit(2)).asList();
+      Sale.class,
+      Pipeline.begin()
+        .match(Filter.where("category").eq("tools"))
+        .sort(Sort.on().desc("amount"))
+        .limit(2)).asList();
 
     Assert.assertEquals(topTwo.size(), 2);
     Assert.assertEquals(topTwo.get(0).getAmount(), Integer.valueOf(200));
@@ -141,11 +141,11 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S5", "x", 5), new InsertOneOptions());
 
     List<Sale> page = throngClient.aggregate(
-                          Sale.class,
-                          Pipeline.begin()
-                                  .sort(Sort.on().asc("amount"))
-                                  .skip(2)
-                                  .limit(2)).asList();
+      Sale.class,
+      Pipeline.begin()
+        .sort(Sort.on().asc("amount"))
+        .skip(2)
+        .limit(2)).asList();
 
     Assert.assertEquals(page.size(), 2);
     Assert.assertEquals(page.get(0).getAmount(), Integer.valueOf(3));
@@ -157,8 +157,8 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S1", "tools", 100), new InsertOneOptions());
 
     List<Sale> results = throngClient.aggregate(
-                            Sale.class,
-                            Pipeline.begin().project(Projections.with().include("category"))).asList();
+      Sale.class,
+      Pipeline.begin().project(Projections.with().include("category"))).asList();
 
     Assert.assertEquals(results.size(), 1);
     Assert.assertEquals(results.get(0).getCategory(), "tools");
@@ -174,12 +174,12 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S5", "consumables", 10), new InsertOneOptions());
 
     List<CategoryRollup> rollups = throngClient.aggregate(
-                                       Sale.class, CategoryRollup.class,
-                                       Pipeline.begin()
-                                               .group("$category",
-                                                      Accumulators.sum("total", "$amount"),
-                                                      Accumulators.sum("count", 1))
-                                               .sort(Sort.on().desc("total"))).asList();
+      Sale.class, CategoryRollup.class,
+      Pipeline.begin()
+        .group("$category",
+          Accumulators.sum("total", "$amount"),
+          Accumulators.sum("count", 1))
+        .sort(Sort.on().desc("total"))).asList();
 
     Assert.assertEquals(rollups.size(), 3);
     Assert.assertEquals(rollups.get(0).getId(), "tools");
@@ -197,10 +197,10 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S3", "z", 30), new InsertOneOptions());
 
     List<CategoryRollup> rollups = throngClient.aggregate(
-                                       Sale.class, CategoryRollup.class,
-                                       Pipeline.begin().group(null,
-                                                              Accumulators.sum("total", "$amount"),
-                                                              Accumulators.sum("count", 1))).asList();
+      Sale.class, CategoryRollup.class,
+      Pipeline.begin().group(null,
+        Accumulators.sum("total", "$amount"),
+        Accumulators.sum("count", 1))).asList();
 
     Assert.assertEquals(rollups.size(), 1);
     Assert.assertNull(rollups.get(0).getId());
@@ -214,10 +214,10 @@ public class ThrongClientPipelineIntegrationTest extends AbstractGroundwaterTest
     throngClient.insert(new Sale("S2", "tools", 200), new InsertOneOptions());
 
     List<Sale> results = throngClient.aggregate(
-                            Sale.class,
-                            Pipeline.begin()
-                                    .stage(org.bson.BsonDocument.parse("{ \"$match\": { \"category\": \"tools\" } }"))
-                                    .sort(Sort.on().asc("amount"))).asList();
+      Sale.class,
+      Pipeline.begin()
+        .stage(org.bson.BsonDocument.parse("{ \"$match\": { \"category\": \"tools\" } }"))
+        .sort(Sort.on().asc("amount"))).asList();
 
     Assert.assertEquals(results.size(), 2);
     Assert.assertEquals(results.get(0).getAmount(), Integer.valueOf(100));

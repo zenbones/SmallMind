@@ -921,7 +921,7 @@ browser-to-server RPC over Bayeux.
 ----
 public interface BayeuxService<V extends Value<V>> {
 
-  Route[]    getBoundRoutes();
+  Route[]    boundRoutes();
   Packet<V>  process(Protocol<V> protocol, Route route,
                      Server<V> server, Session<V> session, Message<V> request);
 
@@ -954,8 +954,9 @@ explicitly override the matching method and return `null`. Returning
 the reason back to the client in the `error` field of the matching meta
 response; returning `SecurityRejection.noReason()` denies without an
 explanation. The built-in `OpenSecurityPolicy` overrides all four methods
-to return `null` and is supplied as the default when no policy is wired
-in.
+to return `null` and may be wired in explicitly. When no policy is
+configured the server leaves the policy `null`, and the meta layer treats
+a null policy as allow-all.
 
 == Wiring It Up Without Spring
 
@@ -1003,7 +1004,7 @@ public class EchoService implements BayeuxService<OrthodoxValue> {
   private static final Route ECHO_ROUTE = new DefaultRoute("/service/echo");
 
   @Override
-  public Route[] getBoundRoutes() {
+  public Route[] boundRoutes() {
 
     return new Route[] {ECHO_ROUTE};
   }
@@ -1090,9 +1091,9 @@ implementation speaks Kafka.
   </bean>
 </property>
 ----
-<1> Identifies this node in log messages and helps triage when more than
-    one node is misbehaving. It is *not* used to de-duplicate records —
-    de-duplication is done via the producer's snowflake id.
+<1> Identifies this node in log messages and is also stamped on every
+    record this node produces, so each node can filter out its own records
+    on receipt (loopback suppression). It must be unique per node.
 <2> The number of background consumer workers polling Kafka on this
     node. One is enough unless inbound volume is very high.
 <3> How long `startUp` will wait for the broker to become reachable
@@ -1369,7 +1370,7 @@ Backbone errors::
 | `OumuamuaConfiguration`
 
 | `sessionMaxIdleTimeoutSeconds`
-| `300`
+| `120`
 | `OumuamuaConfiguration`
 
 | `idleChannelCycleMinutes`
@@ -1405,8 +1406,8 @@ Backbone errors::
 | `OumuamuaServer` constructor
 
 | `securityPolicy`
-| `OpenSecurityPolicy` (allow all) if none configured
-| `OumuamuaServer` / SPI
+| none — a `null` policy is treated as allow-all
+| `OumuamuaConfiguration`
 
 | Long-poll timeout
 | Protocol-specific (test config uses `500ms`)

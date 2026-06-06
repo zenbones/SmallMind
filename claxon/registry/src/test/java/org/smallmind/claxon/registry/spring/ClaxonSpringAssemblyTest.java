@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
@@ -127,7 +128,7 @@ public class ClaxonSpringAssemblyTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     try {
       if (registryBean != null) {
@@ -158,7 +159,7 @@ public class ClaxonSpringAssemblyTest {
   }
 
   public void testDestroyStopsTheCollectionWorker ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     Instrument.with(ClaxonSpringAssemblyTest.class, new TallyBuilder()).update(1L);
 

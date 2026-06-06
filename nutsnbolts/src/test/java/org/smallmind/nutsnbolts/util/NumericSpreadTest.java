@@ -53,43 +53,43 @@ public class NumericSpreadTest {
   public void testSingleNumberIsParsedAsOneElement ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("42"), new int[]{42});
+    Assert.assertEquals(NumericSpread.calculate("42"), new int[] {42});
   }
 
   public void testCommaSeparatedNumbersAreExpandedInOrder ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("1,3,5,7"), new int[]{1, 3, 5, 7});
+    Assert.assertEquals(NumericSpread.calculate("1,3,5,7"), new int[] {1, 3, 5, 7});
   }
 
   public void testAscendingRangeIsInclusive ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("2..5"), new int[]{2, 3, 4, 5});
+    Assert.assertEquals(NumericSpread.calculate("2..5"), new int[] {2, 3, 4, 5});
   }
 
   public void testDescendingRangeWalksBackwards ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("5..2"), new int[]{5, 4, 3, 2});
+    Assert.assertEquals(NumericSpread.calculate("5..2"), new int[] {5, 4, 3, 2});
   }
 
   public void testSingleElementRangeProducesSingleNumber ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("7..7"), new int[]{7});
+    Assert.assertEquals(NumericSpread.calculate("7..7"), new int[] {7});
   }
 
   public void testMixedSinglesAndRangesAreExpandedInOrder ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate("1,3..5,9"), new int[]{1, 3, 4, 5, 9});
+    Assert.assertEquals(NumericSpread.calculate("1,3..5,9"), new int[] {1, 3, 4, 5, 9});
   }
 
   public void testInputIsTrimmedPerZone ()
     throws SpreadParserException {
 
-    Assert.assertEquals(NumericSpread.calculate(" 1 , 3..5 , 9 "), new int[]{1, 3, 4, 5, 9});
+    Assert.assertEquals(NumericSpread.calculate(" 1 , 3..5 , 9 "), new int[] {1, 3, 4, 5, 9});
   }
 
   @Test(expectedExceptions = SpreadParserException.class)

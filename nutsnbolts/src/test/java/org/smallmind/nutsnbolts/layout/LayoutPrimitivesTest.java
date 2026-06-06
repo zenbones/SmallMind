@@ -38,33 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class LayoutPrimitivesTest {
 
-  private static final class StubPlatform implements ParaboxPlatform {
-
-    @Override
-    public double getRelatedGap () {
-
-      return 4.0D;
-    }
-
-    @Override
-    public double getUnrelatedGap () {
-
-      return 8.0D;
-    }
-
-    @Override
-    public Perimeter getFramePerimeter () {
-
-      return new Perimeter(1.0D, 2.0D, 3.0D, 4.0D);
-    }
-
-    @Override
-    public Orientation getOrientation () {
-
-      return Orientation.getDefaultOrientation();
-    }
-  }
-
   public void testBiasEnumExposesBothAxes () {
 
     Assert.assertEquals(Bias.values().length, 2);
@@ -177,5 +150,32 @@ public class LayoutPrimitivesTest {
   public void testGapUnrelatedDelegatesToPlatform () {
 
     Assert.assertEquals(Gap.UNRELATED.getGap(new StubPlatform()), 8.0D);
+  }
+
+  private static final class StubPlatform implements ParaboxPlatform {
+
+    @Override
+    public double getRelatedGap () {
+
+      return 4.0D;
+    }
+
+    @Override
+    public double getUnrelatedGap () {
+
+      return 8.0D;
+    }
+
+    @Override
+    public Perimeter getFramePerimeter () {
+
+      return new Perimeter(1.0D, 2.0D, 3.0D, 4.0D);
+    }
+
+    @Override
+    public Orientation getOrientation () {
+
+      return Orientation.getDefaultOrientation();
+    }
   }
 }

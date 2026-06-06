@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
@@ -41,67 +39,45 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Background {@link Runnable} that wakes on a fixed cycle, applies an {@link IdleChannelOperation}
- * to the entire channel tree to prune expired channels, then compacts the tree by removing empty
- * branches.
+ * Background {@link Runnable} that applies an {@link IdleChannelOperation} to the entire channel
+ * tree to prune expired channels, then compacts the tree by removing empty branches. Scheduled on a
+ * fixed cadence by {@link OumuamuaServer}, which owns its lifecycle.
  *
  * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
-  private final CountDownLatch finishLatch = new CountDownLatch(1);
-  private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final ChannelTree<V> channelTree;
   private final Consumer<Channel<V>> channelCallback;
   private final Level idleChannelLogLevel;
-  private final long idleChannelCycleMinutes;
 
   /**
-   * Constructs the sifter with the given scan schedule and removal callback.
+   * Constructs the sifter with the given removal callback.
    *
-   * @param idleChannelCycleMinutes how many minutes to wait between scans
-   * @param idleChannelLogLevel     log level at which channel removal events are recorded
-   * @param channelTree             the tree to walk on each scan cycle
-   * @param channelCallback         forwarded to {@link IdleChannelOperation} and invoked for each
-   *                                channel that is removed
+   * @param idleChannelLogLevel log level at which channel removal events are recorded
+   * @param channelTree         the tree to walk on each scan
+   * @param channelCallback     forwarded to {@link IdleChannelOperation} and invoked for each
+   *                            channel that is removed
    */
-  public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
+  public IdleChannelSifter (Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
-    this.idleChannelCycleMinutes = idleChannelCycleMinutes;
     this.idleChannelLogLevel = idleChannelLogLevel;
     this.channelTree = channelTree;
     this.channelCallback = channelCallback;
   }
 
   /**
-   * Signals the worker loop to exit and blocks until the thread has fully stopped.
-   *
-   * @throws InterruptedException if the calling thread is interrupted while waiting for the worker
-   *                              to exit
-   */
-  public void stop ()
-    throws InterruptedException {
-
-    finishLatch.countDown();
-    exitLatch.await();
-  }
-
-  /**
-   * Worker loop: sleeps for the configured cycle duration, then walks the channel tree to prune
-   * expired channels and remove dead branches; repeats until {@link #stop()} is called.
+   * Performs a single scan: walks the channel tree to prune expired channels and remove dead
+   * branches. Any failure of the pass is logged so that it cannot cancel future runs.
    */
   @Override
   public void run () {
 
     try {
-      while (!finishLatch.await(idleChannelCycleMinutes, TimeUnit.MINUTES)) {
-        channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), idleChannelLogLevel, channelCallback));
-        channelTree.clean();
-      }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-    } finally {
-      exitLatch.countDown();
+      channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), idleChannelLogLevel, channelCallback));
+      channelTree.clean();
+    } catch (Exception exception) {
+      LoggerManager.getLogger(IdleChannelSifter.class).error(exception);
     }
   }
 }

@@ -34,8 +34,8 @@ package org.smallmind.nutsnbolts.spring;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.support.StaticApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

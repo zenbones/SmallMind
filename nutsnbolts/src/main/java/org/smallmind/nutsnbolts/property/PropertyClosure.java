@@ -92,7 +92,7 @@ public class PropertyClosure {
   public PropertyClosure (Decryptor decryptor, String encryptedPrefix, String prefix, String suffix)
     throws PropertyExpanderException {
 
-    this(new EncryptedVariation(decryptor, encryptedPrefix), "${", "}");
+    this(new EncryptedVariation(decryptor, encryptedPrefix), prefix, suffix);
   }
 
   /**

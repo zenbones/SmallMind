@@ -55,40 +55,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class KeyStoreUtilityTest {
 
-  private static final class BytesResource implements Resource {
-
-    private final byte[] payload;
-
-    BytesResource (byte[] payload) {
-
-      this.payload = payload;
-    }
-
-    @Override
-    public String getIdentifier () {
-
-      return "bytes:in-memory.der";
-    }
-
-    @Override
-    public String getScheme () {
-
-      return "bytes";
-    }
-
-    @Override
-    public String getPath () {
-
-      return "in-memory.der";
-    }
-
-    @Override
-    public InputStream getInputStream () {
-
-      return new ByteArrayInputStream(payload);
-    }
-  }
-
   private static X509Certificate selfSign (KeyPair keyPair)
     throws Exception {
 
@@ -226,6 +192,40 @@ public class KeyStoreUtilityTest {
           }
         });
       }
+    }
+  }
+
+  private static final class BytesResource implements Resource {
+
+    private final byte[] payload;
+
+    BytesResource (byte[] payload) {
+
+      this.payload = payload;
+    }
+
+    @Override
+    public String getIdentifier () {
+
+      return "bytes:in-memory.der";
+    }
+
+    @Override
+    public String getScheme () {
+
+      return "bytes";
+    }
+
+    @Override
+    public String getPath () {
+
+      return "in-memory.der";
+    }
+
+    @Override
+    public InputStream getInputStream () {
+
+      return new ByteArrayInputStream(payload);
     }
   }
 }

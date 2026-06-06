@@ -34,6 +34,7 @@ package org.smallmind.claxon.registry.spring;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.Emitter;
@@ -70,7 +71,7 @@ public class ClaxonRegistryFactoryBeanTest {
   }
 
   public void testAfterPropertiesSetBuildsRegistryFromConfiguration ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     ClaxonRegistryFactoryBean bean = new ClaxonRegistryFactoryBean();
     ClaxonConfiguration configuration = new ClaxonConfiguration();
@@ -87,7 +88,7 @@ public class ClaxonRegistryFactoryBeanTest {
   }
 
   public void testAfterPropertiesSetBindsEmitterMapEntries ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     ClaxonRegistryFactoryBean bean = new ClaxonRegistryFactoryBean();
     Emitter emitter = new PushEmitter() {
@@ -111,7 +112,7 @@ public class ClaxonRegistryFactoryBeanTest {
   }
 
   public void testDestroyIsSafeWhenAfterPropertiesSetNeverRan ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     new ClaxonRegistryFactoryBean().destroy();
   }

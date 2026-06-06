@@ -94,7 +94,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
    * @param concurrencyLimit          number of parallel response consumer threads
    * @param defaultTimeoutSeconds     seconds a caller waits for a response when no explicit timeout is provided
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
-   * @param groupProtocol              Kafka group protocol for the response consumer threads
+   * @param groupProtocol             Kafka group protocol for the response consumer threads
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while the response ingester is starting

@@ -34,6 +34,7 @@ package org.smallmind.claxon.registry.spring;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.Emitter;
@@ -129,7 +130,7 @@ public class ClaxonRegistryFactoryBean implements FactoryBean<ClaxonRegistry>, I
    */
   @Override
   public void destroy ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     if (registry != null) {
       registry.stop();

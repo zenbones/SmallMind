@@ -40,8 +40,8 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 /**
  * Holds the configuration defaults for a {@link ClaxonRegistry}, including the time source,
- * collection cadence, optional features, default tags, per-meter tags, and the strategy used
- * to derive meter names from caller classes.
+ * collection cadence, the bounded wait allowed for shutdown, optional features, default tags,
+ * per-meter tags, and the strategy used to derive meter names from caller classes.
  *
  * <p>Instances may be constructed with all defaults via the no-argument constructor, or with
  * selective overrides via the full constructor. Individual properties can also be changed at
@@ -58,6 +58,12 @@ public class ClaxonConfiguration {
    * Interval between successive collection rounds.
    */
   private Stint collectionStint = new Stint(2, TimeUnit.SECONDS);
+
+  /**
+   * Maximum time {@link ClaxonRegistry#stop()} waits for the background collection worker to terminate;
+   * may be {@code null}, in which case the registry falls back to five times the {@link #collectionStint}.
+   */
+  private Stint terminationStint = new Stint(10, TimeUnit.SECONDS);
 
   /**
    * Optional registry-level features that produce their own {@link Quantity} readings each collection round.
@@ -81,8 +87,8 @@ public class ClaxonConfiguration {
 
   /**
    * Creates a configuration with all properties set to their default values:
-   * {@link SystemClock}, a two-second collection stint, no features, no tags, and
-   * an {@link ImpliedNamingStrategy}.
+   * {@link SystemClock}, a two-second collection stint, a ten-second termination stint,
+   * no features, no tags, and an {@link ImpliedNamingStrategy}.
    */
   public ClaxonConfiguration () {
 
@@ -92,20 +98,24 @@ public class ClaxonConfiguration {
    * Creates a configuration that selectively overrides defaults. Any parameter that is
    * {@code null} leaves the corresponding default value in place.
    *
-   * @param clock           time source for meter calculations; {@code null} retains {@link SystemClock}
-   * @param collectionStint interval between collection rounds; {@code null} retains the two-second default
-   * @param features        registry-level features to activate; {@code null} leaves features unset
-   * @param registryTags    tags to attach to every meter reading; {@code null} leaves an empty array
-   * @param meterTags       per-meter tag overrides keyed by meter name; {@code null} leaves the map unset
-   * @param namingStrategy  strategy for deriving meter names; {@code null} retains {@link ImpliedNamingStrategy}
+   * @param clock            time source for meter calculations; {@code null} retains {@link SystemClock}
+   * @param collectionStint  interval between collection rounds; {@code null} retains the two-second default
+   * @param terminationStint maximum time {@link ClaxonRegistry#stop()} waits for the collection worker to terminate; {@code null} retains the ten-second default
+   * @param features         registry-level features to activate; {@code null} leaves features unset
+   * @param registryTags     tags to attach to every meter reading; {@code null} leaves an empty array
+   * @param meterTags        per-meter tag overrides keyed by meter name; {@code null} leaves the map unset
+   * @param namingStrategy   strategy for deriving meter names; {@code null} retains {@link ImpliedNamingStrategy}
    */
-  public ClaxonConfiguration (Clock clock, Stint collectionStint, Feature[] features, Tag[] registryTags, Map<String, Tag[]> meterTags, NamingStrategy namingStrategy) {
+  public ClaxonConfiguration (Clock clock, Stint collectionStint, Stint terminationStint, Feature[] features, Tag[] registryTags, Map<String, Tag[]> meterTags, NamingStrategy namingStrategy) {
 
     if (clock != null) {
       this.clock = clock;
     }
     if (collectionStint != null) {
       this.collectionStint = collectionStint;
+    }
+    if (terminationStint != null) {
+      this.terminationStint = terminationStint;
     }
     if (features != null) {
       this.features = features;
@@ -159,6 +169,17 @@ public class ClaxonConfiguration {
   public void setCollectionStint (Stint collectionStint) {
 
     this.collectionStint = collectionStint;
+  }
+
+  /**
+   * Returns the maximum time {@link ClaxonRegistry#stop()} waits for the background collection worker
+   * to terminate, or {@code null} when the registry should fall back to five times the collection stint.
+   *
+   * @return the configured termination {@link Stint}, or {@code null}
+   */
+  public Stint getTerminationStint () {
+
+    return terminationStint;
   }
 
   /**

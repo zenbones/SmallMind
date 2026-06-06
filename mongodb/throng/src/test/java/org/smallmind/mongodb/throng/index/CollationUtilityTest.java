@@ -44,6 +44,11 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class CollationUtilityTest {
 
+  private static org.smallmind.mongodb.throng.index.annotation.Collation getCollationFromHolder (Class<?> holderClass) {
+
+    return holderClass.getAnnotation(Indexes.class).options().collation();
+  }
+
   public void testDefaultCollationAnnotationProducesDefaultDriverCollation () {
 
     Collation collation = CollationUtility.generate(getCollationFromHolder(DefaultHolder.class));
@@ -78,11 +83,6 @@ public class CollationUtilityTest {
     Collation collation = CollationUtility.generate(getCollationFromHolder(EmptyLocaleHolder.class));
 
     Assert.assertNull(collation.getLocale());
-  }
-
-  private static org.smallmind.mongodb.throng.index.annotation.Collation getCollationFromHolder (Class<?> holderClass) {
-
-    return holderClass.getAnnotation(Indexes.class).options().collation();
   }
 
   @Indexes(value = {})

@@ -33,6 +33,7 @@
 package org.smallmind.claxon.http;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import jakarta.ws.rs.core.Response;
 import org.smallmind.claxon.emitter.prometheus.PrometheusEmitter;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
@@ -116,7 +117,7 @@ public class EmitterResourceHttpScrapeTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.stop();
   }
@@ -134,7 +135,7 @@ public class EmitterResourceHttpScrapeTest {
   }
 
   public void testScrapeDrainsBufferAfterRegistryStops ()
-    throws InterruptedException, UnknownEmitterException, InvalidEmitterException {
+    throws InterruptedException, TimeoutException, UnknownEmitterException, InvalidEmitterException {
 
     registry.register(EmitterResourceHttpScrapeTest.class, new TallyBuilder()).update(1L);
 

@@ -106,7 +106,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
    * @param signalCodec               codec for encoding {@link ResultSignal}s and decoding {@link org.smallmind.phalanx.wire.signal.InvocationSignal}s
    * @param concurrencyLimit          thread count applied to both the ingesters and the invocation worker pool
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
-   * @param groupProtocol              Kafka group protocol for the whisper, talk, and shout consumer threads
+   * @param groupProtocol             Kafka group protocol for the whisper, talk, and shout consumer threads
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while starting ingesters or the worker pool

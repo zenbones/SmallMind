@@ -35,8 +35,11 @@ package org.smallmind.nutsnbolts.util;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.smallmind.nutsnbolts.lang.FormattedTimeoutException;
 import org.smallmind.nutsnbolts.time.Stint;
 
 /**
@@ -50,8 +53,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   private final ConcurrentHashMap<K, S> internalMap = new ConcurrentHashMap<K, S>();
   private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<>();
   private final Stint defaultTimeoutStint;
-  private final Stint pulseTimeStint;
-  private final IgnitionWorker ignitionWorker;
+  private final ScheduledExecutorService ignitionExecutor;
 
   /**
    * Creates a map using the specified default timeout and a one-second background cleanup pulse.
@@ -71,14 +73,17 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
    */
   public SelfDestructiveMap (Stint defaultTimeoutStint, Stint pulseTimeStint) {
 
-    Thread ignitionThread;
-
     this.defaultTimeoutStint = defaultTimeoutStint;
-    this.pulseTimeStint = pulseTimeStint;
 
-    ignitionThread = new Thread(ignitionWorker = new IgnitionWorker());
-    ignitionThread.setDaemon(true);
-    ignitionThread.start();
+    ignitionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+      Thread thread = new Thread(runnable, "nutsnbolts-self-destructive-map");
+
+      thread.setDaemon(true);
+
+      return thread;
+    });
+    ignitionExecutor.scheduleWithFixedDelay(this::igniteExpired, pulseTimeStint.getTime(), pulseTimeStint.getTime(), pulseTimeStint.getTimeUnit());
   }
 
   /**
@@ -124,71 +129,45 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   }
 
   /**
-   * Stops the background cleanup worker and blocks until it has fully terminated.
+   * Shuts the background cleanup executor down and waits up to three seconds for it to terminate.
    *
    * @throws InterruptedException if the calling thread is interrupted while waiting for the worker to stop
+   * @throws TimeoutException     if the background worker does not terminate within three seconds
    */
   public void shutdown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
-    ignitionWorker.shutdown();
+    ignitionExecutor.shutdown();
+    if (!ignitionExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
+      throw new FormattedTimeoutException("Unable to terminate the self-destructive map in (%d, %s)", 3, TimeUnit.SECONDS.name());
+    }
   }
 
-  private class IgnitionWorker implements Runnable {
+  /**
+   * Polls the expiry set once and invokes {@link SelfDestructive#destroy(Stint)} on any entries whose ignition time has passed.
+   * Invoked on each pulse by the background {@link ScheduledExecutorService}.
+   */
+  private void igniteExpired () {
 
-    private final CountDownLatch terminationLatch = new CountDownLatch(1);
-    private final CountDownLatch exitLatch = new CountDownLatch(1);
-    private Thread runnableThread;
+    try {
 
-    /**
-     * Signals this worker to stop and waits until it has exited.
-     *
-     * @throws InterruptedException if the calling thread is interrupted while waiting
-     */
-    public void shutdown ()
-      throws InterruptedException {
+      NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
 
-      terminationLatch.countDown();
+      if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<>(Stint.none()))).isEmpty()) {
 
-      if (runnableThread != null) {
-        runnableThread.interrupt();
-      }
+        SelfDestructiveKey<K> ignitedKey;
 
-      exitLatch.await();
-    }
+        while ((ignitedKey = ignitedKeySet.pollFirst()) != null) {
 
-    /**
-     * Continuously polls the expiry set at each pulse interval and invokes {@link SelfDestructive#destroy(Stint)} on any entries whose ignition time has passed.
-     */
-    @Override
-    public void run () {
+          SelfDestructive selfDestructive;
 
-      try {
-        runnableThread = Thread.currentThread();
-
-        while (!terminationLatch.await(pulseTimeStint.getTime(), pulseTimeStint.getTimeUnit())) {
-
-          NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
-
-          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<>(Stint.none()))).isEmpty()) {
-
-            SelfDestructiveKey<K> ignitedKey;
-
-            while ((ignitedKey = ignitedKeySet.pollFirst()) != null) {
-
-              SelfDestructive selfDestructive;
-
-              if ((selfDestructive = internalMap.remove(ignitedKey.getMapKey())) != null) {
-                selfDestructive.destroy(ignitedKey.getTimeoutStint());
-              }
-            }
+          if ((selfDestructive = internalMap.remove(ignitedKey.getMapKey())) != null) {
+            selfDestructive.destroy(ignitedKey.getTimeoutStint());
           }
         }
-      } catch (InterruptedException interruptedException) {
-        terminationLatch.countDown();
       }
-
-      exitLatch.countDown();
+    } catch (Exception exception) {
+      // A failed destruction must not cancel future sweeps.
     }
   }
 }

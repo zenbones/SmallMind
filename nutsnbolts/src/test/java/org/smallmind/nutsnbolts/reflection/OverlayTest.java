@@ -40,60 +40,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class OverlayTest {
 
-  public static class Sample implements Overlay<Sample> {
-
-    private String name;
-    @EmptyStringNullifier
-    private String tag;
-    private Integer count;
-    private boolean overlaidCalled;
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public String getTag () {
-
-      return tag;
-    }
-
-    public void setTag (String tag) {
-
-      this.tag = tag;
-    }
-
-    public Integer getCount () {
-
-      return count;
-    }
-
-    public void setCount (Integer count) {
-
-      this.count = count;
-    }
-
-    public boolean isOverlaidCalled () {
-
-      return overlaidCalled;
-    }
-
-    @Override
-    public void overlaid () {
-
-      overlaidCalled = true;
-    }
-  }
-
-  public static class Unrelated {
-
-  }
-
   public void testOverlayCopiesNonNullFieldsAndLeavesNullFieldsAlone () {
 
     Sample target = new Sample();
@@ -203,5 +149,59 @@ public class OverlayTest {
     target.overlay(new Sample[0]);
 
     Assert.assertEquals(target.getName(), "untouched");
+  }
+
+  public static class Sample implements Overlay<Sample> {
+
+    private String name;
+    @EmptyStringNullifier
+    private String tag;
+    private Integer count;
+    private boolean overlaidCalled;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public String getTag () {
+
+      return tag;
+    }
+
+    public void setTag (String tag) {
+
+      this.tag = tag;
+    }
+
+    public Integer getCount () {
+
+      return count;
+    }
+
+    public void setCount (Integer count) {
+
+      this.count = count;
+    }
+
+    public boolean isOverlaidCalled () {
+
+      return overlaidCalled;
+    }
+
+    @Override
+    public void overlaid () {
+
+      overlaidCalled = true;
+    }
+  }
+
+  public static class Unrelated {
+
   }
 }

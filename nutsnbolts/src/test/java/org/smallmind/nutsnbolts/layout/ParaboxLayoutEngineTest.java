@@ -42,175 +42,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ParaboxLayoutEngineTest {
 
-  static final class TestComponent {
-
-    private final String label;
-    private final double minWidth;
-    private final double prefWidth;
-    private final double maxWidth;
-    private final double minHeight;
-    private final double prefHeight;
-    private final double maxHeight;
-    private Pair location;
-    private Pair size;
-    private double baselineAscent;
-
-    TestComponent (String label, double minWidth, double prefWidth, double maxWidth, double minHeight, double prefHeight, double maxHeight) {
-
-      this.label = label;
-      this.minWidth = minWidth;
-      this.prefWidth = prefWidth;
-      this.maxWidth = maxWidth;
-      this.minHeight = minHeight;
-      this.prefHeight = prefHeight;
-      this.maxHeight = maxHeight;
-    }
-
-    TestComponent withBaselineAscent (double baselineAscent) {
-
-      this.baselineAscent = baselineAscent;
-
-      return this;
-    }
-
-    double getBaselineAscent () {
-
-      return baselineAscent;
-    }
-
-    double width (Bias bias, TapeMeasure tapeMeasure) {
-
-      if (bias == Bias.HORIZONTAL) {
-        return switch (tapeMeasure) {
-          case MINIMUM -> minWidth;
-          case PREFERRED -> prefWidth;
-          case MAXIMUM -> maxWidth;
-        };
-      } else {
-        return switch (tapeMeasure) {
-          case MINIMUM -> minHeight;
-          case PREFERRED -> prefHeight;
-          case MAXIMUM -> maxHeight;
-        };
-      }
-    }
-
-    void place (Pair location, Pair size) {
-
-      this.location = location;
-      this.size = size;
-    }
-
-    Pair getLocation () {
-
-      return location;
-    }
-
-    Pair getSize () {
-
-      return size;
-    }
-
-    @Override
-    public String toString () {
-
-      return label;
-    }
-  }
-
-  static final class StubPlatform implements ParaboxPlatform {
-
-    @Override
-    public double getRelatedGap () {
-
-      return 5.0D;
-    }
-
-    @Override
-    public double getUnrelatedGap () {
-
-      return 10.0D;
-    }
-
-    @Override
-    public Perimeter getFramePerimeter () {
-
-      return new Perimeter(0.0D, 0.0D, 0.0D, 0.0D);
-    }
-
-    @Override
-    public Orientation getOrientation () {
-
-      return Orientation.getDefaultOrientation();
-    }
-  }
-
-  static final class StubContainer implements ParaboxContainer<TestComponent> {
-
-    private final ParaboxPlatform platform = new StubPlatform();
-    private final Map<TestComponent, Boolean> added = new HashMap<>();
-
-    @Override
-    public ParaboxPlatform getPlatform () {
-
-      return platform;
-    }
-
-    @Override
-    public ParaboxElement<TestComponent> constructElement (TestComponent component, Constraint constraint) {
-
-      return new ComponentParaboxElement<TestComponent>(component, constraint) {
-
-        @Override
-        public double getComponentMinimumMeasurement (Bias bias) {
-
-          return component.width(bias, TapeMeasure.MINIMUM);
-        }
-
-        @Override
-        public double getComponentPreferredMeasurement (Bias bias) {
-
-          return component.width(bias, TapeMeasure.PREFERRED);
-        }
-
-        @Override
-        public double getComponentMaximumMeasurement (Bias bias) {
-
-          return component.width(bias, TapeMeasure.MAXIMUM);
-        }
-
-        @Override
-        public double getBaseline (Bias bias, double measurement) {
-
-          return component.getBaselineAscent();
-        }
-
-        @Override
-        public void applyLayout (Pair location, Pair size) {
-
-          component.place(location, size);
-        }
-      };
-    }
-
-    @Override
-    public void nativelyAddComponent (TestComponent component) {
-
-      added.put(component, true);
-    }
-
-    @Override
-    public void nativelyRemoveComponent (TestComponent component) {
-
-      added.remove(component);
-    }
-
-    boolean wasAdded (TestComponent component) {
-
-      return added.getOrDefault(component, false);
-    }
-  }
-
   public void testPreferredSizeReflectsComponentRequests () {
 
     StubContainer container = new StubContainer();
@@ -587,5 +418,174 @@ public class ParaboxLayoutEngineTest {
 
     Assert.assertEquals(left.getLocation().first(), 0.0D);
     Assert.assertEquals(right.getLocation().first(), 30.0D);
+  }
+
+  static final class TestComponent {
+
+    private final String label;
+    private final double minWidth;
+    private final double prefWidth;
+    private final double maxWidth;
+    private final double minHeight;
+    private final double prefHeight;
+    private final double maxHeight;
+    private Pair location;
+    private Pair size;
+    private double baselineAscent;
+
+    TestComponent (String label, double minWidth, double prefWidth, double maxWidth, double minHeight, double prefHeight, double maxHeight) {
+
+      this.label = label;
+      this.minWidth = minWidth;
+      this.prefWidth = prefWidth;
+      this.maxWidth = maxWidth;
+      this.minHeight = minHeight;
+      this.prefHeight = prefHeight;
+      this.maxHeight = maxHeight;
+    }
+
+    TestComponent withBaselineAscent (double baselineAscent) {
+
+      this.baselineAscent = baselineAscent;
+
+      return this;
+    }
+
+    double getBaselineAscent () {
+
+      return baselineAscent;
+    }
+
+    double width (Bias bias, TapeMeasure tapeMeasure) {
+
+      if (bias == Bias.HORIZONTAL) {
+        return switch (tapeMeasure) {
+          case MINIMUM -> minWidth;
+          case PREFERRED -> prefWidth;
+          case MAXIMUM -> maxWidth;
+        };
+      } else {
+        return switch (tapeMeasure) {
+          case MINIMUM -> minHeight;
+          case PREFERRED -> prefHeight;
+          case MAXIMUM -> maxHeight;
+        };
+      }
+    }
+
+    void place (Pair location, Pair size) {
+
+      this.location = location;
+      this.size = size;
+    }
+
+    Pair getLocation () {
+
+      return location;
+    }
+
+    Pair getSize () {
+
+      return size;
+    }
+
+    @Override
+    public String toString () {
+
+      return label;
+    }
+  }
+
+  static final class StubPlatform implements ParaboxPlatform {
+
+    @Override
+    public double getRelatedGap () {
+
+      return 5.0D;
+    }
+
+    @Override
+    public double getUnrelatedGap () {
+
+      return 10.0D;
+    }
+
+    @Override
+    public Perimeter getFramePerimeter () {
+
+      return new Perimeter(0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
+    @Override
+    public Orientation getOrientation () {
+
+      return Orientation.getDefaultOrientation();
+    }
+  }
+
+  static final class StubContainer implements ParaboxContainer<TestComponent> {
+
+    private final ParaboxPlatform platform = new StubPlatform();
+    private final Map<TestComponent, Boolean> added = new HashMap<>();
+
+    @Override
+    public ParaboxPlatform getPlatform () {
+
+      return platform;
+    }
+
+    @Override
+    public ParaboxElement<TestComponent> constructElement (TestComponent component, Constraint constraint) {
+
+      return new ComponentParaboxElement<TestComponent>(component, constraint) {
+
+        @Override
+        public double getComponentMinimumMeasurement (Bias bias) {
+
+          return component.width(bias, TapeMeasure.MINIMUM);
+        }
+
+        @Override
+        public double getComponentPreferredMeasurement (Bias bias) {
+
+          return component.width(bias, TapeMeasure.PREFERRED);
+        }
+
+        @Override
+        public double getComponentMaximumMeasurement (Bias bias) {
+
+          return component.width(bias, TapeMeasure.MAXIMUM);
+        }
+
+        @Override
+        public double getBaseline (Bias bias, double measurement) {
+
+          return component.getBaselineAscent();
+        }
+
+        @Override
+        public void applyLayout (Pair location, Pair size) {
+
+          component.place(location, size);
+        }
+      };
+    }
+
+    @Override
+    public void nativelyAddComponent (TestComponent component) {
+
+      added.put(component, true);
+    }
+
+    @Override
+    public void nativelyRemoveComponent (TestComponent component) {
+
+      added.remove(component);
+    }
+
+    boolean wasAdded (TestComponent component) {
+
+      return added.getOrDefault(component, false);
+    }
   }
 }

@@ -81,6 +81,7 @@ public class CubbyConfiguration {
   private long readTimeoutMilliseconds = 30000;
   private long keepAliveSeconds = 30;
   private long resuscitationSeconds = 10;
+  private long terminationTimeoutSeconds = 10;
   private int connectionsPerHost = 1;
 
   /**
@@ -317,6 +318,33 @@ public class CubbyConfiguration {
   public CubbyConfiguration setConnectionsPerHost (int connectionsPerHost) {
 
     this.connectionsPerHost = connectionsPerHost;
+
+    return this;
+  }
+
+  /**
+   * Returns the maximum time the coordinator will wait for the {@link ServerDefibrillator}
+   * scheduler to terminate during {@link ConnectionCoordinator#stop()} before logging a warning
+   * and proceeding with connection teardown.
+   *
+   * @return the defibrillator shutdown grace period in seconds
+   */
+  public long getTerminationTimeoutSeconds () {
+
+    return terminationTimeoutSeconds;
+  }
+
+  /**
+   * Sets the maximum time to wait for the {@link ServerDefibrillator} scheduler to terminate on
+   * shutdown. If the scheduler does not stop within this window a warning is logged and teardown
+   * continues anyway.
+   *
+   * @param terminationTimeoutSeconds shutdown grace period in seconds; must be positive
+   * @return this configuration instance for method chaining
+   */
+  public CubbyConfiguration setTerminationTimeoutSeconds (long terminationTimeoutSeconds) {
+
+    this.terminationTimeoutSeconds = terminationTimeoutSeconds;
 
     return this;
   }

@@ -32,8 +32,11 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
@@ -46,8 +49,9 @@ import org.tanukisoftware.wrapper.WrapperManager;
  * {@link #startup(String[])} and {@link #shutdown()} behavior; this class takes care of:
  * <ul>
  *   <li>reflectively instantiating the configured listener from {@code main} and handing it to {@link WrapperManager};</li>
- *   <li>spawning a background "keep-alive" thread that repeatedly calls {@link WrapperManager#signalStarting(int)}
- *       so slow startups are not killed by the wrapper watchdog (bounded by a fail-safe ceiling);</li>
+ *   <li>scheduling a background "keep-alive" task on a single-thread scheduled executor that repeatedly calls
+ *       {@link WrapperManager#signalStarting(int)} so slow startups are not killed by the wrapper watchdog
+ *       (the task stops signalling and cancels itself once a fail-safe ceiling is reached);</li>
  *   <li>translating wrapper control events into {@link WrapperManager#stop(int)} calls when running without the
  *       native wrapper;</li>
  *   <li>converting exceptions thrown by {@link #startup(String[])} or {@link #shutdown()} into stack-trace exit codes.</li>
@@ -73,7 +77,7 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
    *                                  allowed minimum
    * @throws Throwable                if reflectively instantiating the listener or handing it to the wrapper fails
    */
-  public static void main (String... args)
+  static void main (String... args)
     throws Throwable {
 
     if (args.length < 1) {
@@ -86,8 +90,8 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
 
       if ((startupTimeoutSeconds = WrapperManager.getProperties().getProperty("wrapper.startup.timeout")) != null) {
         try {
-          if (Integer.parseInt(startupTimeoutSeconds) < 10) {
-            throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= 10", MINIMUM_STARTUP_TIMEOUT_SECONDS));
+          if (Integer.parseInt(startupTimeoutSeconds) < MINIMUM_STARTUP_TIMEOUT_SECONDS) {
+            throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= %d", startupTimeoutSeconds, MINIMUM_STARTUP_TIMEOUT_SECONDS));
           }
         } catch (NumberFormatException numberFormatException) {
           throw new IllegalStateException(String.format("Unable to parse the property(wrapper.startup.timeout) as in integer(%s)", startupTimeoutSeconds));
@@ -140,8 +144,13 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Wrapper start callback. Launches the background "still starting" signaller, invokes {@link #startup(String[])},
-   * and releases the latch so the signaller terminates once startup returns.
+   * Wrapper start callback. Opens a single-thread scheduled executor (its worker is a daemon named
+   * {@code spark-wrapper-signal}) in a try-with-resources block, schedules a "still starting" signaller on it via
+   * {@link ScheduledExecutorService#scheduleWithFixedDelay}, and invokes {@link #startup(String[])} on the calling
+   * thread. The signaller calls {@link WrapperManager#signalStarting(int)} on each firing so the wrapper watchdog
+   * keeps waiting while startup runs; once {@link #FAIL_SAFE_TIMEOUT_SECONDS} elapses it stops signalling and
+   * cancels its own future, after which the wrapper is free to time out and stop a stalled startup. When
+   * {@link #startup(String[])} returns or throws, the try-with-resources {@code close()} shuts the executor down.
    *
    * @param args arguments where {@code args[0]} is the startup timeout in seconds and the remainder are the
    *             application arguments forwarded to {@link #startup(String[])}
@@ -150,26 +159,39 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
    */
   public Integer start (String[] args) {
 
-    CountDownLatch completedLatch = new CountDownLatch(1);
+    try (ScheduledExecutorService signalExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
 
-    try {
+      Thread thread = new Thread(runnable, "spark-wrapper-signal");
 
-      Thread signalThread;
+      thread.setDaemon(true);
+
+      return thread;
+    })) {
+
+      AtomicReference<ScheduledFuture<?>> signalFutureRef = new AtomicReference<>();
       String[] trimmedArgs = new String[args.length - 1];
       int startupTimeoutSeconds = Integer.parseInt(args[0]);
+      long startMillis = System.currentTimeMillis();
 
       System.arraycopy(args, 1, trimmedArgs, 0, args.length - 1);
 
-      signalThread = new Thread(new SignalWorker(completedLatch, startupTimeoutSeconds));
-      signalThread.setDaemon(true);
-      signalThread.start();
+      signalFutureRef.set(signalExecutor.scheduleWithFixedDelay(() -> {
+        if (System.currentTimeMillis() - startMillis < (FAIL_SAFE_TIMEOUT_SECONDS * 1000L)) {
+          WrapperManager.signalStarting(startupTimeoutSeconds);
+        } else {
+
+          ScheduledFuture<?> signalFuture;
+
+          if ((signalFuture = signalFutureRef.get()) != null) {
+            signalFuture.cancel(false);
+          }
+        }
+      }, startupTimeoutSeconds - 2, startupTimeoutSeconds - 2, TimeUnit.SECONDS));
 
       startup(trimmedArgs);
     } catch (Exception exception) {
       exception.printStackTrace();
       return STACK_TRACE_ERROR_CODE;
-    } finally {
-      completedLatch.countDown();
     }
 
     return null;
@@ -192,43 +214,5 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     }
 
     return exitCode;
-  }
-
-  private static class SignalWorker implements Runnable {
-
-    private final CountDownLatch completedLatch;
-    private final int startupTimeoutSeconds;
-
-    /**
-     * Creates a signaller that pings the wrapper while waiting for startup to complete.
-     *
-     * @param completedLatch        latch the outer {@link #start(String[])} counts down when startup finishes
-     * @param startupTimeoutSeconds duration to promise to the wrapper on each signal; also controls the wake-up
-     *                              interval (slightly shorter so signals land before the wrapper's deadline)
-     */
-    public SignalWorker (CountDownLatch completedLatch, int startupTimeoutSeconds) {
-
-      this.completedLatch = completedLatch;
-      this.startupTimeoutSeconds = startupTimeoutSeconds;
-    }
-
-    /**
-     * Loops until startup completes or the fail-safe ceiling is reached, calling
-     * {@link WrapperManager#signalStarting(int)} each iteration to extend the wrapper's patience. Interruption
-     * terminates the loop silently.
-     */
-    @Override
-    public void run () {
-
-      long startMillis = System.currentTimeMillis();
-
-      try {
-        while ((System.currentTimeMillis() - startMillis < (FAIL_SAFE_TIMEOUT_SECONDS * 1000)) && (!completedLatch.await(startupTimeoutSeconds - 2, TimeUnit.SECONDS))) {
-          WrapperManager.signalStarting(startupTimeoutSeconds);
-        }
-      } catch (InterruptedException interruptedException) {
-        // do nothing
-      }
-    }
   }
 }

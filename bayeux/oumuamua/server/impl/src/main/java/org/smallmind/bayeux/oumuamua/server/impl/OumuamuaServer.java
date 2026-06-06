@@ -41,6 +41,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -85,9 +87,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final String[] protocolNames;
   private final boolean allowsImplicitConnection;
   private final long sessionConnectionIntervalMilliseconds;
-
-  private IdleChannelSifter<V> idleChannelSifter;
-  private IdleSessionInspector<V> idleSessionInspector;
+  private ScheduledExecutorService idleChannelExecutor;
+  private ScheduledExecutorService idleSessionExecutor;
 
   /**
    * Builds the server from the supplied configuration, wiring protocols, services, and listeners.
@@ -141,8 +142,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Starts the server by bringing up the backbone, initializing each protocol, and launching the
-   * idle-channel and idle-session maintenance threads.
+   * Starts the server by bringing up the backbone, initializing each protocol, and scheduling the
+   * idle-channel and idle-session maintenance tasks on dedicated single-thread daemon scheduled
+   * executors.
    *
    * @param servletConfig servlet configuration forwarded to each protocol's {@code init} method
    * @throws ServletException if the backbone fails to start or a protocol throws during initialization
@@ -168,14 +170,33 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       protocolMap.put(protocol.getName(), protocol);
     }
 
-    new Thread(idleChannelSifter = new IdleChannelSifter<>(configuration.getIdleChannelCycleMinutes(), configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved)).start();
-    new Thread(idleSessionInspector = new IdleSessionInspector<>(this, configuration.getIdleSessionCycleMinutes(), configuration.getIdleCleanupLogLevel())).start();
+    idleChannelExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+      Thread thread = new Thread(runnable, "oumuamua-idle-channel");
+
+      thread.setDaemon(true);
+
+      return thread;
+    });
+    idleChannelExecutor.scheduleWithFixedDelay(new IdleChannelSifter<>(configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved), configuration.getIdleChannelCycleMinutes(), configuration.getIdleChannelCycleMinutes(), TimeUnit.MINUTES);
+
+    idleSessionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+      Thread thread = new Thread(runnable, "oumuamua-idle-session");
+
+      thread.setDaemon(true);
+
+      return thread;
+    });
+    idleSessionExecutor.scheduleWithFixedDelay(new IdleSessionInspector<>(this, configuration.getIdleCleanupLogLevel()), configuration.getIdleSessionCycleMinutes(), configuration.getIdleSessionCycleMinutes(), TimeUnit.MINUTES);
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }
 
   /**
-   * Shuts down the backbone, stops both maintenance threads, and terminates the executor service.
+   * Shuts down the backbone, then shuts down both idle-maintenance executors — waiting up to
+   * {@code configuration.getIdleCheckingTerminationTimeoutSeconds()} seconds for each to terminate
+   * and logging if it times out — and finally shuts down the dispatch executor service.
    */
   public void stop () {
 
@@ -191,14 +212,20 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       }
     }
 
+    idleSessionExecutor.shutdown();
     try {
-      idleSessionInspector.stop();
+      if (!idleSessionExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
+        LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle session executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+      }
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }
 
+    idleChannelExecutor.shutdown();
     try {
-      idleChannelSifter.stop();
+      if (!idleChannelExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
+        LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle channel executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+      }
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
     }

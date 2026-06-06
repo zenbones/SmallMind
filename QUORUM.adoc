@@ -382,56 +382,100 @@ each tagged with the pool's name:
 | `waited`     | Time spent blocked in `getComponent()` (speedometer).
 |===
 
-==== Example: A Complex Pool of Remote Service Stubs
+==== Example: A Self-Returning Complex Pool
+
+This example pools `RemoteSession` objects and shows the full round trip: the
+caller borrows a session with `getComponent()`, uses it, and closes it.
+Closing fires an event the wrapper listens for, and the wrapper returns
+*itself* to the pool. The served `RemoteSession` never references its
+`ComponentInstance` wrapper — the same shape the shipped JDBC
+`PooledConnectionComponentInstance` uses.
 
 [source,java]
 ----
-// 1. A ComponentInstance wrapping a remote stub.
-public final class RemoteServiceInstance implements ComponentInstance<RemoteService> {
+// 1. The component the application borrows. Like java.sql.PooledConnection,
+//    it notifies a listener when the client closes it or hits a fatal error.
+//    That hook is the whole trick: it lets the wrapper react to a close
+//    without the session ever holding a reference back to the pool.
+public interface RemoteSession {
 
-  private final RemoteService stub;
+  void addSessionListener (RemoteSessionListener listener);
+  void removeSessionListener (RemoteSessionListener listener);
+
+  void doWork () throws Exception;
+  void close () throws Exception;        // the client calls this when finished
+}
+
+public interface RemoteSessionListener {
+
+  void sessionClosed ();
+  void sessionErrorOccurred (Exception exception);
+}
+
+// 2. The ComponentInstance wrapper. It keeps the pool and registers itself as
+//    a listener on the session it serves, so it can return *itself*.
+public final class RemoteSessionInstance
+  implements ComponentInstance<RemoteSession>, RemoteSessionListener {
+
+  private final ComponentPool<RemoteSession> pool;
+  private final RemoteSession session;
   private StackTraceElement[] stackTrace;
 
-  public RemoteServiceInstance () throws Exception {
-    this.stub = RemoteServiceFactory.connect();
+  public RemoteSessionInstance (ComponentPool<RemoteSession> pool) throws Exception {
+    this.pool = pool;
+    this.session = RemoteSessionFactory.connect();
+    session.addSessionListener(this);                       // wrapper listens to its own component
   }
 
   @Override
   public boolean validate () {
-    try { stub.ping(); return true; } catch (Exception e) { return false; }
+    try { session.doWork(); return true; } catch (Exception e) { return false; }
   }
 
   @Override
-  public RemoteService serve () {
-    return stub;
+  public RemoteSession serve () {
+    if (pool.getComplexPoolConfig().isExistentiallyAware()) {
+      stackTrace = Thread.currentThread().getStackTrace();   // record the borrowing thread
+    }
+    return session;
+  }
+
+  @Override
+  public void sessionClosed () {
+    pool.returnInstance(this);             // returns *itself*, not the raw session
+  }
+
+  @Override
+  public void sessionErrorOccurred (Exception exception) {
+    pool.reportErrorOccurred(exception);
+    pool.terminateInstance(this);          // discard a broken session, don't reuse it
   }
 
   @Override
   public void close () throws Exception {
-    stub.disconnect();
+    session.removeSessionListener(this);
+    session.close();
   }
 
   @Override
-  public StackTraceElement[] getExistentialStackTrace () { return stackTrace; }
-
-  @Override
-  public void setExistentialStackTrace (StackTraceElement[] stackTrace) {
-    this.stackTrace = stackTrace;
+  public StackTraceElement[] getExistentialStackTrace () {
+    return stackTrace;
   }
 }
 
-// 2. A factory.
-final class RemoteServiceInstanceFactory
-  extends AbstractComponentInstanceFactory<RemoteService> {
+// 3. The factory. The pool passes itself in (see ComponentInstanceFactory),
+//    which is precisely what lets each instance return itself later.
+final class RemoteSessionInstanceFactory
+  extends AbstractComponentInstanceFactory<RemoteSession> {
 
   @Override
-  public ComponentInstance<RemoteService> createInstance (ComponentPool<RemoteService> pool)
+  public ComponentInstance<RemoteSession> createInstance (ComponentPool<RemoteSession> pool)
     throws Exception {
-    return new RemoteServiceInstance();
+    return new RemoteSessionInstance(pool);
   }
 }
 
-// 3. A production-grade configuration.
+// 4. A production-grade configuration.
 ComplexPoolConfig config = new ComplexPoolConfig()
   .setMaxPoolSize(50)
   .setMinPoolSize(10)
@@ -446,9 +490,9 @@ ComplexPoolConfig config = new ComplexPoolConfig()
   .setExistentiallyAware(true)
   .setReportLeaseTimeNanos(true);
 
-// 4. The pool.
-ComponentPool<RemoteService> pool = new ComponentPool<>(
-  "RemoteServicePool", new RemoteServiceInstanceFactory(), config);
+// 5. The pool.
+ComponentPool<RemoteSession> pool = new ComponentPool<>(
+  "RemoteSessionPool", new RemoteSessionInstanceFactory(), config);
 
 pool.addComponentPoolEventListener(new ComponentPoolEventListener() {
 
@@ -463,29 +507,42 @@ pool.addComponentPoolEventListener(new ComponentPoolEventListener() {
   }
 });
 
-// 5. Optional JMX registration.
+// 6. Optional JMX registration.
 ManagementFactory.getPlatformMBeanServer().registerMBean(
   new ComponentPoolMonitor(pool),
-  new ObjectName("com.example:type=ComponentPool,name=RemoteService"));
+  new ObjectName("com.example:type=ComponentPool,name=RemoteSession"));
 
-// 6. Start, use, stop.
+// 7. Start, borrow, use, return, stop.
 pool.startup();
 try {
-  RemoteService service = pool.getComponent();
+  RemoteSession session = pool.getComponent();   // borrow the raw component
   try {
-    service.doWork();
+    session.doWork();
   } finally {
-    pool.returnInstance(service);
+    session.close();                             // fires sessionClosed -> returnInstance(this)
   }
 } finally {
   pool.shutdown();
 }
 ----
 
+[NOTE]
+====
+The asymmetry is deliberate: `getComponent()` serves the raw component, while
+`returnInstance(ComponentInstance)` and `terminateInstance(ComponentInstance)`
+act on the wrapper. Because the wrapper holds the pool and returns itself, the
+served component stays oblivious to pooling — above, `RemoteSession` has no
+idea it is pooled. The framework ships exactly this pattern for JDBC as
+`PooledConnectionComponentInstance`, which registers as a
+`ConnectionEventListener` and self-returns on `connectionClosed`. A lease left
+outstanding past `maxLeaseTimeSeconds` is reclaimed by the pool's
+deconstruction fuse as a backstop.
+====
+
 ==== Leak Diagnostics
 
 When `existentiallyAware` is `true`, `pool.getExistentialStackTraces()`
-returns an array of `StackTraceElement[]`, one per currently
+returns an array of `StackTrace`, one per currently
 checked-out instance, each captured at the moment of acquisition. This
 is the single most useful tool in the framework when the pool looks
 "stuck": dump all stacks, and you immediately see which caller forgot
@@ -641,8 +698,8 @@ Each lifecycle method has a no-argument overload and a
 
 === Recovery
 
-When `recoveryCheckSeconds > 0`, a daemon worker thread
-(`ProviderRecoveryWorker`) wakes up at most every three seconds,
+When `recoveryCheckSeconds > 0`, a daemon worker (a single-thread
+scheduled executor named `quorum-juggler-recovery`) wakes up every three seconds,
 scans the blacklist map for entries older than the configured
 recovery window, and calls `pin.recover()`. If recovery returns
 `true`, the pin is removed from the blacklist and appended to the
@@ -769,8 +826,8 @@ juggler.startup();
   concurrent map; promotion of a recovered pin back to the list *does*
   take the juggler lock.
 * The daemon worker is always a daemon thread, so it will not keep a
-  JVM alive past `shutdown()`; the `abort()` path uses a
-  `CountDownLatch` to signal and await clean exit.
+  JVM alive past `shutdown()`, which stops the recovery executor and
+  waits up to five seconds for it to terminate.
 
 // ==========================================================================
 == The Bucket Framework
@@ -1227,7 +1284,7 @@ the callers that got past the gate.
 * `bucket/TokenBucket.java` -- the entire rate-limiter in a single
   file; read it for the clearest picture of the refill mathematics.
 * `juggler/Juggler.java` -- the rotation algorithm, the blacklist
-  handling, and the `ProviderRecoveryWorker` implementation.
+  handling, and the `recoverProviders` implementation.
 * `pool/complex/ComponentPinManager.java` -- the heart of the complex
   pool; creation, validation, termination, and replacement logic.
 * `pool/complex/DeconstructionFuse.java` and its three subclasses --

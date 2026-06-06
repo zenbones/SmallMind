@@ -57,16 +57,16 @@ public class ArrayUtilityTest {
 
   public void testConcatenateJoinsArrays () {
 
-    String[] result = ArrayUtility.concatenate(String.class, new String[]{"a", "b"}, "c", "d");
+    String[] result = ArrayUtility.concatenate(String.class, new String[] {"a", "b"}, "c", "d");
 
-    Assert.assertEquals(result, new String[]{"a", "b", "c", "d"});
+    Assert.assertEquals(result, new String[] {"a", "b", "c", "d"});
   }
 
   public void testConcatenateWithNullFirstReturnsSecond () {
 
     String[] result = ArrayUtility.concatenate(String.class, null, "x", "y");
 
-    Assert.assertEquals(result, new String[]{"x", "y"});
+    Assert.assertEquals(result, new String[] {"x", "y"});
   }
 
   public void testConcatenateWithBothNullReturnsEmptyArray () {
@@ -85,19 +85,19 @@ public class ArrayUtilityTest {
 
   public void testLinearSearchFindsElement () {
 
-    Assert.assertEquals(ArrayUtility.linearSearch(new String[]{"a", "b", "c"}, "b"), 1);
-    Assert.assertEquals(ArrayUtility.linearSearch(new String[]{"a", "b", "c"}, "a"), 0);
-    Assert.assertEquals(ArrayUtility.linearSearch(new String[]{"a", "b", "c"}, "c"), 2);
+    Assert.assertEquals(ArrayUtility.linearSearch(new String[] {"a", "b", "c"}, "b"), 1);
+    Assert.assertEquals(ArrayUtility.linearSearch(new String[] {"a", "b", "c"}, "a"), 0);
+    Assert.assertEquals(ArrayUtility.linearSearch(new String[] {"a", "b", "c"}, "c"), 2);
   }
 
   public void testLinearSearchReturnsMinusOneWhenNotFound () {
 
-    Assert.assertEquals(ArrayUtility.linearSearch(new String[]{"a", "b"}, "z"), -1);
+    Assert.assertEquals(ArrayUtility.linearSearch(new String[] {"a", "b"}, "z"), -1);
   }
 
   public void testLinearSearchHandlesNullKey () {
 
-    Assert.assertEquals(ArrayUtility.linearSearch(new String[]{"a", null, "c"}, null), 1);
+    Assert.assertEquals(ArrayUtility.linearSearch(new String[] {"a", null, "c"}, null), 1);
   }
 
   public void testLinearSearchOnNullOrEmptyReturnsMinusOne () {

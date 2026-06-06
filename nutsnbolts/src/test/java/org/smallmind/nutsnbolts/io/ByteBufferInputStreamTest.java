@@ -43,7 +43,7 @@ public class ByteBufferInputStreamTest {
   public void testSingleByteReadConsumesFromCurrentPosition ()
     throws IOException {
 
-    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[]{1, 2, 3}));
+    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[] {1, 2, 3}));
 
     Assert.assertEquals(stream.read(), 1);
     Assert.assertEquals(stream.read(), 2);
@@ -54,7 +54,7 @@ public class ByteBufferInputStreamTest {
   public void testHighByteValuesAreReturnedUnsigned ()
     throws IOException {
 
-    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[]{(byte)0xFF, (byte)0x80}));
+    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[] {(byte)0xFF, (byte)0x80}));
 
     Assert.assertEquals(stream.read(), 0xFF);
     Assert.assertEquals(stream.read(), 0x80);
@@ -63,17 +63,17 @@ public class ByteBufferInputStreamTest {
   public void testArrayReadFillsBufferAndReturnsCount ()
     throws IOException {
 
-    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[]{1, 2, 3, 4, 5}));
+    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[] {1, 2, 3, 4, 5}));
     byte[] dest = new byte[3];
 
     Assert.assertEquals(stream.read(dest, 0, 3), 3);
-    Assert.assertEquals(dest, new byte[]{1, 2, 3});
+    Assert.assertEquals(dest, new byte[] {1, 2, 3});
   }
 
   public void testArrayReadAtEndReturnsMinusOne ()
     throws IOException {
 
-    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[]{1, 2}));
+    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[] {1, 2}));
     byte[] dest = new byte[10];
 
     stream.read(dest, 0, 2);
@@ -83,7 +83,7 @@ public class ByteBufferInputStreamTest {
   public void testArrayReadHonorsRemainingWhenLargerThanLimit ()
     throws IOException {
 
-    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[]{1, 2}));
+    ByteBufferInputStream stream = new ByteBufferInputStream(ByteBuffer.wrap(new byte[] {1, 2}));
     byte[] dest = new byte[10];
 
     Assert.assertEquals(stream.read(dest, 0, 10), 2);
@@ -92,7 +92,7 @@ public class ByteBufferInputStreamTest {
   public void testRespectsByteBufferPositionAndLimit ()
     throws IOException {
 
-    ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4, 5});
+    ByteBuffer buffer = ByteBuffer.wrap(new byte[] {1, 2, 3, 4, 5});
 
     buffer.position(2);
     buffer.limit(4);

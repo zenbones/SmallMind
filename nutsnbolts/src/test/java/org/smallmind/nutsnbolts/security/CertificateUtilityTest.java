@@ -50,6 +50,16 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class CertificateUtilityTest {
 
+  private static KeyPair generateRSAKeyPair ()
+    throws Exception {
+
+    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+
+    generator.initialize(2048);
+
+    return generator.generateKeyPair();
+  }
+
   @BeforeClass
   public void registerBouncyCastleProvider () {
 
@@ -87,15 +97,5 @@ public class CertificateUtilityTest {
 
     Assert.assertTrue(certificate.getSubjectX500Principal().getName().contains("CN=server.example.com"));
     Assert.assertTrue(certificate.getIssuerX500Principal().getName().contains("CN=server.example.com"));
-  }
-
-  private static KeyPair generateRSAKeyPair ()
-    throws Exception {
-
-    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-
-    generator.initialize(2048);
-
-    return generator.generateKeyPair();
   }
 }

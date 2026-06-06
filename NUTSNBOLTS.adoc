@@ -6,6 +6,7 @@
 :sectanchors:
 :sectlinks:
 
+[[overview]]
 == Overview
 
 The `smallmind-nutsnbolts` module is the foundational utility jar that every
@@ -222,6 +223,7 @@ and reused across every other SmallMind artifact. It exists so that:
   once you know they exist.
 |===
 
+[[installation]]
 == Installation
 
 Add the artifact to your Maven build. All third-party couplings are marked
@@ -360,7 +362,11 @@ the repository; they are deliberately short.
 [[pkg-command]]
 === command — GNU-style CLI parsing
 
-*Package:* `org.smallmind.nutsnbolts.command`
+*Packages:* `org.smallmind.nutsnbolts.command` (`CommandLineParser`,
+`OptionSet`, `CommandLineException`) and
+`org.smallmind.nutsnbolts.command.template` (`Template`, `Option`,
+`Argument`, `ArgumentType`, `EnumeratedArgument`, `NoneArgument`,
+`SingleArgument`)
 
 Parses `String[] args` against a `Template` of options, returning an
 `OptionSet` that callers query by option name or single-character flag.
@@ -564,10 +570,10 @@ is simpler to reason about than assembling one ad hoc per application.
 *Key types.*
 
 `PropertyExpander`::
-    Entry point. Construct with a `PropertyClosure`, a
-    `SystemPropertyMode` (`OVERRIDE` or `FALLBACK`), an
-    `ignoreUnresolvableProperties` flag, and a `searchSystemEnvironment`
-    flag. Call `expand(String)` or `expand(String, Map)`.
+    Entry point. Construct with a `PropertyClosure`, an
+    `ignoreUnresolvableProperties` flag, a `SystemPropertyMode`
+    (`OVERRIDE` or `FALLBACK`), and a `searchSystemEnvironment` flag.
+    Call `expand(String)` or `expand(String, Map)`.
 
 `PropertyClosure`::
     Delimiter configuration (default `${` / `}`) plus an optional
@@ -1348,7 +1354,8 @@ is most likely to reach for:
     false negatives).
 
 `LRUMap<K,V>`::
-    `LinkedHashMap`-backed bounded cache with access-order eviction.
+    `LinkedHashMap`-backed bounded cache; insertion-order eviction by
+    default, access-order via the two-arg `LRUMap(true, size)` constructor.
 
 `AlphaNumericComparator`::
     Char-by-char sort where digits sort before letters and letters
@@ -1471,7 +1478,7 @@ is most likely to reach for:
 LRUMap<String, User> cache = new LRUMap<>(1_000);                 // <1>
 User user = cache.computeIfAbsent(userId, id -> repo.loadUser(id));
 ----
-<1> Fixed capacity; oldest access is evicted when full.
+<1> Fixed capacity; the oldest entry by insertion order is evicted when full.
 
 [[pkg-inject]]
 === inject — `@Service` marker and lazy fields

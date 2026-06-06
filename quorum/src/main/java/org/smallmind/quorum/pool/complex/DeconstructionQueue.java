@@ -34,9 +34,12 @@ package org.smallmind.quorum.pool.complex;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.nutsnbolts.lang.FormattedTimeoutException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -45,30 +48,34 @@ import org.smallmind.scribe.pen.LoggerManager;
  * <p>
  * Fuses are stored in a {@link ConcurrentSkipListMap} keyed by an {@link IgnitionKey} that
  * sorts first by ignition time and then by fuse ordinal, guaranteeing a deterministic firing
- * order when multiple fuses expire at the same millisecond. A single daemon
- * {@link IgnitionWorker} thread wakes every second, removes all entries whose ignition time
+ * order when multiple fuses expire at the same millisecond. A single daemon task scheduled on a
+ * {@link ScheduledExecutorService} wakes every second, removes all entries whose ignition time
  * is in the past, and calls {@link DeconstructionFuse#ignite()} on each.
  * <p>
- * A global {@link AtomicInteger} issues monotonically increasing ordinals so that no two
- * fuses registered across the entire pool share the same ordinal.
+ * A per-queue {@link AtomicInteger} issues monotonically increasing ordinals so that no two
+ * fuses registered with this queue share the same ordinal.
  */
 public class DeconstructionQueue {
 
   private final ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse> fuseMap = new ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse>();
   private final AtomicInteger ordinal = new AtomicInteger(0);
 
-  private IgnitionWorker ignitionWorker;
+  private ScheduledExecutorService ignitionExecutor;
 
   /**
-   * Starts the background {@link IgnitionWorker} daemon thread that polls for expired fuses.
+   * Starts the background daemon task that polls for expired fuses once per second.
    */
   public void startup () {
 
-    Thread ignitionThread;
+    ignitionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
 
-    ignitionThread = new Thread(ignitionWorker = new IgnitionWorker());
-    ignitionThread.setDaemon(true);
-    ignitionThread.start();
+      Thread thread = new Thread(runnable, "quorum-deconstruction-queue");
+
+      thread.setDaemon(true);
+
+      return thread;
+    });
+    ignitionExecutor.scheduleWithFixedDelay(this::igniteExpired, 1, 1, TimeUnit.SECONDS);
   }
 
   /**
@@ -104,70 +111,49 @@ public class DeconstructionQueue {
   }
 
   /**
-   * Signals the background worker to stop and waits for it to exit.
+   * Shuts the background executor down and waits up to five seconds for the in-flight ignition pass
+   * to finish.
    *
    * @throws InterruptedException if the calling thread is interrupted while waiting for the
    *                              worker to finish
+   * @throws TimeoutException     if the background worker does not terminate within five seconds
    */
   public void shutdown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
-    ignitionWorker.shutdown();
+    ignitionExecutor.shutdown();
+    if (!ignitionExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+      throw new FormattedTimeoutException("Unable to terminate the deconstruction queue in (%d, %s)", 5, TimeUnit.SECONDS.name());
+    }
   }
 
   /**
-   * Background worker that polls the fuse map once per second and ignites any fuses whose
-   * ignition time is in the past.
+   * Removes all fuse-map entries at or before the current time and calls
+   * {@link DeconstructionFuse#ignite()} on each. Logs any exception thrown by a fuse's ignition
+   * logic, and any unexpected failure of the sweep itself, so that a single bad fuse cannot cancel
+   * future runs. Invoked once per second by the background {@link ScheduledExecutorService}.
    */
-  private class IgnitionWorker implements Runnable {
+  private void igniteExpired () {
 
-    private final CountDownLatch terminationLatch = new CountDownLatch(1);
-    private final CountDownLatch exitLatch = new CountDownLatch(1);
+    try {
 
-    /**
-     * Signals this worker to stop and blocks until it exits.
-     *
-     * @throws InterruptedException if the calling thread is interrupted while waiting
-     */
-    public void shutdown ()
-      throws InterruptedException {
+      Map.Entry<IgnitionKey, DeconstructionFuse> firstEntry;
+      long now = System.currentTimeMillis();
 
-      terminationLatch.countDown();
-      exitLatch.await();
-    }
+      while (((firstEntry = fuseMap.firstEntry()) != null) && (firstEntry.getKey().getIgnitionTime() <= now)) {
 
-    /**
-     * Polls the fuse map every second, removes all entries at or before the current time,
-     * and calls {@link DeconstructionFuse#ignite()} on each. Logs any exception thrown by
-     * a fuse's ignition logic so a single bad fuse cannot kill the worker.
-     */
-    @Override
-    public void run () {
+        DeconstructionFuse firstFuse;
 
-      try {
-        while (!terminationLatch.await(1, TimeUnit.SECONDS)) {
-
-          Map.Entry<IgnitionKey, DeconstructionFuse> firstEntry;
-          long now = System.currentTimeMillis();
-
-          while (((firstEntry = fuseMap.firstEntry()) != null) && (firstEntry.getKey().getIgnitionTime() <= now)) {
-
-            DeconstructionFuse firstFuse;
-
-            if ((firstFuse = fuseMap.remove(firstEntry.getKey())) != null) {
-              try {
-                firstFuse.ignite();
-              } catch (Exception exception) {
-                LoggerManager.getLogger(DeconstructionQueue.class).error(exception);
-              }
-            }
+        if ((firstFuse = fuseMap.remove(firstEntry.getKey())) != null) {
+          try {
+            firstFuse.ignite();
+          } catch (Exception exception) {
+            LoggerManager.getLogger(DeconstructionQueue.class).error(exception);
           }
         }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(DeconstructionQueue.class).error(interruptedException);
       }
-
-      exitLatch.countDown();
+    } catch (Exception exception) {
+      LoggerManager.getLogger(DeconstructionQueue.class).error(exception);
     }
   }
 

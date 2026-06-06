@@ -37,7 +37,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
@@ -59,14 +58,31 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class AptUtilityTest {
 
+  private static void runCompilation (JavaFileObject sourceFile, AbstractProcessor processor)
+    throws IOException {
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    Path outputDir = Files.createTempDirectory("apt-out");
+
+    try (var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+
+      fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, List.of(outputDir));
+
+      JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, null, null, List.of(sourceFile));
+
+      task.setProcessors(List.of(processor));
+      Assert.assertTrue(task.call(), "Compilation failed");
+    }
+  }
+
   public void testProcessorReadsAnnotationValueViaAptUtility ()
     throws Exception {
 
     String source = """
       package sample;
-
+      
       import org.smallmind.nutsnbolts.apt.TestMark;
-
+      
       @TestMark(name = "from-source")
       public class Annotated {
       }
@@ -85,9 +101,9 @@ public class AptUtilityTest {
 
     String source = """
       package sample;
-
+      
       import org.smallmind.nutsnbolts.apt.TestMark;
-
+      
       @TestMark
       public class AnnotatedDefault {
       }
@@ -99,23 +115,6 @@ public class AptUtilityTest {
 
     Assert.assertEquals(processor.capturedDefaultedNames.size(), 1);
     Assert.assertEquals(processor.capturedDefaultedNames.get(0), "default-name");
-  }
-
-  private static void runCompilation (JavaFileObject sourceFile, AbstractProcessor processor)
-    throws IOException {
-
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    Path outputDir = Files.createTempDirectory("apt-out");
-
-    try (var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-
-      fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, List.of(outputDir));
-
-      JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, null, null, List.of(sourceFile));
-
-      task.setProcessors(List.of(processor));
-      Assert.assertTrue(task.call(), "Compilation failed");
-    }
   }
 
   @SupportedAnnotationTypes("org.smallmind.nutsnbolts.apt.TestMark")

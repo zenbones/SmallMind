@@ -41,25 +41,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ContextFactoryTest {
 
-  public static class TestContext implements Context {
-
-    private final String value;
-
-    public TestContext (String value) {
-
-      this.value = value;
-    }
-
-    public String getValue () {
-
-      return value;
-    }
-  }
-
-  public static class OtherContext implements Context {
-
-  }
-
   @AfterMethod
   public void clearStacks () {
 
@@ -189,5 +170,24 @@ public class ContextFactoryTest {
     Assert.assertEquals(seen.get(), "parent-value");
     Assert.assertEquals(parentSize.get().intValue(), 2);
     Assert.assertEquals(ContextFactory.sizeFor(TestContext.class), 1);
+  }
+
+  public static class TestContext implements Context {
+
+    private final String value;
+
+    public TestContext (String value) {
+
+      this.value = value;
+    }
+
+    public String getValue () {
+
+      return value;
+    }
+  }
+
+  public static class OtherContext implements Context {
+
   }
 }

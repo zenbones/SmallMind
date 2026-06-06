@@ -59,24 +59,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class TrustManagerUtilityTest {
 
-  @BeforeClass
-  public void registerBouncyCastleProvider () {
-
-    if (Security.getProvider("BC") == null) {
-      Security.addProvider(new BouncyCastleProvider());
-    }
-  }
-
-  public void testLoadProducesTrustManagersFromInMemoryCertificate ()
-    throws Exception {
-
-    byte[] certBytes = generateSelfSignedCertificateBytes();
-    TrustManager[] managers = TrustManagerUtility.load("test-alias", new InMemoryCertResource(certBytes));
-
-    Assert.assertNotNull(managers);
-    Assert.assertTrue(managers.length > 0);
-  }
-
   private static byte[] generateSelfSignedCertificateBytes ()
     throws Exception {
 
@@ -98,6 +80,24 @@ public class TrustManagerUtilityTest {
     X509Certificate certificate = new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(signer));
 
     return certificate.getEncoded();
+  }
+
+  @BeforeClass
+  public void registerBouncyCastleProvider () {
+
+    if (Security.getProvider("BC") == null) {
+      Security.addProvider(new BouncyCastleProvider());
+    }
+  }
+
+  public void testLoadProducesTrustManagersFromInMemoryCertificate ()
+    throws Exception {
+
+    byte[] certBytes = generateSelfSignedCertificateBytes();
+    TrustManager[] managers = TrustManagerUtility.load("test-alias", new InMemoryCertResource(certBytes));
+
+    Assert.assertNotNull(managers);
+    Assert.assertTrue(managers.length > 0);
   }
 
   private static class InMemoryCertResource implements Resource {

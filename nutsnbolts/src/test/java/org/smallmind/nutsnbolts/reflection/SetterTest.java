@@ -38,34 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class SetterTest {
 
-  static class Bean {
-
-    private String name;
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void notASetter (String value) {
-
-    }
-
-    public String setReturnsValue (String value) {
-
-      return value;
-    }
-
-    public void setTwoParams (String first, String second) {
-
-    }
-  }
-
   public void testValidSetterParsesAttributeName ()
     throws ReflectionContractException, NoSuchMethodException {
 
@@ -105,5 +77,33 @@ public class SetterTest {
     throws ReflectionContractException, NoSuchMethodException {
 
     new Setter(Bean.class.getDeclaredMethod("setTwoParams", String.class, String.class));
+  }
+
+  static class Bean {
+
+    private String name;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public void notASetter (String value) {
+
+    }
+
+    public String setReturnsValue (String value) {
+
+      return value;
+    }
+
+    public void setTwoParams (String first, String second) {
+
+    }
   }
 }

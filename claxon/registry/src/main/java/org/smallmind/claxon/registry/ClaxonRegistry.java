@@ -36,20 +36,24 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.feature.Feature;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.nutsnbolts.lang.FormattedTimeoutException;
+import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
  * Central hub of the Claxon metrics system that manages the full lifecycle of meters,
  * emitters, and periodic metric collection.
  *
- * <p>On construction, the registry starts a daemon background thread (the
- * {@link CollectionWorker}) that wakes on the cadence defined by
+ * <p>On construction, the registry schedules a daemon background task on a
+ * {@link ScheduledExecutorService} that wakes on the cadence defined by
  * {@link ClaxonConfiguration#getCollectionStint()}, sweeps tracked objects, collects
  * readings from every active {@link Feature} and {@link Meter}, and delivers those
  * readings to each registered {@link Emitter}.
@@ -84,9 +88,9 @@ public class ClaxonRegistry {
   private final MeasurableTracker measurableTracker;
 
   /**
-   * Background thread that periodically collects and emits meter readings.
+   * Background executor that periodically collects and emits meter readings.
    */
-  private final CollectionWorker collectionWorker;
+  private final ScheduledExecutorService collectionExecutor;
 
   /**
    * Immutable configuration supplied at construction time.
@@ -94,21 +98,26 @@ public class ClaxonRegistry {
   private final ClaxonConfiguration configuration;
 
   /**
-   * Constructs a registry using the supplied configuration and immediately starts the
-   * background collection daemon thread.
+   * Constructs a registry using the supplied configuration and immediately schedules the periodic
+   * background collection task on a daemon-threaded {@link ScheduledExecutorService}.
    *
    * @param configuration the registry configuration controlling timing, tags, and naming
    */
   public ClaxonRegistry (ClaxonConfiguration configuration) {
 
-    Thread workerThread = new Thread(collectionWorker = new CollectionWorker());
-
     this.configuration = configuration;
 
     measurableTracker = new MeasurableTracker(this);
 
-    workerThread.setDaemon(true);
-    workerThread.start();
+    collectionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+      Thread thread = new Thread(runnable, "claxon-collection");
+
+      thread.setDaemon(true);
+
+      return thread;
+    });
+    collectionExecutor.scheduleWithFixedDelay(this::collect, configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit());
   }
 
   /**
@@ -131,15 +140,25 @@ public class ClaxonRegistry {
   }
 
   /**
-   * Signals the background collection worker to stop and blocks until it has exited.
+   * Shuts the background collection worker down and blocks until it has terminated, bounded by the
+   * configured termination stint. The wait time is {@link ClaxonConfiguration#getTerminationStint()};
+   * when that is {@code null} it falls back to five times the
+   * {@link ClaxonConfiguration#getCollectionStint() collection stint}. If the worker has not
+   * terminated within that window a {@link TimeoutException} is thrown.
    *
    * @throws InterruptedException if the calling thread is interrupted while waiting for
    *                              the worker to finish
+   * @throws TimeoutException     if the collection worker does not terminate within the termination stint
    */
   public void stop ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
-    collectionWorker.stop();
+    Stint interpolatdTerminationStint = (configuration.getTerminationStint() == null) ? new Stint(configuration.getCollectionStint().getTime() * 5, configuration.getCollectionStint().getTimeUnit()) : configuration.getTerminationStint();
+
+    collectionExecutor.shutdown();
+    if (!collectionExecutor.awaitTermination(interpolatdTerminationStint.getTime(), interpolatdTerminationStint.getTimeUnit())) {
+      throw new FormattedTimeoutException("Collection worker failed to terminate in time(%d, %s)", interpolatdTerminationStint.getTime(), interpolatdTerminationStint.getTimeUnit().name());
+    }
   }
 
   /**
@@ -255,98 +274,58 @@ public class ClaxonRegistry {
   }
 
   /**
-   * Background daemon that wakes periodically to sweep tracked objects, collect feature
-   * readings, collect meter readings, and forward everything to each bound emitter.
-   *
-   * <p>Exceptions thrown by individual emitters are caught, logged, and do not interrupt
-   * the collection loop. An {@link InterruptedException} from the sleep-wait is logged and
-   * causes the worker to exit cleanly.
+   * Single collection pass invoked on each cadence by the background
+   * {@link ScheduledExecutorService}. On each run this method:
+   * <ol>
+   *   <li>Sweeps garbage-collected tracked objects and updates surviving ones.</li>
+   *   <li>Collects {@link Quantity} readings from every configured {@link Feature}.</li>
+   *   <li>Collects {@link Quantity} readings from every registered {@link Meter}.</li>
+   *   <li>Delivers all non-empty reading sets to every bound {@link Emitter}.</li>
+   * </ol>
+   * Emitter-level exceptions are logged individually, and any other failure of the pass is logged
+   * as a whole, so that a single bad collection cannot cancel future runs.
    */
-  private class CollectionWorker implements Runnable {
+  private void collect () {
 
-    /**
-     * Counting latch used to request a graceful shutdown; counted down to zero to signal stop.
-     */
-    private final CountDownLatch finishLatch = new CountDownLatch(1);
+    try {
 
-    /**
-     * Counting latch used by {@link #stop()} to wait until the worker thread has fully exited.
-     */
-    private final CountDownLatch exitLatch = new CountDownLatch(1);
+      Feature[] features;
 
-    /**
-     * Requests a graceful shutdown of the collection worker and blocks until the worker
-     * thread has exited.
-     *
-     * @throws InterruptedException if the calling thread is interrupted while waiting
-     */
-    public void stop ()
-      throws InterruptedException {
+      measurableTracker.sweepAndUpdate();
 
-      finishLatch.countDown();
-      exitLatch.await();
-    }
+      if ((features = configuration.getFeatures()) != null) {
+        for (Feature feature : features) {
 
-    /**
-     * Main loop of the collection worker. On each iteration the worker:
-     * <ol>
-     *   <li>Sweeps garbage-collected tracked objects and updates surviving ones.</li>
-     *   <li>Collects {@link Quantity} readings from every configured {@link Feature}.</li>
-     *   <li>Collects {@link Quantity} readings from every registered {@link Meter}.</li>
-     *   <li>Delivers all non-empty reading sets to every bound {@link Emitter}.</li>
-     * </ol>
-     * Emitter-level exceptions are logged individually and do not abort the loop.
-     * An {@link InterruptedException} from {@link CountDownLatch#await} causes the
-     * loop to exit and the exit latch to be released.
-     */
-    @Override
-    public void run () {
+          Quantity[] quantities = feature.record();
 
-      try {
-        while (!finishLatch.await(configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit())) {
-
-          Feature[] features;
-
-          measurableTracker.sweepAndUpdate();
-
-          if ((features = configuration.getFeatures()) != null) {
-            for (Feature feature : features) {
-
-              Quantity[] quantities = feature.record();
-
-              if ((quantities != null) && (quantities.length > 0)) {
-                for (Emitter emitter : emitterMap.values()) {
-                  try {
-                    emitter.record(feature.getName(), configuration.calculateTags(feature.getName(), feature.getTags()), quantities);
-                  } catch (Exception exception) {
-                    LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
-                  }
-                }
-              }
-            }
-          }
-
-          for (Map.Entry<RegistryKey, NamedMeter<? extends Meter>> namedMeterEntry : meterMap.entrySet()) {
-
-            Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
-
-            if ((quantities != null) && (quantities.length > 0)) {
-              for (Emitter emitter : emitterMap.values()) {
-                try {
-                  emitter.record(namedMeterEntry.getValue().getName(), configuration.calculateTags(namedMeterEntry.getValue().getName(), namedMeterEntry.getKey().tags()), quantities);
-                } catch (Exception exception) {
-                  LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
-                }
+          if ((quantities != null) && (quantities.length > 0)) {
+            for (Emitter emitter : emitterMap.values()) {
+              try {
+                emitter.record(feature.getName(), configuration.calculateTags(feature.getName(), feature.getTags()), quantities);
+              } catch (Exception exception) {
+                LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
               }
             }
           }
         }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ClaxonRegistry.class).error(interruptedException);
-        finishLatch.countDown();
-      } finally {
-        exitLatch.countDown();
       }
+
+      for (Map.Entry<RegistryKey, NamedMeter<? extends Meter>> namedMeterEntry : meterMap.entrySet()) {
+
+        Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
+
+        if ((quantities != null) && (quantities.length > 0)) {
+          for (Emitter emitter : emitterMap.values()) {
+            try {
+              emitter.record(namedMeterEntry.getValue().getName(), configuration.calculateTags(namedMeterEntry.getValue().getName(), namedMeterEntry.getKey().tags()), quantities);
+            } catch (Exception exception) {
+              LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
+            }
+          }
+        }
+      }
+    } catch (Exception exception) {
+      LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
     }
   }
 

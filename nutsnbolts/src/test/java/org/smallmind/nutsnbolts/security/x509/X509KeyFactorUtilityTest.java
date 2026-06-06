@@ -44,6 +44,16 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class X509KeyFactorUtilityTest {
 
+  private static KeyPair generateRSAKeyPair ()
+    throws Exception {
+
+    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+
+    generator.initialize(2048);
+
+    return generator.generateKeyPair();
+  }
+
   public void testExtractKeyFactorRecoversModulusAndExponentFromSubjectPublicKeyInfo ()
     throws Exception {
 
@@ -91,15 +101,5 @@ public class X509KeyFactorUtilityTest {
 
     Assert.assertEquals(factors.getModulus(), BigInteger.valueOf(123));
     Assert.assertEquals(factors.getExponent(), BigInteger.valueOf(7));
-  }
-
-  private static KeyPair generateRSAKeyPair ()
-    throws Exception {
-
-    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-
-    generator.initialize(2048);
-
-    return generator.generateKeyPair();
   }
 }

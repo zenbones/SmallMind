@@ -39,17 +39,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class LoaderAwareMethodCacheTest {
 
-  static class Fixture {
-
-    public void noArgs () {
-
-    }
-
-    public void oneArg (String value) {
-
-    }
-  }
-
   private static Method method (String name, Class<?>... parameters)
     throws NoSuchMethodException {
 
@@ -109,5 +98,16 @@ public class LoaderAwareMethodCacheTest {
 
     Assert.assertEquals(cache.get(first), "a");
     Assert.assertEquals(cache.get(second), "b");
+  }
+
+  static class Fixture {
+
+    public void noArgs () {
+
+    }
+
+    public void oneArg (String value) {
+
+    }
   }
 }

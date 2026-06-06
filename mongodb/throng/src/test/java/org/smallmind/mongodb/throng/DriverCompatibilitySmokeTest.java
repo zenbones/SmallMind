@@ -120,31 +120,31 @@ public class DriverCompatibilitySmokeTest extends AbstractGroundwaterTest {
     Assert.assertEquals(throngClient.count(SmokeEntity.class, Filter.where("status").eq("active")), 2L);
 
     SmokeEntity highestActive = throngClient.findOne(
-                                    SmokeEntity.class,
-                                    Query.with()
-                                         .filter(Filter.where("status").eq("active"))
-                                         .sort(Sort.on().desc("score"))
-                                         .projection(Projections.with().include("name", "score", "status")));
+      SmokeEntity.class,
+      Query.with()
+        .filter(Filter.where("status").eq("active"))
+        .sort(Sort.on().desc("score"))
+        .projection(Projections.with().include("name", "score", "status")));
 
     Assert.assertNotNull(highestActive);
     Assert.assertEquals(highestActive.getName(), "beta");
     Assert.assertEquals(highestActive.getScore(), Integer.valueOf(20));
 
     List<SmokeEntity> activeAscending = throngClient.find(
-                                            SmokeEntity.class,
-                                            Query.with()
-                                                 .filter(Filter.where("status").eq("active"))
-                                                 .sort(Sort.on().asc("score"))).asList();
+      SmokeEntity.class,
+      Query.with()
+        .filter(Filter.where("status").eq("active"))
+        .sort(Sort.on().asc("score"))).asList();
 
     Assert.assertEquals(activeAscending.size(), 2);
     Assert.assertEquals(activeAscending.get(0).getName(), "alpha");
     Assert.assertEquals(activeAscending.get(1).getName(), "beta");
 
     UpdateResult updateResult = throngClient.update(
-                                    SmokeEntity.class,
-                                    Filter.where("status").eq("inactive"),
-                                    Updates.of().set("status", "archived").inc("score", 5),
-                                    new UpdateOptions());
+      SmokeEntity.class,
+      Filter.where("status").eq("inactive"),
+      Updates.of().set("status", "archived").inc("score", 5),
+      new UpdateOptions());
 
     Assert.assertEquals(updateResult.getModifiedCount(), 1L);
 
@@ -155,10 +155,10 @@ public class DriverCompatibilitySmokeTest extends AbstractGroundwaterTest {
     Assert.assertEquals(archived.getScore(), Integer.valueOf(35));
 
     UpdateResult upsertResult = throngClient.update(
-                                    SmokeEntity.class,
-                                    Filter.where("_id").eq("S4"),
-                                    Updates.of().set("name", "delta").set("score", 40).set("status", "new"),
-                                    new UpdateOptions().upsert(true));
+      SmokeEntity.class,
+      Filter.where("_id").eq("S4"),
+      Updates.of().set("name", "delta").set("score", 40).set("status", "new"),
+      new UpdateOptions().upsert(true));
 
     Assert.assertEquals(upsertResult.getModifiedPlusInsertedCount(), 1L);
     Assert.assertNotNull(upsertResult.getUpsertedId());

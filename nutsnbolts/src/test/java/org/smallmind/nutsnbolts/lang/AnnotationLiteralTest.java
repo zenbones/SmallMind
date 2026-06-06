@@ -46,22 +46,6 @@ public class AnnotationLiteralTest {
     String value () default "default";
   }
 
-  public static class SampleLiteral extends AnnotationLiteral<Sample> implements Sample {
-
-    private final String value;
-
-    public SampleLiteral (String value) {
-
-      this.value = value;
-    }
-
-    @Override
-    public String value () {
-
-      return value;
-    }
-  }
-
   public void testAnnotationTypeIsResolved () {
 
     SampleLiteral literal = new SampleLiteral("x");
@@ -91,5 +75,21 @@ public class AnnotationLiteralTest {
     SampleLiteral literal = new SampleLiteral("payload");
 
     Assert.assertTrue(literal.toString().contains("value=payload"));
+  }
+
+  public static class SampleLiteral extends AnnotationLiteral<Sample> implements Sample {
+
+    private final String value;
+
+    public SampleLiteral (String value) {
+
+      this.value = value;
+    }
+
+    @Override
+    public String value () {
+
+      return value;
+    }
   }
 }

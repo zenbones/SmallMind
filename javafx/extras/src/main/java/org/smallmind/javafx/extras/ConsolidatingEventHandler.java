@@ -35,7 +35,8 @@ package org.smallmind.javafx.extras;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -46,25 +47,28 @@ import org.smallmind.scribe.pen.LoggerManager;
  * A debouncing wrapper around an {@link EventHandler} that consolidates rapid bursts of events
  * into a single dispatch after a configurable quiet period. Each new event received within the
  * quiet window supersedes the previous one so only the most recent event is forwarded. Dispatch
- * always occurs on the JavaFX application thread. A shared daemon thread polls for expired
- * entries every 50 ms.
+ * always occurs on the JavaFX application thread. A shared single-thread {@link ScheduledExecutorService}
+ * checks for expired entries on a daemon thread every 250 ms.
  *
  * @param <T> the type of event handled
  */
 public class ConsolidatingEventHandler<T extends Event> implements EventHandler<T>, Comparable<ConsolidatingEventHandler<?>> {
 
-  private static final CountDownLatch stopLatch = new CountDownLatch(1);
   private static final ConcurrentSkipListMap<ConsolidatingKey, Event> LOOSE_EVENT_MAP = new ConcurrentSkipListMap<>();
+  private static final ScheduledExecutorService CONSOLIDATION_EXECUTOR = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+    Thread thread = new Thread(runnable, "javafx-consolidating-event");
+
+    thread.setDaemon(true);
+
+    return thread;
+  });
   private final EventHandler<T> innerEventHandler;
   private final long consolidationTimeMillis;
   private int generation;
 
   static {
-
-    Thread thread = new Thread(new ConsolidationWorker());
-
-    thread.setDaemon(true);
-    thread.start();
+    CONSOLIDATION_EXECUTOR.scheduleWithFixedDelay(ConsolidatingEventHandler::dispatchExpired, 250, 250, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -83,6 +87,47 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
+   * Drains expired entries from the pending-event map once and dispatches the latest generation for
+   * each handler on the JavaFX application thread. For each expired entry whose generation matches
+   * the handler's current generation, the event is dispatched synchronously on the JavaFX
+   * application thread. Any failure of the pass is logged so that it cannot cancel future runs.
+   * Invoked every 250 ms by the shared {@link ScheduledExecutorService}.
+   */
+  private static void dispatchExpired () {
+
+    try {
+
+      NavigableMap<ConsolidatingKey, Event> expiredKeyMap;
+
+      if (!(expiredKeyMap = LOOSE_EVENT_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
+
+        Map.Entry<ConsolidatingKey, Event> entry;
+
+        while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
+          synchronized (entry.getKey().getEventHandler()) {
+            if (entry.getKey().getGeneration() == entry.getKey().getEventHandler().getGeneration()) {
+
+              final ConsolidatingKey key = entry.getKey();
+              final Event event = entry.getValue();
+
+              PlatformUtil.runAndWait(new Runnable() {
+
+                @Override
+                public void run () {
+
+                  key.getEventHandler().getInnerEventHandler().handle(event);
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (Exception exception) {
+      LoggerManager.getLogger(ConsolidatingEventHandler.class).error(exception);
+    }
+  }
+
+  /**
    * Returns the delegate handler that ultimately receives consolidated event dispatches.
    *
    * @return the inner handler; never {@code null}
@@ -94,7 +139,7 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
 
   /**
    * Returns the current generation counter. Incremented each time {@link #handle} is called; the
-   * worker thread uses it to detect stale queue entries.
+   * scheduled {@link #dispatchExpired} pass uses it to detect stale queue entries.
    *
    * @return the current generation number
    */
@@ -129,55 +174,6 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   }
 
   /**
-   * Background worker that drains expired entries from the pending-event map and dispatches
-   * the latest generation for each handler on the JavaFX application thread.
-   */
-  private static class ConsolidationWorker implements Runnable {
-
-    /**
-     * Polls every 50 ms for events whose quiet window has elapsed. For each expired entry whose
-     * generation matches the handler's current generation, the event is dispatched synchronously
-     * on the JavaFX application thread.
-     */
-    @Override
-    public void run () {
-
-      try {
-        while (!stopLatch.await(50, TimeUnit.MILLISECONDS)) {
-
-          NavigableMap<ConsolidatingKey, Event> expiredKeyMap;
-
-          if (!(expiredKeyMap = LOOSE_EVENT_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
-
-            Map.Entry<ConsolidatingKey, Event> entry;
-
-            while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
-              synchronized (entry.getKey().getEventHandler()) {
-                if (entry.getKey().getGeneration() == entry.getKey().getEventHandler().getGeneration()) {
-
-                  final ConsolidatingKey key = entry.getKey();
-                  final Event event = entry.getValue();
-
-                  PlatformUtil.runAndWait(new Runnable() {
-
-                    @Override
-                    public void run () {
-
-                      key.getEventHandler().getInnerEventHandler().handle(event);
-                    }
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ConsolidatingChangeListener.class).error(interruptedException);
-      }
-    }
-  }
-
-  /**
    * Ordering key used to schedule and retrieve pending event dispatches in the shared skip-list
    * map. Keys are ordered first by expiration time, then by handler identity.
    *
@@ -190,7 +186,7 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
     private final int generation;
 
     /**
-     * Creates a sentinel key with an expiration of zero, used as the exclusive upper bound
+     * Creates a sentinel key whose expiration is the current time, used as the exclusive upper bound
      * argument when querying the map for entries whose quiet window has elapsed.
      */
     private ConsolidatingKey () {

@@ -51,7 +51,7 @@ public class ArrayStackTraceAccumulatorTest {
     accumulator.append("line 2");
     accumulator.append("line 3");
 
-    Assert.assertEquals(accumulator.asArray(), new String[]{"line 1", "line 2", "line 3"});
+    Assert.assertEquals(accumulator.asArray(), new String[] {"line 1", "line 2", "line 3"});
   }
 
   public void testAcceptsArbitraryCharSequence () {

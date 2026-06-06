@@ -38,63 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class BeanUtilityTest {
 
-  public static class Address {
-
-    private String city;
-
-    public String getCity () {
-
-      return city;
-    }
-
-    public void setCity (String city) {
-
-      this.city = city;
-    }
-  }
-
-  public static class Person {
-
-    private String name;
-    private Address address;
-    private boolean active;
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public Address getAddress () {
-
-      return address;
-    }
-
-    public void setAddress (Address address) {
-
-      this.address = address;
-    }
-
-    public boolean isActive () {
-
-      return active;
-    }
-
-    public void setActive (boolean active) {
-
-      this.active = active;
-    }
-
-    public String greet (String prefix) {
-
-      return prefix + " " + name;
-    }
-  }
-
   public void testAsGetterNameProducesGetXxx () {
 
     Assert.assertEquals(BeanUtility.asGetterName("name"), "getName");
@@ -192,5 +135,62 @@ public class BeanUtilityTest {
     throws Exception {
 
     BeanUtility.executeGet(new Person(), "nonexistent", false);
+  }
+
+  public static class Address {
+
+    private String city;
+
+    public String getCity () {
+
+      return city;
+    }
+
+    public void setCity (String city) {
+
+      this.city = city;
+    }
+  }
+
+  public static class Person {
+
+    private String name;
+    private Address address;
+    private boolean active;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public Address getAddress () {
+
+      return address;
+    }
+
+    public void setAddress (Address address) {
+
+      this.address = address;
+    }
+
+    public boolean isActive () {
+
+      return active;
+    }
+
+    public void setActive (boolean active) {
+
+      this.active = active;
+    }
+
+    public String greet (String prefix) {
+
+      return prefix + " " + name;
+    }
   }
 }

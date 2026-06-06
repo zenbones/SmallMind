@@ -38,29 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class GetterTest {
 
-  static class Bean {
-
-    public String getName () {
-
-      return "Berkman";
-    }
-
-    public Boolean isReady () {
-
-      return Boolean.TRUE;
-    }
-
-    public String notAGetter () {
-
-      return "no";
-    }
-
-    public String getWithArgument (String unused) {
-
-      return "no";
-    }
-  }
-
   public void testGetPrefixedMethodParsesAttribute ()
     throws Exception {
 
@@ -109,5 +86,28 @@ public class GetterTest {
     throws Exception {
 
     new Getter(Bean.class.getDeclaredMethod("getWithArgument", String.class));
+  }
+
+  static class Bean {
+
+    public String getName () {
+
+      return "Berkman";
+    }
+
+    public Boolean isReady () {
+
+      return Boolean.TRUE;
+    }
+
+    public String notAGetter () {
+
+      return "no";
+    }
+
+    public String getWithArgument (String unused) {
+
+      return "no";
+    }
   }
 }

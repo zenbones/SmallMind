@@ -121,10 +121,11 @@ injects `CubbyMemcachedClient`; nothing else changes.
   issues one `get` per key. Memcached keys typically land on different
   hosts, so the caller gets correct routing automatically, but there is
   no pipelining or fan-out at this layer.
-* **It does not own a scheduled executor.** The only background thread
-  Cubby starts is the per-coordinator `ServerDefibrillator`, and each
-  connection has its own dedicated selector thread. There is no general
-  worker pool to tune.
+* **It does not run a general-purpose worker pool.** The only scheduled
+  background work Cubby starts is the per-coordinator `ServerDefibrillator`,
+  which runs on a single-thread scheduled executor, and each connection
+  has its own dedicated selector thread. There is no general worker pool
+  to tune.
 * **It does not wrap `ProxyMemcachedClient` in a retry or circuit-breaker
   layer.** The abstraction is a thin pass-through. Policy behaviour
   belongs in a higher layer (e.g. the persistence cache).
@@ -324,7 +325,7 @@ when the pattern does not include `:port`.
 </bean>
 ----
 
-`MemcachedServerMapFactoryBean` (in the cubby module, see below)
+`MemcachedServerMapFactoryBean` (in the utility module, see below)
 produces a `Map<String, MemcachedServer>` from the same syntax, which is
 what Cubby's client factory consumes.
 
@@ -541,7 +542,8 @@ A mutable bean that bundles every tunable knob. Setters are fluent
 | `DEFAULT`
 | `ObjectStreamCubbyCodec`, `DefaultKeyLocator`, `DefaultKeyTranslator`,
   no auth, 0 ms default request timeout, 3s connect timeout, 30s read
-  timeout, 30s keep-alive, 10s resuscitation, 1 connection per host.
+  timeout, 30s keep-alive, 10s resuscitation, 1 connection per host,
+  10s termination timeout.
 
 | `OPTIMAL`
 | `LargeValueCompressingCodec(ObjectStreamCubbyCodec)`,
@@ -611,6 +613,11 @@ Properties:
 | `1`
 | Number of parallel connections to each host. Increase for throughput
   under contention.
+
+| `terminationTimeoutSeconds`
+| `10`
+| Seconds `stop()` waits for each coordinator's defibrillator scheduler
+  to terminate before logging a warning and continuing teardown.
 |===
 
 === `MemcachedHost`
@@ -687,7 +694,7 @@ All Cubby-level exceptions extend formatted-exception base classes from
 | The peer closed the TCP connection.
 
 | `IncomprehensibleRequestException`
-| The server returned `CLIENT_ERROR` (rewritten by the read path to
+| The server returned `ERROR` (rewritten by the read path to
   include the failing command bytes).
 
 | `IncomprehensibleResponseException`
@@ -1079,10 +1086,11 @@ connection is torn down.
 
 === Health monitoring (`ServerDefibrillator`)
 
-A daemon thread per `ConnectionCoordinator`. It wakes every
-`resuscitationSeconds` seconds, iterates `serverPool.values()`, and
-for each inactive host opens a short-lived TCP socket to the host's
-current address. If the connection succeeds:
+A periodic task run on a single-thread scheduled executor, one per
+`ConnectionCoordinator`. It runs every `resuscitationSeconds` seconds
+(scheduled with a fixed delay between passes), iterates
+`serverPool.values()`, and for each inactive host opens a short-lived TCP
+socket to the host's current address. If the connection succeeds:
 
 . The newly resolved address is stored back into the `MemcachedHost`
   via `regenerate(InetSocketAddress)`, so any DNS change is captured.
@@ -1094,17 +1102,19 @@ current address. If the connection succeeds:
 Failure on the probe (any `IOException`) is silent; the host stays
 inactive and will be retried on the next cycle.
 
-Shutdown is cooperative: `stop()` counts down a latch the loop checks,
-then waits on a second latch that the loop counts down in its
-`finally` block. `stop()` therefore blocks until the loop has fully
-exited, which prevents a teardown race between closing connections and
-the defibrillator trying to reopen them.
+Shutdown is owned by the coordinator: `stop()` shuts the scheduled
+executor down and waits up to `terminationStint` (10s by default) for an
+in-flight pass to finish via `awaitTermination`. If the pass does not
+complete within that window the coordinator logs a warning and proceeds
+to close the connections anyway. Probing the executor before tearing down
+connections this way avoids a teardown race between closing connections
+and the defibrillator trying to reopen them.
 
 === `TokenGenerator`
 
-A 32-byte monotonic counter over an 89-character printable ASCII
+A 32-byte monotonic counter over a 90-character printable ASCII
 alphabet, emitting strings of growing length as the counter increments.
-89^32 tokens before wraparound is enough for any realistic workload.
+90^32 tokens before wraparound is enough for any realistic workload.
 The class is `synchronized` so it is safe to share across threads.
 It is primarily useful when a caller wants to attach opaque tokens to
 pipelined commands; Cubby's normal request/response matching does not

@@ -253,8 +253,8 @@ public class FilterTest {
   public void testNestedAndOrProducesCompoundFilterStructure () {
 
     BsonDocument doc = (BsonDocument)Filter.and(
-                                        Filter.where("status").eq("OPEN"),
-                                        Filter.or(Filter.where("priority").eq("HIGH"), Filter.where("priority").eq("URGENT")))
+        Filter.where("status").eq("OPEN"),
+        Filter.or(Filter.where("priority").eq("HIGH"), Filter.where("priority").eq("URGENT")))
                                        .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry());
 
     Assert.assertTrue(doc.containsKey("$and"));

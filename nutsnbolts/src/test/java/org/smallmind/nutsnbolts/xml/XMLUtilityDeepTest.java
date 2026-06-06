@@ -39,10 +39,19 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 @Test(groups = "unit")
 public class XMLUtilityDeepTest {
+
+  private static Document newDocument (String xml)
+    throws Exception {
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+
+    return builder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+  }
 
   public void testIndentedSerializationIncludesNewlines ()
     throws Exception {
@@ -101,15 +110,5 @@ public class XMLUtilityDeepTest {
   public void testEncodeLeavesPlainAsciiAlone () {
 
     Assert.assertEquals(XMLUtility.encode("hello world"), "hello world");
-  }
-
-  private static Document newDocument (String xml)
-    throws Exception {
-
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    DocumentBuilder builder = factory.newDocumentBuilder();
-
-    return builder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
   }
 }

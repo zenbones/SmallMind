@@ -92,6 +92,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(idioms = @Idiom(visibility = OUT))
   private long channelTimeToLiveMinutes = 30;
   @View(idioms = @Idiom(visibility = OUT))
+  private long idleCheckingTerminationTimeoutSeconds = 10;
+  @View(idioms = @Idiom(visibility = OUT))
   private int sessionConnectIntervalSeconds = 30;
   @View(idioms = @Idiom(visibility = OUT))
   private int sessionMaxIdleTimeoutSeconds = 120;
@@ -388,6 +390,16 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   public void setIdleSessionCycleMinutes (int idleSessionCycleMinutes) {
 
     this.idleSessionCycleMinutes = idleSessionCycleMinutes;
+  }
+
+  public long getIdleCheckingTerminationTimeoutSeconds () {
+
+    return idleCheckingTerminationTimeoutSeconds;
+  }
+
+  public void setIdleCheckingTerminationTimeoutSeconds (long idleCheckingTerminationTimeoutSeconds) {
+
+    this.idleCheckingTerminationTimeoutSeconds = idleCheckingTerminationTimeoutSeconds;
   }
 
   /**

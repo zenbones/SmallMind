@@ -30,37 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.nutsnbolts.lang;
+
+import java.util.concurrent.TimeoutException;
 
 /**
- * Directional comparator that delegates ordering to {@link Comparable#compareTo(Object)} and applies the requested sort direction.
- *
- * @param <T> comparable element type
+ * A {@link TimeoutException} whose detail message is constructed via {@link String#format(String, Object...)}, allowing printf-style message formatting at the call site.
  */
-public class NaturalDirectionalComparator<T extends Comparable<T>> extends DirectionalComparator<T> {
+public class FormattedTimeoutException extends TimeoutException {
 
   /**
-   * Constructs a comparator that sorts in the specified direction.
-   *
-   * @param direction the sort direction to apply
+   * Creates an exception with no detail message.
    */
-  public NaturalDirectionalComparator (Direction direction) {
+  public FormattedTimeoutException () {
 
-    super(direction);
+    super();
   }
 
   /**
-   * Compares two values according to their natural order, negating the result for ascending direction.
+   * Creates an exception whose detail message is produced by formatting {@code message} with the supplied arguments.
    *
-   * @param t1 first value
-   * @param t2 second value
-   * @return a negative integer, zero, or positive integer per the {@link java.util.Comparator} contract
+   * @param message the format string passed to {@link String#format}, or {@code null} for a {@code null} message
+   * @param args    the arguments referenced by the format specifiers in {@code message}
    */
-  public int compare (T t1, T t2) {
+  public FormattedTimeoutException (String message, Object... args) {
 
-    return switch (getDirection()) {
-      case DESCENDING -> t1.compareTo(t2);
-      case ASCENDING -> t1.compareTo(t2) * -1;
-    };
+    super(message == null ? null : String.format(message, args));
   }
 }

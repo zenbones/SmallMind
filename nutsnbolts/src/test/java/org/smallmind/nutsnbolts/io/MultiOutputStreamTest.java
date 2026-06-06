@@ -46,12 +46,12 @@ public class MultiOutputStreamTest {
 
     ByteArrayOutputStream a = new ByteArrayOutputStream();
     ByteArrayOutputStream b = new ByteArrayOutputStream();
-    MultiOutputStream multi = new MultiOutputStream(new OutputStream[]{a, b});
+    MultiOutputStream multi = new MultiOutputStream(new OutputStream[] {a, b});
 
     multi.write(42);
 
-    Assert.assertEquals(a.toByteArray(), new byte[]{42});
-    Assert.assertEquals(b.toByteArray(), new byte[]{42});
+    Assert.assertEquals(a.toByteArray(), new byte[] {42});
+    Assert.assertEquals(b.toByteArray(), new byte[] {42});
   }
 
   public void testArrayWriteFansOutToAllDelegates ()
@@ -59,12 +59,12 @@ public class MultiOutputStreamTest {
 
     ByteArrayOutputStream a = new ByteArrayOutputStream();
     ByteArrayOutputStream b = new ByteArrayOutputStream();
-    MultiOutputStream multi = new MultiOutputStream(new OutputStream[]{a, b});
+    MultiOutputStream multi = new MultiOutputStream(new OutputStream[] {a, b});
 
-    multi.write(new byte[]{1, 2, 3});
+    multi.write(new byte[] {1, 2, 3});
 
-    Assert.assertEquals(a.toByteArray(), new byte[]{1, 2, 3});
-    Assert.assertEquals(b.toByteArray(), new byte[]{1, 2, 3});
+    Assert.assertEquals(a.toByteArray(), new byte[] {1, 2, 3});
+    Assert.assertEquals(b.toByteArray(), new byte[] {1, 2, 3});
   }
 
   public void testRangedArrayWriteFansOutToAllDelegates ()
@@ -72,12 +72,12 @@ public class MultiOutputStreamTest {
 
     ByteArrayOutputStream a = new ByteArrayOutputStream();
     ByteArrayOutputStream b = new ByteArrayOutputStream();
-    MultiOutputStream multi = new MultiOutputStream(new OutputStream[]{a, b});
+    MultiOutputStream multi = new MultiOutputStream(new OutputStream[] {a, b});
 
-    multi.write(new byte[]{1, 2, 3, 4, 5}, 1, 3);
+    multi.write(new byte[] {1, 2, 3, 4, 5}, 1, 3);
 
-    Assert.assertEquals(a.toByteArray(), new byte[]{2, 3, 4});
-    Assert.assertEquals(b.toByteArray(), new byte[]{2, 3, 4});
+    Assert.assertEquals(a.toByteArray(), new byte[] {2, 3, 4});
+    Assert.assertEquals(b.toByteArray(), new byte[] {2, 3, 4});
   }
 
   public void testEmptyDelegateArrayIsNoop ()

@@ -45,6 +45,54 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ValidatorsTest {
 
+  private static Email emailWith (char separator) {
+
+    Map<String, Object> overrides = new HashMap<>();
+
+    overrides.put("separator", separator);
+
+    return proxyAnnotation(Email.class, overrides);
+  }
+
+  private static GreaterThan greaterThan (long value) {
+
+    Map<String, Object> overrides = new HashMap<>();
+
+    overrides.put("value", value);
+
+    return proxyAnnotation(GreaterThan.class, overrides);
+  }
+
+  private static LowerBound lowerBound (String first, String second, int value, boolean notNull) {
+
+    Map<String, Object> overrides = new HashMap<>();
+
+    overrides.put("first", first);
+    overrides.put("second", second);
+    overrides.put("value", value);
+    overrides.put("notNull", notNull);
+
+    return proxyAnnotation(LowerBound.class, overrides);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <A extends Annotation> A proxyAnnotation (Class<A> annotationType, Map<String, Object> overrides) {
+
+    return (A)Proxy.newProxyInstance(
+      annotationType.getClassLoader(),
+      new Class<?>[] {annotationType},
+      (proxy, method, args) -> {
+        if ("annotationType".equals(method.getName()) && (method.getParameterCount() == 0)) {
+          return annotationType;
+        } else if (overrides.containsKey(method.getName())) {
+          return overrides.get(method.getName());
+        } else {
+          return method.getDefaultValue();
+        }
+      }
+    );
+  }
+
   public void testEmailValidatorAcceptsValidAddress () {
 
     EmailValidator validator = new EmailValidator();
@@ -186,54 +234,6 @@ public class ValidatorsTest {
     FormattedValidationException exception = new FormattedValidationException("Bad id(%s)", "x-1");
 
     Assert.assertEquals(exception.getMessage(), "Bad id(x-1)");
-  }
-
-  private static Email emailWith (char separator) {
-
-    Map<String, Object> overrides = new HashMap<>();
-
-    overrides.put("separator", separator);
-
-    return proxyAnnotation(Email.class, overrides);
-  }
-
-  private static GreaterThan greaterThan (long value) {
-
-    Map<String, Object> overrides = new HashMap<>();
-
-    overrides.put("value", value);
-
-    return proxyAnnotation(GreaterThan.class, overrides);
-  }
-
-  private static LowerBound lowerBound (String first, String second, int value, boolean notNull) {
-
-    Map<String, Object> overrides = new HashMap<>();
-
-    overrides.put("first", first);
-    overrides.put("second", second);
-    overrides.put("value", value);
-    overrides.put("notNull", notNull);
-
-    return proxyAnnotation(LowerBound.class, overrides);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <A extends Annotation> A proxyAnnotation (Class<A> annotationType, Map<String, Object> overrides) {
-
-    return (A)Proxy.newProxyInstance(
-      annotationType.getClassLoader(),
-      new Class<?>[] {annotationType},
-      (proxy, method, args) -> {
-        if ("annotationType".equals(method.getName()) && (method.getParameterCount() == 0)) {
-          return annotationType;
-        } else if (overrides.containsKey(method.getName())) {
-          return overrides.get(method.getName());
-        } else {
-          return method.getDefaultValue();
-        }
-      }
-    );
   }
 
   public static class BoundedBean {

@@ -34,6 +34,9 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.memcached.cubby.command.Command;
@@ -52,8 +55,8 @@ import org.smallmind.scribe.pen.LoggerManager;
  *   <li>Starting and stopping individual host connections.</li>
  *   <li>Installing and refreshing the routing table in the configured
  *       {@link org.smallmind.memcached.cubby.locator.KeyLocator} as hosts join or leave.</li>
- *   <li>Launching the {@link ServerDefibrillator} daemon thread that probes offline hosts and
- *       triggers reconnection.</li>
+ *   <li>Scheduling the {@link ServerDefibrillator} on a single-thread daemon executor to probe
+ *       offline hosts and trigger reconnection.</li>
  *   <li>Routing outbound {@link Command} objects to the correct connection based on key
  *       affinity.</li>
  * </ul>
@@ -72,7 +75,7 @@ public class ConnectionCoordinator {
   private final CubbyConfiguration configuration;
   private final ServerPool serverPool;
   private final HashMap<String, CubbyConnection> connectionMap = new HashMap<>();
-  private ServerDefibrillator serverDefibrillator;
+  private ScheduledExecutorService defibrillatorExecutor;
 
   /**
    * Constructs a coordinator for the given hosts using the supplied configuration.
@@ -88,9 +91,11 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Starts the coordinator: installs the initial routing table, launches the
-   * {@link ServerDefibrillator} daemon, and opens a {@link NIOCubbyConnection} to each host.
-   * This method is idempotent — subsequent calls while already started are silently ignored.
+   * Starts the coordinator: installs the initial routing table, schedules the
+   * {@link ServerDefibrillator} on a single-thread daemon executor to run every
+   * {@link CubbyConfiguration#getResuscitationSeconds() resuscitation interval}, and opens a
+   * {@link NIOCubbyConnection} to each host. This method is idempotent — subsequent calls while
+   * already started are silently ignored.
    *
    * @throws InterruptedException    if the calling thread is interrupted while opening connections
    * @throws IOException             if a socket cannot be opened to one of the hosts
@@ -104,13 +109,17 @@ public class ConnectionCoordinator {
 
       try {
 
-        Thread defibrillatorThread;
-
         configuration.getKeyLocator().installRouting(serverPool);
 
-        defibrillatorThread = new Thread(serverDefibrillator = new ServerDefibrillator(this, configuration, serverPool));
-        defibrillatorThread.setDaemon(true);
-        defibrillatorThread.start();
+        defibrillatorExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+
+          Thread thread = new Thread(runnable, "cubby-server-defibrillator");
+
+          thread.setDaemon(true);
+
+          return thread;
+        });
+        defibrillatorExecutor.scheduleWithFixedDelay(new ServerDefibrillator(this, configuration, serverPool), configuration.getResuscitationSeconds(), configuration.getResuscitationSeconds(), TimeUnit.SECONDS);
 
         for (HostControl hostControl : serverPool.values()) {
           LoggerManager.getLogger(ConnectionCoordinator.class).info("Connecting to memcached host(%s=%s)", hostControl.getMemcachedHost().getName(), hostControl.getMemcachedHost().getAddress());
@@ -125,9 +134,10 @@ public class ConnectionCoordinator {
   }
 
   /**
-   * Stops the coordinator: signals the {@link ServerDefibrillator} to terminate and closes all
-   * active connections. This method is idempotent — subsequent calls while already stopped are
-   * silently ignored.
+   * Stops the coordinator: shuts down the {@link ServerDefibrillator} scheduler and waits up to
+   * {@link CubbyConfiguration#getTerminationTimeoutSeconds()} seconds for it to terminate (logging
+   * a warning if it does not), then closes all active connections. This method is idempotent —
+   * subsequent calls while already stopped are silently ignored.
    *
    * @throws InterruptedException if the calling thread is interrupted while awaiting shutdown
    * @throws IOException          if closing a connection fails
@@ -139,7 +149,10 @@ public class ConnectionCoordinator {
       lock.writeLock().lock();
 
       try {
-        serverDefibrillator.stop();
+        defibrillatorExecutor.shutdown();
+        if (!defibrillatorExecutor.awaitTermination(configuration.getTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
+          LoggerManager.getLogger(ConnectionCoordinator.class).warn("Unable to terminate the server defibrillator within the allotted time (%d, %s)", configuration.getTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+        }
 
         for (HostControl hostControl : serverPool.values()) {
 

@@ -212,12 +212,12 @@ public class KafkaConnector {
    * {@code topics} are provided the consumer subscribes immediately.
    *
    * @param groupProtocol selects the Kafka group protocol; must match what the broker supports
-   * @param instanceId   static member identity ({@code group.instance.id}); allows the broker
-   *                     to recognize this consumer across restarts and avoid unnecessary rebalances
-   * @param clientId     consumer client identifier reported to the broker
-   * @param groupId      consumer group this instance belongs to
-   * @param topics       zero or more topic names to subscribe to; passing {@code null} or an
-   *                     empty array leaves the consumer unsubscribed
+   * @param instanceId    static member identity ({@code group.instance.id}); allows the broker
+   *                      to recognize this consumer across restarts and avoid unnecessary rebalances
+   * @param clientId      consumer client identifier reported to the broker
+   * @param groupId       consumer group this instance belongs to
+   * @param topics        zero or more topic names to subscribe to; passing {@code null} or an
+   *                      empty array leaves the consumer unsubscribed
    * @return a configured {@link Consumer}; the caller is responsible for closing it
    */
   public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {

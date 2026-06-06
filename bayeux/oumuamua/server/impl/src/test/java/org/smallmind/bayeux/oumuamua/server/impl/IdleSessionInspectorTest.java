@@ -33,10 +33,7 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.smallmind.scribe.pen.Level;
@@ -46,82 +43,42 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class IdleSessionInspectorTest {
 
-  public void testStopAllowsRunToExitPromptly ()
-    throws InterruptedException {
-
-    OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);
-    IdleSessionInspector<OrthodoxValue> inspector = new IdleSessionInspector<>(server, 60L, Level.DEBUG);
-
-    Thread runner = new Thread(inspector);
-
-    runner.start();
-    inspector.stop();
-    runner.join(2_000L);
-    Assert.assertFalse(runner.isAlive(), "run() did not exit within 2 seconds of stop()");
-  }
-
-  public void testIdleSessionIsRemovedAndDeparted ()
-    throws InterruptedException {
+  public void testIdleSessionIsRemovedAndDeparted () {
 
     OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);
     OumuamuaSession<OrthodoxValue> session = Mockito.mock(OumuamuaSession.class);
     List<OumuamuaSession<OrthodoxValue>> sessions = new ArrayList<>();
-    CountDownLatch cleanupLatch = new CountDownLatch(1);
 
     Mockito.when(session.getId()).thenReturn("alice");
     Mockito.when(session.checkAndDisconnect(Mockito.anyLong())).thenReturn(true);
-    Mockito.doAnswer(invocation -> {
-      cleanupLatch.countDown();
-
-      return null;
-    }).when(session).onCleanup();
 
     sessions.add(session);
-    Mockito.when(server.iterateSessions()).thenAnswer(invocation -> {
+    Mockito.when(server.iterateSessions()).thenAnswer(invocation -> sessions.iterator());
 
-      Iterator<OumuamuaSession<OrthodoxValue>> iterator = sessions.iterator();
+    IdleSessionInspector<OrthodoxValue> inspector = new IdleSessionInspector<>(server, Level.DEBUG);
 
-      return iterator;
-    });
-
-    IdleSessionInspector<OrthodoxValue> inspector = new IdleSessionInspector<>(server, 0L, Level.DEBUG);
-    Thread runner = new Thread(inspector);
-
-    runner.start();
-    Assert.assertTrue(cleanupLatch.await(2L, TimeUnit.SECONDS), "session cleanup did not run within 2 seconds");
-    inspector.stop();
-    runner.join(2_000L);
+    inspector.run();
 
     Mockito.verify(server, Mockito.atLeastOnce()).departChannels(session);
     Mockito.verify(session, Mockito.atLeastOnce()).onCleanup();
     Assert.assertTrue(sessions.isEmpty(), "iterator.remove() should have cleared the session list");
   }
 
-  public void testNonIdleSessionIsLeftAlone ()
-    throws InterruptedException {
+  public void testNonIdleSessionIsLeftAlone () {
 
     OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);
     OumuamuaSession<OrthodoxValue> session = Mockito.mock(OumuamuaSession.class);
     List<OumuamuaSession<OrthodoxValue>> sessions = new ArrayList<>();
-    CountDownLatch sweepLatch = new CountDownLatch(1);
 
     Mockito.when(session.getId()).thenReturn("alice");
-    Mockito.when(session.checkAndDisconnect(Mockito.anyLong())).thenAnswer(invocation -> {
-      sweepLatch.countDown();
-
-      return false;
-    });
+    Mockito.when(session.checkAndDisconnect(Mockito.anyLong())).thenReturn(false);
 
     sessions.add(session);
     Mockito.when(server.iterateSessions()).thenAnswer(invocation -> sessions.iterator());
 
-    IdleSessionInspector<OrthodoxValue> inspector = new IdleSessionInspector<>(server, 0L, Level.DEBUG);
-    Thread runner = new Thread(inspector);
+    IdleSessionInspector<OrthodoxValue> inspector = new IdleSessionInspector<>(server, Level.DEBUG);
 
-    runner.start();
-    Assert.assertTrue(sweepLatch.await(2L, TimeUnit.SECONDS), "checkAndDisconnect was not invoked within 2 seconds");
-    inspector.stop();
-    runner.join(2_000L);
+    inspector.run();
 
     Mockito.verify(server, Mockito.never()).departChannels(session);
     Mockito.verify(session, Mockito.never()).onCleanup();

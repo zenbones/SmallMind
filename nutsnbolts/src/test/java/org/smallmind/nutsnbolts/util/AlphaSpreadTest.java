@@ -47,25 +47,25 @@ public class AlphaSpreadTest {
   public void testSingleLetterIsParsedAsOneElement ()
     throws SpreadParserException {
 
-    Assert.assertEquals(AlphaSpread.calculate("k"), new char[]{'k'});
+    Assert.assertEquals(AlphaSpread.calculate("k"), new char[] {'k'});
   }
 
   public void testAscendingRangeIsInclusive ()
     throws SpreadParserException {
 
-    Assert.assertEquals(AlphaSpread.calculate("a..d"), new char[]{'a', 'b', 'c', 'd'});
+    Assert.assertEquals(AlphaSpread.calculate("a..d"), new char[] {'a', 'b', 'c', 'd'});
   }
 
   public void testDescendingRangeWalksBackwards ()
     throws SpreadParserException {
 
-    Assert.assertEquals(AlphaSpread.calculate("d..a"), new char[]{'d', 'c', 'b', 'a'});
+    Assert.assertEquals(AlphaSpread.calculate("d..a"), new char[] {'d', 'c', 'b', 'a'});
   }
 
   public void testMixedSinglesAndRangesExpandInOrder ()
     throws SpreadParserException {
 
-    Assert.assertEquals(AlphaSpread.calculate("a,c..e,z"), new char[]{'a', 'c', 'd', 'e', 'z'});
+    Assert.assertEquals(AlphaSpread.calculate("a,c..e,z"), new char[] {'a', 'c', 'd', 'e', 'z'});
   }
 
   @Test(expectedExceptions = SpreadParserException.class)

@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.http;
 
+import java.util.concurrent.TimeoutException;
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.InvalidEmitterException;
@@ -56,7 +57,7 @@ public class EmitterResourceTest {
 
   @AfterMethod
   public void tearDown ()
-    throws InterruptedException {
+    throws InterruptedException, TimeoutException {
 
     registry.stop();
   }

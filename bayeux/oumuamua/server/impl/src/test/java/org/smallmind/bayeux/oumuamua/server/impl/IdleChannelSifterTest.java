@@ -32,8 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
@@ -49,24 +47,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class IdleChannelSifterTest {
 
-  public void testStopAllowsRunToExitPromptly ()
-    throws InterruptedException {
-
-    Server<OrthodoxValue> server = Mockito.mock(Server.class);
-    Mockito.when(server.getCodec()).thenReturn(new OrthodoxCodec(new JaxbDeserializer<>()));
-
-    ChannelTree<OrthodoxValue> tree = new ChannelTree<>(new ChannelRoot<>(server));
-    IdleChannelSifter<OrthodoxValue> sifter = new IdleChannelSifter<>(60L, Level.DEBUG, tree, c -> {
-    });
-
-    Thread runner = new Thread(sifter);
-
-    runner.start();
-    sifter.stop();
-    runner.join(2_000L);
-    Assert.assertFalse(runner.isAlive(), "run() did not exit within 2 seconds of stop()");
-  }
-
   public void testCycleRemovesIdleChannel ()
     throws Exception {
 
@@ -80,22 +60,12 @@ public class IdleChannelSifterTest {
     }, (c, s) -> {
     }, null);
 
-    CountDownLatch removed = new CountDownLatch(1);
     AtomicInteger removalCount = new AtomicInteger();
 
-    IdleChannelSifter<OrthodoxValue> sifter = new IdleChannelSifter<>(0L, Level.DEBUG, tree, c -> {
-      removalCount.incrementAndGet();
-      removed.countDown();
-    });
+    IdleChannelSifter<OrthodoxValue> sifter = new IdleChannelSifter<>(Level.DEBUG, tree, c -> removalCount.incrementAndGet());
 
     Thread.sleep(2L);
-
-    Thread runner = new Thread(sifter);
-
-    runner.start();
-    Assert.assertTrue(removed.await(2L, TimeUnit.SECONDS), "channel removal callback did not fire within 2 seconds");
-    sifter.stop();
-    runner.join(2_000L);
+    sifter.run();
 
     Assert.assertEquals(removalCount.get(), 1);
     Assert.assertNull(tree.find(0, new DefaultRoute("/foo")));
@@ -116,13 +86,10 @@ public class IdleChannelSifterTest {
     }, null);
 
     AtomicInteger removalCount = new AtomicInteger();
-    IdleChannelSifter<OrthodoxValue> sifter = new IdleChannelSifter<>(0L, Level.DEBUG, tree, c -> removalCount.incrementAndGet());
-    Thread runner = new Thread(sifter);
 
-    runner.start();
-    Thread.sleep(50L);
-    sifter.stop();
-    runner.join(2_000L);
+    IdleChannelSifter<OrthodoxValue> sifter = new IdleChannelSifter<>(Level.DEBUG, tree, c -> removalCount.incrementAndGet());
+
+    sifter.run();
 
     Assert.assertEquals(removalCount.get(), 0);
     Assert.assertSame(tree.find(0, new DefaultRoute("/foo")), channel);

@@ -42,6 +42,78 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class CSVParserTest {
 
+  public void testHandlerLifecycleEventsAreInOrder ()
+    throws IOException, CSVParseException {
+
+    RecordingHandler handler = new RecordingHandler();
+    CSVParser parser = new CSVParser();
+
+    parser.setLineHandler(handler);
+    parser.parse(new StringReader("a,b\nc,d"));
+
+    Assert.assertEquals(handler.events, List.of("start", "row", "row", "end"));
+  }
+
+  public void testEachRecordIsDeliveredToHandler ()
+    throws IOException, CSVParseException {
+
+    RecordingHandler handler = new RecordingHandler();
+    CSVParser parser = new CSVParser();
+
+    parser.setLineHandler(handler);
+    parser.parse(new StringReader("a,b\nc,d\ne,f"));
+
+    Assert.assertEquals(handler.rows.size(), 3);
+    Assert.assertEquals(handler.rows.get(0), new String[] {"a", "b"});
+    Assert.assertEquals(handler.rows.get(2), new String[] {"e", "f"});
+  }
+
+  public void testSkipHeaderDropsFirstLine ()
+    throws IOException, CSVParseException {
+
+    RecordingHandler handler = new RecordingHandler();
+    CSVParser parser = new CSVParser();
+
+    parser.setLineHandler(handler);
+    parser.setSkipHeader(true);
+    parser.parse(new StringReader("id,name\n1,Alice\n2,Bob"));
+
+    Assert.assertEquals(handler.rows.size(), 2);
+    Assert.assertEquals(handler.rows.get(0), new String[] {"1", "Alice"});
+  }
+
+  public void testTrimFieldsPropagatesToReader ()
+    throws IOException, CSVParseException {
+
+    RecordingHandler handler = new RecordingHandler();
+    CSVParser parser = new CSVParser();
+
+    parser.setLineHandler(handler);
+    parser.setTrimFields(true);
+    parser.parse(new StringReader("  a  , b "));
+
+    Assert.assertEquals(handler.rows.get(0), new String[] {"a", "b"});
+  }
+
+  public void testAccessorsReturnConfiguredFlags () {
+
+    CSVParser parser = new CSVParser();
+
+    Assert.assertFalse(parser.isSkipHeader());
+    Assert.assertFalse(parser.isTrimFields());
+    Assert.assertNull(parser.getLineHandler());
+
+    DefaultCSVLineHandler handler = new DefaultCSVLineHandler();
+
+    parser.setLineHandler(handler);
+    parser.setSkipHeader(true);
+    parser.setTrimFields(true);
+
+    Assert.assertSame(parser.getLineHandler(), handler);
+    Assert.assertTrue(parser.isSkipHeader());
+    Assert.assertTrue(parser.isTrimFields());
+  }
+
   private static class RecordingHandler implements CSVLineHandler {
 
     private final List<String> events = new ArrayList<>();
@@ -65,77 +137,5 @@ public class CSVParserTest {
 
       events.add("end");
     }
-  }
-
-  public void testHandlerLifecycleEventsAreInOrder ()
-    throws IOException, CSVParseException {
-
-    RecordingHandler handler = new RecordingHandler();
-    CSVParser parser = new CSVParser();
-
-    parser.setLineHandler(handler);
-    parser.parse(new StringReader("a,b\nc,d"));
-
-    Assert.assertEquals(handler.events, List.of("start", "row", "row", "end"));
-  }
-
-  public void testEachRecordIsDeliveredToHandler ()
-    throws IOException, CSVParseException {
-
-    RecordingHandler handler = new RecordingHandler();
-    CSVParser parser = new CSVParser();
-
-    parser.setLineHandler(handler);
-    parser.parse(new StringReader("a,b\nc,d\ne,f"));
-
-    Assert.assertEquals(handler.rows.size(), 3);
-    Assert.assertEquals(handler.rows.get(0), new String[]{"a", "b"});
-    Assert.assertEquals(handler.rows.get(2), new String[]{"e", "f"});
-  }
-
-  public void testSkipHeaderDropsFirstLine ()
-    throws IOException, CSVParseException {
-
-    RecordingHandler handler = new RecordingHandler();
-    CSVParser parser = new CSVParser();
-
-    parser.setLineHandler(handler);
-    parser.setSkipHeader(true);
-    parser.parse(new StringReader("id,name\n1,Alice\n2,Bob"));
-
-    Assert.assertEquals(handler.rows.size(), 2);
-    Assert.assertEquals(handler.rows.get(0), new String[]{"1", "Alice"});
-  }
-
-  public void testTrimFieldsPropagatesToReader ()
-    throws IOException, CSVParseException {
-
-    RecordingHandler handler = new RecordingHandler();
-    CSVParser parser = new CSVParser();
-
-    parser.setLineHandler(handler);
-    parser.setTrimFields(true);
-    parser.parse(new StringReader("  a  , b "));
-
-    Assert.assertEquals(handler.rows.get(0), new String[]{"a", "b"});
-  }
-
-  public void testAccessorsReturnConfiguredFlags () {
-
-    CSVParser parser = new CSVParser();
-
-    Assert.assertFalse(parser.isSkipHeader());
-    Assert.assertFalse(parser.isTrimFields());
-    Assert.assertNull(parser.getLineHandler());
-
-    DefaultCSVLineHandler handler = new DefaultCSVLineHandler();
-
-    parser.setLineHandler(handler);
-    parser.setSkipHeader(true);
-    parser.setTrimFields(true);
-
-    Assert.assertSame(parser.getLineHandler(), handler);
-    Assert.assertTrue(parser.isSkipHeader());
-    Assert.assertTrue(parser.isTrimFields());
   }
 }

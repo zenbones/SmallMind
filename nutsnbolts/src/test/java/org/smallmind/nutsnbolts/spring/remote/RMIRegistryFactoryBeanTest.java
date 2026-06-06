@@ -42,6 +42,15 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class RMIRegistryFactoryBeanTest {
 
+  private static int findFreePort ()
+    throws Exception {
+
+    try (ServerSocket socket = new ServerSocket(0)) {
+
+      return socket.getLocalPort();
+    }
+  }
+
   public void testFactoryReportsSingletonRegistryType () {
 
     RMIRegistryFactoryBean factory = new RMIRegistryFactoryBean();
@@ -78,14 +87,5 @@ public class RMIRegistryFactoryBeanTest {
     Registry registry = factory.getObject();
     Assert.assertNotNull(registry);
     Assert.assertNotNull(registry.list());
-  }
-
-  private static int findFreePort ()
-    throws Exception {
-
-    try (ServerSocket socket = new ServerSocket(0)) {
-
-      return socket.getLocalPort();
-    }
   }
 }

@@ -86,5 +86,4 @@ public class CodecUtilityTest {
       this.value = value;
     }
   }
-
 }
