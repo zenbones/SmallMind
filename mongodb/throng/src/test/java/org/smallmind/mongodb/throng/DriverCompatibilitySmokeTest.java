@@ -38,7 +38,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.UpdateOptions;
-import or.smallmind.testbench.logger.TestLoggerConfiguration;
+import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.smallmind.mongodb.throng.index.IndexType;
 import org.smallmind.mongodb.throng.index.annotation.Index;
 import org.smallmind.mongodb.throng.index.annotation.IndexOptions;

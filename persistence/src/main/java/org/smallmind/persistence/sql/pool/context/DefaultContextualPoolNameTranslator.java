@@ -44,6 +44,8 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   private final char separator;
 
   /**
+   * Creates a translator that joins the base name and a context with the given separator.
+   *
    * @param baseName  shared base pool name
    * @param separator separator character placed between base and context
    */
@@ -63,7 +65,8 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   }
 
   /**
-   * Constructs a full pool name for a given context portion.
+   * Constructs a full pool name for a given context portion. A {@code null} context yields the bare
+   * base name, which {@link #getContextualPartFromPoolName(String)} parses back to {@code null}.
    *
    * @param contextualPart context identifier (may be null for default)
    * @return full pool name
@@ -71,7 +74,7 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
   @Override
   public String getPoolName (String contextualPart) {
 
-    return baseName + separator + contextualPart;
+    return (contextualPart == null) ? baseName : baseName + separator + contextualPart;
   }
 
   /**

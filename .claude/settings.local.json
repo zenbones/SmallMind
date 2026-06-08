@@ -36,7 +36,18 @@
       "Bash(git -C /c/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind diff --cached --stat nutsnbolts/)",
       "Bash(git -C \"C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind\" diff --stat)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q test-compile -o)",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn test *)"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn test *)",
+      "WebSearch",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl persistence test-compile)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl persistence org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report -DexcludedGroups=integration)",
+      "Bash(awk -F, ' *)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl . test -Dtest='CacheCoherentAspectTest' -DfailIfNoTests=false)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl . org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl . test -Dtest='CachedWithAspectTest' -DfailIfNoTests=false)",
+      "Bash(cd /c/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind/persistence && grep -oE 'tests=\"[0-9]+\" errors=\"[0-9]+\" skipped=\"[0-9]+\" failures=\"[0-9]+\"' target/surefire-reports/TEST-TestSuite.xml | head -1)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl . test -Dtest='AbstractPooledConnectionTest,PooledConnectionComponentInstanceTest' -DfailIfNoTests=false)",
+      "Bash(docker info *)",
+      "Bash(python -)"
     ]
   }
 }

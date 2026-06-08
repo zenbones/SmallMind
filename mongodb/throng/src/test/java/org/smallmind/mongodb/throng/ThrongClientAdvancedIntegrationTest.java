@@ -45,7 +45,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertOneOptions;
-import or.smallmind.testbench.logger.TestLoggerConfiguration;
+import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.bson.Document;
 import org.smallmind.mongodb.throng.index.IndexType;
 import org.smallmind.mongodb.throng.lifecycle.annotation.PostLoad;

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package or.smallmind.testbench.logger;
+package org.smallmind.testbench.logger;
 
 import java.time.format.DateTimeFormatter;
 import org.smallmind.scribe.pen.ConsoleAppender;

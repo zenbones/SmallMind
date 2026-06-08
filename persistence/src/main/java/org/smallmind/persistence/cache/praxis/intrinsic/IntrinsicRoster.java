@@ -655,11 +655,17 @@ public class IntrinsicRoster<T> implements Roster<T> {
     if (!c.isEmpty()) {
       lock.writeLock().lock();
       try {
+        if (index == structure.getSize()) {
+          for (T element : c) {
+            addLast(element);
+          }
+        } else {
 
-        IntrinsicRosterNode<T> next = getNode(index);
+          IntrinsicRosterNode<T> next = getNode(index);
 
-        for (T element : c) {
-          add(next, element);
+          for (T element : c) {
+            add(next, element);
+          }
         }
 
         return true;

@@ -341,7 +341,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
       keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
     }
 
-    return keySet.containsAll(keySet);
+    return new HashSet<>(keyRoster).containsAll(keySet);
   }
 
   /**

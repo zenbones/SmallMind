@@ -152,7 +152,7 @@ public class IntrinsicRosterStructure<T> {
   public void evaporate (IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> current, IntrinsicRosterNode<T> next) {
 
     if (parent != null) {
-      evaporate(prev, current, next);
+      parent.evaporate(prev, current, next);
     }
 
     if (size == 0) {

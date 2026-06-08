@@ -515,7 +515,7 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
 
     JPAQuery<T> constructedQuery;
 
-    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(constructedQuery.iterate());
+    return ((constructedQuery = constructQuery(queryDetails)) == null) ? new EmptyIterable<>() : new IterableIterator<>(constructedQuery.stream().iterator());
   }
 
   /**

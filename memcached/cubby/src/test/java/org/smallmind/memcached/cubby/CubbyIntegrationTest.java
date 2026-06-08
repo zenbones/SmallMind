@@ -34,7 +34,7 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import or.smallmind.testbench.logger.TestLoggerConfiguration;
+import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
 import org.smallmind.memcached.cubby.command.GetCommand;

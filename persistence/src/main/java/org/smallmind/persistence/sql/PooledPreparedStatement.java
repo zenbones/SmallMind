@@ -34,6 +34,7 @@ package org.smallmind.persistence.sql;
 
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.PreparedStatement;
@@ -79,7 +80,7 @@ public class PooledPreparedStatement implements InvocationHandler {
    * @param method invoked method
    * @param args   method arguments
    * @return result of the underlying method call
-   * @throws Throwable the wrapped exception from the target method
+   * @throws Throwable the closest cause from the target method, unwrapped from any {@link InvocationTargetException}
    */
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
@@ -97,16 +98,21 @@ public class PooledPreparedStatement implements InvocationHandler {
       try {
         return method.invoke(actualStatement, args);
       } catch (Throwable throwable) {
-        if (throwable instanceof SQLException) {
 
-          StatementEvent event = new PooledPreparedStatementEvent(pooledConnection, actualStatement, (SQLException)throwable, statementId);
+        Throwable closestCause;
+
+        closestCause = ((throwable instanceof InvocationTargetException) && (throwable.getCause() != null)) ? throwable.getCause() : throwable;
+
+        if (closestCause instanceof SQLException) {
+
+          StatementEvent event = new PooledPreparedStatementEvent(pooledConnection, actualStatement, (SQLException)closestCause, statementId);
 
           for (StatementEventListener listener : pooledConnection.getStatementEventListeners()) {
             listener.statementErrorOccurred(event);
           }
         }
 
-        throw throwable;
+        throw closestCause;
       }
     }
   }

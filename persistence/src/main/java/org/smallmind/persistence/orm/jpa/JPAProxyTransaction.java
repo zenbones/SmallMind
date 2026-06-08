@@ -147,7 +147,7 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
           try {
             applyPostProcesses(TransactionEndState.ROLLBACK);
           } catch (TransactionPostProcessException transactionPostProcessException) {
-            thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : new ProxyTransactionException(transactionPostProcessException).initCause(thrownDuringRollback);
+            thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : ThrowableUtility.attach(new ProxyTransactionException(transactionPostProcessException), thrownDuringRollback);
           }
         }
 

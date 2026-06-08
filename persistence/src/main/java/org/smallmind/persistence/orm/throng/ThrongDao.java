@@ -125,7 +125,7 @@ public class ThrongDao<I extends Serializable & Comparable<I>, D extends ThrongD
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(durableClass, Query.with().filter(Filter.where("_id").eq("id"))));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().findOne(durableClass, Query.with().filter(Filter.where("_id").eq(id))));
   }
 
   /**

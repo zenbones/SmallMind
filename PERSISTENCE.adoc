@@ -260,15 +260,6 @@ The DAO contracts form a layered stack. Each layer adds exactly one concern.
     `register()`, and delegates `get`/`persist`/`delete` to framework
     subclasses (`JPADao`, `ThrongDao`, etc.).
 
-=== Natural Keys
-
-`@NaturalKeys({"customerId", "orderDate"})` on a `Durable` class names the
-fields that together form its business key. `NaturalKey<D>` extracts those
-values reflectively — once per class, cached in `ConcurrentHashMap` — and
-implements `equals`/`hashCode` from them. Applications use natural keys
-when the cache key must survive surrogate-id reassignment (for example, a
-cache populated before an id generator has run).
-
 === Exceptions
 
 All persistence exceptions extend `PersistenceException`, which extends
@@ -324,17 +315,21 @@ public @interface Transactional {
 ----
 
 `dataSources`::
-    An explicit list of session source keys this boundary permits. An
-    empty array allows the default unnamed source only (and only when
-    `implicit` is left at its default). Declaring explicit sources forces
-    a boundary to be *explicit*, not implicit — see below.
+    An explicit list of session source keys this boundary permits, matched
+    against each joining session's `getSessionSourceKey()`. Declaring explicit
+    sources forces a boundary to be *explicit*, not implicit — set
+    `implicit=false` (see below). Left empty, the array adds no source
+    constraint; what an empty array permits then depends on `implicit`.
 
 `implicit` (default `true`)::
     When `true`, the boundary is established implicitly from a class-level
-    annotation on a DAO. Implicit boundaries only allow the default source.
-    An implicit boundary that also lists explicit sources throws
-    `IllegalArgumentException` at boundary check time. Set `implicit=false`
-    whenever you list explicit `dataSources`.
+    annotation on a DAO and acts as a catch-all: with no `dataSources` it
+    permits a session from *any* source. An implicit boundary that also lists
+    explicit `dataSources` throws `IllegalArgumentException` at boundary-check
+    time, so set `implicit=false` whenever you list explicit sources. An
+    explicit boundary (`implicit=false`) with no `dataSources` permits only the
+    default unnamed source (a `null` source key); with `dataSources` it permits
+    only the listed sources.
 
 `rollbackOnly` (default `false`)::
     Forces every transaction in the boundary to roll back regardless of
@@ -1150,7 +1145,11 @@ The `sql.pool.context` package provides "contextual" variants
 (`ContextualPooledDataSource`, `ContextualPooledXADataSource`) that pick
 a pool by a thread-local key — useful when the same DAO method is
 targeted at different shards depending on request context. The
-`ContextualPoolNameTranslator` plugs in the name-resolution strategy.
+`ContextualPoolNameTranslator` plugs in the name-resolution strategy;
+`DefaultContextualPoolNameTranslator` joins the base name and the context
+with a separator character, mapping a `null` context to the bare base name
+and parsing that form back to `null` so a default, context-less pool
+round-trips cleanly.
 
 The `sql.pool.spring` package adds Spring factory beans that build a
 `PooledDataSource` (or XA variant) directly:

@@ -61,16 +61,6 @@ public class BoundarySet<T> extends HashSet<T> {
   }
 
   /**
-   * Returns {@code true} when this boundary is both implicit and unconstrained by any explicit session source keys.
-   *
-   * @return {@code true} if the boundary is implicit and no source keys are listed
-   */
-  public boolean isImplicit () {
-
-    return implicit && (sessionSourceKeys.length == 0);
-  }
-
-  /**
    * Returns {@code true} if the given session's source key is permitted by this boundary.
    *
    * @param proxySession the session whose source key is checked
@@ -90,11 +80,15 @@ public class BoundarySet<T> extends HashSet<T> {
    */
   public boolean allows (String sessionSourceKey) {
 
-    if (sessionSourceKeys.length == 0) {
-      return isImplicit() || (sessionSourceKey == null);
-    } else if (isImplicit()) {
-      throw new IllegalArgumentException("Boundary annotation (@NonTransaction or @Transactional) is marked as implicit, but explicitly lists data sources");
-    } else if (sessionSourceKey != null) {
+    if (implicit) {
+      if ((sessionSourceKeys == null) || (sessionSourceKeys.length == 0)) {
+        return true;
+      } else {
+        throw new IllegalArgumentException("Boundary annotation (@NonTransaction or @Transactional) is marked as implicit, but explicitly lists data sources");
+      }
+    } else if (sessionSourceKey == null) {
+      return (sessionSourceKeys == null) || (sessionSourceKeys.length == 0);
+    } else if (sessionSourceKeys != null) {
       for (String boundarySource : sessionSourceKeys) {
         if (sessionSourceKey.equals(boundarySource)) {
           return true;

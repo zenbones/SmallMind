@@ -304,7 +304,7 @@ public class CachedWithAspect {
       } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
-    } else if (!Iterable.class.isAssignableFrom(finderMethod.getReturnType())) {
+    } else if (Iterable.class.isAssignableFrom(finderMethod.getReturnType())) {
       if ((!((finderReturnType = finderMethod.getGenericReturnType()) instanceof ParameterizedType)) || (!expectedType.isAssignableFrom((Class)((ParameterizedType)finderReturnType).getActualTypeArguments()[0]))) {
         throw new CacheAutomationError("The finder method(%s) must return an Iterable parameterized to %s <? extends Iterable<? extends %s>>", finder.method(), expectedType.getSimpleName(), expectedType.getSimpleName());
       }

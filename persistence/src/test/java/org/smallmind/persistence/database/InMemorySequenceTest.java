@@ -30,23 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.database;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-/**
- * Marks a {@link Durable} class with the ordered list of field names that together form its
- * business (natural) key, as consumed by {@link NaturalKey}.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface NaturalKeys {
+@Test(groups = "unit")
+public class InMemorySequenceTest {
 
-  /**
-   * The field names that comprise the natural key, in the order they should be compared.
-   */
-  String[] value ();
+  public void testFirstValueIsOne () {
+
+    Assert.assertEquals(new InMemorySequence().nextLong("orders"), 1L);
+  }
+
+  public void testValuesIncrementMonotonically () {
+
+    InMemorySequence sequence = new InMemorySequence();
+
+    Assert.assertEquals(sequence.nextLong("orders"), 1L);
+    Assert.assertEquals(sequence.nextLong("orders"), 2L);
+    Assert.assertEquals(sequence.nextLong("orders"), 3L);
+  }
+
+  public void testCountersAreIsolatedByName () {
+
+    InMemorySequence sequence = new InMemorySequence();
+
+    Assert.assertEquals(sequence.nextLong("orders"), 1L);
+    Assert.assertEquals(sequence.nextLong("invoices"), 1L);
+    Assert.assertEquals(sequence.nextLong("orders"), 2L);
+    Assert.assertEquals(sequence.nextLong("invoices"), 2L);
+  }
 }
