@@ -30,24 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire.transport.jms.spring;
+package org.smallmind.phalanx.wire;
+
+import org.smallmind.phalanx.wire.signal.WireContext;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
- * Spring bean reference that identifies a JMS queue destination by logical name and JNDI path.
- *
- * <p>Extends {@link DestinationReference} to carry selector and durability settings in addition
- * to the name and path inherited from {@link ManagedObjectReference}.
+ * Verifies the per-application handle-to-{@link WireContext}-class registry exposed by
+ * {@link WireContextManager}: round-trip registration, the {@code null} result for an unknown
+ * handle, and last-writer-wins re-registration. Handles are unique per test to avoid cross-test
+ * bleed in the shared per-application map.
  */
-public class QueueReference extends DestinationReference {
+@Test(groups = "unit")
+public class WireContextManagerTest {
 
-  /**
-   * Returns {@link DestinationType#QUEUE} to indicate that this reference describes a queue.
-   *
-   * @return {@link DestinationType#QUEUE}
-   */
-  @Override
-  public DestinationType getDestinationType () {
+  public static class OtherContext extends WireContext {
 
-    return DestinationType.QUEUE;
+  }
+
+  @Test
+  public void testRegisterAndRetrieve () {
+
+    WireContextManager.register("wcm-test-primary", TestWireContext.class);
+
+    Assert.assertEquals(WireContextManager.getContextClass("wcm-test-primary"), TestWireContext.class);
+  }
+
+  @Test
+  public void testUnknownHandleReturnsNull () {
+
+    Assert.assertNull(WireContextManager.getContextClass("wcm-test-never-registered"));
+  }
+
+  @Test
+  public void testReRegistrationOverwrites () {
+
+    WireContextManager.register("wcm-test-overwrite", TestWireContext.class);
+    WireContextManager.register("wcm-test-overwrite", OtherContext.class);
+
+    Assert.assertEquals(WireContextManager.getContextClass("wcm-test-overwrite"), OtherContext.class);
   }
 }

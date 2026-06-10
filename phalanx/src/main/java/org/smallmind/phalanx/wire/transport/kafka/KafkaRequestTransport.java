@@ -32,7 +32,9 @@
  */
 package org.smallmind.phalanx.wire.transport.kafka;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -40,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.smallmind.claxon.registry.Instrument;
@@ -85,6 +88,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final ConcurrentHashMap<String, Producer<Long, byte[]>> producerMap = new ConcurrentHashMap<>();
   private final String nodeName;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
+  private final String responseTopicName;
 
   /**
    * Constructs the transport, verifies Kafka broker availability, and starts the response ingester.
@@ -107,10 +111,29 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     this.signalCodec = signalCodec;
     this.nodeName = nodeName;
 
+    long start = System.currentTimeMillis();
+
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, callerId, topicNames.getResponseTopicName(callerId), connector, groupProtocol, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+    responseTopicName = topicNames.getResponseTopicName(callerId);
+    connector.invokeAdminClient(adminClient -> {
+
+      try {
+
+        return adminClient.createTopics(Collections.singletonList(new NewTopic(responseTopicName, Optional.empty(), Optional.empty()))).all().get();
+      } catch (Exception exception) {
+
+        //  The topic may already exist; in that case it is left untouched.
+        return null;
+      }
+    });
+
+    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+
+    if (!responseMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
+      throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");
+    }
   }
 
   /**
@@ -214,5 +237,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     }
 
     responseMessageIngester.shutDown();
+
+    connector.invokeAdminClient(client -> client.deleteTopics(Collections.singletonList(responseTopicName)));
   }
 }

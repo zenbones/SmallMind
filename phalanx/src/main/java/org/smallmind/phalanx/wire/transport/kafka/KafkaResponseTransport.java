@@ -33,6 +33,8 @@
 package org.smallmind.phalanx.wire.transport.kafka;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -52,6 +55,7 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -117,16 +121,46 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
     super(workerClass, concurrencyLimit);
 
     ResponseCallback responseCallback = new ResponseCallback(this);
+    String talkTopicName;
+    String shoutTopicName;
 
     this.nodeName = nodeName;
     this.signalCodec = signalCodec;
 
+    long start = System.currentTimeMillis();
+
     topicNames = new TopicNames("wire");
     connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, instanceId, whisperTopicName = topicNames.getWhisperTopicName(serviceGroup, instanceId), connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
-    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk", topicNames.getTalkTopicName(serviceGroup), connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
-    shoutMessageIngester = new KafkaMessageIngester(nodeName, instanceId, topicNames.getShoutTopicName(serviceGroup), connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
+    talkTopicName = topicNames.getTalkTopicName(serviceGroup);
+    shoutTopicName = topicNames.getShoutTopicName(serviceGroup);
+    whisperTopicName = topicNames.getWhisperTopicName(serviceGroup, instanceId);
+
+    connector.invokeAdminClient(adminClient -> {
+
+      try {
+
+        return adminClient.createTopics(MutationUtility.toList(List.of(talkTopicName, shoutTopicName, whisperTopicName), topicName -> new NewTopic(topicName, Optional.empty(), Optional.empty()))).all().get();
+      } catch (Exception exception) {
+        //  Some or all topics may already exist; existing topics are left untouched, and non-existent ones are still created by the same call.
+
+        return null;
+      }
+    });
+
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, "wire-whisper-" + instanceId, whisperTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk-" + serviceGroup, talkTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, "wire-shout-" + instanceId, shoutTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
+
+    if (!whisperMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
+      throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");
+    }
+    if (!talkMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
+      throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");
+    }
+    if (!shoutMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
+      throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");
+    }
 
     startUp(this);
   }

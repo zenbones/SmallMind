@@ -35,9 +35,12 @@ package org.smallmind.phalanx.wire.transport.kafka;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -62,6 +65,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class KafkaMessageIngester {
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
+  private final ReentrantLock consumerLock = new ReentrantLock();
   private final KafkaConnector connector;
   private final java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback;
   private final KafkaGroupProtocol groupProtocol;
@@ -186,6 +190,46 @@ public class KafkaMessageIngester {
   }
 
   /**
+   * Blocks until every worker consumer has been assigned its partitions and resolved a fetch
+   * position for each, or the timeout elapses.  A freshly subscribed consumer receives no records
+   * until the group rebalances and assigns it partitions, and because the topics use
+   * {@code auto.offset.reset=latest} a partition only sits at the live log end once its position is
+   * resolved; a producer that publishes before that point loses its message.  Each worker signals
+   * this readiness from its own poll loop, so callers that must not drop the first message (or that
+   * simply want to know the ingester is live) await it here rather than retrying throwaway sends.
+   * Returns {@code false} immediately if the ingester has not been started or the timeout is not
+   * positive.
+   *
+   * @param timeout maximum time to wait for all workers to be assigned and positioned
+   * @param unit    time unit of {@code timeout}
+   * @return {@code true} if every worker became ready within the timeout; {@code false} otherwise
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public boolean awaitConsumerAssignment (long timeout, TimeUnit unit)
+    throws InterruptedException {
+
+    if ((timeout <= 0) || (workers == null)) {
+
+      return false;
+    } else {
+
+      long deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
+
+      for (ConsumerWorker worker : workers) {
+
+        long remainingNanos = deadlineNanos - System.nanoTime();
+
+        if ((remainingNanos <= 0) || (!worker.assignedLatch.await(remainingNanos, TimeUnit.NANOSECONDS))) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+
+  /**
    * Single-threaded Kafka consumer that polls in a loop, dispatches each record to the ingester
    * callback, and commits offsets synchronously per partition after each batch.  Supports
    * dynamic subscribe and unsubscribe via {@link #play()} and {@link #pause()}.  On any
@@ -194,6 +238,7 @@ public class KafkaMessageIngester {
    */
   private class ConsumerWorker implements Runnable {
 
+    private final CountDownLatch assignedLatch = new CountDownLatch(1);
     private final CountDownLatch exitLatch = new CountDownLatch(1);
     private final AtomicBoolean finished = new AtomicBoolean(false);
     private final int index;
@@ -233,8 +278,13 @@ public class KafkaMessageIngester {
      */
     public synchronized void play () {
 
-      consumer.subscribe(Collections.singleton(topicName));
-      paused = false;
+      consumerLock.lock();
+      try {
+        consumer.subscribe(Collections.singleton(topicName));
+        paused = false;
+      } finally {
+        consumerLock.unlock();
+      }
     }
 
     /**
@@ -243,8 +293,34 @@ public class KafkaMessageIngester {
      */
     public synchronized void pause () {
 
-      consumer.unsubscribe();
-      paused = true;
+      consumerLock.lock();
+      try {
+        consumer.unsubscribe();
+        paused = true;
+      } finally {
+        consumerLock.unlock();
+      }
+    }
+
+    /**
+     * Trips this worker's {@link #assignedLatch} once its consumer has been assigned partitions and a
+     * fetch position has been resolved for each.  Called from the poll loop on the worker thread (the
+     * consumer's owning thread) while the consumer lock is held, so the single-threaded consumer is
+     * accessed safely; under {@code auto.offset.reset=latest} resolving the position is what places
+     * each partition at the live log end, after which a producer's next send is delivered rather than
+     * skipped.  A no-op once the latch has already been tripped.
+     */
+    private void confirmAssignment () {
+
+      Set<TopicPartition> assignment;
+
+      if ((assignedLatch.getCount() > 0) && (!(assignment = consumer.assignment()).isEmpty())) {
+        for (TopicPartition partition : assignment) {
+          consumer.position(partition);
+        }
+
+        assignedLatch.countDown();
+      }
     }
 
     /**
@@ -261,27 +337,45 @@ public class KafkaMessageIngester {
 
             ConsumerRecords<Long, byte[]> records;
 
-            if (((records = consumer.poll(Duration.ofSeconds(3))) != null) && (!records.isEmpty())) {
-              for (TopicPartition partition : records.partitions()) {
+            if (consumerLock.tryLock(1, TimeUnit.SECONDS)) {
+              try {
+                if (paused) {
+                  // We are paused, so we need to wait for the next call to play() and we're avoiding some very fast cycle doing nothing
+                  Thread.sleep(1000);
+                } else {
 
-                List<ConsumerRecord<Long, byte[]>> recordList;
-                long lastOffset = 0;
+                  records = consumer.poll(Duration.ofSeconds(3));
 
-                for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
-                  try {
-                    callback.accept(record);
-                  } catch (Exception exception) {
-                    LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
+                  confirmAssignment();
+
+                  if ((records != null) && (!records.isEmpty())) {
+                    for (TopicPartition partition : records.partitions()) {
+
+                      List<ConsumerRecord<Long, byte[]>> recordList;
+                      long lastOffset = 0;
+
+                      for (ConsumerRecord<Long, byte[]> record : recordList = records.records(partition)) {
+                        try {
+                          callback.accept(record);
+                        } catch (Exception exception) {
+                          LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
+                        }
+
+                        lastOffset = record.offset();
+                      }
+
+                      if (!recordList.isEmpty()) {
+                        consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+                      }
+                    }
                   }
-
-                  lastOffset = record.offset();
                 }
-
-                if (!recordList.isEmpty()) {
-                  consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
-                }
+              } finally {
+                consumerLock.unlock();
               }
             }
+          } catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(KafkaMessageIngester.class).error(interruptedException);
           } catch (Exception exception) {
             LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
 
