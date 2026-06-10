@@ -241,6 +241,16 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       }
     }
 
+    private synchronized void recreateConsumer () {
+
+      try {
+        consumer.unsubscribe();
+        consumer.close();
+      } finally {
+        consumer = createConsumer(index);
+      }
+    }
+
     /**
      * Polls the backbone topic in a loop.  For each record, deserializes the packet and — if
      * the producing node differs from the local node — delivers it to the server.  Offsets are
@@ -283,20 +293,15 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
                 }
               }
             }
+          } catch (WakeupException wakeupException) {
+            if (!finished.get()) {
+              LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
+              recreateConsumer();
+            }
           } catch (Exception exception) {
             LoggerManager.getLogger(KafkaBackbone.class).error(exception);
-
-            try {
-              consumer.unsubscribe();
-              consumer.close();
-            } finally {
-              consumer = createConsumer(index);
-            }
+            recreateConsumer();
           }
-        }
-      } catch (WakeupException wakeupException) {
-        if (!finished.get()) {
-          LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
         }
       } finally {
         try {

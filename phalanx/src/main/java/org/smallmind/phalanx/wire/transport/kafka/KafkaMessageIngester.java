@@ -323,6 +323,16 @@ public class KafkaMessageIngester {
       }
     }
 
+    private synchronized void recreateConsumer () {
+
+      try {
+        consumer.unsubscribe();
+        consumer.close();
+      } finally {
+        consumer = createConsumer(index, paused);
+      }
+    }
+
     /**
      * Main poll loop.  Polls Kafka with a 3-second timeout per iteration, invokes the callback
      * for every record, commits offsets synchronously after each per-partition batch, recreates
@@ -376,22 +386,15 @@ public class KafkaMessageIngester {
             }
           } catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(KafkaMessageIngester.class).error(interruptedException);
+          } catch (WakeupException wakeupException) {
+            if (!finished.get()) {
+              LoggerManager.getLogger(KafkaMessageIngester.class).error(wakeupException);
+              recreateConsumer();
+            }
           } catch (Exception exception) {
             LoggerManager.getLogger(KafkaMessageIngester.class).error(exception);
-
-            synchronized (this) {
-              try {
-                consumer.unsubscribe();
-                consumer.close();
-              } finally {
-                consumer = createConsumer(index, paused);
-              }
-            }
+            recreateConsumer();
           }
-        }
-      } catch (WakeupException wakeupException) {
-        if (!finished.get()) {
-          LoggerManager.getLogger(KafkaMessageIngester.class).error(wakeupException);
         }
       } finally {
         try {
