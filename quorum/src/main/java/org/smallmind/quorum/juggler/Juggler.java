@@ -211,7 +211,9 @@ public class Juggler<P, R> implements BlackList<R> {
             LoggerManager.getLogger(Juggler.class).error(jugglerResourceException);
           } finally {
             sourcePinIter.remove();
-            blacklistMap.put(System.currentTimeMillis(), new BlacklistEntry<>(pin, jugglerResourceException));
+            if (blacklistMap.putIfAbsent(System.currentTimeMillis(), new BlacklistEntry<>(pin, jugglerResourceException)) != null) {
+              blacklistMap.put(blacklistMap.lastKey() + 1, new BlacklistEntry<>(pin, jugglerResourceException));
+            }
           }
         }
       }
@@ -277,7 +279,9 @@ public class Juggler<P, R> implements BlackList<R> {
         try {
           LoggerManager.getLogger(Juggler.class).error(exception);
         } finally {
-          blacklistMap.put(System.currentTimeMillis(), new BlacklistEntry<>(pin, exception));
+          if (blacklistMap.putIfAbsent(System.currentTimeMillis(), new BlacklistEntry<>(pin, exception)) != null) {
+            blacklistMap.put(blacklistMap.lastKey() + 1, new BlacklistEntry<>(pin, exception));
+          }
         }
       }
     }
@@ -322,10 +326,14 @@ public class Juggler<P, R> implements BlackList<R> {
   public synchronized void addToBlackList (BlacklistEntry<R> blacklistEntry) {
 
     if (sourcePins.remove(blacklistEntry.jugglingPin())) {
-      blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
+      if (blacklistMap.putIfAbsent(System.currentTimeMillis(), blacklistEntry) != null) {
+        blacklistMap.put(blacklistMap.lastKey() + 1, blacklistEntry);
+      }
       LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.jugglingPin().describe());
     } else if (targetPins.remove(blacklistEntry.jugglingPin())) {
-      blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
+      if (blacklistMap.putIfAbsent(System.currentTimeMillis(), blacklistEntry) != null) {
+        blacklistMap.put(blacklistMap.lastKey() + 1, blacklistEntry);
+      }
       LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.jugglingPin().describe());
     }
   }

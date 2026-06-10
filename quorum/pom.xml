@@ -12,9 +12,19 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
+      <groupId>com.unboundid</groupId>
+      <artifactId>unboundid-ldapsdk</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-ink-indigenous</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>

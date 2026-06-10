@@ -56,7 +56,7 @@ import org.smallmind.quorum.namespace.backingStore.NameTranslator;
  * <p>
  * Two construction paths exist:
  * <ul>
- *   <li>Top-level context (no backing context): created by {@link javaURLContextFactory} when no
+ *   <li>Top-level context (no backing context): created by {@link JavaURLContextFactory} when no
  *       existing context is available. The first component of any name supplied to this context
  *       must be {@code java:}; the translator opens a new initial context for each such call.</li>
  *   <li>Nested context (wraps an existing {@link DirContext}): created when {@link #lookup} or
@@ -104,7 +104,7 @@ public class JavaContext implements DirContext {
   /**
    * Creates a top-level context with no pre-existing backing context.
    * <p>
-   * Used by {@link javaURLContextFactory} when constructing the initial context. Every name
+   * Used by {@link JavaURLContextFactory} when constructing the initial context. Every name
    * resolved through this instance must begin with {@code java:}; the translator will open a new
    * initial context from the {@link org.smallmind.quorum.namespace.backingStore.ContextCreator}
    * on each such call.
@@ -205,7 +205,11 @@ public class JavaContext implements DirContext {
 
     contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
     lookupObject = contextNamePair.getContext().lookup(contextNamePair.getName());
-    if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
+    // A directory-context result is a backing-store subcontext and must be wrapped; this is tested
+    // against the DirContext interface rather than the backing context's concrete class so that
+    // top-level lookups (whose backing context is an InitialDirContext, not the LdapCtx that
+    // subcontext lookups return) wrap correctly too.
+    if (lookupObject instanceof DirContext) {
       if (pooled) {
         return new PooledJavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
       } else {
@@ -536,7 +540,7 @@ public class JavaContext implements DirContext {
     contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
     lookupObject = contextNamePair.getContext().lookupLink(contextNamePair.getName());
 
-    if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
+    if (lookupObject instanceof DirContext) {
 
       return new JavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
     }

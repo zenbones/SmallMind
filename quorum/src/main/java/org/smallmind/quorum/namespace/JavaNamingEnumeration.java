@@ -63,9 +63,9 @@ import org.smallmind.quorum.namespace.backingStore.NameTranslator;
  */
 public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
 
-  private static final Class[] SEARCH_RESULT_SIGNATURE = new Class[] {String.class, String.class, Object.class, Attributes.class, Boolean.class};
-  private static final Class[] BINDING_SIGNATURE = new Class[] {String.class, String.class, Object.class, Boolean.class};
-  private static final Class[] NAME_CLASS_PAIR_SIGNATURE = new Class[] {String.class, String.class, Boolean.class};
+  private static final Class[] SEARCH_RESULT_SIGNATURE = new Class[] {String.class, String.class, Object.class, Attributes.class, boolean.class};
+  private static final Class[] BINDING_SIGNATURE = new Class[] {String.class, String.class, Object.class, boolean.class};
+  private static final Class[] NAME_CLASS_PAIR_SIGNATURE = new Class[] {String.class, String.class, boolean.class};
 
   private final NamingEnumeration internalEnumeration;
   private final Class<T> typeClass;

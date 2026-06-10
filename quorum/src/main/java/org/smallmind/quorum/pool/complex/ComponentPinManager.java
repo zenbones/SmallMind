@@ -352,15 +352,21 @@ public class ComponentPinManager<C> {
    */
   public void killAllProcessing () {
 
-    backingLock.writeLock().lock();
+    LinkedList<ComponentInstance<C>> processingComponents = new LinkedList<>();
+
+    backingLock.readLock().lock();
     try {
       for (Map.Entry<ComponentInstance<C>, ComponentPin<C>> backingEntry : backingMap.entrySet()) {
         if (!freeQueue.contains(backingEntry.getValue())) {
-          terminate(backingEntry.getKey(), true, false);
+          processingComponents.add(backingEntry.getKey());
         }
       }
     } finally {
-      backingLock.writeLock().unlock();
+      backingLock.readLock().unlock();
+    }
+
+    for (ComponentInstance<C> componentInstance : processingComponents) {
+      terminate(componentInstance, true, false);
     }
 
     trackSize();

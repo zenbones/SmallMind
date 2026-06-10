@@ -36,6 +36,7 @@ import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import org.smallmind.quorum.namespace.JavaContext;
+import org.smallmind.quorum.namespace.JavaURLContextFactory;
 import org.smallmind.quorum.namespace.PooledJavaContext;
 import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
 import org.smallmind.quorum.namespace.backingStore.StorageType;
@@ -110,6 +111,7 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
     Hashtable<String, Object> env;
 
     env = new Hashtable<String, Object>();
+    env.put(Context.INITIAL_CONTEXT_FACTORY, JavaURLContextFactory.class.getName());
     env.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
     env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, tls, rootNamespace, userContext, password));
     env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());

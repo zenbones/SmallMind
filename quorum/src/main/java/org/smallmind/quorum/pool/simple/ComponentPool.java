@@ -108,9 +108,9 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
    *   <li>If the free list is empty and the pool is below its size cap (or unbounded), a new
    *       component is created via the factory.</li>
    *   <li>If the free list is empty and the size cap has been reached, the caller blocks for up
-   *       to {@link SimplePoolConfig#getAcquireWaitTimeMillis()} milliseconds. If a free
-   *       component becomes available within that window, it is returned. If the window expires
-   *       with no free component, a {@link ComponentPoolException} is thrown.</li>
+   *       to {@link SimplePoolConfig#getAcquireWaitTimeMillis()} milliseconds; a wait time of
+   *       {@code 0} does not block and fails immediately. If a free component becomes available
+   *       within the window, it is returned, otherwise a {@link ComponentPoolException} is thrown.</li>
    * </ol>
    *
    * @return a component instance ready for use; the caller must eventually pass it to
@@ -136,20 +136,27 @@ public class ComponentPool<T extends PooledComponent> extends Pool {
           throw new ComponentPoolException(e);
         }
       } else {
-        try {
-          do {
-            wait(simplePoolConfig.getAcquireWaitTimeMillis());
+
+        long acquireWaitTimeMillis = simplePoolConfig.getAcquireWaitTimeMillis();
+
+        // A zero acquire-wait means do not block: the pool is at capacity, so fail fast. Otherwise
+        // block for the configured window and take a component if one is returned within it.
+        if (acquireWaitTimeMillis == 0) {
+          throw new ComponentPoolException("ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
+        } else {
+          try {
+            wait(acquireWaitTimeMillis);
 
             if (closed.get()) {
               throw new ComponentPoolException("Pool has been closed");
-            } else if (!freeList.isEmpty()) {
-              component = freeList.removeFirst();
-            } else if (simplePoolConfig.getAcquireWaitTimeMillis() > 0) {
+            } else if (freeList.isEmpty()) {
               throw new ComponentPoolException("ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
+            } else {
+              component = freeList.removeFirst();
             }
-          } while (component == null);
-        } catch (InterruptedException i) {
-          throw new ComponentPoolException(i);
+          } catch (InterruptedException interruptedException) {
+            throw new ComponentPoolException(interruptedException);
+          }
         }
       }
     } else {

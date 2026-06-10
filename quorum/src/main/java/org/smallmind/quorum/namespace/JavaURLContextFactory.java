@@ -36,6 +36,8 @@ import java.lang.reflect.Constructor;
 import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.Name;
+import javax.naming.NamingException;
+import javax.naming.spi.InitialContextFactory;
 import javax.naming.spi.ObjectFactory;
 import org.smallmind.nutsnbolts.util.StringUtility;
 import org.smallmind.quorum.namespace.backingStore.ContextCreator;
@@ -62,8 +64,15 @@ import org.smallmind.quorum.namespace.backingStore.NamingConnectionDetails;
  * </ul>
  * When {@code obj} is non-null the factory returns {@code null} immediately, deferring to the
  * existing object.
+ * <p>
+ * The class also implements {@link InitialContextFactory} so it can be named directly as
+ * {@link Context#INITIAL_CONTEXT_FACTORY}. This is the path used by
+ * {@link org.smallmind.quorum.namespace.pool.PooledJavaContextComponentInstanceFactory}, which
+ * builds an {@link javax.naming.InitialContext} from these same environment keys: the JNDI
+ * {@code java:} URL-context-factory naming convention expects {@code <prefix>.java.javaURLContextFactory},
+ * which this class does not satisfy, so it is resolved as the initial context factory instead.
  */
-public class javaURLContextFactory implements ObjectFactory {
+public class JavaURLContextFactory implements ObjectFactory, InitialContextFactory {
 
   private static final Class[] CONTEXT_CREATOR_SIGNATURE = new Class[] {NamingConnectionDetails.class};
   private static final Class[] NAME_TRANSLATOR_SIGNATURE = new Class[] {ContextCreator.class};
@@ -90,10 +99,10 @@ public class javaURLContextFactory implements ObjectFactory {
 
     ContextCreator contextCreator;
     NameTranslator nameTranslator;
-    Class contextCreatorClass;
-    Class nameTranslatorClass;
-    Constructor contextCreatorConstructor;
-    Constructor nameTranslatorConstructor;
+    Class<?> contextCreatorClass;
+    Class<?> nameTranslatorClass;
+    Constructor<?> contextCreatorConstructor;
+    Constructor<?> nameTranslatorConstructor;
     String backingStore;
     boolean modifiable = false;
     boolean pooled = false;
@@ -124,5 +133,36 @@ public class javaURLContextFactory implements ObjectFactory {
     }
 
     return null;
+  }
+
+  /**
+   * Builds the top-level {@link JavaContext} for the given environment when this factory is used as
+   * the {@link Context#INITIAL_CONTEXT_FACTORY}.
+   * <p>
+   * Delegates to {@link #getObjectInstance} with a {@code null} object so the full context is
+   * constructed from the same environment keys documented on this class.
+   *
+   * @param environment the JNDI environment carrying the {@link JavaContext} configuration keys
+   * @return a new top-level {@link JavaContext}
+   * @throws NamingException if the backing {@link ContextCreator} or {@link NameTranslator} cannot be
+   *                         resolved or instantiated
+   */
+  @Override
+  public Context getInitialContext (Hashtable<?, ?> environment)
+    throws NamingException {
+
+    try {
+
+      return (Context)getObjectInstance(null, null, null, (Hashtable)environment);
+    } catch (NamingException namingException) {
+      throw namingException;
+    } catch (Exception exception) {
+
+      NamingException namingException = new NamingException(exception.getMessage());
+
+      namingException.setRootCause(exception);
+
+      throw namingException;
+    }
   }
 }

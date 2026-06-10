@@ -46,9 +46,9 @@ import org.smallmind.quorum.namespace.backingStore.NameTranslator;
  * {@link NameTranslator} so it can render itself in the backing store's external format.
  * <p>
  * Components are stored in an {@link ArrayList} in logical order (most general last for LDAP).
- * Prefix and suffix slices are backed by views of the same list, so mutations to the original name
- * after a slice is taken are visible through the slice. {@link #clone()} produces a deep copy
- * with a new backing list.
+ * Prefix and suffix slices, like {@link #clone()}, copy the relevant components into a new backing
+ * list, so each returned name is independent: mutating the original after a slice is taken does not
+ * affect the slice, and vice versa.
  * <p>
  * Comparison first orders by size (shorter names come first), then component-by-component using
  * an alphanumeric sort.
@@ -77,13 +77,13 @@ public class JavaName implements Name {
    */
   public JavaName (NameTranslator nameTranslator) {
 
-    this(nameTranslator, new ArrayList<String>());
+    this(nameTranslator, new ArrayList<>());
   }
 
   private JavaName (NameTranslator nameTranslator, List<String> externalList) {
 
     this.nameTranslator = nameTranslator;
-    this.nameList = new ArrayList<String>(externalList);
+    this.nameList = new ArrayList<>(externalList);
   }
 
   /**
@@ -183,7 +183,7 @@ public class JavaName implements Name {
    * Returns a {@link JavaName} containing the first {@code posn} components of this name.
    *
    * @param posn the exclusive end index of the prefix; {@code 0} returns an empty name
-   * @return a new {@link JavaName} backed by a sublist view
+   * @return a new {@link JavaName} holding an independent copy of the first {@code posn} components
    */
   public Name getPrefix (int posn) {
 
@@ -194,7 +194,7 @@ public class JavaName implements Name {
    * Returns a {@link JavaName} containing the components from index {@code posn} to the end.
    *
    * @param posn the inclusive start index of the suffix
-   * @return a new {@link JavaName} backed by a sublist view
+   * @return a new {@link JavaName} holding an independent copy of the components from {@code posn} onward
    */
   public Name getSuffix (int posn) {
 
@@ -252,8 +252,7 @@ public class JavaName implements Name {
    * @return this name, for chaining
    * @throws InvalidNameException if {@link #add(String)} rejects any component of {@code suffix}
    */
-  public Name addAll (Name suffix)
-    throws InvalidNameException {
+  public Name addAll (Name suffix) {
 
     int count;
 
@@ -272,13 +271,12 @@ public class JavaName implements Name {
    * @return this name, for chaining
    * @throws InvalidNameException if {@link #add(int, String)} rejects any component
    */
-  public Name addAll (int posn, Name n)
-    throws InvalidNameException {
+  public Name addAll (int posn, Name n) {
 
     int count;
 
     for (count = 0; count < n.size(); count++) {
-      nameList.add(posn, n.get(count));
+      nameList.add(posn + count, n.get(count));
     }
     return this;
   }

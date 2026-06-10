@@ -1025,7 +1025,7 @@ translate between the two.
 
 `quorum.namespace` is that something. It provides:
 
-* A custom `ObjectFactory` (`javaURLContextFactory`) registered for the
+* A custom `ObjectFactory` (`JavaURLContextFactory`) registered for the
   `java:` URL scheme.
 * A `DirContext` implementation (`JavaContext`) that translates names
   on every operation before delegating to a backing-store context.
@@ -1054,7 +1054,7 @@ InitialContext root = new InitialContext(env);
 ----
 
 When the application calls `root.lookup("java:/comp/env/jdbc/myds")`,
-JNDI finds `javaURLContextFactory` by the `java:` prefix, calls
+JNDI finds `JavaURLContextFactory` by the `java:` prefix, calls
 `getObjectInstance(null, ...)`, which in turn locates the backing-store
 classes by naming convention:
 

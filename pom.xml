@@ -166,6 +166,7 @@
     <tanukisoft.version>3.5.54</tanukisoft.version>
     <testng.version>7.11.0</testng.version>
     <tyrus.version>2.2.2</tyrus.version>
+    <unboundid.ldapsdk.version>7.0.1</unboundid.ldapsdk.version>
   </properties>
   <modules>
     <module>ansible</module>
@@ -266,6 +267,11 @@
         <groupId>com.sun.xml.ws</groupId>
         <artifactId>jaxws-rt</artifactId>
         <version>${sun.xml.ws.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.unboundid</groupId>
+        <artifactId>unboundid-ldapsdk</artifactId>
+        <version>${unboundid.ldapsdk.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-logging</groupId>
