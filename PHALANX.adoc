@@ -60,7 +60,7 @@ What stays with the caller:
 | Expose the implementation | `responseTransport.register(Interface.class, wiredService)`; the implementation must implement `WiredService`
 | Unit-test without a broker | `MockMessageRouter` + `MockRequestTransport` + `MockResponseTransport`
 | Run over RabbitMQ | `RabbitMQConnector`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`, a `QueueContractor` pair, `NameConfiguration`
-| Run over Kafka | `KafkaRequestTransport`, `KafkaResponseTransport`, `KafkaConnector`, `KafkaServer...`
+| Run over Kafka | `KafkaRequestTransport`, `KafkaResponseTransport`, `KafkaConnector`, `KafkaServer...`, `KafkaGroupProtocol`
 | Run over JMS (Jakarta Messaging 3.x) | `JmsRequestTransport`, `JmsResponseTransport`, `RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`
 | Flow a tenant/user/trace value through every call | Subclass `WireContext`, `@Wire(adapter = ...)`, `WireContextManager.register("handle", Cls)`, push with `ContextFactory.pushContext(...)`
 | Convert a non-trivial domain type on the wire | `@Wire(adapter = MyAdapter.class)` on the type; extend `WireAdapter<V,B>` (`getValueType`, `marshal`, `unmarshal`)
@@ -491,6 +491,7 @@ KafkaRequestTransport client = new KafkaRequestTransport(
     /* concurrencyLimit         */ 8,
     /* defaultTimeoutSeconds    */ 30L,
     /* startupGracePeriodSeconds */ 15,
+    /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     servers
 );
 
@@ -501,13 +502,26 @@ KafkaResponseTransport server = new KafkaResponseTransport(
     codec,
     /* concurrencyLimit         */ 8,
     /* startupGracePeriodSeconds */ 15,
+    /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     servers
 );
 ----
 
-`startupGracePeriodSeconds` is the number of seconds `KafkaConnector` will
-retry the broker connectivity check before throwing
-`KafkaConnectionException`.
+`groupProtocol` is the Kafka consumer group protocol applied to every worker
+consumer: `KafkaGroupProtocol.CLASSIC` (the classic client-side rebalance
+protocol) or `KafkaGroupProtocol.CONSUMER` (the KIP-848 broker-coordinated
+protocol). It comes from `smallmind-kafka-utility`.
+
+`startupGracePeriodSeconds` bounds two checks during construction. First
+`KafkaConnector` retries the broker connectivity check for up to that many
+seconds, throwing `KafkaConnectionException` if no broker becomes reachable.
+The transport then waits — within the same budget — for every consumer
+ingester to be assigned its partitions and resolve a fetch position
+(`awaitConsumerAssignment`); if that readiness is not confirmed before the
+budget is exhausted, construction fails with a `KafkaConnectionException`
+reporting that consumer readiness could not be confirmed. Because the topics
+use `auto.offset.reset=latest`, this readiness wait is what guarantees the
+first request published after construction is not silently dropped.
 
 === JMS
 

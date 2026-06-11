@@ -37,7 +37,6 @@ import java.util.Properties;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.OnOrOff;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.BeansException;
@@ -130,8 +129,7 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
    * installed. Starts or suspends the scheduler based on {@link #activeMode}.
    *
    * @return the configured {@link Scheduler}
-   * @throws SchedulerException if the scheduler cannot be obtained or configured,
-   *                            or if {@code activeMode} holds an unrecognized value
+   * @throws SchedulerException if the scheduler cannot be obtained or configured
    */
   @Override
   public synchronized Scheduler getScheduler ()
@@ -143,14 +141,8 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     scheduler.setJobFactory(jobFactory);
 
     switch (activeMode) {
-      case ON:
-        scheduler.start();
-        break;
-      case OFF:
-        scheduler.standby();
-        break;
-      default:
-        throw new UnknownSwitchCaseException(activeMode.name());
+      case ON -> scheduler.start();
+      case OFF -> scheduler.standby();
     }
 
     return scheduler;

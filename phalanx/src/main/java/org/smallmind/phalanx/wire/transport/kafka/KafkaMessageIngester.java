@@ -323,6 +323,13 @@ public class KafkaMessageIngester {
       }
     }
 
+    /**
+     * Closes the current consumer and replaces it with a freshly created one after a recoverable
+     * poll error.  The replacement preserves the worker's current paused or playing state: it
+     * subscribes to the configured topic only when the worker is playing, and starts without a
+     * subscription when the worker is paused.  The new consumer is installed even if closing the
+     * old one fails.
+     */
     private synchronized void recreateConsumer () {
 
       try {
