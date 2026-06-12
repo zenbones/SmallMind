@@ -281,14 +281,12 @@ Events are dispatched synchronously on the thread that fires them. Listeners mus
 [source]
 ----
 SleuthEvent                          (className, methodName; abstract)
-├── SetupSleuthEvent                 (SETUP)
 ├── CancelledSleuthEvent             (CANCELLED)
 └── TimedSleuthEvent                 (+ elapsed: long; abstract)
     ├── SuccessSleuthEvent           (SUCCESS)
     ├── ThrowableSleuthEvent         (+ throwable: Throwable; abstract)
     │   ├── FailureSleuthEvent       (FAILURE — AssertionError)
     │   ├── ErrorSleuthEvent         (ERROR — any other exception)
-    │   ├── MootSleuthEvent          (MOOT — unmet assumption)
     │   └── FatalSleuthEvent         (FATAL — runner-level abort)
     └── MessageSleuthEvent           (+ message: String; abstract)
         └── SkippedSleuthEvent       (SKIPPED — culprit-driven)
@@ -434,14 +432,12 @@ All configuration is read from either JVM system properties or the provider's `<
 [cols="2,3,3", options="header"]
 |===
 | Sleuth event type | Surefire callback        | Carries
-| `SETUP`    | `testSetStarting`          | —
 | `START`    | `testStarting`             | —
 | `SUCCESS`  | `testSucceeded`            | elapsed ms
 | `FAILURE`  | `testFailed`               | `SleuthStackTraceWriter`, elapsed ms
 | `ERROR`    | `testError`                | `SleuthStackTraceWriter`, elapsed ms
 | `SKIPPED`  | `testSkipped`              | skip message (names the culprit)
 | `CANCELLED`| `testSetCompleted`         | —
-| `MOOT`     | `testAssumptionFailure`    | `SleuthStackTraceWriter`, elapsed ms
 | `FATAL`    | `testExecutionSkippedByUser`; throwable is captured for later rethrow | —
 |===
 
@@ -501,7 +497,7 @@ There is no thread reuse. If this matters for an embedder, implementing a custom
 
 === `TestIdentifier`
 
-Every time a `SuiteRunner` or `TestRunner` is about to dispatch a method, `TestIdentifier.updateIdentifier(className, methodName)` is called on the spawning thread. `TestIdentifier` maintains a static `HashMap<String, Long>` assigning a stable `long` to each `(className, methodName)` pair it ever sees, and an `InheritableThreadLocal<Long>` holding the current thread's id. The Surefire provider reads this id when constructing every `SimpleReportEntry` and `TestOutputReportEntry`, ensuring that each Surefire event is attributable to the exact test that produced it — even stdout/stderr lines written from deep inside a service under test.
+Every time a `SuiteRunner` or `TestRunner` is about to dispatch a method, `TestIdentifier.updateIdentifier(className, methodName)` is called on the spawning thread. `TestIdentifier` maintains a static `HashMap<TestKey, Long>` — keyed on a `(className, methodName)` composite in which `methodName` is `null` for suite-level entries — assigning a stable `long` to each pair it ever sees, plus an `AtomicLong` counter and an `InheritableThreadLocal<Long>` holding the current thread's id (default `1`, inherited by child test threads). Allocation uses double-checked locking on the map. The Surefire provider reads this id when constructing every `SimpleReportEntry` and `TestOutputReportEntry`, ensuring that each Surefire event is attributable to the exact test that produced it — even stdout/stderr lines written from deep inside a service under test.
 
 == Worked Examples
 
@@ -600,7 +596,6 @@ public class LegacyTestNgTest {
 | Exception | Thrown when
 | `TestDependencyException` | The dependency graph contains a cycle, or a `dependsOn` / `executeAfter` name does not match any discovered node. Thrown from `DependencyAnalysis.calculate()`, before any test executes.
 | `TestProcessingException` | A suite class cannot be instantiated — usually because it lacks a public no-arg constructor — or the constructor itself threw.
-| `MethodInvocationException` | Checked exception carrying a `Method` plus elapsed milliseconds at the point of failure. Provided for use by custom instrumentation.
 |===
 
 == Package File Map
@@ -625,7 +620,6 @@ The `runner` module lives under `sleuth/runner/src/main/java/org/smallmind/sleut
 | `runner/TestIdentifier.java`        | Stable per-test id for output correlation.
 | `runner/TestDependencyException.java` | Cycle or missing-dependency error.
 | `runner/TestProcessingException.java` | Suite instantiation failure.
-| `runner/MethodInvocationException.java` | Reflection-invocation exception with timing.
 
 | `runner/annotation/Suite.java`, `Test.java`, `BeforeSuite.java`, `AfterSuite.java`, `BeforeTest.java`, `AfterTest.java` | Sleuth's annotation set.
 | `runner/annotation/*Literal.java`   | Programmatic annotation instances, one per annotation (used by translators).
@@ -641,7 +635,7 @@ The `runner` module lives under `sleuth/runner/src/main/java/org/smallmind/sleut
 | `runner/event/SleuthEventListener.java` | Observer interface.
 | `runner/event/SleuthEventType.java` | Discriminator enum.
 | `runner/event/TimedSleuthEvent.java`, `ThrowableSleuthEvent.java`, `MessageSleuthEvent.java` | Abstract mixins adding `elapsed`, `throwable`, `message`.
-| `runner/event/StartSleuthEvent.java`, `SuccessSleuthEvent.java`, `FailureSleuthEvent.java`, `ErrorSleuthEvent.java`, `SkippedSleuthEvent.java`, `MootSleuthEvent.java`, `FatalSleuthEvent.java`, `SetupSleuthEvent.java`, `CancelledSleuthEvent.java` | Concrete events.
+| `runner/event/StartSleuthEvent.java`, `SuccessSleuthEvent.java`, `FailureSleuthEvent.java`, `ErrorSleuthEvent.java`, `SkippedSleuthEvent.java`, `FatalSleuthEvent.java`, `CancelledSleuthEvent.java` | Concrete events.
 |===
 
 The `maven/surefire` module lives under `sleuth/maven/surefire/src/main/`.

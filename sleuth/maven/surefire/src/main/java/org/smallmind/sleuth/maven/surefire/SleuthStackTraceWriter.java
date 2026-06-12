@@ -42,9 +42,8 @@ import org.smallmind.sleuth.runner.Culprit;
  * Sleuth's internal utilities.
  * <p>
  * Created by {@link SurefireSleuthEventListener} when translating
- * {@link org.smallmind.sleuth.runner.event.FailureSleuthEvent},
- * {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent}, and
- * {@link org.smallmind.sleuth.runner.event.MootSleuthEvent} into Surefire report entries.
+ * {@link org.smallmind.sleuth.runner.event.FailureSleuthEvent} and
+ * {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent} into Surefire report entries.
  * It provides three representations of the failure:
  * <ul>
  *   <li>{@link #writeTraceToString()} — full stack trace via {@link StackTraceUtility}</li>

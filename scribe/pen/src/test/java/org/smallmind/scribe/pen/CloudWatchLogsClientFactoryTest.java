@@ -30,49 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.scribe.pen;
 
-import java.lang.reflect.Method;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 
-/**
- * Checked exception wrapping a failure that occurred while invoking a reflected test method.
- * <p>
- * Carries both the method reference and the elapsed execution time at the point of failure so that
- * callers can emit accurate Sleuth events without needing to re-compute timing.
- */
-public class MethodInvocationException extends Exception {
+@Test(groups = "unit")
+public class CloudWatchLogsClientFactoryTest {
 
-  private final Method method;
-  private final long elapsed;
+  public void testFactoryBuildsClientOffline ()
+    throws Exception {
 
-  /**
-   * Constructs an invocation exception.
-   *
-   * @param method  reflected method that was being invoked when the failure occurred; must not be {@code null}
-   * @param elapsed elapsed execution time in milliseconds measured from invocation start to failure
-   * @param cause   root cause of the failure; must not be {@code null}
-   */
-  public MethodInvocationException (Method method, long elapsed, Throwable cause) {
+    CloudWatchLogsClientFactory factory = new CloudWatchLogsClientFactory();
 
-    super(cause);
+    factory.setAwsAccessKey("AKIATESTKEY");
+    factory.setAwsSecretKey("test-secret-key");
+    factory.setRegion(Region.US_EAST_1);
+    factory.afterPropertiesSet();
 
-    this.method = method;
-    this.elapsed = elapsed;
+    Assert.assertNotNull(factory.getObject());
+    Assert.assertEquals(factory.getObjectType(), CloudWatchLogsClient.class);
+    Assert.assertTrue(factory.isSingleton());
   }
 
-  /**
-   * @return the method that was being invoked when the failure occurred; never {@code null}
-   */
-  public Method getMethod () {
+  public void testGetObjectReturnsSameSingletonInstance ()
+    throws Exception {
 
-    return method;
-  }
+    CloudWatchLogsClientFactory factory = new CloudWatchLogsClientFactory();
 
-  /**
-   * @return elapsed execution time in milliseconds at the moment the failure was caught
-   */
-  public long getElapsed () {
+    factory.setAwsAccessKey("AKIATESTKEY");
+    factory.setAwsSecretKey("test-secret-key");
+    factory.setRegion(Region.US_WEST_2);
+    factory.afterPropertiesSet();
 
-    return elapsed;
+    Assert.assertSame(factory.getObject(), factory.getObject());
   }
 }

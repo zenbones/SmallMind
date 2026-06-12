@@ -41,7 +41,6 @@ import org.smallmind.sleuth.runner.TestIdentifier;
 import org.smallmind.sleuth.runner.event.ErrorSleuthEvent;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
 import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
-import org.smallmind.sleuth.runner.event.MootSleuthEvent;
 import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEvent;
 import org.smallmind.sleuth.runner.event.SleuthEventListener;
@@ -58,14 +57,12 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
  *       active numeric test identifier from {@link TestIdentifier#getTestIdentifier()}.</li>
  *   <li>Calls the appropriate {@link RunListener} method for the event type:
  *     <ul>
- *       <li>{@code SETUP} → {@link RunListener#testSetStarting}</li>
  *       <li>{@code START} → {@link RunListener#testStarting}</li>
  *       <li>{@code SUCCESS} → {@link RunListener#testSucceeded}</li>
  *       <li>{@code FAILURE} → {@link RunListener#testFailed} with a {@link SleuthStackTraceWriter}</li>
  *       <li>{@code ERROR} → {@link RunListener#testError} with a {@link SleuthStackTraceWriter}</li>
  *       <li>{@code SKIPPED} → {@link RunListener#testSkipped}</li>
  *       <li>{@code CANCELLED} → {@link RunListener#testSetCompleted}</li>
- *       <li>{@code MOOT} → {@link RunListener#testAssumptionFailure} with a {@link SleuthStackTraceWriter}</li>
  *       <li>{@code FATAL} → captures the throwable and calls {@link RunListener#testExecutionSkippedByUser}</li>
  *     </ul>
  *   </li>
@@ -125,9 +122,6 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
     System.out.println("[" + AnsiColor.YELLOW.getCode() + "SUREFIRE" + AnsiColor.DEFAULT.getCode() + "] " + event);
 
     switch (event.getType()) {
-      case SETUP:
-        runListener.testSetStarting(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText"));
-        break;
       case START:
         runListener.testStarting(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText"));
         break;
@@ -145,9 +139,6 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
         break;
       case CANCELLED:
         runListener.testSetCompleted(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "Tests have been cancelled"));
-        break;
-      case MOOT:
-        runListener.testAssumptionFailure(new SimpleReportEntry(runMode, TestIdentifier.getTestIdentifier(), event.getClassName(), "source text", event.getMethodName(), "nameText", new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((MootSleuthEvent)event).getThrowable()), (int)((MootSleuthEvent)event).getElapsed()));
         break;
       case FATAL:
         throwable = ((FatalSleuthEvent)event).getThrowable();

@@ -209,7 +209,7 @@ public class JDKAppenderWrapper extends Handler {
       }
     }
 
-    return false;
+    return true;
   }
 
   /**

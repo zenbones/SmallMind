@@ -42,13 +42,11 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
  * <ul>
  *   <li>{@link FailureSleuthEvent} — the throwable is an {@link AssertionError} (test assertion failed)</li>
  *   <li>{@link ErrorSleuthEvent} — the throwable is any other exception (unexpected runtime error)</li>
- *   <li>{@link MootSleuthEvent} — the throwable signals an unmet assumption (test rendered moot)</li>
  *   <li>{@link FatalSleuthEvent} — the throwable caused the runner itself to halt</li>
  * </ul>
  *
  * @see FailureSleuthEvent
  * @see ErrorSleuthEvent
- * @see MootSleuthEvent
  * @see FatalSleuthEvent
  */
 public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {

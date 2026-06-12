@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.scribe.pen;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+@Test(groups = "unit")
+public class FileNameUtilityTest {
+
+  private Path directory;
+
+  @BeforeMethod
+  public void createDirectory ()
+    throws IOException {
+
+    directory = Files.createTempDirectory("scribe-filename-test");
+  }
+
+  @AfterMethod
+  public void removeDirectory ()
+    throws IOException {
+
+    if (directory != null) {
+      try (java.util.stream.Stream<Path> walk = Files.walk(directory)) {
+        walk.sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+          try {
+            Files.deleteIfExists(path);
+          } catch (IOException ioException) {
+            throw new RuntimeException(ioException);
+          }
+        });
+      }
+    }
+  }
+
+  public void testTimestampInsertedBeforeExtensionWhenNoIndexRequested () {
+
+    Path result = FileNameUtility.calculateUniquePath(directory.resolve("app.log"), '-', "20260611", false);
+
+    Assert.assertEquals(result.getFileName().toString(), "app-20260611.log");
+  }
+
+  public void testIndexIsAppendedOnFirstCandidateWhenAlwaysUseIndexIsSet () {
+
+    Path result = FileNameUtility.calculateUniquePath(directory.resolve("app.log"), '-', "20260611", true);
+
+    Assert.assertEquals(result.getFileName().toString(), "app-20260611-0.log");
+  }
+
+  public void testIndexIncrementsPastExistingCandidates ()
+    throws IOException {
+
+    Files.createFile(directory.resolve("app-20260611.log"));
+    Files.createFile(directory.resolve("app-20260611-0.log"));
+
+    Path result = FileNameUtility.calculateUniquePath(directory.resolve("app.log"), '-', "20260611", false);
+
+    Assert.assertEquals(result.getFileName().toString(), "app-20260611-1.log");
+  }
+
+  public void testNameWithoutExtensionOmitsExtensionSegment () {
+
+    Path result = FileNameUtility.calculateUniquePath(directory.resolve("applog"), '-', "20260611", false);
+
+    Assert.assertEquals(result.getFileName().toString(), "applog-20260611");
+  }
+}

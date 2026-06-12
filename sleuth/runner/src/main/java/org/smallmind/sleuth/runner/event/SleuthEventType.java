@@ -45,12 +45,6 @@ package org.smallmind.sleuth.runner.event;
 public enum SleuthEventType {
 
   /**
-   * Indicates that a suite or test setup phase is starting.
-   * Carried by {@link SetupSleuthEvent}.
-   */
-  SETUP,
-
-  /**
    * Indicates that a test method or lifecycle hook has begun execution.
    * Carried by {@link StartSleuthEvent}.
    */
@@ -81,13 +75,6 @@ public enum SleuthEventType {
    * Carried by {@link SkippedSleuthEvent}.
    */
   SKIPPED,
-
-  /**
-   * Indicates that a test was considered moot — typically because a precondition or
-   * assumption was not satisfied — without constituting a pass or a failure.
-   * Carried by {@link MootSleuthEvent}.
-   */
-  MOOT,
 
   /**
    * Indicates an unrecoverable internal error that halts the runner entirely.

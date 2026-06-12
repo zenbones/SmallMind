@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
  * Elapsed time is measured from immediately before the test or lifecycle method is invoked to
  * immediately after it completes or throws. All outcome events ({@link SuccessSleuthEvent},
  * {@link FailureSleuthEvent}, {@link ErrorSleuthEvent}, {@link SkippedSleuthEvent},
- * {@link MootSleuthEvent}, {@link FatalSleuthEvent}) extend this class.
+ * {@link FatalSleuthEvent}) extend this class.
  *
  * @see ThrowableSleuthEvent
  * @see MessageSleuthEvent

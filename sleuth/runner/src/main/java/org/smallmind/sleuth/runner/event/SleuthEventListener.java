@@ -39,10 +39,10 @@ import java.util.EventListener;
  * <p>
  * Implementations are registered with
  * {@link org.smallmind.sleuth.runner.SleuthRunner#addListener(SleuthEventListener)} and receive
- * every {@link SleuthEvent} fired during a run — including lifecycle events such as
- * {@link SetupSleuthEvent} and {@link CancelledSleuthEvent} as well as per-test outcome events
+ * every {@link SleuthEvent} fired during a run — including the {@link CancelledSleuthEvent}
+ * lifecycle event as well as per-test outcome events
  * ({@link SuccessSleuthEvent}, {@link FailureSleuthEvent}, {@link ErrorSleuthEvent},
- * {@link SkippedSleuthEvent}, {@link MootSleuthEvent}, {@link FatalSleuthEvent}).
+ * {@link SkippedSleuthEvent}, {@link FatalSleuthEvent}).
  * <p>
  * {@link #handle(SleuthEvent)} is invoked on the runner thread that fired the event; implementations
  * must be thread-safe when tests execute concurrently.

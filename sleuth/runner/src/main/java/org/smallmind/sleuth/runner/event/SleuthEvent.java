@@ -51,8 +51,7 @@ import org.smallmind.nutsnbolts.util.AnsiColor;
  * </ul>
  * Concrete types: {@link StartSleuthEvent}, {@link SuccessSleuthEvent},
  * {@link FailureSleuthEvent}, {@link ErrorSleuthEvent}, {@link SkippedSleuthEvent},
- * {@link MootSleuthEvent}, {@link SetupSleuthEvent}, {@link CancelledSleuthEvent},
- * {@link FatalSleuthEvent}.
+ * {@link CancelledSleuthEvent}, {@link FatalSleuthEvent}.
  *
  * @see SleuthEventListener
  * @see SleuthEventType

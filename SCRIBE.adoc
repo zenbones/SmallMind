@@ -986,11 +986,10 @@ new PatternFormatter("%d %+5l %.2n - %m");
 
 === Timestamp Providers
 
-The `%d` token is rendered through a `Timestamp`. Three implementations ship:
+The `%d` token is rendered through a `Timestamp`. Two implementations ship:
 
 * `DateFormatTimestamp` — `java.time.DateTimeFormatter`-based; construction accepts a
   pattern string (`yyyy-MM-dd'T'HH:mm:ss.SSSZ` by default).
-* `FormatStringTimestamp` — `String.format` style (e.g. `%tY-%<tm-%<td`).
 * `NullTimestamp` — renders an empty string.
 
 === Other Formatters

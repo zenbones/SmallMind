@@ -125,22 +125,6 @@ public class TestIdentifier {
     }
 
     /**
-     * @return fully qualified class name component of this key; never {@code null}
-     */
-    public String getClassName () {
-
-      return className;
-    }
-
-    /**
-     * @return method name component of this key; may be {@code null}
-     */
-    public String getMethodName () {
-
-      return methodName;
-    }
-
-    /**
      * @return combined hash of class and method name components
      */
     @Override
@@ -151,6 +135,9 @@ public class TestIdentifier {
 
     /**
      * Two keys are equal when both their class and method name components match.
+     * <p>
+     * The method name component is {@code null} for suite-level identifiers, so the comparison is
+     * null-safe on both components, matching the nullability handled by {@link #hashCode()}.
      *
      * @param obj object to compare; may be {@code null}
      * @return {@code true} if both components are identical
@@ -158,7 +145,14 @@ public class TestIdentifier {
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof TestKey) && ((TestKey)obj).className.equals(className) && ((TestKey)obj).methodName.equals(methodName);
+      if (!(obj instanceof TestKey)) {
+
+        return false;
+      }
+
+      TestKey testKey = (TestKey)obj;
+
+      return ((className == null) ? (testKey.className == null) : className.equals(testKey.className)) && ((methodName == null) ? (testKey.methodName == null) : methodName.equals(testKey.methodName));
     }
   }
 }
