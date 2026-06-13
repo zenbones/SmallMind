@@ -317,6 +317,8 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
         throw new JettyInitializationException(exception);
       }
 
+      sslContextFactory.setNeedClientAuth(sslInfo.isRequireClientAuth());
+
       sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()), new HttpConnectionFactory(httpsConfig));
       sslConnector.setHost(host);
       sslConnector.setPort(sslInfo.getPort());
@@ -358,7 +360,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
           ResourceHandler documentResourceHandler = new ResourceHandler();
 
           documentResourceHandler.setBaseResource(ResourceFactory.of(documentResourceHandler).newResource(Paths.get(documentRootEntry.getValue())));
-          documentContextHandler.setHandler(documentContextHandler);
+          documentContextHandler.setHandler(documentResourceHandler);
 
           contextHandlerCollection.addHandler(documentContextHandler);
         }

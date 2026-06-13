@@ -45,7 +45,6 @@ import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
-import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.grizzly.http2.Http2AddOn;
 import org.glassfish.grizzly.http2.Http2Configuration;
 import org.glassfish.grizzly.jaxws.JaxwsHandler;
@@ -346,7 +345,10 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
       if (webApplicationOption.getDocumentRootOption() != null) {
         for (Map.Entry<String, String> documentRootEntry : webApplicationOption.getDocumentRootOption().getDocumentRoots().entrySet()) {
-          httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(PathUtility.asResourceString(Paths.get(documentRootEntry.getValue())), combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getDocumentRootOption().getDocumentPath()), normalizePath(documentRootEntry.getKey()))));
+
+          String documentMapping = combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getDocumentRootOption().getDocumentPath()), normalizePath(documentRootEntry.getKey()));
+
+          httpServer.getServerConfiguration().addHttpHandler(new DocumentRootHttpHandler(documentMapping, PathUtility.asResourceString(Paths.get(documentRootEntry.getValue()))), documentMapping + "/*");
         }
       }
 
@@ -589,10 +591,16 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
       sslContextConfigurator.setTrustStorePass(sslInfo.getTrustSecureStore().getPassword());
     }
 
-    /* Note: clientMode (2nd param) means server does not
-     *  authenticate the client - which we never want
+    /* SSLEngineConfigurator parameters are (sslContext, clientMode, needClientAuth, wantClientAuth):
+     *  - clientMode is false so this side operates in server mode and drives the handshake.
+     *  - needClientAuth tracks requireClientAuth, making a client certificate mandatory when configured.
+     *  - wantClientAuth must be the inverse of requireClientAuth, and must never be hardcoded true. JSSE
+     *    applies wantClientAuth after needClientAuth, so a true value overrides need and silently downgrades
+     *    mandatory client authentication to optional, letting certificate-less clients through. Requesting a
+     *    certificate optionally only when it is not required keeps mutual TLS enforceable while still exposing
+     *    any presented certificate to the ClientAuthProxyFilter.
      */
-    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(true), false, sslInfo.isRequireClientAuth(), true);
+    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(true), false, sslInfo.isRequireClientAuth(), !sslInfo.isRequireClientAuth());
     secureListener.setSSLEngineConfig(sslEngineConfig);
 
     return secureListener;

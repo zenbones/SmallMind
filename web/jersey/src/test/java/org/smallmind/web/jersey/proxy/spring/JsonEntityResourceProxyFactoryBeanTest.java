@@ -1,0 +1,96 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.web.jersey.proxy.spring;
+
+import java.lang.reflect.Proxy;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.web.jersey.proxy.JsonTarget;
+import org.springframework.context.support.GenericApplicationContext;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+/**
+ * Boots {@link JsonEntityResourceProxyFactoryBean} through a Spring {@link GenericApplicationContext} to confirm it
+ * builds the resource proxy in {@code afterPropertiesSet} and exposes it as a singleton implementing the configured
+ * interface. A {@link PerApplicationContext} is attached because proxy generation registers into it.
+ */
+@Test(groups = "integration")
+public class JsonEntityResourceProxyFactoryBeanTest {
+
+  public interface WidgetResource {
+
+    String describe (String id);
+  }
+
+  @BeforeMethod
+  public void attachPerApplicationContext () {
+
+    new PerApplicationContext();
+  }
+
+  public void testFactoryBeanProducesProxy ()
+    throws Exception {
+
+    JsonTarget target = new JsonTarget("https://api.example.com");
+
+    try (GenericApplicationContext applicationContext = new GenericApplicationContext()) {
+
+      applicationContext.registerBean("widgetProxy", JsonEntityResourceProxyFactoryBean.class, () -> {
+
+        JsonEntityResourceProxyFactoryBean factoryBean = new JsonEntityResourceProxyFactoryBean();
+
+        factoryBean.setTarget(target);
+        factoryBean.setResourceInterface(WidgetResource.class);
+        factoryBean.setServiceName("widget-service");
+        factoryBean.setServiceVersion(1);
+
+        return factoryBean;
+      });
+
+      applicationContext.refresh();
+
+      Proxy proxy = applicationContext.getBean("widgetProxy", Proxy.class);
+
+      Assert.assertTrue(proxy instanceof WidgetResource);
+    }
+  }
+
+  public void testFactoryBeanMetadata () {
+
+    JsonEntityResourceProxyFactoryBean factoryBean = new JsonEntityResourceProxyFactoryBean();
+
+    Assert.assertTrue(factoryBean.isSingleton());
+    Assert.assertEquals(factoryBean.getObjectType(), Proxy.class);
+  }
+}

@@ -72,6 +72,17 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.jersey.inject</groupId>
+      <artifactId>jersey-hk2</artifactId>
+      <version>${jersey.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-ink-indigenous</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>

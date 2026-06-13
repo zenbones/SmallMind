@@ -40,7 +40,6 @@ public class SSLInfo {
   private SSLStore keySSLStore;
   private SSLStore trustSSLStore;
   private boolean requireClientAuth = false;
-  private boolean proxyMode = false;
   private int port = 443;
 
   /**
@@ -121,25 +120,5 @@ public class SSLInfo {
   public void setRequireClientAuth (boolean requireClientAuth) {
 
     this.requireClientAuth = requireClientAuth;
-  }
-
-  /**
-   * Returns whether Jetty operates in proxy mode, which may alter SSL handling when behind another proxy.
-   *
-   * @return {@code true} if proxy mode is active
-   */
-  public boolean isProxyMode () {
-
-    return proxyMode;
-  }
-
-  /**
-   * Configures whether Jetty should operate in proxy mode.
-   *
-   * @param proxyMode {@code true} to enable proxy-aware SSL behavior
-   */
-  public void setProxyMode (boolean proxyMode) {
-
-    this.proxyMode = proxyMode;
   }
 }

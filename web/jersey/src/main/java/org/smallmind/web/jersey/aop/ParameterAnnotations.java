@@ -61,7 +61,7 @@ public class ParameterAnnotations {
   public <T> T getAnnotation (Class<T> clazz) {
 
     for (Annotation annotation : annotations) {
-      if (annotation.annotationType().isAssignableFrom(clazz)) {
+      if (clazz.isAssignableFrom(annotation.annotationType())) {
 
         return clazz.cast(annotation);
       }

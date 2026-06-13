@@ -81,7 +81,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   /**
-   * Sets the optional context path prefix appended to the host URI.
+   * Sets the optional context path prefix prepended to every request path issued by the produced target.
    *
    * @param context context path
    */

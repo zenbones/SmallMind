@@ -55,7 +55,19 @@
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot install -DskipTests)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl spark/singularity/mojo,spark/tanukisoft/mojo,spark/tanukisoft/integration test)",
       "Bash(curl -s --max-time 20 \"https://repo1.maven.org/maven2/org/jacoco/jacoco-maven-plugin/maven-metadata.xml\")",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot,spark/singularity/mojo,spark/tanukisoft/mojo,spark/tanukisoft/integration org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report -DexcludedGroups=integration)"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot,spark/singularity/mojo,spark/tanukisoft/mojo,spark/tanukisoft/integration org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report -DexcludedGroups=integration)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl nutsnbolts -am install -DskipTests -DexcludedGroups=integration)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl nutsnbolts test -Dtest=AsymmetricSigningAlgorithmTest -DexcludedGroups=integration)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest=AsymmetricSigningAlgorithmTest -DexcludedGroups=integration)",
+      "Bash(git -C \"C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind\" status --short)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl web/json/scaffold,web/json/query,web/json/doppelganger,web/jwt,web/http,web/jersey,web/schema,web/grizzly,web/jetty org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report)",
+      "Read(//c/Users/david/.m2/repository/org/jacoco/jacoco-maven-plugin/**)",
+      "Bash(curl -s --max-time 15 https://repo1.maven.org/maven2/org/jacoco/jacoco-maven-plugin/maven-metadata.xml)",
+      "Bash(python3 -)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl web/json/scaffold,web/json/query,web/json/doppelganger,web/jwt,web/http,web/jersey,web/schema,web/grizzly,web/jetty -am install -DskipTests)",
+      "Bash(find / -path '*scribe-ink-indigenous*' -name 'pom.xml' 2>/dev/null | head; echo \"---FAULT---\"; find / -path '*json/scaffold/fault*' -name '*.java' 2>/dev/null | grep -E 'Fault|Native' | head)",
+      "Bash(cd web *)",
+      "Bash(xargs -n1 basename)"
     ]
   }
 }

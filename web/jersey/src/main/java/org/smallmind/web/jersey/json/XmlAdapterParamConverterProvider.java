@@ -76,7 +76,7 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
             synchronized (CONVERTER_MAP) {
               if ((paramConverter = CONVERTER_MAP.get(xmlAdapterClass)) == null) {
                 try {
-                  CONVERTER_MAP.put(xmlAdapterClass, new XmlAdapterParamConverter<T>(xmlAdapterClass.getConstructor().newInstance()));
+                  CONVERTER_MAP.put(xmlAdapterClass, paramConverter = new XmlAdapterParamConverter<T>(xmlAdapterClass.getConstructor().newInstance()));
                 } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException exception) {
                   throw new XmlAdapterParamConversionException(exception);
                 }

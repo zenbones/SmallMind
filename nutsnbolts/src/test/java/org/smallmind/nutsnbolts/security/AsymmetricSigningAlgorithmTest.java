@@ -50,6 +50,11 @@ public class AsymmetricSigningAlgorithmTest {
     Assert.assertEquals(ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.getAlgorithmName(), "EcdsaUsingShaAlgorithm");
   }
 
+  public void testEdDSASigningAlgorithmEnumNamesMapToJcaIdentifiers () {
+
+    Assert.assertEquals(EdDSASigningAlgorithm.ED_DSA.getAlgorithmName(), "EdDSA");
+  }
+
   public void testRSASignAndVerifyRoundTripSucceedsOnUnmodifiedPayload ()
     throws Exception {
 
@@ -80,5 +85,26 @@ public class AsymmetricSigningAlgorithmTest {
     byte[] signature = EncryptionUtility.sign(RSASigningAlgorithm.SHA_256_WITH_RSA, signer.getPrivate(), payload);
 
     Assert.assertFalse(EncryptionUtility.verify(RSASigningAlgorithm.SHA_256_WITH_RSA, other.getPublic(), payload, signature));
+  }
+
+  public void testEdDSASignAndVerifyRoundTripSucceedsOnUnmodifiedPayload ()
+    throws Exception {
+
+    byte[] payload = "the quick brown fox".getBytes(StandardCharsets.UTF_8);
+    KeyPair pair = EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.ED25519);
+    byte[] signature = EncryptionUtility.sign(EdDSASigningAlgorithm.ED_DSA, pair.getPrivate(), payload);
+
+    Assert.assertTrue(EncryptionUtility.verify(EdDSASigningAlgorithm.ED_DSA, pair.getPublic(), payload, signature));
+  }
+
+  public void testEdDSAVerifyFailsOnTamperedPayload ()
+    throws Exception {
+
+    byte[] payload = "original".getBytes(StandardCharsets.UTF_8);
+    byte[] tampered = "originaX".getBytes(StandardCharsets.UTF_8);
+    KeyPair pair = EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.ED25519);
+    byte[] signature = EncryptionUtility.sign(EdDSASigningAlgorithm.ED_DSA, pair.getPrivate(), payload);
+
+    Assert.assertFalse(EncryptionUtility.verify(EdDSASigningAlgorithm.ED_DSA, pair.getPublic(), tampered, signature));
   }
 }

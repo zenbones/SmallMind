@@ -41,15 +41,12 @@ import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.KeyPersuasion;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
-
 /**
  * Parses, verifies, and decrypts compact-serialized JWTs, supporting nested JWE/JWS structures and configurable signature and encryption requirements.
  */
 public class JWTConsumer {
 
   private boolean skipSignatureVerification;
-  private boolean skipVerificationKeyResolutionOnNone;
   private boolean requireSignature = true;
   private boolean requireEncryption;
   private boolean requireIntegrity;
@@ -63,19 +60,6 @@ public class JWTConsumer {
   public JWTConsumer setSkipSignatureVerification (boolean skipSignatureVerification) {
 
     this.skipSignatureVerification = skipSignatureVerification;
-
-    return this;
-  }
-
-  /**
-   * Configures whether the verification key is applied when the header algorithm is {@code none}.
-   *
-   * @param skipVerificationKeyResolutionOnNone {@code true} to omit setting the verification key for unsecured ({@code none}) JWTs
-   * @return this consumer for method chaining
-   */
-  public JWTConsumer setSkipVerificationKeyResolutionOnNone (boolean skipVerificationKeyResolutionOnNone) {
-
-    this.skipVerificationKeyResolutionOnNone = skipVerificationKeyResolutionOnNone;
 
     return this;
   }
@@ -143,9 +127,7 @@ public class JWTConsumer {
       joseObject = JsonWebStructure.fromCompactSerialization(workingJwt);
       String payload;
 
-      if (joseObject instanceof JsonWebSignature) {
-
-        JsonWebSignature jws = (JsonWebSignature)joseObject;
+      if (joseObject instanceof JsonWebSignature jws) {
 
         payload = jws.getUnverifiedPayload();
       } else {
@@ -192,26 +174,18 @@ public class JWTConsumer {
 
       JsonWebStructure currentJoseObject = originalJoseObjects.get(idx);
 
-      if (currentJoseObject instanceof JsonWebSignature) {
-
-        JsonWebSignature jws = (JsonWebSignature)currentJoseObject;
-        boolean isNoneAlg = NONE.equals(jws.getAlgorithmHeaderValue());
+      if (currentJoseObject instanceof JsonWebSignature jws) {
 
         if (!skipSignatureVerification) {
 
-          if (!isNoneAlg || !skipVerificationKeyResolutionOnNone) {
-
-            jws.setKey(verificationKey);
-          }
+          jws.setKey(verificationKey);
 
           if (!jws.verifySignature()) {
             throw new InvalidJWTSignatureException(jws.getAlgorithmHeaderValue());
           }
         }
 
-        if (!isNoneAlg) {
-          hasSignature = true;
-        }
+        hasSignature = true;
       } else {
         JsonWebEncryption jwe = (JsonWebEncryption)currentJoseObject;
 

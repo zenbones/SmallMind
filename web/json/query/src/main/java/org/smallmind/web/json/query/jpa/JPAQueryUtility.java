@@ -33,6 +33,7 @@
 package org.smallmind.web.json.query.jpa;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -161,7 +162,7 @@ public class JPAQueryUtility {
       case EXISTS -> Boolean.TRUE.equals(fieldValue) ? criteriaBuilder.isNotNull(wherePath.getPath()) : criteriaBuilder.isNull(wherePath.getPath());
       case LIKE -> criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
       case UNLIKE -> criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue, allowNonTerminalWildcards));
-      case IN -> criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
+      case IN -> fieldValue.getClass().isArray() ? wherePath.getPath().in(Arrays.asList((Object[])fieldValue)) : wherePath.getPath().in(fieldValue);
     };
   }
 
