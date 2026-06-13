@@ -32,6 +32,7 @@
  */
 package org.smallmind.spark.singularity.boot;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,7 +106,9 @@ public class SingularityJarURLConnection extends URLConnection {
         if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
 
           if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
-            return jarFile.getInputStream(jarEntry);
+            try (InputStream entryInputStream = jarFile.getInputStream(jarEntry)) {
+              return new ByteArrayInputStream(entryInputStream.readAllBytes());
+            }
           }
         } else {
 

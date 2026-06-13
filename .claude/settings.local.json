@@ -48,7 +48,14 @@
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl . test -Dtest='AbstractPooledConnectionTest,PooledConnectionComponentInstanceTest' -DfailIfNoTests=false)",
       "Bash(docker info *)",
       "Bash(python -)",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -o test)"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -o test)",
+      "Bash(cd \"C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/org/smallmind\" && mkdir -p spark/singularity/boot/src/test/java/org/smallmind/spark/singularity/boot spark/singularity/mojo/src/test/java/org/smallmind/spark/singularity/maven spark/tanukisoft/mojo/src/test/java/org/smallmind/spark/tanukisoft/maven spark/tanukisoft/integration/src/test/java/org/smallmind/spark/tanukisoft/integration spark/tanukisoft/integration/src/test/java/org/smallmind/spark/tanukisoft/integration/spring && echo done)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot test)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl spark/singularity/boot test)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot install -DskipTests)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl spark/singularity/mojo,spark/tanukisoft/mojo,spark/tanukisoft/integration test)",
+      "Bash(curl -s --max-time 20 \"https://repo1.maven.org/maven2/org/jacoco/jacoco-maven-plugin/maven-metadata.xml\")",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl spark/singularity/boot,spark/singularity/mojo,spark/tanukisoft/mojo,spark/tanukisoft/integration org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.15:report -DexcludedGroups=integration)"
     ]
   }
 }
