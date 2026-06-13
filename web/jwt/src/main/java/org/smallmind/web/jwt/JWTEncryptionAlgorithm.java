@@ -33,9 +33,10 @@
 package org.smallmind.web.jwt;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import org.smallmind.nutsnbolts.security.ECDSASigningAlgorithm;
+import org.smallmind.nutsnbolts.security.EdDSASigningAlgorithm;
 import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
@@ -46,98 +47,98 @@ public enum JWTEncryptionAlgorithm {
 
   HS256("HS256") {
     /**
-     * Produces a signature over the given prologue bytes using the supplied private key.
+     * Produces an HMAC-SHA-256 signature over the given prologue bytes using the supplied symmetric key.
      *
-     * @param privateKey the key used to generate the signature
-     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @param key      the HMAC secret key used to generate the signature
+     * @param prologue the UTF-8 string to be signed (typically the JWT header and payload segments)
      * @return the raw signature bytes
      * @throws Exception if the signing operation fails
      */
     @Override
-    public byte[] sign (PrivateKey privateKey, String prologue)
+    public byte[] sign (Key key, String prologue)
       throws Exception {
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
+      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Verifies a JWT signature against the supplied public key and token segments.
+     * Verifies a JWT signature against the supplied symmetric key and token segments.
      *
-     * @param publicKey the key used to verify the signature
-     * @param pieces    the JWT segments required by the underlying verifier
-     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @param key     the HMAC secret key used to verify the signature
+     * @param pieces  the JWT segments required by the underlying verifier
+     * @param urlSafe {@code true} if the token uses URL-safe Base64 encoding
      * @return {@code true} if the signature is valid
      * @throws Exception if the verification operation fails
      */
     @Override
-    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.verify(publicKey, pieces, urlSafe);
+      return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces, urlSafe);
     }
   },
   RS256("RS256") {
     /**
-     * Produces a signature over the given prologue bytes using the supplied private key.
+     * Produces an RSA-SHA-256 signature over the given prologue bytes using the supplied private key.
      *
-     * @param privateKey the key used to generate the signature
-     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @param key      the RSA private key used to generate the signature
+     * @param prologue the UTF-8 string to be signed (typically the JWT header and payload segments)
      * @return the raw signature bytes
      * @throws Exception if the signing operation fails
      */
     @Override
-    public byte[] sign (PrivateKey privateKey, String prologue)
+    public byte[] sign (Key key, String prologue)
       throws Exception {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign((PrivateKey)key, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
      * Verifies a JWT signature against the supplied public key and token segments.
      *
-     * @param publicKey the key used to verify the signature
-     * @param pieces    the JWT segments required by the underlying verifier
-     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @param key     the RSA public key used to verify the signature
+     * @param pieces  the JWT segments required by the underlying verifier
+     * @param urlSafe {@code true} if the token uses URL-safe Base64 encoding
      * @return {@code true} if the signature is valid
      * @throws Exception if the verification operation fails
      */
     @Override
-    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(publicKey, pieces, urlSafe);
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify((PublicKey)key, pieces, urlSafe);
     }
   },
   EDDSA("EdDSA") {
     /**
-     * Produces a signature over the given prologue bytes using the supplied private key.
+     * Produces an EdDSA signature over the given prologue bytes using the supplied private key.
      *
-     * @param privateKey the key used to generate the signature
-     * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+     * @param key      the Edwards-curve private key used to generate the signature
+     * @param prologue the UTF-8 string to be signed (typically the JWT header and payload segments)
      * @return the raw signature bytes
      * @throws Exception if the signing operation fails
      */
     @Override
-    public byte[] sign (PrivateKey privateKey, String prologue)
+    public byte[] sign (Key key, String prologue)
       throws Exception {
 
-      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.sign(privateKey, prologue.getBytes(StandardCharsets.UTF_8));
+      return EdDSASigningAlgorithm.ED_DSA.sign((PrivateKey)key, prologue.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
      * Verifies a JWT signature against the supplied public key and token segments.
      *
-     * @param publicKey the key used to verify the signature
-     * @param pieces    the JWT segments required by the underlying verifier
-     * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+     * @param key     the Edwards-curve public key used to verify the signature
+     * @param pieces  the JWT segments required by the underlying verifier
+     * @param urlSafe {@code true} if the token uses URL-safe Base64 encoding
      * @return {@code true} if the signature is valid
      * @throws Exception if the verification operation fails
      */
     @Override
-    public boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
+    public boolean verify (Key key, String[] pieces, boolean urlSafe)
       throws Exception {
 
-      return ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.verify(publicKey, pieces, urlSafe);
+      return EdDSASigningAlgorithm.ED_DSA.verify((PublicKey)key, pieces, urlSafe);
     }
   };
 
@@ -159,25 +160,29 @@ public enum JWTEncryptionAlgorithm {
   }
 
   /**
-   * Produces a signature over the given prologue bytes using the supplied private key.
+   * Produces a signature over the given prologue bytes using the supplied key. The expected key type
+   * depends on the algorithm: a symmetric secret key for {@code HS256}, an RSA private key for
+   * {@code RS256}, or an Edwards-curve private key for {@code EdDSA}.
    *
-   * @param privateKey the key used to generate the signature
-   * @param prologue   the UTF-8 string to be signed (typically the JWT header and payload segments)
+   * @param key      the key used to generate the signature
+   * @param prologue the UTF-8 string to be signed (typically the JWT header and payload segments)
    * @return the raw signature bytes
    * @throws Exception if the signing operation fails
    */
-  public abstract byte[] sign (PrivateKey privateKey, String prologue)
+  public abstract byte[] sign (Key key, String prologue)
     throws Exception;
 
   /**
-   * Verifies a JWT signature against the supplied public key and token segments.
+   * Verifies a JWT signature against the supplied key and token segments. The expected key type depends
+   * on the algorithm: a symmetric secret key for {@code HS256}, an RSA public key for {@code RS256}, or
+   * an Edwards-curve public key for {@code EdDSA}.
    *
-   * @param publicKey the key used to verify the signature
-   * @param pieces    the JWT segments required by the underlying verifier
-   * @param urlSafe   {@code true} if the token uses URL-safe Base64 encoding
+   * @param key     the key used to verify the signature
+   * @param pieces  the JWT segments required by the underlying verifier
+   * @param urlSafe {@code true} if the token uses URL-safe Base64 encoding
    * @return {@code true} if the signature is valid
    * @throws Exception if the verification operation fails
    */
-  public abstract boolean verify (PublicKey publicKey, String[] pieces, boolean urlSafe)
+  public abstract boolean verify (Key key, String[] pieces, boolean urlSafe)
     throws Exception;
 }

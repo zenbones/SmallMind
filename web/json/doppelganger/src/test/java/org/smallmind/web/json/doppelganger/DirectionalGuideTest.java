@@ -1,0 +1,114 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.web.json.doppelganger;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.lang.model.element.AnnotationMirror;
+import org.mockito.Mockito;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+/**
+ * Unit tests for {@link DirectionalGuide} registration, duplicate detection, and purpose validation.
+ */
+@Test(groups = "unit")
+public class DirectionalGuideTest {
+
+  private PropertyInformation newPropertyInformation (boolean virtual) {
+
+    AnnotationMirror annotationMirror = Mockito.mock(AnnotationMirror.class);
+
+    Mockito.when(annotationMirror.getElementValues()).thenReturn(Collections.EMPTY_MAP);
+
+    return new PropertyInformation(annotationMirror, List.of(), false, null, null, virtual);
+  }
+
+  public void testPutAndLexiconEntrySet ()
+    throws DefinitionException {
+
+    DirectionalGuide guide = new DirectionalGuide(Direction.IN);
+
+    guide.put("create", "name", newPropertyInformation(false));
+    guide.put("create", "age", newPropertyInformation(false));
+    guide.put("update", "name", newPropertyInformation(false));
+
+    int purposeCount = 0;
+    for (Map.Entry<String, PropertyLexicon> entry : guide.lexiconEntrySet()) {
+      purposeCount++;
+      Assert.assertNotNull(entry.getValue());
+    }
+
+    Assert.assertEquals(purposeCount, 2);
+  }
+
+  public void testPutEmptyPurposeAllowed ()
+    throws DefinitionException {
+
+    DirectionalGuide guide = new DirectionalGuide(Direction.OUT);
+
+    guide.put("", "name", newPropertyInformation(false));
+
+    Assert.assertEquals(guide.lexiconEntrySet().size(), 1);
+  }
+
+  @Test(groups = "unit", expectedExceptions = DefinitionException.class)
+  public void testPutIllegalPurpose ()
+    throws DefinitionException {
+
+    DirectionalGuide guide = new DirectionalGuide(Direction.IN);
+
+    guide.put("not legal", "name", newPropertyInformation(false));
+  }
+
+  @Test(groups = "unit", expectedExceptions = DefinitionException.class)
+  public void testPutDuplicateField ()
+    throws DefinitionException {
+
+    DirectionalGuide guide = new DirectionalGuide(Direction.IN);
+
+    guide.put("create", "name", newPropertyInformation(false));
+    guide.put("create", "name", newPropertyInformation(false));
+  }
+
+  @Test(groups = "unit", expectedExceptions = DefinitionException.class)
+  public void testPutDuplicateFieldEmptyPurpose ()
+    throws DefinitionException {
+
+    DirectionalGuide guide = new DirectionalGuide(Direction.OUT);
+
+    guide.put("", "name", newPropertyInformation(false));
+    guide.put("", "name", newPropertyInformation(false));
+  }
+}

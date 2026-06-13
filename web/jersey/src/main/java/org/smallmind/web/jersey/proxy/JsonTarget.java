@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.jersey.proxy;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import jakarta.ws.rs.WebApplicationException;
 import org.apache.hc.client5.http.async.methods.SimpleBody;
@@ -73,23 +74,32 @@ public class JsonTarget {
     httpHost = HttpHost.create(host);
   }
 
-  private JsonTarget (HttpHost httpHost, String path) {
+  protected JsonTarget (HttpHost httpHost, String path) {
 
     this.httpHost = httpHost;
     this.path = path;
   }
 
   /**
-   * Returns a new {@link JsonTarget} for the same host but with the given path.
+   * Returns a new {@link JsonTarget} for the same host whose path is the given segment joined to this target's
+   * existing path. When this target has no path, or only a blank one, the segment is used as-is; otherwise the segment
+   * is appended to the existing path so that a context prefix supplied at construction carries through to the request.
+   * A single trailing {@code /} on the existing path is dropped before joining, so a context such as {@code /} or
+   * {@code /app/} does not produce a doubled separator; the supplied segment should begin with {@code /}.
    *
-   * @param path request path (must begin with {@code /})
-   * @return new target bound to the specified path
+   * @param path request path segment (should begin with {@code /})
+   * @return new target bound to the combined path
    * @throws URISyntaxException if the resulting URI is invalid
    */
   public JsonTarget path (String path)
     throws URISyntaxException {
 
-    return new JsonTarget(httpHost, path);
+    if ((this.path == null) || this.path.isBlank()) {
+
+      return new JsonTarget(httpHost, path);
+    }
+
+    return new JsonTarget(httpHost, (this.path.endsWith("/") ? this.path.substring(0, this.path.length() - 1) : this.path) + path);
   }
 
   /**
@@ -157,7 +167,7 @@ public class JsonTarget {
 
     HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
 
-    return convertEntity(callback.getResponse(), responseClass);
+    return readEntity(callback.getResponse(), responseClass);
   }
 
   /**
@@ -179,7 +189,7 @@ public class JsonTarget {
 
     HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
 
-    return convertEntity(callback.getResponse(), responseClass);
+    return readEntity(callback.getResponse(), responseClass);
   }
 
   /**
@@ -201,7 +211,7 @@ public class JsonTarget {
 
     HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
 
-    return convertEntity(callback.getResponse(), responseClass);
+    return readEntity(callback.getResponse(), responseClass);
   }
 
   /**
@@ -223,7 +233,7 @@ public class JsonTarget {
 
     HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
 
-    return convertEntity(callback.getResponse(), responseClass);
+    return readEntity(callback.getResponse(), responseClass);
   }
 
   /**
@@ -244,10 +254,11 @@ public class JsonTarget {
 
     HttpClient.execute(httpRequest, callback = new SimpleCallback(), 10);
 
-    return convertEntity(callback.getResponse(), responseClass);
+    return readEntity(callback.getResponse(), responseClass);
   }
 
-  private <T> T convertEntity (SimpleHttpResponse response, Class<T> responseClass) {
+  private <T> T readEntity (SimpleHttpResponse response, Class<T> responseClass)
+    throws IOException {
 
     SimpleBody body;
     byte[] bodyContent;
@@ -263,14 +274,17 @@ public class JsonTarget {
 
     LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response));
 
-    return JsonCodec.convert(bodyContent, responseClass);
+    return JsonCodec.read(bodyContent, responseClass);
   }
 
   private SimpleHttpRequest createHttpRequest (HttpMethod httpMethod, JsonBody jsonBody) {
 
     SimpleHttpRequest httpRequest;
+    String completedPath;
 
-    if (queryParameters != null) {
+    if (queryParameters == null) {
+      completedPath = path;
+    } else {
 
       StringBuilder queryBuilder = new StringBuilder("?");
       boolean first = true;
@@ -283,28 +297,17 @@ public class JsonTarget {
         first = false;
       }
 
-      path = path + queryBuilder;
+      completedPath = path + queryBuilder;
     }
 
-    switch (httpMethod) {
-      case GET:
-        httpRequest = SimpleHttpRequest.create(Method.GET, httpHost, path);
-        break;
-      case PUT:
-        httpRequest = SimpleHttpRequest.create(Method.PUT, httpHost, path);
-        break;
-      case POST:
-        httpRequest = SimpleHttpRequest.create(Method.POST, httpHost, path);
-        break;
-      case PATCH:
-        httpRequest = SimpleHttpRequest.create(Method.PATCH, httpHost, path);
-        break;
-      case DELETE:
-        httpRequest = SimpleHttpRequest.create(Method.DELETE, httpHost, path);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(httpMethod.name());
-    }
+    httpRequest = switch (httpMethod) {
+      case GET -> SimpleHttpRequest.create(Method.GET, httpHost, completedPath);
+      case PUT -> SimpleHttpRequest.create(Method.PUT, httpHost, completedPath);
+      case POST -> SimpleHttpRequest.create(Method.POST, httpHost, completedPath);
+      case PATCH -> SimpleHttpRequest.create(Method.PATCH, httpHost, completedPath);
+      case DELETE -> SimpleHttpRequest.create(Method.DELETE, httpHost, completedPath);
+      default -> throw new UnknownSwitchCaseException(httpMethod.name());
+    };
 
     if (headers != null) {
       for (Pair<String, String> headerPair : headers) {
@@ -319,14 +322,7 @@ public class JsonTarget {
     return httpRequest;
   }
 
-  private static class ResponseDebugCollector {
-
-    private final SimpleHttpResponse response;
-
-    private ResponseDebugCollector (SimpleHttpResponse response) {
-
-      this.response = response;
-    }
+  private record ResponseDebugCollector(SimpleHttpResponse response) {
 
     @Override
     public String toString () {
@@ -345,14 +341,7 @@ public class JsonTarget {
     }
   }
 
-  private static class RequestDebugCollector {
-
-    private final SimpleHttpRequest httpRequest;
-
-    private RequestDebugCollector (SimpleHttpRequest httpRequest) {
-
-      this.httpRequest = httpRequest;
-    }
+  private record RequestDebugCollector(SimpleHttpRequest httpRequest) {
 
     @Override
     public String toString () {

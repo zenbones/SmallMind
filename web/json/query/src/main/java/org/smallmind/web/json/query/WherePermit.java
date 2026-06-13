@@ -52,7 +52,7 @@ public abstract class WherePermit {
 
     this(name);
 
-    this.entity = entity;
+    this.entity = ((entity == null) || entity.isBlank()) ? null : entity;
   }
 
   /**

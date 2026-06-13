@@ -110,13 +110,30 @@ public class Page<T> implements Iterable<T> {
 
   private static <T> T[] fromList (List<T> listOfValues) {
 
-    T[] values = (T[])new Object[(listOfValues == null) ? 0 : listOfValues.size()];
+    if ((listOfValues == null) || listOfValues.isEmpty()) {
 
-    if (listOfValues != null) {
-      listOfValues.toArray(values);
+      return (T[])new Object[0];
+    } else {
+
+      Object firstValue = listOfValues.getFirst();
+      Class<?> itemType = (firstValue == null) ? Object.class : firstValue.getClass();
+
+      try {
+
+        T[] values = (T[])Array.newInstance(itemType, listOfValues.size());
+
+        listOfValues.toArray(values);
+
+        return values;
+      } catch (ArrayStoreException arrayStoreException) {
+
+        T[] values = (T[])new Object[listOfValues.size()];
+
+        listOfValues.toArray(values);
+
+        return values;
+      }
     }
-
-    return values;
   }
 
   /**

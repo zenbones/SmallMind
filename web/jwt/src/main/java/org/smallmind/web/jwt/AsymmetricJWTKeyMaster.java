@@ -35,7 +35,7 @@ package org.smallmind.web.jwt;
 import java.security.Key;
 
 /**
- * A {@link JWTKeyMaster} that selects the signing algorithm automatically based on the type of an asymmetric key (RSA or Ed25519).
+ * A {@link JWTKeyMaster} that selects the signing algorithm automatically based on the type of an asymmetric key (RSA or an Edwards-curve (EdDSA) key).
  */
 public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
 
@@ -46,23 +46,18 @@ public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
    * Constructs a key master by inspecting the supplied key's algorithm and mapping it to the appropriate JWT signing algorithm.
    *
    * @param key the asymmetric private or public key to use for signing or verification
-   * @throws UnknownAlgorithmException if the key's algorithm is not RSA or Ed25519
+   * @throws UnknownAlgorithmException if the key's algorithm is neither RSA nor an Edwards-curve (EdDSA) algorithm
    */
   public AsymmetricJWTKeyMaster (Key key)
     throws UnknownAlgorithmException {
 
     this.key = key;
 
-    switch (key.getAlgorithm()) {
-      case "RSA":
-        encryptionAlgorithm = JWTEncryptionAlgorithm.RS256;
-        break;
-      case "Ed25519":
-        encryptionAlgorithm = JWTEncryptionAlgorithm.EDDSA;
-        break;
-      default:
-        throw new UnknownAlgorithmException(key.getAlgorithm());
-    }
+    encryptionAlgorithm = switch (key.getAlgorithm()) {
+      case "RSA" -> JWTEncryptionAlgorithm.RS256;
+      case "EdDSA", "Ed25519" -> JWTEncryptionAlgorithm.EDDSA;
+      default -> throw new UnknownAlgorithmException(key.getAlgorithm());
+    };
   }
 
   /**

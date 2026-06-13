@@ -266,6 +266,8 @@ public class DoppelgangerInformation {
 
         return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
       }
+    } catch (DefinitionException definitionException) {
+      throw definitionException;
     } catch (Exception exception) {
       throw new DefinitionException(exception, "Illegal type definition in field(%s) of class(%s)", fieldName, classElement);
     }

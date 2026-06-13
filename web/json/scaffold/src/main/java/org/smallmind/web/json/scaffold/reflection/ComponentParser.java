@@ -133,30 +133,26 @@ public class ComponentParser {
             state = State.PARAMETERS;
             break;
           case PARAMETERS:
-            switch (methodChain.charAt(index)) {
-              case '"':
-                state = State.STRING;
-                break;
-              case ')':
+            state = switch (methodChain.charAt(index)) {
+              case '"' -> State.STRING;
+              case ')' -> {
                 try {
                   component.createArguments(methodChain.substring(mark, index));
                 } catch (IOException ioException) {
                   throw new BeanAccessException("Illegal parameter arguments at index(%d) in method chain(%s)", index, methodChain);
                 }
-                state = State.END_PARAMETERS;
-                break;
-            }
+                yield State.END_PARAMETERS;
+              }
+              default -> state;
+            };
             index++;
             break;
           case STRING:
-            switch (methodChain.charAt(index)) {
-              case '\\':
-                state = State.ESCAPE;
-                break;
-              case '"':
-                state = State.PARAMETERS;
-                break;
-            }
+            state = switch (methodChain.charAt(index)) {
+              case '\\' -> State.ESCAPE;
+              case '"' -> State.PARAMETERS;
+              default -> state;
+            };
             index++;
             break;
           case ESCAPE:
@@ -191,10 +187,18 @@ public class ComponentParser {
             index++;
             break;
           case END_SUBSCRIPT:
-            if (methodChain.charAt(index) == '.') {
-              state = State.START_COMPONENT;
-            } else if (!Character.isWhitespace(methodChain.charAt(index))) {
-              throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
+            switch (methodChain.charAt(index)) {
+              case '.':
+                state = State.START_COMPONENT;
+                break;
+              case '[':
+                mark = index + 1;
+                state = State.START_SUBSCRIPT;
+                break;
+              default:
+                if (!Character.isWhitespace(methodChain.charAt(index))) {
+                  throw new BeanAccessException("Illegal start of component at index(%d) in method chain(%s)", index, methodChain);
+                }
             }
             index++;
             break;

@@ -33,6 +33,7 @@
 package org.smallmind.web.jersey.proxy;
 
 import java.net.URISyntaxException;
+import org.apache.hc.core5.http.HttpHost;
 
 /**
  * Convenience factory for constructing {@link JsonTarget} instances from protocol, host, port, and context components.
@@ -87,13 +88,13 @@ public class JsonTargetFactory {
    * @param protocol HTTP or HTTPS
    * @param host     target host name
    * @param port     port number; pass {@code 0} to omit from the URI
-   * @param context  optional context path prefix; pass {@code null} to omit
+   * @param context  optional context path prefix prepended to every request path; pass {@code null} to omit
    * @return configured {@link JsonTarget}
    * @throws URISyntaxException if the URI cannot be constructed
    */
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws URISyntaxException {
 
-    return new JsonTarget(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : ""));
+    return new JsonTarget(HttpHost.create(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "")), (context != null) ? context : "");
   }
 }

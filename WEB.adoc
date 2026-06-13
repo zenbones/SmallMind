@@ -622,19 +622,22 @@ requiring `@ResourceMethod`.
 === Client proxies
 
 `JsonTarget` is a small fluent builder over Apache HttpComponents, pinned to a
-single host:
+single host. The optional context path passed to `manufacture(...)` becomes a
+prefix that `path(...)` prepends to each request path:
 
 [source,java]
 ----
 JsonTarget target = JsonTargetFactory.manufacture(
-  HttpProtocol.HTTPS, "api.example.com", 443, "/");
-UserOut user = target.path("v1/users/{id}").pathParameter("id", 42).get(UserOut.class);
+  HttpProtocol.HTTPS, "api.example.com", 443, "/app");
+// requests https://api.example.com:443/app/v1/users/42
+UserOut user = target.path("/v1/users/42").get(UserOut.class);
 ----
 
 `JsonEntityResourceProxyFactory.generateProxy(...)` creates a `java.lang.reflect.Proxy`
 for a service interface. Each method call is encoded as a JSON `Envelope`
 (named `Argument[]`) and POSTed to a URL derived from
-`{versionPrefix}/{serviceVersion}/{serviceName}/{methodName}`. Header
+`{context}/{versionPrefix}/{serviceVersion}/{serviceName}/{methodName}`, where
+`{context}` is the prefix configured on the target (empty when none is set). Header
 injectors (`JsonHeaderInjector`) can add per-request headers such as
 authorization tokens. The Spring factory beans
 `JsonEntityResourceProxyFactoryBean` and `JsonTargetFactoryBean` make the
@@ -960,17 +963,24 @@ unwrap nested JWE/JWS structures.
 
 `JWTEncryptionAlgorithm`::
     Enum of supported signing algorithms. Values: `HS256` (HMAC-SHA-256),
-    `RS256` (RSA with SHA-256), `EDDSA` (Ed25519). `getCode()` returns the
-    JWA identifier; `sign(PrivateKey, String)` and
-    `verify(PublicKey, String[], boolean)` delegate to the signing algorithm
-    implementations in `smallmind-nutsnbolts`.
+    `RS256` (RSA with SHA-256), `EDDSA` (Edwards-curve EdDSA). `getCode()`
+    returns the JWA identifier; `sign(Key, String)` and
+    `verify(Key, String[], boolean)` delegate to the signing algorithm
+    implementations in `smallmind-nutsnbolts`. The expected `Key` type
+    depends on the algorithm: an HMAC secret key for `HS256`, an RSA
+    private/public key for `RS256`, and an Edwards-curve private/public key
+    for `EDDSA`.
 
 `SymmetricJWTKeyMaster(String secret)`::
-    Builds an HMAC-SHA-256 key from a UTF-8 secret.
+    Builds an HMAC-SHA-256 key from a UTF-8 secret. HS256 requires at least
+    a 256-bit key, so a secret of 32 bytes or more is used directly while a
+    shorter secret is SHA-256 hashed up to a 256-bit key.
 
 `AsymmetricJWTKeyMaster(Key key)` throws `UnknownAlgorithmException`::
-    Inspects `key.getAlgorithm()` and maps to `RS256` or `EDDSA`; throws
-    `UnknownAlgorithmException` for anything else.
+    Inspects `key.getAlgorithm()` and maps `RSA` to `RS256` and any
+    Edwards-curve key (reported as `EdDSA` or `Ed25519`, depending on the
+    provider) to `EDDSA`; throws `UnknownAlgorithmException` for anything
+    else.
 
 `JWTToken`::
     Optional interface; if your claims class implements it, `getSub()` and
@@ -1106,9 +1116,9 @@ Grizzly or Jetty starts but nothing answers on the port::
     equivalent full application context.
 
 `AsymmetricJWTKeyMaster` rejects my key::
-    Only `RSA` and `Ed25519` keys are recognised. Other key types raise
-    `UnknownAlgorithmException`. Convert or wrap the key appropriately
-    before constructing the key master.
+    Only `RSA` and Edwards-curve (`EdDSA`/`Ed25519`) keys are recognised.
+    Other key types raise `UnknownAlgorithmException`. Convert or wrap the
+    key appropriately before constructing the key master.
 
 JPA query from `web-json-query` throws on non-terminal wildcards::
     Pass `allowNonTerminalWildcards=true` to `JPAQueryUtility.apply(...)` if

@@ -985,10 +985,11 @@ is why this utility exists.
 `SymmetricSigningAlgorithm`, `AsymmetricSigningAlgorithm`::
     Interfaces that concrete algorithm enums implement.
 
-`HMACSigningAlgorithm`, `ECDSASigningAlgorithm`, `RSASigningAlgorithm`::
+`HMACSigningAlgorithm`, `ECDSASigningAlgorithm`, `EdDSASigningAlgorithm`, `RSASigningAlgorithm`::
     Enum implementations providing the signing algorithm constants.
     `HMACSigningAlgorithm.HMAC_SHA_256` is the one callers reach for
-    most often.
+    most often. `EdDSASigningAlgorithm.ED_DSA` maps to the JCA `EdDSA`
+    signature, which selects the Edwards curve from the supplied key.
 
 `AsymmetricKeyGenerator`::
     Generates RSA/EC key pairs; `AsymmetricKeySpec` and
