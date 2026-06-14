@@ -12,7 +12,7 @@
         <ref bean="consoleAppender"/>
       </list>
     </property>
-    <property name="level" value="${log.level.default}"/>
+    <property name="level" value="DEBUG"/>
   </bean>
 
   <!-- Logging Framework Setup -->

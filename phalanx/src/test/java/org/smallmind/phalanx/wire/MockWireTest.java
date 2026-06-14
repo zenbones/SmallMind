@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire;
 import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ContextException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.phalanx.wire.spring.WireProxyFactory;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
@@ -57,6 +58,8 @@ public class MockWireTest {
   @BeforeClass
   public void beforeClass ()
     throws Exception {
+
+    new PerApplicationContext();
 
     //  This block loads the RabbitMQ backed Transport layer
     /*
