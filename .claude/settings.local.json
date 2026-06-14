@@ -67,7 +67,11 @@
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl web/json/scaffold,web/json/query,web/json/doppelganger,web/jwt,web/http,web/jersey,web/schema,web/grizzly,web/jetty -am install -DskipTests)",
       "Bash(find / -path '*scribe-ink-indigenous*' -name 'pom.xml' 2>/dev/null | head; echo \"---FAULT---\"; find / -path '*json/scaffold/fault*' -name '*.java' 2>/dev/null | grep -E 'Fault|Native' | head)",
       "Bash(cd web *)",
-      "Bash(xargs -n1 basename)"
+      "Bash(xargs -n1 basename)",
+      "Bash(grep -rln \"^\\\\s*\\\\* @param\\\\|^/\\\\*\\\\*\" nutsnbolts/src/main/java/org/smallmind/nutsnbolts/)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl nutsnbolts compile)",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest='ActiveDirectoryLdapRealmTest')",
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest='RoleTypeTest,LdapAuthorizingRealmTest,DefaultLdapRealmFactoryBeanTest,ActiveDirectoryLdapRealmFactoryBeanTest,DefaultLdapRealmTest,ActiveDirectoryLdapRealmTest')"
     ]
   }
 }

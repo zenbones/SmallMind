@@ -30,14 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring.remote;
+package org.smallmind.nutsnbolts.namespace.shiro.realm;
 
-import java.rmi.Remote;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-/**
- * A do-nothing {@link Remote} implementation that exists purely to supply a concrete service entry for the example {@code rmi.xml} configuration, where it stands in as the {@code service} bean wired into a {@link RemoteServiceExporter}.
- */
-public class NoopRemote implements Remote {
+@Test(groups = "unit")
+public class RoleTypeTest {
 
+  public void testGetCode () {
 
+    Assert.assertEquals(RoleType.ADMIN.getCode(), "ADMIN");
+    Assert.assertEquals(RoleType.USER.getCode(), "USER");
+    Assert.assertEquals(RoleType.GUEST.getCode(), "GUEST");
+  }
+
+  public void testFromCodeReturnsMatchingConstant () {
+
+    Assert.assertEquals(RoleType.fromCode("ADMIN"), RoleType.ADMIN);
+    Assert.assertEquals(RoleType.fromCode("USER"), RoleType.USER);
+    Assert.assertEquals(RoleType.fromCode("GUEST"), RoleType.GUEST);
+  }
+
+  public void testFromCodeReturnsNullForUnknownCode () {
+
+    Assert.assertNull(RoleType.fromCode("SUPERUSER"));
+  }
+
+  public void testFromCodeIsCaseSensitive () {
+
+    Assert.assertNull(RoleType.fromCode("admin"));
+  }
 }

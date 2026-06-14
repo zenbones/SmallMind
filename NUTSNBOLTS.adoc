@@ -100,6 +100,7 @@ and reused across every other SmallMind artifact. It exists so that:
 ** <<pkg-util,util — collections and comparators>>
 ** <<pkg-inject,inject — @Service marker and lazy fields>>
 ** <<pkg-servlet-soap,servlet, soap — servlet and SOAP helpers>>
+** <<pkg-namespace-shiro,namespace.shiro — Shiro LDAP realms>>
 * <<behavioral-reference,Behavioral Reference>>
 * <<limitations-and-known-issues,Limitations and Known Issues>>
 * <<dependency-notes,Dependency Notes>>
@@ -189,6 +190,10 @@ and reused across every other SmallMind artifact. It exists so that:
 | Use Spring with SmallMind `Resource`, extension loaders, and placeholder configs
 | `org.smallmind.nutsnbolts.spring`
 | `PropertyPlaceholderConfigurer`, `ResourceConverter`, `ExtensionLoader`
+
+| Authenticate a Shiro subject against an LDAP or Active Directory directory
+| `org.smallmind.nutsnbolts.namespace.shiro.realm`
+| `DefaultLdapRealm`, `ActiveDirectoryLdapRealm`, their `…spring` factory beans, `realm.xml`
 
 |===
 
@@ -286,6 +291,12 @@ use it does not pay for the transitive closure.
   that requires a Bouncy Castle provider
 | `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (and
   register the provider — see <<pkg-security-ssl>>)
+
+| `namespace.shiro.realm`
+| `DefaultLdapRealm`, `ActiveDirectoryLdapRealm`, the `…spring` factory beans,
+  the shipped `realm.xml`
+| `org.apache.shiro:shiro-spring` (which pulls in `shiro-core`); the directory
+  access itself uses the JDK's built-in JNDI LDAP provider
 
 | `reflection` (bytecode trace, ASMify)
 | `ClassInspector.trace`, `.asmify`, `ClassVerifier`
@@ -1524,6 +1535,155 @@ web-service client or endpoint to observe requests and responses for
 logging or tracing. `MessageDirection` distinguishes inbound from
 outbound messages in handler callbacks.
 
+[[pkg-namespace-shiro]]
+=== namespace.shiro — Shiro LDAP realms
+
+*Package:* `org.smallmind.nutsnbolts.namespace.shiro.realm`
+(plus `…realm.spring`)
+
+Apache Shiro `AuthorizingRealm` implementations that authenticate a
+subject against a directory over JNDI. This is the realm that backs
+the shipped `realm.xml` Spring fragment. The package depends on
+`shiro-spring` (optional in the POM) and on the JDK's built-in
+`com.sun.jndi.ldap.LdapCtxFactory`; no third-party LDAP client is
+required.
+
+`LdapAuthorizingRealm`::
+    Abstract base extending Shiro's `AuthorizingRealm`. It owns the two
+    collaborators every implementation needs — an
+    `LdapConnectionDetails` and a user search path — taking them as
+    constructor arguments, and exposes a protected `getLdapContext`
+    bind helper to its subclasses. The group-to-role map is set
+    afterwards via `setGroupRoleMap`. It also owns authorization: it
+    reads the groups a subject belongs to (via the subclass hook
+    `getDirectoryGroups`) and grants each subject the `RoleType` its
+    groups map to. A subject whose groups are absent from the map
+    receives no roles, so an empty (unconfigured) map grants nothing.
+
+`DefaultLdapRealm`::
+    Realm for a generic LDAP directory that stores a hashed password
+    on the user entry. It binds with the service account, looks up
+    `uid=<principal>` under the search path, reads the
+    `userPassword` attribute, and authenticates only when that value
+    equals `{SHA}` followed by the Base64-encoded SHA-256 hash of the
+    presented credentials. A missing entry, a missing password
+    attribute, or a mismatch yields no authentication info.
+    For authorization, `getDirectoryGroups` searches a group subtree
+    for entries whose member attribute references the user and returns
+    each match's DN — so its group-to-role keys are full group DNs,
+    like the AD realm. All collaborators are required constructor
+    arguments: `connectionDetails` and `searchPath` (from the base),
+    then the four group-schema arguments `groupSearchPath`,
+    `groupObjectClass`, `memberAttribute`, and `memberValueTemplate`
+    (the member value to match, with `{0}` replaced by the principal,
+    e.g. `uid={0},ou=people` for full-DN members or `{0}` for posix
+    `memberUid`). It has *no no-argument constructor*.
+
+`ActiveDirectoryLdapRealm`::
+    Realm for Microsoft Active Directory. Rather than comparing a
+    stored hash, it binds with the service account, runs a subtree
+    search for `(&(objectClass=user)(sAMAccountName=<principal>))`,
+    and — when a matching entry exists — verifies the credentials by
+    performing a second bind as the user principal name
+    `<principal>@<domain>`. A successful bind authenticates the user;
+    a wrong password surfaces as the `NamingException` raised by that
+    bind. Its constructor takes `connectionDetails`, `searchPath`, and
+    the UPN `domain`, so it has *no no-argument constructor*. For
+    authorization, `getDirectoryGroups` reads the user's `memberOf`
+    group distinguished names, which the base class maps to roles — so
+    the keys in the group-to-role map are full group DNs.
+
+`LdapConnectionDetails`::
+    Plain JavaBean carrying the host, port, root namespace, and
+    service-account user name and password. The host, port, and root
+    namespace are assembled into an
+    `ldap://host:port/rootNamespace` provider URL. Credentials are
+    held in plain text for the life of the realm.
+
+`RoleType`::
+    Enum of grantable role codes (`ADMIN`, `USER`, `GUEST`), with a
+    `fromCode(String)` reverse lookup. Shiro attaches no meaning to
+    role strings — these are this package's vocabulary, and a realm
+    grants them by mapping directory groups onto them through
+    `setGroupRoleMap`. Add constants here to model additional roles.
+
+`DefaultLdapRealmFactoryBean`, `ActiveDirectoryLdapRealmFactoryBean` (in `…realm.spring`)::
+    One Spring `FactoryBean` per realm, each honest about exactly what
+    it builds. Every constructor argument of its realm is exposed as a
+    settable property — `connectionDetails`, `searchPath`, and the
+    group schema (`DefaultLdapRealm`) or `domain`
+    (`ActiveDirectoryLdapRealm`) — plus the optional `groupRoleMap`.
+    Each builds its realm once in `afterPropertiesSet()`, returns it as
+    a singleton, and reports the concrete realm class from
+    `getObjectType()`. Prefer these to hand-wiring `<constructor-arg>`
+    lists, since named properties read more clearly.
+
+*Wiring.* Import the shipped fragment:
+
+[source,xml]
+----
+<import resource="classpath:org/smallmind/nutsnbolts/realm.xml"/>
+----
+
+The fragment wires an `ldapRealm` through `DefaultLdapRealmFactoryBean`
+(building a `DefaultLdapRealm`), installs it into a Shiro
+`DefaultSecurityManager`, and registers that manager globally via
+`SecurityUtils.setSecurityManager`. It reads these placeholders:
+
+[cols="2,3",options="header"]
+|===
+| Placeholder | Meaning
+
+| `ldap.user` / `ldap.password`
+| Service-account bind credentials
+
+| `ldap.host` / `ldap.port` / `ldap.root`
+| Directory host, port, and root namespace
+
+| `ldap.auth.search_path`
+| Subtree under which user entries are searched
+
+| `ldap.group.search_path`
+| Subtree searched for group entries
+
+| `ldap.group.object_class` / `ldap.group.member_attribute` / `ldap.group.member_value`
+| Group object class, member attribute, and member-value template
+  (`{0}` is replaced by the principal) — e.g. `groupOfNames`,
+  `member`, `uid={0},${ldap.auth.search_path}`
+
+| `ldap.admin.group`
+| Group DN granted `RoleType.ADMIN` by the shipped `groupRoleMap`
+|===
+
+[IMPORTANT]
+====
+The shipped fragment builds a `DefaultLdapRealm`. To use Active
+Directory instead, override the `ldapRealm` bean with
+`ActiveDirectoryLdapRealmFactoryBean` — its constructor needs only the
+UPN `domain`, and groups come from `memberOf`:
+
+[source,xml]
+----
+<bean id="ldapRealm" class="org.smallmind.nutsnbolts.namespace.shiro.realm.spring.ActiveDirectoryLdapRealmFactoryBean">
+  <property name="domain" value="${ldap.domain}"/>
+  <property name="searchPath" value="${ldap.auth.search_path}"/>
+  <property name="connectionDetails" ref="ldapConnectionDetails"/>
+  <property name="groupRoleMap">
+    <map>
+      <entry key="CN=Admins,OU=Groups,DC=example,DC=com" value="ADMIN"/>
+      <entry key="CN=Staff,OU=Groups,DC=example,DC=com" value="USER"/>
+    </map>
+  </property>
+</bean>
+----
+
+Each `<entry>` value is a `RoleType` constant name, which Spring
+converts automatically; without a `groupRoleMap` the realm grants no
+roles. `ldapConnectionDetails` is an `LdapConnectionDetails` bean
+carrying the `${ldap.user}`, `${ldap.password}`, `${ldap.host}`,
+`${ldap.port}`, and `${ldap.root}` placeholders.
+====
+
 [[behavioral-reference]]
 == Behavioral Reference
 
@@ -1646,6 +1806,18 @@ Optional dependency failure modes::
 `inject` is not a DI container::
     `@Service` is a marker. `@LazyField` requires AspectJ weaving.
     Neither substitutes for Spring, CDI, or Guice.
+
+`namespace.shiro` authorization must be configured::
+    Roles come from the group-to-`RoleType` map set via
+    `setGroupRoleMap`; an unconfigured map grants no roles.
+    `ActiveDirectoryLdapRealm` derives groups from the user's
+    `memberOf` attribute; `DefaultLdapRealm` derives them by searching
+    the group subtree using the schema given as constructor arguments.
+    Both realms take required constructor arguments and so have no
+    no-argument constructor — assemble them through
+    `DefaultLdapRealmFactoryBean` /
+    `ActiveDirectoryLdapRealmFactoryBean` (or a direct
+    `<constructor-arg>` bean). See <<pkg-namespace-shiro>>.
 
 `layout` is toolkit-agnostic by design::
     It does not know about Swing, JavaFX, SWT, or any specific GUI

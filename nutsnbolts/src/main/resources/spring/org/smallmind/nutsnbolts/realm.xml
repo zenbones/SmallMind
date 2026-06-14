@@ -3,10 +3,12 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="ldapRealm" class="org.smallmind.nutsnbolts.shiro.realm.spring.LdapRealmFactoryBean">
-    <property name="realmClass" value="${security.provider}"/>
+  <!-- Generic LDAP realm. For Active Directory, swap the class to
+       org.smallmind.nutsnbolts.namespace.shiro.realm.spring.ActiveDirectoryLdapRealmFactoryBean,
+       replace the four group-schema properties with a single "domain" property, and key groupRoleMap on memberOf DNs. -->
+  <bean id="ldapRealm" class="org.smallmind.nutsnbolts.namespace.shiro.realm.spring.DefaultLdapRealmFactoryBean">
     <property name="connectionDetails">
-      <bean class="org.smallmind.nutsnbolts.shiro.realm.LdapConnectionDetails">
+      <bean class="org.smallmind.nutsnbolts.namespace.shiro.realm.LdapConnectionDetails">
         <property name="userName" value="${ldap.user}"/>
         <property name="password" value="${ldap.password}"/>
         <property name="host" value="${ldap.host}"/>
@@ -15,6 +17,15 @@
       </bean>
     </property>
     <property name="searchPath" value="${ldap.auth.search_path}"/>
+    <property name="groupSearchPath" value="${ldap.group.search_path}"/>
+    <property name="groupObjectClass" value="${ldap.group.object_class}"/>
+    <property name="memberAttribute" value="${ldap.group.member_attribute}"/>
+    <property name="memberValueTemplate" value="${ldap.group.member_value}"/>
+    <property name="groupRoleMap">
+      <map>
+        <entry key="${ldap.admin.group}" value="ADMIN"/>
+      </map>
+    </property>
   </bean>
 
   <bean id="securityManager" class="org.apache.shiro.mgt.DefaultSecurityManager">

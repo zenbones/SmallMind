@@ -17,6 +17,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.unboundid</groupId>
+      <artifactId>unboundid-ldapsdk</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
       <scope>compile</scope>
