@@ -60,13 +60,13 @@ public class MockWireTest {
 
     //  This block loads the RabbitMQ backed Transport layer
     /*
-    context = new ClassPathXmlApplicationContext("org/smallmind/testbench/foundation/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/rabbitmq-wire.xml");
+    context = new ClassPathXmlApplicationContext("org/smallmind/testbench/nutsnbolts/examples/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/rabbitmq-wire.xml");
     requestTransport = context.getBean("rabbitmqRequestTransport", RabbitMQRequestTransport.class);
     responseTransport = context.getBean("rabbitmqResponseTransport", RabbitMQResponseTransport.class);
     */
 
     //  This block loads the Mock backed Transport layer
-    context = new ClassPathXmlApplicationContext("org/smallmind/testbench/foundation/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/mock-wire.xml");
+    context = new ClassPathXmlApplicationContext("org/smallmind/nutsnbolts/examples/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/mock-wire.xml");
     requestTransport = context.getBean("mockRequestTransport", MockRequestTransport.class);
     responseTransport = context.getBean("mockResponseTransport", MockResponseTransport.class);
 

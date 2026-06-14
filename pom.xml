@@ -176,7 +176,6 @@
     <module>claxon</module>
     <module>file</module>
     <module>forge</module>
-    <module>foundation</module>
     <module>javafx</module>
     <module>kafka</module>
     <module>license</module>
