@@ -1,0 +1,119 @@
+---
+# batch properties
+batch:
+  schema_name: batch
+
+# log properties
+log:
+  dir: /var/log/myproject
+  file: myproject.log
+  rollover_period: TOP_OF_DAY
+  retention_days: 31
+  level:
+    batch: WARN
+    default: INFO
+    liquibase: INFO
+    kafka: WARN
+    oumuamua: INFO
+    wire: INFO
+  pattern:
+    batch: org.springframework.batch.*
+    kafka: org.apache.kafka.*
+    liquibase: liquibase.*
+    oumuamua: org.smallmind.bayeux.oumuamua.*
+    wire: org.smallmind.phalanx.wire.*
+
+# rmi properties
+rmi:
+  port:
+    jmx: 1599
+    registry: 1099
+
+# grizzly properties
+grizzly:
+  host: 0.0.0.0
+  port: 9015
+  pool:
+    initial_size: 64
+    maximum_size: 64
+  path:
+    context: /myproject
+    static: /static
+    rest: /rest
+    soap: /soap
+    web_socket: /
+
+# rabbitmq properties
+rabbitmq:
+  replication_count: 2
+  cluster_size: 4
+
+# wire properties
+wire:
+  cluster_size: 2
+  concurrency_limit: 64
+  default_timeout_seconds: 15
+  message_ttl_seconds: 180
+  verbose: true
+  verbose_log_level: DEBUG
+
+# mysql properties
+mysql:
+  liquibase:
+    database_change_log_table_name: DATABASECHANGELOG
+    database_change_log_lock_table_name: DATABASECHANGELOGLOCK
+  hibernate:
+    cache:
+      use_second_level_cache: false
+    connection:
+      autocommit: false
+      isolation: 4
+    dialect: org.hibernate.dialect.H2Dialect
+    show_sql: false
+    format_sql: true
+    generate_statistics: true
+    hbm2ddl:
+      auto: validate
+    jdbc:
+      batch_size: 100
+  jdbc:
+    driver:
+      class_name: com.mysql.cj.jdbc.Driver
+    user:
+      mysql-myproject:
+        - "${mysql.user}"
+      quartz: "${mysql.user}"
+      batch: "${mysql.user}"
+    password:
+      mysql-myproject:
+        - "{mysql.password}"
+      quartz: "{mysql.password}"
+      batch: "{mysql.password}"
+    url:
+      mysql-myproject:
+        - jdbc:mysql://${mysql.host}/myproject?useUnicode=yes&characterEnoding=UTF-8&createDatabaseIfNotExist=true
+      quartz: jdbc:mysql://${mysql.host}/quartz?useUnicode=yes&characterEnoding=UTF-8&createDatabaseIfNotExist=true
+      batch: jdbc:mysql://${mysql.host}/${batch.schema_name}?useUnicode=yes&characterEnoding=UTF-8&createDatabaseIfNotExist=true
+    validation_query:
+      mysql-myproject: select 1
+    pool:
+      initial_size:
+        mysql-myproject: 10
+      min_size:
+        mysql-myproject: 10
+      max_size:
+        mysql-myproject: 30
+      connection_timeout_millis:
+        mysql-myproject: 2000
+      max_idle_seconds:
+        mysql-myproject: 300
+      acquire_wait_time_millis:
+        mysql-myproject: 3000
+      max_lease_time_seconds:
+        mysql-myproject: 1800
+      test_on_acquire:
+        mysql-myproject: true
+      existentially_aware:
+        mysql-myproject: false
+    mapping:
+      mysql-myproject: mysql-myproject

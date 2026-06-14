@@ -9,20 +9,32 @@
     <property name="locateExistingServerIfPossible" value="true"/>
   </bean>
 
-  <bean id="serverConnector" class="org.springframework.jmx.support.ConnectorServerFactoryBean">
+  <bean id="mbeanServerConnector" class="org.springframework.jmx.support.ConnectorServerFactoryBean">
     <property name="objectName" value="connector:name=rmi"/>
-    <property name="serviceUrl" value="service:jmx:rmi://localhost:${rmi.jmx.port}/jndi/rmi://localhost:${rmi.registry.port}/jmxrmi"/>
+    <property name="serviceUrl" value="service:jmx:rmi://localhost:${rmi.port.jmx}/jndi/rmi://localhost:${rmi.port.registry}/jmxrmi"/>
+    <property name="server" ref="mbeanServer"/>
+    <property name="registrationPolicy" value="IGNORE_EXISTING"/>
+    <property name="environment">
+      <props>
+        <prop key="jmx.remote.jndi.rebind">true</prop>
+      </props>
+    </property>
   </bean>
 
-  <bean id="exporter" class="org.springframework.jmx.export.MBeanExporter">
+  <bean id="jmxAttributeSource" class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource"/>
+
+  <bean id="mbeanExporter" class="org.springframework.jmx.export.MBeanExporter">
     <property name="server" ref="mbeanServer"/>
-    <property name="registrationBehaviorName" value="REGISTRATION_REPLACE_EXISTING"/>
+    <property name="registrationPolicy" value="IGNORE_EXISTING"/>
     <property name="autodetect" value="true"/>
     <property name="namingStrategy">
       <bean class="org.springframework.jmx.export.naming.MetadataNamingStrategy">
-        <property name="attributeSource">
-          <bean class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource"/>
-        </property>
+        <property name="attributeSource" ref="jmxAttributeSource"/>
+      </bean>
+    </property>
+    <property name="assembler">
+      <bean class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler">
+        <property name="attributeSource" ref="jmxAttributeSource"/>
       </bean>
     </property>
   </bean>

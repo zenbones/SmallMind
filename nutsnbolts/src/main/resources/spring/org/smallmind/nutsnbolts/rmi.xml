@@ -9,7 +9,9 @@
 
   <bean class="org.smallmind.nutsnbolts.spring.remote.RemoteServiceExporter" destroy-method="unbind">
     <property name="name" value="${registered name or absolute class name}"/>
-    <property name="service" ref="serviceReference"/>
+    <property name="service">
+      <bean class="org.smallmind.nutsnbolts.spring.remote.NoopRemote"/>
+    </property>
     <property name="registry" ref="rmiRegistry"/>
   </bean>
 
