@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.forge.style;
+package org.smallmind.testbench.style;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;

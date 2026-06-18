@@ -16,6 +16,7 @@
     <module>foundation</module>
     <module>groundwater</module>
     <module>logger</module>
+    <module>style</module>
   </modules>
   <build>
     <plugins>
