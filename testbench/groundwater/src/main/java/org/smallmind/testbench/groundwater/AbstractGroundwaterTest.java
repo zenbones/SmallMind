@@ -76,8 +76,10 @@ public class AbstractGroundwaterTest {
 
   /**
    * TestNG hook that verifies a clean environment and then starts every configured application,
-   * retaining each container id for teardown. Each container is named after the concrete test
-   * class's simple name. Does nothing when no applications were configured.
+   * retaining each container id for teardown. Each container is started under its application's
+   * default name, with the concrete test class's simple name recorded as the owning-test identifier
+   * (the {@code test} label and {@code Test} environment variable). Does nothing when no applications
+   * were configured.
    *
    * @throws Exception if the pre-start absence checks time out, or if any container fails to start
    * or become ready

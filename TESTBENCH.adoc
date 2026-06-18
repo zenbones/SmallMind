@@ -1,0 +1,524 @@
+= Testbench: The Test Harness SmallMind Uses on Itself
+SmallMind
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
+:source-highlighter: rouge
+:source-language: java
+
+[.lead]
+Testbench is the collection of small, focused frameworks the SmallMind project uses to test *itself*. It is not a general-purpose product offered to consumers of the library; it is the in-house plumbing that lets the rest of the repository write integration tests against real backing services — Kafka, MySQL, MongoDB, RabbitMQ, Memcached, MinIO, a registry — by standing those services up in Docker containers, waiting for them to be genuinely ready, and tearing them down again. Alongside the Docker machinery it carries a precondition-polling layer, a one-call console logger, a Spring bootstrap context, and a pair of command-line tools that keep every `pom.xml` in the repository tidy.
+
+[IMPORTANT]
+====
+*This is internal tooling.* The audience for this document is a SmallMind contributor writing or maintaining tests inside this repository, not an external adopter assembling an application. Unlike the runtime modules (`persistence`, `phalanx`, `web`, and so on), the `testbench` artifacts are meant to appear only in `test`-scoped dependency blocks of other SmallMind modules. They make assumptions that are reasonable for this project's own CI and developer machines — a reachable Docker daemon, a fixed set of service names and ports, TestNG as the test runner — that would be inappropriate to bake into a library shipped for general consumption. Read this as a contributor's guide to the test harness, not as a public API reference.
+====
+
+== Why Testbench Exists
+
+Most of SmallMind is glue code that sits between an application and a real piece of infrastructure: a JPA layer over a SQL database, a wire transport over Kafka or RabbitMQ, a cache client over Memcached, a document mapper over MongoDB. The only honest way to test that glue is against the real thing. Mock-based unit tests confirm that the code calls the methods the author expected; they do not confirm that MySQL accepts the generated SQL, that a Kafka consumer is actually positioned before the first publish, or that a Memcached `cas` round-trips the way the protocol says it should.
+
+Running integration tests against real services creates four recurring chores, and each `testbench` module exists to remove one of them:
+
+* *Standing the service up and knowing when it is ready.* A container that is "running" is not the same as a container whose port is accepting connections. The `docker` module pulls the image, applies the right ports, mounts, and environment, starts the container, and then blocks until every service port answers a TCP connect — so the test body never races the broker's startup.
+* *Refusing to start against a dirty environment.* A container left behind by a crashed previous run will collide on name or port and produce confusing failures. The `condition` module supplies pollable preconditions; the `groundwater` base class uses them to fail fast when a stale container or mail-server port is still around.
+* *Boilerplate setup repeated in every integration test.* The `groundwater` module reduces the whole "bring containers up before the class, take them down after" cycle to a one-line `super(...)` call, and the `logger` module reduces "make Scribe print readable debug output" to one static call.
+* *Keeping the build files consistent.* With dozens of modules, dependency blocks drift — declarations go unused, transitive dependencies get relied on without being declared, test-only dependencies leak into compile scope, and ordering becomes arbitrary. The `style` module's two command-line tools rewrite every `pom.xml` to fix exactly those problems.
+
+The name reflects the intent: a *bench* of instruments a contributor reaches for when wiring up a test, each one doing a single mechanical job so the test itself can be about the behavior under test.
+
+== Module Layout
+
+`testbench` is a Maven POM aggregator (`smallmind-testbench`, packaging `pom`) with six published JARs. They are independent: depend on the one whose job you need.
+
+[cols="1,2,2", options="header"]
+|===
+| Artifact | Module | Purpose
+
+| `testbench-docker`
+| `docker/`
+| A catalog of ready-to-run container fixtures (`DockerApplication`) and the static lifecycle operations (`DockerApplications`) that pull, create, start-until-ready, and stop them. Talks to the daemon through `DockerClientUtility`.
+
+| `testbench-condition`
+| `condition/`
+| A pollable-precondition abstraction (`TestCondition`) and a driver (`TestConditions`) that waits on a set of them against a shared timeout, plus concrete conditions for container absence, GreenMail shutdown, and RabbitMQ availability.
+
+| `testbench-groundwater`
+| `groundwater/`
+| `AbstractGroundwaterTest`, a TestNG base class that brings a set of `DockerApplication` fixtures up in `@BeforeClass` (after a clean-environment check) and tears them down in `@AfterClass`.
+
+| `testbench-logger`
+| `logger/`
+| `TestLoggerConfiguration.setup()`, a one-call bootstrap that points the Scribe logging system at the console at `DEBUG` level. Also ships an equivalent Spring `logging.xml`.
+
+| `testbench-foundation`
+| `foundation/`
+| A resources-only JAR carrying a Spring `foundation.xml` bootstrap context (per-application context, BouncyCastle, property placeholder resolution) and a `global.yaml` of default test properties.
+
+| `testbench-style`
+| `style/`
+| Two developer command-line tools, `DependencyOrganizer` (sort every pom's dependencies into canonical order) and `DependencyReducer` (add/remove/re-scope dependencies from `mvn dependency:analyze`), plus the supporting types.
+|===
+
+The dependency edges among them are: `condition` depends on `docker`; `groundwater` depends on both `condition` and `docker` (and TestNG); `logger`, `foundation`, and `style` stand alone. The common entry point for an integration test is `groundwater`, which transitively brings in everything except `logger` and `foundation`.
+
+== Conceptual Model
+
+A handful of terms recur throughout the harness; pinning them down makes the rest of the document precise.
+
+Fixture::
+    A backing service defined as one constant of the `DockerApplication` enum — its image, container name, service ports, environment, and any mounts. A fixture is a _recipe_, not a running thing.
+
+Owning test::
+    The string passed as the `test` argument to `DockerApplications.start`. It is attached to the container both as a `test` label and as a `Test=<value>` environment variable, so a running container can be traced back to the test that launched it. `AbstractGroundwaterTest` uses the concrete test class's simple name for this.
+
+Service port versus external port::
+    A `DockerPort` pairs a container-internal *service port* (fixed at construction) with an optional *external* host port. With no override, the same number is bound on the host. Readiness is always probed against the service port on `localhost`.
+
+Readiness::
+    A started container is not considered ready until it reports `running` _and_ a TCP connect to every one of its service ports succeeds. `DockerApplications.start` does not return until that holds, so callers never poll for readiness themselves.
+
+Condition::
+    A pollable check (`TestCondition`) that reports the _current_ state of the world on each call and leaves the retry-and-timeout loop to `TestConditions`. A condition returns `null` when satisfied and a `TestConditionFailure` (carrying a human-readable description) when not.
+
+== Installation
+
+Every `testbench` artifact belongs in a `test`-scoped dependency block. They share the project group and version; use the `${project.version}` placeholder as the rest of the repository does.
+
+The common case — a TestNG integration test that needs one or more containerized services — pulls in `groundwater` (which transitively provides `condition` and `docker`) and usually `logger`:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>testbench-groundwater</artifactId>
+  <version>${project.version}</version>
+  <scope>test</scope>
+</dependency>
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>testbench-logger</artifactId>
+  <version>${project.version}</version>
+  <scope>test</scope>
+</dependency>
+----
+
+Reach for the narrower artifacts directly when you do not need the whole stack:
+
+* `testbench-docker` alone — when you drive container lifecycle yourself rather than through the `groundwater` base class.
+* `testbench-condition` alone — when you only need to poll a precondition (it brings `docker` with it because `ContainerAbsentTestCondition` queries the daemon).
+* `testbench-foundation` — when a test needs the Spring bootstrap context; add it as a `test` resource dependency.
+
+`testbench-style` is not a test dependency at all; it is run as a command-line tool against the repository checkout (see <<the-style-tools>>).
+
+[IMPORTANT]
+====
+*A Scribe backend must be on the test classpath for log output to appear.* `testbench-logger` and `testbench-docker` depend only on `scribe-pen`, which is the logging _API_. `TestLoggerConfiguration.setup()` configures a template and a console appender, but `LoggerManager` still resolves its logging blueprint from a backend implementation. Add `scribe-ink-indigenous` (test scope) so that calls such as `DockerApplications`' own download/teardown logging — and any `LoggerManager` use in the code under test — actually emit.
+====
+
+[IMPORTANT]
+====
+*`jersey-apache-connector` is pinned to `3.1.11`.* `docker-java` declares a transitive dependency on `org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0`, which does not exist in any repository. The `docker`, `condition`, and `groundwater` poms each pin `3.1.11` explicitly to override that broken request. If you assemble a test classpath that uses `docker-java` without going through these modules, you must add the same pin yourself.
+====
+
+== Quick Start
+
+The canonical path is to extend `AbstractGroundwaterTest`, pass the fixtures the test needs to the constructor, and let the base class manage the container lifecycle. The pattern below is taken from the Memcached integration suite.
+
+[source,java]
+----
+@Test(groups = "integration")                                  // <1>
+public class CubbyIntegrationTest extends AbstractGroundwaterTest {
+
+  private CubbyMemcachedClient client;
+
+  public CubbyIntegrationTest () {
+
+    super(DockerApplication.MEMCACHED);                        // <2>
+  }
+
+  @BeforeClass
+  @Override
+  public void beforeClass ()
+    throws Exception {
+
+    TestLoggerConfiguration.setup();                           // <3>
+    super.beforeClass();                                       // <4>
+
+    client = new CubbyMemcachedClient(
+      CubbyConfiguration.OPTIMAL,
+      new MemcachedHost("0", "localhost", 11211));             // <5>
+    client.start();
+  }
+
+  @AfterClass
+  @Override
+  public void afterClass ()
+    throws Exception {
+
+    client.stop();                                             // <6>
+    super.afterClass();
+  }
+
+  @Test
+  public void testNoop ()
+    throws Exception {
+
+    Response response = client.send(new NoopCommand().setKey("none"), null);
+    Assert.assertEquals(response.getCode(), ResponseCode.MN);
+  }
+}
+----
+<1> The suite opts into the `integration` group, the convention this repository uses to separate container-backed tests from pure unit tests.
+<2> The fixture this test depends on. The base class will start a Memcached container before the class and stop it after.
+<3> Installs the console logger first, so container pull/start progress and the code under test both log to stdout.
+<4> Calling `super.beforeClass()` is what actually runs the clean-environment check and starts the containers. Because the subclass overrides the TestNG `@BeforeClass` hook, it must call super explicitly — the base method is not invoked for you.
+<5> The container binds Memcached's `11211` on the host (no external-port override), so the client connects to `localhost:11211`.
+<6> Tear down the client before calling `super.afterClass()`, which stops and removes the container.
+
+[NOTE]
+====
+`AbstractGroundwaterTest` is a plain TestNG base class, so a subclass that overrides `beforeClass()`/`afterClass()` is responsible for chaining to `super`. This is deliberate and consistent with the project's preference for explicit overrides that call super over magic always-run base behavior. If the subclass needs no setup of its own, it can omit the overrides entirely and the inherited hooks run as-is.
+====
+
+== The Docker Fixture Layer
+
+`testbench-docker` is the heart of the harness. It has two public faces: the `DockerApplication` catalog of recipes and the `DockerApplications` lifecycle operations.
+
+=== The `DockerApplication` Catalog
+
+Each enum constant bundles a complete container recipe: image, default container name, service ports, an optional command override, environment variables, and optional bind mounts, volume binds, and a tmpfs mount.
+
+[cols="1,2,1,3", options="header"]
+|===
+| Constant | Image | Service Ports | Notes
+
+| `KAFKA`     | `confluentinc/cp-kafka:latest` | `9094`        | KRaft mode (no ZooKeeper). The external listener is on `9094`; the broker advertises `localhost:9094`.
+| `MEMCACHED` | `memcached:latest`             | `11211`       | No environment or command; the image default.
+| `MINIO`     | `minio/minio:latest`           | `9000`, `9001`| Command override `server /data --console-address :9001`; root credentials `access_key` / `secret_key`. Console on `9001`.
+| `MONGODB`   | `mongo:latest`                 | `27017`       | Root user `root` / password `secret`.
+| `MYSQL`     | `mysql:latest`                 | `3306`        | Root password `secret`; data directory `/var/lib/mysql` on a 1&nbsp;GB tmpfs for fast, ephemeral storage. The configured container name is `/mysql`.
+| `RABBITMQ`  | `rabbitmq:latest`              | `5671`, `5672`| Both the TLS and plaintext AMQP ports are exposed.
+| `REGISTRY`  | `registry:latest`             | `5000`        | OpenTelemetry trace export disabled (`OTEL_TRACES_EXPORTER=none`).
+|===
+
+Accessors on the enum return defensive copies. `getPorts()` builds a fresh `DockerPort[]` with no external override (host port equals service port); `getEnvironment(test)` returns the configured `KEY=VALUE` entries plus a trailing `Test=<test>` entry on every call, never mutating the stored array.
+
+[NOTE]
+====
+The container `name` of a fixture and its readiness probe are independent of the *owning test* string. The pre-start absence check in `AbstractGroundwaterTest` identifies leftover containers by a mix of `getName()` (the configured name) and the enum constant name — verify exact strings in the source if you add a fixture, because, for example, `MYSQL`'s configured name is `/mysql` while its enum constant name is `MYSQL`.
+====
+
+=== Starting and Stopping Containers
+
+`DockerApplications` exposes static `start` and `stop` operations.
+
+[source,java]
+----
+// Start under the application's default container name.
+String containerId = DockerApplications.start("MyIntegrationTest", DockerApplication.MYSQL);
+
+// Start under an explicit name, overriding the host port for the single service port.
+DockerPort port = new DockerPort(3306);
+port.setExternalPort(13306);
+String otherId = DockerApplications.start("MyIntegrationTest", "mysql-alt", DockerApplication.MYSQL, port);
+
+// Tear down (kills, then removes the container and its volumes).
+DockerApplications.stop(containerId);
+----
+
+`start` performs the full sequence in one call:
+
+. *Pull if absent.* The image is inspected; on `NotFoundException` it is pulled and the download is logged through `LoggerManager`.
+. *Apply the recipe.* Port bindings are built from the supplied `DockerPort` overrides, or from the application's default ports when none are passed. Bind mounts, volume binds, and a tmpfs mount are applied when the fixture declares them. A command override replaces the image `CMD` when present. A `test=<test>` label and the `Test=<test>` environment entry are attached.
+. *Start and wait for readiness.* The container is started, then the method loops: once the container reports `running`, it attempts a one-second TCP connect to every service port on `localhost`. It returns the container id only when all ports answer.
+
+`stop` is written to be safe in teardown regardless of current state: it kills the container (polling until it is no longer `running`), then removes it with its volumes (polling until it is gone), and treats an already-stopped or already-removed container as success, logging rather than throwing.
+
+[IMPORTANT]
+====
+The readiness loop in `start` retries tightly, without a sleep between attempts, until every service port connects. There is no overall timeout inside `start`: a container that never opens its port will spin indefinitely. The clean-environment guard belongs upstream (the `condition` layer and `AbstractGroundwaterTest`); `start` assumes the image will eventually come up.
+====
+
+=== Mounts, Volumes, and Tmpfs
+
+Three small immutable descriptors model the filesystem options. `DockerMount` and `DockerVolume` resolve their *host* side from a classpath resource at construction time, via the thread context classloader, and raise `MissingHostResourceException` immediately when the resource cannot be found — so a misconfigured fixture fails when it is declared, not when the container is later started. `DockerTmpFs` describes an in-memory mount (path plus daemon mount options), used to give I/O-heavy services like MySQL a fast, ephemeral data directory.
+
+[source,java]
+----
+DockerMount config = DockerMount.create(
+  MountType.BIND,                       // <1>
+  "fixtures/my-server.conf",            // <2>
+  "/etc/my-server/server.conf",         // <3>
+  true);                                // <4>
+
+DockerVolume data = DockerVolume.create(
+  "fixtures/seed-data",                 // host resource on the classpath
+  "/var/lib/data",                      // container path
+  AccessMode.rw);
+
+DockerTmpFs scratch = DockerTmpFs.create("/var/lib/mysql", "rw,noexec,nosuid,size=1024m");
+----
+<1> The Docker mount type, typically a bind mount.
+<2> The host side, resolved from the classpath; resolution failure throws here.
+<3> The absolute container path the resource is mounted at.
+<4> Whether the mount is read-only inside the container.
+
+=== Daemon Location
+
+`DockerClientUtility.createClient()` builds the `DockerClient` over an Apache HTTP/5 transport. The daemon address comes from the `DOCKER_HOST` environment variable, falling back to `tcp://localhost:2375` when it is unset. The returned client is `AutoCloseable` and owned by the caller — every operation in `DockerApplications` wraps it in a try-with-resources, and so should any direct use.
+
+[IMPORTANT]
+====
+The `tcp://localhost:2375` default expects a daemon listening on an *unencrypted* TCP port. On a developer machine that exposes Docker only over the default socket, or over TLS on `2376`, you must set `DOCKER_HOST` accordingly before running the tests.
+====
+
+== The Condition Layer
+
+`testbench-condition` separates _what_ to check from _how long_ to wait. A `TestCondition` is a functional interface whose `test()` method reports the current state once — returning `null` when satisfied or a `TestConditionFailure` when not — and `TestConditions` owns the polling loop.
+
+=== Polling Semantics
+
+`TestConditions` offers two static drivers, both taking a timeout budget in seconds and a varargs of conditions. Both treat a `null` or empty array as nothing to do, and both sleep one second between polling rounds. The deadline is measured from the moment the call begins and is *shared across every condition* — the budget is not reset per condition.
+
+[cols="1,4", options="header"]
+|===
+| Driver | Semantics
+
+| `serial`
+| Waits for each condition in turn, advancing to the next only once the current one is satisfied. The first condition still unsatisfied when the shared deadline passes aborts the call with a `TestConditionTimeoutException` naming that one failure.
+
+| `parallel`
+| Re-tests the whole set on each round, dropping conditions as they become satisfied, and returns as soon as none remain. A slow condition does not hold up evaluation of the others. On timeout, the exception reports *every* still-outstanding failure.
+|===
+
+`TestConditionTimeoutException` is a checked `FormattedException` whose message lists each outstanding failure (rendered via its `toString()`) and the timeout that was exceeded.
+
+=== Built-in Conditions
+
+[cols="1,3", options="header"]
+|===
+| Condition | Satisfied when
+
+| `ContainerAbsentTestCondition`
+| No Docker container matching any of the given names is present on the daemon. Polled before starting fixtures to ensure a previous run left nothing behind. The failure names the container that is still around.
+
+| `GreenmailAbsentTestCondition`
+| Nothing is listening on a given `localhost` port — inferred from a refused or timed-out TCP connect. Used to confirm an embedded GreenMail mail server has fully shut down before a test proceeds.
+
+| `RabbitMQAvailableTestCondition`
+| A RabbitMQ broker at a given address accepts an authenticated AMQP connection. Used to wait for a freshly started broker to finish coming up; echoes an incrementing attempt counter to stdout while it waits.
+|===
+
+Note the two polarities. `ContainerAbsentTestCondition` and `GreenmailAbsentTestCondition` wait for something to *go away* (a clean-environment guard); `RabbitMQAvailableTestCondition` waits for something to *come up* (a readiness guard).
+
+=== Writing Your Own Condition
+
+Implement `TestCondition`, probe the resource once, and return `null` or a `MessageTestConditionFailure`. The repository's own `DataSourceAvailableTestCondition` (in the `persistence` module, not in `testbench`) is the model for an availability probe:
+
+[source,java]
+----
+public class DataSourceAvailableTestCondition implements TestCondition {
+
+  private final DriverManagerDataSource dataSource;
+
+  public DataSourceAvailableTestCondition (String driverClassName, String jdbcUrl, String userName, String password)
+    throws SQLException {
+
+    dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, userName, password);
+  }
+
+  @Override
+  public TestConditionFailure test () {
+
+    try (Connection connection = dataSource.getConnection()) {
+
+      return null;                                              // <1>
+    } catch (Exception exception) {
+
+      return new MessageTestConditionFailure("Could not start Mysql");   // <2>
+    }
+  }
+}
+----
+<1> A successful probe satisfies the condition.
+<2> A failed probe is reported as an unsatisfied condition, not thrown — `TestConditions` keeps polling. Reserve a thrown exception for a probe that cannot be carried out at all.
+
+Drive it with `TestConditions.serial(30, new DataSourceAvailableTestCondition(...))`.
+
+== The Groundwater Base Class
+
+`AbstractGroundwaterTest` is the one-line on-ramp to the whole stack. A subclass passes the fixtures it needs to the constructor; the base class then owns their lifecycle through TestNG hooks.
+
+`@BeforeClass beforeClass()`::
+    When the fixture list is non-empty, first waits — via `TestConditions.parallel` with a thirty-second budget — for a clean environment: any leftover Kafka, MongoDB, MySQL, RabbitMQ, or Memcached containers from a prior run must be gone, and the GreenMail port `8025` must be free. Then it starts every configured application, recording each container id for teardown. Each container is started with the concrete test class's simple name as its *owning-test* identifier (the `test` label and `Test` environment variable) and under the application's own default container name.
+
+`@AfterClass afterClass()`::
+    Stops and removes every container started in `beforeClass()`. A `null` or empty fixture list turns both hooks into no-ops.
+
+The lifecycle is owned entirely by this class: the containers it starts are exactly the ones it stops. Because the hooks are ordinary TestNG `@BeforeClass`/`@AfterClass` methods, a subclass that overrides them must call `super` (see the <<quick-start,Quick Start>>).
+
+[NOTE]
+====
+The clean-environment guard's container-name list is hard-coded to the five services above and GreenMail's `8025`. It is a guard against the most common leftovers from this repository's own suites, not a general mechanism — adding a new long-running fixture does not automatically add it to the absence check.
+====
+
+== The Logger
+
+`TestLoggerConfiguration.setup()` is a single static call that points Scribe at the console for readable, debug-level output, so a contributor does not assemble a Scribe configuration by hand in every test.
+
+[source,java]
+----
+TestLoggerConfiguration.setup();
+----
+
+It registers a `DefaultTemplate` at `Level.DEBUG` with auto-filled logger context, routing output through a `ConsoleAppender` whose `PatternFormatter` renders timestamp, level, class, method, line, thread, and message — including any exception principal and stack trace — to stdout. Call it once, early in `@BeforeClass`. Calling it again registers an *additional* template rather than replacing the first, so avoid repeat calls.
+
+For Spring-assembled tests, the module also ships an equivalent `logging.xml` (Spring profile `default`) that wires the same `DefaultTemplate`, `PatternFormatter`, and `ConsoleAppender` as beans.
+
+== The Foundation Spring Context
+
+`testbench-foundation` is a resources-only JAR (no Java types) providing a Spring bootstrap context for tests that need one. Importing `classpath:.../foundation.xml` wires:
+
+* `PerApplicationContext` — the per-application context many SmallMind runtime types resolve against (Claxon instrumentation, the ORM DAO registry, the wire context). Several of this repository's components throw without one attached to the current thread, so the foundation context establishes it.
+* `SpringContextRefreshedAnnouncer` with application name `Epicenter`.
+* `SecurityProviderInitializingBean` registering the BouncyCastle provider.
+* `SystemPropertyInitializingBean` and a `PropertyPlaceholderConfigurer` that resolves placeholders from `classpath:org/smallmind/testbench/foundation/global.yaml` and, if present, `file:${user.home}/.m2/local.yaml` — letting a developer override test properties locally without touching the checked-in defaults.
+
+The bundled `global.yaml` sets two defaults: `log.level.default: DEBUG` and `wire.default_timeout_seconds: 15`.
+
+[NOTE]
+====
+Tests that do not boot the Spring context but still touch components requiring a per-application context can construct one directly on the test thread with `new PerApplicationContext()` in `@BeforeClass`, as several integration tests in the repository do. The foundation context is the assembly-time convenience; the direct constructor is the programmatic equivalent.
+====
+
+[[the-style-tools]]
+== The Style Tools
+
+`testbench-style` is unlike the rest of `testbench`: it contains no test support at all. It is two developer command-line tools that keep every `pom.xml` in the repository consistent. Both walk a project tree from a root path given as the first argument and rewrite poms in place, pretty-printing the result through a bundled XSLT stylesheet (`pretty-print.xslt`) that strips insignificant whitespace and re-indents.
+
+`DependencyOrganizer`::
+    Sorts the `<dependency>` entries of every `pom.xml` into a stable canonical order — by `groupId`, then by `artifactId`, using the segment-aware comparison in `DependencyWrapper` (dot-delimited group segments, dash-delimited artifact segments, each compared alphanumerically, shorter prefixes first). Both the top-level `<dependencies>` block and the dependencies inside a `<dependencyManagement>` block are sorted. Entry point: `DependencyOrganizer.main(rootPath)` or `walkProject(Path)`.
+
+`DependencyReducer`::
+    For each module directory (one containing a `pom.xml`, excluding the root and any dot-prefixed path segment) runs `mvn dependency:analyze -N`, parses the report, and rewrites the pom to: drop *unused declared* dependencies, add *used undeclared* ones (as group/artifact/scope, with no version on the assumption it is managed elsewhere), and narrow *non-test-scoped test-only* dependencies to `test` scope. Surviving dependencies are re-sorted into the same canonical order. The Maven launcher is located via the platform `where`/`where.exe` command (`MavenCommandLocator`); subprocess output is captured by `ProcessOutputUtility`, which expects the process to exit within three seconds of closing its output stream.
+
+[source,shell]
+----
+# Sort every pom under the repository root into canonical order.
+java org.smallmind.testbench.style.DependencyOrganizer /path/to/smallmind
+----
+
+[NOTE]
+====
+`DependencyReducer` relies on `mvn` being resolvable through the platform `where` command and on the three-second exit grace period in `ProcessOutputUtility`; it is a maintenance convenience run deliberately, not part of any automated build phase. Review its rewrites before committing — `dependency:analyze` is heuristic, and a dependency used only via reflection or resources can be misreported as unused.
+====
+
+== Operational Notes and Troubleshooting
+
+Docker daemon not reachable::
+    `DockerClientUtility` defaults to `tcp://localhost:2375` (plaintext TCP). Set `DOCKER_HOST` to match your daemon (for example a TLS endpoint on `2376`, or a named pipe / socket) before running container-backed tests.
+
+`start` never returns::
+    The readiness loop spins without an internal timeout until every service port connects. A hang means the container started but never opened its port — inspect the container's logs. The clean-environment guard does not protect against an image that genuinely fails to come up.
+
+Name or port collision on startup::
+    A container from a crashed prior run is still present. `AbstractGroundwaterTest`'s clean-environment check should surface this as a `TestConditionTimeoutException` within thirty seconds; if you bypass that base class, run a `ContainerAbsentTestCondition` yourself, or remove the stale container manually.
+
+No log output::
+    `TestLoggerConfiguration.setup()` configures Scribe but does not provide a backend. Add `scribe-ink-indigenous` (test scope) so `LoggerManager` resolves a logging blueprint. See the installation note above.
+
+`jersey-apache-connector` resolution failure::
+    `docker-java` requests a non-existent `4.0.0`; the `docker`, `condition`, and `groundwater` poms pin `3.1.11`. Reproduce the pin in any classpath that uses `docker-java` outside these modules.
+
+`MissingHostResourceException` when declaring a mount::
+    `DockerMount`/`DockerVolume` resolve the host resource from the classpath at construction. The named resource is not on the test classpath, or its URL is malformed. Confirm the resource path is correct and present under `src/test/resources`.
+
+== Limitations and Known Issues
+
+No internal start timeout::
+    `DockerApplications.start` waits for readiness indefinitely. This is intentional — the surrounding `condition`/`groundwater` layers own the "fail fast on a dirty environment" guard — but it means a genuinely broken image hangs the test rather than failing it.
+
+Hard-coded clean-environment list::
+    `AbstractGroundwaterTest` checks for a fixed set of leftover containers (Kafka, MongoDB, MySQL, RabbitMQ, Memcached) and GreenMail port `8025`. A new long-running fixture is not added to that guard automatically.
+
+TestNG-only base class::
+    `groundwater` is built on TestNG's `@BeforeClass`/`@AfterClass`. There is no JUnit equivalent; a JUnit-based test must drive `DockerApplications` directly.
+
+Plaintext daemon default::
+    The `tcp://localhost:2375` fallback assumes an unauthenticated TCP daemon. There is no built-in TLS configuration beyond what `DOCKER_HOST` and the docker-java defaults supply.
+
+`DependencyReducer` is heuristic::
+    It acts on `mvn dependency:analyze` output, which can misclassify dependencies used only via reflection, SPI, or resources. Treat its rewrites as proposals to review, not as authoritative.
+
+== Defaults Reference
+
+[cols="2,2,2", options="header"]
+|===
+| Setting | Default | Source
+
+| Docker daemon host          | `tcp://localhost:2375` | `DockerClientUtility` (env `DOCKER_HOST` override)
+| Port readiness connect timeout | `1000` ms             | `DockerApplications.start`
+| Condition polling interval  | `1` s                  | `TestConditions`
+| Clean-environment budget    | `30` s                 | `AbstractGroundwaterTest.beforeClass`
+| GreenMail absence port      | `8025`                 | `AbstractGroundwaterTest.beforeClass`
+| Test log level              | `DEBUG`                | `TestLoggerConfiguration` / `global.yaml`
+| Wire default timeout        | `15` s                 | `global.yaml`
+| Subprocess exit grace       | `3` s                  | `ProcessOutputUtility`
+| `jersey-apache-connector`   | `3.1.11`               | `docker` / `condition` / `groundwater` poms
+|===
+
+== Package File Map
+
+[cols="2,3", options="header"]
+|===
+| File | Role
+
+| `docker/.../DockerApplication.java`        | Enum catalog of container fixtures (image, name, ports, env, mounts).
+| `docker/.../DockerApplications.java`       | Static `start` (pull, create, start-until-ready) and `stop` (kill, remove).
+| `docker/.../DockerClientUtility.java`      | `DockerClient` factory; reads `DOCKER_HOST`.
+| `docker/.../DockerPort.java`               | Service-port / external-host-port pair.
+| `docker/.../DockerMount.java`              | Bind-mount descriptor; resolves host side from the classpath.
+| `docker/.../DockerVolume.java`             | Volume-bind descriptor; resolves host side from the classpath.
+| `docker/.../DockerTmpFs.java`              | In-memory mount descriptor.
+| `docker/.../MissingHostResourceException.java` | Thrown when a mount/volume host resource is unresolved.
+
+| `condition/.../TestCondition.java`         | Functional interface: one pollable precondition check.
+| `condition/.../TestConditions.java`        | `serial` and `parallel` polling drivers over a shared timeout.
+| `condition/.../TestConditionFailure.java`  | Marker for an unsatisfied condition; described via `toString()`.
+| `condition/.../MessageTestConditionFailure.java` | String-backed `TestConditionFailure`.
+| `condition/.../TestConditionTimeoutException.java` | Checked timeout exception listing outstanding failures.
+| `condition/.../ContainerAbsentTestCondition.java` | Satisfied when named containers are gone.
+| `condition/.../GreenmailAbsentTestCondition.java` | Satisfied when a GreenMail port is closed.
+| `condition/.../RabbitMQAvailableTestCondition.java` | Satisfied when a broker accepts an AMQP connection.
+
+| `groundwater/.../AbstractGroundwaterTest.java` | TestNG base class managing fixture lifecycle.
+
+| `logger/.../TestLoggerConfiguration.java`  | One-call Scribe console bootstrap.
+| `logger/.../logging.xml`                   | Spring-bean equivalent of the console bootstrap.
+
+| `foundation/.../foundation.xml`            | Spring bootstrap context (per-app context, BouncyCastle, properties).
+| `foundation/.../global.yaml`               | Default test properties.
+
+| `style/.../DependencyOrganizer.java`       | Sorts pom dependencies into canonical order.
+| `style/.../DependencyReducer.java`         | Adds/removes/re-scopes dependencies from `dependency:analyze`.
+| `style/.../DependencyReference.java`       | Parsed coordinate from analyze output.
+| `style/.../DependencyWrapper.java`         | Sortable wrapper around a `<dependency>` DOM node.
+| `style/.../MavenCommandLocator.java`       | Locates the `mvn` launcher via `where`.
+| `style/.../ProcessOutputUtility.java`      | Captures subprocess stdout.
+| `style/.../pretty-print.xslt`              | Whitespace-stripping re-indent stylesheet.
+|===
+
+== See Also
+
+* xref:SLEUTH.adoc[Sleuth] — the dependency-aware test runner and Surefire provider that executes these suites.
+* xref:SCRIBE.adoc[Scribe] — the logging system `testbench-logger` configures; pair it with a backend such as `scribe-ink-indigenous` for output.
+* xref:NUTSNBOLTS.adoc[NutsNBolts] — provides `PerApplicationContext`, `FormattedException`, and the alphanumeric comparator the style tools sort with.
+* https://github.com/docker-java/docker-java[docker-java] — the daemon client `testbench-docker` adapts.
+
+== License
+
+Testbench is dual-licensed under the GNU Affero General Public License v3 and the Apache License 2.0, at the user's discretion. See the license header on any source file for the full text.

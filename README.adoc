@@ -38,4 +38,5 @@ The following documentation covers each functional area of the framework:
 * link:SCRIBE.adoc[Scribe] — Logging infrastructure built on SLF4J and Log4j 2
 * link:SLEUTH.adoc[Sleuth] — Distributed tracing and observability
 * link:SPARK.adoc[Spark] — Self-executing jar packaging (Singularity) and OS service distributions (Tanukisoft)
+* link:TESTBENCH.adoc[Testbench] — Internal test harness: Dockerized service fixtures, preconditions, and build-file tooling used to test SmallMind itself
 * link:WEB.adoc[Web] — Web layer support including REST (Jersey), Jetty, and WebSocket
