@@ -37,15 +37,33 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
+/**
+ * A {@link TestCondition} satisfied only when nothing is listening on a GreenMail port, used to
+ * confirm a previously embedded GreenMail mail server has fully shut down before a test proceeds.
+ * Satisfaction is inferred from a failed TCP connection: a refused or timed-out connect to
+ * {@code localhost} on the configured port means the server is gone.
+ */
 public class GreenmailAbsentTestCondition implements TestCondition {
 
   private final int port;
 
+  /**
+   * Creates a condition that waits for the GreenMail port to stop accepting connections.
+   *
+   * @param port the {@code localhost} TCP port GreenMail was bound to
+   */
   public GreenmailAbsentTestCondition (int port) {
 
     this.port = port;
   }
 
+  /**
+   * Attempts a short-timeout TCP connection to the configured port.
+   *
+   * @return {@code null} when the connection is refused or times out (GreenMail is down), or a
+   * {@link MessageTestConditionFailure} when the connection succeeds (GreenMail is still up)
+   * @throws Exception if a socket error other than a connection refusal or timeout occurs
+   */
   @Override
   public TestConditionFailure test ()
     throws Exception {

@@ -38,13 +38,13 @@ import java.nio.file.Paths;
 import com.github.dockerjava.api.model.MountType;
 
 /**
- * Value object describing a Docker mount configuration (typically a bind mount). The host path
- * is resolved from the thread context classloader at construction time. Throws
- * {@link MissingHostResourceException} immediately if the classpath resource cannot be located,
- * catching configuration errors early.
+ * Immutable description of a Docker mount (typically a bind mount) whose host side is a classpath
+ * resource. The resource is resolved against the thread context classloader at construction, and a
+ * resolution failure raises {@link MissingHostResourceException} right away, so a misconfigured
+ * fixture fails when it is declared rather than when the container is started.
  *
- * <p>Instances are created exclusively via the {@link #create(MountType, String, String, boolean)}
- * factory method.
+ * <p>Construct instances through {@link #create(MountType, String, String, boolean)}; the
+ * constructor is private.
  */
 public class DockerMount {
 
@@ -54,12 +54,13 @@ public class DockerMount {
   private final boolean readOnly;
 
   /**
-   * Private constructor — use {@link #create(MountType, String, String, boolean)} instead.
+   * Stores the already-resolved mount fields. Use
+   * {@link #create(MountType, String, String, boolean)} rather than calling this directly.
    *
-   * @param mountType the Docker mount type (e.g., {@code BIND})
-   * @param hostPath  the resolved absolute host filesystem path
+   * @param mountType the Docker mount type, such as {@link MountType#BIND}
+   * @param hostPath the resolved absolute host path
    * @param localPath the absolute container-side mount path
-   * @param readOnly  {@code true} to mount the path read-only inside the container
+   * @param readOnly {@code true} to mount read-only inside the container
    */
   private DockerMount (MountType mountType, String hostPath, String localPath, boolean readOnly) {
 
@@ -70,16 +71,16 @@ public class DockerMount {
   }
 
   /**
-   * Creates a new {@link DockerMount} by resolving {@code hostResource} from the thread
-   * context classloader. The resulting URL is converted to an absolute OS path.
+   * Creates a mount whose host side is resolved from a classpath resource. The resource is located
+   * via the thread context classloader and its URL converted to an absolute filesystem path.
    *
-   * @param mountType    the Docker mount type (e.g., {@link MountType#BIND})
-   * @param hostResource the classpath-relative resource name to mount onto the container
-   * @param localPath    the absolute path inside the container where the resource is mounted
-   * @param readOnly     {@code true} to mount the path read-only inside the container
-   * @return a new {@link DockerMount} instance; never {@code null}
-   * @throws MissingHostResourceException if the classpath resource cannot be found by the
-   *                                      thread context classloader
+   * @param mountType the Docker mount type, such as {@link MountType#BIND}
+   * @param hostResource the classpath-relative resource name providing the host side of the mount
+   * @param localPath the absolute container path the resource is mounted at
+   * @param readOnly {@code true} to mount read-only inside the container
+   * @return a new mount descriptor; never {@code null}
+   * @throws MissingHostResourceException if {@code hostResource} cannot be found on the classpath or
+   * its URL is malformed
    */
   public static DockerMount create (MountType mountType, String hostResource, String localPath, boolean readOnly) {
 
@@ -98,7 +99,7 @@ public class DockerMount {
   }
 
   /**
-   * Returns the Docker mount type for this mount configuration.
+   * Returns the Docker mount type.
    *
    * @return the mount type; never {@code null}
    */
@@ -108,7 +109,7 @@ public class DockerMount {
   }
 
   /**
-   * Returns the resolved absolute host filesystem path to mount into the container.
+   * Returns the resolved absolute host path mounted into the container.
    *
    * @return the host path; never {@code null}
    */
@@ -118,7 +119,7 @@ public class DockerMount {
   }
 
   /**
-   * Returns the absolute path inside the container where the host resource is mounted.
+   * Returns the absolute container path at which the host resource is mounted.
    *
    * @return the container-side mount path; never {@code null}
    */
@@ -128,9 +129,9 @@ public class DockerMount {
   }
 
   /**
-   * Returns whether the container-side mount path is read-only.
+   * Returns whether the mount is read-only inside the container.
    *
-   * @return {@code true} if the mount is read-only; {@code false} if it is read-write
+   * @return {@code true} if read-only, {@code false} if read-write
    */
   public boolean isReadOnly () {
 

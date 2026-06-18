@@ -33,9 +33,10 @@
 package org.smallmind.testbench.docker;
 
 /**
- * Descriptor for a single Docker port mapping, pairing an internal container service port
- * with an optional external host port. When no external port is set the service port is
- * used on both sides of the mapping.
+ * A single Docker port mapping, pairing a container-internal service port with an optional external
+ * host port. The service port is fixed at construction; the host port is an optional override that
+ * may be set afterward. When no override is set, the service port number is used on the host side as
+ * well.
  */
 public class DockerPort {
 
@@ -43,9 +44,10 @@ public class DockerPort {
   private Integer externalPort;
 
   /**
-   * Constructs a port descriptor with the given service port and no external port override.
+   * Creates a mapping for the given service port with no host-port override, so the same number is
+   * used on both sides until {@link #setExternalPort(Integer)} is called.
    *
-   * @param servicePort the container-internal TCP port number
+   * @param servicePort the container-internal TCP port
    */
   public DockerPort (int servicePort) {
 
@@ -53,7 +55,7 @@ public class DockerPort {
   }
 
   /**
-   * Returns the container-side (service) port number.
+   * Returns the container-internal service port.
    *
    * @return the service port
    */
@@ -63,8 +65,8 @@ public class DockerPort {
   }
 
   /**
-   * Returns the host-side port number, or {@code null} if no override has been configured.
-   * When {@code null}, callers should fall back to using the service port on the host.
+   * Returns the host-side port override, or {@code null} when none is set; in that case the
+   * {@linkplain #getServicePort() service port} is used on the host.
    *
    * @return the external host port, or {@code null}
    */
@@ -74,9 +76,10 @@ public class DockerPort {
   }
 
   /**
-   * Sets the host-side port number to bind to.
+   * Sets the host-side port to bind the service port to.
    *
-   * @param externalPort the external host port, or {@code null} to clear the override
+   * @param externalPort the external host port, or {@code null} to clear the override and fall back
+   * to the service port
    */
   public void setExternalPort (Integer externalPort) {
 

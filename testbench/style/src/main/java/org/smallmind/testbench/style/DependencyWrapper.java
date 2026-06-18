@@ -37,8 +37,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Adapter that pairs a Maven dependency DOM node with its pre-extracted {@code groupId} and
- * {@code artifactId}, enabling natural sort-order comparison without repeated DOM traversal.
+ * Sortable wrapper around a {@code <dependency>} DOM node, pairing the node with its eagerly
+ * extracted {@code groupId} and {@code artifactId} so a list of dependencies can be ordered without
+ * re-walking the DOM. Ordering is the segment-aware, canonical order used by both
+ * {@link DependencyOrganizer} and {@link DependencyReducer}: by {@code groupId} first, then by
+ * {@code artifactId}.
  */
 public class DependencyWrapper implements Comparable<DependencyWrapper> {
 
@@ -49,10 +52,10 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   private final String artifactId;
 
   /**
-   * Wrap a {@code <dependency>} DOM node and eagerly extract its coordinates for comparison.
+   * Wraps a {@code <dependency>} node, eagerly reading its coordinates for later comparison.
    *
-   * @param dependencyNode the DOM element to wrap; must contain {@code <groupId>} and
-   *                       {@code <artifactId>} child elements
+   * @param dependencyNode the DOM node to wrap; it must contain {@code <groupId>} and
+   * {@code <artifactId>} child elements
    */
   public DependencyWrapper (Node dependencyNode) {
 
@@ -63,9 +66,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Returns the {@code groupId} extracted from the wrapped dependency node.
+   * Returns the {@code groupId} read from the wrapped node.
    *
-   * @return groupId text content
+   * @return the groupId text content
    */
   public String getGroupId () {
 
@@ -73,9 +76,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Returns the {@code artifactId} extracted from the wrapped dependency node.
+   * Returns the {@code artifactId} read from the wrapped node.
    *
-   * @return artifactId text content
+   * @return the artifactId text content
    */
   public String getArtifactId () {
 
@@ -83,9 +86,9 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Returns the underlying DOM node representing the {@code <dependency>} element.
+   * Returns the wrapped {@code <dependency>} DOM node.
    *
-   * @return the wrapped dependency node
+   * @return the underlying dependency node
    */
   public Node getDependencyNode () {
 
@@ -93,14 +96,13 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Compare this wrapper to {@code otherWrapper} for sort-order purposes.
-   *
-   * <p>Ordering is first by {@code groupId} (dot-delimited segments, alphanumerically), then
-   * by {@code artifactId} (dash-delimited segments, alphanumerically) when the groupIds are equal.
+   * Orders this wrapper against another by {@code groupId} first and, when those are equal, by
+   * {@code artifactId}. The {@code groupId} is compared as dot-delimited segments and the
+   * {@code artifactId} as dash-delimited segments, each segment via an alphanumeric comparator.
    *
    * @param otherWrapper the wrapper to compare against
-   * @return a negative integer, zero, or a positive integer as this dependency orders before,
-   * at the same position as, or after {@code otherWrapper}
+   * @return a negative integer, zero, or a positive integer as this dependency sorts before, equal
+   * to, or after {@code otherWrapper}
    */
   @Override
   public int compareTo (DependencyWrapper otherWrapper) {
@@ -117,16 +119,15 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
   }
 
   /**
-   * Compare two strings by splitting each on {@code separator} and comparing corresponding
-   * segments with an alphanumeric comparator.
+   * Compares two coordinate strings segment by segment, splitting each on {@code separator} and
+   * comparing matching segments alphanumerically. When every shared segment is equal, the string
+   * with fewer segments sorts first, so a shorter prefix precedes a longer one that extends it.
    *
-   * <p>When all shared segments are equal, the string with fewer segments sorts first.
-   *
-   * @param first     the left-hand string
-   * @param second    the right-hand string
-   * @param separator regex used to split each string into segments
-   * @return a negative integer, zero, or a positive integer as {@code first} orders before,
-   * at the same position as, or after {@code second}
+   * @param first the left-hand string
+   * @param second the right-hand string
+   * @param separator the regular expression used to split each string into segments
+   * @return a negative integer, zero, or a positive integer as {@code first} sorts before, equal to,
+   * or after {@code second}
    */
   private int subCompare (String first, String second, String separator) {
 

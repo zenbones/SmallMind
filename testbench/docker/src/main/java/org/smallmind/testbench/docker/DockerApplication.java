@@ -33,21 +33,21 @@
 package org.smallmind.testbench.docker;
 
 /**
- * Enum of pre-configured Docker application templates used by the science testbench
- * test environment. Each constant encapsulates everything needed to run the application
- * as a test fixture: the Docker image reference, container name, exposed ports, optional
- * command overrides, environment variables, optional volume binds, and optional tmpfs
- * configuration.
+ * Catalog of ready-to-run Docker container fixtures for testbench integration tests. Each constant
+ * bundles the complete recipe for one backing service: its image reference, container name, exposed
+ * service ports, optional command override, environment variables, optional bind mounts, optional
+ * volume binds, and optional tmpfs mount. {@link DockerApplications} consumes these constants to
+ * create, start, and stop the corresponding containers.
  *
- * <p>Defined applications:
+ * <p>The catalog covers:
  * <ul>
- *   <li>{@link #KAFKA} — Confluent Platform Kafka running in KRaft mode (no ZooKeeper)
- *   <li>{@link #MEMCACHED} — Memcached cache daemon
- *   <li>{@link #MINIO} — MinIO object storage server with web console
- *   <li>{@link #MONGODB} — MongoDB with a preconfigured root user
- *   <li>{@link #MYSQL} — MySQL with the data directory on a tmpfs for fast ephemeral storage
- *   <li>{@link #RABBITMQ} — RabbitMQ message broker
- *   <li>{@link #REGISTRY} — Docker Distribution registry with OTEL tracing disabled
+ *   <li>{@link #KAFKA} — Confluent Platform Kafka in KRaft mode (no ZooKeeper), external port 9094
+ *   <li>{@link #MEMCACHED} — a Memcached cache daemon on port 11211
+ *   <li>{@link #MINIO} — a MinIO object-storage server with its web console on ports 9000 and 9001
+ *   <li>{@link #MONGODB} — MongoDB on port 27017 with a preconfigured {@code root} user
+ *   <li>{@link #MYSQL} — MySQL on port 3306 with its data directory on a tmpfs for fast, ephemeral storage
+ *   <li>{@link #RABBITMQ} — a RabbitMQ broker on ports 5671 and 5672
+ *   <li>{@link #REGISTRY} — a Docker Distribution registry on port 5000 with OpenTelemetry tracing disabled
  * </ul>
  */
 public enum DockerApplication {
@@ -70,16 +70,16 @@ public enum DockerApplication {
   private final String[] environment;
 
   /**
-   * Constructs a {@code DockerApplication} constant with its full configuration.
+   * Defines a catalog constant from its full container recipe.
    *
-   * @param name        the container name used when creating the container
-   * @param image       the Docker image reference (e.g., {@code "mysql:latest"})
-   * @param ports       the service ports exposed by the container
-   * @param commands    optional command arguments that override the image's default CMD; may be {@code null}
-   * @param environment optional environment variable strings in {@code KEY=VALUE} format; may be {@code null}
-   * @param mounts      optional mount descriptors (e.g., bind mounts); may be {@code null}
-   * @param volumes     optional volume bind mounts; may be {@code null}
-   * @param tmpFs       optional tmpfs mount configuration; may be {@code null}
+   * @param name the default container name
+   * @param image the Docker image reference, such as {@code "mysql:latest"}
+   * @param ports the container-internal service ports to expose
+   * @param commands an optional command override replacing the image's default {@code CMD}, or {@code null}
+   * @param environment optional {@code KEY=VALUE} environment entries, or {@code null}
+   * @param mounts optional bind-mount descriptors, or {@code null}
+   * @param volumes optional volume-bind descriptors, or {@code null}
+   * @param tmpFs an optional tmpfs mount, or {@code null}
    */
   DockerApplication (String name, String image, int[] ports, String[] commands, String[] environment, org.smallmind.testbench.docker.DockerMount[] mounts, org.smallmind.testbench.docker.DockerVolume[] volumes, org.smallmind.testbench.docker.DockerTmpFs tmpFs) {
 
@@ -94,7 +94,7 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the default container name for this application.
+   * Returns this application's default container name.
    *
    * @return the container name; never {@code null}
    */
@@ -104,9 +104,9 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the Docker image reference used to create the container.
+   * Returns the Docker image reference the container is created from.
    *
-   * @return the image reference (e.g., {@code "mysql:latest"}); never {@code null}
+   * @return the image reference, such as {@code "mysql:latest"}; never {@code null}
    */
   public String getImage () {
 
@@ -114,9 +114,10 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the raw array of service port numbers as defined in the enum constant.
+   * Returns this application's service port numbers as raw {@code int}s, without wrapping them in
+   * {@link DockerPort} descriptors.
    *
-   * @return the port numbers; never {@code null}
+   * @return the container-internal service ports; never {@code null}
    */
   public int[] getRawPorts () {
 
@@ -124,10 +125,12 @@ public enum DockerApplication {
   }
 
   /**
-   * Wraps each raw port number in a {@link DockerPort} descriptor and returns the result.
-   * External port overrides are not set; callers must configure them separately if needed.
+   * Returns this application's service ports as fresh {@link DockerPort} descriptors. Each descriptor
+   * carries only the service port; no external host-port override is set, so by default the service
+   * port is also used on the host. Callers wanting a different host binding must set it on the
+   * returned descriptors.
    *
-   * @return an array of {@link DockerPort} instances; never {@code null}
+   * @return a new array of {@link DockerPort} descriptors; never {@code null}
    */
   public DockerPort[] getPorts () {
 
@@ -142,9 +145,10 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the optional command override array passed to the container at startup.
+   * Returns the command override applied to the container at startup, replacing the image's default
+   * {@code CMD}.
    *
-   * @return the command arguments, or {@code null} if no command override was specified
+   * @return the command arguments, or {@code null} when the image default is used
    */
   public String[] getCommands () {
 
@@ -152,11 +156,12 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the full environment variable array for the container, appending a
-   * {@code Test=<test>} entry to allow containers to identify their owning test.
+   * Returns the container's environment, this application's configured {@code KEY=VALUE} entries plus
+   * a trailing {@code Test=<test>} entry that lets a container identify the test that launched it.
+   * A fresh array is returned on each call; the configured entries are not mutated.
    *
-   * @param test the test identifier to embed; must not be {@code null}
-   * @return the environment variable strings in {@code KEY=VALUE} format; never {@code null}
+   * @param test the identifier of the owning test, embedded as the {@code Test} variable
+   * @return the {@code KEY=VALUE} environment entries; never {@code null}
    */
   public String[] getEnvironment (String test) {
 
@@ -171,9 +176,9 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the optional mount descriptors for this application.
+   * Returns this application's bind-mount descriptors.
    *
-   * @return the mount descriptors, or {@code null} if no mounts were configured
+   * @return the mount descriptors, or {@code null} when none were configured
    */
   public DockerMount[] getMounts () {
 
@@ -181,9 +186,9 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the optional volume bind mount descriptors for this application.
+   * Returns this application's volume-bind descriptors.
    *
-   * @return the volume descriptors, or {@code null} if no volumes were configured
+   * @return the volume descriptors, or {@code null} when none were configured
    */
   public DockerVolume[] getVolumes () {
 
@@ -191,9 +196,9 @@ public enum DockerApplication {
   }
 
   /**
-   * Returns the optional tmpfs mount configuration for this application.
+   * Returns this application's tmpfs mount.
    *
-   * @return the tmpfs descriptor, or {@code null} if no tmpfs was configured
+   * @return the tmpfs descriptor, or {@code null} when none was configured
    */
   public DockerTmpFs getTmpFs () {
 

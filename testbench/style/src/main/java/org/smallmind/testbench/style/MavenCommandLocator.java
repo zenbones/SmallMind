@@ -37,17 +37,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Resolves the path to the Maven executable by invoking the platform-appropriate system
- * search command ({@code where.exe} on Windows, {@code where} on Linux). Returns {@code null}
- * when Maven cannot be found on the PATH.
+ * Resolves the path to the Maven executable by running the platform's {@code where} command and
+ * reading its first line of output. {@link DependencyReducer} uses this to find the {@code mvn}
+ * launcher before invoking it per module. Both methods return {@code null} when Maven is not on the
+ * PATH.
  */
 public class MavenCommandLocator {
 
   /**
-   * Locate the Maven command on Windows using {@code where.exe mvn.cmd}.
+   * Locates the Maven launcher on Windows by running {@code where.exe mvn.cmd}.
    *
-   * @param commandDir working directory for the probe command
-   * @return full path to {@code mvn.cmd}, or {@code null} if Maven is not found on the PATH
+   * @param commandDir the working directory for the probe command
+   * @return the path to {@code mvn.cmd}, or {@code null} if it is not found on the PATH
    * @throws IOException if {@code where.exe} cannot be executed
    */
   public static String inWindows (Path commandDir)
@@ -66,10 +67,10 @@ public class MavenCommandLocator {
   }
 
   /**
-   * Locate the Maven command on Linux using {@code where mvn}.
+   * Locates the Maven launcher on Linux by running {@code where mvn}.
    *
-   * @param commandDir working directory for the probe command
-   * @return full path to {@code mvn}, or {@code null} if Maven is not found on the PATH
+   * @param commandDir the working directory for the probe command
+   * @return the path to {@code mvn}, or {@code null} if it is not found on the PATH
    * @throws IOException if {@code where} cannot be executed
    */
   public static String inLinux (Path commandDir)

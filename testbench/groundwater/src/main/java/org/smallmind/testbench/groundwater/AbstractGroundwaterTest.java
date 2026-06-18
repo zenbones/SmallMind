@@ -40,11 +40,33 @@ import org.smallmind.testbench.docker.DockerApplications;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+/**
+ * TestNG base class that brings a set of {@link DockerApplication} fixtures up before a test class
+ * runs and tears them down afterward. Subclasses pass the applications they need to the constructor;
+ * the container lifecycle is then managed by the {@link BeforeClass} and {@link AfterClass} hooks.
+ *
+ * <p>Before starting anything, {@link #beforeClass()} waits — via
+ * {@link org.smallmind.testbench.condition.TestConditions#parallel}, with a thirty-second budget —
+ * for any leftover Kafka, MongoDB, MySQL, RabbitMQ, or Memcached containers from a prior run to be
+ * gone and for the GreenMail port {@code 8025} to be free, so a stale environment fails fast rather
+ * than colliding with the new fixtures.
+ *
+ * <p>The container lifecycle is owned by this class: containers it starts in {@link #beforeClass()}
+ * are the ones it stops in {@link #afterClass()}. A {@code null} or empty application list is
+ * permitted and turns both hooks into no-ops.
+ */
 public class AbstractGroundwaterTest {
 
   private final DockerApplication[] dockerApplications;
   private final String[] dockerContainerIds;
 
+  /**
+   * Records the applications this test class depends on and sizes the container-id tracking array
+   * accordingly. No containers are started here; that happens in {@link #beforeClass()}.
+   *
+   * @param dockerApplications the application fixtures to start before the class and stop after it;
+   * may be {@code null} or empty to manage no containers
+   */
   public AbstractGroundwaterTest (DockerApplication... dockerApplications) {
 
     this.dockerApplications = dockerApplications;
@@ -52,6 +74,14 @@ public class AbstractGroundwaterTest {
     dockerContainerIds = new String[(dockerApplications == null) ? 0 : dockerApplications.length];
   }
 
+  /**
+   * TestNG hook that verifies a clean environment and then starts every configured application,
+   * retaining each container id for teardown. Each container is named after the concrete test
+   * class's simple name. Does nothing when no applications were configured.
+   *
+   * @throws Exception if the pre-start absence checks time out, or if any container fails to start
+   * or become ready
+   */
   @BeforeClass
   public void beforeClass ()
     throws Exception {
@@ -71,6 +101,12 @@ public class AbstractGroundwaterTest {
     }
   }
 
+  /**
+   * TestNG hook that stops and removes every container started in {@link #beforeClass()}. Does
+   * nothing when no applications were configured.
+   *
+   * @throws Exception if stopping or removing a container fails
+   */
   @AfterClass
   public void afterClass ()
     throws Exception {

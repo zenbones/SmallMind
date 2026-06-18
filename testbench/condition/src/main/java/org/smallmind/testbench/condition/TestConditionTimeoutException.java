@@ -37,8 +37,20 @@ import java.util.Collection;
 import org.smallmind.nutsnbolts.lang.FormattedException;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
+/**
+ * Checked exception thrown by {@link TestConditions} when one or more {@link TestCondition}s remain
+ * unsatisfied after the allotted timeout elapses. The message lists each outstanding failure, as
+ * rendered by its {@link Object#toString()}, together with the timeout that was exceeded.
+ */
 public class TestConditionTimeoutException extends FormattedException {
 
+  /**
+   * Creates a timeout exception describing the conditions that never became satisfied.
+   *
+   * @param timeoutSeconds the timeout, in seconds, that was exceeded
+   * @param failureCollection the {@link TestConditionFailure}s still outstanding when the timeout
+   * elapsed; each is rendered via its {@link Object#toString()} into the message
+   */
   public TestConditionTimeoutException (int timeoutSeconds, Collection<TestConditionFailure> failureCollection) {
 
     super("Some test conditions(%s) failed the timeout(%d seconds)", Arrays.toString(MutationUtility.toArray(failureCollection, String.class, Object::toString)), timeoutSeconds);

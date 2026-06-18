@@ -54,27 +54,31 @@ import com.github.dockerjava.api.model.Volume;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Utility class for starting and stopping Docker containers in the science workbench
- * test environment. Missing images are pulled automatically. Port bindings, volume mounts,
- * and tmpfs configuration are applied from the {@link DockerApplication} descriptor.
+ * Static lifecycle operations for the container fixtures described by {@link DockerApplication}.
+ * The image is pulled automatically when it is not already present locally, and the port bindings,
+ * bind mounts, volume binds, and tmpfs mount declared by the application are applied when the
+ * container is created.
  *
- * <p>{@link #start} blocks until the container is running <em>and</em> all service ports
- * are accepting TCP connections, ensuring downstream test code does not need its own
- * readiness polling.
+ * <p>{@link #start} blocks until the container is running <em>and</em> every service port is
+ * accepting TCP connections, so callers receive a fixture that is ready to use without writing
+ * their own readiness polling. {@link #stop} kills and removes a container, tolerating one that is
+ * already stopped or already gone.
  */
 public class DockerApplications {
 
   /**
-   * Starts a container for the given application using the application's default container name,
-   * and waits until all service ports accept connections.
+   * Starts the application under its default container name, blocking until every service port
+   * accepts connections. Equivalent to {@link #start(String, String, DockerApplication, DockerPort...)}
+   * with the application's own name.
    *
-   * @param test        a test identifier embedded as a container label and environment variable
-   * @param application the application template describing the image, ports, and configuration
-   * @param ports       optional port overrides; when empty or {@code null} the application's
-   *                    default ports are used
-   * @return the Docker container ID of the newly started container
-   * @throws IOException          if a port liveness check or Docker client operation fails
-   * @throws InterruptedException if the calling thread is interrupted while waiting for readiness
+   * @param test an identifier for the owning test, recorded as a container label and as the
+   * {@code Test} environment variable
+   * @param application the fixture to start
+   * @param ports optional port overrides; when {@code null} or empty the application's default ports
+   * are used
+   * @return the id of the started container, for later passing to {@link #stop}
+   * @throws IOException if image inspection or pull, container creation, or a port readiness probe fails
+   * @throws InterruptedException if the thread is interrupted while pulling the image or awaiting readiness
    */
   public static String start (String test, DockerApplication application, DockerPort... ports)
     throws IOException, InterruptedException {
@@ -83,24 +87,24 @@ public class DockerApplications {
   }
 
   /**
-   * Starts a container for the given application under an explicit container name, and waits
-   * until all service ports accept connections. If the image is not present locally it is
-   * pulled before the container is created.
+   * Starts the application under an explicit container name, blocking until every service port
+   * accepts connections. The image is pulled first when it is not already present locally.
    *
-   * <p>Mount descriptors are applied with their read-only flag when the application specifies
-   * them. Volume binds are applied when the application specifies them. A tmpfs mount is applied
-   * when the application specifies one. Command overrides are applied when non-empty.
-   * A {@code test=<test>} label is added to the container for later identification.
+   * <p>The created container reflects the application's full recipe: bind mounts are applied with
+   * their read-only flag, volume binds with their access mode, a tmpfs mount when one is declared,
+   * and a command override when one is present. A {@code test=<test>} label is attached so the
+   * container can be attributed to its owning test. Once running, each service port is probed with a
+   * one-second TCP connect, and the method does not return until all of them succeed.
    *
-   * @param test        a test identifier embedded as a container label and environment variable
-   * @param name        the name to assign to the new container
-   * @param application the application template describing the image, ports, and configuration
-   * @param ports       optional port overrides; when empty or {@code null} the application's
-   *                    default ports are used
-   * @return the Docker container ID of the newly started container
-   * @throws IOException          if a port liveness check or Docker client operation fails
-   * @throws InterruptedException if the calling thread is interrupted while pulling the image
-   *                              or waiting for readiness
+   * @param test an identifier for the owning test, recorded as a container label and as the
+   * {@code Test} environment variable
+   * @param name the name to assign to the new container
+   * @param application the fixture to start
+   * @param ports optional port overrides; when {@code null} or empty the application's default ports
+   * are used
+   * @return the id of the started container, for later passing to {@link #stop}
+   * @throws IOException if image inspection or pull, container creation, or a port readiness probe fails
+   * @throws InterruptedException if the thread is interrupted while pulling the image or awaiting readiness
    */
   public static String start (String test, String name, DockerApplication application, DockerPort... ports)
     throws IOException, InterruptedException {
@@ -198,15 +202,14 @@ public class DockerApplications {
   }
 
   /**
-   * Kills and removes the container with the given ID. Waits for the container to reach a
-   * stopped state before issuing the remove command, then polls until the remove completes.
-   * Volumes associated with the container are removed along with it.
+   * Kills and removes a container, along with the volumes created for it. The container is first
+   * killed and polled until it is no longer running, then removed and polled until it is gone.
    *
-   * <p>This method tolerates containers that are already stopped or already removed —
-   * both cases are logged and treated as success.
+   * <p>A container that has already stopped or already been removed is treated as success and simply
+   * logged, so the method is safe to call in teardown regardless of the container's current state.
    *
-   * @param containerId the Docker container ID returned by {@link #start}
-   * @throws IOException if the Docker client cannot be created or an unexpected API error occurs
+   * @param containerId the id returned by {@link #start}
+   * @throws IOException if a Docker client cannot be created or an unexpected Docker API error occurs
    */
   public static void stop (String containerId)
     throws IOException {

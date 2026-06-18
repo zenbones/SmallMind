@@ -40,15 +40,19 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.PatternFormatter;
 
 /**
- * A static bootstrap utility that configures the Scribe logging system for use in automated tests,
- * installing a console appender with a {@link PatternFormatter} and {@link Level#DEBUG} threshold.
+ * One-call bootstrap that points the Scribe logging system at the console for automated tests.
+ * It is a convenience for test harnesses that want readable, debug-level log output without
+ * assembling a Scribe configuration by hand.
  */
 public class TestLoggerConfiguration {
 
   /**
-   * Registers a {@link DefaultTemplate} at {@link Level#DEBUG} with auto-filled logger context and a
-   * {@link PatternFormatter} that emits timestamp, level, class, method, line, thread, and message
-   * (including exception principal and stack trace) to standard output via a {@link ConsoleAppender}.
+   * Installs the test logging configuration by registering a {@link DefaultTemplate} at
+   * {@link Level#DEBUG} with auto-filled logger context. The template routes output through a
+   * {@link ConsoleAppender} whose {@link PatternFormatter} renders timestamp, level, class, method,
+   * line, thread, and message — including any exception principal and stack trace — to standard
+   * output. Intended to be called once during test setup; calling it again registers an additional
+   * template.
    */
   public static void setup () {
 

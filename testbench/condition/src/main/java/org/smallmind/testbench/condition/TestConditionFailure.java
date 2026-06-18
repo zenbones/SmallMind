@@ -32,6 +32,13 @@
  */
 package org.smallmind.testbench.condition;
 
+/**
+ * Marker type returned by {@link TestCondition#test()} to signal that a condition is not yet
+ * satisfied. The interface carries no methods; implementations describe the failure through their
+ * {@link Object#toString()} representation, which {@link TestConditionTimeoutException} renders into
+ * the timeout message. {@link MessageTestConditionFailure} is the common string-backed
+ * implementation.
+ */
 public interface TestConditionFailure {
 
 }

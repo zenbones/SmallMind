@@ -38,13 +38,13 @@ import java.nio.file.Paths;
 import com.github.dockerjava.api.model.AccessMode;
 
 /**
- * Value object describing a host-to-container volume bind mount. The host path is resolved
- * from the thread context classloader at construction time, with automatic Windows path
- * normalization applied. Throws {@link MissingHostResourceException} immediately if the
- * classpath resource cannot be located, catching configuration errors early.
+ * Immutable description of a host-to-container volume bind whose host side is a classpath resource.
+ * The resource is resolved against the thread context classloader at construction, and a resolution
+ * failure raises {@link MissingHostResourceException} right away, so a misconfigured fixture fails
+ * when it is declared rather than when the container is started.
  *
- * <p>Instances are created exclusively via the {@link #create(String, String, AccessMode)}
- * factory method.
+ * <p>Construct instances through {@link #create(String, String, AccessMode)}; the constructor is
+ * private.
  */
 public class DockerVolume {
 
@@ -53,10 +53,11 @@ public class DockerVolume {
   private final AccessMode accessMode;
 
   /**
-   * Private constructor — use {@link #create(String, String, AccessMode)} instead.
+   * Stores the already-resolved volume fields. Use {@link #create(String, String, AccessMode)}
+   * rather than calling this directly.
    *
-   * @param hostPath   the resolved absolute host filesystem path
-   * @param localPath  the absolute container-side mount path
+   * @param hostPath the resolved absolute host path
+   * @param localPath the absolute container-side mount path
    * @param accessMode the volume access mode ({@code ro} or {@code rw})
    */
   private DockerVolume (String hostPath, String localPath, AccessMode accessMode) {
@@ -67,16 +68,15 @@ public class DockerVolume {
   }
 
   /**
-   * Creates a new {@link DockerVolume} by resolving {@code hostResource} from the thread
-   * context classloader. The resulting URL is converted to an absolute OS path, with Windows
-   * paths normalized from the URL form to a drive-letter-prefixed backslash path.
+   * Creates a volume bind whose host side is resolved from a classpath resource. The resource is
+   * located via the thread context classloader and its URL converted to an absolute filesystem path.
    *
-   * @param hostResource the classpath-relative resource name to bind onto the container
-   * @param localPath    the absolute path inside the container where the volume is mounted
-   * @param accessMode   the volume access mode ({@code ro} or {@code rw})
-   * @return a new {@link DockerVolume} instance; never {@code null}
-   * @throws MissingHostResourceException if the classpath resource cannot be found by the
-   *                                      thread context classloader
+   * @param hostResource the classpath-relative resource name providing the host side of the bind
+   * @param localPath the absolute container path the volume is mounted at
+   * @param accessMode the volume access mode ({@code ro} or {@code rw})
+   * @return a new volume descriptor; never {@code null}
+   * @throws MissingHostResourceException if {@code hostResource} cannot be found on the classpath or
+   * its URL is malformed
    */
   public static DockerVolume create (String hostResource, String localPath, AccessMode accessMode) {
 
@@ -95,7 +95,7 @@ public class DockerVolume {
   }
 
   /**
-   * Returns the resolved absolute host filesystem path to bind into the container.
+   * Returns the resolved absolute host path bound into the container.
    *
    * @return the host path; never {@code null}
    */
@@ -105,7 +105,7 @@ public class DockerVolume {
   }
 
   /**
-   * Returns the absolute path inside the container where the host volume is mounted.
+   * Returns the absolute container path at which the host volume is mounted.
    *
    * @return the container-side mount path; never {@code null}
    */
@@ -115,9 +115,9 @@ public class DockerVolume {
   }
 
   /**
-   * Returns the access mode governing whether the container may write to this volume.
+   * Returns the access mode governing whether the container may write to the volume.
    *
-   * @return {@code AccessMode.ro} for read-only or {@code AccessMode.rw} for read-write
+   * @return {@link AccessMode#ro} for read-only or {@link AccessMode#rw} for read-write
    */
   public AccessMode getAccessMode () {
 

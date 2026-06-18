@@ -39,15 +39,33 @@ import com.github.dockerjava.api.model.Container;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.testbench.docker.DockerClientUtility;
 
+/**
+ * A {@link TestCondition} satisfied only when no Docker container matching any of the given names is
+ * present on the daemon. It is typically polled before a test starts its own containers, to ensure a
+ * previous run left nothing behind that would collide on container name or bound port.
+ */
 public class ContainerAbsentTestCondition implements TestCondition {
 
   private final String[] names;
 
+  /**
+   * Creates a condition that waits for the named containers to be gone.
+   *
+   * @param names the container names to watch for; the condition is satisfied only when none of
+   * them are present
+   */
   public ContainerAbsentTestCondition (String... names) {
 
     this.names = names;
   }
 
+  /**
+   * Queries the Docker daemon for any container matching the configured names.
+   *
+   * @return {@code null} when no matching container is present, or a
+   * {@link MessageTestConditionFailure} naming the container that is still around
+   * @throws Exception if a Docker client cannot be created or the container listing fails
+   */
   @Override
   public TestConditionFailure test ()
     throws Exception {

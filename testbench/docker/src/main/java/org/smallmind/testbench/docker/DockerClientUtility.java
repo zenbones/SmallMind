@@ -39,18 +39,19 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 
 /**
- * Utility class that creates a minimally configured {@link DockerClient} for use in
- * test fixtures. The Docker daemon URI is read from the {@code DOCKER_HOST} environment
- * variable; when absent it defaults to {@code tcp://localhost:2375}.
+ * Factory for the {@link DockerClient} used by the rest of this package to talk to the Docker
+ * daemon. The daemon location is taken from the {@code DOCKER_HOST} environment variable, falling
+ * back to {@code tcp://localhost:2375} when that variable is unset.
  */
 public class DockerClientUtility {
 
   /**
-   * Creates and returns a new {@link DockerClient} backed by an Apache HTTP/5 transport.
-   * The caller is responsible for closing the client when it is no longer needed
-   * (it implements {@link AutoCloseable}).
+   * Creates a new {@link DockerClient} over an Apache HTTP/5 transport, configured from
+   * {@code DOCKER_HOST} (or the {@code tcp://localhost:2375} default). The client is
+   * {@link AutoCloseable}; ownership transfers to the caller, who must close it when finished —
+   * typically with a try-with-resources block.
    *
-   * @return a configured, ready-to-use {@link DockerClient}
+   * @return a ready-to-use {@link DockerClient}
    */
   public static DockerClient createClient () {
 

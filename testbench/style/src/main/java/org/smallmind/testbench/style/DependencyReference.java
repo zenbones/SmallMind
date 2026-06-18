@@ -33,9 +33,10 @@
 package org.smallmind.testbench.style;
 
 /**
- * Immutable value object representing a Maven dependency coordinate parsed from
- * {@code mvn dependency:analyze} output. The expected textual format is colon-delimited:
- * {@code groupId:artifactId:classifier:version:scope}.
+ * Immutable Maven dependency coordinate parsed from one line of {@code mvn dependency:analyze}
+ * output, where the coordinate is colon-delimited as
+ * {@code groupId:artifactId:classifier:version:scope}. Consumed by {@link DependencyReducer} to
+ * decide which dependencies to add, remove, or re-scope.
  */
 public class DependencyReference {
 
@@ -46,13 +47,12 @@ public class DependencyReference {
   private final String scope;
 
   /**
-   * Parse a colon-delimited dependency reference.
+   * Parses a colon-delimited dependency coordinate, expecting the five fields
+   * {@code groupId:artifactId:classifier:version:scope} in that order.
    *
-   * <p>Expects exactly five colon-separated fields in the order
-   * {@code groupId:artifactId:classifier:version:scope}.
-   *
-   * @param reference the raw dependency string as produced by {@code mvn dependency:analyze}
-   * @throws ArrayIndexOutOfBoundsException if {@code reference} contains fewer than five fields
+   * @param reference the raw coordinate string as produced by {@code mvn dependency:analyze}
+   * @throws ArrayIndexOutOfBoundsException if {@code reference} contains fewer than five
+   * colon-separated fields
    */
   public DependencyReference (String reference) {
 
@@ -66,9 +66,9 @@ public class DependencyReference {
   }
 
   /**
-   * Returns the Maven {@code groupId} of this dependency.
+   * Returns the Maven {@code groupId}.
    *
-   * @return groupId, e.g. {@code org.smallmind}
+   * @return the groupId, such as {@code org.smallmind}
    */
   public String getGroupId () {
 
@@ -76,9 +76,9 @@ public class DependencyReference {
   }
 
   /**
-   * Returns the Maven {@code artifactId} of this dependency.
+   * Returns the Maven {@code artifactId}.
    *
-   * @return artifactId, e.g. {@code forge-deploy}
+   * @return the artifactId, such as {@code testbench-docker}
    */
   public String getArtifactId () {
 
@@ -86,9 +86,9 @@ public class DependencyReference {
   }
 
   /**
-   * Returns the Maven version of this dependency.
+   * Returns the Maven version.
    *
-   * @return version string as it appears in the analyze output
+   * @return the version as it appeared in the analyze output
    */
   public String getVersion () {
 
@@ -96,9 +96,9 @@ public class DependencyReference {
   }
 
   /**
-   * Returns the Maven classifier of this dependency.
+   * Returns the Maven classifier.
    *
-   * @return classifier string, or an empty string when no classifier is present
+   * @return the classifier field from the coordinate
    */
   public String getClassifier () {
 
@@ -106,9 +106,9 @@ public class DependencyReference {
   }
 
   /**
-   * Returns the Maven scope of this dependency.
+   * Returns the Maven scope.
    *
-   * @return scope string, e.g. {@code compile}, {@code test}, or {@code provided}
+   * @return the scope, such as {@code compile}, {@code test}, or {@code provided}
    */
   public String getScope () {
 

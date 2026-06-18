@@ -32,15 +32,30 @@
  */
 package org.smallmind.testbench.condition;
 
+/**
+ * A {@link TestConditionFailure} that simply carries a human-readable message. The message is
+ * surfaced verbatim through {@link #toString()}, which is how {@link TestConditionTimeoutException}
+ * incorporates the failure into its timeout report.
+ */
 public class MessageTestConditionFailure implements TestConditionFailure {
 
   private final String message;
 
+  /**
+   * Creates a failure carrying the given description.
+   *
+   * @param message text describing why the condition is not yet satisfied
+   */
   public MessageTestConditionFailure (String message) {
 
     this.message = message;
   }
 
+  /**
+   * Returns the failure message supplied at construction.
+   *
+   * @return the description of the unsatisfied condition
+   */
   @Override
   public String toString () {
 

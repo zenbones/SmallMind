@@ -32,9 +32,28 @@
  */
 package org.smallmind.testbench.condition;
 
+/**
+ * A single, repeatable precondition check evaluated by {@link TestConditions} before a test runs.
+ * A condition is expected to be polled: each call to {@link #test()} reports the <em>current</em>
+ * state of the world rather than waiting internally, leaving the retry-and-timeout loop to the
+ * caller.
+ *
+ * <p>This is a functional interface; implementations typically probe an external resource (a
+ * Docker container, a socket, a message broker) and report whether it has reached the desired
+ * state. Existing implementations include {@link ContainerAbsentTestCondition},
+ * {@link GreenmailAbsentTestCondition}, and {@link RabbitMQAvailableTestCondition}.
+ */
 @FunctionalInterface
 public interface TestCondition {
 
+  /**
+   * Evaluates the condition once against the current state of the world.
+   *
+   * @return {@code null} if the condition is satisfied, or a {@link TestConditionFailure}
+   * describing why it is not yet satisfied
+   * @throws Exception if the underlying probe cannot be carried out at all (as opposed to simply
+   * reporting an unsatisfied condition)
+   */
   TestConditionFailure test ()
     throws Exception;
 }

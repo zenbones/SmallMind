@@ -63,40 +63,48 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Runs {@code mvn dependency:analyze} on each module in a Maven project tree and rewrites the
- * affected {@code pom.xml} files to remove unused declared dependencies, add used-but-undeclared
- * dependencies, and narrow over-scoped dependencies to {@code test} scope. Hidden directories
- * (any path segment starting with {@code '.'}) and the project root itself are skipped.
+ * Maven-style enforcement tool that tidies dependency declarations across a project tree. For each
+ * module it runs {@code mvn dependency:analyze -N} and rewrites the module's {@code pom.xml} to drop
+ * unused declared dependencies, add ones used in source but not declared, and narrow dependencies
+ * that are only used in tests down to {@code test} scope. Hidden directories (any path segment
+ * starting with {@code '.'}) and the project root itself are skipped, and the resulting list is
+ * re-sorted into canonical order.
+ *
+ * <p>This is a developer command-line tool rather than a runtime library type; entry is through
+ * {@link #main(String...)} or, programmatically, {@link #walkProject(Path)}.
  */
 public class DependencyReducer {
 
   /**
-   * Parse states used while consuming sections of {@code mvn dependency:analyze} output.
+   * Tracks which section of {@code mvn dependency:analyze} output is currently being consumed as the
+   * report is read line by line.
    */
   private enum ParseState {
     /**
-     * Lines in this state are outside any recognized section and are discarded.
+     * Outside any recognized section; lines are discarded.
      */
     IGNORED,
     /**
-     * Lines in this state list dependencies used in compiled sources but absent from the pom.
+     * The "used undeclared" section: dependencies referenced by compiled sources but missing from the pom.
      */
     USED_UNDECLARED,
     /**
-     * Lines in this state list dependencies declared in the pom but absent from compiled sources.
+     * The "unused declared" section: dependencies declared in the pom but not referenced by compiled sources.
      */
     UNUSED_DECLARED,
     /**
-     * Lines in this state list dependencies declared with a broader scope than test-only usage requires.
+     * The "non-test scoped test only" section: dependencies used only by tests yet declared at a broader scope.
      */
     NON_TEST_SCOPED_TEST_ONLY
   }
 
   /**
-   * Command-line entry point.
+   * Command-line entry point that reduces the dependencies of the project tree rooted at the first
+   * argument.
    *
-   * @param args command-line arguments; {@code args[0]} must be the root path of the Maven project to process
-   * @throws IOException if file traversal or Maven execution fails
+   * @param args the command-line arguments; {@code args[0]} must be the root path of the Maven
+   * project to process
+   * @throws IOException if file traversal or a Maven invocation fails
    */
   static void main (String... args)
     throws IOException {
@@ -105,13 +113,15 @@ public class DependencyReducer {
   }
 
   /**
-   * Recursively visit every Maven module under {@code projectPath}, run {@code mvn dependency:analyze},
-   * and rewrite any {@code pom.xml} files that require corrections.
+   * Locates Maven, then visits every module directory beneath {@code projectPath} (those containing
+   * a {@code pom.xml}), runs {@code mvn dependency:analyze -N} in each, and rewrites the module's pom
+   * when the analysis reports corrections. Directories with a dot-prefixed path segment and the
+   * project root itself are skipped.
    *
-   * <p>Directories whose path contains a dot-prefixed segment and the project root itself are skipped.
-   *
-   * @param projectPath root of the Maven project tree to process
-   * @throws IOException if directory traversal, Maven process execution, or pom rewriting fails
+   * @param projectPath the root of the Maven project tree to process
+   * @throws IOException if directory traversal or a Maven invocation fails
+   * @throws RuntimeException if the Maven executable cannot be located, or wrapping a parse,
+   * transform, or write failure on an individual pom
    */
   public static void walkProject (Path projectPath)
     throws IOException {
@@ -176,12 +186,11 @@ public class DependencyReducer {
   }
 
   /**
-   * Locate the Maven executable for the current operating system.
+   * Resolves the Maven executable for the current operating system, delegating to
+   * {@link MavenCommandLocator#inWindows} on Windows and {@link MavenCommandLocator#inLinux}
+   * elsewhere.
    *
-   * <p>Delegates to {@link MavenCommandLocator#inWindows} on Windows or
-   * {@link MavenCommandLocator#inLinux} on all other platforms.
-   *
-   * @param commandDir working directory passed to the locator command
+   * @param commandDir the working directory for the locator probe
    * @return the absolute path to the Maven executable, or {@code null} if Maven is not on the PATH
    * @throws IOException if the operating-system probe command cannot be executed
    */
@@ -198,7 +207,8 @@ public class DependencyReducer {
   }
 
   /**
-   * Test whether any segment of {@code path} begins with a dot, indicating a hidden or internal directory.
+   * Reports whether any name component of {@code path} begins with a dot, marking it as a hidden or
+   * internal directory to skip.
    *
    * @param path the path to inspect
    * @return {@code true} if any name component starts with {@code '.'}, otherwise {@code false}
@@ -216,17 +226,18 @@ public class DependencyReducer {
   }
 
   /**
-   * Parse the pom at {@code pomPath}, apply the supplied dependency adjustments, and write the
-   * result back only if changes were made.
+   * Parses the pom at {@code pomPath}, applies the supplied dependency adjustments to its top-level
+   * {@code <dependencies>} element, and writes the result back only if something actually changed. A
+   * {@code <dependencies>} element left empty by the adjustments is removed entirely.
    *
-   * @param pomPath                   path to the {@code pom.xml} to update
-   * @param usedUndeclaredList        dependencies found in compiled sources but missing from the pom
-   * @param unusedDeclaredList        dependencies declared in the pom but absent from compiled sources
-   * @param nonTestScopedTestOnlyList dependencies that should be narrowed to {@code test} scope
-   * @throws IOException                  if the file cannot be read or written
-   * @throws SAXException                 if the XML cannot be parsed
-   * @throws ParserConfigurationException if a DOM builder cannot be created
-   * @throws TransformerException         if the updated document cannot be serialized
+   * @param pomPath the path to the {@code pom.xml} to update
+   * @param usedUndeclaredList dependencies referenced by sources but missing from the pom, to be added
+   * @param unusedDeclaredList dependencies declared in the pom but unused, to be removed
+   * @param nonTestScopedTestOnlyList dependencies to narrow to {@code test} scope
+   * @throws IOException if the file cannot be read or written
+   * @throws SAXException if the pom is not well-formed XML
+   * @throws ParserConfigurationException if a DOM parser cannot be created
+   * @throws TransformerException if the updated document cannot be serialized
    */
   private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
@@ -270,7 +281,7 @@ public class DependencyReducer {
     if (changed) {
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();
-      Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/forge/style/pretty-print.xslt")));
+      Transformer transformer = transformerFactory.newTransformer(new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/testbench/style/pretty-print.xslt")));
       DOMSource source = new DOMSource(doc);
       StreamResult result = new StreamResult(Files.newOutputStream(pomPath));
 
@@ -280,16 +291,17 @@ public class DependencyReducer {
   }
 
   /**
-   * Apply the three categories of dependency corrections to a {@code <dependencies>} DOM node.
+   * Applies the three categories of correction to a {@code <dependencies>} node: unused declared
+   * dependencies are removed, used-undeclared ones are added (via {@link #createDependencyElement}),
+   * and over-scoped ones have their {@code <scope>} set to {@code test}. When anything changed, the
+   * surviving dependencies are re-sorted into canonical order on a fresh replacement node.
    *
-   * <p>Unused declared dependencies are removed, used undeclared ones are added, and
-   * over-scoped dependencies have their scope changed to {@code test}. The resulting list is sorted.
-   *
-   * @param parentNode                the {@code <dependencies>} node to adjust
-   * @param usedUndeclaredList        dependencies to add
-   * @param unusedDeclaredList        dependencies to remove
-   * @param nonTestScopedTestOnlyList dependencies whose scope should be narrowed to {@code test}
-   * @return a replacement node with all adjustments applied, or {@code null} if no changes were needed
+   * @param parentNode the {@code <dependencies>} node to adjust
+   * @param usedUndeclaredList dependencies to add
+   * @param unusedDeclaredList dependencies to remove
+   * @param nonTestScopedTestOnlyList dependencies to narrow to {@code test} scope
+   * @return a replacement node with all adjustments applied and re-sorted, or {@code null} if no
+   * change was needed
    */
   private static Node adjustDependencies (Node parentNode, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList) {
 
@@ -368,14 +380,13 @@ public class DependencyReducer {
   }
 
   /**
-   * Build a minimal {@code <dependency>} DOM element from a parsed reference.
+   * Builds a minimal {@code <dependency>} element from a parsed reference, carrying only
+   * {@code <groupId>}, {@code <artifactId>}, and {@code <scope>} children; no {@code <version>} is
+   * emitted, on the assumption that the version is managed elsewhere.
    *
-   * <p>The generated element contains only {@code <groupId>}, {@code <artifactId>}, and
-   * {@code <scope>} children; no {@code <version>} is emitted.
-   *
-   * @param document            the DOM document that will own the new element
-   * @param dependencyReference the parsed reference providing groupId, artifactId, and scope
-   * @return a new {@code <dependency>} element populated with the reference values
+   * @param document the DOM document that will own the new element
+   * @param dependencyReference the reference supplying groupId, artifactId, and scope
+   * @return a new, unattached {@code <dependency>} element populated from the reference
    */
   private static Element createDependencyElement (Document document, DependencyReference dependencyReference) {
 

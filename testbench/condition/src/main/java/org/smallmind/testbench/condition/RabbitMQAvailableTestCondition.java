@@ -36,12 +36,25 @@ import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+/**
+ * A {@link TestCondition} satisfied once a RabbitMQ broker accepts an authenticated AMQP connection
+ * at a given address, used to wait for a freshly started broker to finish coming up before a test
+ * publishes or consumes. Progress is echoed to standard output as a {@code "Waiting for RabbitMQ..."}
+ * line followed by an incrementing attempt counter.
+ */
 public class RabbitMQAvailableTestCondition implements TestCondition {
 
   private final ConnectionFactory connectionFactory = new ConnectionFactory();
   private final Address address;
   private int count = 0;
 
+  /**
+   * Creates a condition that waits for the broker at {@code address} to accept the given credentials.
+   *
+   * @param userName the AMQP username to authenticate with
+   * @param password the AMQP password to authenticate with
+   * @param address the host and port of the broker to probe
+   */
   public RabbitMQAvailableTestCondition (String userName, String password, Address address) {
 
     this.address = address;
@@ -50,6 +63,15 @@ public class RabbitMQAvailableTestCondition implements TestCondition {
     connectionFactory.setPassword(password);
   }
 
+  /**
+   * Attempts to open and immediately close an AMQP connection to the configured broker.
+   *
+   * @return {@code null} when the connection succeeds (the broker is available), or a
+   * {@link MessageTestConditionFailure} when the connection attempt fails, having printed an
+   * incrementing attempt counter to standard output
+   * @throws Exception is declared by the contract but not thrown directly; connection failures are
+   * caught and reported as a {@link TestConditionFailure} instead
+   */
   @Override
   public TestConditionFailure test ()
     throws Exception {

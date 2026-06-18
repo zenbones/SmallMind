@@ -34,8 +34,19 @@ package org.smallmind.testbench.docker;
 
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+/**
+ * Unchecked exception raised when a host resource a Docker mount or volume depends on cannot be
+ * resolved on the classpath. {@link DockerMount} and {@link DockerVolume} throw this at construction
+ * time so a misconfigured fixture fails immediately rather than when the container is later started.
+ */
 public class MissingHostResourceException extends FormattedRuntimeException {
 
+  /**
+   * Creates the exception with a {@code printf}-style message.
+   *
+   * @param message the message template, in the {@link FormattedRuntimeException} format
+   * @param args the arguments substituted into {@code message}; commonly the unresolved resource name
+   */
   public MissingHostResourceException (String message, Object... args) {
 
     super(message, args);

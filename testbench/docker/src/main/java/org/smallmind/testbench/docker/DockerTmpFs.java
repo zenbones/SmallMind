@@ -33,11 +33,11 @@
 package org.smallmind.testbench.docker;
 
 /**
- * Value object describing a tmpfs mount to be applied to a Docker container.
- * Used to create fast, ephemeral in-memory filesystems for applications that perform
- * heavy disk I/O during testing (e.g., the MySQL data directory).
+ * Immutable description of a tmpfs (in-memory) mount for a Docker container, used to give I/O-heavy
+ * services a fast, ephemeral filesystem during testing — for instance the MySQL data directory in
+ * {@link DockerApplication#MYSQL}.
  *
- * <p>Instances are created exclusively via the {@link #create(String, String)} factory method.
+ * <p>Construct instances through {@link #create(String, String)}; the constructor is private.
  */
 public class DockerTmpFs {
 
@@ -45,10 +45,10 @@ public class DockerTmpFs {
   private final String parameters;
 
   /**
-   * Private constructor — use {@link #create(String, String)} instead.
+   * Stores the tmpfs fields. Use {@link #create(String, String)} rather than calling this directly.
    *
-   * @param path       the absolute container path to mount as tmpfs
-   * @param parameters the mount option string passed to the Docker daemon
+   * @param path the absolute container path mounted as tmpfs
+   * @param parameters the tmpfs mount options passed to the Docker daemon
    */
   private DockerTmpFs (String path, String parameters) {
 
@@ -57,11 +57,12 @@ public class DockerTmpFs {
   }
 
   /**
-   * Creates a new {@link DockerTmpFs} descriptor with the given path and mount parameters.
+   * Creates a tmpfs descriptor for the given container path and mount options.
    *
-   * @param path       the absolute container path to mount as tmpfs (e.g., {@code "/var/lib/mysql"})
-   * @param parameters mount options accepted by the Docker daemon (e.g., {@code "rw,noexec,nosuid,size=1024m"})
-   * @return a new {@link DockerTmpFs} instance; never {@code null}
+   * @param path the absolute container path to mount as tmpfs, such as {@code "/var/lib/mysql"}
+   * @param parameters the tmpfs mount options accepted by the Docker daemon, such as
+   * {@code "rw,noexec,nosuid,size=1024m"}
+   * @return a new tmpfs descriptor; never {@code null}
    */
   public static DockerTmpFs create (String path, String parameters) {
 
@@ -79,9 +80,9 @@ public class DockerTmpFs {
   }
 
   /**
-   * Returns the mount option string passed to the Docker daemon when creating the tmpfs.
+   * Returns the tmpfs mount options passed to the Docker daemon.
    *
-   * @return the mount parameters (e.g., {@code "rw,noexec,nosuid,size=1024m"}); never {@code null}
+   * @return the mount options, such as {@code "rw,noexec,nosuid,size=1024m"}; never {@code null}
    */
   public String getParameters () {
 
