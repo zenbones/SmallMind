@@ -1,0 +1,808 @@
+= SmallMind JavaFX
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:sectanchors:
+:sectlinks:
+
+[[overview]]
+== Overview
+
+The `smallmind-javafx` module is a small collection of JavaFX controls, panes,
+converters, and a live-charting toolkit that fill gaps left by the standard
+JavaFX control set. It is published as a single jar, `smallmind-javafx-extras`,
+under the parent `smallmind-javafx` aggregator. Every class is a thin, directly
+instantiable extension of an existing JavaFX type — a `Region`, a `TextField`,
+a `ChoiceBox`, a `TableColumn`, a `LineChart` — so each one drops into a normal
+scene graph without a framework, a builder DSL, or a container around it.
+
+The classes group into seven concerns:
+
+* a pair of *debouncing* wrappers that coalesce bursts of change/event
+  notifications into a single delivery on the JavaFX application thread;
+* *dialogs* for showing a stack trace or a warning with a project icon;
+* an *enum-aware* `ChoiceBox` and matching `StringConverter` family;
+* a *pattern-validated* text field;
+* a *property-backed* table column with display formatting;
+* an *image pane* that stretches a swappable `ImageView` to fill its bounds;
+* a JavaFX *bridge to the parabox layout engine* in `smallmind-nutsnbolts`;
+* an *instrument* package: self-updating charts that plot throughput, velocity,
+  and latency-percentile metrics over a scrolling wall-clock window, with
+  optional JMX-polling subclasses that read the same metric attributes a
+  SmallMind meter publishes.
+
+The module is deliberately narrow. It does not start the JavaFX runtime, own an
+`Application` subclass, define a theme, or assume a dependency-injection
+container. The caller owns the `Stage`, the scene, and the lifecycle; these
+classes are parts that get bolted into that scene.
+
+[[why-this-package-exists]]
+=== Why This Package Exists
+
+JavaFX ships a capable control set, but several recurring needs in a desktop
+operations or admin tool are left to the application author every time:
+
+. *Notification storms.* A property bound to a fast-changing model, or an event
+  source that fires on every keystroke or mouse move, can overwhelm a handler
+  that does real work (a query, a repaint, a network call). The JDK offers no
+  debounce primitive, so each application hand-rolls a timer, a "latest wins"
+  flag, and the marshalling back onto the FX thread.
+. *Showing an exception to a user.* `Throwable.printStackTrace` goes to a
+  stream, not a window. A usable error dialog needs a scrollable trace, a
+  sensible default size, an icon, and — often — a hook so the rest of the UI can
+  react when the dialog is dismissed. That is twenty lines of boilerplate per
+  application.
+. *Enums in controls.* Populating a `ChoiceBox` from an enum, sorting the
+  constants, hiding a few, and rendering `SOME_VALUE` as `Some Value` is a small
+  but repeated chore, as is the round-trip `StringConverter` a table cell needs.
+. *Constrained input.* Restricting a `TextField` to digits, a decimal number, or
+  any regular expression requires overriding `replaceText` and
+  `replaceSelection` and forecasting the post-edit value — easy to get subtly
+  wrong, especially for clipboard pastes.
+. *Cross-toolkit layout.* `smallmind-nutsnbolts` carries a platform-neutral
+  layout engine (parabox) whose measurement math is identical across Swing,
+  JavaFX, and the web. JavaFX needs a concrete `Region` and element adapter to
+  use it, so the same declarative `SerialBox`/`ParallelBox` layout can be reused
+  from a JavaFX front end.
+. *Live operational charts.* Watching a running service means watching its rate,
+  velocity, and latency-percentile metrics move in real time. JavaFX charts plot
+  static data well but have no notion of a scrolling time axis, no automatic
+  trimming of off-screen points, and no marshalling of background samples onto
+  the FX thread. Wiring those to a JMX `MBeanServerConnection` so the chart polls
+  a live meter is, again, per-application plumbing.
+
+`smallmind-javafx-extras` assembles answers to all seven, once, as concrete
+JavaFX types that the rest of an application can instantiate directly.
+
+[[at-a-glance]]
+== At A Glance
+
+[cols="1,2,2", options="header"]
+|===
+| Concern | Type(s) | Start here
+
+| Debounce change/event bursts
+| `ConsolidatingChangeListener`, `ConsolidatingEventHandler`
+| <<debouncing-wrappers,Debouncing Wrappers>>
+
+| Show an exception or warning
+| `JavaErrorDialog`, `WarningAlert`, `ErrorEvent`, `ImageNotFoundException`
+| <<dialogs,Dialogs>>
+
+| Enum-populated control + formatting
+| `EnumChoiceBox`, `EnumStringConverter`, `IndecipherableStringConverter`
+| <<enum-controls,Enum Controls And Converters>>
+
+| Validate typed/pasted input
+| `PatternTextField`
+| <<pattern-text-field,Pattern-Validated Text Field>>
+
+| Property-backed, formatted table column
+| `PropertyTableColumn`
+| <<table-column,Property Table Column>>
+
+| Stretch a swappable image
+| `ImageViewPane`
+| <<image-pane,Image View Pane>>
+
+| Reuse the parabox layout engine in JavaFX
+| `ParaboxPane`, `InsetsPane`, `JavaFxParaboxElement`, `JavaFxParaboxPlatform`, `Cut`
+| <<layout-bridge,Parabox Layout Bridge>>
+
+| Live, scrolling operational charts
+| `GaugeChart`, `VelocityChart`, `SigmaChart`, `TimeAxis`, plus `JMX*` pollers
+| <<instrument,The Instrument Charting Toolkit>>
+|===
+
+[[installation]]
+== Installation
+
+The module is one publishable jar. Applications add it directly:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.smallmind</groupId>
+  <artifactId>smallmind-javafx-extras</artifactId>
+  <version>${project.version}</version>
+</dependency>
+----
+
+`smallmind-javafx-extras` declares the JavaFX runtime artifacts it needs at
+compile scope, so adding the one dependency above pulls them transitively:
+
+[cols="2,3", options="header"]
+|===
+| Dependency | Why it is present
+
+| `org.openjfx:javafx-base`
+| Observable values, properties, and the `Event`/`EventHandler` types.
+
+| `org.openjfx:javafx-controls`
+| `ChoiceBox`, `TableColumn`, `TextField`, `Alert`, `Dialog`, the chart classes.
+
+| `org.openjfx:javafx-graphics`
+| `Region`, scene-graph nodes, `Image`, `ImageView`.
+
+| `org.jfxtras:jfxtras-all`
+| Supplies `jfxtras.util.PlatformUtil.runAndWait`, used by the debouncing
+  wrappers to dispatch synchronously on the FX thread.
+
+| `org.smallmind:scribe-pen`
+| Logging façade (`LoggerManager`) used to report failures in the shared
+  consolidation pass.
+
+| `org.smallmind:smallmind-nutsnbolts`
+| The parabox layout engine, `StringUtility`, `AlphaNumericComparator`, and
+  `FormattedRuntimeException`.
+|===
+
+The OpenJFX and jfxtras versions are pinned by the parent SmallMind BOM (OpenJFX
+`27-ea+20` at the time of writing); applications inherit them rather than naming
+them.
+
+[IMPORTANT]
+====
+JavaFX modular runtimes are platform-classified. When you build a runnable
+distribution you must supply the OpenJFX native jars for each target platform
+(`javafx-graphics:win`, `:mac`, `:linux`, and so on). This module depends on the
+classifier-less API jars only; selecting platform natives is the application's
+responsibility.
+====
+
+[[quick-start]]
+== Quick Start
+
+A minimal window using several of the pieces together:
+
+[source,java]
+----
+public class AdminApplication extends Application {
+
+  @Override
+  public void start (Stage stage) {
+
+    ParaboxPane root = new ParaboxPane();                               // <1>
+
+    EnumChoiceBox<Severity> severityBox = new EnumChoiceBox<>(Severity.class);
+    PatternTextField portField = new PatternTextField(Pattern.compile("\\d{0,5}"));
+
+    Button showError = new Button("Boom");
+    showError.setOnAction(event ->
+      JavaErrorDialog.showJavaErrorDialog(this, new IllegalStateException("example")));  // <2>
+
+    root.setHorizontalBox(
+      root.parallelBox(Alignment.LEADING)
+        .add(severityBox).add(portField).add(showError));              // <3>
+    root.setVerticalBox(
+      root.serialBox(Gap.RELATED)
+        .add(severityBox).add(portField).add(showError));
+
+    stage.setScene(new Scene(root));
+    stage.show();
+  }
+}
+----
+<1> `ParaboxPane` is a normal `Region`; it needs no builder and no container.
+<2> The static factory creates the dialog and blocks until it is dismissed.
+<3> A parabox layout is declared twice — once per axis — listing the same nodes;
+    the engine cross-references the two passes to position each node.
+
+[[conceptual-model]]
+== Conceptual Model
+
+A few invariants run through the whole module and are worth stating once.
+
+JavaFX application thread::
+    Every mutation of a live scene graph must happen on the JavaFX application
+    thread. The classes that accept data from other threads — the debouncing
+    wrappers and the charts — marshal that data onto the FX thread for you, so
+    you may feed them from a background poller, a scheduler, or a JMX callback
+    without wrapping each call in `Platform.runLater` yourself.
+
+Shared daemon executors::
+    The debouncing wrappers and the charting toolkit each own a *static*,
+    process-wide `ScheduledExecutorService` built from daemon threads. Daemon
+    status means these threads never block JVM exit. The trade-off is that the
+    debounce executors run for the life of the process; only the chart-related
+    executors expose a per-instance <<lifecycle,`stop()`>> to cancel their
+    scheduled task.
+
+Latest-wins consolidation::
+    Both debouncing wrappers keep only the most recent pending notification per
+    listener. A monotonically increasing *generation* counter, captured when a
+    notification is queued and checked again at dispatch time, guarantees that a
+    superseded notification is silently dropped rather than delivered late.
+
+Scrolling time window::
+    The charts share a single axis type, `TimeAxis`, that represents wall-clock
+    epoch-millisecond values and slides its `[lowerBound, upperBound]` window
+    forward once per second. Samples older than the lower bound are trimmed on
+    every update, so memory stays bounded by the visible span rather than by
+    uptime.
+
+Thin extension, caller-owned wiring::
+    Each public type *is* the JavaFX type it extends. There is no wrapper object
+    to unwrap, no lifecycle owner to register with, and no hidden global state
+    beyond the shared executors noted above. You add these nodes to a scene the
+    same way you add any JavaFX node.
+
+[[debouncing-wrappers]]
+== Debouncing Wrappers
+
+`ConsolidatingChangeListener<T>` and `ConsolidatingEventHandler<T extends Event>`
+wrap a delegate `ChangeListener`/`EventHandler` and forward to it only after a
+configurable quiet period has elapsed with no newer notification. They solve the
+"my handler does real work and the source fires too often" problem without a
+per-call-site timer.
+
+How it works:
+
+. Each incoming notification is stored in a shared `ConcurrentSkipListMap`,
+  keyed by an expiration timestamp (`now + consolidationTimeMillis`), the owning
+  wrapper, and a fresh generation number. A new notification for the same wrapper
+  supersedes the previous one because only the latest generation will match at
+  dispatch time.
+. A shared single-thread daemon scheduler runs every 250 ms, drains all entries
+  whose quiet window has elapsed, and for each entry whose stored generation
+  still equals the wrapper's current generation, dispatches the delegate
+  *synchronously on the FX thread* via `jfxtras.util.PlatformUtil.runAndWait`.
+. Any exception thrown by a dispatch pass is logged through `LoggerManager` and
+  swallowed, so one failing delivery cannot cancel the recurring task.
+
+[source,java]
+----
+TextField search = new TextField();
+
+ChangeListener<String> runQuery = (observable, oldValue, newValue) ->
+  reloadResultsFor(newValue);                                          // <1>
+
+search.textProperty().addListener(
+  new ConsolidatingChangeListener<>(300, runQuery));                   // <2>
+----
+<1> The delegate does expensive work and should not run on every keystroke.
+<2> Only the last value typed within any 300 ms quiet window reaches `runQuery`,
+    and it is delivered on the FX thread.
+
+The event variant is identical in shape:
+
+[source,java]
+----
+node.addEventHandler(MouseEvent.MOUSE_MOVED,
+  new ConsolidatingEventHandler<>(100, this::handleHover));            // <1>
+----
+<1> Rapid `MOUSE_MOVED` events collapse to one hover handling per 100 ms quiet
+    window.
+
+[NOTE]
+====
+The quiet window restarts on every notification: a source that never goes quiet
+for `consolidationTimeMillis` will never dispatch. Choose a window short enough
+that a continuously active source still settles between user actions. The 250 ms
+scheduler granularity also means effective latency is the quiet window rounded up
+to the next 250 ms tick.
+====
+
+[[dialogs]]
+== Dialogs
+
+The `org.smallmind.javafx.extras.dialog` package provides two ready-to-show
+dialogs and the event they fire.
+
+[[java-error-dialog]]
+=== JavaErrorDialog
+
+`JavaErrorDialog` is a resizable, modal `Dialog<ButtonType>` that renders the full
+stack trace of a `Throwable` inside a scrollable text area, sized 600×400 by
+default, with a bug icon and a single Close button. When the dialog hides it
+fires an `ErrorEvent` of type `ErrorEvent.OCCURRED` on its dialog pane, carrying
+the original source object and the throwable, so the rest of the UI can react to
+the dismissal.
+
+[source,java]
+----
+try {
+  riskyOperation();
+} catch (Exception exception) {
+  JavaErrorDialog.showJavaErrorDialog(this, exception);                // <1>
+}
+----
+<1> Creates the dialog and blocks until the user closes it, returning an
+    `Optional<ButtonType>`. Pass any object as the source; it is carried verbatim
+    in the resulting `ErrorEvent`.
+
+To react when the dialog closes, register a handler for the error event:
+
+[source,java]
+----
+JavaErrorDialog dialog = new JavaErrorDialog(this, exception);
+dialog.getDialogPane().addEventHandler(ErrorEvent.OCCURRED, event ->
+  log.warn("user dismissed error from {}", event.getExceptionSource()));
+dialog.showAndWait();
+----
+
+`ErrorEvent` exposes two event types: `ErrorEvent.ANY` (a wildcard parent that
+receives every variant) and `ErrorEvent.OCCURRED` (the specific type fired on
+dismissal). It carries `getExceptionSource()` (the source object, which may be
+`null`) and `getThrowable()` (the displayed throwable, never `null`).
+
+[[warning-alert]]
+=== WarningAlert
+
+`WarningAlert` is a pre-styled `Alert` of type `WARNING` with a custom warning
+icon and a single Close button.
+
+[source,java]
+----
+WarningAlert.showWarningAlert("The connection was lost; retrying.");   // <1>
+----
+<1> Creates the alert and blocks until Close is clicked, returning the chosen
+    `ButtonType` as an `Optional`.
+
+[[dialog-resources]]
+=== Dialog Icons
+
+Dialog icons load from the classpath at `org/smallmind/javafx/extras/dialog/`.
+The jar ships six icons — `dialog_bug.png`, `dialog_warning.png`,
+`dialog_info.png`, `dialog_progress.png`, `dialog_question.png`, and
+`dialog_stop.png` — of which the bug and warning images back `JavaErrorDialog`
+and `WarningAlert` respectively. `ImageNotFoundException`, an unchecked
+`FormattedRuntimeException`, exists to wrap the checked failure of loading such a
+resource so it can propagate through code that does not declare checked
+exceptions.
+
+[[enum-controls]]
+== Enum Controls And Converters
+
+[[enum-choice-box]]
+=== EnumChoiceBox
+
+`EnumChoiceBox<E extends Enum<E>>` is a `ChoiceBox` pre-populated with the
+constants of an enum, sorted alphabetically by their *display-case* names
+(`SOME_VALUE` renders as `Some Value`). Constants can be excluded, and an initial
+selection can be supplied; when none is given the first remaining entry is
+selected automatically. Sorting uses the nutsnbolts `AlphaNumericComparator`, so
+constants with embedded numbers order naturally.
+
+[source,java]
+----
+EnumChoiceBox<LogLevel> all = new EnumChoiceBox<>(LogLevel.class);     // <1>
+
+EnumChoiceBox<LogLevel> preset =
+  new EnumChoiceBox<>(LogLevel.class, LogLevel.WARN);                  // <2>
+
+EnumChoiceBox<LogLevel> filtered =
+  new EnumChoiceBox<>(LogLevel.class, List.of(LogLevel.OFF, LogLevel.TRACE));  // <3>
+----
+<1> All constants, sorted, first selected.
+<2> All constants, `WARN` selected initially.
+<3> `OFF` and `TRACE` omitted; first remaining constant selected.
+
+[[string-converters]]
+=== String Converters
+
+Two `StringConverter` helpers support enum and read-only display in tables and
+controls:
+
+`EnumStringConverter<E>`::
+    Renders an enum constant as a display-case string and parses it back via
+    `Enum.valueOf`. Note that `fromString` expects an exact constant name (for
+    example `SOME_VALUE`), not the display form `Some Value`, so it is suited to
+    round-trips that store the raw name.
+
+`IndecipherableStringConverter<T>`::
+    An abstract, display-only converter. Subclasses implement `toString` only;
+    `fromString` always throws `UnsupportedOperationException`. Use it for
+    read-only table columns where a cell value never needs to be parsed back
+    into a typed object.
+
+[source,java]
+----
+StringConverter<Instant> timestampColumn = new IndecipherableStringConverter<>() {
+
+  @Override
+  public String toString (Instant instant) {
+
+    return DateTimeFormatter.ISO_INSTANT.format(instant);
+  }
+};
+----
+
+[[pattern-text-field]]
+== Pattern-Validated Text Field
+
+`PatternTextField` is a `TextField` that admits an edit only when the *resulting*
+field value would match a configured `java.util.regex.Pattern`. It overrides both
+`replaceText` and `replaceSelection`, forecasting the post-edit string with a
+`StringBuilder` and testing it before allowing the change, so typed characters
+*and* clipboard pastes are validated identically. With no pattern set it behaves
+as a plain `TextField`.
+
+[source,java]
+----
+PatternTextField decimal =
+  new PatternTextField(Pattern.compile("-?\\d*(\\.\\d*)?"));           // <1>
+
+PatternTextField ipFragment =
+  new PatternTextField(Pattern.compile("\\d{0,3}"), "0");             // <2>
+
+decimal.setPattern(Pattern.compile("\\d*"));                          // <3>
+----
+<1> Accepts only text that forms a valid (possibly partial) signed decimal.
+<2> Starts with the value `0` and limits input to up to three digits.
+<3> The pattern can be swapped at runtime; the new pattern applies to the next
+    edit. `setPattern` returns the field for chaining.
+
+[NOTE]
+====
+The pattern is matched against the *whole* prospective value, not the inserted
+fragment, so write patterns that accept intermediate states (for example
+`\d{0,5}` rather than `\d{5}`) or the user will be unable to type the value one
+character at a time.
+====
+
+[[table-column]]
+== Property Table Column
+
+`PropertyTableColumn<S, T>` is a `TableColumn` that reads each cell value from a
+named JavaBean property of the row model (via JavaFX's `PropertyValueFactory`)
+and optionally formats it with a `StringConverter`. Cells are rendered through a
+`TextFieldTableCell`, aligned by a configurable `Pos` (default
+`Pos.CENTER_LEFT`), and the converter — when present — is applied whenever the
+cell is neither empty nor in edit mode.
+
+[source,java]
+----
+TableView<Server> table = new TableView<>();
+
+table.getColumns().add(
+  new PropertyTableColumn<>("Host", "hostName"));                      // <1>
+
+table.getColumns().add(
+  new PropertyTableColumn<>("State", "state",
+    new EnumStringConverter<>(ServerState.class)));                    // <2>
+
+table.getColumns().add(
+  new PropertyTableColumn<>("Latency", "latencyMillis", Pos.CENTER_RIGHT));  // <3>
+----
+<1> Header `Host`, bound to `Server.getHostName()`, left-aligned, no formatting.
+<2> An enum property rendered in display case via `EnumStringConverter`.
+<3> A numeric property, right-aligned, no converter.
+
+[[image-pane]]
+== Image View Pane
+
+`ImageViewPane` is a `Region` that hosts a single `ImageView` and, on every
+layout pass, resizes the view to fill the pane's bounds and centres it. The
+hosted view is exposed as an observable `ObjectProperty<ImageView>`; setting a
+new value automatically removes the old view from the scene graph and adds the
+replacement, so the displayed image can be swapped at runtime.
+
+[source,java]
+----
+ImageViewPane pane =
+  new ImageViewPane(new ImageView(new Image("logo.png")));             // <1>
+
+pane.setImageView(new ImageView(new Image("logo-dark.png")));          // <2>
+
+pane.imageViewProperty().addListener((obs, oldView, newView) ->        // <3>
+  log.debug("image swapped"));
+----
+<1> Construct with an initial view, or pass `null` to start empty.
+<2> Swapping replaces the displayed image and updates the scene graph in one call.
+<3> The property is observable, so other nodes can bind to or watch the change.
+
+[[layout-bridge]]
+== Parabox Layout Bridge
+
+The `org.smallmind.javafx.extras.layout` package is the JavaFX adapter for the
+platform-neutral parabox layout engine in `smallmind-nutsnbolts` (see
+xref:NUTSNBOLTS.adoc[NutsNBolts], the `layout` package). The engine performs the
+same three-pass (minimum / preferred / maximum) measurement math regardless of
+GUI toolkit; this package supplies the JavaFX-specific pieces so a layout defined
+once can be reused across Swing, JavaFX, or the web.
+
+[cols="1,3", options="header"]
+|===
+| Type | Role
+
+| `ParaboxPane`
+| A `Region` that *is* a `ParaboxContainer<Node>`. You declare layout by setting
+  a horizontal and a vertical root `Box`; the pane delegates size computation and
+  child placement to an internal `ParaboxLayout` and keeps scene-graph membership
+  in sync with the layout's registrations.
+
+| `JavaFxParaboxElement`
+| Wraps a single `Node` so the engine can query its min/pref/max sizes and apply
+  computed geometry through `Node.resizeRelocate`.
+
+| `JavaFxParaboxPlatform`
+| Supplies JavaFX default spacing — 5 px related gap, 10 px unrelated gap, a 10 px
+  frame perimeter, horizontal-first left-to-right orientation.
+
+| `InsetsPane`
+| A simpler `Region` that wraps its managed children with fixed `Insets`,
+  reporting padded size hints and resizing each child to fill the area inside the
+  insets. Useful for a quick uniform border without a full parabox layout.
+
+| `Cut`
+| An enum (`MINIMUM`, `PREFERRED`, `MAXIMUM`) selecting which measurement variant
+  `InsetsPane` requests from a child along an axis.
+|===
+
+A parabox layout is declared per axis. The same nodes are listed in both the
+horizontal and vertical boxes; the engine correlates the two passes to place each
+node:
+
+[source,java]
+----
+ParaboxPane pane = new ParaboxPane();                                  // <1>
+
+Label nameLabel = new Label("Name:");
+TextField nameField = new TextField();
+
+pane.setHorizontalBox(
+  pane.serialBox(Gap.RELATED)
+    .add(nameLabel)
+    .add(nameField, Constraint.stretch()));                            // <2>
+
+pane.setVerticalBox(
+  pane.parallelBox(Alignment.BASELINE)
+    .add(nameLabel)
+    .add(nameField));                                                  // <3>
+----
+<1> Use `new ParaboxPane(Insets)` to override the default 10 px frame perimeter.
+<2> Horizontally the label and field run in series; the field stretches to
+    consume slack via `Constraint.stretch()`.
+<3> Vertically they share one parallel group aligned on their text baselines.
+
+`InsetsPane` covers the simpler case of a single padded child:
+
+[source,java]
+----
+ScrollPane scroll = new ScrollPane();
+scroll.setContent(new InsetsPane(new Insets(3, 3, 3, 3), bodyText));   // <1>
+----
+<1> The body text is inset 3 px on every side and resized to fill the remainder —
+    the same construction `JavaErrorDialog` uses internally.
+
+[[instrument]]
+== The Instrument Charting Toolkit
+
+The `org.smallmind.javafx.extras.instrument` package is the largest and most
+distinctive part of the module: a set of charts for watching a running service's
+metrics move in real time. They are built for the metric vocabulary a SmallMind
+meter publishes — throughput *rate*, *velocity*, and latency *percentile*
+distributions — but the base charts accept plain data records and can be driven
+from any source.
+
+[[instrument-model]]
+=== The Model
+
+`TimeAxis`::
+    A `ValueAxis<Long>` over wall-clock epoch milliseconds. It maintains a
+    fixed-width sliding window (the `spanInMilliseconds` you construct it with),
+    advancing the lower and upper bounds once per second from a shared daemon
+    scheduler. Tick labels render as `HH:mm:ss` in the system time zone, with
+    major ticks every 15 seconds and minor ticks every 5 seconds. Advancement —
+    and therefore the visible window — freezes while the `paused` property is
+    `true`. Call `stop()` to cancel its scheduled task. `EndPoints<T>` is the
+    immutable `(low, high)` record it returns from `getRange()`.
+
+Data records::
+    `Measure` (rate), `Blur` (velocity), and `Dispersion` (latency percentiles)
+    are immutable records, each a snapshot sampled at one instant. `Measure` and
+    `Blur` carry four rolling-window averages — lifetime, 15-, 5-, and
+    1-minute — so a single chart can compare long- and short-term trends.
+    `Dispersion` carries the median and the 75th, 95th, 98th, 99th, and 99.9th
+    percentiles.
+
+Base charts::
+    `GaugeChart` (a `LineChart`) plots a `Measure`'s four rate windows;
+    `VelocityChart` (a `LineChart`) plots a `Blur`'s four velocity windows;
+    `SigmaChart` (a `StackedAreaChart`) plots a `Dispersion` as stacked bands,
+    where each series is the *incremental gap* between adjacent percentile
+    thresholds so the stack height equals the full latency spread. Each base
+    chart owns a `TimeAxis`, exposes its `paused` property, trims off-screen
+    points on every update, and marshals all data mutations onto the FX thread
+    with `Platform.runLater`. Each ships a CSS stylesheet
+    (`GaugeChart.css`, `VelocityChart.css`, `SigmaChart.css`) it loads itself.
+
+JMX pollers::
+    `JMXGaugeChart`, `JMXVelocityChart`, and `JMXSigmaChart` extend the base
+    charts and add a scheduled poller that reads metric attributes from an MBean
+    every 15 seconds (starting one second after construction) over a supplied
+    `MBeanServerConnection`. On any polling error the chart pauses itself and
+    shows a `JavaErrorDialog` on the FX thread.
+
+[[instrument-base-usage]]
+=== Driving A Base Chart Directly
+
+Feed samples from any source — a local meter, a callback, a test harness — and
+the chart handles thread marshalling and trimming:
+
+[source,java]
+----
+GaugeChart chart = new GaugeChart(TimeUnit.MINUTES.toMillis(5));       // <1>
+stage.setScene(new Scene(chart));
+
+// from any thread, at whatever cadence you choose:
+chart.addMeasure(System.currentTimeMillis(),
+  new Measure(avgRate, oneMinute, fiveMinute, fifteenMinute));         // <2>
+
+chart.setPaused(true);                                                 // <3>
+chart.stop();                                                          // <4>
+----
+<1> A five-minute visible window. Older points scroll off the left and are
+    trimmed.
+<2> `addMeasure` is safe to call off the FX thread; it enqueues the update via
+    `Platform.runLater`. `SigmaChart.addDispersion` and `VelocityChart.addBlur`
+    are the equivalents for the other two charts.
+<3> Pausing freezes the time axis; the chart stops scrolling and the JMX pollers
+    (below) treat paused as "skip this sample."
+<4> `stop()` cancels the time-axis scheduler. Call it when the chart is discarded
+    to release the background task.
+
+[[instrument-jmx-usage]]
+=== Polling A Live MBean
+
+The JMX subclasses turn a chart into a self-updating monitor. Each expects a
+specific set of attributes on the target MBean — the names a SmallMind meter
+publishes:
+
+[cols="1,3", options="header"]
+|===
+| Chart | Required MBean attributes
+
+| `JMXGaugeChart`
+| `RateTimeUnit` (read once, to label the Y axis), then `AverageRate`,
+  `OneMinuteAvgRate`, `FiveMinuteAvgRate`, `FifteenMinuteAvgRate`.
+
+| `JMXVelocityChart`
+| `AverageVelocity`, `OneMinuteAvgVelocity`, `FiveMinuteAvgVelocity`,
+  `FifteenMinuteAvgVelocity`.
+
+| `JMXSigmaChart`
+| `Median`, `75thPercentile`, `95thPercentile`, `98thPercentile`,
+  `99thPercentile`, `999thPercentile`.
+|===
+
+[source,java]
+----
+MBeanServerConnection connection =
+  JMXConnectorFactory.connect(serviceUrl).getMBeanServerConnection();  // <1>
+ObjectName meter = new ObjectName("org.smallmind:type=Meter,name=requests");
+
+JMXGaugeChart chart =
+  new JMXGaugeChart(TimeUnit.MINUTES.toMillis(15), connection, meter); // <2>
+stage.setScene(new Scene(chart));
+
+// on shutdown:
+chart.stop();                                                          // <3>
+----
+<1> Any `MBeanServerConnection` works — local platform server or a remote
+    `JMXConnector`.
+<2> The chart immediately reads `RateTimeUnit` to label its axis (throwing
+    `IllegalStateException` if that attribute is missing) and schedules polling
+    every 15 seconds.
+<3> `stop()` cancels the poller *and* the time-axis task. Always call it; the
+    pollers run on shared daemon threads that otherwise keep sampling.
+
+[IMPORTANT]
+====
+A JMX poller catches every exception from a sample, pauses the chart, and shows a
+`JavaErrorDialog`. Because the chart pauses on the first failure, a transient JMX
+hiccup stops the chart permanently until you call `setPaused(false)`. Treat the
+error dialog as a signal to inspect the connection, not as a self-healing retry.
+====
+
+[[lifecycle]]
+== Lifecycle, Threading, And Ownership
+
+JavaFX runtime::
+    This module never starts or stops the JavaFX runtime and defines no
+    `Application`. The caller owns the platform lifecycle, the `Stage`, and the
+    scene.
+
+FX-thread marshalling::
+    The debouncing wrappers and all charts accept input from any thread and
+    dispatch onto the FX thread internally. Every other class is an ordinary
+    JavaFX node and must be constructed and mutated on the FX thread like any
+    control.
+
+Background threads and `stop()`::
+    `TimeAxis`, the base charts, and the JMX charts each schedule work on a
+    shared daemon `ScheduledExecutorService`. Each exposes `stop()` to cancel its
+    own scheduled task — call it when the chart leaves the scene. The
+    consolidating wrappers' 250 ms scheduler is shared and process-lived; there
+    is no per-wrapper shutdown, which is acceptable because the wrappers hold no
+    heavy resources and the thread is a daemon.
+
+Pause semantics::
+    Pausing a chart (or its `TimeAxis`) freezes the visible window and causes JMX
+    pollers to skip samples. It does not stop the background scheduler; only
+    `stop()` does that.
+
+[[limitations]]
+== Limitations And Known Issues
+
+`JMXVelocityChart` polls the one-minute attribute three times::
+    Its attribute array names `OneMinuteAvgVelocity` for the five- and
+    fifteen-minute slots as well as the one-minute slot, so the three shorter
+    series all plot the one-minute value and the chart does not show distinct 5-
+    and 15-minute velocity curves. The class Javadoc states the intended
+    attributes (`FiveMinuteAvgVelocity`, `FifteenMinuteAvgVelocity`); the array
+    does not yet match. Verify against the source before relying on those series.
+
+JMX error dialogs are permanent pauses::
+    The first sampling error pauses the chart and shows a dialog; sampling does
+    not resume until the caller sets `paused` back to `false`. There is no
+    automatic retry or backoff.
+
+Consolidation latency is quantised to 250 ms::
+    The shared scheduler wakes every 250 ms, so the effective debounce delay is
+    the configured quiet window rounded up to the next tick. A continuously
+    active source that never quiets for a full window is never dispatched.
+
+`EnumStringConverter.fromString` expects raw constant names::
+    `toString` produces display case (`Some Value`) but `fromString` parses raw
+    constant names (`SOME_VALUE`). The two are not inverses; the converter suits
+    round-trips that persist the raw name rather than the displayed text.
+
+No theme or skin::
+    Beyond the three chart CSS files the module loads for its own charts, it
+    provides no application theme. Styling the rest of the scene is the caller's
+    responsibility.
+
+[[defaults-reference]]
+== Defaults Reference
+
+[cols="2,2,3", options="header"]
+|===
+| Setting | Default | Where
+
+| Consolidation scheduler tick | 250 ms | `ConsolidatingChangeListener`, `ConsolidatingEventHandler`
+| `JavaErrorDialog` size | 600 × 400, resizable | `JavaErrorDialog`
+| `PropertyTableColumn` alignment | `Pos.CENTER_LEFT` | `PropertyTableColumn`
+| Parabox related gap | 5.0 px | `JavaFxParaboxPlatform`
+| Parabox unrelated gap | 10.0 px | `JavaFxParaboxPlatform`
+| Parabox frame perimeter | 10 px all sides | `JavaFxParaboxPlatform`
+| Parabox orientation | horizontal, first-to-last | `JavaFxParaboxPlatform`
+| `TimeAxis` advance interval | 1 second | `TimeAxis`
+| `TimeAxis` major / minor ticks | 15 s / 5 s | `TimeAxis`
+| `TimeAxis` label format | `HH:mm:ss`, system zone | `TimeAxis`
+| JMX poll interval | 15 s, first sample after 1 s | `JMX*Chart`
+|===
+
+[[see-also]]
+== See Also
+
+* xref:NUTSNBOLTS.adoc[NutsNBolts] — the parabox layout engine, `StringUtility`,
+  and `FormattedRuntimeException` this module builds on.
+* xref:SCRIBE.adoc[Scribe] — the `LoggerManager` façade used to report
+  consolidation failures.
+* https://openjfx.io/[OpenJFX] — the JavaFX runtime these classes extend.
+* https://jfxtras.org/[JFXtras] — source of `PlatformUtil.runAndWait`.
+</content>
+</invoke>

@@ -25,6 +25,7 @@ The following documentation covers each functional area of the framework:
 * link:CLAXON.adoc[Claxon] — Alerting and notification infrastructure
 * link:DOPPELGANGER.adoc[Doppelganger] — Object cloning and transformation utilities
 * link:FILE.adoc[File] — File handling and storage abstractions
+* link:JAVAFX.adoc[JavaFX] — JavaFX controls, dialogs, a parabox layout bridge, and live metric charts
 * link:KAFKA.adoc[Kafka] — Apache Kafka producer and consumer integration
 * link:LIQUIBASE.adoc[Liquibase] — Database schema migration support via Liquibase
 * link:MEMCACHED.adoc[Memcached] — Memcached client integration and caching abstractions
