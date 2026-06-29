@@ -217,14 +217,14 @@ public class TimeUtility {
   }
 
   /**
-   * Formats a {@link LocalDateTime} as an ISO-8601 offset date-time string.
+   * Formats a {@link LocalDateTime} as an ISO-8601 offset date-time string with system default time-zone.
    *
    * @param localDateTime the local date-time to format, or {@code null}
-   * @return the ISO-8601 offset date-time string, or {@code null} if {@code localDateTime} is {@code null}
+   * @return the ISO-8601 offset date-time string in the system default zone, or {@code null} if {@code localDateTime} is {@code null}
    */
   public static String format (LocalDateTime localDateTime) {
 
-    return (localDateTime == null) ? null : ISO_OFFSET_DATE_TIME_FORMATTER.format(localDateTime);
+    return (localDateTime == null) ? null : ISO_OFFSET_DATE_TIME_FORMATTER.format(localDateTime.atZone(ZoneId.systemDefault()));
   }
 
   /**
