@@ -66,7 +66,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   public Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException {
 
-    return read(codec, JsonCodec.readAsJsonNode(buffer));
+    return read(codec, JsonCodec.instance().readAsJsonNode(buffer));
   }
 
   /**
@@ -81,7 +81,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   public Message<V>[] read (Codec<V> codec, String data)
     throws IOException {
 
-    return read(codec, JsonCodec.readAsJsonNode(data));
+    return read(codec, JsonCodec.instance().readAsJsonNode(data));
   }
 
   /**
@@ -144,7 +144,7 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
   public Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException {
 
-    return walk(factory, JsonCodec.writeAsJsonNode(object));
+    return walk(factory, JsonCodec.instance().writeAsJsonNode(object));
   }
 
   /**

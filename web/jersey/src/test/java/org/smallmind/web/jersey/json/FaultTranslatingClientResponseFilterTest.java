@@ -86,7 +86,7 @@ public class FaultTranslatingClientResponseFilterTest {
     throws Exception {
 
     Fault fault = new Fault(new IllegalStateException("native boom"));
-    byte[] body = JsonCodec.writeAsBytes(fault);
+    byte[] body = JsonCodec.instance().writeAsBytes(fault);
 
     try {
       new FaultTranslatingClientResponseFilter().filter(null, mockResponse(500, MediaType.APPLICATION_JSON_TYPE, true, body));
@@ -101,7 +101,7 @@ public class FaultTranslatingClientResponseFilterTest {
     throws Exception {
 
     Fault fault = new Fault(new RuntimeException("no native"), false);
-    byte[] body = JsonCodec.writeAsBytes(fault);
+    byte[] body = JsonCodec.instance().writeAsBytes(fault);
 
     try {
       new FaultTranslatingClientResponseFilter().filter(null, mockResponse(404, MediaType.APPLICATION_JSON_TYPE, true, body));

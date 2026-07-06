@@ -110,13 +110,13 @@ public class AttributedPolymorphicXmlAdapterTest {
   @Test(expectedExceptions = JAXBProcessingException.class)
   public void testUnmarshalMissingAttributeFails () {
 
-    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.readAsJsonNode("{\"legs\":4}"));
+    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.instance().readAsJsonNode("{\"legs\":4}"));
   }
 
   @Test(expectedExceptions = JAXBProcessingException.class)
   public void testUnmarshalUnknownDiscriminatorFails () {
 
-    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.readAsJsonNode("{\"" + PolymorphicAttributeManager.getPolymorphicAttributeName() + "\":\"fish\"}"));
+    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.instance().readAsJsonNode("{\"" + PolymorphicAttributeManager.getPolymorphicAttributeName() + "\":\"fish\"}"));
   }
 
   @Test(expectedExceptions = JAXBProcessingException.class)

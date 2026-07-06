@@ -62,7 +62,7 @@ import org.testng.annotations.Test;
  * path composition supplied by {@link JsonTargetFactory}.
  *
  * <p>The round-trip assertions deserialize the JSON response body into the {@link Echo} POJO via
- * {@code JsonCodec.read(byte[], Class)}, confirming the full request-through-response path returns a typed object.
+ * {@code JsonCodec.instance().read(byte[], Class)}, confirming the full request-through-response path returns a typed object.
  */
 @Test(groups = "integration")
 public class JsonTargetNetworkTest {

@@ -274,7 +274,7 @@ public class JsonTarget {
 
     LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response));
 
-    return JsonCodec.read(bodyContent, responseClass);
+    return JsonCodec.instance().read(bodyContent, responseClass);
   }
 
   private SimpleHttpRequest createHttpRequest (HttpMethod httpMethod, JsonBody jsonBody) {

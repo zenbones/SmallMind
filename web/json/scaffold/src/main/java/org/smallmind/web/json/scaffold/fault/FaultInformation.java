@@ -71,7 +71,7 @@ public class FaultInformation implements Serializable {
 
     this.code = code;
     this.template = template;
-    this.arguments = (ArrayNode)JsonCodec.writeAsJsonNode(arguments);
+    this.arguments = (ArrayNode)JsonCodec.instance().writeAsJsonNode(arguments);
   }
 
   /**
@@ -129,7 +129,7 @@ public class FaultInformation implements Serializable {
     Object[] convertedArguments = new Object[arguments.size()];
 
     for (int index = 0; index < arguments.size(); index++) {
-      convertedArguments[index] = JsonCodec.convert(arguments.get(index), classes[index]);
+      convertedArguments[index] = JsonCodec.instance().convert(arguments.get(index), classes[index]);
     }
 
     return convertedArguments;
@@ -151,7 +151,7 @@ public class FaultInformation implements Serializable {
       throw new IndexOutOfBoundsException(index + ">" + ((arguments == null) ? 0 : arguments.size()));
     }
 
-    return JsonCodec.convert(arguments.get(index), clazz);
+    return JsonCodec.instance().convert(arguments.get(index), clazz);
   }
 
   /**

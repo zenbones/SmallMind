@@ -175,7 +175,7 @@ public class Page<T> implements Iterable<T> {
       int index = 0;
 
       for (Object obj : getValues()) {
-        convertedArray[index++] = JsonCodec.convert(obj, componentClass);
+        convertedArray[index++] = JsonCodec.instance().convert(obj, componentClass);
       }
 
       values = convertedArray;

@@ -142,7 +142,7 @@ public class JWTConsumer {
       if (this.isNestedJwt(joseObject)) {
         workingJwt = payload;
       } else {
-        jwtClaims = JsonCodec.read(payload, claimsClass);
+        jwtClaims = JsonCodec.instance().read(payload, claimsClass);
       }
 
       joseObjects.addFirst(joseObject);

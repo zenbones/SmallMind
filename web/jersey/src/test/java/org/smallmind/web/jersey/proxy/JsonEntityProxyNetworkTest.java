@@ -213,7 +213,7 @@ public class JsonEntityProxyNetworkTest {
     Assert.assertEquals(recordedRequest.method(), "POST");
     Assert.assertEquals(recordedRequest.uri(), "/v1/sample-service/lookup");
 
-    Envelope envelope = JsonCodec.read(recordedRequest.body().getBytes(StandardCharsets.UTF_8), Envelope.class);
+    Envelope envelope = JsonCodec.instance().read(recordedRequest.body().getBytes(StandardCharsets.UTF_8), Envelope.class);
 
     Assert.assertEquals(envelope.get("id"), "abc");
     // The adapter marshals the Integer 3 into a string of 3 'x' characters before it is enveloped.
@@ -232,7 +232,7 @@ public class JsonEntityProxyNetworkTest {
 
     Assert.assertEquals(recordedRequest.uri(), "/v1/sample-service/custom-path");
 
-    Envelope envelope = JsonCodec.read(recordedRequest.body().getBytes(StandardCharsets.UTF_8), Envelope.class);
+    Envelope envelope = JsonCodec.instance().read(recordedRequest.body().getBytes(StandardCharsets.UTF_8), Envelope.class);
 
     Assert.assertEquals(envelope.get("id"), "xyz");
   }
@@ -263,10 +263,10 @@ public class JsonEntityProxyNetworkTest {
     SampleResource resource = generate();
 
     resource.lookup("first", 1);
-    Envelope firstEnvelope = JsonCodec.read(lastRequestRef.get().body().getBytes(StandardCharsets.UTF_8), Envelope.class);
+    Envelope firstEnvelope = JsonCodec.instance().read(lastRequestRef.get().body().getBytes(StandardCharsets.UTF_8), Envelope.class);
 
     resource.lookup("second", 2);
-    Envelope secondEnvelope = JsonCodec.read(lastRequestRef.get().body().getBytes(StandardCharsets.UTF_8), Envelope.class);
+    Envelope secondEnvelope = JsonCodec.instance().read(lastRequestRef.get().body().getBytes(StandardCharsets.UTF_8), Envelope.class);
 
     Assert.assertEquals(firstEnvelope.get("id"), "first");
     Assert.assertEquals(firstEnvelope.get("size"), "x");

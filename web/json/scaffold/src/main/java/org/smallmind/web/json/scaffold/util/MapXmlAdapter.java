@@ -74,7 +74,7 @@ public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapte
       M map = getEmptyMap();
 
       for (MapKeyValue<K, V> mapKeyValue : array) {
-        map.put(JsonCodec.convert(mapKeyValue.getKey(), getKeyClass()), JsonCodec.convert(mapKeyValue.getValue(), getValueClass()));
+        map.put(JsonCodec.instance().convert(mapKeyValue.getKey(), getKeyClass()), JsonCodec.instance().convert(mapKeyValue.getValue(), getValueClass()));
       }
 
       return map;

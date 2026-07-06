@@ -81,7 +81,7 @@ public class PathComponent {
   public void createArguments (String argumentSubPath)
     throws IOException {
 
-    arguments = JsonCodec.read('[' + argumentSubPath.strip() + ']', Object[].class);
+    arguments = JsonCodec.instance().read('[' + argumentSubPath.strip() + ']', Object[].class);
   }
 
   /**

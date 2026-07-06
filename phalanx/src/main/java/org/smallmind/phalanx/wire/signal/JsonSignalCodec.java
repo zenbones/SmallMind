@@ -88,7 +88,7 @@ public class JsonSignalCodec implements SignalCodec {
   @Override
   public byte[] encode (Signal signal) {
 
-    byte[] bytes = JsonCodec.writeAsBytes(signal);
+    byte[] bytes = JsonCodec.instance().writeAsBytes(signal);
 
     if (verbose) {
       LoggerManager.getLogger(JsonSignalCodec.class).log(verboseLogLevel, "=>%s", new StringConverter(bytes));
@@ -117,7 +117,7 @@ public class JsonSignalCodec implements SignalCodec {
       LoggerManager.getLogger(JsonSignalCodec.class).log(verboseLogLevel, "<=%s", new StringConverter(buffer, offset, len));
     }
 
-    return JsonCodec.read(buffer, offset, len, signalClass);
+    return JsonCodec.instance().read(buffer, offset, len, signalClass);
   }
 
   /**
@@ -132,7 +132,7 @@ public class JsonSignalCodec implements SignalCodec {
   @Override
   public <T> T extractObject (Object value, Class<T> clazz) {
 
-    return JsonCodec.convert(value, clazz);
+    return JsonCodec.instance().convert(value, clazz);
   }
 
   /**

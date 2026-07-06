@@ -94,7 +94,7 @@ public class MapXmlAdapterTest {
   @Test(expectedExceptions = RuntimeException.class)
   public void testSimpleMapAdapterRejectsNonObject () {
 
-    new SimpleAdapter().unmarshal(JsonCodec.readAsJsonNode("[1,2,3]"));
+    new SimpleAdapter().unmarshal(JsonCodec.instance().readAsJsonNode("[1,2,3]"));
   }
 
   public static class PairMapAdapter extends MapXmlAdapter<HashMap<String, Integer>, String, Integer> {

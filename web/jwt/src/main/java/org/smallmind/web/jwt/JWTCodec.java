@@ -70,7 +70,7 @@ public class JWTCodec {
 
     JsonWebSignature jws = new JsonWebSignature();
 
-    jws.setPayloadBytes(JsonCodec.writeAsBytes(claims));
+    jws.setPayloadBytes(JsonCodec.instance().writeAsBytes(claims));
     jws.setHeader(HeaderParameterNames.TYPE, "JWT");
     jws.setKey(keyMaster.getKey());
     jws.setAlgorithmHeaderValue(keyMaster.getEncryptionAlgorithm().getCode());

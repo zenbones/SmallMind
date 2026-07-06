@@ -118,7 +118,7 @@ public class BeanReflectorEdgeTest {
     throws BeanAccessException {
 
     // NOTE: executeMethod's argument-conversion catch only handles IllegalArgumentException (the
-    // Jackson 2.x conversion-failure type). Under Jackson 3.x, JsonCodec.convert raises a
+    // Jackson 2.x conversion-failure type). Under Jackson 3.x, JsonCodec.instance().convert raises a
     // MismatchedInputException (a JacksonException, not an IllegalArgumentException), so the failure
     // is NOT downgraded to a "no matching method" miss but escapes raw. This pins current behavior.
     BeanReflector.apply(new ReflectorEdgeBean(), "needsNumber", new Object());

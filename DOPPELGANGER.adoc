@@ -241,8 +241,8 @@ public class UserResource {
 ----
 
 The generated classes are plain JAXB/Jackson POJOs. They serialise with
-`JsonCodec.writeAsBytes(...)` and deserialise with
-`JsonCodec.readAsObject(..., UserCreateIn.class)` without further wiring.
+`JsonCodec.instance().writeAsBytes(...)` and deserialise with
+`JsonCodec.instance().readAsObject(..., UserCreateIn.class)` without further wiring.
 
 == Conceptual Model
 

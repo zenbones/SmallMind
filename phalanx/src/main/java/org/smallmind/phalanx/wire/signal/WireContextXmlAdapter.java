@@ -74,7 +74,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
           Class<? extends WireContext> contextClass;
 
           if ((contextClass = WireContextManager.getContextClass(topEntry.getKey())) != null) {
-            contextList.add(JsonCodec.convert(topEntry.getValue(), contextClass));
+            contextList.add(JsonCodec.instance().convert(topEntry.getValue(), contextClass));
           } else {
             contextList.add(new ProtoWireContext(topEntry.getKey(), topEntry.getValue()));
           }
@@ -111,7 +111,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
-        objectNode.set(((ProtoWireContext)wireContext).getSkin(), JsonCodec.writeAsJsonNode(((ProtoWireContext)wireContext).getGuts()));
+        objectNode.set(((ProtoWireContext)wireContext).getSkin(), JsonCodec.instance().writeAsJsonNode(((ProtoWireContext)wireContext).getGuts()));
         arrayNode.add(objectNode);
       } else {
 
@@ -119,7 +119,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
         XmlRootElement xmlRootElementAnnotation = wireContext.getClass().getAnnotation(XmlRootElement.class);
 
-        objectNode.set((xmlRootElementAnnotation == null) ? wireContext.getClass().getSimpleName() : xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(wireContext));
+        objectNode.set((xmlRootElementAnnotation == null) ? wireContext.getClass().getSimpleName() : xmlRootElementAnnotation.name(), JsonCodec.instance().writeAsJsonNode(wireContext));
         arrayNode.add(objectNode);
       }
     }

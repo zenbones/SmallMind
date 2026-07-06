@@ -30,45 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.version;
+package org.smallmind.web.json.scaffold.util.spring;
 
-import java.io.IOException;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.springframework.beans.factory.InitializingBean;
+import tools.jackson.databind.JacksonModule;
 
 /**
- * Contract for version enum constants that know how to serialize and deserialize the {@link Versioned}
- * type they govern.
- *
- * @param <V> concrete version enum type that implements this interface
+ * Spring {@link InitializingBean} that extends the shared {@link JsonCodec} with additional Jackson
+ * modules. When the bean is initialized, the configured modules are layered on top of the
+ * {@link JsonCodec#standardMapperBuilder() standard mapper configuration} and the resulting mapper is
+ * installed as the active codec, so every subsequent {@link JsonCodec#instance()} lookup uses the
+ * extended configuration.
  */
-public interface Version<V extends Enum<V> & Version<V>> {
+public class JsonCodecInitializingBean implements InitializingBean {
+
+  private JacksonModule[] additionalModules;
 
   /**
-   * @return class of the {@link Versioned} type associated with this version
-   */
-  Class<? extends Versioned<V>> getVersionedClass ();
-
-  /**
-   * Deserializes a JSON string into the {@link Versioned} type for this version.
+   * Sets the Jackson modules to register with the {@link JsonCodec} when the bean is initialized.
    *
-   * @param json JSON payload
-   * @return deserialized instance
-   * @throws IOException if parsing or binding fails
+   * @param additionalModules the modules to add on top of the standard mapper configuration
    */
-  default Versioned<V> fromJson (String json)
-    throws IOException {
+  public void setAdditionalModules (JacksonModule[] additionalModules) {
 
-    return JsonCodec.instance().read(json, getVersionedClass());
+    this.additionalModules = additionalModules;
   }
 
   /**
-   * Serializes a {@link Versioned} instance to a compact JSON string.
+   * Rebuilds the shared {@link JsonCodec} from the {@link JsonCodec#standardMapperBuilder() standard
+   * builder} with the configured modules added and installs it as the active codec.
    *
-   * @param versioned instance to serialize
-   * @return JSON representation
+   * @throws Exception if building the mapper or installing the codec fails
    */
-  default String toJson (Versioned<V> versioned) {
+  @Override
+  public void afterPropertiesSet ()
+    throws Exception {
 
-    return JsonCodec.instance().writeAsString(versioned);
+    JsonCodec.redefine(JsonCodec.standardMapperBuilder().addModules(additionalModules).build());
   }
 }

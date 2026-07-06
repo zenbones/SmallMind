@@ -86,13 +86,13 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
     if (Boolean.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.BOOLEAN);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Byte.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.BYTE);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Character.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.CHARACTER);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (LocalDateTime.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DATE);
       value = JsonNodeFactory.instance.arrayNode();
@@ -101,22 +101,22 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
       }
     } else if (Double.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DOUBLE);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Float.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.FLOAT);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Integer.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.INTEGER);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Long.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.LONG);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Short.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.SHORT);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (String.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.STRING);
-      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+      value = (ArrayNode)JsonCodec.instance().writeAsJsonNode(array);
     } else if (Enum.class.isAssignableFrom(componentClass)) {
       hint = new EnumHint((Class<? extends Enum>)componentClass);
       value = JsonNodeFactory.instance.arrayNode();
@@ -194,7 +194,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Boolean[] booleanArray = new Boolean[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                booleanArray[index] = JsonCodec.convert(value.get(index), Boolean.class);
+                booleanArray[index] = JsonCodec.instance().convert(value.get(index), Boolean.class);
               }
 
               return booleanArray;
@@ -203,7 +203,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Byte[] byteArray = new Byte[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                byteArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Byte.class);
+                byteArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), Byte.class);
               }
 
               return byteArray;
@@ -215,7 +215,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
                 String string;
 
-                characterArray[index] = (value.get(index) == null) ? null : (string = JsonCodec.convert(value.get(index), String.class)).isEmpty() ? null : string.charAt(0);
+                characterArray[index] = (value.get(index) == null) ? null : (string = JsonCodec.instance().convert(value.get(index), String.class)).isEmpty() ? null : string.charAt(0);
               }
 
               return characterArray;
@@ -224,7 +224,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               LocalDateTime[] dates = new LocalDateTime[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                dates[index] = (value.get(index) == null) ? null : LOCAL_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class));
+                dates[index] = (value.get(index) == null) ? null : LOCAL_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.instance().convert(value.get(index), String.class));
               }
 
               return dates;
@@ -233,7 +233,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Double[] doubleArray = new Double[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                doubleArray[index] = JsonCodec.convert(value.get(index), Double.class);
+                doubleArray[index] = JsonCodec.instance().convert(value.get(index), Double.class);
               }
 
               return doubleArray;
@@ -242,7 +242,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Float[] floatArray = new Float[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                floatArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Float.class);
+                floatArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), Float.class);
               }
 
               return floatArray;
@@ -251,7 +251,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Integer[] integerArray = new Integer[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                integerArray[index] = JsonCodec.convert(value.get(index), Integer.class);
+                integerArray[index] = JsonCodec.instance().convert(value.get(index), Integer.class);
               }
 
               return integerArray;
@@ -260,7 +260,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Long[] longArray = new Long[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                longArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Long.class);
+                longArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), Long.class);
               }
 
               return longArray;
@@ -269,7 +269,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               Short[] shortArray = new Short[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                shortArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Short.class);
+                shortArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), Short.class);
               }
 
               return shortArray;
@@ -278,7 +278,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               String[] stringArray = new String[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                stringArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), String.class);
+                stringArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), String.class);
               }
 
               return stringArray;
@@ -293,7 +293,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
             Object[] enumArray = new Object[value.size()];
 
             for (int index = 0; index < value.size(); index++) {
-              enumArray[index] = (value.get(index) == null) ? null : Enum.valueOf(enumClass, JsonCodec.convert(value.get(index), String.class));
+              enumArray[index] = (value.get(index) == null) ? null : Enum.valueOf(enumClass, JsonCodec.instance().convert(value.get(index), String.class));
             }
 
             return enumArray;

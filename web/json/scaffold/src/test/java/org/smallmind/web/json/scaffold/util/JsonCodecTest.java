@@ -52,7 +52,7 @@ public class JsonCodecTest {
     point.setX(3);
     point.setY(7);
 
-    Point recovered = JsonCodec.read(JsonCodec.writeAsBytes(point), Point.class);
+    Point recovered = JsonCodec.instance().read(JsonCodec.instance().writeAsBytes(point), Point.class);
 
     Assert.assertEquals(recovered.getX(), 3);
     Assert.assertEquals(recovered.getY(), 7);
@@ -64,7 +64,7 @@ public class JsonCodecTest {
     point.setX(11);
     point.setY(13);
 
-    Point recovered = JsonCodec.read(JsonCodec.writeAsString(point), Point.class);
+    Point recovered = JsonCodec.instance().read(JsonCodec.instance().writeAsString(point), Point.class);
 
     Assert.assertEquals(recovered.getX(), 11);
     Assert.assertEquals(recovered.getY(), 13);
@@ -72,7 +72,7 @@ public class JsonCodecTest {
 
   public void testConvertFromMap () {
 
-    Point point = JsonCodec.convert(Map.of("x", 5, "y", 9), Point.class);
+    Point point = JsonCodec.instance().convert(Map.of("x", 5, "y", 9), Point.class);
 
     Assert.assertEquals(point.getX(), 5);
     Assert.assertEquals(point.getY(), 9);
@@ -80,7 +80,7 @@ public class JsonCodecTest {
 
   public void testReadAsJsonNode () {
 
-    JsonNode node = JsonCodec.readAsJsonNode("{\"x\":1,\"y\":2}");
+    JsonNode node = JsonCodec.instance().readAsJsonNode("{\"x\":1,\"y\":2}");
 
     Assert.assertEquals(node.get("x").intValue(), 1);
     Assert.assertEquals(node.get("y").intValue(), 2);
@@ -88,8 +88,8 @@ public class JsonCodecTest {
 
   public void testCopyIsDeepAndIndependent () {
 
-    JsonNode original = JsonCodec.readAsJsonNode("{\"outer\":{\"inner\":1},\"list\":[1,2]}");
-    JsonNode copy = JsonCodec.copy(original);
+    JsonNode original = JsonCodec.instance().readAsJsonNode("{\"outer\":{\"inner\":1},\"list\":[1,2]}");
+    JsonNode copy = JsonCodec.instance().copy(original);
 
     Assert.assertEquals(copy, original);
     Assert.assertNotSame(copy, original);
@@ -98,13 +98,13 @@ public class JsonCodecTest {
 
   public void testCopyOfNullIsNull () {
 
-    Assert.assertNull(JsonCodec.copy(null));
+    Assert.assertNull(JsonCodec.instance().copy(null));
   }
 
   public void testPrettyPrintedStringSortsFields () {
 
-    JsonNode node = JsonCodec.readAsJsonNode("{\"banana\":1,\"apple\":2}");
-    String pretty = JsonCodec.writeAsPrettyPrintedString(node);
+    JsonNode node = JsonCodec.instance().readAsJsonNode("{\"banana\":1,\"apple\":2}");
+    String pretty = JsonCodec.instance().writeAsPrettyPrintedString(node);
 
     Assert.assertTrue(pretty.indexOf("apple") < pretty.indexOf("banana"), pretty);
   }

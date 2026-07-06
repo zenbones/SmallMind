@@ -62,7 +62,7 @@ public class JsonBody {
    */
   public JsonBody (Envelope envelope) {
 
-    this.bodyAsBytes = JsonCodec.writeAsBytes(envelope);
+    this.bodyAsBytes = JsonCodec.instance().writeAsBytes(envelope);
     this.contentType = ContentType.APPLICATION_JSON;
   }
 
@@ -73,7 +73,7 @@ public class JsonBody {
    */
   public JsonBody (Object obj) {
 
-    this.bodyAsBytes = JsonCodec.writeAsBytes(obj);
+    this.bodyAsBytes = JsonCodec.instance().writeAsBytes(obj);
     this.contentType = ContentType.APPLICATION_JSON;
   }
 

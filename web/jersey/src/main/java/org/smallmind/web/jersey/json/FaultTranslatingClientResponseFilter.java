@@ -92,7 +92,7 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
       Fault fault;
       NativeObject nativeObject;
 
-      if (((nativeObject = (fault = JsonCodec.read(responseContext.getEntityStream(), Fault.class)).getNativeObject()) != null) && nativeObject.getLanguage().equals(NativeLanguage.JAVA)) {
+      if (((nativeObject = (fault = JsonCodec.instance().read(responseContext.getEntityStream(), Fault.class)).getNativeObject()) != null) && nativeObject.getLanguage().equals(NativeLanguage.JAVA)) {
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(nativeObject.getBytes()); ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
           try {
             throw new ResourceInvocationException((Throwable)objectInputStream.readObject());

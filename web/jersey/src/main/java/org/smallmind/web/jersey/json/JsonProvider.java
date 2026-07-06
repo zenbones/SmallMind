@@ -91,7 +91,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   public Object readFrom (Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
     throws IOException, WebApplicationException {
 
-    return JsonCodec.read(entityStream, type);
+    return JsonCodec.instance().read(entityStream, type);
   }
 
   /**
@@ -127,7 +127,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
     WRITE_BUFFER_LOCAL.set(new ByteArrayOutputStream());
 
     try {
-      JsonCodec.writeToStream(WRITE_BUFFER_LOCAL.get(), o);
+      JsonCodec.instance().writeToStream(WRITE_BUFFER_LOCAL.get(), o);
 
       return WRITE_BUFFER_LOCAL.get().size();
     } catch (Throwable throwable) {

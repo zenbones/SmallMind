@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedList;
@@ -49,31 +48,112 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * Centralized Jackson-backed facade providing static helpers for reading, writing, converting, and
- * copying JSON trees and POJOs.
+ * Centralized Jackson-backed facade for reading, writing, converting, and copying JSON trees and
+ * POJOs. The codec is exposed as a mutable singleton: retrieve the active instance through
+ * {@link #instance()} and invoke the reading and writing methods on it. The backing
+ * {@link ObjectMapper} can be replaced at startup through {@link #redefine(ObjectMapper)}, and
+ * {@link #standardMapperBuilder()} hands back a fresh, pre-configured builder so callers can layer
+ * additional modules on top of the standard configuration.
  */
 public class JsonCodec {
 
   private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>();
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
-                                                      // TODO: Bring back when fixed
-                                                      // AfterBurner fails with Jackson 3.x parsing implemented methods of an interface (multiple definitions of method <methode> found)
-                                                      // .addModule(new AfterburnerModule())
-                                                      .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
-                                                      .addModule(new PolymorphicModule())
-                                                      .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME).build();
+  private static JsonCodec INSTANCE = new JsonCodec();
+  private final ObjectMapper objectMapper;
+
+  private JsonCodec () {
+
+    this(standardMapperBuilder().build());
+  }
+
+  private JsonCodec (ObjectMapper objectMapper) {
+
+    this.objectMapper = objectMapper;
+  }
+
+  /**
+   * Returns a fresh, pre-configured {@link JsonMapper.Builder} matching the standard codec
+   * configuration. A new builder is constructed on each call, so additional modules or features can
+   * be layered onto it — typically to build a customized {@link ObjectMapper} for installation
+   * through {@link #redefine(ObjectMapper)} — without disturbing the shared instance or other callers.
+   *
+   * @return a fresh, pre-configured mapper builder
+   */
+  public static JsonMapper.Builder standardMapperBuilder () {
+
+    return JsonMapper.builder()
+             // TODO: Bring back when fixed
+             // AfterBurner fails with Jackson 3.x parsing implemented methods of an interface (multiple definitions of method <methode> found)
+             // .addModule(new AfterburnerModule())
+             .addModule(new JakartaXmlBindAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL))
+             .addModule(new PolymorphicModule())
+             .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME);
+  }
+
+  /**
+   * Returns the codec currently installed as the shared singleton.
+   *
+   * @return the active {@code JsonCodec} instance
+   */
+  public static JsonCodec instance () {
+
+    return INSTANCE;
+  }
+
+  /**
+   * Installs a new shared codec backed by the supplied {@link ObjectMapper}, replacing the previous
+   * singleton so that subsequent calls to {@link #instance()} return the new codec. Doing this can
+   * come as a surprise to all callers, and the intention is that this is engaged *once*, very early in
+   * your service life cycle.
+   *
+   * @param objectMapper the mapper to back the new codec
+   * @return the newly installed {@code JsonCodec} instance
+   */
+  public static JsonCodec redefine (ObjectMapper objectMapper) {
+
+    INSTANCE = new JsonCodec(objectMapper);
+
+    return INSTANCE;
+  }
+
+  /**
+   * Recursively sorts the field names of object nodes using an alphanumeric comparator.
+   *
+   * @param node node to sort
+   * @return a new object node with sorted fields, or the original node for non-object types
+   */
+  private JsonNode sort (JsonNode node) {
+
+    if (node == null) {
+
+      return null;
+    } else if (node.isObject()) {
+
+      ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+      LinkedList<String> sortedPropertyNameList = new LinkedList<>(node.propertyNames());
+
+      sortedPropertyNameList.sort(ALPHA_NUMERIC_COMPARATOR);
+
+      for (String sortedPropertyName : sortedPropertyNameList) {
+        objectNode.set(sortedPropertyName, sort(node.get(sortedPropertyName)));
+      }
+
+      return objectNode;
+    } else {
+
+      return node;
+    }
+  }
 
   /**
    * Parses a JSON byte array into a {@link JsonNode}.
    *
    * @param bytes JSON payload
    * @return parsed tree node
-   * @throws IOException if parsing fails
    */
-  public static JsonNode readAsJsonNode (byte[] bytes)
-    throws IOException {
+  public JsonNode readAsJsonNode (byte[] bytes) {
 
-    return OBJECT_MAPPER.readTree(bytes);
+    return objectMapper.readTree(bytes);
   }
 
   /**
@@ -82,9 +162,9 @@ public class JsonCodec {
    * @param aString JSON payload
    * @return parsed tree node
    */
-  public static JsonNode readAsJsonNode (String aString) {
+  public JsonNode readAsJsonNode (String aString) {
 
-    return OBJECT_MAPPER.readTree(aString);
+    return objectMapper.readTree(aString);
   }
 
   /**
@@ -92,12 +172,10 @@ public class JsonCodec {
    *
    * @param inputStream stream containing JSON data
    * @return parsed tree node
-   * @throws IOException if reading or parsing fails
    */
-  public static JsonNode readAsJsonNode (InputStream inputStream)
-    throws IOException {
+  public JsonNode readAsJsonNode (InputStream inputStream) {
 
-    return OBJECT_MAPPER.readTree(inputStream);
+    return objectMapper.readTree(inputStream);
   }
 
   /**
@@ -107,12 +185,10 @@ public class JsonCodec {
    * @param clazz target class
    * @param <T>   target type
    * @return deserialized object
-   * @throws IOException if parsing or binding fails
    */
-  public static <T> T read (byte[] bytes, Class<T> clazz)
-    throws IOException {
+  public <T> T read (byte[] bytes, Class<T> clazz) {
 
-    return OBJECT_MAPPER.readValue(bytes, clazz);
+    return objectMapper.readValue(bytes, clazz);
   }
 
   /**
@@ -124,12 +200,10 @@ public class JsonCodec {
    * @param clazz  target class
    * @param <T>    target type
    * @return deserialized object
-   * @throws IOException if parsing or binding fails
    */
-  public static <T> T read (byte[] bytes, int offset, int len, Class<T> clazz)
-    throws IOException {
+  public <T> T read (byte[] bytes, int offset, int len, Class<T> clazz) {
 
-    return OBJECT_MAPPER.readValue(bytes, offset, len, clazz);
+    return objectMapper.readValue(bytes, offset, len, clazz);
   }
 
   /**
@@ -140,9 +214,9 @@ public class JsonCodec {
    * @param <T>     target type
    * @return deserialized object
    */
-  public static <T> T read (String aString, Class<T> clazz) {
+  public <T> T read (String aString, Class<T> clazz) {
 
-    return OBJECT_MAPPER.readValue(aString, clazz);
+    return objectMapper.readValue(aString, clazz);
   }
 
   /**
@@ -152,12 +226,10 @@ public class JsonCodec {
    * @param clazz       target class
    * @param <T>         target type
    * @return deserialized object
-   * @throws IOException if reading or binding fails
    */
-  public static <T> T read (InputStream inputStream, Class<T> clazz)
-    throws IOException {
+  public <T> T read (InputStream inputStream, Class<T> clazz) {
 
-    return OBJECT_MAPPER.readValue(inputStream, clazz);
+    return objectMapper.readValue(inputStream, clazz);
   }
 
   /**
@@ -167,12 +239,10 @@ public class JsonCodec {
    * @param clazz  target class
    * @param <T>    target type
    * @return deserialized object
-   * @throws IOException if parsing or binding fails
    */
-  public static <T> T read (JsonParser parser, Class<T> clazz)
-    throws IOException {
+  public <T> T read (JsonParser parser, Class<T> clazz) {
 
-    return OBJECT_MAPPER.readValue(parser, clazz);
+    return objectMapper.readValue(parser, clazz);
   }
 
   /**
@@ -183,9 +253,9 @@ public class JsonCodec {
    * @param <T>   target type
    * @return converted POJO
    */
-  public static <T> T read (JsonNode node, Class<T> clazz) {
+  public <T> T read (JsonNode node, Class<T> clazz) {
 
-    return OBJECT_MAPPER.treeToValue(node, clazz);
+    return objectMapper.treeToValue(node, clazz);
   }
 
   /**
@@ -194,9 +264,9 @@ public class JsonCodec {
    * @param obj source object
    * @return JSON tree representation
    */
-  public static JsonNode writeAsJsonNode (Object obj) {
+  public JsonNode writeAsJsonNode (Object obj) {
 
-    return OBJECT_MAPPER.valueToTree(obj);
+    return objectMapper.valueToTree(obj);
   }
 
   /**
@@ -205,9 +275,9 @@ public class JsonCodec {
    * @param obj object to serialize
    * @return JSON bytes
    */
-  public static byte[] writeAsBytes (Object obj) {
+  public byte[] writeAsBytes (Object obj) {
 
-    return OBJECT_MAPPER.writeValueAsBytes(obj);
+    return objectMapper.writeValueAsBytes(obj);
   }
 
   /**
@@ -216,9 +286,9 @@ public class JsonCodec {
    * @param obj object to serialize
    * @return compact JSON string
    */
-  public static String writeAsString (Object obj) {
+  public String writeAsString (Object obj) {
 
-    return OBJECT_MAPPER.writeValueAsString(obj);
+    return objectMapper.writeValueAsString(obj);
   }
 
   /**
@@ -227,9 +297,9 @@ public class JsonCodec {
    * @param obj object to serialize
    * @return formatted, sorted JSON string
    */
-  public static String writeAsPrettyPrintedString (Object obj) {
+  public String writeAsPrettyPrintedString (Object obj) {
 
-    return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(sort(OBJECT_MAPPER.valueToTree(obj)));
+    return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sort(objectMapper.valueToTree(obj)));
   }
 
   /**
@@ -237,12 +307,10 @@ public class JsonCodec {
    *
    * @param outputStream destination stream
    * @param obj          object to serialize
-   * @throws IOException if serialization or writing fails
    */
-  public static void writeToStream (OutputStream outputStream, Object obj)
-    throws IOException {
+  public void writeToStream (OutputStream outputStream, Object obj) {
 
-    OBJECT_MAPPER.writeValue(outputStream, obj);
+    objectMapper.writeValue(outputStream, obj);
   }
 
   /**
@@ -253,9 +321,9 @@ public class JsonCodec {
    * @param <T>   target type
    * @return converted value
    */
-  public static <T> T convert (Object obj, Class<T> clazz) {
+  public <T> T convert (Object obj, Class<T> clazz) {
 
-    return OBJECT_MAPPER.convertValue(obj, clazz);
+    return objectMapper.convertValue(obj, clazz);
   }
 
   /**
@@ -264,7 +332,7 @@ public class JsonCodec {
    * @param node node to copy
    * @return independent copy of the node, or {@code null} if the input is {@code null}
    */
-  public static JsonNode copy (JsonNode node) {
+  public JsonNode copy (JsonNode node) {
 
     if (node == null) {
 
@@ -293,35 +361,6 @@ public class JsonCodec {
 
           return node;
       }
-    }
-  }
-
-  /**
-   * Recursively sorts the field names of object nodes using an alphanumeric comparator.
-   *
-   * @param node node to sort
-   * @return a new object node with sorted fields, or the original node for non-object types
-   */
-  private static JsonNode sort (JsonNode node) {
-
-    if (node == null) {
-
-      return null;
-    } else if (node.isObject()) {
-
-      ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
-      LinkedList<String> sortedPropertyNameList = new LinkedList<>(node.propertyNames());
-
-      sortedPropertyNameList.sort(ALPHA_NUMERIC_COMPARATOR);
-
-      for (String sortedPropertyName : sortedPropertyNameList) {
-        objectNode.set(sortedPropertyName, sort(node.get(sortedPropertyName)));
-      }
-
-      return objectNode;
-    } else {
-
-      return node;
     }
   }
 }

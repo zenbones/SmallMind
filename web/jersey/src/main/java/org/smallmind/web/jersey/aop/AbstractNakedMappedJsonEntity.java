@@ -79,13 +79,13 @@ public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String
 
           xmlAdapter = adapterConstructor.newInstance();
 
-          return JsonCodec.convert(xmlAdapter.unmarshal(JsonCodec.convert(obj, GenericUtility.getTypeArgumentsOfSubclass(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
+          return JsonCodec.instance().convert(xmlAdapter.unmarshal(JsonCodec.instance().convert(obj, GenericUtility.getTypeArgumentsOfSubclass(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
         } catch (Exception exception) {
           throw new ParameterProcessingException(exception);
         }
       } else {
 
-        return JsonCodec.convert(obj, clazz);
+        return JsonCodec.instance().convert(obj, clazz);
       }
     }
 

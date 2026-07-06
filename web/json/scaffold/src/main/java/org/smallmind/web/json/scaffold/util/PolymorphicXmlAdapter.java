@@ -101,7 +101,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
           throw new JAXBProcessingException(exception);
         }
 
-        JsonCodec.convert(node.get(polymorphicKey), proxySubClass);
+        JsonCodec.instance().convert(node.get(polymorphicKey), proxySubClass);
 
         return (T)polymorphicInstance;
       }
@@ -128,7 +128,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
       Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
       PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
-      rootNode.set(xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(proxyObject));
+      rootNode.set(xmlRootElementAnnotation.name(), JsonCodec.instance().writeAsJsonNode(proxyObject));
 
       return rootNode;
     }

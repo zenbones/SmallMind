@@ -752,16 +752,28 @@ bean-reflection helper, and a small versioning SPI.
 === Key types
 
 `JsonCodec` (in `org.smallmind.web.json.scaffold.util`)::
-    Static facade over the project `ObjectMapper`. The mapper is configured
-    with `JakartaXmlBindAnnotationModule` (respects `@XmlElement`,
-    `@XmlRootElement`, `@XmlJavaTypeAdapter`), `PolymorphicModule`, and
+    Singleton facade over the project `ObjectMapper`, retrieved with
+    `JsonCodec.instance()`. The mapper is configured with
+    `JakartaXmlBindAnnotationModule` (respects `@XmlElement`, `@XmlRootElement`,
+    `@XmlJavaTypeAdapter`), `PolymorphicModule`, and
     `MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME`.
-    Primary methods:
+    `JsonCodec.redefine(ObjectMapper)` swaps in a differently configured mapper as
+    the shared instance, and `JsonCodec.standardMapperBuilder()` returns a fresh,
+    pre-configured builder as a starting point.
+    Primary methods (invoked on the instance):
 +
 * `readAsJsonNode(byte[]|String|InputStream)`
-* `readAsObject(source, Class<T>)`
-* `writeAsBytes(Object)`
-* `jsonConvert(Object, Class<T>)` — round-trip re-bind via Jackson.
+* `read(source, Class<T>)` — bind `byte[]`, a `String`, an `InputStream`, a
+  `JsonParser`, or a `JsonNode` to a POJO.
+* `writeAsBytes(Object)` / `writeAsString(Object)` /
+  `writeAsPrettyPrintedString(Object)`
+* `convert(Object, Class<T>)` — round-trip re-bind via Jackson.
+
+`JsonCodecInitializingBean` (in `org.smallmind.web.json.scaffold.util.spring`)::
+    Spring `InitializingBean` that extends the shared `JsonCodec` with extra
+    Jackson modules. Set its `additionalModules` property; on context startup it
+    rebuilds the codec from `standardMapperBuilder()` with those modules added
+    and installs it through `JsonCodec.redefine(...)`.
 
 `Fault` + `FaultElement` + `Informed`::
     `Fault` is the transportable shape of a server-side exception. Built from
@@ -809,8 +821,8 @@ bean-reflection helper, and a small versioning SPI.
 
 [source,java]
 ----
-User user = JsonCodec.readAsObject(requestBytes, User.class);
-byte[] payload = JsonCodec.writeAsBytes(new Page<>(users, 0, 20, 135L));
+User user = JsonCodec.instance().read(requestBytes, User.class);
+byte[] payload = JsonCodec.instance().writeAsBytes(new Page<>(users, 0, 20, 135L));
 String city = BeanReflector.get(order, "billingAddress.city");
 BeanReflector.set(order, "items[2].quantity", 5);
 ----

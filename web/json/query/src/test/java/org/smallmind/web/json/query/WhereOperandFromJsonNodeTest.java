@@ -46,7 +46,7 @@ public class WhereOperandFromJsonNodeTest {
 
   private WhereOperand<?> from (String json) {
 
-    return WhereOperand.fromJsonNode(JsonCodec.readAsJsonNode(json));
+    return WhereOperand.fromJsonNode(JsonCodec.instance().readAsJsonNode(json));
   }
 
   public void testBoolean () {

@@ -155,7 +155,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
     Backbone<V> backbone;
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
-    LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
+    LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.instance().writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
 
     if ((backbone = getBackbone()) != null) {
       try {

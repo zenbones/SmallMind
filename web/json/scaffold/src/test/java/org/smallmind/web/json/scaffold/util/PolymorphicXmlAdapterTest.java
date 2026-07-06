@@ -78,13 +78,13 @@ public class PolymorphicXmlAdapterTest {
   @Test(expectedExceptions = JAXBProcessingException.class)
   public void testUnmarshalMalformedNodeFails () {
 
-    new PolymorphicAnimalAdapter().unmarshal(JsonCodec.readAsJsonNode("{\"dog\":1,\"cat\":2}"));
+    new PolymorphicAnimalAdapter().unmarshal(JsonCodec.instance().readAsJsonNode("{\"dog\":1,\"cat\":2}"));
   }
 
   @Test(expectedExceptions = JAXBProcessingException.class)
   public void testUnmarshalUnknownDiscriminatorFails () {
 
-    new PolymorphicAnimalAdapter().unmarshal(JsonCodec.readAsJsonNode("{\"fish\":{}}"));
+    new PolymorphicAnimalAdapter().unmarshal(JsonCodec.instance().readAsJsonNode("{\"fish\":{}}"));
   }
 
   @Test(expectedExceptions = JAXBProcessingException.class)

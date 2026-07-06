@@ -59,7 +59,7 @@ public class TachometerParser implements InstrumentedParser<Tachometer> {
   public MeterBuilder<Tachometer> parse (String json)
     throws IOException {
 
-    TachometerProperties properties = JsonCodec.read(json, TachometerPropertiesInView.class).factory();
+    TachometerProperties properties = JsonCodec.instance().read(json, TachometerPropertiesInView.class).factory();
     TachometerBuilder builder = new TachometerBuilder();
 
     if (properties.getResolutionStint() != null) {

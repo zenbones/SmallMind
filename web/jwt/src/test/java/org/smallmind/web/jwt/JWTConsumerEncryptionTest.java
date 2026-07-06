@@ -87,7 +87,7 @@ public class JWTConsumerEncryptionTest {
 
     JsonWebEncryption jwe = new JsonWebEncryption();
 
-    jwe.setPayload(new String(JsonCodec.writeAsBytes(sampleClaims())));
+    jwe.setPayload(new String(JsonCodec.instance().writeAsBytes(sampleClaims())));
     jwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.A256KW);
     jwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_256_CBC_HMAC_SHA_512);
     jwe.setKey(key);
@@ -101,7 +101,7 @@ public class JWTConsumerEncryptionTest {
 
     JsonWebEncryption jwe = new JsonWebEncryption();
 
-    jwe.setPayload(new String(JsonCodec.writeAsBytes(sampleClaims())));
+    jwe.setPayload(new String(JsonCodec.instance().writeAsBytes(sampleClaims())));
     jwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.RSA_OAEP_256);
     jwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_256_CBC_HMAC_SHA_512);
     jwe.setKey(keyPair.getPublic());
@@ -116,7 +116,7 @@ public class JWTConsumerEncryptionTest {
 
     JsonWebSignature jws = new JsonWebSignature();
 
-    jws.setPayloadBytes(JsonCodec.writeAsBytes(sampleClaims()));
+    jws.setPayloadBytes(JsonCodec.instance().writeAsBytes(sampleClaims()));
     jws.setHeader(HeaderParameterNames.TYPE, "JWT");
     jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
     jws.setKey(encryptionKey);

@@ -240,7 +240,7 @@ public class BeanReflector {
           } else {
             try {
 
-              return method.invoke(target, (value == null) ? null : JsonCodec.convert(value, method.getParameterTypes()[0]));
+              return method.invoke(target, (value == null) ? null : JsonCodec.instance().convert(value, method.getParameterTypes()[0]));
             } catch (IllegalAccessException | InvocationTargetException exception) {
               throw new BeanAccessException(exception);
             }
@@ -265,7 +265,7 @@ public class BeanReflector {
       }
     } else {
       try {
-        field.set(target, (value == null) ? null : JsonCodec.convert(value, field.getType()));
+        field.set(target, (value == null) ? null : JsonCodec.instance().convert(value, field.getType()));
       } catch (IllegalAccessException illegalAccessException) {
         throw new BeanAccessException(illegalAccessException);
       }
@@ -299,7 +299,7 @@ public class BeanReflector {
       if ((penultimateComponentType = penultimateValue.getClass().getComponentType()) == null) {
         throw new BeanAccessException("Unable to apply the %s subscript(%d) to value type(%s)", indexToNth(subscripts.length - 1), subscripts[subscripts.length - 1], penultimateValue.getClass());
       } else {
-        Array.set(penultimateValue, subscripts[subscripts.length - 1], (value == null) ? null : JsonCodec.convert(value, penultimateComponentType));
+        Array.set(penultimateValue, subscripts[subscripts.length - 1], (value == null) ? null : JsonCodec.instance().convert(value, penultimateComponentType));
 
         return currentValue;
       }
@@ -333,7 +333,7 @@ public class BeanReflector {
               int index = 0;
 
               for (Class<?> parameterType : method.getParameterTypes()) {
-                parameterValues[index] = (arguments[index] == null) ? null : JsonCodec.convert(arguments[index], parameterType);
+                parameterValues[index] = (arguments[index] == null) ? null : JsonCodec.instance().convert(arguments[index], parameterType);
                 index++;
               }
             } catch (IllegalArgumentException illegalArgumentException) {
@@ -352,7 +352,7 @@ public class BeanReflector {
         }
       }
 
-      throw new BeanAccessException("No method(name=%s, arguments=%s) found in class(%s)", name, JsonCodec.writeAsString(arguments), target.getClass().getName());
+      throw new BeanAccessException("No method(name=%s, arguments=%s) found in class(%s)", name, JsonCodec.instance().writeAsString(arguments), target.getClass().getName());
     }
   }
 

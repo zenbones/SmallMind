@@ -50,7 +50,7 @@ public class JsonCodecBranchTest {
   public void testReadAsJsonNodeFromBytes ()
     throws IOException {
 
-    JsonNode node = JsonCodec.readAsJsonNode("{\"x\":1}".getBytes(StandardCharsets.UTF_8));
+    JsonNode node = JsonCodec.instance().readAsJsonNode("{\"x\":1}".getBytes(StandardCharsets.UTF_8));
 
     Assert.assertEquals(node.get("x").intValue(), 1);
   }
@@ -58,7 +58,7 @@ public class JsonCodecBranchTest {
   public void testReadAsJsonNodeFromStream ()
     throws IOException {
 
-    JsonNode node = JsonCodec.readAsJsonNode(new ByteArrayInputStream("{\"x\":2}".getBytes(StandardCharsets.UTF_8)));
+    JsonNode node = JsonCodec.instance().readAsJsonNode(new ByteArrayInputStream("{\"x\":2}".getBytes(StandardCharsets.UTF_8)));
 
     Assert.assertEquals(node.get("x").intValue(), 2);
   }
@@ -66,7 +66,7 @@ public class JsonCodecBranchTest {
   public void testReadFromBytes ()
     throws IOException {
 
-    JsonCodecTest.Point point = JsonCodec.read("{\"x\":3,\"y\":4}".getBytes(StandardCharsets.UTF_8), JsonCodecTest.Point.class);
+    JsonCodecTest.Point point = JsonCodec.instance().read("{\"x\":3,\"y\":4}".getBytes(StandardCharsets.UTF_8), JsonCodecTest.Point.class);
 
     Assert.assertEquals(point.getX(), 3);
     Assert.assertEquals(point.getY(), 4);
@@ -77,7 +77,7 @@ public class JsonCodecBranchTest {
 
     byte[] padded = ("XX" + "{\"x\":5,\"y\":6}").getBytes(StandardCharsets.UTF_8);
 
-    JsonCodecTest.Point point = JsonCodec.read(padded, 2, padded.length - 2, JsonCodecTest.Point.class);
+    JsonCodecTest.Point point = JsonCodec.instance().read(padded, 2, padded.length - 2, JsonCodecTest.Point.class);
 
     Assert.assertEquals(point.getX(), 5);
     Assert.assertEquals(point.getY(), 6);
@@ -86,7 +86,7 @@ public class JsonCodecBranchTest {
   public void testReadFromStream ()
     throws IOException {
 
-    JsonCodecTest.Point point = JsonCodec.read(new ByteArrayInputStream("{\"x\":7,\"y\":8}".getBytes(StandardCharsets.UTF_8)), JsonCodecTest.Point.class);
+    JsonCodecTest.Point point = JsonCodec.instance().read(new ByteArrayInputStream("{\"x\":7,\"y\":8}".getBytes(StandardCharsets.UTF_8)), JsonCodecTest.Point.class);
 
     Assert.assertEquals(point.getX(), 7);
     Assert.assertEquals(point.getY(), 8);
@@ -94,8 +94,8 @@ public class JsonCodecBranchTest {
 
   public void testReadFromJsonNode () {
 
-    JsonNode node = JsonCodec.readAsJsonNode("{\"x\":9,\"y\":10}");
-    JsonCodecTest.Point point = JsonCodec.read(node, JsonCodecTest.Point.class);
+    JsonNode node = JsonCodec.instance().readAsJsonNode("{\"x\":9,\"y\":10}");
+    JsonCodecTest.Point point = JsonCodec.instance().read(node, JsonCodecTest.Point.class);
 
     Assert.assertEquals(point.getX(), 9);
     Assert.assertEquals(point.getY(), 10);
@@ -107,7 +107,7 @@ public class JsonCodecBranchTest {
     point.setX(11);
     point.setY(12);
 
-    JsonNode node = JsonCodec.writeAsJsonNode(point);
+    JsonNode node = JsonCodec.instance().writeAsJsonNode(point);
 
     Assert.assertEquals(node.get("x").intValue(), 11);
     Assert.assertEquals(node.get("y").intValue(), 12);
@@ -122,9 +122,9 @@ public class JsonCodecBranchTest {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-    JsonCodec.writeToStream(outputStream, point);
+    JsonCodec.instance().writeToStream(outputStream, point);
 
-    JsonCodecTest.Point recovered = JsonCodec.read(outputStream.toByteArray(), JsonCodecTest.Point.class);
+    JsonCodecTest.Point recovered = JsonCodec.instance().read(outputStream.toByteArray(), JsonCodecTest.Point.class);
 
     Assert.assertEquals(recovered.getX(), 13);
     Assert.assertEquals(recovered.getY(), 14);
@@ -132,8 +132,8 @@ public class JsonCodecBranchTest {
 
   public void testCopyArrayNode () {
 
-    JsonNode original = JsonCodec.readAsJsonNode("[1,2,3]");
-    JsonNode copy = JsonCodec.copy(original);
+    JsonNode original = JsonCodec.instance().readAsJsonNode("[1,2,3]");
+    JsonNode copy = JsonCodec.instance().copy(original);
 
     Assert.assertEquals(copy, original);
     Assert.assertNotSame(copy, original);
