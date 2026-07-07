@@ -127,6 +127,7 @@
     <log4j.version>2.25.3</log4j.version>
     <maven.version>3.9.15</maven.version>
     <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+    <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
     <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
     <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
     <maven.plugin.annotations.version>3.15.2</maven.plugin.annotations.version>
@@ -1204,6 +1205,11 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
       <scope>test</scope>
@@ -1222,6 +1228,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${maven.surefire.plugin.version}</version>
           <configuration>
+            <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
             <useSystemClassLoader>false</useSystemClassLoader>
             <groups>integration,unit</groups>
           </configuration>
@@ -1232,6 +1239,19 @@
               <version>${surefire.version}</version>
             </dependency>
           </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${maven.dependency.plugin.version}</version>
+          <executions>
+            <execution>
+              <id>resolve-dependency-properties</id>
+              <goals>
+                <goal>properties</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -1429,6 +1449,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
