@@ -67,6 +67,6 @@ public class JsonCodecInitializingBean implements InitializingBean {
   public void afterPropertiesSet ()
     throws Exception {
 
-    JsonCodec.redefine(JsonCodec.standardMapperBuilder().addModules(additionalModules).build());
+    JsonCodec.redefine(JsonCodec.standardMapperBuilder().addModules((additionalModules == null) ? new JacksonModule[0] : additionalModules).build());
   }
 }
