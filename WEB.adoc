@@ -800,6 +800,14 @@ bean-reflection helper, and a small versioning SPI.
     nested bean properties. Uses `ComponentParser` + `PathComponent`
     internally.
 
+`JsonNodeUtility` (in `org.smallmind.web.json.scaffold.util`)::
+    Order-independent structural comparison for Jackson `JsonNode` trees.
+    `equalsIgnoresOrder(node1, node2)` matches objects by key, arrays as
+    multisets (element order ignored), and numbers by `double` value, so `2`
+    and `2.0` compare equal. `hashCodeIgnoresOrder(node)` is the companion hash
+    that upholds the `equals`/`hashCode` contract under that relation — equal
+    nodes always share a hash — so nodes can be keyed in a `HashMap`/`HashSet`.
+
 `Version` / `Versioned<V>`::
     A two-interface SPI for DTOs that declare a schema version via an enum
     — the interfaces are opt-in and carry no behaviour other than the type
