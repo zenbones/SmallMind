@@ -84,13 +84,13 @@ public class ResponseMessageRouter extends MessageRouter {
       String talkQueueName;
       String whisperQueueName;
 
-      channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+      channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true, false, true, null);
       channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
 
-      channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
+      channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, true, false, false, null);
       channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
 
-      channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+      channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true, false, true, null);
       channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
     });
   }

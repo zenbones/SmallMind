@@ -87,7 +87,7 @@ public class RequestMessageRouter extends MessageRouter {
 
       String queueName;
 
-      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
+      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, true, false, true, null);
       channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
     });
   }
