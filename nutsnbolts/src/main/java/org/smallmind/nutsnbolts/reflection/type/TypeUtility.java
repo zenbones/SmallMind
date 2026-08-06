@@ -32,13 +32,65 @@
  */
 package org.smallmind.nutsnbolts.reflection.type;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+
 /**
  * Static helpers for comparing and querying {@link Class} objects, with special handling for Java
  * primitive types and their boxed wrapper counterparts.
  */
 public class TypeUtility {
 
-  private static final Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
+  private static final Map<Class<?>, Class<?>> WRAPPER_MAP = Map.of(
+    boolean.class, Boolean.class,
+    byte.class, Byte.class,
+    char.class, Character.class,
+    double.class, Double.class,
+    float.class, Float.class,
+    int.class, Integer.class,
+    long.class, Long.class,
+    short.class, Short.class
+  );
+
+  /**
+   * Returns the wrapper class corresponding to the given primitive type, or the class itself if it
+   * is not a primitive type.
+   *
+   * @param clazz the class to translate
+   * @return the matching wrapper class (e.g. {@code Integer} for {@code int}), or {@code clazz}
+   * unchanged when it is not a primitive type
+   */
+  public static Class<?> boxedType (Class<?> clazz) {
+
+    Class<?> wrappedTye;
+
+    return ((wrappedTye = WRAPPER_MAP.get(clazz)) != null) ? wrappedTye : clazz;
+  }
+
+  /**
+   * Converts a primitive value into an instance of its wrapper class by reflectively invoking the
+   * wrapper's {@code valueOf} method. Values whose class is not a primitive type are returned as is.
+   *
+   * @param value the value to box, which may be {@code null}
+   * @return the boxed equivalent of {@code value}, {@code value} itself when no boxing is required,
+   * or {@code null} if {@code value} is {@code null}
+   * @throws NoSuchMethodException     if the wrapper class declares no matching {@code valueOf} method
+   * @throws IllegalAccessException    if the {@code valueOf} method is not accessible
+   * @throws InvocationTargetException if the {@code valueOf} method throws an exception
+   */
+  public static Object box (Object value)
+    throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+
+    if (value == null) {
+
+      return null;
+    } else {
+
+      Class<?> clazz = value.getClass();
+
+      return clazz.isPrimitive() ? boxedType(clazz).getMethod("valueOf", clazz).invoke(null, value) : value;
+    }
+  }
 
   /**
    * Returns {@code true} if the given class is either a primitive type or one of the standard
@@ -49,18 +101,7 @@ public class TypeUtility {
    */
   public static boolean isEssentiallyPrimitive (Class<?> aClass) {
 
-    if (!aClass.isPrimitive()) {
-      for (Class<?> primitive : PRIMITIVES) {
-        if (primitive.equals(aClass)) {
-
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    return true;
+    return aClass.isPrimitive() || WRAPPER_MAP.containsValue(aClass);
   }
 
   /**

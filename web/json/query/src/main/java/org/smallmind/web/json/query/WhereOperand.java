@@ -32,9 +32,12 @@
  */
 package org.smallmind.web.json.query;
 
+import java.lang.reflect.Array;
+import java.time.LocalDateTime;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
@@ -48,6 +51,59 @@ import tools.jackson.databind.node.ArrayNode;
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 @XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, NullWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
 public abstract class WhereOperand<I> {
+
+  /**
+   * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given Java object. Boxed primitives,
+   * {@link String}, {@link LocalDateTime}, enums and arrays map onto their dedicated operand implementations. Anything
+   * else, having no proper operand subclass, is wrapped as a {@link StringWhereOperand} over the object's
+   * {@code toString()} representation.
+   *
+   * @param obj the value to convert, may be {@code null}
+   * @return matching operand implementation
+   */
+  public static WhereOperand<?> fromObject (Object obj) {
+
+    if (obj == null) {
+
+      return NullWhereOperand.instance();
+    } else if (obj.getClass().isArray()) {
+
+      Class<?> componentType;
+
+      if ((componentType = obj.getClass().getComponentType()).isPrimitive()) {
+
+        int length = Array.getLength(obj);
+        Object[] boxedArray = (Object[])Array.newInstance(TypeUtility.boxedType(componentType), length);
+
+        for (int index = 0; index < length; index++) {
+          boxedArray[index] = Array.get(obj, index);
+        }
+
+        return new ArrayWhereOperand(boxedArray);
+      } else {
+        return new ArrayWhereOperand((Object[])obj);
+      }
+    } else {
+      try {
+        return switch (TypeUtility.box(obj)) {
+          case Boolean b -> new BooleanWhereOperand(b);
+          case Long l -> new LongWhereOperand(l);
+          case Integer i -> new IntegerWhereOperand(i);
+          case Double d -> new DoubleWhereOperand(d);
+          case Float f -> new FloatWhereOperand(f);
+          case Short sh -> new ShortWhereOperand(sh);
+          case Byte b -> new ByteWhereOperand(b);
+          case Character ch -> new CharacterWhereOperand(ch);
+          case String s -> new StringWhereOperand(s);
+          case LocalDateTime d -> new DateWhereOperand(d);
+          case Enum<?> en -> new EnumWhereOperand(en);
+          default -> new StringWhereOperand(obj.toString());
+        };
+      } catch (Exception e) {
+        throw new QueryProcessingException(e);
+      }
+    }
+  }
 
   /**
    * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given JSON node.
