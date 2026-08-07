@@ -34,9 +34,12 @@ package org.smallmind.web.json.query;
 
 import java.lang.reflect.Array;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Comparator;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.jspecify.annotations.NonNull;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 import tools.jackson.databind.JsonNode;
@@ -50,7 +53,14 @@ import tools.jackson.databind.node.ArrayNode;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 @XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, NullWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
-public abstract class WhereOperand<I> {
+public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
+
+  private static final Comparator<Object> VALUE_COMPARATOR = Comparator.nullsFirst(WhereOperand::compareValues);
+
+  private static int compareValues (Object first, Object second) {
+
+    return ((Comparable<Object>)first).compareTo(second);
+  }
 
   /**
    * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given Java object. Boxed primitives,
@@ -153,6 +163,31 @@ public abstract class WhereOperand<I> {
         default:
           throw new QueryProcessingException("Unable to convert json node type(%s) to operand", node.getNodeType().name());
       }
+    }
+  }
+
+  /**
+   * Orders this operand against another operand of the same {@link OperandType}. Array operands are compared
+   * lexicographically by element, with a shorter array sorting before a longer one that shares its prefix. All
+   * other operands are compared by their underlying value. A {@code null} value, or a {@code null} array element,
+   * sorts before any non-{@code null} counterpart, so two {@link NullWhereOperand}s compare as equal.
+   *
+   * @param operand the operand to compare against
+   * @return a negative integer, zero, or a positive integer as this operand sorts before, at, or after {@code operand}
+   * @throws QueryProcessingException if the two operands carry differing operand types
+   * @throws ClassCastException       if the compared values are not mutually comparable
+   */
+  @Override
+  public int compareTo (@NonNull WhereOperand<?> operand) {
+
+    if (!this.getOperandType().equals(operand.getOperandType())) {
+      throw new QueryProcessingException("Can't compare differing type(%s!=%s)", this.getOperandType(), operand.getOperandType());
+    } else if (OperandType.ARRAY.equals(this.getOperandType())) {
+
+      return Arrays.compare(((ArrayWhereOperand)this).get(), ((ArrayWhereOperand)operand).get(), VALUE_COMPARATOR);
+    } else {
+
+      return VALUE_COMPARATOR.compare(this.get(), operand.get());
     }
   }
 
