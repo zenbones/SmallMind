@@ -33,7 +33,9 @@
 package org.smallmind.nutsnbolts.util;
 
 /**
- * Present-value implementation of {@link Option} that always carries a (possibly {@code null}) wrapped value.
+ * Present-case implementation of {@link Option}. The wrapped value is fixed at construction time and may
+ * itself be {@code null}, in which case this option is {@link #isEmpty() empty} without being
+ * {@link #isNone() absent}.
  *
  * @param <T> element type
  */
@@ -52,10 +54,12 @@ public class Some<T> implements Option<T> {
   }
 
   /**
-   * Always returns {@code false} because this option holds a value.
+   * Always returns {@code false} because this is the present case, even when the wrapped value is
+   * {@code null}.
    *
    * @return {@code false}
    */
+  @Override
   public boolean isNone () {
 
     return false;
@@ -66,6 +70,7 @@ public class Some<T> implements Option<T> {
    *
    * @return the value supplied at construction time, which may be {@code null}
    */
+  @Override
   public T get () {
 
     return value;

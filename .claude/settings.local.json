@@ -71,7 +71,9 @@
       "Bash(grep -rln \"^\\\\s*\\\\* @param\\\\|^/\\\\*\\\\*\" nutsnbolts/src/main/java/org/smallmind/nutsnbolts/)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -q -pl nutsnbolts compile)",
       "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest='ActiveDirectoryLdapRealmTest')",
-      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest='RoleTypeTest,LdapAuthorizingRealmTest,DefaultLdapRealmFactoryBeanTest,ActiveDirectoryLdapRealmFactoryBeanTest,DefaultLdapRealmTest,ActiveDirectoryLdapRealmTest')"
+      "Bash(/c/ProgramData/chocolatey/lib/maven/apache-maven-3.9.14/bin/mvn -pl nutsnbolts test -Dtest='RoleTypeTest,LdapAuthorizingRealmTest,DefaultLdapRealmFactoryBeanTest,ActiveDirectoryLdapRealmFactoryBeanTest,DefaultLdapRealmTest,ActiveDirectoryLdapRealmTest')",
+      "mcp__idea__lint_files",
+      "mcp__idea__build_project"
     ]
   }
 }

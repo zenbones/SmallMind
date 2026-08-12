@@ -32,6 +32,8 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import java.io.Serial;
+
 /**
  * Singleton empty {@link Option} that represents the absence of a value.
  *
@@ -39,27 +41,52 @@ package org.smallmind.nutsnbolts.util;
  */
 public class None<T> implements Option<T> {
 
-  protected static None<?> NONE = new None();
+  private static final None<?> NONE = new None<>();
 
   private None () {
 
   }
 
   /**
-   * Always returns {@code true} because this option carries no value.
+   * Returns the singleton instance typed to the caller's element type. The cast is unchecked but safe
+   * because this option never holds a value of type {@code T}.
+   *
+   * @param <T> element type
+   * @return the shared {@link None} instance
+   */
+  public static <T> None<T> none () {
+
+    return (None<T>)NONE;
+  }
+
+  /**
+   * Preserves singleton identity across deserialization.
+   *
+   * @return the shared {@link None} instance
+   */
+  @Serial
+  private Object readResolve () {
+
+    return NONE;
+  }
+
+  /**
+   * Always returns {@code true} because this is the absent case.
    *
    * @return {@code true}
    */
+  @Override
   public boolean isNone () {
 
     return true;
   }
 
   /**
-   * Always returns {@code null}; callers should call {@link #isNone()} before invoking this method.
+   * Always returns {@code null}, as this option carries no value.
    *
    * @return {@code null}
    */
+  @Override
   public T get () {
 
     return null;

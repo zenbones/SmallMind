@@ -1414,9 +1414,18 @@ is most likely to reach for:
     lists, sets, maps, or `Bag`s, wrapping any thrown exception in a
     `MutationException`.
 
-`Option` / `Some` / `None`::
+`Option<T>` / `Some<T>` / `None<T>`::
     Lightweight option-type helpers for codebases that prefer to model
-    presence/absence explicitly without `java.util.Optional`.
+    presence/absence explicitly without `java.util.Optional`. `Option`
+    is a `Serializable` interface with two implementations: `Some`, the
+    present case, built with `Option.of(value)`; and `None`, the absent
+    case, a singleton obtained from `Option.none()` and typed to the
+    caller's element type. Because `Some` accepts a `null` value,
+    `isNone()` (which of the two cases this is) and `isEmpty()`
+    (whether `get()` returns `null`) are distinct questions — a present
+    option can be empty. Unrelated to the command-line `Option` in
+    `org.smallmind.nutsnbolts.command.template`, despite the shared
+    simple name.
 
 `AnsiColor`::
     Terminal color escape sequences.

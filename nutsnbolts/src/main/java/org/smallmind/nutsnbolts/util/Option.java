@@ -37,6 +37,10 @@ import java.io.Serializable;
 /**
  * Lightweight optional value container with concrete {@link Some} (present) and {@link None} (absent) implementations.
  *
+ * <p>Presence and emptiness are distinct notions here. {@link #isNone()} asks which of the two cases this
+ * option is, while {@link #isEmpty()} asks whether the wrapped value is {@code null}. Because {@link Some}
+ * accepts a {@code null} value, an option may be present yet empty.
+ *
  * @param <T> element type
  */
 public interface Option<T> extends Serializable {
@@ -49,13 +53,13 @@ public interface Option<T> extends Serializable {
    */
   static <T> None<T> none () {
 
-    return (None<T>)None.NONE;
+    return None.none();
   }
 
   /**
    * Wraps the supplied value in a {@link Some}.
    *
-   * @param value value to wrap
+   * @param value value to wrap; may be {@code null}, in which case the result is present but {@link #isEmpty() empty}
    * @param <T>   element type
    * @return a new {@link Some} containing {@code value}
    */
@@ -65,16 +69,31 @@ public interface Option<T> extends Serializable {
   }
 
   /**
-   * Returns {@code true} if this option holds no value.
+   * Returns {@code true} if the wrapped value is {@code null}. This always holds for {@link None}, but also
+   * for a {@link Some} constructed around a {@code null} value, so an empty option is not necessarily the
+   * absent case.
    *
-   * @return {@code true} when the option is empty
+   * @return {@code true} when {@link #get()} would return {@code null}
+   */
+  default boolean isEmpty () {
+
+    return get() == null;
+  }
+
+  /**
+   * Returns {@code true} if this option is the absent case, that is, the {@link None} singleton. A
+   * {@link Some} wrapping a {@code null} value returns {@code false} here even though it is
+   * {@link #isEmpty() empty}.
+   *
+   * @return {@code true} when the option is absent
    */
   boolean isNone ();
 
   /**
-   * Returns the contained value, or {@code null} if this option is empty.
+   * Returns the contained value. This is always {@code null} for {@link None}, and may also be {@code null}
+   * for a {@link Some} constructed around a {@code null} value.
    *
-   * @return the wrapped value, or {@code null} for {@link None}
+   * @return the wrapped value, which may be {@code null}
    */
   T get ();
 }
