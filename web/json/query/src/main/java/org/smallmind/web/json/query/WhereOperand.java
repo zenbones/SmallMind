@@ -44,6 +44,7 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
  * Abstract base for the right-hand side value in a where field comparison, parameterized on the Java type it carries.
@@ -62,16 +63,28 @@ public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
     return ((Comparable<Object>)first).compareTo(second);
   }
 
+  private static ArrayNode toLowerCaseArrayNode (ArrayNode array) {
+
+    ArrayNode lowerCaseArrayNode = JsonNodeFactory.instance.arrayNode(array.size());
+
+    for (JsonNode node : array) {
+      lowerCaseArrayNode.add(node.asString().toLowerCase());
+    }
+
+    return lowerCaseArrayNode;
+  }
+
   /**
    * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given Java object. Boxed primitives,
    * {@link String}, {@link LocalDateTime}, enums and arrays map onto their dedicated operand implementations. Anything
    * else, having no proper operand subclass, is wrapped as a {@link StringWhereOperand} over the object's
    * {@code toString()} representation.
    *
-   * @param obj the value to convert, may be {@code null}
+   * @param obj         the value to convert, may be {@code null}
+   * @param toLowerCase whether a {@link Character} or {@link String} value is lower-cased before being wrapped
    * @return matching operand implementation
    */
-  public static WhereOperand<?> fromObject (Object obj) {
+  public static WhereOperand<?> fromObject (Object obj, boolean toLowerCase) {
 
     if (obj == null) {
 
@@ -103,8 +116,8 @@ public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
           case Float f -> new FloatWhereOperand(f);
           case Short sh -> new ShortWhereOperand(sh);
           case Byte b -> new ByteWhereOperand(b);
-          case Character ch -> new CharacterWhereOperand(ch);
-          case String s -> new StringWhereOperand(s);
+          case Character ch -> new CharacterWhereOperand(toLowerCase ? Character.toLowerCase(ch) : ch);
+          case String s -> new StringWhereOperand(toLowerCase ? s.toLowerCase() : s);
           case LocalDateTime d -> new DateWhereOperand(d);
           case Enum<?> en -> new EnumWhereOperand(en);
           default -> new StringWhereOperand(obj.toString());
@@ -118,11 +131,12 @@ public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
   /**
    * Constructs the most appropriate concrete {@link WhereOperand} subtype for the given JSON node.
    *
-   * @param node JSON node representing a scalar or array literal
+   * @param node        JSON node representing a scalar or array literal
+   * @param toLowerCase whether a string, or an array of strings, is lower-cased before being wrapped
    * @return matching operand implementation
    * @throws QueryProcessingException if the node type or number sub-type cannot be mapped to a known operand
    */
-  public static WhereOperand<?> fromJsonNode (JsonNode node) {
+  public static WhereOperand<?> fromJsonNode (JsonNode node, boolean toLowerCase) {
 
     if (node == null) {
 
@@ -140,7 +154,7 @@ public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
             default -> throw new QueryProcessingException("Unable to convert json number type(%s) to operand", node.numberType().name());
           };
         case STRING:
-          return new StringWhereOperand(node.stringValue());
+          return new StringWhereOperand(toLowerCase ? node.stringValue().toLowerCase() : node.stringValue());
         case NULL:
           return NullWhereOperand.instance();
         case ARRAY:
@@ -156,7 +170,7 @@ public abstract class WhereOperand<I> implements Comparable<WhereOperand<?>> {
                 case LONG -> new ArrayWhereOperand(new ComponentHint(ComponentType.LONG), (ArrayNode)node);
                 default -> throw new QueryProcessingException("Unable to convert json array of number type(%s) to operand", node.get(0).numberType().name());
               };
-              case STRING -> new ArrayWhereOperand(new ComponentHint(ComponentType.STRING), (ArrayNode)node);
+              case STRING -> new ArrayWhereOperand(new ComponentHint(ComponentType.STRING), toLowerCase ? toLowerCaseArrayNode((ArrayNode)node) : (ArrayNode)node);
               default -> throw new QueryProcessingException("Unable to convert json array of type(%s) to operand", node.getNodeType().name());
             };
           }

@@ -46,7 +46,7 @@ public class WhereOperandFromJsonNodeTest {
 
   private WhereOperand<?> from (String json) {
 
-    return WhereOperand.fromJsonNode(JsonCodec.instance().readAsJsonNode(json));
+    return WhereOperand.fromJsonNode(JsonCodec.instance().readAsJsonNode(json), false);
   }
 
   public void testBoolean () {
@@ -135,7 +135,7 @@ public class WhereOperandFromJsonNodeTest {
 
   public void testNullNodeBecomesNullOperand () {
 
-    Assert.assertEquals(WhereOperand.fromJsonNode(null).getOperandType(), OperandType.NULL);
+    Assert.assertEquals(WhereOperand.fromJsonNode(null, false).getOperandType(), OperandType.NULL);
   }
 
   @Test(expectedExceptions = QueryProcessingException.class)

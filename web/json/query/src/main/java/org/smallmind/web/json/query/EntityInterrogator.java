@@ -61,12 +61,13 @@ public class EntityInterrogator {
    * @param first      zero-based offset of the first result to return, may be {@code null} for {@code 0}
    * @param max        maximum number of results to return, may be {@code null} for all remaining results
    * @param predicate  an additional filter which must also accept an entity for it to be retained
+   * @param caseInsensitive whether string-valued fields are compared without regard to case
    * @param <E>        the entity type
    * @return a page over the requested window, carrying the total count of matching entities
    * @throws QueryProcessingException if {@code first} or {@code max} is negative, or if a field named by the query
    *                                  can't be read from an entity
    */
-  public static <E> Page<E> page (List<E> entityList, Where where, Sort sort, Long first, Integer max, Predicate<E> predicate) {
+  public static <E> Page<E> page (List<E> entityList, Where where, Sort sort, Long first, Integer max, Predicate<E> predicate, boolean caseInsensitive) {
 
     ArrayList<E> filteredList;
     E[] pagedArray;
@@ -85,14 +86,14 @@ public class EntityInterrogator {
 
     if (entityList != null) {
       for (E entity : entityList) {
-        if (matchesWhere(entity, where) && predicate.test(entity)) {
+        if (matchesWhere(entity, where, caseInsensitive) && predicate.test(entity)) {
           filteredList.add(entity);
         }
       }
     }
 
     if ((sort != null) && (!sort.isEmpty())) {
-      filteredList.sort(new SortFieldComparator<>(sort.getFields()));
+      filteredList.sort(new SortFieldComparator<>(caseInsensitive, sort.getFields()));
     }
 
     firstResult = (first == null) ? 0 : first;
@@ -107,12 +108,13 @@ public class EntityInterrogator {
    * Determines whether an entity satisfies a where clause, treating a missing clause or a missing root conjunction as
    * an unconditional match.
    *
-   * @param entity the entity to test
-   * @param where  the filter to apply, may be {@code null}
-   * @param <E>    the entity type
+   * @param entity      the entity to test
+   * @param where       the filter to apply, may be {@code null}
+   * @param toLowerCase whether string-valued fields are compared without regard to case
+   * @param <E>         the entity type
    * @return {@code true} if the entity matches
    */
-  private static <E> boolean matchesWhere (E entity, Where where) {
+  private static <E> boolean matchesWhere (E entity, Where where, boolean toLowerCase) {
 
     WhereConjunction rootConjunction;
 
@@ -121,7 +123,7 @@ public class EntityInterrogator {
       return true;
     }
 
-    return matchesConjunction(entity, rootConjunction);
+    return matchesConjunction(entity, rootConjunction, toLowerCase);
   }
 
   /**
@@ -130,29 +132,31 @@ public class EntityInterrogator {
    *
    * @param entity      the entity to test
    * @param conjunction the conjunction to apply
+   * @param toLowerCase whether string-valued fields are compared without regard to case
    * @param <E>         the entity type
    * @return {@code true} if the entity matches
    */
-  private static <E> boolean matchesConjunction (E entity, WhereConjunction conjunction) {
+  private static <E> boolean matchesConjunction (E entity, WhereConjunction conjunction, boolean toLowerCase) {
 
     return conjunction.isEmpty() || switch (conjunction.getConjunctionType()) {
-      case AND -> matchesAllCriteria(entity, conjunction.getCriteria());
-      case OR -> matchesAnyCriterion(entity, conjunction.getCriteria());
+      case AND -> matchesAllCriteria(entity, conjunction.getCriteria(), toLowerCase);
+      case OR -> matchesAnyCriterion(entity, conjunction.getCriteria(), toLowerCase);
     };
   }
 
   /**
    * Determines whether an entity satisfies every one of the given criteria, short-circuiting on the first failure.
    *
-   * @param entity   the entity to test
-   * @param criteria the criteria to apply
-   * @param <E>      the entity type
+   * @param entity      the entity to test
+   * @param criteria    the criteria to apply
+   * @param toLowerCase whether string-valued fields are compared without regard to case
+   * @param <E>         the entity type
    * @return {@code true} if the entity matches all criteria
    */
-  private static <E> boolean matchesAllCriteria (E entity, WhereCriterion[] criteria) {
+  private static <E> boolean matchesAllCriteria (E entity, WhereCriterion[] criteria, boolean toLowerCase) {
 
     for (WhereCriterion criterion : criteria) {
-      if (!matchesCriterion(entity, criterion)) {
+      if (!matchesCriterion(entity, criterion, toLowerCase)) {
 
         return false;
       }
@@ -164,15 +168,16 @@ public class EntityInterrogator {
   /**
    * Determines whether an entity satisfies at least one of the given criteria, short-circuiting on the first match.
    *
-   * @param entity   the entity to test
-   * @param criteria the criteria to apply
-   * @param <E>      the entity type
+   * @param entity      the entity to test
+   * @param criteria    the criteria to apply
+   * @param toLowerCase whether string-valued fields are compared without regard to case
+   * @param <E>         the entity type
    * @return {@code true} if the entity matches any criterion
    */
-  private static <E> boolean matchesAnyCriterion (E entity, WhereCriterion[] criteria) {
+  private static <E> boolean matchesAnyCriterion (E entity, WhereCriterion[] criteria, boolean toLowerCase) {
 
     for (WhereCriterion criterion : criteria) {
-      if (matchesCriterion(entity, criterion)) {
+      if (matchesCriterion(entity, criterion, toLowerCase)) {
 
         return true;
       }
@@ -186,19 +191,20 @@ public class EntityInterrogator {
    * reads the named property from the entity, wraps it as a {@link WhereOperand}, and hands both operands to the
    * criterion's operator.
    *
-   * @param entity    the entity to test
-   * @param criterion the criterion to apply
-   * @param <E>       the entity type
+   * @param entity      the entity to test
+   * @param criterion   the criterion to apply
+   * @param toLowerCase whether string-valued fields are compared without regard to case
+   * @param <E>         the entity type
    * @return {@code true} if the entity matches
    * @throws QueryProcessingException if the field named by the criterion can't be read from the entity
    */
-  private static <E> boolean matchesCriterion (E entity, WhereCriterion criterion) {
+  private static <E> boolean matchesCriterion (E entity, WhereCriterion criterion, boolean toLowerCase) {
 
     return switch (criterion.getCriterionType()) {
-      case CONJUNCTION -> matchesConjunction(entity, (WhereConjunction)criterion);
+      case CONJUNCTION -> matchesConjunction(entity, (WhereConjunction)criterion, toLowerCase);
       case FIELD -> {
         try {
-          yield ((WhereField)criterion).getOperator().isTrue(((WhereField)criterion).getOperand(), WhereOperand.fromObject(BeanReflector.get(entity, constructAttributePath((WhereField)criterion))));
+          yield ((WhereField)criterion).getOperator().isTrue(((WhereField)criterion).getOperand(), WhereOperand.fromObject(BeanReflector.get(entity, constructAttributePath((WhereField)criterion)), toLowerCase));
         } catch (BeanAccessException beanAccessException) {
           throw new QueryProcessingException(beanAccessException);
         }
@@ -233,10 +239,11 @@ public class EntityInterrogator {
   /**
    * Orders entities by a list of sort fields, applied in declaration order as successive tie-breakers.
    *
-   * @param sortFields the fields to order by, each carrying its own direction
-   * @param <E>        the entity type
+   * @param toLowerCase whether string-valued fields are compared without regard to case
+   * @param sortFields  the fields to order by, each carrying its own direction
+   * @param <E>         the entity type
    */
-  private record SortFieldComparator<E>(SortField... sortFields) implements Comparator<E> {
+  private record SortFieldComparator<E>(boolean toLowerCase, SortField... sortFields) implements Comparator<E> {
 
     /**
      * Compares two entities by walking the sort fields in order and returning the first non-zero comparison. Each
@@ -254,8 +261,8 @@ public class EntityInterrogator {
       for (SortField sortField : sortFields) {
         try {
 
-          WhereOperand<?> firstOperand = WhereOperand.fromObject(BeanReflector.get(firstEntity, constructAttributePath(sortField)));
-          WhereOperand<?> secondOperand = WhereOperand.fromObject(BeanReflector.get(secondEntity, constructAttributePath(sortField)));
+          WhereOperand<?> firstOperand = WhereOperand.fromObject(BeanReflector.get(firstEntity, constructAttributePath(sortField)), toLowerCase);
+          WhereOperand<?> secondOperand = WhereOperand.fromObject(BeanReflector.get(secondEntity, constructAttributePath(sortField)), toLowerCase);
           int comparison = switch ((sortField.getDirection() == null) ? SortDirection.ASC : sortField.getDirection()) {
             case ASC -> firstOperand.compareTo(secondOperand);
             case DESC -> secondOperand.compareTo(firstOperand);

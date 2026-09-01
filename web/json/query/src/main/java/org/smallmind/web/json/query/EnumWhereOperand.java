@@ -74,9 +74,9 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
    * @param <E>         the enum type
    * @return new operand instance
    */
-  public static <E extends Enum<E>> EnumWhereOperand instance (E enumeration) {
+  public static <E extends Enum<E>> EnumWhereOperand<E> instance (E enumeration) {
 
-    return new EnumWhereOperand<E>(enumeration);
+    return new EnumWhereOperand<>(enumeration);
   }
 
   /**
