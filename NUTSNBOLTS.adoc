@@ -655,11 +655,14 @@ the writer advance independently against the same buffer.
     Callback mechanism to observe `close()` on resources whose
     lifecycle is managed elsewhere.
 
-`ByteBufferInputStream`, `MultiOutputStream`, `MarkableInputStream`::
+`ByteBufferInputStream`, `MultiOutputStream`, `MarkableInputStream`,
+`ReaderInputStream`::
     `InputStream` view over a `ByteBuffer`'s remaining bytes, an
     `OutputStream` that fans every write out to a fixed array of
-    delegate streams, and a wrapper that adds `mark` / `reset` support
-    to any `InputStream` that doesn't natively offer it.
+    delegate streams, a wrapper that adds `mark` / `reset` support
+    to any `InputStream` that doesn't natively offer it, and the
+    inverse of `java.io.InputStreamReader` — encoding a `Reader`'s
+    characters into bytes as they are consumed, via a `CharsetEncoder`.
 
 `FileUtility`, `PathUtility`, `CopyTreeConfigurationBuilder`,
 `DeleteTreeConfigurationBuilder`::
