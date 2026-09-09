@@ -50,7 +50,6 @@ public class CloseableProxyFactory {
    * @param listener the listener to notify after the close method returns
    * @param <C>      the closeable interface type
    * @return a dynamic proxy implementing {@code clazz}
-   * @throws NoSuchMethodException if the {@code close} method cannot be resolved on {@code instance}
    */
   public static <C extends Closeable> C createProxy (Class<C> clazz, C instance, CloseListener listener) {
 
@@ -64,7 +63,6 @@ public class CloseableProxyFactory {
      *
      * @param closeable the wrapped closeable instance
      * @param listener  the listener to invoke after close returns
-     * @throws NoSuchMethodException if the {@code close} method cannot be found on {@code closeable}
      */
     private CloseableInvocationHandler {
 

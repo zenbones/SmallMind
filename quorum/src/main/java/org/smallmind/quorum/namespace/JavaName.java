@@ -250,7 +250,6 @@ public class JavaName implements Name {
    *
    * @param suffix the name whose components to append
    * @return this name, for chaining
-   * @throws InvalidNameException if {@link #add(String)} rejects any component of {@code suffix}
    */
   public Name addAll (Name suffix) {
 
@@ -269,7 +268,6 @@ public class JavaName implements Name {
    *             position are shifted right
    * @param n    the name whose components to insert
    * @return this name, for chaining
-   * @throws InvalidNameException if {@link #add(int, String)} rejects any component
    */
   public Name addAll (int posn, Name n) {
 

@@ -33,11 +33,12 @@
 package org.smallmind.file.ephemeral.watch;
 
 import java.nio.file.WatchEvent;
+import org.smallmind.file.ephemeral.EphemeralPath;
 
 /**
  * Immutable {@link WatchEvent} implementation used by the ephemeral watch subsystem.
  *
- * <p>Instances are created by {@link EphemeralWatchKey#fire(WatchEvent.Kind)} and placed on
+ * <p>Instances are created by {@link EphemeralWatchKey#fire(Kind, EphemeralPath)} and placed on
  * the key's internal queue. Each event captures the {@link WatchEvent.Kind kind} of change
  * that occurred, the number of times the event was coalesced into this single record, and an
  * optional context value (typically the relative path of the affected entry).
