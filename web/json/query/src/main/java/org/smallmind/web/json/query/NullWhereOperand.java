@@ -82,11 +82,12 @@ public class NullWhereOperand extends WhereOperand<Void> {
   /**
    * Always returns {@code null} because this operand represents the null literal.
    *
+   * @param toLowerCase ignored; there is no value to case-fold
    * @return {@code null}
    */
   @Override
   @XmlTransient
-  public Void get () {
+  public Void get (boolean toLowerCase) {
 
     return null;
   }

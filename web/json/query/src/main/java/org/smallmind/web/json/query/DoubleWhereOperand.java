@@ -101,11 +101,12 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   /**
    * Returns the stored double value.
    *
+   * @param toLowerCase ignored; a double value has no case
    * @return double literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Double get () {
+  public Double get (boolean toLowerCase) {
 
     return value;
   }

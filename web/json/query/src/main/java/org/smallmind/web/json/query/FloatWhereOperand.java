@@ -101,11 +101,12 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   /**
    * Returns the stored float value.
    *
+   * @param toLowerCase ignored; a float value has no case
    * @return float literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Float get () {
+  public Float get (boolean toLowerCase) {
 
     return value;
   }

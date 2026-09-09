@@ -865,7 +865,9 @@ or a MongoDB criterion document. The module lives under
 
 `WhereOperator`::
     `LT`, `LE`, `EQ`, `NE`, `GE`, `GT`, `EXISTS`, `LIKE`, `UNLIKE`, `IN`.
-    Includes an `isTrue(op1, op2)` method used for in-memory evaluation.
+    Includes an `isTrue(op1, op2)` method used for in-memory evaluation, and
+    an `isTrue(op1, op2, caseInsensitive)` overload that compares `String` and
+    `Character` operand values without regard to case.
     `LIKE` accepts leading and/or trailing `*` wildcards.
 
 `WhereOperand<I>` (abstract)::
@@ -873,7 +875,11 @@ or a MongoDB criterion document. The module lives under
     primitive-like type (`String`, `Integer`, `Long`, `Double`, `Float`,
     `Byte`, `Short`, `Boolean`, `Character`, `Date` (`LocalDateTime`), `Enum`,
     `Array`, `Null`). Discriminated on the wire via
-    `WhereOperandPolymorphicXmlAdapter`.
+    `WhereOperandPolymorphicXmlAdapter`. `get(caseInsensitive)` returns the
+    underlying value, lower-cased when the operand carries a `String` or
+    `Character` (including inside an `Array`) and the flag is set;
+    `getCaseInsensitiveComparator()` returns a `Comparator<WhereOperand<?>>`
+    that orders operands the same way, ignoring case.
 
 `Sort` + `SortField` + `SortDirection` (`ASC`, `DESC`)::
     Ordered list of field sorts, same naming model as `WhereField`.
@@ -883,6 +889,15 @@ or a MongoDB criterion document. The module lives under
 
 `WhereVisitor`, `WhereUtility.walk(visitor, where)`::
     Visitor infrastructure for tree traversal.
+
+`EntityInterrogator`::
+    Applies a `Where`/`Sort` pair against an in-memory `List` of entities,
+    rather than translating it to a backend query. `page(entityList, where,
+    sort, first, max, predicate, caseInsensitive)` reflectively reads each
+    field named by the query (via `BeanReflector`), filters, sorts and pages
+    the results, and returns a `Page`. The `caseInsensitive` flag makes
+    string-valued filtering and sorting ignore case, consistently for both
+    scalar and array-typed fields.
 
 `WhereValidator` + `WherePermit` implementations (`AllowedWherePermit`,
 `RequiredWherePermit`, `ExcludedWherePermit`, `DependentWherePermit`,

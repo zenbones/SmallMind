@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-claxon</artifactId>
-    <version>7.2.0-SNAPSHOT</version>
+    <version>7.1.1-SNAPSHOT</version>
   </parent>
   <artifactId>claxon-registry</artifactId>
   <packaging>jar</packaging>
@@ -66,6 +66,20 @@
       <plugin>
         <groupId>dev.aspectj</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.smallmind</groupId>
+              <artifactId>web-json-doppelganger</artifactId>
+              <version>${project.version}</version>
+            </path>
+          </annotationProcessorPaths>
+          <proc>full</proc>
+        </configuration>
       </plugin>
     </plugins>
   </build>

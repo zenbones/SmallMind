@@ -101,13 +101,14 @@ public class StringWhereOperand extends WhereOperand<String> {
   /**
    * Returns the string value held by this operand.
    *
+   * @param toLowerCase whether the string is lower-cased before being returned
    * @return string literal, or {@code null} if unset
    */
   @Override
   @XmlTransient
-  public String get () {
+  public String get (boolean toLowerCase) {
 
-    return value;
+    return toLowerCase ? value.toLowerCase() : value;
   }
 
   /**

@@ -55,14 +55,14 @@ public class EntityInterrogator {
    * is extracted. A {@code null} or empty {@code where} or {@code sort} is skipped, and a {@code null} entity list is
    * treated as empty.
    *
-   * @param entityList the entities to interrogate, may be {@code null}
-   * @param where      the filter to apply, may be {@code null} to match everything
-   * @param sort       the ordering to apply, may be {@code null} or empty to leave the list in encounter order
-   * @param first      zero-based offset of the first result to return, may be {@code null} for {@code 0}
-   * @param max        maximum number of results to return, may be {@code null} for all remaining results
-   * @param predicate  an additional filter which must also accept an entity for it to be retained
+   * @param entityList      the entities to interrogate, may be {@code null}
+   * @param where           the filter to apply, may be {@code null} to match everything
+   * @param sort            the ordering to apply, may be {@code null} or empty to leave the list in encounter order
+   * @param first           zero-based offset of the first result to return, may be {@code null} for {@code 0}
+   * @param max             maximum number of results to return, may be {@code null} for all remaining results
+   * @param predicate       an additional filter which must also accept an entity for it to be retained
    * @param caseInsensitive whether string-valued fields are compared without regard to case
-   * @param <E>        the entity type
+   * @param <E>             the entity type
    * @return a page over the requested window, carrying the total count of matching entities
    * @throws QueryProcessingException if {@code first} or {@code max} is negative, or if a field named by the query
    *                                  can't be read from an entity
@@ -204,7 +204,7 @@ public class EntityInterrogator {
       case CONJUNCTION -> matchesConjunction(entity, (WhereConjunction)criterion, toLowerCase);
       case FIELD -> {
         try {
-          yield ((WhereField)criterion).getOperator().isTrue(((WhereField)criterion).getOperand(), WhereOperand.fromObject(BeanReflector.get(entity, constructAttributePath((WhereField)criterion)), toLowerCase));
+          yield ((WhereField)criterion).getOperator().isTrue(((WhereField)criterion).getOperand(), WhereOperand.fromObject(BeanReflector.get(entity, constructAttributePath((WhereField)criterion))), toLowerCase);
         } catch (BeanAccessException beanAccessException) {
           throw new QueryProcessingException(beanAccessException);
         }
@@ -261,11 +261,11 @@ public class EntityInterrogator {
       for (SortField sortField : sortFields) {
         try {
 
-          WhereOperand<?> firstOperand = WhereOperand.fromObject(BeanReflector.get(firstEntity, constructAttributePath(sortField)), toLowerCase);
-          WhereOperand<?> secondOperand = WhereOperand.fromObject(BeanReflector.get(secondEntity, constructAttributePath(sortField)), toLowerCase);
+          WhereOperand<?> firstOperand = WhereOperand.fromObject(BeanReflector.get(firstEntity, constructAttributePath(sortField)));
+          WhereOperand<?> secondOperand = WhereOperand.fromObject(BeanReflector.get(secondEntity, constructAttributePath(sortField)));
           int comparison = switch ((sortField.getDirection() == null) ? SortDirection.ASC : sortField.getDirection()) {
-            case ASC -> firstOperand.compareTo(secondOperand);
-            case DESC -> secondOperand.compareTo(firstOperand);
+            case ASC -> toLowerCase ? WhereOperand.getCaseInsensitiveComparator().compare(firstOperand, secondOperand) : firstOperand.compareTo(secondOperand);
+            case DESC -> toLowerCase ? WhereOperand.getCaseInsensitiveComparator().compare(secondOperand, firstOperand) : secondOperand.compareTo(firstOperand);
           };
 
           if (comparison != 0) {

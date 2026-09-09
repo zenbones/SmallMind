@@ -101,11 +101,12 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   /**
    * Returns the stored byte value.
    *
+   * @param toLowerCase ignored; a byte value has no case
    * @return byte literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Byte get () {
+  public Byte get (boolean toLowerCase) {
 
     return value;
   }

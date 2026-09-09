@@ -101,11 +101,12 @@ public class LongWhereOperand extends WhereOperand<Long> {
   /**
    * Returns the stored long value.
    *
+   * @param toLowerCase ignored; a long value has no case
    * @return long literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Long get () {
+  public Long get (boolean toLowerCase) {
 
     return value;
   }

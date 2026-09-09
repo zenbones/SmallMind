@@ -103,11 +103,12 @@ public class DateWhereOperand extends WhereOperand<LocalDateTime> {
   /**
    * Returns the stored date-time value.
    *
+   * @param toLowerCase ignored; a date-time value has no case
    * @return date-time literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public LocalDateTime get () {
+  public LocalDateTime get (boolean toLowerCase) {
 
     return value;
   }

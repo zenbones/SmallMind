@@ -42,13 +42,13 @@ public enum WhereOperator {
 
   LT {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) < 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(toLowerCase), (Number)op1.get(toLowerCase)) < 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((LocalDateTime)op2.get()).isBefore((LocalDateTime)op1.get());
+          return ((LocalDateTime)op2.get(toLowerCase)).isBefore((LocalDateTime)op1.get(toLowerCase));
         }
       }
 
@@ -57,13 +57,13 @@ public enum WhereOperator {
   },
   LE {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) <= 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(toLowerCase), (Number)op1.get(toLowerCase)) <= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op2.get().equals(op1.get()) || ((LocalDateTime)op2.get()).isBefore((LocalDateTime)op1.get());
+          return op2.get(toLowerCase).equals(op1.get(toLowerCase)) || ((LocalDateTime)op2.get(toLowerCase)).isBefore((LocalDateTime)op1.get(toLowerCase));
         }
       }
 
@@ -72,7 +72,7 @@ public enum WhereOperator {
   },
   EQ {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if (ElementType.NULL.equals(op1.getElementType())) {
@@ -81,8 +81,8 @@ public enum WhereOperator {
           return false;
         } else if (op1.getElementType().equals(op2.getElementType())) {
           return switch (op1.getElementType()) {
-            case BOOLEAN, DATE, STRING -> op1.get().equals(op2.get());
-            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) == 0;
+            case BOOLEAN, DATE, STRING -> op1.get(toLowerCase).equals(op2.get(toLowerCase));
+            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(toLowerCase), (Number)op2.get(toLowerCase)) == 0;
             case NULL -> true;
           };
         }
@@ -93,7 +93,7 @@ public enum WhereOperator {
   },
   NE {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if (ElementType.NULL.equals(op1.getElementType())) {
@@ -102,8 +102,8 @@ public enum WhereOperator {
           return true;
         } else if (op1.getElementType().equals(op2.getElementType())) {
           return switch (op1.getElementType()) {
-            case BOOLEAN, DATE, STRING -> !op1.get().equals(op2.get());
-            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) != 0;
+            case BOOLEAN, DATE, STRING -> !op1.get(toLowerCase).equals(op2.get(toLowerCase));
+            case NUMBER -> NUMBER_COMPARATOR.compare((Number)op1.get(toLowerCase), (Number)op2.get(toLowerCase)) != 0;
             case NULL -> false;
           };
         }
@@ -114,13 +114,13 @@ public enum WhereOperator {
   },
   GE {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) >= 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(toLowerCase), (Number)op1.get(toLowerCase)) >= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op2.get().equals(op1.get()) || ((LocalDateTime)op2.get()).isAfter((LocalDateTime)op1.get());
+          return op2.get(toLowerCase).equals(op1.get(toLowerCase)) || ((LocalDateTime)op2.get(toLowerCase)).isAfter((LocalDateTime)op1.get(toLowerCase));
         }
       }
 
@@ -129,13 +129,13 @@ public enum WhereOperator {
   },
   GT {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) > 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(toLowerCase), (Number)op1.get(toLowerCase)) > 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((LocalDateTime)op2.get()).isAfter((LocalDateTime)op1.get());
+          return ((LocalDateTime)op2.get(toLowerCase)).isAfter((LocalDateTime)op1.get(toLowerCase));
         }
       }
       throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
@@ -143,7 +143,7 @@ public enum WhereOperator {
   },
   EXISTS {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!OperandType.BOOLEAN.equals(op1.getOperandType())) {
         throw new QueryProcessingException("The operator(%s) requires a boolean operand", name());
@@ -151,41 +151,41 @@ public enum WhereOperator {
       if (OperandType.ARRAY.equals(op2.getOperandType())) {
         throw new QueryProcessingException("The operator(%s) does not accept array inputs", name());
       } else {
-        return ElementType.NULL.equals(op2.getElementType()) ? Boolean.FALSE.equals(op1.get()) : Boolean.TRUE.equals(op1.get());
+        return ElementType.NULL.equals(op2.getElementType()) ? Boolean.FALSE.equals(op1.get(toLowerCase)) : Boolean.TRUE.equals(op1.get(toLowerCase));
       }
     }
   },
   LIKE {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if (ElementType.STRING.equals(op1.getElementType())) {
           if (ElementType.NULL.equals(op2.getElementType())) {
             return false;
           } else if (ElementType.STRING.equals(op2.getElementType())) {
-            switch (((String)op1.get()).length()) {
+            switch (((String)op1.get(toLowerCase)).length()) {
               case 0:
-                return op2.get().equals("");
+                return op2.get(toLowerCase).equals("");
               case 1:
-                return op1.get().equals(SINGLE_WILDCARD) || op2.get().equals(op1.get());
+                return op1.get(toLowerCase).equals(SINGLE_WILDCARD) || op2.get(toLowerCase).equals(op1.get(toLowerCase));
               case 2:
-                return op1.get().equals(DOUBLE_WILDCARD) || (((String)op1.get()).charAt(0) == WILDCARD_CHAR) ? ((String)op2.get()).endsWith(((String)op1.get()).substring(1)) : (((String)op1.get()).charAt(1) == WILDCARD_CHAR) ? ((String)op2.get()).startsWith(((String)op1.get()).substring(0, 1)) : op2.get().equals(op1.get());
+                return op1.get(toLowerCase).equals(DOUBLE_WILDCARD) || (((String)op1.get(toLowerCase)).charAt(0) == WILDCARD_CHAR) ? ((String)op2.get(toLowerCase)).endsWith(((String)op1.get(toLowerCase)).substring(1)) : (((String)op1.get(toLowerCase)).charAt(1) == WILDCARD_CHAR) ? ((String)op2.get(toLowerCase)).startsWith(((String)op1.get(toLowerCase)).substring(0, 1)) : op2.get(toLowerCase).equals(op1.get(toLowerCase));
               default:
-                if (((String)op1.get()).substring(1, ((String)op1.get()).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
+                if (((String)op1.get(toLowerCase)).substring(1, ((String)op1.get(toLowerCase)).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
                   throw new QueryProcessingException("The operation(%s) allows wild cards(%s) only at the  start or end of the operand", name(), SINGLE_WILDCARD);
-                } else if (((String)op1.get()).startsWith(SINGLE_WILDCARD) && ((String)op1.get()).endsWith(SINGLE_WILDCARD)) {
+                } else if (((String)op1.get(toLowerCase)).startsWith(SINGLE_WILDCARD) && ((String)op1.get(toLowerCase)).endsWith(SINGLE_WILDCARD)) {
 
-                  return ((String)op2.get()).contains(((String)op1.get()).substring(1, ((String)op1.get()).length() - 1));
-                } else if (((String)op1.get()).startsWith(SINGLE_WILDCARD)) {
+                  return ((String)op2.get(toLowerCase)).contains(((String)op1.get(toLowerCase)).substring(1, ((String)op1.get(toLowerCase)).length() - 1));
+                } else if (((String)op1.get(toLowerCase)).startsWith(SINGLE_WILDCARD)) {
 
-                  return ((String)op2.get()).endsWith(((String)op1.get()).substring(1));
-                } else if (((String)op1.get()).endsWith(SINGLE_WILDCARD)) {
+                  return ((String)op2.get(toLowerCase)).endsWith(((String)op1.get(toLowerCase)).substring(1));
+                } else if (((String)op1.get(toLowerCase)).endsWith(SINGLE_WILDCARD)) {
 
-                  return ((String)op2.get()).startsWith(((String)op1.get()).substring(0, ((String)op1.get()).length() - 1));
+                  return ((String)op2.get(toLowerCase)).startsWith(((String)op1.get(toLowerCase)).substring(0, ((String)op1.get(toLowerCase)).length() - 1));
                 } else {
 
-                  return op2.get().equals(op1.get());
+                  return op2.get(toLowerCase).equals(op1.get(toLowerCase));
                 }
             }
           }
@@ -197,29 +197,29 @@ public enum WhereOperator {
   },
   UNLIKE {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
-      return !LIKE.isTrue(op1, op2);
+      return !LIKE.isTrue(op1, op2, toLowerCase);
     }
   },
   IN {
     @Override
-    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase) {
 
       if (OperandType.ARRAY.equals(op1.getOperandType()) && (!OperandType.ARRAY.equals(op2.getOperandType()))) {
         if (op1.getElementType().equals(op2.getElementType())) {
           if (ElementType.NULL.equals(op2.getElementType())) {
             return true;
           } else {
-            for (Object element : (Object[])op1.get()) {
+            for (Object element : (Object[])op1.get(toLowerCase)) {
               switch (op2.getElementType()) {
                 case BOOLEAN, DATE, STRING -> {
-                  if (op2.get().equals(element)) {
+                  if (op2.get(toLowerCase).equals(element)) {
                     return true;
                   }
                 }
                 case NUMBER -> {
-                  if (NUMBER_COMPARATOR.compare((Number)element, (Number)op2.get()) == 0) {
+                  if (NUMBER_COMPARATOR.compare((Number)element, (Number)op2.get(toLowerCase)) == 0) {
                     return true;
                   }
                 }
@@ -241,12 +241,27 @@ public enum WhereOperator {
   private static final char WILDCARD_CHAR = '*';
 
   /**
-   * Evaluates this operator against the two supplied operands and returns whether the comparison holds.
+   * Evaluates this operator against the two supplied operands, without regard to case, and returns whether the
+   * comparison holds.
    *
    * @param op1 left-hand (pattern/threshold) operand
    * @param op2 right-hand (input value) operand
    * @return {@code true} if the comparison is satisfied
    * @throws QueryProcessingException if the operand types are incompatible with this operator
    */
-  public abstract boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2);
+  public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+    return isTrue(op1, op2, false);
+  }
+
+  /**
+   * Evaluates this operator against the two supplied operands and returns whether the comparison holds.
+   *
+   * @param op1         left-hand (pattern/threshold) operand
+   * @param op2         right-hand (input value) operand
+   * @param toLowerCase whether {@link Character} or {@link String} operand values are compared without regard to case
+   * @return {@code true} if the comparison is satisfied
+   * @throws QueryProcessingException if the operand types are incompatible with this operator
+   */
+  public abstract boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2, boolean toLowerCase);
 }

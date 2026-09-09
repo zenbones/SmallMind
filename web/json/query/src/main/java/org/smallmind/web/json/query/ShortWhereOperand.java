@@ -101,11 +101,12 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   /**
    * Returns the short value held by this operand.
    *
+   * @param toLowerCase ignored; a short value has no case
    * @return short literal, or {@code null} if unset
    */
   @Override
   @XmlTransient
-  public Short get () {
+  public Short get (boolean toLowerCase) {
 
     return value;
   }

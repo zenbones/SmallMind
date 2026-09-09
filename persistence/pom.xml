@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>7.2.0-SNAPSHOT</version>
+    <version>7.1.1-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-persistence</artifactId>
   <name>Persistence</name>
@@ -183,6 +183,26 @@
       <plugin>
         <groupId>org.hibernate.orm.tooling</groupId>
         <artifactId>hibernate-enhance-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.querydsl</groupId>
+              <artifactId>querydsl-apt</artifactId>
+              <classifier>jakarta</classifier>
+              <version>${querydsl.version}</version>
+            </path>
+            <path>
+              <groupId>jakarta.persistence</groupId>
+              <artifactId>jakarta.persistence-api</artifactId>
+              <version>${jakarta.persistence.version}</version>
+            </path>
+          </annotationProcessorPaths>
+          <proc>full</proc>
+        </configuration>
       </plugin>
     </plugins>
   </build>

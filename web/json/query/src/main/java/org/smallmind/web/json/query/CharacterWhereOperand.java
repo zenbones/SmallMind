@@ -101,13 +101,14 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
   /**
    * Returns the stored character value.
    *
+   * @param toLowerCase whether the character is lower-cased before being returned
    * @return character literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Character get () {
+  public Character get (boolean toLowerCase) {
 
-    return value;
+    return toLowerCase ? Character.toLowerCase(value) : value;
   }
 
   /**

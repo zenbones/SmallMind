@@ -101,11 +101,12 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
   /**
    * Returns the stored integer value.
    *
+   * @param toLowerCase ignored; an integer value has no case
    * @return integer literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Integer get () {
+  public Integer get (boolean toLowerCase) {
 
     return value;
   }

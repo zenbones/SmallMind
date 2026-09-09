@@ -106,12 +106,13 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   /**
    * Resolves and returns the enum constant by loading the class from the hint and looking up the stored name.
    *
+   * @param toLowerCase ignored; an enum constant is matched by its exact declared name
    * @return resolved enum constant
    * @throws QueryProcessingException if the enum class named in the hint cannot be loaded
    */
   @Override
   @XmlTransient
-  public E get () {
+  public E get (boolean toLowerCase) {
 
     try {
 

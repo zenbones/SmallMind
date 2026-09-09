@@ -175,12 +175,14 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   /**
    * Deserializes the backing JSON array into a typed Java array using the stored hint.
    *
+   * @param toLowerCase whether a {@code CHARACTER} or {@code STRING} component array is lower-cased element by
+   *                    element; ignored for every other component type
    * @return typed Java array, or {@code null} if no value has been set
    * @throws QueryProcessingException   if an enum class referenced by the hint cannot be loaded
    * @throws UnknownSwitchCaseException if the hint type or component type is unrecognized
    */
   @XmlTransient
-  public Object[] get () {
+  public Object[] get (boolean toLowerCase) {
 
     if (value == null) {
 
@@ -215,7 +217,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
                 String string;
 
-                characterArray[index] = (value.get(index) == null) ? null : (string = JsonCodec.instance().convert(value.get(index), String.class)).isEmpty() ? null : string.charAt(0);
+                characterArray[index] = (value.get(index) == null) ? null : (string = JsonCodec.instance().convert(value.get(index), String.class)).isEmpty() ? null : toLowerCase ? Character.toLowerCase(string.charAt(0)) : string.charAt(0);
               }
 
               return characterArray;
@@ -278,7 +280,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
               String[] stringArray = new String[value.size()];
 
               for (int index = 0; index < value.size(); index++) {
-                stringArray[index] = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), String.class);
+
+                String string = (value.get(index) == null) ? null : JsonCodec.instance().convert(value.get(index), String.class);
+
+                stringArray[index] = (toLowerCase && (string != null)) ? string.toLowerCase() : string;
               }
 
               return stringArray;

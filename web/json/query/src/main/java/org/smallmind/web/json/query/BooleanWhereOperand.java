@@ -101,11 +101,12 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
   /**
    * Returns the stored boolean value.
    *
+   * @param toLowerCase ignored; a boolean value has no case
    * @return boolean literal, or {@code null} if not set
    */
   @Override
   @XmlTransient
-  public Boolean get () {
+  public Boolean get (boolean toLowerCase) {
 
     return value;
   }

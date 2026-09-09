@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>7.2.0-SNAPSHOT</version>
+  <version>7.1.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -1420,25 +1420,6 @@
           <source>${maven.compiler.release}</source>
           <target>${maven.compiler.release}</target>
           <release>${maven.compiler.release}</release>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.querydsl</groupId>
-              <artifactId>querydsl-apt</artifactId>
-              <classifier>jakarta</classifier>
-              <version>${querydsl.version}</version>
-            </path>
-            <path>
-              <groupId>jakarta.persistence</groupId>
-              <artifactId>jakarta.persistence-api</artifactId>
-              <version>${jakarta.persistence.version}</version>
-            </path>
-            <path>
-              <groupId>org.smallmind</groupId>
-              <artifactId>web-json-doppelganger</artifactId>
-              <version>${project.version}</version>
-            </path>
-          </annotationProcessorPaths>
-          <proc>full</proc>
         </configuration>
       </plugin>
       <plugin>
