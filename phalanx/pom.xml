@@ -80,11 +80,6 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-foundation</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
