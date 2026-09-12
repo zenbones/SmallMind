@@ -54,6 +54,18 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
   }
 
   @Override
+  public boolean isHealthy () {
+
+    return responseTransport.isHealthy();
+  }
+
+  @Override
+  public String getDiagnostic () {
+
+    return responseTransport.getDiagnostic();
+  }
+
+  @Override
   public void play ()
     throws Exception {
 

@@ -51,9 +51,14 @@ import org.smallmind.phalanx.worker.WorkerFactory;
 
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport, ResponseTransmitter {
 
+  //  Three, and not negotiable downward. A quorum queue needs a majority of its members, so two
+  //  replicas tolerate no node failures at all and are worse than the classic queue they replace.
+  private static final int DEFAULT_QUORUM_REPLICATION_COUNT = 3;
+
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
+  private final RabbitMQConnectionManager connectionManager;
   private final SignalCodec signalCodec;
   private final ConcurrentLinkedQueue<ResponseMessageRouter> responseQueue;
   private final ResponseMessageRouter[] responseMessageRouters;
@@ -62,17 +67,29 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, InterruptedException, TimeoutException {
 
+    this(rabbitMQConnector, nameConfiguration, workerClass, signalCodec, serviceGroup, clusterSize, concurrencyLimit, messageTTLSeconds, DEFAULT_QUORUM_REPLICATION_COUNT, autoAcknowledge, publisherConfirmationHandler);
+  }
+
+  public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
+    throws IOException, InterruptedException, TimeoutException {
+
     super(workerClass, concurrencyLimit);
 
     int routerIndex = 0;
 
     this.signalCodec = signalCodec;
 
+    //  One connection for the whole transport, shared by every router. The per-instance queues are
+    //  declared exclusively, and an exclusive queue belongs to a connection - a router per connection
+    //  would mean a queue per router, and a shout or whisper delivered once per router instead of once.
+    connectionManager = new RabbitMQConnectionManager(rabbitMQConnector, "response[" + serviceGroup + "]");
+
     responseMessageRouters = new ResponseMessageRouter[clusterSize];
     for (int index = 0; index < responseMessageRouters.length; index++) {
-      responseMessageRouters[index] = new ResponseMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler);
-      responseMessageRouters[index].initialize();
+      responseMessageRouters[index] = new ResponseMessageRouter(connectionManager, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, quorumReplicationCount, autoAcknowledge, publisherConfirmationHandler);
     }
+
+    connectionManager.start();
 
     responseQueue = new ConcurrentLinkedQueue<>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
@@ -109,6 +126,22 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   public TransportState getState () {
 
     return transportStateRef.get();
+  }
+
+  /*
+   * What the state field alone could never tell anyone - the transport reports PLAYING whether or not
+   * a single consumer is actually attached to a single queue.
+   */
+  @Override
+  public boolean isHealthy () {
+
+    return (!closed.get()) && connectionManager.isHealthy();
+  }
+
+  @Override
+  public String getDiagnostic () {
+
+    return connectionManager.getDiagnostic();
   }
 
   @Override
@@ -158,9 +191,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
       synchronized (transportStateRef) {
         transportStateRef.set(TransportState.CLOSED);
 
-        for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
-          responseMessageRouter.close();
-        }
+        connectionManager.close();
 
         shutDown();
       }

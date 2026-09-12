@@ -44,6 +44,11 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   private RabbitMQServer[] servers;
   private String username;
   private String password;
+  private Double retryMultiplier;
+  private Double retryJitterRatio;
+  private Integer initialRetryMilliseconds;
+  private Integer maximumRetryMilliseconds;
+  private Integer channelFailureEscalationCount;
   private int heartbeatSeconds;
 
   public void setServers (RabbitMQServer[] servers) {
@@ -64,6 +69,33 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   public void setHeartbeatSeconds (int heartbeatSeconds) {
 
     this.heartbeatSeconds = heartbeatSeconds;
+  }
+
+  //  All optional, and all defaulted in RabbitMQConnector. Existing wiring needs no change.
+
+  public void setInitialRetryMilliseconds (Integer initialRetryMilliseconds) {
+
+    this.initialRetryMilliseconds = initialRetryMilliseconds;
+  }
+
+  public void setMaximumRetryMilliseconds (Integer maximumRetryMilliseconds) {
+
+    this.maximumRetryMilliseconds = maximumRetryMilliseconds;
+  }
+
+  public void setRetryMultiplier (Double retryMultiplier) {
+
+    this.retryMultiplier = retryMultiplier;
+  }
+
+  public void setRetryJitterRatio (Double retryJitterRatio) {
+
+    this.retryJitterRatio = retryJitterRatio;
+  }
+
+  public void setChannelFailureEscalationCount (Integer channelFailureEscalationCount) {
+
+    this.channelFailureEscalationCount = channelFailureEscalationCount;
   }
 
   @Override
@@ -97,11 +129,31 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
     }
 
     connectionFactory = new ConnectionFactory();
-    connectionFactory.setAutomaticRecoveryEnabled(true);
+    //  RabbitMQConnectionManager owns recovery. Two recovery mechanisms racing on the same broker-side
+    //  drop is how a connection ends up autorecovered behind the manager's back, with its consumers
+    //  duplicated on queues the manager has already rebuilt elsewhere.
+    connectionFactory.setAutomaticRecoveryEnabled(false);
+    connectionFactory.setTopologyRecoveryEnabled(false);
     connectionFactory.setRequestedHeartbeat(heartbeatSeconds);
     connectionFactory.setUsername(username);
     connectionFactory.setPassword(password);
 
     rabbitMQConnector = new RabbitMQConnector(connectionFactory, addresses);
+
+    if (initialRetryMilliseconds != null) {
+      rabbitMQConnector.setInitialRetryMilliseconds(initialRetryMilliseconds);
+    }
+    if (maximumRetryMilliseconds != null) {
+      rabbitMQConnector.setMaximumRetryMilliseconds(maximumRetryMilliseconds);
+    }
+    if (retryMultiplier != null) {
+      rabbitMQConnector.setRetryMultiplier(retryMultiplier);
+    }
+    if (retryJitterRatio != null) {
+      rabbitMQConnector.setRetryJitterRatio(retryJitterRatio);
+    }
+    if (channelFailureEscalationCount != null) {
+      rabbitMQConnector.setChannelFailureEscalationCount(channelFailureEscalationCount);
+    }
   }
 }

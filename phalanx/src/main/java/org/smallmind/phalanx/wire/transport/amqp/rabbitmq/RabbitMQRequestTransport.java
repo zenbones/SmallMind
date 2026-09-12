@@ -55,6 +55,7 @@ import org.smallmind.phalanx.wire.transport.ClaxonTag;
 public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final RabbitMQConnectionManager connectionManager;
   private final SignalCodec signalCodec;
   private final LinkedBlockingQueue<RequestMessageRouter> routerQueue;
   private final RequestMessageRouter[] requestMessageRouters;
@@ -69,11 +70,16 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
     this.signalCodec = signalCodec;
 
+    //  One connection for the whole transport - the per-caller response queue is exclusive, and an
+    //  exclusive queue belongs to the connection that declared it.
+    connectionManager = new RabbitMQConnectionManager(rabbitMQConnector, "request[" + callerId + "]");
+
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler);
-      requestMessageRouters[index].initialize();
+      requestMessageRouters[index] = new RequestMessageRouter(connectionManager, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler);
     }
+
+    connectionManager.start();
 
     routerQueue = new LinkedBlockingQueue<>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
@@ -135,9 +141,17 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
     throws Exception {
 
     if (closed.compareAndSet(false, true)) {
-      for (RequestMessageRouter requestMessageRouter : requestMessageRouters) {
-        requestMessageRouter.close();
-      }
+      connectionManager.close();
     }
+  }
+
+  public boolean isHealthy () {
+
+    return (!closed.get()) && connectionManager.isHealthy();
+  }
+
+  public String getDiagnostic () {
+
+    return connectionManager.getDiagnostic();
   }
 }

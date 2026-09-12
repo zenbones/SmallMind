@@ -38,6 +38,10 @@ public interface ResponseTransportMXBean {
 
   TransportState getState ();
 
+  boolean isHealthy ();
+
+  String getDiagnostic ();
+
   void play ()
     throws Exception;
 

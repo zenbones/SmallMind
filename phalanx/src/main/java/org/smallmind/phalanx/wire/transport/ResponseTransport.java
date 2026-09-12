@@ -41,6 +41,20 @@ public interface ResponseTransport {
 
   TransportState getState ();
 
+  /*
+   * Whether this transport is actually able to carry traffic, which is a different question from the
+   * state it was last told to be in. Defaulted for the transports whose liveness is not in doubt.
+   */
+  default boolean isHealthy () {
+
+    return true;
+  }
+
+  default String getDiagnostic () {
+
+    return getState().name();
+  }
+
   void play ()
     throws Exception;
 

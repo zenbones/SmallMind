@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -63,13 +64,14 @@ public class RequestMessageRouter extends MessageRouter {
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
   private final String callerId;
+  private final AtomicReference<String> consumerTagRef = new AtomicReference<>();
   private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public RequestMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
-    super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
+    super(connectionManager, "wire", nameConfiguration, publisherConfirmationHandler);
 
     this.requestTransport = requestTransport;
     this.signalCodec = signalCodec;
@@ -79,16 +81,55 @@ public class RequestMessageRouter extends MessageRouter {
     this.autoAcknowledge = autoAcknowledge;
   }
 
+  public String getCallerResponseQueueName () {
+
+    return getResponseQueueName() + "-" + callerId;
+  }
+
+  /*
+   * Exclusive, for the same reason as the per-instance queues on the responding side - the broker
+   * deletes it with its connection, so the name can never be left behind as a record whose process has
+   * been stopped. Durability is inert here and set only to stay clear of the broker's refusal to accept
+   * transient non-exclusive queues; auto-delete is off because the connection now governs its life.
+   */
   @Override
   public final void bindQueues ()
     throws IOException {
 
+    markFullyBound(declareAndBind(getCallerResponseQueueName(), true, (channel) -> {
+
+      channel.queueDeclare(getCallerResponseQueueName(), true, true, false, null);
+      channel.queueBind(getCallerResponseQueueName(), getResponseExchangeName(), "response-" + callerId);
+    }));
+  }
+
+  @Override
+  public boolean isConsumerRequired () {
+
+    return true;
+  }
+
+  @Override
+  public boolean isConsumerInstalled () {
+
+    return consumerTagRef.get() != null;
+  }
+
+  @Override
+  public void uninstallConsumer ()
+    throws IOException {
+
     operate((channel) -> {
 
-      String queueName;
+      String consumerTag;
 
-      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, true, false, true, null);
-      channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
+      if ((consumerTag = consumerTagRef.getAndSet(null)) != null) {
+        try {
+          channel.basicCancel(consumerTag);
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(RequestMessageRouter.class).warn(ioException);
+        }
+      }
     });
   }
 
@@ -96,9 +137,12 @@ public class RequestMessageRouter extends MessageRouter {
   public void installConsumer ()
     throws IOException {
 
-    operate((channel) -> {
+    if (isFullyBound()) {
+      operate((channel) -> {
 
-      channel.basicConsume(getResponseQueueName() + "-" + callerId, autoAcknowledge, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+        String consumerTag = getCallerResponseQueueName() + "[" + index + "]";
+
+        channel.basicConsume(getCallerResponseQueueName(), autoAcknowledge, consumerTag, false, false, null, new DefaultConsumer(channel) {
 
         @Override
         public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
@@ -125,8 +169,11 @@ public class RequestMessageRouter extends MessageRouter {
             }
           }
         }
+        });
+
+        consumerTagRef.set(consumerTag);
       });
-    });
+    }
   }
 
   public String publish (final boolean inOnly, final String serviceGroup, final Voice<?, ?> voice, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
