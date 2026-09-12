@@ -39,8 +39,9 @@ import org.testng.annotations.Test;
 
 /**
  * Re-runs the wire transport contract over RabbitMQ with two features the base RabbitMQ test leaves
- * off: a quorum talk queue ({@link QuorumQueueContractor}) and a non-null
- * {@link PublisherConfirmationHandler}, exercising the publisher-confirm path in the message routers.
+ * off: a non-null {@link PublisherConfirmationHandler}, exercising the publisher-confirm path in the
+ * message routers. The talk queue is a quorum queue in either case, since the routers now declare
+ * queue types by role rather than taking them as configuration.
  * Inherits the broker/connector setup and the four contract methods from
  * {@link RabbitMQTransportIntegrationTest}.
  */
@@ -71,13 +72,13 @@ public class RabbitMQConfirmationIntegrationTest extends RabbitMQTransportIntegr
   protected ResponseTransport createResponseTransport ()
     throws Exception {
 
-    return new RabbitMQResponseTransport(connector, new QuorumQueueContractor(1), new ClassicQueueContractor(), new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, false, CONFIRMATION_HANDLER);
+    return new RabbitMQResponseTransport(connector, new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, false, CONFIRMATION_HANDLER);
   }
 
   @Override
   protected RequestTransport createRequestTransport ()
     throws Exception {
 
-    return new RabbitMQRequestTransport(connector, new ClassicQueueContractor(), new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, CONFIRMATION_HANDLER);
+    return new RabbitMQRequestTransport(connector, new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, CONFIRMATION_HANDLER);
   }
 }

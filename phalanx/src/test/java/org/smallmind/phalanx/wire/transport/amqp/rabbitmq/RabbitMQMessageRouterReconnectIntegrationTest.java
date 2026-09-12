@@ -118,15 +118,27 @@ public class RabbitMQMessageRouterReconnectIntegrationTest extends AbstractGroun
   public void testSendRecoversAfterChannelClose ()
     throws Exception {
 
-    ReconnectTestRouter router = new ReconnectTestRouter(connector);
+    RabbitMQConnectionManager connectionManager = new RabbitMQConnectionManager(connector, "reconnect-test");
+    ReconnectTestRouter router = new ReconnectTestRouter(connectionManager);
 
-    router.initialize();
+    //  The manager owns the connection and drives every rebuild; registering happens in the router's
+    //  constructor, so starting the manager is what builds this router's channel.
+    connectionManager.start();
     try {
 
-      //  Kill the channel out from under the router; the registered shutdown listener rebuilds it
-      //  (re-declaring the exchange and re-binding the queue) on another thread. abort() forces the
-      //  close and discards any close-time error, so it fits the IOException-only ChannelOperation.
-      router.operate(Channel::abort);
+      //  Kill the channel out from under the router; the registered shutdown listener reports it and
+      //  the manager rebuilds it on another thread.
+      //
+      //  The kill has to come from the broker. An abort() would be application initiated, and the
+      //  manager deliberately ignores those - it aborts channels itself when replacing them, and must
+      //  not treat its own tidying as a failure. A passive declare of a queue that does not exist is a
+      //  404, which closes the channel the way a real channel level failure does.
+      try {
+        router.operate((channel) -> channel.queueDeclarePassive("wire-test-no-such-queue"));
+        Assert.fail("the broker accepted a passive declare of a queue that should not exist");
+      } catch (IOException ioException) {
+        //  expected - this IS the failure the test is about
+      }
 
       //  Publishing now must succeed: send() either finds the rebuilt channel or hits AlreadyClosed,
       //  rebuilds, and retries. Either way the message must land on the bound queue.
@@ -134,7 +146,7 @@ public class RabbitMQMessageRouterReconnectIntegrationTest extends AbstractGroun
 
       Assert.assertEquals(awaitDelivery(), "after-reconnect", "the message published after the channel was killed was not delivered");
     } finally {
-      router.close();
+      connectionManager.close();
     }
   }
 
@@ -162,21 +174,40 @@ public class RabbitMQMessageRouterReconnectIntegrationTest extends AbstractGroun
 
   private static class ReconnectTestRouter extends MessageRouter {
 
-    public ReconnectTestRouter (RabbitMQConnector connector) {
+    public ReconnectTestRouter (RabbitMQConnectionManager connectionManager) {
 
-      super(connector, "wire-test", new NameConfiguration(), null);
+      super(connectionManager, "wire-test", new NameConfiguration(), null);
     }
 
     @Override
     public void bindQueues ()
       throws IOException {
 
-      operate(channel -> {
-        //  Durable (not transient): this broker rejects transient non-exclusive queues, matching what
-        //  ClassicQueueContractor declares in production.
+      //  Durable and non-exclusive, unlike the per-instance queues in production - this test is about
+      //  the channel coming back, and a shared queue that outlives the connection is the simpler
+      //  subject for that. The broker rejects transient non-exclusive queues, hence durable.
+      markFullyBound(declareAndBind(QUEUE_NAME, false, (channel) -> {
+
         channel.queueDeclare(QUEUE_NAME, true, false, false, null);
         channel.queueBind(QUEUE_NAME, getRequestExchangeName(), ROUTING_KEY);
-      });
+      }));
+    }
+
+    @Override
+    public boolean isConsumerRequired () {
+
+      return false;
+    }
+
+    @Override
+    public boolean isConsumerInstalled () {
+
+      return false;
+    }
+
+    @Override
+    public void uninstallConsumer () {
+
     }
 
     @Override

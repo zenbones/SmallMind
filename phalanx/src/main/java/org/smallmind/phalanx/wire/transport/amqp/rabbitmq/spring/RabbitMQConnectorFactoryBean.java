@@ -39,7 +39,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * Spring factory bean that builds a {@link RabbitMQConnector} from configured servers and credentials.
+ * Spring factory bean that builds a {@link RabbitMQConnector} from configured servers, credentials and
+ * optional recovery tuning.
  */
 public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnector>, InitializingBean {
 
@@ -47,6 +48,11 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   private RabbitMQServer[] servers;
   private String username;
   private String password;
+  private Double retryMultiplier;
+  private Double retryJitterRatio;
+  private Integer initialRetryMilliseconds;
+  private Integer maximumRetryMilliseconds;
+  private Integer channelFailureEscalationCount;
   private int heartbeatSeconds;
 
   /**
@@ -80,13 +86,67 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * Sets the heartbeat interval sent to the broker.
+   * Sets the heartbeat interval requested of the broker, which also bounds how quickly a dead
+   * connection is noticed.
    *
    * @param heartbeatSeconds heartbeat interval in seconds.
    */
   public void setHeartbeatSeconds (int heartbeatSeconds) {
 
     this.heartbeatSeconds = heartbeatSeconds;
+  }
+
+  //  All optional, and all defaulted in RabbitMQConnector. Existing wiring needs no change.
+
+  /**
+   * Optionally overrides the delay before the first recovery attempt.
+   *
+   * @param initialRetryMilliseconds initial retry delay in milliseconds, or null for the default.
+   */
+  public void setInitialRetryMilliseconds (Integer initialRetryMilliseconds) {
+
+    this.initialRetryMilliseconds = initialRetryMilliseconds;
+  }
+
+  /**
+   * Optionally overrides the ceiling on the recovery delay.
+   *
+   * @param maximumRetryMilliseconds maximum retry delay in milliseconds, or null for the default.
+   */
+  public void setMaximumRetryMilliseconds (Integer maximumRetryMilliseconds) {
+
+    this.maximumRetryMilliseconds = maximumRetryMilliseconds;
+  }
+
+  /**
+   * Optionally overrides the backoff growth factor.
+   *
+   * @param retryMultiplier backoff multiplier, or null for the default.
+   */
+  public void setRetryMultiplier (Double retryMultiplier) {
+
+    this.retryMultiplier = retryMultiplier;
+  }
+
+  /**
+   * Optionally overrides the proportion of the delay applied as random jitter.
+   *
+   * @param retryJitterRatio jitter ratio, or null for the default.
+   */
+  public void setRetryJitterRatio (Double retryJitterRatio) {
+
+    this.retryJitterRatio = retryJitterRatio;
+  }
+
+  /**
+   * Optionally overrides how many consecutive channel rebuild failures are tolerated before the
+   * connection is replaced.
+   *
+   * @param channelFailureEscalationCount failure count, or null for the default.
+   */
+  public void setChannelFailureEscalationCount (Integer channelFailureEscalationCount) {
+
+    this.channelFailureEscalationCount = channelFailureEscalationCount;
   }
 
   /**
@@ -103,7 +163,7 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   /**
    * Returns whether the produced object is a singleton.
    *
-   * @return {@code true} because the connector is shared.
+   * @return true, because the connector is shared.
    */
   @Override
   public boolean isSingleton () {
@@ -112,7 +172,7 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * Returns the constructed {@link RabbitMQConnector}.
+   * Returns the constructed connector.
    *
    * @return configured connector instance.
    */
@@ -123,7 +183,8 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
   }
 
   /**
-   * Builds the {@link ConnectionFactory} and address list, then creates the connector.
+   * Builds the connection factory and address list, then creates the connector and applies any
+   * recovery tuning that was configured.
    */
   @Override
   public void afterPropertiesSet () {
@@ -138,11 +199,31 @@ public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnect
     }
 
     connectionFactory = new ConnectionFactory();
-    connectionFactory.setAutomaticRecoveryEnabled(true);
+    //  RabbitMQConnectionManager owns recovery. Two recovery mechanisms racing on the same broker-side
+    //  drop is how a connection ends up autorecovered behind the manager's back, with its consumers
+    //  duplicated on queues the manager has already rebuilt elsewhere.
+    connectionFactory.setAutomaticRecoveryEnabled(false);
+    connectionFactory.setTopologyRecoveryEnabled(false);
     connectionFactory.setRequestedHeartbeat(heartbeatSeconds);
     connectionFactory.setUsername(username);
     connectionFactory.setPassword(password);
 
     rabbitMQConnector = new RabbitMQConnector(connectionFactory, addresses);
+
+    if (initialRetryMilliseconds != null) {
+      rabbitMQConnector.setInitialRetryMilliseconds(initialRetryMilliseconds);
+    }
+    if (maximumRetryMilliseconds != null) {
+      rabbitMQConnector.setMaximumRetryMilliseconds(maximumRetryMilliseconds);
+    }
+    if (retryMultiplier != null) {
+      rabbitMQConnector.setRetryMultiplier(retryMultiplier);
+    }
+    if (retryJitterRatio != null) {
+      rabbitMQConnector.setRetryJitterRatio(retryJitterRatio);
+    }
+    if (channelFailureEscalationCount != null) {
+      rabbitMQConnector.setChannelFailureEscalationCount(channelFailureEscalationCount);
+    }
   }
 }

@@ -49,6 +49,20 @@ public interface ResponseTransportMXBean {
   TransportState getState ();
 
   /**
+   * Returns whether the transport is connected, bound, and consuming when it is supposed to be.
+   *
+   * @return true if the transport is able to carry traffic
+   */
+  boolean isHealthy ();
+
+  /**
+   * Returns a description of the transport's connection, binding and consumer state.
+   *
+   * @return diagnostic description intended for an operator
+   */
+  String getDiagnostic ();
+
+  /**
    * Resumes request consumption after a pause.
    *
    * @throws Exception if the transport cannot transition to {@link TransportState#PLAYING}

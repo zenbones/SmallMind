@@ -34,6 +34,9 @@ package org.smallmind.phalanx.wire.transport.amqp.rabbitmq;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -48,15 +51,22 @@ import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.wire.transport.TransportState;
+import org.smallmind.phalanx.wire.transport.jms.QueueOperator;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Routes incoming requests to invocation workers and publishes responses over RabbitMQ.
+ * Routes inbound requests to invocation workers and publishes responses over RabbitMQ.
+ *
+ * <p>Queue types are chosen by role rather than taken as configuration, because the correct type
+ * follows from what the queue is for and a wrong choice is an outage rather than a preference. The
+ * shout and whisper queues are per-instance and exclusive; the talk queue is shared by the service
+ * group and is a quorum queue.
  */
 public class ResponseMessageRouter extends MessageRouter {
 
-  private final QueueContractor enduringQueueContractor;
-  private final QueueContractor ephemeralQueueContractor;
+  private final ConcurrentHashMap<String, String> consumerTagMap = new ConcurrentHashMap<>();
+  private final CopyOnWriteArraySet<String> boundQueueSet = new CopyOnWriteArraySet<>();
   private final RabbitMQResponseTransport responseTransport;
   private final SignalCodec signalCodec;
   private final String serviceGroup;
@@ -64,90 +74,162 @@ public class ResponseMessageRouter extends MessageRouter {
   private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
+  private final int quorumReplicationCount;
 
   /**
    * Creates a response message router for the given service group and instance.
    *
-   * @param connector                    connector for creating AMQP channels.
-   * @param enduringQueueContractor      contractor for durable talk queues.
-   * @param ephemeralQueueContractor     contractor for ephemeral whisper and shout queues.
+   * @param connectionManager            owner of the connection this router's channel is taken from.
    * @param nameConfiguration            exchange and queue naming scheme.
-   * @param responseTransport            owning response transport that receives dispatched messages.
+   * @param responseTransport            owning transport, consulted for lifecycle state and dispatch.
    * @param signalCodec                  codec for serializing and deserializing signals.
    * @param serviceGroup                 service group name embedded in AMQP routing keys.
-   * @param instanceId                   unique instance identifier used in whisper routing keys.
+   * @param instanceId                   unique instance identifier used in shout and whisper queue names.
    * @param index                        ordinal index of this router, used in consumer tags.
    * @param ttlSeconds                   message time-to-live in seconds.
+   * @param quorumReplicationCount       replica count for the shared talk queue; three or more, since a
+   *                                     quorum queue needs a majority of its members and two replicas
+   *                                     tolerate no failures at all.
    * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
    */
-  public ResponseMessageRouter (RabbitMQConnector connector, QueueContractor enduringQueueContractor, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public ResponseMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
-    super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
+    super(connectionManager, "wire", nameConfiguration, publisherConfirmationHandler);
 
-    this.enduringQueueContractor = enduringQueueContractor;
-    this.ephemeralQueueContractor = ephemeralQueueContractor;
     this.responseTransport = responseTransport;
     this.signalCodec = signalCodec;
     this.serviceGroup = serviceGroup;
     this.instanceId = instanceId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
+    this.quorumReplicationCount = quorumReplicationCount;
     this.autoAcknowledge = autoAcknowledge;
   }
 
   /**
-   * Declares and binds the shout, talk, and whisper request queues handled by this router.
+   * Returns the name of this instance's shout queue.
    *
-   * @throws IOException if queue declaration or binding fails.
+   * @return per-instance shout queue name.
+   */
+  public String getInstanceShoutQueueName () {
+
+    return getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]";
+  }
+
+  /**
+   * Returns the name of the talk queue shared by the whole service group.
+   *
+   * @return shared talk queue name.
+   */
+  public String getGroupTalkQueueName () {
+
+    return getTalkQueueName() + "-" + serviceGroup;
+  }
+
+  /**
+   * Returns the name of this instance's whisper queue.
+   *
+   * @return per-instance whisper queue name.
+   */
+  public String getInstanceWhisperQueueName () {
+
+    return getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]";
+  }
+
+  /**
+   * Declares and binds the shout, talk and whisper queues, each independently, so that a queue the
+   * broker will not hand over degrades this router rather than killing it.
+   *
+   * <p>The per-instance queues are exclusive. An exclusive queue belongs to the connection that
+   * declared it and the broker deletes it the moment that connection ends, so it cannot survive as a
+   * stale record whose process has stopped and which no client can then declare, delete or consume
+   * from - the name is always free to be re-declared. Durability is inert for an exclusive queue and is
+   * set only to stay clear of the broker's refusal to accept transient non-exclusive queues.
+   * Auto-delete is off so that pausing, which cancels the consumers, does not destroy the queue and
+   * drop whatever arrives meanwhile.
+   *
+   * <p>The talk queue is shared by the whole service group, so it can be neither exclusive nor
+   * auto-delete. It is a quorum queue instead, which is what keeps it serving when a node is lost - but
+   * only because the replication count is three.
+   *
+   * @throws IOException if the connection is unusable.
    */
   @Override
   public void bindQueues ()
     throws IOException {
 
-    operate((channel) -> {
+    boolean fullyBound = true;
 
-      String shoutQueueName;
-      String talkQueueName;
-      String whisperQueueName;
+    consumerTagMap.clear();
+    boundQueueSet.clear();
 
-      ephemeralQueueContractor.declare(channel, shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
-      channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+    for (RoutedQueue routedQueue : getRoutedQueues()) {
+      if (declareAndBind(routedQueue.getQueueName(), routedQueue.isEphemeral(), routedQueue.getDeclaration())) {
+        boundQueueSet.add(routedQueue.getQueueName());
+      } else {
+        fullyBound = false;
+      }
+    }
 
-      enduringQueueContractor.declare(channel, talkQueueName = getTalkQueueName() + "-" + serviceGroup, false);
-      channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
+    markFullyBound(fullyBound);
+  }
 
-      ephemeralQueueContractor.declare(channel, whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", true);
-      channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
-    });
+  /*
+   * The single definition of which queues this router serves, how each is declared, and which of them
+   * are per-instance. Binding, consuming and the consumer health check all iterate this, so adding or
+   * removing a queue is one edit here rather than three that have to agree.
+   */
+  private RoutedQueue[] getRoutedQueues () {
+
+    return new RoutedQueue[] {
+      new RoutedQueue(getInstanceShoutQueueName(), true, (channel) -> {
+
+        channel.queueDeclare(getInstanceShoutQueueName(), true, true, false, null);
+        channel.queueBind(getInstanceShoutQueueName(), getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+      }),
+      new RoutedQueue(getGroupTalkQueueName(), false, (channel) -> {
+
+        channel.queueDeclare(getGroupTalkQueueName(), true, false, false, Map.of("x-queue-type", "quorum", "x-quorum-initial-group-size", quorumReplicationCount));
+        channel.queueBind(getGroupTalkQueueName(), getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
+      }),
+      new RoutedQueue(getInstanceWhisperQueueName(), true, (channel) -> {
+
+        channel.queueDeclare(getInstanceWhisperQueueName(), true, true, false, null);
+        channel.queueBind(getInstanceWhisperQueueName(), getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
+      })
+    };
   }
 
   /**
-   * Starts consumption on all routing queues.
+   * Resumes consumption on this router's queues.
    *
    * @throws IOException if installing a consumer fails.
    */
   public void play ()
     throws IOException {
 
-    installConsumer();
+    resumeConsumer();
   }
 
   /**
-   * Stops consumption on all queues by canceling consumers.
+   * Suspends consumption by cancelling this router's consumers. The queues survive, so messages
+   * arriving while paused are held rather than lost.
    *
-   * @throws IOException if canceling a consumer fails.
+   * @throws IOException if cancelling a consumer fails.
    */
   public void pause ()
     throws IOException {
 
-    unInstallConsumer();
+    suspendConsumer();
   }
 
   /**
-   * Installs consumers for shout, talk, and whisper queues.
+   * Installs consumers on the queues that actually bound. Idempotent: the consumer tag is claimed
+   * before the broker call, so a rebuild and a resume arriving together cannot both install one, which
+   * the broker would answer with a connection level error for reusing a consumer tag.
    *
-   * @throws IOException if consumer installation fails.
+   * @throws IOException if installing a consumer fails.
    */
   @Override
   public void installConsumer ()
@@ -155,65 +237,33 @@ public class ResponseMessageRouter extends MessageRouter {
 
     operate((channel) -> {
 
-      bindQueues();
-
-      installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-      installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
-      installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+      for (String queueName : boundQueueSet) {
+        installConsumerInternal(channel, queueName);
+      }
     });
   }
 
   /**
-   * Cancels consumers for shout, talk, and whisper queues to stop message flow.
+   * Cancels only the consumers this router actually installed. A basic.cancel against a tag the broker
+   * has never seen is a channel error, which would turn a degraded router into a dead one.
    *
-   * @throws IOException if canceling consumers fails.
+   * @throws IOException if cancelling fails.
    */
-  public void unInstallConsumer ()
+  @Override
+  public void uninstallConsumer ()
     throws IOException {
 
     operate((channel) -> {
 
-      channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
-      channel.basicCancel(getTalkQueueName() + "-" + serviceGroup + "[" + index + "]");
-      channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
-    });
-  }
+      for (String queueName : consumerTagMap.keySet()) {
 
-  /**
-   * Installs a consumer on the supplied queue and wires it to execute responses.
-   *
-   * @param channel   channel used to install the consumer.
-   * @param queueName queue to consume from.
-   * @throws IOException if consumer installation fails.
-   */
-  private void installConsumerInternal (Channel channel, String queueName)
-    throws IOException {
+        String consumerTag;
 
-    channel.basicConsume(queueName, autoAcknowledge, queueName + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
-
-      /**
-       * Processes an inbound invocation request and forwards it for execution.
-       */
-      @Override
-      public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
-
-        try {
-
-          long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
-
-          LoggerManager.getLogger(ResponseMessageRouter.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          Instrument.with(ResponseMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
-
-          responseTransport.execute(new RabbitMQMessage(properties, body));
-        } catch (Throwable throwable) {
-          LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
-        } finally {
-          if (!autoAcknowledge) {
-            try {
-              channel.basicAck(envelope.getDeliveryTag(), true);
-            } catch (IOException ioException) {
-              LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
-            }
+        if ((consumerTag = consumerTagMap.remove(queueName)) != null) {
+          try {
+            channel.basicCancel(consumerTag);
+          } catch (IOException ioException) {
+            LoggerManager.getLogger(ResponseMessageRouter.class).warn(ioException);
           }
         }
       }
@@ -221,33 +271,97 @@ public class ResponseMessageRouter extends MessageRouter {
   }
 
   /**
-   * Publishes a response message back to the caller over RabbitMQ.
+   * Returns whether this router should be consuming, which follows the owning transport's lifecycle
+   * state. A transport that was paused stays paused across a rebuild - reinstalling consumers
+   * unconditionally meant any channel bounce silently resumed a transport an operator had stopped.
    *
-   * @param callerId      identifier of the requesting caller.
-   * @param correlationId correlation id to match the originating request.
-   * @param error         true if the result represents an error payload.
-   * @param nativeType    native return type of the result payload.
-   * @param result        encoded result payload.
-   * @throws Throwable if message construction or publication fails.
+   * @return true if the transport is playing.
    */
-  public void publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
+  @Override
+  public boolean isConsumerRequired () {
+
+    return TransportState.PLAYING.equals(responseTransport.getState());
+  }
+
+  /**
+   * Returns whether every queue this router managed to bind is being consumed. Derived from the bound
+   * set rather than counted against a fixed number, so that changing which queues this router serves
+   * cannot leave the health check quietly reporting on the wrong thing.
+   *
+   * @return true if each bound queue has a consumer, and at least one queue is bound.
+   */
+  @Override
+  public boolean isConsumerInstalled () {
+
+    return (!boundQueueSet.isEmpty()) && consumerTagMap.keySet().containsAll(boundQueueSet);
+  }
+
+  private void installConsumerInternal (Channel channel, String queueName)
+    throws IOException {
+
+    String consumerTag = queueName + "[" + index + "]";
+
+    //  Idempotent, and claimed before the call rather than after it. A rebuild and a resume can both
+    //  arrive here, and reusing a consumer tag is a connection level error, so it is worth being unable
+    //  to do it twice by construction.
+    if (consumerTagMap.putIfAbsent(queueName, consumerTag) == null) {
+      try {
+        channel.basicConsume(queueName, autoAcknowledge, consumerTag, false, false, null, new DefaultConsumer(channel) {
+
+        @Override
+        public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
+
+          try {
+
+            long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
+
+            LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
+            Instrument.with(ResponseMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
+
+            responseTransport.execute(new RabbitMQMessage(properties, body));
+          } catch (Throwable throwable) {
+            LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
+          } finally {
+            if (!autoAcknowledge) {
+              try {
+                channel.basicAck(envelope.getDeliveryTag(), true);
+              } catch (IOException ioException) {
+                LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+              }
+            }
+          }
+          }
+        });
+      } catch (IOException ioException) {
+        //  The claim has to be released, or a later attempt on a healthy channel would skip this queue.
+        consumerTagMap.remove(queueName);
+
+        throw ioException;
+      }
+    }
+  }
+
+  /**
+   * Serializes and publishes a result to the calling instance's response queue.
+   *
+   * @param callerId      identifier of the caller whose response queue should receive this.
+   * @param correlationId correlation id matching the original request.
+   * @param error         whether the result represents an error.
+   * @param nativeType    native type information for the result.
+   * @param result        payload to send.
+   * @return the message id assigned to the published response.
+   * @throws Throwable if encoding or publishing fails.
+   */
+  public String publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(correlationId, error, nativeType, result);
 
     send("response-" + callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
+
+    return rabbitMQMessage.getProperties().getMessageId();
   }
 
-  /**
-   * Creates a response message with correlation and payload metadata.
-   *
-   * @param correlationId correlation id tying the response to the request.
-   * @param error         whether the payload represents an error.
-   * @param nativeType    result native type.
-   * @param result        result payload.
-   * @return response message ready for publication.
-   * @throws Throwable if encoding fails.
-   */
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 
@@ -263,5 +377,60 @@ public class ResponseMessageRouter extends MessageRouter {
 
       return new RabbitMQMessage(properties, signalCodec.encode(new ResultSignal(error, nativeType, result)));
     });
+  }
+
+  /**
+   * One of the queues this router serves - its name, whether it belongs to this instance alone, and how
+   * it is declared and bound.
+   */
+  private static class RoutedQueue {
+
+    private final ChannelOperation declaration;
+    private final String queueName;
+    private final boolean ephemeral;
+
+    /**
+     * Describes a queue this router serves.
+     *
+     * @param queueName   the queue's name.
+     * @param ephemeral   true for a per-instance queue, whose name a new connection would free.
+     * @param declaration the declaration and binding to perform.
+     */
+    private RoutedQueue (String queueName, boolean ephemeral, ChannelOperation declaration) {
+
+      this.queueName = queueName;
+      this.ephemeral = ephemeral;
+      this.declaration = declaration;
+    }
+
+    /**
+     * Returns the queue's name.
+     *
+     * @return queue name.
+     */
+    private String getQueueName () {
+
+      return queueName;
+    }
+
+    /**
+     * Returns whether the queue belongs to this instance alone.
+     *
+     * @return true if per-instance.
+     */
+    private boolean isEphemeral () {
+
+      return ephemeral;
+    }
+
+    /**
+     * Returns the declaration and binding to perform for this queue.
+     *
+     * @return the declaring operation.
+     */
+    private ChannelOperation getDeclaration () {
+
+      return declaration;
+    }
   }
 }

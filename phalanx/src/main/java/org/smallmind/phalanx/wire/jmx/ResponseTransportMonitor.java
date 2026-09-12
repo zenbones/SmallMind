@@ -69,6 +69,28 @@ public class ResponseTransportMonitor extends StandardMBean implements ResponseT
   }
 
   /**
+   * Returns whether the underlying transport is connected, bound, and consuming when it should be.
+   *
+   * @return true if the transport is able to carry traffic
+   */
+  @Override
+  public boolean isHealthy () {
+
+    return responseTransport.isHealthy();
+  }
+
+  /**
+   * Returns a description of the underlying transport's connection, binding and consumer state.
+   *
+   * @return diagnostic description intended for an operator
+   */
+  @Override
+  public String getDiagnostic () {
+
+    return responseTransport.getDiagnostic();
+  }
+
+  /**
    * Resumes request processing on the underlying transport.
    *
    * @throws Exception if the transport cannot transition to the {@link TransportState#PLAYING} state

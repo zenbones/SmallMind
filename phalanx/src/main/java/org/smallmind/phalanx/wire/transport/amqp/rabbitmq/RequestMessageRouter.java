@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
@@ -57,39 +58,39 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
- * Routes request/response messages for callers over RabbitMQ, including consumer setup and message construction.
+ * Publishes invocation signals to the request exchange and consumes correlated results from this
+ * caller's own response queue, which is declared exclusive so that its name can never be left behind
+ * as a record the caller cannot reclaim.
  */
 public class RequestMessageRouter extends MessageRouter {
 
   private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
 
-  private final QueueContractor ephemeralQueueContractor;
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
   private final String callerId;
+  private final AtomicReference<String> consumerTagRef = new AtomicReference<>();
   private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
 
   /**
-   * Creates a request message router that publishes invocations and consumes correlated responses.
+   * Creates a request message router for the given caller.
    *
-   * @param connector                    connector for creating AMQP channels.
-   * @param ephemeralQueueContractor     contractor for the ephemeral per-caller response queue.
+   * @param connectionManager            owner of the connection this router's channel is taken from.
    * @param nameConfiguration            exchange and queue naming scheme.
-   * @param requestTransport             owning request transport used to complete pending callbacks.
+   * @param requestTransport             owning transport, notified when a correlated result arrives.
    * @param signalCodec                  codec for serializing and deserializing signals.
-   * @param callerId                     unique caller id used in queue names and message headers.
-   * @param index                        ordinal index of this router, used in consumer tags.
-   * @param ttlSeconds                   message time-to-live in seconds for published invocations.
-   * @param autoAcknowledge              whether to auto-ack response deliveries.
+   * @param callerId                     unique caller identifier embedded in the response queue name.
+   * @param index                        ordinal index of this router, used in the consumer tag.
+   * @param ttlSeconds                   message time-to-live in seconds.
+   * @param autoAcknowledge              whether the consumer should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
    */
-  public RequestMessageRouter (RabbitMQConnector connector, QueueContractor ephemeralQueueContractor, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public RequestMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
 
-    super(connector, "wire", nameConfiguration, publisherConfirmationHandler);
+    super(connectionManager, "wire", nameConfiguration, publisherConfirmationHandler);
 
-    this.ephemeralQueueContractor = ephemeralQueueContractor;
     this.requestTransport = requestTransport;
     this.signalCodec = signalCodec;
     this.callerId = callerId;
@@ -99,79 +100,141 @@ public class RequestMessageRouter extends MessageRouter {
   }
 
   /**
-   * Declares and binds the caller-specific response queue.
+   * Returns the name of this caller's response queue.
    *
-   * @throws IOException if queue declaration/binding fails.
+   * @return per-caller response queue name.
+   */
+  public String getCallerResponseQueueName () {
+
+    return getResponseQueueName() + "-" + callerId;
+  }
+
+  /**
+   * Declares and binds this caller's response queue.
+   *
+   * <p>Exclusive, for the same reason as the per-instance queues on the responding side: the broker
+   * deletes it with its connection, so the name can never be left behind as a record whose process has
+   * been stopped. Durability is inert here and set only to stay clear of the broker's refusal to accept
+   * transient non-exclusive queues; auto-delete is off because the connection governs its life.
+   *
+   * @throws IOException if the connection is unusable.
    */
   @Override
   public final void bindQueues ()
     throws IOException {
 
+    markFullyBound(declareAndBind(getCallerResponseQueueName(), true, (channel) -> {
+
+      channel.queueDeclare(getCallerResponseQueueName(), true, true, false, null);
+      channel.queueBind(getCallerResponseQueueName(), getResponseExchangeName(), "response-" + callerId);
+    }));
+  }
+
+  /**
+   * Returns whether this router should be consuming, which for a caller is always.
+   *
+   * @return always true.
+   */
+  @Override
+  public boolean isConsumerRequired () {
+
+    return true;
+  }
+
+  /**
+   * Returns whether the response queue consumer is installed.
+   *
+   * @return true if consuming.
+   */
+  @Override
+  public boolean isConsumerInstalled () {
+
+    return consumerTagRef.get() != null;
+  }
+
+  /**
+   * Cancels the response queue consumer, if one was installed.
+   *
+   * @throws IOException if cancelling fails.
+   */
+  @Override
+  public void uninstallConsumer ()
+    throws IOException {
+
     operate((channel) -> {
 
-      String queueName;
+      String consumerTag;
 
-      ephemeralQueueContractor.declare(channel, queueName = getResponseQueueName() + "-" + callerId, true);
-      channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
+      if ((consumerTag = consumerTagRef.getAndSet(null)) != null) {
+        try {
+          channel.basicCancel(consumerTag);
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(RequestMessageRouter.class).warn(ioException);
+        }
+      }
     });
   }
 
   /**
-   * Installs a consumer on the caller response queue to process result messages.
+   * Installs the response queue consumer, provided the queue bound. Idempotent, since the consumer tag
+   * is claimed before the broker call.
    *
-   * @throws IOException if consumer installation fails.
+   * @throws IOException if installing the consumer fails.
    */
   @Override
   public void installConsumer ()
     throws IOException {
 
-    operate((channel) -> {
+    if (isFullyBound()) {
+      operate((channel) -> {
 
-      channel.basicConsume(getResponseQueueName() + "-" + callerId, autoAcknowledge, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+        String consumerTag = getCallerResponseQueueName() + "[" + index + "]";
 
-        /**
-         * Processes a response message, decoding the result and completing the pending callback.
-         */
-        @Override
-        public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
+        channel.basicConsume(getCallerResponseQueueName(), autoAcknowledge, consumerTag, false, false, null, new DefaultConsumer(channel) {
 
-          try {
+          @Override
+          public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
-            long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
+            try {
 
-            LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-            Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
+              long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
-            Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
-              () -> requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class))
-            );
-          } catch (Throwable throwable) {
-            LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
-          } finally {
-            if (!autoAcknowledge) {
-              try {
-                channel.basicAck(envelope.getDeliveryTag(), true);
-              } catch (IOException ioException) {
-                LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+              LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
+              Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
+
+              Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
+                () -> requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class))
+              );
+            } catch (Throwable throwable) {
+              LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
+            } finally {
+              if (!autoAcknowledge) {
+                try {
+                  channel.basicAck(envelope.getDeliveryTag(), true);
+                } catch (IOException ioException) {
+                  LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+                }
               }
             }
           }
-        }
+        });
+
+        consumerTagRef.set(consumerTag);
       });
-    });
+    }
   }
 
   /**
-   * Publishes an invocation message using a routing key derived from the vocal mode and service group.
+   * Encodes and publishes an invocation signal, routed by the voice's vocal mode.
    *
-   * @param inOnly       whether the conversation expects a reply.
-   * @param serviceGroup target service group.
-   * @param voice        invocation metadata including mode and instance id.
-   * @param route        route to the target method.
-   * @param arguments    invocation arguments.
-   * @param contexts     optional contexts.
-   * @return generated message id.
-   * @throws Throwable if message construction or publishing fails.
+   * @param inOnly       true for a fire-and-forget call, which carries no caller id for a reply.
+   * @param serviceGroup service group to address.
+   * @param voice        routing and conversation metadata, including the vocal mode.
+   * @param route        target service, version and function.
+   * @param arguments    named argument map to encode.
+   * @param contexts     optional wire contexts propagated with the call.
+   * @return the message id assigned to the published request.
+   * @throws Throwable if encoding or publishing fails.
    */
   public String publish (final boolean inOnly, final String serviceGroup, final Voice<?, ?> voice, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
@@ -188,16 +251,6 @@ public class RequestMessageRouter extends MessageRouter {
     return rabbitMQMessage.getProperties().getMessageId();
   }
 
-  /**
-   * Creates an invocation message with headers and encoded payload.
-   *
-   * @param inOnly    whether the conversation expects a response.
-   * @param route     route to the target method.
-   * @param arguments invocation arguments.
-   * @param contexts  optional contexts.
-   * @return message ready for publication.
-   * @throws Throwable if encoding fails.
-   */
   private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
