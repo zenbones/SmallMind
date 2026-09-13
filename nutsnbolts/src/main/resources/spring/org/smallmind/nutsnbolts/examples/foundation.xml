@@ -9,7 +9,7 @@
       <map>
         <entry key="SMALLMIND_ENVIRONMENT" value="de"/>
         <entry key="SMALLMIND_DATABASE" value="mysql"/>
-        <entry key="SMALLMIND_MODULE" value="foundation"/>
+        <entry key="SMALLMIND_MODULE" value="nutsbolts/exaamples"/>
         <entry key="SMALLMIND_PRODUCT" value="any"/>
       </map>
     </property>
@@ -23,10 +23,10 @@
     <property name="searchSystemEnvironment" value="true"/>
     <property name="locations">
       <list>
-        <value>classpath:org/smallmind/foundation/global.properties</value>
-        <value>classpath:org/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:org/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
-        <value>classpath:org/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/nutsnbolts/examples/global.properties</value>
+        <value>classpath:org/smallmind/nutsnbolts/examples/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/nutsnbolts/examples/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
+        <value>classpath:org/smallmind/nutsnbolts/examples/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/application.properties</value>
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
