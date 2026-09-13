@@ -59,7 +59,7 @@ What stays with the caller:
 | Build the client-side proxy | `WireProxyFactory.generateProxy(transport, version, name, iface, groupExtractor, instanceIdExtractor, timeoutExtractor)`
 | Expose the implementation | `responseTransport.register(Interface.class, wiredService)`; the implementation must implement `WiredService`
 | Unit-test without a broker | `MockMessageRouter` + `MockRequestTransport` + `MockResponseTransport`
-| Run over RabbitMQ | `RabbitMQConnector`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`, a `QueueContractor` pair, `NameConfiguration`
+| Run over RabbitMQ | `RabbitMQConnector`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`, `NameConfiguration`
 | Run over Kafka | `KafkaRequestTransport`, `KafkaResponseTransport`, `KafkaConnector`, `KafkaServer...`, `KafkaGroupProtocol`
 | Run over JMS (Jakarta Messaging 3.x) | `JmsRequestTransport`, `JmsResponseTransport`, `RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`
 | Flow a tenant/user/trace value through every call | Subclass `WireContext`, `@Wire(adapter = ...)`, `WireContextManager.register("handle", Cls)`, push with `ContextFactory.pushContext(...)`
@@ -405,7 +405,9 @@ ConnectionFactory factory = new ConnectionFactory();
 factory.setUsername("guest");
 factory.setPassword("guest");
 factory.setVirtualHost("/");
-factory.setAutomaticRecoveryEnabled(true);
+//  RabbitMQConnector turns automatic and topology recovery off regardless -
+//  RabbitMQConnectionManager owns recovery, and two mechanisms racing on the
+//  same broker-side drop leave zombie connections with duplicate consumers.
 
 RabbitMQConnector connector = new RabbitMQConnector(
     factory,
@@ -413,11 +415,18 @@ RabbitMQConnector connector = new RabbitMQConnector(
 );
 ----
 
-A `QueueContractor` declares the AMQP queues the transport uses.
-`ClassicQueueContractor` and `QuorumQueueContractor` are the two built-in
-implementations — pick one per queue role (the response transport takes
-two: an `enduringQueueContractor` for talk queues and an
-`ephemeralQueueContractor` for shout and whisper queues).
+Queue types are not configurable, because the correct type follows from the
+queue's role and a wrong choice is an outage rather than a preference.
+
+The per-instance queues — shout, whisper, and the caller's response queue —
+are declared *exclusive*. An exclusive queue belongs to the connection that
+declared it and the broker deletes it the moment that connection ends, so
+its name can never be left behind as a record whose process has stopped and
+which no client can then declare, delete or consume from. The shared talk
+queue cannot be exclusive, so it is declared as a *quorum* queue with three
+replicas, which is what keeps it serving when a node is lost. Two replicas
+tolerate no failures at all, so do not deploy against a cluster of fewer
+than three nodes.
 
 `NameConfiguration` supplies the suffix tokens used when composing queue
 and exchange names. The out-of-the-box suffixes are `requestExchange`,
@@ -426,12 +435,10 @@ and exchange names. The out-of-the-box suffixes are `requestExchange`,
 
 [source,java]
 ----
-NameConfiguration names      = new NameConfiguration();
-QueueContractor  ephemeral   = new ClassicQueueContractor();
-QueueContractor  enduring    = new QuorumQueueContractor();
+NameConfiguration names = new NameConfiguration();
 
 RabbitMQRequestTransport client = new RabbitMQRequestTransport(
-    connector, ephemeral, names, codec,
+    connector, names, codec,
     /* clusterSize              */ 4,
     /* concurrencyLimit         */ 8,
     /* defaultTimeoutSeconds    */ 30L,
@@ -441,7 +448,7 @@ RabbitMQRequestTransport client = new RabbitMQRequestTransport(
 );
 
 RabbitMQResponseTransport server = new RabbitMQResponseTransport(
-    connector, enduring, ephemeral, names,
+    connector, names,
     InvocationWorker.class, codec,
     /* serviceGroup             */ "default",
     /* clusterSize              */ 4,
@@ -457,6 +464,19 @@ RabbitMQResponseTransport server = new RabbitMQResponseTransport(
 — while `concurrencyLimit` sets how many handler slots the pool round-
 robins through. The pool always has `max(clusterSize, concurrencyLimit)`
 slots.
+
+All of a transport's routers share a single connection, owned by a
+`RabbitMQConnectionManager`. That is a requirement rather than an economy:
+every router of a transport declares the same per-instance queue names, and
+an exclusive queue belongs to a connection, so a connection per router would
+mean a queue per router — and a shout or whisper delivered once per router
+instead of once. The manager also owns recovery, retrying with capped
+exponential backoff for as long as the transport is open, so automatic
+recovery is disabled on the underlying `ConnectionFactory`; two recovery
+mechanisms racing on the same drop leave duplicate consumers behind.
+`ResponseTransport.isHealthy()` reports whether the transport is genuinely
+connected, bound and consuming, which is what a liveness probe should read
+rather than the lifecycle state.
 
 === Kafka
 

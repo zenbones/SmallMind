@@ -66,6 +66,30 @@ public interface ResponseTransport {
   TransportState getState ();
 
   /**
+   * Returns whether this transport is actually able to carry traffic, which is a different question
+   * from the state it was last told to be in - a transport can report {@link TransportState#PLAYING}
+   * while its connection is gone and nothing is bound. A transport that has been deliberately paused
+   * is healthy but idle. Defaulted for transports whose liveness is not in doubt.
+   *
+   * @return true if the underlying transport is connected and carrying, or able to carry, traffic
+   */
+  default boolean isHealthy () {
+
+    return true;
+  }
+
+  /**
+   * Returns a human readable description of the transport's current connection, binding and consumer
+   * state, intended for an operator reading it during an incident.
+   *
+   * @return diagnostic description of the transport's runtime state
+   */
+  default String getDiagnostic () {
+
+    return getState().name();
+  }
+
+  /**
    * Activates request consumption; the transport begins dispatching inbound requests.
    *
    * @throws Exception if activation fails

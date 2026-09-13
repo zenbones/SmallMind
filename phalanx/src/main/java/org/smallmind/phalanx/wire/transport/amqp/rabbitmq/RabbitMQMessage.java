@@ -37,10 +37,7 @@ import com.rabbitmq.client.AMQP;
 /**
  * Immutable wrapper pairing AMQP message properties with a raw payload for use within the RabbitMQ transport.
  */
-public class RabbitMQMessage {
-
-  private final AMQP.BasicProperties properties;
-  private final byte[] body;
+public record RabbitMQMessage(AMQP.BasicProperties properties, byte[] body) {
 
   /**
    * Creates a message from an existing properties object and body.
@@ -48,10 +45,8 @@ public class RabbitMQMessage {
    * @param properties AMQP properties associated with the message.
    * @param body       raw message payload bytes.
    */
-  public RabbitMQMessage (AMQP.BasicProperties properties, byte[] body) {
+  public RabbitMQMessage {
 
-    this.properties = properties;
-    this.body = body;
   }
 
   /**
@@ -59,7 +54,8 @@ public class RabbitMQMessage {
    *
    * @return AMQP basic properties.
    */
-  public AMQP.BasicProperties getProperties () {
+  @Override
+  public AMQP.BasicProperties properties () {
 
     return properties;
   }
@@ -69,7 +65,8 @@ public class RabbitMQMessage {
    *
    * @return payload bytes.
    */
-  public byte[] getBody () {
+  @Override
+  public byte[] body () {
 
     return body;
   }

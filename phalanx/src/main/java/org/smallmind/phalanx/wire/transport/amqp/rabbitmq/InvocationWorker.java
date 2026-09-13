@@ -83,10 +83,10 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
   public void engageWork (final RabbitMQMessage message)
     throws Throwable {
 
-    InvocationSignal invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
+    InvocationSignal invocationSignal = signalCodec.decode(message.body(), 0, message.body().length, InvocationSignal.class);
 
     Instrument.with(InvocationWorker.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("operation", "invoke"), new Tag("service", invocationSignal.getRoute().getService()), new Tag("method", invocationSignal.getRoute().getFunction().getName()), new Tag("version", Integer.toString(invocationSignal.getRoute().getVersion()))).on(
-      () -> invocationCircuit.handle(responseTransmitter, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal)
+      () -> invocationCircuit.handle(responseTransmitter, signalCodec, getCallerId(message.properties().getHeaders()), message.properties().getMessageId(), invocationSignal)
     );
   }
 
