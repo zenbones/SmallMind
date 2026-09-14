@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -60,9 +61,7 @@ import org.smallmind.phalanx.worker.WorkerFactory;
  */
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport, ResponseTransmitter {
 
-  //  Three, and not negotiable downward. A quorum queue needs a majority of its members, so two
-  //  replicas tolerate no node failures at all and are worse than the classic queue they replace.
-  private static final int DEFAULT_QUORUM_REPLICATION_COUNT = 3;
+  private static final int MINIMUM_QUORUM_REPLICATION_COUNT = 3;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -72,29 +71,6 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final ConcurrentLinkedQueue<ResponseMessageRouter> responseQueue;
   private final ResponseMessageRouter[] responseMessageRouters;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
-
-  /**
-   * Creates a response transport with the default talk queue replication count of three.
-   *
-   * @param rabbitMQConnector            source of connections and retry tuning.
-   * @param nameConfiguration            exchange and queue naming scheme.
-   * @param workerClass                  worker class used for invocation handling.
-   * @param signalCodec                  codec for serializing and deserializing signals.
-   * @param serviceGroup                 service group name embedded in AMQP routing keys.
-   * @param clusterSize                  number of response routers to create.
-   * @param concurrencyLimit             maximum number of concurrent invocation workers.
-   * @param messageTTLSeconds            message time-to-live in seconds.
-   * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
-   * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
-   * @throws IOException          if the transport cannot be started.
-   * @throws InterruptedException if startup is interrupted.
-   * @throws TimeoutException     if startup times out.
-   */
-  public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
-    throws IOException, InterruptedException, TimeoutException {
-
-    this(rabbitMQConnector, nameConfiguration, workerClass, signalCodec, serviceGroup, clusterSize, concurrencyLimit, messageTTLSeconds, DEFAULT_QUORUM_REPLICATION_COUNT, autoAcknowledge, publisherConfirmationHandler);
-  }
 
   /**
    * Creates a response transport with an explicit talk queue replication count.
@@ -107,19 +83,24 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
    * @param clusterSize                  number of response routers to create.
    * @param concurrencyLimit             maximum number of concurrent invocation workers.
    * @param messageTTLSeconds            message time-to-live in seconds.
-   * @param quorumReplicationCount       replica count for the shared talk queue; do not set this below
-   *                                     three, since a quorum queue needs a majority of its members and
-   *                                     two replicas tolerate no node failure at all.
+   * @param quorumReplicationCount       replica count for the shared talk queue; never less than three,
+   *                                     since a quorum queue needs a majority of its members and two
+   *                                     replicas tolerate no node failure at all.
    * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
-   * @throws IOException          if the transport cannot be started.
-   * @throws InterruptedException if startup is interrupted.
-   * @throws TimeoutException     if startup times out.
+   * @throws IllegalArgumentException if {@code quorumReplicationCount} is less than three.
+   * @throws IOException              if the transport cannot be started.
+   * @throws InterruptedException     if startup is interrupted.
+   * @throws TimeoutException         if startup times out.
    */
   public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
     throws IOException, InterruptedException, TimeoutException {
 
     super(workerClass, concurrencyLimit);
+
+    if (quorumReplicationCount < MINIMUM_QUORUM_REPLICATION_COUNT) {
+      throw new FormattedIllegalArgumentException("Quorum replication count must be >= %d", MINIMUM_QUORUM_REPLICATION_COUNT);
+    }
 
     int routerIndex = 0;
 

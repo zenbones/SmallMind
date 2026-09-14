@@ -54,6 +54,7 @@ wire:
   concurrency_limit: 64
   default_timeout_seconds: 15
   message_ttl_seconds: 180
+  quorum_replication_count: 3
   verbose: true
   verbose_log_level: DEBUG
 

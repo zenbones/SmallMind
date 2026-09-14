@@ -380,9 +380,9 @@ public class RabbitMQRecoveryIntegrationTest extends AbstractGroundwaterTest {
   private RabbitMQResponseTransport createResponseTransport (RabbitMQConnector rabbitMQConnector, String serviceGroup)
     throws Exception {
 
-    //  A single quorum replica, because the test harness runs one broker node. Production wants three,
-    //  since a quorum queue needs a majority of its members.
-    return new RabbitMQResponseTransport(rabbitMQConnector, new NameConfiguration(), InvocationWorker.class, new JsonSignalCodec(), serviceGroup, 1, 1, 60, 1, false, null);
+    //  Three, the floor the transport enforces, even though the harness runs one broker node - the
+    //  broker clamps the initial group size to the nodes it has, so the queue comes up with one replica.
+    return new RabbitMQResponseTransport(rabbitMQConnector, new NameConfiguration(), InvocationWorker.class, new JsonSignalCodec(), serviceGroup, 1, 1, 60, 3, false, null);
   }
 
   /*
