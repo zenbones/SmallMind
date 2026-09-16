@@ -135,6 +135,70 @@ public class OumuamuaSessionTest {
     Assert.assertEquals(fires.get(), 1);
   }
 
+  public void testInitiateDisconnectMovesStateWithoutNotifying () {
+
+    AtomicInteger fires = new AtomicInteger();
+    OumuamuaSession<OrthodoxValue> s = session(x -> {
+    }, x -> fires.incrementAndGet());
+
+    s.completeConnection();
+    s.initiateDisconnect();
+
+    Assert.assertEquals(s.getState(), SessionState.DISCONNECTED, "initiateDisconnect must move the state immediately so no further delivery is accepted");
+    Assert.assertEquals(fires.get(), 0, "initiateDisconnect must leave the disconnect notification outstanding");
+  }
+
+  public void testCompleteDisconnectStillNotifiesAfterInitiateDisconnect () {
+
+    AtomicInteger fires = new AtomicInteger();
+    OumuamuaSession<OrthodoxValue> s = session(x -> {
+    }, x -> fires.incrementAndGet());
+
+    s.completeConnection();
+    s.initiateDisconnect();
+    s.completeDisconnect();
+    s.completeDisconnect();
+
+    Assert.assertEquals(s.getState(), SessionState.DISCONNECTED);
+    Assert.assertEquals(fires.get(), 1, "The outstanding notification must fire exactly once, however many times the disconnect is completed");
+  }
+
+  public void testDeliverIgnoredAfterInitiateDisconnect () {
+
+    OumuamuaSession<OrthodoxValue> s = session();
+
+    s.completeConnection();
+    s.initiateDisconnect();
+
+    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+
+    Mockito.when(channel.isStreaming()).thenReturn(true);
+
+    s.deliver(channel, null, deliveryPacket("/foo"));
+    Mockito.verify(connection, Mockito.never()).deliver(Mockito.any());
+  }
+
+  public void testPollUnblocksOnInitiateDisconnect ()
+    throws InterruptedException {
+
+    OumuamuaSession<OrthodoxValue> s = session();
+
+    s.completeConnection();
+
+    Thread poller = new Thread(() -> {
+      try {
+        s.poll(10_000L, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException ignored) {
+      }
+    });
+
+    poller.start();
+    Thread.sleep(20L);
+    s.initiateDisconnect();
+    poller.join(2_000L);
+    Assert.assertFalse(poller.isAlive(), "initiateDisconnect must wake a blocked long poll rather than leave it waiting out its timeout");
+  }
+
   public void testLongPollingFromProtocol () {
 
     Mockito.when(protocol.isLongPolling()).thenReturn(true);

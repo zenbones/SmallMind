@@ -452,6 +452,11 @@ public class BayeuxServiceDefaultsTest {
       }
 
       @Override
+      public void initiateDisconnect () {
+
+      }
+
+      @Override
       public void completeDisconnect () {
 
       }
@@ -478,8 +483,9 @@ public class BayeuxServiceDefaultsTest {
       }
 
       @Override
-      public void dispatch (Packet<TestValueFactory.TestValue> packet) {
+      public boolean dispatch (Packet<TestValueFactory.TestValue> packet) {
 
+        return true;
       }
 
       @Override

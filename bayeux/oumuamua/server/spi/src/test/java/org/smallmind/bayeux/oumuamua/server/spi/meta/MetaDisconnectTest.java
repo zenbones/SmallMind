@@ -81,12 +81,13 @@ public class MetaDisconnectTest {
     return request;
   }
 
-  public void testProcessAdvancesSessionToDisconnected ()
+  public void testProcessInitiatesButDoesNotFinalizeDisconnect ()
     throws Exception {
 
     Meta.DISCONNECT.process(protocol, DefaultRoute.DISCONNECT_ROUTE, server, session, request());
 
-    Mockito.verify(session).completeDisconnect();
+    Mockito.verify(session).initiateDisconnect();
+    Mockito.verify(session, Mockito.never()).completeDisconnect();
   }
 
   public void testProcessReturnsResponsePacket ()

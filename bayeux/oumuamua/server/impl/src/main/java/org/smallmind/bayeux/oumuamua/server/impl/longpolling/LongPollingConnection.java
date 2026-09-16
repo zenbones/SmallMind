@@ -102,10 +102,11 @@ public class LongPollingConnection<V extends Value<V>> implements OumuamuaConnec
    * instances rather than via a persistent channel.
    *
    * @param packet the packet that cannot be delivered through this path
+   * @return never returns normally
    * @throws UnsupportedOperationException always
    */
   @Override
-  public void deliver (Packet<V> packet) {
+  public boolean deliver (Packet<V> packet) {
 
     throw new UnsupportedOperationException();
   }

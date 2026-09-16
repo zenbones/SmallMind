@@ -35,6 +35,7 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -260,7 +261,7 @@ public class ConnectionTest {
     Assert.assertEquals(received.get(0).getPacketType(), PacketType.RESPONSE);
   }
 
-  public void testCycleInvokesOnDisconnectWhenSessionLeftDisconnected () {
+  public void testProcessInvokesOnDisconnectWhenSessionLeftDisconnected () {
 
     Session<OrthodoxValue> session = Mockito.mock(Session.class);
 
@@ -277,6 +278,52 @@ public class ConnectionTest {
     Assert.assertTrue(conn.wasDisconnected(), "Session transitioning to DISCONNECTED must trigger onDisconnect");
   }
 
+  public void testDisconnectResponseIsWrittenBeforeSessionIsFinalized () {
+
+    Session<OrthodoxValue> session = Mockito.mock(Session.class);
+    AtomicReference<SessionState> state = new AtomicReference<>(SessionState.CONNECTED);
+    StubConnection conn = connection(null, true);
+
+    Mockito.when(server.getSession("sess-ord")).thenReturn(session);
+    Mockito.when(server.onRequest(Mockito.any(), Mockito.any())).thenAnswer(invocation -> invocation.getArgument(1));
+    Mockito.when(server.onResponse(Mockito.any(), Mockito.any())).thenAnswer(invocation -> invocation.getArgument(1));
+    Mockito.when(session.getState()).thenAnswer(invocation -> state.get());
+    Mockito.doAnswer(invocation -> {
+      state.set(SessionState.DISCONNECTED);
+
+      return null;
+    }).when(session).initiateDisconnect();
+    Mockito.doAnswer(invocation -> conn.journal().add("completeDisconnect")).when(session).completeDisconnect();
+
+    conn.process(server, (s, packet) -> conn.journal().add("response"), new Message[] {messageWith("/meta/disconnect", "sess-ord")});
+
+    Assert.assertEquals(conn.journal(), List.of("response", "completeDisconnect", "onDisconnect"), "The disconnect response must reach the transport before the session is notified and deregistered");
+  }
+
+  public void testDisconnectSessionIsFinalizedEvenWhenTheResponseWriteFails () {
+
+    Session<OrthodoxValue> session = Mockito.mock(Session.class);
+    AtomicReference<SessionState> state = new AtomicReference<>(SessionState.CONNECTED);
+    StubConnection conn = connection(null, true);
+
+    Mockito.when(server.getSession("sess-boom")).thenReturn(session);
+    Mockito.when(server.onRequest(Mockito.any(), Mockito.any())).thenAnswer(invocation -> invocation.getArgument(1));
+    Mockito.when(server.onResponse(Mockito.any(), Mockito.any())).thenAnswer(invocation -> invocation.getArgument(1));
+    Mockito.when(session.getState()).thenAnswer(invocation -> state.get());
+    Mockito.doAnswer(invocation -> {
+      state.set(SessionState.DISCONNECTED);
+
+      return null;
+    }).when(session).initiateDisconnect();
+
+    Assert.assertThrows(IllegalStateException.class, () -> conn.process(server, (s, packet) -> {
+      throw new IllegalStateException("the socket is already gone");
+    }, new Message[] {messageWith("/meta/disconnect", "sess-boom")}));
+
+    Mockito.verify(session).completeDisconnect();
+    Assert.assertTrue(conn.wasDisconnected(), "A failed response write must still release the session");
+  }
+
   private class StubConnection implements Connection<OrthodoxValue> {
 
     private final Session<OrthodoxValue> createdSession;
@@ -284,12 +331,18 @@ public class ConnectionTest {
     private final AtomicBoolean hijacked = new AtomicBoolean(false);
     private final AtomicBoolean updated = new AtomicBoolean(false);
     private final AtomicBoolean disconnected = new AtomicBoolean(false);
+    private final List<String> journal = new ArrayList<>();
     private final Transport<OrthodoxValue> transport = Mockito.mock(Transport.class);
 
     StubConnection (Session<OrthodoxValue> createdSession, boolean validateResult) {
 
       this.createdSession = createdSession;
       this.validateResult = validateResult;
+    }
+
+    List<String> journal () {
+
+      return journal;
     }
 
     boolean wasHijacked () {
@@ -352,6 +405,7 @@ public class ConnectionTest {
     public void onDisconnect (Server<OrthodoxValue> server, Session<OrthodoxValue> session) {
 
       disconnected.set(true);
+      journal.add("onDisconnect");
     }
 
     @Override
@@ -360,8 +414,9 @@ public class ConnectionTest {
     }
 
     @Override
-    public void deliver (Packet<OrthodoxValue> packet) {
+    public boolean deliver (Packet<OrthodoxValue> packet) {
 
+      return true;
     }
   }
 }

@@ -55,11 +55,11 @@ public class WebsocketConfigurationTest {
     Assert.assertEquals(config.getMaxIdleTimeoutMilliseconds(), -1L);
   }
 
-  public void testDefaultAsyncSendTimeoutIsZero () {
+  public void testDefaultAsyncSendTimeoutIsBounded () {
 
     WebsocketConfiguration config = new WebsocketConfiguration(StubEndpoint.class, "/ws");
 
-    Assert.assertEquals(config.getAsyncSendTimeoutMilliseconds(), 0L);
+    Assert.assertTrue(config.getAsyncSendTimeoutMilliseconds() > 0L, "The default send timeout must be bounded so that one unresponsive peer cannot stall a connection's deliveries indefinitely");
   }
 
   public void testDefaultMaximumTextMessageBufferSizeIsNegativeOne () {

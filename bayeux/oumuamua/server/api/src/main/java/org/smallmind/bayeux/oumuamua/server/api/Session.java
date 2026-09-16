@@ -152,7 +152,19 @@ public interface Session<V extends Value<V>> extends Attributed {
   void completeConnection ();
 
   /**
-   * Advances the session state to {@link SessionState#DISCONNECTED} upon disconnect.
+   * Marks the session as disconnecting by advancing its state to
+   * {@link SessionState#DISCONNECTED} without notifying listeners, so that no further channel
+   * delivery is accepted and any blocked long poll wakes immediately, while the disconnect
+   * notification and registry teardown are withheld until {@link #completeDisconnect()} runs.
+   * This lets a transport finish writing the {@code /meta/disconnect} response before the
+   * session is dismantled beneath it.
+   */
+  void initiateDisconnect ();
+
+  /**
+   * Advances the session state to {@link SessionState#DISCONNECTED} upon disconnect and notifies
+   * listeners; idempotent, and safe to call after {@link #initiateDisconnect()}, which leaves the
+   * notification outstanding.
    */
   void completeDisconnect ();
 
@@ -170,8 +182,10 @@ public interface Session<V extends Value<V>> extends Attributed {
    * Hands a packet directly to the session's underlying transport for immediate sending.
    *
    * @param packet packet to dispatch
+   * @return {@code true} if the transport accepted the packet, {@code false} if it was discarded
+   * or the write failed; the transport logs the reason, so callers need only decide how to react
    */
-  void dispatch (Packet<V> packet);
+  boolean dispatch (Packet<V> packet);
 
   /**
    * Blocks until a packet is available for delivery or the timeout elapses; used by long-poll

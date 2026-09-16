@@ -72,6 +72,7 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   private final Consumer<Session<V>> onConnectedCallback;
   private final Consumer<Session<V>> onDisconnectedCallback;
   private final AtomicBoolean longPolling = new AtomicBoolean(false);
+  private final AtomicBoolean disconnectNotified = new AtomicBoolean(false);
   private final Level overflowLogLevel;
   private final String sessionId = SnowflakeId.newInstance().generateHexEncoding();
   private final long maxIdleTimeoutMilliseconds;
@@ -273,10 +274,29 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
+   * Advances the session state to {@link SessionState#DISCONNECTED} without firing the
+   * disconnected callback, leaving the notification outstanding for a later
+   * {@link #completeDisconnect()}.  The state moves immediately so that
+   * {@link #deliver(Channel, Session, Packet)} stops accepting channel deliveries and any thread
+   * blocked in {@link #poll(long, TimeUnit)} wakes at once, but the session stays intact long
+   * enough for its transport to write the {@code /meta/disconnect} response.
+   */
+  @Override
+  public void initiateDisconnect () {
+
+    synchronized (this) {
+      stateRef.set(SessionState.DISCONNECTED);
+    }
+
+    signalLongPoll();
+  }
+
+  /**
    * Advances the session state to {@link SessionState#DISCONNECTED} and fires the disconnected
-   * callback; idempotent — if the session is already disconnected the callback is not fired a
-   * second time.  Always signals any thread blocked in {@link #poll(long, TimeUnit)} so that it
-   * wakes immediately rather than waiting for its full timeout after the session is gone.  Callers
+   * callback; idempotent — the callback is fired at most once per session, no matter how many
+   * times this method runs or whether {@link #initiateDisconnect()} already moved the state.
+   * Always signals any thread blocked in {@link #poll(long, TimeUnit)} so that it wakes
+   * immediately rather than waiting for its full timeout after the session is gone.  Callers
    * that need to atomically test idle expiry and disconnect in one step should use
    * {@link #checkAndDisconnect(long)} instead.
    */
@@ -284,11 +304,21 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   public void completeDisconnect () {
 
     synchronized (this) {
-      if (!SessionState.DISCONNECTED.equals(stateRef.get())) {
-        stateRef.set(SessionState.DISCONNECTED);
+      stateRef.set(SessionState.DISCONNECTED);
+
+      if (disconnectNotified.compareAndSet(false, true)) {
         onDisconnectedCallback.accept(this);
       }
     }
+
+    signalLongPoll();
+  }
+
+  /**
+   * Wakes every thread waiting on the long-poll queue so that a session which is shutting down
+   * does not hold a poller for the remainder of its timeout.
+   */
+  private void signalLongPoll () {
 
     longPollLock.lock();
 
@@ -370,11 +400,13 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
    * Writes the packet immediately to the underlying connection without queuing.
    *
    * @param packet the packet to send over the current connection
+   * @return {@code true} if the connection wrote the packet, {@code false} if it was discarded or
+   * the write failed; the connection logs the reason
    */
   @Override
-  public void dispatch (Packet<V> packet) {
+  public boolean dispatch (Packet<V> packet) {
 
-    connectionRef.get().deliver(packet);
+    return connectionRef.get().deliver(packet);
   }
 
   /**

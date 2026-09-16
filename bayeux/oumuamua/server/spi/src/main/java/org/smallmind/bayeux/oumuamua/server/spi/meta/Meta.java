@@ -343,13 +343,16 @@ public enum Meta {
   },
 
   /**
-   * Handles {@code /meta/disconnect}: immediately transitions the session to the disconnected state
-   * and returns a success response with {@link Reconnect#NONE} advice.
+   * Handles {@code /meta/disconnect}: immediately marks the session as disconnecting, so that it
+   * accepts no further delivery, and returns a success response with {@link Reconnect#NONE}
+   * advice.  Finalizing the disconnect — notifying listeners and tearing the session out of the
+   * server registry — is deferred to the transport, which does it only once this response has
+   * been written; see {@link Session#initiateDisconnect()}.
    */
   DISCONNECT(DefaultRoute.DISCONNECT_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
-      session.completeDisconnect();
+      session.initiateDisconnect();
 
       return new Packet<>(PacketType.RESPONSE, request.getSessionId(), route, constructDisconnectSuccessResponse(server, route.getPath(), request.getId(), request.getSessionId()));
     }

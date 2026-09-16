@@ -49,8 +49,8 @@ public class WebsocketConfiguration {
   private String subProtocol;
   // Use the default;
   private long maxIdleTimeoutMilliseconds = -1;
-  // No timeout
-  private long asyncSendTimeoutMilliseconds = 0;
+  // Bound the write so that one unresponsive peer cannot stall a connection's deliveries
+  private long asyncSendTimeoutMilliseconds = 30000;
   // Use the default
   private int maximumTextMessageBufferSize = -1;
 
@@ -153,9 +153,12 @@ public class WebsocketConfiguration {
   }
 
   /**
-   * Returns the timeout applied to asynchronous message sends.
+   * Returns the timeout applied to asynchronous message sends.  Sends on one WebSocket session
+   * are serialized, so this value caps how long a peer that has stopped reading can delay the
+   * connection's other deliveries.
    *
-   * @return async send timeout in milliseconds; {@code 0} means no timeout
+   * @return async send timeout in milliseconds; a non-positive value selects an unbounded
+   * blocking write instead
    */
   public long getAsyncSendTimeoutMilliseconds () {
 
@@ -165,7 +168,10 @@ public class WebsocketConfiguration {
   /**
    * Sets the timeout applied to asynchronous message sends.
    *
-   * @param asyncSendTimeoutMilliseconds timeout in milliseconds; {@code 0} disables the timeout
+   * @param asyncSendTimeoutMilliseconds timeout in milliseconds; a non-positive value opts into
+   *                                     an unbounded blocking write, which lets a peer that has
+   *                                     stopped reading stall every later delivery on the same
+   *                                     connection and is not recommended
    */
   public void setAsyncSendTimeoutMilliseconds (long asyncSendTimeoutMilliseconds) {
 

@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.io.IOException;
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -59,6 +58,13 @@ public interface Connection<V extends Value<V>> {
    * Processes an array of inbound messages through the full Bayeux meta lifecycle, delivering
    * each resulting packet to {@code responseConsumer}; errors are converted to error-response packets.
    *
+   * <p>A session left in the {@link SessionState#DISCONNECTED} state by message processing is
+   * finalized — listeners notified and the session removed from the server registry — only
+   * after its response has been handed to {@code responseConsumer}, so that the
+   * {@code /meta/disconnect} reply is written while the session is still whole.  The
+   * finalization runs in a {@code finally} block, so a transport that fails to write the
+   * response still releases the session rather than leaking it.</p>
+   *
    * @param server           server that owns this connection
    * @param responseConsumer callback that receives each generated response packet paired with its session
    * @param messages         messages received from the client in one batch
@@ -69,6 +75,7 @@ public interface Connection<V extends Value<V>> {
 
       Session<V> session = null;
       Packet<V> packet;
+      boolean processed = false;
       String path = message.getChannel();
       String sessionId = message.getSessionId();
 
@@ -87,7 +94,8 @@ public interface Connection<V extends Value<V>> {
             if (SessionState.DISCONNECTED.equals(session.getState())) {
               throw new MetaProcessingException("Session has been disconnected");
             } else {
-              packet = cycle(meta, route, server, session, message);
+              processed = true;
+              packet = respond(meta, route, server, session, message);
             }
           } else {
             throw new MetaProcessingException("Missing client id");
@@ -105,46 +113,26 @@ public interface Connection<V extends Value<V>> {
           }
 
           updateSession(session);
-          packet = cycle(meta, route, server, session, message);
+          processed = true;
+          packet = respond(meta, route, server, session, message);
         }
       } catch (MetaProcessingException exception) {
         packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), Reconnect.HANDSHAKE));
-      } catch (IOException | InterruptedException | InvalidPathException exception) {
+      } catch (InterruptedException | InvalidPathException exception) {
         packet = new Packet<>(PacketType.RESPONSE, sessionId, null, Meta.constructErrorResponse(server, path, message.getId(), sessionId, exception.getMessage(), null));
       }
 
-      if (packet != null) {
-        responseConsumer.accept(session, packet);
+      try {
+        if (packet != null) {
+          responseConsumer.accept(session, packet);
+        }
+      } finally {
+        if (processed && SessionState.DISCONNECTED.equals(session.getState())) {
+          session.completeDisconnect();
+          onDisconnect(server, session);
+        }
       }
     }
-  }
-
-  /**
-   * Delegates to {@link #respond} and triggers disconnect handling when the session transitions
-   * to disconnected as a result of processing.
-   *
-   * @param meta    meta operation identified from the message channel
-   * @param route   resolved {@link Route} for the message
-   * @param server  server hosting this connection
-   * @param session session associated with the message
-   * @param request inbound message being processed
-   * @return the response packet, or {@code null} if no response should be sent
-   * @throws IOException          if packet encoding fails
-   * @throws InterruptedException if the thread is interrupted while awaiting a response
-   * @throws InvalidPathException if the resolved route contains an invalid path
-   */
-  private Packet<V> cycle (Meta meta, Route route, Server<V> server, Session<V> session, Message<V> request)
-    throws IOException, InterruptedException, InvalidPathException {
-
-    Packet<V> packet;
-
-    packet = respond(meta, route, server, session, request);
-
-    if (SessionState.DISCONNECTED.equals(session.getState())) {
-      onDisconnect(server, session);
-    }
-
-    return packet;
   }
 
   /**
@@ -249,9 +237,15 @@ public interface Connection<V extends Value<V>> {
   void onCleanup ();
 
   /**
-   * Pushes an outgoing packet to the client over this connection.
+   * Pushes an outgoing packet to the client over this connection.  Implementations report the
+   * outcome rather than failing silently: a {@code false} result means the packet did not reach
+   * the client, because the underlying transport was already closed or because the write itself
+   * failed.  Implementations are expected to log the reason at a visible severity, so callers
+   * need only decide how to react.
    *
    * @param packet packet to deliver
+   * @return {@code true} if the packet was handed to the transport successfully, {@code false} if
+   * it was discarded or the write failed
    */
-  void deliver (Packet<V> packet);
+  boolean deliver (Packet<V> packet);
 }

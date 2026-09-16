@@ -143,8 +143,9 @@ public class OumuamuaConnectionTest {
     }
 
     @Override
-    public void deliver (Packet<OrthodoxValue> packet) {
+    public boolean deliver (Packet<OrthodoxValue> packet) {
 
+      return true;
     }
 
     @Override

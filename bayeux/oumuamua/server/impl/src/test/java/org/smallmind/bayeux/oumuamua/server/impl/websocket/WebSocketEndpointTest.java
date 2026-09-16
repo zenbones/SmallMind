@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
 import jakarta.websocket.RemoteEndpoint;
@@ -244,7 +245,7 @@ public class WebSocketEndpointTest {
 
     Mockito.when(websocketSession.isOpen()).thenReturn(false);
 
-    endpoint.deliver(deliveryPacket("/closed"));
+    Assert.assertFalse(endpoint.deliver(deliveryPacket("/closed")), "A packet discarded on a closed session must be reported as undelivered");
 
     Mockito.verify(websocketSession, Mockito.never()).getBasicRemote();
     Mockito.verify(websocketSession, Mockito.never()).getAsyncRemote();
@@ -265,7 +266,7 @@ public class WebSocketEndpointTest {
 
     Packet<OrthodoxValue> packet = deliveryPacket("/sync");
 
-    endpoint.deliver(packet);
+    Assert.assertTrue(endpoint.deliver(packet));
 
     Mockito.verify(basicRemote).sendText(Mockito.anyString());
     Mockito.verify(wsProtocol).onDelivery(packet);
@@ -288,10 +289,83 @@ public class WebSocketEndpointTest {
 
     Packet<OrthodoxValue> packet = deliveryPacket("/async");
 
-    endpoint.deliver(packet);
+    Assert.assertTrue(endpoint.deliver(packet));
 
     Mockito.verify(asyncRemote).sendText(Mockito.anyString());
     Mockito.verify(sendFuture).get(5_000L, TimeUnit.MILLISECONDS);
     Mockito.verify(wsProtocol).onDelivery(packet);
+  }
+
+  public void testDeliverReportsFailureAndSkipsOnDeliveryWhenTheWriteFails ()
+    throws Exception {
+
+    WebsocketProtocol<OrthodoxValue> wsProtocol = Mockito.mock(WebsocketProtocol.class);
+    RemoteEndpoint.Basic basicRemote = Mockito.mock(RemoteEndpoint.Basic.class);
+
+    Mockito.when(websocketSession.isOpen()).thenReturn(true);
+    Mockito.when(websocketSession.getBasicRemote()).thenReturn(basicRemote);
+    Mockito.when(transport.getAsyncSendTimeoutMilliseconds()).thenReturn(0L);
+    Mockito.when(transport.getProtocol()).thenReturn(wsProtocol);
+    Mockito.doThrow(new IOException("the peer hung up mid-write")).when(basicRemote).sendText(Mockito.anyString());
+
+    openEndpoint();
+
+    Packet<OrthodoxValue> packet = deliveryPacket("/broken");
+
+    Assert.assertFalse(endpoint.deliver(packet), "A failed write must be reported as undelivered");
+
+    Mockito.verify(wsProtocol, Mockito.never()).onDelivery(Mockito.any());
+  }
+
+  public void testDeliverReportsFailureAndSkipsOnDeliveryWhenTheWriteTimesOut ()
+    throws Exception {
+
+    WebsocketProtocol<OrthodoxValue> wsProtocol = Mockito.mock(WebsocketProtocol.class);
+    RemoteEndpoint.Async asyncRemote = Mockito.mock(RemoteEndpoint.Async.class);
+    Future<Void> sendFuture = Mockito.mock(Future.class);
+
+    Mockito.when(websocketSession.isOpen()).thenReturn(true);
+    Mockito.when(websocketSession.getAsyncRemote()).thenReturn(asyncRemote);
+    Mockito.when(transport.getAsyncSendTimeoutMilliseconds()).thenReturn(5_000L);
+    Mockito.when(transport.getProtocol()).thenReturn(wsProtocol);
+    Mockito.when(asyncRemote.sendText(Mockito.anyString())).thenReturn(sendFuture);
+    Mockito.when(sendFuture.get(5_000L, TimeUnit.MILLISECONDS)).thenThrow(new TimeoutException());
+
+    openEndpoint();
+
+    Packet<OrthodoxValue> packet = deliveryPacket("/stalled");
+
+    Assert.assertFalse(endpoint.deliver(packet), "An unconfirmed write must not be reported as delivered");
+
+    Mockito.verify(wsProtocol, Mockito.never()).onDelivery(Mockito.any());
+  }
+
+  public void testDeliverKeepsReportingFailureForEveryDiscardedPacket ()
+    throws Exception {
+
+    openEndpoint();
+
+    Mockito.when(websocketSession.isOpen()).thenReturn(false);
+
+    // Only the first discard is logged, but every one of them must still be reported to the caller
+    Assert.assertFalse(endpoint.deliver(deliveryPacket("/closed")));
+    Assert.assertFalse(endpoint.deliver(deliveryPacket("/closed")));
+    Assert.assertFalse(endpoint.deliver(deliveryPacket("/closed")));
+
+    Mockito.verify(websocketSession, Mockito.never()).getBasicRemote();
+    Mockito.verify(websocketSession, Mockito.never()).getAsyncRemote();
+  }
+
+  public void testDeliverSurvivesAPacketCarryingNoRoute ()
+    throws Exception {
+
+    Message<OrthodoxValue> message = codec.create();
+
+    openEndpoint();
+
+    Mockito.when(websocketSession.isOpen()).thenReturn(false);
+
+    // Error responses are built without a route, so the discard path must not assume one is present
+    Assert.assertFalse(endpoint.deliver(new Packet<>(PacketType.RESPONSE, null, null, message)));
   }
 }
