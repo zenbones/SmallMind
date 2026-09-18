@@ -70,48 +70,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class TyrusGrizzlyServerContainerProgrammaticTest {
 
-  public static class EchoEndpoint extends Endpoint {
-
-    @Override
-    public void onOpen (Session session, EndpointConfig config) {
-
-      session.addMessageHandler(new MessageHandler.Whole<String>() {
-
-        @Override
-        public void onMessage (String message) {
-
-          try {
-            session.getBasicRemote().sendText("echo:" + message);
-          } catch (Exception exception) {
-            throw new RuntimeException(exception);
-          }
-        }
-      });
-    }
-  }
-
-  @ClientEndpoint
-  public static class RecordingClientEndpoint {
-
-    private final AtomicReference<String> received = new AtomicReference<>();
-    private final CountDownLatch latch = new CountDownLatch(1);
-
-    @OnMessage
-    public void onMessage (String message) {
-
-      received.set(message);
-      latch.countDown();
-    }
-
-    public String awaitMessage ()
-      throws InterruptedException {
-
-      latch.await(10, TimeUnit.SECONDS);
-
-      return received.get();
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -258,6 +216,48 @@ public class TyrusGrizzlyServerContainerProgrammaticTest {
     } finally {
       container.stop();
       httpServer.shutdownNow();
+    }
+  }
+
+  public static class EchoEndpoint extends Endpoint {
+
+    @Override
+    public void onOpen (Session session, EndpointConfig config) {
+
+      session.addMessageHandler(new MessageHandler.Whole<String>() {
+
+        @Override
+        public void onMessage (String message) {
+
+          try {
+            session.getBasicRemote().sendText("echo:" + message);
+          } catch (Exception exception) {
+            throw new RuntimeException(exception);
+          }
+        }
+      });
+    }
+  }
+
+  @ClientEndpoint
+  public static class RecordingClientEndpoint {
+
+    private final AtomicReference<String> received = new AtomicReference<>();
+    private final CountDownLatch latch = new CountDownLatch(1);
+
+    @OnMessage
+    public void onMessage (String message) {
+
+      received.set(message);
+      latch.countDown();
+    }
+
+    public String awaitMessage ()
+      throws InterruptedException {
+
+      latch.await(10, TimeUnit.SECONDS);
+
+      return received.get();
     }
   }
 }

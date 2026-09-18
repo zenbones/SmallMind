@@ -38,12 +38,12 @@ package org.smallmind.web.json.scaffold.reflection;
  */
 public class ReflectedBean extends ReflectedBeanParent {
 
-  public String publicField;
   private int[] cells;
   private int[][] grid;
   private boolean enabled;
   private int writeOnly;
   private String label;
+  public String publicField;
 
   public boolean isEnabled () {
 
@@ -61,15 +61,15 @@ public class ReflectedBean extends ReflectedBeanParent {
     return "fixed";
   }
 
+  public int getWriteOnly () {
+
+    return writeOnly;
+  }
+
   // Write-only property: setter without a matching getter.
   public void setWriteOnly (int writeOnly) {
 
     this.writeOnly = writeOnly;
-  }
-
-  public int getWriteOnly () {
-
-    return writeOnly;
   }
 
   public String getLabel () {

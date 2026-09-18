@@ -32,10 +32,10 @@
  */
 package org.smallmind.scribe.pen;
 
+import jakarta.mail.internet.MimeMessage;
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.util.ServerSetup;
-import jakarta.mail.internet.MimeMessage;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

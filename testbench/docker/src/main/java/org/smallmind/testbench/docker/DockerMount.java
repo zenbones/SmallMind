@@ -58,9 +58,9 @@ public class DockerMount {
    * {@link #create(MountType, String, String, boolean)} rather than calling this directly.
    *
    * @param mountType the Docker mount type, such as {@link MountType#BIND}
-   * @param hostPath the resolved absolute host path
+   * @param hostPath  the resolved absolute host path
    * @param localPath the absolute container-side mount path
-   * @param readOnly {@code true} to mount read-only inside the container
+   * @param readOnly  {@code true} to mount read-only inside the container
    */
   private DockerMount (MountType mountType, String hostPath, String localPath, boolean readOnly) {
 
@@ -74,13 +74,13 @@ public class DockerMount {
    * Creates a mount whose host side is resolved from a classpath resource. The resource is located
    * via the thread context classloader and its URL converted to an absolute filesystem path.
    *
-   * @param mountType the Docker mount type, such as {@link MountType#BIND}
+   * @param mountType    the Docker mount type, such as {@link MountType#BIND}
    * @param hostResource the classpath-relative resource name providing the host side of the mount
-   * @param localPath the absolute container path the resource is mounted at
-   * @param readOnly {@code true} to mount read-only inside the container
+   * @param localPath    the absolute container path the resource is mounted at
+   * @param readOnly     {@code true} to mount read-only inside the container
    * @return a new mount descriptor; never {@code null}
    * @throws MissingHostResourceException if {@code hostResource} cannot be found on the classpath or
-   * its URL is malformed
+   *                                      its URL is malformed
    */
   public static DockerMount create (MountType mountType, String hostResource, String localPath, boolean readOnly) {
 

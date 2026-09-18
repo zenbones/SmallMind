@@ -45,16 +45,6 @@ public class SingularityIndexTest {
 
   private static final String PARENT = "file:/opt/app/application.jar";
 
-  // The singularity: URLs emitted below can only be turned into URL instances once the synthetic protocol handler is
-  // registered, which happens exactly once in SingularityClassLoader's static initializer. Triggering it here keeps
-  // that JVM-wide, one-shot registration funneled through the single production registrar.
-  @BeforeClass
-  public void registerSingularityProtocol ()
-    throws ClassNotFoundException {
-
-    Class.forName(SingularityClassLoader.class.getName());
-  }
-
   private static HashMap<String, String> collect (Iterable<SingularityIndex.URLEntry> iterable) {
 
     HashMap<String, String> nameToExternalForm = new HashMap<>();
@@ -64,6 +54,16 @@ public class SingularityIndexTest {
     }
 
     return nameToExternalForm;
+  }
+
+  // The singularity: URLs emitted below can only be turned into URL instances once the synthetic protocol handler is
+  // registered, which happens exactly once in SingularityClassLoader's static initializer. Triggering it here keeps
+  // that JVM-wide, one-shot registration funneled through the single production registrar.
+  @BeforeClass
+  public void registerSingularityProtocol ()
+    throws ClassNotFoundException {
+
+    Class.forName(SingularityClassLoader.class.getName());
   }
 
   public void testBareFilesBecomeJarProtocolUrls () {

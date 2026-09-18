@@ -43,14 +43,14 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ParameterAnnotationsTest {
 
+  @Marker
+  @Deprecated
+  private String annotatedField;
+
   @Retention(RetentionPolicy.RUNTIME)
   private @interface Marker {
 
   }
-
-  @Marker
-  @Deprecated
-  private String annotatedField;
 
   private ParameterAnnotations annotationsForField ()
     throws NoSuchFieldException {

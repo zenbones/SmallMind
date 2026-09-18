@@ -44,7 +44,6 @@ import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.testbench.docker.DockerApplication;
 import org.smallmind.testbench.groundwater.AbstractGroundwaterTest;
 import org.smallmind.testbench.logger.TestLoggerConfiguration;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

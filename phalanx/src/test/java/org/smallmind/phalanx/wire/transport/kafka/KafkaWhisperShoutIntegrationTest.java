@@ -68,6 +68,11 @@ public class KafkaWhisperShoutIntegrationTest extends AbstractGroundwaterTest {
   private WhisperShoutServiceImpl serviceImpl;
   private WhisperShoutService serviceProxy;
 
+  public KafkaWhisperShoutIntegrationTest () {
+
+    super(DockerApplication.KAFKA);
+  }
+
   public interface WhisperShoutService {
 
     @Whisper(timeoutSeconds = 5)
@@ -75,45 +80,6 @@ public class KafkaWhisperShoutIntegrationTest extends AbstractGroundwaterTest {
 
     @Shout
     void broadcast (@Argument("value") String value);
-  }
-
-  public static class WhisperShoutServiceImpl implements WhisperShoutService, WiredService {
-
-    private final AtomicReference<String> lastShout = new AtomicReference<>();
-
-    @Override
-    public int getVersion () {
-
-      return 1;
-    }
-
-    @Override
-    public String getServiceName () {
-
-      return "WhisperShoutService";
-    }
-
-    @Override
-    public void setResponseTransport (ResponseTransport responseTransport) {
-
-    }
-
-    @Override
-    public String ping (String value) {
-
-      return "pong:" + value;
-    }
-
-    @Override
-    public void broadcast (String value) {
-
-      lastShout.set(value);
-    }
-  }
-
-  public KafkaWhisperShoutIntegrationTest () {
-
-    super(DockerApplication.KAFKA);
   }
 
   @BeforeClass
@@ -178,5 +144,39 @@ public class KafkaWhisperShoutIntegrationTest extends AbstractGroundwaterTest {
     }
 
     Assert.assertEquals(serviceImpl.lastShout.get(), "hey");
+  }
+
+  public static class WhisperShoutServiceImpl implements WhisperShoutService, WiredService {
+
+    private final AtomicReference<String> lastShout = new AtomicReference<>();
+
+    @Override
+    public int getVersion () {
+
+      return 1;
+    }
+
+    @Override
+    public String getServiceName () {
+
+      return "WhisperShoutService";
+    }
+
+    @Override
+    public void setResponseTransport (ResponseTransport responseTransport) {
+
+    }
+
+    @Override
+    public String ping (String value) {
+
+      return "pong:" + value;
+    }
+
+    @Override
+    public void broadcast (String value) {
+
+      lastShout.set(value);
+    }
   }
 }

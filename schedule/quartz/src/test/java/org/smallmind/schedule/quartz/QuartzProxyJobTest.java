@@ -39,59 +39,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class QuartzProxyJobTest {
 
-  /**
-   * Concrete subclass whose {@code proceed()} and {@code cleanup()} behavior is
-   * driven by fields so that each test can dial in the lifecycle path it cares
-   * about. {@code execute(JobExecutionContext)} never touches the context, so
-   * the tests pass {@code null}.
-   */
-  private static class HarnessJob extends QuartzProxyJob {
-
-    private Runnable body;
-    private Exception proceedFailure;
-    private RuntimeException cleanupFailure;
-    private boolean enabled = true;
-    private boolean logZero = false;
-    private boolean proceedRan = false;
-    private boolean cleanupRan = false;
-
-    @Override
-    public boolean isEnabled () {
-
-      return enabled;
-    }
-
-    @Override
-    public boolean logOnZeroCount () {
-
-      return logZero;
-    }
-
-    @Override
-    public void proceed ()
-      throws Exception {
-
-      proceedRan = true;
-
-      if (body != null) {
-        body.run();
-      }
-      if (proceedFailure != null) {
-        throw proceedFailure;
-      }
-    }
-
-    @Override
-    public void cleanup () {
-
-      cleanupRan = true;
-
-      if (cleanupFailure != null) {
-        throw cleanupFailure;
-      }
-    }
-  }
-
   public void testEnabledSuccessRecordsTimingAndRunsCleanup () {
 
     HarnessJob job = new HarnessJob();
@@ -249,6 +196,59 @@ public class QuartzProxyJobTest {
   }
 
   /**
+   * Concrete subclass whose {@code proceed()} and {@code cleanup()} behavior is
+   * driven by fields so that each test can dial in the lifecycle path it cares
+   * about. {@code execute(JobExecutionContext)} never touches the context, so
+   * the tests pass {@code null}.
+   */
+  private static class HarnessJob extends QuartzProxyJob {
+
+    private Runnable body;
+    private Exception proceedFailure;
+    private RuntimeException cleanupFailure;
+    private boolean enabled = true;
+    private boolean logZero = false;
+    private boolean proceedRan = false;
+    private boolean cleanupRan = false;
+
+    @Override
+    public boolean isEnabled () {
+
+      return enabled;
+    }
+
+    @Override
+    public boolean logOnZeroCount () {
+
+      return logZero;
+    }
+
+    @Override
+    public void proceed ()
+      throws Exception {
+
+      proceedRan = true;
+
+      if (body != null) {
+        body.run();
+      }
+      if (proceedFailure != null) {
+        throw proceedFailure;
+      }
+    }
+
+    @Override
+    public void cleanup () {
+
+      cleanupRan = true;
+
+      if (cleanupFailure != null) {
+        throw cleanupFailure;
+      }
+    }
+  }
+
+  /**
    * Subclass that does not override {@link QuartzProxyJob#isEnabled()}, so a firing exercises the
    * inherited default that always returns {@code true}.
    */
@@ -270,6 +270,7 @@ public class QuartzProxyJobTest {
 
     @Override
     public void cleanup () {
+
     }
   }
 }

@@ -63,14 +63,6 @@ public class NonTransactionalStateTest {
 
   }
 
-  @BeforeMethod
-  public void clearThreadLocalState ()
-    throws Exception {
-
-    clearThreadLocal(NonTransactionalState.class, "SESSION_SET_STACK_LOCAL");
-    clearThreadLocal(TransactionalState.class, "TRANSACTION_SET_STACK_LOCAL");
-  }
-
   private static void clearThreadLocal (Class<?> stateClass, String fieldName)
     throws Exception {
 
@@ -98,6 +90,14 @@ public class NonTransactionalStateTest {
     } catch (NoSuchMethodException noSuchMethodException) {
       throw new RuntimeException(noSuchMethodException);
     }
+  }
+
+  @BeforeMethod
+  public void clearThreadLocalState ()
+    throws Exception {
+
+    clearThreadLocal(NonTransactionalState.class, "SESSION_SET_STACK_LOCAL");
+    clearThreadLocal(TransactionalState.class, "TRANSACTION_SET_STACK_LOCAL");
   }
 
   public void testNoBoundaryMeansNoActiveSession () {

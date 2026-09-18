@@ -84,6 +84,30 @@ public class JPAProxyTransactionIntegrationTest extends AbstractGroundwaterTest 
     super(DockerApplication.MYSQL);
   }
 
+  private static boolean containsThrowable (Throwable throwable, Class<? extends Throwable> type) {
+
+    for (Throwable cursor = throwable; cursor != null; cursor = cursor.getCause()) {
+      if (type.isInstance(cursor)) {
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean containsRollbackOnlyCause (Throwable throwable) {
+
+    for (Throwable cursor = throwable; cursor != null; cursor = cursor.getCause()) {
+      if ((cursor instanceof ProxyTransactionException) && (cursor.getMessage() != null) && cursor.getMessage().contains("rollback only")) {
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @BeforeClass
   @Override
   public void beforeClass ()
@@ -233,30 +257,6 @@ public class JPAProxyTransactionIntegrationTest extends AbstractGroundwaterTest 
     }
 
     Assert.assertNull(findGizmo(5L), "the rollback-only durable should not be persisted");
-  }
-
-  private static boolean containsThrowable (Throwable throwable, Class<? extends Throwable> type) {
-
-    for (Throwable cursor = throwable; cursor != null; cursor = cursor.getCause()) {
-      if (type.isInstance(cursor)) {
-
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean containsRollbackOnlyCause (Throwable throwable) {
-
-    for (Throwable cursor = throwable; cursor != null; cursor = cursor.getCause()) {
-      if ((cursor instanceof ProxyTransactionException) && (cursor.getMessage() != null) && cursor.getMessage().contains("rollback only")) {
-
-        return true;
-      }
-    }
-
-    return false;
   }
 
   @Entity

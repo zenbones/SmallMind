@@ -42,33 +42,6 @@ import org.testng.annotations.BeforeMethod;
 @org.testng.annotations.Test(groups = "unit")
 public class AbstractWrapperListenerLifecycleTest {
 
-  private static class RecordingListener extends AbstractWrapperListener {
-
-    private final boolean startupThrows;
-    private String[] startupArgs;
-
-    private RecordingListener (boolean startupThrows) {
-
-      this.startupThrows = startupThrows;
-    }
-
-    @Override
-    public void startup (String[] args)
-      throws Exception {
-
-      startupArgs = args;
-
-      if (startupThrows) {
-        throw new Exception("startup failed");
-      }
-    }
-
-    @Override
-    public void shutdown () {
-
-    }
-  }
-
   @BeforeMethod
   public void resetWrapperManager () {
 
@@ -163,5 +136,32 @@ public class AbstractWrapperListenerLifecycleTest {
     WrapperManager.getProperties().setProperty("wrapper.startup.timeout", "soon");
 
     Assert.assertThrows(IllegalStateException.class, () -> AbstractWrapperListener.main(CapturingWrapperListener.class.getName(), "alpha"));
+  }
+
+  private static class RecordingListener extends AbstractWrapperListener {
+
+    private final boolean startupThrows;
+    private String[] startupArgs;
+
+    private RecordingListener (boolean startupThrows) {
+
+      this.startupThrows = startupThrows;
+    }
+
+    @Override
+    public void startup (String[] args)
+      throws Exception {
+
+      startupArgs = args;
+
+      if (startupThrows) {
+        throw new Exception("startup failed");
+      }
+    }
+
+    @Override
+    public void shutdown () {
+
+    }
   }
 }

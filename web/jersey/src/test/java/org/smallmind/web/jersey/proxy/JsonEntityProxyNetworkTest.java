@@ -39,10 +39,10 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
 import jakarta.ws.rs.Path;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.aop.EntityParam;
@@ -77,32 +77,6 @@ public class JsonEntityProxyNetworkTest {
   private HttpServer server;
   private int port;
 
-  public static class Echo {
-
-    private String name;
-    private int count;
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public int getCount () {
-
-      return count;
-    }
-
-    public void setCount (int count) {
-
-      this.count = count;
-    }
-  }
-
   public interface SampleResource {
 
     Echo lookup (@EntityParam("id") String id, @XmlJavaTypeAdapter(StringToLengthAdapter.class) @EntityParam("size") Integer size);
@@ -114,39 +88,6 @@ public class JsonEntityProxyNetworkTest {
   public interface BrokenResource {
 
     Echo broken (String value);
-  }
-
-  /**
-   * Test {@link jakarta.xml.bind.annotation.adapters.XmlAdapter} that marshals an {@link Integer} to a string of that
-   * many {@code x} characters. Declared with a public no-arg constructor so the production code can instantiate it
-   * reflectively.
-   */
-  public static class StringToLengthAdapter extends jakarta.xml.bind.annotation.adapters.XmlAdapter<String, Integer> {
-
-    @Override
-    public Integer unmarshal (String value) {
-
-      return (value == null) ? null : value.length();
-    }
-
-    @Override
-    public String marshal (Integer value) {
-
-      return (value == null) ? null : "x".repeat(value);
-    }
-  }
-
-  private static class MarkerHeaderInjector implements JsonHeaderInjector {
-
-    @Override
-    public JsonHeader injectOnInvoke (Object proxy, Method method, Object[] args) {
-
-      return new JsonHeader("X-Marker", "marker-value");
-    }
-  }
-
-  private record RecordedRequest(String method, String uri, String body, String marker) {
-
   }
 
   @BeforeClass
@@ -289,5 +230,64 @@ public class JsonEntityProxyNetworkTest {
       Assert.assertTrue(undeclaredThrowableException.getCause() instanceof ResourceDefinitionException);
       Assert.assertTrue(undeclaredThrowableException.getCause().getMessage().contains("broken-service"));
     }
+  }
+
+  public static class Echo {
+
+    private String name;
+    private int count;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public int getCount () {
+
+      return count;
+    }
+
+    public void setCount (int count) {
+
+      this.count = count;
+    }
+  }
+
+  /**
+   * Test {@link jakarta.xml.bind.annotation.adapters.XmlAdapter} that marshals an {@link Integer} to a string of that
+   * many {@code x} characters. Declared with a public no-arg constructor so the production code can instantiate it
+   * reflectively.
+   */
+  public static class StringToLengthAdapter extends jakarta.xml.bind.annotation.adapters.XmlAdapter<String, Integer> {
+
+    @Override
+    public Integer unmarshal (String value) {
+
+      return (value == null) ? null : value.length();
+    }
+
+    @Override
+    public String marshal (Integer value) {
+
+      return (value == null) ? null : "x".repeat(value);
+    }
+  }
+
+  private static class MarkerHeaderInjector implements JsonHeaderInjector {
+
+    @Override
+    public JsonHeader injectOnInvoke (Object proxy, Method method, Object[] args) {
+
+      return new JsonHeader("X-Marker", "marker-value");
+    }
+  }
+
+  private record RecordedRequest(String method, String uri, String body, String marker) {
+
   }
 }

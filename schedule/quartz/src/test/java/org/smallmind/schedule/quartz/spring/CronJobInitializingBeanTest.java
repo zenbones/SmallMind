@@ -42,7 +42,6 @@ import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.TriggerKey;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")

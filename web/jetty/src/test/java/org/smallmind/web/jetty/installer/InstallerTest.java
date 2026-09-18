@@ -51,20 +51,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class InstallerTest {
 
-  public static class NoopFilter implements Filter {
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      chain.doFilter(request, response);
-    }
-  }
-
-  public static class SampleListener implements EventListener {
-
-  }
-
   public void testInstallerTypeValues () {
 
     Assert.assertEquals(JettyInstallerType.valueOf("FILTER"), JettyInstallerType.FILTER);
@@ -229,5 +215,19 @@ public class InstallerTest {
     Assert.assertEquals(installer.getPath(), "/other");
     Assert.assertSame(installer.getService(), replacement);
     Assert.assertEquals(installer.getAsyncSupported(), Boolean.TRUE);
+  }
+
+  public static class NoopFilter implements Filter {
+
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+
+      chain.doFilter(request, response);
+    }
+  }
+
+  public static class SampleListener implements EventListener {
+
   }
 }

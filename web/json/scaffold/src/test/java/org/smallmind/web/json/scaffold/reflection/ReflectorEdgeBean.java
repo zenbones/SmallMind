@@ -42,11 +42,11 @@ package org.smallmind.web.json.scaffold.reflection;
  */
 public class ReflectorEdgeBean {
 
-  public int[] publicCells;
   private final String label = "edge";
   private String[] words;
   private int[] holes;
   private int[][][] cube;
+  public int[] publicCells;
 
   // A getter that always fails at invocation time, surfacing as an InvocationTargetException.
   public String getBoom () {

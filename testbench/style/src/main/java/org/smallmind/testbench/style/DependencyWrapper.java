@@ -55,7 +55,7 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
    * Wraps a {@code <dependency>} node, eagerly reading its coordinates for later comparison.
    *
    * @param dependencyNode the DOM node to wrap; it must contain {@code <groupId>} and
-   * {@code <artifactId>} child elements
+   *                       {@code <artifactId>} child elements
    */
   public DependencyWrapper (Node dependencyNode) {
 
@@ -123,8 +123,8 @@ public class DependencyWrapper implements Comparable<DependencyWrapper> {
    * comparing matching segments alphanumerically. When every shared segment is equal, the string
    * with fewer segments sorts first, so a shorter prefix precedes a longer one that extends it.
    *
-   * @param first the left-hand string
-   * @param second the right-hand string
+   * @param first     the left-hand string
+   * @param second    the right-hand string
    * @param separator the regular expression used to split each string into segments
    * @return a negative integer, zero, or a positive integer as {@code first} sorts before, equal to,
    * or after {@code second}

@@ -71,13 +71,13 @@ public class DockerApplications {
    * accepts connections. Equivalent to {@link #start(String, String, DockerApplication, DockerPort...)}
    * with the application's own name.
    *
-   * @param test an identifier for the owning test, recorded as a container label and as the
-   * {@code Test} environment variable
+   * @param test        an identifier for the owning test, recorded as a container label and as the
+   *                    {@code Test} environment variable
    * @param application the fixture to start
-   * @param ports optional port overrides; when {@code null} or empty the application's default ports
-   * are used
+   * @param ports       optional port overrides; when {@code null} or empty the application's default ports
+   *                    are used
    * @return the id of the started container, for later passing to {@link #stop}
-   * @throws IOException if image inspection or pull, container creation, or a port readiness probe fails
+   * @throws IOException          if image inspection or pull, container creation, or a port readiness probe fails
    * @throws InterruptedException if the thread is interrupted while pulling the image or awaiting readiness
    */
   public static String start (String test, DockerApplication application, DockerPort... ports)
@@ -96,14 +96,14 @@ public class DockerApplications {
    * container can be attributed to its owning test. Once running, each service port is probed with a
    * one-second TCP connect, and the method does not return until all of them succeed.
    *
-   * @param test an identifier for the owning test, recorded as a container label and as the
-   * {@code Test} environment variable
-   * @param name the name to assign to the new container
+   * @param test        an identifier for the owning test, recorded as a container label and as the
+   *                    {@code Test} environment variable
+   * @param name        the name to assign to the new container
    * @param application the fixture to start
-   * @param ports optional port overrides; when {@code null} or empty the application's default ports
-   * are used
+   * @param ports       optional port overrides; when {@code null} or empty the application's default ports
+   *                    are used
    * @return the id of the started container, for later passing to {@link #stop}
-   * @throws IOException if image inspection or pull, container creation, or a port readiness probe fails
+   * @throws IOException          if image inspection or pull, container creation, or a port readiness probe fails
    * @throws InterruptedException if the thread is interrupted while pulling the image or awaiting readiness
    */
   public static String start (String test, String name, DockerApplication application, DockerPort... ports)

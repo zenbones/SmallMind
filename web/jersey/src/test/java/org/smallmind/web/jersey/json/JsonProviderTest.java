@@ -46,32 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JsonProviderTest {
 
-  public static class Bean {
-
-    private String name;
-    private int count;
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public int getCount () {
-
-      return count;
-    }
-
-    public void setCount (int count) {
-
-      this.count = count;
-    }
-  }
-
   public void testIsReadableAndWriteableAlwaysTrue () {
 
     JsonProvider provider = new JsonProvider();
@@ -122,5 +96,31 @@ public class JsonProviderTest {
     provider.writeTo(bean, Bean.class, Bean.class, null, MediaType.APPLICATION_JSON_TYPE, null, outputStream);
 
     Assert.assertTrue(outputStream.toString(StandardCharsets.UTF_8).contains("direct"));
+  }
+
+  public static class Bean {
+
+    private String name;
+    private int count;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public int getCount () {
+
+      return count;
+    }
+
+    public void setCount (int count) {
+
+      this.count = count;
+    }
   }
 }

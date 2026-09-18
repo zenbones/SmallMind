@@ -50,13 +50,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class SpringJobFactoryTest {
 
-  public static class DummyJob implements Job {
-
-    @Override
-    public void execute (JobExecutionContext context) {
-    }
-  }
-
   private TriggerFiredBundle bundleFor (JobKey jobKey) {
 
     JobDetail jobDetail = Mockito.mock(JobDetail.class);
@@ -187,5 +180,13 @@ public class SpringJobFactoryTest {
 
     // A plain ApplicationContext is not Closeable, so close() must be a no-op.
     new SpringJobFactory(Mockito.mock(ApplicationContext.class)).close();
+  }
+
+  public static class DummyJob implements Job {
+
+    @Override
+    public void execute (JobExecutionContext context) {
+
+    }
   }
 }

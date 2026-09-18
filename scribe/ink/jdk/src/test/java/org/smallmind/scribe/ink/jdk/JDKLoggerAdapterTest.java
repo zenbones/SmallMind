@@ -50,125 +50,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JDKLoggerAdapterTest {
 
-  private static class CapturingHandler extends Handler {
-
-    private final List<LogRecord> records = new CopyOnWriteArrayList<>();
-
-    @Override
-    public void publish (LogRecord record) {
-
-      records.add(record);
-    }
-
-    @Override
-    public void flush () {
-
-    }
-
-    @Override
-    public void close () {
-
-    }
-
-    private List<LogRecord> getRecords () {
-
-      return records;
-    }
-  }
-
-  private static class CapturingAppender implements Appender {
-
-    private final List<Record<?>> records = new ArrayList<>();
-    private final List<Filter> filterList = new ArrayList<>();
-    private ErrorHandler errorHandler;
-    private String name;
-    private boolean active = true;
-
-    @Override
-    public String getName () {
-
-      return name;
-    }
-
-    @Override
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    @Override
-    public void setFilter (Filter filter) {
-
-      filterList.clear();
-      filterList.add(filter);
-    }
-
-    @Override
-    public void clearFilters () {
-
-      filterList.clear();
-    }
-
-    @Override
-    public void addFilter (Filter filter) {
-
-      filterList.add(filter);
-    }
-
-    @Override
-    public Filter[] getFilters () {
-
-      return filterList.toArray(new Filter[0]);
-    }
-
-    @Override
-    public void setFilters (List<Filter> filterList) {
-
-      this.filterList.clear();
-      this.filterList.addAll(filterList);
-    }
-
-    @Override
-    public ErrorHandler getErrorHandler () {
-
-      return errorHandler;
-    }
-
-    @Override
-    public void setErrorHandler (ErrorHandler errorHandler) {
-
-      this.errorHandler = errorHandler;
-    }
-
-    @Override
-    public boolean isActive () {
-
-      return active;
-    }
-
-    @Override
-    public void setActive (boolean active) {
-
-      this.active = active;
-    }
-
-    @Override
-    public void publish (Record<?> record) {
-
-      records.add(record);
-    }
-
-    @Override
-    public void close () {
-
-    }
-
-    private List<Record<?>> getRecords () {
-
-      return records;
-    }
-  }
-
   private Logger julLogger;
   private CapturingHandler handler;
   private JDKLoggerAdapter adapter;
@@ -379,5 +260,124 @@ public class JDKLoggerAdapterTest {
     Assert.assertFalse(adapter.getAutoFillLoggerContext());
     adapter.setAutoFillLoggerContext(true);
     Assert.assertTrue(adapter.getAutoFillLoggerContext());
+  }
+
+  private static class CapturingHandler extends Handler {
+
+    private final List<LogRecord> records = new CopyOnWriteArrayList<>();
+
+    @Override
+    public void publish (LogRecord record) {
+
+      records.add(record);
+    }
+
+    @Override
+    public void flush () {
+
+    }
+
+    @Override
+    public void close () {
+
+    }
+
+    private List<LogRecord> getRecords () {
+
+      return records;
+    }
+  }
+
+  private static class CapturingAppender implements Appender {
+
+    private final List<Record<?>> records = new ArrayList<>();
+    private final List<Filter> filterList = new ArrayList<>();
+    private ErrorHandler errorHandler;
+    private String name;
+    private boolean active = true;
+
+    @Override
+    public String getName () {
+
+      return name;
+    }
+
+    @Override
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    @Override
+    public void setFilter (Filter filter) {
+
+      filterList.clear();
+      filterList.add(filter);
+    }
+
+    @Override
+    public void clearFilters () {
+
+      filterList.clear();
+    }
+
+    @Override
+    public void addFilter (Filter filter) {
+
+      filterList.add(filter);
+    }
+
+    @Override
+    public Filter[] getFilters () {
+
+      return filterList.toArray(new Filter[0]);
+    }
+
+    @Override
+    public void setFilters (List<Filter> filterList) {
+
+      this.filterList.clear();
+      this.filterList.addAll(filterList);
+    }
+
+    @Override
+    public ErrorHandler getErrorHandler () {
+
+      return errorHandler;
+    }
+
+    @Override
+    public void setErrorHandler (ErrorHandler errorHandler) {
+
+      this.errorHandler = errorHandler;
+    }
+
+    @Override
+    public boolean isActive () {
+
+      return active;
+    }
+
+    @Override
+    public void setActive (boolean active) {
+
+      this.active = active;
+    }
+
+    @Override
+    public void publish (Record<?> record) {
+
+      records.add(record);
+    }
+
+    @Override
+    public void close () {
+
+    }
+
+    private List<Record<?>> getRecords () {
+
+      return records;
+    }
   }
 }

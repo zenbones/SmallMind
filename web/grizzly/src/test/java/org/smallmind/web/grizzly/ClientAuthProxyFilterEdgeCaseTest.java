@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.grizzly;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.security.cert.Certificate;

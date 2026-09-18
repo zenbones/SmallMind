@@ -39,5 +39,4 @@ import java.rmi.Remote;
  */
 public class NoopRemote implements Remote {
 
-
 }

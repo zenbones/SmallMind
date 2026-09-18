@@ -95,6 +95,15 @@ public class XMLValidationMojoTest {
 
   private Path resourceDirectory;
 
+  private static void setField (Object target, String name, Object value)
+    throws Exception {
+
+    Field field = XMLValidationMojo.class.getDeclaredField(name);
+
+    field.setAccessible(true);
+    field.set(target, value);
+  }
+
   @BeforeClass
   public void beforeClass ()
     throws Exception {
@@ -118,15 +127,6 @@ public class XMLValidationMojoTest {
         paths.sorted(java.util.Comparator.reverseOrder()).forEach(path -> path.toFile().delete());
       }
     }
-  }
-
-  private static void setField (Object target, String name, Object value)
-    throws Exception {
-
-    Field field = XMLValidationMojo.class.getDeclaredField(name);
-
-    field.setAccessible(true);
-    field.set(target, value);
   }
 
   private XMLValidationMojo mojo (String w3c, List<XSD> schemas)

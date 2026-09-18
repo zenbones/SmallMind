@@ -58,6 +58,17 @@ public class WireInvocationCircuitTest {
 
   private final SignalCodec signalCodec = new JsonSignalCodec();
 
+  public interface UnserializableService {
+
+    Object make ();
+  }
+
+  public interface FaultyService {
+
+    void boom ()
+      throws FaultWrappingException;
+  }
+
   private InvocationSignal invocation (boolean inOnly, int version, String service, Function function, Map<String, Object> arguments) {
 
     return new InvocationSignal(inOnly, new Route(version, service, function), arguments);
@@ -244,11 +255,6 @@ public class WireInvocationCircuitTest {
     }
   }
 
-  public interface UnserializableService {
-
-    Object make ();
-  }
-
   public static class UnserializableServiceImpl implements UnserializableService, WiredService {
 
     @Override
@@ -273,12 +279,6 @@ public class WireInvocationCircuitTest {
 
       return new Object();
     }
-  }
-
-  public interface FaultyService {
-
-    void boom ()
-      throws FaultWrappingException;
   }
 
   public static class FaultyServiceImpl implements FaultyService, WiredService {

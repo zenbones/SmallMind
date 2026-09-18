@@ -69,7 +69,7 @@ public class DocumentRootHttpHandler extends StaticHttpHandler {
    *
    * @param request the current request
    * @return the path relative to the document root, or {@code null} if the request does not address this handler's
-   *         document root
+   * document root
    */
   @Override
   protected String getRelativeURI (Request request) {

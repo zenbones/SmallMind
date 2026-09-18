@@ -42,6 +42,17 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class VersionTest {
 
+  public enum SampleVersion implements Version<SampleVersion> {
+
+    V1;
+
+    @Override
+    public Class<? extends Versioned<SampleVersion>> getVersionedClass () {
+
+      return SampleVersioned.class;
+    }
+  }
+
   public void testGetVersionedClass () {
 
     Assert.assertEquals(SampleVersion.V1.getVersionedClass(), SampleVersioned.class);
@@ -62,17 +73,6 @@ public class VersionTest {
     Assert.assertTrue(recovered instanceof SampleVersioned, recovered.getClass().getName());
     Assert.assertEquals(((SampleVersioned)recovered).getValue(), "hello");
     Assert.assertEquals(recovered.getVersion(), SampleVersion.V1);
-  }
-
-  public enum SampleVersion implements Version<SampleVersion> {
-
-    V1;
-
-    @Override
-    public Class<? extends Versioned<SampleVersion>> getVersionedClass () {
-
-      return SampleVersioned.class;
-    }
   }
 
   public static class SampleVersioned implements Versioned<SampleVersion> {

@@ -218,7 +218,7 @@ public class RabbitMQConnectionManager {
         //  A connection level failure reported through a channel. Nothing is salvageable at channel scope.
         scheduleConnectionRebuild(failedGeneration, describe(shutdownSignalException));
       } else {
-        scheduleChannelRebuild(messageRouter, failedGeneration, describe(shutdownSignalException),true);
+        scheduleChannelRebuild(messageRouter, failedGeneration, describe(shutdownSignalException), true);
       }
     }
   }

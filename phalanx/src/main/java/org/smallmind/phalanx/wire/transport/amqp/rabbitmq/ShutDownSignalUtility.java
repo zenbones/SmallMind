@@ -47,7 +47,6 @@ public class ShutDownSignalUtility {
    * encountered, starting with the throwable itself.
    *
    * @param throwable the throwable to inspect, which may be {@code null}
-   *
    * @return the first shutdown signal found within the cause chain, or {@code null} if the chain
    * contains no shutdown signal.
    */

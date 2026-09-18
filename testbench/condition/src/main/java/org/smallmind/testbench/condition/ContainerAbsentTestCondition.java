@@ -52,7 +52,7 @@ public class ContainerAbsentTestCondition implements TestCondition {
    * Creates a condition that waits for the named containers to be gone.
    *
    * @param names the container names to watch for; the condition is satisfied only when none of
-   * them are present
+   *              them are present
    */
   public ContainerAbsentTestCondition (String... names) {
 

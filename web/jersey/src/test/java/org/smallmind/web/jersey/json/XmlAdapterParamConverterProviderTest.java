@@ -47,38 +47,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class XmlAdapterParamConverterProviderTest {
 
-  public static class TrimAdapter extends XmlAdapter<String, String> {
-
-    @Override
-    public String unmarshal (String value) {
-
-      return value.trim();
-    }
-
-    @Override
-    public String marshal (String value) {
-
-      return "[" + value + "]";
-    }
-  }
-
-  public static class BoomAdapter extends XmlAdapter<String, String> {
-
-    @Override
-    public String unmarshal (String value)
-      throws Exception {
-
-      throw new Exception("unmarshal failed");
-    }
-
-    @Override
-    public String marshal (String value)
-      throws Exception {
-
-      throw new Exception("marshal failed");
-    }
-  }
-
   @XmlJavaTypeAdapter(TrimAdapter.class)
   private String trimmed;
   @XmlJavaTypeAdapter(BoomAdapter.class)
@@ -143,5 +111,37 @@ public class XmlAdapterParamConverterProviderTest {
     throws Exception {
 
     converterFor(new XmlAdapterParamConverterProvider(), "boom").toString("anything");
+  }
+
+  public static class TrimAdapter extends XmlAdapter<String, String> {
+
+    @Override
+    public String unmarshal (String value) {
+
+      return value.trim();
+    }
+
+    @Override
+    public String marshal (String value) {
+
+      return "[" + value + "]";
+    }
+  }
+
+  public static class BoomAdapter extends XmlAdapter<String, String> {
+
+    @Override
+    public String unmarshal (String value)
+      throws Exception {
+
+      throw new Exception("unmarshal failed");
+    }
+
+    @Override
+    public String marshal (String value)
+      throws Exception {
+
+      throw new Exception("marshal failed");
+    }
   }
 }

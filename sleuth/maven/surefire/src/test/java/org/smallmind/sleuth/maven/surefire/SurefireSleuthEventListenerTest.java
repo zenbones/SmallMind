@@ -59,6 +59,15 @@ public class SurefireSleuthEventListenerTest {
     return captor;
   }
 
+  private static void assertStackTraceWriterCarries (CapturingRunListener captor, Throwable expected) {
+
+    Assert.assertTrue(captor.getLastReportEntry().getStackTraceWriter() instanceof SleuthStackTraceWriter, "Failure/error/moot entries must carry a SleuthStackTraceWriter");
+
+    SleuthStackTraceWriter writer = (SleuthStackTraceWriter)captor.getLastReportEntry().getStackTraceWriter();
+
+    Assert.assertSame(writer.getThrowable().getTarget(), expected);
+  }
+
   public void testStartMapsToTestStarting () {
 
     Assert.assertEquals(dispatch(new StartSleuthEvent(CLASS_NAME, METHOD_NAME)).getLastCall(), "testStarting");
@@ -111,14 +120,5 @@ public class SurefireSleuthEventListenerTest {
 
     Assert.assertTrue(captor.wasExecutionSkippedByUser());
     Assert.assertSame(listener.getThrowable(), throwable, "A fatal event's throwable must be retained for rethrow");
-  }
-
-  private static void assertStackTraceWriterCarries (CapturingRunListener captor, Throwable expected) {
-
-    Assert.assertTrue(captor.getLastReportEntry().getStackTraceWriter() instanceof SleuthStackTraceWriter, "Failure/error/moot entries must carry a SleuthStackTraceWriter");
-
-    SleuthStackTraceWriter writer = (SleuthStackTraceWriter)captor.getLastReportEntry().getStackTraceWriter();
-
-    Assert.assertSame(writer.getThrowable().getTarget(), expected);
   }
 }

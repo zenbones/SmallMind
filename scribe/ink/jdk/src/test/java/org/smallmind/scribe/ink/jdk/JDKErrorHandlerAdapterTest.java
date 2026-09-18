@@ -42,43 +42,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JDKErrorHandlerAdapterTest {
 
-  private static class RecordingErrorManager extends ErrorManager {
-
-    private String message;
-    private Exception exception;
-    private int code = Integer.MIN_VALUE;
-    private boolean invoked = false;
-
-    @Override
-    public void error (String message, Exception exception, int code) {
-
-      this.message = message;
-      this.exception = exception;
-      this.code = code;
-      invoked = true;
-    }
-
-    private boolean wasInvoked () {
-
-      return invoked;
-    }
-
-    private String getMessage () {
-
-      return message;
-    }
-
-    private Exception getException () {
-
-      return exception;
-    }
-
-    private int getCode () {
-
-      return code;
-    }
-  }
-
   public void testGetNativeErrorManagerReturnsWrappedManager () {
 
     RecordingErrorManager errorManager = new RecordingErrorManager();
@@ -124,5 +87,42 @@ public class JDKErrorHandlerAdapterTest {
     Assert.assertTrue(errorManager.wasInvoked());
     Assert.assertSame(errorManager.getException(), exception);
     Assert.assertEquals(errorManager.getMessage(), "record failed");
+  }
+
+  private static class RecordingErrorManager extends ErrorManager {
+
+    private String message;
+    private Exception exception;
+    private int code = Integer.MIN_VALUE;
+    private boolean invoked = false;
+
+    @Override
+    public void error (String message, Exception exception, int code) {
+
+      this.message = message;
+      this.exception = exception;
+      this.code = code;
+      invoked = true;
+    }
+
+    private boolean wasInvoked () {
+
+      return invoked;
+    }
+
+    private String getMessage () {
+
+      return message;
+    }
+
+    private Exception getException () {
+
+      return exception;
+    }
+
+    private int getCode () {
+
+      return code;
+    }
   }
 }

@@ -54,11 +54,11 @@ public class TestConditions {
    *
    * @param timeoutSeconds the overall budget, in seconds, shared across all conditions
    * @param testConditions the conditions to satisfy, evaluated left to right; may be {@code null}
-   * or empty, in which case the method returns immediately
+   *                       or empty, in which case the method returns immediately
    * @throws TestConditionTimeoutException if a condition is still unsatisfied when the shared
-   * deadline is reached
-   * @throws Exception if a condition's {@link TestCondition#test()} cannot be carried out, or the
-   * polling sleep is interrupted
+   *                                       deadline is reached
+   * @throws Exception                     if a condition's {@link TestCondition#test()} cannot be carried out, or the
+   *                                       polling sleep is interrupted
    */
   public static void serial (int timeoutSeconds, TestCondition... testConditions)
     throws Exception {
@@ -95,11 +95,11 @@ public class TestConditions {
    *
    * @param timeoutSeconds the overall budget, in seconds, allowed for all conditions to be satisfied
    * @param testConditions the conditions to satisfy, all polled on each round; may be {@code null}
-   * or empty, in which case the method returns immediately
+   *                       or empty, in which case the method returns immediately
    * @throws TestConditionTimeoutException if any conditions remain unsatisfied when the deadline is
-   * reached; the exception reports every outstanding failure
-   * @throws Exception if a condition's {@link TestCondition#test()} cannot be carried out, or the
-   * polling sleep is interrupted
+   *                                       reached; the exception reports every outstanding failure
+   * @throws Exception                     if a condition's {@link TestCondition#test()} cannot be carried out, or the
+   *                                       polling sleep is interrupted
    */
   public static void parallel (int timeoutSeconds, TestCondition... testConditions)
     throws Exception {

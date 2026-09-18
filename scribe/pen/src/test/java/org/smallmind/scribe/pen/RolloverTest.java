@@ -39,34 +39,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class RolloverTest {
 
-  /**
-   * A {@link RolloverRule} stub with a fixed verdict that records whether it was consulted, so a test
-   * can prove short-circuit evaluation never reaches it.
-   */
-  private static class RecordingRule implements RolloverRule {
-
-    private final boolean verdict;
-    private boolean consulted;
-
-    private RecordingRule (boolean verdict) {
-
-      this.verdict = verdict;
-    }
-
-    private boolean wasConsulted () {
-
-      return consulted;
-    }
-
-    @Override
-    public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
-
-      consulted = true;
-
-      return verdict;
-    }
-  }
-
   public void testFirstTriggeringRuleShortCircuitsTheRest () {
 
     RecordingRule first = new RecordingRule(true);
@@ -104,5 +76,33 @@ public class RolloverTest {
   public void testDefaultSeparatorIsHyphen () {
 
     Assert.assertEquals(new Rollover().getSeparator(), '-');
+  }
+
+  /**
+   * A {@link RolloverRule} stub with a fixed verdict that records whether it was consulted, so a test
+   * can prove short-circuit evaluation never reaches it.
+   */
+  private static class RecordingRule implements RolloverRule {
+
+    private final boolean verdict;
+    private boolean consulted;
+
+    private RecordingRule (boolean verdict) {
+
+      this.verdict = verdict;
+    }
+
+    private boolean wasConsulted () {
+
+      return consulted;
+    }
+
+    @Override
+    public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
+
+      consulted = true;
+
+      return verdict;
+    }
   }
 }

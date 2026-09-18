@@ -70,7 +70,7 @@ public class FileCountCleanupRuleTest {
     }
   }
 
-  private Path createAgedFile (String name, long lastModifiedMillis )
+  private Path createAgedFile (String name, long lastModifiedMillis)
     throws IOException {
 
     Path path = Files.createFile(directory.resolve(name));

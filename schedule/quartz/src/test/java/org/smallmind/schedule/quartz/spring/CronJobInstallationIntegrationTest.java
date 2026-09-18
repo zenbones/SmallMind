@@ -58,23 +58,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class CronJobInstallationIntegrationTest {
 
-  public static class NoopJob extends QuartzProxyJob {
-
-    @Override
-    public boolean logOnZeroCount () {
-
-      return false;
-    }
-
-    @Override
-    public void proceed () {
-    }
-
-    @Override
-    public void cleanup () {
-    }
-  }
-
   private Scheduler standbyScheduler (String instanceName)
     throws SchedulerException {
 
@@ -127,6 +110,25 @@ public class CronJobInstallationIntegrationTest {
       Assert.assertEquals(((CronTrigger)scheduler.getTrigger(triggerKey)).getCronExpression(), "0 0/10 * * * ?", "the trigger was not rescheduled");
     } finally {
       scheduler.shutdown();
+    }
+  }
+
+  public static class NoopJob extends QuartzProxyJob {
+
+    @Override
+    public boolean logOnZeroCount () {
+
+      return false;
+    }
+
+    @Override
+    public void proceed () {
+
+    }
+
+    @Override
+    public void cleanup () {
+
     }
   }
 }

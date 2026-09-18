@@ -46,16 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class FilterInstallerTest {
 
-  public static class NoOpFilter implements Filter {
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      chain.doFilter(request, response);
-    }
-  }
-
   public void testOptionTypeIsFilter () {
 
     Assert.assertEquals(new FilterInstaller().getOptionType(), GrizzlyInstallerType.FILTER);
@@ -129,5 +119,15 @@ public class FilterInstallerTest {
     installer.setFilterClass(NoOpFilter.class);
 
     Assert.assertSame(installer.getFilter(), filter);
+  }
+
+  public static class NoOpFilter implements Filter {
+
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+
+      chain.doFilter(request, response);
+    }
   }
 }

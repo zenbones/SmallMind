@@ -91,6 +91,17 @@ public class SuiteRunnerBehaviorTest {
     Assert.assertFalse(listener.hasEvent(SleuthEventType.SUCCESS, "suiteTest"));
   }
 
+  // The first suite (priority 0) fails to instantiate; with stopOnError the run is cancelled, so the
+  // priority-1 suite gated behind it never starts — exercising the stop-on-error branch of the
+  // suite-level catch.
+  public void testSuiteInstantiationFailureWithStopOnErrorCancelsLaterSuites () {
+
+    CapturingSleuthEventListener listener = run(true, false, FailingFirstSuite.class, NormalSecondSuite.class);
+
+    Assert.assertEquals(listener.countOfType(SleuthEventType.FATAL), 1);
+    Assert.assertFalse(listener.hasMethod("secondSuiteTest"), "stopOnError on a suite failure must cancel later suites");
+  }
+
   public static class NoDefaultConstructorSuite {
 
     public NoDefaultConstructorSuite (String required) {
@@ -114,17 +125,6 @@ public class SuiteRunnerBehaviorTest {
     public void neverRuns () {
 
     }
-  }
-
-  // The first suite (priority 0) fails to instantiate; with stopOnError the run is cancelled, so the
-  // priority-1 suite gated behind it never starts — exercising the stop-on-error branch of the
-  // suite-level catch.
-  public void testSuiteInstantiationFailureWithStopOnErrorCancelsLaterSuites () {
-
-    CapturingSleuthEventListener listener = run(true, false, FailingFirstSuite.class, NormalSecondSuite.class);
-
-    Assert.assertEquals(listener.countOfType(SleuthEventType.FATAL), 1);
-    Assert.assertFalse(listener.hasMethod("secondSuiteTest"), "stopOnError on a suite failure must cancel later suites");
   }
 
   public static class BeforeSuiteThrowsSuite {

@@ -103,7 +103,7 @@ public class DependencyReducer {
    * argument.
    *
    * @param args the command-line arguments; {@code args[0]} must be the root path of the Maven
-   * project to process
+   *             project to process
    * @throws IOException if file traversal or a Maven invocation fails
    */
   static void main (String... args)
@@ -119,9 +119,9 @@ public class DependencyReducer {
    * project root itself are skipped.
    *
    * @param projectPath the root of the Maven project tree to process
-   * @throws IOException if directory traversal or a Maven invocation fails
+   * @throws IOException      if directory traversal or a Maven invocation fails
    * @throws RuntimeException if the Maven executable cannot be located, or wrapping a parse,
-   * transform, or write failure on an individual pom
+   *                          transform, or write failure on an individual pom
    */
   public static void walkProject (Path projectPath)
     throws IOException {
@@ -230,14 +230,14 @@ public class DependencyReducer {
    * {@code <dependencies>} element, and writes the result back only if something actually changed. A
    * {@code <dependencies>} element left empty by the adjustments is removed entirely.
    *
-   * @param pomPath the path to the {@code pom.xml} to update
-   * @param usedUndeclaredList dependencies referenced by sources but missing from the pom, to be added
-   * @param unusedDeclaredList dependencies declared in the pom but unused, to be removed
+   * @param pomPath                   the path to the {@code pom.xml} to update
+   * @param usedUndeclaredList        dependencies referenced by sources but missing from the pom, to be added
+   * @param unusedDeclaredList        dependencies declared in the pom but unused, to be removed
    * @param nonTestScopedTestOnlyList dependencies to narrow to {@code test} scope
-   * @throws IOException if the file cannot be read or written
-   * @throws SAXException if the pom is not well-formed XML
+   * @throws IOException                  if the file cannot be read or written
+   * @throws SAXException                 if the pom is not well-formed XML
    * @throws ParserConfigurationException if a DOM parser cannot be created
-   * @throws TransformerException if the updated document cannot be serialized
+   * @throws TransformerException         if the updated document cannot be serialized
    */
   private static void rewritePom (Path pomPath, List<DependencyReference> usedUndeclaredList, LinkedList<DependencyReference> unusedDeclaredList, LinkedList<DependencyReference> nonTestScopedTestOnlyList)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {
@@ -296,9 +296,9 @@ public class DependencyReducer {
    * and over-scoped ones have their {@code <scope>} set to {@code test}. When anything changed, the
    * surviving dependencies are re-sorted into canonical order on a fresh replacement node.
    *
-   * @param parentNode the {@code <dependencies>} node to adjust
-   * @param usedUndeclaredList dependencies to add
-   * @param unusedDeclaredList dependencies to remove
+   * @param parentNode                the {@code <dependencies>} node to adjust
+   * @param usedUndeclaredList        dependencies to add
+   * @param unusedDeclaredList        dependencies to remove
    * @param nonTestScopedTestOnlyList dependencies to narrow to {@code test} scope
    * @return a replacement node with all adjustments applied and re-sorted, or {@code null} if no
    * change was needed
@@ -384,7 +384,7 @@ public class DependencyReducer {
    * {@code <groupId>}, {@code <artifactId>}, and {@code <scope>} children; no {@code <version>} is
    * emitted, on the assumption that the version is managed elsewhere.
    *
-   * @param document the DOM document that will own the new element
+   * @param document            the DOM document that will own the new element
    * @param dependencyReference the reference supplying groupId, artifactId, and scope
    * @return a new, unattached {@code <dependency>} element populated from the reference
    */

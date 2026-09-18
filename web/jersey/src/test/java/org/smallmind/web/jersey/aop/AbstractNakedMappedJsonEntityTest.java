@@ -44,10 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class AbstractNakedMappedJsonEntityTest {
 
-  private static class NakedEntity extends AbstractNakedMappedJsonEntity {
-
-  }
-
   @XmlJavaTypeAdapter(StringToLengthAdapter.class)
   private String adapted;
 
@@ -86,5 +82,9 @@ public class AbstractNakedMappedJsonEntityTest {
     throws Exception {
 
     Assert.assertEquals(sampleEntity().getParameter("word", Integer.class, adapterAnnotations()), Integer.valueOf(4));
+  }
+
+  private static class NakedEntity extends AbstractNakedMappedJsonEntity {
+
   }
 }

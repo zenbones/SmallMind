@@ -44,22 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class Log4JFilterAdapterTest {
 
-  private static class FixedResultFilter extends AbstractFilter {
-
-    private final Result result;
-
-    private FixedResultFilter (Result result) {
-
-      this.result = result;
-    }
-
-    @Override
-    public Result filter (LogEvent event) {
-
-      return result;
-    }
-  }
-
   private Record<LogEvent> newRecord () {
 
     return new Log4JRecordSubverter("logger.name", "logger.class.Name", Level.INFO, new DefaultLoggerContext(), null, "msg").getRecord();
@@ -84,5 +68,21 @@ public class Log4JFilterAdapterTest {
     Log4JFilterAdapter adapter = new Log4JFilterAdapter(new FixedResultFilter(Filter.Result.DENY));
 
     Assert.assertFalse(adapter.willLog(newRecord()));
+  }
+
+  private static class FixedResultFilter extends AbstractFilter {
+
+    private final Result result;
+
+    private FixedResultFilter (Result result) {
+
+      this.result = result;
+    }
+
+    @Override
+    public Result filter (LogEvent event) {
+
+      return result;
+    }
   }
 }

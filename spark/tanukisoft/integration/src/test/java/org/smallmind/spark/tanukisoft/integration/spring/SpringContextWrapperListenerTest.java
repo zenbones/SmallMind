@@ -39,19 +39,6 @@ import org.testng.Assert;
 @org.testng.annotations.Test(groups = "unit")
 public class SpringContextWrapperListenerTest {
 
-  private static class CountingListener extends SpringContextWrapperListener {
-
-    private int loadCount = 0;
-
-    @Override
-    public ConfigurableApplicationContext loadApplicationContext (String[] args) {
-
-      loadCount++;
-
-      return new GenericApplicationContext();
-    }
-  }
-
   public void testStartupCreatesAndRefreshesTheContext () {
 
     CountingListener listener = new CountingListener();
@@ -88,5 +75,18 @@ public class SpringContextWrapperListenerTest {
     throws Exception {
 
     new CountingListener().shutdown();
+  }
+
+  private static class CountingListener extends SpringContextWrapperListener {
+
+    private int loadCount = 0;
+
+    @Override
+    public ConfigurableApplicationContext loadApplicationContext (String[] args) {
+
+      loadCount++;
+
+      return new GenericApplicationContext();
+    }
   }
 }

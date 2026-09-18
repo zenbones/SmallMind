@@ -112,7 +112,7 @@ public class ActiveDirectoryLdapRealm extends LdapAuthorizingRealm {
    *
    * @param principal the primary principal of the authenticated subject (the {@code sAMAccountName})
    * @return the group distinguished names from the user's {@code memberOf} attribute; empty when the user is not found or
-   *         belongs to no groups
+   * belongs to no groups
    * @throws AuthorizationException if the directory search fails with a {@link NamingException}
    */
   @Override
@@ -163,7 +163,7 @@ public class ActiveDirectoryLdapRealm extends LdapAuthorizingRealm {
    * @param token the submitted authentication token; its principal is the {@code sAMAccountName} and its credentials are
    *              the cleartext password as a {@code char[]}
    * @return authentication info carrying a freshly salted SHA-256 digest of the credentials when the verification bind
-   *         succeeds, or {@code null} when no matching directory entry is found
+   * succeeds, or {@code null} when no matching directory entry is found
    * @throws AuthenticationException if the directory search or the verification bind fails with a {@link NamingException}
    */
   @Override

@@ -45,17 +45,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class EntityParameterNameProviderTest {
 
-  public static class Target {
-
-    public Target (@EntityParam("ctorArg") String first, int second) {
-
-    }
-
-    public void mixed (@EntityParam("named") String first, String unnamed) {
-
-    }
-  }
-
   public void testMethodNames ()
     throws Exception {
 
@@ -74,5 +63,16 @@ public class EntityParameterNameProviderTest {
 
     Assert.assertEquals(names.get(0), "ctorArg");
     Assert.assertEquals(names.get(1), "argument[1]");
+  }
+
+  public static class Target {
+
+    public Target (@EntityParam("ctorArg") String first, int second) {
+
+    }
+
+    public void mixed (@EntityParam("named") String first, String unnamed) {
+
+    }
   }
 }

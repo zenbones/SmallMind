@@ -45,6 +45,11 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ProcessPriorityComparatorTest {
 
+  private static TransactionPostProcess process (ProcessPriority priority) {
+
+    return new FixedPriorityPostProcess(priority);
+  }
+
   public void testCompareReflectsDeclaredPriorityOrder () {
 
     ProcessPriorityComparator comparator = new ProcessPriorityComparator();
@@ -69,11 +74,6 @@ public class ProcessPriorityComparatorTest {
     Assert.assertEquals(processes.get(1).getPriority(), ProcessPriority.FIRST);
     Assert.assertEquals(processes.get(2).getPriority(), ProcessPriority.MIDDLE);
     Assert.assertEquals(processes.get(3).getPriority(), ProcessPriority.LAST);
-  }
-
-  private static TransactionPostProcess process (ProcessPriority priority) {
-
-    return new FixedPriorityPostProcess(priority);
   }
 
   private static class FixedPriorityPostProcess extends TransactionPostProcess {

@@ -34,7 +34,6 @@ package org.smallmind.persistence.cache.praxis.extrinsic;
 
 import java.util.List;
 import java.util.Map;
-import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.smallmind.memcached.cubby.CubbyConfiguration;
 import org.smallmind.memcached.cubby.CubbyMemcachedClient;
 import org.smallmind.memcached.cubby.MemcachedHost;
@@ -47,6 +46,7 @@ import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
 import org.smallmind.testbench.docker.DockerApplication;
 import org.smallmind.testbench.groundwater.AbstractGroundwaterTest;
+import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

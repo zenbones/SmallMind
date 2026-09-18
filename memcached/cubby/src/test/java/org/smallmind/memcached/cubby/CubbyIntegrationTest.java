@@ -34,7 +34,6 @@ package org.smallmind.memcached.cubby;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.smallmind.memcached.cubby.command.ArithmeticCommand;
 import org.smallmind.memcached.cubby.command.ArithmeticMode;
 import org.smallmind.memcached.cubby.command.GetCommand;
@@ -46,6 +45,7 @@ import org.smallmind.memcached.cubby.response.Response;
 import org.smallmind.memcached.cubby.response.ResponseCode;
 import org.smallmind.testbench.docker.DockerApplication;
 import org.smallmind.testbench.groundwater.AbstractGroundwaterTest;
+import org.smallmind.testbench.logger.TestLoggerConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

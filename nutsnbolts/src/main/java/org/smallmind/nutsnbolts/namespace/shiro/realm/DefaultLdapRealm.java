@@ -157,7 +157,7 @@ public class DefaultLdapRealm extends LdapAuthorizingRealm {
    * @param token the submitted authentication token; its principal is the user id and its credentials are the cleartext
    *              password as a {@code char[]}
    * @return authentication info carrying the SHA-256 digest of the credentials when the stored password matches, or
-   *         {@code null} when the user is not found, has no password attribute, or the password does not match
+   * {@code null} when the user is not found, has no password attribute, or the password does not match
    * @throws AuthenticationException if the directory lookup fails with a {@link NamingException}
    */
   @Override

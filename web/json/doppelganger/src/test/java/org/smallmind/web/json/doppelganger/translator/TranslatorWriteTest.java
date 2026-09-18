@@ -48,6 +48,12 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class TranslatorWriteTest {
 
+  private interface Emitter {
+
+    void emit (BufferedWriter writer)
+      throws IOException;
+  }
+
   private TypeMirror typeMirror (TypeKind typeKind) {
 
     TypeMirror typeMirror = Mockito.mock(TypeMirror.class);
@@ -130,11 +136,5 @@ public class TranslatorWriteTest {
     String emitted = capture((writer) -> translator.writeInsideOfSet(writer, null, typeMirror(TypeKind.DECLARED), "java.util.List<com.foo.ChildInView>", "children"));
 
     Assert.assertEquals(emitted, "org.smallmind.web.json.scaffold.property.ListMutator.toEntityType(this.children)");
-  }
-
-  private interface Emitter {
-
-    void emit (BufferedWriter writer)
-      throws IOException;
   }
 }

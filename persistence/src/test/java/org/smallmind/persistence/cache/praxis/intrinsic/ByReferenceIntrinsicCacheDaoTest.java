@@ -40,7 +40,6 @@ import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.CacheDomain;
-import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
 import org.smallmind.persistence.cache.VectorArtifact;

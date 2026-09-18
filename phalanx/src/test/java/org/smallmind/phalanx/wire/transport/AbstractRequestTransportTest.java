@@ -33,9 +33,9 @@
 package org.smallmind.phalanx.wire.transport;
 
 import java.util.Map;
+import org.smallmind.phalanx.wire.Talking;
 import org.smallmind.phalanx.wire.TransportTimeoutException;
 import org.smallmind.phalanx.wire.TwoWayConversation;
-import org.smallmind.phalanx.wire.Talking;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.JsonSignalCodec;

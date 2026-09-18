@@ -44,18 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class AbstractIndexedJsonEntityTest {
 
-  private static class IndexedEntity extends AbstractIndexedJsonEntity {
-
-    public IndexedEntity () {
-
-    }
-
-    public IndexedEntity (Object[] arguments) {
-
-      super(arguments);
-    }
-  }
-
   @XmlJavaTypeAdapter(StringToLengthAdapter.class)
   private String adapted;
 
@@ -112,5 +100,17 @@ public class AbstractIndexedJsonEntityTest {
     IndexedEntity entity = new IndexedEntity(new Object[] {"hello"});
 
     Assert.assertEquals(entity.getParameter("0", Integer.class, adapterAnnotations()), Integer.valueOf(5));
+  }
+
+  private static class IndexedEntity extends AbstractIndexedJsonEntity {
+
+    public IndexedEntity () {
+
+    }
+
+    public IndexedEntity (Object[] arguments) {
+
+      super(arguments);
+    }
   }
 }

@@ -55,6 +55,13 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PostProcessProxyFactoryTest {
 
+  public interface ProxyContract {
+
+    void doVoidThing (String value);
+
+    String returnsValue ();
+  }
+
   public void testHandlerRegistersDelayedInvocationForVoidMethod ()
     throws Throwable {
 
@@ -125,13 +132,6 @@ public class PostProcessProxyFactoryTest {
     // The target throws ExplodingException; Method.invoke wraps it in InvocationTargetException, and
     // process() must unwrap and rethrow the underlying checked exception.
     postProcess.process();
-  }
-
-  public interface ProxyContract {
-
-    void doVoidThing (String value);
-
-    String returnsValue ();
   }
 
   public static class TargetRecorder {

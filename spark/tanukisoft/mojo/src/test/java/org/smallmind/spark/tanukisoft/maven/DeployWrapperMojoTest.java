@@ -33,8 +33,8 @@
 package org.smallmind.spark.tanukisoft.maven;
 
 import java.io.File;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.model.Build;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.testng.Assert;
 

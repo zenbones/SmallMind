@@ -54,11 +54,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JettySupportTypesTest {
 
-  @ServicePath(value = "/quote", context = "/finance")
-  public static class AnnotatedService {
-
-  }
-
   public void testByteArrayResourceFlags () {
 
     ByteArrayResource resource = new ByteArrayResource(new byte[] {1, 2, 3});
@@ -213,5 +208,10 @@ public class JettySupportTypesTest {
     Assert.assertSame(state.getFilterInstallerList().getFirst(), filterInstaller);
     Assert.assertEquals(state.getServletInstallerList().size(), 1);
     Assert.assertSame(state.getServletInstallerList().getFirst(), servletInstaller);
+  }
+
+  @ServicePath(value = "/quote", context = "/finance")
+  public static class AnnotatedService {
+
   }
 }

@@ -44,14 +44,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ServletInstallerTest {
 
-  public static class NoOpServlet extends GenericServlet {
-
-    @Override
-    public void service (ServletRequest request, ServletResponse response) {
-
-    }
-  }
-
   public void testOptionTypeIsServlet () {
 
     Assert.assertEquals(new ServletInstaller().getOptionType(), GrizzlyInstallerType.SERVLET);
@@ -125,5 +117,13 @@ public class ServletInstallerTest {
     installer.setServletClass(NoOpServlet.class);
 
     Assert.assertSame(installer.getServlet(), servlet);
+  }
+
+  public static class NoOpServlet extends GenericServlet {
+
+    @Override
+    public void service (ServletRequest request, ServletResponse response) {
+
+    }
   }
 }

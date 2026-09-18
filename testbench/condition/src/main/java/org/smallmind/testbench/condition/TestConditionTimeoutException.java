@@ -47,9 +47,9 @@ public class TestConditionTimeoutException extends FormattedException {
   /**
    * Creates a timeout exception describing the conditions that never became satisfied.
    *
-   * @param timeoutSeconds the timeout, in seconds, that was exceeded
+   * @param timeoutSeconds    the timeout, in seconds, that was exceeded
    * @param failureCollection the {@link TestConditionFailure}s still outstanding when the timeout
-   * elapsed; each is rendered via its {@link Object#toString()} into the message
+   *                          elapsed; each is rendered via its {@link Object#toString()} into the message
    */
   public TestConditionTimeoutException (int timeoutSeconds, Collection<TestConditionFailure> failureCollection) {
 

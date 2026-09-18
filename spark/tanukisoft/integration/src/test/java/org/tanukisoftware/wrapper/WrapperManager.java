@@ -74,11 +74,6 @@ public class WrapperManager {
     lastStopCode = null;
   }
 
-  public static void setControlledByNativeWrapper (boolean controlled) {
-
-    controlledByNativeWrapper = controlled;
-  }
-
   public static int signalStartingCount () {
 
     return signalStartingCount;
@@ -104,16 +99,21 @@ public class WrapperManager {
     return lastStopCode;
   }
 
-  // ---- shadowed surface called by AbstractWrapperListener ----
-
   public static Properties getProperties () {
 
     return properties;
   }
 
+  // ---- shadowed surface called by AbstractWrapperListener ----
+
   public static boolean isControlledByNativeWrapper () {
 
     return controlledByNativeWrapper;
+  }
+
+  public static void setControlledByNativeWrapper (boolean controlled) {
+
+    controlledByNativeWrapper = controlled;
   }
 
   public static void signalStarting (int timeout) {

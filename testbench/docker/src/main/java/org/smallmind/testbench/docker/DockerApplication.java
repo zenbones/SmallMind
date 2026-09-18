@@ -72,14 +72,14 @@ public enum DockerApplication {
   /**
    * Defines a catalog constant from its full container recipe.
    *
-   * @param name the default container name
-   * @param image the Docker image reference, such as {@code "mysql:latest"}
-   * @param ports the container-internal service ports to expose
-   * @param commands an optional command override replacing the image's default {@code CMD}, or {@code null}
+   * @param name        the default container name
+   * @param image       the Docker image reference, such as {@code "mysql:latest"}
+   * @param ports       the container-internal service ports to expose
+   * @param commands    an optional command override replacing the image's default {@code CMD}, or {@code null}
    * @param environment optional {@code KEY=VALUE} environment entries, or {@code null}
-   * @param mounts optional bind-mount descriptors, or {@code null}
-   * @param volumes optional volume-bind descriptors, or {@code null}
-   * @param tmpFs an optional tmpfs mount, or {@code null}
+   * @param mounts      optional bind-mount descriptors, or {@code null}
+   * @param volumes     optional volume-bind descriptors, or {@code null}
+   * @param tmpFs       an optional tmpfs mount, or {@code null}
    */
   DockerApplication (String name, String image, int[] ports, String[] commands, String[] environment, org.smallmind.testbench.docker.DockerMount[] mounts, org.smallmind.testbench.docker.DockerVolume[] volumes, org.smallmind.testbench.docker.DockerTmpFs tmpFs) {
 

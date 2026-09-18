@@ -73,7 +73,7 @@ public class DependencyOrganizer {
    * Command-line entry point that organizes the project tree rooted at the first argument.
    *
    * @param args the command-line arguments; {@code args[0]} must be the root path of the Maven
-   * project to process
+   *             project to process
    * @throws IOException if the project tree cannot be traversed or a pom cannot be rewritten
    */
   public static void main (String... args)
@@ -88,7 +88,7 @@ public class DependencyOrganizer {
    *
    * @param projectPath the root of the Maven project tree to process
    * @throws IOException if directory traversal fails; a parse, transform, or write failure on an
-   * individual pom surfaces as an unchecked exception wrapping the underlying cause
+   *                     individual pom surfaces as an unchecked exception wrapping the underlying cause
    */
   public static void walkProject (Path projectPath)
     throws IOException {
@@ -117,10 +117,10 @@ public class DependencyOrganizer {
    * {@code <dependencyManagement>} block are each sorted when present.
    *
    * @param pomPath the path to the {@code pom.xml} to rewrite
-   * @throws IOException if the file cannot be read or written
-   * @throws SAXException if the pom is not well-formed XML
+   * @throws IOException                  if the file cannot be read or written
+   * @throws SAXException                 if the pom is not well-formed XML
    * @throws ParserConfigurationException if a DOM parser cannot be created
-   * @throws TransformerException if the sorted document cannot be serialized
+   * @throws TransformerException         if the sorted document cannot be serialized
    */
   private static void rewritePom (Path pomPath)
     throws IOException, SAXException, ParserConfigurationException, TransformerException {

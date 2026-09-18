@@ -54,12 +54,12 @@ public class ProcessOutputUtility {
    * {@link IOException}) is thrown. Standard error is not captured.
    *
    * @param commandDir the working directory for the subprocess
-   * @param commands the command and its arguments
+   * @param commands   the command and its arguments
    * @return a {@link ByteArrayOutputStream} holding the full standard output
-   * @throws IOException if the process cannot be started, its output cannot be read, or it does not
-   * exit within the three-second grace period
+   * @throws IOException      if the process cannot be started, its output cannot be read, or it does not
+   *                          exit within the three-second grace period
    * @throws RuntimeException wrapping an {@link InterruptedException} if the wait for the process to
-   * exit is interrupted
+   *                          exit is interrupted
    */
   public static ByteArrayOutputStream buffer (Path commandDir, String... commands)
     throws IOException {

@@ -57,28 +57,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class WsadlHttpHandlerTest {
 
-  @ServerEndpoint("/echo")
-  public static class EchoServerEndpoint {
-
-    @OnMessage
-    public String onMessage (String message) {
-
-      return "echo:" + message;
-    }
-  }
-
-  public static class DelegateHttpHandler extends HttpHandler {
-
-    @Override
-    public void service (Request request, Response response)
-      throws Exception {
-
-      response.setStatus(200);
-      response.setContentType("text/plain");
-      response.getWriter().write("delegated");
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -161,6 +139,28 @@ public class WsadlHttpHandlerTest {
     } finally {
       container.stop();
       httpServer.shutdownNow();
+    }
+  }
+
+  @ServerEndpoint("/echo")
+  public static class EchoServerEndpoint {
+
+    @OnMessage
+    public String onMessage (String message) {
+
+      return "echo:" + message;
+    }
+  }
+
+  public static class DelegateHttpHandler extends HttpHandler {
+
+    @Override
+    public void service (Request request, Response response)
+      throws Exception {
+
+      response.setStatus(200);
+      response.setContentType("text/plain");
+      response.getWriter().write("delegated");
     }
   }
 }

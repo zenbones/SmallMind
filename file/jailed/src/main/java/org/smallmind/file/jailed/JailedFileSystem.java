@@ -273,8 +273,8 @@ public class JailedFileSystem extends FileSystem {
    *
    * @param syntaxAndPattern a string of the form {@code "<syntax>:<pattern>"}
    * @return a {@link PathMatcher} that matches jailed paths against the given pattern
-   * @throws IllegalArgumentException      if the parameter does not take the required form
-   * @throws UnsupportedOperationException if the syntax is not {@code "glob"} or {@code "regex"}
+   * @throws IllegalArgumentException               if the parameter does not take the required form
+   * @throws UnsupportedOperationException          if the syntax is not {@code "glob"} or {@code "regex"}
    * @throws java.util.regex.PatternSyntaxException if the pattern is invalid
    */
   @Override

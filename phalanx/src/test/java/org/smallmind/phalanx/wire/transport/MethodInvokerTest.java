@@ -55,6 +55,11 @@ public class MethodInvokerTest {
 
   private MethodInvoker methodInvoker;
 
+  public interface ErrorService {
+
+    void boom ();
+  }
+
   @BeforeClass
   public void beforeClass ()
     throws Exception {
@@ -162,11 +167,6 @@ public class MethodInvokerTest {
     //  pooled thread and bleed it into the next invocation.
     Assert.assertEquals(methodInvoker.remoteInvocation(new WireContext[] {new TestWireContext("flibble"), null}, function), Boolean.TRUE);
     Assert.assertFalse(ContextFactory.exists(TestWireContext.class));
-  }
-
-  public interface ErrorService {
-
-    void boom ();
   }
 
   public static class ErrorServiceImpl implements ErrorService {

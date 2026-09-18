@@ -45,29 +45,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class GrizzlyPostProcessorTest {
 
-  @ServicePath(value = "/quote", contextPath = "/context")
-  public static class AnnotatedService {
-
-  }
-
-  private static class MapBackedLocator implements GrizzlyWebAppStateLocator {
-
-    private final Map<String, GrizzlyWebAppState> stateMap = new HashMap<>();
-
-    private MapBackedLocator (String... contexts) {
-
-      for (String context : contexts) {
-        stateMap.put(context, new GrizzlyWebAppState(new WebappContext("Test Context", context)));
-      }
-    }
-
-    @Override
-    public GrizzlyWebAppState webAppStateFor (String context) {
-
-      return stateMap.get(context);
-    }
-  }
-
   public void testPostProcessReturnsSameBean () {
 
     GrizzlyPostProcessor postProcessor = new GrizzlyPostProcessor();
@@ -147,5 +124,28 @@ public class GrizzlyPostProcessorTest {
     postProcessor.postProcessAfterInitialization(filterInstaller, "filter");
 
     Assert.assertEquals(locator.webAppStateFor("/context").getFilterInstallerList().size(), 1);
+  }
+
+  @ServicePath(value = "/quote", contextPath = "/context")
+  public static class AnnotatedService {
+
+  }
+
+  private static class MapBackedLocator implements GrizzlyWebAppStateLocator {
+
+    private final Map<String, GrizzlyWebAppState> stateMap = new HashMap<>();
+
+    private MapBackedLocator (String... contexts) {
+
+      for (String context : contexts) {
+        stateMap.put(context, new GrizzlyWebAppState(new WebappContext("Test Context", context)));
+      }
+    }
+
+    @Override
+    public GrizzlyWebAppState webAppStateFor (String context) {
+
+      return stateMap.get(context);
+    }
   }
 }

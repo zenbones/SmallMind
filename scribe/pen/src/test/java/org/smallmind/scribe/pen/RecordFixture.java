@@ -53,62 +53,6 @@ public class RecordFixture implements Record<Object> {
   private long sequenceNumber;
   private long millis;
 
-  public RecordFixture setLevel (Level level) {
-
-    this.level = level;
-
-    return this;
-  }
-
-  public RecordFixture setLoggerName (String loggerName) {
-
-    this.loggerName = loggerName;
-
-    return this;
-  }
-
-  public RecordFixture setMessage (String message) {
-
-    this.message = message;
-
-    return this;
-  }
-
-  public RecordFixture setThrown (Throwable thrown) {
-
-    this.thrown = thrown;
-
-    return this;
-  }
-
-  public RecordFixture setParameters (Parameter[] parameters) {
-
-    this.parameters = parameters;
-
-    return this;
-  }
-
-  public RecordFixture setLoggerContext (LoggerContext loggerContext) {
-
-    this.loggerContext = loggerContext;
-
-    return this;
-  }
-
-  public RecordFixture setThreadName (String threadName) {
-
-    this.threadName = threadName;
-
-    return this;
-  }
-
-  public RecordFixture setMillis (long millis) {
-
-    this.millis = millis;
-
-    return this;
-  }
-
   @Override
   public Object getNativeLogEntry () {
 
@@ -121,10 +65,24 @@ public class RecordFixture implements Record<Object> {
     return loggerName;
   }
 
+  public RecordFixture setLoggerName (String loggerName) {
+
+    this.loggerName = loggerName;
+
+    return this;
+  }
+
   @Override
   public Level getLevel () {
 
     return level;
+  }
+
+  public RecordFixture setLevel (Level level) {
+
+    this.level = level;
+
+    return this;
   }
 
   @Override
@@ -133,10 +91,24 @@ public class RecordFixture implements Record<Object> {
     return thrown;
   }
 
+  public RecordFixture setThrown (Throwable thrown) {
+
+    this.thrown = thrown;
+
+    return this;
+  }
+
   @Override
   public String getMessage () {
 
     return message;
+  }
+
+  public RecordFixture setMessage (String message) {
+
+    this.message = message;
+
+    return this;
   }
 
   @Override
@@ -145,10 +117,24 @@ public class RecordFixture implements Record<Object> {
     return parameters;
   }
 
+  public RecordFixture setParameters (Parameter[] parameters) {
+
+    this.parameters = parameters;
+
+    return this;
+  }
+
   @Override
   public LoggerContext getLoggerContext () {
 
     return loggerContext;
+  }
+
+  public RecordFixture setLoggerContext (LoggerContext loggerContext) {
+
+    this.loggerContext = loggerContext;
+
+    return this;
   }
 
   @Override
@@ -163,6 +149,13 @@ public class RecordFixture implements Record<Object> {
     return threadName;
   }
 
+  public RecordFixture setThreadName (String threadName) {
+
+    this.threadName = threadName;
+
+    return this;
+  }
+
   @Override
   public long getSequenceNumber () {
 
@@ -173,5 +166,12 @@ public class RecordFixture implements Record<Object> {
   public long getMillis () {
 
     return millis;
+  }
+
+  public RecordFixture setMillis (long millis) {
+
+    this.millis = millis;
+
+    return this;
   }
 }

@@ -73,130 +73,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class JettyInstallerDetailBootScenariosTest {
 
-  public static class EchoServlet extends HttpServlet {
-
-    @Override
-    protected void doGet (HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().write("servlet-echo");
-    }
-  }
-
-  public static class InitParameterServlet extends HttpServlet {
-
-    @Override
-    protected void doGet (HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().write("servlet-param=" + getInitParameter("greeting"));
-    }
-  }
-
-  public static class InitParameterFilter implements Filter {
-
-    private String banner;
-
-    @Override
-    public void init (FilterConfig filterConfig) {
-
-      banner = filterConfig.getInitParameter("banner");
-    }
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      ((HttpServletResponse)response).addHeader("X-Filter-Banner", (banner == null) ? "none" : banner);
-      chain.doFilter(request, response);
-    }
-  }
-
-  public static class ContextParameterListener implements ServletContextListener {
-
-    private static final AtomicReference<String> CAPTURED = new AtomicReference<>(null);
-
-    public static String captured () {
-
-      return CAPTURED.get();
-    }
-
-    public static void reset () {
-
-      CAPTURED.set(null);
-    }
-
-    @Override
-    public void contextInitialized (ServletContextEvent servletContextEvent) {
-
-      ServletContext servletContext = servletContextEvent.getServletContext();
-
-      CAPTURED.set(servletContext.getInitParameter("listener-context-key"));
-    }
-
-    @Override
-    public void contextDestroyed (ServletContextEvent servletContextEvent) {
-
-    }
-  }
-
-  /**
-   * A servlet whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
-   * installer fails with an {@link InstantiationException} and surfaces as a boot failure.
-   */
-  public static class NonInstantiableServlet extends HttpServlet {
-
-    public NonInstantiableServlet (String required) {
-
-    }
-
-    @Override
-    protected void doGet (HttpServletRequest request, HttpServletResponse response) {
-
-    }
-  }
-
-  /**
-   * A filter whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
-   * installer fails with an {@link InstantiationException} and surfaces as a boot failure.
-   */
-  public static class NonInstantiableFilter implements Filter {
-
-    public NonInstantiableFilter (String required) {
-
-    }
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      chain.doFilter(request, response);
-    }
-  }
-
-  /**
-   * A listener whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
-   * installer fails with a {@link NoSuchMethodException} and surfaces as a boot failure.
-   */
-  public static class NonInstantiableListener implements ServletContextListener {
-
-    public NonInstantiableListener (String required) {
-
-    }
-
-    @Override
-    public void contextInitialized (ServletContextEvent servletContextEvent) {
-
-    }
-
-    @Override
-    public void contextDestroyed (ServletContextEvent servletContextEvent) {
-
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -550,6 +426,130 @@ public class JettyInstallerDetailBootScenariosTest {
 
       // The NoSuchMethodException raised while creating the listener is wrapped as a JettyInitializationException.
       Assert.assertThrows(Exception.class, applicationContext::refresh);
+    }
+  }
+
+  public static class EchoServlet extends HttpServlet {
+
+    @Override
+    protected void doGet (HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().write("servlet-echo");
+    }
+  }
+
+  public static class InitParameterServlet extends HttpServlet {
+
+    @Override
+    protected void doGet (HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().write("servlet-param=" + getInitParameter("greeting"));
+    }
+  }
+
+  public static class InitParameterFilter implements Filter {
+
+    private String banner;
+
+    @Override
+    public void init (FilterConfig filterConfig) {
+
+      banner = filterConfig.getInitParameter("banner");
+    }
+
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+
+      ((HttpServletResponse)response).addHeader("X-Filter-Banner", (banner == null) ? "none" : banner);
+      chain.doFilter(request, response);
+    }
+  }
+
+  public static class ContextParameterListener implements ServletContextListener {
+
+    private static final AtomicReference<String> CAPTURED = new AtomicReference<>(null);
+
+    public static String captured () {
+
+      return CAPTURED.get();
+    }
+
+    public static void reset () {
+
+      CAPTURED.set(null);
+    }
+
+    @Override
+    public void contextInitialized (ServletContextEvent servletContextEvent) {
+
+      ServletContext servletContext = servletContextEvent.getServletContext();
+
+      CAPTURED.set(servletContext.getInitParameter("listener-context-key"));
+    }
+
+    @Override
+    public void contextDestroyed (ServletContextEvent servletContextEvent) {
+
+    }
+  }
+
+  /**
+   * A servlet whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
+   * installer fails with an {@link InstantiationException} and surfaces as a boot failure.
+   */
+  public static class NonInstantiableServlet extends HttpServlet {
+
+    public NonInstantiableServlet (String required) {
+
+    }
+
+    @Override
+    protected void doGet (HttpServletRequest request, HttpServletResponse response) {
+
+    }
+  }
+
+  /**
+   * A filter whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
+   * installer fails with an {@link InstantiationException} and surfaces as a boot failure.
+   */
+  public static class NonInstantiableFilter implements Filter {
+
+    public NonInstantiableFilter (String required) {
+
+    }
+
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+
+      chain.doFilter(request, response);
+    }
+  }
+
+  /**
+   * A listener whose only constructor demands an argument, so the no-arg reflective instantiation performed by the
+   * installer fails with a {@link NoSuchMethodException} and surfaces as a boot failure.
+   */
+  public static class NonInstantiableListener implements ServletContextListener {
+
+    public NonInstantiableListener (String required) {
+
+    }
+
+    @Override
+    public void contextInitialized (ServletContextEvent servletContextEvent) {
+
+    }
+
+    @Override
+    public void contextDestroyed (ServletContextEvent servletContextEvent) {
+
     }
   }
 }

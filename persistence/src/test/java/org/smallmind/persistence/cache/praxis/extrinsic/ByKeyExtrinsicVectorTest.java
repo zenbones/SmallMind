@@ -55,23 +55,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ByKeyExtrinsicVectorTest {
 
-  @BeforeMethod
-  @SuppressWarnings("unchecked")
-  public void registerDao () {
-
-    new PerApplicationContext();
-
-    ORMDao<Long, Gadget, ?, ?> ormDao = Mockito.mock(ORMDao.class);
-
-    for (long id = 1L; id <= 5L; id++) {
-      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
-      Mockito.when(ormDao.get(id)).thenReturn(new Gadget(id));
-      Mockito.when(ormDao.acquire(Gadget.class, id)).thenReturn(new Gadget(id));
-    }
-
-    OrmDaoManager.register(Gadget.class, ormDao);
-  }
-
   private static List<Gadget> gadgets (long... ids) {
 
     List<Gadget> gadgets = new ArrayList<>();
@@ -97,6 +80,23 @@ public class ByKeyExtrinsicVectorTest {
     }
 
     return ids;
+  }
+
+  @BeforeMethod
+  @SuppressWarnings("unchecked")
+  public void registerDao () {
+
+    new PerApplicationContext();
+
+    ORMDao<Long, Gadget, ?, ?> ormDao = Mockito.mock(ORMDao.class);
+
+    for (long id = 1L; id <= 5L; id++) {
+      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
+      Mockito.when(ormDao.get(id)).thenReturn(new Gadget(id));
+      Mockito.when(ormDao.acquire(Gadget.class, id)).thenReturn(new Gadget(id));
+    }
+
+    OrmDaoManager.register(Gadget.class, ormDao);
   }
 
   public void testLazyListHydratesKeysInOrder () {

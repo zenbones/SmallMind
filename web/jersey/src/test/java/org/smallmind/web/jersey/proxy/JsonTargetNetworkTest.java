@@ -39,9 +39,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import jakarta.ws.rs.WebApplicationException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import jakarta.ws.rs.WebApplicationException;
 import org.smallmind.scribe.pen.AbstractAppender;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
@@ -70,52 +70,6 @@ public class JsonTargetNetworkTest {
   private final AtomicReference<RecordedRequest> lastRequestRef = new AtomicReference<>();
   private HttpServer server;
   private int port;
-
-  public static class Echo {
-
-    private String name;
-    private int count;
-
-    public String getName () {
-
-      return name;
-    }
-
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    public int getCount () {
-
-      return count;
-    }
-
-    public void setCount (int count) {
-
-      this.count = count;
-    }
-  }
-
-  private record RecordedRequest(String method, String uri, String body, String marker) {
-
-  }
-
-  private static class CapturingAppender extends AbstractAppender {
-
-    private final List<Record<?>> records = new CopyOnWriteArrayList<>();
-
-    @Override
-    public void handleOutput (Record<?> record) {
-
-      records.add(record);
-    }
-
-    public List<Record<?>> getRecords () {
-
-      return records;
-    }
-  }
 
   @BeforeClass
   public void beforeClass ()
@@ -346,5 +300,51 @@ public class JsonTargetNetworkTest {
 
     Assert.assertEquals(echo.getName(), "GET");
     Assert.assertEquals(echo.getCount(), 42);
+  }
+
+  public static class Echo {
+
+    private String name;
+    private int count;
+
+    public String getName () {
+
+      return name;
+    }
+
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    public int getCount () {
+
+      return count;
+    }
+
+    public void setCount (int count) {
+
+      this.count = count;
+    }
+  }
+
+  private record RecordedRequest(String method, String uri, String body, String marker) {
+
+  }
+
+  private static class CapturingAppender extends AbstractAppender {
+
+    private final List<Record<?>> records = new CopyOnWriteArrayList<>();
+
+    @Override
+    public void handleOutput (Record<?> record) {
+
+      records.add(record);
+    }
+
+    public List<Record<?>> getRecords () {
+
+      return records;
+    }
   }
 }

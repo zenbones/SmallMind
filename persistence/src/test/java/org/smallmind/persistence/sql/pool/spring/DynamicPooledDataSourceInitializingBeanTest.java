@@ -51,17 +51,6 @@ import org.testng.annotations.Test;
 public class DynamicPooledDataSourceInitializingBeanTest {
 
   /**
-   * Installs a per-application context on the current thread so that
-   * {@link SpringPropertyAccessorManager#register} (which writes to {@link PerApplicationContext})
-   * does not fail. Runs before every test method.
-   */
-  @BeforeMethod
-  public void installPerApplicationContext () {
-
-    new PerApplicationContext();
-  }
-
-  /**
    * Builds a Mockito-mocked {@link SpringPropertyAccessor} backed by the supplied property map:
    * {@code getKeySet()} returns the keys and {@code asString} returns each value. The numeric/boolean
    * accessors fall back to {@link Option#none()} for absent keys, matching the real accessor's
@@ -97,6 +86,17 @@ public class DynamicPooledDataSourceInitializingBeanTest {
     bean.setPrefix(null);
 
     return bean;
+  }
+
+  /**
+   * Installs a per-application context on the current thread so that
+   * {@link SpringPropertyAccessorManager#register} (which writes to {@link PerApplicationContext})
+   * does not fail. Runs before every test method.
+   */
+  @BeforeMethod
+  public void installPerApplicationContext () {
+
+    new PerApplicationContext();
   }
 
   @Test(groups = "unit", expectedExceptions = RuntimeBeansException.class)

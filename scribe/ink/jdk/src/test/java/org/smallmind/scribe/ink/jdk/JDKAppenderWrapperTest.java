@@ -39,8 +39,8 @@ import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.ErrorHandler;
 import org.smallmind.scribe.pen.Filter;
-import org.smallmind.scribe.pen.Formatter;
 import org.smallmind.scribe.pen.FormattedAppender;
+import org.smallmind.scribe.pen.Formatter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerException;
 import org.smallmind.scribe.pen.Record;
@@ -49,214 +49,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit")
 public class JDKAppenderWrapperTest {
-
-  private static class RecordingAppender implements FormattedAppender {
-
-    private final List<Filter> filterList = new ArrayList<>();
-    private final List<Record<?>> published = new ArrayList<>();
-    private ErrorHandler errorHandler;
-    private Formatter formatter;
-    private String name;
-    private boolean active = true;
-    private boolean closed = false;
-    private boolean failOnClose = false;
-    private boolean interruptOnClose = false;
-
-    @Override
-    public String getName () {
-
-      return name;
-    }
-
-    @Override
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    @Override
-    public Formatter getFormatter () {
-
-      return formatter;
-    }
-
-    @Override
-    public void setFormatter (Formatter formatter) {
-
-      this.formatter = formatter;
-    }
-
-    @Override
-    public void setFilter (Filter filter) {
-
-      filterList.clear();
-      filterList.add(filter);
-    }
-
-    @Override
-    public void clearFilters () {
-
-      filterList.clear();
-    }
-
-    @Override
-    public void addFilter (Filter filter) {
-
-      filterList.add(filter);
-    }
-
-    @Override
-    public Filter[] getFilters () {
-
-      return filterList.toArray(new Filter[0]);
-    }
-
-    @Override
-    public void setFilters (List<Filter> filterList) {
-
-      this.filterList.clear();
-      this.filterList.addAll(filterList);
-    }
-
-    @Override
-    public ErrorHandler getErrorHandler () {
-
-      return errorHandler;
-    }
-
-    @Override
-    public void setErrorHandler (ErrorHandler errorHandler) {
-
-      this.errorHandler = errorHandler;
-    }
-
-    @Override
-    public boolean isActive () {
-
-      return active;
-    }
-
-    @Override
-    public void setActive (boolean active) {
-
-      this.active = active;
-    }
-
-    @Override
-    public void publish (Record<?> record) {
-
-      published.add(record);
-    }
-
-    @Override
-    public void close ()
-      throws InterruptedException, LoggerException {
-
-      if (interruptOnClose) {
-        throw new InterruptedException("interrupted");
-      }
-      if (failOnClose) {
-        throw new LoggerException("boom");
-      }
-      closed = true;
-    }
-
-    private List<Record<?>> getPublished () {
-
-      return published;
-    }
-
-    private boolean isClosed () {
-
-      return closed;
-    }
-  }
-
-  private static class PlainAppender implements Appender {
-
-    private final List<Filter> filterList = new ArrayList<>();
-    private ErrorHandler errorHandler;
-    private String name;
-    private boolean active = true;
-
-    @Override
-    public String getName () {
-
-      return name;
-    }
-
-    @Override
-    public void setName (String name) {
-
-      this.name = name;
-    }
-
-    @Override
-    public void setFilter (Filter filter) {
-
-      filterList.clear();
-      filterList.add(filter);
-    }
-
-    @Override
-    public void clearFilters () {
-
-      filterList.clear();
-    }
-
-    @Override
-    public void addFilter (Filter filter) {
-
-      filterList.add(filter);
-    }
-
-    @Override
-    public Filter[] getFilters () {
-
-      return filterList.toArray(new Filter[0]);
-    }
-
-    @Override
-    public void setFilters (List<Filter> filterList) {
-
-      this.filterList.clear();
-      this.filterList.addAll(filterList);
-    }
-
-    @Override
-    public ErrorHandler getErrorHandler () {
-
-      return errorHandler;
-    }
-
-    @Override
-    public void setErrorHandler (ErrorHandler errorHandler) {
-
-      this.errorHandler = errorHandler;
-    }
-
-    @Override
-    public boolean isActive () {
-
-      return active;
-    }
-
-    @Override
-    public void setActive (boolean active) {
-
-      this.active = active;
-    }
-
-    @Override
-    public void publish (Record<?> record) {
-
-    }
-
-    @Override
-    public void close () {
-
-    }
-  }
 
   private Record<LogRecord> buildRecord (String message) {
 
@@ -594,5 +386,213 @@ public class JDKAppenderWrapperTest {
     Assert.assertEquals(wrapperOne, wrapperTwo);
     Assert.assertEquals(wrapperOne.hashCode(), appender.hashCode());
     Assert.assertTrue(wrapperOne.equals(appender));
+  }
+
+  private static class RecordingAppender implements FormattedAppender {
+
+    private final List<Filter> filterList = new ArrayList<>();
+    private final List<Record<?>> published = new ArrayList<>();
+    private ErrorHandler errorHandler;
+    private Formatter formatter;
+    private String name;
+    private boolean active = true;
+    private boolean closed = false;
+    private boolean failOnClose = false;
+    private boolean interruptOnClose = false;
+
+    @Override
+    public String getName () {
+
+      return name;
+    }
+
+    @Override
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    @Override
+    public Formatter getFormatter () {
+
+      return formatter;
+    }
+
+    @Override
+    public void setFormatter (Formatter formatter) {
+
+      this.formatter = formatter;
+    }
+
+    @Override
+    public void setFilter (Filter filter) {
+
+      filterList.clear();
+      filterList.add(filter);
+    }
+
+    @Override
+    public void clearFilters () {
+
+      filterList.clear();
+    }
+
+    @Override
+    public void addFilter (Filter filter) {
+
+      filterList.add(filter);
+    }
+
+    @Override
+    public Filter[] getFilters () {
+
+      return filterList.toArray(new Filter[0]);
+    }
+
+    @Override
+    public void setFilters (List<Filter> filterList) {
+
+      this.filterList.clear();
+      this.filterList.addAll(filterList);
+    }
+
+    @Override
+    public ErrorHandler getErrorHandler () {
+
+      return errorHandler;
+    }
+
+    @Override
+    public void setErrorHandler (ErrorHandler errorHandler) {
+
+      this.errorHandler = errorHandler;
+    }
+
+    @Override
+    public boolean isActive () {
+
+      return active;
+    }
+
+    @Override
+    public void setActive (boolean active) {
+
+      this.active = active;
+    }
+
+    @Override
+    public void publish (Record<?> record) {
+
+      published.add(record);
+    }
+
+    @Override
+    public void close ()
+      throws InterruptedException, LoggerException {
+
+      if (interruptOnClose) {
+        throw new InterruptedException("interrupted");
+      }
+      if (failOnClose) {
+        throw new LoggerException("boom");
+      }
+      closed = true;
+    }
+
+    private List<Record<?>> getPublished () {
+
+      return published;
+    }
+
+    private boolean isClosed () {
+
+      return closed;
+    }
+  }
+
+  private static class PlainAppender implements Appender {
+
+    private final List<Filter> filterList = new ArrayList<>();
+    private ErrorHandler errorHandler;
+    private String name;
+    private boolean active = true;
+
+    @Override
+    public String getName () {
+
+      return name;
+    }
+
+    @Override
+    public void setName (String name) {
+
+      this.name = name;
+    }
+
+    @Override
+    public void setFilter (Filter filter) {
+
+      filterList.clear();
+      filterList.add(filter);
+    }
+
+    @Override
+    public void clearFilters () {
+
+      filterList.clear();
+    }
+
+    @Override
+    public void addFilter (Filter filter) {
+
+      filterList.add(filter);
+    }
+
+    @Override
+    public Filter[] getFilters () {
+
+      return filterList.toArray(new Filter[0]);
+    }
+
+    @Override
+    public void setFilters (List<Filter> filterList) {
+
+      this.filterList.clear();
+      this.filterList.addAll(filterList);
+    }
+
+    @Override
+    public ErrorHandler getErrorHandler () {
+
+      return errorHandler;
+    }
+
+    @Override
+    public void setErrorHandler (ErrorHandler errorHandler) {
+
+      this.errorHandler = errorHandler;
+    }
+
+    @Override
+    public boolean isActive () {
+
+      return active;
+    }
+
+    @Override
+    public void setActive (boolean active) {
+
+      this.active = active;
+    }
+
+    @Override
+    public void publish (Record<?> record) {
+
+    }
+
+    @Override
+    public void close () {
+
+    }
   }
 }

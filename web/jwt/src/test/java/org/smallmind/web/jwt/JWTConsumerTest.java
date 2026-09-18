@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.jwt;
 
-import org.smallmind.web.jwt.jose4j.JWTConsumer;
 import org.smallmind.web.jwt.jose4j.InvalidJWTException;
+import org.smallmind.web.jwt.jose4j.JWTConsumer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

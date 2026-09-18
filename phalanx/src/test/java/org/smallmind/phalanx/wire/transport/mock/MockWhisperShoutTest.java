@@ -70,42 +70,6 @@ public class MockWhisperShoutTest {
     void broadcast (@Argument("value") String value);
   }
 
-  public static class WhisperShoutServiceImpl implements WhisperShoutService, WiredService {
-
-    private final CountDownLatch shoutLatch = new CountDownLatch(1);
-    private volatile String lastShout;
-
-    @Override
-    public int getVersion () {
-
-      return 1;
-    }
-
-    @Override
-    public String getServiceName () {
-
-      return "WhisperShoutService";
-    }
-
-    @Override
-    public void setResponseTransport (ResponseTransport responseTransport) {
-
-    }
-
-    @Override
-    public String ping (String value) {
-
-      return "pong:" + value;
-    }
-
-    @Override
-    public void broadcast (String value) {
-
-      lastShout = value;
-      shoutLatch.countDown();
-    }
-  }
-
   @BeforeClass
   public void beforeClass ()
     throws Exception {
@@ -144,5 +108,41 @@ public class MockWhisperShoutTest {
 
     Assert.assertTrue(serviceImpl.shoutLatch.await(5, TimeUnit.SECONDS), "shout was not delivered in time");
     Assert.assertEquals(serviceImpl.lastShout, "hey");
+  }
+
+  public static class WhisperShoutServiceImpl implements WhisperShoutService, WiredService {
+
+    private final CountDownLatch shoutLatch = new CountDownLatch(1);
+    private volatile String lastShout;
+
+    @Override
+    public int getVersion () {
+
+      return 1;
+    }
+
+    @Override
+    public String getServiceName () {
+
+      return "WhisperShoutService";
+    }
+
+    @Override
+    public void setResponseTransport (ResponseTransport responseTransport) {
+
+    }
+
+    @Override
+    public String ping (String value) {
+
+      return "pong:" + value;
+    }
+
+    @Override
+    public void broadcast (String value) {
+
+      lastShout = value;
+      shoutLatch.countDown();
+    }
   }
 }

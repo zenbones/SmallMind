@@ -47,26 +47,6 @@ public class CopyFileVisitorTest {
   private Path sourceRoot;
   private Path targetRoot;
 
-  @BeforeMethod
-  public void createTrees ()
-    throws Exception {
-
-    sourceRoot = Files.createTempDirectory("singularity-copy-source");
-    targetRoot = Files.createTempDirectory("singularity-copy-target");
-
-    Files.writeString(sourceRoot.resolve("top.txt"), "TOP", StandardCharsets.UTF_8);
-    Files.createDirectories(sourceRoot.resolve("org/example"));
-    Files.writeString(sourceRoot.resolve("org/example/Widget.class"), "WIDGET", StandardCharsets.UTF_8);
-  }
-
-  @AfterMethod(alwaysRun = true)
-  public void deleteTrees ()
-    throws Exception {
-
-    delete(sourceRoot);
-    delete(targetRoot);
-  }
-
   private static void delete (Path root)
     throws Exception {
 
@@ -92,6 +72,26 @@ public class CopyFileVisitorTest {
     }
 
     return names;
+  }
+
+  @BeforeMethod
+  public void createTrees ()
+    throws Exception {
+
+    sourceRoot = Files.createTempDirectory("singularity-copy-source");
+    targetRoot = Files.createTempDirectory("singularity-copy-target");
+
+    Files.writeString(sourceRoot.resolve("top.txt"), "TOP", StandardCharsets.UTF_8);
+    Files.createDirectories(sourceRoot.resolve("org/example"));
+    Files.writeString(sourceRoot.resolve("org/example/Widget.class"), "WIDGET", StandardCharsets.UTF_8);
+  }
+
+  @AfterMethod(alwaysRun = true)
+  public void deleteTrees ()
+    throws Exception {
+
+    delete(sourceRoot);
+    delete(targetRoot);
   }
 
   public void testEveryFileIsMirroredBeneathTheTarget ()

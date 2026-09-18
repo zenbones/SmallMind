@@ -46,15 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class LoggingPlanTest {
 
-  private static class CapturingLoggingPlan extends LoggingPlan {
-
-    @Override
-    public Appender getAppender () {
-
-      return new CapturingAppender();
-    }
-  }
-
   @BeforeMethod
   public void resetLoggerManager () {
 
@@ -98,5 +89,14 @@ public class LoggingPlanTest {
     Logger defaultLogger = LoggerManager.getLogger("com.other.Thing");
 
     Assert.assertEquals(defaultLogger.getLevel(), Level.INFO);
+  }
+
+  private static class CapturingLoggingPlan extends LoggingPlan {
+
+    @Override
+    public Appender getAppender () {
+
+      return new CapturingAppender();
+    }
   }
 }

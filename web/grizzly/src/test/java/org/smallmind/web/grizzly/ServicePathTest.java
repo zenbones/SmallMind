@@ -38,11 +38,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ServicePathTest {
 
-  @ServicePath(value = "/quote", contextPath = "/services")
-  public static class AnnotatedService {
-
-  }
-
   public void testAnnotationRetainedAtRuntime () {
 
     Assert.assertTrue(AnnotatedService.class.isAnnotationPresent(ServicePath.class));
@@ -55,5 +50,10 @@ public class ServicePathTest {
     Assert.assertNotNull(servicePath);
     Assert.assertEquals(servicePath.value(), "/quote");
     Assert.assertEquals(servicePath.contextPath(), "/services");
+  }
+
+  @ServicePath(value = "/quote", contextPath = "/services")
+  public static class AnnotatedService {
+
   }
 }

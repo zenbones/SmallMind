@@ -55,13 +55,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ByKeySingularVectorTest {
 
-  @BeforeMethod
-  public void attachApplicationContext () {
-
-    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
-    new PerApplicationContext();
-  }
-
   @SuppressWarnings("unchecked")
   private static ORMDao<Long, Sprocket, ?, ?> registerMockDao () {
 
@@ -70,6 +63,13 @@ public class ByKeySingularVectorTest {
     OrmDaoManager.register(Sprocket.class, ormDao);
 
     return ormDao;
+  }
+
+  @BeforeMethod
+  public void attachApplicationContext () {
+
+    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
+    new PerApplicationContext();
   }
 
   public void testIsSingularIsAlwaysTrue () {

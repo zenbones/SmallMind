@@ -72,55 +72,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class GrizzlyServerBootScenariosTest {
 
-  @Path("echo")
-  public static class EchoResource {
-
-    @GET
-    public String echo () {
-
-      return "grizzly-up";
-    }
-  }
-
-  public static class RecordingServlet extends GenericServlet {
-
-    static final AtomicBoolean SERVICED = new AtomicBoolean(false);
-
-    @Override
-    public void service (ServletRequest request, ServletResponse response)
-      throws IOException {
-
-      SERVICED.set(true);
-      response.setContentType("text/plain");
-      response.getWriter().write("servlet-ok");
-      response.getWriter().flush();
-    }
-  }
-
-  public static class RecordingFilter implements Filter {
-
-    static final AtomicBoolean FILTERED = new AtomicBoolean(false);
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      FILTERED.set(true);
-      chain.doFilter(request, response);
-    }
-  }
-
-  public static class RecordingListener implements ServletContextListener {
-
-    static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
-
-    @Override
-    public void contextInitialized (ServletContextEvent event) {
-
-      INITIALIZED.set(true);
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -363,6 +314,55 @@ public class GrizzlyServerBootScenariosTest {
       Assert.assertTrue(RecordingListener.INITIALIZED.get(), "listener contextInitialized should have run");
       Assert.assertTrue(RecordingFilter.FILTERED.get(), "filter doFilter should have run");
       Assert.assertTrue(RecordingServlet.SERVICED.get(), "servlet service should have run");
+    }
+  }
+
+  @Path("echo")
+  public static class EchoResource {
+
+    @GET
+    public String echo () {
+
+      return "grizzly-up";
+    }
+  }
+
+  public static class RecordingServlet extends GenericServlet {
+
+    static final AtomicBoolean SERVICED = new AtomicBoolean(false);
+
+    @Override
+    public void service (ServletRequest request, ServletResponse response)
+      throws IOException {
+
+      SERVICED.set(true);
+      response.setContentType("text/plain");
+      response.getWriter().write("servlet-ok");
+      response.getWriter().flush();
+    }
+  }
+
+  public static class RecordingFilter implements Filter {
+
+    static final AtomicBoolean FILTERED = new AtomicBoolean(false);
+
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+
+      FILTERED.set(true);
+      chain.doFilter(request, response);
+    }
+  }
+
+  public static class RecordingListener implements ServletContextListener {
+
+    static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
+
+    @Override
+    public void contextInitialized (ServletContextEvent event) {
+
+      INITIALIZED.set(true);
     }
   }
 }

@@ -59,38 +59,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class TyrusGrizzlyServerContainerMessageTest {
 
-  @ServerEndpoint("/echo")
-  public static class EchoServerEndpoint {
-
-    @OnMessage
-    public String onMessage (String message) {
-
-      return "echo:" + message;
-    }
-  }
-
-  @ClientEndpoint
-  public static class RecordingClientEndpoint {
-
-    private final AtomicReference<String> received = new AtomicReference<>();
-    private final CountDownLatch latch = new CountDownLatch(1);
-
-    @OnMessage
-    public void onMessage (String message) {
-
-      received.set(message);
-      latch.countDown();
-    }
-
-    public String awaitMessage ()
-      throws InterruptedException {
-
-      latch.await(10, TimeUnit.SECONDS);
-
-      return received.get();
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -132,6 +100,38 @@ public class TyrusGrizzlyServerContainerMessageTest {
     } finally {
       container.stop();
       httpServer.shutdownNow();
+    }
+  }
+
+  @ServerEndpoint("/echo")
+  public static class EchoServerEndpoint {
+
+    @OnMessage
+    public String onMessage (String message) {
+
+      return "echo:" + message;
+    }
+  }
+
+  @ClientEndpoint
+  public static class RecordingClientEndpoint {
+
+    private final AtomicReference<String> received = new AtomicReference<>();
+    private final CountDownLatch latch = new CountDownLatch(1);
+
+    @OnMessage
+    public void onMessage (String message) {
+
+      received.set(message);
+      latch.countDown();
+    }
+
+    public String awaitMessage ()
+      throws InterruptedException {
+
+      latch.await(10, TimeUnit.SECONDS);
+
+      return received.get();
     }
   }
 }

@@ -42,21 +42,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JsonArgumentTest {
 
-  private static class UppercaseAdapter extends XmlAdapter<String, String> {
-
-    @Override
-    public String unmarshal (String value) {
-
-      return (value == null) ? null : value.toLowerCase();
-    }
-
-    @Override
-    public String marshal (String value) {
-
-      return (value == null) ? null : value.toUpperCase();
-    }
-  }
-
   public void testWithAdapter () {
 
     XmlAdapter adapter = new UppercaseAdapter();
@@ -72,5 +57,20 @@ public class JsonArgumentTest {
 
     Assert.assertEquals(jsonArgument.getName(), "name");
     Assert.assertNull(jsonArgument.getXmlAdapter());
+  }
+
+  private static class UppercaseAdapter extends XmlAdapter<String, String> {
+
+    @Override
+    public String unmarshal (String value) {
+
+      return (value == null) ? null : value.toLowerCase();
+    }
+
+    @Override
+    public String marshal (String value) {
+
+      return (value == null) ? null : value.toUpperCase();
+    }
   }
 }

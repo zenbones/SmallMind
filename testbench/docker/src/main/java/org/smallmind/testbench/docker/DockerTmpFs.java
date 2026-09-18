@@ -47,7 +47,7 @@ public class DockerTmpFs {
   /**
    * Stores the tmpfs fields. Use {@link #create(String, String)} rather than calling this directly.
    *
-   * @param path the absolute container path mounted as tmpfs
+   * @param path       the absolute container path mounted as tmpfs
    * @param parameters the tmpfs mount options passed to the Docker daemon
    */
   private DockerTmpFs (String path, String parameters) {
@@ -59,9 +59,9 @@ public class DockerTmpFs {
   /**
    * Creates a tmpfs descriptor for the given container path and mount options.
    *
-   * @param path the absolute container path to mount as tmpfs, such as {@code "/var/lib/mysql"}
+   * @param path       the absolute container path to mount as tmpfs, such as {@code "/var/lib/mysql"}
    * @param parameters the tmpfs mount options accepted by the Docker daemon, such as
-   * {@code "rw,noexec,nosuid,size=1024m"}
+   *                   {@code "rw,noexec,nosuid,size=1024m"}
    * @return a new tmpfs descriptor; never {@code null}
    */
   public static DockerTmpFs create (String path, String parameters) {

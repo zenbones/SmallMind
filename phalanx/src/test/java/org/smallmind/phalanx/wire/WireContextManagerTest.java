@@ -45,10 +45,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WireContextManagerTest {
 
-  public static class OtherContext extends WireContext {
-
-  }
-
   @Test
   public void testRegisterAndRetrieve () {
 
@@ -70,5 +66,9 @@ public class WireContextManagerTest {
     WireContextManager.register("wcm-test-overwrite", OtherContext.class);
 
     Assert.assertEquals(WireContextManager.getContextClass("wcm-test-overwrite"), OtherContext.class);
+  }
+
+  public static class OtherContext extends WireContext {
+
   }
 }

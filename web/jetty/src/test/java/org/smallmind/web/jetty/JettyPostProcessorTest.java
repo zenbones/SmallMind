@@ -48,22 +48,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class JettyPostProcessorTest {
 
-  @ServicePath(value = "/quote", context = "/finance")
-  public static class AnnotatedService {
-
-  }
-
-  private static class CapturingLocator implements JettyWebAppStateLocator {
-
-    private final Map<String, JettyWebAppState> stateMap = new HashMap<>();
-
-    @Override
-    public JettyWebAppState webAppStateFor (String context) {
-
-      return stateMap.computeIfAbsent(context, key -> new JettyWebAppState());
-    }
-  }
-
   public void testRoutesInstallersWhenLocatorPresentFirst () {
 
     JettyPostProcessor postProcessor = new JettyPostProcessor();
@@ -154,5 +138,21 @@ public class JettyPostProcessorTest {
     postProcessor.postProcessAfterInitialization(new ServletInstaller(), "trigger");
 
     Assert.assertSame(locator.webAppStateFor("/q").getServletInstallerList().getFirst(), queuedServlet);
+  }
+
+  @ServicePath(value = "/quote", context = "/finance")
+  public static class AnnotatedService {
+
+  }
+
+  private static class CapturingLocator implements JettyWebAppStateLocator {
+
+    private final Map<String, JettyWebAppState> stateMap = new HashMap<>();
+
+    @Override
+    public JettyWebAppState webAppStateFor (String context) {
+
+      return stateMap.computeIfAbsent(context, key -> new JettyWebAppState());
+    }
   }
 }

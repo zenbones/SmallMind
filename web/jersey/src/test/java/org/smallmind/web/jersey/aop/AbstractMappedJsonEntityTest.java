@@ -46,18 +46,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class AbstractMappedJsonEntityTest {
 
-  private static class MappedEntity extends AbstractMappedJsonEntity {
-
-    public MappedEntity () {
-
-    }
-
-    public MappedEntity (Map<String, Object> arguments) {
-
-      super(arguments);
-    }
-  }
-
   @XmlJavaTypeAdapter(StringToLengthAdapter.class)
   private String adapted;
 
@@ -111,5 +99,17 @@ public class AbstractMappedJsonEntityTest {
     MappedEntity entity = new MappedEntity(sampleMap());
 
     Assert.assertEquals(entity.getParameter("word", Integer.class, adapterAnnotations()), Integer.valueOf(5));
+  }
+
+  private static class MappedEntity extends AbstractMappedJsonEntity {
+
+    public MappedEntity () {
+
+    }
+
+    public MappedEntity (Map<String, Object> arguments) {
+
+      super(arguments);
+    }
   }
 }

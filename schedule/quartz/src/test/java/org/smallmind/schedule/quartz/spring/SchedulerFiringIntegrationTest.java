@@ -57,37 +57,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class SchedulerFiringIntegrationTest {
 
-  /**
-   * Records each firing into a shared latch so the test thread can observe that the job actually
-   * executed. A new prototype instance is created per firing, so the latch is held statically
-   * rather than on the instance.
-   */
-  public static class CountingJob extends QuartzProxyJob {
-
-    static final AtomicReference<CountDownLatch> LATCH = new AtomicReference<>();
-
-    @Override
-    public boolean logOnZeroCount () {
-
-      return false;
-    }
-
-    @Override
-    public void proceed () {
-
-      CountDownLatch latch;
-
-      incCount();
-      if ((latch = LATCH.get()) != null) {
-        latch.countDown();
-      }
-    }
-
-    @Override
-    public void cleanup () {
-    }
-  }
-
   private Properties ramProperties (String instanceName) {
 
     Properties properties = new Properties();
@@ -189,6 +158,38 @@ public class SchedulerFiringIntegrationTest {
     } finally {
       scheduler.shutdown(true);
       applicationContext.close();
+    }
+  }
+
+  /**
+   * Records each firing into a shared latch so the test thread can observe that the job actually
+   * executed. A new prototype instance is created per firing, so the latch is held statically
+   * rather than on the instance.
+   */
+  public static class CountingJob extends QuartzProxyJob {
+
+    static final AtomicReference<CountDownLatch> LATCH = new AtomicReference<>();
+
+    @Override
+    public boolean logOnZeroCount () {
+
+      return false;
+    }
+
+    @Override
+    public void proceed () {
+
+      CountDownLatch latch;
+
+      incCount();
+      if ((latch = LATCH.get()) != null) {
+        latch.countDown();
+      }
+    }
+
+    @Override
+    public void cleanup () {
+
     }
   }
 }

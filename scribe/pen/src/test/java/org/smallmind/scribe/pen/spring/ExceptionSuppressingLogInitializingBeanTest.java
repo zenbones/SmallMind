@@ -40,12 +40,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ExceptionSuppressingLogInitializingBeanTest {
 
-  // A marker exception unique to this test; the underlying suppression set is static and additive
-  // (never cleared), so a private type guarantees this test observes only its own registration.
-  private static final class UniqueSuppressedTestException extends RuntimeException {
-
-  }
-
   @SuppressWarnings("unchecked")
   public void testSuppressedExceptionIsBlockedByTheFilter () {
 
@@ -59,5 +53,11 @@ public class ExceptionSuppressingLogInitializingBeanTest {
     Assert.assertFalse(filter.willLog(new RecordFixture().setThrown(new UniqueSuppressedTestException())));
     Assert.assertTrue(filter.willLog(new RecordFixture().setThrown(new IllegalStateException("not suppressed"))));
     Assert.assertTrue(filter.willLog(new RecordFixture()));
+  }
+
+  // A marker exception unique to this test; the underlying suppression set is static and additive
+  // (never cleared), so a private type guarantees this test observes only its own registration.
+  private static final class UniqueSuppressedTestException extends RuntimeException {
+
   }
 }

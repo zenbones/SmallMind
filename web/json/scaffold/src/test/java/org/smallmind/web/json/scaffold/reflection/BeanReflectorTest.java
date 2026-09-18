@@ -160,10 +160,10 @@ public class BeanReflectorTest {
 
   public static class Order {
 
-    public String note;
     private Address billingAddress;
     private Item[] items;
     private boolean active;
+    public String note;
 
     public Address getBillingAddress () {
 

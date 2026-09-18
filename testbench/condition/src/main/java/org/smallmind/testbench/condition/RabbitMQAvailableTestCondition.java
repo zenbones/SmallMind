@@ -53,7 +53,7 @@ public class RabbitMQAvailableTestCondition implements TestCondition {
    *
    * @param userName the AMQP username to authenticate with
    * @param password the AMQP password to authenticate with
-   * @param address the host and port of the broker to probe
+   * @param address  the host and port of the broker to probe
    */
   public RabbitMQAvailableTestCondition (String userName, String password, Address address) {
 
@@ -70,7 +70,7 @@ public class RabbitMQAvailableTestCondition implements TestCondition {
    * {@link MessageTestConditionFailure} when the connection attempt fails, having printed an
    * incrementing attempt counter to standard output
    * @throws Exception is declared by the contract but not thrown directly; connection failures are
-   * caught and reported as a {@link TestConditionFailure} instead
+   *                   caught and reported as a {@link TestConditionFailure} instead
    */
   @Override
   public TestConditionFailure test ()

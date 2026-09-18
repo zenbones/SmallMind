@@ -56,8 +56,8 @@ public class DockerVolume {
    * Stores the already-resolved volume fields. Use {@link #create(String, String, AccessMode)}
    * rather than calling this directly.
    *
-   * @param hostPath the resolved absolute host path
-   * @param localPath the absolute container-side mount path
+   * @param hostPath   the resolved absolute host path
+   * @param localPath  the absolute container-side mount path
    * @param accessMode the volume access mode ({@code ro} or {@code rw})
    */
   private DockerVolume (String hostPath, String localPath, AccessMode accessMode) {
@@ -72,11 +72,11 @@ public class DockerVolume {
    * located via the thread context classloader and its URL converted to an absolute filesystem path.
    *
    * @param hostResource the classpath-relative resource name providing the host side of the bind
-   * @param localPath the absolute container path the volume is mounted at
-   * @param accessMode the volume access mode ({@code ro} or {@code rw})
+   * @param localPath    the absolute container path the volume is mounted at
+   * @param accessMode   the volume access mode ({@code ro} or {@code rw})
    * @return a new volume descriptor; never {@code null}
    * @throws MissingHostResourceException if {@code hostResource} cannot be found on the classpath or
-   * its URL is malformed
+   *                                      its URL is malformed
    */
   public static DockerVolume create (String hostResource, String localPath, AccessMode accessMode) {
 

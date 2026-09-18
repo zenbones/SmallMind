@@ -45,7 +45,7 @@ public class MissingHostResourceException extends FormattedRuntimeException {
    * Creates the exception with a {@code printf}-style message.
    *
    * @param message the message template, in the {@link FormattedRuntimeException} format
-   * @param args the arguments substituted into {@code message}; commonly the unresolved resource name
+   * @param args    the arguments substituted into {@code message}; commonly the unresolved resource name
    */
   public MissingHostResourceException (String message, Object... args) {
 

@@ -65,42 +65,6 @@ public class SingularityClassLoaderTest {
   private Path bundlePath;
   private SingularityClassLoader classLoader;
 
-  @BeforeClass
-  public void buildLoader ()
-    throws Exception {
-
-    SingularityIndex index = new SingularityIndex();
-
-    index.addFileName("config/app.properties");
-    index.addFileName("config/extra.txt");
-    index.addFileName("top.txt");
-    index.addInverseJarEntry("org/lib/Thing.class", "thing.jar");
-
-    // A real class laid down directly in the outer jar exercises the jar: definition path; a real class drawn from a
-    // nested library jar exercises the singularity: definition path. Both live in the same package so that the
-    // first-time and already-present branches of package definition are both reached.
-    index.addFileName(resourcePath(ALPHA_NAME));
-    index.addInverseJarEntry(resourcePath(BETA_NAME), "fixtures.jar");
-
-    Map<String, byte[]> bareEntries = new LinkedHashMap<>();
-
-    bareEntries.put(resourcePath(ALPHA_NAME), classBytes(ALPHA_NAME));
-    bareEntries.put("META-INF/singularity/lib/fixtures.jar", buildJar(Map.of(resourcePath(BETA_NAME), classBytes(BETA_NAME))));
-
-    bundlePath = writeBundle(index, true, bareEntries);
-
-    try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(bundlePath))) {
-      classLoader = new SingularityClassLoader(null, jarInputStream.getManifest(), bundlePath.toUri().toURL(), jarInputStream);
-    }
-  }
-
-  @AfterClass(alwaysRun = true)
-  public void deleteBundle ()
-    throws Exception {
-
-    deleteBestEffort(bundlePath);
-  }
-
   // The JDK's jar: URL handler caches the open JarFile once a class has been defined from it, which on Windows keeps
   // the bundle locked; the file is registered for deleteOnExit at creation, so an eager delete here is best effort.
   private static void deleteBestEffort (Path path) {
@@ -205,6 +169,50 @@ public class SingularityClassLoaderTest {
     }
 
     return total;
+  }
+
+  private static String invokePing (Class<?> clazz)
+    throws Exception {
+
+    Method ping = clazz.getMethod("ping");
+
+    return (String)ping.invoke(null);
+  }
+
+  @BeforeClass
+  public void buildLoader ()
+    throws Exception {
+
+    SingularityIndex index = new SingularityIndex();
+
+    index.addFileName("config/app.properties");
+    index.addFileName("config/extra.txt");
+    index.addFileName("top.txt");
+    index.addInverseJarEntry("org/lib/Thing.class", "thing.jar");
+
+    // A real class laid down directly in the outer jar exercises the jar: definition path; a real class drawn from a
+    // nested library jar exercises the singularity: definition path. Both live in the same package so that the
+    // first-time and already-present branches of package definition are both reached.
+    index.addFileName(resourcePath(ALPHA_NAME));
+    index.addInverseJarEntry(resourcePath(BETA_NAME), "fixtures.jar");
+
+    Map<String, byte[]> bareEntries = new LinkedHashMap<>();
+
+    bareEntries.put(resourcePath(ALPHA_NAME), classBytes(ALPHA_NAME));
+    bareEntries.put("META-INF/singularity/lib/fixtures.jar", buildJar(Map.of(resourcePath(BETA_NAME), classBytes(BETA_NAME))));
+
+    bundlePath = writeBundle(index, true, bareEntries);
+
+    try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(bundlePath))) {
+      classLoader = new SingularityClassLoader(null, jarInputStream.getManifest(), bundlePath.toUri().toURL(), jarInputStream);
+    }
+  }
+
+  @AfterClass(alwaysRun = true)
+  public void deleteBundle ()
+    throws Exception {
+
+    deleteBestEffort(bundlePath);
   }
 
   public void testBareFileResolvesThroughTheJarProtocol () {
@@ -416,13 +424,5 @@ public class SingularityClassLoaderTest {
     } finally {
       Files.deleteIfExists(placeholderBundle);
     }
-  }
-
-  private static String invokePing (Class<?> clazz)
-    throws Exception {
-
-    Method ping = clazz.getMethod("ping");
-
-    return (String)ping.invoke(null);
   }
 }

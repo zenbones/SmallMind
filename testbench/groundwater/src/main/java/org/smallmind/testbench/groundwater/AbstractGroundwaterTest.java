@@ -65,7 +65,7 @@ public class AbstractGroundwaterTest {
    * accordingly. No containers are started here; that happens in {@link #beforeClass()}.
    *
    * @param dockerApplications the application fixtures to start before the class and stop after it;
-   * may be {@code null} or empty to manage no containers
+   *                           may be {@code null} or empty to manage no containers
    */
   public AbstractGroundwaterTest (DockerApplication... dockerApplications) {
 
@@ -82,7 +82,7 @@ public class AbstractGroundwaterTest {
    * were configured.
    *
    * @throws Exception if the pre-start absence checks time out, or if any container fails to start
-   * or become ready
+   *                   or become ready
    */
   @BeforeClass
   public void beforeClass ()

@@ -43,10 +43,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ListenerInstallerTest {
 
-  public static class NoOpListener implements ServletContextListener {
-
-  }
-
   public void testOptionTypeIsListener () {
 
     Assert.assertEquals(new ListenerInstaller().getOptionType(), GrizzlyInstallerType.LISTENER);
@@ -108,5 +104,9 @@ public class ListenerInstallerTest {
     installer.setListenerClass(NoOpListener.class);
 
     Assert.assertSame(installer.getListener(), listener);
+  }
+
+  public static class NoOpListener implements ServletContextListener {
+
   }
 }

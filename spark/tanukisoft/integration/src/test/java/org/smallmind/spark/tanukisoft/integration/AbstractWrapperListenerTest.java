@@ -40,6 +40,21 @@ import org.testng.Assert;
 @org.testng.annotations.Test(groups = "unit")
 public class AbstractWrapperListenerTest {
 
+  public void testBootstrapRequiresAListenerClassName () {
+
+    Assert.assertThrows(IllegalArgumentException.class, () -> AbstractWrapperListener.main(new String[0]));
+  }
+
+  public void testStopReturnsTheRequestedExitCodeOnCleanShutdown () {
+
+    Assert.assertEquals(new RecordingListener(false).stop(7), 7);
+  }
+
+  public void testStopTranslatesAFailedShutdownIntoTheStackTraceExitCode () {
+
+    Assert.assertEquals(new RecordingListener(true).stop(7), 2);
+  }
+
   private static class RecordingListener extends AbstractWrapperListener {
 
     private final boolean shutdownThrows;
@@ -62,20 +77,5 @@ public class AbstractWrapperListenerTest {
         throw new Exception("shutdown failed");
       }
     }
-  }
-
-  public void testBootstrapRequiresAListenerClassName () {
-
-    Assert.assertThrows(IllegalArgumentException.class, () -> AbstractWrapperListener.main(new String[0]));
-  }
-
-  public void testStopReturnsTheRequestedExitCodeOnCleanShutdown () {
-
-    Assert.assertEquals(new RecordingListener(false).stop(7), 7);
-  }
-
-  public void testStopTranslatesAFailedShutdownIntoTheStackTraceExitCode () {
-
-    Assert.assertEquals(new RecordingListener(true).stop(7), 2);
   }
 }

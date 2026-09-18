@@ -41,6 +41,21 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class GrizzlyWebAppStateLocatorTest {
 
+  public void testLocatorResolvesRegisteredState () {
+
+    MapBackedLocator locator = new MapBackedLocator();
+    GrizzlyWebAppState state = new GrizzlyWebAppState(new WebappContext("Test Context", "/context"));
+
+    locator.register("/context", state);
+
+    Assert.assertSame(locator.webAppStateFor("/context"), state);
+  }
+
+  public void testLocatorReturnsNullForUnknownContext () {
+
+    Assert.assertNull(new MapBackedLocator().webAppStateFor("/missing"));
+  }
+
   public static class MapBackedLocator implements GrizzlyWebAppStateLocator {
 
     private final Map<String, GrizzlyWebAppState> stateMap = new HashMap<>();
@@ -55,20 +70,5 @@ public class GrizzlyWebAppStateLocatorTest {
 
       return stateMap.get(context);
     }
-  }
-
-  public void testLocatorResolvesRegisteredState () {
-
-    MapBackedLocator locator = new MapBackedLocator();
-    GrizzlyWebAppState state = new GrizzlyWebAppState(new WebappContext("Test Context", "/context"));
-
-    locator.register("/context", state);
-
-    Assert.assertSame(locator.webAppStateFor("/context"), state);
-  }
-
-  public void testLocatorReturnsNullForUnknownContext () {
-
-    Assert.assertNull(new MapBackedLocator().webAppStateFor("/missing"));
   }
 }

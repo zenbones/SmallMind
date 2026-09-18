@@ -52,7 +52,7 @@ public class DependencyReference {
    *
    * @param reference the raw coordinate string as produced by {@code mvn dependency:analyze}
    * @throws ArrayIndexOutOfBoundsException if {@code reference} contains fewer than five
-   * colon-separated fields
+   *                                        colon-separated fields
    */
   public DependencyReference (String reference) {
 

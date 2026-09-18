@@ -46,6 +46,16 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JsonTargetTest {
 
+  private static String pathOf (JsonTarget target)
+    throws NoSuchFieldException, IllegalAccessException {
+
+    Field pathField = JsonTarget.class.getDeclaredField("path");
+
+    pathField.setAccessible(true);
+
+    return (String)pathField.get(target);
+  }
+
   public void testConstructorParsesHost ()
     throws Exception {
 
@@ -96,16 +106,6 @@ public class JsonTargetTest {
     JsonTarget base = JsonTargetFactory.manufacture(HttpProtocol.HTTPS, "api.example.com", 443, "/app/");
 
     Assert.assertEquals(pathOf(base.path("/v1/users")), "/app/v1/users");
-  }
-
-  private static String pathOf (JsonTarget target)
-    throws NoSuchFieldException, IllegalAccessException {
-
-    Field pathField = JsonTarget.class.getDeclaredField("path");
-
-    pathField.setAccessible(true);
-
-    return (String)pathField.get(target);
   }
 
   public void testHeaderReturnsSameInstance ()

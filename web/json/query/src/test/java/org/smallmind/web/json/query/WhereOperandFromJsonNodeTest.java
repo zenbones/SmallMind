@@ -35,7 +35,6 @@ package org.smallmind.web.json.query;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import tools.jackson.databind.JsonNode;
 
 /**
  * Covers {@link WhereOperand#fromJsonNode}, the server-side factory that maps a parsed JSON literal to

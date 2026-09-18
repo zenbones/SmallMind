@@ -380,54 +380,54 @@ public class ResponseMessageRouter extends MessageRouter {
   }
 
   /**
-     * One of the queues this router serves - its name, whether it belongs to this instance alone, and how
-     * it is declared and bound.
+   * One of the queues this router serves - its name, whether it belongs to this instance alone, and how
+   * it is declared and bound.
+   */
+  private record RoutedQueue(ChannelOperation declaration, String queueName, boolean ephemeral) {
+
+    /**
+     * Describes a queue this router serves.
+     *
+     * @param queueName   the queue's name.
+     * @param ephemeral   true for a per-instance queue, whose name a new connection would free.
+     * @param declaration the declaration and binding to perform.
      */
-    private record RoutedQueue(ChannelOperation declaration, String queueName, boolean ephemeral) {
+    private RoutedQueue (String queueName, boolean ephemeral, ChannelOperation declaration) {
 
-      /**
-       * Describes a queue this router serves.
-       *
-       * @param queueName   the queue's name.
-       * @param ephemeral   true for a per-instance queue, whose name a new connection would free.
-       * @param declaration the declaration and binding to perform.
-       */
-      private RoutedQueue (String queueName, boolean ephemeral, ChannelOperation declaration) {
-
-        this(declaration, queueName, ephemeral);
-      }
-
-      /**
-       * Returns the queue's name.
-       *
-       * @return queue name.
-       */
-      @Override
-      public String queueName () {
-
-        return queueName;
-      }
-
-      /**
-       * Returns whether the queue belongs to this instance alone.
-       *
-       * @return true if per-instance.
-       */
-      @Override
-      public boolean ephemeral () {
-
-        return ephemeral;
-      }
-
-      /**
-       * Returns the declaration and binding to perform for this queue.
-       *
-       * @return the declaring operation.
-       */
-      @Override
-      public ChannelOperation declaration () {
-
-        return declaration;
-      }
+      this(declaration, queueName, ephemeral);
     }
+
+    /**
+     * Returns the queue's name.
+     *
+     * @return queue name.
+     */
+    @Override
+    public String queueName () {
+
+      return queueName;
+    }
+
+    /**
+     * Returns whether the queue belongs to this instance alone.
+     *
+     * @return true if per-instance.
+     */
+    @Override
+    public boolean ephemeral () {
+
+      return ephemeral;
+    }
+
+    /**
+     * Returns the declaration and binding to perform for this queue.
+     *
+     * @return the declaring operation.
+     */
+    @Override
+    public ChannelOperation declaration () {
+
+      return declaration;
+    }
+  }
 }

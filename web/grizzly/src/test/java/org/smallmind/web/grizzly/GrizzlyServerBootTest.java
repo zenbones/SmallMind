@@ -54,16 +54,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class GrizzlyServerBootTest {
 
-  @Path("echo")
-  public static class EchoResource {
-
-    @GET
-    public String echo () {
-
-      return "grizzly-up";
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -107,6 +97,16 @@ public class GrizzlyServerBootTest {
 
       Assert.assertEquals(response.statusCode(), 200);
       Assert.assertEquals(response.body(), "grizzly-up");
+    }
+  }
+
+  @Path("echo")
+  public static class EchoResource {
+
+    @GET
+    public String echo () {
+
+      return "grizzly-up";
     }
   }
 }

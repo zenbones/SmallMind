@@ -54,16 +54,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class JettyServerBootTest {
 
-  @Path("echo")
-  public static class EchoResource {
-
-    @GET
-    public String echo () {
-
-      return "jetty-up";
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -108,6 +98,16 @@ public class JettyServerBootTest {
 
       Assert.assertEquals(response.statusCode(), 200);
       Assert.assertEquals(response.body(), "jetty-up");
+    }
+  }
+
+  @Path("echo")
+  public static class EchoResource {
+
+    @GET
+    public String echo () {
+
+      return "jetty-up";
     }
   }
 }

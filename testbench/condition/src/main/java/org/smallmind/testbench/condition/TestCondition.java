@@ -52,7 +52,7 @@ public interface TestCondition {
    * @return {@code null} if the condition is satisfied, or a {@link TestConditionFailure}
    * describing why it is not yet satisfied
    * @throws Exception if the underlying probe cannot be carried out at all (as opposed to simply
-   * reporting an unsatisfied condition)
+   *                   reporting an unsatisfied condition)
    */
   TestConditionFailure test ()
     throws Exception;

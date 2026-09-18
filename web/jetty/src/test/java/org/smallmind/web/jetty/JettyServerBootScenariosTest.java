@@ -87,77 +87,6 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class JettyServerBootScenariosTest {
 
-  @Path("echo")
-  public static class EchoResource {
-
-    @GET
-    public String echo () {
-
-      return "jetty-up";
-    }
-  }
-
-  public static class GreetingServlet extends HttpServlet {
-
-    @Override
-    protected void doGet (HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().write("servlet-greeting");
-    }
-  }
-
-  public static class MarkerFilter implements Filter {
-
-    private static final AtomicBoolean INVOKED = new AtomicBoolean(false);
-
-    public static boolean wasInvoked () {
-
-      return INVOKED.get();
-    }
-
-    public static void reset () {
-
-      INVOKED.set(false);
-    }
-
-    @Override
-    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-      INVOKED.set(true);
-      ((HttpServletResponse)response).addHeader("X-Marker-Filter", "seen");
-      chain.doFilter(request, response);
-    }
-  }
-
-  public static class StartupListener implements ServletContextListener {
-
-    private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
-
-    public static boolean wasInitialized () {
-
-      return INITIALIZED.get();
-    }
-
-    public static void reset () {
-
-      INITIALIZED.set(false);
-    }
-
-    @Override
-    public void contextInitialized (ServletContextEvent servletContextEvent) {
-
-      INITIALIZED.set(true);
-    }
-
-    @Override
-    public void contextDestroyed (ServletContextEvent servletContextEvent) {
-
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
@@ -172,6 +101,158 @@ public class JettyServerBootScenariosTest {
     return HttpClient.newHttpClient().send(
       HttpRequest.newBuilder(URI.create(url)).GET().build(),
       HttpResponse.BodyHandlers.ofString());
+  }
+
+  private static java.nio.file.Path generateSelfSignedKeyStore ()
+    throws Exception {
+
+    java.nio.file.Path keyStoreFile = Files.createTempFile("jetty-test-keystore", ".jks");
+    String javaHome = System.getProperty("java.home");
+    String keytool = javaHome + "/bin/keytool";
+
+    Files.deleteIfExists(keyStoreFile);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(
+      keytool,
+      "-genkeypair",
+      "-alias", "jetty-test",
+      "-keyalg", "RSA",
+      "-keysize", "2048",
+      "-validity", "1",
+      "-dname", "CN=localhost, OU=test, O=test, L=test, ST=test, C=US",
+      "-ext", "san=dns:localhost,ip:127.0.0.1",
+      "-keystore", keyStoreFile.toAbsolutePath().toString(),
+      "-storepass", "changeit",
+      "-keypass", "changeit",
+      "-storetype", "JKS");
+
+    processBuilder.redirectErrorStream(true);
+
+    try {
+
+      Process process = processBuilder.start();
+      int exitCode = process.waitFor();
+
+      if ((exitCode != 0) || (!Files.exists(keyStoreFile)) || (Files.size(keyStoreFile) == 0)) {
+        Files.deleteIfExists(keyStoreFile);
+
+        return null;
+      }
+
+      return keyStoreFile;
+    } catch (IOException ioException) {
+
+      return null;
+    }
+  }
+
+  private static String classpathResourceFor (java.nio.file.Path keyStoreFile)
+    throws Exception {
+
+    URI rootUri = JettyServerBootScenariosTest.class.getResource("/").toURI();
+
+    if (!"file".equals(rootUri.getScheme())) {
+
+      return null;
+    }
+
+    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
+    String stagedName = "jetty-https-test-keystore.jks";
+    java.nio.file.Path stagedFile = classpathRoot.resolve(stagedName);
+
+    Files.copy(keyStoreFile, stagedFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+    return "classpath:/" + stagedName;
+  }
+
+  private static String stageClasspathRootFile (String name, String content)
+    throws Exception {
+
+    URI rootUri = JettyServerBootScenariosTest.class.getResource("/").toURI();
+
+    if (!"file".equals(rootUri.getScheme())) {
+
+      return null;
+    }
+
+    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
+    java.nio.file.Path stagedFile = classpathRoot.resolve(name);
+
+    Files.write(stagedFile, content.getBytes(StandardCharsets.UTF_8));
+
+    return name;
+  }
+
+  private static HttpClient trustAllHttpsClient ()
+    throws Exception {
+
+    TrustManager[] trustManagers = new TrustManager[] {
+      new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public void checkServerTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers () {
+
+          return new X509Certificate[0];
+        }
+      }
+    };
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+
+    sslContext.init(null, trustManagers, new SecureRandom());
+
+    return HttpClient.newBuilder().sslContext(sslContext).build();
+  }
+
+  private static HttpClient mutualTlsClient (java.nio.file.Path keyStoreFile)
+    throws Exception {
+
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+
+    try (InputStream inputStream = Files.newInputStream(keyStoreFile)) {
+      keyStore.load(inputStream, "changeit".toCharArray());
+    }
+
+    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+    keyManagerFactory.init(keyStore, "changeit".toCharArray());
+
+    TrustManager[] trustManagers = new TrustManager[] {
+      new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public void checkServerTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers () {
+
+          return new X509Certificate[0];
+        }
+      }
+    };
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+
+    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
+
+    return HttpClient.newBuilder().sslContext(sslContext).build();
   }
 
   public void testMultipleContextPathsOnOneServer ()
@@ -832,7 +913,7 @@ public class JettyServerBootScenariosTest {
       HttpClient noCertificateClient = trustAllHttpsClient();
 
       Assert.assertThrows(Exception.class, () ->
-        noCertificateClient.send(HttpRequest.newBuilder(secureUri).GET().build(), HttpResponse.BodyHandlers.ofString()));
+                                             noCertificateClient.send(HttpRequest.newBuilder(secureUri).GET().build(), HttpResponse.BodyHandlers.ofString()));
 
       // A client presenting the trusted certificate completes the handshake and is served.
       HttpResponse<String> response = mutualTlsClient(keyStoreFile).send(
@@ -844,155 +925,74 @@ public class JettyServerBootScenariosTest {
     }
   }
 
-  private static java.nio.file.Path generateSelfSignedKeyStore ()
-    throws Exception {
+  @Path("echo")
+  public static class EchoResource {
 
-    java.nio.file.Path keyStoreFile = Files.createTempFile("jetty-test-keystore", ".jks");
-    String javaHome = System.getProperty("java.home");
-    String keytool = javaHome + "/bin/keytool";
+    @GET
+    public String echo () {
 
-    Files.deleteIfExists(keyStoreFile);
-
-    ProcessBuilder processBuilder = new ProcessBuilder(
-      keytool,
-      "-genkeypair",
-      "-alias", "jetty-test",
-      "-keyalg", "RSA",
-      "-keysize", "2048",
-      "-validity", "1",
-      "-dname", "CN=localhost, OU=test, O=test, L=test, ST=test, C=US",
-      "-ext", "san=dns:localhost,ip:127.0.0.1",
-      "-keystore", keyStoreFile.toAbsolutePath().toString(),
-      "-storepass", "changeit",
-      "-keypass", "changeit",
-      "-storetype", "JKS");
-
-    processBuilder.redirectErrorStream(true);
-
-    try {
-
-      Process process = processBuilder.start();
-      int exitCode = process.waitFor();
-
-      if ((exitCode != 0) || (!Files.exists(keyStoreFile)) || (Files.size(keyStoreFile) == 0)) {
-        Files.deleteIfExists(keyStoreFile);
-
-        return null;
-      }
-
-      return keyStoreFile;
-    } catch (IOException ioException) {
-
-      return null;
+      return "jetty-up";
     }
   }
 
-  private static String classpathResourceFor (java.nio.file.Path keyStoreFile)
-    throws Exception {
+  public static class GreetingServlet extends HttpServlet {
 
-    URI rootUri = JettyServerBootScenariosTest.class.getResource("/").toURI();
+    @Override
+    protected void doGet (HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
 
-    if (!"file".equals(rootUri.getScheme())) {
-
-      return null;
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().write("servlet-greeting");
     }
-
-    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
-    String stagedName = "jetty-https-test-keystore.jks";
-    java.nio.file.Path stagedFile = classpathRoot.resolve(stagedName);
-
-    Files.copy(keyStoreFile, stagedFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-    return "classpath:/" + stagedName;
   }
 
-  private static String stageClasspathRootFile (String name, String content)
-    throws Exception {
+  public static class MarkerFilter implements Filter {
 
-    URI rootUri = JettyServerBootScenariosTest.class.getResource("/").toURI();
+    private static final AtomicBoolean INVOKED = new AtomicBoolean(false);
 
-    if (!"file".equals(rootUri.getScheme())) {
+    public static boolean wasInvoked () {
 
-      return null;
+      return INVOKED.get();
     }
 
-    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
-    java.nio.file.Path stagedFile = classpathRoot.resolve(name);
+    public static void reset () {
 
-    Files.write(stagedFile, content.getBytes(StandardCharsets.UTF_8));
-
-    return name;
-  }
-
-  private static HttpClient trustAllHttpsClient ()
-    throws Exception {
-
-    TrustManager[] trustManagers = new TrustManager[] {
-      new X509TrustManager() {
-
-        @Override
-        public void checkClientTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public void checkServerTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers () {
-
-          return new X509Certificate[0];
-        }
-      }
-    };
-
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-
-    sslContext.init(null, trustManagers, new SecureRandom());
-
-    return HttpClient.newBuilder().sslContext(sslContext).build();
-  }
-
-  private static HttpClient mutualTlsClient (java.nio.file.Path keyStoreFile)
-    throws Exception {
-
-    KeyStore keyStore = KeyStore.getInstance("JKS");
-
-    try (InputStream inputStream = Files.newInputStream(keyStoreFile)) {
-      keyStore.load(inputStream, "changeit".toCharArray());
+      INVOKED.set(false);
     }
 
-    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    @Override
+    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
 
-    keyManagerFactory.init(keyStore, "changeit".toCharArray());
+      INVOKED.set(true);
+      ((HttpServletResponse)response).addHeader("X-Marker-Filter", "seen");
+      chain.doFilter(request, response);
+    }
+  }
 
-    TrustManager[] trustManagers = new TrustManager[] {
-      new X509TrustManager() {
+  public static class StartupListener implements ServletContextListener {
 
-        @Override
-        public void checkClientTrusted (X509Certificate[] chain, String authType) {
+    private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
-        }
+    public static boolean wasInitialized () {
 
-        @Override
-        public void checkServerTrusted (X509Certificate[] chain, String authType) {
+      return INITIALIZED.get();
+    }
 
-        }
+    public static void reset () {
 
-        @Override
-        public X509Certificate[] getAcceptedIssuers () {
+      INITIALIZED.set(false);
+    }
 
-          return new X509Certificate[0];
-        }
-      }
-    };
+    @Override
+    public void contextInitialized (ServletContextEvent servletContextEvent) {
 
-    SSLContext sslContext = SSLContext.getInstance("TLS");
+      INITIALIZED.set(true);
+    }
 
-    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
+    @Override
+    public void contextDestroyed (ServletContextEvent servletContextEvent) {
 
-    return HttpClient.newBuilder().sslContext(sslContext).build();
+    }
   }
 }

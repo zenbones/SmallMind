@@ -32,7 +32,6 @@
  */
 package org.smallmind.spark.singularity.boot;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -53,6 +52,28 @@ public class SingularityJarURLConnectionTest {
 
   private Path bundlePath;
   private String bundleUrlPart;
+
+  private static byte[] innerJar ()
+    throws Exception {
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    try (JarOutputStream jarOutputStream = new JarOutputStream(byteArrayOutputStream)) {
+      jarOutputStream.putNextEntry(new JarEntry("deep.txt"));
+      jarOutputStream.write("DEEP".getBytes(StandardCharsets.UTF_8));
+      jarOutputStream.closeEntry();
+    }
+
+    return byteArrayOutputStream.toByteArray();
+  }
+
+  private static String read (InputStream inputStream)
+    throws Exception {
+
+    try (InputStream guarded = inputStream) {
+      return new String(guarded.readAllBytes(), StandardCharsets.UTF_8);
+    }
+  }
 
   // Forming a singularity: URL requires the synthetic protocol handler, registered once by the class loader's static
   // initializer; the bundle itself must be a real file because the connection reopens it through java.util.jar.JarFile.
@@ -86,32 +107,10 @@ public class SingularityJarURLConnectionTest {
     }
   }
 
-  private static byte[] innerJar ()
-    throws Exception {
-
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-    try (JarOutputStream jarOutputStream = new JarOutputStream(byteArrayOutputStream)) {
-      jarOutputStream.putNextEntry(new JarEntry("deep.txt"));
-      jarOutputStream.write("DEEP".getBytes(StandardCharsets.UTF_8));
-      jarOutputStream.closeEntry();
-    }
-
-    return byteArrayOutputStream.toByteArray();
-  }
-
   private SingularityJarURLConnection connectionFor (String spec)
     throws Exception {
 
     return new SingularityJarURLConnection(URI.create("singularity:" + bundleUrlPart + spec).toURL());
-  }
-
-  private static String read (InputStream inputStream)
-    throws Exception {
-
-    try (InputStream guarded = inputStream) {
-      return new String(guarded.readAllBytes(), StandardCharsets.UTF_8);
-    }
   }
 
   public void testReadsEntryStoredDirectlyInTheOuterJar ()

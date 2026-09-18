@@ -54,22 +54,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ByKeyIntrinsicVectorTest {
 
-  @BeforeMethod
-  @SuppressWarnings("unchecked")
-  public void registerDao () {
-
-    new PerApplicationContext();
-
-    ORMDao<Long, Cog, ?, ?> ormDao = Mockito.mock(ORMDao.class);
-
-    for (long id = 1L; id <= 5L; id++) {
-      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
-      Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
-    }
-
-    OrmDaoManager.register(Cog.class, ormDao);
-  }
-
   private static ByKeyIntrinsicVector<Long, Cog> vectorFor (long... ids) {
 
     List<Cog> cogs = new ArrayList<>();
@@ -90,6 +74,22 @@ public class ByKeyIntrinsicVectorTest {
     }
 
     return ids;
+  }
+
+  @BeforeMethod
+  @SuppressWarnings("unchecked")
+  public void registerDao () {
+
+    new PerApplicationContext();
+
+    ORMDao<Long, Cog, ?, ?> ormDao = Mockito.mock(ORMDao.class);
+
+    for (long id = 1L; id <= 5L; id++) {
+      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
+      Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
+    }
+
+    OrmDaoManager.register(Cog.class, ormDao);
   }
 
   public void testLazyListHydratesKeysThroughDao () {

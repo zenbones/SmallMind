@@ -79,7 +79,7 @@ public class DockerPort {
    * Sets the host-side port to bind the service port to.
    *
    * @param externalPort the external host port, or {@code null} to clear the override and fall back
-   * to the service port
+   *                     to the service port
    */
   public void setExternalPort (Integer externalPort) {
 

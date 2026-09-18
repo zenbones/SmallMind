@@ -45,15 +45,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class EntityValidatorTest {
 
-  public static class Service {
-
-    @NotNull
-    public String handle (@NotNull @EntityParam("name") String name, @Min(1) int count) {
-
-      return name + count;
-    }
-  }
-
   private Method handleMethod ()
     throws Exception {
 
@@ -88,5 +79,14 @@ public class EntityValidatorTest {
     throws Exception {
 
     EntityValidator.validateReturnValue(new Service(), handleMethod(), null);
+  }
+
+  public static class Service {
+
+    @NotNull
+    public String handle (@NotNull @EntityParam("name") String name, @Min(1) int count) {
+
+      return name + count;
+    }
   }
 }

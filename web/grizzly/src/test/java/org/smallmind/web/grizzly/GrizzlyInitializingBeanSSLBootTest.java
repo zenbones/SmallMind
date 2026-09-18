@@ -69,22 +69,141 @@ import org.testng.annotations.Test;
 @Test(groups = "integration")
 public class GrizzlyInitializingBeanSSLBootTest {
 
-  @Path("echo")
-  public static class EchoResource {
-
-    @GET
-    public String echo () {
-
-      return "grizzly-up";
-    }
-  }
-
   private static int freePort ()
     throws Exception {
 
     try (ServerSocket serverSocket = new ServerSocket(0)) {
       return serverSocket.getLocalPort();
     }
+  }
+
+  private static String stageSelfSignedKeyStore ()
+    throws Exception {
+
+    java.nio.file.Path keyStoreFile = Files.createTempFile("grizzly-test-keystore", ".jks");
+    String javaHome = System.getProperty("java.home");
+    String keytool = javaHome + "/bin/keytool";
+
+    Files.deleteIfExists(keyStoreFile);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(
+      keytool,
+      "-genkeypair",
+      "-alias", "grizzly-test",
+      "-keyalg", "RSA",
+      "-keysize", "2048",
+      "-validity", "1",
+      "-dname", "CN=localhost, OU=test, O=test, L=test, ST=test, C=US",
+      "-ext", "san=dns:localhost,ip:127.0.0.1",
+      "-keystore", keyStoreFile.toAbsolutePath().toString(),
+      "-storepass", "changeit",
+      "-keypass", "changeit",
+      "-storetype", "JKS");
+
+    processBuilder.redirectErrorStream(true);
+
+    try {
+
+      Process process = processBuilder.start();
+      int exitCode = process.waitFor();
+
+      if ((exitCode != 0) || (!Files.exists(keyStoreFile)) || (Files.size(keyStoreFile) == 0)) {
+        Files.deleteIfExists(keyStoreFile);
+
+        return null;
+      }
+    } catch (IOException ioException) {
+
+      return null;
+    }
+
+    URI rootUri = GrizzlyInitializingBeanSSLBootTest.class.getResource("/").toURI();
+
+    if (!"file".equals(rootUri.getScheme())) {
+
+      return null;
+    }
+
+    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
+    String stagedName = "grizzly-https-test-keystore.jks";
+    java.nio.file.Path stagedFile = classpathRoot.resolve(stagedName);
+
+    Files.copy(keyStoreFile, stagedFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    Files.deleteIfExists(keyStoreFile);
+
+    return "classpath:/" + stagedName;
+  }
+
+  private static HttpClient trustAllHttpsClient ()
+    throws Exception {
+
+    TrustManager[] trustManagers = new TrustManager[] {
+      new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public void checkServerTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers () {
+
+          return new X509Certificate[0];
+        }
+      }
+    };
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+
+    sslContext.init(null, trustManagers, new SecureRandom());
+
+    return HttpClient.newBuilder().sslContext(sslContext).build();
+  }
+
+  private static HttpClient mutualTlsClient (java.nio.file.Path keyStoreFile)
+    throws Exception {
+
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+
+    try (InputStream inputStream = Files.newInputStream(keyStoreFile)) {
+      keyStore.load(inputStream, "changeit".toCharArray());
+    }
+
+    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+    keyManagerFactory.init(keyStore, "changeit".toCharArray());
+
+    TrustManager[] trustManagers = new TrustManager[] {
+      new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public void checkServerTrusted (X509Certificate[] chain, String authType) {
+
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers () {
+
+          return new X509Certificate[0];
+        }
+      }
+    };
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+
+    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
+
+    return HttpClient.newBuilder().sslContext(sslContext).build();
   }
 
   public void testHttpsBootWithSelfSignedKeystore ()
@@ -262,7 +381,7 @@ public class GrizzlyInitializingBeanSSLBootTest {
       HttpClient noCertificateClient = trustAllHttpsClient();
 
       Assert.assertThrows(Exception.class, () ->
-        noCertificateClient.send(HttpRequest.newBuilder(secureUri).GET().build(), HttpResponse.BodyHandlers.ofString()));
+                                             noCertificateClient.send(HttpRequest.newBuilder(secureUri).GET().build(), HttpResponse.BodyHandlers.ofString()));
 
       // A client presenting the trusted certificate completes the handshake and is served.
       HttpResponse<String> response = mutualTlsClient(stagedKeyStoreFile).send(
@@ -346,132 +465,13 @@ public class GrizzlyInitializingBeanSSLBootTest {
     }
   }
 
-  private static String stageSelfSignedKeyStore ()
-    throws Exception {
+  @Path("echo")
+  public static class EchoResource {
 
-    java.nio.file.Path keyStoreFile = Files.createTempFile("grizzly-test-keystore", ".jks");
-    String javaHome = System.getProperty("java.home");
-    String keytool = javaHome + "/bin/keytool";
+    @GET
+    public String echo () {
 
-    Files.deleteIfExists(keyStoreFile);
-
-    ProcessBuilder processBuilder = new ProcessBuilder(
-      keytool,
-      "-genkeypair",
-      "-alias", "grizzly-test",
-      "-keyalg", "RSA",
-      "-keysize", "2048",
-      "-validity", "1",
-      "-dname", "CN=localhost, OU=test, O=test, L=test, ST=test, C=US",
-      "-ext", "san=dns:localhost,ip:127.0.0.1",
-      "-keystore", keyStoreFile.toAbsolutePath().toString(),
-      "-storepass", "changeit",
-      "-keypass", "changeit",
-      "-storetype", "JKS");
-
-    processBuilder.redirectErrorStream(true);
-
-    try {
-
-      Process process = processBuilder.start();
-      int exitCode = process.waitFor();
-
-      if ((exitCode != 0) || (!Files.exists(keyStoreFile)) || (Files.size(keyStoreFile) == 0)) {
-        Files.deleteIfExists(keyStoreFile);
-
-        return null;
-      }
-    } catch (IOException ioException) {
-
-      return null;
+      return "grizzly-up";
     }
-
-    URI rootUri = GrizzlyInitializingBeanSSLBootTest.class.getResource("/").toURI();
-
-    if (!"file".equals(rootUri.getScheme())) {
-
-      return null;
-    }
-
-    java.nio.file.Path classpathRoot = java.nio.file.Paths.get(rootUri);
-    String stagedName = "grizzly-https-test-keystore.jks";
-    java.nio.file.Path stagedFile = classpathRoot.resolve(stagedName);
-
-    Files.copy(keyStoreFile, stagedFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-    Files.deleteIfExists(keyStoreFile);
-
-    return "classpath:/" + stagedName;
-  }
-
-  private static HttpClient trustAllHttpsClient ()
-    throws Exception {
-
-    TrustManager[] trustManagers = new TrustManager[] {
-      new X509TrustManager() {
-
-        @Override
-        public void checkClientTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public void checkServerTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers () {
-
-          return new X509Certificate[0];
-        }
-      }
-    };
-
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-
-    sslContext.init(null, trustManagers, new SecureRandom());
-
-    return HttpClient.newBuilder().sslContext(sslContext).build();
-  }
-
-  private static HttpClient mutualTlsClient (java.nio.file.Path keyStoreFile)
-    throws Exception {
-
-    KeyStore keyStore = KeyStore.getInstance("JKS");
-
-    try (InputStream inputStream = Files.newInputStream(keyStoreFile)) {
-      keyStore.load(inputStream, "changeit".toCharArray());
-    }
-
-    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-
-    keyManagerFactory.init(keyStore, "changeit".toCharArray());
-
-    TrustManager[] trustManagers = new TrustManager[] {
-      new X509TrustManager() {
-
-        @Override
-        public void checkClientTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public void checkServerTrusted (X509Certificate[] chain, String authType) {
-
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers () {
-
-          return new X509Certificate[0];
-        }
-      }
-    };
-
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-
-    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
-
-    return HttpClient.newBuilder().sslContext(sslContext).build();
   }
 }

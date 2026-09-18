@@ -61,30 +61,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ByKeyRosterTest {
 
-  @BeforeMethod
-  @SuppressWarnings("unchecked")
-  public void attachApplicationContext () {
-
-    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
-    // The map is a static InheritableThreadLocal that is reused (not recreated) across methods, so registrations leak
-    // between tests on the same Surefire thread; install a fresh registry every method to keep the missing-DAO branch
-    // observable and to stop a foreign DAO bleeding into hydration here.
-    new PerApplicationContext();
-    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<>());
-
-    // ByKeyRoster hydrates each key through OrmDaoManager on get/iterate/remove, so register a DAO that turns the
-    // key's id string back into a Cog. Tests that need different hydration (prefetch) re-register their own mock.
-    ORMDao<Long, Cog, ?, ?> ormDao = Mockito.mock(ORMDao.class);
-
-    Mockito.when(ormDao.getManagedClass()).thenReturn(Cog.class);
-    for (long id = 1L; id <= 9L; id++) {
-      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
-      Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
-    }
-
-    OrmDaoManager.register(Cog.class, ormDao);
-  }
-
   private static IntrinsicRoster<DurableKey<Long, Cog>> keyRosterFor (long... ids) {
 
     IntrinsicRoster<DurableKey<Long, Cog>> keyRoster = new IntrinsicRoster<DurableKey<Long, Cog>>();
@@ -110,6 +86,30 @@ public class ByKeyRosterTest {
     }
 
     return list;
+  }
+
+  @BeforeMethod
+  @SuppressWarnings("unchecked")
+  public void attachApplicationContext () {
+
+    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
+    // The map is a static InheritableThreadLocal that is reused (not recreated) across methods, so registrations leak
+    // between tests on the same Surefire thread; install a fresh registry every method to keep the missing-DAO branch
+    // observable and to stop a foreign DAO bleeding into hydration here.
+    new PerApplicationContext();
+    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<>());
+
+    // ByKeyRoster hydrates each key through OrmDaoManager on get/iterate/remove, so register a DAO that turns the
+    // key's id string back into a Cog. Tests that need different hydration (prefetch) re-register their own mock.
+    ORMDao<Long, Cog, ?, ?> ormDao = Mockito.mock(ORMDao.class);
+
+    Mockito.when(ormDao.getManagedClass()).thenReturn(Cog.class);
+    for (long id = 1L; id <= 9L; id++) {
+      Mockito.when(ormDao.getIdFromString(Long.toString(id))).thenReturn(id);
+      Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
+    }
+
+    OrmDaoManager.register(Cog.class, ormDao);
   }
 
   public void testContainsRejectsNonDurableClassElementWithoutDao () {

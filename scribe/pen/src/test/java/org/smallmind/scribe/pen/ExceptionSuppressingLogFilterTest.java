@@ -45,18 +45,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ExceptionSuppressingLogFilterTest {
 
-  private static class SuppressedMarkerException extends RuntimeException {
-
-  }
-
-  private static class SuppressedMarkerSubclassException extends SuppressedMarkerException {
-
-  }
-
-  private static class UnrelatedException extends RuntimeException {
-
-  }
-
   @BeforeClass
   public void registerSuppressedType () {
 
@@ -82,5 +70,17 @@ public class ExceptionSuppressingLogFilterTest {
 
     // Suppression keys on the exact class, not instanceof, so a subclass of a suppressed type passes.
     Assert.assertTrue(new ExceptionSuppressingLogFilter().willLog(new RecordFixture().setThrown(new SuppressedMarkerSubclassException())));
+  }
+
+  private static class SuppressedMarkerException extends RuntimeException {
+
+  }
+
+  private static class SuppressedMarkerSubclassException extends SuppressedMarkerException {
+
+  }
+
+  private static class UnrelatedException extends RuntimeException {
+
   }
 }

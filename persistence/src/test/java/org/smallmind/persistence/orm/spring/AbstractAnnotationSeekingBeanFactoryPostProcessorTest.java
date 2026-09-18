@@ -87,6 +87,57 @@ public class AbstractAnnotationSeekingBeanFactoryPostProcessorTest {
     return set;
   }
 
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.TYPE)
+  public @interface Persistent {
+
+  }
+
+  public interface SampleDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ManagedDao<I, D> {
+
+  }
+
+  public interface WidgetDao extends SampleDao<Long, Widget> {
+
+    @Override
+    Class<Widget> getManagedClass ();
+  }
+
+  public interface PlainWidgetDao extends SampleDao<Long, PlainWidget> {
+
+    @Override
+    Class<PlainWidget> getManagedClass ();
+  }
+
+  public interface AnimalDao extends SampleDao<Long, Animal> {
+
+    @Override
+    Class<Animal> getManagedClass ();
+  }
+
+  public interface BadAnimalDao extends SampleDao<Long, BadAnimal> {
+
+    @Override
+    Class<BadAnimal> getManagedClass ();
+  }
+
+  public interface OrderDao extends SampleDao<Long, Order> {
+
+    @Override
+    Class<Order> getManagedClass ();
+  }
+
+  @SessionSource("alpha")
+  public interface AlphaWidgetDao extends SampleDao<Long, AlphaWidget> {
+
+    @Override
+    Class<AlphaWidget> getManagedClass ();
+  }
+
+  public interface GenericSampleDao<D extends Durable<Long>> extends SampleDao<Long, D> {
+
+  }
+
   public void testDetectsDaoAndRecordsAnnotatedDurableUnderNullSessionKey () {
 
     SampleSeekingPostProcessor postProcessor = new SampleSeekingPostProcessor();
@@ -180,12 +231,6 @@ public class AbstractAnnotationSeekingBeanFactoryPostProcessorTest {
     Assert.assertEquals(postProcessor.getAnnotatedClasses("missing").length, 0);
   }
 
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.TYPE)
-  public @interface Persistent {
-
-  }
-
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static class SampleSeekingPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
@@ -200,51 +245,6 @@ public class AbstractAnnotationSeekingBeanFactoryPostProcessorTest {
 
       return new Class[] {Persistent.class};
     }
-  }
-
-  public interface SampleDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ManagedDao<I, D> {
-
-  }
-
-  public interface WidgetDao extends SampleDao<Long, Widget> {
-
-    @Override
-    Class<Widget> getManagedClass ();
-  }
-
-  public interface PlainWidgetDao extends SampleDao<Long, PlainWidget> {
-
-    @Override
-    Class<PlainWidget> getManagedClass ();
-  }
-
-  public interface AnimalDao extends SampleDao<Long, Animal> {
-
-    @Override
-    Class<Animal> getManagedClass ();
-  }
-
-  public interface BadAnimalDao extends SampleDao<Long, BadAnimal> {
-
-    @Override
-    Class<BadAnimal> getManagedClass ();
-  }
-
-  public interface OrderDao extends SampleDao<Long, Order> {
-
-    @Override
-    Class<Order> getManagedClass ();
-  }
-
-  @SessionSource("alpha")
-  public interface AlphaWidgetDao extends SampleDao<Long, AlphaWidget> {
-
-    @Override
-    Class<AlphaWidget> getManagedClass ();
-  }
-
-  public interface GenericSampleDao<D extends Durable<Long>> extends SampleDao<Long, D> {
-
   }
 
   // Leaves getManagedClass inherited from the generic DAO interface, so its generic return type stays a

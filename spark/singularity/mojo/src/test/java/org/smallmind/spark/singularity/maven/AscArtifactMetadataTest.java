@@ -51,6 +51,11 @@ public class AscArtifactMetadataTest {
 
   private Path repositoryBase;
 
+  private static Artifact artifact (String classifier) {
+
+    return new DefaultArtifact("org.smallmind", "widget", "1.2.0", "compile", "jar", classifier, new DefaultArtifactHandler("jar"));
+  }
+
   @BeforeMethod
   public void createRepositoryBase ()
     throws Exception {
@@ -83,11 +88,6 @@ public class AscArtifactMetadataTest {
     repository.setUrl(repositoryBase.toUri().toString());
 
     return repository;
-  }
-
-  private static Artifact artifact (String classifier) {
-
-    return new DefaultArtifact("org.smallmind", "widget", "1.2.0", "compile", "jar", classifier, new DefaultArtifactHandler("jar"));
   }
 
   public void testFilenameIsDerivedFromCoordinatesWithoutClassifier () {

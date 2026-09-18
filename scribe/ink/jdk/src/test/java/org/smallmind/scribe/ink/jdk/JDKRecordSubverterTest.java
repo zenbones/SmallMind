@@ -42,6 +42,49 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class JDKRecordSubverterTest {
 
+  public void testRecordExposesScribeLevelAndRawMessage () {
+
+    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.WARN, new StubLoggerContext("com.example.Foo", "bar"), null, "raw %s message", "arg");
+    Record<LogRecord> record = subverter.getRecord();
+
+    Assert.assertEquals(record.getLevel(), Level.WARN);
+    Assert.assertEquals(record.getMessage(), "raw %s message");
+    Assert.assertEquals(record.getLoggerName(), "jdk.subverter.logger");
+  }
+
+  public void testNativeLogEntryCarriesTranslatedJDKLevel () {
+
+    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.WARN, null, null, "message");
+
+    Assert.assertEquals(subverter.getLevel(), java.util.logging.Level.WARNING);
+    Assert.assertSame(subverter.getRecord().getNativeLogEntry(), subverter);
+  }
+
+  public void testThrowableIsAttachedToRecord () {
+
+    Throwable throwable = new RuntimeException("boom");
+    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.ERROR, null, throwable, "oops");
+
+    Assert.assertSame(subverter.getRecord().getThrown(), throwable);
+    Assert.assertSame(subverter.getThrown(), throwable);
+  }
+
+  public void testSourceClassAndMethodComeFromContext () {
+
+    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.INFO, new StubLoggerContext("com.example.Source", "doThing"), null, "message");
+
+    Assert.assertEquals(subverter.getSourceClassName(), "com.example.Source");
+    Assert.assertEquals(subverter.getSourceMethodName(), "doThing");
+  }
+
+  public void testSourceClassAndMethodNullWhenNoContext () {
+
+    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.INFO, null, null, "message");
+
+    Assert.assertNull(subverter.getSourceClassName());
+    Assert.assertNull(subverter.getSourceMethodName());
+  }
+
   private static class StubLoggerContext implements LoggerContext {
 
     private final String className;
@@ -93,48 +136,5 @@ public class JDKRecordSubverterTest {
 
       return -1;
     }
-  }
-
-  public void testRecordExposesScribeLevelAndRawMessage () {
-
-    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.WARN, new StubLoggerContext("com.example.Foo", "bar"), null, "raw %s message", "arg");
-    Record<LogRecord> record = subverter.getRecord();
-
-    Assert.assertEquals(record.getLevel(), Level.WARN);
-    Assert.assertEquals(record.getMessage(), "raw %s message");
-    Assert.assertEquals(record.getLoggerName(), "jdk.subverter.logger");
-  }
-
-  public void testNativeLogEntryCarriesTranslatedJDKLevel () {
-
-    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.WARN, null, null, "message");
-
-    Assert.assertEquals(subverter.getLevel(), java.util.logging.Level.WARNING);
-    Assert.assertSame(subverter.getRecord().getNativeLogEntry(), subverter);
-  }
-
-  public void testThrowableIsAttachedToRecord () {
-
-    Throwable throwable = new RuntimeException("boom");
-    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.ERROR, null, throwable, "oops");
-
-    Assert.assertSame(subverter.getRecord().getThrown(), throwable);
-    Assert.assertSame(subverter.getThrown(), throwable);
-  }
-
-  public void testSourceClassAndMethodComeFromContext () {
-
-    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.INFO, new StubLoggerContext("com.example.Source", "doThing"), null, "message");
-
-    Assert.assertEquals(subverter.getSourceClassName(), "com.example.Source");
-    Assert.assertEquals(subverter.getSourceMethodName(), "doThing");
-  }
-
-  public void testSourceClassAndMethodNullWhenNoContext () {
-
-    JDKRecordSubverter subverter = new JDKRecordSubverter("jdk.subverter.logger", Level.INFO, null, null, "message");
-
-    Assert.assertNull(subverter.getSourceClassName());
-    Assert.assertNull(subverter.getSourceMethodName());
   }
 }

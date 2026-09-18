@@ -48,6 +48,11 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class AbstractManagedDaoTest {
 
+  public enum Color {
+
+    RED, GREEN, BLUE
+  }
+
   public void testStringId () {
 
     Assert.assertEquals(new StringDao().getIdFromString("hello"), "hello");
@@ -136,11 +141,6 @@ public class AbstractManagedDaoTest {
 
       return (id == null) ? ((durable.getId() == null) ? 0 : -1) : ((durable.getId() == null) ? 1 : id.compareTo(durable.getId()));
     }
-  }
-
-  public enum Color {
-
-    RED, GREEN, BLUE
   }
 
   private static class ColorDurable extends IdDurable<Color> {

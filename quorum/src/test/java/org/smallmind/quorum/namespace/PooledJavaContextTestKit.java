@@ -47,6 +47,14 @@ import javax.naming.NamingException;
  */
 public final class PooledJavaContextTestKit {
 
+  /**
+   * The three programmable outcomes of a backing-context {@code lookup}.
+   */
+  public enum LookupBehavior {
+
+    SUCCEED, THROW_NAMING, THROW_COMMUNICATION
+  }
+
   private PooledJavaContextTestKit () {
 
   }
@@ -109,13 +117,5 @@ public final class PooledJavaContextTestKit {
           return super.lookup(name);
       }
     }
-  }
-
-  /**
-   * The three programmable outcomes of a backing-context {@code lookup}.
-   */
-  public enum LookupBehavior {
-
-    SUCCEED, THROW_NAMING, THROW_COMMUNICATION
   }
 }

@@ -61,6 +61,11 @@ public class ArgumentRectifierTest {
     void take (@Argument("text") String text);
   }
 
+  public interface AdapterSample {
+
+    void consume (@Argument("w") Widget widget);
+  }
+
   private Method method (String name, Class<?>... parameterTypes)
     throws NoSuchMethodException {
 
@@ -209,11 +214,6 @@ public class ArgumentRectifierTest {
 
     Assert.assertTrue(reconstructed[0] instanceof Widget);
     Assert.assertEquals(((Widget)reconstructed[0]).getLabel(), "hello");
-  }
-
-  public interface AdapterSample {
-
-    void consume (@Argument("w") Widget widget);
   }
 
   @Wire(adapter = WidgetAdapter.class)

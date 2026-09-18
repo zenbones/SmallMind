@@ -50,6 +50,18 @@ public class InstallSingularityMojoTest {
 
   private Path buildDirectory;
 
+  private static boolean hasSignatureMetadata (org.apache.maven.artifact.Artifact artifact) {
+
+    for (ArtifactMetadata metadata : artifact.getMetadataList()) {
+      if (metadata instanceof AscArtifactMetadata) {
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @BeforeMethod
   public void createBuildDirectory ()
     throws Exception {
@@ -85,18 +97,6 @@ public class InstallSingularityMojoTest {
     MojoTestSupport.setField(mojo, "artifactInstaller", installer);
 
     return mojo;
-  }
-
-  private static boolean hasSignatureMetadata (org.apache.maven.artifact.Artifact artifact) {
-
-    for (ArtifactMetadata metadata : artifact.getMetadataList()) {
-      if (metadata instanceof AscArtifactMetadata) {
-
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public void testInstallsTheSingularityJar ()

@@ -45,7 +45,6 @@ import org.smallmind.web.json.query.Sort;
 import org.smallmind.web.json.query.SortField;
 import org.smallmind.web.json.query.StringWhereOperand;
 import org.smallmind.web.json.query.Where;
-import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereOperator;
 import org.testng.Assert;

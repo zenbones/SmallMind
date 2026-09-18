@@ -41,28 +41,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class WebSocketExtensionInstallerTest {
 
-  public static class NamedExtension implements Extension {
-
-    private final String name;
-
-    public NamedExtension (String name) {
-
-      this.name = name;
-    }
-
-    @Override
-    public String getName () {
-
-      return name;
-    }
-
-    @Override
-    public List<Parameter> getParameters () {
-
-      return Collections.emptyList();
-    }
-  }
-
   public void testOptionTypeIsWebSocketExtension () {
 
     Assert.assertEquals(new WebSocketExtensionInstaller().getOptionType(), GrizzlyInstallerType.WEB_SOCKET_EXTENSION);
@@ -94,5 +72,27 @@ public class WebSocketExtensionInstallerTest {
     Assert.assertEquals(installer.getEndpointClass(), WebSocketExtensionInstallerTest.class);
     Assert.assertEquals(installer.getPath(), "/socket");
     Assert.assertEquals(installer.getContextPath(), "/context");
+  }
+
+  public static class NamedExtension implements Extension {
+
+    private final String name;
+
+    public NamedExtension (String name) {
+
+      this.name = name;
+    }
+
+    @Override
+    public String getName () {
+
+      return name;
+    }
+
+    @Override
+    public List<Parameter> getParameters () {
+
+      return Collections.emptyList();
+    }
   }
 }
