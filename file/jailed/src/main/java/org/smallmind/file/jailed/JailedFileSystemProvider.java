@@ -33,10 +33,16 @@
 package org.smallmind.file.jailed;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -45,6 +51,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -52,15 +59,23 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A {@link FileSystemProvider} that exposes a jailed, chroot-like view of an underlying
  * native file system via a {@link JailedPathTranslator}.
  *
- * <p>This provider manages a single {@link JailedFileSystem} instance. All file operations
- * are forwarded to the native file system's provider after translating the supplied jailed
- * paths into their native equivalents. Paths returned from listing operations are wrapped
- * back into jailed paths before being delivered to callers.
+ * <p>This provider manages a single {@link JailedFileSystem} instance. Every operation first
+ * verifies that the paths it was handed are {@link JailedPath} instances belonging to that file
+ * system, then forwards the operation to the native file system's provider using the translated
+ * native paths. Paths returned from listing operations are wrapped back into jailed paths before
+ * being delivered to callers, and a native path that can not be expressed inside the jail is
+ * refused rather than reported.
+ *
+ * <p>Link options are passed through to the translator, so an operation that does not follow
+ * the final symbolic link of a path - deleting it, moving it, or reading its target - is
+ * confined on the strength of its parent chain alone, while an operation that does follow it is
+ * confined on the strength of its real location.
  *
  * <p>Because only one file system instance exists per provider, calls to
  * {@link #newFileSystem(URI, Map)} always throw {@link FileSystemAlreadyExistsException}.
@@ -69,6 +84,16 @@ import java.util.Set;
  * @see JailedPathTranslator
  */
 public class JailedFileSystemProvider extends FileSystemProvider {
+
+  /**
+   * The empty set of link options, denoting an operation that follows symbolic links.
+   */
+  private static final LinkOption[] NO_LINK_OPTIONS = new LinkOption[0];
+
+  /**
+   * The set of link options denoting an operation that does not follow symbolic links.
+   */
+  private static final LinkOption[] NO_FOLLOW_LINK_OPTIONS = new LinkOption[] {LinkOption.NOFOLLOW_LINKS};
 
   /**
    * The single jailed file system instance managed by this provider.
@@ -152,6 +177,88 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   }
 
   /**
+   * Returns the provider of the backing native file system, to which every operation is
+   * forwarded.
+   *
+   * @return the native {@link FileSystemProvider}
+   */
+  private FileSystemProvider getNativeFileSystemProvider () {
+
+    return jailedPathTranslator.getNativeFileSystem().provider();
+  }
+
+  /**
+   * Translates a jailed path into its native equivalent after verifying that it belongs to this
+   * provider's file system.
+   *
+   * @param path    the path supplied by the caller
+   * @param options options indicating how symbolic links are handled by the operation being
+   *                performed
+   * @return the corresponding native {@link Path}
+   * @throws IOException               if an I/O error occurs during translation
+   * @throws SecurityException         if the path can not be confined to the jail
+   * @throws ProviderMismatchException if the path is not a {@link JailedPath} of this provider's
+   *                                   file system
+   */
+  private Path unwrapPath (Path path, LinkOption... options)
+    throws IOException {
+
+    if (!((path instanceof JailedPath) && jailedFileSystem.equals(path.getFileSystem()))) {
+      throw new ProviderMismatchException();
+    } else {
+
+      return jailedPathTranslator.unwrapPath(path, options);
+    }
+  }
+
+  /**
+   * Translates a native path into its jailed equivalent.
+   *
+   * @param nativePath the native path to wrap
+   * @return the corresponding jailed {@link Path}
+   * @throws IOException       if an I/O error occurs during translation
+   * @throws SecurityException if the native path lies outside the jail
+   */
+  private Path wrapPath (Path nativePath)
+    throws IOException {
+
+    return jailedPathTranslator.wrapPath(jailedFileSystem, nativePath);
+  }
+
+  /**
+   * Extracts the link options from an array of open or copy options.
+   *
+   * @param options the options supplied by the caller, which may be {@code null}
+   * @return {@link #NO_FOLLOW_LINK_OPTIONS} if the caller asked that links not be followed,
+   * otherwise {@link #NO_LINK_OPTIONS}
+   */
+  private LinkOption[] getLinkOptions (Object[] options) {
+
+    if (options != null) {
+      for (Object option : options) {
+        if (LinkOption.NOFOLLOW_LINKS.equals(option)) {
+
+          return NO_FOLLOW_LINK_OPTIONS;
+        }
+      }
+    }
+
+    return NO_LINK_OPTIONS;
+  }
+
+  /**
+   * Extracts the link options from a set of open options.
+   *
+   * @param options the options supplied by the caller, which may be {@code null}
+   * @return {@link #NO_FOLLOW_LINK_OPTIONS} if the caller asked that links not be followed,
+   * otherwise {@link #NO_LINK_OPTIONS}
+   */
+  private LinkOption[] getLinkOptions (Set<? extends OpenOption> options) {
+
+    return ((options != null) && options.contains(LinkOption.NOFOLLOW_LINKS)) ? NO_FOLLOW_LINK_OPTIONS : NO_LINK_OPTIONS;
+  }
+
+  /**
    * Always throws {@link FileSystemAlreadyExistsException} because this provider manages
    * exactly one pre-created {@link JailedFileSystem} instance.
    *
@@ -201,6 +308,38 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   }
 
   /**
+   * Translates {@code path} to its native equivalent and opens an input stream via the native
+   * provider.
+   *
+   * @param path    the jailed path of the file to open
+   * @param options options specifying how the file is opened
+   * @return a new {@link InputStream} on the underlying file
+   * @throws IOException if an I/O error occurs
+   */
+  @Override
+  public InputStream newInputStream (Path path, OpenOption... options)
+    throws IOException {
+
+    return getNativeFileSystemProvider().newInputStream(unwrapPath(path, getLinkOptions(options)), options);
+  }
+
+  /**
+   * Translates {@code path} to its native equivalent and opens an output stream via the native
+   * provider.
+   *
+   * @param path    the jailed path of the file to open
+   * @param options options specifying how the file is opened
+   * @return a new {@link OutputStream} on the underlying file
+   * @throws IOException if an I/O error occurs
+   */
+  @Override
+  public OutputStream newOutputStream (Path path, OpenOption... options)
+    throws IOException {
+
+    return getNativeFileSystemProvider().newOutputStream(unwrapPath(path, getLinkOptions(options)), options);
+  }
+
+  /**
    * Translates {@code path} to its native equivalent and opens a byte channel via the
    * native provider.
    *
@@ -214,7 +353,46 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().newByteChannel(jailedPathTranslator.unwrapPath(path), options, attrs);
+    return getNativeFileSystemProvider().newByteChannel(unwrapPath(path, getLinkOptions(options)), options, attrs);
+  }
+
+  /**
+   * Translates {@code path} to its native equivalent and opens a file channel via the native
+   * provider.
+   *
+   * @param path    the jailed path for which to open a file channel
+   * @param options options specifying how the file is opened
+   * @param attrs   optional attributes to set atomically on creation
+   * @return a new {@link FileChannel} on the underlying file
+   * @throws IOException                   if an I/O error occurs
+   * @throws UnsupportedOperationException if the native provider does not support file channels
+   */
+  @Override
+  public FileChannel newFileChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
+
+    return getNativeFileSystemProvider().newFileChannel(unwrapPath(path, getLinkOptions(options)), options, attrs);
+  }
+
+  /**
+   * Translates {@code path} to its native equivalent and opens an asynchronous file channel via
+   * the native provider.
+   *
+   * @param path     the jailed path for which to open a channel
+   * @param options  options specifying how the file is opened
+   * @param executor the thread pool to which tasks are submitted, or {@code null} for the
+   *                 default
+   * @param attrs    optional attributes to set atomically on creation
+   * @return a new {@link AsynchronousFileChannel} on the underlying file
+   * @throws IOException                   if an I/O error occurs
+   * @throws UnsupportedOperationException if the native provider does not support asynchronous
+   *                                       channels
+   */
+  @Override
+  public AsynchronousFileChannel newAsynchronousFileChannel (Path path, Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
+    throws IOException {
+
+    return getNativeFileSystemProvider().newAsynchronousFileChannel(unwrapPath(path, getLinkOptions(options)), options, executor, attrs);
   }
 
   /**
@@ -231,14 +409,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws IOException {
 
-    DirectoryStream<Path> nativeDirectoryStream = jailedPathTranslator.getNativeFileSystem().provider().newDirectoryStream(jailedPathTranslator.unwrapPath(dir), entry -> {
-
-      try {
-        return filter.accept(jailedPathTranslator.wrapPath(jailedFileSystem, entry));
-      } catch (IOException ioException) {
-        throw new RuntimeException(ioException);
-      }
-    });
+    DirectoryStream<Path> nativeDirectoryStream = getNativeFileSystemProvider().newDirectoryStream(unwrapPath(dir), entry -> filter.accept(wrapPath(entry)));
 
     return new DirectoryStream<>() {
 
@@ -259,9 +430,9 @@ public class JailedFileSystemProvider extends FileSystemProvider {
           public Path next () {
 
             try {
-              return jailedPathTranslator.wrapPath(jailedFileSystem, nativeIterator.next());
+              return wrapPath(nativeIterator.next());
             } catch (IOException ioException) {
-              throw new RuntimeException(ioException);
+              throw new DirectoryIteratorException(ioException);
             }
           }
         };
@@ -288,12 +459,87 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void createDirectory (Path dir, FileAttribute<?>... attrs)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().createDirectory(jailedPathTranslator.unwrapPath(dir), attrs);
+    getNativeFileSystemProvider().createDirectory(unwrapPath(dir, NO_FOLLOW_LINK_OPTIONS), attrs);
+  }
+
+  /**
+   * Creates a symbolic link inside the jail.
+   *
+   * <p>A relative target is taken to be relative to the directory holding the link, as it is on
+   * the native file systems, and is resolved there in order to confine it. The link is then
+   * created with a native target expressed relative to that same directory, which keeps the
+   * location of the jail out of the link and guarantees that the link resolves to the confined
+   * target rather than to whatever the untranslated text would have addressed.
+   *
+   * @param link   the jailed path of the link to create
+   * @param target the jailed path the link should resolve to
+   * @param attrs  optional attributes to set atomically on the new link
+   * @throws IOException                   if an I/O error occurs
+   * @throws SecurityException             if either path can not be confined to the jail
+   * @throws UnsupportedOperationException if the native provider does not support symbolic links
+   */
+  @Override
+  public void createSymbolicLink (Path link, Path target, FileAttribute<?>... attrs)
+    throws IOException {
+
+    Path nativeLink = unwrapPath(link, NO_FOLLOW_LINK_OPTIONS);
+    Path jailedLinkParent = link.toAbsolutePath().getParent();
+    Path nativeTarget = unwrapPath((jailedLinkParent == null) ? target : jailedLinkParent.resolve(target), NO_FOLLOW_LINK_OPTIONS);
+    Path nativeLinkParent = nativeLink.getParent();
+    Path nativeRelativeTarget;
+
+    if (nativeLinkParent == null) {
+      nativeRelativeTarget = nativeTarget;
+    } else if ((nativeRelativeTarget = nativeLinkParent.relativize(nativeTarget)).getNameCount() == 0) {
+      nativeRelativeTarget = jailedPathTranslator.getNativeFileSystem().getPath(".");
+    }
+
+    getNativeFileSystemProvider().createSymbolicLink(nativeLink, nativeRelativeTarget, attrs);
+  }
+
+  /**
+   * Creates a hard link inside the jail.
+   *
+   * @param link     the jailed path of the link to create
+   * @param existing the jailed path of the existing file to link to
+   * @throws IOException                   if an I/O error occurs
+   * @throws SecurityException             if either path can not be confined to the jail
+   * @throws UnsupportedOperationException if the native provider does not support hard links
+   */
+  @Override
+  public void createLink (Path link, Path existing)
+    throws IOException {
+
+    getNativeFileSystemProvider().createLink(unwrapPath(link, NO_FOLLOW_LINK_OPTIONS), unwrapPath(existing));
+  }
+
+  /**
+   * Reads the target of a symbolic link inside the jail.
+   *
+   * <p>The native target is translated back into jail space, which means that a link pointing
+   * out of the jail is refused with a {@link SecurityException} rather than having its target
+   * disclosed. As on the native file systems, a relative result is relative to the directory
+   * holding the link.
+   *
+   * @param link the jailed path of the link to read
+   * @return the target of the link, as a jailed {@link Path}
+   * @throws IOException                   if the path is not a link or an I/O error occurs
+   * @throws SecurityException             if the link points outside the jail
+   * @throws UnsupportedOperationException if the native provider does not support symbolic links
+   */
+  @Override
+  public Path readSymbolicLink (Path link)
+    throws IOException {
+
+    return wrapPath(getNativeFileSystemProvider().readSymbolicLink(unwrapPath(link, NO_FOLLOW_LINK_OPTIONS)));
   }
 
   /**
    * Translates {@code path} to its native equivalent and deletes the file or directory via
    * the native provider.
+   *
+   * <p>Deletion does not follow the final symbolic link of the path, so a link that points out
+   * of the jail may still be removed; only reading through it is refused.
    *
    * @param path the jailed path of the file or directory to delete
    * @throws IOException if an I/O error occurs
@@ -302,7 +548,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void delete (Path path)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().delete(jailedPathTranslator.unwrapPath(path));
+    getNativeFileSystemProvider().delete(unwrapPath(path, NO_FOLLOW_LINK_OPTIONS));
   }
 
   /**
@@ -318,7 +564,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void copy (Path source, Path target, CopyOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().copy(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
+    getNativeFileSystemProvider().copy(unwrapPath(source, getLinkOptions(options)), unwrapPath(target, NO_FOLLOW_LINK_OPTIONS), options);
   }
 
   /**
@@ -334,7 +580,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void move (Path source, Path target, CopyOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().move(jailedPathTranslator.unwrapPath(source), jailedPathTranslator.unwrapPath(target), options);
+    getNativeFileSystemProvider().move(unwrapPath(source, NO_FOLLOW_LINK_OPTIONS), unwrapPath(target, NO_FOLLOW_LINK_OPTIONS), options);
   }
 
   /**
@@ -350,7 +596,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public boolean isSameFile (Path path, Path path2)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().isSameFile(jailedPathTranslator.unwrapPath(path), jailedPathTranslator.unwrapPath(path2));
+    return getNativeFileSystemProvider().isSameFile(unwrapPath(path), unwrapPath(path2));
   }
 
   /**
@@ -365,7 +611,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public boolean isHidden (Path path)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().isHidden(jailedPathTranslator.unwrapPath(path));
+    return getNativeFileSystemProvider().isHidden(unwrapPath(path));
   }
 
   /**
@@ -380,7 +626,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public FileStore getFileStore (Path path)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().getFileStore(jailedPathTranslator.unwrapPath(path));
+    return getNativeFileSystemProvider().getFileStore(unwrapPath(path));
   }
 
   /**
@@ -394,26 +640,30 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void checkAccess (Path path, AccessMode... modes)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().checkAccess(jailedPathTranslator.unwrapPath(path), modes);
+    getNativeFileSystemProvider().checkAccess(unwrapPath(path), modes);
   }
 
   /**
    * Translates {@code path} to its native equivalent and retrieves a file attribute view.
-   * Any {@link IOException} from path translation is wrapped in a {@link RuntimeException}.
+   *
+   * <p>Because this method can not report a checked exception, an {@link IOException} raised
+   * while translating the path is wrapped in an {@link UncheckedIOException}.
    *
    * @param <V>     the type of the file attribute view
    * @param path    the jailed path for which to obtain the attribute view
    * @param type    the {@link Class} of the desired attribute view
    * @param options options indicating how symbolic links are handled
    * @return the file attribute view, or {@code null} if the view type is not available
+   * @throws UncheckedIOException if an I/O error occurs while translating the path
+   * @throws SecurityException    if the path can not be confined to the jail
    */
   @Override
   public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
     try {
-      return jailedPathTranslator.getNativeFileSystem().provider().getFileAttributeView(jailedPathTranslator.unwrapPath(path), type, options);
+      return getNativeFileSystemProvider().getFileAttributeView(unwrapPath(path, options), type, options);
     } catch (IOException ioException) {
-      throw new RuntimeException(ioException);
+      throw new UncheckedIOException(ioException);
     }
   }
 
@@ -432,7 +682,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), type, options);
+    return getNativeFileSystemProvider().readAttributes(unwrapPath(path, options), type, options);
   }
 
   /**
@@ -449,7 +699,7 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws IOException {
 
-    return jailedPathTranslator.getNativeFileSystem().provider().readAttributes(jailedPathTranslator.unwrapPath(path), attributes, options);
+    return getNativeFileSystemProvider().readAttributes(unwrapPath(path, options), attributes, options);
   }
 
   /**
@@ -466,6 +716,6 @@ public class JailedFileSystemProvider extends FileSystemProvider {
   public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws IOException {
 
-    jailedPathTranslator.getNativeFileSystem().provider().setAttribute(jailedPathTranslator.unwrapPath(path), attribute, value, options);
+    getNativeFileSystemProvider().setAttribute(unwrapPath(path, options), attribute, value, options);
   }
 }

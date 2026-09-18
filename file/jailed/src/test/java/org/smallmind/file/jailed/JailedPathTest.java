@@ -37,6 +37,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.ProviderMismatchException;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchService;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -257,27 +259,20 @@ public class JailedPathTest {
     Assert.assertSame(absolute.toAbsolutePath(), absolute);
   }
 
-  public void testToRealPath () {
-
-    Assert.assertEquals(path("/a/./b/../c").toRealPath().toString(), "/a/c");
-  }
-
   public void testToUri () {
 
     Assert.assertEquals(path("/a/b").toUri().toString(), "jailed:///a/b");
     Assert.assertEquals(path("a/b").toUri().toString(), "jailed:///a/b");
   }
 
-  @Test(expectedExceptions = ProviderMismatchException.class)
-  public void testStartsWithForeignPath () {
+  public void testStartsWithForeignPathIsFalse () {
 
-    path("/a").startsWith(Paths.get("/a"));
+    Assert.assertFalse(path("/a").startsWith(Paths.get("/a")));
   }
 
-  @Test(expectedExceptions = ProviderMismatchException.class)
-  public void testEndsWithForeignPath () {
+  public void testEndsWithForeignPathIsFalse () {
 
-    path("/a").endsWith(Paths.get("/a"));
+    Assert.assertFalse(path("/a").endsWith(Paths.get("/a")));
   }
 
   @Test(expectedExceptions = ProviderMismatchException.class)
@@ -298,10 +293,57 @@ public class JailedPathTest {
     path("/a").compareTo(Paths.get("/a"));
   }
 
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRegisterUnsupported ()
+  @Test(expectedExceptions = ProviderMismatchException.class)
+  public void testRegisterRejectsForeignWatchService ()
     throws Exception {
 
-    path("/a").register(null, new java.nio.file.WatchEvent.Kind<?>[0]);
+    try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
+      path("/a").register(watchService, new WatchEvent.Kind<?>[0]);
+    }
+  }
+
+  public void testNormalizeClampsParentSegmentsAtRoot () {
+
+    Assert.assertEquals(path("/..").normalize().toString(), "/");
+    Assert.assertEquals(path("/../..").normalize().toString(), "/");
+    Assert.assertEquals(path("/a/..").normalize().toString(), "/");
+    Assert.assertEquals(path("/a/../..").normalize().toString(), "/");
+    Assert.assertEquals(path("/../a").normalize().toString(), "/a");
+    Assert.assertEquals(path("/a/../../b/./c").normalize().toString(), "/b/c");
+  }
+
+  public void testNormalizeRetainsRelativeParentSegments () {
+
+    Assert.assertEquals(path("..").normalize().toString(), "..");
+    Assert.assertEquals(path("../a").normalize().toString(), "../a");
+    Assert.assertEquals(path("a/../..").normalize().toString(), "..");
+    Assert.assertEquals(path("a/../../b").normalize().toString(), "../b");
+    Assert.assertEquals(path("./a").normalize().toString(), "a");
+  }
+
+  public void testNormalizedRootRemainsAbsolute () {
+
+    Path normalized = path("/a/..").normalize();
+
+    Assert.assertTrue(normalized.isAbsolute());
+    Assert.assertEquals(normalized.getNameCount(), 0);
+    Assert.assertEquals(normalized.toString(), "/");
+  }
+
+  public void testRelativizeNormalizesFirst () {
+
+    Assert.assertEquals(path("/a/b/../c").relativize(path("/a/c/d")).toString(), "d");
+    Assert.assertEquals(path("/a/b/../..").relativize(path("/x")).toString(), "x");
+  }
+
+  public void testEqualsAndHashCode () {
+
+    Assert.assertTrue(path("/a/b").equals(path("/a/b")));
+    Assert.assertTrue(path("/a/b").equals(path("//a//b//")));
+    Assert.assertEquals(path("/a/b").hashCode(), path("//a//b//").hashCode());
+    Assert.assertFalse(path("/a/b").equals(path("a/b")));
+    Assert.assertFalse(path("/a/b").equals(path("/a/B")));
+    Assert.assertFalse(path("/ab/c").equals(path("/a/bc")));
+    Assert.assertFalse(path("/a/b").equals(Paths.get("/a/b")));
   }
 }

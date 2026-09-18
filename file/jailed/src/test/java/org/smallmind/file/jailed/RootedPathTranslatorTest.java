@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.jailed;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -62,7 +63,8 @@ public class RootedPathTranslatorTest {
     Assert.assertSame(translator.getNativeFileSystem(), FileSystems.getDefault());
   }
 
-  public void testWrapAbsoluteUnderRoot () {
+  public void testWrapAbsoluteUnderRoot ()
+    throws IOException {
 
     Path nativePath = rootPath.resolve("alpha").resolve("beta");
     Path jailed = translator.wrapPath(jailedFileSystem, nativePath);
@@ -72,30 +74,36 @@ public class RootedPathTranslatorTest {
     Assert.assertSame(jailed.getFileSystem(), jailedFileSystem);
   }
 
-  public void testWrapAbsoluteEqualToRoot () {
+  public void testWrapAbsoluteEqualToRoot ()
+    throws IOException {
 
     Path jailed = translator.wrapPath(jailedFileSystem, rootPath);
 
-    Assert.assertEquals(jailed.toString(), "");
+    Assert.assertEquals(jailed.toString(), "/");
+    Assert.assertTrue(jailed.isAbsolute());
   }
 
   @Test(expectedExceptions = SecurityException.class)
-  public void testWrapAbsoluteOutsideRoot () {
+  public void testWrapAbsoluteOutsideRoot ()
+    throws IOException {
 
     Path outside = rootPath.getParent();
 
     translator.wrapPath(jailedFileSystem, outside);
   }
 
-  public void testWrapRelativePath () {
+  public void testWrapRelativePathStaysRelative ()
+    throws IOException {
 
     Path relative = FileSystems.getDefault().getPath("foo", "bar");
     Path jailed = translator.wrapPath(jailedFileSystem, relative);
 
-    Assert.assertEquals(jailed.toString(), "/foo/bar");
+    Assert.assertEquals(jailed.toString(), "foo/bar");
+    Assert.assertFalse(jailed.isAbsolute());
   }
 
-  public void testUnwrapAbsoluteJailedPath () {
+  public void testUnwrapAbsoluteJailedPath ()
+    throws IOException {
 
     JailedPath jailed = new JailedPath(jailedFileSystem, "/alpha/beta");
     Path native_ = translator.unwrapPath(jailed);
@@ -104,7 +112,8 @@ public class RootedPathTranslatorTest {
     Assert.assertEquals(native_, rootPath.resolve("alpha").resolve("beta"));
   }
 
-  public void testUnwrapEmptyJailedPath () {
+  public void testUnwrapEmptyJailedPath ()
+    throws IOException {
 
     JailedPath jailed = new JailedPath(jailedFileSystem, "/");
     Path native_ = translator.unwrapPath(jailed);
@@ -112,7 +121,8 @@ public class RootedPathTranslatorTest {
     Assert.assertEquals(native_, rootPath);
   }
 
-  public void testRoundTrip () {
+  public void testRoundTrip ()
+    throws IOException {
 
     Path original = rootPath.resolve("dir").resolve("file.txt");
     Path jailed = translator.wrapPath(jailedFileSystem, original);

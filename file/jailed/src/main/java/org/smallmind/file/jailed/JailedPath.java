@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.jailed;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
@@ -50,12 +51,15 @@ import java.util.LinkedList;
  * pairs on construction to enable efficient, allocation-free segment operations. The separator
  * is always the forward slash ({@code '/'}).
  *
- * <p>All cross-path operations ({@link #startsWith}, {@link #endsWith}, {@link #resolve},
- * {@link #relativize}, {@link #compareTo}) require the other path to be a {@code JailedPath};
- * a {@link ProviderMismatchException} is thrown if it is not.
+ * <p>Jail space is closed: {@link #resolve} and {@link #relativize} require the other path to
+ * belong to the same {@link JailedFileSystem} and throw {@link ProviderMismatchException} if it
+ * does not, as does {@link #compareTo}, while {@link #startsWith} and {@link #endsWith} simply
+ * report {@code false} for a path of any other file system, as their contracts require.
  *
- * <p>{@link #register(WatchService, WatchEvent.Kind[], WatchEvent.Modifier...)} is not
- * supported and throws {@link UnsupportedOperationException}.
+ * <p>Name elements are compared character-for-character, so jail space is case-sensitive
+ * regardless of how the backing native file system compares names, and so
+ * {@link #equals(Object)} reports whether two paths are the same path rather than whether they
+ * locate the same file.
  *
  * @see JailedFileSystem
  * @see JailedFileSystemProvider
@@ -289,6 +293,10 @@ public class JailedPath implements Path {
       }
     }
 
+    if (hasRoot && translatedTextBuilder.isEmpty()) {
+      translatedTextBuilder.append(SEPARATOR);
+    }
+
     translatedText = new char[translatedTextBuilder.length()];
     translatedTextBuilder.getChars(0, translatedTextBuilder.length(), translatedText, 0);
 
@@ -424,15 +432,18 @@ public class JailedPath implements Path {
    * Returns {@code true} if this path begins with {@code other}, meaning the leading
    * segments are identical to all segments of {@code other} and their absoluteness agrees.
    *
-   * @param other the path to test against; must be a {@link JailedPath}
+   * <p>As required by {@link Path#startsWith(Path)}, a path belonging to any other file system
+   * simply does not start with this one, and so yields {@code false} rather than an exception.
+   *
+   * @param other the path to test against
    * @return {@code true} if this path starts with {@code other}
-   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public boolean startsWith (Path other) {
 
-    if (!(other instanceof JailedPath)) {
-      throw new ProviderMismatchException();
+    if (!((other instanceof JailedPath) && jailedFileSystem.equals(other.getFileSystem()))) {
+
+      return false;
     } else if ((hasRoot == other.isAbsolute()) && (other.getNameCount() <= segments.length)) {
 
       int segmentIndex = 0;
@@ -454,15 +465,18 @@ public class JailedPath implements Path {
    * Returns {@code true} if this path ends with {@code other}. If {@code other} is
    * absolute, this path must also be absolute with the same segments.
    *
-   * @param other the path to test against; must be a {@link JailedPath}
+   * <p>As required by {@link Path#endsWith(Path)}, a path belonging to any other file system
+   * simply does not end this one, and so yields {@code false} rather than an exception.
+   *
+   * @param other the path to test against
    * @return {@code true} if this path ends with {@code other}
-   * @throws ProviderMismatchException if {@code other} is not a {@link JailedPath}
    */
   @Override
   public boolean endsWith (Path other) {
 
-    if (!(other instanceof JailedPath)) {
-      throw new ProviderMismatchException();
+    if (!((other instanceof JailedPath) && jailedFileSystem.equals(other.getFileSystem()))) {
+
+      return false;
     } else if (((!other.isAbsolute()) || (hasRoot && (segments.length == other.getNameCount()))) && (segments.length >= other.getNameCount())) {
 
       int segmentIndex = segments.length - other.getNameCount();
@@ -484,7 +498,14 @@ public class JailedPath implements Path {
    * Returns a path with {@code "."} and {@code ".."} segments resolved. If no such segments
    * are present this path is returned unchanged.
    *
-   * @return a normalized path
+   * <p>A {@code ".."} segment cancels the name element that precedes it. Because an absolute
+   * jailed path is rooted at the jail itself, a {@code ".."} with nothing left to cancel is
+   * discarded, exactly as {@code "/.."} denotes {@code "/"}; this is what makes it impossible
+   * to express a location above the jail root. A relative path, whose base is not yet known,
+   * instead retains such a segment, so that {@code "a/../.."} normalizes to {@code ".."}.
+   *
+   * @return a normalized path, never {@code null} and never throwing for surplus {@code ".."}
+   * segments
    */
   @Override
   public Path normalize () {
@@ -492,10 +513,7 @@ public class JailedPath implements Path {
     boolean normalized = true;
 
     for (Segment segment : segments) {
-
-      int segmentLength = segment.length();
-
-      if (((segmentLength == 1) && (text[segment.getBegin()] == '.')) || ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.'))) {
+      if (isDot(segment) || isDotDot(segment)) {
         normalized = false;
         break;
       }
@@ -509,13 +527,12 @@ public class JailedPath implements Path {
       LinkedList<Segment> normalizedSegmentList = new LinkedList<>();
 
       for (Segment segment : segments) {
-
-        int segmentLength = segment.length();
-
-        if ((segmentLength != 1) || (text[segment.getBegin()] != '.')) {
-          if ((segmentLength == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.')) {
+        if (!isDot(segment)) {
+          if (!isDotDot(segment)) {
+            normalizedSegmentList.add(segment);
+          } else if ((!normalizedSegmentList.isEmpty()) && (!isDotDot(normalizedSegmentList.getLast()))) {
             normalizedSegmentList.removeLast();
-          } else {
+          } else if (!hasRoot) {
             normalizedSegmentList.add(segment);
           }
         }
@@ -523,6 +540,28 @@ public class JailedPath implements Path {
 
       return constructPath(text, hasRoot, normalizedSegmentList.toArray(new Segment[0]));
     }
+  }
+
+  /**
+   * Tests whether a segment of this path is the current-directory segment {@code "."}.
+   *
+   * @param segment the segment to test, which must index into this path's text
+   * @return {@code true} if the segment consists of a single period
+   */
+  private boolean isDot (Segment segment) {
+
+    return (segment.length() == 1) && (text[segment.getBegin()] == '.');
+  }
+
+  /**
+   * Tests whether a segment of this path is the parent-directory segment {@code ".."}.
+   *
+   * @param segment the segment to test, which must index into this path's text
+   * @return {@code true} if the segment consists of exactly two periods
+   */
+  private boolean isDotDot (Segment segment) {
+
+    return (segment.length() == 2) && (text[segment.getBegin()] == '.') && (text[segment.getBegin() + 1] == '.');
   }
 
   /**
@@ -536,7 +575,7 @@ public class JailedPath implements Path {
   @Override
   public Path resolve (Path other) {
 
-    if (!(other instanceof JailedPath)) {
+    if (!((other instanceof JailedPath) && jailedFileSystem.equals(other.getFileSystem()))) {
       throw new ProviderMismatchException();
     } else if (other.isAbsolute()) {
 
@@ -562,7 +601,7 @@ public class JailedPath implements Path {
   @Override
   public Path relativize (Path other) {
 
-    if (!(other instanceof JailedPath)) {
+    if (!((other instanceof JailedPath) && jailedFileSystem.equals(other.getFileSystem()))) {
       throw new ProviderMismatchException();
     } else if (hasRoot != other.isAbsolute()) {
       throw new IllegalArgumentException("The paths specified must be either both absolute or both relative");
@@ -572,11 +611,12 @@ public class JailedPath implements Path {
       JailedPath otherNormalizedPath = (JailedPath)other.normalize();
       LinkedList<Segment> redactedSegmentList = new LinkedList<>();
       StringBuilder redactedTextBuilder = new StringBuilder();
+      int normalizedNameCount = normalizedPath.getNameCount();
       char[] redactedText;
 
-      for (int segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+      for (int segmentIndex = 0; segmentIndex < normalizedNameCount; segmentIndex++) {
         if ((segmentIndex >= otherNormalizedPath.getNameCount()) || (!normalizedPath.sameSegment(otherNormalizedPath.getText(), otherNormalizedPath.getSegments()[segmentIndex], segmentIndex))) {
-          for (int count = 0; count < segments.length - segmentIndex; count++) {
+          for (int count = 0; count < normalizedNameCount - segmentIndex; count++) {
             if (redactedTextBuilder.length() > 0) {
               redactedSegmentList.add(new Segment(redactedTextBuilder.length() + 1, redactedTextBuilder.length() + 3));
               redactedTextBuilder.append(SEPARATOR);
@@ -593,7 +633,7 @@ public class JailedPath implements Path {
         }
       }
 
-      return constructPath(otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), segments.length, otherNormalizedPath.getNameCount()));
+      return constructPath(otherNormalizedPath.getText(), false, Arrays.copyOfRange(otherNormalizedPath.getSegments(), normalizedNameCount, otherNormalizedPath.getNameCount()));
     }
   }
 
@@ -616,16 +656,27 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Returns a normalized, absolute path. This implementation does not perform I/O or
-   * symbolic-link resolution.
+   * Returns the real path of an existing file, resolved on the backing native file system and
+   * translated back into jail space.
    *
-   * @param options link options (currently unused)
-   * @return a normalized, absolute path equivalent to this path
+   * <p>The path is translated to its native equivalent, resolved there - which eliminates
+   * {@code .} and {@code ..} elements and, unless {@link LinkOption#NOFOLLOW_LINKS} is given,
+   * follows symbolic links - and the result is wrapped back into the jail. A real path that
+   * falls outside the jail is refused rather than reported, so a link pointing out of the jail
+   * can not be used to learn about the file system beyond it.
+   *
+   * @param options options indicating how symbolic links are handled
+   * @return the absolute, resolved jailed {@link Path} of the file
+   * @throws IOException       if the file does not exist or can not be resolved
+   * @throws SecurityException if the resolved location lies outside the jail
    */
   @Override
-  public Path toRealPath (LinkOption... options) {
+  public Path toRealPath (LinkOption... options)
+    throws IOException {
 
-    return normalize().toAbsolutePath();
+    JailedPathTranslator jailedPathTranslator = jailedFileSystem.getJailedPathTranslator();
+
+    return jailedPathTranslator.wrapPath(jailedFileSystem, jailedPathTranslator.unwrapPath(this, options).toRealPath(options));
   }
 
   /**
@@ -640,7 +691,7 @@ public class JailedPath implements Path {
   @Override
   public int compareTo (Path other) {
 
-    if (!(other instanceof JailedPath)) {
+    if (!((other instanceof JailedPath) && jailedFileSystem.equals(other.getFileSystem()))) {
       throw new ProviderMismatchException();
     } else if (hasRoot != other.isAbsolute()) {
 
@@ -719,18 +770,32 @@ public class JailedPath implements Path {
   }
 
   /**
-   * Not supported by jailed paths.
+   * Registers this path with a watch service obtained from
+   * {@link JailedFileSystem#newWatchService()}.
    *
-   * @param watcher   the watch service to register with (unused)
-   * @param events    the events to watch for (unused)
-   * @param modifiers optional modifiers (unused)
-   * @return never returns normally
-   * @throws UnsupportedOperationException always
+   * <p>The registration is performed against the native equivalent of this path, and the
+   * returned key reports this jailed path as its {@link WatchKey#watchable()} and delivers
+   * events whose context lies in jail space.
+   *
+   * @param watcher   the watch service to register with, which must have been created by the
+   *                  jailed file system that owns this path
+   * @param events    the events to watch for
+   * @param modifiers optional modifiers qualifying how the path is registered
+   * @return a {@link WatchKey} representing the registration of this path
+   * @throws IOException               if an I/O error occurs
+   * @throws ProviderMismatchException if {@code watcher} was not created by this file system
+   * @throws SecurityException         if this path can not be confined to the jail
    */
   @Override
-  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
+  public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+    throws IOException {
 
-    throw new UnsupportedOperationException();
+    if (!(watcher instanceof JailedWatchService)) {
+      throw new ProviderMismatchException();
+    } else {
+
+      return ((JailedWatchService)watcher).register(this, events, modifiers);
+    }
   }
 
   /**
@@ -742,6 +807,68 @@ public class JailedPath implements Path {
   public String toString () {
 
     return String.valueOf(text);
+  }
+
+  /**
+   * Returns a hash code consistent with {@link #equals(Object)}, derived from the owning file
+   * system, whether the path is absolute, and the characters of each name element.
+   *
+   * @return a hash code for this path
+   */
+  @Override
+  public int hashCode () {
+
+    int hashCode = (31 * jailedFileSystem.hashCode()) + (hasRoot ? 1 : 0);
+
+    for (Segment segment : segments) {
+      for (int charIndex = segment.getBegin(); charIndex < segment.getEnd(); charIndex++) {
+        hashCode = (31 * hashCode) + text[charIndex];
+      }
+
+      hashCode = 31 * hashCode;
+    }
+
+    return hashCode;
+  }
+
+  /**
+   * Tests this path for equality with another object.
+   *
+   * <p>Two jailed paths are equal when they belong to the same {@link JailedFileSystem}, agree
+   * on whether they are absolute, and have the same name elements. Comparison is
+   * character-for-character, so jail space is case-sensitive no matter how the backing native
+   * file system compares names; equality therefore says nothing about whether two paths locate
+   * the same file, which is what {@link java.nio.file.Files#isSameFile(Path, Path)} answers.
+   *
+   * <p>Redundant separators are not significant, since they are discarded when the path is
+   * parsed - {@code "//a//b"} equals {@code "/a/b"}.
+   *
+   * @param obj the object to compare with this path
+   * @return {@code true} if {@code obj} is an equal jailed path
+   */
+  @Override
+  public boolean equals (Object obj) {
+
+    if (this == obj) {
+
+      return true;
+    } else if (!((obj instanceof JailedPath) && jailedFileSystem.equals(((JailedPath)obj).getFileSystem()))) {
+
+      return false;
+    } else if ((hasRoot != ((JailedPath)obj).isAbsolute()) || (segments.length != ((JailedPath)obj).getNameCount())) {
+
+      return false;
+    } else {
+
+      for (int segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+        if (!sameSegment(((JailedPath)obj).getText(), ((JailedPath)obj).getSegments()[segmentIndex], segmentIndex)) {
+
+          return false;
+        }
+      }
+
+      return true;
+    }
   }
 
   /**

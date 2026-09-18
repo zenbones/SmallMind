@@ -32,7 +32,9 @@
  */
 package org.smallmind.file.jailed;
 
+import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 /**
@@ -44,36 +46,79 @@ import java.nio.file.Path;
  * appropriate when the root directory is known statically and does not need to vary per
  * caller or per request.
  *
+ * <p>The supplied root is made absolute and normalized at construction time, so that the
+ * boundary against which every translation is checked is itself free of {@code .} and
+ * {@code ..} elements.
+ *
  * @see AbstractJailedPathTranslator
  * @see ContextSensitiveRootedPathTranslator
  */
 public class RootedPathTranslator extends AbstractJailedPathTranslator {
 
   /**
-   * The native root path that defines the jail boundary.
+   * The file system that owns the root path, and therefore backs the jail.
+   */
+  private final FileSystem nativeFileSystem;
+
+  /**
+   * The absolute, normalized native root path that defines the jail boundary.
    */
   private final Path rootPath;
 
   /**
-   * Constructs a translator with a fixed jail root.
+   * Constructs a translator with a fixed jail root, enforcing {@link JailPolicy#STRICT}.
    *
    * @param rootPath the native {@link Path} that serves as the root of the jail;
    *                 all jailed paths are resolved relative to this directory
+   * @throws IllegalArgumentException if {@code rootPath} is {@code null} or can not be made
+   *                                  absolute
    */
   public RootedPathTranslator (Path rootPath) {
 
-    this.rootPath = rootPath;
+    this(rootPath, JailPolicy.STRICT);
   }
 
   /**
-   * Returns the file system that owns the fixed root path supplied at construction time.
+   * Constructs a translator with a fixed jail root and an explicit enforcement policy.
+   *
+   * @param rootPath   the native {@link Path} that serves as the root of the jail;
+   *                   all jailed paths are resolved relative to this directory
+   * @param jailPolicy the {@link JailPolicy} to enforce, or {@code null} for
+   *                   {@link JailPolicy#STRICT}
+   * @throws IllegalArgumentException if {@code rootPath} is {@code null} or can not be made
+   *                                  absolute
+   */
+  public RootedPathTranslator (Path rootPath, JailPolicy jailPolicy) {
+
+    super(jailPolicy);
+
+    if (rootPath == null) {
+      throw new IllegalArgumentException("The root path must not be null");
+    }
+
+    this.nativeFileSystem = rootPath.getFileSystem();
+    this.rootPath = normalizeRootPath(rootPath);
+  }
+
+  /**
+   * Returns the file system that owns the root path supplied at construction time.
    *
    * @return the {@link FileSystem} of the configured root path
    */
   @Override
   public FileSystem getNativeFileSystem () {
 
-    return rootPath.getFileSystem();
+    return nativeFileSystem;
+  }
+
+  /**
+   * Returns the absolute, normalized jail root.
+   *
+   * @return the native {@link Path} that defines the jail boundary
+   */
+  public Path getRootPath () {
+
+    return rootPath;
   }
 
   /**
@@ -83,11 +128,13 @@ public class RootedPathTranslator extends AbstractJailedPathTranslator {
    * @param jailedFileSystem the {@link JailedFileSystem} for which the jailed path is created
    * @param nativePath       the native path to translate into the jail
    * @return the corresponding jailed {@link Path}
-   * @throws SecurityException if {@code nativePath} is absolute and does not start with
-   *                           the configured root path
+   * @throws IOException       if an I/O error occurs while resolving real paths
+   * @throws SecurityException if {@code nativePath} is absolute and does not lie within the
+   *                           configured root
    */
   @Override
-  public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath) {
+  public Path wrapPath (JailedFileSystem jailedFileSystem, Path nativePath)
+    throws IOException {
 
     return wrapPath(rootPath, jailedFileSystem, nativePath);
   }
@@ -97,11 +144,16 @@ public class RootedPathTranslator extends AbstractJailedPathTranslator {
    * configured at construction time.
    *
    * @param jailedPath the jailed {@link Path} to translate back to the native file system
+   * @param options    options indicating how symbolic links are handled by the operation that
+   *                   the translated path will be used for
    * @return the corresponding native {@link Path} resolved against the configured root
+   * @throws IOException       if an I/O error occurs while resolving real paths
+   * @throws SecurityException if {@code jailedPath} can not be confined to the jail
    */
   @Override
-  public Path unwrapPath (Path jailedPath) {
+  public Path unwrapPath (Path jailedPath, LinkOption... options)
+    throws IOException {
 
-    return unwrapPath(rootPath, jailedPath);
+    return unwrapPath(rootPath, jailedPath, options);
   }
 }

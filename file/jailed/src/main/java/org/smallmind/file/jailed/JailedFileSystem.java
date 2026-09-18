@@ -42,6 +42,7 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * A {@link FileSystem} implementation that presents a jailed, chroot-like view of an
@@ -51,10 +52,16 @@ import java.util.Set;
  * are strictly confined to the subtree defined by the {@link JailedPathTranslator} held by
  * the owning {@link JailedFileSystemProvider}. The path separator is always {@code '/'}.
  *
- * <p>Lifecycle operations ({@link #isOpen()}, {@link #isReadOnly()}) and metadata queries
- * ({@link #getFileStores()}, {@link #supportedFileAttributeViews()},
- * {@link #getUserPrincipalLookupService()}, {@link #newWatchService()}) are delegated to
- * the backing native file system obtained via the translator.
+ * <p>Everything a caller can observe through this file system is expressed in terms of the jail
+ * rather than the host: {@link #getRootDirectories()} reports the single jail root,
+ * {@link #getFileStores()} reports only the store that holds the jail, and
+ * {@link #getPathMatcher(String)} matches jailed paths with jailed separator and case semantics,
+ * so a pattern means the same thing whether the jail is backed by Windows or by Linux.
+ *
+ * <p>Lifecycle and metadata queries that have no jailed equivalent ({@link #isOpen()},
+ * {@link #isReadOnly()}, {@link #supportedFileAttributeViews()},
+ * {@link #getUserPrincipalLookupService()}) are delegated to the backing native file system
+ * obtained via the translator.
  *
  * @see JailedFileSystemProvider
  * @see JailedPathTranslator
@@ -65,6 +72,16 @@ public class JailedFileSystem extends FileSystem {
    * The string representation of the jailed path separator character.
    */
   private static final String SEPARATOR = Character.toString(JailedPath.SEPARATOR);
+
+  /**
+   * The name of the glob syntax accepted by {@link #getPathMatcher(String)}.
+   */
+  private static final String GLOB_SYNTAX = "glob";
+
+  /**
+   * The name of the regular expression syntax accepted by {@link #getPathMatcher(String)}.
+   */
+  private static final String REGEX_SYNTAX = "regex";
 
   /**
    * The provider that created and manages this file system instance.
@@ -103,10 +120,31 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
+   * Returns the translator that maps between this jail and the backing native file system.
+   *
+   * @return the {@link JailedPathTranslator} held by the owning provider; never {@code null}
+   */
+  public JailedPathTranslator getJailedPathTranslator () {
+
+    return jailedFileSystemProvider.getJailedPathTranslator();
+  }
+
+  /**
+   * Returns the native file system that backs this jail.
+   *
+   * @return the native {@link FileSystem} obtained from the translator
+   */
+  private FileSystem getNativeFileSystem () {
+
+    return getJailedPathTranslator().getNativeFileSystem();
+  }
+
+  /**
    * Closes this file system.
    *
    * <p>This implementation is a no-op because the jailed file system does not own the
-   * underlying native file system; its lifecycle is managed externally.
+   * underlying native file system; its lifecycle is managed externally, and closing it here
+   * would close it for every other holder as well.
    */
   @Override
   public void close () {
@@ -121,7 +159,7 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public boolean isOpen () {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isOpen();
+    return getNativeFileSystem().isOpen();
   }
 
   /**
@@ -132,7 +170,7 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public boolean isReadOnly () {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().isReadOnly();
+    return getNativeFileSystem().isReadOnly();
   }
 
   /**
@@ -158,14 +196,25 @@ public class JailedFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the file stores accessible through the backing native file system.
+   * Returns the file store that holds the jail.
    *
-   * @return the file stores of the backing native file system
+   * <p>Only the store containing the jail root is reported, because the remaining stores of the
+   * host are not reachable from inside the jail and their names would disclose its layout. As
+   * {@link FileSystem#getFileStores()} permits, a store that can not be accessed is omitted, so
+   * the result is empty when the jail root can not be resolved.
+   *
+   * @return an {@link Iterable} containing at most the one {@link FileStore} that holds the jail
    */
   @Override
   public Iterable<FileStore> getFileStores () {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getFileStores();
+    try {
+
+      return List.of(jailedFileSystemProvider.getFileStore(rootPath));
+    } catch (IOException | SecurityException exception) {
+
+      return List.of();
+    }
   }
 
   /**
@@ -176,12 +225,15 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public Set<String> supportedFileAttributeViews () {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().supportedFileAttributeViews();
+    return getNativeFileSystem().supportedFileAttributeViews();
   }
 
   /**
    * Constructs a {@link JailedPath} by joining {@code first} and the optional {@code more}
    * components with the jail separator.
+   *
+   * <p>Empty components contribute nothing, so that joining never introduces an empty name
+   * element.
    *
    * @param first the first path component
    * @param more  optional additional path components to append
@@ -190,23 +242,63 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public Path getPath (String first, String... more) {
 
-    return new JailedPath(this, ((more == null) || (more.length == 0)) ? first : first + getSeparator() + String.join(getSeparator(), more));
+    if ((more == null) || (more.length == 0)) {
+
+      return new JailedPath(this, first);
+    } else {
+
+      StringBuilder pathBuilder = new StringBuilder(first);
+
+      for (String component : more) {
+        if ((component != null) && (!component.isEmpty())) {
+          if (!pathBuilder.isEmpty()) {
+            pathBuilder.append(JailedPath.SEPARATOR);
+          }
+
+          pathBuilder.append(component);
+        }
+      }
+
+      return new JailedPath(this, pathBuilder.toString());
+    }
   }
 
   /**
    * Returns a {@link PathMatcher} for the given syntax-and-pattern string.
    *
-   * <p>Delegates to the backing native file system, which determines the supported
-   * syntaxes (typically {@code "glob"} and {@code "regex"}).
+   * <p>The {@code "glob"} and {@code "regex"} syntaxes are supported, and both are interpreted
+   * in jail space - the separator is the forward slash and matching is case-sensitive -
+   * regardless of the separator and case semantics of the backing native file system. Matching
+   * is performed against the string form of the path.
    *
    * @param syntaxAndPattern a string of the form {@code "<syntax>:<pattern>"}
-   * @return a {@link PathMatcher} that matches paths against the given pattern
-   * @throws IllegalArgumentException if the syntax is not recognized
+   * @return a {@link PathMatcher} that matches jailed paths against the given pattern
+   * @throws IllegalArgumentException      if the parameter does not take the required form
+   * @throws UnsupportedOperationException if the syntax is not {@code "glob"} or {@code "regex"}
+   * @throws java.util.regex.PatternSyntaxException if the pattern is invalid
    */
   @Override
   public PathMatcher getPathMatcher (String syntaxAndPattern) {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getPathMatcher(syntaxAndPattern);
+    int colonPos;
+
+    if ((colonPos = syntaxAndPattern.indexOf(':')) < 1) {
+      throw new IllegalArgumentException("The parameter must be of the form '<syntax>:<pattern>'");
+    } else {
+
+      String syntax = syntaxAndPattern.substring(0, colonPos);
+      String pattern = syntaxAndPattern.substring(colonPos + 1);
+
+      if (GLOB_SYNTAX.equalsIgnoreCase(syntax)) {
+
+        return new JailedPathMatcher(JailedGlob.toRegexPattern(pattern));
+      } else if (REGEX_SYNTAX.equalsIgnoreCase(syntax)) {
+
+        return new JailedPathMatcher(Pattern.compile(pattern));
+      } else {
+        throw new UnsupportedOperationException("Unsupported syntax(=" + syntax + ")");
+      }
+    }
   }
 
   /**
@@ -219,13 +311,17 @@ public class JailedFileSystem extends FileSystem {
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService () {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().getUserPrincipalLookupService();
+    return getNativeFileSystem().getUserPrincipalLookupService();
   }
 
   /**
-   * Creates a new {@link WatchService} by delegating to the backing native file system.
+   * Creates a new {@link WatchService} that watches jailed paths.
    *
-   * @return a new {@link WatchService}
+   * <p>The returned service wraps the watch service of the backing native file system, so that
+   * registering a jailed path translates and confines it exactly as any other jailed operation
+   * would, and the keys and events handed back are expressed in jail space.
+   *
+   * @return a new {@link JailedWatchService}
    * @throws IOException                   if an I/O error occurs creating the watch service
    * @throws UnsupportedOperationException if the backing file system does not support
    *                                       watching file-tree changes
@@ -234,6 +330,6 @@ public class JailedFileSystem extends FileSystem {
   public WatchService newWatchService ()
     throws IOException {
 
-    return jailedFileSystemProvider.getJailedPathTranslator().getNativeFileSystem().newWatchService();
+    return new JailedWatchService(this, getNativeFileSystem().newWatchService());
   }
 }

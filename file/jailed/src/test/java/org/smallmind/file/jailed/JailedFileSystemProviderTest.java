@@ -34,13 +34,17 @@ package org.smallmind.file.jailed;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.FileStore;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -230,5 +234,109 @@ public class JailedFileSystemProviderTest {
     Files.writeString(jailedPath("/b.txt"), "b", StandardCharsets.UTF_8);
 
     Assert.assertFalse(Files.isSameFile(jailedPath("/a.txt"), jailedPath("/b.txt")));
+  }
+
+  public void testToRealPathResolvesWithinJail ()
+    throws IOException {
+
+    Files.createDirectory(jailedPath("/a"));
+    Files.createDirectory(jailedPath("/a/b"));
+
+    Path realPath = jailedPath("/a/./b/../b").toRealPath();
+
+    Assert.assertTrue(realPath instanceof JailedPath);
+    Assert.assertEquals(realPath.toString(), "/a/b");
+  }
+
+  @Test(expectedExceptions = java.nio.file.NoSuchFileException.class)
+  public void testToRealPathRequiresAnExistingFile ()
+    throws IOException {
+
+    jailedPath("/missing").toRealPath();
+  }
+
+  public void testFileChannelRoundTripsThroughNative ()
+    throws IOException {
+
+    Files.writeString(jailedPath("/channel.txt"), "channelled", StandardCharsets.UTF_8);
+
+    try (FileChannel fileChannel = FileChannel.open(jailedPath("/channel.txt"), StandardOpenOption.READ)) {
+
+      ByteBuffer byteBuffer = ByteBuffer.allocate((int)fileChannel.size());
+
+      while (byteBuffer.hasRemaining() && (fileChannel.read(byteBuffer) >= 0)) {
+        // fill the buffer
+      }
+
+      Assert.assertEquals(new String(byteBuffer.array(), StandardCharsets.UTF_8), "channelled");
+    }
+  }
+
+  public void testFileStoresReportOnlyTheStoreHoldingTheJail ()
+    throws IOException {
+
+    int storeCount = 0;
+
+    for (FileStore fileStore : jailedFileSystem.getFileStores()) {
+      Assert.assertEquals(fileStore, Files.getFileStore(nativeRoot));
+      storeCount++;
+    }
+
+    Assert.assertEquals(storeCount, 1);
+  }
+
+  public void testGetPathJoinsComponentsAndSkipsEmptyOnes () {
+
+    Assert.assertEquals(jailedFileSystem.getPath("/a", "b", "c").toString(), "/a/b/c");
+    Assert.assertEquals(jailedFileSystem.getPath("/a", "", "b").toString(), "/a/b");
+    Assert.assertEquals(jailedFileSystem.getPath("", "a").toString(), "a");
+    Assert.assertEquals(jailedFileSystem.getPath("/").toString(), "/");
+  }
+
+  public void testRootDirectoryIsTheJailRoot () {
+
+    for (Path rootDirectory : jailedFileSystem.getRootDirectories()) {
+      Assert.assertEquals(rootDirectory.toString(), "/");
+      Assert.assertTrue(rootDirectory.isAbsolute());
+      Assert.assertTrue(Files.isDirectory(rootDirectory));
+    }
+  }
+
+  public void testCreateDirectoriesWalksTheJailedParentChain ()
+    throws IOException {
+
+    Files.createDirectories(jailedPath("/deep/deeper/deepest"));
+
+    Assert.assertTrue(Files.isDirectory(nativeRoot.resolve("deep").resolve("deeper").resolve("deepest")));
+  }
+
+  public void testWalkVisitsTheJailedTree ()
+    throws IOException {
+
+    Files.createDirectories(jailedPath("/tree/branch"));
+    Files.writeString(jailedPath("/tree/branch/leaf.txt"), "leaf", StandardCharsets.UTF_8);
+    Files.writeString(jailedPath("/tree/trunk.txt"), "trunk", StandardCharsets.UTF_8);
+
+    Set<String> visited = new HashSet<>();
+
+    try (Stream<Path> walk = Files.walk(jailedPath("/tree"))) {
+      walk.forEach(path -> visited.add(path.toString()));
+    }
+
+    Assert.assertEquals(visited, Set.of("/tree", "/tree/branch", "/tree/branch/leaf.txt", "/tree/trunk.txt"));
+  }
+
+  public void testJailedPathsWorkAsMapAndSetMembers ()
+    throws IOException {
+
+    Files.writeString(jailedPath("/keyed.txt"), "keyed", StandardCharsets.UTF_8);
+
+    Set<Path> pathSet = new HashSet<>();
+
+    pathSet.add(jailedPath("/keyed.txt"));
+
+    Assert.assertTrue(pathSet.contains(jailedPath("/keyed.txt")));
+    Assert.assertTrue(pathSet.contains(jailedPath("//keyed.txt")));
+    Assert.assertFalse(pathSet.contains(jailedPath("/other.txt")));
   }
 }

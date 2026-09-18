@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.jailed;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -85,7 +86,8 @@ public class ContextSensitiveRootedPathTranslatorTest {
     Assert.assertSame(translator.getNativeFileSystem(), FileSystems.getDefault());
   }
 
-  public void testWrapAndUnwrapUseContextRoot () {
+  public void testWrapAndUnwrapUseContextRoot ()
+    throws IOException {
 
     pushRoot(nativeRoot.toString());
 
@@ -99,32 +101,37 @@ public class ContextSensitiveRootedPathTranslatorTest {
   }
 
   @Test(expectedExceptions = SecurityException.class)
-  public void testWrapWithoutContextRejected () {
+  public void testWrapWithoutContextRejected ()
+    throws IOException {
 
     translator.wrapPath(jailedFileSystem, nativeRoot.resolve("alpha"));
   }
 
   @Test(expectedExceptions = SecurityException.class)
-  public void testWrapWithNullRootInContextRejected () {
+  public void testWrapWithNullRootInContextRejected ()
+    throws IOException {
 
     pushRoot(null);
     translator.wrapPath(jailedFileSystem, nativeRoot.resolve("alpha"));
   }
 
   @Test(expectedExceptions = SecurityException.class)
-  public void testUnwrapWithoutContextRejected () {
+  public void testUnwrapWithoutContextRejected ()
+    throws IOException {
 
     translator.unwrapPath(new JailedPath(jailedFileSystem, "/alpha"));
   }
 
   @Test(expectedExceptions = SecurityException.class)
-  public void testWrapAbsoluteOutsideContextRootRejected () {
+  public void testWrapAbsoluteOutsideContextRootRejected ()
+    throws IOException {
 
     pushRoot(nativeRoot.toString());
     translator.wrapPath(jailedFileSystem, nativeRoot.getParent());
   }
 
-  public void testContextRootChangeReflectedBetweenCalls () {
+  public void testContextRootChangeReflectedBetweenCalls ()
+    throws IOException {
 
     Path nestedRoot = nativeRoot.resolve("nested");
 
