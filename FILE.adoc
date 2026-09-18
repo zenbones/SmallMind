@@ -106,7 +106,12 @@ that a non-standard provider is in play.
 | … a library author building a user-facing upload surface that must not
   escape a tenant directory
 | <<jailed-quick-start,Jailed quick start>> →
-  <<translator-strategies>> → <<context-sensitive-jails>>.
+  <<translator-strategies>> → <<jail-policy,Jail policy>> →
+  <<context-sensitive-jails>>.
+
+| … someone deciding how hard the jail boundary needs to be, and what a
+  symbolic link inside it can do
+| <<jail-policy,Jail policy>> → <<limitations-and-known-issues>>.
 
 | … someone trying to understand why a call is throwing
   `ProviderMismatchException`, `SecurityException`, or
@@ -124,7 +129,8 @@ that a non-standard provider is in play.
 
 | `file-ephemeral`
 | `EphemeralFileSystemProvider`, `EphemeralFileSystem`, `EphemeralFileStore`,
-  heap tree, watch service
+  heap tree, symbolic and hard links, seekable and file channels, enforced
+  capacity, watch service
 | You need a `FileSystem` whose storage is RAM and whose paths can either
   stand alone (`ephemeral:///…`) or masquerade as the JVM default
   (`file:///…`) with transparent pass-through for anything outside the
@@ -132,7 +138,8 @@ that a non-standard provider is in play.
 
 | `file-jailed`
 | `JailedFileSystemProvider`, `JailedFileSystem`, `JailedPath`,
-  `JailedPathTranslator` strategy tree
+  `JailedPathTranslator` strategy tree, `JailPolicy` link confinement,
+  jail-space glob matching and watch service
 | You need a `FileSystem` whose `/` is actually a subtree of some other
   native file system, and every path operation must be guarded from
   escaping that subtree.
@@ -164,40 +171,76 @@ Scheme mirroring::
     "ours".
 
 Native delegation::
-    In the ephemeral provider, any path that does *not* start with one
-    of the configured roots is wrapped in a `NativePath` adapter and all
-    operations on it are forwarded, unchanged, to the native provider.
-    This is what makes the ephemeral provider safe to install as the JVM
-    default: real files under `C:\Users\…` or `/usr/…` are not
-    intercepted; only paths that match the configured overlay roots are
-    served from the heap.
+    In the ephemeral provider, any path the configuration does not claim
+    is wrapped in a `NativePath` adapter and all operations on it are
+    forwarded, unchanged, to the native provider. This is what makes the
+    ephemeral provider safe to install as the JVM default: real files
+    under `C:\Users\…` or `/usr/…` are not intercepted; only paths that
+    match the configured overlay roots are served from the heap.
++
+Three rules decide the question, in order. A path rooted at `/` is
+claimed when it lies at or beneath a configured root, matched on whole
+segments. A path that is absolute in the *native* namespace is never
+claimed, whatever the roots say — on Windows a drive-qualified or UNC
+path does not begin with `/`, so without this rule it would look
+relative and be swallowed by the heap. Anything genuinely relative
+belongs to whichever file system owns the
+<<ephemeral-configuration,working directory>>.
 
 Path translation::
     In the jailed provider, every operation goes through a
-    `JailedPathTranslator.unwrapPath(Path)` call that converts the
-    jailed absolute path into a native path rooted at the jail's
-    configured root directory. Listing operations wrap the returned
-    native paths back into `JailedPath` instances via `wrapPath(...)`,
-    which throws `SecurityException` if the native path does not start
-    with the configured root.
+    `JailedPathTranslator.unwrapPath(Path, LinkOption...)` call that
+    converts the jailed absolute path into a native path rooted at the
+    jail's configured root directory. Translation normalizes the jailed
+    path with `..` clamped at the jail root, validates every name
+    element as a single legal name on the native file system, and
+    verifies that the assembled native path lies beneath the root.
+    Listing operations wrap native paths back into `JailedPath`
+    instances via `wrapPath(...)`. Any failure to confine a path raises
+    `SecurityException`.
+
+Jail policy::
+    Structural confinement alone can be defeated by a symbolic link
+    that lives inside the jail and points out of it, because the native
+    file system will follow it. `JailPolicy.STRICT`, the default, closes
+    that by additionally resolving the real location of the translated
+    path and comparing it against the real path of the jail root, so an
+    escaping link is refused rather than followed. `JailPolicy.LENIENT`
+    performs no I/O and accepts the risk. See <<jail-policy>>.
 
 Heap tree::
     Internal name for the in-memory data structure that backs the
-    ephemeral file store: a tree of `DirectoryNode` and `FileNode`
-    objects, each descending from a single anonymous root. File content
-    lives in a `ByteArrayIOBuffer` (from `smallmind-nutsnbolts`) and is
-    exposed to clients through `EphemeralSeekableByteChannel`.
+    ephemeral file store: a tree of `DirectoryNode`, `FileNode`, and
+    `LinkNode` objects, each descending from a single anonymous root.
+    File content lives in a `HeapFileContent`, a list of fixed-size
+    segments addressed by absolute position, and is exposed to clients
+    through `EphemeralSeekableByteChannel` and `EphemeralFileChannel`.
++
+The content object holds no cursor of its own. That is the point: a
+channel owns only its own position, so two channels on one file advance
+independently, a single channel can be opened for reading *and* writing,
+and concurrent appends resolve the end of the file and write in one
+atomic step instead of overwriting one another.
+
+Space accounting::
+    Every growth of file content is reserved against a running total
+    through the `HeapSpaceGovernor` the store implements, and a write
+    that would exceed the configured capacity fails rather than
+    succeeding and driving the reported free space negative. Because the
+    reservation happens while a content lock is held, the counter is
+    lock-free and never reaches back for the tree lock.
 
 Heap event / watch translation::
     Mutations to the heap tree raise `HeapEvent` objects whose path is
-    the *changed* entry. Each event bubbles up the heap-node parent
-    chain. An `EphemeralHeapEventListener` is installed per watched
-    directory and carries that directory's path. When bubbling reaches
-    the listener, it forwards the event to the
-    `EphemeralWatchService`, which computes the `WatchEvent`
-    `context()` as `watchedPath.relativize(changedPath)` so that the
-    standard NIO `WatchService` contract is honoured end-to-end,
-    entirely in heap.
+    the *changed* entry. The store fires each event on the directory
+    that *contains* the changed entry, and on that directory only — a
+    NIO watch registration covers the entries of one directory and says
+    nothing about its descendants, so events deliberately do not climb
+    the tree. An `EphemeralHeapEventListener` is installed per watched
+    directory and forwards to the `EphemeralWatchService`, which
+    computes the `WatchEvent` `context()` as
+    `watchedPath.relativize(changedPath)` so that the standard NIO
+    `WatchService` contract is honoured end-to-end, entirely in heap.
 
 [[installation]]
 == Installation
@@ -224,9 +267,12 @@ Use whichever one you need; depending on both is allowed but unusual.
 === Runtime prerequisites
 
 `file-ephemeral`::
-    Requires `smallmind-nutsnbolts` (for `ByteArrayIOBuffer`,
-    `ByteArrayIOStream`, `SingleItemIterable`, `SnowflakeId`, and
-    `UnknownSwitchCaseException`). Everything else is JDK-only.
+    Requires `smallmind-nutsnbolts` (for `SingleItemIterable`,
+    `SnowflakeId`, and `UnknownSwitchCaseException`). Everything else is
+    JDK-only. File content is held in `HeapFileContent` rather than in
+    nutsnbolts' `ByteArrayIOBuffer`, whose single shared stream position
+    is the wrong shape for a file that several channels may hold open at
+    once.
 
 `file-jailed`::
     Requires `smallmind-nutsnbolts` (for `ContextFactory` / `Context`).
@@ -248,14 +294,25 @@ META-INF/services/java.nio.file.spi.FileSystemProvider
 so simply placing `file-jailed` on the classpath registers the `jailed:`
 scheme with `FileSystems.newFileSystem(URI, Map)`.
 
-The ephemeral artifact *does not* ship a service entry. Installation is
-controlled explicitly: the provider is instantiated either directly by
-the application or by the JVM via
+The ephemeral artifact ships one too:
+
+[source,text]
+----
+META-INF/services/java.nio.file.spi.FileSystemProvider
+  org.smallmind.file.ephemeral.EphemeralFileSystemProvider
+----
+
+so placing `file-ephemeral` on the classpath makes
+`FileSystems.getFileSystem(URI.create("ephemeral:///"))` resolve without
+the application constructing a provider itself. The service loader uses
+the no-arg constructor, so the registered instance carries the
+`ephemeral:` scheme and performs no native delegation.
+
+Replacing the platform `file:` provider is a separate and deliberate
+act, requested through
 `-Djava.nio.file.spi.DefaultFileSystemProvider=…` (see
-<<ephemeral-provider-installation>>). This is deliberate — the ephemeral
-provider's whole point, when installed as a default, is to *replace* the
-platform `file:` provider, which is a decision an application must make
-on purpose.
+<<ephemeral-provider-installation>>) — a decision an application must
+make on purpose, and one that constrains the configuration.
 
 [[ephemeral]]
 == The Ephemeral File System
@@ -278,25 +335,43 @@ the configuration does not claim.
   `SecureDirectoryStream` contracts against the heap, so
   `Files.newByteChannel`, `Files.newDirectoryStream`, and
   `Files.walkFileTree` all work.
-* Implements `WatchService` against heap-bubbled events
+* Implements `FileChannel` for ephemeral paths, so `FileChannel.open`
+  works as well as `Files.newByteChannel`, including the positional
+  `read` / `write` overloads and `transferTo` / `transferFrom`.
+* Supports symbolic links and hard links: `createSymbolicLink`,
+  `readSymbolicLink`, and `createLink`, with `NOFOLLOW_LINKS` honoured
+  throughout and link cycles reported rather than recursed. A hard link
+  is a second `FileNode` over one `HeapFileContent`, so both names
+  report the same `fileKey`, `Files.isSameFile` agrees, and the content
+  outlives the deletion of either name.
+* Enforces the configured capacity. A write past it fails with an
+  `IOException`, and `getUsableSpace()` / `getUnallocatedSpace()` report
+  what is genuinely left.
+* Resolves relative paths against a configurable working directory, so a
+  relative path is served from the heap rather than silently reaching
+  the real disk.
+* Implements `WatchService` against heap events
   (`HeapEvent` → `WatchEvent.Kind` translation), so
-  `Files.newWatchService()` produces a working in-memory watcher.
+  `Files.newWatchService()` produces a working in-memory watcher with
+  the same per-directory, non-recursive scope a platform watcher has.
 * Exposes a `clear()` method on both `EphemeralFileSystem` and
   `EphemeralFileStore` that drops every node, useful for test teardown.
 
 === What it intentionally does not do
 
-* No symbolic link support. `EphemeralBasicFileAttributes.isSymbolicLink`
-  always returns `false`; `toRealPath` is equivalent to
-  `normalize().toAbsolutePath()`.
 * No POSIX permission model. The only `FileAttribute` accepted by
   `createDirectory` and `newByteChannel` is `"posix:permissions"`, and
   even that is validated only by name — the value is not stored or
-  enforced.
-* No `FileChannel` / `AsynchronousFileChannel` support for ephemeral
-  paths. Those methods exist only to delegate to the native provider
-  when given a `NativePath`; ephemeral paths throw
-  `UnsupportedOperationException`.
+  enforced. Only the `basic` attribute view is advertised.
+* No `AsynchronousFileChannel` support for ephemeral paths; that method
+  exists only to delegate to the native provider when given a
+  `NativePath`.
+* No memory mapping. `EphemeralFileChannel.map(...)` throws
+  `UnsupportedOperationException`, because content is held as a list of
+  segments and no `MappedByteBuffer` can be produced over it.
+* No file locking across processes. `EphemeralFileChannel.lock(...)`
+  returns a valid `FileLock`, but the heap is private to one JVM so
+  there is nothing to arbitrate with.
 * No `UserPrincipalLookupService` backing store. Lookups return fresh
   `EphemeralUserPrincipal` / `EphemeralGroupPrincipal` instances on
   every call.
@@ -324,11 +399,14 @@ the configuration does not claim.
   `EphemeralPath` and a `NativePath` wrapper.
 
 | `EphemeralFileSystemConfiguration`
-| Immutable configuration carrier: capacity, block size, and roots.
-  The no-arg constructor reads system properties; an explicit
-  constructor accepts the three values directly. `isOurs(first, more)`
-  performs a character-by-character match of the assembled path
-  against each configured root.
+| Immutable configuration carrier: capacity, block size, roots, and
+  working directory. The no-arg constructor reads system properties; an
+  explicit constructor accepts the values directly and
+  `withWorkingDirectory(String)` derives a variant.
+  `isOurs(first, more)` matches the assembled path against each root on
+  whole path segments, and never claims a path that is absolute in the
+  native namespace. `checkFitToBeDefaultFileSystem()` refuses a
+  configuration that could not serve as the JVM default.
 
 | `EphemeralFileStore`
 | The heap file store. Implements every mutating and attribute-reading
@@ -367,9 +445,18 @@ the configuration does not claim.
   operations after `close()` throw `ClosedDirectoryStreamException`.
 
 | `EphemeralSeekableByteChannel`
-| Channel backed by the `ByteArrayIOBuffer` of a `FileNode`. Single-mode
-  (read xor write) and `synchronized`. Honours `DELETE_ON_CLOSE` by
-  removing the file from the store upon `close()`.
+| Channel over the `HeapFileContent` of a `FileNode`, holding only its
+  own position. Supports read, write, and read-and-write together.
+  Honours `DELETE_ON_CLOSE` by removing the file from the store upon
+  `close()`, at most once and without complaint if the file is already
+  gone.
+
+| `EphemeralFileChannel`
+| `FileChannel` over the same content, for callers that reach for
+  `FileChannel.open` rather than `Files.newByteChannel`. Adds the
+  positional `read` / `write` overloads, `transferTo` / `transferFrom`,
+  and `force` (a no-op). `map(...)` throws
+  `UnsupportedOperationException`.
 
 | `EphemeralUserPrincipal` / `EphemeralGroupPrincipal` /
   `EphemeralUserPrincipalLookupService`
@@ -396,26 +483,46 @@ internal data structures:
 | `HeapNode`
 | Abstract base for tree nodes. Holds the parent reference, the node
   name, the `EphemeralBasicFileAttributes`, and a lazy listener list.
-  `bubble(HeapEvent)` delivers the event to locally registered
-  listeners and propagates to the parent.
+  Parent and name are mutable, so `relink(DirectoryNode, String)` can
+  move a node in place — which is what lets a directory move carry its
+  whole subtree at no cost. `fire(HeapEvent)` notifies the listeners on
+  *this* node and no others.
 
 | `DirectoryNode`
-| Map of child names to child nodes. `size()` is the *recursive* sum
-  of child sizes (no cache). All child-mutating methods are
-  `synchronized` on this node.
+| Map of child names to child nodes. `size()` is nominal — one block —
+  as a real file system reports the size of the directory entry rather
+  than of its contents. All child-mutating methods are `synchronized`
+  on this node.
 
 | `FileNode`
-| Leaf node holding a `ByteArrayIOBuffer` for content. `size()` returns
-  the buffer's current limit bookmark.
+| Leaf node referring to a `HeapFileContent`. Two file nodes may share
+  one content instance, which is how a hard link is represented.
+
+| `LinkNode`
+| Leaf node holding the raw, unresolved target of a symbolic link. The
+  target may be relative, and may not exist — a dangling link is legal,
+  so resolution happens at lookup time.
+
+| `HeapFileContent`
+| Segmented byte storage addressed by absolute position, with no cursor
+  of its own. Grows on demand, zero-fills a gap left by a write past
+  the end, zeroes a truncated tail so later growth cannot expose stale
+  bytes, and counts the names referring to it so a hard-linked file
+  survives the deletion of one of them.
+
+| `HeapSpaceGovernor`
+| The accounting contract `HeapFileContent` calls before it grows and
+  after it shrinks. `EphemeralFileStore` implements it, which is what
+  turns the configured capacity into an enforced one.
 
 | `HeapNodeType`
-| Enum with two constants, `FILE` and `DIRECTORY`.
+| Enum with three constants, `FILE`, `DIRECTORY`, and `SYMBOLIC_LINK`.
 
 | `HeapEvent`
 | `EventObject` carrying an `EphemeralPath` and a `HeapEventType`.
 
 | `HeapEventListener`
-| Callback interface invoked during `HeapNode.bubble(...)`.
+| Callback interface invoked during `HeapNode.fire(...)`.
 
 | `HeapEventType`
 | Enum whose three constants (`CREATE`, `DELETE`, `MODIFY`) each wrap
@@ -432,21 +539,25 @@ heap events back to NIO's `WatchService`:
 | Class | Role
 
 | `EphemeralWatchService`
-| `WatchService` implementation. Keeps a path → `List<EphemeralWatchKey>`
-  map and a `LinkedBlockingQueue` of signalled keys. The first key
-  registered against a path causes a fresh `EphemeralHeapEventListener`
-  bound to that watched path to be installed on the path's directory
-  node; the last key cancelled removes it. `fire(watchedPath, kind,
-  changedPath)` relativizes the changed path against the watched path
-  to produce the `WatchEvent` context. Polls in 500&nbsp;ms increments
-  when `timeout >= 500&nbsp;ms` so that closure mid-wait is detected
-  promptly.
+| `WatchService` implementation. Keeps a path → `EphemeralWatchKey` map
+  and a `LinkedBlockingQueue` of signalled keys. Registering a path
+  installs an `EphemeralHeapEventListener` on that directory node;
+  registering it *again* returns the key it already has with its event
+  kinds replaced, as `Watchable.register` specifies. `fire(watchedPath,
+  kind, changedPath)` relativizes the changed path against the watched
+  path to produce the `WatchEvent` context, and treats an event about
+  the watched directory itself as its deletion, cancelling the key.
+  `close()` enqueues a sentinel so a thread blocked in `take()` wakes at
+  once rather than waiting out a polling interval.
 
 | `EphemeralWatchKey`
-| `WatchKey` implementation with an internal
-  `LinkedBlockingQueue<WatchEvent<?>>` of pending events. Tracks
-  `valid` and `signalled` flags; `reset()` re-queues the key with the
-  service if new events arrived while it was being processed.
+| `WatchKey` implementation with a *bounded*
+  `LinkedBlockingQueue<WatchEvent<?>>` of pending events (512). Once it
+  is full a single `OVERFLOW` event replaces what could not be kept, so
+  a consumer that has fallen behind is told it has rather than growing
+  the queue without limit. Tracks `valid` and `signalled` flags;
+  `reset()` re-queues the key with the service if new events arrived
+  while it was being processed.
 
 | `EphemeralWatchEvent`
 | `WatchEvent<?>` record: kind, count, context.
@@ -454,28 +565,43 @@ heap events back to NIO's `WatchService`:
 | `EphemeralHeapEventListener`
 | Bridge from `HeapEvent` to `EphemeralWatchService.fire(...)`. Each
   instance is created with the path it was registered on; on every
-  bubbled event it forwards its own watched path, the heap event's
-  type translated to a `WatchEvent.Kind`, and the heap event's
-  changed path so the service can produce the relative context.
+  event it forwards its own watched path, the heap event's type
+  translated to a `WatchEvent.Kind`, and the heap event's changed path
+  so the service can produce the relative context.
 |===
 
 [[ephemeral-configuration]]
 === Configuration
 
-`EphemeralFileSystemConfiguration` has two constructors:
+`EphemeralFileSystemConfiguration` is immutable, and has two
+constructors plus one derivation:
 
 [source,java]
 ----
 // reads system properties; falls back to defaults
 public EphemeralFileSystemConfiguration ();
 
-// explicit
+// explicit; the working directory becomes the first root
 public EphemeralFileSystemConfiguration (long capacity,
                                          int blockSize,
                                          String... roots);
+
+// a copy with a different working directory
+public EphemeralFileSystemConfiguration withWorkingDirectory (String workingDirectory);
 ----
 
-The three knobs are:
+[NOTE]
+====
+The working directory is set through `withWorkingDirectory` rather than
+through a fourth constructor parameter on purpose. A
+`(long, int, String, String...)` overload would compete with the varargs
+constructor during overload resolution, and a four-argument call such as
+`new EphemeralFileSystemConfiguration(2048L, 512, "/opt", "/var")` would
+bind to it — silently reinterpreting the first root as the working
+directory.
+====
+
+The four knobs are:
 
 [cols="1,1,3",options="header"]
 |===
@@ -483,34 +609,46 @@ The three knobs are:
 
 | `capacity`
 | `Long.MAX_VALUE`
-| Reported through `EphemeralFileStore.getUsableSpace()` and
-  `getTotalSpace()`. `getUnallocatedSpace()` returns `capacity -
-  rootNode.size()`, so capacity is a *logical* ceiling — actual heap
-  consumption is driven by the `ByteArrayIOBuffer` contents of each
-  `FileNode`.
+| An *enforced* ceiling on the bytes of file content the store will
+  hold. `getTotalSpace()` reports it; `getUsableSpace()` and
+  `getUnallocatedSpace()` report it less the bytes currently allocated,
+  and never go negative. A write that would exceed it fails with an
+  `IOException` naming the store and what remains. Directories and links
+  are not charged against it.
 
 | `blockSize`
 | `1024`
-| Passed to the `ByteArrayIOBuffer` constructor when a new `FileNode`
-  is allocated. Acts as the initial buffer capacity; the buffer grows
-  past this figure as writes proceed.
+| The size of each segment `HeapFileContent` allocates as a file grows,
+  and the nominal size a directory entry reports.
 
 | `roots`
 | `{"/"}`
-| The set of prefixes that route a path through the heap. A root must
-  start with `"/"`. Paths that do not match any root fall through to
-  the captured native provider.
+| The set of subtrees served from the heap. A root must start with
+  `"/"`, and is matched on whole path segments, so `/overlay` claims
+  `/overlay` and `/overlay/a` but not `/overlayed`. Anything not claimed
+  falls through to the captured native provider.
+
+| `workingDirectory`
+| the first root
+| The absolute directory relative paths resolve against, the ephemeral
+  counterpart of `user.dir`. A relative path is served from the heap
+  when this directory is claimed by a root, and delegated otherwise. It
+  is created in the heap at construction, together with
+  `java.io.tmpdir` when a root claims that too, so that relative I/O
+  and `Files.createTempFile` work against a fresh file system instead
+  of failing on a missing directory.
 |===
 
 The no-arg constructor reads:
 
 [source,text]
 ----
-org.smallmind.file.ephemeral.configuration.capacity  = <long>
-org.smallmind.file.ephemeral.configuration.blockSize = <int>
-org.smallmind.file.ephemeral.configuration.roots     = <comma-separated
-                                                         list, optionally
-                                                         bracketed>
+org.smallmind.file.ephemeral.configuration.capacity         = <long>
+org.smallmind.file.ephemeral.configuration.blockSize        = <int>
+org.smallmind.file.ephemeral.configuration.roots            = <comma-separated
+                                                                list, optionally
+                                                                bracketed>
+org.smallmind.file.ephemeral.configuration.workingDirectory = <absolute path>
 ----
 
 For `roots`, both `"/opt/tmp,/var/scratch"` and `"[/opt/tmp, /var/scratch]"`
@@ -525,12 +663,43 @@ To replace the platform `file:` provider:
 [source,text]
 ----
 -Djava.nio.file.spi.DefaultFileSystemProvider=org.smallmind.file.ephemeral.EphemeralFileSystemProvider
+-Dorg.smallmind.file.ephemeral.configuration.roots=/opt/overlay,/var/scratch
 
 # plus any of:
 -Dorg.smallmind.file.ephemeral.configuration.capacity=1073741824
 -Dorg.smallmind.file.ephemeral.configuration.blockSize=4096
--Dorg.smallmind.file.ephemeral.configuration.roots=/opt/overlay,/var/scratch
+-Dorg.smallmind.file.ephemeral.configuration.workingDirectory=/opt/overlay
 ----
+
+[IMPORTANT]
+====
+An explicit `roots` setting is *required* here, and the default of `"/"`
+is refused:
+
+[source,text]
+----
+java.lang.IllegalArgumentException: A root of / claims every path, so it
+cannot serve as the default file system, which must leave the platform
+able to read its own configuration. Set
+org.smallmind.file.ephemeral.configuration.roots to an overlay root,
+such as /overlay.
+----
+
+The reason is that the platform reads its own configuration through
+`java.nio.file.Files` while it is starting up — `java.security` above
+all, by way of `SecureRandom` — and an empty heap has nothing to give
+it. Left to happen, the result is an
+`InternalError: Error loading java.security file` thrown from deep
+inside the security provider machinery, which says nothing about the
+cause. A configuration that claims `java.home` is refused for the same
+reason, and with the same rule on every platform.
+
+The check runs only when this class is actually named in
+`java.nio.file.spi.DefaultFileSystemProvider`. Constructing
+`new EphemeralFileSystemProvider(FileSystems.getDefault().provider())`
+by hand mirrors the `file:` scheme without answering for every path in
+the JVM, so it stays available for tests whatever the roots are.
+====
 
 When the JVM bootstraps the default file system through this property,
 it calls the `EphemeralFileSystemProvider(FileSystemProvider)`
@@ -547,6 +716,16 @@ From the application's perspective, `Paths.get("/opt/overlay/foo")` is
 an `EphemeralPath` while `Paths.get("/etc/hosts")` is a `NativePath`
 wrapping the platform provider's path — both returned by the same
 `FileSystems.getDefault().getPath(...)` call.
+
+The same holds on Windows, where a native absolute path carries a drive
+or UNC prefix instead of a leading separator:
+`Paths.get("C:\\Program Files\\…")` is a `NativePath`, while
+`Paths.get("/opt/overlay/foo")` is an `EphemeralPath`. The heap
+namespace is rooted at `/` on both platforms, which means test code
+addresses it identically everywhere; the corollary is that an ephemeral
+path is not a valid *native* path string on Windows, so
+`new java.io.File(ephemeralPath.toString())` will not find it —
+`java.io.File` bypasses NIO altogether.
 
 [NOTE]
 ====
@@ -685,15 +864,16 @@ public void watch (Path root)
     the watched path and attaches it to the directory's `DirectoryNode`.
     The first registration per path attaches the listener; the last
     cancel detaches it.
-<2> Any mutation whose `HeapEvent` bubbles through the watched directory
-    fires the listener, which forwards the event to the service together
-    with the changed path. The service translates the event type to a
+<2> Any mutation to an *entry of* the watched directory fires the
+    listener, which forwards the event to the service together with the
+    changed path. A change deeper in the tree does not, exactly as with
+    a platform watch service. The service translates the event type to a
     `WatchEvent.Kind` (`ENTRY_CREATE`, `ENTRY_DELETE`, `ENTRY_MODIFY`)
     and dispatches to the registered keys with
     `watchedPath.relativize(changedPath)` as the context.
-<3> `take()` polls the service's ready queue in 500&nbsp;ms increments
-    so that a mid-wait `close()` raises `ClosedWatchServiceException`
-    promptly rather than hanging.
+<3> `take()` blocks on the service's ready queue. A mid-wait `close()`
+    enqueues a sentinel, so the waiting thread raises
+    `ClosedWatchServiceException` at once rather than hanging.
 <4> Forget to call `reset()` and the key will never be signalled again.
     If events arrived while the key was being processed, `reset()`
     requeues it immediately so it is returned by the next `take()`.
@@ -752,17 +932,35 @@ provider translates them to
   `RootedPathTranslator` (fixed native root) and
   `ContextSensitiveRootedPathTranslator` (native root read from a
   thread-bound `RootedFileSystemContext`).
+* Clamps `..` at the jail root during normalization, so no amount of
+  parent traversal walks out of the jail, and resolves a relative jailed
+  path against the jail root.
+* Validates every name element as a single legal name on the native
+  file system. A NUL character is always refused; when the native file
+  system is backslash-separated, so are embedded separators, drive
+  qualifiers, trailing dots or spaces, and the reserved device names
+  (`CON`, `PRN`, `AUX`, `NUL`, `CONIN$`, `CONOUT$`, and `COM0`–`COM9` /
+  `LPT0`–`LPT9`).
+* Refuses to follow a symbolic link out of the jail under
+  `JailPolicy.STRICT`, the default. See <<jail-policy>>.
+* Confines watch registrations. `JailedFileSystem.newWatchService()`
+  returns a `JailedWatchService` whose keys and events are expressed in
+  jail space, and `JailedPath.register(...)` works.
+* Matches globs in jail space. `getPathMatcher("glob:…")` and
+  `("regex:…")` return a `JailedPathMatcher` that treats `/` as the
+  separator regardless of the native platform.
+* Creates a symbolic link with its target expressed *relative to the
+  link's own directory*, which keeps the jail's real location out of the
+  link and makes the link resolve to the confined target.
 
 === What it intentionally does not do
 
-* No native-to-jail path re-entry guard beyond `startsWith(rootPath)`.
-  Symbolic links on the underlying native file system that point outside
-  the root are *not* detected; the caller is responsible for choosing a
-  root whose contents do not include escape-capable links.
-* No watch service translation. `JailedFileSystem.newWatchService()`
-  delegates straight to the native file system, which returns native
-  `WatchKey` instances whose `Watchable` is a native path. Callers that
-  need jail-scoped watch events must translate on the way out.
+* No defence against a link substituted *between* the check and the
+  operation it guards. `JailPolicy.STRICT` verifies before it forwards,
+  so a link swapped in during that window would not be caught — a race
+  inherent to confining by path rather than by file descriptor, and one
+  only the operating system can close. What the policy does guarantee is
+  that a link already in place is not followed out of the jail.
 * No in-jail file store abstraction. `FileStore` queries delegate to
   the native provider.
 * No jail-level quota, audit, or interception hooks. The translator
@@ -781,25 +979,49 @@ provider translates them to
   with the translator and forwards to the native provider.
 
 | `JailedFileSystem`
-| `FileSystem` implementation. Delegates lifecycle, attribute views,
-  `PathMatcher`, and `WatchService` queries to the translator's native
-  file system. Its `getPath(String, String...)` returns a `JailedPath`.
+| `FileSystem` implementation. Delegates lifecycle and attribute views
+  to the translator's native file system, but answers `getPathMatcher`
+  itself through `JailedGlob` / `JailedPathMatcher` and `newWatchService`
+  with a `JailedWatchService`, so both work in jail space. Its
+  `getPath(String, String...)` returns a `JailedPath`.
 
 | `JailedPath`
 | Custom `Path` implementation. Stores the raw text as `char[]` and
   parses `Segment` boundaries once at construction to make navigation
   allocation-free. Compatible only with other `JailedPath` instances —
   cross-path operations with a foreign `Path` throw
-  `ProviderMismatchException`. `register(WatchService, ...)` is
-  unsupported.
+  `ProviderMismatchException`. `register(...)` requires a
+  `JailedWatchService`.
 
 | `JailedPathTranslator`
-| Strategy interface: `getNativeFileSystem`, `wrapPath`, `unwrapPath`.
+| Strategy interface: `getNativeFileSystem`, `getJailPolicy`,
+  `wrapPath`, and `unwrapPath(Path, LinkOption...)`. Both translation
+  directions may perform I/O and so declare `IOException`.
+
+| `JailPolicy`
+| Enum choosing how rigorously the boundary is enforced: `STRICT` (the
+  default) also verifies the real, link-resolved location of a path;
+  `LENIENT` applies structural confinement only and performs no I/O.
+  See <<jail-policy>>.
 
 | `AbstractJailedPathTranslator`
 | Base class providing reusable `wrapPath(rootPath, ...)` and
-  `unwrapPath(rootPath, ...)` helpers that perform the segment-level
-  translation. Subclasses supply the root.
+  `unwrapPath(rootPath, ...)` helpers. Normalizes with `..` clamped at
+  the root, validates each name element through `asNativeName(String)`,
+  verifies containment, and — under `STRICT` — confines the real path as
+  well, caching the resolved jail root per root path.
+
+| `JailedGlob` / `JailedPathMatcher`
+| Glob-to-regex translator and the compiled-regex-backed `PathMatcher`
+  behind `JailedFileSystem.getPathMatcher(...)`. The jail separator is
+  always `/`, so a pattern means the same thing whatever the native
+  platform.
+
+| `JailedWatchService` / `JailedWatchKey` / `JailedWatchEvent`
+| Watch-service adapters over the native watch service. A registration
+  translates and confines its path exactly as any other operation does,
+  and the key, its `watchable()`, and every event context come back
+  expressed in jail space.
 
 | `RootedPathTranslator`
 | Fixed-root translator. The native root is passed at construction and
@@ -825,11 +1047,15 @@ provider translates them to
 The translator interface is the policy boundary for the jail. The
 module ships two implementations:
 
+Both implementations take an optional `JailPolicy`; omitting it selects
+`JailPolicy.STRICT`.
+
 ==== Fixed-root: `RootedPathTranslator`
 
 A single native root decided at construction time. Appropriate when the
 jail boundary is known when the translator is created and never needs
-to change:
+to change. The root must be non-`null`, absolute, and owned by the
+native file system, and is normalized on the way in:
 
 [source,java]
 ----
@@ -850,6 +1076,47 @@ either resolves to a file that tenant has deliberately placed there or
 to `NoSuchFileException`. What it never resolves to is the real
 `/etc/passwd`, because `RootedPathTranslator.unwrapPath(jailedPath)`
 appends segments to `nativeRoot` rather than treating them as absolute.
+
+To trade the link check for speed, name the policy explicitly:
+
+[source,java]
+----
+new RootedPathTranslator(nativeRoot, JailPolicy.LENIENT)
+----
+
+[[jail-policy]]
+==== Jail policy: structural versus real-path confinement
+
+Both policies apply the same structural confinement — `..` clamped at
+the root, each name element validated, and the assembled native path
+verified to lie beneath the root. They differ in whether the *real*
+location of that path is checked as well.
+
+[cols="1,3",options="header"]
+|===
+| Policy | Behaviour
+
+| `STRICT`
+| The default. The deepest existing ancestor of the translated path is
+  resolved with `toRealPath(...)` and compared against the real path of
+  the jail root, so a symbolic link inside the jail that points out of
+  it is refused rather than followed. Resolving both sides also means a
+  jail root that is *itself* reached through a link — a `/tmp` that
+  links to `/private/tmp`, a Windows short-name alias — is still
+  recognized as the jail root. Costs one or two extra lookups per
+  translated path.
+
+| `LENIENT`
+| Structural confinement only, and no I/O at all. Cheaper, but a link
+  (or a Windows junction or other reparse point) that lives inside the
+  jail and points outside of it will be followed out by the native file
+  system. Choose it only when the contents of the jail are trusted, or
+  when the native file system has no notion of links.
+|===
+
+Under `STRICT`, passing `LinkOption.NOFOLLOW_LINKS` excludes the final
+name element from the check, so an escaping link may still be deleted or
+have its own attributes read — only reading *through* it is refused.
 
 ==== Context-sensitive: `ContextSensitiveRootedPathTranslator`
 
@@ -1104,17 +1371,39 @@ public void handleUpload (String tenantId, String relativePath, byte[] bytes)
 === Ephemeral: path routing
 
 `EphemeralFileSystem.getPath(first, more)` decides between
-`EphemeralPath` and `NativePath` by calling
-`EphemeralFileSystemConfiguration.isOurs(first, more)`, which performs
-a *character-level* prefix match. The match walks the concatenated path
-character-by-character without first building a full path string; a
-root matches when all of its characters are consumed in order by the
-leading portion of the assembled path.
+`EphemeralPath` and `NativePath` in three steps:
 
-Implication: configuration entries like `"/opt/scratch"` and
-`"/opt"` behave differently. `"/opt/scratchy/foo"` matches `"/opt"` but
-not `"/opt/scratch"`. Plan the root set to avoid accidental capture of
-sibling trees.
+. A `/`-rooted path is claimed when it equals a configured root or lies
+  beneath one *on a segment boundary*, so `/overlay` claims `/overlay`
+  and `/overlay/a` but not `/overlayed`.
+. A path that is absolute in the *native* namespace is never claimed,
+  whatever the roots say.
+. Anything genuinely relative is claimed when the working directory is
+  claimed.
+
+[WARNING]
+====
+Rule 2 is not a nicety. A Windows path such as `C:\Users\…` does not
+begin with `/`, so without it the path falls through to rule 3, is taken
+for a relative path, and is claimed whenever the working directory is —
+handing every real file on the machine to an empty heap. Installed as
+the JVM default that leaves the platform unable to read `java.security`,
+and start-up dies with `InternalError`.
+====
+
+The rule is applied in two places, deliberately.
+`EphemeralFileSystem.getPath(...)` puts the question of what makes a
+path absolute to the native file system itself, so no platform's
+spelling of a root has to be recognized in this code.
+`EphemeralFileSystemConfiguration.isOurs(...)` also applies a syntactic
+test for a drive qualifier or a UNC prefix, performing no I/O, so that a
+caller asking the configuration directly gets the same answer — and so
+that the test is safe to run while `FileSystems` is still resolving its
+default provider.
+
+`EphemeralOverlayRoutingTest` pins this matrix using literal
+Linux-shaped and Windows-shaped path strings, so the whole decision is
+exercised on either platform.
 
 === Ephemeral: file-system close semantics
 
@@ -1128,21 +1417,24 @@ before calling `close()`.
 
 === Ephemeral: watch-service cadence and closure
 
-* Registrations install a per-watched-path heap listener on first
-  register per path and remove it on last cancel.
-* Heap mutations performed through the file store and the seekable
-  byte channel (`createDirectory`, `delete`, `copy`, `move`,
-  `newByteChannel` with `CREATE` / `CREATE_NEW` / `TRUNCATE_EXISTING`,
-  channel `write` / `truncate`) bubble events up to ancestor watchers,
-  including watchers registered on directories above the changed
-  entry. The `WatchEvent.context()` is the path relative to the
-  watched directory.
-* Polling: `poll(timeout, unit)` with a timeout shorter than 500&nbsp;ms
-  delegates to the underlying `LinkedBlockingQueue.poll`. With a longer
-  timeout, the service polls in 500&nbsp;ms increments, checking
-  `closed` between polls so that `close()` mid-wait raises
-  `ClosedWatchServiceException` promptly.
-* `take()` behaves identically but has no upper bound.
+* Registration installs a heap listener on the watched directory.
+  Registering the same directory again returns the *same* key with its
+  event kinds replaced, as `Watchable.register` specifies, rather than
+  handing out a second key for one directory.
+* Watching is per directory and *not* recursive. Heap mutations
+  performed through the file store and the channels (`createDirectory`,
+  `delete`, `copy`, `move`, `newByteChannel` with `CREATE` /
+  `CREATE_NEW` / `TRUNCATE_EXISTING`, channel `write` / `truncate`) fire
+  on the directory that contains the changed entry and on no other, so a
+  key registered on `/a` says nothing about `/a/b/c.txt`. The
+  `WatchEvent.context()` is the path relative to the watched directory.
+* Deleting a watched directory invalidates its key.
+* Polling delegates straight to the underlying queue. `close()`
+  enqueues a sentinel, so a thread already blocked in `take()` or
+  `poll(timeout, unit)` raises `ClosedWatchServiceException` at once.
+* A key's pending-event queue is bounded at 512. Once it is full a
+  single `OVERFLOW` event replaces what could not be kept, so a
+  consumer that has fallen behind is told so.
 * A `WatchKey` that is fired while already signalled does not re-queue;
   subsequent fires are still added to the key's event queue. Consumers
   who neglect to call `reset()` after `pollEvents()` silently stop
@@ -1151,20 +1443,64 @@ before calling `close()`.
 === Ephemeral: copy vs. move semantics
 
 `EphemeralFileStore.copy(source, target, options)` and
-`move(source, target, options)` both:
+`move(source, target, options)` both follow `java.nio.file.Files`
+semantics: the target is the destination *itself*, never a container to
+place the source inside. Both:
 
-* accept only `StandardCopyOption` values; anything else throws
-  `UnsupportedOperationException`;
-* honour only `StandardCopyOption.REPLACE_EXISTING` (others are
-  accepted but have no effect);
-* treat `source.equals(target)` as a no-op;
-* reject attempts to overwrite the root directory (throw `IOException`
-  with message `"Not Allowed"`).
+* treat a target that already exists as an error unless
+  `REPLACE_EXISTING` was given, and refuse to replace a directory that
+  is not empty (`DirectoryNotEmptyException`);
+* require the target's parent to exist (`NoSuchFileException`);
+* treat `source` and `target` naming the same file as a no-op;
+* name the result from the *target's* final name.
 
-The difference: `copy` allocates a fresh `ByteArrayIOBuffer` per file
-copy (content duplication), while `move` transfers the source's
-`ByteArrayIOBuffer` by reference and then unlinks the source node
-(zero-copy content transfer).
+They differ in what they do with the source:
+
+`copy`::
+    Duplicates a file's content into a fresh `HeapFileContent`, charged
+    against the capacity as a new allocation. A *directory* is copied as
+    an empty directory — `Files.copy` copies one entry, and walking a
+    tree is the caller's job. `COPY_ATTRIBUTES` carries the timestamps
+    over. Under `NOFOLLOW_LINKS` a symbolic link is copied as a link.
+    `ATOMIC_MOVE` is rejected with `UnsupportedOperationException`.
+
+`move`::
+    Re-parents the existing node through `HeapNode.relink(...)`, so a
+    directory arrives with its whole subtree intact and the cost does
+    not depend on how much lives beneath it. A symbolic link is moved as
+    a link, not as its target. Moving a directory beneath itself, or
+    moving the root, is refused. `ATOMIC_MOVE` is accepted: a re-parent
+    under the store's write lock already is atomic.
+
+=== Ephemeral: capacity accounting
+
+`getTotalSpace()` reports the configured capacity; `getUsableSpace()`
+and `getUnallocatedSpace()` report it less the bytes currently held by
+file content. Only file content is charged — directories and links are
+not — and the count is maintained as content grows and shrinks rather
+than by walking the tree, so a stat call is not O(tree).
+
+A write that would exceed the capacity fails with an `IOException` and
+changes nothing. Space is returned when a file is truncated or deleted;
+for a hard-linked file, only when the last name for it goes.
+
+=== Ephemeral: links
+
+* `findNode` follows symbolic links, and a link in any position but the
+  last is always followed, because the elements after it have to be
+  resolved somewhere. `LinkOption.NOFOLLOW_LINKS` applies to the final
+  element only.
+* Resolution is bounded at 40 links. Beyond that a `FileSystemException`
+  reports `"Too many levels of symbolic links"` rather than exhausting
+  the stack.
+* A relative link target is interpreted against the directory holding
+  the link, not against the working directory.
+* A dangling link is legal: `createSymbolicLink` does not require the
+  target to exist.
+* `delete` removes a link rather than following it.
+* Hard links share one `HeapFileContent`, so both names report the same
+  `fileKey` and `Files.isSameFile` returns `true` for them. Deleting one
+  name leaves the content reachable through the other.
 
 === Jailed: path identity and `ProviderMismatchException`
 
@@ -1174,6 +1510,32 @@ be a `JailedPath`. A foreign `Path` raises `ProviderMismatchException`
 with no message. This is a stricter contract than the JDK's default
 `Path` types; be careful when mixing `JailedPath` with paths returned
 from other file systems.
+
+=== Jailed: name validation
+
+`AbstractJailedPathTranslator.asNativeName(String)` vets every name
+element before it is appended to the native root, so a name can never
+contribute structure of its own. A NUL character is refused on every
+platform. When the native file system is backslash-separated, so are
+embedded separators, drive qualifiers, trailing dots or spaces, and the
+reserved device names (`CON`, `PRN`, `AUX`, `NUL`, `CONIN$`, `CONOUT$`,
+and `COM0`–`COM9` / `LPT0`–`LPT9`). Each rejection is a
+`SecurityException` naming the offending element.
+
+The practical consequence is that a jailed path which is perfectly legal
+on Linux may be refused on Windows. Names that are portable in the first
+place are accepted everywhere.
+
+=== Jailed: watch registration
+
+`JailedFileSystem.newWatchService()` returns a `JailedWatchService`
+wrapping the native watch service. Registering a `JailedPath` translates
+and confines it exactly as any other operation would, so a registration
+cannot be used to observe a directory outside the jail. The key handed
+back is a `JailedWatchKey` whose `watchable()` is the jailed path, and
+every event context is expressed in jail space, so a caller never sees a
+native path. `JailedPath.register(...)` requires a `JailedWatchService`
+and raises `ProviderMismatchException` for any other watcher.
 
 === Jailed: attribute and file-store forwarding
 
@@ -1217,22 +1579,62 @@ themselves.
     target, non-empty directory on delete or directory-target copy).
 
 `UnsupportedOperationException`::
-    Raised when a caller passes a non-`StandardOpenOption` to
-    `newByteChannel`, a non-`StandardCopyOption` to `copy` / `move`,
-    or a `FileAttribute` whose name is not `"posix:permissions"` to
-    `createDirectory` / `newByteChannel`. Also raised by
-    `newFileChannel` / `newAsynchronousFileChannel` when the path is
-    not a `NativePath`.
+    Raised when a caller passes an open option that is neither a
+    `StandardOpenOption` nor a `LinkOption` to `newByteChannel` /
+    `newFileChannel`, an unrecognised `CopyOption` to `copy` / `move`
+    (including `ATOMIC_MOVE` to `copy`), or a `FileAttribute` whose name
+    is not `"posix:permissions"` to a creation method. Also raised by
+    `newAsynchronousFileChannel` for an ephemeral path, by
+    `EphemeralFileChannel.map(...)`, by an unsupported attribute-view
+    name, and by `getNativeFileSystem()` on a provider constructed
+    without a native provider.
+
+`IllegalArgumentException`::
+    Raised for an illegal combination of open options (`APPEND` with
+    `READ`, or `APPEND` with `TRUNCATE_EXISTING`), for a negative
+    channel position or size, for an unrecognised attribute name in
+    `readAttributes` / `setAttribute`, and by
+    `EphemeralFileSystemConfiguration.checkFitToBeDefaultFileSystem()`
+    when the configuration could not serve as the JVM default.
+
+`IOException`::
+    Raised when a write would exceed the store's capacity, with a
+    message naming the store and the space remaining.
+
+`FileSystemException`::
+    Raised with `"Too many levels of symbolic links"` when link
+    resolution exceeds 40 hops, and when a hard link is requested for
+    something other than a regular file.
+
+`AccessDeniedException`::
+    Raised by `checkAccess` when `AccessMode.EXECUTE` is requested for
+    anything but a directory. The heap carries no permission bits, so
+    read and write access is always granted.
 
 === Exceptions raised by `file-jailed`
 
 `SecurityException`::
-    Raised by `AbstractJailedPathTranslator.wrapPath` when a native
-    path does not start with the configured root, and by
-    `ContextSensitiveRootedPathTranslator.wrapPath` /
-    `unwrapPath` when no `RootedFileSystemContext` is present or its
-    root is `null`. The message is always
-    `"No authorization for path"`.
+    The single failure mode of confinement, raised with a message that
+    identifies which rule was broken:
++
+[cols="2,3",options="header"]
+|===
+| Message | Cause
+
+| `No authorization for path`
+| No `RootedFileSystemContext` is present, or its root is `null`.
+
+| `No authorization for path(=X)`
+| The path does not lie beneath the jail root — structurally, or, under
+  `JailPolicy.STRICT`, once its real location is resolved.
+
+| `Illegal path element(=X)` / `Illegal character in path element`
+| A name element is not a single legal name on the native file system.
+
+| `Reserved path element(=X)`
+| A name element is a reserved device name on a backslash-separated
+  native file system.
+|===
 
 `ProviderMismatchException`::
     Raised by any `JailedPath` cross-path operation that receives a
@@ -1245,8 +1647,10 @@ themselves.
 `IllegalArgumentException`::
     Raised by `JailedURIUtility` for URIs that are not well-formed for
     the provider (wrong scheme, non-empty authority, path other than
-    `"/"`, any query or fragment). Also raised by
-    `JailedPath.relativize` when the two paths differ in absoluteness.
+    `"/"`, any query or fragment), and by `JailedPath.relativize` when
+    the two paths differ in absoluteness. Also raised when a translator
+    is given a root that is `null`, not absolute, or not owned by the
+    native file system.
 
 == Defaults Reference
 
@@ -1263,16 +1667,24 @@ themselves.
 | `EphemeralFileSystemConfiguration.deriveBlockSize()`
 
 | Ephemeral roots
-| `{"/"}`
+| `{"/"}` (refused as the JVM default)
 | `EphemeralFileSystemConfiguration.deriveRoots()`
+
+| Ephemeral working directory
+| the first root
+| `EphemeralFileSystemConfiguration.deriveWorkingDirectory()`
 
 | Ephemeral provider scheme (no-arg)
 | `"ephemeral"`
 | `EphemeralFileSystemProvider()`
 
-| Ephemeral watch poll interval
-| `500 ms`
-| `EphemeralWatchService.poll(long, TimeUnit)` / `take()`
+| Ephemeral symbolic link resolution limit
+| `40` hops
+| `EphemeralFileStore.MAXIMUM_LINK_DEPTH`
+
+| Ephemeral pending watch events per key
+| `512`, then `OVERFLOW`
+| `EphemeralWatchKey.MAXIMUM_PENDING_EVENTS`
 
 | Jailed provider scheme (no-arg)
 | `"jailed"`
@@ -1281,6 +1693,10 @@ themselves.
 | Jailed default translator (no-arg)
 | `ContextSensitiveRootedPathTranslator(FileSystems.getDefault())`
 | `JailedFileSystemProvider()`
+
+| Jailed default policy
+| `JailPolicy.STRICT`
+| `AbstractJailedPathTranslator(JailPolicy)` subclass constructors
 
 | Jailed failure mode with no context
 | `SecurityException("No authorization for path")`
@@ -1302,12 +1718,36 @@ themselves.
     file system you intend to use
     (`ephemeralFs.getPath(...)`).
 
-`NullPointerException` deep inside `EphemeralFileSystemProvider` on a non-matching path::
+`UnsupportedOperationException: This provider(…) was constructed without a native provider`::
     A provider constructed with the no-arg or `String`-scheme form has
-    no native file system captured. Paths outside the configured roots
-    hit `provider.getNativeFileSystem()` which is `null`. Use the
+    no native file system to delegate to, and a path outside the
+    configured roots needs one. Use the
     `EphemeralFileSystemProvider(FileSystemProvider)` constructor, or
     ensure every path matches a configured root.
+
+`IllegalArgumentException: A root of / claims every path…` at JVM start-up::
+    The provider was named in
+    `java.nio.file.spi.DefaultFileSystemProvider` without an explicit
+    `roots` setting. Add
+    `-Dorg.smallmind.file.ephemeral.configuration.roots=/overlay` (or
+    whichever subtree you mean to overlay). The same refusal applies to
+    any root that would claim `java.home`. See
+    <<ephemeral-provider-installation>>.
+
+`InternalError: Error loading java.security file` at JVM start-up::
+    The overlay claimed the platform's own files, so `SecureRandom`
+    could not read `java.security`. If you see this, the configuration
+    got past the check above — most likely because the roots are
+    ephemeral-shaped but still cover the JDK (say `roots=/usr` on
+    Linux). Narrow the roots.
+
+`ProviderMismatchException` from an operation on a path derived from a native one::
+    Only possible when mixing path kinds by hand. Paths derived from a
+    `NativePath` stay native — `resolve`, `resolveSibling`, and
+    `relativize` are all overridden to keep them so — but a path built
+    independently through `fileSystem.getPath(...)` may be an
+    `EphemeralPath`. Derive from the path you already hold rather than
+    re-parsing its text.
 
 `EphemeralFileSystem` operations hang at startup under the default-provider install::
     Some thread is calling `FileSystems.getDefault()` (or
@@ -1323,11 +1763,25 @@ themselves.
     thrown by the path-setup code — the whole point of `SecurityException`
     here is that the jail fails closed.
 
-`JailedPath` operations return a path that "escapes" the jail::
-    Check whether the root directory contains symlinks. The translator
-    only validates `startsWith(rootPath)`; the underlying native
-    provider is free to follow symlinks out of the root. Either remove
-    the symlinks or put a filesystem-level protection around the root.
+`SecurityException("Illegal path element(=X)")` for a name that works on Linux::
+    The native file system is backslash-separated and the name is not a
+    legal Windows name — it embeds a separator or a drive qualifier,
+    ends in a dot or a space, or is a reserved device name such as
+    `CON`. Use portable names, which are accepted on every platform.
+
+`SecurityException("No authorization for path(=X)")` on a path that looks inside the jail::
+    Under `JailPolicy.STRICT` a symbolic link within the jail that
+    resolves outside of it is refused rather than followed. That is the
+    policy working. If the link is legitimate, either bring its target
+    inside the jail or, having weighed the consequence, construct the
+    translator with `JailPolicy.LENIENT`.
+
+`JailedPath` operations reach a file outside the jail::
+    The translator was constructed with `JailPolicy.LENIENT`, which
+    applies structural confinement only and will follow a link out of
+    the jail. Use the default `JailPolicy.STRICT`, and note that even
+    `STRICT` cannot close the window between its check and the operation
+    it guards — see <<jail-policy>>.
 
 `IllegalArgumentException("Path component should be '/'")` when obtaining a `JailedFileSystem`::
     `getFileSystem(URI)` was called with a URI other than `"jailed:///"`.
@@ -1337,42 +1791,45 @@ themselves.
 [[limitations-and-known-issues]]
 == Limitations and Known Issues
 
-No symbolic links in the ephemeral heap::
-    `EphemeralBasicFileAttributes.isSymbolicLink` always returns
-    `false`; `toRealPath` is `normalize().toAbsolutePath()`. Code paths
-    that depend on symlink semantics will behave differently on
-    ephemeral paths than on native ones.
-
 Ephemeral `close()` does not close open resources::
     A `close()` call on an `EphemeralFileSystem` that is not the
     default provider flips the `closed` flag but leaves open channels
     and directory streams alone. The file store's open-resource
     tracking is a known TODO in the source.
 
-No `FileChannel` / `AsynchronousFileChannel` for ephemeral paths::
-    `EphemeralFileSystemProvider.newFileChannel` and
-    `newAsynchronousFileChannel` throw `UnsupportedOperationException`
-    unless the path is a `NativePath`. Code that needs memory-mapped
-    access to ephemeral content must work through
-    `EphemeralSeekableByteChannel` or read the full buffer into heap.
+No `AsynchronousFileChannel`, and no memory mapping, for ephemeral paths::
+    `newAsynchronousFileChannel` throws `UnsupportedOperationException`
+    unless the path is a `NativePath`, and
+    `EphemeralFileChannel.map(...)` always does: content is a list of
+    segments, and no `MappedByteBuffer` can be produced over it. Code
+    that needs mapped access must read the content into heap itself.
+    `FileChannel.open` itself is supported.
 
 Ephemeral attribute model is deliberately shallow::
     Only the `basic` view is supported. `posix`, `dos`, `owner`, and
     `acl` views are not implemented. `setAttribute` recognises only
-    `creationTime`, `lastModifiedTime`, and `lastAccessTime`; other
-    names are silently ignored.
+    `creationTime`, `lastModifiedTime`, and `lastAccessTime`; any other
+    name raises `IllegalArgumentException` rather than being ignored.
 
-Jailed `register(WatchService, ...)` is unimplemented::
-    `JailedPath.register(...)` throws
-    `UnsupportedOperationException`. Watching inside a jail requires
-    using the native file system's watch service and translating paths
-    manually.
+Ephemeral paths are POSIX-shaped on every platform::
+    The heap namespace is rooted at `/` on Windows as well as Linux,
+    which is what lets the same test address it identically on both. The
+    corollary is that an ephemeral path is not a valid *native* path
+    string on Windows, so handing `path.toString()` to `java.io.File`,
+    to a native process, or to any API that bypasses NIO will not find
+    the file.
 
-Jailed translators do not defend against native symlink traversal::
-    The containment guarantee is `startsWith(rootPath)` at the path
-    level. Whether the native provider respects that containment when
-    it dereferences symlinks is out of scope; callers must curate the
-    root directory accordingly.
+Jailed confinement is by path, not by descriptor::
+    `JailPolicy.STRICT` verifies a path before forwarding the operation
+    it guards, so a link substituted in between would not be caught.
+    Closing that window requires descriptor-relative system calls the
+    JDK does not expose. A link already in place is reliably refused.
+
+Jailed name validation is platform-dependent::
+    A name element legal on Linux may be refused on a
+    backslash-separated native file system. This is deliberate — the
+    alternative is letting a name contribute path structure of its own —
+    but it does mean a jail is not equally permissive everywhere.
 
 Single-instance per provider::
     Both providers hold exactly one `FileSystem` instance. Multiple
@@ -1386,12 +1843,15 @@ Single-instance per provider::
 system implementations that fill two concrete gaps in the JDK:
 
 * `file-ephemeral` gives you an in-memory `FileSystem` with native
-  pass-through and watch support, installable as the JVM default for
-  transparent overlay behaviour or usable side-by-side with the
-  platform provider for tests and scratch areas.
+  pass-through, links, seekable and file channels, enforced capacity,
+  and watch support, installable as the JVM default for transparent
+  overlay behaviour or usable side-by-side with the platform provider
+  for tests and scratch areas.
 * `file-jailed` gives you a chroot-style `FileSystem` on top of an
   existing native one, with a pluggable translator strategy that
-  supports both fixed-root and per-request root selection.
+  supports both fixed-root and per-request root selection, and a
+  `JailPolicy` that decides whether a symbolic link may be followed out
+  of the jail.
 
 Both modules integrate through the standard `Paths`, `Files`, and
 `FileSystems` APIs and depend on nothing outside `smallmind-nutsnbolts`.
