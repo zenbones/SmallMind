@@ -33,12 +33,14 @@
 package org.smallmind.file.ephemeral.watch;
 
 import java.io.IOException;
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.file.ephemeral.EphemeralFileStore;
@@ -102,8 +104,17 @@ public class EphemeralWatchService implements WatchService {
       for (EphemeralWatchKey watchKey : watchKeyMap.values()) {
         watchKey.cancel(false);
       }
+      for (Map.Entry<EphemeralPath, HeapEventListener> listenerEntry : heapListenerMap.entrySet()) {
+        try {
+          ephemeralFileStore.unregisterHeapListener(listenerEntry.getKey(), listenerEntry.getValue());
+        } catch (IOException | ClosedFileSystemException exception) {
+          // the directory, or the whole file system, is already gone, so the listener went with it
+        }
+      }
+
       watchKeyMap.clear();
       heapListenerMap.clear();
+      ephemeralFileStore.unregisterOpenResource(this);
       watchKeyQueue.add(CLOSE_SENTINEL);
     }
   }

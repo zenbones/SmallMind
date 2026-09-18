@@ -56,6 +56,7 @@ import org.smallmind.file.ephemeral.heap.DirectoryNode;
  */
 public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
+  private final EphemeralFileStore fileStore;
   private final EphemeralFileSystemProvider provider;
   private final EphemeralPath streamPath;
   private final DirectoryNode directoryNode;
@@ -66,13 +67,15 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   /**
    * Creates a stream over a directory.
    *
+   * @param fileStore     the store the stream was opened against, notified when it closes
    * @param provider      the provider used to carry out operations on entries
    * @param streamPath    the absolute path of the directory
    * @param directoryNode the directory node being listed
    * @param filter        the filter deciding which entries to include, or {@code null} for all
    */
-  public EphemeralDirectoryStream (EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
+  public EphemeralDirectoryStream (EphemeralFileStore fileStore, EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
 
+    this.fileStore = fileStore;
     this.provider = provider;
     this.streamPath = streamPath;
     this.directoryNode = directoryNode;
@@ -105,7 +108,10 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   @Override
   public synchronized void close () {
 
-    closed = true;
+    if (!closed) {
+      closed = true;
+      fileStore.unregisterOpenResource(this);
+    }
   }
 
   /**

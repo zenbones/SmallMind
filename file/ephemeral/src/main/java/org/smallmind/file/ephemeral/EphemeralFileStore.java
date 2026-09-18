@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -390,6 +391,26 @@ public class EphemeralFileStore extends FileStore implements HeapSpaceGovernor {
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
     }
+  }
+
+  /**
+   * Records a resource that must be closed when the owning file system is.
+   *
+   * @param closeable the channel, directory stream, or watch service to track
+   */
+  public void registerOpenResource (Closeable closeable) {
+
+    fileSystem.registerOpenResource(closeable);
+  }
+
+  /**
+   * Stops tracking a resource, because it has closed itself.
+   *
+   * @param closeable the channel, directory stream, or watch service to forget
+   */
+  public void unregisterOpenResource (Closeable closeable) {
+
+    fileSystem.unregisterOpenResource(closeable);
   }
 
   /**
@@ -923,7 +944,11 @@ public class EphemeralFileStore extends FileStore implements HeapSpaceGovernor {
       throw new NotDirectoryException(dir.toString());
     } else {
 
-      return new EphemeralDirectoryStream(fileSystem.provider(), canonical(dir), (DirectoryNode)heapNode, filter);
+      EphemeralDirectoryStream directoryStream = new EphemeralDirectoryStream(this, fileSystem.provider(), canonical(dir), (DirectoryNode)heapNode, filter);
+
+      registerOpenResource(directoryStream);
+
+      return directoryStream;
     }
   }
 
@@ -1476,8 +1501,11 @@ public class EphemeralFileStore extends FileStore implements HeapSpaceGovernor {
     ensureOpen();
 
     OpenOptions parsed = parseOpenOptions(options);
+    EphemeralSeekableByteChannel channel = new EphemeralSeekableByteChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
 
-    return new EphemeralSeekableByteChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
+    registerOpenResource(channel);
+
+    return channel;
   }
 
   /**
@@ -1495,8 +1523,11 @@ public class EphemeralFileStore extends FileStore implements HeapSpaceGovernor {
     ensureOpen();
 
     OpenOptions parsed = parseOpenOptions(options);
+    EphemeralFileChannel channel = new EphemeralFileChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
 
-    return new EphemeralFileChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
+    registerOpenResource(channel);
+
+    return channel;
   }
 
   /**

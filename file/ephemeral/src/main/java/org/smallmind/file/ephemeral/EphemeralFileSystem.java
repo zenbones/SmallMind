@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.ClosedFileSystemException;
@@ -41,7 +42,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 import org.smallmind.nutsnbolts.util.SingleItemIterable;
@@ -61,6 +65,12 @@ public class EphemeralFileSystem extends FileSystem {
   private final EphemeralFileStore fileStore;
   private final EphemeralPath rootPath;
   private final EphemeralPath workingDirectoryPath;
+
+  /**
+   * The channels, directory streams, and watch services opened through this file system and not yet
+   * closed, held weakly so that an abandoned resource is not kept alive by the registry alone.
+   */
+  private final Set<Closeable> openResourceSet = Collections.newSetFromMap(new WeakHashMap<>());
   private volatile boolean closed;
 
   /**
@@ -126,16 +136,90 @@ public class EphemeralFileSystem extends FileSystem {
   }
 
   /**
-   * Closes this file system. This method has no effect if the file system is already closed
-   * or if it is installed as the JVM default provider. Closing the file system marks it as
-   * closed but does not yet close open channels or streams.
+   * Records a resource that must be closed when this file system is.
+   *
+   * <p>The registry holds its entries weakly. A caller who abandons a channel without closing it
+   * has leaked it already; there is no reason for this file system to hold the remains alive on top
+   * of that, and a long-lived default file system would otherwise accumulate them for the life of
+   * the JVM.
+   *
+   * @param closeable the resource to track; must not be {@code null}
+   */
+  void registerOpenResource (Closeable closeable) {
+
+    synchronized (openResourceSet) {
+      openResourceSet.add(closeable);
+    }
+  }
+
+  /**
+   * Stops tracking a resource, because it has closed itself.
+   *
+   * @param closeable the resource to forget; must not be {@code null}
+   */
+  void unregisterOpenResource (Closeable closeable) {
+
+    synchronized (openResourceSet) {
+      openResourceSet.remove(closeable);
+    }
+  }
+
+  /**
+   * Closes this file system, and with it every channel, directory stream, and watch service opened
+   * through it.
+   *
+   * <p>{@link FileSystem#close()} requires exactly this: closing a file system closes the closeable
+   * objects associated with it, and subsequent access to any of them fails rather than quietly
+   * operating on a file system that is no longer there.
+   *
+   * <p>The closed flag is set <em>before</em> any resource is closed, so that a thread racing to
+   * open another one is refused rather than slipping a channel past the sweep. The consequence is
+   * that a resource needing the heap on its way out — a channel opened with
+   * {@link java.nio.file.StandardOpenOption#DELETE_ON_CLOSE} has a deletion to perform — finds it
+   * already gone. That is harmless, because the heap is being discarded in its entirety; those
+   * resources tolerate it rather than failing.
+   *
+   * <p>Every resource is closed even if an earlier one fails, so that one bad channel cannot strand
+   * the rest.
+   *
+   * <p>This method has no effect if the file system is already closed, or if it is installed as the
+   * JVM default provider — the default file system cannot be closed.
+   *
+   * @throws IOException if one or more resources failed to close; the first failure is thrown and
+   *                     any others are attached to it as suppressed exceptions
    */
   @Override
-  public synchronized void close () {
+  public synchronized void close ()
+    throws IOException {
 
     if ((!closed) && (!provider.isDefault())) {
-      //TODO: Closing a file system will close all open channels, directory-streams, watch-service, and other closeable objects associated with this file system
+
       closed = true;
+
+      LinkedList<Closeable> closeableList;
+
+      synchronized (openResourceSet) {
+        closeableList = new LinkedList<>(openResourceSet);
+        openResourceSet.clear();
+      }
+
+      IOException thrownException = null;
+
+      for (Closeable closeable : closeableList) {
+        try {
+          closeable.close();
+        } catch (IOException ioException) {
+          if (thrownException == null) {
+            thrownException = ioException;
+          } else {
+            thrownException.addSuppressed(ioException);
+          }
+        }
+      }
+
+      if (thrownException != null) {
+        throw thrownException;
+      }
     }
   }
 
@@ -434,7 +518,11 @@ public class EphemeralFileSystem extends FileSystem {
       throw new ClosedFileSystemException();
     } else {
 
-      return new EphemeralWatchService(fileStore);
+      EphemeralWatchService watchService = new EphemeralWatchService(fileStore);
+
+      registerOpenResource(watchService);
+
+      return watchService;
     }
   }
 }

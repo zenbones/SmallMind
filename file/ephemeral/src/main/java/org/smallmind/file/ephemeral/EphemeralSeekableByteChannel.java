@@ -38,6 +38,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.ClosedFileSystemException;
 import org.smallmind.file.ephemeral.heap.FileNode;
 
 /**
@@ -226,12 +227,14 @@ public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
     if (!closed) {
       closed = true;
+      fileStore.unregisterOpenResource(this);
 
       if (deleteOnClose) {
         try {
           fileStore.delete(filePath);
-        } catch (IOException ioException) {
-          // the file is already gone, which is the outcome this option asked for
+        } catch (IOException | ClosedFileSystemException exception) {
+          // the file, or the whole file system, is already gone - either way there is nothing
+          // left to delete
         }
       }
     }

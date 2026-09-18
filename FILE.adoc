@@ -354,6 +354,10 @@ the configuration does not claim.
   (`HeapEvent` → `WatchEvent.Kind` translation), so
   `Files.newWatchService()` produces a working in-memory watcher with
   the same per-directory, non-recursive scope a platform watcher has.
+* Closes what it opened. `EphemeralFileSystem.close()` closes every
+  channel, directory stream, and watch service obtained through the file
+  system, as `FileSystem.close()` requires, so a caller still holding
+  one is told it is gone rather than operating on an abandoned heap.
 * Exposes a `clear()` method on both `EphemeralFileSystem` and
   `EphemeralFileStore` that drops every node, useful for test teardown.
 
@@ -1408,12 +1412,43 @@ exercised on either platform.
 === Ephemeral: file-system close semantics
 
 `EphemeralFileSystem.close()` is a no-op when the file system is
-installed as the default provider (`isDefault() == true`). Otherwise it
-sets the `closed` flag. The class deliberately does not close open
-channels, directory streams, or the watch service; a TODO in the source
-acknowledges the gap. Callers who need a hard shutdown for a
-non-default instance should close outstanding resources themselves
-before calling `close()`.
+installed as the default provider (`isDefault() == true`) — the default
+file system cannot be closed. Otherwise it closes every channel,
+directory stream, and watch service opened through the file system, and
+then marks the file system closed.
+
+Each resource is tracked from the moment it is handed out until it
+closes itself, so a caller who uses try-with-resources costs nothing
+here. The ordering matters, and it favours the stronger guarantee: the
+closed flag is set *before* any resource is swept, so a thread racing to
+open another one is refused rather than slipping a channel past the
+sweep. The cost is that a resource needing the heap on its way out — a
+channel opened with `DELETE_ON_CLOSE` has a deletion to perform — finds
+it already gone. That is moot, since the heap is being discarded whole,
+and those resources tolerate it rather than failing.
+
+Every resource is closed even if an earlier one fails, so one bad
+channel cannot strand the rest.
+
+After the call:
+
+* a channel reports `isOpen() == false` and raises
+  `ClosedChannelException`;
+* a directory stream raises `ClosedDirectoryStreamException`;
+* a watch service raises `ClosedWatchServiceException`;
+* anything reaching the file store raises `ClosedFileSystemException`.
+
+`close()` is idempotent, and declares `IOException`: if a resource fails
+to close, the first failure is thrown with any others attached as
+suppressed exceptions, after every resource has been given its turn.
+
+The registry holds its entries *weakly*. A caller who abandons a channel
+without closing it has leaked it already, and a long-lived default file
+system should not compound that by holding the remains for the life of
+the JVM. The corollary is that an abandoned channel may be collected
+before `close()` ever sees it, so a `DELETE_ON_CLOSE` deletion is only
+guaranteed for a channel that is actually closed — by its caller or by
+the file system.
 
 === Ephemeral: watch-service cadence and closure
 
@@ -1686,6 +1721,10 @@ themselves.
 | `512`, then `OVERFLOW`
 | `EphemeralWatchKey.MAXIMUM_PENDING_EVENTS`
 
+| Ephemeral open-resource registry
+| weak references
+| `EphemeralFileSystem.openResourceSet`
+
 | Jailed provider scheme (no-arg)
 | `"jailed"`
 | `JailedFileSystemProvider()`
@@ -1790,12 +1829,6 @@ themselves.
 
 [[limitations-and-known-issues]]
 == Limitations and Known Issues
-
-Ephemeral `close()` does not close open resources::
-    A `close()` call on an `EphemeralFileSystem` that is not the
-    default provider flips the `closed` flag but leaves open channels
-    and directory streams alone. The file store's open-resource
-    tracking is a known TODO in the source.
 
 No `AsynchronousFileChannel`, and no memory mapping, for ephemeral paths::
     `newAsynchronousFileChannel` throws `UnsupportedOperationException`
