@@ -32,7 +32,8 @@
  */
 package org.smallmind.file.ephemeral.watch;
 
-import java.nio.file.NoSuchFileException;
+import java.io.IOException;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.Watchable;
@@ -42,61 +43,33 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.smallmind.file.ephemeral.EphemeralPath;
 
 /**
- * {@link WatchKey} implementation that buffers {@link WatchEvent} instances for a single
- * ephemeral file-system path.
+ * {@link WatchKey} handed out by an {@link EphemeralWatchService} for one watched directory.
  *
- * <p>A key is created by registering an {@link EphemeralPath} with an
- * {@link EphemeralWatchService}. It maintains an internal queue of pending events and
- * tracks whether it has been signalled (i.e. added to the service's ready queue). Once
- * cancelled, the key becomes permanently invalid and is removed from the service.
- *
- * <p>All state-mutating methods are {@code synchronized} on the key instance to allow safe
- * concurrent access from both the thread that fires events and the thread that consumes them.
+ * <p>The queue of pending events is bounded. Once it is full an {@link StandardWatchEventKinds#OVERFLOW}
+ * event is recorded in place of the events that could not be kept, which is how a platform watch
+ * service signals that a consumer has fallen too far behind to be given a complete history.
  */
 public class EphemeralWatchKey implements WatchKey {
 
   /**
-   * The watch service that owns and manages this key.
+   * The number of pending events a key will hold before reporting an overflow.
    */
+  private static final int MAXIMUM_PENDING_EVENTS = 512;
+
   private final EphemeralWatchService watchService;
-
-  /**
-   * The set of event kinds that this key is subscribed to.
-   */
-  private final WatchEvent.Kind<?>[] events;
-
-  /**
-   * The ephemeral path being monitored by this key.
-   */
   private final EphemeralPath path;
-
-  /**
-   * Thread-safe queue of pending {@link WatchEvent} instances that have not yet been
-   * consumed by the client via {@link #pollEvents()}.
-   */
-  private final LinkedBlockingQueue<WatchEvent<?>> eventQueue = new LinkedBlockingQueue<>();
-
-  /**
-   * Whether this key is still valid. Set to {@code false} permanently when
-   * {@link #cancel(boolean)} is called.
-   */
+  private final LinkedBlockingQueue<WatchEvent<?>> eventQueue = new LinkedBlockingQueue<>(MAXIMUM_PENDING_EVENTS);
+  private WatchEvent.Kind<?>[] events;
+  private boolean overflowed = false;
   private boolean valid = true;
-
-  /**
-   * Whether this key is currently in the service's ready queue, waiting to be returned
-   * by a {@code poll} or {@code take} call. Reset to {@code false} by {@link #reset()}
-   * when the event queue is drained.
-   */
   private boolean signalled = false;
 
   /**
-   * Creates a watch key that monitors the given path for the specified event kinds.
+   * Creates a key for a watched directory.
    *
-   * @param watchService the {@link EphemeralWatchService} that manages this key;
-   *                     must not be {@code null}
-   * @param events       the array of {@link WatchEvent.Kind} values that this key should
-   *                     react to; must not be {@code null} or empty
-   * @param path         the {@link EphemeralPath} to be monitored; must not be {@code null}
+   * @param watchService the service that issued this key
+   * @param events       the kinds of event this key reports
+   * @param path         the absolute path of the watched directory
    */
   public EphemeralWatchKey (EphemeralWatchService watchService, WatchEvent.Kind<?>[] events, EphemeralPath path) {
 
@@ -106,9 +79,21 @@ public class EphemeralWatchKey implements WatchKey {
   }
 
   /**
-   * Returns the ephemeral path associated with this watch key.
+   * Narrows an event kind to the context type this key produces.
    *
-   * @return the {@link EphemeralPath} being monitored; never {@code null}
+   * @param kind the kind to narrow
+   * @return the same kind, typed for an {@link EphemeralPath} context
+   */
+  @SuppressWarnings("unchecked")
+  private static WatchEvent.Kind<EphemeralPath> castKind (WatchEvent.Kind<?> kind) {
+
+    return (WatchEvent.Kind<EphemeralPath>)kind;
+  }
+
+  /**
+   * Returns the absolute path of the watched directory.
+   *
+   * @return the watched path
    */
   public EphemeralPath getPath () {
 
@@ -116,13 +101,15 @@ public class EphemeralWatchKey implements WatchKey {
   }
 
   /**
-   * Returns whether this key is currently valid. A key is valid from the time it is
-   * created until it is cancelled (via {@link #cancel()}) or the owning
-   * {@link EphemeralWatchService} is closed.
+   * Replaces the kinds of event this key reports, as a repeated registration does.
    *
-   * @return {@code true} if this key has not been cancelled and the owning service is
-   * still open; {@code false} otherwise
+   * @param events the kinds of event to report from now on
    */
+  synchronized void setEvents (WatchEvent.Kind<?>[] events) {
+
+    this.events = events;
+  }
+
   @Override
   public synchronized boolean isValid () {
 
@@ -130,35 +117,20 @@ public class EphemeralWatchKey implements WatchKey {
   }
 
   /**
-   * Attempts to enqueue a fired event if it matches one of the subscribed event kinds.
+   * Records an event against this key if its kind was registered for.
    *
-   * <p>When the key is valid and the fired event kind matches a subscribed kind (by both
-   * class identity and name), a new {@link EphemeralWatchEvent} carrying the supplied
-   * {@code context} is added to the internal queue. If the key has not yet been signalled,
-   * it is marked as signalled and this method returns {@code true} to indicate that the
-   * service should add the key to its ready queue. Subsequent firings while the key is
-   * already signalled return {@code false}.
-   *
-   * <p>If the key is invalid, or the event kind does not match any subscription, this
-   * method returns {@code false} without modifying any state.
-   *
-   * @param firedEvent the {@link WatchEvent.Kind} of the change that occurred;
-   *                   must not be {@code null}
-   * @param context    the entry path relative to the watched directory, attached as the
-   *                   {@link WatchEvent#context() context} of the generated event;
-   *                   may be {@code null} when the change occurred on the watched
-   *                   directory itself
-   * @return {@code true} if the key was just transitioned to the signalled state and
-   * the calling service should enqueue it in its ready queue;
-   * {@code false} if the key was already signalled, is invalid, or the event
-   * kind is not subscribed
+   * @param firedEvent the kind of change observed
+   * @param context    the path of the changed entry, relative to the watched directory
+   * @return {@code true} if this key should be queued for collection, which happens only on the
+   * first event after each {@link #reset()}
    */
   public synchronized boolean fire (WatchEvent.Kind<?> firedEvent, EphemeralPath context) {
 
     if (valid) {
       for (WatchEvent.Kind<?> event : events) {
-        if (event.getClass().equals(firedEvent.getClass()) && event.name().equals(firedEvent.name())) {
-          eventQueue.add(new EphemeralWatchEvent<EphemeralPath>((WatchEvent.Kind<EphemeralPath>)firedEvent, 1, context));
+        if (event.name().equals(firedEvent.name())) {
+
+          enqueue(new EphemeralWatchEvent<>(castKind(firedEvent), 1, context));
 
           if (!signalled) {
             signalled = true;
@@ -176,19 +148,24 @@ public class EphemeralWatchKey implements WatchKey {
   }
 
   /**
-   * Retrieves and removes all pending events that have accumulated in this key's queue
-   * since it was last reset.
+   * Adds an event, degrading to a single overflow event once the queue is full.
    *
-   * <p>This method drains the internal queue atomically, returning all available events
-   * as an ordered list. If the queue is empty, an empty list is returned. The caller is
-   * responsible for calling {@link #reset()} after processing the events to allow the
-   * key to be signalled again.
-   *
-   * @return a non-{@code null}, possibly empty {@link List} of all pending
-   * {@link WatchEvent} instances in the order they were enqueued
+   * @param watchEvent the event to record
    */
+  private void enqueue (WatchEvent<EphemeralPath> watchEvent) {
+
+    if (!eventQueue.offer(watchEvent)) {
+      if (!overflowed) {
+        overflowed = true;
+        // the queue is full, so the one slot that matters is a marker saying events were lost
+        eventQueue.poll();
+        eventQueue.offer(new EphemeralWatchEvent<>(castKind(StandardWatchEventKinds.OVERFLOW), 1, null));
+      }
+    }
+  }
+
   @Override
-  public List<WatchEvent<?>> pollEvents () {
+  public synchronized List<WatchEvent<?>> pollEvents () {
 
     LinkedList<WatchEvent<?>> eventList = new LinkedList<>();
     WatchEvent<?> event;
@@ -196,30 +173,15 @@ public class EphemeralWatchKey implements WatchKey {
     while ((event = eventQueue.poll()) != null) {
       eventList.add(event);
     }
+    overflowed = false;
 
     return eventList;
   }
 
-  /**
-   * Resets this key so that it can be signalled again for future events.
-   *
-   * <p>If the key is still valid and its event queue is non-empty (new events arrived
-   * while the key was being processed), the key is immediately re-enqueued in the
-   * service's ready queue via {@link EphemeralWatchService#requeue(EphemeralWatchKey)}.
-   * Otherwise the signalled flag is cleared so the next fired event will trigger a fresh
-   * enqueue.
-   *
-   * <p>If the key is no longer valid (cancelled or the service is closed), this method
-   * returns {@code false} without modifying any state.
-   *
-   * @return {@code true} if the key is valid and has been successfully reset;
-   * {@code false} if the key is no longer valid
-   */
   @Override
   public synchronized boolean reset () {
 
     if (isValid()) {
-
       if (!eventQueue.isEmpty()) {
         watchService.requeue(this);
       } else {
@@ -233,14 +195,6 @@ public class EphemeralWatchKey implements WatchKey {
     }
   }
 
-  /**
-   * Cancels this watch key and deregisters it from the owning {@link EphemeralWatchService}.
-   *
-   * <p>Once cancelled, the key becomes permanently invalid and will never be signalled
-   * again. This is equivalent to calling {@link #cancel(boolean) cancel(true)}.
-   *
-   * <p>If the key has already been cancelled, this method has no effect.
-   */
   @Override
   public synchronized void cancel () {
 
@@ -248,21 +202,10 @@ public class EphemeralWatchKey implements WatchKey {
   }
 
   /**
-   * Cancels this watch key, optionally deregistering it from the owning service.
+   * Invalidates this key, optionally removing its registration from the service.
    *
-   * <p>Setting {@code valid} to {@code false} permanently prevents this key from
-   * receiving further events. When {@code deregister} is {@code true}, the key is also
-   * removed from the service's path-to-key map via
-   * {@link EphemeralWatchService#unregister(EphemeralWatchKey)}. Passing {@code false}
-   * is used internally by {@link EphemeralWatchService#close()} to avoid re-entrant
-   * modification of the map while iterating over it.
-   *
-   * <p>Any {@link NoSuchFileException} thrown during deregistration is silently ignored,
-   * because the path may have already been removed from the file system.
-   *
-   * @param deregister {@code true} to also remove this key from the watch service's
-   *                   internal registry; {@code false} to mark it invalid without
-   *                   touching the registry
+   * @param deregister {@code false} when the service is already discarding its registrations, as
+   *                   it does while closing
    */
   public synchronized void cancel (boolean deregister) {
 
@@ -271,22 +214,12 @@ public class EphemeralWatchKey implements WatchKey {
     if (deregister) {
       try {
         watchService.unregister(this);
-      } catch (NoSuchFileException noSuchFileException) {
-        // nothing to do here
+      } catch (IOException ioException) {
+        // the directory is already gone, which is the usual reason for cancelling
       }
     }
   }
 
-  /**
-   * Returns the {@link Watchable} (the monitored path) associated with this key.
-   *
-   * <p>The returned object is the same {@link EphemeralPath} that was supplied when the
-   * key was created, and can be used to identify which path this key is watching
-   * regardless of the key's current validity.
-   *
-   * @return the {@link EphemeralPath} that this key is (or was) monitoring;
-   * never {@code null}
-   */
   @Override
   public Watchable watchable () {
 

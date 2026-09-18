@@ -35,6 +35,8 @@ package org.smallmind.file.ephemeral;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.file.ephemeral.heap.FileNode;
+import org.smallmind.file.ephemeral.heap.HeapFileContent;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
@@ -61,9 +63,10 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
 
   /**
    * Initialises attributes for the given heap node. All three timestamps are set to the
-   * current wall-clock time. The {@code regularFile} and {@code directory} flags are derived
-   * from the node's {@link HeapNodeType}; symbolic links and "other" types are always
-   * {@code false}.
+   * current wall-clock time. The {@code regularFile}, {@code directory}, and
+   * {@code symbolicLink} flags are all derived from the node's {@link HeapNodeType}; the
+   * {@code other} type is always {@code false}, as the heap holds nothing but files,
+   * directories, and links.
    *
    * @param heapNode the heap node whose attributes are being tracked; must not be {@code null}
    */
@@ -77,7 +80,7 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
 
     directory = HeapNodeType.DIRECTORY.equals(heapNode.getType());
     regularFile = HeapNodeType.FILE.equals(heapNode.getType());
-    symbolicLink = false;
+    symbolicLink = HeapNodeType.SYMBOLIC_LINK.equals(heapNode.getType());
     other = false;
   }
 
@@ -169,7 +172,7 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
   /**
    * Indicates whether the heap node represents a symbolic link.
    *
-   * @return always {@code false}; symbolic links are not supported
+   * @return {@code true} if the node is of type {@link HeapNodeType#SYMBOLIC_LINK}
    */
   @Override
   public boolean isSymbolicLink () {
@@ -209,18 +212,28 @@ public class EphemeralBasicFileAttributes implements BasicFileAttributes {
    * {@link AtomicReference#compareAndSet compare-and-set} and then re-read, so every caller
    * agrees on the single installed value regardless of which thread won.
    *
-   * @return a non-{@code null} hex string that is unique across all attribute instances
+   * <p>A regular file reports the key of its {@link HeapFileContent} rather than its own, so that
+   * two names hard-linked to the same content agree on their file key, exactly as two names sharing
+   * an inode do on a real file system.
+   *
+   * @return a non-{@code null} hex string identifying the file this node exposes
    */
   @Override
   public Object fileKey () {
 
-    String id;
+    if (heapNode instanceof FileNode) {
 
-    if ((id = idRef.get()) == null) {
-      idRef.compareAndSet(null, SnowflakeId.newInstance().generateHexEncoding());
-      id = idRef.get();
+      return ((FileNode)heapNode).getContent().getFileKey();
+    } else {
+
+      String id;
+
+      if ((id = idRef.get()) == null) {
+        idRef.compareAndSet(null, SnowflakeId.newInstance().generateHexEncoding());
+        id = idRef.get();
+      }
+
+      return id;
     }
-
-    return id;
   }
 }

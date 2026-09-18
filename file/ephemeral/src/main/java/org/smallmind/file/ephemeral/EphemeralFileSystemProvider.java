@@ -34,12 +34,14 @@ package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
@@ -50,6 +52,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.SecureDirectoryStream;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
@@ -141,8 +144,45 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
 
     this.scheme = scheme;
 
-    ephemeralFileSystem = new EphemeralFileSystem(this, new EphemeralFileSystemConfiguration());
+    EphemeralFileSystemConfiguration configuration = new EphemeralFileSystemConfiguration();
+
+    if (isInstalledAsDefaultFileSystem()) {
+      // refused here, while the reason can still be stated plainly, rather than surfacing much
+      // later as an InternalError raised from the platform's own start-up
+      configuration.checkFitToBeDefaultFileSystem();
+    }
+
+    ephemeralFileSystem = new EphemeralFileSystem(this, configuration);
     INITIALIZATION_LATCH.countDown();
+  }
+
+  /**
+   * Returns whether this class has been named as the JVM default file system provider.
+   *
+   * <p>Distinct from {@link #isDefault()}, which only reports that this provider mirrors the
+   * {@code "file"} scheme. Mirroring the scheme is what makes delegation possible and is perfectly
+   * ordinary in a test; being named in
+   * {@code java.nio.file.spi.DefaultFileSystemProvider} is what makes this provider answer for
+   * every path in the JVM, and only then must the configuration leave the platform able to read its
+   * own files.
+   *
+   * @return {@code true} if this class is named as the JVM default provider
+   */
+  private static boolean isInstalledAsDefaultFileSystem () {
+
+    String property;
+
+    if ((property = System.getProperty("java.nio.file.spi.DefaultFileSystemProvider")) != null) {
+      // the property holds a comma separated chain of provider class names
+      for (String className : property.split(",")) {
+        if (EphemeralFileSystemProvider.class.getName().equals(className.strip())) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -202,6 +242,10 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   public FileSystem getNativeFileSystem () {
 
     FileSystem nativeFileSystem;
+
+    if (fileSystemProvider == null) {
+      throw new UnsupportedOperationException("This provider(" + scheme + ") was constructed without a native provider, so it cannot delegate");
+    }
 
     if ((nativeFileSystem = nativeFileSystemRef.get()) == null) {
       nativeFileSystemRef.compareAndSet(null, fileSystemProvider.getFileSystem(URI.create(fileSystemProvider.getScheme() + ":///")));
@@ -267,7 +311,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+  public SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -277,21 +321,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       return ((NativePath)path).getNativeFileSystem().provider().newByteChannel(((NativePath)path).getNativePath(), options, attrs);
     } else {
 
-      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
+      EphemeralPath ephemeralPath = (EphemeralPath)path;
 
-      if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
-        try {
-          internalCheckAccess(normalizedPath, AccessMode.WRITE);
-        } catch (NoSuchFileException noSuchFileException) {
-          if (normalizedPath.getNames().length > 0) {
-            internalCheckAccess(normalizedPath.getParent(), AccessMode.WRITE);
-          }
-        }
-      } else {
-        internalCheckAccess(normalizedPath, AccessMode.READ);
-      }
-
-      return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().newByteChannel(normalizedPath, options, attrs);
+      return ((EphemeralFileSystem)ephemeralPath.getFileSystem()).getFileStore().newByteChannel(ephemeralPath, options, attrs);
     }
   }
 
@@ -307,7 +339,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
+  public DirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
@@ -335,11 +367,12 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    * @return the secure directory stream
    * @throws NoSuchFileException       if the directory does not exist
    * @throws NotDirectoryException     if the path is not a directory
+   * @throws IOException               if the directory cannot be opened
    * @throws ProviderMismatchException if the path is not associated with an
    *                                   {@link EphemeralFileSystem}
    */
-  public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
-    throws NoSuchFileException, NotDirectoryException {
+  public SecureDirectoryStream<Path> newDirectoryStream (Path dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
+    throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + dir + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
@@ -364,7 +397,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized void createDirectory (Path dir, FileAttribute<?>... attrs)
+  public void createDirectory (Path dir, FileAttribute<?>... attrs)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(dir.getFileSystem().getClass())) {
@@ -394,7 +427,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized void delete (Path path)
+  public void delete (Path path)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -426,7 +459,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   to different file systems
    */
   @Override
-  public synchronized void copy (Path source, Path target, CopyOption... options)
+  public void copy (Path source, Path target, CopyOption... options)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
@@ -435,9 +468,12 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else if (!source.getFileSystem().equals(target.getFileSystem())) {
       throw new ProviderMismatchException("The source and target are associated with different file systems");
-    } else if (source instanceof NativePath) {
+    } else if ((source instanceof NativePath) && (target instanceof NativePath)) {
 
       ((NativePath)source).getNativeFileSystem().provider().copy(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath(), options);
+    } else if ((source instanceof NativePath) || (target instanceof NativePath)) {
+      // one side is overlaid and the other is not, so the bytes must be carried across
+      transfer(source, target, options);
     } else {
 
       EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
@@ -468,7 +504,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   to different file systems
    */
   @Override
-  public synchronized void move (Path source, Path target, CopyOption... options)
+  public void move (Path source, Path target, CopyOption... options)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
@@ -477,9 +513,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       throw new ProviderMismatchException("The path(" + target + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
     } else if (!source.getFileSystem().equals(target.getFileSystem())) {
       throw new ProviderMismatchException("The source and target are associated with different file systems");
-    } else if (source instanceof NativePath) {
+    } else if ((source instanceof NativePath) && (target instanceof NativePath)) {
 
       ((NativePath)source).getNativeFileSystem().provider().move(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath(), options);
+    } else if ((source instanceof NativePath) || (target instanceof NativePath)) {
+      // a move across the overlay boundary has nothing to relink, so it copies and then removes
+      transfer(source, target, options);
+      delete(source);
     } else {
 
       EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
@@ -503,13 +543,13 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *
    * @param source the first path; must belong to an {@link EphemeralFileSystem}
    * @param target the second path; must belong to an {@link EphemeralFileSystem}
-   * @return {@code true} if the normalized paths are equal within the same file system
+   * @return {@code true} if both paths resolve to the same file, which two hard links do
    * @throws IOException               if an I/O error occurs
    * @throws ProviderMismatchException if either path is not associated with an
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized boolean isSameFile (Path source, Path target)
+  public boolean isSameFile (Path source, Path target)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(source.getFileSystem().getClass())) {
@@ -519,31 +559,44 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
     } else if (!source.getFileSystem().equals(target.getFileSystem())) {
 
       return false;
-    } else if (source instanceof NativePath) {
+    } else if ((source instanceof NativePath) && (target instanceof NativePath)) {
 
       return ((NativePath)source).getNativeFileSystem().provider().isSameFile(((NativePath)source).getNativePath(), ((NativePath)target).getNativePath());
+    } else if ((source instanceof NativePath) || (target instanceof NativePath)) {
+      // a heap file and a real file are never the same file
+      return false;
     } else {
 
-      EphemeralPath normalizedSource = (EphemeralPath)source.normalize();
-      EphemeralPath normalizedTarget = (EphemeralPath)target.normalize();
-
-      internalCheckAccess(normalizedSource, AccessMode.READ);
-      internalCheckAccess(normalizedTarget, AccessMode.READ);
-
-      return normalizedSource.equals(normalizedTarget);
+      return ((EphemeralFileSystem)source.getFileSystem()).getFileStore().isSameFile((EphemeralPath)source, (EphemeralPath)target);
     }
   }
 
   /**
-   * Indicates whether the given path is considered hidden. Ephemeral paths are never hidden.
+   * Indicates whether the given path is considered hidden. An ephemeral path is hidden when its
+   * file name begins with a period, which is the convention the platform's own POSIX provider
+   * applies; a {@link NativePath} is delegated so that it keeps the native meaning.
    *
    * @param path the path to test
-   * @return always {@code false}
+   * @return {@code true} if the path is hidden
+   * @throws IOException               if the native provider reports an error
+   * @throws ProviderMismatchException if the path is not associated with an
+   *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public boolean isHidden (Path path) {
+  public boolean isHidden (Path path)
+    throws IOException {
 
-    return false;
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().isHidden(((NativePath)path).getNativePath());
+    } else {
+
+      Path fileName;
+
+      return ((fileName = path.getFileName()) != null) && fileName.toString().startsWith(".");
+    }
   }
 
   /**
@@ -552,11 +605,19 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *
    * @param path the path to query
    * @return the associated {@link FileStore}
+   * @throws IOException if the native provider reports an error
    */
   @Override
-  public FileStore getFileStore (Path path) {
+  public FileStore getFileStore (Path path)
+    throws IOException {
 
-    return path.getFileSystem().getFileStores().iterator().next();
+    if (path instanceof NativePath) {
+
+      return ((NativePath)path).getNativeFileSystem().provider().getFileStore(((NativePath)path).getNativePath());
+    } else {
+
+      return path.getFileSystem().getFileStores().iterator().next();
+    }
   }
 
   /**
@@ -570,7 +631,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized void checkAccess (Path path, AccessMode... modes)
+  public void checkAccess (Path path, AccessMode... modes)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -595,9 +656,9 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    * @throws NoSuchFileException if the path does not exist
    */
   private void internalCheckAccess (EphemeralPath path, AccessMode... modes)
-    throws NoSuchFileException {
+    throws IOException {
 
-    ((EphemeralFileSystem)path.getFileSystem()).getFileStore().checkAccess(path);
+    ((EphemeralFileSystem)path.getFileSystem()).getFileStore().checkAccess(path, modes);
   }
 
   /**
@@ -614,7 +675,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
+  public <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
       throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
@@ -623,14 +684,11 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
       return ((NativePath)path).getNativeFileSystem().provider().getFileAttributeView(((NativePath)path).getNativePath(), type, options);
     } else {
 
-      EphemeralPath normalizedPath = (EphemeralPath)path.normalize();
-
       try {
-        internalCheckAccess(normalizedPath, AccessMode.READ);
 
-        return ((EphemeralFileSystem)normalizedPath.getFileSystem()).getFileStore().getFileAttributeView(normalizedPath, type, options);
-      } catch (NoSuchFileException noSuchFileException) {
-
+        return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().getFileAttributeView((EphemeralPath)path, type, options);
+      } catch (IOException ioException) {
+        // the view of a file that cannot be resolved is simply absent
         return null;
       }
     }
@@ -650,7 +708,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
+  public <A extends BasicFileAttributes> A readAttributes (Path path, Class<A> type, LinkOption... options)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -681,7 +739,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
+  public Map<String, Object> readAttributes (Path path, String attributes, LinkOption... options)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -712,7 +770,7 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
    *                                   {@link EphemeralFileSystem}
    */
   @Override
-  public synchronized void setAttribute (Path path, String attribute, Object value, LinkOption... options)
+  public void setAttribute (Path path, String attribute, Object value, LinkOption... options)
     throws IOException {
 
     if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
@@ -731,24 +789,154 @@ public class EphemeralFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Opens a {@link FileChannel} for the given path. Only {@link NativePath} instances are
-   * supported; ephemeral paths always throw {@link UnsupportedOperationException}.
+   * Opens a {@link FileChannel} for the given path.
    *
-   * @param path    the native file path
+   * <p>This is a distinct entry point from {@link #newByteChannel}: {@link FileChannel#open} routes
+   * here, and a great deal of ordinary code reaches for it in preference to
+   * {@code Files.newByteChannel}. Supporting only native paths here would leave every such caller
+   * failing however complete the rest of the file system is.
+   *
+   * @param path    the file to open
    * @param options the open options
    * @param attrs   optional file attributes
    * @return the opened file channel
-   * @throws IOException                   if the channel cannot be opened
-   * @throws UnsupportedOperationException if the path is an ephemeral (non-native) path
+   * @throws IOException               if the channel cannot be opened
+   * @throws ProviderMismatchException if the path is not associated with an
+   *                                   {@link EphemeralFileSystem}
    */
+  @Override
   public FileChannel newFileChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
-    if (path instanceof NativePath) {
+    if (!EphemeralFileSystem.class.isAssignableFrom(path.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + path + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (path instanceof NativePath) {
 
       return ((NativePath)path).getNativeFileSystem().provider().newFileChannel(((NativePath)path).getNativePath(), options, attrs);
     } else {
-      throw new UnsupportedOperationException();
+
+      return ((EphemeralFileSystem)path.getFileSystem()).getFileStore().newFileChannel((EphemeralPath)path, options, attrs);
+    }
+  }
+
+  /**
+   * Creates a symbolic link.
+   *
+   * @param link   the link to create
+   * @param target the target of the link, which need not exist
+   * @param attrs  optional file attributes
+   * @throws IOException               if the link cannot be created
+   * @throws ProviderMismatchException if the link is not associated with an
+   *                                   {@link EphemeralFileSystem}
+   */
+  @Override
+  public void createSymbolicLink (Path link, Path target, FileAttribute<?>... attrs)
+    throws IOException {
+
+    if (!EphemeralFileSystem.class.isAssignableFrom(link.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + link + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (link instanceof NativePath) {
+      ((NativePath)link).getNativeFileSystem().provider().createSymbolicLink(((NativePath)link).getNativePath(), (target instanceof NativePath) ? ((NativePath)target).getNativePath() : target, attrs);
+    } else {
+      ((EphemeralFileSystem)link.getFileSystem()).getFileStore().createSymbolicLink((EphemeralPath)link, target, attrs);
+    }
+  }
+
+  /**
+   * Reads the target of a symbolic link.
+   *
+   * @param link the link to read
+   * @return the raw target of the link
+   * @throws IOException               if the link cannot be read
+   * @throws ProviderMismatchException if the link is not associated with an
+   *                                   {@link EphemeralFileSystem}
+   */
+  @Override
+  public Path readSymbolicLink (Path link)
+    throws IOException {
+
+    if (!EphemeralFileSystem.class.isAssignableFrom(link.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + link + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if (link instanceof NativePath) {
+
+      return new NativePath((EphemeralFileSystem)link.getFileSystem(), ((NativePath)link).getNativeFileSystem().provider().readSymbolicLink(((NativePath)link).getNativePath()));
+    } else {
+
+      return ((EphemeralFileSystem)link.getFileSystem()).getFileStore().readSymbolicLink((EphemeralPath)link);
+    }
+  }
+
+  /**
+   * Creates an additional name for an existing file, sharing its content.
+   *
+   * @param link     the new name to create
+   * @param existing the existing file to link to
+   * @throws IOException               if the link cannot be created
+   * @throws ProviderMismatchException if either path is not associated with an
+   *                                   {@link EphemeralFileSystem}
+   */
+  @Override
+  public void createLink (Path link, Path existing)
+    throws IOException {
+
+    if (!EphemeralFileSystem.class.isAssignableFrom(link.getFileSystem().getClass())) {
+      throw new ProviderMismatchException("The path(" + link + ") is not associated with the " + EphemeralFileSystem.class.getSimpleName());
+    } else if ((link instanceof NativePath) && (existing instanceof NativePath)) {
+      ((NativePath)link).getNativeFileSystem().provider().createLink(((NativePath)link).getNativePath(), ((NativePath)existing).getNativePath());
+    } else if ((link instanceof NativePath) || (existing instanceof NativePath)) {
+      throw new IOException("A hard link cannot span the overlay boundary");
+    } else {
+      ((EphemeralFileSystem)link.getFileSystem()).getFileStore().createLink((EphemeralPath)link, (EphemeralPath)existing);
+    }
+  }
+
+  /**
+   * Copies one entry across the overlay boundary by carrying its bytes over, since no node can be
+   * shared or relinked between the heap and the native file system.
+   *
+   * @param source  the entry to copy
+   * @param target  the destination path
+   * @param options the copy options
+   * @throws IOException if the copy cannot be performed
+   */
+  private void transfer (Path source, Path target, CopyOption... options)
+    throws IOException {
+
+    boolean replaceExisting = false;
+
+    if (options != null) {
+      for (CopyOption option : options) {
+        if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+          replaceExisting = true;
+          break;
+        }
+      }
+    }
+
+    if (exists(target)) {
+      if (!replaceExisting) {
+        throw new FileAlreadyExistsException(target.toString());
+      } else {
+        delete(target);
+      }
+    }
+
+    if (readAttributes(source, BasicFileAttributes.class).isDirectory()) {
+      createDirectory(target);
+    } else {
+      try (SeekableByteChannel sourceChannel = newByteChannel(source, Set.of(StandardOpenOption.READ));
+           SeekableByteChannel targetChannel = newByteChannel(target, Set.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW))) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(8192);
+
+        while (sourceChannel.read(buffer) > 0) {
+          buffer.flip();
+          while (buffer.hasRemaining()) {
+            targetChannel.write(buffer);
+          }
+          buffer.clear();
+        }
+      }
     }
   }
 

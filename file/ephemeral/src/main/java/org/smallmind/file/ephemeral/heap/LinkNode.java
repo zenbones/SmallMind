@@ -32,69 +32,69 @@
  */
 package org.smallmind.file.ephemeral.heap;
 
+import java.nio.charset.StandardCharsets;
+
 /**
- * Represents an in-memory file node in the ephemeral heap file-system tree.
+ * Represents a symbolic link in the ephemeral heap file-system tree.
  *
- * <p>A {@code FileNode} holds no content of its own; it refers to a {@link HeapFileContent}, which
- * provides position-free random access to the file's bytes. Two file nodes may refer to the
- * <em>same</em> content instance, which is how a hard link is represented: writing through either
- * name is visible through the other, and the content survives until both names are removed.
+ * <p>A link stores its target exactly as it was supplied, unresolved. The target may be absolute or
+ * relative, and it may not exist at all — a dangling link is legal, and resolution therefore happens
+ * at lookup time rather than at creation time. A relative target is interpreted against the
+ * directory holding the link.
  *
  * @see HeapNode
- * @see HeapFileContent
- * @see DirectoryNode
+ * @see HeapNodeType#SYMBOLIC_LINK
  */
-public class FileNode extends HeapNode {
+public class LinkNode extends HeapNode {
 
   /**
-   * The byte content of this file, possibly shared with other file nodes that hard-link to it.
+   * The raw, unresolved target of this link.
    */
-  private final HeapFileContent content;
+  private final String target;
 
   /**
-   * Constructs a new file node over the supplied content.
+   * Constructs a new symbolic link node.
    *
-   * @param parent  the {@link DirectoryNode} that will contain this file
-   * @param name    the simple name of the file
-   * @param content the byte content this node exposes; pass an existing instance to create a hard
-   *                link to an existing file
+   * @param parent the {@link DirectoryNode} that will contain this link
+   * @param name   the simple name of the link
+   * @param target the raw target of the link, which need not exist
    */
-  public FileNode (DirectoryNode parent, String name, HeapFileContent content) {
+  public LinkNode (DirectoryNode parent, String name, String target) {
 
     super(parent, name);
 
-    this.content = content;
+    this.target = target;
   }
 
   /**
    * Returns the type identifier for this node.
    *
-   * @return {@link HeapNodeType#FILE}, always
+   * @return {@link HeapNodeType#SYMBOLIC_LINK}, always
    */
   @Override
   public HeapNodeType getType () {
 
-    return HeapNodeType.FILE;
+    return HeapNodeType.SYMBOLIC_LINK;
   }
 
   /**
-   * Returns the byte content of this file.
+   * Returns the raw, unresolved target of this link.
    *
-   * @return the {@link HeapFileContent} backing this node; never {@code null}
+   * @return the link target; never {@code null}
    */
-  public HeapFileContent getContent () {
+  public String getTarget () {
 
-    return content;
+    return target;
   }
 
   /**
-   * Returns the current size of the file in bytes.
+   * Returns the size of this link, which a POSIX file system reports as the length of its target.
    *
-   * @return the number of bytes currently in the file
+   * @return the encoded length of the link target
    */
   @Override
   public long size () {
 
-    return content.size();
+    return target.getBytes(StandardCharsets.UTF_8).length;
   }
 }

@@ -30,37 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.file.ephemeral;
+package org.smallmind.file.ephemeral.heap;
 
-import java.nio.file.attribute.UserPrincipal;
+import java.io.IOException;
 
 /**
- * Lightweight in-memory {@link UserPrincipal} used by the ephemeral file system. Instances
- * are produced by
- * {@link EphemeralUserPrincipalLookupService#lookupPrincipalByName(String)}.
+ * Accounts for the bytes consumed by file content within a bounded heap store.
+ *
+ * <p>{@link HeapFileContent} calls {@link #reserve(long)} before it grows and
+ * {@link #release(long)} after it shrinks, both while holding its own monitor, so that the running
+ * total can never drift from the bytes actually allocated. Implementations are expected to reject a
+ * reservation that would exceed the store's capacity, which is what turns a configured capacity
+ * into an enforced one.
  */
-public class EphemeralUserPrincipal implements UserPrincipal {
-
-  private final String name;
+public interface HeapSpaceGovernor {
 
   /**
-   * Creates a user principal with the given name.
+   * Accounts for {@code bytes} additional bytes of file content.
    *
-   * @param name the principal name; must not be {@code null}
+   * @param bytes the number of bytes about to be allocated; never negative
+   * @throws IOException if the allocation would exceed the capacity of the store
    */
-  public EphemeralUserPrincipal (String name) {
-
-    this.name = name;
-  }
+  void reserve (long bytes)
+    throws IOException;
 
   /**
-   * Returns the name of this user principal.
+   * Returns {@code bytes} bytes of file content to the store.
    *
-   * @return the principal name; never {@code null}
+   * @param bytes the number of bytes no longer allocated; never negative
    */
-  @Override
-  public String getName () {
-
-    return name;
-  }
+  void release (long bytes);
 }

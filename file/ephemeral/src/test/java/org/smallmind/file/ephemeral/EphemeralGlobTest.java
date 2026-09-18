@@ -37,16 +37,16 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
-public class GlobTest {
+public class EphemeralGlobTest {
 
   private void assertMatches (String glob, String input) {
 
-    Assert.assertTrue(Glob.toRegexPattern('/', glob).matcher(input).matches(), "glob '" + glob + "' should match '" + input + "'");
+    Assert.assertTrue(EphemeralGlob.toRegexPattern('/', glob).matcher(input).matches(), "glob '" + glob + "' should match '" + input + "'");
   }
 
   private void assertNotMatches (String glob, String input) {
 
-    Assert.assertFalse(Glob.toRegexPattern('/', glob).matcher(input).matches(), "glob '" + glob + "' should not match '" + input + "'");
+    Assert.assertFalse(EphemeralGlob.toRegexPattern('/', glob).matcher(input).matches(), "glob '" + glob + "' should not match '" + input + "'");
   }
 
   public void testLiteralMatch () {
@@ -117,30 +117,30 @@ public class GlobTest {
   @Test(expectedExceptions = PatternSyntaxException.class)
   public void testUnterminatedEscape () {
 
-    Glob.toRegexPattern('/', "abc\\");
+    EphemeralGlob.toRegexPattern('/', "abc\\");
   }
 
   @Test(expectedExceptions = PatternSyntaxException.class)
   public void testUnterminatedCharacterClass () {
 
-    Glob.toRegexPattern('/', "abc[");
+    EphemeralGlob.toRegexPattern('/', "abc[");
   }
 
   @Test(expectedExceptions = PatternSyntaxException.class)
   public void testUnterminatedGroup () {
 
-    Glob.toRegexPattern('/', "{a,b");
+    EphemeralGlob.toRegexPattern('/', "{a,b");
   }
 
   @Test(expectedExceptions = PatternSyntaxException.class)
   public void testNestedGroupRejected () {
 
-    Glob.toRegexPattern('/', "{a,{b,c}}");
+    EphemeralGlob.toRegexPattern('/', "{a,{b,c}}");
   }
 
   @Test(expectedExceptions = PatternSyntaxException.class)
   public void testSeparatorInCharacterClassRejected () {
 
-    Glob.toRegexPattern('/', "[a/b]");
+    EphemeralGlob.toRegexPattern('/', "[a/b]");
   }
 }

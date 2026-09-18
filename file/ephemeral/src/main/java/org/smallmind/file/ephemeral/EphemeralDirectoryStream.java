@@ -37,7 +37,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedDirectoryStreamException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -49,10 +48,11 @@ import java.util.Set;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 
 /**
- * {@link SecureDirectoryStream} implementation that iterates over entries in an ephemeral
- * heap directory. All mutating and navigation operations are guarded against use after
- * {@link #close()} by throwing {@link ClosedDirectoryStreamException}. Relative paths
- * supplied to the secure-stream methods are resolved against the stream's own path.
+ * {@link SecureDirectoryStream} over the entries of an ephemeral directory.
+ *
+ * <p>Relative paths handed to the operations of this stream are resolved against the directory the
+ * stream was opened on, which is the point of a secure directory stream: a caller can work with
+ * entries by simple name without re-resolving the containing directory each time.
  */
 public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
 
@@ -60,15 +60,16 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   private final EphemeralPath streamPath;
   private final DirectoryNode directoryNode;
   private final DirectoryStream.Filter<? super Path> filter;
+  private boolean iterated = false;
   private boolean closed = false;
 
   /**
-   * Creates a directory stream for the specified heap directory node.
+   * Creates a stream over a directory.
    *
-   * @param provider      the file-system provider used to delegate new channel and stream operations
-   * @param streamPath    the absolute path that this stream represents
-   * @param directoryNode the heap node backing the directory
-   * @param filter        an optional filter applied when iterating entries; may be {@code null}
+   * @param provider      the provider used to carry out operations on entries
+   * @param streamPath    the absolute path of the directory
+   * @param directoryNode the directory node being listed
+   * @param filter        the filter deciding which entries to include, or {@code null} for all
    */
   public EphemeralDirectoryStream (EphemeralFileSystemProvider provider, EphemeralPath streamPath, DirectoryNode directoryNode, DirectoryStream.Filter<? super Path> filter) {
 
@@ -79,9 +80,28 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * Closes this directory stream. Subsequent operations on the stream will throw
-   * {@link ClosedDirectoryStreamException}.
+   * Throws if this stream has been closed.
+   *
+   * @throws ClosedDirectoryStreamException if the stream is closed
    */
+  private void ensureOpen () {
+
+    if (closed) {
+      throw new ClosedDirectoryStreamException();
+    }
+  }
+
+  /**
+   * Resolves a path against this stream's directory when it is relative.
+   *
+   * @param path the path supplied by the caller
+   * @return an absolute path
+   */
+  private Path against (Path path) {
+
+    return path.isAbsolute() ? path : streamPath.resolve(path);
+  }
+
   @Override
   public synchronized void close () {
 
@@ -89,166 +109,140 @@ public class EphemeralDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   /**
-   * Returns an iterator over the entries of this directory, applying the configured filter.
+   * Returns an iterator over the entries of this directory.
    *
-   * @return an iterator of child {@link Path} objects
-   * @throws ClosedDirectoryStreamException if this stream has been closed
+   * @return an iterator over the accepted entries
+   * @throws IllegalStateException          if an iterator has already been returned
+   * @throws ClosedDirectoryStreamException if the stream is closed
    */
   @Override
   public synchronized Iterator<Path> iterator () {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
+    ensureOpen();
+
+    if (iterated) {
+      throw new IllegalStateException("An iterator has already been obtained from this stream");
     } else {
+      iterated = true;
 
       return directoryNode.iterator(streamPath, filter);
     }
   }
 
-  /**
-   * Opens a new directory stream for a sub-directory. A relative path is resolved against
-   * this stream's own path before delegation.
-   *
-   * @param path    the sub-directory path (absolute or relative)
-   * @param options link options (currently unused)
-   * @return a new {@link SecureDirectoryStream} for the resolved path
-   * @throws NoSuchFileException            if the resolved path does not exist
-   * @throws NotDirectoryException          if the resolved path is not a directory
-   * @throws ClosedDirectoryStreamException if this stream has been closed
-   */
   @Override
   public synchronized SecureDirectoryStream<Path> newDirectoryStream (Path path, LinkOption... options)
-    throws NoSuchFileException, NotDirectoryException {
+    throws IOException {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
+    ensureOpen();
 
-      return provider.newDirectoryStream(path.isAbsolute() ? path : streamPath.resolve(path), null, options);
-    }
+    return provider.newDirectoryStream(against(path), null, options);
   }
 
-  /**
-   * Opens a seekable byte channel for a file entry. A relative path is resolved against
-   * this stream's own path before delegation.
-   *
-   * @param path    the file path (absolute or relative)
-   * @param options the open options controlling read/write semantics
-   * @param attrs   optional file attributes to set on creation
-   * @return the opened {@link SeekableByteChannel}
-   * @throws IOException                    if the channel cannot be opened
-   * @throws ClosedDirectoryStreamException if this stream has been closed
-   */
   @Override
   public synchronized SeekableByteChannel newByteChannel (Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
     throws IOException {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
+    ensureOpen();
 
-      return provider.newByteChannel(path.isAbsolute() ? path : streamPath.resolve(path), options, attrs);
-    }
+    return provider.newByteChannel(against(path), options, attrs);
   }
 
   /**
-   * Deletes the file at the given path. A relative path is resolved against this stream's
-   * own path before delegation.
+   * Deletes an entry that must be a file rather than a directory.
    *
-   * @param path the file path to delete (absolute or relative)
-   * @throws IOException                    if the file cannot be deleted
-   * @throws ClosedDirectoryStreamException if this stream has been closed
+   * @param path the entry to delete
+   * @throws NotDirectoryException          never; declared for symmetry with the interface
+   * @throws IOException                    if the entry names a directory, or cannot be deleted
+   * @throws ClosedDirectoryStreamException if the stream is closed
    */
   @Override
   public synchronized void deleteFile (Path path)
     throws IOException {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
-      provider.delete(path.isAbsolute() ? path : streamPath.resolve(path));
+    ensureOpen();
+
+    Path resolvedPath = against(path);
+
+    if (provider.readAttributes(resolvedPath, java.nio.file.attribute.BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS).isDirectory()) {
+      throw new IOException("The path(" + resolvedPath + ") names a directory");
     }
+
+    provider.delete(resolvedPath);
   }
 
   /**
-   * Deletes the directory at the given path. A relative path is resolved against this
-   * stream's own path before delegation.
+   * Deletes an entry that must be a directory rather than a file.
    *
-   * @param path the directory path to delete (absolute or relative)
-   * @throws IOException                    if the directory cannot be deleted
-   * @throws ClosedDirectoryStreamException if this stream has been closed
+   * @param path the entry to delete
+   * @throws NotDirectoryException          if the entry does not name a directory
+   * @throws IOException                    if the entry cannot be deleted
+   * @throws ClosedDirectoryStreamException if the stream is closed
    */
   @Override
   public synchronized void deleteDirectory (Path path)
     throws IOException {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
-      provider.delete(path.isAbsolute() ? path : streamPath.resolve(path));
+    ensureOpen();
+
+    Path resolvedPath = against(path);
+
+    if (!provider.readAttributes(resolvedPath, java.nio.file.attribute.BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS).isDirectory()) {
+      throw new NotDirectoryException(resolvedPath.toString());
     }
+
+    provider.delete(resolvedPath);
   }
 
   /**
-   * Moves the entry at {@code src} to {@code targetpath} within the {@code target} stream.
-   * Relative source and target paths are resolved against their respective stream paths.
+   * Moves an entry of this directory into another open directory stream.
    *
-   * @param src        the source path (absolute or relative to this stream)
-   * @param target     the destination directory stream
-   * @param targetpath the destination path within the target stream (absolute or relative)
+   * @param src        the entry to move, relative to this stream's directory
+   * @param target     the stream whose directory will receive the entry
+   * @param targetpath the name the entry will take, relative to the target stream's directory
    * @throws IOException                    if the move cannot be performed
-   * @throws ClosedDirectoryStreamException if this stream has been closed
+   * @throws ClosedDirectoryStreamException if either stream is closed
    */
   @Override
   public synchronized void move (Path src, SecureDirectoryStream<Path> target, Path targetpath)
     throws IOException {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
+    ensureOpen();
+
+    Path resolvedTarget;
+
+    if (targetpath.isAbsolute()) {
+      resolvedTarget = targetpath;
+    } else if (target instanceof EphemeralDirectoryStream) {
+      // resolved against the target stream's own directory, not against one of its entries
+      resolvedTarget = ((EphemeralDirectoryStream)target).streamPath.resolve(targetpath);
     } else {
-      provider.move(src.isAbsolute() ? src : streamPath.resolve(src), targetpath.isAbsolute() ? targetpath : target.iterator().next().resolve(targetpath));
+      throw new IOException("The target stream is not associated with this file system");
     }
+
+    provider.move(against(src), resolvedTarget);
   }
 
   /**
-   * Returns a file-attribute view for the directory itself. This implementation always
-   * returns {@code null} because no view is associated with the stream's own directory entry.
+   * Returns an attribute view of this stream's own directory.
    *
+   * @param type the view type requested
    * @param <V>  the view type
-   * @param type the class of the desired view
-   * @return always {@code null}
-   * @throws ClosedDirectoryStreamException if this stream has been closed
+   * @return the view, or {@code null} if the type is unsupported
+   * @throws ClosedDirectoryStreamException if the stream is closed
    */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Class<V> type) {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
+    ensureOpen();
 
-      return null;
-    }
+    return provider.getFileAttributeView(streamPath, type);
   }
 
-  /**
-   * Returns a file-attribute view for the entry at the given path, delegating to the provider.
-   * A relative path is resolved against this stream's own path before delegation.
-   *
-   * @param <V>     the view type
-   * @param path    the entry path (absolute or relative)
-   * @param type    the class of the desired view
-   * @param options link options passed through to the provider
-   * @return the requested view, or {@code null} when the view type is unsupported
-   * @throws ClosedDirectoryStreamException if this stream has been closed
-   */
   @Override
   public synchronized <V extends FileAttributeView> V getFileAttributeView (Path path, Class<V> type, LinkOption... options) {
 
-    if (closed) {
-      throw new ClosedDirectoryStreamException();
-    } else {
+    ensureOpen();
 
-      return provider.getFileAttributeView(path, type, options);
-    }
+    return provider.getFileAttributeView(against(path), type, options);
   }
 }

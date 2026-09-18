@@ -32,42 +32,60 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.LinkedList;
-import org.smallmind.file.ephemeral.watch.EphemeralWatchKey;
 import org.smallmind.file.ephemeral.watch.EphemeralWatchService;
 
 /**
- * {@link Path} implementation representing a location within an {@link EphemeralFileSystem}.
- * Paths are stored as an ordered array of name components plus an {@code absolute} flag.
- * The separator character is {@code "/"}.
+ * {@link Path} implementation for the in-memory {@link EphemeralFileSystem}.
  *
- * <p>Three package-visible constructors exist for special cases (root path, subpath slices,
- * and pre-parsed component arrays). Public callers should use
- * {@link EphemeralFileSystem#getPath(String, String...)} to obtain instances.
+ * <p>A path is held as an array of simple name elements plus a flag recording whether it is
+ * absolute. Redundant and trailing separators are discarded during parsing, so {@code /a//b/} and
+ * {@code /a/b} produce identical paths, matching the behaviour of the platform's own providers.
+ *
+ * <p>Two name arrays carry special meaning:
+ * <ul>
+ *   <li>an <em>absolute</em> path with zero names is the root, and renders as {@code "/"}</li>
+ *   <li>a <em>relative</em> path with a single empty name is the empty path, and renders as
+ *       {@code ""} with a {@linkplain #getNameCount() name count} of one</li>
+ * </ul>
+ * The empty path exists because {@code java.nio.file} requires it: {@code Files.createTempFile}
+ * and other JDK utilities build a single-element relative path and inspect its parent.
+ *
+ * <p>Relative paths are resolved against the file system's
+ * {@linkplain EphemeralFileSystem#getWorkingDirectory() working directory}.
  */
 public class EphemeralPath implements Path {
 
   private static final String[] NO_NAMES = new String[0];
+  private static final String[] EMPTY_NAMES = new String[] {""};
   private static final String SEPARATOR = "/";
+
+  /**
+   * The one character a path element may never contain.
+   */
+  private static final char NUL_CHARACTER = 0;
+
   private final EphemeralFileSystem fileSystem;
   private final String[] names;
   private final boolean absolute;
 
   /**
-   * Creates the root path (zero name components, absolute) for the given file system.
+   * Creates the root path of the given file system.
    *
-   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
+   * @param fileSystem the owning file system
    */
   protected EphemeralPath (EphemeralFileSystem fileSystem) {
 
@@ -78,15 +96,16 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Builds a path by parsing and joining the provided string segments. The {@code first}
-   * parameter determines whether the path is absolute (starts with {@code "/"}). Subsequent
-   * elements in {@code more} are always treated as relative and appended in order.
+   * Parses a path from a first component and any number of additional components.
    *
-   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
-   * @param first      the first path string; must not be {@code null}
-   * @param more       optional additional path strings to append
+   * <p>Empty and repeated separators are ignored. If nothing but separators is supplied and the
+   * first component is not absolute, the result is the empty path.
+   *
+   * @param fileSystem the owning file system
+   * @param first      the first path component; must not be {@code null}
+   * @param more       additional components to be joined
    * @throws NullPointerException if {@code first} is {@code null}
-   * @throws InvalidPathException if any resulting path component is empty
+   * @throws InvalidPathException if any component contains the NUL character
    */
   public EphemeralPath (EphemeralFileSystem fileSystem, String first, String... more) {
 
@@ -100,30 +119,25 @@ public class EphemeralPath implements Path {
 
       absolute = first.startsWith(SEPARATOR);
 
-      split(nameList, first, absolute);
-
+      split(nameList, first);
       if (more != null) {
         for (String another : more) {
-          split(nameList, another, false);
+          split(nameList, another);
         }
       }
 
-      names = nameList.toArray(new String[0]);
+      names = nameList.isEmpty() ? (absolute ? NO_NAMES : EMPTY_NAMES) : nameList.toArray(new String[0]);
     }
   }
 
-  /**
-   * Creates a subpath view by copying a slice of the name array from another path.
-   *
-   * @param path  the source path
-   * @param begin the start index (inclusive) of the slice
-   * @param end   the end index (exclusive) of the slice
-   */
-  private EphemeralPath (EphemeralPath path, int begin, int end) {
+  private EphemeralPath (EphemeralPath path, int begin, int end, boolean absolute) {
 
     fileSystem = (EphemeralFileSystem)path.getFileSystem();
-    absolute = path.isAbsolute();
+
+    this.absolute = absolute;
+
     names = new String[end - begin];
+
     int to = 0;
 
     for (int from = begin; from < end; from++) {
@@ -132,13 +146,17 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Constructs a new path from pre-parsed name components and an explicit absoluteness flag.
+   * Creates a path directly from its name elements, without parsing.
    *
-   * @param fileSystem the owning {@link EphemeralFileSystem}; must not be {@code null}
-   * @param names      the parsed name components; must not be {@code null}
-   * @param absolute   {@code true} if the path is absolute
+   * <p>Visible within the package so that {@link EphemeralFileStore} can build the prefix of a path
+   * while resolving symbolic links. The array is retained rather than copied, so callers must not
+   * modify it afterwards.
+   *
+   * @param fileSystem the owning file system
+   * @param names      the name elements of the path
+   * @param absolute   whether the path is absolute
    */
-  private EphemeralPath (EphemeralFileSystem fileSystem, String[] names, boolean absolute) {
+  EphemeralPath (EphemeralFileSystem fileSystem, String[] names, boolean absolute) {
 
     this.fileSystem = fileSystem;
     this.names = names;
@@ -146,9 +164,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Returns the separator character used by ephemeral paths.
+   * Returns the separator character used by this file system.
    *
-   * @return the {@code '/'} character
+   * @return the separator character, {@code '/'}
    */
   public static char getSeparatorChar () {
 
@@ -156,9 +174,9 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Returns the separator string used by ephemeral paths.
+   * Returns the separator used by this file system.
    *
-   * @return {@code "/"}
+   * @return the separator, {@code "/"}
    */
   public static String getSeparator () {
 
@@ -166,42 +184,53 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Splits a raw path string on the separator and appends the resulting non-empty tokens to
-   * {@code nameList}. Leading separator characters are permitted only when {@code absolute}
-   * is {@code true} and {@code text} is the first segment.
+   * Returns the name elements of an arbitrary path, accepting both {@link EphemeralPath} and
+   * {@link NativePath} instances.
    *
-   * @param nameList the list to append tokens to
-   * @param text     the raw text to split
-   * @param absolute {@code true} when a leading separator is acceptable
-   * @throws InvalidPathException if {@code text} is empty or yields an empty component in an
-   *                              unexpected position
+   * @param path the path to read
+   * @return the effective name array of {@code path}
    */
-  private void split (LinkedList<String> nameList, String text, boolean absolute) {
+  private static String[] namesOf (Path path) {
 
-    if (text.isEmpty()) {
-      throw new InvalidPathException(text, "Empty path component");
+    if (path instanceof EphemeralPath) {
+
+      return ((EphemeralPath)path).getEffectiveNames();
     } else {
 
-      int index = 0;
+      String[] extracted = new String[path.getNameCount()];
 
-      for (String segment : text.split(SEPARATOR, -1)) {
-        if (segment.isEmpty()) {
-          if ((!absolute) || (index > 0)) {
-            throw new InvalidPathException(text, "Empty path component");
-          }
-        } else {
-          nameList.add(segment);
-          index++;
-        }
+      for (int index = 0; index < extracted.length; index++) {
+        extracted[index] = path.getName(index).toString();
+      }
+
+      return ((extracted.length == 1) && extracted[0].isEmpty()) ? NO_NAMES : extracted;
+    }
+  }
+
+  /**
+   * Appends the non-empty segments of {@code text} to the accumulating name list.
+   *
+   * @param nameList the list accumulating name elements
+   * @param text     the component to split
+   * @throws InvalidPathException if the component contains the NUL character
+   */
+  private void split (LinkedList<String> nameList, String text) {
+
+    if (text.indexOf(NUL_CHARACTER) >= 0) {
+      throw new InvalidPathException(text, "NUL character not allowed");
+    }
+
+    for (String segment : text.split(SEPARATOR)) {
+      if (!segment.isEmpty()) {
+        nameList.add(segment);
       }
     }
   }
 
   /**
-   * Returns the parsed name components of this path. The returned array is the internal
-   * backing array and must not be modified by callers.
+   * Returns the name elements backing this path.
    *
-   * @return the name component array; never {@code null}, may be empty for the root path
+   * @return the internal name array, which callers must not modify
    */
   public String[] getNames () {
 
@@ -209,79 +238,62 @@ public class EphemeralPath implements Path {
   }
 
   /**
-   * Returns the file system that created this path.
+   * Returns whether this path is the empty path, a relative path consisting of one empty name.
    *
-   * @return the owning {@link EphemeralFileSystem}; never {@code null}
+   * @return {@code true} if this is the empty path
    */
+  private boolean isEmptyPath () {
+
+    return (!absolute) && (names.length == 1) && names[0].isEmpty();
+  }
+
+  /**
+   * Returns the name elements of this path as they participate in {@link #relativize(Path)},
+   * where the empty path behaves as though it had no name elements at all.
+   *
+   * @return the effective name array
+   */
+  private String[] getEffectiveNames () {
+
+    return isEmptyPath() ? NO_NAMES : names;
+  }
+
   @Override
   public FileSystem getFileSystem () {
 
     return fileSystem;
   }
 
-  /**
-   * Indicates whether this path is absolute.
-   *
-   * @return {@code true} if the path was constructed from a string beginning with {@code "/"}
-   */
   @Override
   public boolean isAbsolute () {
 
     return absolute;
   }
 
-  /**
-   * Returns the root component of this path, or {@code null} for relative paths.
-   *
-   * @return the root {@link EphemeralPath}, or {@code null} if this path is relative
-   */
   @Override
   public EphemeralPath getRoot () {
 
     return absolute ? new EphemeralPath(fileSystem) : null;
   }
 
-  /**
-   * Returns the last name element of this path as a relative single-element path, or
-   * {@code null} for the root path.
-   *
-   * @return the file name path element, or {@code null} when the path has no name components
-   */
   @Override
   public EphemeralPath getFileName () {
 
-    return (names.length == 0) ? null : new EphemeralPath(fileSystem, names[names.length - 1]);
+    return (names.length == 0) ? null : new EphemeralPath(fileSystem, new String[] {names[names.length - 1]}, false);
   }
 
-  /**
-   * Returns the parent of this path, or {@code null} when no parent exists.
-   *
-   * @return the parent {@link EphemeralPath}, or {@code null}
-   */
   @Override
   public EphemeralPath getParent () {
 
-    return (names.length == 0) ? null : (names.length > 1) ? new EphemeralPath(this, 0, names.length - 1) : absolute ? new EphemeralPath(fileSystem) : null;
+    return (names.length == 0) ? null : (names.length > 1) ? new EphemeralPath(this, 0, names.length - 1, absolute) : absolute ? new EphemeralPath(fileSystem) : null;
   }
 
-  /**
-   * Returns the number of name elements in this path.
-   *
-   * @return the element count; {@code 0} for the root path
-   */
   @Override
   public int getNameCount () {
 
     return names.length;
   }
 
-  /**
-   * Returns the name element at the given position as a relative path.
-   *
-   * @param index the zero-based element index
-   * @return the name element at {@code index}
-   * @throws IllegalArgumentException if {@code index} is negative or {@code >= getNameCount()}
-   */
   @Override
   public EphemeralPath getName (int index) {
 
@@ -289,17 +301,9 @@ public class EphemeralPath implements Path {
       throw new IllegalArgumentException("Illegal index value");
     }
 
-    return new EphemeralPath(fileSystem, names[index]);
+    return new EphemeralPath(fileSystem, new String[] {names[index]}, false);
   }
 
-  /**
-   * Returns a relative sub-sequence of the name elements of this path.
-   *
-   * @param beginIndex the start index (inclusive)
-   * @param endIndex   the end index (exclusive)
-   * @return the sub-path
-   * @throws IllegalArgumentException if the indices are out of range or inconsistent
-   */
   @Override
   public EphemeralPath subpath (int beginIndex, int endIndex) {
 
@@ -307,24 +311,62 @@ public class EphemeralPath implements Path {
       throw new IllegalArgumentException("Illegal index value");
     } else {
 
-      return new EphemeralPath(this, beginIndex, endIndex);
+      return new EphemeralPath(this, beginIndex, endIndex, false);
     }
   }
 
-  /**
-   * Tests whether this path starts with the given path. Returns {@code true} only when both
-   * paths belong to an {@link EphemeralFileSystem} and the other path's components form a
-   * prefix of this path's components.
-   *
-   * @param other the candidate prefix path
-   * @return {@code true} if this path starts with {@code other}
-   */
   @Override
   public boolean startsWith (Path other) {
 
-    if ((other.getFileSystem() instanceof EphemeralFileSystem) && (other.getNameCount() <= names.length)) {
-      for (int index = 0; index < other.getNameCount(); index++) {
-        if (!((EphemeralPath)other).getNames()[index].equals(names[index])) {
+    if ((!(other instanceof EphemeralPath)) || (!fileSystem.equals(other.getFileSystem())) || (absolute != other.isAbsolute())) {
+
+      return false;
+    } else {
+
+      String[] otherNames = ((EphemeralPath)other).getNames();
+
+      if (otherNames.length > names.length) {
+
+        return false;
+      } else {
+        for (int index = 0; index < otherNames.length; index++) {
+          if (!otherNames[index].equals(names[index])) {
+
+            return false;
+          }
+        }
+
+        return true;
+      }
+    }
+  }
+
+  @Override
+  public boolean endsWith (Path other) {
+
+    if ((!(other instanceof EphemeralPath)) || (!fileSystem.equals(other.getFileSystem()))) {
+
+      return false;
+    } else {
+
+      String[] otherNames = ((EphemeralPath)other).getNames();
+      int offset;
+
+      if (other.isAbsolute()) {
+        if ((!absolute) || (otherNames.length != names.length)) {
+
+          return false;
+        }
+        offset = 0;
+      } else if (otherNames.length > names.length) {
+
+        return false;
+      } else {
+        offset = names.length - otherNames.length;
+      }
+
+      for (int index = 0; index < otherNames.length; index++) {
+        if (!otherNames[index].equals(names[offset + index])) {
 
           return false;
         }
@@ -332,119 +374,76 @@ public class EphemeralPath implements Path {
 
       return true;
     }
-
-    return false;
   }
 
-  /**
-   * Tests whether this path ends with the given path. Applies standard NIO rules: an absolute
-   * {@code other} must match the full path; a relative {@code other} need only match the
-   * trailing components.
-   *
-   * @param other the candidate suffix path
-   * @return {@code true} if this path ends with {@code other}
-   */
-  @Override
-  public boolean endsWith (Path other) {
-
-    if (other.getFileSystem() instanceof EphemeralFileSystem) {
-      if (absolute || (!other.isAbsolute())) {
-        if ((other.isAbsolute() && (other.getNameCount() == names.length)) || ((!other.isAbsolute()) && (other.getNameCount() <= names.length))) {
-
-          int offset = names.length - other.getNameCount();
-
-          for (int index = 0; index < other.getNameCount(); index++) {
-            if (!((EphemeralPath)other).getNames()[index].equals(names[offset + index])) {
-
-              return false;
-            }
-          }
-
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Returns a path with redundant {@code "."} and {@code ".."} components resolved. If no
-   * such components are present {@code this} is returned unchanged.
-   *
-   * @return the normalized path
-   */
   @Override
   public EphemeralPath normalize () {
 
-    LinkedList<String> namesList = null;
-    int position = 0;
-
-    for (String name : names) {
-      switch (name) {
-        case ".":
-          if (namesList == null) {
-            namesList = new LinkedList<>(Arrays.asList(names).subList(0, position));
-          }
-          break;
-        case "..":
-          if (namesList == null) {
-            namesList = (position > 1) ? new LinkedList<>(Arrays.asList(names).subList(0, position - 1)) : new LinkedList<>();
-          } else if (!namesList.isEmpty()) {
-            namesList.removeLast();
-          }
-          break;
-        default:
-          if (namesList == null) {
-            position++;
-          } else {
-            namesList.add(name);
-          }
-      }
-    }
-
-    return (namesList == null) ? this : new EphemeralPath(fileSystem, namesList.toArray(new String[0]), absolute);
-  }
-
-  /**
-   * Resolves the given path against this path. If {@code other} is absolute it is returned
-   * unchanged. If {@code other} is empty this path is returned. Otherwise the name components
-   * of {@code other} are appended to the components of this path.
-   *
-   * @param other the path to resolve
-   * @return the resolved path
-   */
-  @Override
-  public Path resolve (Path other) {
-
-    if (other.isAbsolute()) {
-
-      return other;
-    } else if (other.getNameCount() == 0) {
+    if (isEmptyPath()) {
 
       return this;
     } else {
 
-      String[] resolvedNames = new String[names.length + other.getNameCount()];
+      LinkedList<String> normalizedList = new LinkedList<>();
+      boolean modified = false;
+
+      for (String name : names) {
+        switch (name) {
+          case ".":
+            modified = true;
+            break;
+          case "..":
+            modified = true;
+            if ((!normalizedList.isEmpty()) && (!"..".equals(normalizedList.getLast()))) {
+              normalizedList.removeLast();
+            } else if (!absolute) {
+              // a relative path retains leading parent references, an absolute path cannot ascend past its root
+              normalizedList.add(name);
+            }
+            break;
+          default:
+            normalizedList.add(name);
+        }
+      }
+
+      if (!modified) {
+
+        return this;
+      } else if (normalizedList.isEmpty()) {
+
+        return absolute ? new EphemeralPath(fileSystem) : new EphemeralPath(fileSystem, EMPTY_NAMES, false);
+      } else {
+
+        return new EphemeralPath(fileSystem, normalizedList.toArray(new String[0]), absolute);
+      }
+    }
+  }
+
+  @Override
+  public Path resolve (Path other) {
+
+    String[] otherNames;
+
+    if (other.isAbsolute()) {
+
+      return other;
+    } else if ((otherNames = namesOf(other)).length == 0) {
+
+      return this;
+    } else if (isEmptyPath()) {
+
+      return new EphemeralPath(fileSystem, otherNames, false);
+    } else {
+
+      String[] resolvedNames = new String[names.length + otherNames.length];
 
       System.arraycopy(names, 0, resolvedNames, 0, names.length);
-      for (int index = 0; index < other.getNameCount(); index++) {
-        resolvedNames[names.length + index] = other.getName(index).toString();
-      }
+      System.arraycopy(otherNames, 0, resolvedNames, names.length, otherNames.length);
 
       return new EphemeralPath(fileSystem, resolvedNames, absolute);
     }
   }
 
-  /**
-   * Constructs a relative path between this path and the given path. The result is a sequence
-   * of {@code ".."} steps to reach the common ancestor followed by the remaining components
-   * of {@code other}.
-   *
-   * @param other the target path; must have the same absolute/relative status as this path
-   * @return a relative path from this path to {@code other}
-   * @throws IllegalArgumentException if this path and {@code other} differ in absoluteness
-   */
   @Override
   public EphemeralPath relativize (Path other) {
 
@@ -452,175 +451,121 @@ public class EphemeralPath implements Path {
       throw new IllegalArgumentException("No relative path can be constructed");
     } else {
 
+      String[] sourceNames = getEffectiveNames();
+      String[] targetNames = namesOf(other);
       LinkedList<String> namesList = new LinkedList<>();
-      int index = 0;
+      int common = 0;
+      int limit = Math.min(sourceNames.length, targetNames.length);
 
-      for (String name : names) {
-        if (name.equals(other.getName(index).toString())) {
-          index++;
-        } else {
-          break;
-        }
+      while ((common < limit) && sourceNames[common].equals(targetNames[common])) {
+        common++;
       }
 
-      if (index < names.length) {
-
-        int redacted = names.length - index;
-
-        for (int loop = 0; loop < redacted; loop++) {
-          namesList.add("..");
-        }
+      for (int index = common; index < sourceNames.length; index++) {
+        namesList.add("..");
       }
+      namesList.addAll(Arrays.asList(targetNames).subList(common, targetNames.length));
 
-      if (index < other.getNameCount()) {
-        for (int loop = index; loop < other.getNameCount(); loop++) {
-          namesList.add(other.getName(loop).toString());
-        }
-      }
+      return namesList.isEmpty() ? new EphemeralPath(fileSystem, EMPTY_NAMES, false) : new EphemeralPath(fileSystem, namesList.toArray(new String[0]), false);
+    }
+  }
 
-      return new EphemeralPath(fileSystem, namesList.toArray(new String[0]), false);
+  @Override
+  public URI toUri () {
+
+    try {
+
+      return new URI(fileSystem.provider().getScheme(), "", toAbsolutePath().toString(), null);
+    } catch (URISyntaxException uriSyntaxException) {
+      throw new IOError(uriSyntaxException);
+    }
+  }
+
+  @Override
+  public EphemeralPath toAbsolutePath () {
+
+    if (absolute) {
+
+      return this;
+    } else {
+
+      EphemeralPath workingDirectory = fileSystem.getWorkingDirectory();
+
+      return isEmptyPath() ? workingDirectory : (EphemeralPath)workingDirectory.resolve(this);
     }
   }
 
   /**
-   * Converts this path to a URI using the provider's scheme and the absolute path string.
+   * Returns the absolute, normalized, link-free form of this path.
    *
-   * @return the URI representation of this path
+   * @param options {@link LinkOption#NOFOLLOW_LINKS} to leave a final symbolic link unresolved
+   * @return the real path of the existing file
+   * @throws IOException if the file does not exist, or if a symbolic link cycle is encountered
    */
   @Override
-  public URI toUri () {
+  public EphemeralPath toRealPath (LinkOption... options)
+    throws IOException {
 
-    return URI.create(fileSystem.provider().getScheme() + "://" + toAbsolutePath());
+    return fileSystem.getFileStore().toRealPath(toAbsolutePath().normalize(), options);
   }
 
-  /**
-   * Returns an absolute form of this path. If already absolute, returns {@code this}.
-   *
-   * @return this path as an absolute path
-   */
-  @Override
-  public EphemeralPath toAbsolutePath () {
-
-    return absolute ? this : new EphemeralPath(fileSystem, names, true);
-  }
-
-  /**
-   * Returns the real path by normalizing and making this path absolute. Symbolic link
-   * resolution is not currently supported.
-   *
-   * @param options link options (currently unused)
-   * @return the normalized absolute path
-   */
-  @Override
-  public EphemeralPath toRealPath (LinkOption... options) {
-
-    // TODO: will need to handle symlinks when/if the file system provide for them
-    return normalize().toAbsolutePath();
-  }
-
-  /**
-   * Registers this path with the given watch service for the specified event kinds.
-   *
-   * @param watcher   the watch service; must be an {@link EphemeralWatchService}
-   * @param events    the kinds of events to watch for
-   * @param modifiers optional modifiers (currently unused)
-   * @return the {@link WatchKey} representing the registration
-   * @throws NoSuchFileException      if this path does not exist in the heap
-   * @throws NotDirectoryException    if this path is not a directory
-   * @throws IllegalArgumentException if {@code watcher} is not an {@link EphemeralWatchService}
-   */
   @Override
   public WatchKey register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
-    throws NoSuchFileException, NotDirectoryException {
+    throws IOException {
 
     if (!(watcher instanceof EphemeralWatchService)) {
       throw new IllegalArgumentException("The watcher is not associated with this file system");
     } else {
-
-      EphemeralWatchKey watchKey;
-
-      // modifiers unused as yet
-      ((EphemeralWatchService)watcher).register(watchKey = new EphemeralWatchKey((EphemeralWatchService)watcher, events, this));
-
-      return watchKey;
-    }
-  }
-
-  /**
-   * Compares this path lexicographically with another {@link EphemeralPath}, first by name
-   * component count and then component-by-component.
-   *
-   * @param other the other path to compare to
-   * @return a negative integer, zero, or positive integer as this path is less than, equal
-   * to, or greater than {@code other}
-   */
-  @Override
-  public int compareTo (Path other) {
-
-    EphemeralPath otherEphemeralPath = (EphemeralPath)other;
-
-    if (names.length == other.getNameCount()) {
-      for (int index = 0; index < names.length; index++) {
-
-        int comparison;
-
-        if ((comparison = names[index].compareTo(otherEphemeralPath.getNames()[index])) != 0) {
-
-          return comparison;
+      for (WatchEvent.Kind<?> event : events) {
+        if (!(StandardWatchEventKinds.ENTRY_CREATE.equals(event) || StandardWatchEventKinds.ENTRY_DELETE.equals(event) || StandardWatchEventKinds.ENTRY_MODIFY.equals(event) || StandardWatchEventKinds.OVERFLOW.equals(event))) {
+          throw new UnsupportedOperationException(event.name());
         }
       }
 
-      return 0;
-    } else {
-
-      return names.length - otherEphemeralPath.getNameCount();
+      return ((EphemeralWatchService)watcher).register(toAbsolutePath().normalize(), events);
     }
   }
 
-  /**
-   * Returns a hash code based on the name component array and the absoluteness flag.
-   *
-   * @return a hash code value for this path
-   */
+  @Override
+  public int compareTo (Path other) {
+
+    if (!fileSystem.equals(other.getFileSystem())) {
+      throw new ClassCastException("The path(" + other + ") is not associated with this file system");
+    }
+
+    return toString().compareTo(other.toString());
+  }
+
   @Override
   public int hashCode () {
 
     return (Arrays.hashCode(names) * 31) + (absolute ? Boolean.TRUE.hashCode() : Boolean.FALSE.hashCode());
   }
 
-  /**
-   * Compares this path with another object for equality. Two {@link EphemeralPath} instances
-   * are equal when both have the same absoluteness flag and the same sequence of name
-   * components.
-   *
-   * @param obj the object to compare
-   * @return {@code true} if {@code obj} is an {@link EphemeralPath} with identical components
-   * and absoluteness
-   */
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof EphemeralPath) && (((EphemeralPath)obj).isAbsolute() == absolute) && Arrays.equals(((EphemeralPath)obj).getNames(), names);
+    return (this == obj) || ((obj instanceof EphemeralPath) && fileSystem.equals(((EphemeralPath)obj).getFileSystem()) && (((EphemeralPath)obj).isAbsolute() == absolute) && Arrays.equals(((EphemeralPath)obj).getNames(), names));
   }
 
-  /**
-   * Returns the string form of this path. Absolute paths begin with the separator; name
-   * components are joined by the separator.
-   *
-   * @return the path string; never {@code null}
-   */
   @Override
   public String toString () {
 
-    StringBuilder pathBuilder = new StringBuilder();
+    if (absolute && (names.length == 0)) {
 
-    for (String name : names) {
-      if (absolute || (!pathBuilder.isEmpty())) {
-        pathBuilder.append(SEPARATOR);
+      return SEPARATOR;
+    } else {
+
+      StringBuilder pathBuilder = new StringBuilder();
+
+      for (String name : names) {
+        if (absolute || (!pathBuilder.isEmpty())) {
+          pathBuilder.append(SEPARATOR);
+        }
+        pathBuilder.append(name);
       }
-      pathBuilder.append(name);
-    }
 
-    return pathBuilder.toString();
+      return pathBuilder.toString();
+    }
   }
 }

@@ -33,9 +33,10 @@
 package org.smallmind.file.ephemeral.heap;
 
 /**
- * Distinguishes between ephemeral directory and file nodes stored in the in-memory heap tree.
+ * Distinguishes between the ephemeral directory, file, and symbolic link nodes stored in the
+ * in-memory heap tree.
  */
 public enum HeapNodeType {
 
-  DIRECTORY, FILE
+  DIRECTORY, FILE, SYMBOLIC_LINK
 }

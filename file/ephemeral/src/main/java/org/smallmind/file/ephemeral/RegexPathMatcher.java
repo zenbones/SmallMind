@@ -40,33 +40,66 @@ import java.util.regex.Pattern;
  * {@link PathMatcher} implementation that tests paths against a compiled regular expression.
  * Instances are created by {@link EphemeralFileSystem#getPathMatcher(String)} for both the
  * {@code "glob"} and {@code "regex"} syntaxes.
+ *
+ * <p>Because an {@link EphemeralFileSystem} may hand out {@link NativePath} instances for paths
+ * that fall outside its configured roots, a matcher may also carry the equivalent matcher obtained
+ * from the native file system. A native path is rendered with the native separator, so testing it
+ * against a pattern compiled for the {@code '/'} separator would silently fail to match; such
+ * paths are delegated instead.
  */
 public class RegexPathMatcher implements PathMatcher {
 
   /**
-   * The compiled regular expression used to match path strings.
+   * The compiled regular expression used to match ephemeral path strings.
    */
-  Pattern pattern;
+  private final Pattern pattern;
 
   /**
-   * Creates a matcher backed by the given compiled regular expression.
+   * The equivalent matcher from the native file system, used for {@link NativePath} instances, or
+   * {@code null} when no native file system is attached.
+   */
+  private final PathMatcher nativePathMatcher;
+
+  /**
+   * Creates a matcher backed by the given compiled regular expression, with no native delegate.
    *
    * @param pattern the pre-compiled pattern to use for matching; must not be {@code null}
    */
   public RegexPathMatcher (Pattern pattern) {
 
-    this.pattern = pattern;
+    this(pattern, null);
   }
 
   /**
-   * Tests whether the string representation of {@code path} matches the regular expression.
+   * Creates a matcher backed by the given compiled regular expression.
+   *
+   * @param pattern           the pre-compiled pattern to use for matching; must not be
+   *                          {@code null}
+   * @param nativePathMatcher the matcher to consult for {@link NativePath} instances, which may be
+   *                          {@code null}
+   */
+  public RegexPathMatcher (Pattern pattern, PathMatcher nativePathMatcher) {
+
+    this.pattern = pattern;
+    this.nativePathMatcher = nativePathMatcher;
+  }
+
+  /**
+   * Tests whether the string representation of {@code path} matches the regular expression, or, for
+   * a {@link NativePath}, whether the native file system's equivalent matcher accepts it.
    *
    * @param path the path to test; must not be {@code null}
-   * @return {@code true} if the path string matches the pattern
+   * @return {@code true} if the path matches
    */
   @Override
   public boolean matches (Path path) {
 
-    return pattern.matcher(path.toString()).matches();
+    if (path instanceof NativePath) {
+
+      return (nativePathMatcher != null) && nativePathMatcher.matches(((NativePath)path).getNativePath());
+    } else {
+
+      return pattern.matcher(path.toString()).matches();
+    }
   }
 }

@@ -32,8 +32,11 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -86,10 +89,58 @@ public class EphemeralPathTest {
     Assert.assertEquals(path.getNameCount(), 3);
   }
 
-  @Test(expectedExceptions = InvalidPathException.class)
-  public void testEmptyPathRejected () {
+  public void testEmptyPath () {
 
-    path("");
+    EphemeralPath empty = path("");
+
+    Assert.assertEquals(empty.toString(), "");
+    Assert.assertFalse(empty.isAbsolute());
+    Assert.assertEquals(empty.getNameCount(), 1);
+    Assert.assertNull(empty.getParent());
+    Assert.assertEquals(empty.getFileName().toString(), "");
+  }
+
+  @Test(expectedExceptions = InvalidPathException.class)
+  public void testNulCharacterRejected () {
+
+    path("/a/\u0000/b");
+  }
+
+  public void testRedundantSeparatorsCollapse () {
+
+    Assert.assertEquals(path("/a//b").toString(), "/a/b");
+    Assert.assertEquals(path("/a/b/").toString(), "/a/b");
+    Assert.assertEquals(path("/").toString(), "/");
+    Assert.assertEquals(path("/").getNameCount(), 0);
+  }
+
+  public void testRootRenders () {
+
+    Assert.assertEquals(path("/a/b").getRoot().toString(), "/");
+    Assert.assertEquals(path("/a/../..").normalize().toString(), "/");
+  }
+
+  public void testStartsWithRequiresMatchingAbsoluteness () {
+
+    Assert.assertFalse(path("/a/b").startsWith(path("a")));
+    Assert.assertTrue(path("/a/b").startsWith(path("/")));
+  }
+
+  public void testRelativizeToShorterPath () {
+
+    Assert.assertEquals(path("/a/b/c").relativize(path("/a")).toString(), "../..");
+    Assert.assertEquals(path("/a/b").relativize(path("/a/b")).toString(), "");
+  }
+
+  public void testNormalizeRetainsLeadingParentOfRelativePath () {
+
+    Assert.assertEquals(path("../a").normalize().toString(), "../a");
+    Assert.assertEquals(path("a/..").normalize().toString(), "");
+  }
+
+  public void testResolveEmptyHasNoTrailingSeparator () {
+
+    Assert.assertEquals(path("/a").resolve(path("")).toString(), "/a");
   }
 
   public void testGetRoot () {
@@ -223,9 +274,24 @@ public class EphemeralPathTest {
     Assert.assertSame(absolute.toAbsolutePath(), absolute);
   }
 
-  public void testToRealPath () {
+  @Test(expectedExceptions = NoSuchFileException.class)
+  public void testToRealPathOfMissingFile ()
+    throws IOException {
 
-    Assert.assertEquals(path("/a/./b/../c").toRealPath().toString(), "/a/c");
+    path("/a/./b/../c").toRealPath();
+  }
+
+  public void testToRealPath ()
+    throws IOException {
+
+    Files.createDirectory(path("/a"));
+    try {
+      Files.writeString(path("/a/c"), "x");
+
+      Assert.assertEquals(path("/a/./b/../c").toRealPath().toString(), "/a/c");
+    } finally {
+      ephemeralFileSystem.clear();
+    }
   }
 
   public void testToUri () {

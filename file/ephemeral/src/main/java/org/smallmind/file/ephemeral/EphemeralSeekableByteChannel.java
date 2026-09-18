@@ -38,232 +38,202 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.attribute.FileTime;
 import org.smallmind.file.ephemeral.heap.FileNode;
-import org.smallmind.file.ephemeral.heap.HeapEvent;
-import org.smallmind.file.ephemeral.heap.HeapEventType;
-import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 /**
- * {@link SeekableByteChannel} backed by an in-memory {@link FileNode}. The channel
- * operates in either read-only or write-only mode, determined at construction time. All
- * public methods are {@code synchronized} to support concurrent access.
+ * {@link SeekableByteChannel} over the content of an ephemeral file.
  *
- * <p>If the channel was opened with {@code deleteOnClose = true} the underlying file is
- * removed from the store when the channel is {@linkplain #close() closed}.
+ * <p>The channel owns its position and nothing else; the bytes live in the file's
+ * {@link org.smallmind.file.ephemeral.heap.HeapFileContent}, which is addressed absolutely. Two
+ * channels open on one file therefore advance independently, a single channel can be opened for
+ * reading and writing at once, and two appending channels cannot overwrite each other — each
+ * resolves the end of the file at the moment it writes.
  */
 public class EphemeralSeekableByteChannel implements SeekableByteChannel {
 
   private final EphemeralFileStore fileStore;
   private final FileNode fileNode;
   private final EphemeralPath filePath;
-  private final ByteArrayIOStream stream;
-  private final boolean read;
+  private final boolean readable;
+  private final boolean writable;
+  private final boolean append;
   private final boolean deleteOnClose;
+  private long position;
+  private boolean closed;
 
   /**
-   * Opens a channel over the given heap file node.
+   * Creates a channel over a file.
    *
-   * @param fileStore     the owning {@link EphemeralFileStore} used for delete-on-close
-   * @param fileNode      the heap node whose data this channel operates on
-   * @param filePath      the logical path of the file, used when deleting on close
-   * @param read          {@code true} to open the channel in read-only mode;
-   *                      {@code false} for write-only mode
-   * @param append        when {@code true} (and {@code read} is {@code false}) the write
-   *                      position is advanced to end-of-stream before any writes occur
-   * @param deleteOnClose when {@code true} the file is deleted from the store upon
-   *                      {@link #close()}
-   * @throws IOException if the underlying stream cannot be initialised
+   * @param fileStore the store owning the file, notified of modifications
+   * @param fileNode  the file this channel addresses
+   * @param filePath  the absolute path of the file, used when reporting changes
+   * @param options   the validated open options governing this channel
    */
-  public EphemeralSeekableByteChannel (EphemeralFileStore fileStore, FileNode fileNode, EphemeralPath filePath, boolean read, boolean append, boolean deleteOnClose)
-    throws IOException {
+  EphemeralSeekableByteChannel (EphemeralFileStore fileStore, FileNode fileNode, EphemeralPath filePath, EphemeralFileStore.OpenOptions options) {
 
     this.fileStore = fileStore;
-    this.filePath = filePath;
     this.fileNode = fileNode;
-    this.read = read;
-    this.deleteOnClose = deleteOnClose;
+    this.filePath = filePath;
 
-    stream = new ByteArrayIOStream(fileNode.getSegmentBuffer());
-    if (append) {
-      stream.asOutputStream().advance();
-    }
+    readable = options.isRead();
+    writable = options.isWrite();
+    append = options.isAppend();
+    deleteOnClose = options.isDeleteOnClose();
 
-    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+    fileStore.reportAccessed(fileNode);
   }
 
   /**
-   * Reads bytes from the channel into the given buffer. The last-access timestamp of the
-   * underlying file is updated after a successful read.
+   * Throws if this channel has been closed.
    *
-   * @param dst the buffer into which bytes are to be transferred
-   * @return the number of bytes read, or {@code -1} if the channel has reached end-of-stream
-   * @throws NonReadableChannelException if the channel was opened in write-only mode
-   * @throws ClosedChannelException      if the channel has been closed
-   * @throws IOException                 if an I/O error occurs
+   * @throws ClosedChannelException if the channel is closed
    */
+  private void ensureOpen ()
+    throws ClosedChannelException {
+
+    if (closed) {
+      throw new ClosedChannelException();
+    }
+  }
+
   @Override
   public synchronized int read (ByteBuffer dst)
     throws IOException {
 
-    if (!read) {
+    ensureOpen();
+
+    if (!readable) {
       throw new NonReadableChannelException();
-    } else if (stream.isClosed()) {
-      throw new ClosedChannelException();
     } else {
 
       byte[] buffer = new byte[dst.remaining()];
-      int bytesRead = stream.asInputStream().read(buffer);
+      int bytesRead = fileNode.getContent().read(position, buffer, 0, buffer.length);
 
       if (bytesRead > 0) {
         dst.put(buffer, 0, bytesRead);
-
-        fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+        position += bytesRead;
+        fileStore.reportAccessed(fileNode);
       }
 
       return bytesRead;
     }
   }
 
-  /**
-   * Writes bytes from the given buffer into the channel. Both the last-access and
-   * last-modified timestamps of the underlying file are updated after each write.
-   *
-   * @param src the buffer containing bytes to be written
-   * @return the number of bytes written
-   * @throws NonWritableChannelException if the channel was opened in read-only mode
-   * @throws ClosedChannelException      if the channel has been closed
-   * @throws IOException                 if an I/O error occurs
-   */
   @Override
   public synchronized int write (ByteBuffer src)
     throws IOException {
 
-    if (read) {
+    ensureOpen();
+
+    if (!writable) {
       throw new NonWritableChannelException();
-    } else if (stream.isClosed()) {
-      throw new ClosedChannelException();
     } else {
 
-      byte[] buffer;
       int bytesWritten = src.remaining();
 
       if (bytesWritten > 0) {
 
-        buffer = new byte[bytesWritten];
+        byte[] buffer = new byte[bytesWritten];
+
         src.get(buffer);
-        stream.asOutputStream().write(buffer);
 
-        fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
-        fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
+        // an appending channel resolves the end of the file and writes atomically, so that two
+        // appenders interleave their writes rather than overwriting one another
+        if (append) {
+          position = fileNode.getContent().append(buffer, 0, bytesWritten);
+        } else {
+          fileNode.getContent().write(position, buffer, 0, bytesWritten);
+          position += bytesWritten;
+        }
 
-        fileNode.bubble(new HeapEvent(this, filePath, HeapEventType.MODIFY));
+        fileStore.reportModified(fileNode, filePath);
       }
 
       return bytesWritten;
     }
   }
 
-  /**
-   * Returns the current byte position of this channel.
-   *
-   * @return the current position, measured in bytes from the beginning of the entity
-   * @throws IOException if an I/O error occurs
-   */
   @Override
   public synchronized long position ()
     throws IOException {
 
-    synchronized (stream) {
+    ensureOpen();
 
-      return (read) ? stream.asInputStream().position() : stream.asOutputStream().position();
-    }
+    return position;
   }
 
-  /**
-   * Sets this channel's position to the given value.
-   *
-   * @param newPosition the new position; must be non-negative
-   * @return this channel
-   * @throws IOException if an I/O error occurs
-   */
   @Override
   public synchronized SeekableByteChannel position (long newPosition)
     throws IOException {
 
-    if (read) {
-      stream.asInputStream().position(newPosition);
-    } else {
-      stream.asOutputStream().position(newPosition);
+    ensureOpen();
+
+    if (newPosition < 0) {
+      throw new IllegalArgumentException("Negative position");
     }
+
+    position = newPosition;
 
     return this;
   }
 
-  /**
-   * Returns the current size of the entity to which this channel is connected. The
-   * last-access timestamp is updated as a side effect.
-   *
-   * @return the current size in bytes
-   * @throws IOException if an I/O error occurs
-   */
   @Override
   public synchronized long size ()
     throws IOException {
 
-    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+    ensureOpen();
 
-    return stream.size();
+    return fileNode.getContent().size();
   }
 
-  /**
-   * Truncates the entity to which this channel is connected to the given size. If the given
-   * size is greater than or equal to the current size the entity is left unchanged. Both the
-   * last-access and last-modified timestamps are updated.
-   *
-   * @param size the new size; must be non-negative
-   * @return this channel
-   * @throws IOException if an I/O error occurs
-   */
   @Override
   public synchronized SeekableByteChannel truncate (long size)
     throws IOException {
 
-    stream.truncate(size);
+    ensureOpen();
 
-    fileNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
-    fileNode.getAttributes().setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()));
+    if (!writable) {
+      throw new NonWritableChannelException();
+    } else if (size < 0) {
+      throw new IllegalArgumentException("Negative size");
+    } else {
+      if (size < fileNode.getContent().size()) {
+        fileNode.getContent().truncate(size);
+        fileStore.reportModified(fileNode, filePath);
+      }
+      if (position > size) {
+        position = size;
+      }
 
-    fileNode.bubble(new HeapEvent(this, filePath, HeapEventType.MODIFY));
-
-    return this;
+      return this;
+    }
   }
 
-  /**
-   * Indicates whether this channel is open.
-   *
-   * @return {@code true} if the channel has not been closed
-   */
   @Override
   public synchronized boolean isOpen () {
 
-    return !stream.isClosed();
+    return !closed;
   }
 
   /**
-   * Closes this channel. If the channel was opened with {@code deleteOnClose = true} the
-   * underlying file is removed from the store after the stream is closed.
-   *
-   * @throws IOException if the stream cannot be closed or, for delete-on-close channels,
-   *                     if the file cannot be deleted
+   * Closes this channel, deleting the file if it was opened with
+   * {@link java.nio.file.StandardOpenOption#DELETE_ON_CLOSE}. Closing an already closed channel
+   * has no effect, so the deletion happens at most once, and a file that has already been removed
+   * by other means is not an error.
    */
   @Override
-  public synchronized void close ()
-    throws IOException {
+  public synchronized void close () {
 
-    stream.close();
-    if (deleteOnClose) {
-      fileStore.delete(filePath);
+    if (!closed) {
+      closed = true;
+
+      if (deleteOnClose) {
+        try {
+          fileStore.delete(filePath);
+        } catch (IOException ioException) {
+          // the file is already gone, which is the outcome this option asked for
+        }
+      }
     }
   }
 }

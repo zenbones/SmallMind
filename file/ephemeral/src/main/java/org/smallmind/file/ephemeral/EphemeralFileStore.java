@@ -33,16 +33,21 @@
 package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.AccessMode;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.FileSystemException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
+import java.nio.file.NotLinkException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
@@ -54,43 +59,74 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.file.ephemeral.heap.DirectoryNode;
 import org.smallmind.file.ephemeral.heap.FileNode;
 import org.smallmind.file.ephemeral.heap.HeapEvent;
 import org.smallmind.file.ephemeral.heap.HeapEventListener;
 import org.smallmind.file.ephemeral.heap.HeapEventType;
+import org.smallmind.file.ephemeral.heap.HeapFileContent;
 import org.smallmind.file.ephemeral.heap.HeapNode;
 import org.smallmind.file.ephemeral.heap.HeapNodeType;
-import org.smallmind.nutsnbolts.io.ByteArrayIOBuffer;
+import org.smallmind.file.ephemeral.heap.HeapSpaceGovernor;
+import org.smallmind.file.ephemeral.heap.LinkNode;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * In-memory {@link FileStore} implementation that backs the ephemeral file system. All file
- * and directory data are stored in a heap tree rooted at an anonymous {@link DirectoryNode}.
- * The store enforces a logical capacity ceiling and uses a fixed block size when allocating
- * new file nodes. All mutating operations are {@code synchronized} to guard against concurrent
- * access.
+ * The {@link FileStore} that owns the in-memory tree behind an {@link EphemeralFileSystem}, and the
+ * single place where that tree is mutated.
+ *
+ * <h2>Locking</h2>
+ * The shape of the tree — which nodes exist, and where — is guarded by one
+ * {@link ReentrantReadWriteLock}. Lookups take the read lock; anything that creates, removes,
+ * renames, or re-parents a node takes the write lock. The <em>content</em> of a file is guarded
+ * separately, by the monitor of its own {@link HeapFileContent}, so that a long write does not
+ * block unrelated directory traversal. The lock order is always tree lock first, then content;
+ * space accounting deliberately uses a lock-free counter so that {@link #reserve(long)}, which is
+ * called while a content monitor is held, can never reach back for the tree lock.
+ *
+ * <h2>Capacity</h2>
+ * The configured capacity is enforced. Every growth of file content is reserved against a running
+ * total first, and a write that would exceed the capacity fails with an {@link IOException} rather
+ * than succeeding and driving the reported free space negative.
+ *
+ * <h2>Links</h2>
+ * Path resolution follows symbolic links, bounded by {@link #MAXIMUM_LINK_DEPTH} so that a cycle
+ * reports an error instead of exhausting the stack. Hard links are represented by two
+ * {@link FileNode}s sharing one {@link HeapFileContent}, which is discarded when the last of them
+ * is deleted.
  */
-public class EphemeralFileStore extends FileStore {
+public class EphemeralFileStore extends FileStore implements HeapSpaceGovernor {
 
   private static final Map<String, Class<? extends FileAttributeView>> SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP = Map.of("basic", BasicFileAttributeView.class);
   private static final String[] BASIC_FILE_ATTRIBUTE_NAMES = new String[] {"creationTime", "lastModifiedTime", "lastAccessTime", "isDirectory", "isRegularFile", "isSymbolicLink", "isOther", "size", "fileKey"};
+
+  /**
+   * The number of symbolic links that may be traversed while resolving a single path before the
+   * resolution is treated as cyclic.
+   */
+  private static final int MAXIMUM_LINK_DEPTH = 40;
+
   private final EphemeralFileSystem fileSystem;
   private final EphemeralFileStoreAttributeView fileStoreAttributeView = new EphemeralFileStoreAttributeView();
-  private final DirectoryNode rootNode = new DirectoryNode(null, null);
+  private final ReentrantReadWriteLock treeLock = new ReentrantReadWriteLock();
+  private final AtomicLong usedRef = new AtomicLong(0);
+  private final DirectoryNode rootNode;
   private final long capacity;
   private final int blockSize;
 
   /**
-   * Creates a file store bound to the given file system.
+   * Creates a store with the given bounds.
    *
-   * @param fileSystem the owning {@link EphemeralFileSystem}
-   * @param capacity   the maximum capacity in bytes that will be reported by {@link #getUsableSpace()}
-   * @param blockSize  the allocation unit in bytes used when creating new file nodes
-   * @throws IllegalArgumentException if {@code capacity} or {@code blockSize} are not positive
+   * @param fileSystem the owning file system
+   * @param capacity   the total number of bytes of file content the store may hold; must be &gt; 0
+   * @param blockSize  the segment size used to allocate file content; must be &gt; 0
+   * @throws IllegalArgumentException if either bound is not positive
    */
   public EphemeralFileStore (EphemeralFileSystem fileSystem, long capacity, int blockSize) {
 
@@ -101,43 +137,125 @@ public class EphemeralFileStore extends FileStore {
     this.fileSystem = fileSystem;
     this.capacity = capacity;
     this.blockSize = blockSize;
+
+    rootNode = new DirectoryNode(null, null, blockSize);
   }
 
   /**
-   * Removes all child nodes from the root, effectively resetting the store to an empty state.
+   * Returns whether {@link LinkOption#NOFOLLOW_LINKS} appears among the supplied options.
+   *
+   * @param options the options to inspect, which may be {@code null}
+   * @return {@code true} if links in the final position should not be followed
+   */
+  private static boolean isNoFollow (LinkOption... options) {
+
+    if (options != null) {
+      for (LinkOption option : options) {
+        if (LinkOption.NOFOLLOW_LINKS.equals(option)) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Validates and interprets the options of a channel open request.
+   *
+   * <p>Only combinations that {@code java.nio.file} itself forbids are rejected. In particular
+   * {@link StandardOpenOption#READ} together with {@link StandardOpenOption#WRITE} is legal and
+   * produces a channel that can do both.
+   *
+   * @param options the requested options
+   * @return the interpreted options
+   * @throws UnsupportedOperationException if an option this store does not understand is supplied
+   * @throws IllegalArgumentException      if the combination of options is invalid
+   */
+  private static OpenOptions parseOpenOptions (Set<? extends OpenOption> options) {
+
+    OpenOptions parsed = new OpenOptions();
+
+    for (OpenOption option : options) {
+      if (option instanceof LinkOption) {
+        parsed.noFollowLinks = parsed.noFollowLinks || LinkOption.NOFOLLOW_LINKS.equals(option);
+      } else if (!(option instanceof StandardOpenOption)) {
+        throw new UnsupportedOperationException(String.valueOf(option));
+      } else {
+        switch ((StandardOpenOption)option) {
+          case READ:
+            parsed.read = true;
+            break;
+          case WRITE:
+            parsed.write = true;
+            break;
+          case APPEND:
+            parsed.write = true;
+            parsed.append = true;
+            break;
+          case TRUNCATE_EXISTING:
+            parsed.truncateExisting = true;
+            break;
+          case CREATE:
+            parsed.create = true;
+            break;
+          case CREATE_NEW:
+            parsed.createNew = true;
+            break;
+          case DELETE_ON_CLOSE:
+            parsed.deleteOnClose = true;
+            break;
+          case SPARSE:
+          case SYNC:
+          case DSYNC:
+            // all content is held in memory, so these carry no meaning here
+            break;
+          default:
+            throw new UnknownSwitchCaseException(option.toString());
+        }
+      }
+    }
+
+    if (parsed.append && parsed.read) {
+      throw new IllegalArgumentException("READ + APPEND not allowed");
+    } else if (parsed.append && parsed.truncateExisting) {
+      throw new IllegalArgumentException("APPEND + TRUNCATE_EXISTING not allowed");
+    }
+
+    if (!(parsed.read || parsed.write)) {
+      parsed.read = true;
+    }
+
+    return parsed;
+  }
+
+  /**
+   * Empties the store, discarding every node and returning all accounted space.
    */
   public void clear () {
 
-    rootNode.clear();
+    treeLock.writeLock().lock();
+    try {
+      rootNode.clear();
+      usedRef.set(0);
+    } finally {
+      treeLock.writeLock().unlock();
+    }
   }
 
-  /**
-   * Returns the name of this file store.
-   *
-   * @return the simple class name of this store
-   */
   @Override
   public String name () {
 
     return EphemeralFileStore.class.getSimpleName();
   }
 
-  /**
-   * Returns the type identifier of this file store, which is the same as its name.
-   *
-   * @return the type string; never {@code null}
-   */
   @Override
   public String type () {
 
     return name();
   }
 
-  /**
-   * Indicates whether this file store is read-only.
-   *
-   * @return always {@code false}
-   */
   @Override
   public boolean isReadOnly () {
 
@@ -145,1062 +263,1316 @@ public class EphemeralFileStore extends FileStore {
   }
 
   /**
-   * Returns the total size of this file store, which is equal to the usable space.
+   * Returns the total number of bytes of file content this store may hold.
    *
-   * @return the configured capacity in bytes
+   * @return the configured capacity
    * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public long getTotalSpace () {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return getUsableSpace();
-    }
+    return capacity;
   }
 
   /**
-   * Returns the number of bytes available for use on this file store.
+   * Returns the number of bytes still available for file content.
    *
-   * @return the configured capacity in bytes
+   * @return the capacity less the bytes currently allocated; never negative
    * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
   public long getUsableSpace () {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return capacity;
-    }
+    return capacity - usedRef.get();
   }
 
   /**
-   * Returns the number of bytes not yet allocated in this file store, calculated as
-   * {@code capacity - rootNode.size()}.
+   * Returns the number of bytes still available for file content.
    *
-   * @return unallocated bytes remaining
+   * @return the capacity less the bytes currently allocated; never negative
    * @throws ClosedFileSystemException if the owning file system has been closed
    */
   @Override
-  public synchronized long getUnallocatedSpace () {
+  public long getUnallocatedSpace () {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return capacity - rootNode.size();
+    return capacity - usedRef.get();
+  }
+
+  /**
+   * Accounts for file content about to be allocated.
+   *
+   * <p>Implemented with a compare-and-set loop rather than a lock because it is invoked while a
+   * {@link HeapFileContent} monitor is held; taking the tree lock here would invert this store's
+   * lock order and could deadlock against an in-flight tree mutation.
+   *
+   * @param bytes the number of bytes about to be allocated
+   * @throws IOException if the allocation would exceed the capacity of this store
+   */
+  @Override
+  public void reserve (long bytes)
+    throws IOException {
+
+    while (true) {
+
+      long current = usedRef.get();
+      long updated = current + bytes;
+
+      if (updated > capacity) {
+        throw new IOException("Insufficient space in file store(" + name() + "), " + (capacity - current) + " of " + capacity + " bytes remain");
+      } else if (usedRef.compareAndSet(current, updated)) {
+
+        return;
+      }
     }
   }
 
   /**
-   * Indicates whether this file store supports the attribute view identified by the given class.
+   * Returns file content bytes to this store.
    *
-   * @param type the attribute view class to test
-   * @return {@code true} if the view is supported
-   * @throws ClosedFileSystemException if the owning file system has been closed
+   * @param bytes the number of bytes no longer allocated
    */
+  @Override
+  public void release (long bytes) {
+
+    usedRef.addAndGet(-bytes);
+  }
+
   @Override
   public boolean supportsFileAttributeView (Class<? extends FileAttributeView> type) {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type);
-    }
+    return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type);
   }
 
-  /**
-   * Indicates whether this file store supports the attribute view identified by the given name.
-   *
-   * @param name the attribute view name to test (e.g., {@code "basic"})
-   * @return {@code true} if the named view is supported
-   * @throws ClosedFileSystemException if the owning file system has been closed
-   */
   @Override
   public boolean supportsFileAttributeView (String name) {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(name);
-    }
+    return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(name);
   }
 
   /**
-   * Returns the set of attribute view names supported by this store.
+   * Returns the names of the attribute views this store supports.
    *
-   * @return an unmodifiable set of supported view name strings
+   * @return the supported view names
    * @throws ClosedFileSystemException if the owning file system has been closed
    */
   public Set<String> getSupportedFileAttributeViewNames () {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
+    ensureOpen();
 
-      return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.keySet();
-    }
+    return SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.keySet();
   }
 
-  /**
-   * Returns a file-store-level attribute view of the requested type, or {@code null} when
-   * the type is not {@link EphemeralFileStoreAttributeView}.
-   *
-   * @param <V>  the view type
-   * @param type the class of the desired view
-   * @return the view instance, or {@code null} when unsupported
-   * @throws ClosedFileSystemException if the owning file system has been closed
-   */
   @Override
   public <V extends FileStoreAttributeView> V getFileStoreAttributeView (Class<V> type) {
 
+    ensureOpen();
+
+    return EphemeralFileStoreAttributeView.class.equals(type) ? type.cast(fileStoreAttributeView) : null;
+  }
+
+  /**
+   * Throws if the owning file system has been closed.
+   *
+   * @throws ClosedFileSystemException if the owning file system has been closed
+   */
+  private void ensureOpen () {
+
     if (!fileSystem.isOpen()) {
       throw new ClosedFileSystemException();
-    } else {
-
-      return EphemeralFileStoreAttributeView.class.equals(type) ? type.cast(fileStoreAttributeView) : null;
     }
   }
 
   /**
-   * Returns a file-attribute view of the requested type for the specified path.
+   * Returns the absolute, normalized form of a path, so that every operation addresses the tree the
+   * same way regardless of how the caller spelled it.
    *
-   * @param <V>     the view type
-   * @param path    the path whose attributes are requested
-   * @param type    the class of the desired view
-   * @param options link options (currently unused)
-   * @return the view instance, or {@code null} when the type is unsupported or the path does
-   * not exist
-   * @throws NoSuchFileException       if a non-terminal path component does not exist
-   * @throws ClosedFileSystemException if the owning file system has been closed
+   * @param path the path to canonicalize
+   * @return the absolute, normalized path
    */
-  public synchronized <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
-    throws NoSuchFileException {
+  private EphemeralPath canonical (EphemeralPath path) {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type)) {
+    return path.toAbsolutePath().normalize();
+  }
+
+  /**
+   * Builds the absolute path formed by the first {@code count} name elements of {@code path}.
+   *
+   * @param path  the path to take a prefix of
+   * @param count the number of leading name elements to retain
+   * @return the prefix as an absolute path
+   */
+  private EphemeralPath prefix (EphemeralPath path, int count) {
+
+    return (count == path.getNames().length) ? path : new EphemeralPath(fileSystem, Arrays.copyOfRange(path.getNames(), 0, count), true);
+  }
+
+  /**
+   * Resolves an absolute, normalized path to the node it names, following symbolic links.
+   *
+   * <p>A link encountered anywhere but the final element is always followed, because the elements
+   * after it have to be looked up somewhere. A link in the final position is followed only when
+   * {@code followFinalLink} is set, which is how {@link LinkOption#NOFOLLOW_LINKS} is honoured.
+   *
+   * @param path            the absolute, normalized path to resolve
+   * @param followFinalLink whether a symbolic link in the final position should be resolved
+   * @param depth           the number of links already traversed
+   * @return the resolution, whose node is {@code null} when nothing exists at the path
+   * @throws IOException if more than {@link #MAXIMUM_LINK_DEPTH} links are traversed
+   */
+  private Resolution resolve (EphemeralPath path, boolean followFinalLink, int depth)
+    throws IOException {
+
+    if (depth > MAXIMUM_LINK_DEPTH) {
+      throw new FileSystemException(path.toString(), null, "Too many levels of symbolic links");
+    } else {
+
+      String[] names = path.getNames();
+      DirectoryNode currentNode = rootNode;
+
+      for (int index = 0; index < names.length; index++) {
+
+        HeapNode childNode;
+        boolean last = (index == (names.length - 1));
+
+        if ((childNode = currentNode.get(names[index])) == null) {
+
+          return new Resolution(path, null);
+        } else if (HeapNodeType.SYMBOLIC_LINK.equals(childNode.getType()) && (followFinalLink || (!last))) {
+
+          EphemeralPath targetPath = linkTarget((LinkNode)childNode, prefix(path, index));
+
+          // whatever followed the link must be re-resolved beneath the link's target
+          for (int remaining = index + 1; remaining < names.length; remaining++) {
+            targetPath = (EphemeralPath)targetPath.resolve(names[remaining]);
+          }
+
+          return resolve(targetPath.normalize(), followFinalLink, depth + 1);
+        } else if (last) {
+
+          return new Resolution(prefix(path, index + 1), childNode);
+        } else if (!HeapNodeType.DIRECTORY.equals(childNode.getType())) {
+          // a file or dangling link used as a directory names nothing
+          return new Resolution(path, null);
+        } else {
+          currentNode = (DirectoryNode)childNode;
+        }
+      }
+
+      return new Resolution(path, rootNode);
+    }
+  }
+
+  /**
+   * Interprets the raw target of a symbolic link as a path, resolving a relative target against the
+   * directory that holds the link.
+   *
+   * @param linkNode      the link whose target is being interpreted
+   * @param linkDirectory the absolute path of the directory containing the link
+   * @return the target as an absolute path
+   */
+  private EphemeralPath linkTarget (LinkNode linkNode, EphemeralPath linkDirectory) {
+
+    EphemeralPath target = new EphemeralPath(fileSystem, linkNode.getTarget());
+
+    return target.isAbsolute() ? target : (EphemeralPath)linkDirectory.resolve(target);
+  }
+
+  /**
+   * Resolves a path under the read lock, following links unless instructed otherwise.
+   *
+   * @param path    the path to resolve
+   * @param options the link options supplied by the caller
+   * @return the node named by the path, or {@code null} if nothing exists there
+   * @throws IOException if a symbolic link cycle is encountered
+   */
+  private HeapNode findNode (EphemeralPath path, LinkOption... options)
+    throws IOException {
+
+    treeLock.readLock().lock();
+    try {
+
+      return resolve(canonical(path), !isNoFollow(options), 0).node();
+    } finally {
+      treeLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Notifies the listeners watching {@code directory} that one of its entries changed.
+   *
+   * <p>Only the containing directory is notified. A {@link java.nio.file.WatchService}
+   * registration observes the entries of one directory and not those of its descendants, so an
+   * event must not climb the tree.
+   *
+   * @param directory the directory holding the changed entry, which may be {@code null}
+   * @param path      the absolute path of the changed entry
+   * @param type      the kind of change
+   */
+  private void publish (DirectoryNode directory, EphemeralPath path, HeapEventType type) {
+
+    if (directory != null) {
+      directory.fire(new HeapEvent(this, path, type));
+    }
+  }
+
+  /**
+   * Returns the attribute view for a file.
+   *
+   * @param path    the file to inspect
+   * @param type    the view type requested
+   * @param options the link options
+   * @param <V>     the view type
+   * @return the view, or {@code null} if the type is unsupported or the file does not exist
+   * @throws IOException if a symbolic link cycle is encountered
+   */
+  public <V extends FileAttributeView> V getFileAttributeView (EphemeralPath path, Class<V> type, LinkOption... options)
+    throws IOException {
+
+    ensureOpen();
+
+    if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsValue(type)) {
 
       return null;
     } else {
 
       HeapNode heapNode;
 
-      return ((heapNode = findNode(path)) != null) ? type.cast(new EphemeralBasicFileAttributeView(heapNode.getAttributes())) : null;
+      return ((heapNode = findNode(path, options)) != null) ? type.cast(new EphemeralBasicFileAttributeView(heapNode.getAttributes())) : null;
     }
   }
 
   /**
-   * Reads basic file attributes for the specified path.
+   * Reads the attributes of a file.
    *
+   * @param path    the file to inspect
+   * @param type    the attribute type requested
+   * @param options the link options
    * @param <A>     the attribute type
-   * @param path    the path whose attributes are to be read
-   * @param type    the expected attribute class; must be assignable from
-   *                {@link EphemeralBasicFileAttributes}
-   * @param options link options (currently unused)
-   * @return the attributes, or {@code null} if the path does not exist
-   * @throws NoSuchFileException           if a non-terminal path component does not exist
-   * @throws UnsupportedOperationException if {@code type} is not assignable from
-   *                                       {@link EphemeralBasicFileAttributes}
-   * @throws ClosedFileSystemException     if the owning file system has been closed
+   * @return the attributes of the file
+   * @throws NoSuchFileException           if the file does not exist
+   * @throws UnsupportedOperationException if the attribute type is not supported
+   * @throws IOException                   if a symbolic link cycle is encountered
    */
-  public synchronized <A extends BasicFileAttributes> A readAttributes (EphemeralPath path, Class<A> type, LinkOption... options)
-    throws NoSuchFileException {
+  public <A extends BasicFileAttributes> A readAttributes (EphemeralPath path, Class<A> type, LinkOption... options)
+    throws IOException {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else if (!type.isAssignableFrom(EphemeralBasicFileAttributes.class)) {
+    ensureOpen();
+
+    if (!type.isAssignableFrom(EphemeralBasicFileAttributes.class)) {
       throw new UnsupportedOperationException(type.getName());
     } else {
+
       HeapNode heapNode;
 
-      return ((heapNode = findNode(path)) != null) ? type.cast(heapNode.getAttributes()) : null;
+      if ((heapNode = findNode(path, options)) == null) {
+        throw new NoSuchFileException(path.toString());
+      }
+
+      return type.cast(heapNode.getAttributes());
     }
   }
 
   /**
-   * Reads a selected subset of basic file attributes, specified by name, for the given path.
-   * The {@code attributes} string may optionally be prefixed with a view name followed by a
-   * colon (e.g., {@code "basic:size,isDirectory"}). An asterisk ({@code *}) in the name list
-   * selects all known attribute names.
+   * Reads named attributes of a file into a map.
    *
-   * @param path       the path whose attributes are to be read
-   * @param attributes the comma-separated attribute name selection, optionally prefixed with
-   *                   a view name and colon
-   * @param options    link options (currently unused)
-   * @return a map from attribute name to value for the selected attributes
-   * @throws NoSuchFileException           if the path does not exist
-   * @throws UnsupportedOperationException if an unsupported view name is specified
-   * @throws ClosedFileSystemException     if the owning file system has been closed
+   * @param path       the file to inspect
+   * @param attributes a comma-separated attribute list, optionally prefixed by a view name, where
+   *                   {@code "*"} selects every attribute of the view
+   * @param options    the link options
+   * @return a map of attribute name to value
+   * @throws NoSuchFileException           if the file does not exist
+   * @throws IllegalArgumentException      if an attribute is not recognised
+   * @throws UnsupportedOperationException if the named view is not supported
+   * @throws IOException                   if a symbolic link cycle is encountered
    */
-  public synchronized Map<String, Object> readAttributes (EphemeralPath path, String attributes, LinkOption... options)
-    throws NoSuchFileException {
+  public Map<String, Object> readAttributes (EphemeralPath path, String attributes, LinkOption... options)
+    throws IOException {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
+    ensureOpen();
+
+    HeapNode heapNode;
+    String[] attributeNames;
+    String viewName;
+    boolean asterisk = false;
+    int colonPos;
+
+    if ((colonPos = attributes.indexOf(':')) >= 0) {
+      if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attributes.substring(0, colonPos))) {
+        throw new UnsupportedOperationException(viewName);
+      }
+      attributeNames = attributes.substring(colonPos + 1).split(",");
     } else {
+      attributeNames = attributes.split(",");
+    }
 
-      HeapNode heapNode;
-      String[] attributeNames;
-      String viewName;
-      boolean asterisk = false;
-      int colonPos;
+    for (int index = 0; index < attributeNames.length; index++) {
+      attributeNames[index] = attributeNames[index].strip();
 
-      if ((colonPos = attributes.indexOf(':')) >= 0) {
-        if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attributes.substring(0, colonPos))) {
-          throw new UnsupportedOperationException(viewName);
+      if (!asterisk) {
+        if (attributeNames[index].indexOf('*') >= 0) {
+          asterisk = true;
         }
-        attributeNames = attributes.substring(colonPos + 1).split(",");
-      } else {
-        attributeNames = attributes.split(",");
-      }
-
-      for (int index = 0; index < attributeNames.length; index++) {
-        attributeNames[index] = attributeNames[index].strip();
-
-        if (!asterisk) {
-          if (attributeNames[index].indexOf('*') >= 0) {
-            asterisk = true;
-          }
-        }
-      }
-      if (asterisk) {
-        attributeNames = BASIC_FILE_ATTRIBUTE_NAMES;
-      }
-
-      if ((heapNode = findNode(path)) == null) {
-        throw new NoSuchFileException(path.toString());
-      } else {
-
-        EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
-        HashMap<String, Object> attributeMap = new HashMap<>();
-
-        for (String attributeName : attributeNames) {
-          switch (attributeName) {
-            case "creationTime":
-              attributeMap.put("creationTime", fileAttributes.creationTime());
-              break;
-            case "lastModifiedTime":
-              attributeMap.put("lastModifiedTime", fileAttributes.lastModifiedTime());
-              break;
-            case "lastAccessTime":
-              attributeMap.put("lastAccessTime", fileAttributes.lastAccessTime());
-              break;
-            case "isDirectory":
-              attributeMap.put("isDirectory", fileAttributes.isDirectory());
-              break;
-            case "isRegularFile":
-              attributeMap.put("isRegularFile", fileAttributes.isRegularFile());
-              break;
-            case "isSymbolicLink":
-              attributeMap.put("isSymbolicLink", fileAttributes.isSymbolicLink());
-              break;
-            case "isOther":
-              attributeMap.put("isOther", fileAttributes.isOther());
-              break;
-            case "size":
-              attributeMap.put("size", fileAttributes.size());
-              break;
-            case "fileKey":
-              attributeMap.put("fileKey", fileAttributes.fileKey());
-              break;
-          }
-        }
-
-        return attributeMap;
       }
     }
-  }
 
-  /**
-   * Sets a single basic file attribute for the given path. The {@code attribute} string may
-   * optionally be prefixed with a view name and colon (e.g., {@code "basic:creationTime"}).
-   * The supported settable attributes are {@code creationTime}, {@code lastModifiedTime}, and
-   * {@code lastAccessTime}, each expecting a {@link FileTime} value.
-   *
-   * @param path      the path whose attribute is to be set
-   * @param attribute the attribute name, optionally prefixed with a view name and colon
-   * @param value     the new attribute value
-   * @param options   link options (currently unused)
-   * @throws NoSuchFileException           if the path does not exist
-   * @throws UnsupportedOperationException if an unsupported view name is specified
-   * @throws ClosedFileSystemException     if the owning file system has been closed
-   */
-  public synchronized void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
-    throws NoSuchFileException {
+    if (asterisk) {
+      attributeNames = BASIC_FILE_ATTRIBUTE_NAMES;
+    }
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
+    if ((heapNode = findNode(path, options)) == null) {
+      throw new NoSuchFileException(path.toString());
     } else {
 
-      HeapNode heapNode;
-      String attributeName;
-      String viewName;
-      int colonPos;
+      EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
+      HashMap<String, Object> attributeMap = new HashMap<>();
 
-      if ((colonPos = attribute.indexOf(':')) >= 0) {
-        if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attribute.substring(0, colonPos))) {
-          throw new UnsupportedOperationException(viewName);
-        }
-        attributeName = attribute.substring(colonPos + 1);
-      } else {
-        attributeName = attribute;
-      }
-
-      if ((heapNode = findNode(path)) == null) {
-        throw new NoSuchFileException(path.toString());
-      } else {
-
-        EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
-
+      for (String attributeName : attributeNames) {
         switch (attributeName) {
           case "creationTime":
-            fileAttributes.setCreationTime((FileTime)value);
+            attributeMap.put("creationTime", fileAttributes.creationTime());
             break;
           case "lastModifiedTime":
-            fileAttributes.setLastModifiedTime((FileTime)value);
+            attributeMap.put("lastModifiedTime", fileAttributes.lastModifiedTime());
             break;
           case "lastAccessTime":
-            fileAttributes.setLastAccessTime((FileTime)value);
+            attributeMap.put("lastAccessTime", fileAttributes.lastAccessTime());
             break;
+          case "isDirectory":
+            attributeMap.put("isDirectory", fileAttributes.isDirectory());
+            break;
+          case "isRegularFile":
+            attributeMap.put("isRegularFile", fileAttributes.isRegularFile());
+            break;
+          case "isSymbolicLink":
+            attributeMap.put("isSymbolicLink", fileAttributes.isSymbolicLink());
+            break;
+          case "isOther":
+            attributeMap.put("isOther", fileAttributes.isOther());
+            break;
+          case "size":
+            attributeMap.put("size", fileAttributes.size());
+            break;
+          case "fileKey":
+            attributeMap.put("fileKey", fileAttributes.fileKey());
+            break;
+          default:
+            throw new IllegalArgumentException("Unrecognized attribute(" + attributeName + ")");
         }
       }
+
+      return attributeMap;
     }
   }
 
   /**
-   * Reads a file-store-level attribute by its qualified name ({@code viewName:attributeName}).
+   * Sets a single attribute of a file.
    *
-   * @param attribute the qualified attribute name, which must contain a colon separator
-   * @return the attribute value, or {@code null} if the view name does not match
-   * @throws IOException               if the attribute field cannot be accessed via reflection
-   * @throws IllegalArgumentException  if the attribute string does not contain a colon
-   * @throws ClosedFileSystemException if the owning file system has been closed
+   * @param path      the file to modify
+   * @param attribute the attribute name, optionally prefixed by a view name
+   * @param value     the value to set
+   * @param options   the link options
+   * @throws NoSuchFileException           if the file does not exist
+   * @throws IllegalArgumentException      if the attribute is not recognised or not writable
+   * @throws UnsupportedOperationException if the named view is not supported
+   * @throws IOException                   if a symbolic link cycle is encountered
    */
+  public void setAttribute (EphemeralPath path, String attribute, Object value, LinkOption... options)
+    throws IOException {
+
+    ensureOpen();
+
+    HeapNode heapNode;
+    String attributeName;
+    String viewName;
+    int colonPos;
+
+    if ((colonPos = attribute.indexOf(':')) >= 0) {
+      if (!SUPPORTED_FILE_ATTRIBUTE_VIEW_MAP.containsKey(viewName = attribute.substring(0, colonPos))) {
+        throw new UnsupportedOperationException(viewName);
+      }
+      attributeName = attribute.substring(colonPos + 1);
+    } else {
+      attributeName = attribute;
+    }
+
+    if ((heapNode = findNode(path, options)) == null) {
+      throw new NoSuchFileException(path.toString());
+    } else {
+
+      EphemeralBasicFileAttributes fileAttributes = heapNode.getAttributes();
+
+      switch (attributeName) {
+        case "creationTime":
+          fileAttributes.setCreationTime((FileTime)value);
+          break;
+        case "lastModifiedTime":
+          fileAttributes.setLastModifiedTime((FileTime)value);
+          break;
+        case "lastAccessTime":
+          fileAttributes.setLastAccessTime((FileTime)value);
+          break;
+        default:
+          throw new IllegalArgumentException("Unrecognized or read-only attribute(" + attributeName + ")");
+      }
+    }
+  }
+
   @Override
   public Object getAttribute (String attribute)
     throws IOException {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
+    ensureOpen();
+
+    int colonPos;
+
+    if ((colonPos = attribute.indexOf(':')) < 0) {
+      throw new IllegalArgumentException(attribute);
     } else {
+      if (fileStoreAttributeView.name().equals(attribute.substring(0, colonPos))) {
+        try {
 
-      int colonPos;
-
-      if ((colonPos = attribute.indexOf(':')) < 0) {
-        throw new IllegalArgumentException(attribute);
+          return fileStoreAttributeView.getClass().getDeclaredField(attribute.substring(colonPos + 1)).get(fileStoreAttributeView);
+        } catch (NoSuchFieldException | IllegalAccessException exception) {
+          throw new IOException(exception);
+        }
       } else {
 
-        if (fileStoreAttributeView.name().equals(attribute.substring(0, colonPos))) {
-          try {
-
-            return fileStoreAttributeView.getClass().getDeclaredField(attribute.substring(colonPos + 1)).get(fileStoreAttributeView);
-          } catch (NoSuchFieldException | IllegalAccessException exception) {
-            throw new IOException(exception);
-          }
-        } else {
-
-          return null;
-        }
+        return null;
       }
     }
   }
 
   /**
-   * Registers a {@link HeapEventListener} on the directory node at the given path so that the
-   * listener is notified of heap changes within that directory.
+   * Registers a listener for changes to the entries of a directory.
    *
-   * @param path     the directory path to which the listener should be attached
-   * @param listener the listener to register
-   * @throws NoSuchFileException       if the path does not exist
-   * @throws NotDirectoryException     if the path exists but is not a directory
-   * @throws ClosedFileSystemException if the owning file system has been closed
+   * @param path     the directory to watch
+   * @param listener the listener to notify
+   * @throws NoSuchFileException   if the directory does not exist
+   * @throws NotDirectoryException if the path does not name a directory
+   * @throws IOException           if a symbolic link cycle is encountered
    */
-  public synchronized void registerHeapListener (EphemeralPath path, HeapEventListener listener)
-    throws NoSuchFileException, NotDirectoryException {
-
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
-
-      HeapNode node;
-
-      if (((node = findNode(path)) == null) || (!HeapNodeType.DIRECTORY.equals(node.getType()))) {
-        throw new NotDirectoryException(path.toString());
-      } else {
-        node.registerListener(listener);
-      }
-    }
-  }
-
-  /**
-   * Removes a previously registered {@link HeapEventListener} from the directory node at
-   * the given path. If the path does not exist the method returns silently.
-   *
-   * @param path     the directory path from which the listener should be removed
-   * @param listener the listener to unregister
-   * @throws NoSuchFileException       if a non-terminal component of the path does not exist
-   * @throws ClosedFileSystemException if the owning file system has been closed
-   */
-  public synchronized void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
-    throws NoSuchFileException {
-
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
-
-      HeapNode node;
-
-      if ((node = findNode(path)) != null) {
-        node.unregisterListener(listener);
-      }
-    }
-  }
-
-  /**
-   * Verifies that the given path exists in the heap.
-   *
-   * @param path the path to check
-   * @throws NoSuchFileException if the path does not exist in the heap
-   */
-  public synchronized void checkAccess (EphemeralPath path)
-    throws NoSuchFileException {
-
-    if (findNode(path) == null) {
-      throw new NoSuchFileException(path.toString());
-    }
-  }
-
-  /**
-   * Opens a {@link SecureDirectoryStream} for the directory at the given path.
-   *
-   * @param dir     the directory path to open
-   * @param filter  an optional filter applied when iterating entries; may be {@code null}
-   * @param options link options (currently unused)
-   * @return a new {@link SecureDirectoryStream} for the directory
-   * @throws NoSuchFileException       if the path does not exist
-   * @throws NotDirectoryException     if the path is not a directory
-   * @throws ClosedFileSystemException if the owning file system has been closed
-   */
-  public synchronized SecureDirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
-    throws NoSuchFileException, NotDirectoryException {
-
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
-
-      HeapNode heapNode;
-
-      if (((heapNode = findNode(dir)) == null) || (!HeapNodeType.DIRECTORY.equals(heapNode.getType()))) {
-        throw new NotDirectoryException(dir.toString());
-      } else {
-
-        return new EphemeralDirectoryStream(fileSystem.provider(), dir, (DirectoryNode)heapNode, filter);
-      }
-    }
-  }
-
-  /**
-   * Creates a new directory at the specified path.
-   *
-   * @param path  the path of the directory to create
-   * @param attrs optional file attributes; only {@code "posix:permissions"} is accepted
-   * @throws NoSuchFileException           if the parent directory does not exist, or if a file
-   *                                       occupies an intermediate path component
-   * @throws FileAlreadyExistsException    if a node already exists at the given path
-   * @throws UnsupportedOperationException if any attribute other than {@code "posix:permissions"}
-   *                                       is supplied
-   * @throws ClosedFileSystemException     if the owning file system has been closed
-   */
-  public synchronized void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
-    throws NoSuchFileException, FileAlreadyExistsException {
-
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else {
-
-      for (FileAttribute<?> attribute : attrs) {
-        if (!"posix:permissions".equals(attribute.name())) {
-          throw new UnsupportedOperationException("Only posix permission file attributes are supported");
-        }
-      }
-
-      if (path.getNameCount() > 0) {
-
-        EphemeralPath parentPath;
-        HeapNode parentNode;
-
-        if ((parentNode = findNode(parentPath = path.getParent())) == null) {
-          throw new NoSuchFileException(parentPath.toString());
-        } else {
-          switch (parentNode.getType()) {
-            case FILE:
-              throw new NoSuchFileException(path.toString());
-            case DIRECTORY:
-              if (((DirectoryNode)parentNode).exists(path.getNames()[path.getNameCount() - 1])) {
-                throw new FileAlreadyExistsException(path.toString());
-              } else {
-
-                DirectoryNode createdDirectory = new DirectoryNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1]);
-
-                ((DirectoryNode)parentNode).put(createdDirectory);
-                createdDirectory.bubble(new HeapEvent(this, path, HeapEventType.CREATE));
-              }
-              break;
-            default:
-              throw new UnknownSwitchCaseException(parentNode.getType().name());
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Deletes the file or directory at the given path.
-   *
-   * @param path the path to delete
-   * @throws IOException                if deletion of the root is attempted, or another I/O error
-   *                                    occurs
-   * @throws NoSuchFileException        if the path does not exist
-   * @throws DirectoryNotEmptyException if the path is a non-empty directory
-   * @throws ClosedFileSystemException  if the owning file system has been closed
-   */
-  public synchronized void delete (EphemeralPath path)
+  public void registerHeapListener (EphemeralPath path, HeapEventListener listener)
     throws IOException {
 
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
+    ensureOpen();
+
+    HeapNode heapNode;
+
+    if ((heapNode = findNode(path)) == null) {
+      throw new NoSuchFileException(path.toString());
+    } else if (!HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
+      throw new NotDirectoryException(path.toString());
     } else {
+      heapNode.registerListener(listener);
+    }
+  }
 
-      HeapNode heapNode;
+  /**
+   * Removes a previously registered directory listener.
+   *
+   * @param path     the directory being watched
+   * @param listener the listener to remove
+   * @throws IOException if a symbolic link cycle is encountered
+   */
+  public void unregisterHeapListener (EphemeralPath path, HeapEventListener listener)
+    throws IOException {
 
-      if (path.getNameCount() == 0) {
-        throw new IOException("Not allowed");
-      } else if ((heapNode = findNode(path)) == null) {
+    ensureOpen();
+
+    HeapNode heapNode;
+
+    if ((heapNode = findNode(path)) != null) {
+      heapNode.unregisterListener(listener);
+    }
+  }
+
+  /**
+   * Verifies that a file exists and that the requested kinds of access are permitted.
+   *
+   * <p>The heap carries no permission bits, so read and write access is always granted. Execute
+   * access is granted only for directories, which is what a POSIX file system reports for a freshly
+   * created regular file.
+   *
+   * @param path  the file to check
+   * @param modes the kinds of access required
+   * @throws NoSuchFileException   if the file does not exist
+   * @throws AccessDeniedException if execute access is requested for something other than a
+   *                               directory
+   * @throws IOException           if a symbolic link cycle is encountered
+   */
+  public void checkAccess (EphemeralPath path, AccessMode... modes)
+    throws IOException {
+
+    ensureOpen();
+
+    HeapNode heapNode;
+
+    if ((heapNode = findNode(path)) == null) {
+      throw new NoSuchFileException(path.toString());
+    } else if (modes != null) {
+      for (AccessMode mode : modes) {
+        switch (mode) {
+          case READ:
+          case WRITE:
+            break;
+          case EXECUTE:
+            if (!HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
+              throw new AccessDeniedException(path.toString());
+            }
+            break;
+          default:
+            throw new UnknownSwitchCaseException(mode.name());
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns whether two paths name the same file, which two hard links to one content do.
+   *
+   * @param first  the first path
+   * @param second the second path
+   * @return {@code true} if both paths resolve to the same file
+   * @throws NoSuchFileException if either file does not exist
+   * @throws IOException         if a symbolic link cycle is encountered
+   */
+  public boolean isSameFile (EphemeralPath first, EphemeralPath second)
+    throws IOException {
+
+    ensureOpen();
+
+    treeLock.readLock().lock();
+    try {
+
+      HeapNode firstNode;
+      HeapNode secondNode;
+
+      if ((firstNode = resolve(canonical(first), true, 0).node()) == null) {
+        throw new NoSuchFileException(first.toString());
+      } else if ((secondNode = resolve(canonical(second), true, 0).node()) == null) {
+        throw new NoSuchFileException(second.toString());
+      } else {
+
+        return (firstNode == secondNode) || firstNode.getAttributes().fileKey().equals(secondNode.getAttributes().fileKey());
+      }
+    } finally {
+      treeLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Returns the absolute, link-free path of an existing file.
+   *
+   * @param path    the path to resolve
+   * @param options {@link LinkOption#NOFOLLOW_LINKS} to leave a final link unresolved
+   * @return the real path
+   * @throws NoSuchFileException if the file does not exist
+   * @throws IOException         if a symbolic link cycle is encountered
+   */
+  public EphemeralPath toRealPath (EphemeralPath path, LinkOption... options)
+    throws IOException {
+
+    ensureOpen();
+
+    treeLock.readLock().lock();
+    try {
+
+      Resolution resolution = resolve(canonical(path), !isNoFollow(options), 0);
+
+      if (resolution.node() == null) {
         throw new NoSuchFileException(path.toString());
-      } else {
-        switch (heapNode.getType()) {
-          case FILE:
-            heapNode.getParent().remove(heapNode.getName());
-            heapNode.bubble(new HeapEvent(this, path, HeapEventType.DELETE));
-            break;
-          case DIRECTORY:
-            if (!((DirectoryNode)heapNode).isEmpty()) {
-              throw new DirectoryNotEmptyException(path.toString());
-            } else {
-              heapNode.getParent().remove(heapNode.getName());
-              heapNode.bubble(new HeapEvent(this, path, HeapEventType.DELETE));
-            }
-            break;
-          default:
-            throw new UnknownSwitchCaseException(heapNode.getType().name());
-        }
       }
+
+      return resolution.path();
+    } finally {
+      treeLock.readLock().unlock();
     }
   }
 
   /**
-   * Copies a file or directory from {@code source} to {@code target}. When both paths refer
-   * to the same location the operation is a no-op. The {@link StandardCopyOption#REPLACE_EXISTING}
-   * option controls whether an existing target may be overwritten. File content is copied via
-   * a new {@link ByteArrayIOBuffer} snapshot.
+   * Opens a stream over the entries of a directory.
    *
-   * @param source  the source path
-   * @param target  the target path
-   * @param options copy options; only {@link StandardCopyOption} values are accepted
-   * @throws NoSuchFileException           if the source, or (when target is absent) the parent
-   *                                       of the target, does not exist
-   * @throws FileAlreadyExistsException    if the target already exists and
-   *                                       {@link StandardCopyOption#REPLACE_EXISTING} was not
-   *                                       specified
-   * @throws DirectoryNotEmptyException    if the target is a non-empty directory
-   * @throws UnsupportedOperationException if a non-standard copy option is provided
-   * @throws IOException                   if the root directory is the target of a directory copy,
-   *                                       or another I/O error occurs
+   * @param dir     the directory to list
+   * @param filter  the filter deciding which entries to include, or {@code null} for all
+   * @param options the link options
+   * @return a {@link SecureDirectoryStream} over the directory
+   * @throws NoSuchFileException   if the directory does not exist
+   * @throws NotDirectoryException if the path does not name a directory
+   * @throws IOException           if a symbolic link cycle is encountered
    */
-  public synchronized void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
+  public SecureDirectoryStream<Path> newDirectoryStream (EphemeralPath dir, DirectoryStream.Filter<? super Path> filter, LinkOption... options)
     throws IOException {
 
-    if (!source.equals(target)) {
+    ensureOpen();
 
-      HeapNode sourceNode;
-      boolean replaceExisting = false;
+    HeapNode heapNode;
 
-      for (CopyOption option : options) {
-        if (!(option instanceof StandardCopyOption)) {
-          throw new UnsupportedOperationException("Only standard open options are supported");
-        } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
-          replaceExisting = true;
-        }
-      }
-
-      if ((sourceNode = findNode(source)) == null) {
-        throw new NoSuchFileException(source.toString());
-      } else {
-
-        HeapNode targetNode;
-        HeapNode parentOfTargetNode = null;
-
-        if ((targetNode = findNode(target)) == null) {
-
-          EphemeralPath parentOfTargetPath;
-
-          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
-            throw new NoSuchFileException(parentOfTargetPath.toString());
-          }
-        }
-
-        switch (sourceNode.getType()) {
-          case FILE:
-            if (targetNode != null) {
-              switch (targetNode.getType()) {
-                case FILE:
-                  if (!replaceExisting) {
-                    throw new FileAlreadyExistsException(target.toString());
-                  } else {
-
-                    // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                    FileNode replacedFile = new FileNode(targetNode.getParent(), targetNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
-
-                    targetNode.getParent().put(replacedFile);
-                    replacedFile.bubble(new HeapEvent(this, target, HeapEventType.MODIFY));
-                  }
-                  break;
-                case DIRECTORY:
-                  if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
-                    throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
-                  } else {
-
-                    // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                    FileNode copiedFile = new FileNode((DirectoryNode)targetNode, sourceNode.getName(), new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
-
-                    ((DirectoryNode)targetNode).put(copiedFile);
-                    copiedFile.bubble(new HeapEvent(this, (EphemeralPath)target.resolve(sourceNode.getName()), HeapEventType.CREATE));
-                  }
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(targetNode.getType().name());
-              }
-            } else {
-              switch (parentOfTargetNode.getType()) {
-                case FILE:
-                  throw new NoSuchFileException(target.toString());
-                case DIRECTORY:
-
-                  // all sorts of nasty race condition, need ByteArrayIOBuffer to self-encapsulate and synchronize
-                  FileNode createdFile = new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], new ByteArrayIOBuffer(((FileNode)sourceNode).getSegmentBuffer()));
-
-                  ((DirectoryNode)parentOfTargetNode).put(createdFile);
-                  createdFile.bubble(new HeapEvent(this, target, HeapEventType.CREATE));
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
-              }
-            }
-            break;
-          case DIRECTORY:
-            if (targetNode != null) {
-              switch (targetNode.getType()) {
-                case FILE:
-                  throw new FileAlreadyExistsException(target.toString());
-                case DIRECTORY:
-                  if (targetNode.getParent() == null) {
-                    throw new IOException("Not Allowed");
-                  } else if (!((DirectoryNode)targetNode).isEmpty()) {
-                    throw new DirectoryNotEmptyException(target.toString());
-                  } else if (!replaceExisting) {
-                    throw new FileAlreadyExistsException(target.toString());
-                  } else {
-
-                    DirectoryNode renamedDirectory = new DirectoryNode(targetNode.getParent(), sourceNode.getName());
-
-                    targetNode.getParent().put(renamedDirectory);
-                    targetNode.getParent().remove(targetNode.getName());
-
-                    EphemeralPath renamedPath = (EphemeralPath)target.getParent().resolve(sourceNode.getName());
-
-                    renamedDirectory.bubble(new HeapEvent(this, renamedPath, HeapEventType.CREATE));
-                    targetNode.bubble(new HeapEvent(this, target, HeapEventType.DELETE));
-                  }
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(targetNode.getType().name());
-              }
-            } else {
-              switch (parentOfTargetNode.getType()) {
-                case FILE:
-                  throw new NoSuchFileException(target.toString());
-                case DIRECTORY:
-
-                  DirectoryNode createdDirectory = new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName());
-
-                  ((DirectoryNode)parentOfTargetNode).put(createdDirectory);
-                  createdDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
-              }
-            }
-            break;
-          default:
-            throw new UnknownSwitchCaseException(sourceNode.getType().name());
-        }
-      }
-    }
-  }
-
-  /**
-   * Moves a file or directory from {@code source} to {@code target}. When both paths refer to
-   * the same location the operation is a no-op. Unlike {@link #copy}, the source node is
-   * removed after placement at the target. File content is transferred by reference rather than
-   * being duplicated.
-   *
-   * @param source  the source path
-   * @param target  the target path
-   * @param options move options; only {@link StandardCopyOption} values are accepted
-   * @throws NoSuchFileException           if the source, or (when target is absent) the parent
-   *                                       of the target, does not exist
-   * @throws FileAlreadyExistsException    if the target already exists and
-   *                                       {@link StandardCopyOption#REPLACE_EXISTING} was not
-   *                                       specified
-   * @throws DirectoryNotEmptyException    if the target is a non-empty directory
-   * @throws UnsupportedOperationException if a non-standard copy option is provided
-   * @throws IOException                   if the root directory is the target, or another I/O
-   *                                       error occurs
-   */
-  public synchronized void move (EphemeralPath source, EphemeralPath target, CopyOption... options)
-    throws IOException {
-
-    if (!source.equals(target)) {
-
-      HeapNode sourceNode;
-      boolean replaceExisting = false;
-
-      for (CopyOption option : options) {
-        if (!(option instanceof StandardCopyOption)) {
-          throw new UnsupportedOperationException("Only standard open options are supported");
-        } else if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
-          replaceExisting = true;
-        }
-      }
-
-      if ((sourceNode = findNode(source)) == null) {
-        throw new NoSuchFileException(source.toString());
-      } else {
-
-        HeapNode targetNode;
-        HeapNode parentOfTargetNode = null;
-
-        if ((targetNode = findNode(target)) == null) {
-
-          EphemeralPath parentOfTargetPath;
-
-          if ((parentOfTargetNode = findNode(parentOfTargetPath = target.getParent())) == null) {
-            throw new NoSuchFileException(parentOfTargetPath.toString());
-          }
-        }
-
-        switch (sourceNode.getType()) {
-          case FILE:
-            if (targetNode != null) {
-              switch (targetNode.getType()) {
-                case FILE:
-                  if (!replaceExisting) {
-                    throw new FileAlreadyExistsException(target.toString());
-                  } else {
-
-                    FileNode replacedFile = new FileNode(targetNode.getParent(), targetNode.getName(), ((FileNode)sourceNode).getSegmentBuffer());
-
-                    targetNode.getParent().put(replacedFile);
-                    replacedFile.bubble(new HeapEvent(this, target, HeapEventType.MODIFY));
-                  }
-                  break;
-                case DIRECTORY:
-                  if (((DirectoryNode)targetNode).exists(sourceNode.getName()) && (!replaceExisting)) {
-                    throw new FileAlreadyExistsException(target.resolve(source.getFileName()).toString());
-                  } else {
-
-                    FileNode movedFile = new FileNode((DirectoryNode)targetNode, sourceNode.getName(), ((FileNode)sourceNode).getSegmentBuffer());
-
-                    ((DirectoryNode)targetNode).put(movedFile);
-                    movedFile.bubble(new HeapEvent(this, (EphemeralPath)target.resolve(sourceNode.getName()), HeapEventType.CREATE));
-                  }
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(targetNode.getType().name());
-              }
-            } else {
-              switch (parentOfTargetNode.getType()) {
-                case FILE:
-                  throw new NoSuchFileException(target.toString());
-                case DIRECTORY:
-
-                  FileNode createdFile = new FileNode((DirectoryNode)parentOfTargetNode, target.getNames()[target.getNameCount() - 1], ((FileNode)sourceNode).getSegmentBuffer());
-
-                  ((DirectoryNode)parentOfTargetNode).put(createdFile);
-                  createdFile.bubble(new HeapEvent(this, target, HeapEventType.CREATE));
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
-              }
-            }
-            break;
-          case DIRECTORY:
-            if (targetNode != null) {
-              switch (targetNode.getType()) {
-                case FILE:
-                  throw new FileAlreadyExistsException(target.toString());
-                case DIRECTORY:
-                  if (targetNode.getParent() == null) {
-                    throw new IOException("Not Allowed");
-                  } else if (!((DirectoryNode)targetNode).isEmpty()) {
-                    throw new DirectoryNotEmptyException(target.toString());
-                  } else if (!replaceExisting) {
-                    throw new FileAlreadyExistsException(target.toString());
-                  } else {
-
-                    DirectoryNode renamedDirectory = new DirectoryNode(targetNode.getParent(), sourceNode.getName());
-
-                    targetNode.getParent().put(renamedDirectory);
-                    targetNode.getParent().remove(targetNode.getName());
-
-                    renamedDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
-                    targetNode.bubble(new HeapEvent(this, target, HeapEventType.DELETE));
-                  }
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(targetNode.getType().name());
-              }
-            } else {
-              switch (parentOfTargetNode.getType()) {
-                case FILE:
-                  throw new NoSuchFileException(target.toString());
-                case DIRECTORY:
-
-                  DirectoryNode movedDirectory = new DirectoryNode((DirectoryNode)parentOfTargetNode, sourceNode.getName());
-
-                  ((DirectoryNode)parentOfTargetNode).put(movedDirectory);
-                  movedDirectory.bubble(new HeapEvent(this, (EphemeralPath)target.getParent().resolve(sourceNode.getName()), HeapEventType.CREATE));
-                  break;
-                default:
-                  throw new UnknownSwitchCaseException(parentOfTargetNode.getType().name());
-              }
-            }
-            break;
-          default:
-            throw new UnknownSwitchCaseException(sourceNode.getType().name());
-        }
-
-        sourceNode.getParent().remove(sourceNode.getName());
-        sourceNode.bubble(new HeapEvent(this, source, HeapEventType.DELETE));
-      }
-    }
-  }
-
-  /**
-   * Opens or creates a seekable byte channel for the file at the given path. The behaviour is
-   * controlled by the supplied open options, which must all be instances of
-   * {@link StandardOpenOption}. Only {@code "posix:permissions"} file attributes are accepted
-   * on creation.
-   *
-   * @param path    the path of the file to open or create
-   * @param options the set of open options; must not contain non-standard options
-   * @param attrs   optional attributes to apply on creation; only {@code "posix:permissions"}
-   *                is accepted
-   * @return the opened or newly created {@link SeekableByteChannel}
-   * @throws IOException                   if the path is the root, if an option combination is
-   *                                       invalid, or if the file cannot be created or opened
-   * @throws NoSuchFileException           if the file does not exist and no creation option was
-   *                                       provided, or if the parent directory is absent
-   * @throws FileAlreadyExistsException    if {@link StandardOpenOption#CREATE_NEW} was specified
-   *                                       and the file already exists
-   * @throws UnsupportedOperationException if a non-standard open option or unsupported file
-   *                                       attribute is supplied
-   * @throws ClosedFileSystemException     if the owning file system has been closed
-   */
-  public synchronized SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
-    throws IOException {
-
-    if (!fileSystem.isOpen()) {
-      throw new ClosedFileSystemException();
-    } else if (path.getNameCount() == 0) {
-      throw new IOException("Cannot open a directory for read operations");
+    if ((heapNode = findNode(dir, options)) == null) {
+      throw new NoSuchFileException(dir.toString());
+    } else if (!HeapNodeType.DIRECTORY.equals(heapNode.getType())) {
+      throw new NotDirectoryException(dir.toString());
     } else {
 
-      HeapNode heapNode = findNode(path);
-      Boolean read = null;
-      boolean append = false;
-      boolean truncateExisting = false;
-      boolean createNew = false;
-      boolean create = false;
-      boolean deleteOnClose = false;
+      return new EphemeralDirectoryStream(fileSystem.provider(), canonical(dir), (DirectoryNode)heapNode, filter);
+    }
+  }
 
-      for (OpenOption option : options) {
-        if (!(option instanceof StandardOpenOption)) {
-          throw new UnsupportedOperationException("Only standard open options are supported");
-        } else {
-          if (StandardOpenOption.READ.equals(option)) {
-            if (Boolean.FALSE.equals(read)) {
-              throw new IllegalArgumentException("Invalid option combination");
-            } else {
-              read = Boolean.TRUE;
-            }
-          } else if (StandardOpenOption.WRITE.equals(option) || StandardOpenOption.APPEND.equals(option)) {
-            if (Boolean.TRUE.equals(read)) {
-              throw new IllegalArgumentException("Invalid option combination");
-            } else {
-              if (StandardOpenOption.APPEND.equals(option)) {
-                if (truncateExisting) {
-                  throw new IllegalArgumentException("Invalid option combination");
-                } else {
-                  append = true;
-                }
-              }
-              read = Boolean.FALSE;
-            }
-          } else if (StandardOpenOption.TRUNCATE_EXISTING.equals(option)) {
-            if (append) {
-              throw new IllegalArgumentException("Invalid option combination");
-            } else {
-              truncateExisting = true;
-            }
-          } else if (StandardOpenOption.CREATE_NEW.equals(option)) {
-            createNew = true;
-          } else if (StandardOpenOption.CREATE.equals(option)) {
-            create = true;
-          } else if (StandardOpenOption.DELETE_ON_CLOSE.equals(option)) {
-            deleteOnClose = true;
-          }
-        }
-      }
+  /**
+   * Rejects any file attribute this store cannot honour at creation time.
+   *
+   * @param attrs the attributes supplied by the caller
+   * @throws UnsupportedOperationException if an attribute other than POSIX permissions is supplied
+   */
+  private void checkCreationAttributes (FileAttribute<?>... attrs) {
 
+    if (attrs != null) {
       for (FileAttribute<?> attribute : attrs) {
         if (!"posix:permissions".equals(attribute.name())) {
           throw new UnsupportedOperationException("Only posix permission file attributes are supported");
         }
       }
-
-      if (read == null) {
-        read = Boolean.TRUE;
-      }
-
-      if (Boolean.TRUE.equals(read)) {
-        if (heapNode == null) {
-          throw new NoSuchFileException(path.toString());
-        } else {
-          switch (heapNode.getType()) {
-            case FILE:
-
-              return new EphemeralSeekableByteChannel(this, (FileNode)heapNode, path, true, false, deleteOnClose);
-            case DIRECTORY:
-              throw new IOException("Cannot open a directory for read operations");
-            default:
-              throw new UnknownSwitchCaseException(heapNode.getType().name());
-          }
-        }
-      } else {
-        if (heapNode == null) {
-          if (!(createNew || create)) {
-            throw new NoSuchFileException(path.toString());
-          } else {
-
-            EphemeralPath parentPath;
-            HeapNode parentNode;
-
-            if ((parentNode = findNode(parentPath = path.getParent())) == null) {
-              throw new NoSuchFileException(parentPath.toString());
-            } else {
-              switch (parentNode.getType()) {
-                case FILE:
-                  throw new NoSuchFileException(path.toString());
-                case DIRECTORY:
-
-                  FileNode fileNode;
-
-                  ((DirectoryNode)parentNode).put(fileNode = new FileNode((DirectoryNode)parentNode, path.getNames()[path.getNameCount() - 1], blockSize));
-                  fileNode.bubble(new HeapEvent(this, path, HeapEventType.CREATE));
-
-                  return new EphemeralSeekableByteChannel(this, fileNode, path, false, false, deleteOnClose);
-                default:
-                  throw new UnknownSwitchCaseException(parentNode.getType().name());
-              }
-            }
-          }
-        } else {
-          if (createNew) {
-            throw new FileAlreadyExistsException(path.toString());
-          } else {
-            switch (heapNode.getType()) {
-              case FILE:
-                if (truncateExisting) {
-                  ((FileNode)heapNode).getSegmentBuffer().clear();
-                  heapNode.bubble(new HeapEvent(this, path, HeapEventType.MODIFY));
-                }
-
-                return new EphemeralSeekableByteChannel(this, (FileNode)heapNode, path, false, append, deleteOnClose);
-              case DIRECTORY:
-                throw new IOException("Cannot open a directory for write operations");
-              default:
-                throw new UnknownSwitchCaseException(heapNode.getType().name());
-            }
-          }
-        }
-      }
     }
   }
 
   /**
-   * Traverses the heap tree to locate the node corresponding to the given absolute path.
-   * Returns {@code null} when a path component does not exist. Throws
-   * {@link NoSuchFileException} when a non-terminal component resolves to a file node rather
-   * than a directory.
+   * Locates the directory that will hold a new entry, and the name it will take.
    *
-   * @param path the absolute path to resolve; must be absolute
-   * @return the located {@link HeapNode}, or {@code null} if any component is absent
-   * @throws NoSuchFileException if the path is relative, or if a file node appears at a
-   *                             non-terminal position in the path
+   * @param path the path of the entry to be created
+   * @return the parent directory
+   * @throws NoSuchFileException   if the parent does not exist
+   * @throws NotDirectoryException if the parent is not a directory
+   * @throws IOException           if a symbolic link cycle is encountered
    */
-  private HeapNode findNode (EphemeralPath path)
-    throws NoSuchFileException {
+  private DirectoryNode findParent (EphemeralPath path)
+    throws IOException {
 
-    if (!path.isAbsolute()) {
-      throw new NoSuchFileException(path.toString());
+    EphemeralPath parentPath;
+    HeapNode parentNode;
+
+    if ((parentPath = path.getParent()) == null) {
+      throw new FileAlreadyExistsException(path.toString());
+    } else if ((parentNode = resolve(parentPath, true, 0).node()) == null) {
+      throw new NoSuchFileException(parentPath.toString());
+    } else if (!HeapNodeType.DIRECTORY.equals(parentNode.getType())) {
+      throw new NotDirectoryException(parentPath.toString());
     } else {
 
+      return (DirectoryNode)parentNode;
+    }
+  }
+
+  /**
+   * Creates a directory.
+   *
+   * @param path  the directory to create
+   * @param attrs the attributes to apply
+   * @throws FileAlreadyExistsException if something already exists at the path
+   * @throws NoSuchFileException        if the parent does not exist
+   * @throws IOException                if a symbolic link cycle is encountered
+   */
+  public void createDirectory (EphemeralPath path, FileAttribute<?>... attrs)
+    throws IOException {
+
+    ensureOpen();
+    checkCreationAttributes(attrs);
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalPath = canonical(path);
+
+      if (canonicalPath.getNameCount() == 0) {
+        throw new FileAlreadyExistsException(canonicalPath.toString());
+      } else {
+
+        DirectoryNode parentNode = findParent(canonicalPath);
+        String name = canonicalPath.getNames()[canonicalPath.getNameCount() - 1];
+
+        if (parentNode.exists(name)) {
+          throw new FileAlreadyExistsException(canonicalPath.toString());
+        } else {
+          parentNode.put(new DirectoryNode(parentNode, name, blockSize));
+          publish(parentNode, canonicalPath, HeapEventType.CREATE);
+        }
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Creates a directory and every missing directory above it, without reporting an error if it is
+   * already there.
+   *
+   * <p>Used to seed the heap with the directories a file system is expected to have from the
+   * outset. An empty heap has no working directory and no temporary directory, so relative I/O and
+   * {@code Files.createTempFile} would fail until something created them by hand.
+   *
+   * @param path the absolute directory to create
+   * @throws FileAlreadyExistsException if a non-directory already occupies part of the path
+   * @throws IOException                if the directories cannot be created
+   */
+  public void createDirectories (EphemeralPath path)
+    throws IOException {
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalPath = canonical(path);
       DirectoryNode currentNode = rootNode;
 
-      for (int index = 0; index < path.getNames().length; index++) {
+      for (String name : canonicalPath.getNames()) {
 
         HeapNode childNode;
 
-        if ((childNode = currentNode.get(path.getNames()[index])) == null) {
+        if ((childNode = currentNode.get(name)) == null) {
 
-          return null;
+          DirectoryNode createdNode = new DirectoryNode(currentNode, name, blockSize);
+
+          currentNode.put(createdNode);
+          currentNode = createdNode;
+        } else if (HeapNodeType.DIRECTORY.equals(childNode.getType())) {
+          currentNode = (DirectoryNode)childNode;
         } else {
-          switch (childNode.getType()) {
-            case FILE:
-              if (index < path.getNames().length - 1) {
-                throw new NoSuchFileException(path.toString());
-              } else {
-
-                return childNode;
-              }
-            case DIRECTORY:
-              currentNode = (DirectoryNode)childNode;
-              break;
-            default:
-              throw new UnknownSwitchCaseException(childNode.getType().name());
-          }
+          throw new FileAlreadyExistsException(canonicalPath.toString());
         }
       }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
 
-      return currentNode;
+  /**
+   * Creates a symbolic link.
+   *
+   * @param link   the link to create
+   * @param target the raw target of the link, which need not exist
+   * @param attrs  the attributes to apply
+   * @throws FileAlreadyExistsException if something already exists at the link path
+   * @throws NoSuchFileException        if the parent of the link does not exist
+   * @throws IOException                if a symbolic link cycle is encountered
+   */
+  public void createSymbolicLink (EphemeralPath link, Path target, FileAttribute<?>... attrs)
+    throws IOException {
+
+    ensureOpen();
+    checkCreationAttributes(attrs);
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalLink = canonical(link);
+      DirectoryNode parentNode = findParent(canonicalLink);
+      String name = canonicalLink.getNames()[canonicalLink.getNameCount() - 1];
+
+      if (parentNode.exists(name)) {
+        throw new FileAlreadyExistsException(canonicalLink.toString());
+      } else {
+        parentNode.put(new LinkNode(parentNode, name, target.toString()));
+        publish(parentNode, canonicalLink, HeapEventType.CREATE);
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Reads the target of a symbolic link.
+   *
+   * @param link the link to read
+   * @return the raw target of the link
+   * @throws NoSuchFileException if the link does not exist
+   * @throws NotLinkException    if the path does not name a symbolic link
+   * @throws IOException         if a symbolic link cycle is encountered
+   */
+  public Path readSymbolicLink (EphemeralPath link)
+    throws IOException {
+
+    ensureOpen();
+
+    HeapNode heapNode;
+
+    if ((heapNode = findNode(link, LinkOption.NOFOLLOW_LINKS)) == null) {
+      throw new NoSuchFileException(link.toString());
+    } else if (!HeapNodeType.SYMBOLIC_LINK.equals(heapNode.getType())) {
+      throw new NotLinkException(link.toString());
+    } else {
+
+      return new EphemeralPath(fileSystem, ((LinkNode)heapNode).getTarget());
+    }
+  }
+
+  /**
+   * Creates an additional name for an existing file, sharing its content.
+   *
+   * @param link     the new name to create
+   * @param existing the existing file to link to
+   * @throws FileAlreadyExistsException if something already exists at the link path
+   * @throws NoSuchFileException        if the existing file does not exist
+   * @throws FileSystemException        if the existing path names a directory
+   * @throws IOException                if a symbolic link cycle is encountered
+   */
+  public void createLink (EphemeralPath link, EphemeralPath existing)
+    throws IOException {
+
+    ensureOpen();
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalLink = canonical(link);
+      HeapNode existingNode;
+
+      if ((existingNode = resolve(canonical(existing), true, 0).node()) == null) {
+        throw new NoSuchFileException(existing.toString());
+      } else if (!HeapNodeType.FILE.equals(existingNode.getType())) {
+        throw new FileSystemException(existing.toString(), null, "Only a regular file can be hard linked");
+      } else {
+
+        DirectoryNode parentNode = findParent(canonicalLink);
+        String name = canonicalLink.getNames()[canonicalLink.getNameCount() - 1];
+
+        if (parentNode.exists(name)) {
+          throw new FileAlreadyExistsException(canonicalLink.toString());
+        } else {
+
+          HeapFileContent content = ((FileNode)existingNode).getContent();
+
+          content.link();
+          parentNode.put(new FileNode(parentNode, name, content));
+          publish(parentNode, canonicalLink, HeapEventType.CREATE);
+        }
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Deletes a file, directory, or symbolic link. A symbolic link is removed rather than followed.
+   *
+   * @param path the entry to delete
+   * @throws NoSuchFileException        if the entry does not exist
+   * @throws DirectoryNotEmptyException if the entry is a directory with children
+   * @throws IOException                if the entry is the root, or a link cycle is encountered
+   */
+  public void delete (EphemeralPath path)
+    throws IOException {
+
+    ensureOpen();
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalPath = canonical(path);
+      HeapNode heapNode;
+
+      if (canonicalPath.getNameCount() == 0) {
+        throw new IOException("The root directory may not be deleted");
+      } else if ((heapNode = resolve(canonicalPath, false, 0).node()) == null) {
+        throw new NoSuchFileException(canonicalPath.toString());
+      } else {
+        removeEntry(heapNode, canonicalPath);
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Unlinks a node from its parent, releasing its content when no other name refers to it.
+   *
+   * <p>Must be called while holding the write lock.
+   *
+   * @param heapNode the node to unlink
+   * @param path     the absolute path the node occupies
+   * @throws DirectoryNotEmptyException if the node is a directory with children
+   * @throws IOException                if the node has no parent
+   */
+  private void removeEntry (HeapNode heapNode, EphemeralPath path)
+    throws IOException {
+
+    DirectoryNode parentNode;
+
+    if ((parentNode = heapNode.getParent()) == null) {
+      throw new IOException("The root directory may not be deleted");
+    } else if (HeapNodeType.DIRECTORY.equals(heapNode.getType()) && (!((DirectoryNode)heapNode).isEmpty())) {
+      throw new DirectoryNotEmptyException(path.toString());
+    } else {
+      parentNode.remove(heapNode.getName());
+
+      if (HeapNodeType.FILE.equals(heapNode.getType())) {
+        // the content outlives this name only if another name is hard linked to it
+        ((FileNode)heapNode).getContent().unlink();
+      }
+
+      publish(parentNode, path, HeapEventType.DELETE);
+      // a watcher registered on the entry itself learns that its registration is now moot
+      heapNode.fire(new HeapEvent(this, path, HeapEventType.DELETE));
+    }
+  }
+
+  /**
+   * Clears the slot a copy or move is about to occupy, and returns the directory that will hold it.
+   *
+   * <p>Must be called while holding the write lock. This is the shared implementation of the
+   * replacement rules {@code java.nio.file} defines: a target that already exists is an error
+   * unless {@link StandardCopyOption#REPLACE_EXISTING} was given, and a target directory can only
+   * be replaced while it is empty.
+   *
+   * @param target          the destination path
+   * @param replaceExisting whether an existing destination may be replaced
+   * @return the directory that will hold the new entry
+   * @throws FileAlreadyExistsException if the destination exists and may not be replaced
+   * @throws DirectoryNotEmptyException if the destination is a non-empty directory
+   * @throws NoSuchFileException        if the destination's parent does not exist
+   * @throws IOException                if a symbolic link cycle is encountered
+   */
+  private DirectoryNode clearTarget (EphemeralPath target, boolean replaceExisting)
+    throws IOException {
+
+    HeapNode targetNode;
+
+    if ((targetNode = resolve(target, false, 0).node()) != null) {
+      if (!replaceExisting) {
+        throw new FileAlreadyExistsException(target.toString());
+      } else {
+        removeEntry(targetNode, target);
+      }
+    }
+
+    return findParent(target);
+  }
+
+  /**
+   * Copies a file, an empty directory, or a symbolic link to a new path.
+   *
+   * <p>A directory is copied as an empty directory, which is what {@code java.nio.file} specifies:
+   * {@link java.nio.file.Files#copy} copies one entry, and walking a tree is the caller's job.
+   *
+   * @param source  the entry to copy
+   * @param target  the destination path
+   * @param options the copy options
+   * @throws NoSuchFileException           if the source does not exist
+   * @throws FileAlreadyExistsException    if the destination exists and may not be replaced
+   * @throws UnsupportedOperationException if an unsupported option is supplied
+   * @throws IOException                   if the copy cannot be performed
+   */
+  public void copy (EphemeralPath source, EphemeralPath target, CopyOption... options)
+    throws IOException {
+
+    ensureOpen();
+
+    boolean replaceExisting = false;
+    boolean copyAttributes = false;
+    boolean noFollowLinks = false;
+
+    if (options != null) {
+      for (CopyOption option : options) {
+        if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+          replaceExisting = true;
+        } else if (StandardCopyOption.COPY_ATTRIBUTES.equals(option)) {
+          copyAttributes = true;
+        } else if (LinkOption.NOFOLLOW_LINKS.equals(option)) {
+          noFollowLinks = true;
+        } else if (StandardCopyOption.ATOMIC_MOVE.equals(option)) {
+          throw new UnsupportedOperationException(StandardCopyOption.ATOMIC_MOVE.name());
+        } else {
+          throw new UnsupportedOperationException(String.valueOf(option));
+        }
+      }
+    }
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalSource = canonical(source);
+      EphemeralPath canonicalTarget = canonical(target);
+      HeapNode sourceNode;
+
+      if ((sourceNode = resolve(canonicalSource, !noFollowLinks, 0).node()) == null) {
+        throw new NoSuchFileException(canonicalSource.toString());
+      } else if (canonicalSource.equals(canonicalTarget)) {
+        // copying a file onto itself is specified to do nothing
+      } else {
+
+        DirectoryNode parentNode = clearTarget(canonicalTarget, replaceExisting);
+        String name = canonicalTarget.getNames()[canonicalTarget.getNameCount() - 1];
+        HeapNode copiedNode;
+
+        switch (sourceNode.getType()) {
+          case FILE:
+            copiedNode = new FileNode(parentNode, name, new HeapFileContent(((FileNode)sourceNode).getContent()));
+            break;
+          case DIRECTORY:
+            copiedNode = new DirectoryNode(parentNode, name, blockSize);
+            break;
+          case SYMBOLIC_LINK:
+            copiedNode = new LinkNode(parentNode, name, ((LinkNode)sourceNode).getTarget());
+            break;
+          default:
+            throw new UnknownSwitchCaseException(sourceNode.getType().name());
+        }
+
+        if (copyAttributes) {
+          copiedNode.getAttributes().setCreationTime(sourceNode.getAttributes().creationTime());
+          copiedNode.getAttributes().setLastModifiedTime(sourceNode.getAttributes().lastModifiedTime());
+          copiedNode.getAttributes().setLastAccessTime(sourceNode.getAttributes().lastAccessTime());
+        }
+
+        parentNode.put(copiedNode);
+        publish(parentNode, canonicalTarget, HeapEventType.CREATE);
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Moves a file, directory, or symbolic link to a new path.
+   *
+   * <p>The node is re-parented rather than rebuilt, so a directory arrives with its entire subtree
+   * intact and the cost of the move does not depend on how much lives beneath it. A symbolic link
+   * is moved as a link, not as its target.
+   *
+   * @param source  the entry to move
+   * @param target  the destination path
+   * @param options the copy options
+   * @throws NoSuchFileException           if the source does not exist
+   * @throws FileAlreadyExistsException    if the destination exists and may not be replaced
+   * @throws UnsupportedOperationException if an unsupported option is supplied
+   * @throws IOException                   if the move cannot be performed
+   */
+  public void move (EphemeralPath source, EphemeralPath target, CopyOption... options)
+    throws IOException {
+
+    ensureOpen();
+
+    boolean replaceExisting = false;
+
+    if (options != null) {
+      for (CopyOption option : options) {
+        if (StandardCopyOption.REPLACE_EXISTING.equals(option)) {
+          replaceExisting = true;
+        } else if (!(StandardCopyOption.ATOMIC_MOVE.equals(option) || StandardCopyOption.COPY_ATTRIBUTES.equals(option) || LinkOption.NOFOLLOW_LINKS.equals(option))) {
+          throw new UnsupportedOperationException(String.valueOf(option));
+        }
+        // a move within one heap re-parents a node under the write lock, so it is already atomic,
+        // and it carries its own attributes and its own link target along with it
+      }
+    }
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalSource = canonical(source);
+      EphemeralPath canonicalTarget = canonical(target);
+      HeapNode sourceNode;
+
+      if ((sourceNode = resolve(canonicalSource, false, 0).node()) == null) {
+        throw new NoSuchFileException(canonicalSource.toString());
+      } else if (canonicalSource.equals(canonicalTarget)) {
+        // moving a file onto itself is specified to do nothing
+      } else if (canonicalSource.getNameCount() == 0) {
+        throw new IOException("The root directory may not be moved");
+      } else if (HeapNodeType.DIRECTORY.equals(sourceNode.getType()) && canonicalTarget.startsWith(canonicalSource)) {
+        throw new IOException("A directory may not be moved beneath itself");
+      } else {
+
+        DirectoryNode formerParentNode = sourceNode.getParent();
+        DirectoryNode parentNode = clearTarget(canonicalTarget, replaceExisting);
+        String name = canonicalTarget.getNames()[canonicalTarget.getNameCount() - 1];
+
+        formerParentNode.remove(sourceNode.getName());
+        publish(formerParentNode, canonicalSource, HeapEventType.DELETE);
+
+        sourceNode.relink(parentNode, name);
+        parentNode.put(sourceNode);
+        publish(parentNode, canonicalTarget, HeapEventType.CREATE);
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Resolves, and if required creates, the file a channel is about to be opened on.
+   *
+   * @param path   the file to open
+   * @param parsed the validated open options
+   * @param attrs  the attributes to apply to a newly created file
+   * @return the file node the channel will address
+   * @throws NoSuchFileException        if the file does not exist and is not to be created
+   * @throws FileAlreadyExistsException if the file exists and {@code CREATE_NEW} was requested
+   * @throws IOException                if the path names a directory, or a link cycle is found
+   */
+  private FileNode openFileNode (EphemeralPath path, OpenOptions parsed, FileAttribute<?>... attrs)
+    throws IOException {
+
+    checkCreationAttributes(attrs);
+
+    treeLock.writeLock().lock();
+    try {
+
+      EphemeralPath canonicalPath = canonical(path);
+      HeapNode heapNode;
+
+      if (canonicalPath.getNameCount() == 0) {
+        throw new IOException("A directory may not be opened as a file");
+      } else if ((heapNode = resolve(canonicalPath, !parsed.noFollowLinks, 0).node()) == null) {
+        if (!(parsed.write && (parsed.create || parsed.createNew))) {
+          throw new NoSuchFileException(canonicalPath.toString());
+        } else {
+
+          DirectoryNode parentNode = findParent(canonicalPath);
+          String name = canonicalPath.getNames()[canonicalPath.getNameCount() - 1];
+          FileNode fileNode = new FileNode(parentNode, name, new HeapFileContent(this, blockSize));
+
+          parentNode.put(fileNode);
+          publish(parentNode, canonicalPath, HeapEventType.CREATE);
+
+          return fileNode;
+        }
+      } else if (parsed.createNew) {
+        throw new FileAlreadyExistsException(canonicalPath.toString());
+      } else if (!HeapNodeType.FILE.equals(heapNode.getType())) {
+        throw new IOException("A directory may not be opened as a file");
+      } else {
+        if (parsed.write && parsed.truncateExisting) {
+          ((FileNode)heapNode).getContent().truncate(0);
+          touchModified(heapNode);
+          publish(heapNode.getParent(), canonicalPath, HeapEventType.MODIFY);
+        }
+
+        return (FileNode)heapNode;
+      }
+    } finally {
+      treeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Opens a byte channel over a file.
+   *
+   * @param path    the file to open
+   * @param options the open options
+   * @param attrs   the attributes to apply to a newly created file
+   * @return a channel positioned at the start of the file, or at its end when appending
+   * @throws IOException if the file cannot be opened
+   */
+  public SeekableByteChannel newByteChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
+
+    ensureOpen();
+
+    OpenOptions parsed = parseOpenOptions(options);
+
+    return new EphemeralSeekableByteChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
+  }
+
+  /**
+   * Opens a file channel over a file.
+   *
+   * @param path    the file to open
+   * @param options the open options
+   * @param attrs   the attributes to apply to a newly created file
+   * @return a channel positioned at the start of the file, or at its end when appending
+   * @throws IOException if the file cannot be opened
+   */
+  public FileChannel newFileChannel (EphemeralPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+    throws IOException {
+
+    ensureOpen();
+
+    OpenOptions parsed = parseOpenOptions(options);
+
+    return new EphemeralFileChannel(this, openFileNode(path, parsed, attrs), canonical(path), parsed);
+  }
+
+  /**
+   * Records that a node's content changed, and tells the containing directory's watchers.
+   *
+   * @param heapNode the node that changed
+   * @param path     the absolute path of the node
+   */
+  void reportModified (HeapNode heapNode, EphemeralPath path) {
+
+    touchModified(heapNode);
+    publish(heapNode.getParent(), path, HeapEventType.MODIFY);
+  }
+
+  /**
+   * Stamps a node's modification and access times with the current time.
+   *
+   * @param heapNode the node that changed
+   */
+  private void touchModified (HeapNode heapNode) {
+
+    FileTime now = FileTime.fromMillis(System.currentTimeMillis());
+
+    heapNode.getAttributes().setLastModifiedTime(now);
+    heapNode.getAttributes().setLastAccessTime(now);
+  }
+
+  /**
+   * Stamps a node's access time with the current time.
+   *
+   * @param heapNode the node that was read
+   */
+  void reportAccessed (HeapNode heapNode) {
+
+    heapNode.getAttributes().setLastAccessTime(FileTime.fromMillis(System.currentTimeMillis()));
+  }
+
+  /**
+   * The outcome of resolving a path: the link-free absolute path, and the node found there.
+   */
+  private record Resolution(EphemeralPath path, HeapNode node) {
+
+  }
+
+  /**
+   * The open options that govern a single channel, after validation.
+   */
+  static class OpenOptions {
+
+    private boolean read;
+    private boolean write;
+    private boolean append;
+    private boolean truncateExisting;
+    private boolean createNew;
+    private boolean create;
+    private boolean deleteOnClose;
+    private boolean noFollowLinks;
+
+    boolean isRead () {
+
+      return read;
+    }
+
+    boolean isWrite () {
+
+      return write;
+    }
+
+    boolean isAppend () {
+
+      return append;
+    }
+
+    boolean isDeleteOnClose () {
+
+      return deleteOnClose;
     }
   }
 }

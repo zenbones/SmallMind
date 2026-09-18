@@ -78,6 +78,11 @@ public class EphemeralWatchServiceTest {
     ephemeralFileSystem.clear();
   }
 
+  private EphemeralPath entry (String text) {
+
+    return (EphemeralPath)ephemeralFileSystem.getPath(text);
+  }
+
   private EphemeralPath createDirectory (String text)
     throws IOException {
 
@@ -106,7 +111,7 @@ public class EphemeralWatchServiceTest {
 
       WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_MODIFY});
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       WatchKey polled = service.poll();
 
@@ -128,7 +133,7 @@ public class EphemeralWatchServiceTest {
 
       watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_CREATE});
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertNull(service.poll());
     }
@@ -143,8 +148,8 @@ public class EphemeralWatchServiceTest {
 
       WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_MODIFY});
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertSame(service.poll(), key);
       Assert.assertNull(service.poll());
@@ -162,11 +167,11 @@ public class EphemeralWatchServiceTest {
 
       WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_MODIFY});
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertSame(service.poll(), key);
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertTrue(key.reset());
       Assert.assertSame(service.poll(), key);
@@ -182,13 +187,13 @@ public class EphemeralWatchServiceTest {
 
       WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_MODIFY});
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
       service.poll();
       key.pollEvents();
 
       Assert.assertTrue(key.reset());
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertSame(service.poll(), key);
     }
@@ -207,7 +212,7 @@ public class EphemeralWatchServiceTest {
 
       Assert.assertFalse(key.isValid());
 
-      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, watched);
+      service.fire(watched, StandardWatchEventKinds.ENTRY_MODIFY, entry("/watched/leaf.txt"));
 
       Assert.assertNull(service.poll());
     }
@@ -331,7 +336,7 @@ public class EphemeralWatchServiceTest {
     }
   }
 
-  public void testDeepDescendantBubblesToAncestorWatcher ()
+  public void testDeepDescendantIsNotReportedToAncestorWatcher ()
     throws IOException {
 
     EphemeralPath watched = createDirectory("/watched");
@@ -340,22 +345,50 @@ public class EphemeralWatchServiceTest {
 
     try (EphemeralWatchService service = (EphemeralWatchService)ephemeralFileSystem.newWatchService()) {
 
-      WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_CREATE});
+      watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_CREATE});
 
       Files.writeString(ephemeralFileSystem.getPath("/watched/inner/leaf.txt"), "hi", StandardCharsets.UTF_8);
 
-      Assert.assertSame(service.poll(), key);
+      // a registration covers the entries of one directory, not those of its descendants
+      Assert.assertNull(service.poll());
+    }
+  }
 
-      List<WatchEvent<?>> events = key.pollEvents();
-      String observed = null;
+  public void testRepeatedRegistrationReturnsTheSameKey ()
+    throws IOException {
 
-      for (WatchEvent<?> event : events) {
-        if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())) {
-          observed = event.context().toString();
-        }
-      }
+    EphemeralPath watched = createDirectory("/watched");
 
-      Assert.assertEquals(observed, "inner/leaf.txt");
+    try (EphemeralWatchService service = (EphemeralWatchService)ephemeralFileSystem.newWatchService()) {
+
+      WatchKey first = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_CREATE});
+      WatchKey second = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_DELETE});
+
+      Assert.assertSame(second, first);
+
+      Files.writeString(ephemeralFileSystem.getPath("/watched/leaf.txt"), "hi", StandardCharsets.UTF_8);
+
+      // the second registration replaced the kinds, so a creation is no longer reported
+      Assert.assertNull(service.poll());
+
+      Files.delete(ephemeralFileSystem.getPath("/watched/leaf.txt"));
+
+      Assert.assertSame(service.poll(), first);
+    }
+  }
+
+  public void testDeletingWatchedDirectoryInvalidatesItsKey ()
+    throws IOException {
+
+    EphemeralPath watched = createDirectory("/watched");
+
+    try (EphemeralWatchService service = (EphemeralWatchService)ephemeralFileSystem.newWatchService()) {
+
+      WatchKey key = watched.register(service, new WatchEvent.Kind<?>[] {StandardWatchEventKinds.ENTRY_DELETE});
+
+      Files.delete(watched);
+
+      Assert.assertFalse(key.isValid());
     }
   }
 }

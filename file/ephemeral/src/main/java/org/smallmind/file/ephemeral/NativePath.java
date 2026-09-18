@@ -88,6 +88,22 @@ public class NativePath implements Path {
   }
 
   /**
+   * Brings another path into the native namespace so that the native provider will accept it.
+   *
+   * <p>A {@link NativePath} contributes its delegate directly. Anything else — in practice an
+   * {@link EphemeralPath}, since both kinds report the same file system — is re-parsed from its
+   * string form by the native file system, because handing a foreign provider's path to the native
+   * one raises a {@link java.nio.file.ProviderMismatchException}.
+   *
+   * @param other the path to convert
+   * @return a path belonging to the native file system
+   */
+  private Path toNative (Path other) {
+
+    return (other instanceof NativePath) ? ((NativePath)other).nativePath : nativePath.getFileSystem().getPath(other.toString());
+  }
+
+  /**
    * Returns the ephemeral file system associated with this path.
    *
    * @return the {@link EphemeralFileSystem} supplied at construction time; never {@code null}
@@ -110,36 +126,52 @@ public class NativePath implements Path {
   }
 
   /**
+   * Wraps a native path in a {@link NativePath}, preserving {@code null}.
+   *
+   * <p>Preserving {@code null} matters: the {@link Path} contract lets {@code getRoot},
+   * {@code getFileName}, and {@code getParent} return {@code null}, and callers test for it.
+   * {@code Files.createTempFile}, for instance, rejects a generated name whose parent is
+   * non-{@code null}, so wrapping a {@code null} parent in an adapter makes it fail.
+   *
+   * @param path the native path to wrap, which may be {@code null}
+   * @return the adapter, or {@code null} if {@code path} is {@code null}
+   */
+  private Path wrap (Path path) {
+
+    return (path == null) ? null : new NativePath(ephemeralFileSystem, path);
+  }
+
+  /**
    * Returns the root component of the native path wrapped in a {@link NativePath}.
    *
-   * @return the root path adapter
+   * @return the root path adapter, or {@code null} if the native path has no root
    */
   @Override
   public Path getRoot () {
 
-    return new NativePath(ephemeralFileSystem, nativePath.getRoot());
+    return wrap(nativePath.getRoot());
   }
 
   /**
    * Returns the file name component of the native path wrapped in a {@link NativePath}.
    *
-   * @return the file name path adapter
+   * @return the file name path adapter, or {@code null} if the native path has no name elements
    */
   @Override
   public Path getFileName () {
 
-    return new NativePath(ephemeralFileSystem, nativePath.getFileName());
+    return wrap(nativePath.getFileName());
   }
 
   /**
    * Returns the parent of the native path wrapped in a {@link NativePath}.
    *
-   * @return the parent path adapter
+   * @return the parent path adapter, or {@code null} if the native path has no parent
    */
   @Override
   public Path getParent () {
 
-    return new NativePath(ephemeralFileSystem, nativePath.getParent());
+    return wrap(nativePath.getParent());
   }
 
   /**
@@ -190,7 +222,20 @@ public class NativePath implements Path {
   @Override
   public boolean startsWith (Path other) {
 
-    return nativePath.startsWith((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
+    return nativePath.startsWith(toNative(other));
+  }
+
+  /**
+   * Tests whether this path starts with the path named by {@code other}, parsed by the native file
+   * system.
+   *
+   * @param other the candidate prefix
+   * @return {@code true} if this path starts with {@code other}
+   */
+  @Override
+  public boolean startsWith (String other) {
+
+    return nativePath.startsWith(other);
   }
 
   /**
@@ -203,7 +248,20 @@ public class NativePath implements Path {
   @Override
   public boolean endsWith (Path other) {
 
-    return nativePath.endsWith((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
+    return nativePath.endsWith(toNative(other));
+  }
+
+  /**
+   * Tests whether this path ends with the path named by {@code other}, parsed by the native file
+   * system.
+   *
+   * @param other the candidate suffix
+   * @return {@code true} if this path ends with {@code other}
+   */
+  @Override
+  public boolean endsWith (String other) {
+
+    return nativePath.endsWith(other);
   }
 
   /**
@@ -227,7 +285,49 @@ public class NativePath implements Path {
   @Override
   public Path resolve (Path other) {
 
-    return new NativePath(ephemeralFileSystem, nativePath.resolve((other instanceof NativePath) ? ((NativePath)other).nativePath : other));
+    return new NativePath(ephemeralFileSystem, nativePath.resolve(toNative(other)));
+  }
+
+  /**
+   * Resolves the path named by {@code other} against this one, keeping the result native.
+   *
+   * <p>Overriding this matters more than it appears to. The {@link Path} default implementation
+   * resolves a string by way of {@code getFileSystem().getPath(other)}, and this adapter's file
+   * system is the {@link EphemeralFileSystem} — so a relative name would come back as an
+   * {@link EphemeralPath} and then be rejected by the native provider. Standing on a native path
+   * and naming something relative to it must yield a native path.
+   *
+   * @param other the path to resolve, in native syntax
+   * @return the resolved path adapter
+   */
+  @Override
+  public Path resolve (String other) {
+
+    return new NativePath(ephemeralFileSystem, nativePath.resolve(other));
+  }
+
+  /**
+   * Resolves {@code other} against this path's parent, keeping the result native.
+   *
+   * @param other the path to resolve against the parent
+   * @return the resolved path adapter
+   */
+  @Override
+  public Path resolveSibling (Path other) {
+
+    return new NativePath(ephemeralFileSystem, nativePath.resolveSibling(toNative(other)));
+  }
+
+  /**
+   * Resolves the path named by {@code other} against this path's parent, keeping the result native.
+   *
+   * @param other the path to resolve against the parent, in native syntax
+   * @return the resolved path adapter
+   */
+  @Override
+  public Path resolveSibling (String other) {
+
+    return new NativePath(ephemeralFileSystem, nativePath.resolveSibling(other));
   }
 
   /**
@@ -240,7 +340,7 @@ public class NativePath implements Path {
   @Override
   public Path relativize (Path other) {
 
-    return new NativePath(ephemeralFileSystem, nativePath.relativize((other instanceof NativePath) ? ((NativePath)other).nativePath : other));
+    return new NativePath(ephemeralFileSystem, nativePath.relativize(toNative(other)));
   }
 
   /**
@@ -306,7 +406,30 @@ public class NativePath implements Path {
   @Override
   public int compareTo (Path other) {
 
-    return nativePath.compareTo((other instanceof NativePath) ? ((NativePath)other).nativePath : other);
+    return nativePath.compareTo(toNative(other));
+  }
+
+  /**
+   * Returns a hash code consistent with {@link #equals(Object)}.
+   *
+   * @return the hash code of the wrapped native path
+   */
+  @Override
+  public int hashCode () {
+
+    return nativePath.hashCode();
+  }
+
+  /**
+   * Compares this adapter with another, treating two adapters over equal native paths as equal.
+   *
+   * @param obj the object to compare with
+   * @return {@code true} if {@code obj} is a {@code NativePath} over an equal native path
+   */
+  @Override
+  public boolean equals (Object obj) {
+
+    return (this == obj) || ((obj instanceof NativePath) && nativePath.equals(((NativePath)obj).getNativePath()));
   }
 
   /**

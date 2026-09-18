@@ -376,7 +376,7 @@ the configuration does not claim.
 | Trivial `UserPrincipal` / `GroupPrincipal` implementations. No external
   backing store; lookups manufacture fresh instances.
 
-| `Glob` / `RegexPathMatcher`
+| `EphemeralGlob` / `RegexPathMatcher`
 | Glob-to-regex translator and the compiled-regex-backed `PathMatcher`.
   Drives `EphemeralFileSystem.getPathMatcher(syntaxAndPattern)` for the
   `"glob:"` and `"regex:"` syntaxes.

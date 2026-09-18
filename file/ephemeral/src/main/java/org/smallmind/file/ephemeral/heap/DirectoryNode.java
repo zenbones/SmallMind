@@ -44,9 +44,14 @@ import org.smallmind.file.ephemeral.EphemeralPath;
  * Represents an in-memory directory node in the ephemeral heap file-system tree.
  *
  * <p>A {@code DirectoryNode} maintains a map of named child {@link HeapNode} instances and
- * provides synchronized access to those children. Its reported {@link #size()} is the
- * recursive sum of every descendant's size. The root of the tree is represented by an
+ * provides synchronized access to those children. The root of the tree is represented by an
  * instance whose parent is {@code null}.
+ *
+ * <p>The {@linkplain #size() size} a directory reports is nominal — one block — as a real file
+ * system reports the size of the directory entry itself rather than the size of its contents.
+ * Summing the subtree on every stat call would make an ordinary directory listing quadratic, and
+ * the store accounts for consumed space directly (see {@link HeapSpaceGovernor}) rather than by
+ * walking the tree.
  *
  * @see HeapNode
  * @see FileNode
@@ -60,15 +65,23 @@ public class DirectoryNode extends HeapNode {
   private final HashMap<String, HeapNode> children = new HashMap<>();
 
   /**
+   * The nominal size reported for this directory entry.
+   */
+  private final int nominalSize;
+
+  /**
    * Creates a new directory node.
    *
-   * @param parent the parent directory that contains this node, or {@code null} when this
-   *               node is the root of the file-system tree
-   * @param name   the simple name of this directory
+   * @param parent      the parent directory that contains this node, or {@code null} when this
+   *                    node is the root of the file-system tree
+   * @param name        the simple name of this directory
+   * @param nominalSize the size reported for this directory entry, conventionally one block
    */
-  public DirectoryNode (DirectoryNode parent, String name) {
+  public DirectoryNode (DirectoryNode parent, String name, int nominalSize) {
 
     super(parent, name);
+
+    this.nominalSize = nominalSize;
   }
 
   /**
@@ -147,15 +160,26 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
+   * Returns the child nodes of this directory as a snapshot.
+   *
+   * @return a list of the current children, safe to traverse while the directory changes
+   */
+  public synchronized LinkedList<HeapNode> getChildren () {
+
+    return new LinkedList<>(children.values());
+  }
+
+  /**
    * Returns an iterator over the paths of child nodes that are accepted by the given filter.
    *
    * <p>Each child name is resolved against the supplied {@code path} to produce a candidate
-   * {@link Path}. The filter's {@link DirectoryStream.Filter#accept(Object)} method is called
-   * for each candidate; any {@link IOException} thrown by the filter is silently suppressed and
-   * the candidate is excluded from the results.
+   * {@link Path}. The candidate paths are collected up front, so the returned iterator is not
+   * affected by concurrent changes to the directory. Any {@link IOException} thrown by the filter
+   * is suppressed and the candidate is excluded from the results.
    *
    * @param path   the parent {@link EphemeralPath} against which each child name is resolved
-   * @param filter the filter used to decide which child paths to include
+   * @param filter the filter used to decide which child paths to include, or {@code null} to
+   *               accept every child
    * @return an iterator over the accepted child paths, in no guaranteed order
    */
   public synchronized Iterator<Path> iterator (EphemeralPath path, DirectoryStream.Filter<? super Path> filter) {
@@ -164,14 +188,14 @@ public class DirectoryNode extends HeapNode {
 
     for (String name : children.keySet()) {
 
-      Path childPath;
+      Path childPath = path.resolve(name);
 
       try {
-        if (filter.accept(childPath = path.resolve(name))) {
+        if ((filter == null) || filter.accept(childPath)) {
           pathList.add(childPath);
         }
       } catch (IOException ioException) {
-        // nothing to do here
+        // a filter that fails on a candidate excludes it
       }
     }
 
@@ -179,22 +203,13 @@ public class DirectoryNode extends HeapNode {
   }
 
   /**
-   * Returns the aggregate size of all descendant nodes.
+   * Returns the nominal size of this directory entry.
    *
-   * <p>The value is computed on every call by summing the {@link HeapNode#size()} of each
-   * direct child; for child directories the computation recurses. There is no caching.
-   *
-   * @return the total number of bytes consumed by the contents of this directory tree
+   * @return the configured nominal directory size in bytes
    */
   @Override
-  public synchronized long size () {
+  public long size () {
 
-    long size = 0;
-
-    for (HeapNode child : children.values()) {
-      size += child.size();
-    }
-
-    return size;
+    return nominalSize;
   }
 }

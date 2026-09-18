@@ -34,10 +34,13 @@ package org.smallmind.file.ephemeral;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -81,14 +84,163 @@ public class EphemeralFileOperationsTest {
     return ephemeralFileSystem.getPath(text);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testReadAndWriteOptionsRejected ()
+  public void testReadAndWriteOptionsAccepted ()
     throws IOException {
 
     Path file = path("/a.txt");
 
     Files.writeString(file, "hi", StandardCharsets.UTF_8);
-    Files.newByteChannel(file, Set.of(StandardOpenOption.READ, StandardOpenOption.WRITE));
+
+    try (SeekableByteChannel channel = Files.newByteChannel(file, Set.of(StandardOpenOption.READ, StandardOpenOption.WRITE))) {
+      channel.write(ByteBuffer.wrap("HI".getBytes(StandardCharsets.UTF_8)));
+      channel.position(0);
+
+      ByteBuffer buffer = ByteBuffer.allocate(2);
+
+      Assert.assertEquals(channel.read(buffer), 2);
+      Assert.assertEquals(new String(buffer.array(), StandardCharsets.UTF_8), "HI");
+    }
+  }
+
+  public void testSeparateChannelsHoldIndependentPositions ()
+    throws IOException {
+
+    Path file = path("/two.txt");
+
+    Files.writeString(file, "abcdef", StandardCharsets.UTF_8);
+
+    try (SeekableByteChannel first = Files.newByteChannel(file, Set.of(StandardOpenOption.READ));
+         SeekableByteChannel second = Files.newByteChannel(file, Set.of(StandardOpenOption.READ))) {
+
+      ByteBuffer firstBuffer = ByteBuffer.allocate(3);
+      ByteBuffer secondBuffer = ByteBuffer.allocate(3);
+
+      first.read(firstBuffer);
+      second.read(secondBuffer);
+
+      Assert.assertEquals(new String(firstBuffer.array(), StandardCharsets.UTF_8), "abc");
+      Assert.assertEquals(new String(secondBuffer.array(), StandardCharsets.UTF_8), "abc");
+    }
+  }
+
+  public void testWriteBeyondEndZeroFills ()
+    throws IOException {
+
+    Path file = path("/sparse.bin");
+
+    try (SeekableByteChannel channel = Files.newByteChannel(file, Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE))) {
+      channel.position(4);
+      channel.write(ByteBuffer.wrap(new byte[] {1}));
+    }
+
+    Assert.assertEquals(Files.size(file), 5L);
+    Assert.assertEquals(Files.readAllBytes(file), new byte[] {0, 0, 0, 0, 1});
+  }
+
+  public void testMovedDirectoryKeepsItsChildren ()
+    throws IOException {
+
+    Files.createDirectory(path("/from"));
+    Files.createDirectory(path("/from/inner"));
+    Files.writeString(path("/from/inner/leaf.txt"), "kept", StandardCharsets.UTF_8);
+
+    Files.move(path("/from"), path("/to"));
+
+    Assert.assertFalse(Files.exists(path("/from")));
+    Assert.assertTrue(Files.isDirectory(path("/to/inner")));
+    Assert.assertEquals(Files.readString(path("/to/inner/leaf.txt")), "kept");
+  }
+
+  public void testCopyUsesTheTargetName ()
+    throws IOException {
+
+    Files.createDirectory(path("/source"));
+
+    Files.copy(path("/source"), path("/renamed"));
+
+    Assert.assertTrue(Files.isDirectory(path("/renamed")));
+  }
+
+  public void testCapacityIsEnforced ()
+    throws IOException {
+
+    EphemeralFileSystem boundedFileSystem = new EphemeralFileSystem(new EphemeralFileSystemProvider("bounded"), new EphemeralFileSystemConfiguration(64L, 16, "/"));
+    Path file = boundedFileSystem.getPath("/blob");
+
+    try {
+      Files.write(file, new byte[4096]);
+      Assert.fail("A write past the capacity of the store should have been rejected");
+    } catch (IOException ioException) {
+      Assert.assertTrue(boundedFileSystem.getFileStore().getUnallocatedSpace() >= 0);
+      Assert.assertTrue(boundedFileSystem.getFileStore().getUsableSpace() <= boundedFileSystem.getFileStore().getTotalSpace());
+    }
+  }
+
+  public void testHardLinkSharesContentAndSurvivesOneDeletion ()
+    throws IOException {
+
+    Path original = path("/original.txt");
+    Path linked = path("/linked.txt");
+
+    Files.writeString(original, "shared", StandardCharsets.UTF_8);
+    Files.createLink(linked, original);
+
+    Assert.assertTrue(Files.isSameFile(original, linked));
+    Assert.assertEquals(Files.readString(linked), "shared");
+
+    Files.delete(original);
+
+    Assert.assertEquals(Files.readString(linked), "shared");
+  }
+
+  public void testSymbolicLinkResolvesAndReports ()
+    throws IOException {
+
+    Files.createDirectory(path("/real"));
+    Files.writeString(path("/real/leaf.txt"), "target", StandardCharsets.UTF_8);
+    Files.createSymbolicLink(path("/link"), path("/real"));
+
+    Assert.assertTrue(Files.isSymbolicLink(path("/link")));
+    Assert.assertFalse(Files.isSymbolicLink(path("/real")));
+    Assert.assertEquals(Files.readString(path("/link/leaf.txt")), "target");
+    Assert.assertEquals(Files.readSymbolicLink(path("/link")).toString(), "/real");
+    Assert.assertEquals(path("/link/leaf.txt").toRealPath().toString(), "/real/leaf.txt");
+  }
+
+  public void testSymbolicLinkCycleReportsAnError ()
+    throws IOException {
+
+    Files.createSymbolicLink(path("/loop"), path("/loop"));
+
+    try {
+      Files.readAllBytes(path("/loop"));
+      Assert.fail("A symbolic link cycle should have been reported");
+    } catch (FileSystemException fileSystemException) {
+      Assert.assertTrue(fileSystemException.getMessage().contains("symbolic links"));
+    }
+  }
+
+  public void testFileChannelOpenIsSupported ()
+    throws IOException {
+
+    Path file = path("/channel.bin");
+
+    Files.writeString(file, "abc", StandardCharsets.UTF_8);
+
+    try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+      Assert.assertEquals(channel.size(), 3L);
+    }
+  }
+
+  public void testCreateTempFileSucceeds ()
+    throws IOException {
+
+    Files.createDirectory(path("/tmp"));
+
+    Path temporaryFile = Files.createTempFile(path("/tmp"), "prefix", ".suffix");
+
+    Assert.assertTrue(Files.exists(temporaryFile));
+    Assert.assertEquals(temporaryFile.getParent().toString(), "/tmp");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)

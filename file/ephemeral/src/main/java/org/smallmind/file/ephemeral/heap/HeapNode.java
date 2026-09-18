@@ -38,18 +38,28 @@ import org.smallmind.file.ephemeral.EphemeralBasicFileAttributes;
 /**
  * Abstract base class for all nodes held in the in-memory ephemeral file-system tree.
  *
- * <p>Every node in the heap tree — whether a file ({@link FileNode}) or a directory
- * ({@link DirectoryNode}) — extends this class. A {@code HeapNode} records its parent,
- * its simple name, and a lazily initialised list of {@link HeapEventListener}s. When a
- * change occurs at any node, {@link #bubble(HeapEvent)} propagates the event to locally
- * registered listeners and then up to the parent node, allowing watch-service subscribers
- * to observe changes anywhere beneath a watched directory.
+ * <p>Every node in the heap tree — a file ({@link FileNode}), a directory
+ * ({@link DirectoryNode}), or a symbolic link ({@link LinkNode}) — extends this class. A
+ * {@code HeapNode} records its parent, its simple name, and a lazily initialised list of
+ * {@link HeapEventListener}s.
  *
- * <p>All listener-management methods are {@code synchronized} on the node's own monitor
- * to allow safe concurrent registration and event delivery.
+ * <p>A node's parent and name are mutable so that a rename or a move can
+ * {@linkplain #relink(DirectoryNode, String) relink} an existing node into its new home. Doing so
+ * keeps a directory's entire subtree intact, and makes a move independent of how much lives beneath
+ * the node being moved.
+ *
+ * <p>Event delivery is deliberately <em>not</em> recursive. {@link #fire(HeapEvent)} notifies only
+ * the listeners registered on the node it is called upon; deciding who hears about a change is the
+ * caller's job. A {@link java.nio.file.WatchService} registration covers the entries of one
+ * directory and not its descendants, so the store reports a change by firing on the directory that
+ * contains the changed entry.
+ *
+ * <p>All listener-management methods are {@code synchronized} on the node's own monitor to allow
+ * safe concurrent registration and event delivery.
  *
  * @see FileNode
  * @see DirectoryNode
+ * @see LinkNode
  * @see HeapEvent
  * @see HeapEventListener
  */
@@ -62,20 +72,20 @@ public abstract class HeapNode {
   private final EphemeralBasicFileAttributes attributes;
 
   /**
-   * The parent directory of this node, or {@code null} if this node is the root.
-   */
-  private final DirectoryNode parent;
-
-  /**
-   * The simple name of this node within its parent directory.
-   */
-  private final String name;
-
-  /**
    * The list of listeners registered on this node. Lazily initialised to avoid allocating a
    * list for nodes that are never watched.
    */
   private LinkedList<HeapEventListener> listenerList;
+
+  /**
+   * The parent directory of this node, or {@code null} if this node is the root.
+   */
+  private DirectoryNode parent;
+
+  /**
+   * The simple name of this node within its parent directory.
+   */
+  private String name;
 
   /**
    * Creates a new heap node attached to the given parent directory.
@@ -93,17 +103,14 @@ public abstract class HeapNode {
   }
 
   /**
-   * Returns the type identifier that distinguishes files from directories.
+   * Returns the type identifier that distinguishes files, directories, and symbolic links.
    *
    * @return the {@link HeapNodeType} for this node; never {@code null}
    */
   public abstract HeapNodeType getType ();
 
   /**
-   * Returns the aggregate byte size represented by this node.
-   *
-   * <p>For a {@link FileNode} this is the number of bytes written to the file. For a
-   * {@link DirectoryNode} this is the recursive sum of all descendant sizes.
+   * Returns the byte size reported for this node by its file attributes.
    *
    * @return the size in bytes; always &ge; 0
    */
@@ -114,7 +121,7 @@ public abstract class HeapNode {
    *
    * @return the containing {@link DirectoryNode}, or {@code null} if this node is the root
    */
-  public DirectoryNode getParent () {
+  public synchronized DirectoryNode getParent () {
 
     return parent;
   }
@@ -122,11 +129,27 @@ public abstract class HeapNode {
   /**
    * Returns the simple name of this node within its parent directory.
    *
-   * @return the node name; never {@code null}
+   * @return the node name; never {@code null} except for the root
    */
-  public String getName () {
+  public synchronized String getName () {
 
     return name;
+  }
+
+  /**
+   * Re-parents and renames this node in place.
+   *
+   * <p>This is how a move is performed. The node itself, and therefore everything beneath it, is
+   * preserved; only its position in the tree changes. Callers are responsible for removing the node
+   * from its former parent and installing it in its new one.
+   *
+   * @param parent the directory that will contain this node
+   * @param name   the simple name this node will take within that directory
+   */
+  public synchronized void relink (DirectoryNode parent, String name) {
+
+    this.parent = parent;
+    this.name = name;
   }
 
   /**
@@ -143,7 +166,7 @@ public abstract class HeapNode {
   }
 
   /**
-   * Registers a listener to receive {@link HeapEvent}s that are bubbled through this node.
+   * Registers a listener to receive {@link HeapEvent}s fired on this node.
    *
    * <p>The listener list is lazily created on the first registration. The same listener
    * instance may be added more than once and will then be notified multiple times per event.
@@ -169,29 +192,26 @@ public abstract class HeapNode {
    */
   public synchronized void unregisterListener (HeapEventListener eventListener) {
 
-    listenerList.remove(eventListener);
+    if (listenerList != null) {
+      listenerList.remove(eventListener);
+    }
   }
 
   /**
-   * Delivers a {@link HeapEvent} to every listener registered on this node and then
-   * propagates the event to the parent node.
+   * Delivers a {@link HeapEvent} to every listener registered on this node, and on this node only.
    *
-   * <p>Delivery to local listeners happens before propagation to the parent, so a listener
-   * at a deeper level in the tree always receives the event before a listener at a shallower
-   * level. Propagation stops at the root, where {@link #getParent()} returns {@code null}.
+   * <p>Events are not propagated to the parent. A watch registration observes the entries of a
+   * single directory, so the store fires on the directory containing a changed entry rather than
+   * letting the event climb to the root.
    *
    * @param event the {@link HeapEvent} to deliver; must not be {@code null}
    */
-  public synchronized void bubble (HeapEvent event) {
+  public synchronized void fire (HeapEvent event) {
 
     if (listenerList != null) {
       for (HeapEventListener listener : listenerList) {
         listener.handle(event);
       }
-    }
-
-    if (parent != null) {
-      parent.bubble(event);
     }
   }
 }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.file.ephemeral;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.FileStore;
@@ -59,6 +60,7 @@ public class EphemeralFileSystem extends FileSystem {
   private final EphemeralFileSystemConfiguration configuration;
   private final EphemeralFileStore fileStore;
   private final EphemeralPath rootPath;
+  private final EphemeralPath workingDirectoryPath;
   private volatile boolean closed;
 
   /**
@@ -74,6 +76,34 @@ public class EphemeralFileSystem extends FileSystem {
 
     fileStore = new EphemeralFileStore(this, configuration.getCapacity(), configuration.getBlockSize());
     rootPath = new EphemeralPath(this);
+    workingDirectoryPath = new EphemeralPath(this, configuration.getWorkingDirectory());
+
+    seedBootstrapDirectories();
+  }
+
+  /**
+   * Creates the directories a file system is expected to already have.
+   *
+   * <p>A fresh heap is completely empty, so nothing exists — not even the working directory. Code
+   * that writes to a relative path, or calls {@code Files.createTempFile}, would fail until
+   * something created those directories, which is a poor first impression for a file system whose
+   * whole purpose is to stand in for a real one. Only directories this file system actually claims
+   * are created; a temporary directory that belongs to the native file system is left alone.
+   */
+  private void seedBootstrapDirectories () {
+
+    try {
+      fileStore.createDirectories(workingDirectoryPath);
+
+      String temporaryDirectory;
+
+      if (((temporaryDirectory = System.getProperty("java.io.tmpdir")) != null) && configuration.isOurs(temporaryDirectory)) {
+        fileStore.createDirectories(new EphemeralPath(this, temporaryDirectory));
+      }
+    } catch (IOException ioException) {
+      // seeding is a convenience; a caller that needs these directories will report the failure
+      // itself when it tries to use them
+    }
   }
 
   /**
@@ -150,7 +180,28 @@ public class EphemeralFileSystem extends FileSystem {
   @Override
   public Iterable<Path> getRootDirectories () {
 
-    return rootPath;
+    // a Path is itself an Iterable over its name elements, so the root must be wrapped rather than returned
+    return new SingleItemIterable<>(rootPath);
+  }
+
+  /**
+   * Returns the configuration this file system was created with.
+   *
+   * @return the {@link EphemeralFileSystemConfiguration}; never {@code null}
+   */
+  public EphemeralFileSystemConfiguration getConfiguration () {
+
+    return configuration;
+  }
+
+  /**
+   * Returns the absolute directory against which relative paths are resolved.
+   *
+   * @return the working directory as an absolute {@link EphemeralPath}; never {@code null}
+   */
+  public EphemeralPath getWorkingDirectory () {
+
+    return workingDirectoryPath;
   }
 
   /**
@@ -209,6 +260,14 @@ public class EphemeralFileSystem extends FileSystem {
    * match one of the configured roots are returned as {@link EphemeralPath} instances; all
    * other paths are wrapped in a {@link NativePath} that delegates to the native file system.
    *
+   * <p>A path that is absolute on the <em>native</em> file system but not rooted at this file
+   * system's separator is always delegated. On a platform whose absolute paths do not begin with
+   * {@code '/'} — a Windows drive or UNC prefix, for instance — such a path would otherwise look
+   * relative, and a relative path belongs to whichever file system owns the working directory. That
+   * would quietly claim every real file on the machine, which matters most when this provider is
+   * installed as the JVM default: the platform asks for its own configuration by absolute path
+   * while it is starting up.
+   *
    * @param first the initial path string
    * @param more  additional strings to be joined to the path
    * @return the resulting {@link Path}
@@ -219,6 +278,9 @@ public class EphemeralFileSystem extends FileSystem {
 
     if (closed) {
       throw new ClosedFileSystemException();
+    } else if (isNativeAbsolute(first)) {
+
+      return new NativePath(this, provider.getNativeFileSystem().getPath(first, more));
     } else if (configuration.isOurs(first, more)) {
 
       return new EphemeralPath(this, first, more);
@@ -229,12 +291,13 @@ public class EphemeralFileSystem extends FileSystem {
   }
 
   /**
-   * Converts a URI into a {@link Path}. URIs whose string representation matches a configured
-   * root are returned as {@link EphemeralPath} instances; others are wrapped as
-   * {@link NativePath}.
+   * Converts a URI into a {@link Path}. The URI's decoded path component is matched against the
+   * configured roots; a claimed path is returned as an {@link EphemeralPath} and any other is
+   * wrapped as a {@link NativePath}.
    *
    * @param uri the URI to convert
    * @return the resulting {@link Path}
+   * @throws IllegalArgumentException  if the URI has no path component
    * @throws ClosedFileSystemException if this file system has been closed
    */
   public Path getPath (URI uri) {
@@ -243,11 +306,14 @@ public class EphemeralFileSystem extends FileSystem {
       throw new ClosedFileSystemException();
     } else {
 
-      String uriAsString = uri.toString();
+      String uriPath;
 
-      if (configuration.isOurs(uriAsString)) {
+      // the path component, not the whole URI, is what a root can claim
+      if ((uriPath = uri.getPath()) == null) {
+        throw new IllegalArgumentException("Path component is undefined");
+      } else if (configuration.isOurs(uriPath)) {
 
-        return new EphemeralPath(this, uriAsString);
+        return new EphemeralPath(this, uriPath);
       } else {
 
         return new NativePath(this, provider.getNativeFileSystem().provider().getPath(uri));
@@ -257,7 +323,7 @@ public class EphemeralFileSystem extends FileSystem {
 
   /**
    * Returns a {@link PathMatcher} for the given syntax-and-pattern string. The supported
-   * syntaxes are {@code "glob"} (converted via {@link Glob#toRegexPattern}) and
+   * syntaxes are {@code "glob"} (converted via {@link EphemeralGlob#toRegexPattern}) and
    * {@code "regex"}.
    *
    * @param syntaxAndPattern a string of the form {@code "syntax:pattern"}
@@ -282,11 +348,59 @@ public class EphemeralFileSystem extends FileSystem {
         String syntax;
 
         return switch (syntax = syntaxAndPattern.substring(0, colonPos)) {
-          case "glob" -> new RegexPathMatcher(Glob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)));
-          case "regex" -> new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)));
+          case "glob" -> new RegexPathMatcher(EphemeralGlob.toRegexPattern(EphemeralPath.getSeparatorChar(), syntaxAndPattern.substring(colonPos + 1)), nativePathMatcher(syntaxAndPattern));
+          case "regex" -> new RegexPathMatcher(Pattern.compile(syntaxAndPattern.substring(colonPos + 1)), nativePathMatcher(syntaxAndPattern));
           default -> throw new UnsupportedOperationException(syntax);
         };
       }
+    }
+  }
+
+  /**
+   * Returns whether a path component is absolute on the native file system while not being rooted
+   * at this file system's separator.
+   *
+   * <p>The question of what makes a path absolute is left to the native file system rather than
+   * answered here, so that no platform's spelling of a root — a drive letter, a UNC share — has to
+   * be recognised by this code.
+   *
+   * @param first the initial path string, which is what determines whether a path is absolute
+   * @return {@code true} if the path belongs to the native file system by virtue of its own syntax
+   */
+  private boolean isNativeAbsolute (String first) {
+
+    if (first.startsWith(EphemeralPath.getSeparator())) {
+
+      return false;
+    } else {
+      try {
+
+        return provider.getNativeFileSystem().getPath(first).isAbsolute();
+      } catch (Exception exception) {
+        // there is no native file system attached, or it cannot express this path at all, in which
+        // case the path is not one it could have produced
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Builds the equivalent matcher from the native file system, used by {@link RegexPathMatcher} to
+   * test the {@link NativePath} instances this file system hands out for paths that fall outside
+   * its configured roots.
+   *
+   * @param syntaxAndPattern the syntax-and-pattern string to hand to the native file system
+   * @return the native {@link PathMatcher}, or {@code null} when no native file system is attached
+   * or it rejects the pattern
+   */
+  private PathMatcher nativePathMatcher (String syntaxAndPattern) {
+
+    try {
+
+      return provider.getNativeFileSystem().getPathMatcher(syntaxAndPattern);
+    } catch (Exception exception) {
+      // no native file system is attached, or it cannot express this pattern
+      return null;
     }
   }
 
