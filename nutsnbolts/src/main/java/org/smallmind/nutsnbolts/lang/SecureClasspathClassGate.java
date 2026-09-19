@@ -34,67 +34,78 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.cert.Certificate;
 
 /**
- * {@link ClasspathClassGate} that constructs a {@link CodeSource} from the provided classpath
- * entries, enabling policy-based permission evaluation during secure class loading.
+ * {@link ClasspathClassGate} that associates the classes it loads with a {@link CodeSource} naming
+ * the classpath entry they were read from. As a {@link CodeSource} carries a single location, this
+ * gate covers a single classpath entry, so compose a {@link GatingClassLoader} from one gate per
+ * entry rather than handing a multi-entry class path to a single gate.
  */
 public class SecureClasspathClassGate extends ClasspathClassGate {
 
   private final CodeSource codeSource;
 
   /**
-   * Constructs a gate from the JVM's {@code java.class.path} system property.
+   * Constructs a gate over a single classpath entry, which may be either a directory or a JAR file,
+   * and builds the {@link CodeSource} that names it. The entry is taken whole, and so is never split
+   * on the platform path separator.
    *
-   * @throws MalformedURLException if the derived code source URL is malformed
+   * @param pathComponent the sole classpath entry this gate searches
+   * @throws MalformedURLException    if the derived code source URL is malformed
+   * @throws IllegalArgumentException if the entry is null or blank
    */
-  public SecureClasspathClassGate ()
+  public SecureClasspathClassGate (String pathComponent)
     throws MalformedURLException {
 
-    this(System.getProperty("java.class.path"));
+    super(new String[] {vetted(pathComponent)});
+
+    codeSource = new CodeSource(asCodeSourceURI(pathComponent).toURL(), (Certificate[])null);
   }
 
   /**
-   * Constructs a gate by splitting the given class path string on the platform path separator.
+   * Returns the given classpath entry once confirmed usable, so that no entry the {@link CodeSource}
+   * cannot name is ever passed to the superclass as somewhere to search.
    *
-   * @param classPath the class path string to parse
-   * @throws MalformedURLException if the derived code source URL is malformed
+   * @param pathComponent the classpath entry to check
+   * @return the checked classpath entry
+   * @throws IllegalArgumentException if the entry is null or blank
    */
-  public SecureClasspathClassGate (String classPath)
-    throws MalformedURLException {
+  private static String vetted (String pathComponent) {
 
-    this(classPath.split(System.getProperty("path.separator"), -1));
-  }
-
-  /**
-   * Constructs a gate from an explicit array of path components and builds a {@link CodeSource}
-   * URL that spans all of them.
-   *
-   * @param pathComponents the individual classpath entries
-   * @throws MalformedURLException if the assembled code source URL is malformed
-   */
-  public SecureClasspathClassGate (String... pathComponents)
-    throws MalformedURLException {
-
-    super(pathComponents);
-
-    StringBuilder urlSpecBuilder = new StringBuilder("file://");
-
-    for (String pathComponent : pathComponents) {
-      if (pathComponent.charAt(0) != '/') {
-        urlSpecBuilder.append('/');
-      }
-      urlSpecBuilder.append(pathComponent);
+    if ((pathComponent == null) || pathComponent.isBlank()) {
+      throw new IllegalArgumentException("A classpath entry is required from which to construct a code source");
     }
-    urlSpecBuilder.append("/-");
 
-    codeSource = new CodeSource(URI.create(urlSpecBuilder.toString()).toURL(), (Certificate[])null);
+    return pathComponent;
   }
 
   /**
-   * Returns the {@link CodeSource} constructed from the classpath entries provided at creation.
+   * Renders a classpath entry as a code source location, relying on {@link Path#toUri()} to absolutize
+   * the entry and to escape any characters, such as spaces, that are not legal within a URI. Directory
+   * entries gain the trailing {@code /-} that matches every class beneath them, while JAR entries name
+   * the archive itself.
+   *
+   * @param pathComponent the classpath entry to render
+   * @return the code source location naming the entry
+   */
+  private static URI asCodeSourceURI (String pathComponent) {
+
+    String uriSpec = Paths.get(pathComponent).toAbsolutePath().normalize().toUri().toString();
+
+    if (pathComponent.endsWith(".jar")) {
+
+      return URI.create(uriSpec);
+    }
+
+    return URI.create((uriSpec.endsWith("/") ? uriSpec : uriSpec + '/') + '-');
+  }
+
+  /**
+   * Returns the {@link CodeSource} constructed from the classpath entry provided at creation.
    *
    * @return the code source associated with this gate
    */
