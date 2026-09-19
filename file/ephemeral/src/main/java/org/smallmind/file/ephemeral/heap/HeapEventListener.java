@@ -41,7 +41,7 @@ import java.util.EventListener;
  * <p>Implementations are registered with a {@link HeapNode} via
  * {@link HeapNode#registerListener(HeapEventListener)} and deregistered via
  * {@link HeapNode#unregisterListener(HeapEventListener)}. When a node is created,
- * deleted, or modified, the originating node calls {@link HeapNode#bubble(HeapEvent)},
+ * deleted, or modified, the originating node calls {@link HeapNode#fire(HeapEvent)},
  * which invokes {@link #handle(HeapEvent)} on every registered listener and then
  * propagates the event upward to the parent node.
  *

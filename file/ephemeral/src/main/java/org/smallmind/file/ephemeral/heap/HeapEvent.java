@@ -41,13 +41,13 @@ import org.smallmind.file.ephemeral.EphemeralPath;
  * <p>A {@code HeapEvent} is created whenever a {@link HeapNode} is created, deleted, or
  * modified. It carries the affected {@link EphemeralPath} and the {@link HeapEventType}
  * that categorises the change. Events are propagated upward through the tree by
- * {@link HeapNode#bubble(HeapEvent)} and ultimately delivered to registered
+ * {@link HeapNode#fire(HeapEvent)} and ultimately delivered to registered
  * {@link HeapEventListener} instances, which translate them into
  * {@link java.nio.file.WatchEvent}s for the NIO watch-service subsystem.
  *
  * @see HeapEventType
  * @see HeapEventListener
- * @see HeapNode#bubble(HeapEvent)
+ * @see HeapNode#fire(HeapEvent)
  */
 public class HeapEvent extends EventObject {
 
