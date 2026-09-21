@@ -32,35 +32,61 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.bayeux.oumuamua.server.api.Attributed;
 
+/**
+ * {@link Attributed} base implementation backed by a {@link ConcurrentHashMap},
+ * providing thread-safe attribute storage for Bayeux sessions and channels.
+ */
 public class AbstractAttributed implements Attributed {
 
   private final ConcurrentHashMap<String, Object> attributeMap = new ConcurrentHashMap<>();
 
+  /**
+   * Returns an unmodifiable snapshot of all currently stored attribute names.
+   *
+   * @return unmodifiable {@link Set} containing the attribute names at the time of the call
+   */
   @Override
-  public synchronized Set<String> getAttributeNames () {
+  public Set<String> getAttributeNames () {
 
-    return new HashSet<>(attributeMap.keySet());
+    return Set.copyOf(attributeMap.keySet());
   }
 
+  /**
+   * Retrieves the value bound to the given name.
+   *
+   * @param name key of the attribute to retrieve
+   * @return the associated value, or {@code null} if no mapping exists
+   */
   @Override
-  public synchronized Object getAttribute (String name) {
+  public Object getAttribute (String name) {
 
     return attributeMap.get(name);
   }
 
+  /**
+   * Binds a value to the given name, replacing any existing mapping.
+   *
+   * @param name  key under which the value is stored
+   * @param value value to associate with the name
+   */
   @Override
-  public synchronized void setAttribute (String name, Object value) {
+  public void setAttribute (String name, Object value) {
 
     attributeMap.put(name, value);
   }
 
+  /**
+   * Removes the attribute bound to the given name.
+   *
+   * @param name key of the attribute to remove
+   * @return the value that was associated with the name, or {@code null} if none existed
+   */
   @Override
-  public synchronized Object removeAttribute (String name) {
+  public Object removeAttribute (String name) {
 
     return attributeMap.remove(name);
   }

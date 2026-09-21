@@ -32,17 +32,38 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+/**
+ * Enumeration of the Bayeux protocol identifiers used during transport negotiation.
+ */
 public enum Protocols {
 
-  WEBSOCKET("websocket"), SERVLET("servlet");
+  /**
+   * WebSocket-based protocol transport.
+   */
+  WEBSOCKET("websocket"),
+
+  /**
+   * HTTP servlet-based (long-polling) protocol transport.
+   */
+  SERVLET("servlet");
 
   private final String name;
 
+  /**
+   * Binds the enum constant to its wire-protocol name.
+   *
+   * @param name protocol identifier string exchanged during handshake negotiation
+   */
   Protocols (String name) {
 
     this.name = name;
   }
 
+  /**
+   * Returns the protocol identifier string as used in Bayeux handshake negotiation.
+   *
+   * @return wire-level protocol name
+   */
   public String getName () {
 
     return name;

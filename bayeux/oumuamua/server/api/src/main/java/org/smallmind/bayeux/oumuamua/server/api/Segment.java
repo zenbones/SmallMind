@@ -32,12 +32,33 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Single path component of a channel {@link Route}, supporting character-sequence matching
+ * that may be literal or wildcard depending on the concrete subtype.
+ */
 public abstract class Segment implements CharSequence {
 
+  /**
+   * Evaluates whether this segment matches the given character sequence according to its
+   * matching rules (literal equality, single-level wildcard, or deep wildcard).
+   *
+   * @param charSequence sequence to test against this segment
+   * @return {@code true} if the sequence satisfies this segment's matching criterion
+   */
   public abstract boolean matches (CharSequence charSequence);
 
+  /**
+   * Returns the literal text of this segment as it appears in the channel path.
+   *
+   * @return segment text
+   */
   public abstract String toString ();
 
+  /**
+   * Computes a hash code derived from the characters of this segment.
+   *
+   * @return character-based hash code
+   */
   @Override
   public int hashCode () {
 
@@ -50,6 +71,12 @@ public abstract class Segment implements CharSequence {
     return hashCode;
   }
 
+  /**
+   * Returns whether another object is a {@link Segment} that this segment matches.
+   *
+   * @param obj object to compare
+   * @return {@code true} if {@code obj} is a {@link Segment} and {@link #matches(CharSequence)} returns {@code true} for it
+   */
   @Override
   public boolean equals (Object obj) {
 

@@ -34,14 +34,34 @@ package org.smallmind.bayeux.oumuamua.server.impl.json;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
+/**
+ * JAXB {@link XmlAdapter} that marshals a {@code String[][]} to a bracketed list of
+ * slash-joined path strings (e.g. {@code [/a/b,/c/d]}); unmarshalling is intentionally
+ * unsupported.
+ */
 public class DoubleStringArrayXmlAdapter extends XmlAdapter<String, String[][]> {
 
+  /**
+   * Not supported; this adapter is marshal-only.
+   *
+   * @param s the serialized string value (unused)
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public String[][] unmarshal (String s) {
 
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Serializes a two-dimensional string array into a bracketed list of slash-prefixed,
+   * slash-joined paths (e.g. inner array {@code ["a","b"]} becomes {@code /a/b}).
+   *
+   * @param doubleArray the array of path-segment arrays to serialize
+   * @return the bracketed path-list string, or {@code null} if {@code doubleArray} is
+   * {@code null}
+   */
   @Override
   public String marshal (String[][] doubleArray) {
 

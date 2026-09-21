@@ -37,21 +37,47 @@ import javax.servlet.ServletContextListener;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Servlet context lifecycle listener that publishes a pre-configured {@link OumuamuaServer} into
+ * the servlet context so that the {@link OumuamuaServlet} can find it, and shuts it down when the
+ * context is destroyed.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class OumuamuaServletContextListener<V extends Value<V>> implements ServletContextListener {
 
   private OumuamuaServer<V> oumuamuaServer;
 
+  /**
+   * Injects the server instance that will be placed into the servlet context on initialization.
+   * Intended for dependency-injection frameworks that construct this listener externally.
+   *
+   * @param oumuamuaServer the fully configured server to use; must be set before the context
+   *                       initializes
+   */
   public void setOumuamuaServer (OumuamuaServer<V> oumuamuaServer) {
 
     this.oumuamuaServer = oumuamuaServer;
   }
 
+  /**
+   * Stores the server under the {@link Server#ATTRIBUTE} key in the servlet context so that
+   * {@link OumuamuaServlet} can retrieve it during its own initialization.
+   *
+   * @param servletContextEvent the initialization event carrying the servlet context
+   */
   @Override
   public void contextInitialized (ServletContextEvent servletContextEvent) {
 
     servletContextEvent.getServletContext().setAttribute(Server.ATTRIBUTE, oumuamuaServer);
   }
 
+  /**
+   * Shuts down the server and releases its resources when the servlet context is being destroyed.
+   *
+   * @param servletContextEvent the destruction event; the context attribute is not cleared because
+   *                            the context itself is being torn down
+   */
   @Override
   public void contextDestroyed (ServletContextEvent servletContextEvent) {
 

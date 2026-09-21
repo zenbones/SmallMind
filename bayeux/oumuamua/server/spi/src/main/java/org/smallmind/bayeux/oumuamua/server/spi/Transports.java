@@ -32,24 +32,52 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi;
 
+/**
+ * Enumeration of the supported Bayeux transport types, carrying the wire-level name
+ * and whether the transport operates in a node-local (non-clustered) mode.
+ */
 public enum Transports {
 
-  WEBSOCKET("websocket", false), LONG_POLLING("long-polling", false);
+  /**
+   * Full-duplex WebSocket transport; not restricted to a single node.
+   */
+  WEBSOCKET("websocket", false),
+
+  /**
+   * HTTP long-polling transport; not restricted to a single node.
+   */
+  LONG_POLLING("long-polling", false);
 
   private final String name;
   private final boolean local;
 
+  /**
+   * Binds the enum constant to its wire name and locality flag.
+   *
+   * @param name  transport identifier string used in Bayeux handshake negotiation
+   * @param local {@code true} if messages on this transport must stay on the originating node
+   */
   Transports (String name, boolean local) {
 
     this.name = name;
     this.local = local;
   }
 
+  /**
+   * Returns the transport identifier string as used in Bayeux handshake negotiation.
+   *
+   * @return wire-level transport name
+   */
   public String getName () {
 
     return name;
   }
 
+  /**
+   * Indicates whether this transport is restricted to the originating cluster node.
+   *
+   * @return {@code true} if packets must not be forwarded to remote nodes via the backbone
+   */
   public boolean isLocal () {
 
     return local;

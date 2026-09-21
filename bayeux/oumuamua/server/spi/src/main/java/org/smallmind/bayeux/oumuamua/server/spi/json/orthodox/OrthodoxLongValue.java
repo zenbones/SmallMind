@@ -37,10 +37,20 @@ import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
+/**
+ * Immutable {@link NumberValue} wrapping a 64-bit signed long scalar for the orthodox codec;
+ * reports {@link NumberType#LONG}, truncates when narrowed to int, and promotes when widened to double.
+ */
 public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
   private final long value;
 
+  /**
+   * Constructs a long value associated with the given factory.
+   *
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param value   the primitive long to wrap
+   */
   protected OrthodoxLongValue (OrthodoxValueFactory factory, long value) {
 
     super(factory);
@@ -48,36 +58,67 @@ public class OrthodoxLongValue extends OrthodoxValue implements NumberValue<Orth
     this.value = value;
   }
 
+  /**
+   * Identifies the numeric subtype of this value.
+   *
+   * @return {@link NumberType#LONG}
+   */
   @Override
   public NumberType getNumberType () {
 
     return NumberType.LONG;
   }
 
+  /**
+   * Returns the value boxed as a {@link Long}.
+   *
+   * @return boxed {@code Long} representation
+   */
   @Override
   public Number asNumber () {
 
     return value;
   }
 
+  /**
+   * Returns the value narrowed to a primitive int by truncation of the high 32 bits.
+   *
+   * @return low 32 bits of the long value cast to int
+   */
   @Override
   public int asInt () {
 
     return (int)value;
   }
 
+  /**
+   * Returns the raw wrapped primitive long.
+   *
+   * @return the long value as stored at construction
+   */
   @Override
   public long asLong () {
 
     return value;
   }
 
+  /**
+   * Returns the value widened to a primitive double; values beyond 2^53 may lose precision.
+   *
+   * @return the long value promoted to double
+   */
   @Override
   public double asDouble () {
 
     return (double)value;
   }
 
+  /**
+   * Writes the JSON numeric literal representation of the long to {@code writer}.
+   *
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

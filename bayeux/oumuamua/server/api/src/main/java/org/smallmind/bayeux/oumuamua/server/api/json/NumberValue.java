@@ -32,20 +32,56 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * JSON numeric value within the Bayeux value hierarchy, carrying an integer, long, or double
+ * depending on the precision of the underlying representation.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
+ */
 public interface NumberValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Returns {@link ValueType#NUMBER}, identifying this value as a JSON number.
+   *
+   * @return {@link ValueType#NUMBER}
+   */
   default ValueType getType () {
 
     return ValueType.NUMBER;
   }
 
+  /**
+   * Returns the precision category of the number held by this value.
+   *
+   * @return {@link NumberType#INTEGER}, {@link NumberType#LONG}, or {@link NumberType#DOUBLE}
+   */
   NumberType getNumberType ();
 
+  /**
+   * Returns the value as a boxed {@link Number} without narrowing conversion.
+   *
+   * @return boxed numeric value in its natural type
+   */
   Number asNumber ();
 
+  /**
+   * Returns the value narrowed to a primitive {@code int}, truncating if necessary.
+   *
+   * @return int representation of the stored number
+   */
   int asInt ();
 
+  /**
+   * Returns the value widened or narrowed to a primitive {@code long}.
+   *
+   * @return long representation of the stored number
+   */
   long asLong ();
 
+  /**
+   * Returns the value widened or narrowed to a primitive {@code double}.
+   *
+   * @return double representation of the stored number
+   */
   double asDouble ();
 }

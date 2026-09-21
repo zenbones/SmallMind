@@ -32,12 +32,27 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * JSON boolean value ({@code true} or {@code false}) within the Bayeux value hierarchy.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
+ */
 public interface BooleanValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Returns {@link ValueType#BOOLEAN}, identifying this value as a JSON boolean.
+   *
+   * @return {@link ValueType#BOOLEAN}
+   */
   default ValueType getType () {
 
     return ValueType.BOOLEAN;
   }
 
+  /**
+   * Returns the primitive boolean this value represents.
+   *
+   * @return {@code true} or {@code false}
+   */
   boolean asBoolean ();
 }

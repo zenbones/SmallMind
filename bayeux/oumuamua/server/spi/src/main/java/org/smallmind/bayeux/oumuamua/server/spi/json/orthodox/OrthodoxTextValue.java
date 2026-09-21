@@ -37,10 +37,20 @@ import java.io.Writer;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 
+/**
+ * Immutable {@link StringValue} implementation for the orthodox codec that stores a Java string and
+ * encodes it as a properly escaped JSON string using the Jackson {@link JsonStringEncoder}.
+ */
 public class OrthodoxTextValue extends OrthodoxValue implements StringValue<OrthodoxValue> {
 
   private final String text;
 
+  /**
+   * Constructs a string value associated with the given factory.
+   *
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param text    the string to wrap; may be empty but should not be {@code null}
+   */
   protected OrthodoxTextValue (OrthodoxValueFactory factory, String text) {
 
     super(factory);
@@ -48,6 +58,11 @@ public class OrthodoxTextValue extends OrthodoxValue implements StringValue<Orth
     this.text = text;
   }
 
+  /**
+   * Returns the raw wrapped string without any escaping applied.
+   *
+   * @return the original string as stored at construction
+   */
   @Override
   public String asText () {
 

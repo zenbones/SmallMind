@@ -32,8 +32,18 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Thrown when a channel operation is attempted in an incompatible state, such as trying
+ * to remove a persistent channel.
+ */
 public class ChannelStateException extends OumuamuaException {
 
+  /**
+   * Constructs the exception with a {@link String#format}-style detail message.
+   *
+   * @param message format string describing the state violation
+   * @param args    arguments substituted into the format string
+   */
   public ChannelStateException (String message, Object... args) {
 
     super(message, args);

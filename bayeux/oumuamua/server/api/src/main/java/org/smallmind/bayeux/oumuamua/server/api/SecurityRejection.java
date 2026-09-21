@@ -32,31 +32,64 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Value returned by {@link SecurityPolicy} to describe a denial. Any non-{@code null}
+ * {@link SecurityRejection} signals deny; a {@link SecurityPolicy} method must return {@code null}
+ * to permit the operation. {@link #noReason()} is the shared sentinel deny rejection that carries
+ * no human-readable explanation, while {@link #reason(String)} carries an explanation propagated to
+ * the client.
+ */
 public class SecurityRejection {
 
   private static final SecurityRejection NO_REASON = new SecurityRejection(null);
   private final String reason;
 
+  /**
+   * Constructs a rejection, optionally with a human-readable explanation.
+   *
+   * @param reason denial explanation, or {@code null} to represent the allow sentinel
+   */
   private SecurityRejection (String reason) {
 
     this.reason = reason;
   }
 
+  /**
+   * Returns the shared sentinel deny rejection that carries no human-readable explanation.
+   *
+   * @return deny sentinel with no rejection reason
+   */
   public static SecurityRejection noReason () {
 
     return NO_REASON;
   }
 
+  /**
+   * Creates a denial result carrying the given explanation.
+   *
+   * @param reason human-readable explanation to surface to the client
+   * @return new rejection instance bearing the reason
+   */
   public static SecurityRejection reason (String reason) {
 
     return new SecurityRejection(reason);
   }
 
+  /**
+   * Returns whether this rejection carries an explanation string.
+   *
+   * @return {@code true} if a reason string is present
+   */
   public boolean hasReason () {
 
     return reason != null;
   }
 
+  /**
+   * Returns the denial explanation, or {@code null} when this is the allow sentinel.
+   *
+   * @return reason string, or {@code null}
+   */
   public String getReason () {
 
     return reason;

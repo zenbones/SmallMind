@@ -37,6 +37,12 @@ import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Callback that receives each response packet paired with its originating session,
+ * produced by {@link Connection#process} for every inbound Bayeux message batch.
+ *
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
+ */
 @FunctionalInterface
 public interface ResponseConsumer<V extends Value<V>> extends BiConsumer<Session<V>, Packet<V>> {
 

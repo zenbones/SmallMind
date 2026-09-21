@@ -40,8 +40,23 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.PacketWriter;
 
+/**
+ * Static helpers for composing, freezing, and JSON-encoding {@link Packet} instances.
+ */
 public class PacketUtility {
 
+  /**
+   * Merges the messages from {@code otherPacket} into {@code basePacket}, optionally excluding messages
+   * whose channel matches {@code filteredRoute} and optionally inserting the merged messages immediately
+   * after the first base message rather than appending them at the end.
+   *
+   * @param basePacket    packet whose metadata (type, sender, route) governs the result
+   * @param otherPacket   packet supplying additional messages to merge in
+   * @param filteredRoute channel path to exclude from {@code otherPacket}, or {@code null} to include all messages
+   * @param prepend       when {@code true}, inserts other messages after position 0 of base; when {@code false}, appends them
+   * @param <V>           value type
+   * @return a new merged packet, or {@code basePacket} unchanged when all other messages were filtered out
+   */
   public static <V extends Value<V>> Packet<V> merge (Packet<V> basePacket, Packet<V> otherPacket, Route filteredRoute, boolean prepend) {
 
     LinkedList<Message<V>> otherPacketMessageList = new LinkedList<>();
@@ -61,10 +76,10 @@ public class PacketUtility {
 
       if (prepend) {
 
-        int prolog = Math.max(basePacket.getMessages().length, 1);
+        int prologLength = Math.min(basePacket.getMessages().length, 1);
 
-        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, prolog);
-        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, prolog, otherPacketMessageList.size());
+        System.arraycopy(basePacket.getMessages(), 0, mergedMessages, 0, prologLength);
+        System.arraycopy(otherPacketMessageList.toArray(new Message[0]), 0, mergedMessages, prologLength, otherPacketMessageList.size());
         if (basePacket.getMessages().length > 1) {
           System.arraycopy(basePacket.getMessages(), 1, mergedMessages, otherPacketMessageList.size() + 1, basePacket.getMessages().length - 1);
         }
@@ -77,6 +92,14 @@ public class PacketUtility {
     }
   }
 
+  /**
+   * Produces a new packet whose messages are each wrapped in a {@link MessageDouble}, preventing
+   * downstream consumers from mutating the originals while still allowing overlay reads.
+   *
+   * @param packet the packet whose messages should be frozen
+   * @param <V>    value type
+   * @return new packet with the same metadata as {@code packet} but with immutability-shielded messages
+   */
   public static <V extends Value<V>> Packet<V> freezePacket (Packet<V> packet) {
 
     Message<V>[] frozenMessages = new Message[packet.getMessages().length];
@@ -89,6 +112,14 @@ public class PacketUtility {
     return new Packet<V>(packet.getPacketType(), packet.getSenderId(), packet.getRoute(), frozenMessages);
   }
 
+  /**
+   * Serializes all messages in {@code packet} to a JSON array string.
+   *
+   * @param packet the packet whose messages are to be serialized
+   * @param <V>    value type
+   * @return JSON array string containing every message in the packet
+   * @throws IOException if encoding any message to the output fails
+   */
   public static <V extends Value<V>> String encode (Packet<V> packet)
     throws IOException {
 

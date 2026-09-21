@@ -30,40 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.nutsnbolts.util;
 
-public class KafkaServer {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  private String host;
-  private int port = 9094;
+/**
+ * Thrown to signal that a component operation was attempted in an invalid or unexpected lifecycle state.
+ */
+public class ComponentStateException extends FormattedException {
 
-  public KafkaServer () {
+  /**
+   * Constructs an exception with no detail message.
+   */
+  public ComponentStateException () {
 
   }
 
-  public KafkaServer (String host, int port) {
+  /**
+   * Constructs an exception with a formatted detail message.
+   *
+   * @param message the message pattern describing the state violation
+   * @param args    optional arguments formatted into the message
+   */
+  public ComponentStateException (String message, Object... args) {
 
-    this.host = host;
-    this.port = port;
+    super(message, args);
   }
 
-  public String getHost () {
+  /**
+   * Constructs an exception with a cause and a formatted detail message.
+   *
+   * @param throwable the underlying cause
+   * @param message   the message pattern describing the state violation
+   * @param args      optional arguments formatted into the message
+   */
+  public ComponentStateException (Throwable throwable, String message, Object... args) {
 
-    return host;
+    super(throwable, message, args);
   }
 
-  public void setHost (String host) {
+  /**
+   * Constructs an exception wrapping the given cause.
+   *
+   * @param throwable the underlying cause
+   */
+  public ComponentStateException (Throwable throwable) {
 
-    this.host = host;
-  }
-
-  public int getPort () {
-
-    return port;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
+    super(throwable);
   }
 }

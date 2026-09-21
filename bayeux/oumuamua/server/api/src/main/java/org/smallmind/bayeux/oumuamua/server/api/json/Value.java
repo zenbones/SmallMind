@@ -35,12 +35,34 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 import java.io.IOException;
 import java.io.Writer;
 
+/**
+ * Root abstraction for all JSON value kinds used within the Bayeux server codec pipeline.
+ *
+ * @param <V> self-referential concrete value subtype, enabling fluent builder returns
+ */
 public interface Value<V extends Value<V>> {
 
+  /**
+   * Returns the factory associated with this value's codec, used to create companion values
+   * of the same concrete type family.
+   *
+   * @return value factory for this codec binding
+   */
   ValueFactory<V> getFactory ();
 
+  /**
+   * Returns the JSON kind of this value.
+   *
+   * @return one of the {@link ValueType} constants identifying the value's JSON type
+   */
   ValueType getType ();
 
+  /**
+   * Serializes this value as JSON to the given writer.
+   *
+   * @param writer destination writer
+   * @throws IOException if an I/O error occurs while writing
+   */
   void encode (Writer writer)
     throws IOException;
 }

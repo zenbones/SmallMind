@@ -38,10 +38,21 @@ import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Skeletal {@link Protocol} implementation that maintains a listener registry and fans out
+ * receipt, publish, and delivery events to all registered {@link ProtocolListener} instances.
+ *
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
+ */
 public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V> {
 
   private final ConcurrentLinkedQueue<Listener<V>> listenerList = new ConcurrentLinkedQueue<>();
 
+  /**
+   * Fans out a receipt event to every registered {@link ProtocolListener}.
+   *
+   * @param incomingMessages array of messages just received from a client
+   */
   public void onReceipt (Message<V>[] incomingMessages) {
 
     for (Listener<V> listener : listenerList) {
@@ -51,6 +62,12 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Fans out a publish event to every registered {@link ProtocolListener}.
+   *
+   * @param originatingMessage the raw message submitted by the client
+   * @param outgoingMessage    the processed message prepared for delivery
+   */
   public void onPublish (Message<V> originatingMessage, Message<V> outgoingMessage) {
 
     for (Listener<V> listener : listenerList) {
@@ -60,6 +77,11 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Fans out a delivery event to every registered {@link ProtocolListener}.
+   *
+   * @param outgoingPacket the packet about to be delivered to a client
+   */
   public void onDelivery (Packet<V> outgoingPacket) {
 
     for (Listener<V> listener : listenerList) {
@@ -69,12 +91,22 @@ public abstract class AbstractProtocol<V extends Value<V>> implements Protocol<V
     }
   }
 
+  /**
+   * Registers a listener to receive protocol lifecycle events.
+   *
+   * @param listener listener to register
+   */
   @Override
   public void addListener (Listener<V> listener) {
 
     listenerList.add(listener);
   }
 
+  /**
+   * Deregisters a previously registered listener.
+   *
+   * @param listener listener to remove; no-op if not currently registered
+   */
   @Override
   public void removeListener (Listener<V> listener) {
 

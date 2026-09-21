@@ -51,17 +51,36 @@ import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * HTTP servlet that accepts Bayeux long-polling requests, reads the full request body, hands the
+ * decoded messages to the server, and completes the response asynchronously.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
   private LongPollingConnection<V> connection;
   private OumuamuaServer<V> server;
 
+  /**
+   * Returns a human-readable description of the servlet, delegating to the base implementation.
+   *
+   * @return servlet info string from {@link HttpServlet#getServletInfo()}
+   */
   @Override
   public String getServletInfo () {
 
     return super.getServletInfo();
   }
 
+  /**
+   * Initializes the servlet by locating the {@link OumuamuaServer} from the servlet context,
+   * resolving the servlet protocol and long-polling transport, and starting the server.
+   *
+   * @param servletConfig the servlet configuration provided by the container
+   * @throws ServletException if the server is absent from the context, the servlet protocol has
+   *                          not been configured, or the long-polling transport is missing
+   */
   @Override
   public void init (ServletConfig servletConfig)
     throws ServletException {
@@ -90,6 +109,14 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Handles a Bayeux POST: validates the {@code Content-Length} header, reads the full body into
+   * a buffer, decodes the messages with the server codec, and submits asynchronous processing.
+   *
+   * @param request  the inbound HTTP request carrying the serialized Bayeux message array
+   * @param response used to send HTTP error codes when the request is malformed or unreadable
+   * @throws IOException if writing an HTTP error response fails
+   */
   @Override
   protected void doPost (HttpServletRequest request, HttpServletResponse response)
     throws IOException {
@@ -131,6 +158,15 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Reads bytes from the stream until the buffer is completely filled or EOF is reached.
+   *
+   * @param inputStream   the stream to read from; expected to contain exactly
+   *                      {@code contentBuffer.length} bytes
+   * @param contentBuffer pre-allocated destination whose length defines how many bytes to read
+   * @return {@code true} if every byte was read successfully; {@code false} if EOF was encountered
+   * before the buffer was full or an {@link IOException} occurred
+   */
   private boolean readStream (InputStream inputStream, byte[] contentBuffer) {
 
     try {
@@ -154,6 +190,9 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
     }
   }
 
+  /**
+   * Stops the server and releases all resources when the servlet container unloads the servlet.
+   */
   @Override
   public void destroy () {
 

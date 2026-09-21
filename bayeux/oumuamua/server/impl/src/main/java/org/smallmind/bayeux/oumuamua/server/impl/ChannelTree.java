@@ -42,11 +42,22 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 
+/**
+ * Top-level entry point for the channel hierarchy, adding a tree-wide exclusive lock around
+ * structural mutations so that channel creation and dead-branch removal are always consistent.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
 
   private final ReentrantLock treeChangeLock = new ReentrantLock();
   private final ChannelRoot<V> root;
 
+  /**
+   * Creates the tree with the given server adapter as the shared root for all channels.
+   *
+   * @param root the server-level facade that channels use for codec, backbone, and configuration access
+   */
   public ChannelTree (ChannelRoot<V> root) {
 
     super(null);
@@ -54,6 +65,20 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     this.root = root;
   }
 
+  /**
+   * Returns the channel at the given route, creating it and any missing intermediate branches
+   * under an exclusive tree-change lock.
+   *
+   * @param timeToLive             TTL in milliseconds assigned to a newly created channel
+   * @param index                  the starting route segment index (pass {@code 0} from callers)
+   * @param route                  the full route identifying the target channel
+   * @param channelCallback        invoked with the channel immediately after it is created
+   * @param onSubscribedCallback   forwarded to the new channel for subscription events
+   * @param onUnsubscribedCallback forwarded to the new channel for unsubscription events
+   * @param initializerQueue       initializers applied to the channel on first creation; may be
+   *                               {@code null}
+   * @return the existing or newly created channel; never {@code null}
+   */
   public Channel<V> createIfAbsent (long timeToLive, int index, DefaultRoute route, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     treeChangeLock.lock();
@@ -66,6 +91,10 @@ public class ChannelTree<V extends Value<V>> extends ChannelBranch<V> {
     }
   }
 
+  /**
+   * Prunes branches that have no channel and no children, compacting the tree after idle-channel
+   * removal; runs under an exclusive tree-change lock.
+   */
   public void clean () {
 
     treeChangeLock.lock();

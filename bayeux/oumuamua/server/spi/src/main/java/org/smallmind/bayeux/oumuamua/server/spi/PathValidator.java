@@ -34,8 +34,26 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 
 import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 
+/**
+ * Utility that validates Bayeux channel path strings against the protocol's naming rules
+ * and computes the internal segment-boundary array used by {@link DefaultRoute}.
+ */
 public class PathValidator {
 
+  /**
+   * Validates {@code path} against Bayeux channel rules and returns an array of slash positions
+   * that delimit each segment boundary within the path string.
+   *
+   * <p>Rules enforced: the path must start with {@code '/'}, contain at least one non-empty segment,
+   * use only permitted characters (alphanumeric plus {@code " !#$()+-.@_{}~"}), contain no empty
+   * segments, and use wildcards only as a complete final segment ({@code *} or {@code **}).
+   *
+   * @param path channel path to validate
+   * @return array of {@code '/'} positions; length equals the number of internal delimiters
+   * @throws InvalidPathException if the path is null, too short, missing a leading slash,
+   *                              contains empty segments, has illegal characters, or uses
+   *                              a malformed wildcard expression
+   */
   public static int[] validate (String path)
     throws InvalidPathException {
 
@@ -65,7 +83,7 @@ public class PathValidator {
           if ((pos - startPos) == 0) {
             throw new InvalidPathException("Path(%s) must not contain empty segments", path);
           } else if (asterisks > 0) {
-            throw new InvalidPathException("Path(%s) uses an illegal wildcard '*' definition", path);
+            throw new InvalidPathException("Path(%s) uses an illegal wild card '*' definition", path);
           } else {
             segments[index++] = pos;
             startPos = pos + 1;
@@ -84,7 +102,7 @@ public class PathValidator {
       if ((path.length() - startPos) == 0) {
         throw new InvalidPathException("Path(%s) must not contain empty segments", path);
       } else if (((asterisks > 0) && (asterisks < (path.length() - startPos))) || (asterisks > 2)) {
-        throw new InvalidPathException("Path(%s) uses an illegal wildcard '*' definition", path);
+        throw new InvalidPathException("Path(%s) uses an illegal wild card '*' definition", path);
       } else {
 
         return segments;

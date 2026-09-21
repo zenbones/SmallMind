@@ -39,26 +39,63 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Open {@link SecurityPolicy} that unconditionally allows every Bayeux operation;
+ * intended for development or deployments where access control is handled externally.
+ *
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
+ */
 public class OpenSecurityPolicy<V extends Value<V>> implements SecurityPolicy<V> {
 
+  /**
+   * Approves all handshake requests without restriction.
+   *
+   * @param session the session attempting to handshake
+   * @param message the {@code /meta/handshake} message
+   * @return {@code null}, indicating no rejection
+   */
   @Override
   public SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Approves all channel creation attempts without restriction.
+   *
+   * @param session the session requesting channel creation
+   * @param path    the path of the channel to be created
+   * @param message the message that triggered the creation
+   * @return {@code null}, indicating no rejection
+   */
   @Override
   public SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Approves all subscription requests without restriction.
+   *
+   * @param session the session requesting the subscription
+   * @param channel the channel being subscribed to
+   * @param message the {@code /meta/subscribe} message
+   * @return {@code null}, indicating no rejection
+   */
   @Override
   public SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return null;
   }
 
+  /**
+   * Approves all publish attempts without restriction.
+   *
+   * @param session the session publishing the message
+   * @param channel the target channel
+   * @param message the message being published
+   * @return {@code null}, indicating no rejection
+   */
   @Override
   public SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 

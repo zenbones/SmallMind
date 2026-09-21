@@ -40,33 +40,65 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 
+/**
+ * {@link Transport} implementation for HTTP long-polling in servlet environments, owned by
+ * a {@link ServletProtocol} and identified by the {@code long-polling} transport name.
+ *
+ * @param <V> the concrete {@link Value} type used by the server's JSON codec
+ */
 public class LongPollingTransport<V extends Value<V>> extends AbstractAttributed implements Transport<V> {
 
   private final ServletProtocol<V> servletProtocol;
 
+  /**
+   * Constructs the transport and binds it to the supplied protocol.
+   *
+   * @param servletProtocol the {@link ServletProtocol} that owns this transport
+   */
   public LongPollingTransport (ServletProtocol<V> servletProtocol) {
 
     this.servletProtocol = servletProtocol;
   }
 
+  /**
+   * Returns the {@link ServletProtocol} that created and owns this transport.
+   *
+   * @return the owning servlet protocol
+   */
   @Override
   public Protocol<V> getProtocol () {
 
     return servletProtocol;
   }
 
+  /**
+   * Returns the canonical Bayeux transport name for long-polling.
+   *
+   * @return the {@code long-polling} transport name
+   */
   @Override
   public String getName () {
 
     return Transports.LONG_POLLING.getName();
   }
 
+  /**
+   * Indicates that long-polling operates over a remote network connection, not in-process.
+   *
+   * @return {@code false} always
+   */
   @Override
   public boolean isLocal () {
 
     return Transports.LONG_POLLING.isLocal();
   }
 
+  /**
+   * Performs transport initialization within the servlet lifecycle; currently a no-op.
+   *
+   * @param server        the hosting {@link Server}
+   * @param servletConfig the servlet configuration available at startup
+   */
   @Override
   public void init (Server<?> server, ServletConfig servletConfig) {
 

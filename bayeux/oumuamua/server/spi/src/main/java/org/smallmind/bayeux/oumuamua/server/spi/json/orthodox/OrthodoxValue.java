@@ -37,21 +37,42 @@ import java.io.StringWriter;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * Abstract base for all orthodox {@link Value} implementations, holding the owning
+ * {@link OrthodoxValueFactory} and providing a {@link #toString()} that delegates to {@link #encode}.
+ */
 public abstract class OrthodoxValue implements Value<OrthodoxValue> {
 
   private final OrthodoxValueFactory factory;
 
+  /**
+   * Stores the factory reference shared by all values in the same codec session.
+   *
+   * @param factory the {@link OrthodoxValueFactory} that created and owns this value
+   */
   protected OrthodoxValue (OrthodoxValueFactory factory) {
 
     this.factory = factory;
   }
 
+  /**
+   * Returns the {@link OrthodoxValueFactory} that owns this value.
+   *
+   * @return value factory used for constructing sibling values
+   */
   @Override
   public ValueFactory<OrthodoxValue> getFactory () {
 
     return factory;
   }
 
+  /**
+   * Returns a JSON string representation of this value by delegating to {@link #encode}.
+   * Wraps any {@link IOException} in a {@link RuntimeException} since {@code toString} cannot throw.
+   *
+   * @return JSON-encoded string suitable for debugging
+   * @throws RuntimeException wrapping an {@link IOException} if encoding unexpectedly fails
+   */
   @Override
   public String toString () {
 

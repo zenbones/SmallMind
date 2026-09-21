@@ -34,18 +34,39 @@ package org.smallmind.bayeux.oumuamua.server.api;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
+/**
+ * Root checked exception for all errors originating within the Oumuamua Bayeux server stack.
+ */
 public class OumuamuaException extends FormattedException {
 
+  /**
+   * Constructs the exception with a {@link String#format}-style detail message.
+   *
+   * @param message format string describing the error
+   * @param args    arguments substituted into the format string
+   */
   public OumuamuaException (String message, Object... args) {
 
     super(message, args);
   }
 
+  /**
+   * Constructs the exception with an underlying cause and a {@link String#format}-style detail message.
+   *
+   * @param throwable cause of this exception
+   * @param message   format string describing the error
+   * @param args      arguments substituted into the format string
+   */
   public OumuamuaException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
+  /**
+   * Constructs the exception by wrapping another throwable, using its message as the detail.
+   *
+   * @param throwable cause to wrap
+   */
   public OumuamuaException (Throwable throwable) {
 
     super(throwable);

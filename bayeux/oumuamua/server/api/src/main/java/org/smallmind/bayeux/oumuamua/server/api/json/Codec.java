@@ -34,16 +34,49 @@ package org.smallmind.bayeux.oumuamua.server.api.json;
 
 import java.io.IOException;
 
+/**
+ * Serialization gateway that converts between Bayeux {@link Message} objects and their JSON
+ * wire representations, and that bridges arbitrary Java objects into the {@link Value} type hierarchy.
+ *
+ * @param <V> concrete value subtype used within messages produced by this codec
+ */
 public interface Codec<V extends Value<V>> {
 
+  /**
+   * Allocates a new, empty message whose value factory is bound to this codec.
+   *
+   * @return blank message ready for field population
+   */
   Message<V> create ();
 
+  /**
+   * Deserializes a JSON byte array into one or more Bayeux messages.
+   *
+   * @param buffer UTF-8 encoded JSON payload, containing either a single object or an array of objects
+   * @return array of decoded messages; never {@code null}, never empty on success
+   * @throws IOException if the payload is malformed or I/O fails during reading
+   */
   Message<V>[] from (byte[] buffer)
     throws IOException;
 
+  /**
+   * Deserializes a JSON string into one or more Bayeux messages.
+   *
+   * @param data JSON string containing either a single object or an array of objects
+   * @return array of decoded messages; never {@code null}, never empty on success
+   * @throws IOException if the string is malformed JSON
+   */
   Message<V>[] from (String data)
     throws IOException;
 
+  /**
+   * Converts an arbitrary Java object to its {@link Value} equivalent using the codec's
+   * underlying serialization strategy.
+   *
+   * @param object object to convert; may be a primitive wrapper, collection, or bean
+   * @return value representation of the object
+   * @throws IOException if the object cannot be represented as a {@link Value}
+   */
   Value<V> convert (Object object)
     throws IOException;
 }

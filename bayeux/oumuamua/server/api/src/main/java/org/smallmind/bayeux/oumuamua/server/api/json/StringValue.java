@@ -32,12 +32,27 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * JSON string value within the Bayeux value hierarchy.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
+ */
 public interface StringValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Returns {@link ValueType#STRING}, identifying this value as a JSON string.
+   *
+   * @return {@link ValueType#STRING}
+   */
   default ValueType getType () {
 
     return ValueType.STRING;
   }
 
+  /**
+   * Returns the raw string content of this value.
+   *
+   * @return text content, never {@code null}
+   */
   String asText ();
 }

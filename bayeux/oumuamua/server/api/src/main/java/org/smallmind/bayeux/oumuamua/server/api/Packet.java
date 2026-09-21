@@ -35,6 +35,12 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Immutable carrier for one or more Bayeux messages addressed to a single route, classified
+ * by its role in the request/response/delivery lifecycle.
+ *
+ * @param <V> concrete {@link Value} implementation used to represent message payloads
+ */
 public class Packet<V extends Value<V>> {
 
   private final Message<V>[] messages;
@@ -42,11 +48,27 @@ public class Packet<V extends Value<V>> {
   private final Route route;
   private final String senderId;
 
+  /**
+   * Creates a single-message packet.
+   *
+   * @param packetType role this packet plays in the Bayeux exchange
+   * @param senderId   session id of the originator, or {@code null} for server-originated packets
+   * @param route      channel route the packet is addressed to
+   * @param message    single message carried by this packet
+   */
   public Packet (PacketType packetType, String senderId, Route route, Message<V> message) {
 
     this(packetType, senderId, route, new Message[] {message});
   }
 
+  /**
+   * Creates a multi-message packet.
+   *
+   * @param packetType role this packet plays in the Bayeux exchange
+   * @param senderId   session id of the originator, or {@code null} for server-originated packets
+   * @param route      channel route the packet is addressed to
+   * @param message    messages carried by this packet
+   */
   public Packet (PacketType packetType, String senderId, Route route, Message<V>[] message) {
 
     this.packetType = packetType;
@@ -55,21 +77,41 @@ public class Packet<V extends Value<V>> {
     this.messages = message;
   }
 
+  /**
+   * Returns the role this packet plays in the Bayeux exchange.
+   *
+   * @return {@link PacketType#REQUEST}, {@link PacketType#RESPONSE}, or {@link PacketType#DELIVERY}
+   */
   public PacketType getPacketType () {
 
     return packetType;
   }
 
+  /**
+   * Returns the session id of the originating client, or {@code null} for server-originated packets.
+   *
+   * @return sender session id, possibly {@code null}
+   */
   public String getSenderId () {
 
     return senderId;
   }
 
+  /**
+   * Returns the route this packet is addressed to.
+   *
+   * @return target channel route
+   */
   public Route getRoute () {
 
     return route;
   }
 
+  /**
+   * Returns all messages carried by this packet.
+   *
+   * @return array of one or more messages
+   */
   public Message<V>[] getMessages () {
 
     return messages;

@@ -37,20 +37,47 @@ import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Base {@link Server.PacketListener} that passes every packet through unmodified, suitable for
+ * extension subclasses that only need to override a subset of the lifecycle hooks.
+ *
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
+ */
 public abstract class AbstractServerPacketListener<V extends Value<V>> implements Server.PacketListener<V> {
 
+  /**
+   * Passes the inbound request packet through without modification.
+   *
+   * @param sender the session that originated the request
+   * @param packet the inbound request packet
+   * @return {@code packet} unchanged
+   */
   @Override
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
     return packet;
   }
 
+  /**
+   * Passes the outbound response packet through without modification.
+   *
+   * @param sender the session the response is addressed to
+   * @param packet the outbound response packet
+   * @return {@code packet} unchanged
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
     return packet;
   }
 
+  /**
+   * Passes the outbound delivery packet through without modification.
+   *
+   * @param sender the session the delivery is addressed to
+   * @param packet the outbound delivery packet
+   * @return {@code packet} unchanged
+   */
   @Override
   public Packet<V> onDelivery (Session<V> sender, Packet<V> packet) {
 

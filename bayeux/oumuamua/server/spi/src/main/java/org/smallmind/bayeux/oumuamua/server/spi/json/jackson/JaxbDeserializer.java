@@ -47,8 +47,22 @@ import org.smallmind.nutsnbolts.lang.FormattedIOException;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
+/**
+ * Jackson-backed {@link JsonDeserializer} that parses JSON byte buffers and strings into Bayeux
+ * {@link Message} arrays and recursively converts {@link JsonNode} trees into the {@link Value} hierarchy.
+ *
+ * @param <V> the concrete {@link Value} subtype produced during deserialization
+ */
 public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V> {
 
+  /**
+   * Parses a byte buffer into Bayeux messages by first converting it to a {@link JsonNode} tree.
+   *
+   * @param codec  codec supplying the message factory used to construct each message
+   * @param buffer JSON-encoded payload bytes
+   * @return array of decoded messages
+   * @throws IOException if the bytes cannot be parsed or do not represent an object or array
+   */
   @Override
   public Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException {
@@ -56,6 +70,14 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return read(codec, JsonCodec.readAsJsonNode(buffer));
   }
 
+  /**
+   * Parses a JSON string into Bayeux messages by first converting it to a {@link JsonNode} tree.
+   *
+   * @param codec codec supplying the message factory used to construct each message
+   * @param data  JSON-encoded string
+   * @return array of decoded messages
+   * @throws IOException if the string cannot be parsed or does not represent an object or array
+   */
   @Override
   public Message<V>[] read (Codec<V> codec, String data)
     throws IOException {
@@ -63,6 +85,15 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return read(codec, JsonCodec.readAsJsonNode(data));
   }
 
+  /**
+   * Constructs messages from an already-parsed {@link JsonNode}, handling both a top-level object
+   * (single message) and a top-level array (multiple messages).
+   *
+   * @param codec codec used to create each message via {@link Codec#create()}
+   * @param node  parsed Jackson node representing the incoming payload
+   * @return array of one or more messages populated from the node's fields
+   * @throws IOException if any array element is not an object, or if the root node type is unsupported
+   */
   private Message<V>[] read (Codec<V> codec, JsonNode node)
     throws IOException {
 
@@ -78,8 +109,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
           } else {
             messages[index] = codec.create();
 
-            for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(item.fields())) {
-              messages[index].put(fieldEntry.getKey(), walk(messages[index].getFactory(), fieldEntry.getValue()));
+            for (Map.Entry<String, JsonNode> propertyEntry : new IterableIterator<>(item.fields())) {
+              messages[index].put(propertyEntry.getKey(), walk(messages[index].getFactory(), propertyEntry.getValue()));
             }
           }
 
@@ -91,8 +122,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
 
         Message<V> message = codec.create();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          message.put(fieldEntry.getKey(), walk(message.getFactory(), fieldEntry.getValue()));
+        for (Map.Entry<String, JsonNode> propertyEntry : new IterableIterator<>(node.fields())) {
+          message.put(propertyEntry.getKey(), walk(message.getFactory(), propertyEntry.getValue()));
         }
 
         return new Message[] {message};
@@ -101,6 +132,15 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     }
   }
 
+  /**
+   * Converts {@code object} to a {@link Value} by serializing it to a {@link JsonNode} tree first,
+   * then walking the tree with {@link #walk}.
+   *
+   * @param factory factory used to instantiate value nodes
+   * @param object  arbitrary object to convert; must be Jackson-serializable
+   * @return value tree representing {@code object}
+   * @throws IOException if Jackson cannot serialize the object or the resulting node has an unsupported type
+   */
   @Override
   public Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException {
@@ -108,6 +148,15 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
     return walk(factory, JsonCodec.writeAsJsonNode(object));
   }
 
+  /**
+   * Recursively converts a {@link JsonNode} into a {@link Value} node using the appropriate
+   * {@code factory} method for each JSON type (object, array, string, number, boolean, null).
+   *
+   * @param factory factory used to create each value node
+   * @param node    Jackson node to convert
+   * @return the equivalent {@link Value} representation
+   * @throws IOException if {@code node} has an unknown or unsupported type, or an unsupported numeric subtype
+   */
   private Value<V> walk (ValueFactory<V> factory, JsonNode node)
     throws IOException {
 
@@ -116,8 +165,8 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
 
         ObjectValue<V> objectValue = factory.objectValue();
 
-        for (Map.Entry<String, JsonNode> fieldEntry : new IterableIterator<>(node.fields())) {
-          objectValue.put(fieldEntry.getKey(), walk(factory, fieldEntry.getValue()));
+        for (Map.Entry<String, JsonNode> propertyEntry : new IterableIterator<>(node.fields())) {
+          objectValue.put(propertyEntry.getKey(), walk(factory, propertyEntry.getValue()));
         }
 
         return objectValue;
@@ -133,18 +182,13 @@ public class JaxbDeserializer<V extends Value<V>> implements JsonDeserializer<V>
       case STRING:
         return factory.textValue(node.textValue());
       case NUMBER:
-        switch (node.numberType()) {
-          case LONG:
-            return factory.numberValue(node.longValue());
-          case INT:
-            return factory.numberValue(node.intValue());
-          case DOUBLE:
-            return factory.numberValue(node.doubleValue());
-          case FLOAT:
-            return factory.numberValue(node.doubleValue());
-          default:
-            throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
-        }
+        return switch (node.numberType()) {
+          case LONG -> factory.numberValue(node.longValue());
+          case INT -> factory.numberValue(node.intValue());
+          case DOUBLE -> factory.numberValue(node.doubleValue());
+          case FLOAT -> factory.numberValue(node.doubleValue());
+          default -> throw new FormattedIOException("Unknown number type(%s)", node.numberType().name());
+        };
       case BOOLEAN:
         return factory.booleanValue(node.booleanValue());
       case NULL:

@@ -32,7 +32,23 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * Identifies the Java primitive type backing a {@link NumberValue}.
+ */
 public enum NumberType {
 
-  INTEGER, LONG, DOUBLE
+  /**
+   * Value is stored as a 32-bit signed integer ({@code int}).
+   */
+  INTEGER,
+
+  /**
+   * Value is stored as a 64-bit signed integer ({@code long}).
+   */
+  LONG,
+
+  /**
+   * Value is stored as a 64-bit IEEE 754 floating-point number ({@code double}).
+   */
+  DOUBLE
 }

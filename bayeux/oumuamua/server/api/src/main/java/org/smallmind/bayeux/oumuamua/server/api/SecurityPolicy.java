@@ -35,23 +35,67 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Access-control extension point consulted at each security-sensitive step of the Bayeux lifecycle.
+ * Any non-{@code null} return from a check signals denial; only {@code null} permits the operation.
+ * The default methods return {@link SecurityRejection#noReason()} (a non-{@code null} deny sentinel),
+ * so an implementor who inherits without overriding produces a completely closed policy. Opening a
+ * given operation requires an explicit override that returns {@code null}.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface SecurityPolicy<V extends Value<V>> {
 
+  /**
+   * Decides whether the given session may complete a handshake.
+   *
+   * @param session session attempting to handshake
+   * @param message the {@code /meta/handshake} message
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
+   */
   default SecurityRejection canHandshake (Session<V> session, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Decides whether the given session may cause a new channel to be created at the specified path.
+   *
+   * @param session session requesting channel creation
+   * @param path    channel path that would be created
+   * @param message the Bayeux message that triggered the creation attempt
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
+   */
   default SecurityRejection canCreate (Session<V> session, String path, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Decides whether the given session may subscribe to the specified channel.
+   *
+   * @param session session requesting the subscription
+   * @param channel channel being subscribed to
+   * @param message the {@code /meta/subscribe} message
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
+   */
   default SecurityRejection canSubscribe (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return SecurityRejection.noReason();
   }
 
+  /**
+   * Decides whether the given session may publish to the specified channel.
+   *
+   * @param session session attempting to publish
+   * @param channel channel being published to
+   * @param message the publish message
+   * @return {@code null} to allow, or a {@link SecurityRejection} describing the denial; the
+   * default returns a no-reason rejection, which denies
+   */
   default SecurityRejection canPublish (Session<V> session, Channel<V> channel, Message<V> message) {
 
     return SecurityRejection.noReason();

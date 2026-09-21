@@ -33,61 +33,63 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.Iterator;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Background {@link Runnable} that iterates the active session registry, disconnects any session
+ * that has been idle beyond its configured timeout, removes it from the server, and departs it from
+ * all channels. Scheduled on a fixed cadence by {@link OumuamuaServer}, which owns its lifecycle.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class IdleSessionInspector<V extends Value<V>> implements Runnable {
 
-  private final CountDownLatch finishLatch = new CountDownLatch(1);
-  private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final OumuamuaServer<V> server;
   private final Level idleSessionLogLevel;
-  private final long connectionMaintenanceCycleMinutes;
 
-  public IdleSessionInspector (OumuamuaServer<V> server, long connectionMaintenanceCycleMinutes, Level idleSessionLogLevel) {
+  /**
+   * Creates an inspector bound to the given server.
+   *
+   * @param server              the server whose session map will be inspected
+   * @param idleSessionLogLevel log level at which idle-session termination events are recorded
+   */
+  public IdleSessionInspector (OumuamuaServer<V> server, Level idleSessionLogLevel) {
 
     this.server = server;
-    this.connectionMaintenanceCycleMinutes = connectionMaintenanceCycleMinutes;
     this.idleSessionLogLevel = idleSessionLogLevel;
   }
 
-  public void stop ()
-    throws InterruptedException {
-
-    finishLatch.countDown();
-    exitLatch.await();
-  }
-
+  /**
+   * Performs a single maintenance pass: iterates all active sessions and for each one that has
+   * exceeded its idle timeout atomically checks and transitions it to the disconnected state via
+   * {@link OumuamuaSession#checkAndDisconnect}, removes it from the registry via the iterator,
+   * departs it from all channels, and triggers connection cleanup. Any failure of the pass is logged
+   * so that it cannot cancel future runs.
+   */
   @Override
   public void run () {
 
     try {
-      while (!finishLatch.await(connectionMaintenanceCycleMinutes, TimeUnit.MINUTES)) {
 
-        Iterator<OumuamuaSession<V>> sessionIterator = server.iterateSessions();
-        long now = System.currentTimeMillis();
+      Iterator<OumuamuaSession<V>> sessionIterator = server.iterateSessions();
+      long now = System.currentTimeMillis();
 
-        while (sessionIterator.hasNext()) {
+      while (sessionIterator.hasNext()) {
 
-          OumuamuaSession<V> session = sessionIterator.next();
+        OumuamuaSession<V> session = sessionIterator.next();
 
-          if (session.isRemovable(now)) {
-            LoggerManager.getLogger(IdleSessionInspector.class).log(idleSessionLogLevel, "Idle session termination(%s)", session.getId());
+        if (session.checkAndDisconnect(now)) {
+          LoggerManager.getLogger(IdleSessionInspector.class).log(idleSessionLogLevel, "Idle session termination(%s)", session.getId());
 
-            session.completeDisconnect();
-            sessionIterator.remove();
-            server.departChannels(session);
-            session.onCleanup();
-          }
+          sessionIterator.remove();
+          server.departChannels(session);
+          session.onCleanup();
         }
       }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-    } finally {
-      exitLatch.countDown();
+    } catch (Exception exception) {
+      LoggerManager.getLogger(IdleSessionInspector.class).error(exception);
     }
   }
 }

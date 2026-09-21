@@ -35,22 +35,44 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Carrier that pairs a deserialized {@link Packet} with the name of the cluster node that
+ * originally published it, allowing recipients to skip local re-delivery.
+ *
+ * @param <V> concrete {@link Value} type carried in Bayeux messages
+ */
 public class DebonedPacket<V extends Value<V>> {
 
   private final Packet<V> packet;
   private final String nodeName;
 
+  /**
+   * Combines a source node name with its associated packet.
+   *
+   * @param nodeName unique identifier of the cluster node that serialized the packet
+   * @param packet   the deserialized packet received from the backbone
+   */
   public DebonedPacket (String nodeName, Packet<V> packet) {
 
     this.nodeName = nodeName;
     this.packet = packet;
   }
 
+  /**
+   * Returns the packet received from the backbone.
+   *
+   * @return deserialized packet ready for local delivery
+   */
   public Packet<V> getPacket () {
 
     return packet;
   }
 
+  /**
+   * Returns the identifier of the cluster node that originally published this packet.
+   *
+   * @return source node name; used to suppress self-delivery of echoed messages
+   */
   public String getNodeName () {
 
     return nodeName;

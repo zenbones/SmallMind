@@ -32,8 +32,17 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Thrown when a channel path string is syntactically or semantically invalid.
+ */
 public class InvalidPathException extends OumuamuaException {
 
+  /**
+   * Constructs the exception with a {@link String#format}-style detail message.
+   *
+   * @param message format string describing why the path is invalid
+   * @param args    arguments substituted into the format string
+   */
   public InvalidPathException (String message, Object... args) {
 
     super(message, args);

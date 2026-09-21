@@ -34,43 +34,59 @@ package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.DebonedPacket;
 import org.smallmind.bayeux.oumuamua.server.spi.backbone.RecordUtility;
+import org.smallmind.kafka.utility.KafkaConnectionException;
+import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaGroupProtocol;
+import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.util.ComponentModulator;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Kafka-backed {@link Backbone} that fans every published packet out to all nodes in the
+ * Oumuamua cluster by writing to a shared topic prefixed with {@code oumuamua-}.
+ *
+ * <p>Each node creates a unique consumer group at startup (via a Snowflake-generated group ID)
+ * so that every node independently receives every record.  Records produced by the local node
+ * are skipped on consumption to prevent loopback delivery.  A pool of consumer worker threads
+ * polls the topic, deserializes each record with {@link RecordUtility}, and delivers
+ * the packet to the local server.  Workers automatically recreate their consumers on recoverable
+ * poll errors.
+ *
+ * @param <V> the concrete {@link Value} type carried in Bayeux messages
+ */
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
-  private final ExecutorService executorService = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
-  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
+  private final ExecutorService executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy());
+
+  private final ComponentModulator componentModulator = new ComponentModulator();
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
+  private final KafkaGroupProtocol groupProtocol;
   private final String nodeName;
   private final String topicName;
   private final String prefixedTopicName;
@@ -78,90 +94,101 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, String topicName, KafkaServer... servers)
-    throws OumuamuaException {
-
-    long startTimestamp = System.currentTimeMillis();
+  /**
+   * Creates the backbone, verifies broker availability, and opens a shared producer.
+   *
+   * @param nodeName                  unique name for this cluster node; embedded in every produced record
+   *                                  and used to skip locally-originating records on consumption
+   * @param concurrencyLimit          number of parallel consumer worker threads spawned at {@link #startUp}
+   * @param startupGracePeriodSeconds maximum seconds to wait for at least one broker to become reachable
+   * @param groupProtocol             Kafka group protocol for the backbone's consumer workers
+   * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
+   * @param servers                   one or more Kafka bootstrap broker addresses
+   * @throws KafkaConnectionException if no broker is reachable within the startup grace period
+   */
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, String topicName, KafkaServer... servers)
+    throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
+    this.groupProtocol = groupProtocol;
     this.topicName = topicName;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
-    connector = new KafkaConnector(servers);
 
-    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka with boostrap servers(%s)...", connector.getBoostrapServers());
+    LoggerManager.getLogger(KafkaBackbone.class).info("Starting Kafka backbone...");
+    connector = new KafkaConnector(servers).check(startupGracePeriodSeconds);
+    LoggerManager.getLogger(KafkaBackbone.class).info("Started Kafka backbone with bootstrap servers(%s)...", connector.getBoostrapServers());
 
     prefixedTopicName = "oumuamua-" + topicName;
     producer = connector.createProducer("oumuamua-producer-" + topicName + "-" + nodeName);
-
-    if (!connector.invokeAdminClient(adminClient -> {
-        while (true) {
-          try {
-            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
-
-            return (nodes != null) && (!nodes.isEmpty());
-          } catch (ExecutionException | InterruptedException exception) {
-            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
-              try {
-                Thread.sleep(1000);
-              } catch (InterruptedException interruptedException) {
-                LoggerManager.getLogger(KafkaBackbone.class).error(interruptedException);
-
-                return false;
-              }
-            } else {
-              LoggerManager.getLogger(KafkaBackbone.class).error(exception);
-
-              return false;
-            }
-          }
-        }
-      }
-    )) {
-      throw new OumuamuaException("Unable to start the kafka backbone service");
-    }
   }
 
+  /**
+   * Creates and subscribes a new Kafka consumer for the worker at {@code index}.
+   * Each worker uses the same group ID so the full fan-out is preserved.
+   *
+   * @param index zero-based worker index used to form a unique consumer client ID
+   * @return a new {@link Consumer} already subscribed to the backbone topic
+   */
   private Consumer<Long, byte[]> createConsumer (int index) {
 
-    return connector.createConsumer("oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
+    return connector.createConsumer(groupProtocol, nodeName, "oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
   }
 
+  /**
+   * Spawns {@code concurrencyLimit} consumer worker threads and transitions the backbone to
+   * {@link ComponentStatus#STARTED}.  Blocks if a concurrent state transition is in progress.
+   *
+   * @param server server to which deserialized packets from remote nodes will be delivered
+   * @throws ComponentStateException if the backbone cannot reach the started state
+   * @throws InterruptedException    if interrupted while waiting for the state transition
+   */
   @Override
   public void startUp (Server<V> server)
-    throws Exception {
+    throws ComponentStateException, InterruptedException {
 
-    if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+    if (componentModulator.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
         new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
       }
-      statusRef.set(ComponentStatus.STARTED);
-    } else {
-      while (ComponentStatus.STARTING.equals(statusRef.get())) {
-        Thread.sleep(100);
-      }
+      componentModulator.set(ComponentStatus.STARTED);
+    } else if (ComponentStatus.STOPPED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
+      throw new ComponentStateException("Could not enter the started state");
     }
   }
 
+  /**
+   * Wakes up all consumer workers, waits for each to exit, shuts down the publishing executor,
+   * and transitions the backbone to {@link ComponentStatus#STOPPED}.  Blocks if a concurrent
+   * state transition is in progress.
+   *
+   * @throws ComponentStateException if the backbone cannot reach the stopped state
+   * @throws InterruptedException    if interrupted while waiting for worker exit or the state transition
+   */
   @Override
   public void shutDown ()
-    throws InterruptedException {
+    throws ComponentStateException, InterruptedException {
 
-    if (statusRef.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
+    if (componentModulator.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
       for (ConsumerWorker<V> worker : workers) {
         worker.stop();
       }
-      statusRef.set(ComponentStatus.STOPPED);
-    } else {
-      while (ComponentStatus.STOPPING.equals(statusRef.get())) {
-        Thread.sleep(100);
-      }
+      executorService.shutdown();
+      componentModulator.set(ComponentStatus.STOPPED);
+    } else if (ComponentStatus.STARTED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
+      throw new ComponentStateException("Could not enter the stopped state");
     }
   }
 
+  /**
+   * Serializes {@code packet} and publishes it to the backbone topic via the virtual-thread executor.
+   * Serialization and send errors are logged but not propagated; this is a best-effort fan-out.
+   *
+   * @param packet packet to distribute to all cluster nodes
+   */
   @Override
   public void publish (Packet<V> packet) {
 
@@ -174,6 +201,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     });
   }
 
+  /**
+   * Single-threaded consumer that polls the backbone topic, deserializes each record, delivers
+   * packets from remote nodes to the local server, commits offsets per partition, and replaces
+   * its consumer automatically on recoverable errors.
+   */
   private class ConsumerWorker<V extends Value<V>> implements Runnable {
 
     private final CountDownLatch exitLatch = new CountDownLatch(1);
@@ -183,6 +215,13 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     private final int index;
     private Consumer<Long, byte[]> consumer;
 
+    /**
+     * Creates a consumer worker for the given server and slot.
+     *
+     * @param server   local server to which packets from remote nodes are delivered
+     * @param nodeName name of this cluster node; records whose node name matches are skipped
+     * @param index    zero-based worker index used when recreating the consumer after an error
+     */
     public ConsumerWorker (Server<V> server, String nodeName, int index) {
 
       this.server = server;
@@ -192,6 +231,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       consumer = createConsumer(index);
     }
 
+    /**
+     * Signals the poll loop to stop and blocks until the worker thread has fully exited.
+     *
+     * @throws InterruptedException if interrupted while waiting on the exit latch
+     */
     private void stop ()
       throws InterruptedException {
 
@@ -202,6 +246,23 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       }
     }
 
+    private synchronized void recreateConsumer () {
+
+      try {
+        consumer.unsubscribe();
+        consumer.close();
+      } finally {
+        consumer = createConsumer(index);
+      }
+    }
+
+    /**
+     * Polls the backbone topic in a loop.  For each record, deserializes the packet and — if
+     * the producing node differs from the local node — delivers it to the server.  Offsets are
+     * committed synchronously per partition after each batch.  On recoverable poll errors the
+     * consumer is replaced before the next iteration.  A {@link WakeupException} from a
+     * {@link #stop()} call exits the loop cleanly; unexpected wakeups are logged as errors.
+     */
     @Override
     public void run () {
 
@@ -237,22 +298,19 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
                 }
               }
             }
+          } catch (WakeupException wakeupException) {
+            if (!finished.get()) {
+              LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
+              recreateConsumer();
+            }
           } catch (Exception exception) {
             LoggerManager.getLogger(KafkaBackbone.class).error(exception);
-
-            try {
-              consumer.close();
-            } finally {
-              consumer = createConsumer(index);
-            }
+            recreateConsumer();
           }
-        }
-      } catch (WakeupException wakeupException) {
-        if (!finished.get()) {
-          LoggerManager.getLogger(KafkaBackbone.class).error(wakeupException);
         }
       } finally {
         try {
+          consumer.unsubscribe();
           consumer.close();
         } finally {
           exitLatch.countDown();

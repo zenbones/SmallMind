@@ -38,14 +38,44 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * SPI contract for parsing inbound JSON payloads into Bayeux {@link Message} arrays and for
+ * converting arbitrary objects into the {@link Value} type hierarchy used by a given codec.
+ *
+ * @param <V> the concrete {@link Value} subtype produced by implementations of this interface
+ */
 public interface JsonDeserializer<V extends Value<V>> {
 
+  /**
+   * Parses a raw byte payload into an array of Bayeux messages using the codec's factory.
+   *
+   * @param codec  codec that supplies the message factory and value creation context
+   * @param buffer UTF-8 (or codec-appropriate) encoded JSON payload
+   * @return one or more decoded messages; never {@code null} but may be empty
+   * @throws IOException if the bytes cannot be parsed or do not represent valid message JSON
+   */
   Message<V>[] read (Codec<V> codec, byte[] buffer)
     throws IOException;
 
+  /**
+   * Parses a JSON string payload into an array of Bayeux messages using the codec's factory.
+   *
+   * @param codec codec that supplies the message factory and value creation context
+   * @param data  JSON string encoding one object or an array of objects
+   * @return one or more decoded messages; never {@code null} but may be empty
+   * @throws IOException if the string cannot be parsed or does not represent valid message JSON
+   */
   Message<V>[] read (Codec<V> codec, String data)
     throws IOException;
 
+  /**
+   * Converts {@code object} into an equivalent {@link Value} using {@code factory} for construction.
+   *
+   * @param factory factory used to instantiate value nodes during conversion
+   * @param object  arbitrary object to convert (typically a POJO or collection)
+   * @return value tree representing {@code object}
+   * @throws IOException if the object cannot be serialized or contains unsupported types
+   */
   Value<V> convert (ValueFactory<V> factory, Object object)
     throws IOException;
 }

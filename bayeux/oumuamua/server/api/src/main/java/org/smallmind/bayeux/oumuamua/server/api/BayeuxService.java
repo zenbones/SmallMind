@@ -35,8 +35,22 @@ package org.smallmind.bayeux.oumuamua.server.api;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Handler for Bayeux messages addressed to a specific set of server-side service channels.
+ *
+ * @param <V> concrete {@link Value} implementation used to represent JSON payloads
+ */
 public interface BayeuxService<V extends Value<V>> {
 
+  /**
+   * Builds a minimal response message pre-filled with the channel path, request id, and session id.
+   *
+   * @param route   route whose path is written into the {@code channel} field
+   * @param server  server whose codec creates the message
+   * @param session session whose id is written into the {@code clientId} field
+   * @param request originating request whose id is copied into the {@code id} field
+   * @return new message ready for additional field population and dispatch
+   */
   default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
 
     Message<V> response = (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
@@ -44,7 +58,22 @@ public interface BayeuxService<V extends Value<V>> {
     return response;
   }
 
-  Route[] getBoundRoutes ();
+  /**
+   * Returns the routes this service is registered to handle.
+   *
+   * @return non-empty array of bound routes
+   */
+  Route[] boundRoutes ();
 
+  /**
+   * Handles an incoming message and returns a response packet for the client.
+   *
+   * @param protocol active transport protocol
+   * @param route    route the message was addressed to
+   * @param server   hosting server
+   * @param session  session that sent the request
+   * @param request  incoming Bayeux message
+   * @return packet containing one or more response messages to deliver to the session
+   */
   Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

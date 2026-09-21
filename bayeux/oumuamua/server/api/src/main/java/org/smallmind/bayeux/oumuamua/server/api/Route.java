@@ -32,26 +32,89 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Parsed representation of a Bayeux channel path, providing segment-level access and
+ * predicate methods for classifying the route.
+ */
 public interface Route {
 
+  /**
+   * Returns the full channel path string for this route.
+   *
+   * @return channel path (e.g. {@code /foo/bar})
+   */
   String getPath ();
 
+  /**
+   * Returns the number of path segments in this route.
+   *
+   * @return segment count, always at least one
+   */
   int size ();
 
+  /**
+   * Returns the index of the last segment ({@code size() - 1}).
+   *
+   * @return zero-based index of the final segment
+   */
   int lastIndex ();
 
+  /**
+   * Returns the segment at the specified position.
+   *
+   * @param index zero-based segment index
+   * @return segment at that position
+   */
   Segment getSegment (int index);
 
+  /**
+   * Returns whether the final segment is a single-level wildcard ({@code *}).
+   *
+   * @return {@code true} if the route ends with {@code *}
+   */
   boolean isWild ();
 
+  /**
+   * Returns whether the final segment is a deep wildcard ({@code **}).
+   *
+   * @return {@code true} if the route ends with {@code **}
+   */
   boolean isDeepWild ();
 
+  /**
+   * Returns whether the route begins with {@code /meta/}.
+   *
+   * @return {@code true} for meta channels
+   */
   boolean isMeta ();
 
+  /**
+   * Returns whether the route begins with {@code /service/}.
+   *
+   * @return {@code true} for service channels
+   */
   boolean isService ();
 
-  boolean matches (String... segments);
+  /**
+   * Tests whether the supplied segments form a valid prefix of this route's path.
+   * The candidate may be no longer than the route ({@link #size()} segments); a
+   * shorter sequence matches whenever it aligns with the leading segments of the
+   * route. Within the candidate, {@code "*"} matches any single segment at that
+   * position and {@code "**"} matches all remaining segments of the route.
+   *
+   * @param segments ordered segments forming a candidate prefix; a {@code "**"}
+   *                 entry consumes all remaining route segments
+   * @return {@code true} if {@code segments} is a valid (possibly wildcard-bearing)
+   * prefix of this route
+   */
+  boolean matchesPrefix (String... segments);
 
+  /**
+   * Returns whether user messages can be published and delivered on this route.
+   * A route is deliverable when it is not wild, deep wild, meta, or service.
+   *
+   * @return {@code true} if the route accepts user publications
+   */
   default boolean isDeliverable () {
 
     return !(isWild() || isDeepWild() || isMeta() || isService());

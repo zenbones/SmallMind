@@ -36,14 +36,43 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * Named physical connection mechanism (e.g., long-polling or WebSocket) owned by a {@link Protocol}
+ * and responsible for the actual byte-level exchange with clients.
+ *
+ * @param <V> concrete {@link Value} implementation used for message payloads
+ */
 public interface Transport<V extends Value<V>> extends Attributed {
 
+  /**
+   * Returns the protocol that owns this transport.
+   *
+   * @return owning protocol
+   */
   Protocol<V> getProtocol ();
 
+  /**
+   * Returns the name used during Bayeux connection-type negotiation.
+   *
+   * @return transport name string
+   */
   String getName ();
 
+  /**
+   * Returns whether this transport is restricted to local (in-process) use and should not
+   * be offered to remote clients.
+   *
+   * @return {@code true} if the transport is local-only
+   */
   boolean isLocal ();
 
+  /**
+   * Initializes this transport using servlet and server context.
+   *
+   * @param server        hosting server
+   * @param servletConfig servlet configuration
+   * @throws ServletException if transport initialization fails
+   */
   void init (Server<?> server, ServletConfig servletConfig)
     throws ServletException;
 }

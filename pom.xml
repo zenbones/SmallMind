@@ -142,6 +142,7 @@
     <module>forge</module>
     <module>foundation</module>
     <module>javafx</module>
+    <module>kafka</module>
     <module>license</module>
     <module>liquibase</module>
     <module>memcached</module>
@@ -203,6 +204,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>file-jailed</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>kafka-utility</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

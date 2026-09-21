@@ -37,6 +37,10 @@ import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
+/**
+ * Standard {@link Route} implementation that parses and validates a Bayeux channel path,
+ * exposing segment-level access and wildcard matching for channel resolution.
+ */
 public class DefaultRoute implements Route {
 
   public static final DefaultRoute HANDSHAKE_ROUTE;
@@ -60,6 +64,14 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Parses {@code path} into segments and validates its conformance to Bayeux channel rules.
+   *
+   * @param path channel path; must begin with {@code '/'} and contain at least one segment
+   * @throws InvalidPathException if the path is null, empty, missing a leading slash,
+   *                              contains empty segments, has illegal characters, or
+   *                              uses a malformed wildcard expression
+   */
   public DefaultRoute (String path)
     throws InvalidPathException {
 
@@ -68,52 +80,99 @@ public class DefaultRoute implements Route {
     segments = PathValidator.validate(path);
   }
 
+  /**
+   * Returns the full channel path string as provided at construction.
+   *
+   * @return path string beginning with {@code '/'}
+   */
   public String getPath () {
 
     return path;
   }
 
+  /**
+   * Returns the total number of segments in this route.
+   *
+   * @return segment count; always at least 1
+   */
   public int size () {
 
     return segments.length + 1;
   }
 
+  /**
+   * Returns the zero-based index of the last segment.
+   *
+   * @return index of the trailing segment
+   */
   public int lastIndex () {
 
     return segments.length;
   }
 
+  /**
+   * Indicates whether the final segment is a single-level wildcard ({@code *}).
+   *
+   * @return {@code true} if the last segment equals {@code *}
+   */
   public boolean isWild () {
 
     return matches(segments.length, "*");
   }
 
+  /**
+   * Indicates whether the final segment is a deep wildcard ({@code **}).
+   *
+   * @return {@code true} if the last segment equals {@code **}
+   */
   public boolean isDeepWild () {
 
     return matches(segments.length, "**");
   }
 
+  /**
+   * Indicates whether this path belongs to the {@code /meta} namespace.
+   *
+   * @return {@code true} if the first segment is {@code meta}
+   */
   public boolean isMeta () {
 
     return matches(0, "meta");
   }
 
+  /**
+   * Indicates whether this path belongs to the {@code /service} namespace.
+   *
+   * @return {@code true} if the first segment is {@code service}
+   */
   public boolean isService () {
 
     return matches(0, "service");
   }
 
+  /**
+   * Tests whether {@code prefixSegments} forms a valid prefix of this route's path,
+   * respecting single-level ({@code "*"}) and deep ({@code "**"}) wildcards in the
+   * candidate. The candidate must contain no more segments than the route; a shorter
+   * candidate matches whenever each of its segments aligns with the corresponding
+   * leading segment of the route. A {@code "**"} entry short-circuits the comparison
+   * and consumes every remaining route segment. A {@code null} candidate never matches.
+   *
+   * @param prefixSegments ordered segments forming a candidate prefix; a {@code "**"}
+   *                       entry consumes all remaining route segments
+   * @return {@code true} if {@code prefixSegments} is a valid prefix of this route
+   */
   @Override
-  public boolean matches (String... matchingSegments) {
+  public boolean matchesPrefix (String... prefixSegments) {
 
-    if ((matchingSegments == null) || (matchingSegments.length > (segments.length + 1))) {
+    if ((prefixSegments == null) || (prefixSegments.length > (segments.length + 1))) {
 
       return false;
     } else {
 
       int index = 0;
 
-      for (String matchingSegment : matchingSegments) {
+      for (String matchingSegment : prefixSegments) {
         if ("**".equals(matchingSegment)) {
 
           return true;
@@ -129,6 +188,15 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Tests whether the segment at {@code index} exactly equals {@code name} by comparing
+   * characters directly against the underlying path string.
+   *
+   * @param index zero-based segment index within this route
+   * @param name  character sequence to compare; {@code null} always returns {@code false}
+   * @return {@code true} if the segment text equals {@code name} character-for-character
+   * @throws IndexOutOfBoundsException if {@code index} is negative or greater than {@link #lastIndex()}
+   */
   protected boolean matches (int index, CharSequence name) {
 
     if ((index < 0) || (index > segments.length)) {
@@ -153,6 +221,13 @@ public class DefaultRoute implements Route {
     }
   }
 
+  /**
+   * Returns a {@link Segment} view backed by this route for the given index.
+   *
+   * @param index zero-based segment index
+   * @return segment wrapping the path characters at that position
+   * @throws IndexOutOfBoundsException if {@code index} is negative or greater than {@link #lastIndex()}
+   */
   @Override
   public Segment getSegment (int index) {
 
@@ -176,6 +251,10 @@ public class DefaultRoute implements Route {
     return (obj instanceof DefaultRoute) && ((DefaultRoute)obj).path.equals(path);
   }
 
+  /**
+   * {@link Segment} view into a single path segment of its enclosing {@link DefaultRoute},
+   * delegating character access and matching directly to the parent path string.
+   */
   public class RouteSegment extends Segment {
 
     private final int index;
@@ -185,18 +264,36 @@ public class DefaultRoute implements Route {
       this.index = index;
     }
 
+    /**
+     * Delegates matching to {@link DefaultRoute#matches(int, CharSequence)} for this segment's index.
+     *
+     * @param charSequence character sequence to compare against this segment
+     * @return {@code true} if the segment text equals {@code charSequence} character-for-character
+     */
     @Override
     public boolean matches (CharSequence charSequence) {
 
       return DefaultRoute.this.matches(index, charSequence);
     }
 
+    /**
+     * Returns the number of characters in this segment.
+     *
+     * @return character count, excluding any delimiter slashes
+     */
     @Override
     public int length () {
 
       return ((index < segments.length) ? segments[index] : path.length()) - ((index == 0) ? 1 : segments[index - 1] + 1);
     }
 
+    /**
+     * Returns the character at {@code pos} within this segment.
+     *
+     * @param pos zero-based position within the segment
+     * @return the character at that position
+     * @throws StringIndexOutOfBoundsException if {@code pos} is out of bounds for this segment
+     */
     @Override
     public char charAt (int pos) {
 
@@ -211,6 +308,14 @@ public class DefaultRoute implements Route {
       }
     }
 
+    /**
+     * Returns the sub-sequence of this segment between {@code start} (inclusive) and {@code end} (exclusive).
+     *
+     * @param start start offset within the segment, inclusive
+     * @param end   end offset within the segment, exclusive
+     * @return subsequence as a {@link String}
+     * @throws StringIndexOutOfBoundsException if {@code start} or {@code end} is out of range
+     */
     @Override
     public CharSequence subSequence (int start, int end) {
 
@@ -225,6 +330,11 @@ public class DefaultRoute implements Route {
       }
     }
 
+    /**
+     * Returns the full text of this segment as a plain string.
+     *
+     * @return segment text extracted from the parent path, without surrounding slashes
+     */
     @Override
     public String toString () {
 

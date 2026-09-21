@@ -50,6 +50,13 @@ import org.smallmind.bayeux.oumuamua.server.spi.meta.Meta;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Server-side implementation of the Bayeux {@code ack} extension that guarantees at-least-once
+ * delivery by tracking unacknowledged packets per session and re-queuing them until the client
+ * confirms receipt via an ack identifier on subsequent connect responses.
+ *
+ * @param <V> the concrete {@link Value} type carried by messages in this deployment
+ */
 public class AckExtension<V extends Value<V>> extends AbstractServerPacketListener<V> {
 
   private static final String ACK_FLAG_ATTRIBUTE = "org.smallmind.bayeux.oumuamua.extension.ack.flag";
@@ -60,17 +67,41 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
   private final Level overflowLogLevel;
   private final int maxAckQueueSize;
 
+  /**
+   * Creates the extension with the given maximum unacknowledged-message queue capacity and
+   * {@link Level#DEBUG} as the overflow log level.
+   *
+   * @param maxAckQueueSize upper bound on the total number of messages that may be held in the
+   *                        unacknowledged map across all in-flight packets for a single session
+   */
   public AckExtension (int maxAckQueueSize) {
 
     this(maxAckQueueSize, Level.DEBUG);
   }
 
+  /**
+   * Creates the extension with a custom overflow log level.
+   *
+   * @param maxAckQueueSize  upper bound on the total number of messages that may be held in the
+   *                         unacknowledged map for a single session
+   * @param overflowLogLevel level at which a log entry is emitted when the unacknowledged map is
+   *                         trimmed due to overflow; pass {@code null} to suppress overflow logging
+   */
   public AckExtension (int maxAckQueueSize, Level overflowLogLevel) {
 
     this.maxAckQueueSize = maxAckQueueSize;
     this.overflowLogLevel = (overflowLogLevel == null) ? Level.OFF : overflowLogLevel;
   }
 
+  /**
+   * Initialises per-session ack state on handshake when the client advertises {@code ext.ack=true},
+   * and on connect advances the unacknowledged map by removing entries whose ack id has been
+   * confirmed and moving any entries with lower ids to the resend queue.
+   *
+   * @param sender the session submitting the request, or {@code null} for anonymous requests
+   * @param packet the inbound request packet to inspect and pass through
+   * @return {@code packet} unchanged
+   */
   @Override
   public Packet<V> onRequest (final Session<V> sender, Packet<V> packet) {
 
@@ -145,6 +176,16 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
     return packet;
   }
 
+  /**
+   * Annotates handshake responses with {@code ext.ack=true} to confirm extension support, and on
+   * connect prepends any pending resend-queue packets to the response, stamps a new ack id onto the
+   * connect message, records the merged packet in the unacknowledged map, and trims the map when its
+   * accumulated message count exceeds {@code maxAckQueueSize}.
+   *
+   * @param sender the session the response is being sent to, or {@code null} for anonymous sessions
+   * @param packet the outbound response packet, which may be replaced by a merged packet
+   * @return the response packet, potentially merged with resent packets
+   */
   @Override
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
@@ -197,7 +238,7 @@ public class AckExtension<V extends Value<V>> extends AbstractServerPacketListen
                 LoggerManager.getLogger(AckExtension.class).log(overflowLogLevel, "Session(%s) overflowed the ack queue", sender.getId());
 
                 do {
-                  if ((unacknowledgedEntry = unacknowledgedMap.pollLastEntry()) != null) {
+                  if ((unacknowledgedEntry = unacknowledgedMap.pollFirstEntry()) != null) {
                     accumulatedSize = ackSize.accumulateAndGet(unacknowledgedEntry.getValue().getMessages().length, (x, y) -> x - y);
                   }
                 } while ((unacknowledgedEntry != null) && (accumulatedSize > maxAckQueueSize));

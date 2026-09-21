@@ -32,8 +32,18 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api.json;
 
+/**
+ * JSON {@code null} literal within the Bayeux value hierarchy.
+ *
+ * @param <V> concrete value subtype used by the enclosing codec
+ */
 public interface NullValue<V extends Value<V>> extends Value<V> {
 
+  /**
+   * Returns {@link ValueType#NULL}, identifying this value as the JSON null literal.
+   *
+   * @return {@link ValueType#NULL}
+   */
   default ValueType getType () {
 
     return ValueType.NULL;

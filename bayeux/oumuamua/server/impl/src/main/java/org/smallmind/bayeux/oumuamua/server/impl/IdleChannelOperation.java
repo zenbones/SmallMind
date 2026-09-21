@@ -39,12 +39,28 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * {@link ChannelOperation} that terminates and removes a channel from its branch when the channel
+ * reports itself removable at the reference timestamp.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class IdleChannelOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Consumer<Channel<V>> channelCallback;
   private final Level idleChannelLogLevel;
   private final long now;
 
+  /**
+   * Creates an operation that will prune channels whose idle period exceeds their TTL relative to
+   * the given reference time.
+   *
+   * @param now                 the epoch millisecond timestamp passed to
+   *                            {@link Channel#isRemovable(long)}
+   * @param idleChannelLogLevel log level at which channel termination events are recorded
+   * @param channelCallback     invoked with each channel that is removed; forwarded to
+   *                            {@link ChannelBranch#removeChannelIfStillRemovable(long, java.util.function.Consumer)}
+   */
   public IdleChannelOperation (long now, Level idleChannelLogLevel, Consumer<Channel<V>> channelCallback) {
 
     this.now = now;
@@ -52,6 +68,17 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
     this.channelCallback = channelCallback;
   }
 
+  /**
+   * Checks the channel at the given branch and, if it appears removable, delegates to
+   * {@link ChannelBranch#removeChannelIfStillRemovable(long, java.util.function.Consumer)} which
+   * re-verifies removability under the branch write lock before terminating; this two-step approach
+   * avoids acquiring the write lock unnecessarily while still closing the window where a subscriber
+   * could join between the outer check and the removal.  Logs the termination event and silently
+   * absorbs any {@link ChannelStateException} (which would indicate a now-persistent channel that
+   * should not be removed).
+   *
+   * @param channelBranch the branch to inspect; no-op if the branch carries no channel
+   */
   @Override
   public void operate (ChannelBranch<V> channelBranch) {
 
@@ -61,7 +88,7 @@ public class IdleChannelOperation<V extends Value<V>> implements ChannelOperatio
       try {
         LoggerManager.getLogger(IdleChannelOperation.class).log(idleChannelLogLevel, "Idle channel termination(%s)", channel.getRoute().getPath());
 
-        channelBranch.removeChannel(channelCallback);
+        channelBranch.removeChannelIfStillRemovable(now, channelCallback);
       } catch (ChannelStateException channelStateException) {
         LoggerManager.getLogger(IdleChannelOperation.class).error(channelStateException);
       }

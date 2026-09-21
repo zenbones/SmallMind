@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 through 2024 David Berkman
+ * Copyright (c) 2007 through 2026 David Berkman
  *
  * This file is part of the SmallMind Code Project.
  *
@@ -30,8 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.kafka.utility;
 
+/**
+ * Reference container for recommended Kafka broker configuration properties.
+ * This class holds no runtime state; its body is a comment block documenting
+ * broker-level settings (partitioning, replication, retention, compression, etc.)
+ * intended to be applied via an external config file or Kubernetes ConfigMap.
+ */
 public class KafkaConfiguration {
 
   // Should go in a config file (config map for k8s)

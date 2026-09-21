@@ -32,50 +32,52 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Background {@link Runnable} that applies an {@link IdleChannelOperation} to the entire channel
+ * tree to prune expired channels, then compacts the tree by removing empty branches. Scheduled on a
+ * fixed cadence by {@link OumuamuaServer}, which owns its lifecycle.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class IdleChannelSifter<V extends Value<V>> implements Runnable {
 
-  private final CountDownLatch finishLatch = new CountDownLatch(1);
-  private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final ChannelTree<V> channelTree;
   private final Consumer<Channel<V>> channelCallback;
   private final Level idleChannelLogLevel;
-  private final long idleChannelCycleMinutes;
 
-  public IdleChannelSifter (long idleChannelCycleMinutes, Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
+  /**
+   * Constructs the sifter with the given removal callback.
+   *
+   * @param idleChannelLogLevel log level at which channel removal events are recorded
+   * @param channelTree         the tree to walk on each scan
+   * @param channelCallback     forwarded to {@link IdleChannelOperation} and invoked for each
+   *                            channel that is removed
+   */
+  public IdleChannelSifter (Level idleChannelLogLevel, ChannelTree<V> channelTree, Consumer<Channel<V>> channelCallback) {
 
-    this.idleChannelCycleMinutes = idleChannelCycleMinutes;
     this.idleChannelLogLevel = idleChannelLogLevel;
     this.channelTree = channelTree;
     this.channelCallback = channelCallback;
   }
 
-  public void stop ()
-    throws InterruptedException {
-
-    finishLatch.countDown();
-    exitLatch.await();
-  }
-
+  /**
+   * Performs a single scan: walks the channel tree to prune expired channels and remove dead
+   * branches. Any failure of the pass is logged so that it cannot cancel future runs.
+   */
   @Override
   public void run () {
 
     try {
-      while (!finishLatch.await(idleChannelCycleMinutes, TimeUnit.MINUTES)) {
-        channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), idleChannelLogLevel, channelCallback));
-        channelTree.clean();
-      }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-    } finally {
-      exitLatch.countDown();
+      channelTree.walk(new IdleChannelOperation<V>(System.currentTimeMillis(), idleChannelLogLevel, channelCallback));
+      channelTree.clean();
+    } catch (Exception exception) {
+      LoggerManager.getLogger(IdleChannelSifter.class).error(exception);
     }
   }
 }

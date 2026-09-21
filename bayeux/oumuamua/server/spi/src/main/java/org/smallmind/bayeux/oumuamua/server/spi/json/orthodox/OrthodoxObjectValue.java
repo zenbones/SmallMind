@@ -40,39 +40,76 @@ import java.util.Map;
 import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * {@link HashMap}-backed {@link ObjectValue} implementation for the orthodox codec, providing
+ * unordered field storage with constant-time get, put, and remove operations.
+ */
 public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<OrthodoxValue> {
 
   private final HashMap<String, Value<OrthodoxValue>> valueMap = new HashMap<>();
 
+  /**
+   * Constructs an empty object value associated with the given factory.
+   *
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   */
   protected OrthodoxObjectValue (OrthodoxValueFactory factory) {
 
     super(factory);
   }
 
+  /**
+   * Returns the number of fields currently stored in the object.
+   *
+   * @return field count
+   */
   @Override
   public int size () {
 
     return valueMap.size();
   }
 
+  /**
+   * Reports whether the object contains no fields.
+   *
+   * @return {@code true} when no fields have been stored
+   */
   @Override
   public boolean isEmpty () {
 
     return valueMap.isEmpty();
   }
 
+  /**
+   * Returns an iterator over the names of all stored fields in unspecified order.
+   *
+   * @return field name iterator reflecting the current map key set
+   */
   @Override
   public Iterator<String> fieldNames () {
 
     return valueMap.keySet().iterator();
   }
 
+  /**
+   * Returns the value stored under {@code field}, or {@code null} if the field is absent.
+   *
+   * @param field name of the field to look up
+   * @return the associated value, or {@code null} if no such field exists
+   */
   @Override
   public Value<OrthodoxValue> get (String field) {
 
     return valueMap.get(field);
   }
 
+  /**
+   * Stores {@code value} under {@code field}, replacing any previously stored value.
+   *
+   * @param field name of the field to set
+   * @param value value to associate with the field
+   * @return this object for chaining
+   */
   @Override
   public <U extends Value<OrthodoxValue>> ObjectValue<OrthodoxValue> put (String field, U value) {
 
@@ -81,12 +118,23 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
     return this;
   }
 
+  /**
+   * Removes the field named {@code field} and returns its former value.
+   *
+   * @param field name of the field to remove
+   * @return the value previously associated with the field, or {@code null} if absent
+   */
   @Override
   public Value<OrthodoxValue> remove (String field) {
 
     return valueMap.remove(field);
   }
 
+  /**
+   * Removes all fields from the object, leaving it empty.
+   *
+   * @return this object for chaining
+   */
   @Override
   public ObjectValue<OrthodoxValue> removeAll () {
 
@@ -95,6 +143,12 @@ public class OrthodoxObjectValue extends OrthodoxValue implements ObjectValue<Or
     return this;
   }
 
+  /**
+   * Writes the JSON object representation of all non-null fields to {@code writer}.
+   *
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

@@ -32,7 +32,23 @@
  */
 package org.smallmind.bayeux.oumuamua.server.api;
 
+/**
+ * Classifies the role a {@link Packet} plays within the Bayeux message exchange.
+ */
 public enum PacketType {
 
-  REQUEST, RESPONSE, DELIVERY
+  /**
+   * An inbound packet carrying messages from a client to the server.
+   */
+  REQUEST,
+
+  /**
+   * An outbound packet carrying server-generated replies to a specific requesting session.
+   */
+  RESPONSE,
+
+  /**
+   * An outbound packet distributing a published message to subscribing sessions.
+   */
+  DELIVERY
 }

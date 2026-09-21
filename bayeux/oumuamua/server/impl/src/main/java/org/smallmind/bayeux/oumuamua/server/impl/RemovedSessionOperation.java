@@ -36,15 +36,33 @@ import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 
+/**
+ * {@link ChannelOperation} that unsubscribes a single departed session from every channel it
+ * encounters during a tree walk; used when a session is removed to ensure no channel retains a
+ * stale subscriber reference.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class RemovedSessionOperation<V extends Value<V>> implements ChannelOperation<V> {
 
   private final Session<V> session;
 
+  /**
+   * Captures the session to unsubscribe during the tree walk.
+   *
+   * @param session the session that has been removed from the server's registry
+   */
   public RemovedSessionOperation (Session<V> session) {
 
     this.session = session;
   }
 
+  /**
+   * Calls {@link Channel#unsubscribe} for the captured session on the channel at this branch;
+   * silently skips branches that carry no channel.
+   *
+   * @param channelBranch the branch currently being visited during the tree walk
+   */
   @Override
   public void operate (ChannelBranch<V> channelBranch) {
 

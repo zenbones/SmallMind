@@ -35,12 +35,22 @@ package org.smallmind.bayeux.oumuamua.server.spi;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Segment;
 
+/**
+ * {@link Segment} implementation backed by a plain string literal, with shared singleton
+ * instances for the single-level ({@code *}) and deep ({@code **}) Bayeux wildcards.
+ */
 public class StringSegment extends Segment {
 
   private static final StringSegment WILD_SEGMENT = new StringSegment(Channel.WILD);
   private static final StringSegment DEEP_WILD_SEGMENT = new StringSegment(Channel.DEEP_WILD);
   private final String name;
 
+  /**
+   * Constructs a segment wrapping the given text.
+   *
+   * @param name segment text; must not be null
+   * @throws NullPointerException if {@code name} is null
+   */
   public StringSegment (String name) {
 
     if (name == null) {
@@ -51,16 +61,32 @@ public class StringSegment extends Segment {
     }
   }
 
+  /**
+   * Returns the shared single-level wildcard segment ({@code *}).
+   *
+   * @return singleton {@code StringSegment} whose text equals {@link Channel#WILD}
+   */
   public static StringSegment wild () {
 
     return WILD_SEGMENT;
   }
 
+  /**
+   * Returns the shared deep wildcard segment ({@code **}).
+   *
+   * @return singleton {@code StringSegment} whose text equals {@link Channel#DEEP_WILD}
+   */
   public static StringSegment deepWild () {
 
     return DEEP_WILD_SEGMENT;
   }
 
+  /**
+   * Tests whether this segment's text equals {@code charSequence} character-for-character.
+   *
+   * @param charSequence sequence to compare; null or different length always returns {@code false}
+   * @return {@code true} if every character matches
+   */
   @Override
   public boolean matches (CharSequence charSequence) {
 
@@ -79,24 +105,49 @@ public class StringSegment extends Segment {
     }
   }
 
+  /**
+   * Returns the segment text as a plain string.
+   *
+   * @return the literal string backing this segment
+   */
   @Override
   public String toString () {
 
     return name;
   }
 
+  /**
+   * Returns the number of characters in the segment text.
+   *
+   * @return character count of the backing string
+   */
   @Override
   public int length () {
 
     return name.length();
   }
 
+  /**
+   * Returns the character at the given index within the segment text.
+   *
+   * @param index zero-based character position
+   * @return character at that position
+   * @throws StringIndexOutOfBoundsException if {@code index} is out of range
+   */
   @Override
   public char charAt (int index) {
 
     return name.charAt(index);
   }
 
+  /**
+   * Returns the sub-sequence of the segment text between {@code start} and {@code end}.
+   *
+   * @param start start index, inclusive
+   * @param end   end index, exclusive
+   * @return the requested substring
+   * @throws StringIndexOutOfBoundsException if the indices are out of range
+   */
   @Override
   public CharSequence subSequence (int start, int end) {
 

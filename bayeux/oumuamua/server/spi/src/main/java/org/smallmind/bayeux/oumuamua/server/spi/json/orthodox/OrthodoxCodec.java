@@ -38,23 +38,44 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.json.JsonDeserializer;
 
+/**
+ * {@link Codec} implementation for the orthodox value model, delegating JSON parsing and object
+ * conversion to an injected {@link JsonDeserializer} and using a shared {@link OrthodoxValueFactory}.
+ */
 public class OrthodoxCodec implements Codec<OrthodoxValue> {
 
   private static final OrthodoxValueFactory FACTORY = new OrthodoxValueFactory();
 
   private final JsonDeserializer<OrthodoxValue> deserializer;
 
+  /**
+   * Constructs the codec with the given deserializer for all inbound JSON parsing.
+   *
+   * @param deserializer the {@link JsonDeserializer} used to decode byte and string payloads
+   */
   public OrthodoxCodec (JsonDeserializer<OrthodoxValue> deserializer) {
 
     this.deserializer = deserializer;
   }
 
+  /**
+   * Allocates and returns a new, empty {@link OrthodoxMessage} backed by the shared factory.
+   *
+   * @return fresh empty message ready to be populated
+   */
   @Override
   public Message<OrthodoxValue> create () {
 
     return new OrthodoxMessage(this, FACTORY);
   }
 
+  /**
+   * Parses one or more messages from a raw byte payload via the injected deserializer.
+   *
+   * @param buffer JSON-encoded payload bytes
+   * @return array of decoded messages
+   * @throws IOException if the payload cannot be parsed
+   */
   @Override
   public Message<OrthodoxValue>[] from (byte[] buffer)
     throws IOException {
@@ -62,6 +83,13 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
     return deserializer.read(this, buffer);
   }
 
+  /**
+   * Parses one or more messages from a JSON string payload via the injected deserializer.
+   *
+   * @param data JSON-encoded string
+   * @return array of decoded messages
+   * @throws IOException if the string cannot be parsed
+   */
   @Override
   public Message<OrthodoxValue>[] from (String data)
     throws IOException {
@@ -69,6 +97,14 @@ public class OrthodoxCodec implements Codec<OrthodoxValue> {
     return deserializer.read(this, data);
   }
 
+  /**
+   * Converts {@code object} to an {@link OrthodoxValue} tree using the shared factory and the
+   * injected deserializer.
+   *
+   * @param object arbitrary object to convert; must be serializable by the configured deserializer
+   * @return value tree representing {@code object}
+   * @throws IOException if conversion fails
+   */
   @Override
   public Value<OrthodoxValue> convert (Object object)
     throws IOException {

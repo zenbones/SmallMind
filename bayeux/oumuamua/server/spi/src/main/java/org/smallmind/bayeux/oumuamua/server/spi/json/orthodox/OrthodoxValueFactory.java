@@ -40,50 +40,99 @@ import org.smallmind.bayeux.oumuamua.server.api.json.ObjectValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.StringValue;
 import org.smallmind.bayeux.oumuamua.server.api.json.ValueFactory;
 
+/**
+ * {@link ValueFactory} that instantiates the full suite of orthodox value implementations,
+ * serving as the single creation point for all {@link OrthodoxValue} subtypes within a codec session.
+ */
 public class OrthodoxValueFactory implements ValueFactory<OrthodoxValue> {
 
+  /**
+   * Allocates and returns a new, empty {@link OrthodoxObjectValue}.
+   *
+   * @return new mutable object value backed by a {@link java.util.HashMap}
+   */
   @Override
   public ObjectValue<OrthodoxValue> objectValue () {
 
     return new OrthodoxObjectValue(this);
   }
 
+  /**
+   * Allocates and returns a new, empty {@link OrthodoxArrayValue}.
+   *
+   * @return new mutable array value backed by a {@link java.util.LinkedList}
+   */
   @Override
   public ArrayValue<OrthodoxValue> arrayValue () {
 
     return new OrthodoxArrayValue(this);
   }
 
+  /**
+   * Creates an {@link OrthodoxTextValue} wrapping {@code text}.
+   *
+   * @param text the string to wrap; encoded with JSON escaping when serialized
+   * @return new immutable string value
+   */
   @Override
   public StringValue<OrthodoxValue> textValue (String text) {
 
     return new OrthodoxTextValue(this, text);
   }
 
+  /**
+   * Creates an {@link OrthodoxIntegerValue} wrapping {@code i}.
+   *
+   * @param i the primitive int to wrap
+   * @return new immutable integer number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#INTEGER}
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (int i) {
 
     return new OrthodoxIntegerValue(this, i);
   }
 
+  /**
+   * Creates an {@link OrthodoxLongValue} wrapping {@code l}.
+   *
+   * @param l the primitive long to wrap
+   * @return new immutable long number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#LONG}
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (long l) {
 
     return new OrthodoxLongValue(this, l);
   }
 
+  /**
+   * Creates an {@link OrthodoxDoubleValue} wrapping {@code d}.
+   *
+   * @param d the primitive double to wrap
+   * @return new immutable double number value with {@link org.smallmind.bayeux.oumuamua.server.api.json.NumberType#DOUBLE}
+   */
   @Override
   public NumberValue<OrthodoxValue> numberValue (double d) {
 
     return new OrthodoxDoubleValue(this, d);
   }
 
+  /**
+   * Creates an {@link OrthodoxBooleanValue} wrapping {@code bool}.
+   *
+   * @param bool the primitive boolean to wrap
+   * @return new immutable boolean value encoding as {@code true} or {@code false}
+   */
   @Override
   public BooleanValue<OrthodoxValue> booleanValue (boolean bool) {
 
     return new OrthodoxBooleanValue(this, bool);
   }
 
+  /**
+   * Creates an {@link OrthodoxNullValue} encoding the JSON literal {@code null}.
+   *
+   * @return new null value instance
+   */
   @Override
   public NullValue<OrthodoxValue> nullValue () {
 

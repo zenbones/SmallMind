@@ -37,10 +37,20 @@ import java.io.Writer;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberType;
 import org.smallmind.bayeux.oumuamua.server.api.json.NumberValue;
 
+/**
+ * Immutable {@link NumberValue} wrapping a IEEE 754 double-precision floating-point scalar for the
+ * orthodox codec; reports {@link NumberType#DOUBLE} and truncates when coerced to integer types.
+ */
 public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<OrthodoxValue> {
 
   private final double value;
 
+  /**
+   * Constructs a double value associated with the given factory.
+   *
+   * @param factory the {@link OrthodoxValueFactory} that owns this value
+   * @param value   the double-precision number to wrap
+   */
   protected OrthodoxDoubleValue (OrthodoxValueFactory factory, double value) {
 
     super(factory);
@@ -48,36 +58,67 @@ public class OrthodoxDoubleValue extends OrthodoxValue implements NumberValue<Or
     this.value = value;
   }
 
+  /**
+   * Identifies the numeric subtype of this value.
+   *
+   * @return {@link NumberType#DOUBLE}
+   */
   @Override
   public NumberType getNumberType () {
 
     return NumberType.DOUBLE;
   }
 
+  /**
+   * Returns the value boxed as a {@link Double}.
+   *
+   * @return boxed {@code Double} representation
+   */
   @Override
   public Number asNumber () {
 
     return value;
   }
 
+  /**
+   * Returns the value narrowed to a primitive int by truncation toward zero.
+   *
+   * @return integer part of the double, truncated
+   */
   @Override
   public int asInt () {
 
     return (int)value;
   }
 
+  /**
+   * Returns the value narrowed to a primitive long by truncation toward zero.
+   *
+   * @return integer part of the double as a long, truncated
+   */
   @Override
   public long asLong () {
 
     return (long)value;
   }
 
+  /**
+   * Returns the raw wrapped double value.
+   *
+   * @return the primitive double as stored at construction
+   */
   @Override
   public double asDouble () {
 
     return value;
   }
 
+  /**
+   * Writes the JSON numeric literal representation of the double to {@code writer}.
+   *
+   * @param writer destination for the JSON output
+   * @throws IOException if writing to {@code writer} fails
+   */
   @Override
   public void encode (Writer writer)
     throws IOException {

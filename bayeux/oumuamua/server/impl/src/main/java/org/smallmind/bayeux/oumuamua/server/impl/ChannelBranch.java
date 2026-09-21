@@ -49,19 +49,38 @@ import org.smallmind.bayeux.oumuamua.server.api.Session;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.StringSegment;
+import org.smallmind.nutsnbolts.util.Pair;
 
+/**
+ * Single node in the channel path hierarchy, holding an optional {@link Channel} and a map of
+ * child nodes keyed by path segment; supports concurrent reads with exclusive writes via a
+ * read/write lock on the channel reference.
+ *
+ * @param <V> the concrete {@link Value} type used throughout message processing
+ */
 public class ChannelBranch<V extends Value<V>> {
 
-  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock channelChangeLock = new ReentrantReadWriteLock(true);
   private final ConcurrentHashMap<Segment, ChannelBranch<V>> childMap = new ConcurrentHashMap<>();
   private final ChannelBranch<V> parent;
   private Channel<V> channel;
 
+  /**
+   * Allocates a new branch node with the given parent reference.
+   *
+   * @param parent the branch one level up in the hierarchy, or {@code null} when this node is the
+   *               top-level sentinel used by {@link ChannelTree}
+   */
   public ChannelBranch (ChannelBranch<V> parent) {
 
     this.parent = parent;
   }
 
+  /**
+   * Returns the channel stored at this branch node under a read lock.
+   *
+   * @return the channel, or {@code null} if no channel has been placed here yet
+   */
   public Channel<V> getChannel () {
 
     channelChangeLock.readLock().lock();
@@ -74,6 +93,14 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Traverses the child map segment-by-segment to locate the channel at the given route.
+   *
+   * @param index the current position within {@code route}; incremented on each recursive call
+   * @param route the full route whose segments drive the traversal
+   * @return the channel at the terminal segment, or {@code null} if any intermediate segment is
+   * absent
+   */
   public Channel<V> find (int index, DefaultRoute route) {
 
     ChannelBranch<V> child;
@@ -87,18 +114,41 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Navigates to the terminal segment of the route, creating any absent intermediate branch nodes
+   * along the way, then delegates to {@link #initializeChannel} at the leaf.
+   *
+   * @param timeToLive             TTL in milliseconds for a newly created channel
+   * @param index                  the current segment index; incremented on each recursive call
+   * @param route                  the full route being resolved
+   * @param root                   server facade passed through to the created channel
+   * @param channelCallback        invoked with the new channel immediately after creation
+   * @param onSubscribedCallback   forwarded to the channel for subscription events
+   * @param onUnsubscribedCallback forwarded to the channel for unsubscription events
+   * @param initializerQueue       initializers to apply to a newly created channel; may be
+   *                               {@code null}
+   * @return the existing or newly created channel at the route's terminal position
+   */
   protected Channel<V> addChannelAsNecessary (long timeToLive, int index, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
-    ChannelBranch<V> child;
-    Segment segment;
-
-    if ((child = childMap.get(segment = route.getSegment(index))) == null) {
-      childMap.put(segment, child = new ChannelBranch<V>(this));
-    }
+    ChannelBranch<V> child = childMap.computeIfAbsent(route.getSegment(index), segment -> new ChannelBranch<>(this));
 
     return (index == route.lastIndex()) ? child.initializeChannel(timeToLive, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue) : child.addChannelAsNecessary(timeToLive, index + 1, route, root, channelCallback, onSubscribedCallback, onUnsubscribedCallback, initializerQueue);
   }
 
+  /**
+   * Creates the channel on this branch under an exclusive write lock if one does not already
+   * exist, runs all initializers, and fires the creation callback.
+   *
+   * @param timeToLive             TTL in milliseconds assigned to the new channel
+   * @param route                  the route the new channel will be registered under
+   * @param root                   server facade passed to the {@link OumuamuaChannel} constructor
+   * @param channelCallback        invoked with the channel after all initializers have run
+   * @param onSubscribedCallback   forwarded to the channel for subscription events
+   * @param onUnsubscribedCallback forwarded to the channel for unsubscription events
+   * @param initializerQueue       ordered set of initializers to apply; may be {@code null}
+   * @return the existing channel if already present, or the newly constructed one
+   */
   private Channel<V> initializeChannel (long timeToLive, DefaultRoute route, ChannelRoot<V> root, Consumer<Channel<V>> channelCallback, BiConsumer<Channel<V>, Session<V>> onSubscribedCallback, BiConsumer<Channel<V>, Session<V>> onUnsubscribedCallback, Queue<ChannelInitializer<V>> initializerQueue) {
 
     channelChangeLock.writeLock().lock();
@@ -122,6 +172,15 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Traverses the route to find the target branch and removes its channel.
+   *
+   * @param index           the current segment index; incremented on each recursive call
+   * @param route           the full route of the channel to remove
+   * @param channelCallback invoked with the terminated channel if one was found and removed
+   * @return the branch that held the channel, or {@code null} if the route was not found
+   * @throws ChannelStateException if the target channel is persistent and removal is not permitted
+   */
   public ChannelBranch<V> removeChannelIfPresent (int index, Route route, Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
 
@@ -136,28 +195,101 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Terminates and nulls out the channel on this branch under an exclusive write lock.
+   *
+   * @param channelCallback invoked with the terminated {@link OumuamuaChannel} before this method
+   *                        returns; only called if a channel was present
+   * @return this branch instance, allowing callers to chain inspection of the now-empty branch
+   * @throws ChannelStateException if the channel is marked persistent; the channel is left intact
+   */
   public ChannelBranch<V> removeChannel (Consumer<Channel<V>> channelCallback)
     throws ChannelStateException {
+
+    Pair<OumuamuaChannel<V>, Set<Session<V>>> terminatedPair = null;
 
     channelChangeLock.writeLock().lock();
 
     try {
       if (channel != null) {
         if (channel.isPersistent()) {
-          throw new ChannelStateException("Attempt to remove persistent channel(%s)", ((OumuamuaChannel<V>)channel).getRoute().getPath());
+          throw new ChannelStateException("Attempt to remove persistent channel(%s)", channel.getRoute().getPath());
         } else {
-          channelCallback.accept(((OumuamuaChannel<V>)channel).terminate());
+          terminatedPair = ((OumuamuaChannel<V>)channel).terminate();
 
           channel = null;
         }
       }
-
-      return this;
     } finally {
       channelChangeLock.writeLock().unlock();
     }
+
+    if (terminatedPair != null) {
+      channelCallback.accept(terminatedPair.getFirst());
+      for (Session<V> unsubscribedSession : terminatedPair.getSecond()) {
+        terminatedPair.getFirst().onUnsubscribed(unsubscribedSession);
+      }
+    }
+
+    return this;
   }
 
+  /**
+   * Re-verifies removability under the branch write lock and, if the channel still qualifies,
+   * terminates and nulls it out; the callback is invoked outside the lock to prevent deadlock
+   * with callers that may acquire the tree-level lock inside the callback (e.g. to recreate the
+   * channel).  No-op if the channel has since acquired a subscriber or been made persistent.
+   *
+   * @param now             the epoch millisecond timestamp passed to {@link Channel#isRemovable(long)};
+   *                        must be the same value used for the outer removability check so that
+   *                        a channel that just became idle is not evicted before its full TTL elapses
+   * @param channelCallback invoked with the terminated channel after the write lock is released;
+   *                        only called if a channel was present and still removable at {@code now}
+   * @return this branch instance, allowing callers to chain further inspection
+   * @throws ChannelStateException if the channel is marked persistent; the channel is left intact
+   */
+  public ChannelBranch<V> removeChannelIfStillRemovable (long now, Consumer<Channel<V>> channelCallback)
+    throws ChannelStateException {
+
+    Pair<OumuamuaChannel<V>, Set<Session<V>>> terminatedPair = null;
+
+    channelChangeLock.writeLock().lock();
+
+    try {
+      if (channel != null) {
+        if (channel.isPersistent()) {
+          throw new ChannelStateException("Attempt to remove persistent channel(%s)", channel.getRoute().getPath());
+        } else if (channel.isRemovable(now)) {
+          terminatedPair = ((OumuamuaChannel<V>)channel).terminate();
+
+          channel = null;
+        }
+      }
+    } finally {
+      channelChangeLock.writeLock().unlock();
+    }
+
+    if (terminatedPair != null) {
+      channelCallback.accept(terminatedPair.getFirst());
+      for (Session<V> unsubscribedSession : terminatedPair.getSecond()) {
+        terminatedPair.getFirst().onUnsubscribed(unsubscribedSession);
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Routes the packet down the tree, matching literal segments, the single-level wildcard
+   * ({@code *}), and the deep wildcard ({@code **}) according to Bayeux routing rules.
+   *
+   * @param sender       the originating session, or {@code null} for server-side publishes
+   * @param index        the current position within the packet's route; incremented on each
+   *                     recursive call
+   * @param packet       the packet to deliver to matching channel branches
+   * @param sessionIdSet accumulates subscriber ids already delivered to, preventing duplicate
+   *                     delivery when multiple wildcard patterns match the same subscriber
+   */
   public void deliver (Session<V> sender, int index, Packet<V> packet, Set<String> sessionIdSet) {
 
     if (index < packet.getRoute().size()) {
@@ -169,7 +301,7 @@ public class ChannelBranch<V extends Value<V>> {
 
         deepWildBranch.deliverToChannel(sender, packet, sessionIdSet);
       }
-      if ((nextBranch = childMap.get(((DefaultRoute)packet.getRoute()).getSegment(index))) != null) {
+      if ((nextBranch = childMap.get(packet.getRoute().getSegment(index))) != null) {
         nextBranch.deliver(sender, index + 1, packet, sessionIdSet);
       }
     } else if (parent != null) {
@@ -184,6 +316,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Forwards the packet to this branch's channel under a read lock; no-op if the channel is absent.
+   *
+   * @param sender       the originating session
+   * @param packet       the packet to forward to the channel's subscribers
+   * @param sessionIdSet the deduplication set forwarded to {@link Channel#deliver}
+   */
   private void deliverToChannel (Session<V> sender, Packet<V> packet, Set<String> sessionIdSet) {
 
     channelChangeLock.readLock().lock();
@@ -197,6 +336,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Recursively removes childless, channel-free branches from the tree, or removes this branch
+   * from its parent when it qualifies.
+   *
+   * @param segment the key under which this branch is stored in the parent's child map; pass
+   *                {@code null} for the root call so the root itself is never removed
+   */
   protected void removeDeadLeaves (Segment segment) {
 
     if ((segment != null) && (parent != null) && (getChannel() == null) && childMap.isEmpty()) {
@@ -208,6 +354,13 @@ public class ChannelBranch<V extends Value<V>> {
     }
   }
 
+  /**
+   * Performs a depth-first traversal of this branch and all descendants, invoking the operation
+   * on every node including this one.
+   *
+   * @param operation the action to perform at each branch; called with this branch first, then
+   *                  recursively with each child
+   */
   public void walk (ChannelOperation<V> operation) {
 
     operation.operate(this);

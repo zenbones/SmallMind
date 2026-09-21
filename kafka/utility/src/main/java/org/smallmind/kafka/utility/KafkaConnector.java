@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 through 2024 David Berkman
+ * Copyright (c) 2007 through 2026 David Berkman
  *
  * This file is part of the SmallMind Code Project.
  *
@@ -30,10 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
+package org.smallmind.kafka.utility;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -43,18 +45,32 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.Node;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
+import org.smallmind.scribe.pen.LoggerManager;
 
+/**
+ * Factory for Kafka client objects sharing a single bootstrap server list.
+ * Provides methods to create fire-and-forget producers, manually-committed consumers,
+ * and short-lived admin clients, as well as a blocking availability check.
+ */
 public class KafkaConnector {
 
   private final String boostrapServers;
 
+  /**
+   * Builds the connector from one or more broker descriptors, assembling a comma-separated
+   * bootstrap server string in {@code host:port} format.
+   *
+   * @param servers one or more broker descriptors; must not be empty
+   */
   public KafkaConnector (KafkaServer... servers) {
 
     StringBuilder boostrapBuilder = new StringBuilder();
+
     boolean first = true;
 
     for (KafkaServer server : servers) {
@@ -69,11 +85,68 @@ public class KafkaConnector {
     boostrapServers = boostrapBuilder.toString();
   }
 
+  /**
+   * Returns the bootstrap server string that will be passed to all created clients.
+   *
+   * @return comma-separated list of {@code host:port} entries
+   */
   public String getBoostrapServers () {
 
     return boostrapServers;
   }
 
+  /**
+   * Blocks until at least one Kafka node is reachable or the grace period expires.
+   * Retries the cluster-describe call every second; logs and returns failure when interrupted.
+   *
+   * @param startupGracePeriodSeconds maximum seconds to keep retrying before giving up
+   * @return this connector, allowing call chaining
+   * @throws KafkaConnectionException if no node can be confirmed before the grace period elapses
+   */
+  public KafkaConnector check (int startupGracePeriodSeconds)
+    throws KafkaConnectionException {
+
+    long startTimestamp = System.currentTimeMillis();
+
+    if (!invokeAdminClient(adminClient -> {
+        while (true) {
+          try {
+            Collection<Node> nodes = adminClient.describeCluster().nodes().get();
+
+            return (nodes != null) && (!nodes.isEmpty());
+          } catch (ExecutionException | InterruptedException exception) {
+            if ((System.currentTimeMillis() - startTimestamp) < (startupGracePeriodSeconds * 1000L)) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException interruptedException) {
+                LoggerManager.getLogger(KafkaConnector.class).error(interruptedException);
+
+                return false;
+              }
+            } else {
+              LoggerManager.getLogger(KafkaConnector.class).error(exception);
+
+              return false;
+            }
+          }
+        }
+      }
+    )) {
+      throw new KafkaConnectionException("Unable to prove kafka nodes are available with boostrap servers(%s)...", boostrapServers);
+    } else {
+
+      return this;
+    }
+  }
+
+  /**
+   * Opens a temporary {@link AdminClient}, applies {@code clientFunction}, and closes the client.
+   *
+   * @param clientFunction function that accepts an {@link AdminClient} and returns a result;
+   *                       the client is closed automatically when the function returns
+   * @param <R>            return type of the function
+   * @return the value produced by {@code clientFunction}
+   */
   public <R> R invokeAdminClient (Function<AdminClient, R> clientFunction) {
 
     Properties props = new Properties();
@@ -92,6 +165,14 @@ public class KafkaConnector {
     }
   }
 
+  /**
+   * Creates a {@link Producer} configured for fire-and-forget semantics: {@code acks=0},
+   * no retries, and a short delivery timeout.  The producer writes {@code Long} keys and
+   * raw byte-array values.
+   *
+   * @param clientId client identifier reported to the broker for monitoring and tracing
+   * @return a ready-to-use {@link Producer}; the caller is responsible for closing it
+   */
   public Producer<Long, byte[]> createProducer (String clientId) {
 
     Properties props = new Properties();
@@ -121,7 +202,25 @@ public class KafkaConnector {
     return new KafkaProducer<>(props);
   }
 
-  public Consumer<Long, byte[]> createConsumer (String clientId, String groupId, String... topics) {
+  /**
+   * Creates a {@link Consumer} that reads {@code Long} keys and byte-array values with manual
+   * offset commits ({@code enable.auto.commit=false}).  A consumer group with no prior committed
+   * offset starts reading at the latest available record.  When {@code groupProtocol} is
+   * {@link KafkaGroupProtocol#CLASSIC}, {@code heartbeat.interval.ms} and
+   * {@code session.timeout.ms} are also configured; those properties are broker-managed under
+   * {@link KafkaGroupProtocol#CONSUMER} and must not be set from the client side.  If
+   * {@code topics} are provided the consumer subscribes immediately.
+   *
+   * @param groupProtocol selects the Kafka group protocol; must match what the broker supports
+   * @param instanceId    static member identity ({@code group.instance.id}); allows the broker
+   *                      to recognize this consumer across restarts and avoid unnecessary rebalances
+   * @param clientId      consumer client identifier reported to the broker
+   * @param groupId       consumer group this instance belongs to
+   * @param topics        zero or more topic names to subscribe to; passing {@code null} or an
+   *                      empty array leaves the consumer unsubscribed
+   * @return a configured {@link Consumer}; the caller is responsible for closing it
+   */
+  public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
 
     Properties props = new Properties();
 
@@ -151,7 +250,9 @@ public class KafkaConnector {
     final Consumer<Long, byte[]> consumer = new KafkaConsumer<>(props);
 
     // Subscribe to the topic.
-    consumer.subscribe(Arrays.asList(topics));
+    if ((topics != null) && (topics.length > 0)) {
+      consumer.subscribe(Arrays.asList(topics));
+    }
 
     return consumer;
   }
