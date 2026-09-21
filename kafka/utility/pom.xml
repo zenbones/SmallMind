@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-kafka</artifactId>
-    <version>5.21.0</version>
+    <version>5.22.0</version>
   </parent>
   <artifactId>kafka-utility</artifactId>
   <packaging>jar</packaging>

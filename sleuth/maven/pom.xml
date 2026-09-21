@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-sleuth</artifactId>
-    <version>5.21.0</version>
+    <version>5.22.0</version>
   </parent>
   <artifactId>sleuth-maven</artifactId>
   <name>Sleuth-Maven</name>
