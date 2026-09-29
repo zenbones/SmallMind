@@ -589,7 +589,31 @@ propagation is explicit via `ScopeSnapshot`.
     Unchecked, thrown for an unsatisfied `ExpectedScopes` declaration or
     an attempt to bind a `null` scope.
 
-*Example.*
+`PerApplicationScope`::
+    The `ScopedValue` counterpart to `lang.PerApplicationContext`. Each
+    instance owns a mutable, thread-safe map keyed by
+    `lang.PerApplicationDataManager` class; the instance methods `run` /
+    `call` bind that map for the extent of an operation, and the static
+    `setPerApplicationData` / `getPerApplicationData` read and write
+    whichever map is bound. Only the binding is scoped — the map is
+    shared, so data stored in one `run` is visible in every later or
+    concurrent `run` of the same instance and through every carrier
+    taken from it. Constructing an instance binds nothing.
+
+`PerApplicationScope.ApplicationCarrier`::
+    Returned by the static `generateCarrier()` on a bound thread; `run` /
+    `call` rebind the same map on any other thread, any number of times.
+    The static `wrapThreadFactory` decorates a `ThreadFactory` so every
+    thread it creates runs its whole body inside the carrier. Both throw
+    `MissingPerApplicationScopeException` when called on an unbound
+    thread, so a missing binding fails at wiring time rather than on the
+    first lookup.
+
+`MissingPerApplicationScopeException`::
+    Unchecked, thrown by the static accessors, `generateCarrier`, and
+    `wrapThreadFactory` when no per-application scope is bound.
+
+*Example — ambient value.*
 
 [source,java]
 ----
@@ -612,6 +636,35 @@ executor.submit(() -> snapshot.run(() -> processInBackground()));
     outside any entry.
 <3> Bindings do not follow the task to the executor thread on their
     own. The snapshot rebinds them for the extent of the inner lambda.
+
+*Example — per-application scope.*
+
+[source,java]
+----
+PerApplicationScope applicationScope = new PerApplicationScope();               // <1>
+
+applicationScope.run(() -> {
+  PerApplicationScope.setPerApplicationData(CacheManager.class, cache);          // <2>
+
+  ThreadFactory workers = PerApplicationScope.wrapThreadFactory(Thread::new);    // <3>
+  executor = Executors.newFixedThreadPool(4, workers);
+});
+
+// On a request thread, later:
+applicationScope.call(() -> chain.doFilter(request, response));                  // <4>
+----
+<1> The instance owns the map. Construction binds nothing to the
+    current thread.
+<2> Writes into the bound map. Because the map is shared, this value is
+    visible in every later `run` / `call` on `applicationScope` and on
+    every thread the wrapped factory creates.
+<3> Must be called on a bound thread; the factory carries the binding
+    for the whole life of each thread it creates. Pools built from an
+    unwrapped factory see no binding and fail with
+    `MissingPerApplicationScopeException` on first lookup.
+<4> `ScopedValue.CallableOp` carries a single checked exception type.
+    `doFilter` throws two, so a real filter declares `X = Exception` and
+    splits the rethrow.
 
 [[pkg-resource]]
 === resource — uniform addressable content
@@ -1852,6 +1905,13 @@ reference with every thread that rebinds it. `LifecycleAware`
 callbacks fire only on the original entry through `ScopeFactory`, never
 on a snapshot rebind.
 
+`PerApplicationScope` follows the same rule with
+`PerApplicationScope.generateCarrier()` and `wrapThreadFactory`. The
+difference is what is copied: a `ScopeSnapshot` copies an immutable
+binding map, whereas an `ApplicationCarrier` refers to the scope's one
+shared, mutable map, so data stored after the capture — on any thread —
+is still visible through the carrier.
+
 Structured concurrency (`StructuredTaskScope`) propagates `ScopedValue`
 bindings to forked subtasks automatically, but that API is still a
 preview feature in JDK 25 and this module does not depend on it.
@@ -1976,7 +2036,11 @@ Optional dependency failure modes::
     by child threads or executor tasks, and there is no push/pop API
     for binding at one call site and unbinding at another. Use
     `ScopeFactory.snapshot()` with `ScopeSnapshot.run` / `call` to
-    rebind explicitly. See <<behavioral-reference,Scope propagation>>.
+    rebind explicitly. The same applies to `PerApplicationScope`: every
+    thread pool that resolves per-application data must be built from
+    `PerApplicationScope.wrapThreadFactory`, or its tasks run through an
+    `ApplicationCarrier`; unlike `lang.PerApplicationContext`, nothing
+    is inherited. See <<behavioral-reference,Scope propagation>>.
 
 No JPMS `module-info`::
     `smallmind-nutsnbolts` is published as a classpath jar. Consumers
