@@ -11,9 +11,10 @@
 
 The `smallmind-nutsnbolts` module is the foundational utility jar that every
 other module in the SmallMind repository builds on. It is a single artifact,
-`smallmind-nutsnbolts`, that collects twenty-eight small, focused subpackages
+`smallmind-nutsnbolts`, that collects twenty-nine small, focused subpackages
 of general-purpose Java infrastructure: command-line parsing, thread-bound
-context stacks, CSV and XML processing, cryptography, layout calculation,
+context stacks and `ScopedValue`-bound scopes, CSV and XML processing,
+cryptography, layout calculation,
 classloader control, property expansion, a resource abstraction, time
 conversions, bag and bloom-filter collections, retry, e-mail, NTP, SSL,
 servlet and SOAP helpers, and more.
@@ -81,6 +82,7 @@ and reused across every other SmallMind artifact. It exists so that:
 * <<package-reference,Package Reference>>
 ** <<pkg-command,command — GNU-style CLI parsing>>
 ** <<pkg-context,context — thread-bound context stacks>>
+** <<pkg-scope,scope — ScopedValue-bound scopes>>
 ** <<pkg-resource,resource — uniform addressable content>>
 ** <<pkg-property,property — placeholder expansion>>
 ** <<pkg-io,io — streams, buffers, and path helpers>>
@@ -121,6 +123,10 @@ and reused across every other SmallMind artifact. It exists so that:
 | A per-thread stack of "current caller" objects that inherits into child threads
 | `org.smallmind.nutsnbolts.context`
 | `ContextFactory.pushContext`, `getContext`, `popContext`
+
+| Bind an ambient "current caller" object for the exact extent of an operation, with nothing to pop and nothing to leak
+| `org.smallmind.nutsnbolts.scope`
+| `ScopeFactory.callInScope`, `runInScope`, `getScope`, `snapshot`
 
 | Uniform access to content behind `file:`, `classpath:`, `jar:`, or URL schemes
 | `org.smallmind.nutsnbolts.resource`
@@ -342,6 +348,14 @@ Understanding them first makes every subpackage easier to read.
     transaction metadata are propagated through SmallMind services
     without polluting method signatures. See <<pkg-context>>.
 
+*Scope*::
+    The `ScopedValue`-backed counterpart to the context stack. A `Scope`
+    is bound, keyed by concrete class, only for the dynamic extent of the
+    operation passed to `ScopeFactory.callInScope` or `runInScope`. There
+    is no pop to forget, so a scope can not leak past its operation, and
+    bindings are *not* inherited by child threads — a `ScopeSnapshot`
+    carries them across a thread boundary explicitly. See <<pkg-scope>>.
+
 *PropertyExpander*::
     A configurable `${...}` placeholder engine that consults a map, system
     properties, and environment variables in a declared order, with
@@ -458,6 +472,14 @@ real services actually need. The `ExpectedContexts` annotation lets
 framework glue verify that required contexts are present at a given
 method boundary.
 
+[NOTE]
+====
+<<pkg-scope>> solves the same problem with a JDK `ScopedValue` instead of
+an inheritable thread-local. Prefer it for new code that can wrap its work
+in a lambda; keep `ContextFactory` where push and pop must happen at
+different call sites or where child-thread inheritance is relied upon.
+====
+
 *Key types.*
 
 `Context`::
@@ -502,6 +524,94 @@ CallerContext caller = ContextFactory.getContext(CallerContext.class);
 <2> Always pop in a `finally`. Failing to pop is the single most common
     bug; the context survives the method and pollutes subsequent work
     on the same thread.
+
+[[pkg-scope]]
+=== scope — ScopedValue-bound scopes
+
+*Package:* `org.smallmind.nutsnbolts.scope`
+
+Binds objects implementing the `Scope` marker, keyed by concrete class,
+for the dynamic extent of an operation. The binding is a JDK
+`ScopedValue` (final since JDK 25), so a scope exists only while the
+operation passed to `ScopeFactory.callInScope` or `runInScope` is
+executing and is unbound automatically when that operation returns or
+throws. Entering a scope of a class that is already bound shadows the
+outer binding until the inner operation completes, then restores it.
+
+*Why it exists.* `ContextFactory` (<<pkg-context>>) solves the same
+"ambient value" problem with an inheritable thread-local stack, which
+carries two costs: a forgotten `popContext` leaves the value on a
+pooled thread indefinitely, and every virtual thread copies the
+inheritable map at creation. `ScopeFactory` removes both by making the
+bound extent structural. The trade is that there is no push/pop
+surface — the caller wraps the work in a lambda — and bindings are
+*not* inherited by threads the operation starts; cross-thread
+propagation is explicit via `ScopeSnapshot`.
+
+*Key types.*
+
+`Scope`::
+    Marker interface (`Serializable`). The concrete class is the
+    binding key.
+
+`ScopeFactory`::
+    Static entry points. `callInScope` / `callInScopes` return the
+    operation's result and propagate its checked exception type
+    unchanged; `runInScope` / `runInScopes` take a `Runnable`.
+    `getScope` returns the innermost binding for a class, or `null`.
+    `filterScopesOn` collects bound scopes assignable to the given
+    filter types and validates any `ExpectedScopes` on the method.
+    `snapshot` captures the current bindings for another thread.
+    Passing a `null` scope, or an array containing one, throws
+    `ScopeException`; a `null` or empty array runs the operation with
+    no additional binding.
+
+`ScopeSnapshot`::
+    Immutable capture of the bindings on the calling thread, returned
+    by `ScopeFactory.snapshot()`. `run` / `call` rebind exactly those
+    scopes for the extent of the operation on whichever thread invokes
+    them. Reusable any number of times; fires no lifecycle callbacks.
+
+`LifecycleAware`::
+    Optional hook for scopes that need setup or teardown. `beforeEnter`
+    runs on the entering thread before the scope is bound; `afterExit`
+    runs after the operation completes, normally or by throwing. With
+    several scopes, `beforeEnter` runs in array order and `afterExit`
+    in reverse order; a `beforeEnter` that throws still triggers
+    `afterExit` for the scopes already entered.
+
+`ExpectedScopes`::
+    Method-level annotation naming the `Scope` types that must be bound
+    when the method runs. `ScopeFactory.filterScopesOn(method, filters...)`
+    validates and collects them.
+
+`ScopeException`::
+    Unchecked, thrown for an unsatisfied `ExpectedScopes` declaration or
+    an attempt to bind a `null` scope.
+
+*Example.*
+
+[source,java]
+----
+public record CallerScope(String userId, String tenantId) implements Scope {}
+
+Response response = ScopeFactory.callInScope(
+  new CallerScope("u-42", "t-7"), () -> processRequest());               // <1>
+
+// Deep in the call stack — no parameter plumbing:
+CallerScope caller = ScopeFactory.getScope(CallerScope.class);           // <2>
+
+// Handing work to another thread:
+ScopeSnapshot snapshot = ScopeFactory.snapshot();                         // <3>
+executor.submit(() -> snapshot.run(() -> processInBackground()));
+----
+<1> The scope is bound for exactly the duration of `processRequest()`.
+    If `processRequest` throws a checked exception, `callInScope`
+    throws that same type; there is nothing to pop in a `finally`.
+<2> Returns the innermost bound `CallerScope`, or `null` when called
+    outside any entry.
+<3> Bindings do not follow the task to the executor thread on their
+    own. The snapshot rebinds them for the extent of the inner lambda.
 
 [[pkg-resource]]
 === resource — uniform addressable content
@@ -1722,6 +1832,30 @@ Any context that refers to mutable state (connection handles,
 transactions, open resources) is still *shared by reference* with the
 parent — inheritability copies the stacks, not the objects on them.
 
+=== Scope propagation
+
+`ScopeFactory` is backed by a `ScopedValue`. A binding is visible only
+on the thread that entered it and only for the dynamic extent of the
+entered operation. Threads started from inside that extent — via
+`new Thread`, an executor, or a `CompletableFuture` — see no bindings.
+
+To carry bindings across a thread boundary, call
+`ScopeFactory.snapshot()` on the originating thread and run the
+downstream work through `ScopeSnapshot.run` or `call`. The snapshot is
+an immutable copy of the binding map taken at that moment; it does not
+track later entries or exits on the originating thread, and it can be
+reused for any number of runs on any number of threads.
+
+As with context inheritance, the snapshot copies the *map*, not the
+scope objects. A scope that refers to mutable state is shared by
+reference with every thread that rebinds it. `LifecycleAware`
+callbacks fire only on the original entry through `ScopeFactory`, never
+on a snapshot rebind.
+
+Structured concurrency (`StructuredTaskScope`) propagates `ScopedValue`
+bindings to forked subtasks automatically, but that API is still a
+preview feature in JDK 25 and this module does not depend on it.
+
 === PropertyExpander resolution order
 
 With `SystemPropertyMode.FALLBACK` (the default):
@@ -1836,6 +1970,13 @@ Optional dependency failure modes::
     widget. Using it in a real application requires writing the
     `ParaboxElement` adapter for your toolkit (the `smallmind-javafx`
     module contains a JavaFX adapter as a reference).
+
+`scope` bindings do not cross plain thread boundaries::
+    Unlike `ContextFactory`, `ScopeFactory` bindings are not inherited
+    by child threads or executor tasks, and there is no push/pop API
+    for binding at one call site and unbinding at another. Use
+    `ScopeFactory.snapshot()` with `ScopeSnapshot.run` / `call` to
+    rebind explicitly. See <<behavioral-reference,Scope propagation>>.
 
 No JPMS `module-info`::
     `smallmind-nutsnbolts` is published as a classpath jar. Consumers

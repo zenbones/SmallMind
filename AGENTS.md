@@ -74,7 +74,7 @@ See `CODE_STYLE.md` for the authoritative, detailed conventions — formatting, 
 - Use explicit imports. Never use wildcard imports.
 - Use descriptive names, even when they are long.
 - Prefer straightforward imperative control flow over stream-heavy or functional rewrites.
-- Avoid records, sealed types, Lombok, annotation-driven code generation, or other convenience features unless the surrounding module already uses them.
+- Records are fine for immutable value carriers (see `CODE_STYLE.md`). Avoid sealed types, Lombok, annotation-driven code generation, or other convenience features unless the surrounding module already uses them.
 - Do not modernize code just because the build targets a recent JDK. This project's style is intentionally conservative and explicit.
 - Use comments sparingly. Prefer clear code and focused Javadocs on public contracts.
 - Do not refactor unrelated code while making a focused fix.

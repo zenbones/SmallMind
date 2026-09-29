@@ -182,6 +182,8 @@ Other rules:
 - Do not use `final` on parameters or local variables as a matter of habit — leave it off unless the surrounding code already uses it.
 - Do not use `this.` unless required for disambiguation (for example, a setter or constructor assigning a parameter to a field of the same name).
 - Prefer straightforward `public` / `private` visibility. Reach for `protected` only when a real subclass contract requires it.
+- Records are welcome for immutable value carriers — a small set of final components, no hidden mutable state, no lifecycle. Use a record when the type is exactly its data (a key, a coordinate pair, a scope or context marker, a result tuple); use a class when the type needs a builder, setters, non-trivial validation beyond a compact constructor, or inheritance. A record's compact constructor is the right place for argument checks. Records follow the same declaration spacing as classes (`public record Range (int low, int high)`).
+- Sealed types, Lombok, and annotation-driven code generation remain off the table unless the surrounding module already uses them.
 - On `Serializable` types, prefer not to declare `serialVersionUID`. The default auto-computed id rejects deserialization when the class's serialized shape changes — that rejection is usually the safety mechanism you want. Declare an explicit `serialVersionUID` only when you have a specific reason to accept structural changes across versions, and record why.
 
 ## Control Flow And Idioms
