@@ -370,7 +370,7 @@ public class OumuamuaServerTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return packet;
       }

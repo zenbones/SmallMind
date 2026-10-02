@@ -158,9 +158,11 @@ public interface Server<V extends Value<V>> extends Attributed {
      *
      * @param sender session that originally published the message
      * @param packet delivery packet being distributed
+     * @param local  {@code true} if the packet originated on this node, {@code false} if it was
+     *               received from the backbone
      * @return packet to continue delivering, possibly transformed
      */
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet, boolean local);
   }
 
   /**
@@ -377,11 +379,13 @@ public interface Server<V extends Value<V>> extends Attributed {
    * Routes a packet to its target channel subscribers, optionally publishing to the backbone
    * for cluster-wide distribution.
    *
-   * @param sender    session originating the packet
-   * @param packet    packet to deliver
-   * @param clustered {@code true} to also forward the packet to the backbone for other nodes
+   * @param sender session originating the packet
+   * @param packet packet to deliver
+   * @param local  {@code true} if the packet originated on this node, in which case it is also
+   *               forwarded to the backbone for other nodes; {@code false} for packets received
+   *               from the backbone
    */
-  void deliver (Session<V> sender, Packet<V> packet, boolean clustered);
+  void deliver (Session<V> sender, Packet<V> packet, boolean local);
 
   /**
    * Pushes a packet directly to the packet listeners of a channel without involving transports,

@@ -368,7 +368,7 @@ public class BayeuxServiceDefaultsTest {
       }
 
       @Override
-      public void deliver (Session<TestValueFactory.TestValue> sender, Packet<TestValueFactory.TestValue> packet, boolean clustered) {
+      public void deliver (Session<TestValueFactory.TestValue> sender, Packet<TestValueFactory.TestValue> packet, boolean local) {
 
       }
 

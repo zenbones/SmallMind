@@ -196,7 +196,7 @@ Backbone::
     The inter-node message distribution layer. A single-node deployment can
     omit it. A multi-node deployment supplies a `Backbone`
     implementation — in this repository that is `KafkaBackbone` — and
-    every `deliver` with `clustered=true` fans the packet out
+    every `deliver` with `local=true` fans the packet out
     to peer nodes over the bus.
 
 Codec and Value::
@@ -742,7 +742,7 @@ public interface Server<V extends Value<V>> extends Attributed {
   // packet pipeline
   Packet<V>    onRequest(Session<V> sender, Packet<V> packet);
   Packet<V>    onResponse(Session<V> sender, Packet<V> packet);
-  void         deliver(Session<V> sender, Packet<V> packet, boolean clustered);
+  void         deliver(Session<V> sender, Packet<V> packet, boolean local);
   void         forward(Channel<V> channel, Packet<V> packet);
 
   // configuration surface
@@ -770,11 +770,14 @@ Notable behaviours:
   channel's `isPersistent()` flag is `true`. Unsubscribe every
   session before removal if you want listeners to see the
   `onUnsubscribed` notifications.
-* `deliver(sender, packet, clustered)` is the main fan-out call.
-  When `clustered` is `true` and a backbone is configured,
-  the packet is also handed to `Backbone.publish` for peer nodes.
-  When the server *receives* a packet from the backbone, `deliver`
-  is called with `clustered=false` to prevent an infinite loop.
+* `deliver(sender, packet, local)` is the main fan-out call.
+  When `local` is `true` the packet originated on this node, and if a
+  backbone is configured it is also handed to `Backbone.publish` for
+  peer nodes. When the server *receives* a packet from the backbone,
+  `deliver` is called with `local=false` to prevent an infinite loop.
+  The same flag is passed through to every
+  `Server.PacketListener.onDelivery` call, so a listener can tell a
+  locally published packet from one arriving off the bus.
 * `forward(channel, packet)` is the "local fan-out without
   transports" call — useful for `BayeuxService` implementations
   that want to spit their response into a channel's packet listeners
@@ -806,7 +809,11 @@ Four subtypes, each tied to a distinct event:
 +
 * `onRequest(sender, packet)` — inbound client request.
 * `onResponse(sender, packet)` — outbound server response.
-* `onDelivery(sender, packet)` — fan-out packet, per subscriber.
+* `onDelivery(sender, packet, local)` — fan-out packet, per subscriber.
+  `local` is `true` for packets published on this node and `false` for
+  packets received from the backbone; because the server-level chain
+  runs on both the publishing node and every receiving node, a listener
+  that must act exactly once cluster-wide should check this flag.
 +
 Returning a different `Packet` replaces the original for every
 listener further down the chain. This is the mechanism `AckExtension`
@@ -1058,7 +1065,7 @@ public class AuditPacketListener<V extends Value<V>>
   }
 
   @Override public Packet<V> onResponse(Session<V> sender, Packet<V> packet) { return packet; }
-  @Override public Packet<V> onDelivery(Session<V> sender, Packet<V> packet) { return packet; }
+  @Override public Packet<V> onDelivery(Session<V> sender, Packet<V> packet, boolean local) { return packet; }
 }
 
 server.addListener(new AuditPacketListener<>());
@@ -1119,7 +1126,7 @@ How it works, concretely:
 * Each consumer worker polls the topic. For every record it receives, it
   compares the record's node id against the local node's id; matches
   are skipped to prevent loopback. Non-matches are deserialized and
-  handed to `Server.deliver(sender=null, packet, clustered=false)`
+  handed to `Server.deliver(sender=null, packet, local=false)`
   so that the fan-out happens without re-publishing to the backbone.
 * `shutDown` gracefully wakes every consumer via
   `KafkaConsumer.wakeup()` and closes the producer.
@@ -1227,8 +1234,8 @@ A single round trip walks the packet through several hands:
    or a publish. Meta requests are handled internally; service requests
    are dispatched to the matching `BayeuxService`; publishes are
    fanned out via `deliver`.
-6. `deliver` runs `Server.PacketListener.onDelivery`,
-   freezes the messages, then walks every subscribed session and calls
+6. `deliver` runs `Server.PacketListener.onDelivery` (passing
+   `local=true`), freezes the messages, then walks every subscribed session and calls
    `Session.deliver`, which runs
    `Session.PacketListener.onDelivery` before queueing or
    streaming the packet.
