@@ -104,6 +104,15 @@ public class PerApplicationScope {
     return new WrappingThreadFactory(generateCarrier(), threadFactory);
   }
 
+  private static ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> requireBoundMap () {
+
+    if (!PER_APPLICATION_MAP.isBound()) {
+      throw new MissingPerApplicationScopeException("No per-application scope is bound in this thread environment");
+    }
+
+    return PER_APPLICATION_MAP.get();
+  }
+
   /**
    * Runs the operation with this scope's per-application map bound to the current thread for the dynamic extent of the operation.
    *
@@ -127,15 +136,6 @@ public class PerApplicationScope {
     throws X {
 
     return ScopedValue.where(PER_APPLICATION_MAP, perApplicationMap).call(op);
-  }
-
-  private static ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> requireBoundMap () {
-
-    if (!PER_APPLICATION_MAP.isBound()) {
-      throw new MissingPerApplicationScopeException("No per-application scope is bound in this thread environment");
-    }
-
-    return PER_APPLICATION_MAP.get();
   }
 
   /**

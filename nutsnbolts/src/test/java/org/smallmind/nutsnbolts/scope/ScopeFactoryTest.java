@@ -43,6 +43,20 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ScopeFactoryTest {
 
+  private static void joinChild (Runnable runnable) {
+
+    Thread child = new Thread(runnable);
+
+    child.setName("scope-factory-test-child");
+    child.setDaemon(true);
+    child.start();
+    try {
+      child.join();
+    } catch (InterruptedException interruptedException) {
+      throw new IllegalStateException(interruptedException);
+    }
+  }
+
   public void testScopeIsVisibleOnlyInsideTheOperation () {
 
     Assert.assertNull(ScopeFactory.getScope(TestScope.class));
@@ -255,20 +269,6 @@ public class ScopeFactoryTest {
     Assert.assertEquals(boundSnapshot.call(() -> ScopeFactory.getScope(TestScope.class).getValue()), "captured");
     Assert.assertEquals(boundSnapshot.call(() -> ScopeFactory.getScope(TestScope.class).getValue()), "captured");
     Assert.assertNull(ScopeFactory.getScope(TestScope.class));
-  }
-
-  private static void joinChild (Runnable runnable) {
-
-    Thread child = new Thread(runnable);
-
-    child.setName("scope-factory-test-child");
-    child.setDaemon(true);
-    child.start();
-    try {
-      child.join();
-    } catch (InterruptedException interruptedException) {
-      throw new IllegalStateException(interruptedException);
-    }
   }
 
   public static class TestScope implements Scope {

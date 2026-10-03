@@ -43,6 +43,25 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class PerApplicationScopeTest {
 
+  private static void joinChild (Runnable runnable) {
+
+    Thread child = new Thread(runnable);
+
+    child.setName("per-application-scope-test-child");
+    child.setDaemon(true);
+    joinThread(child);
+  }
+
+  private static void joinThread (Thread thread) {
+
+    thread.start();
+    try {
+      thread.join();
+    } catch (InterruptedException interruptedException) {
+      throw new IllegalStateException(interruptedException);
+    }
+  }
+
   public void testDataIsVisibleInsideRun () {
 
     PerApplicationScope scope = new PerApplicationScope();
@@ -219,25 +238,6 @@ public class PerApplicationScopeTest {
   public void testWrapThreadFactoryWithoutScopeThrows () {
 
     PerApplicationScope.wrapThreadFactory(Thread::new);
-  }
-
-  private static void joinChild (Runnable runnable) {
-
-    Thread child = new Thread(runnable);
-
-    child.setName("per-application-scope-test-child");
-    child.setDaemon(true);
-    joinThread(child);
-  }
-
-  private static void joinThread (Thread thread) {
-
-    thread.start();
-    try {
-      thread.join();
-    } catch (InterruptedException interruptedException) {
-      throw new IllegalStateException(interruptedException);
-    }
   }
 
   public static class SampleManager implements PerApplicationDataManager {
