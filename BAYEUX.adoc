@@ -1089,8 +1089,9 @@ implementation speaks Kafka.
     <constructor-arg name="concurrencyLimit"          value="1"/>           <2>
     <constructor-arg name="startupGracePeriodSeconds" value="10"/>          <3>
     <constructor-arg name="groupProtocol"             value="CLASSIC"/>     <4>
-    <constructor-arg name="topicName"                 value="oumuamua"/>    <5>
-    <constructor-arg name="servers">                                         <6>
+    <constructor-arg name="dynamicConsumers"          value="true"/>        <5>
+    <constructor-arg name="topicName"                 value="oumuamua"/>    <6>
+    <constructor-arg name="servers">                                         <7>
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="kafka-1:9094,kafka-2:9094"/>
       </bean>
@@ -1100,7 +1101,10 @@ implementation speaks Kafka.
 ----
 <1> Identifies this node in log messages and is also stamped on every
     record this node produces, so each node can filter out its own records
-    on receipt (loopback suppression). It must be unique per node.
+    on receipt (loopback suppression). It must be unique per node. When
+    `dynamicConsumers` is `false` it also prefixes each consumer worker's
+    Kafka `group.instance.id` (`<nodeName>-<workerIndex>`) and should
+    then be stable across restarts of the same node.
 <2> The number of background consumer workers polling Kafka on this
     node. One is enough unless inbound volume is very high.
 <3> How long `startUp` will wait for the broker to become reachable
@@ -1108,10 +1112,17 @@ implementation speaks Kafka.
 <4> The Kafka group protocol for the backbone's consumers. Use
     `CLASSIC` for brokers that do not support KIP-848; use `CONSUMER`
     for Kafka 3.7 and later with the new consumer protocol enabled.
-<5> The effective Kafka topic is `oumuamua-{topicName}`. Use a
+<5> Kafka group membership for the backbone's consumers. `true` joins
+    as dynamic members that leave the group as soon as they are closed;
+    `false` joins as static members (`group.instance.id` =
+    `<nodeName>-<workerIndex>`) whose assignments are held for the
+    session timeout after they go away. Because every node already uses
+    its own consumer group, static membership buys the backbone nothing;
+    `true` is the sensible choice.
+<6> The effective Kafka topic is `oumuamua-{topicName}`. Use a
     different `topicName` per Bayeux cluster if more than one
     independent cluster shares the broker.
-<6> Bootstrap servers. `KafkaServerFactoryBean` resolves
+<7> Bootstrap servers. `KafkaServerFactoryBean` resolves
     comma-separated host:port patterns into the producer/consumer
     `bootstrap.servers` property.
 

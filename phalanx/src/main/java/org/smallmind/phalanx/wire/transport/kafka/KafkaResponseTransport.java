@@ -104,18 +104,32 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
    * ingesters (whisper, talk, and shout) for the given service group, and initializes the
    * invocation worker pool.
    *
-   * @param nodeName                  label appended to producer and consumer client IDs for tracing
+   * @param nodeName                  label appended to producer and consumer client IDs for tracing; when
+   *                                  {@code dynamicConsumers} is {@code false} it also prefixes each consumer's
+   *                                  {@code group.instance.id}, in which case it must be unique across every node
+   *                                  in {@code serviceGroup} (the talk consumer group spans nodes) and stable
+   *                                  across restarts of the same node
    * @param serviceGroup              logical service group whose topics this transport subscribes to
    * @param workerClass               {@link InvocationWorker} subclass instantiated by the work manager
    * @param signalCodec               codec for encoding {@link ResultSignal}s and decoding {@link org.smallmind.phalanx.wire.signal.InvocationSignal}s
    * @param concurrencyLimit          thread count applied to both the ingesters and the invocation worker pool
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
    * @param groupProtocol             Kafka group protocol for the whisper, talk, and shout consumer threads
+   * @param dynamicConsumers          {@code true} to join the consumer groups as dynamic members, which leave
+   *                                  their groups immediately on shutdown so talk partitions are reassigned at
+   *                                  once; {@code false} to join as static members identified by
+   *                                  {@code <nodeName>-<workerIndex>}, whose assignments are held until the
+   *                                  session timeout expires
+   * @param dynamicConsumers          {@code true} to join the consumer groups as dynamic members, which leave
+   *                                  their groups immediately on shutdown so talk partitions are reassigned at
+   *                                  once; {@code false} to join as static members identified by
+   *                                  {@code <nodeName>-<workerIndex>}, whose assignments are held until the
+   *                                  session timeout expires
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while starting ingesters or the worker pool
    */
-  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, KafkaServer... servers)
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(workerClass, concurrencyLimit);
@@ -148,9 +162,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
       }
     });
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, "wire-whisper-" + instanceId, whisperTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
-    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk-" + serviceGroup, talkTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
-    shoutMessageIngester = new KafkaMessageIngester(nodeName, "wire-shout-" + instanceId, shoutTopicName, connector, groupProtocol, responseCallback, concurrencyLimit).startUp();
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, "wire-whisper-" + instanceId, whisperTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk-" + serviceGroup, talkTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, "wire-shout-" + instanceId, shoutTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
 
     if (!whisperMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
       throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");

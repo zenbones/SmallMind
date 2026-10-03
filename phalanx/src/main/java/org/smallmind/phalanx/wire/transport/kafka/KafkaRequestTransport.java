@@ -93,17 +93,25 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   /**
    * Constructs the transport, verifies Kafka broker availability, and starts the response ingester.
    *
-   * @param nodeName                  label appended to producer and consumer client IDs for tracing
+   * @param nodeName                  label appended to producer and consumer client IDs for tracing; when
+   *                                  {@code dynamicConsumers} is {@code false} it also prefixes each response
+   *                                  consumer's {@code group.instance.id} and should be stable across restarts
    * @param signalCodec               codec used to serialize {@link InvocationSignal}s and deserialize results
    * @param concurrencyLimit          number of parallel response consumer threads
    * @param defaultTimeoutSeconds     seconds a caller waits for a response when no explicit timeout is provided
    * @param startupGracePeriodSeconds seconds to retry broker connectivity before throwing
    * @param groupProtocol             Kafka group protocol for the response consumer threads
+   * @param dynamicConsumers          {@code true} to join the response consumer group as dynamic members, which
+   *                                  leave the group immediately on shutdown; {@code false} to join as static
+   *                                  members identified by {@code <nodeName>-<workerIndex>}
+   * @param dynamicConsumers          {@code true} to join the response consumer group as dynamic members, which
+   *                                  leave the group immediately on shutdown; {@code false} to join as static
+   *                                  members identified by {@code <nodeName>-<workerIndex>}
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while the response ingester is starting
    */
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, KafkaServer... servers)
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(defaultTimeoutSeconds);
@@ -129,7 +137,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
       }
     });
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, dynamicConsumers, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
 
     if (!responseMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
       throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");

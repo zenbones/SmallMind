@@ -65,13 +65,15 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class KafkaMessageIngester {
 
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
-  private final ReentrantLock consumerLock = new ReentrantLock();
+  // Fair, so that pause()/play() waiting on the lock are served ahead of the poll loop's immediate re-acquisition
+  private final ReentrantLock consumerLock = new ReentrantLock(true);
   private final KafkaConnector connector;
   private final java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback;
   private final KafkaGroupProtocol groupProtocol;
   private final String nodeName;
   private final String groupId;
   private final String topicName;
+  private final boolean dynamicConsumers;
   private final int concurrencyLimit;
   private ConsumerWorker[] workers;
 
@@ -79,21 +81,31 @@ public class KafkaMessageIngester {
    * Creates an ingester configured for the named topic without starting any threads.
    * Call {@link #startUp()} before invoking {@link #play()} or {@link #pause()}.
    *
-   * @param nodeName         label appended to consumer client IDs for broker-side diagnostics
+   * @param nodeName         label appended to consumer client IDs for broker-side diagnostics; when
+   *                         {@code dynamicConsumers} is {@code false} it is also combined with the worker index
+   *                         to form each consumer's {@code group.instance.id}, in which case it must be unique
+   *                         among every node sharing {@code groupId} and stable across restarts
    * @param groupId          Kafka consumer group identifier; governs offset coordination among workers
    * @param topicName        topic to subscribe to when the ingester is in the playing state
    * @param connector        factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
    * @param groupProtocol    Kafka group protocol applied to each worker consumer
+   * @param dynamicConsumers {@code true} to join {@code groupId} as dynamic members, which leave the group
+   *                         immediately on shutdown; {@code false} to join as static members identified by
+   *                         {@code <nodeName>-<index>}
+   * @param dynamicConsumers {@code true} to join {@code groupId} as dynamic members, which leave the group
+   *                         immediately on shutdown; {@code false} to join as static members identified by
+   *                         {@code <nodeName>-<index>}
    * @param callback         invoked for every record polled from the topic
    * @param concurrencyLimit number of parallel consumer worker threads to maintain
    */
-  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, KafkaGroupProtocol groupProtocol, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
+  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
 
     this.nodeName = nodeName;
     this.groupId = groupId;
     this.topicName = topicName;
     this.connector = connector;
     this.groupProtocol = groupProtocol;
+    this.dynamicConsumers = dynamicConsumers;
     this.callback = callback;
     this.concurrencyLimit = concurrencyLimit;
   }
@@ -102,14 +114,16 @@ public class KafkaMessageIngester {
    * Creates a Kafka consumer for the given worker slot, optionally subscribing it to the
    * configured topic.
    *
-   * @param index  zero-based worker index; incorporated into the consumer's client ID for uniqueness
+   * @param index  zero-based worker index; incorporated into the consumer's client ID and, for static
+   *               members, its {@code group.instance.id} ({@code <nodeName>-<index>}) so workers do not
+   *               fence each other
    * @param paused when {@code true} the consumer is created without an initial topic subscription;
    *               when {@code false} it subscribes to the configured topic immediately
    * @return a newly created {@link Consumer}
    */
   private Consumer<Long, byte[]> createConsumer (int index, boolean paused) {
 
-    return connector.createConsumer(groupProtocol, nodeName, "wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, paused ? null : topicName);
+    return connector.createConsumer(groupProtocol, nodeName + "-" + index, "wire-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, dynamicConsumers, paused ? null : topicName);
   }
 
   /**

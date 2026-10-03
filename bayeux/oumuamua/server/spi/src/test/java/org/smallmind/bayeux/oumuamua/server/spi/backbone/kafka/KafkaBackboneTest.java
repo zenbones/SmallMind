@@ -109,7 +109,7 @@ public class KafkaBackboneTest {
       Mockito.when(mock.check(Mockito.anyInt())).thenReturn(mock);
       Mockito.when(mock.getBoostrapServers()).thenReturn("localhost:9094");
       Mockito.when(mock.createProducer(Mockito.anyString())).thenReturn(producer);
-      Mockito.when(mock.createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any())).thenReturn(consumer);
+      Mockito.when(mock.createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.<String>any())).thenReturn(consumer);
     });
   }
 
@@ -125,7 +125,7 @@ public class KafkaBackboneTest {
   private KafkaBackbone<OrthodoxValue> createBackbone ()
     throws Exception {
 
-    return new KafkaBackbone<>(NODE_NAME, 1, 5, KafkaGroupProtocol.CLASSIC, TOPIC, new KafkaServer("localhost", 9094));
+    return new KafkaBackbone<>(NODE_NAME, 1, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, new KafkaServer("localhost", 9094));
   }
 
   private Packet<OrthodoxValue> makePacket ()
@@ -162,6 +162,7 @@ public class KafkaBackboneTest {
       1,
       SHORT_GRACE_PERIOD_SECONDS,
       KafkaGroupProtocol.CLASSIC,
+      true,
       "unit-test-topic",
       new KafkaServer("127.0.0.1", UNREACHABLE_PORT));
   }
@@ -205,7 +206,7 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.timeout(2000).times(1))
-        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.<String>any());
     } finally {
       backbone.shutDown();
     }
@@ -291,7 +292,7 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.timeout(2000).times(2))
-        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.<String>any());
       Mockito.verify(consumer, Mockito.atLeastOnce()).unsubscribe();
       Mockito.verify(consumer, Mockito.atLeastOnce()).close();
     } finally {
@@ -337,7 +338,7 @@ public class KafkaBackboneTest {
       KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
       Mockito.verify(constructedConnector, Mockito.times(1))
-        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.<String>any());
+        .createConsumer(Mockito.any(KafkaGroupProtocol.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean(), Mockito.<String>any());
     } finally {
       backbone.shutDown();
     }

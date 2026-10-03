@@ -214,16 +214,24 @@ Group protocol::
     `CONSUMER` those two values are broker-owned and the client is
     forbidden from setting them.
 
-Static membership::
-    `createConsumer` always sets `group.instance.id` from its
-    `instanceId` argument. A static member that restarts within the
-    session timeout reclaims its previous partition assignment without
-    triggering a rebalance of the whole group. The id must be unique
-    among live members of the group — two running consumers sharing an
-    `instanceId` fence each other out with `FencedInstanceIdException`.
-    Under `CLASSIC` the reclaim window is the client's
-    `session.timeout.ms` (45 seconds); under `CONSUMER` it is the
-    broker's `group.consumer.session.timeout.ms`.
+Static versus dynamic membership::
+    `createConsumer` takes a `dynamic` flag. When it is `false` the
+    consumer joins as a static member with `group.instance.id` set from
+    `instanceId`. A static member that restarts within the session
+    timeout reclaims its previous partition assignment without
+    triggering a rebalance of the whole group — but because a static
+    member does not leave the group on `close()`, its partitions are
+    also held unread for that same window whenever it goes away. The id
+    must be unique among live members of the group; two running
+    consumers sharing an `instanceId` fence each other out with
+    `FencedInstanceIdException`. Under `CLASSIC` the reclaim window is
+    the client's `session.timeout.ms` (45 seconds); under `CONSUMER` it
+    is the broker's `group.consumer.session.timeout.ms`. When `dynamic`
+    is `true` no `group.instance.id` is set, `instanceId` is ignored,
+    the broker assigns a fresh member id on every join, and `close()`
+    leaves the group immediately so partitions are reassigned at once.
+    Dynamic membership is the better fit for stateless consumers whose
+    identity changes on every restart, such as container deployments.
 
 Startup grace period::
     The maximum number of seconds `KafkaConnector.check` will keep
@@ -386,7 +394,8 @@ public class HeartbeatSink {
              connector.createConsumer(KafkaGroupProtocol.CLASSIC,               <1>
                                       "heartbeat-sink-1",                       <2>
                                       "heartbeat-reader", "heartbeat-sink",     <3>
-                                      "service.heartbeat")) {                   <4>
+                                      false,                                    <4>
+                                      "service.heartbeat")) {                   <5>
 
       while (!Thread.currentThread().isInterrupted()) {
         ConsumerRecords<Long, byte[]> batch = consumer.poll(Duration.ofSeconds(1));
@@ -396,7 +405,7 @@ public class HeartbeatSink {
         }
 
         if (!batch.isEmpty()) {
-          consumer.commitSync();                                                <5>
+          consumer.commitSync();                                                <6>
         }
       }
     }
@@ -409,17 +418,21 @@ public class HeartbeatSink {
     `CONSUMER` (KIP-848) needs a broker with the new group coordinator
     enabled and otherwise fails at startup with
     `UnsupportedVersionException`.
-<2> `group.instance.id`. Must be unique among the live members of the
-    group; a restart presenting the same id within the session timeout
-    reclaims its partitions without a rebalance.
+<2> `group.instance.id`, used only because `dynamic` is `false` below.
+    Must be unique among the live members of the group; a restart
+    presenting the same id within the session timeout reclaims its
+    partitions without a rebalance.
 <3> `client.id` (reported to the broker) and `group.id` (the consumer
     group). Two consumers sharing a `group.id` partition the topic between
     themselves; a second `group.id` receives its own independent stream of
     every record.
-<4> The vararg topic list subscribes immediately. Passing zero topics here
+<4> Static membership. Pass `true` instead for a dynamic member, which
+    ignores `instanceId`, gets a fresh member id on every join, and leaves
+    the group the moment it is closed.
+<5> The vararg topic list subscribes immediately. Passing zero topics here
     is legal and leaves the consumer unsubscribed; callers then use
     `consumer.assign(...)` for manual partition control.
-<5> Explicit commit. Because the factory sets `enable.auto.commit=false`,
+<6> Explicit commit. Because the factory sets `enable.auto.commit=false`,
     failing to commit here means the next `poll` after a restart will
     re-deliver the same batch — which is exactly the point.
 
@@ -511,7 +524,7 @@ KafkaConnector connector = new KafkaConnector(servers).check(30);
 
 Producer<Long, byte[]> orders      = connector.createProducer("order-ingest");
 Producer<Long, byte[]> metrics     = connector.createProducer("metrics-ingest");
-Consumer<Long, byte[]> orderReader = connector.createConsumer(KafkaGroupProtocol.CLASSIC, "order-service-1", "order-reader", "order-service", "orders");
+Consumer<Long, byte[]> orderReader = connector.createConsumer(KafkaGroupProtocol.CLASSIC, null, "order-reader", "order-service", true, "orders");
 ----
 
 Each call returns a fresh, independent client. They do not share any
@@ -726,10 +739,12 @@ pattern.
 | Defines the consumer group this instance joins.
 
 | `group.instance.id`
-| caller-supplied (`instanceId`)
+| caller-supplied (`instanceId`), only when `dynamic` is `false`
 | Static membership. A restarted consumer presenting the same id within
   the session timeout reclaims its partitions without a group rebalance.
-  Must be unique among the live members of the group.
+  Must be unique among the live members of the group. Not set at all
+  when `dynamic` is `true`; the consumer is then an ordinary dynamic
+  member.
 
 | `group.protocol`
 | caller-supplied (`groupProtocol.getCode()`)
@@ -1279,7 +1294,7 @@ Consumer starts reading from the end of the topic::
     Two live consumers in the same group presented the same
     `instanceId`. The broker fences the older one. Make `instanceId`
     unique per running member — typically the node name plus a worker
-    index.
+    index — or pass `dynamic=true` to drop static membership altogether.
 
 `NumberFormatException` from `KafkaServerFactoryBean`::
     The pattern's text after the first `:` is not parseable as an
@@ -1334,11 +1349,6 @@ Fixed classic session timing::
     broker-owned and cannot be set client-side at all. A caller that
     needs different classic timing builds its own `Properties`.
 
-Static membership is not optional::
-    `group.instance.id` is always set from `instanceId`; the factory
-    cannot create a dynamic member. Callers must supply a stable id
-    that is unique among the live members of the group.
-
 No connection pooling or sharing::
     Each `createProducer` / `createConsumer` call constructs a fresh
     client with its own connection pool. Callers that want to share a
@@ -1360,9 +1370,11 @@ Before shipping an integration:
    never rely on `enable.auto.commit` (it is off by default in this
    factory anyway).
 5. Pick the `KafkaGroupProtocol` that matches the broker: `CLASSIC`
-   unless the cluster has the KIP-848 group coordinator enabled. Give
-   every live consumer in a group a distinct, restart-stable
-   `instanceId`.
+   unless the cluster has the KIP-848 group coordinator enabled. Decide
+   membership per consumer: `dynamic=true` where node identity changes
+   on every restart; `dynamic=false` with a distinct, restart-stable
+   `instanceId` per live member only where partition reclaim across
+   restarts is worth the delayed reassignment.
 6. Ensure the broker cluster's `server.properties` is consistent with
    the values documented in `KafkaConfiguration`, or document any
    intentional divergence where your service's maintainers will find

@@ -208,27 +208,42 @@ public class KafkaConnector {
    * offset starts reading at the latest available record.  When {@code groupProtocol} is
    * {@link KafkaGroupProtocol#CLASSIC}, {@code heartbeat.interval.ms} and
    * {@code session.timeout.ms} are also configured; those properties are broker-managed under
-   * {@link KafkaGroupProtocol#CONSUMER} and must not be set from the client side.  If
+   * {@link KafkaGroupProtocol#CONSUMER} and must not be set from the client side.  When
+   * {@code dynamic} is {@code false} the consumer joins {@code groupId} as a static member under
+   * {@code instanceId} ({@code group.instance.id}); when {@code true} it joins as a dynamic member,
+   * {@code instanceId} is ignored, and the broker assigns a fresh member id on every join.  If
    * {@code topics} are provided the consumer subscribes immediately.
    *
    * @param groupProtocol selects the Kafka group protocol; must match what the broker supports
    * @param instanceId    static member identity ({@code group.instance.id}); allows the broker
-   *                      to recognize this consumer across restarts and avoid unnecessary rebalances
+   *                      to recognize this consumer across restarts and avoid unnecessary rebalances.
+   *                      Must be unique among the live members of {@code groupId}; a second consumer
+   *                      joining with the same id fences the first.  Ignored, and may be {@code null},
+   *                      when {@code dynamic} is {@code true}
    * @param clientId      consumer client identifier reported to the broker
    * @param groupId       consumer group this instance belongs to
+   * @param dynamic       {@code true} to join as a dynamic member (no {@code group.instance.id}); a
+   *                      dynamic member leaves the group immediately on {@code close()} so its
+   *                      partitions are reassigned at once, where a static member's assignment is
+   *                      held until the session timeout expires
    * @param topics        zero or more topic names to subscribe to; passing {@code null} or an
    *                      empty array leaves the consumer unsubscribed
    * @return a configured {@link Consumer}; the caller is responsible for closing it
    */
-  public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
+  public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, boolean dynamic, String... topics) {
 
     Properties props = new Properties();
 
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
     props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
     props.put(ConsumerConfig.GROUP_PROTOCOL_CONFIG, groupProtocol.getCode());
+
+    if (!dynamic) {
+      // A static member holds its assignment across restarts; omitting the id makes this a dynamic member
+      props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, instanceId);
+    }
+
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 

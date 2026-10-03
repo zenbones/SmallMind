@@ -93,12 +93,12 @@ public class KafkaWhisperShoutIntegrationTest extends AbstractGroundwaterTest {
     //  Required on this thread for the transports' Claxon instrumentation (see the contract base).
     new PerApplicationContext();
 
-    responseTransport = new KafkaResponseTransport("kafka-ws-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, new KafkaServer("localhost", 9094));
+    responseTransport = new KafkaResponseTransport("kafka-ws-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
     serviceImpl = new WhisperShoutServiceImpl();
 
     String instanceId = responseTransport.register(WhisperShoutService.class, serviceImpl);
 
-    requestTransport = new KafkaRequestTransport("kafka-ws-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, new KafkaServer("localhost", 9094));
+    requestTransport = new KafkaRequestTransport("kafka-ws-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
     serviceProxy = (WhisperShoutService)WireProxyFactory.generateProxy(requestTransport, 1, "WhisperShoutService", WhisperShoutService.class, new StaticParameterExtractor<>("default"), new StaticParameterExtractor<>(instanceId), null);
 
     //  No warm-up is needed: both transport constructors pre-create the topics they consume and block

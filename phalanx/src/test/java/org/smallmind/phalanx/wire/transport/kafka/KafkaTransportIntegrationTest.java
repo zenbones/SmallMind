@@ -60,14 +60,14 @@ public class KafkaTransportIntegrationTest extends AbstractWireTransportContract
   protected ResponseTransport createResponseTransport ()
     throws Exception {
 
-    return new KafkaResponseTransport("kafka-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, new KafkaServer("localhost", 9094));
+    return new KafkaResponseTransport("kafka-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
   }
 
   @Override
   protected RequestTransport createRequestTransport ()
     throws Exception {
 
-    return new KafkaRequestTransport("kafka-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, new KafkaServer("localhost", 9094));
+    return new KafkaRequestTransport("kafka-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
   }
 
   //  No warmUp() override is needed: the Kafka transports pre-create the topics they consume and their

@@ -50,7 +50,7 @@ public enum KafkaGroupProtocol {
   CLASSIC("classic"),
 
   /**
-   * KIP-848 new consumer group protocol ({@code group.protocol=group}).
+   * KIP-848 new consumer group protocol ({@code group.protocol=consumer}).
    * {@code heartbeat.interval.ms} and {@code session.timeout.ms} are not set
    * client-side; the broker manages them under this protocol.
    */

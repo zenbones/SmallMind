@@ -363,7 +363,7 @@ Lifecycle control on `ResponseTransport`:
 | Method | Effect
 
 | `play()`  | Resume request consumption (if previously `pause()`d).
-| `pause()` | Suspend request consumption; already-dispatched work continues. Talk queue only; whisper/shout continue uninterrupted.
+| `pause()` | Suspend request consumption on the shout, talk, and whisper paths; already-dispatched work continues. (The in-process Mock transport pauses talk only.)
 | `close()` | Stop the transport, shut the worker pool down, release broker resources.
 | `getState()` | Returns the current `TransportState` (`PLAYING`, `PAUSED`, `CLOSED`).
 | `isHealthy()` | Whether the transport is actually connected, bound, and consuming. A transport reports `PLAYING` whether or not a single consumer is attached to a single queue, so this — not the state — is what a liveness probe should read. A deliberately paused transport is healthy but idle.
@@ -538,9 +538,11 @@ Topic names are derived by `TopicNames` from a fixed prefix of `"wire"`:
 | response    | `wire-response-<callerId>`
 |===
 
-The whisper topic is per-instance and is deleted from the broker when the
-response transport is closed; the other three must exist at startup, so
-enable topic auto-creation or pre-create them.
+Each transport creates the topics it consumes at construction
+(`AdminClient.createTopics` with the broker's default partition count and
+replication factor; topics that already exist are left untouched). The
+whisper topic and the response topic are per-instance and are deleted from
+the broker when their transport is closed.
 
 [source,java]
 ----
@@ -553,6 +555,7 @@ KafkaRequestTransport client = new KafkaRequestTransport(
     /* defaultTimeoutSeconds    */ 30L,
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
+    /* dynamicConsumers         */ true,
     servers
 );
 
@@ -564,6 +567,7 @@ KafkaResponseTransport server = new KafkaResponseTransport(
     /* concurrencyLimit         */ 8,
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
+    /* dynamicConsumers         */ true,
     servers
 );
 ----
@@ -572,6 +576,83 @@ KafkaResponseTransport server = new KafkaResponseTransport(
 consumer: `KafkaGroupProtocol.CLASSIC` (the classic client-side rebalance
 protocol) or `KafkaGroupProtocol.CONSUMER` (the KIP-848 broker-coordinated
 protocol). It comes from `smallmind-kafka-utility`.
+
+`dynamicConsumers` selects Kafka group membership for those same consumers.
+`true` joins every consumer group as a dynamic member: no
+`group.instance.id` is set, and a consumer leaves its group the moment it
+is closed, so a node's talk partitions are reassigned immediately on
+shutdown. `false` joins as a static member identified by
+`<nodeName>-<workerIndex>`; a node that restarts under the same `nodeName`
+within the session timeout reclaims its talk partitions without
+rebalancing the rest of the group, but the partitions of a node that goes
+away are held unread for that same timeout. Use `true` for deployments
+whose node identity changes on every restart (a Kubernetes `Deployment`,
+for example) and `false` only when `nodeName` is stable across restarts
+and rebalance avoidance is worth the delayed reassignment.
+
+Consumer groups are derived from the constructor arguments as follows:
+
+[cols="1,2,3",options="header"]
+|===
+| Role | Consumer group | Membership
+
+| talk
+| `wire-talk-<serviceGroup>`
+| Shared by every response transport in the service group. Kafka
+  partitions the talk topic across all of their workers, so each request
+  is handled by exactly one node.
+
+| shout
+| `wire-shout-<instanceId>`
+| One group per response transport instance. Every instance reads the
+  whole shout topic independently, so each request reaches every node.
+
+| whisper
+| `wire-whisper-<instanceId>`
+| One group per response transport instance, on that instance's private
+  whisper topic.
+
+| response
+| `wire-response-<callerId>`
+| One group per request transport instance, on that instance's private
+  response topic.
+|===
+
+When `dynamicConsumers` is `false`, every consumer carries
+`<nodeName>-<workerIndex>` as its Kafka `group.instance.id`; the index
+keeps a node's own workers distinct, so the only collision that can occur
+is between nodes. Two operational requirements follow (neither applies
+when `dynamicConsumers` is `true`):
+
+* `nodeName` must be unique across every node in a service group. The
+  talk group spans nodes, and Kafka allows only one live member per
+  `group.instance.id` in a group: a second node joining with the same
+  `nodeName` fences the first, which fails its next `poll` or commit with
+  `FencedInstanceIdException`, recreates its consumer, and fences the
+  second in turn. Both nodes flap and talk requests intermittently time
+  out.
+* `nodeName` should be stable across restarts of the same node. A restart
+  that presents the same id within the session timeout (45 seconds under
+  `CLASSIC`; the broker's `group.consumer.session.timeout.ms` under
+  `CONSUMER`) reclaims its talk partitions without rebalancing the rest of
+  the group.
+
+The talk topic's partition count caps how far the talk group can spread.
+Because the transport creates `wire-talk-<serviceGroup>` with the broker's
+default `num.partitions`, a topic with fewer partitions than
+`nodes × concurrencyLimit` leaves the surplus workers idle, and a topic
+with a single partition routes every talk request to one node no matter
+how many have joined. Pre-create the talk topic with enough partitions, or
+raise the broker default (see the `KafkaConfiguration` guidance in the
+Kafka chapter).
+
+`pause()` and `play()` on the Kafka response transport unsubscribe and
+resubscribe each ingester's consumers in turn. Each call blocks until the
+worker's current poll cycle completes — up to three seconds per ingester
+while playing, up to one second while paused — so a full `pause()` across
+the whisper, talk, and shout ingesters can take up to nine seconds and a
+`play()` up to three. The Kafka calls themselves are milliseconds; the wait
+is the hand-off from the poll loop.
 
 `startupGracePeriodSeconds` bounds two checks during construction. First
 `KafkaConnector` retries the broker connectivity check for up to that many
@@ -834,6 +915,22 @@ classloader.
 Phalanx uses `wire-*-<serviceGroup>` topic names. Renaming the group
 without restarting both sides leaves the server subscribed to the old
 topic while the client publishes to the new one. Coordinate the rollover.
+
+**Kafka talk calls time out intermittently; `FencedInstanceIdException`
+in the server logs.**
+Two response transports in the same service group were started with
+`dynamicConsumers=false` and the same `nodeName`. `nodeName` prefixes the
+Kafka `group.instance.id` (`<nodeName>-<workerIndex>`), and the talk group
+spans nodes, so each worker on one node fences its counterpart on the
+other in a loop. Give every node in the service group a distinct
+`nodeName`, or switch to `dynamicConsumers=true`.
+
+**Every Kafka talk call lands on one node.**
+`wire-talk-<serviceGroup>` has too few partitions for the group — often
+exactly one, the stock broker default for `num.partitions`. Kafka assigns
+at most one worker per partition, so the rest of the service group sits
+idle. Pre-create the topic with at least `nodes × concurrencyLimit`
+partitions or raise the broker default.
 
 == Limitations
 

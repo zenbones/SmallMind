@@ -88,27 +88,37 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final String topicName;
   private final String prefixedTopicName;
   private final String groupId;
+  private final boolean dynamicConsumers;
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
   /**
    * Creates the backbone, verifies broker availability, and opens a shared producer.
    *
-   * @param nodeName                  unique name for this cluster node; embedded in every produced record
-   *                                  and used to skip locally-originating records on consumption
+   * @param nodeName                  unique name for this cluster node; embedded in every produced record and
+   *                                  used to skip locally-originating records on consumption. When
+   *                                  {@code dynamicConsumers} is {@code false} it is also combined with the
+   *                                  worker index to form each consumer's {@code group.instance.id}
    * @param concurrencyLimit          number of parallel consumer worker threads spawned at {@link #startUp}
    * @param startupGracePeriodSeconds maximum seconds to wait for at least one broker to become reachable
    * @param groupProtocol             Kafka group protocol for the backbone's consumer workers
+   * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
+   *                                  leave the group immediately on shutdown; {@code false} to join as static
+   *                                  members identified by {@code <nodeName>-<index>}
+   * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
+   *                                  leave the group immediately on shutdown; {@code false} to join as static
+   *                                  members identified by {@code <nodeName>-<index>}
    * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
    * @param servers                   one or more Kafka bootstrap broker addresses
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    */
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, KafkaServer... servers)
     throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
     this.groupProtocol = groupProtocol;
+    this.dynamicConsumers = dynamicConsumers;
     this.topicName = topicName;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
@@ -123,14 +133,17 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   /**
    * Creates and subscribes a new Kafka consumer for the worker at {@code index}.
-   * Each worker uses the same group ID so the full fan-out is preserved.
+   * Each worker uses the same group ID so the full fan-out is preserved.  When static membership is
+   * in use each worker also gets a distinct {@code group.instance.id} of {@code <nodeName>-<index>}
+   * so the workers do not fence each other.
    *
-   * @param index zero-based worker index used to form a unique consumer client ID
+   * @param index zero-based worker index used to form a unique consumer client ID and, for static
+   *              members, the {@code group.instance.id}
    * @return a new {@link Consumer} already subscribed to the backbone topic
    */
   private Consumer<Long, byte[]> createConsumer (int index) {
 
-    return connector.createConsumer(groupProtocol, nodeName, "oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, prefixedTopicName);
+    return connector.createConsumer(groupProtocol, nodeName + "-" + index, "oumuamua-consumer-" + index + "-" + topicName + "-" + nodeName, groupId, dynamicConsumers, prefixedTopicName);
   }
 
   /**

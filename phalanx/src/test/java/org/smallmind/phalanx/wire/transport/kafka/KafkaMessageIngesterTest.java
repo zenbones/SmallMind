@@ -96,13 +96,13 @@ public class KafkaMessageIngesterTest {
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092)) {
 
       @Override
-      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
+      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, boolean dynamic, String... topics) {
 
         return assignedProxyConsumer();
       }
     };
 
-    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, record -> {
+    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
     }, 1).startUp();
 
     try {
@@ -120,13 +120,13 @@ public class KafkaMessageIngesterTest {
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092)) {
 
       @Override
-      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
+      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, boolean dynamic, String... topics) {
 
         return proxyConsumer(pollCount, false);
       }
     };
 
-    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, record -> {
+    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
     }, 1).startUp();
 
     try {
@@ -149,7 +149,7 @@ public class KafkaMessageIngesterTest {
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092)) {
 
       @Override
-      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
+      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, boolean dynamic, String... topics) {
 
         createdConsumers.incrementAndGet();
 
@@ -157,7 +157,7 @@ public class KafkaMessageIngesterTest {
       }
     };
 
-    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, record -> {
+    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
     }, 1).startUp();
 
     try {
@@ -177,13 +177,13 @@ public class KafkaMessageIngesterTest {
     KafkaConnector connector = new KafkaConnector(new KafkaServer("localhost", 9092)) {
 
       @Override
-      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, String... topics) {
+      public Consumer<Long, byte[]> createConsumer (KafkaGroupProtocol groupProtocol, String instanceId, String clientId, String groupId, boolean dynamic, String... topics) {
 
         return proxyConsumer(pollCount, false);
       }
     };
 
-    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, record -> {
+    KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
     }, 1).startUp();
 
     try {

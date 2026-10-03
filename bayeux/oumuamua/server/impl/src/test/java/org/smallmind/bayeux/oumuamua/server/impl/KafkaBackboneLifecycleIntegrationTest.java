@@ -72,6 +72,7 @@ public class KafkaBackboneLifecycleIntegrationTest extends AbstractBayeuxIntegra
       1,
       GRACE_PERIOD_SECONDS,
       KafkaGroupProtocol.CLASSIC,
+      true,
       LIFECYCLE_TOPIC,
       new KafkaServer("localhost", 9094));
 
