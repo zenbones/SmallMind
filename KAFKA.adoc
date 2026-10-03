@@ -146,6 +146,12 @@ Producer<Long, byte[]> producer =
   `createConsumer`. Holds no client state; each call constructs a new
   client.
 
+| `KafkaGroupProtocol`
+| Enum selecting the consumer group protocol `createConsumer` writes to
+  `group.protocol`: `CLASSIC` (`classic`, the client-side rebalance
+  protocol) or `CONSUMER` (`consumer`, the KIP-848 broker-coordinated
+  protocol). `getCode()` returns the string Kafka expects.
+
 | `KafkaConnectionException`
 | Checked exception thrown by `KafkaConnector.check` when no broker can be
   confirmed reachable within the allowed grace period. Extends
@@ -193,6 +199,31 @@ Manual offset commit::
     side effects. A brand-new consumer group starts at the tail of the
     log, not the head — it reads what is produced after it joins, not
     the backlog.
+
+Group protocol::
+    Every `createConsumer` call takes a `KafkaGroupProtocol` and writes
+    it to `group.protocol`. `CLASSIC` is the client-side rebalance
+    protocol every broker understands. `CONSUMER` is the KIP-848
+    broker-coordinated protocol; it requires a broker with the new group
+    coordinator enabled (Kafka 4.0 and later by default, or 3.7–3.9 with
+    `group.coordinator.rebalance.protocols` including `consumer`). The
+    factory does not pick one for you because it cannot know which
+    broker it will be pointed at; the choice is part of the caller's
+    deployment contract. Under `CLASSIC` the factory also pins
+    `heartbeat.interval.ms=3000` and `session.timeout.ms=45000`; under
+    `CONSUMER` those two values are broker-owned and the client is
+    forbidden from setting them.
+
+Static membership::
+    `createConsumer` always sets `group.instance.id` from its
+    `instanceId` argument. A static member that restarts within the
+    session timeout reclaims its previous partition assignment without
+    triggering a rebalance of the whole group. The id must be unique
+    among live members of the group — two running consumers sharing an
+    `instanceId` fence each other out with `FencedInstanceIdException`.
+    Under `CLASSIC` the reclaim window is the client's
+    `session.timeout.ms` (45 seconds); under `CONSUMER` it is the
+    broker's `group.consumer.session.timeout.ms`.
 
 Startup grace period::
     The maximum number of seconds `KafkaConnector.check` will keep
@@ -345,14 +376,17 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.smallmind.kafka.utility.KafkaConnector;
+import org.smallmind.kafka.utility.KafkaGroupProtocol;
 
 public class HeartbeatSink {
 
   public void run (KafkaConnector connector) {
 
     try (Consumer<Long, byte[]> consumer =
-             connector.createConsumer("heartbeat-reader", "heartbeat-sink",     <1>
-                                      "service.heartbeat")) {                   <2>
+             connector.createConsumer(KafkaGroupProtocol.CLASSIC,               <1>
+                                      "heartbeat-sink-1",                       <2>
+                                      "heartbeat-reader", "heartbeat-sink",     <3>
+                                      "service.heartbeat")) {                   <4>
 
       while (!Thread.currentThread().isInterrupted()) {
         ConsumerRecords<Long, byte[]> batch = consumer.poll(Duration.ofSeconds(1));
@@ -362,7 +396,7 @@ public class HeartbeatSink {
         }
 
         if (!batch.isEmpty()) {
-          consumer.commitSync();                                                <3>
+          consumer.commitSync();                                                <5>
         }
       }
     }
@@ -371,14 +405,21 @@ public class HeartbeatSink {
   private void process (Long nodeId, byte[] payload) { /* ... */ }
 }
 ----
-<1> `client.id` (reported to the broker) and `group.id` (the consumer
+<1> The consumer group protocol. `CLASSIC` works against any broker;
+    `CONSUMER` (KIP-848) needs a broker with the new group coordinator
+    enabled and otherwise fails at startup with
+    `UnsupportedVersionException`.
+<2> `group.instance.id`. Must be unique among the live members of the
+    group; a restart presenting the same id within the session timeout
+    reclaims its partitions without a rebalance.
+<3> `client.id` (reported to the broker) and `group.id` (the consumer
     group). Two consumers sharing a `group.id` partition the topic between
     themselves; a second `group.id` receives its own independent stream of
     every record.
-<2> The vararg topic list subscribes immediately. Passing zero topics here
+<4> The vararg topic list subscribes immediately. Passing zero topics here
     is legal and leaves the consumer unsubscribed; callers then use
     `consumer.assign(...)` for manual partition control.
-<3> Explicit commit. Because the factory sets `enable.auto.commit=false`,
+<5> Explicit commit. Because the factory sets `enable.auto.commit=false`,
     failing to commit here means the next `poll` after a restart will
     re-deliver the same batch — which is exactly the point.
 
@@ -470,7 +511,7 @@ KafkaConnector connector = new KafkaConnector(servers).check(30);
 
 Producer<Long, byte[]> orders      = connector.createProducer("order-ingest");
 Producer<Long, byte[]> metrics     = connector.createProducer("metrics-ingest");
-Consumer<Long, byte[]> orderReader = connector.createConsumer("order-reader", "order-service", "orders");
+Consumer<Long, byte[]> orderReader = connector.createConsumer(KafkaGroupProtocol.CLASSIC, "order-service-1", "order-reader", "order-service", "orders");
 ----
 
 Each call returns a fresh, independent client. They do not share any
@@ -684,12 +725,30 @@ pattern.
 | caller-supplied
 | Defines the consumer group this instance joins.
 
+| `group.instance.id`
+| caller-supplied (`instanceId`)
+| Static membership. A restarted consumer presenting the same id within
+  the session timeout reclaims its partitions without a group rebalance.
+  Must be unique among the live members of the group.
+
 | `group.protocol`
-| `consumer`
-| KIP-848 "new" consumer group protocol. Supersedes the classic
-  client-side rebalance protocol. This value also forbids setting
-  `heartbeat.interval.ms` and `session.timeout.ms` from the client
-  side — those are broker-side settings under the new protocol.
+| caller-supplied (`groupProtocol.getCode()`)
+| `classic` for `KafkaGroupProtocol.CLASSIC`, `consumer` for
+  `KafkaGroupProtocol.CONSUMER` (KIP-848). `CONSUMER` requires a broker
+  with the new group coordinator enabled.
+
+| `heartbeat.interval.ms`
+| `3000` — `CLASSIC` only
+| Client-side heartbeat cadence under the classic protocol. Not set
+  under `CONSUMER`, where the client rejects it and the broker's
+  `group.consumer.heartbeat.interval.ms` applies.
+
+| `session.timeout.ms`
+| `45000` — `CLASSIC` only
+| How long the broker waits for a heartbeat before evicting the member,
+  and how long a static member's assignment is held for reclaim. Not
+  set under `CONSUMER`, where the broker's
+  `group.consumer.session.timeout.ms` applies.
 
 | `key.deserializer`
 | `LongDeserializer`
@@ -1152,8 +1211,16 @@ clusters.
 | `KafkaConnector.createConsumer`.
 
 | Consumer `group.protocol`
-| `consumer`
-| `KafkaConnector.createConsumer` (KIP-848 new protocol).
+| caller-supplied (`KafkaGroupProtocol`)
+| `KafkaConnector.createConsumer`; `CLASSIC` or `CONSUMER` (KIP-848).
+
+| Consumer `heartbeat.interval.ms`
+| `3000` (`CLASSIC` only)
+| `KafkaConnector.createConsumer`; unset under `CONSUMER`.
+
+| Consumer `session.timeout.ms`
+| `45000` (`CLASSIC` only)
+| `KafkaConnector.createConsumer`; unset under `CONSUMER`.
 
 | Consumer `max.poll.records`
 | `500`
@@ -1202,10 +1269,17 @@ Consumer starts reading from the end of the topic::
     interval, or reduce `max.poll.records`.
 
 `UnsupportedVersionException` on consumer start::
-    The broker does not understand the new consumer group protocol
-    (`group.protocol=consumer`, KIP-848). Upgrade the broker, or
-    override `group.protocol` in a custom `Properties` block — the
-    factory hard-codes `consumer` and does not expose a toggle.
+    The consumer was created with `KafkaGroupProtocol.CONSUMER` but the
+    broker does not have the KIP-848 group coordinator enabled. Either
+    pass `KafkaGroupProtocol.CLASSIC` to `createConsumer`, or upgrade
+    the broker (Kafka 4.0 and later enable it by default; 3.7–3.9 need
+    `group.coordinator.rebalance.protocols=classic,consumer`).
+
+`FencedInstanceIdException` from `poll` or `commitSync`::
+    Two live consumers in the same group presented the same
+    `instanceId`. The broker fences the older one. Make `instanceId`
+    unique per running member — typically the node name plus a worker
+    index.
 
 `NumberFormatException` from `KafkaServerFactoryBean`::
     The pattern's text after the first `:` is not parseable as an
@@ -1253,11 +1327,17 @@ Inconsistent default port::
     default is `9092`. Explicit `:port` suffixes in patterns avoid
     the ambiguity.
 
-No alternate group protocol::
-    The consumer hard-codes `group.protocol=consumer` (KIP-848). Older
-    brokers that expect the classic protocol will reject the client
-    with `UnsupportedVersionException`. The factory does not offer a
-    classic-mode toggle.
+Fixed classic session timing::
+    Under `KafkaGroupProtocol.CLASSIC` the factory pins
+    `heartbeat.interval.ms=3000` and `session.timeout.ms=45000` and
+    does not expose them. Under `KafkaGroupProtocol.CONSUMER` they are
+    broker-owned and cannot be set client-side at all. A caller that
+    needs different classic timing builds its own `Properties`.
+
+Static membership is not optional::
+    `group.instance.id` is always set from `instanceId`; the factory
+    cannot create a dynamic member. Callers must supply a stable id
+    that is unique among the live members of the group.
 
 No connection pooling or sharing::
     Each `createProducer` / `createConsumer` call constructs a fresh
@@ -1279,14 +1359,18 @@ Before shipping an integration:
 4. For consumers, commit explicitly after side effects are durable;
    never rely on `enable.auto.commit` (it is off by default in this
    factory anyway).
-5. Ensure the broker cluster's `server.properties` is consistent with
+5. Pick the `KafkaGroupProtocol` that matches the broker: `CLASSIC`
+   unless the cluster has the KIP-848 group coordinator enabled. Give
+   every live consumer in a group a distinct, restart-stable
+   `instanceId`.
+6. Ensure the broker cluster's `server.properties` is consistent with
    the values documented in `KafkaConfiguration`, or document any
    intentional divergence where your service's maintainers will find
    it.
-6. If the deployment spans availability zones, set `client.rack` on
+7. If the deployment spans availability zones, set `client.rack` on
    the consumer and rack-aware selector on the brokers — the factory
    does not set `client.rack`.
-7. If the deployment uses authentication, build `Properties` directly
+8. If the deployment uses authentication, build `Properties` directly
    using `connector.getBoostrapServers()` as the starting point, and
    stop using the factory methods for that client.
 
