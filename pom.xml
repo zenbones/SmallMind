@@ -207,6 +207,13 @@
         <groupId>com.github.docker-java</groupId>
         <artifactId>docker-java</artifactId>
         <version>${docker.java.version}</version>
+        <exclusions>
+          <!-- unused (testbench-docker uses the httpclient5 transport) and requests a jersey-apache-connector version that does not exist alongside Jersey 4 -->
+          <exclusion>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-jersey</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.github.docker-java</groupId>
@@ -654,11 +661,6 @@
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-runtime</artifactId>
         <version>${glassfish.jaxb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.connectors</groupId>
-        <artifactId>jersey-apache-connector</artifactId>
-        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.containers</groupId>

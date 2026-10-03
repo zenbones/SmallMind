@@ -1342,7 +1342,7 @@ Precision of `Stratified`::
     values, bump `highestTrackableValue` or you'll overflow.
 
 Prometheus output inclusion in Spring context::
-    `claxon.xml` (under `claxon-registry/src/main/resources/spring/prg/smallmind/claxon/registry/`)
+    `claxon.xml` (under `claxon-registry/src/main/resources/spring/org/smallmind/claxon/registry/`)
     ships an example Spring configuration that declares a `claxonRegistry`
     bean and a `claxonEmitterResource` pointing at it. It is intended as a
     reference, not a drop-in import — real applications will want to

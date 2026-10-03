@@ -62,13 +62,6 @@
       <artifactId>grizzly-http-servlet-server</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
-    <dependency>
-      <groupId>org.glassfish.jersey.connectors</groupId>
-      <artifactId>jersey-apache-connector</artifactId>
-      <version>3.1.11</version>
-      <scope>compile</scope>
-    </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
       <artifactId>jersey-spring6</artifactId>

@@ -121,7 +121,7 @@ Reach for the narrower artifacts directly when you do not need the whole stack:
 
 [IMPORTANT]
 ====
-*`jersey-apache-connector` is pinned to `3.1.11`.* `docker-java` declares a transitive dependency on `org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0`, which does not exist in any repository. The `docker`, `condition`, and `groundwater` poms each pin `3.1.11` explicitly to override that broken request. If you assemble a test classpath that uses `docker-java` without going through these modules, you must add the same pin yourself.
+*`docker-java-transport-jersey` is excluded.* `docker-java` declares a compile-scope dependency on its Jersey transport, which in turn requests `org.glassfish.jersey.connectors:jersey-apache-connector` at a version that does not exist alongside Jersey 4 (the Jersey 4 line no longer publishes that artifact). `DockerClientUtility` uses the Apache HttpClient 5 transport exclusively, so the root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java` in `dependencyManagement` and nothing in this repository depends on the connector. If you declare `docker-java` yourself without inheriting this project's dependency management, add the same exclusion (or pin a Jersey 3 connector) or resolution will fail.
 ====
 
 == Quick Start
@@ -432,7 +432,7 @@ No log output::
     `TestLoggerConfiguration.setup()` configures Scribe but does not provide a backend. Add `scribe-ink-indigenous` (test scope) so `LoggerManager` resolves a logging blueprint. See the installation note above.
 
 `jersey-apache-connector` resolution failure::
-    `docker-java` requests a non-existent `4.0.0`; the `docker`, `condition`, and `groundwater` poms pin `3.1.11`. Reproduce the pin in any classpath that uses `docker-java` outside these modules.
+    `docker-java`'s Jersey transport requests a `jersey-apache-connector` version that does not exist. The root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java`; reproduce that exclusion in any build that declares `docker-java` outside this project's dependency management. See the installation note above.
 
 `MissingHostResourceException` when declaring a mount::
     `DockerMount`/`DockerVolume` resolve the host resource from the classpath at construction. The named resource is not on the test classpath, or its URL is malformed. Confirm the resource path is correct and present under `src/test/resources`.
@@ -468,7 +468,7 @@ Plaintext daemon default::
 | Test log level              | `DEBUG`                | `TestLoggerConfiguration` / `global.yaml`
 | Wire default timeout        | `15` s                 | `global.yaml`
 | Subprocess exit grace       | `3` s                  | `ProcessOutputUtility`
-| `jersey-apache-connector`   | `3.1.11`               | `docker` / `condition` / `groundwater` poms
+| `docker-java-transport-jersey` | excluded            | root `pom.xml` `dependencyManagement`
 |===
 
 == Package File Map

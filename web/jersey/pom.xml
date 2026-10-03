@@ -68,11 +68,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jersey.test-framework</groupId>
-      <artifactId>jersey-test-framework-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hibernate.validator</groupId>
       <artifactId>hibernate-validator</artifactId>
       <scope>compile</scope>
@@ -115,11 +110,6 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
