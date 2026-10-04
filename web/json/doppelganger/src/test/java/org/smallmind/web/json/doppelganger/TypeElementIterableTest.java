@@ -35,7 +35,10 @@ package org.smallmind.web.json.doppelganger;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,6 +60,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -75,13 +79,18 @@ public class TypeElementIterableTest {
   // hands back the qualified names the iterable collected for each requested probe key.
 
   private Map<String, List<String>> runProbes (String className, String source, List<String> probeKeys)
-    throws IOException {
+    throws IOException, URISyntaxException {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
     ProbeProcessor probeProcessor = new ProbeProcessor(probeKeys);
+    // Keep the compiled fixtures beside target/test-classes rather than in the working directory, where javac writes
+    // class files when no output location is set.
+    Path classOutput = Files.createDirectories(Path.of(TypeElementIterableTest.class.getProtectionDomain().getCodeSource().getLocation().toURI()).resolveSibling("probe-classes"));
 
     try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+
+      fileManager.setLocationFromPaths(StandardLocation.CLASS_OUTPUT, List.of(classOutput));
 
       List<String> options = List.of("-classpath", System.getProperty("java.class.path"));
       JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, List.of(new StringSource(className, source)));

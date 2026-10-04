@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Claxon-Exotic</name>
   <description>Exotic Features</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.exotic</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

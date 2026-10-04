@@ -134,6 +134,8 @@ transport you actually use.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.phalanx`
+
 Add the matching runtime dependencies:
 
 [cols="1,2",options="header"]

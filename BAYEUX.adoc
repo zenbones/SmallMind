@@ -225,9 +225,9 @@ Ack extension::
 
 The module is split so that a library consumer imports only what it needs.
 
-[cols="1,2,2",options="header"]
+[cols="1,2,2,2",options="header"]
 |===
-| Artifact | Purpose | When you depend on it
+| Artifact | Purpose | When you depend on it | Module name
 
 | `oumuamua-server-api`
 | Contracts only: `Server`, `Session`, `Channel`,
@@ -237,6 +237,7 @@ The module is split so that a library consumer imports only what it needs.
 | Shared library code that must *describe* Bayeux shapes
   (`BayeuxService` implementations, message handlers, custom
   `Value` types) without pulling in the server.
+| `org.smallmind.bayeux.oumuamua.server.api`
 
 | `oumuamua-server-spi`
 | Service-provider base classes: `AbstractProtocol`,
@@ -248,6 +249,7 @@ The module is split so that a library consumer imports only what it needs.
 | Anyone writing a custom codec, a custom protocol, an additional
   extension, a new backbone, or any component that needs to subclass
   a server-provided base class.
+| `org.smallmind.bayeux.oumuamua.server.spi`
 
 | `oumuamua-server-impl`
 | The running server: `OumuamuaServer`, `OumuamuaSession`,
@@ -255,6 +257,7 @@ The module is split so that a library consumer imports only what it needs.
   `WebSocketEndpoint`, the long-polling servlet protocol, and
   `OumuamuaConfiguration`.
 | The application that actually hosts the Bayeux server.
+| `org.smallmind.bayeux.oumuamua.server.impl`
 |===
 
 A consuming library that only needs to *type* Bayeux shapes depends on

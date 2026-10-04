@@ -82,6 +82,15 @@ and deterministic lookup.
 - Do not let the registry become a global mutable scratch space; keep it to the named
   surface it was designed for.
 
+### The Module Descriptor Is Part Of The Contract
+
+A module's `module-info.java` states its contract in a form the compiler and the runtime
+enforce. `requires static` is how an optional integration is expressed: the dependency is
+optional in the POM and `static` in the descriptor, and neither says more than the other.
+Reflective access is granted by a qualified `opens … to` naming the framework that needs
+it, or by an unconditional `opens` only for packages whose resources are loaded by path.
+Never declare an `open module`.
+
 ## Annotation Design
 
 An annotation's job is to declare intent in a location where a separate tool (aspect,

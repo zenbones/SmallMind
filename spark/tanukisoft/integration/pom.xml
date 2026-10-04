@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Spark-Tanukisoft-Integration</name>
   <description>Tanukisoft Wrapper Integration</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.spark.tanukisoft.integration</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

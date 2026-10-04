@@ -273,6 +273,8 @@ The module is published as a single artifact:
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.liquibase`
+
 It transitively pulls in `liquibase-core`, `smallmind-nutsnbolts`, and
 `smallmind-persistence`. `spring-beans` is declared as an `optional`
 dependency, which means a project consuming `smallmind-liquibase` also has

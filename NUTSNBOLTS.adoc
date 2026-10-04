@@ -249,6 +249,8 @@ Add the artifact to your Maven build. All third-party couplings are marked
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.nutsnbolts`
+
 === Optional Dependency Matrix
 
 The following dependencies are declared `<optional>true</optional>` in the
@@ -312,6 +314,10 @@ use it does not pay for the transitive closure.
 | `NTPTime`
 | `commons-net:commons-net`
 
+| `inject`, `reflection.aop`
+| `@LazyField` with `LazyFieldAspect`, `AOPUtility`
+| `org.aspectj:aspectjrt` (and weaving in your own build — see <<pkg-inject>>)
+
 | spring XML configuration under `src/main/resources/spring/org/smallmind/nutsnbolts/`
 | importing the shipped JMX, Realm, or RMI Spring snippets
 | `org.springframework:spring-context` (and SnakeYAML, if the consuming app loads
@@ -326,6 +332,86 @@ required when a placeholder is actually marked as encrypted. Similarly, JAXB
 adapters are declared as compile-optional so types that merely *reference* the
 adapter classes at runtime do not need a JAXB runtime on the classpath.
 ====
+
+[[module-path]]
+=== Module Path
+
+The jar ships an explicit module descriptor for `org.smallmind.nutsnbolts`. On the
+classpath the descriptor is ignored. The repository-wide rules are in
+xref:README.adoc#module-path[Module Path And Classpath]; this section lists what is specific
+to this module.
+
+*Required modules.* The descriptor requires `java.management` and, re-exported,
+`java.compiler`, `java.naming`, `java.rmi`, and `java.xml`. These are JDK modules and resolve
+without any action on your part.
+
+*Optional modules.* Every dependency in the matrix above is `requires static`. On the module
+path, a module you use must be resolved by your own `requires` or by `--add-modules`; its jar
+being present is not enough. Explicit modules are the ones that catch people out, because
+nothing else pulls them into the graph. Re-exported modules are read by any module that
+reads `org.smallmind.nutsnbolts`, once they are resolved.
+
+[cols="3,3,1,1",options="header"]
+|===
+| Artifact | Module name | Kind | Re-exported
+
+| `jakarta.activation:jakarta.activation-api` | `jakarta.activation` | explicit | yes
+| `jakarta.mail:jakarta.mail-api` | `jakarta.mail` | explicit | yes
+| `jakarta.servlet:jakarta.servlet-api` | `jakarta.servlet` | explicit | yes
+| `jakarta.validation:jakarta.validation-api` | `jakarta.validation` | explicit | yes
+| `jakarta.xml.bind:jakarta.xml.bind-api` | `jakarta.xml.bind` | explicit | yes
+| `jakarta.xml.soap:jakarta.xml.soap-api` | `jakarta.xml.soap` | explicit | no
+| `jakarta.xml.ws:jakarta.xml.ws-api` | `jakarta.xml.ws` | explicit | yes
+| `org.bouncycastle:bcpkix-jdk18on` | `org.bouncycastle.pkix` | explicit | yes
+| `org.bouncycastle:bcprov-jdk18on` | `org.bouncycastle.provider` | explicit | no
+| `org.ow2.asm:asm` | `org.objectweb.asm` | explicit | no
+| `org.ow2.asm:asm-util` | `org.objectweb.asm.util` | explicit | no
+| `org.yaml:snakeyaml` | `org.yaml.snakeyaml` | explicit | no
+| `commons-net:commons-net` | `org.apache.commons.net` | explicit | no
+| `org.freemarker:freemarker` | `freemarker` | automatic | no
+| `org.apache.shiro:shiro-core` | `org.apache.shiro.core` | automatic | no
+| `org.apache.shiro:shiro-crypto-hash` | `org.apache.shiro.crypto.hash` | automatic | no
+| `org.apache.shiro:shiro-lang` | `org.apache.shiro.lang` | automatic | no
+| `org.springframework:spring-beans` | `spring.beans` | automatic | no
+| `org.springframework:spring-context` | `spring.context` | automatic | no
+| `org.springframework:spring-core` | `spring.core` | automatic | no
+| `org.springframework:spring-web` | `spring.web` | automatic | no
+| `org.aspectj:aspectjrt` | `org.aspectj.runtime` | automatic | no
+|===
+
+Public signatures in `freemarker`, `namespace.shiro.realm`, `inject`, and the `spring`
+packages expose FreeMarker, Shiro, AspectJ, and Spring types. Those modules are automatic
+and therefore not re-exported; require them in your own descriptor when you use those
+packages. `shiro-spring` is not named by the descriptor because no class in this jar
+references it; the shipped `realm.xml` needs it, and as an automatic module it is resolved
+along with Spring.
+
+*Packages this module opens.*
+
+* `org.smallmind.nutsnbolts.examples`, unconditionally. It contains no classes; it carries
+  the shipped Spring XML, property, YAML, and XSD resources, and the open keeps
+  `classpath:org/smallmind/nutsnbolts/examples/...` resolvable from other modules.
+* `org.smallmind.nutsnbolts.json` to `jakarta.xml.bind`.
+* `spring`, `spring.jmx`, `spring.property`, `spring.remote`, `spring.web`,
+  `security.spring`, `namespace.shiro.realm.spring`, and `resource` (all under
+  `org.smallmind.nutsnbolts`) to `spring.core` and `spring.beans`.
+
+*Packages you open.* `FieldUtility.getFieldAccessor` and `getFieldAccessors` make
+non-public fields of your classes accessible, so the packages holding those classes must be
+opened to this module:
+
+[source,java]
+----
+module com.example.app {
+
+  requires org.smallmind.nutsnbolts;
+
+  opens com.example.app.model to org.smallmind.nutsnbolts;
+}
+----
+
+`AnnotationLiteral` calls `setAccessible` on the members of the annotation type it
+implements; that type's package must be exported, or opened to `org.smallmind.nutsnbolts`.
 
 [[conceptual-model]]
 == Conceptual Model
@@ -1690,7 +1776,9 @@ User user = cache.computeIfAbsent(userId, id -> repo.loadUser(id));
 `LazyFieldAspect` requires AspectJ weaving (load-time or
 compile-time). The nutsnbolts POM configures the
 `aspectj-maven-plugin` for its own build; consumers who want lazy
-fields in their own code must configure weaving separately.
+fields in their own code must configure weaving separately and must
+supply `org.aspectj:aspectjrt`, which is optional in the nutsnbolts
+POM. On the module path its module name is `org.aspectj.runtime`.
 ====
 
 [[pkg-servlet-soap]]
@@ -2042,11 +2130,20 @@ Optional dependency failure modes::
     `ApplicationCarrier`; unlike `lang.PerApplicationContext`, nothing
     is inherited. See <<behavioral-reference,Scope propagation>>.
 
-No JPMS `module-info`::
-    `smallmind-nutsnbolts` is published as a classpath jar. Consumers
-    in a fully modular (JPMS) deployment should expect to use the
-    automatic-module-name behaviour rather than an explicit module
-    descriptor.
+Optional modules on the module path::
+    Every optional dependency is `requires static` in the module
+    descriptor. On the module path a jar that is present but not
+    required by anything is not resolved, and the code that uses it
+    fails with `NoClassDefFoundError` exactly as if the jar were
+    missing. `requires` the module or pass `--add-modules`. See
+    <<module-path>>.
+
+`examples` opens a package with no classes::
+    The descriptor opens `org.smallmind.nutsnbolts.examples` so its
+    resources stay loadable by path. `javac` reports
+    `[opens] package is empty or does not exist` for that line while
+    compiling this module; the warning is expected. At run time the
+    package exists because the jar contains its resource files.
 
 [[dependency-notes]]
 == Dependency Notes
@@ -2054,10 +2151,12 @@ No JPMS `module-info`::
 * `smallmind-nutsnbolts` sits at the bottom of the dependency graph in
   this repository. Nearly every other SmallMind module depends on it;
   it depends on nothing else in the repository.
-* The POM lists all Jakarta, Spring, FreeMarker, Commons-Net, Bouncy
-  Castle, ASM, and SnakeYAML dependencies as `optional`. A consumer
+* The POM lists all Jakarta, Spring, Shiro, FreeMarker, Commons-Net,
+  Bouncy Castle, ASM, and SnakeYAML dependencies as `optional`, and
+  inherits `aspectjrt` as `optional` from the parent POM. A consumer
   choosing a specific subpackage must add the corresponding runtime
-  dependency to its own build.
+  dependency to its own build. The module descriptor mirrors this:
+  each optional dependency is `requires static` (see <<module-path>>).
 * The build configures the `smallmind-license-maven-plugin` (for
   dual AGPL/Apache licensing headers) and the `aspectj-maven-plugin`
   (because `LazyFieldAspect` is an AspectJ aspect woven at compile

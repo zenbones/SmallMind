@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Memcached Utility</name>
   <description>Memcached Driver Abstractions</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.memcached.utility</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

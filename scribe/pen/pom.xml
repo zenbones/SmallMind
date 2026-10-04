@@ -10,6 +10,9 @@
   <name>Scribe-Pen</name>
   <description>Pen Logging Interfaces</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.scribe.pen</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.icegreen</groupId>

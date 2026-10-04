@@ -122,10 +122,11 @@ that a non-standard provider is in play.
 [[at-a-glance]]
 == At A Glance
 
-[cols="1,2,2",options="header"]
+[cols="1,2,2,2",options="header"]
 |===
 | Artifact | Ships
 | Reach for it when
+| Module name
 
 | `file-ephemeral`
 | `EphemeralFileSystemProvider`, `EphemeralFileSystem`, `EphemeralFileStore`,
@@ -135,6 +136,7 @@ that a non-standard provider is in play.
   stand alone (`ephemeral:///…`) or masquerade as the JVM default
   (`file:///…`) with transparent pass-through for anything outside the
   configured roots.
+| `org.smallmind.file.ephemeral`
 
 | `file-jailed`
 | `JailedFileSystemProvider`, `JailedFileSystem`, `JailedPath`,
@@ -143,6 +145,7 @@ that a non-standard provider is in play.
 | You need a `FileSystem` whose `/` is actually a subtree of some other
   native file system, and every path operation must be guarded from
   escaping that subtree.
+| `org.smallmind.file.jailed`
 |===
 
 [[conceptual-model]]

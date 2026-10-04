@@ -10,6 +10,9 @@
   <name>License</name>
   <description>License Header Plugin</description>
   <packaging>maven-plugin</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.license</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

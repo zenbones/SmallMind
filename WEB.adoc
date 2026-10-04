@@ -109,51 +109,62 @@ Generated DTOs::
 
 == At A Glance
 
-[cols="1,2,3",options="header"]
+[cols="1,2,2,3",options="header"]
 |===
-| Module | Artifact | Use when you need…
+| Module | Artifact | Module name | Use when you need…
 
 | web-grizzly
 | `org.smallmind:web-grizzly`
+| `org.smallmind.web.grizzly`
 | An embedded Grizzly server with HTTP/2, WebSockets (Tyrus), JAX-WS, and
   per-context servlet deployment driven by Spring.
 
 | web-jetty
 | `org.smallmind:web-jetty`
+| `org.smallmind.web.jetty`
 | An embedded Jetty 12 server with the same capability set as Grizzly but
   different HTTP and thread-pool semantics.
 
 | web-jersey
 | `org.smallmind:web-jersey`
+| `org.smallmind.web.jersey`
 | JAX-RS providers, filters, exception mapping, paging, entity-parameter
   injection, and dynamic JSON proxies on top of Jersey 3.
 
 | web-http
 | `org.smallmind:web-http`
+| `org.smallmind.web.http`
 | A shared, pooled, async-but-callable Apache HttpComponents 5 client.
 
 | web-json-query
 | `org.smallmind:web-json-query`
+| `org.smallmind.web.json.query`
 | A portable, JSON-round-trippable query language with JPA/QueryDSL/Throng
   translators.
 
 | web-json-scaffold
 | `org.smallmind:web-json-scaffold`
+| `org.smallmind.web.json.scaffold`
 | `JsonCodec`, `Fault`, polymorphic Jackson support, `Page`, and bean
   reflection helpers. Always a compile dependency of `web-jersey`.
 
 | web-json-doppelganger
 | `org.smallmind:web-json-doppelganger`
+| `org.smallmind.web.json.doppelganger`
 | Compile-time generation of directional, purpose-aware view classes. See
   xref:DOPPELGANGER.adoc[DOPPELGANGER.adoc].
 
 | web-jwt
 | `org.smallmind:web-jwt`
+| `org.smallmind.web.jwt`
 | JWS (compact-serialised JWT) encoding, decoding, and signature verification
   over jose4j.
 
 | schema-validation-maven-plugin
 | `org.smallmind:schema-validation-maven-plugin`
+| Automatic module name: `org.smallmind.web.schema` — Maven loads plugins
+  through its own class realms, so this name only identifies the jar; it is
+  not intended for a consumer's `requires`.
 | A build goal that validates XSD files and XML instance documents and fails
   the build on errors.
 |===

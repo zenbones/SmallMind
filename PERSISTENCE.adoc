@@ -143,6 +143,8 @@ accumulates glue code that is neither testable nor portable.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.persistence`
+
 Every ORM, cache, and Spring dependency is declared `optional` in the module
 POM. A consumer must explicitly pull in the subset it uses.
 

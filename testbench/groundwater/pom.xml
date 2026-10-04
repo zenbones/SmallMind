@@ -10,14 +10,10 @@
   <name>Testbench-Groundwater</name>
   <description>Extensible Test Classes</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.testbench.groundwater</jigsaw.module.name>
+  </properties>
   <dependencies>
-    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
-    <dependency>
-      <groupId>org.glassfish.jersey.connectors</groupId>
-      <artifactId>jersey-apache-connector</artifactId>
-      <version>3.1.11</version>
-      <scope>compile</scope>
-    </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>testbench-condition</artifactId>

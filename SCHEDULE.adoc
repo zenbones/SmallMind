@@ -258,6 +258,8 @@ needs to name the job contract without pulling in Quartz or Spring.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.schedule.base`
+
 This artifact brings in `smallmind-nutsnbolts` (for `SuccessOrFailure`) and
 nothing else.
 
@@ -274,6 +276,8 @@ scheduler.
   <version>${project.version}</version>
 </dependency>
 ----
+
+Module name (for `requires`): `org.smallmind.schedule.quartz`
 
 Brings in `schedule-base`, `smallmind-nutsnbolts`, `smallmind-scribe-pen`
 (for structured logging), Quartz (`org.quartz-scheduler:quartz`), and the

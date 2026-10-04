@@ -325,6 +325,16 @@ you can ignore this artifact entirely.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.spark.singularity.boot`
+
+The jar ships an explicit module descriptor that exports
+`org.smallmind.spark.singularity.boot` and requires nothing beyond `java.base`. The
+`generate-singularity` goal copies only the entries under
+`org/smallmind/spark/singularity/boot/` into a Singularity jar, so the descriptor does not
+travel with them: a Singularity jar is not a named module, it is launched with `java -jar`,
+and the classes its boot loader defines run in unnamed modules. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 === `spark-singularity-maven-plugin`
 
 Declare this as a build plugin with `<extensions>true</extensions>`. The
@@ -351,6 +361,8 @@ will not be recognized.
 </build>
 ----
 
+Automatic module name: `org.smallmind.spark.singularity.mojo` — Maven loads plugins through its own class realms, so this name only identifies the jar; it is not intended for a consumer's `requires`.
+
 === `spark-tanukisoft-integration`
 
 Depend on this from application code that extends
@@ -366,6 +378,8 @@ Spring's `spring-context`, and `smallmind-nutsnbolts`.
   <version>${project.version}</version>
 </dependency>
 ----
+
+Module name (for `requires`): `org.smallmind.spark.tanukisoft.integration`
 
 If you are using the shipped
 `ClassPathXmlSpringContextWrapperListener` and you do not need to
@@ -400,6 +414,8 @@ the `tanukisoft` packaging type is registered.
   </plugins>
 </build>
 ----
+
+Automatic module name: `org.smallmind.spark.tanukisoft.mojo` — Maven loads plugins through its own class realms, so this name only identifies the jar; it is not intended for a consumer's `requires`.
 
 [IMPORTANT]
 ====

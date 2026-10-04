@@ -139,18 +139,9 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
         AsyncContext asyncContext = request.startAsync();
         ServletInputStream inputStream = request.getInputStream();
-        OumuamuaReadListener<V> readListener;
 
         asyncContext.setTimeout(0);
-        inputStream.setReadListener(readListener = new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
-
-        executorService.submit(() -> {
-          try {
-            readListener.onDataAvailable();
-          } catch (IOException ioException) {
-            readListener.onError(ioException);
-          }
-        });
+        inputStream.setReadListener(new OumuamuaReadListener<>(executorService, server, connection, asyncContext, inputStream, contentBufferSize));
       }
     }
   }
@@ -168,7 +159,9 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
   }
 
   /**
-   * Asynchronous read listener that consumes the request body and forwards messages.
+   * Asynchronous read listener that consumes the request body and forwards messages. Callbacks are serialized, and the
+   * decoded messages are handed to the connection exactly once, because a container may report all data read before
+   * the listener has consumed an already buffered body and then report it again (Grizzly does both).
    *
    * @param <V> value representation
    */
@@ -181,6 +174,7 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
     private final ServletInputStream inputStream;
     private final byte[] contentBuffer;
     private int index = 0;
+    private boolean delivered = false;
 
     /**
      * Creates a read listener to accumulate the incoming payload.
@@ -209,47 +203,74 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
      * @throws IOException if more data is received than expected
      */
     @Override
-    public void onDataAvailable ()
+    public synchronized void onDataAvailable ()
       throws IOException {
 
-      if (index == contentBuffer.length) {
-        throw new IOException("Available data exceeds the declared content length");
-      } else {
+      readAvailableContent();
+    }
 
-        int bytesRead;
+    /**
+     * Triggered once the entire payload has arrived; drains any content not yet read, then deserializes and processes
+     * the messages. Repeated invocations after the messages have been handed off are ignored.
+     *
+     * @throws IOException if the content is shorter than declared or cannot be parsed
+     */
+    @Override
+    public synchronized void onAllDataRead ()
+      throws IOException {
 
-        while (inputStream.isReady() && ((bytesRead = inputStream.read(contentBuffer, index, contentBuffer.length - index)) >= 0)) {
-          index += bytesRead;
+      if (!delivered) {
+        readAvailableContent();
+
+        if (index == contentBuffer.length) {
+
+          Message<V>[] messages;
+
+          LoggerManager.getLogger(OumuamuaServlet.class).log(server.getMessageLogLevel(), () -> "<=" + new String(contentBuffer));
+
+          messages = server.getCodec().from(contentBuffer);
+
+          ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
+
+          delivered = true;
+          executorService.submit(() -> connection.onMessages(asyncContext, messages));
+        } else if (inputStream.isFinished()) {
+          throw new IOException("Received fewer bytes(" + index + ") than the declared content length(" + contentBuffer.length + ")");
         }
       }
     }
 
     /**
-     * Triggered once the entire payload has been read; deserializes and processes messages.
+     * Reads whatever content the stream can supply without blocking, up to the declared content length.
      *
-     * @throws IOException if the content cannot be parsed
+     * @throws IOException if more data is received than expected
      */
-    @Override
-    public void onAllDataRead ()
+    private void readAvailableContent ()
       throws IOException {
 
-      LoggerManager.getLogger(OumuamuaServlet.class).log(server.getMessageLogLevel(), () -> "<=" + new String(contentBuffer));
+      int bytesRead;
 
-      Message<V>[] messages = server.getCodec().from(contentBuffer);
+      while ((index < contentBuffer.length) && inputStream.isReady() && ((bytesRead = inputStream.read(contentBuffer, index, contentBuffer.length - index)) >= 0)) {
+        index += bytesRead;
+      }
 
-      ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
-      executorService.submit(() -> connection.onMessages(asyncContext, messages));
+      if ((index == contentBuffer.length) && inputStream.isReady() && (inputStream.read() >= 0)) {
+        throw new IOException("Available data exceeds the declared content length");
+      }
     }
 
     /**
-     * Handles read errors by completing the async context and logging the failure.
+     * Handles read errors by logging the failure and, unless the messages were already handed to the connection (which
+     * then owns completion), completing the async context.
      *
      * @param throwable encountered error
      */
     @Override
-    public void onError (Throwable throwable) {
+    public synchronized void onError (Throwable throwable) {
 
-      asyncContext.complete();
+      if (!delivered) {
+        asyncContext.complete();
+      }
 
       LoggerManager.getLogger(OumuamuaReadListener.class).error(throwable);
     }

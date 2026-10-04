@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Sleuth-Runner</name>
   <description>Test Runner</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.sleuth.runner</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Artifact-Maven</name>
   <description>Maven Artifact Loader</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.artifact.maven</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

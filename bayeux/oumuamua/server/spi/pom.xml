@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Oumuamua-Server-Spi</name>
   <description>Oumuamua Server Spi</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.bayeux.oumuamua.server.spi</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>jakarta.servlet</groupId>

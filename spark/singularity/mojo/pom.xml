@@ -10,6 +10,9 @@
   <name>Spark-Singularity-Maven-Plugin</name>
   <description>Singularity Maven Plugin</description>
   <packaging>maven-plugin</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.spark.singularity.mojo</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

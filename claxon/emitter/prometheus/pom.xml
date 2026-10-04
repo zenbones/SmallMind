@@ -10,6 +10,9 @@
   <name>Claxon-Emitter-Promethus</name>
   <description>Prometheus Emitter</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.emitter.prometheus</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

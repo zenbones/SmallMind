@@ -10,6 +10,9 @@
   <name>Scribe-SLF4J</name>
   <description>SLF4J Redirection</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.scribe.slf4j</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>

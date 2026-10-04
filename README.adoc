@@ -40,3 +40,135 @@ The following documentation covers each functional area of the framework:
 * link:SPARK.adoc[Spark] — Self-executing jar packaging (Singularity) and OS service distributions (Tanukisoft)
 * link:TESTBENCH.adoc[Testbench] — Internal test harness: Dockerized service fixtures, preconditions, and build-file tooling used to test SmallMind itself
 * link:WEB.adoc[Web] — Web layer support including REST (Jersey), Jetty, and WebSocket
+
+[[module-names]]
+== Module Names
+
+Every SmallMind jar declares a stable Java module name. The name is `org.smallmind.`
+followed by the artifact's directory path in this repository, and it does not change when
+the jar file is renamed. A modular consumer refers to an artifact by this name, for example
+`requires org.smallmind.nutsnbolts;`.
+
+The *Kind* column says how the name is declared. An `explicit` jar ships a module
+descriptor (`module-info.class`) that lists its exported packages, the modules it requires,
+and the packages it opens to reflection; see <<module-path>> for what that means for a
+consumer. An `automatic` jar carries the name only in its `Automatic-Module-Name` manifest
+entry and is an automatic module on the module path. Explicit jars keep the manifest entry
+as well. On the classpath neither form has any effect.
+
+[cols="2,3,1,1", options="header"]
+|===
+| Artifact | Module name | Kind | Chapter
+
+| `smallmind-ansible` | `org.smallmind.ansible` | automatic | link:ANSIBLE.adoc[Ansible]
+| `artifact-maven` | `org.smallmind.artifact.maven` | automatic | link:ARTIFACT.adoc[Artifact]
+| `batch-base` | `org.smallmind.batch.base` | explicit | link:BATCH.adoc[Batch]
+| `batch-spring` | `org.smallmind.batch.spring` | automatic | link:BATCH.adoc[Batch]
+| `oumuamua-server-api` | `org.smallmind.bayeux.oumuamua.server.api` | automatic | link:BAYEUX.adoc[Bayeux]
+| `oumuamua-server-impl` | `org.smallmind.bayeux.oumuamua.server.impl` | automatic | link:BAYEUX.adoc[Bayeux]
+| `oumuamua-server-spi` | `org.smallmind.bayeux.oumuamua.server.spi` | automatic | link:BAYEUX.adoc[Bayeux]
+| `claxon-emitter-aws` | `org.smallmind.claxon.emitter.aws` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-emitter-datadog` | `org.smallmind.claxon.emitter.datadog` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-emitter-jmx` | `org.smallmind.claxon.emitter.jmx` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-emitter-message` | `org.smallmind.claxon.emitter.message` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-emitter-noop` | `org.smallmind.claxon.emitter.noop` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-emitter-prometheus` | `org.smallmind.claxon.emitter.prometheus` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-exotic` | `org.smallmind.claxon.exotic` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-http` | `org.smallmind.claxon.http` | automatic | link:CLAXON.adoc[Claxon]
+| `claxon-registry` | `org.smallmind.claxon.registry` | automatic | link:CLAXON.adoc[Claxon]
+| `file-ephemeral` | `org.smallmind.file.ephemeral` | automatic | link:FILE.adoc[File]
+| `file-jailed` | `org.smallmind.file.jailed` | automatic | link:FILE.adoc[File]
+| `smallmind-javafx-extras` | `org.smallmind.javafx.extras` | automatic | link:JAVAFX.adoc[JavaFX]
+| `kafka-utility` | `org.smallmind.kafka.utility` | automatic | link:KAFKA.adoc[Kafka]
+| `smallmind-license-maven-plugin` | `org.smallmind.license` ^†^ | automatic | link:LICENSE.adoc[License]
+| `smallmind-liquibase` | `org.smallmind.liquibase` | automatic | link:LIQUIBASE.adoc[Liquibase]
+| `memcached-cubby` | `org.smallmind.memcached.cubby` | automatic | link:MEMCACHED.adoc[Memcached]
+| `memcached-utility` | `org.smallmind.memcached.utility` | automatic | link:MEMCACHED.adoc[Memcached]
+| `mongodb-throng` | `org.smallmind.mongodb.throng` | automatic | link:MONGODB.adoc[MongoDB]
+| `mongodb-utility` | `org.smallmind.mongodb.utility` | automatic | link:MONGODB.adoc[MongoDB]
+| `smallmind-nutsnbolts` | `org.smallmind.nutsnbolts` | explicit | link:NUTSNBOLTS.adoc[NutsNBolts]
+| `smallmind-persistence` | `org.smallmind.persistence` | automatic | link:PERSISTENCE.adoc[Persistence]
+| `smallmind-phalanx` | `org.smallmind.phalanx` | automatic | link:PHALANX.adoc[Phalanx]
+| `smallmind-quorum` | `org.smallmind.quorum` | automatic | link:QUORUM.adoc[Quorum]
+| `schedule-base` | `org.smallmind.schedule.base` | automatic | link:SCHEDULE.adoc[Schedule]
+| `schedule-quartz` | `org.smallmind.schedule.quartz` | automatic | link:SCHEDULE.adoc[Schedule]
+| `scribe-apache` | `org.smallmind.scribe.apache` | automatic | link:SCRIBE.adoc[Scribe]
+| `scribe-ink-indigenous` | `org.smallmind.scribe.ink.indigenous` | automatic | link:SCRIBE.adoc[Scribe]
+| `scribe-ink-jdk` | `org.smallmind.scribe.ink.jdk` | automatic | link:SCRIBE.adoc[Scribe]
+| `scribe-ink-log4j` | `org.smallmind.scribe.ink.log4j` | automatic | link:SCRIBE.adoc[Scribe]
+| `scribe-pen` | `org.smallmind.scribe.pen` | automatic | link:SCRIBE.adoc[Scribe]
+| `scribe-slf4j` | `org.smallmind.scribe.slf4j` | automatic | link:SCRIBE.adoc[Scribe]
+| `sleuth-runner` | `org.smallmind.sleuth.runner` | automatic | link:SLEUTH.adoc[Sleuth]
+| `surefire-sleuth-provider` | `org.smallmind.sleuth.maven.surefire` ^†^ | automatic | link:SLEUTH.adoc[Sleuth]
+| `spark-singularity-boot` | `org.smallmind.spark.singularity.boot` | explicit | link:SPARK.adoc[Spark]
+| `spark-singularity-maven-plugin` | `org.smallmind.spark.singularity.mojo` ^†^ | automatic | link:SPARK.adoc[Spark]
+| `spark-tanukisoft-integration` | `org.smallmind.spark.tanukisoft.integration` | automatic | link:SPARK.adoc[Spark]
+| `spark-tanukisoft-maven-plugin` | `org.smallmind.spark.tanukisoft.mojo` ^†^ | automatic | link:SPARK.adoc[Spark]
+| `testbench-condition` | `org.smallmind.testbench.condition` | automatic | link:TESTBENCH.adoc[Testbench]
+| `testbench-docker` | `org.smallmind.testbench.docker` | automatic | link:TESTBENCH.adoc[Testbench]
+| `testbench-foundation` | `org.smallmind.testbench.foundation` | automatic | link:TESTBENCH.adoc[Testbench]
+| `testbench-groundwater` | `org.smallmind.testbench.groundwater` | automatic | link:TESTBENCH.adoc[Testbench]
+| `testbench-logger` | `org.smallmind.testbench.logger` | automatic | link:TESTBENCH.adoc[Testbench]
+| `testbench-style` | `org.smallmind.testbench.style` | automatic | link:TESTBENCH.adoc[Testbench]
+| `schema-validation-maven-plugin` | `org.smallmind.web.schema` ^†^ | automatic | link:WEB.adoc[Web]
+| `web-grizzly` | `org.smallmind.web.grizzly` | automatic | link:WEB.adoc[Web]
+| `web-http` | `org.smallmind.web.http` | automatic | link:WEB.adoc[Web]
+| `web-jersey` | `org.smallmind.web.jersey` | automatic | link:WEB.adoc[Web]
+| `web-jetty` | `org.smallmind.web.jetty` | automatic | link:WEB.adoc[Web]
+| `web-json-doppelganger` | `org.smallmind.web.json.doppelganger` | automatic | link:DOPPELGANGER.adoc[Doppelganger]
+| `web-json-query` | `org.smallmind.web.json.query` | automatic | link:WEB.adoc[Web]
+| `web-json-scaffold` | `org.smallmind.web.json.scaffold` | automatic | link:WEB.adoc[Web]
+| `web-jwt` | `org.smallmind.web.jwt` | automatic | link:WEB.adoc[Web]
+|===
+
+^†^ Maven plugins and the Surefire provider carry a name so the jar is identifiable, but Maven
+and Surefire load them through their own class realms. These names are not intended for a
+consumer's `requires`.
+They stay automatic permanently.
+
+[[module-path]]
+== Module Path And Classpath
+
+The classpath is the configuration SmallMind tests against: every module's test suite runs
+with its jars on the classpath, where module descriptors are ignored and nothing in this
+section applies. The rules below apply when an application puts SmallMind jars on the module
+path. Each chapter's installation section lists the module-specific details: which optional
+dependencies its descriptor names, which modules it re-exports, and which of your packages
+you must open to it.
+
+All or nothing::
+    A named module cannot read the classpath. If a SmallMind jar is on the module path, the
+    third-party jars it uses (Spring, the Jakarta APIs, and so on) must be on the module path
+    too. Jars without a descriptor become automatic modules there.
+
+Optional dependencies are `requires static`::
+    Every dependency a SmallMind POM marks `<optional>true</optional>` appears in the
+    descriptor as `requires static`. Such a module is needed at compile time but is *not*
+    resolved at run time just because a SmallMind module names it. If its jar is on the
+    module path and nothing in the application requires it, the module is not in the module
+    graph, and the SmallMind code that uses it fails on first use with
+    `NoClassDefFoundError`, even though the jar is present. Either `requires` the module in
+    your own descriptor, which is the normal case because you are using that library
+    directly, or add it with `--add-modules`. Resolving any automatic module resolves every
+    automatic module on the module path, so in practice this failure hits explicit modules
+    (the Jakarta APIs, Bouncy Castle, ASM, and the like) far more often than automatic ones
+    (Spring, FreeMarker, Shiro, AspectJ).
+
+Re-exported and non-re-exported modules::
+    A SmallMind descriptor uses `requires transitive` for an explicit module whose types appear
+    in its public signatures, so your module reads that module without naming it. Automatic
+    modules are never re-exported, because their names are not guaranteed stable; when a
+    SmallMind signature exposes a Spring, Hibernate, MongoDB, or similar type, require that
+    module yourself.
+
+Reflection::
+    SmallMind descriptors open their own packages to the frameworks that reflect into them,
+    such as Spring and JAXB. Packages that carry resources loaded by path, such as the Spring
+    XML files documented as `classpath:org/smallmind/...`, are opened unconditionally so those
+    paths keep working. When a SmallMind utility reflects over *your* classes, you open your
+    package to the SmallMind module named in that chapter.
+
+Services::
+    Service implementations are declared both with `provides` in the descriptor and in a
+    `META-INF/services` file. The module path reads only the first; the classpath reads only
+    the second.

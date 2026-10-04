@@ -566,6 +566,19 @@ artifacts):
     `claxon-emitter-jmx`, `claxon-emitter-message`, `claxon-emitter-noop`,
     and `claxon-emitter-prometheus`. Each brings in only its own backend SDK.
 
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `claxon-registry` | `org.smallmind.claxon.registry`
+| `claxon-emitter-aws` | `org.smallmind.claxon.emitter.aws`
+| `claxon-emitter-datadog` | `org.smallmind.claxon.emitter.datadog`
+| `claxon-emitter-jmx` | `org.smallmind.claxon.emitter.jmx`
+| `claxon-emitter-message` | `org.smallmind.claxon.emitter.message`
+| `claxon-emitter-noop` | `org.smallmind.claxon.emitter.noop`
+| `claxon-emitter-prometheus` | `org.smallmind.claxon.emitter.prometheus`
+|===
+
 Optional add-ons:
 
 [source,xml]
@@ -587,6 +600,14 @@ Optional add-ons:
 <2> Adds `ProfileFeature` for JVM/OS metrics. The exotic module is weaved
     with the same AspectJ plugin as the registry, so it can be annotated with
     `@Instrumented` if a caller wants to measure its own sampling cost.
+
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `claxon-http` | `org.smallmind.claxon.http`
+| `claxon-exotic` | `org.smallmind.claxon.exotic`
+|===
 
 === AOP weaving
 
@@ -1342,7 +1363,7 @@ Precision of `Stratified`::
     values, bump `highestTrackableValue` or you'll overflow.
 
 Prometheus output inclusion in Spring context::
-    `claxon.xml` (under `claxon-registry/src/main/resources/spring/prg/smallmind/claxon/registry/`)
+    `claxon.xml` (under `claxon-registry/src/main/resources/spring/org/smallmind/claxon/registry/`)
     ships an example Spring configuration that declares a `claxonRegistry`
     bean and a `claxonEmitterResource` pointing at it. It is intended as a
     reference, not a drop-in import — real applications will want to

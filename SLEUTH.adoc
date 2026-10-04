@@ -29,12 +29,14 @@ The package name and its contents reflect that focus: a test runner that *invest
 
 The `sleuth` package is a Maven POM aggregator with two published artifacts:
 
-[cols="1,1,3", options="header"]
+[cols="1,1,2,3", options="header"]
 |===
-| Artifact | Module | Purpose
-| `sleuth-runner` | `runner/` | The framework proper: annotations, dependency resolution, thread pool, event system. No Maven dependencies; usable programmatically from any JVM host.
-| `surefire-sleuth-provider` | `maven/surefire/` | A Surefire provider that adapts `sleuth-runner` to the standard Maven `mvn test` lifecycle, translating Sleuth events into Surefire `RunListener` calls.
+| Artifact | Module | Module name | Purpose
+| `sleuth-runner` | `runner/` | `org.smallmind.sleuth.runner` | The framework proper: annotations, dependency resolution, thread pool, event system. No Maven dependencies; usable programmatically from any JVM host.
+| `surefire-sleuth-provider` | `maven/surefire/` | `org.smallmind.sleuth.maven.surefire` | A Surefire provider that adapts `sleuth-runner` to the standard Maven `mvn test` lifecycle, translating Sleuth events into Surefire `RunListener` calls.
 |===
+
+The `sleuth-runner` module name is the one to use in `requires`. Surefire loads `surefire-sleuth-provider` through its own class realms, so `org.smallmind.sleuth.maven.surefire` only identifies the jar; it is not intended for a consumer's `requires`.
 
 Depend on `sleuth-runner` if you are embedding Sleuth in another tool, driving it from a main method, or writing your own reporter. Depend on `surefire-sleuth-provider` (and only that) when you want `mvn test` to execute Sleuth-annotated classes.
 

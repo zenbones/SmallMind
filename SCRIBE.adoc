@@ -269,6 +269,8 @@ only on `scribe-pen`.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.scribe.pen`
+
 With `scribe-pen` alone, `LoggingBlueprintFactory` will fail at class-load time because
 no `LoggingBlueprint` is discovered. That is the correct shape for a library jar:
 downstream applications supply the blueprint.
@@ -302,6 +304,15 @@ are the three `scribe-ink-*` artifacts:
 </dependency>
 ----
 
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `scribe-ink-indigenous` | `org.smallmind.scribe.ink.indigenous`
+| `scribe-ink-jdk` | `org.smallmind.scribe.ink.jdk`
+| `scribe-ink-log4j` | `org.smallmind.scribe.ink.log4j`
+|===
+
 [IMPORTANT]
 ====
 Only one `scribe-ink-*` artifact may be on the classpath. `LoggingBlueprintFactory`
@@ -329,6 +340,14 @@ Commons Logging, add the matching bridge so those calls flow into the Scribe pip
   <version>${project.version}</version>
 </dependency>
 ----
+
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `scribe-slf4j` | `org.smallmind.scribe.slf4j`
+| `scribe-apache` | `org.smallmind.scribe.apache`
+|===
 
 === Optional Runtime Features
 

@@ -10,6 +10,9 @@
   <name>Claxon-Emitter-Message</name>
   <description>Message Emitter</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.emitter.message</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

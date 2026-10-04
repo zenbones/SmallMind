@@ -10,6 +10,9 @@
   <name>Claxon-Emitter-DataDog</name>
   <description>DataDog Emitter</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.emitter.datadog</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.datadoghq</groupId>

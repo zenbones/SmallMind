@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Web-Grizzly</name>
   <description>Grizzly Bootstrapping</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.grizzly</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>jakarta.servlet</groupId>

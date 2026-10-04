@@ -45,11 +45,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
+import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
+import org.smallmind.bayeux.oumuamua.server.api.json.Message;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTransport;
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -229,6 +232,7 @@ public class AsyncOumuamuaServletTest {
 
     Mockito.verify(asyncContext, Mockito.timeout(2000)).setTimeout(0);
     Mockito.verify(inputStream, Mockito.timeout(2000)).setReadListener(Mockito.any(ReadListener.class));
+    Mockito.verify(inputStream, Mockito.never()).read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt());
   }
 
   public void testReadListenerOnErrorCompletesAsyncContext ()
@@ -272,18 +276,11 @@ public class AsyncOumuamuaServletTest {
     Mockito.when(request.getHeader("Content-Length")).thenReturn("4");
     Mockito.when(request.startAsync()).thenReturn(asyncContext);
     Mockito.when(request.getInputStream()).thenReturn(inputStream);
-    Mockito.when(inputStream.isReady()).thenReturn(true).thenReturn(false);
+    Mockito.when(inputStream.isReady()).thenReturn(true);
     Mockito.when(inputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt())).thenReturn(4);
+    Mockito.when(inputStream.read()).thenReturn((int)'x');
 
-    ArgumentCaptor<ReadListener> listenerCaptor = ArgumentCaptor.forClass(ReadListener.class);
-
-    servlet.doPost(request, response);
-
-    Mockito.verify(inputStream, Mockito.timeout(2000)).setReadListener(listenerCaptor.capture());
-
-    ReadListener listener = listenerCaptor.getValue();
-
-    Mockito.verify(inputStream, Mockito.timeout(2000).atLeastOnce()).read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt());
+    ReadListener listener = postAndCaptureListener(request, response, inputStream);
 
     try {
       listener.onDataAvailable();
@@ -291,5 +288,100 @@ public class AsyncOumuamuaServletTest {
     } catch (IOException ioException) {
       Assert.assertTrue(ioException.getMessage().contains("exceeds the declared content length"));
     }
+  }
+
+  public void testReadListenerDeliversOnceWhenAllDataReadRepeats ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = initServletWithMocks();
+    Codec<OrthodoxValue> codec = Mockito.mock(Codec.class);
+
+    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+    HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+    AsyncContext asyncContext = Mockito.mock(AsyncContext.class);
+    ServletInputStream inputStream = Mockito.mock(ServletInputStream.class);
+
+    Mockito.when(server.getCodec()).thenReturn(codec);
+    Mockito.when(server.getMessageLogLevel()).thenReturn(Level.OFF);
+    Mockito.when(codec.from(Mockito.any(byte[].class))).thenReturn(new Message[0]);
+    Mockito.when(request.getHeader("Content-Length")).thenReturn("4");
+    Mockito.when(request.startAsync()).thenReturn(asyncContext);
+    Mockito.when(request.getInputStream()).thenReturn(inputStream);
+    Mockito.when(inputStream.isReady()).thenReturn(true);
+    Mockito.when(inputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt())).thenReturn(4);
+    Mockito.when(inputStream.read()).thenReturn(-1);
+
+    ReadListener listener = postAndCaptureListener(request, response, inputStream);
+
+    // The container reports all data read before the buffered body is consumed, then reports it again.
+    listener.onAllDataRead();
+    listener.onAllDataRead();
+
+    Mockito.verify(asyncContext, Mockito.timeout(2000)).complete();
+    Mockito.verify(codec, Mockito.times(1)).from(Mockito.any(byte[].class));
+    Mockito.verify(asyncContext, Mockito.times(1)).complete();
+  }
+
+  public void testReadListenerWaitsWhenContentIsIncompleteAndStreamIsNotFinished ()
+    throws Exception {
+
+    initServletWithMocks();
+
+    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+    HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+    AsyncContext asyncContext = Mockito.mock(AsyncContext.class);
+    ServletInputStream inputStream = Mockito.mock(ServletInputStream.class);
+
+    Mockito.when(request.getHeader("Content-Length")).thenReturn("4");
+    Mockito.when(request.startAsync()).thenReturn(asyncContext);
+    Mockito.when(request.getInputStream()).thenReturn(inputStream);
+    Mockito.when(inputStream.isReady()).thenReturn(true).thenReturn(false);
+    Mockito.when(inputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt())).thenReturn(2);
+    Mockito.when(inputStream.isFinished()).thenReturn(false);
+
+    ReadListener listener = postAndCaptureListener(request, response, inputStream);
+
+    listener.onAllDataRead();
+
+    Mockito.verify(asyncContext, Mockito.never()).complete();
+  }
+
+  public void testReadListenerShortContentOnFinishedStreamThrowsIOException ()
+    throws Exception {
+
+    initServletWithMocks();
+
+    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+    HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+    AsyncContext asyncContext = Mockito.mock(AsyncContext.class);
+    ServletInputStream inputStream = Mockito.mock(ServletInputStream.class);
+
+    Mockito.when(request.getHeader("Content-Length")).thenReturn("4");
+    Mockito.when(request.startAsync()).thenReturn(asyncContext);
+    Mockito.when(request.getInputStream()).thenReturn(inputStream);
+    Mockito.when(inputStream.isReady()).thenReturn(true);
+    Mockito.when(inputStream.read(Mockito.any(byte[].class), Mockito.anyInt(), Mockito.anyInt())).thenReturn(2).thenReturn(-1);
+    Mockito.when(inputStream.isFinished()).thenReturn(true);
+
+    ReadListener listener = postAndCaptureListener(request, response, inputStream);
+
+    try {
+      listener.onAllDataRead();
+      Assert.fail("Expected IOException on short content");
+    } catch (IOException ioException) {
+      Assert.assertTrue(ioException.getMessage().contains("fewer bytes(2) than the declared content length(4)"));
+    }
+  }
+
+  private ReadListener postAndCaptureListener (HttpServletRequest request, HttpServletResponse response, ServletInputStream inputStream)
+    throws IOException {
+
+    ArgumentCaptor<ReadListener> listenerCaptor = ArgumentCaptor.forClass(ReadListener.class);
+
+    servlet.doPost(request, response);
+
+    Mockito.verify(inputStream).setReadListener(listenerCaptor.capture());
+
+    return listenerCaptor.getValue();
   }
 }

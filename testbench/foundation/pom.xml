@@ -10,6 +10,9 @@
   <name>Testbench-Foundation</name>
   <description>Testbed Spring Setup</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.testbench.foundation</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.bouncycastle</groupId>

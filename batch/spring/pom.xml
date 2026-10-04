@@ -10,6 +10,9 @@
   <name>Batch-Spring</name>
   <description>Spring Batch Extensions</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.batch.spring</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

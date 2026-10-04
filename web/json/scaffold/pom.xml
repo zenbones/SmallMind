@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Web-Json-Scaffold</name>
   <description>Json Frameworks</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.json.scaffold</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

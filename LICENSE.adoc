@@ -222,6 +222,10 @@ same rules.
 <2> Binds to `process-sources`. Runs on every build unless skipped.
 <3> Binds to `prepare-package`. Quiet no-op if `target/classes` doesn't exist.
 
+Automatic module name: `org.smallmind.license` — Maven loads plugins through
+its own class realms, so this name only identifies the jar; it is not
+intended for a consumer's `requires`.
+
 A single `<configuration>` block can feed both goals. `install-license-files`
 declares the same `rules` parameter as `generate-notice-headers` (so both
 goals accept the same configuration without errors) but ignores it.

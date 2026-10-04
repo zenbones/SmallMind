@@ -10,6 +10,9 @@
   <name>Scribe-Ink-JDK</name>
   <description>JDK Ink</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.scribe.ink.jdk</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

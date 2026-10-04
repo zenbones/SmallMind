@@ -10,4 +10,7 @@
   <name>Batch-Base</name>
   <description>Common Batching Framework</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.batch.base</jigsaw.module.name>
+  </properties>
 </project>

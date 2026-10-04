@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Web-Http</name>
   <description>Http Client Framework</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.http</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>

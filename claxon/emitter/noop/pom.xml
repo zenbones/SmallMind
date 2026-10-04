@@ -10,6 +10,9 @@
   <name>Claxon-Emitter-Noop</name>
   <description>Noop Emitter</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.emitter.noop</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

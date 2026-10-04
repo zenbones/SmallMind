@@ -175,17 +175,19 @@ If you are diagnosing a failure:
 
 == Module Structure
 
-[cols="1,3",options="header"]
+[cols="1,2,3",options="header"]
 |===
-| Artifact | Role
+| Artifact | Module name | Role
 
 | `mongodb-utility`
+| `org.smallmind.mongodb.utility`
 | Spring `FactoryBean` implementations that build
   `ServerAddress[]`, `MongoCredential`, `WriteConcern`,
   `MongoClientSettings`, and a managed `MongoClient`. Depends on
   `spring-beans` as an optional compile dependency.
 
 | `mongodb-throng`
+| `org.smallmind.mongodb.throng`
 | Annotation-driven object/document mapper over the sync driver.
   Exposes `ThrongClient`, `ThrongOptions`, the `query.*` DSL, the
   `mapping.annotation.*` / `lifecycle.annotation.*` /

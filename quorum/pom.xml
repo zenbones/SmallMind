@@ -10,6 +10,9 @@
   <name>Quorum</name>
   <description>Collections, Caches and Pools</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.quorum</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.unboundid</groupId>

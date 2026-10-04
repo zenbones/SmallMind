@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Claxon-Registry</name>
   <description>Code Instrumentation Framework</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.registry</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>jakarta.annotation</groupId>

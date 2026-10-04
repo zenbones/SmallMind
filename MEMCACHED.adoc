@@ -155,6 +155,14 @@ Depend on the module that matches your need.
 </dependency>
 ----
 
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `memcached-utility` | `org.smallmind.memcached.utility`
+| `memcached-cubby` | `org.smallmind.memcached.cubby`
+|===
+
 Library code that only needs the abstraction (`ProxyMemcachedClient`,
 `MemcachedServer`, `InMemoryMemcachedClient`) can depend on
 `memcached-utility` alone. Bringing in `memcached-cubby` also transitively

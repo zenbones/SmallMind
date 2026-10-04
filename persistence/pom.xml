@@ -10,6 +10,9 @@
   <name>Persistence</name>
   <description>Persistence and Object/Relational Extensions, Utilities, and Data Types</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.persistence</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.mysql</groupId>
@@ -44,14 +47,6 @@
     <dependency>
       <groupId>jakarta.persistence</groupId>
       <artifactId>jakarta.persistence-api</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
-    <dependency>
-      <groupId>org.glassfish.jersey.connectors</groupId>
-      <artifactId>jersey-apache-connector</artifactId>
-      <version>3.1.11</version>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

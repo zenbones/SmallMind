@@ -129,6 +129,8 @@ The module is one publishable jar. Applications add it directly:
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.javafx.extras`
+
 `smallmind-javafx-extras` declares the JavaFX runtime artifacts it needs at
 compile scope, so adding the one dependency above pulls them transitively:
 

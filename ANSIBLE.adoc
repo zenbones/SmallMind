@@ -387,6 +387,8 @@ No third-party runtime dependencies. All cryptographic work goes through the
 standard JCA (`javax.crypto.*`), so any Java 8+ JVM with a default provider is
 sufficient.
 
+Module name (for `requires`): `org.smallmind.ansible`
+
 == Summary
 
 `smallmind-ansible` exists so that Java services can participate natively in

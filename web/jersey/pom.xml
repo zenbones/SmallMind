@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Web-Jersey</name>
   <description>Jersey Integrations</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.jersey</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>jakarta.inject</groupId>
@@ -68,11 +71,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jersey.test-framework</groupId>
-      <artifactId>jersey-test-framework-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hibernate.validator</groupId>
       <artifactId>hibernate-validator</artifactId>
       <scope>compile</scope>
@@ -115,11 +113,6 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

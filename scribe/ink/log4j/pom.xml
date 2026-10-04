@@ -10,6 +10,9 @@
   <name>Scribe-Ink-Log4J</name>
   <description>Log4J Ink</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.scribe.ink.log4j</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>

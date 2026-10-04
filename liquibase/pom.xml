@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Liquibase</name>
   <description>Liquibase Integrations</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.liquibase</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.liquibase</groupId>

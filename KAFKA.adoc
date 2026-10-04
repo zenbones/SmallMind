@@ -263,6 +263,8 @@ The utility artifact is published under `org.smallmind`:
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.kafka.utility`
+
 This pulls in `org.apache.kafka:kafka-clients` at the version declared by
 the parent POM, `org.smallmind:scribe-pen` for logging, and
 `org.springframework:spring-beans` for the `FactoryBean` interface that

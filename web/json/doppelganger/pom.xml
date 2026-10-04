@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Web-Json-Doppelganger</name>
   <description>Doppelganger Annotation Processor</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.json.doppelganger</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.google.auto.service</groupId>

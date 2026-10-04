@@ -85,6 +85,8 @@ subpackages, each independent from the others:
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.quorum`
+
 === Compile-Time Dependencies
 
 * `org.smallmind:smallmind-nutsnbolts` -- general utilities (`Stint`,

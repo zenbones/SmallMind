@@ -10,6 +10,9 @@
   <name>Scribe-Apache</name>
   <description>Apache Commons Redirection</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.scribe.apache</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>commons-logging</groupId>

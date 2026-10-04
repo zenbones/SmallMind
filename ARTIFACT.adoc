@@ -240,6 +240,8 @@ already supply them, add them explicitly.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.artifact.maven`
+
 Additional direct dependencies in a standalone deployment:
 
 [source,xml]

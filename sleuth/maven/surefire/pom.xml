@@ -10,6 +10,9 @@
   <name>Surefire-Sleuth-Provider</name>
   <description>Sleuth Maven Surefire Provider</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.sleuth.maven.surefire</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.surefire</groupId>

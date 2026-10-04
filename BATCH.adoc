@@ -271,6 +271,19 @@ The two artifacts are published under `org.smallmind`:
 </dependency>
 ----
 
+[cols="1,1", options="header"]
+|===
+| Artifact | Module name
+
+| `batch-base` | `org.smallmind.batch.base`
+| `batch-spring` | `org.smallmind.batch.spring`
+|===
+
+`batch-base` ships an explicit module descriptor that exports
+`org.smallmind.batch.base` and requires nothing beyond `java.base`. `batch-spring`
+is currently an automatic module under the name above. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 A reusable library that only needs to *describe* a batch launch (e.g., a
 service API module whose REST controllers accept parameter maps and hand them
 off to the runtime) depends on `batch-base` only. An application that wants to

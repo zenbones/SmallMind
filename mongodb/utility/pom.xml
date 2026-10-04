@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>MongoDB Utility</name>
   <description>MongoDB Driver Abstractions</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.mongodb.utility</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.mongodb</groupId>

@@ -10,6 +10,9 @@
   <name>Spark-Tanukisoft-Maven-Plugin</name>
   <description>Tanukisoft Wrapper Maven Plugin</description>
   <packaging>maven-plugin</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.spark.tanukisoft.mojo</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

@@ -34,31 +34,37 @@ The name reflects the intent: a *bench* of instruments a contributor reaches for
 
 `testbench` is a Maven POM aggregator (`smallmind-testbench`, packaging `pom`) with six published JARs. They are independent: depend on the one whose job you need.
 
-[cols="1,2,2", options="header"]
+[cols="1,2,2,2", options="header"]
 |===
-| Artifact | Module | Purpose
+| Artifact | Module name | Module | Purpose
 
 | `testbench-docker`
+| `org.smallmind.testbench.docker`
 | `docker/`
 | A catalog of ready-to-run container fixtures (`DockerApplication`) and the static lifecycle operations (`DockerApplications`) that pull, create, start-until-ready, and stop them. Talks to the daemon through `DockerClientUtility`.
 
 | `testbench-condition`
+| `org.smallmind.testbench.condition`
 | `condition/`
 | A pollable-precondition abstraction (`TestCondition`) and a driver (`TestConditions`) that waits on a set of them against a shared timeout, plus concrete conditions for container absence, GreenMail shutdown, and RabbitMQ availability.
 
 | `testbench-groundwater`
+| `org.smallmind.testbench.groundwater`
 | `groundwater/`
 | `AbstractGroundwaterTest`, a TestNG base class that brings a set of `DockerApplication` fixtures up in `@BeforeClass` (after a clean-environment check) and tears them down in `@AfterClass`.
 
 | `testbench-logger`
+| `org.smallmind.testbench.logger`
 | `logger/`
 | `TestLoggerConfiguration.setup()`, a one-call bootstrap that points the Scribe logging system at the console at `DEBUG` level. Also ships an equivalent Spring `logging.xml`.
 
 | `testbench-foundation`
+| `org.smallmind.testbench.foundation`
 | `foundation/`
 | A resources-only JAR carrying a Spring `foundation.xml` bootstrap context (per-application context, BouncyCastle, property placeholder resolution) and a `global.yaml` of default test properties.
 
 | `testbench-style`
+| `org.smallmind.testbench.style`
 | `style/`
 | Two developer command-line tools, `DependencyOrganizer` (sort every pom's dependencies into canonical order) and `DependencyReducer` (add/remove/re-scope dependencies from `mvn dependency:analyze`), plus the supporting types.
 |===
@@ -121,7 +127,7 @@ Reach for the narrower artifacts directly when you do not need the whole stack:
 
 [IMPORTANT]
 ====
-*`jersey-apache-connector` is pinned to `3.1.11`.* `docker-java` declares a transitive dependency on `org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0`, which does not exist in any repository. The `docker`, `condition`, and `groundwater` poms each pin `3.1.11` explicitly to override that broken request. If you assemble a test classpath that uses `docker-java` without going through these modules, you must add the same pin yourself.
+*`docker-java-transport-jersey` is excluded.* `docker-java` declares a compile-scope dependency on its Jersey transport, which in turn requests `org.glassfish.jersey.connectors:jersey-apache-connector` at a version that does not exist alongside Jersey 4 (the Jersey 4 line no longer publishes that artifact). `DockerClientUtility` uses the Apache HttpClient 5 transport exclusively, so the root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java` in `dependencyManagement` and nothing in this repository depends on the connector. If you declare `docker-java` yourself without inheriting this project's dependency management, add the same exclusion (or pin a Jersey 3 connector) or resolution will fail.
 ====
 
 == Quick Start
@@ -432,7 +438,7 @@ No log output::
     `TestLoggerConfiguration.setup()` configures Scribe but does not provide a backend. Add `scribe-ink-indigenous` (test scope) so `LoggerManager` resolves a logging blueprint. See the installation note above.
 
 `jersey-apache-connector` resolution failure::
-    `docker-java` requests a non-existent `4.0.0`; the `docker`, `condition`, and `groundwater` poms pin `3.1.11`. Reproduce the pin in any classpath that uses `docker-java` outside these modules.
+    `docker-java`'s Jersey transport requests a `jersey-apache-connector` version that does not exist. The root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java`; reproduce that exclusion in any build that declares `docker-java` outside this project's dependency management. See the installation note above.
 
 `MissingHostResourceException` when declaring a mount::
     `DockerMount`/`DockerVolume` resolve the host resource from the classpath at construction. The named resource is not on the test classpath, or its URL is malformed. Confirm the resource path is correct and present under `src/test/resources`.
@@ -468,7 +474,7 @@ Plaintext daemon default::
 | Test log level              | `DEBUG`                | `TestLoggerConfiguration` / `global.yaml`
 | Wire default timeout        | `15` s                 | `global.yaml`
 | Subprocess exit grace       | `3` s                  | `ProcessOutputUtility`
-| `jersey-apache-connector`   | `3.1.11`               | `docker` / `condition` / `groundwater` poms
+| `docker-java-transport-jersey` | excluded            | root `pom.xml` `dependencyManagement`
 |===
 
 == Package File Map

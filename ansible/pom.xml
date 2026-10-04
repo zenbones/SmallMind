@@ -10,6 +10,9 @@
   <name>Ansible</name>
   <description>Ansible Vault Implementation</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.ansible</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.bouncycastle</groupId>

@@ -123,6 +123,8 @@ have `roles`; neither of those should be a runtime assertion.
 </dependency>
 ----
 
+Module name (for `requires`): `org.smallmind.web.json.doppelganger`
+
 The processor is registered as a Java SPI service (via Google Auto Service)
 at `META-INF/services/javax.annotation.processing.Processor`, so `javac`
 discovers it automatically as soon as the artifact is on the annotation

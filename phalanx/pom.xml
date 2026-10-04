@@ -10,6 +10,9 @@
   <name>Smalmind-Phalanx</name>
   <description>Clustering and Coordination Frameworks</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.phalanx</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.rabbitmq</groupId>
@@ -49,13 +52,6 @@
       <artifactId>kafka-clients</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
-    </dependency>
-    <dependency>
-      <!-- docker-java (via testbench-docker) wants jersey-apache-connector 4.0.0, which does not exist; pin the working release -->
-      <groupId>org.glassfish.jersey.connectors</groupId>
-      <artifactId>jersey-apache-connector</artifactId>
-      <version>3.1.11</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>

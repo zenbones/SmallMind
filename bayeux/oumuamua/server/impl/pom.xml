@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>Oumuamua-Server-Impl</name>
   <description>Oumuamua Server Reference Implementation</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.bayeux.oumuamua.server.impl</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>jakarta.servlet</groupId>
@@ -61,13 +64,6 @@
       <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-http-servlet-server</artifactId>
       <scope>test</scope>
-    </dependency>
-    <!-- docker-java wants org.glassfish.jersey.connectors:jersey-apache-connector:4.0.0, which does not exist -->
-    <dependency>
-      <groupId>org.glassfish.jersey.connectors</groupId>
-      <artifactId>jersey-apache-connector</artifactId>
-      <version>3.1.11</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>

@@ -10,6 +10,9 @@
   <name>Sechedule-Quartz</name>
   <description>Quartz Extensions</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.schedule.quartz</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.quartz-scheduler</groupId>

@@ -10,4 +10,7 @@
   <packaging>jar</packaging>
   <name>Spark-Singularity-Boot</name>
   <description>Singularity Jar Entry Point</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.spark.singularity.boot</jigsaw.module.name>
+  </properties>
 </project>

@@ -10,6 +10,9 @@
   <packaging>jar</packaging>
   <name>NutsNBolts</name>
   <description>Nuts'n'Bolts Utilities</description>
+  <properties>
+    <jigsaw.module.name>org.smallmind.nutsnbolts</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.sun.mail</groupId>
@@ -66,6 +69,24 @@
     <dependency>
       <groupId>jakarta.xml.ws</groupId>
       <artifactId>jakarta.xml.ws-api</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-core</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-crypto-hash</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-lang</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -155,6 +176,23 @@
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <compilerArgs combine.children="append">
+                <arg>--add-modules</arg>
+                <arg>jdk.httpserver</arg>
+                <arg>--add-reads</arg>
+                <arg>org.smallmind.nutsnbolts=jdk.httpserver</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>dev.aspectj</groupId>

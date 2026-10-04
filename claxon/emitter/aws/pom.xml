@@ -10,6 +10,9 @@
   <name>Claxon-Emitter-AWS</name>
   <description>AWS Emitter</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.claxon.emitter.aws</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>

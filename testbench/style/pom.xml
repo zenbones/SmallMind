@@ -10,6 +10,9 @@
   <name>Testbench-Style</name>
   <description>Pom Organizing Scripts</description>
   <packaging>jar</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.testbench.style</jigsaw.module.name>
+  </properties>
   <dependencies>
       <dependency>
       <groupId>org.smallmind</groupId>

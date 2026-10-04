@@ -10,6 +10,9 @@
   <name>schema-validation-maven-plugin</name>
   <description>XSD Schema Validating Maven Plugin</description>
   <packaging>maven-plugin</packaging>
+  <properties>
+    <jigsaw.module.name>org.smallmind.web.schema</jigsaw.module.name>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
