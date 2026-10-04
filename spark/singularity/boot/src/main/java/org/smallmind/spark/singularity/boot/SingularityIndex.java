@@ -69,6 +69,43 @@ public class SingularityIndex implements Serializable {
   private final HashMap<String, ModuleEntry> moduleEntryMap = new HashMap<>();
 
   /**
+   * Forms the {@code jar:} URL of a file laid down directly in the outer jar.
+   *
+   * @param parentJarUrlPart the external form of the outer jar's URL
+   * @param entryName        the file's path relative to the jar root
+   * @return the URL of the file
+   * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the composed
+   *                          URL is not well formed
+   */
+  public static URL createOuterJarURL (String parentJarUrlPart, String entryName) {
+
+    try {
+      return new URI("jar", parentJarUrlPart + "!/" + entryName, null).toURL();
+    } catch (URISyntaxException | MalformedURLException exception) {
+      throw new RuntimeException(exception);
+    }
+  }
+
+  /**
+   * Forms the {@code singularity:} URL of an entry inside a bundled library jar.
+   *
+   * @param parentJarUrlPart the external form of the outer jar's URL
+   * @param jarName          the filename of the library jar under {@code META-INF/singularity/lib/}
+   * @param entryName        the entry's path inside the library jar
+   * @return the URL of the entry
+   * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the composed
+   *                          URL is not well formed
+   */
+  public static URL createNestedJarURL (String parentJarUrlPart, String jarName, String entryName) {
+
+    try {
+      return new URI("singularity", parentJarUrlPart + "@/META-INF/singularity/lib/" + jarName + "!/" + entryName, null).toURL();
+    } catch (URISyntaxException | MalformedURLException exception) {
+      throw new RuntimeException(exception);
+    }
+  }
+
+  /**
    * Records that an entry observed inside a bundled library jar can be served from that jar at runtime. When several
    * jars contain the same entry, each is kept, in the order in which they were recorded; recording the same jar for
    * the same entry twice has no effect.
@@ -122,43 +159,6 @@ public class SingularityIndex implements Serializable {
   public Iterable<ModuleEntry> getModuleEntryIterable () {
 
     return moduleEntryMap.values();
-  }
-
-  /**
-   * Forms the {@code jar:} URL of a file laid down directly in the outer jar.
-   *
-   * @param parentJarUrlPart the external form of the outer jar's URL
-   * @param entryName        the file's path relative to the jar root
-   * @return the URL of the file
-   * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the composed
-   *                          URL is not well formed
-   */
-  public static URL createOuterJarURL (String parentJarUrlPart, String entryName) {
-
-    try {
-      return new URI("jar", parentJarUrlPart + "!/" + entryName, null).toURL();
-    } catch (URISyntaxException | MalformedURLException exception) {
-      throw new RuntimeException(exception);
-    }
-  }
-
-  /**
-   * Forms the {@code singularity:} URL of an entry inside a bundled library jar.
-   *
-   * @param parentJarUrlPart the external form of the outer jar's URL
-   * @param jarName          the filename of the library jar under {@code META-INF/singularity/lib/}
-   * @param entryName        the entry's path inside the library jar
-   * @return the URL of the entry
-   * @throws RuntimeException wrapping a {@link URISyntaxException} or {@link MalformedURLException} when the composed
-   *                          URL is not well formed
-   */
-  public static URL createNestedJarURL (String parentJarUrlPart, String jarName, String entryName) {
-
-    try {
-      return new URI("singularity", parentJarUrlPart + "@/META-INF/singularity/lib/" + jarName + "!/" + entryName, null).toURL();
-    } catch (URISyntaxException | MalformedURLException exception) {
-      throw new RuntimeException(exception);
-    }
   }
 
   /**

@@ -73,6 +73,14 @@ public class SingularityBundleIntegrationTest {
   private Path uncachedBundle;
   private MavenProject project;
 
+  private static String jarCacheAttribute (Path bundleToRead)
+    throws Exception {
+
+    try (JarFile jarFile = new JarFile(bundleToRead.toFile())) {
+      return jarFile.getManifest().getMainAttributes().getValue(new Attributes.Name("Singularity-Jar-Cache"));
+    }
+  }
+
   @BeforeClass
   public void buildBundle ()
     throws Exception {
@@ -174,14 +182,6 @@ public class SingularityBundleIntegrationTest {
 
     Assert.assertEquals(process.exitValue(), 0, "the bundle's child JVM exited abnormally; output:\n" + output);
     Assert.assertEquals(Files.readString(marker, StandardCharsets.UTF_8), "hello world|greeted-by-dependency");
-  }
-
-  private static String jarCacheAttribute (Path bundleToRead)
-    throws Exception {
-
-    try (JarFile jarFile = new JarFile(bundleToRead.toFile())) {
-      return jarFile.getManifest().getMainAttributes().getValue(new Attributes.Name("Singularity-Jar-Cache"));
-    }
   }
 
   @AfterClass(alwaysRun = true)

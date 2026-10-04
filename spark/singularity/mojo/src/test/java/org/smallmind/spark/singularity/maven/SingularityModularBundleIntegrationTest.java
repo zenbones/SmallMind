@@ -170,11 +170,11 @@ public class SingularityModularBundleIntegrationTest {
 
     compile(fixtureDirectory.resolve("cp"), Map.of("test/cp/CpThing.java", """
       package test.cp;
-
+      
       public class CpThing {
-
+      
         public static String where () {
-
+      
           return CpThing.class.getModule().isNamed() ? "named" : "unnamed";
         }
       }
@@ -183,13 +183,13 @@ public class SingularityModularBundleIntegrationTest {
 
     compile(fixtureDirectory.resolve("auto"), Map.of("test/auto/AutoHelper.java", """
       package test.auto;
-
+      
       import test.cp.CpThing;
-
+      
       public class AutoHelper {
-
+      
         public static String describe () {
-
+      
           return AutoHelper.class.getModule().getName() + ":" + CpThing.where();
         }
       }
@@ -198,37 +198,37 @@ public class SingularityModularBundleIntegrationTest {
 
     compile(fixtureDirectory.resolve("greeter"), Map.of("module-info.java", """
       module test.greeter {
-
+      
         exports test.greeter;
-
+      
         opens test.greeter.data;
-
+      
         provides test.greeter.Greeting with test.greeter.internal.DefaultGreeting;
       }
       """, "test/greeter/Greeting.java", """
       package test.greeter;
-
+      
       public interface Greeting {
-
+      
         String greet ();
       }
       """, "test/greeter/internal/DefaultGreeting.java", """
       package test.greeter.internal;
-
+      
       import test.greeter.Greeting;
-
+      
       public class DefaultGreeting implements Greeting {
-
+      
         public String greet () {
-
+      
           return "greeted-by-module@" + DefaultGreeting.class.getModule().getName();
         }
       }
       """, "test/greeter/data/Marker.java", """
       package test.greeter.data;
-
+      
       public class Marker {
-
+      
       }
       """));
     greeterEntryMap = new LinkedHashMap<>(readTree(fixtureDirectory.resolve("greeter"), ""));
@@ -238,27 +238,27 @@ public class SingularityModularBundleIntegrationTest {
 
     compile(fixtureDirectory.resolve("versioned-base"), Map.of("test/versioned/Version.java", """
       package test.versioned;
-
+      
       public class Version {
-
+      
         public static String get () {
-
+      
           return "base";
         }
       }
       """));
     compile(fixtureDirectory.resolve("versioned-11"), Map.of("module-info.java", """
       module test.versioned {
-
+      
         exports test.versioned;
       }
       """, "test/versioned/Version.java", """
       package test.versioned;
-
+      
       public class Version {
-
+      
         public static String get () {
-
+      
           return "versioned@" + Version.class.getModule().getName();
         }
       }
@@ -270,16 +270,16 @@ public class SingularityModularBundleIntegrationTest {
 
     compile(classesDirectory, Map.of("module-info.java", """
       module test.app {
-
+      
         requires test.auto;
         requires test.greeter;
         requires test.versioned;
-
+      
         uses test.greeter.Greeting;
       }
       """, "test/app/main/Main.java", """
       package test.app.main;
-
+      
       import java.nio.charset.StandardCharsets;
       import java.nio.file.Files;
       import java.nio.file.Path;
@@ -287,22 +287,22 @@ public class SingularityModularBundleIntegrationTest {
       import test.auto.AutoHelper;
       import test.greeter.Greeting;
       import test.versioned.Version;
-
+      
       public class Main {
-
+      
         public static void main (String[] args)
           throws Exception {
-
+      
           ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
           String internal;
-
+      
           try {
             Class.forName("test.greeter.internal.DefaultGreeting", true, contextClassLoader).getConstructor().newInstance();
             internal = "accessible";
           } catch (IllegalAccessException illegalAccessException) {
             internal = "encapsulated";
           }
-
+      
           Files.writeString(Path.of(args[0]), Main.class.getModule().getName()
             + "|" + ServiceLoader.load(Greeting.class).findFirst().orElseThrow().greet()
             + "|" + Version.get()
@@ -398,20 +398,20 @@ public class SingularityModularBundleIntegrationTest {
     // test.shadow is bound into the graph only as a Greeting provider, and its package collides with test.greeter's
     compile(fixtureDirectory.resolve("shadow"), Map.of("module-info.java", """
       module test.shadow {
-
+      
         requires test.greeter;
-
+      
         provides test.greeter.Greeting with test.greeter.internal.ShadowGreeting;
       }
       """, "test/greeter/internal/ShadowGreeting.java", """
       package test.greeter.internal;
-
+      
       import test.greeter.Greeting;
-
+      
       public class ShadowGreeting implements Greeting {
-
+      
         public String greet () {
-
+      
           return "shadow";
         }
       }
