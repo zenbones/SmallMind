@@ -112,14 +112,20 @@ Pick whichever matches the deployment surface.
 * **Provides a custom `ClassLoader` that resolves classes from nested
   jars in place** (`SingularityClassLoader`), backed by a custom
   `singularity:` URL protocol that can stream bytes from any entry in
-  any nested library without extracting anything to disk. Nested jars
-  are cached in memory via soft references so repeated lookups do not
-  reopen the outer archive.
+  any nested library without extracting anything to disk. A nested jar
+  is held in memory once something in it has been used, so later
+  lookups do not reopen the outer archive; `useJarCache` chooses
+  between fast first use and a smaller footprint.
 
 * **Turns the jar into an executable bootstrap** via
   `SingularityEntryPoint`: `Main-Class` of the outer jar, reflectively
   invokes whatever fully qualified class name was configured as
   `mainClass` at build time.
+
+* **Runs a modular application on a module path** when the project is
+  a named module and `modular` is set: the application and the modular
+  dependencies it requires run as named modules, everything else on the
+  class path, and the module graph is checked when the bundle is built.
 
 * **Assembles a ready-to-run Tanuki wrapper distribution**
   (`spark-tanukisoft-maven-plugin`) with `bin/`, `lib/`, `conf/`, the
@@ -216,7 +222,15 @@ Pick whichever matches the deployment surface.
 
 | … debugging a `ClassNotFoundException` coming out of a Singularity jar
 | <<class-loading-rules,Class Loading Rules>> →
+  <<class-path-order,Class Path Order>> →
   <<reserved-jdk-namespaces,Reserved JDK Namespaces>>.
+
+| … packaging an application that has its own `module-info.java`
+| <<singularity-modular-mode,Modular Mode>>.
+
+| … tuning how much memory a running Singularity jar holds for its
+  dependencies, or how fast it starts
+| <<cached-nested-jars,Nested Jars In Memory>>.
 
 | … debugging "the service started, then the wrapper killed it" in
   production
@@ -246,6 +260,18 @@ Pick whichever matches the deployment surface.
   `spark-singularity-maven-plugin`
 | Dependency jars land under `META-INF/singularity/lib/` verbatim; a
   custom `ClassLoader` reads them in place.
+
+| Run an application that is a named module, with its modular
+  dependencies on a module path
+| `<modular>true</modular>`
+| The module graph is checked when the bundle is built. See
+  <<singularity-modular-mode,Modular Mode>>.
+
+| Reduce the memory a running Singularity jar holds for its
+  dependencies
+| `<useJarCache>false</useJarCache>`
+| Smaller footprint, much slower first use of each dependency. See
+  <<cached-nested-jars,Nested Jars In Memory>>.
 
 | Wrap a Java service as a Windows service, Linux daemon, or macOS
   launchd task with a real watchdog
@@ -331,8 +357,10 @@ The jar ships an explicit module descriptor that exports
 `org.smallmind.spark.singularity.boot` and requires nothing beyond `java.base`. The
 `generate-singularity` goal copies only the entries under
 `org/smallmind/spark/singularity/boot/` into a Singularity jar, so the descriptor does not
-travel with them: a Singularity jar is not a named module, it is launched with `java -jar`,
-and the classes its boot loader defines run in unnamed modules. See
+travel with them: a Singularity jar is not itself a named module and is launched with
+`java -jar`. By default the classes its boot loader defines run in that loader's unnamed
+module; a bundle built in <<singularity-modular-mode,modular mode>> defines a module layer
+for the application and its modular dependencies instead. See
 xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 === `spark-singularity-maven-plugin`
@@ -444,7 +472,11 @@ spark/
           SingularityEntryPoint.java         Main-Class of every Singularity jar
           SingularityClassLoader.java        Custom ClassLoader over nested jars
           SingularityIndex.java              Serializable map of bundle contents
-          CachedJarFile.java                 Soft-ref in-memory nested jar cache
+          SingularityModule.java             A module of a modular bundle
+          SingularityModuleFinder.java       ModuleFinder over those modules
+          NestedJarFile.java                 A dependency jar held in memory
+          CachedJarFile.java                 ... kept as-is (useJarCache=true)
+          RecompressedJarFile.java           ... kept re-compressed (useJarCache=false)
           SingularityJarURLConnection.java   singularity: URL connection
           SingularityJarURLStreamHandler.java singularity: URL handler
           SingularityJarURLStreamHandlerFactory.java JVM-wide handler factory
@@ -532,8 +564,9 @@ Index::
     A serialized `SingularityIndex` at
     `META-INF/singularity/index/singularity.idx` records, for every
     class and resource, which of the three populations it belongs to.
-    For library entries, it also records which specific library jar
-    inside `lib/` supplied it.
+    For library entries, it also records which library jars inside
+    `lib/` supply it, in class path order. In a modular bundle it also
+    records which dependencies form the module path.
 
 Custom URL protocol::
     The `singularity:` protocol has the form
@@ -545,11 +578,12 @@ Custom URL protocol::
     and URL-based classloaders layered on top) can reach the bytes.
 
 Custom ClassLoader::
-    `SingularityClassLoader` reads the index at boot, maps every
-    entry name to the appropriate URL form (`jar:` for jar-root entries,
-    `singularity:` for library entries), and serves `findClass` /
-    `findResource` from that map. It *refuses* a small set of
-    JDK-shadowed namespaces so the platform's own copies win.
+    `SingularityClassLoader` reads the index at boot and serves
+    `findClass` / `findResource` from it, addressing jar-root entries
+    with `jar:` URLs and library entries with `singularity:` URLs. It
+    *refuses* a small set of JDK-shadowed namespaces so the platform's
+    own copies win. In a modular bundle it is also the class loader of
+    every module on the bundle's module path.
 
 Entry point::
     `SingularityEntryPoint` is the jar's `Main-Class`. On `main`, it
@@ -557,6 +591,8 @@ Entry point::
     `SingularityClassLoader`, installs it as the context class loader,
     and reflectively invokes the application's *real* `main` — whose
     class name is stored in the manifest attribute `Singularity-Class`.
+    In a modular bundle it first sets up the module path and loads the
+    main class from the application's module.
 
 === Tanukisoft's Central Idea
 
@@ -619,11 +655,13 @@ ship as.
     recording every one of its entries in the `SingularityIndex`),
     walks `target/classes/` and copies every file into the tree (while
     recording each in the index), serializes the index to
-    `META-INF/singularity/index/singularity.idx`, composes a manifest
-    with `Main-Class: org.smallmind.spark.singularity.boot.SingularityEntryPoint`
-    and `Singularity-Class: <mainClass>`, compresses the tree into
+    `META-INF/singularity/index/singularity.idx`, composes the manifest
+    (see <<singularity-manifest,Manifest Attributes>>), compresses the
+    tree into
     `${project.build.directory}/<artifactId>-<version>[-<classifier>].jar`,
-    and attaches the result as a project artifact.
+    and attaches the result as a project artifact. In modular mode it
+    also works out which dependencies form the module path and fails
+    the build if the module graph does not resolve.
 
 `install-singularity` (phase: `install`)::
     Locates the output jar in `target/` using the same naming rule as
@@ -662,6 +700,43 @@ ship as.
     Skips execution. Combine with a Maven profile to build a
     "development" jar that intentionally omits the Singularity step.
 
+`modular` (default: `false`)::
+    Runs the application on a module path. The project must be a named
+    module (it has a `module-info.java`), and `mainClass` must be one of
+    its classes. See <<singularity-modular-mode,Modular Mode>>.
+
+`useJarCache` (default: `true`)::
+    How the running bundle keeps a dependency jar in memory once
+    something in it has been used. `true` favors speed; `false` uses
+    less memory but makes the first use of each dependency much slower.
+    See <<cached-nested-jars,Nested Jars In Memory>>.
+
+[[singularity-manifest]]
+=== Manifest Attributes
+
+`generate-singularity` writes these attributes into the bundle's
+manifest, and the bundle reads them when it starts. They are derived
+from the plugin configuration; there is no need to set them by hand.
+
+[cols="1,3",options="header"]
+|===
+| Attribute
+| Meaning
+
+| `Main-Class`
+| Always `org.smallmind.spark.singularity.boot.SingularityEntryPoint`.
+
+| `Singularity-Class`
+| The application's main class, from `mainClass`.
+
+| `Singularity-Module`
+| The application's module name. Present only in a modular bundle.
+
+| `Singularity-Jar-Cache`
+| `true` or `false`, from `useJarCache`. A bundle without this
+  attribute behaves as `true`.
+|===
+
 === Runtime Classes (`spark-singularity-boot`)
 
 `SingularityEntryPoint`::
@@ -670,16 +745,18 @@ ship as.
     manifest, constructs a `SingularityClassLoader` bound to that
     jar, installs the loader as the context class loader, and
     reflectively invokes the `Singularity-Class`'s `main` with the
-    original argument array. Silently ignores the degenerate case
-    where `Singularity-Class` equals itself (so the boot does not
-    recurse).
+    original argument array. In a modular bundle it first sets up the
+    module path (see <<singularity-modular-mode,Modular Mode>>).
+    Silently ignores the degenerate case where `Singularity-Class`
+    equals itself (so the boot does not recurse).
 
 `SingularityClassLoader`::
     The runtime's center. Reads the serialized `SingularityIndex` off
-    the jar, maps every entry name to either a `jar:`-protocol URL
-    (for entries sitting at the jar root) or a `singularity:`-protocol
-    URL (for entries inside a nested library jar), and serves
-    `findClass` / `findResource` / `findResources` from that map.
+    the jar and serves `findClass` / `findResource` / `findResources`
+    from it, searching the jar's own classes first and then the bundled
+    libraries in class path order (see
+    <<class-path-order,Class Path Order>>). In a modular bundle it is
+    also the class loader of every module on the bundle's module path.
 +
 Its static initializer installs `SingularityJarURLStreamHandlerFactory`
 *JVM-wide*, which is a deliberate singleton: the JVM permits exactly
@@ -687,28 +764,24 @@ one `URLStreamHandlerFactory` to be registered, and
 `SingularityClassLoader` must be the one that registers it.
 
 `SingularityIndex`::
-    `Serializable` POJO with two internal collections: `fileNameSet`
-    for entries stored directly in the outer jar and `inverseEntryMap`
-    for entries inside a nested library (mapping entry-name → jar-name).
-    Exposes two `Iterable<URLEntry>` views used by the loader to
-    materialize its resolution table. The `URLEntry` nested record
-    pairs a logical entry name with the URL at which its bytes can
-    be read.
+    The serialized record of the bundle's contents, written at build
+    time: which jar supplies each class and resource and, in a modular
+    bundle, which dependencies form the module path.
 
-`CachedJarFile`::
-    In-memory snapshot of a nested jar. Its constructor drains a
-    `JarInputStream` once, storing every entry's compressed bytes in
-    a map keyed by entry name. Subsequent calls to
-    `getInputStream(name)` return a fresh `InflaterInputStream` over
-    those bytes. Used by `SingularityJarURLConnection` behind a
-    soft-reference map so the JVM can reclaim cached jars under
-    memory pressure.
+`SingularityModule`, `SingularityModuleFinder`::
+    Support for modular bundles: one module of the bundle's module
+    path, and the `ModuleFinder` over all of them.
+
+`NestedJarFile`, `CachedJarFile`, `RecompressedJarFile`::
+    A dependency jar held in memory, and the two ways of holding it
+    that `useJarCache` chooses between (see
+    <<cached-nested-jars,Nested Jars In Memory>>).
 
 `SingularityJarURLConnection`::
     `URLConnection` for the `singularity:` protocol. Parses the URL
     form `singularity:<outer>@/[<inner-jar>!/]<entry>` and returns an
-    `InputStream` over the addressed entry, reusing the cached
-    nested-jar form when possible.
+    `InputStream` over the addressed entry, reusing a dependency jar
+    already held in memory when possible.
 
 `SingularityJarURLStreamHandler`::
     Standard `URLStreamHandler` that returns a fresh
@@ -771,6 +844,36 @@ self-before-parent strategy:
 . Calls `defineClass(name, bytes, 0, bytes.length, protectionDomain)`
   where the protection domain has `AllPermission`.
 
+In a modular bundle, a class in a package of a module on the bundle's
+module path is defined into that module, with the module's jar as its
+code source, and the reserved namespaces do not apply to it.
+
+[[class-path-order]]
+=== Class Path Order
+
+When the same class or resource name appears in more than one place,
+a Singularity jar resolves it the way `java -cp
+target/classes:<dependencies>` would: the project's own classes and
+resources first, then the dependency jars in the project's runtime
+class path order.
+
+A class, or a resource fetched with `getResource`, comes from the first
+place that has it. `getResources` returns every copy, in that order, so
+`ServiceLoader` sees the `META-INF/services` files of every dependency,
+and `getResources("META-INF/MANIFEST.MF")` returns one manifest per
+jar.
+
+[NOTE]
+====
+Bundles built by plugins before 7.4.0 kept one source per entry name:
+the *last* library jar to contain an entry, which also took precedence
+over the project's own copy. Consequently `getResources` returned at
+most one URL per name, and `ServiceLoader` saw only one jar's
+providers for each service. A project that relied on a dependency
+overriding one of its own resources, or on a later dependency
+overriding an earlier one, now gets the class path behavior instead.
+====
+
 [[reserved-jdk-namespaces]]
 === Reserved JDK Namespaces
 
@@ -825,6 +928,64 @@ the Singularity jar — same class, two definitions, different
 
 Exclusions match exactly on both coordinates. There is no
 glob / version / scope filtering — add an entry per artifact id.
+
+[[singularity-modular-mode]]
+=== Modular Mode
+
+By default a Singularity jar runs its application on a class path, as
+`java -cp` would, even when the application and its dependencies carry
+module descriptors. If the project is a named module (it has a
+`module-info.java`), set `modular` to run it on a module path instead,
+as `java --module-path … --module …` would:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.smallmind</groupId>
+  <artifactId>spark-singularity-maven-plugin</artifactId>
+  <version>${project.version}</version>
+  <extensions>true</extensions>
+  <configuration>
+    <mainClass>com.example.service.main.Main</mainClass>   <!--1-->
+    <modular>true</modular>
+  </configuration>
+</plugin>
+----
+<1> Must be a class of the project's own module. Its package does not
+    need to be exported.
+
+The running jar then behaves as if it had been launched with both a
+module path and a class path:
+
+* The project's module, the modular dependencies it requires, and the
+  modular dependencies that provide services it `uses` run as named
+  modules.
+* A dependency without a module descriptor runs as an automatic module
+  when one of those modules `requires` it, and on the class path
+  otherwise.
+* Every other dependency stays on the class path, exactly as in a
+  class path bundle.
+
+The usual module-path rules apply. Code outside a module can use only
+the packages it exports. A framework that reflects into a module, or
+loads a resource from one of its packages by path (as Spring does with
+`classpath:` locations), needs that package opened by the module's
+`opens` declaration. A named module can use classes on the class path
+only if it is an automatic module.
+
+The plugin works out the module path when the bundle is built and logs
+one `Module path:` or `Class path:` line per dependency. A module that
+cannot be found, two dependencies that supply the same module, or a
+package split across two modules fails the build rather than the
+launch (see
+<<build-time-failure-signatures,Build-Time Failure Signatures>>).
+That check runs on the JDK that runs Maven, so launch the jar on the
+same Java feature release.
+
+The <<reserved-jdk-namespaces,reserved JDK namespaces>> apply to the
+class path only. A dependency on the module path that duplicates a JDK
+package (an old XML API jar carrying `org.w3c.dom`, say) usually fails
+the build as a split package; exclude it.
 
 [[tanukisoft-reference]]
 == Tanukisoft Reference
@@ -1215,6 +1376,7 @@ my-service-1.0.0.jar
   META-INF/
     MANIFEST.MF                              Main-Class: SingularityEntryPoint
                                              Singularity-Class: com.example.service.Main
+                                             Singularity-Jar-Cache: true
     singularity/
       index/singularity.idx                  Serialized SingularityIndex
       lib/
@@ -1507,6 +1669,9 @@ to use against them.
   nothing (the recursive case). Otherwise, loads the class *through
   the context loader* and reflectively invokes its
   `main(String[])`.
+. In a modular bundle (`Singularity-Module` present), the module path
+  is set up first and the main class is loaded from the module named by
+  `Singularity-Module`. See <<singularity-modular-mode,Modular Mode>>.
 
 Side effects:
 
@@ -1565,20 +1730,58 @@ Parts:
 * `!/` — standard separator between jar location and intra-jar entry.
 * `<entry-name>` — the entry's path inside whichever jar contains it.
 
-=== Cached Nested Jars
+[[cached-nested-jars]]
+=== Nested Jars In Memory
 
-`SingularityJarURLConnection` maintains a `Map<String, SoftReference<CachedJarFile>>`
-keyed by inner-jar entry name. On every `getInputStream`:
+The first time a class or resource is needed from a dependency jar, the
+running Singularity jar reads that dependency out of the outer jar and
+keeps it in memory, so later classes and resources from it are served
+without touching the file again. Dependencies that are never used are
+never read. Held dependencies are softly referenced: under memory
+pressure the JVM may release them, and the next use reads them again.
+There is no other eviction and no size limit.
 
-. If the map has a live reference, that `CachedJarFile` is reused.
-. Otherwise, the inner jar is opened through a `jar:` URL that points
-  at it inside the outer jar, drained into a new `CachedJarFile`
-  (which holds every entry's compressed bytes in memory), and stored
-  back into the map.
+`useJarCache` decides how a dependency is held:
 
-Soft references mean the JVM can reclaim a cached jar under memory
-pressure; the next access simply re-drains it. There is no explicit
-eviction policy and no size cap.
+`true` (default)::
+    The dependency jar is kept as it is, and each class or resource is
+    decompressed when it is read. First use of a dependency is fast.
+
+`false`::
+    Every entry of the dependency jar is decompressed and compressed
+    again when the jar is first used. The memory held is somewhat
+    smaller, but the first use of each dependency is much slower.
+
+Measured with a 110-jar dependency set, loading 3,000 classes in a
+freshly started jar:
+
+[cols="3,2,2",options="header"]
+|===
+|
+| `useJarCache` `true`
+| `useJarCache` `false`
+
+| Classes from a few dependencies
+| 0.6–0.7 s
+| 3.0–3.3 s
+
+| Classes from all 110 dependencies
+| 0.9–1.0 s
+| 9.2–9.3 s
+
+| Memory held with all 110 dependencies in use
+| 105–114 MB
+| 84–93 MB
+|===
+
+Once a dependency is in memory, reading from it costs the same either
+way. Choose `false` only when memory matters more than startup time.
+
+With `false`, signed dependency jars have their signatures checked as
+they are read into memory, and a tampered one fails at that point. With
+`true` they are not checked. In neither case do signatures affect which
+classes may load: Singularity does not attach signers' certificates to
+the classes it defines.
 
 [[startup-timeout-and-keep-alive]]
 === Startup Timeout And Keep-Alive
@@ -1717,6 +1920,7 @@ costs a few hundred KB on disk and simplifies `wrapper.conf`.
     `freemarker` (for `wrapper.conf` rendering), plus the same Maven
     provided/compile matrix.
 
+[[build-time-failure-signatures]]
 === Build-Time Failure Signatures
 
 "Unable to locate the boot class dependencies"::
@@ -1726,6 +1930,22 @@ costs a few hundred KB on disk and simplifies `wrapper.conf`.
     it is always present. This error means the plugin was installed
     with a modified POM, or Maven's dependency resolution stripped
     the boot artifact.
+
+"Modular packaging requires the project to be a named module…"::
+    `modular` is `true`, but the project has no `module-info.java`. Add
+    one, or turn modular mode off.
+
+"Unable to resolve the module path of module(…)"::
+    In modular mode, the module graph does not resolve. The rest of the
+    message is the JDK's own explanation, usually one of: a module that
+    is required but missing from the dependencies, a package found in
+    two modules (often an old API jar duplicating a JDK or Jakarta
+    module; exclude it), or two modules exporting the same package to
+    one module.
+
+"Module(…) is supplied by more than one dependency(…)"::
+    In modular mode, two dependency jars carry the same module name.
+    Exclude one of them.
 
 "Missing singularity index"::
     `SingularityClassLoader`'s constructor advanced through every
@@ -1774,6 +1994,19 @@ costs a few hundred KB on disk and simplifies `wrapper.conf`.
   early; make sure the offending framework is initialized from
   within the application's `main`, not from a static initializer
   that runs before it.
+
+`InaccessibleObjectException: … does not "opens …" to …`::
+    In a modular bundle, a framework (Spring, Jackson, Hibernate, and
+    so on) tried to reflect into a package of a module on the module
+    path that the module does not open. Add an `opens` declaration for
+    that package to the module's descriptor; a Singularity jar has no
+    equivalent of `--add-opens`.
+
+`ZipException` naming a nested jar ("Encrypted entry…", "Unsupported compression method…", "Invalid central directory…")::
+    A dependency jar is damaged, or uses a zip feature that Singularity
+    does not read: encryption, or a compression method other than
+    stored or deflated. Standard jar tools do not produce such jars;
+    rebuild or replace the dependency.
 
 `StackOverflowError` during static initialization of
 `SingularityClassLoader`::
@@ -1852,14 +2085,12 @@ Reserved-namespace list is fixed::
     newer `org.xml.sax`, say) cannot be accommodated without a
     code change.
 
-No module-path support::
-    `SingularityClassLoader` is a classic flat `ClassLoader` — it
-    does not understand Java modules. The TODO comment in
-    `findClass(String moduleName, String name)` records this. Jars
-    that rely on automatic-module names still work (modules are a
-    runtime concern layered on top of classpath loading), but a
-    module-path-oriented application using explicit `requires`
-    declarations inside a Singularity bundle is not supported.
+Module path only for a modular application::
+    A class path bundle (the default) ignores the module descriptors
+    its dependencies carry. Modular mode requires the project itself to
+    be a named module; selected dependencies cannot be put on a module
+    path beneath a class path application. There is no equivalent of
+    `--add-opens`, `--add-exports`, or `--add-reads`.
 
 Exclusions and bundled-dependencies match exactly::
     `Exclusion` (singularity) and `Dependency` (tanukisoft) both

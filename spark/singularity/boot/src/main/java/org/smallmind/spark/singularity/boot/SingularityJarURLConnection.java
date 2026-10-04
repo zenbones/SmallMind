@@ -43,8 +43,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 /**
  * {@link URLConnection} implementation that reads an entry from a nested jar addressed by a {@code singularity:} URL.
@@ -52,12 +54,16 @@ import java.util.jar.JarInputStream;
  * <ul>
  *   <li>{@code singularity:<outer>@/<entry>} for an entry that lives directly in the outer jar.</li>
  *   <li>{@code singularity:<outer>@/<inner-jar>!/<entry>} for an entry nested inside a jar bundled under
- *       {@code META-INF/singularity/lib/}; nested jars are memoized in a soft-reference cache to amortize inflation.</li>
+ *       {@code META-INF/singularity/lib/}; nested jars are memoized in a soft-reference cache, keyed by outer jar and
+ *       nested jar, so that each is read out of the outer jar once. The outer jar is opened only to fill that cache.</li>
  * </ul>
+ * <p>The outer jar's {@code Singularity-Jar-Cache} manifest attribute selects how a nested jar is held: {@code true},
+ * or no attribute, holds it as a {@link CachedJarFile}; {@code false} holds it as a {@link RecompressedJarFile}.
  */
 public class SingularityJarURLConnection extends URLConnection {
 
-  private static final ConcurrentHashMap<String, SoftReference<CachedJarFile>> CACHED_JAR_FILE_MAP = new ConcurrentHashMap<>();
+  private static final Attributes.Name JAR_CACHE_ATTRIBUTE = new Attributes.Name("Singularity-Jar-Cache");
+  private static final ConcurrentHashMap<String, SoftReference<NestedJarFile>> NESTED_JAR_FILE_MAP = new ConcurrentHashMap<>();
 
   /**
    * Binds this connection to a {@code singularity:} URL without performing any I/O.
@@ -90,55 +96,109 @@ public class SingularityJarURLConnection extends URLConnection {
   public InputStream getInputStream ()
     throws IOException {
 
-    JarEntry jarEntry;
-    String outerEntryName;
-    String innerEntryName;
     int atPos;
+    int bangPos;
 
     if ((atPos = url.getPath().indexOf("@/")) < 0) {
       throw new MalformedURLException("no @/ found in url spec:" + url.getPath());
-    } else {
+    } else if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
+      try (JarFile jarFile = openOuterJarFile(atPos)) {
 
-      try (JarFile jarFile = new JarFile(URI.create(url.getPath().substring(0, atPos)).toURL().getFile())) {
+        JarEntry jarEntry;
 
-        int bangPos;
-
-        if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
-
-          if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
-            try (InputStream entryInputStream = jarFile.getInputStream(jarEntry)) {
-              return new ByteArrayInputStream(entryInputStream.readAllBytes());
-            }
-          }
-        } else {
-
-          outerEntryName = url.getPath().substring(atPos + 2, bangPos);
-          innerEntryName = url.getPath().substring(bangPos + 2);
-
-          if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
-
-            SoftReference<CachedJarFile> cachedJarFileReference;
-            CachedJarFile cachedJarFile;
-
-            InputStream cachedInputStream;
-
-            if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null)) {
-              synchronized (CACHED_JAR_FILE_MAP) {
-                if (((cachedJarFileReference = CACHED_JAR_FILE_MAP.get(outerEntryName)) == null) || ((cachedJarFile = cachedJarFileReference.get()) == null)) {
-                  CACHED_JAR_FILE_MAP.put(outerEntryName, new SoftReference<>(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry)))));
-                }
-              }
-            }
-            if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
-
-              return cachedInputStream;
-            }
+        if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
+          try (InputStream entryInputStream = jarFile.getInputStream(jarEntry)) {
+            return new ByteArrayInputStream(entryInputStream.readAllBytes());
           }
         }
       }
+    } else {
 
-      throw new FileNotFoundException(getURL().getPath());
+      NestedJarFile nestedJarFile;
+      InputStream nestedInputStream;
+
+      if (((nestedJarFile = getNestedJarFile(atPos, bangPos)) != null) && ((nestedInputStream = nestedJarFile.getInputStream(url.getPath().substring(bangPos + 2))) != null)) {
+
+        return nestedInputStream;
+      }
     }
+
+    throw new FileNotFoundException(getURL().getPath());
+  }
+
+  /**
+   * Returns the in-memory form of the nested jar this connection's URL points into, building it on first use. The
+   * outer jar is opened only on a cache miss, so a read from an already held nested jar performs no file I/O.
+   *
+   * @param atPos   position of the {@code @/} separator in the URL path
+   * @param bangPos position of the {@code !/} separator in the URL path
+   * @return the nested jar, or {@code null} if the outer jar has no such nested jar
+   * @throws IOException if the outer jar or the nested jar cannot be read
+   */
+  private NestedJarFile getNestedJarFile (int atPos, int bangPos)
+    throws IOException {
+
+    String cacheKey = url.getPath().substring(0, bangPos);
+    SoftReference<NestedJarFile> nestedJarFileReference;
+    NestedJarFile nestedJarFile;
+
+    if (((nestedJarFileReference = NESTED_JAR_FILE_MAP.get(cacheKey)) == null) || ((nestedJarFile = nestedJarFileReference.get()) == null)) {
+      synchronized (NESTED_JAR_FILE_MAP) {
+        if (((nestedJarFileReference = NESTED_JAR_FILE_MAP.get(cacheKey)) == null) || ((nestedJarFile = nestedJarFileReference.get()) == null)) {
+
+          String outerEntryName = url.getPath().substring(atPos + 2, bangPos);
+
+          try (JarFile jarFile = openOuterJarFile(atPos)) {
+
+            JarEntry jarEntry;
+
+            if ((jarEntry = jarFile.getJarEntry(outerEntryName)) == null) {
+
+              return null;
+            }
+
+            if (isJarCacheEnabled(jarFile)) {
+              try (InputStream nestedJarInputStream = jarFile.getInputStream(jarEntry)) {
+                nestedJarFile = new CachedJarFile(outerEntryName, nestedJarInputStream.readAllBytes());
+              }
+            } else {
+              try (JarInputStream nestedJarInputStream = new JarInputStream(jarFile.getInputStream(jarEntry))) {
+                nestedJarFile = new RecompressedJarFile(outerEntryName, nestedJarInputStream);
+              }
+            }
+
+            NESTED_JAR_FILE_MAP.put(cacheKey, new SoftReference<>(nestedJarFile));
+          }
+        }
+      }
+    }
+
+    return nestedJarFile;
+  }
+
+  /**
+   * @param jarFile the outer Singularity jar
+   * @return {@code false} only if the outer jar's manifest sets {@code Singularity-Jar-Cache} to {@code false}
+   * @throws IOException if the manifest cannot be read
+   */
+  private boolean isJarCacheEnabled (JarFile jarFile)
+    throws IOException {
+
+    Manifest manifest;
+    String jarCache;
+
+    return ((manifest = jarFile.getManifest()) == null) || ((jarCache = manifest.getMainAttributes().getValue(JAR_CACHE_ATTRIBUTE)) == null) || Boolean.parseBoolean(jarCache);
+  }
+
+  /**
+   * @param atPos position of the {@code @/} separator in the URL path
+   * @return the outer Singularity jar named by the part of the URL path before {@code @/}; the caller closes it
+   * @throws IOException if the jar cannot be opened
+   */
+  private JarFile openOuterJarFile (int atPos)
+    throws IOException {
+
+    return new JarFile(URI.create(url.getPath().substring(0, atPos)).toURL().getFile());
   }
 
   /**

@@ -36,7 +36,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 
@@ -90,6 +92,28 @@ public class SingularityIndexTest {
 
     Assert.assertEquals(entries.size(), 1);
     Assert.assertEquals(entries.get("org/lib/Thing.class"), "singularity:" + PARENT + "@/META-INF/singularity/lib/thing-1.0.jar!/org/lib/Thing.class");
+  }
+
+  // Every jar that supplies an entry is kept, in the order recorded, and recording the same jar again is a no-op.
+  public void testEntrySuppliedByManyJarsKeepsEveryJarInRecordedOrder () {
+
+    SingularityIndex index = new SingularityIndex();
+    List<String> externalForms = new ArrayList<>();
+
+    index.addInverseJarEntry("META-INF/services/com.example.Spi", "first.jar");
+    index.addInverseJarEntry("META-INF/services/com.example.Spi", "second.jar");
+    index.addInverseJarEntry("META-INF/services/com.example.Spi", "first.jar");
+    index.addInverseJarEntry("META-INF/services/com.example.Spi", "third.jar");
+
+    for (SingularityIndex.URLEntry urlEntry : index.getSingularityURLEntryIterable(PARENT)) {
+      Assert.assertEquals(urlEntry.entryName(), "META-INF/services/com.example.Spi");
+      externalForms.add(urlEntry.entryURL().toExternalForm());
+    }
+
+    Assert.assertEquals(externalForms, List.of(
+      "singularity:" + PARENT + "@/META-INF/singularity/lib/first.jar!/META-INF/services/com.example.Spi",
+      "singularity:" + PARENT + "@/META-INF/singularity/lib/second.jar!/META-INF/services/com.example.Spi",
+      "singularity:" + PARENT + "@/META-INF/singularity/lib/third.jar!/META-INF/services/com.example.Spi"));
   }
 
   public void testEmptyIndexYieldsNothing () {

@@ -33,10 +33,14 @@
 package org.smallmind.spark.singularity.boot;
 
 import java.io.IOException;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -44,7 +48,9 @@ import java.util.jar.Manifest;
 /**
  * Bootstrap class declared as the jar's {@code Main-Class}. When executed it installs a {@link SingularityClassLoader}
  * as the context class loader and then reflectively dispatches to the real application main, whose fully qualified
- * name is carried in the manifest's {@code Singularity-Class} attribute.
+ * name is carried in the manifest's {@code Singularity-Class} attribute. When the manifest also carries a
+ * {@code Singularity-Module} attribute, the bundle was built in modular mode: a module layer is defined over the
+ * bundle's modules first, and the main class is loaded from the named main module.
  */
 public class SingularityEntryPoint {
 
@@ -68,22 +74,60 @@ public class SingularityEntryPoint {
 
     ProtectionDomain protectionDomain = SingularityEntryPoint.class.getProtectionDomain();
     CodeSource codeSource = protectionDomain.getCodeSource();
+    SingularityClassLoader singularityClassLoader;
     Manifest manifest;
     String mainClass;
 
     try (JarInputStream jarInputStream = new JarInputStream(codeSource.getLocation().openStream())) {
       manifest = jarInputStream.getManifest();
-      Thread.currentThread().setContextClassLoader(new SingularityClassLoader(null, manifest, codeSource.getLocation(), jarInputStream));
+      Thread.currentThread().setContextClassLoader(singularityClassLoader = new SingularityClassLoader(null, manifest, codeSource.getLocation(), jarInputStream));
     }
 
     if ((mainClass = manifest.getMainAttributes().getValue(new Attributes.Name("Singularity-Class"))) != null) {
       if (!mainClass.equals(SingularityEntryPoint.class.getName())) {
 
-        Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(mainClass);
-        Method main = clazz.getMethod("main", String[].class);
+        String mainModule;
+        Class<?> clazz;
+        Method main;
 
+        if ((mainModule = manifest.getMainAttributes().getValue(new Attributes.Name("Singularity-Module"))) == null) {
+          clazz = singularityClassLoader.loadClass(mainClass);
+        } else {
+          clazz = loadModularMainClass(singularityClassLoader, mainModule, mainClass);
+        }
+
+        main = clazz.getMethod("main", String[].class);
         main.invoke(null, new Object[] {args});
       }
     }
+  }
+
+  /**
+   * Defines the module layer for a bundle built in modular mode and loads the main class from it. The configuration is
+   * resolved from the main module over the bundle's module finder with service binding, every module is mapped to the
+   * Singularity class loader, and the main class's package is exported to this entry point so its {@code main} method
+   * can be invoked even when the module does not export it.
+   *
+   * @param singularityClassLoader the loader holding the bundle's modules
+   * @param mainModuleName         the name carried in the manifest's {@code Singularity-Module} attribute
+   * @param mainClassName          the name carried in the manifest's {@code Singularity-Class} attribute
+   * @return the main class, a member of the main module
+   * @throws ClassNotFoundException if the main module does not contain the main class
+   */
+  private static Class<?> loadModularMainClass (SingularityClassLoader singularityClassLoader, String mainModuleName, String mainClassName)
+    throws ClassNotFoundException {
+
+    Configuration configuration = ModuleLayer.boot().configuration().resolveAndBind(singularityClassLoader.getModuleFinder(), ModuleFinder.of(), Set.of(mainModuleName));
+    ModuleLayer.Controller controller = ModuleLayer.defineModules(configuration, List.of(ModuleLayer.boot()), (moduleName) -> singularityClassLoader);
+    Module mainModule = controller.layer().findModule(mainModuleName).orElseThrow();
+    Class<?> clazz;
+
+    if ((clazz = Class.forName(mainModule, mainClassName)) == null) {
+      throw new ClassNotFoundException(mainClassName + " in module(" + mainModuleName + ")");
+    }
+
+    controller.addExports(mainModule, clazz.getPackageName(), SingularityEntryPoint.class.getModule());
+
+    return clazz;
   }
 }

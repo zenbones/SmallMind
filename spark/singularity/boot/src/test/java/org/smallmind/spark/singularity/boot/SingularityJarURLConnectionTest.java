@@ -35,14 +35,19 @@ package org.smallmind.spark.singularity.boot;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -51,6 +56,7 @@ import org.testng.annotations.BeforeClass;
 public class SingularityJarURLConnectionTest {
 
   private Path bundlePath;
+  private Path recompressedBundlePath;
   private String bundleUrlPart;
 
   private static byte[] innerJar ()
@@ -65,6 +71,46 @@ public class SingularityJarURLConnectionTest {
     }
 
     return byteArrayOutputStream.toByteArray();
+  }
+
+  // A null jarCache leaves the Singularity-Jar-Cache attribute out of the manifest, as bundles built before it existed.
+  private static Path writeBundle (String jarCache)
+    throws Exception {
+
+    Manifest manifest = new Manifest();
+    Path path = Files.createTempFile("singularity-connection", ".jar");
+
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    if (jarCache != null) {
+      manifest.getMainAttributes().put(new Attributes.Name("Singularity-Jar-Cache"), jarCache);
+    }
+
+    try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(path), manifest)) {
+      jarOutputStream.putNextEntry(new JarEntry("hello.txt"));
+      jarOutputStream.write("HELLO".getBytes(StandardCharsets.UTF_8));
+      jarOutputStream.closeEntry();
+
+      jarOutputStream.putNextEntry(new JarEntry("META-INF/singularity/lib/inner.jar"));
+      jarOutputStream.write(innerJar());
+      jarOutputStream.closeEntry();
+    }
+
+    return path;
+  }
+
+  // Reads the connection's private cache to learn which NestedJarFile implementation holds a bundle's nested jar.
+  private static Class<?> heldImplementation (Path bundle)
+    throws Exception {
+
+    Field mapField = SingularityJarURLConnection.class.getDeclaredField("NESTED_JAR_FILE_MAP");
+    String cacheKey = URI.create("singularity:" + bundle.toUri().toURL().toExternalForm() + "@/META-INF/singularity/lib/inner.jar").toURL().getPath();
+    SoftReference<?> reference;
+    Object held;
+
+    mapField.setAccessible(true);
+    reference = (SoftReference<?>)((Map<?, ?>)mapField.get(null)).get(cacheKey);
+
+    return ((reference == null) || ((held = reference.get()) == null)) ? null : held.getClass();
   }
 
   private static String read (InputStream inputStream)
@@ -83,18 +129,8 @@ public class SingularityJarURLConnectionTest {
 
     Class.forName(SingularityClassLoader.class.getName());
 
-    bundlePath = Files.createTempFile("singularity-connection", ".jar");
-
-    try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(bundlePath))) {
-      jarOutputStream.putNextEntry(new JarEntry("hello.txt"));
-      jarOutputStream.write("HELLO".getBytes(StandardCharsets.UTF_8));
-      jarOutputStream.closeEntry();
-
-      jarOutputStream.putNextEntry(new JarEntry("META-INF/singularity/lib/inner.jar"));
-      jarOutputStream.write(innerJar());
-      jarOutputStream.closeEntry();
-    }
-
+    bundlePath = writeBundle(null);
+    recompressedBundlePath = writeBundle("false");
     bundleUrlPart = bundlePath.toUri().toURL().toExternalForm();
   }
 
@@ -104,6 +140,9 @@ public class SingularityJarURLConnectionTest {
 
     if (bundlePath != null) {
       Files.deleteIfExists(bundlePath);
+    }
+    if (recompressedBundlePath != null) {
+      Files.deleteIfExists(recompressedBundlePath);
     }
   }
 
@@ -156,6 +195,23 @@ public class SingularityJarURLConnectionTest {
 
     Assert.assertEquals(read(connectionFor("@/META-INF/singularity/lib/inner.jar!/deep.txt").getInputStream()), "DEEP");
     Assert.assertEquals(read(connectionFor("@/META-INF/singularity/lib/inner.jar!/deep.txt").getInputStream()), "DEEP");
+  }
+
+  // Without a Singularity-Jar-Cache attribute the nested jar is held as its own bytes.
+  public void testNestedJarIsHeldAsItsOwnBytesByDefault ()
+    throws Exception {
+
+    Assert.assertEquals(read(connectionFor("@/META-INF/singularity/lib/inner.jar!/deep.txt").getInputStream()), "DEEP");
+    Assert.assertEquals(heldImplementation(bundlePath), CachedJarFile.class);
+  }
+
+  public void testJarCacheDisabledHoldsTheNestedJarRecompressed ()
+    throws Exception {
+
+    URL url = URI.create("singularity:" + recompressedBundlePath.toUri().toURL().toExternalForm() + "@/META-INF/singularity/lib/inner.jar!/deep.txt").toURL();
+
+    Assert.assertEquals(read(new SingularityJarURLConnection(url).getInputStream()), "DEEP");
+    Assert.assertEquals(heldImplementation(recompressedBundlePath), RecompressedJarFile.class);
   }
 
   public void testConnectIsANoOpAndContentLengthIsIndeterminate ()

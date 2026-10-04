@@ -105,8 +105,7 @@ final class MojoTestSupport {
 
   // The boot dependency resolves to a jar when pulled from the local repository, but to a classes directory when the
   // boot module is part of the same reactor build; GenerateSingularityMojo can only read it as a jar. When handed a
-  // directory, stage it into a jar using STORED entries so that JarInputStream.getSize() (which the Mojo relies on)
-  // is populated.
+  // directory, stage it into a jar.
   static Path bootClassesAsJar (Path bootLocation, Path stagedJar)
     throws Exception {
 

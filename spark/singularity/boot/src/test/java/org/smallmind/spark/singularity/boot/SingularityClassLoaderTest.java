@@ -41,8 +41,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.jar.Attributes;
@@ -171,6 +174,27 @@ public class SingularityClassLoaderTest {
     return total;
   }
 
+  private static String read (URL url)
+    throws IOException {
+
+    try (InputStream inputStream = url.openStream()) {
+
+      return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    }
+  }
+
+  private static List<String> readAll (Enumeration<URL> enumeration)
+    throws IOException {
+
+    List<String> contents = new ArrayList<>();
+
+    while (enumeration.hasMoreElements()) {
+      contents.add(read(enumeration.nextElement()));
+    }
+
+    return contents;
+  }
+
   private static String invokePing (Class<?> clazz)
     throws Exception {
 
@@ -196,10 +220,21 @@ public class SingularityClassLoaderTest {
     index.addFileName(resourcePath(ALPHA_NAME));
     index.addInverseJarEntry(resourcePath(BETA_NAME), "fixtures.jar");
 
+    // The same names supplied by the outer jar and by two library jars, recorded in class path order, exercise
+    // first-source-wins lookup and every-source enumeration.
+    index.addFileName("dup.txt");
+    index.addInverseJarEntry("dup.txt", "first.jar");
+    index.addInverseJarEntry("dup.txt", "second.jar");
+    index.addInverseJarEntry("libdup.txt", "first.jar");
+    index.addInverseJarEntry("libdup.txt", "second.jar");
+
     Map<String, byte[]> bareEntries = new LinkedHashMap<>();
 
     bareEntries.put(resourcePath(ALPHA_NAME), classBytes(ALPHA_NAME));
     bareEntries.put("META-INF/singularity/lib/fixtures.jar", buildJar(Map.of(resourcePath(BETA_NAME), classBytes(BETA_NAME))));
+    bareEntries.put("dup.txt", "root".getBytes(StandardCharsets.UTF_8));
+    bareEntries.put("META-INF/singularity/lib/first.jar", buildJar(Map.of("dup.txt", "first".getBytes(StandardCharsets.UTF_8), "libdup.txt", "first".getBytes(StandardCharsets.UTF_8))));
+    bareEntries.put("META-INF/singularity/lib/second.jar", buildJar(Map.of("dup.txt", "second".getBytes(StandardCharsets.UTF_8), "libdup.txt", "second".getBytes(StandardCharsets.UTF_8))));
 
     bundlePath = writeBundle(index, true, bareEntries);
 
@@ -281,6 +316,26 @@ public class SingularityClassLoaderTest {
     Assert.assertNotNull(enumeration.nextElement());
     Assert.assertFalse(enumeration.hasMoreElements());
     Assert.assertThrows(NoSuchElementException.class, enumeration::nextElement);
+  }
+
+  // The outer jar's copy precedes every library copy, as the project's classes precede its dependencies on a class path.
+  public void testOuterJarCopyWinsOverLibraryCopies ()
+    throws Exception {
+
+    Assert.assertEquals(read(classLoader.findResource("dup.txt")), "root");
+  }
+
+  public void testFirstLibraryInClassPathOrderWins ()
+    throws Exception {
+
+    Assert.assertEquals(read(classLoader.findResource("libdup.txt")), "first");
+  }
+
+  public void testEveryCopyIsEnumeratedInClassPathOrder ()
+    throws Exception {
+
+    Assert.assertEquals(readAll(classLoader.findResources("dup.txt")), List.of("root", "first", "second"));
+    Assert.assertEquals(readAll(classLoader.findResources("libdup.txt")), List.of("first", "second"));
   }
 
   // Names in the JDK-shadowed namespaces are refused outright so the platform's own copy is used.

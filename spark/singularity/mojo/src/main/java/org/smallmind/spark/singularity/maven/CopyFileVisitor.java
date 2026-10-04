@@ -39,13 +39,17 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
 /**
  * {@link SimpleFileVisitor} used while walking the project's compiled {@code classes} directory. Every directory is
  * mirrored below the Singularity build root and every file is copied into it, with the file's relative path
- * simultaneously registered with a {@link SingularityIndex} so that the boot loader can serve it.
+ * simultaneously registered with a {@link SingularityIndex} so that the boot loader can serve it. Without an index the
+ * files are only copied; the names of everything copied remain available from {@link #getCopiedNameSet()} either way.
  * <p>The source root is captured on the first directory visit, which is assumed to be the top of the tree passed to
  * {@link Files#walkFileTree}.
  */
@@ -53,18 +57,28 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
   private final SingularityIndex singularityIndex;
   private final Path targetPath;
+  private final HashSet<String> copiedNameSet = new HashSet<>();
   private Path sourcePath;
 
   /**
    * Captures the index to update and the directory under which copied files should be placed.
    *
-   * @param singularityIndex index that should learn about every file copied by this visitor
+   * @param singularityIndex index that should learn about every file copied by this visitor, or {@code null} to copy
+   *                         without indexing
    * @param targetPath       destination root; subdirectories are created beneath it as the walk progresses
    */
   public CopyFileVisitor (SingularityIndex singularityIndex, Path targetPath) {
 
     this.singularityIndex = singularityIndex;
     this.targetPath = targetPath;
+  }
+
+  /**
+   * @return the resource-style path (forward slashes, relative to the source root) of every file copied so far
+   */
+  public Set<String> getCopiedNameSet () {
+
+    return Collections.unmodifiableSet(copiedNameSet);
   }
 
   /**
@@ -104,7 +118,10 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
     Path jarPath;
 
     Files.copy(file, targetPath.resolve(jarPath = sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-    singularityIndex.addFileName(PathUtility.asResourceString(jarPath));
+    copiedNameSet.add(PathUtility.asResourceString(jarPath));
+    if (singularityIndex != null) {
+      singularityIndex.addFileName(PathUtility.asResourceString(jarPath));
+    }
 
     return FileVisitResult.CONTINUE;
   }

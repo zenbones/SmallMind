@@ -35,10 +35,13 @@ package org.smallmind.spark.singularity.maven;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
@@ -54,7 +57,8 @@ import org.testng.annotations.BeforeClass;
  * hand-built {@link MavenProject} to assemble a real bundle, which is then launched in a child JVM; the bundle's
  * {@link SingularityEntryPoint} must install the class loader, load the application class from the outer jar (the
  * {@code jar:} path) and a dependency class from a nested library jar (the {@code singularity:} path), and forward
- * the supplied arguments to the application's {@code main}.
+ * the supplied arguments to the application's {@code main}. The same bundle is also built and launched with
+ * {@code useJarCache} disabled, which changes how nested jars are held in memory but not what is loaded.
  */
 @org.testng.annotations.Test(groups = "integration")
 public class SingularityBundleIntegrationTest {
@@ -63,7 +67,10 @@ public class SingularityBundleIntegrationTest {
   private static final String DEP_CLASS = "org.smallmind.spark.singularity.dep.DepGreeter";
 
   private Path workspace;
+  private Path dependencyJar;
+  private Path bootJar;
   private Path bundle;
+  private Path uncachedBundle;
   private MavenProject project;
 
   @BeforeClass
@@ -71,46 +78,49 @@ public class SingularityBundleIntegrationTest {
     throws Exception {
 
     workspace = Files.createTempDirectory("singularity-bundle-it");
-
-    Path buildDirectory = Files.createDirectories(workspace.resolve("build"));
-    Path classesDirectory = Files.createDirectories(buildDirectory.resolve("classes"));
-    Path dependencyJar = workspace.resolve("dependency-greeter.jar");
+    dependencyJar = workspace.resolve("dependency-greeter.jar");
 
     // The application class is laid down as a project class (served from the outer jar); the dependency class is
     // packaged only inside a runtime dependency jar (served from a nested library jar).
-    MojoTestSupport.writeClassInto(classesDirectory, APP_CLASS);
     MojoTestSupport.buildJar(dependencyJar, Map.of(MojoTestSupport.resourcePath(DEP_CLASS), MojoTestSupport.classBytes(DEP_CLASS)));
 
     Path bootLocation = Path.of(SingularityEntryPoint.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-    Path bootJar = MojoTestSupport.bootClassesAsJar(bootLocation, workspace.resolve("spark-singularity-boot.jar"));
 
-    project = new MavenProject();
-    project.setGroupId("org.smallmind.test");
-    project.setArtifactId("sample-app");
-    project.setVersion("1.0.0");
+    bootJar = MojoTestSupport.bootClassesAsJar(bootLocation, workspace.resolve("spark-singularity-boot.jar"));
 
+    project = generateBundle(workspace.resolve("build"), null);
+    bundle = workspace.resolve("build").resolve("sample-app-1.0.0.jar");
+    generateBundle(workspace.resolve("build-uncached"), false);
+    uncachedBundle = workspace.resolve("build-uncached").resolve("sample-app-1.0.0.jar");
+  }
+
+  // A null useJarCache leaves the Mojo's own default in place.
+  private MavenProject generateBundle (Path buildDirectory, Boolean useJarCache)
+    throws Exception {
+
+    Path classesDirectory = Files.createDirectories(buildDirectory.resolve("classes"));
+    MavenProject generatedProject = new MavenProject();
     Build build = new Build();
-
-    build.setDirectory(buildDirectory.toString());
-    project.setBuild(build);
-    project.setArtifact(new DefaultArtifact("org.smallmind.test", "sample-app", "1.0.0", "compile", "jar", null, new DefaultArtifactHandler("jar")));
-
     DefaultArtifactHandler runtimeHandler = new DefaultArtifactHandler("jar");
-
-    runtimeHandler.setAddedToClasspath(true);
-
     DefaultArtifact dependencyArtifact = new DefaultArtifact("org.smallmind.test", "dependency-greeter", "1.0.0", "runtime", "jar", null, runtimeHandler);
-
-    dependencyArtifact.setFile(dependencyJar.toFile());
-    project.setArtifacts(Set.<Artifact>of(dependencyArtifact));
-
     DefaultArtifact bootArtifact = new DefaultArtifact("org.smallmind", "spark-singularity-boot", "7.1.0-SNAPSHOT", "compile", "jar", null, new DefaultArtifactHandler("jar"));
-
-    bootArtifact.setFile(bootJar.toFile());
-
     GenerateSingularityMojo mojo = new GenerateSingularityMojo();
 
-    MojoTestSupport.setField(mojo, "project", project);
+    MojoTestSupport.writeClassInto(classesDirectory, APP_CLASS);
+
+    generatedProject.setGroupId("org.smallmind.test");
+    generatedProject.setArtifactId("sample-app");
+    generatedProject.setVersion("1.0.0");
+    build.setDirectory(buildDirectory.toString());
+    generatedProject.setBuild(build);
+    generatedProject.setArtifact(new DefaultArtifact("org.smallmind.test", "sample-app", "1.0.0", "compile", "jar", null, new DefaultArtifactHandler("jar")));
+
+    runtimeHandler.setAddedToClasspath(true);
+    dependencyArtifact.setFile(dependencyJar.toFile());
+    generatedProject.setArtifacts(Set.<Artifact>of(dependencyArtifact));
+    bootArtifact.setFile(bootJar.toFile());
+
+    MojoTestSupport.setField(mojo, "project", generatedProject);
     MojoTestSupport.setField(mojo, "singularityBuildDir", "singularity");
     MojoTestSupport.setField(mojo, "mainClass", APP_CLASS);
     MojoTestSupport.setField(mojo, "skip", false);
@@ -118,32 +128,20 @@ public class SingularityBundleIntegrationTest {
     MojoTestSupport.setField(mojo, "exclusions", null);
     MojoTestSupport.setField(mojo, "pluginArtifacts", List.of(bootArtifact));
     MojoTestSupport.setField(mojo, "artifactFactory", new StubArtifactFactory());
+    if (useJarCache != null) {
+      MojoTestSupport.setField(mojo, "useJarCache", useJarCache);
+    }
 
     mojo.execute();
 
-    bundle = buildDirectory.resolve("sample-app-1.0.0.jar");
+    return generatedProject;
   }
 
-  @AfterClass(alwaysRun = true)
-  public void deleteWorkspace () {
-
-    MojoTestSupport.deleteTree(workspace);
-  }
-
-  public void testGoalProducesAnAttachedExecutableBundle () {
-
-    Assert.assertTrue(Files.isRegularFile(bundle), "the goal did not produce the expected bundle");
-    Assert.assertEquals(project.getAttachedArtifacts().size(), 1);
-    Assert.assertEquals(project.getAttachedArtifacts().get(0).getFile(), bundle.toFile());
-  }
-
-  public void testBundleBootsAndLoadsAcrossBothProtocols ()
+  private void launchAndVerify (Path bundleToLaunch, Path marker)
     throws Exception {
 
-    Path marker = workspace.resolve("marker.txt");
     String javaExecutable = Path.of(System.getProperty("java.home"), "bin", "java").toString();
-
-    java.util.List<String> command = new java.util.ArrayList<>();
+    List<String> command = new ArrayList<>();
 
     command.add(javaExecutable);
 
@@ -156,7 +154,7 @@ public class SingularityBundleIntegrationTest {
     }
 
     command.add("-jar");
-    command.add(bundle.toString());
+    command.add(bundleToLaunch.toString());
     command.add(marker.toString());
     command.add("hello");
     command.add("world");
@@ -176,5 +174,45 @@ public class SingularityBundleIntegrationTest {
 
     Assert.assertEquals(process.exitValue(), 0, "the bundle's child JVM exited abnormally; output:\n" + output);
     Assert.assertEquals(Files.readString(marker, StandardCharsets.UTF_8), "hello world|greeted-by-dependency");
+  }
+
+  private static String jarCacheAttribute (Path bundleToRead)
+    throws Exception {
+
+    try (JarFile jarFile = new JarFile(bundleToRead.toFile())) {
+      return jarFile.getManifest().getMainAttributes().getValue(new Attributes.Name("Singularity-Jar-Cache"));
+    }
+  }
+
+  @AfterClass(alwaysRun = true)
+  public void deleteWorkspace () {
+
+    MojoTestSupport.deleteTree(workspace);
+  }
+
+  public void testGoalProducesAnAttachedExecutableBundle () {
+
+    Assert.assertTrue(Files.isRegularFile(bundle), "the goal did not produce the expected bundle");
+    Assert.assertEquals(project.getAttachedArtifacts().size(), 1);
+    Assert.assertEquals(project.getAttachedArtifacts().get(0).getFile(), bundle.toFile());
+  }
+
+  public void testBundleBootsAndLoadsAcrossBothProtocols ()
+    throws Exception {
+
+    launchAndVerify(bundle, workspace.resolve("marker.txt"));
+  }
+
+  public void testJarCacheIsEnabledByDefault ()
+    throws Exception {
+
+    Assert.assertEquals(jarCacheAttribute(bundle), "true");
+  }
+
+  public void testBundleWithoutJarCacheRecordsTheSettingAndBoots ()
+    throws Exception {
+
+    Assert.assertEquals(jarCacheAttribute(uncachedBundle), "false");
+    launchAndVerify(uncachedBundle, workspace.resolve("uncached-marker.txt"));
   }
 }

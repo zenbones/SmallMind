@@ -155,11 +155,12 @@ Optional dependencies are `requires static`::
     (Spring, FreeMarker, Shiro, AspectJ).
 
 Re-exported and non-re-exported modules::
-    A SmallMind descriptor uses `requires transitive` for an explicit module whose types appear
-    in its public signatures, so your module reads that module without naming it. Automatic
-    modules are never re-exported, because their names are not guaranteed stable; when a
-    SmallMind signature exposes a Spring, Hibernate, MongoDB, or similar type, require that
-    module yourself.
+    A SmallMind descriptor uses `requires transitive` for a mandatory explicit module whose
+    types appear in its public signatures, so your module reads that module without naming
+    it. Optional modules are never re-exported, because `javac` would then demand them when
+    compiling every consumer, and automatic modules are never re-exported, because their names
+    are not guaranteed stable. When a SmallMind signature exposes a type from either kind,
+    require that module yourself.
 
 Reflection::
     SmallMind descriptors open their own packages to the frameworks that reflect into them,

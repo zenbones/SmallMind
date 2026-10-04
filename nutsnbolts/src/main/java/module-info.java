@@ -40,12 +40,19 @@ module org.smallmind.nutsnbolts {
   requires transitive java.xml;
 
   requires static freemarker;
+  requires static jakarta.activation;
+  requires static jakarta.mail;
+  requires static jakarta.servlet;
+  requires static jakarta.validation;
+  requires static jakarta.xml.bind;
   requires static jakarta.xml.soap;
+  requires static jakarta.xml.ws;
   requires static org.apache.commons.net;
   requires static org.apache.shiro.core;
   requires static org.apache.shiro.crypto.hash;
   requires static org.apache.shiro.lang;
   requires static org.aspectj.runtime;
+  requires static org.bouncycastle.pkix;
   requires static org.bouncycastle.provider;
   requires static org.objectweb.asm;
   requires static org.objectweb.asm.util;
@@ -54,14 +61,6 @@ module org.smallmind.nutsnbolts {
   requires static spring.context;
   requires static spring.core;
   requires static spring.web;
-
-  requires static transitive jakarta.activation;
-  requires static transitive jakarta.mail;
-  requires static transitive jakarta.servlet;
-  requires static transitive jakarta.validation;
-  requires static transitive jakarta.xml.bind;
-  requires static transitive jakarta.xml.ws;
-  requires static transitive org.bouncycastle.pkix;
 
   exports org.smallmind.nutsnbolts.apt;
   exports org.smallmind.nutsnbolts.command;

@@ -345,44 +345,46 @@ to this module.
 `java.compiler`, `java.naming`, `java.rmi`, and `java.xml`. These are JDK modules and resolve
 without any action on your part.
 
-*Optional modules.* Every dependency in the matrix above is `requires static`. On the module
-path, a module you use must be resolved by your own `requires` or by `--add-modules`; its jar
-being present is not enough. Explicit modules are the ones that catch people out, because
-nothing else pulls them into the graph. Re-exported modules are read by any module that
-reads `org.smallmind.nutsnbolts`, once they are resolved.
+*Optional modules.* Every dependency in the matrix above is `requires static`, and none of
+them is re-exported. On the module path, a module you use must be resolved by your own
+`requires` or by `--add-modules`; its jar being present is not enough. Explicit modules are
+the ones that catch people out, because nothing else pulls them into the graph.
 
-[cols="3,3,1,1",options="header"]
+[cols="3,3,1",options="header"]
 |===
-| Artifact | Module name | Kind | Re-exported
+| Artifact | Module name | Kind
 
-| `jakarta.activation:jakarta.activation-api` | `jakarta.activation` | explicit | yes
-| `jakarta.mail:jakarta.mail-api` | `jakarta.mail` | explicit | yes
-| `jakarta.servlet:jakarta.servlet-api` | `jakarta.servlet` | explicit | yes
-| `jakarta.validation:jakarta.validation-api` | `jakarta.validation` | explicit | yes
-| `jakarta.xml.bind:jakarta.xml.bind-api` | `jakarta.xml.bind` | explicit | yes
-| `jakarta.xml.soap:jakarta.xml.soap-api` | `jakarta.xml.soap` | explicit | no
-| `jakarta.xml.ws:jakarta.xml.ws-api` | `jakarta.xml.ws` | explicit | yes
-| `org.bouncycastle:bcpkix-jdk18on` | `org.bouncycastle.pkix` | explicit | yes
-| `org.bouncycastle:bcprov-jdk18on` | `org.bouncycastle.provider` | explicit | no
-| `org.ow2.asm:asm` | `org.objectweb.asm` | explicit | no
-| `org.ow2.asm:asm-util` | `org.objectweb.asm.util` | explicit | no
-| `org.yaml:snakeyaml` | `org.yaml.snakeyaml` | explicit | no
-| `commons-net:commons-net` | `org.apache.commons.net` | explicit | no
-| `org.freemarker:freemarker` | `freemarker` | automatic | no
-| `org.apache.shiro:shiro-core` | `org.apache.shiro.core` | automatic | no
-| `org.apache.shiro:shiro-crypto-hash` | `org.apache.shiro.crypto.hash` | automatic | no
-| `org.apache.shiro:shiro-lang` | `org.apache.shiro.lang` | automatic | no
-| `org.springframework:spring-beans` | `spring.beans` | automatic | no
-| `org.springframework:spring-context` | `spring.context` | automatic | no
-| `org.springframework:spring-core` | `spring.core` | automatic | no
-| `org.springframework:spring-web` | `spring.web` | automatic | no
-| `org.aspectj:aspectjrt` | `org.aspectj.runtime` | automatic | no
+| `jakarta.activation:jakarta.activation-api` | `jakarta.activation` | explicit
+| `jakarta.mail:jakarta.mail-api` | `jakarta.mail` | explicit
+| `jakarta.servlet:jakarta.servlet-api` | `jakarta.servlet` | explicit
+| `jakarta.validation:jakarta.validation-api` | `jakarta.validation` | explicit
+| `jakarta.xml.bind:jakarta.xml.bind-api` | `jakarta.xml.bind` | explicit
+| `jakarta.xml.soap:jakarta.xml.soap-api` | `jakarta.xml.soap` | explicit
+| `jakarta.xml.ws:jakarta.xml.ws-api` | `jakarta.xml.ws` | explicit
+| `org.bouncycastle:bcpkix-jdk18on` | `org.bouncycastle.pkix` | explicit
+| `org.bouncycastle:bcprov-jdk18on` | `org.bouncycastle.provider` | explicit
+| `org.ow2.asm:asm` | `org.objectweb.asm` | explicit
+| `org.ow2.asm:asm-util` | `org.objectweb.asm.util` | explicit
+| `org.yaml:snakeyaml` | `org.yaml.snakeyaml` | explicit
+| `commons-net:commons-net` | `org.apache.commons.net` | explicit
+| `org.freemarker:freemarker` | `freemarker` | automatic
+| `org.apache.shiro:shiro-core` | `org.apache.shiro.core` | automatic
+| `org.apache.shiro:shiro-crypto-hash` | `org.apache.shiro.crypto.hash` | automatic
+| `org.apache.shiro:shiro-lang` | `org.apache.shiro.lang` | automatic
+| `org.springframework:spring-beans` | `spring.beans` | automatic
+| `org.springframework:spring-context` | `spring.context` | automatic
+| `org.springframework:spring-core` | `spring.core` | automatic
+| `org.springframework:spring-web` | `spring.web` | automatic
+| `org.aspectj:aspectjrt` | `org.aspectj.runtime` | automatic
 |===
 
-Public signatures in `freemarker`, `namespace.shiro.realm`, `inject`, and the `spring`
-packages expose FreeMarker, Shiro, AspectJ, and Spring types. Those modules are automatic
-and therefore not re-exported; require them in your own descriptor when you use those
-packages. `shiro-spring` is not named by the descriptor because no class in this jar
+Public signatures in `email`, `freemarker`, `json`, `lang.web`, `namespace.shiro.realm`,
+`inject`, `security`, `soap`, `validation`, and the `spring` packages expose types from these
+modules. Require the module in your own descriptor when you use the package that exposes
+it. They are deliberately not re-exported: `javac` treats a `requires static transitive`
+dependency as mandatory when compiling every module that reads `org.smallmind.nutsnbolts`, so
+re-exporting them would force all seven of the affected APIs onto every consumer's compile
+path. `shiro-spring` is not named by the descriptor because no class in this jar
 references it; the shipped `realm.xml` needs it, and as an automatic module it is resolved
 along with Spring.
 

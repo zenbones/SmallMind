@@ -33,25 +33,29 @@
 package org.smallmind.spark.singularity.boot;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.UncheckedIOException;
+import java.lang.module.ModuleFinder;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AllPermission;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -64,13 +68,31 @@ import java.util.jar.Manifest;
  * <p>On first touch the loader installs a {@link SingularityJarURLStreamHandlerFactory} so that {@code singularity:}
  * URLs generated from the index can be opened. Classes in certain JDK-shadowed namespaces (XML/W3C, for example) are
  * refused so that platform-provided implementations are used instead.
+ * <p>Class path entries are searched in class path order: files laid down at the root of the outer jar (the
+ * application's own classes and resources) first, then the bundled library jars in the order the plugin recorded them,
+ * which is the project's runtime class path order. A class or single resource comes from the first source that has it;
+ * {@link #findResources(String)} returns every source's copy, in the same order. The index is reduced at construction
+ * to each name's sources; a URL is formed only when a lookup needs one, and a single-resource lookup keeps the URL it
+ * formed so that asking again is a map access.
+ * <p>For a bundle built in modular mode the loader also holds the modules recorded in the index. It is the class loader
+ * of every one of them, exactly as the JDK's application class loader is both the loader of the module path and of the
+ * class path: {@link SingularityEntryPoint} defines a module layer that maps each module to this loader, after which a
+ * class in one of their packages is defined into its named module, resources in their packages obey the modules'
+ * {@code opens} declarations, and everything else is served from the class path entries as before.
  */
 public class SingularityClassLoader extends ClassLoader {
 
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"jakarta.xml.", "org.xml.", "org.w3c."};
   private static final String[] OPERABLE_NAMESPACES = new String[] {"jakarta.xml.bind."};
-  private final Map<String, URL> urlMap;
+  private static final String OUTER_JAR_SOURCE = "";
+  private final ConcurrentHashMap<String, URL> resourceURLMap = new ConcurrentHashMap<>();
+  private final Map<String, String> sourceMap;
+  private final Map<String, List<String>> additionalSourceMap;
+  private final String parentJarUrlPart;
+  private final Map<String, SingularityModule> moduleMap;
+  private final Map<String, SingularityModule> packageModuleMap;
+  private final Map<String, List<SingularityModule>> nonPackageModuleMap;
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
   private final String specificationTitle;
@@ -107,7 +129,11 @@ public class SingularityClassLoader extends ClassLoader {
 
     super(parent);
 
-    HashMap<String, URL> underConstructionMap = new HashMap<>();
+    HashMap<String, String> underConstructionSourceMap = new HashMap<>();
+    HashMap<String, List<String>> underConstructionAdditionalSourceMap = new HashMap<>();
+    HashMap<String, SingularityModule> underConstructionModuleMap = new HashMap<>();
+    HashMap<String, SingularityModule> underConstructionPackageModuleMap = new HashMap<>();
+    HashMap<String, List<SingularityModule>> underConstructionNonPackageModuleMap = new HashMap<>();
     SingularityIndex singularityIndex = null;
     Attributes mainAttributes = manifest.getMainAttributes();
     JarEntry jarEntry;
@@ -116,16 +142,7 @@ public class SingularityClassLoader extends ClassLoader {
     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
       if (!jarEntry.isDirectory()) {
         if (jarEntry.getName().equals("META-INF/singularity/index/singularity.idx")) {
-          ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-          int singleByte;
-
-          while ((singleByte = jarInputStream.read()) >= 0) {
-            byteArrayOutputStream.write(singleByte);
-          }
-          byteArrayOutputStream.close();
-
-          try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+          try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(jarInputStream.readAllBytes()))) {
             singularityIndex = (SingularityIndex)objectInputStream.readObject();
           }
           break;
@@ -137,11 +154,38 @@ public class SingularityClassLoader extends ClassLoader {
       throw new IOException("Missing singularity index");
     }
 
-    for (SingularityIndex.URLEntry urlEntry : singularityIndex.getJarURLEntryIterable(jarURL.toExternalForm())) {
-      underConstructionMap.put(urlEntry.entryName(), urlEntry.entryURL());
+    parentJarUrlPart = jarURL.toExternalForm();
+
+    for (String fileName : singularityIndex.getFileNameIterable()) {
+      underConstructionSourceMap.put(fileName, OUTER_JAR_SOURCE);
     }
-    for (SingularityIndex.URLEntry urlEntry : singularityIndex.getSingularityURLEntryIterable(jarURL.toExternalForm())) {
-      underConstructionMap.put(urlEntry.entryName(), urlEntry.entryURL());
+    for (SingularityIndex.SourceEntry sourceEntry : singularityIndex.getNestedJarSourceIterable()) {
+      addClassPathSource(underConstructionSourceMap, underConstructionAdditionalSourceMap, sourceEntry.entryName(), sourceEntry.jarName());
+    }
+    for (SingularityIndex.ModuleEntry moduleEntry : singularityIndex.getModuleEntryIterable()) {
+
+      SingularityModule singularityModule;
+
+      try {
+        singularityModule = new SingularityModule(moduleEntry, jarURL.toExternalForm());
+      } catch (URISyntaxException uriSyntaxException) {
+        throw new IOException("Unable to locate module(" + moduleEntry.moduleName() + ")", uriSyntaxException);
+      }
+
+      underConstructionModuleMap.put(singularityModule.getName(), singularityModule);
+      for (String packageName : singularityModule.getModuleDescriptor().packages()) {
+        underConstructionPackageModuleMap.put(packageName, singularityModule);
+      }
+      for (String entryName : singularityModule.listNonPackageEntryNames()) {
+
+        List<SingularityModule> entryModuleList;
+
+        if ((entryModuleList = underConstructionNonPackageModuleMap.get(entryName)) == null) {
+          underConstructionNonPackageModuleMap.put(entryName, entryModuleList = new ArrayList<>(1));
+        }
+
+        entryModuleList.add(singularityModule);
+      }
     }
 
     specificationTitle = mainAttributes.getValue(Attributes.Name.SPECIFICATION_TITLE);
@@ -161,7 +205,159 @@ public class SingularityClassLoader extends ClassLoader {
       sealBase = null;
     }
 
-    urlMap = Collections.unmodifiableMap(underConstructionMap);
+    sourceMap = Collections.unmodifiableMap(underConstructionSourceMap);
+    additionalSourceMap = Collections.unmodifiableMap(underConstructionAdditionalSourceMap);
+    moduleMap = Collections.unmodifiableMap(underConstructionModuleMap);
+    packageModuleMap = Collections.unmodifiableMap(underConstructionPackageModuleMap);
+    nonPackageModuleMap = Collections.unmodifiableMap(underConstructionNonPackageModuleMap);
+  }
+
+  /**
+   * Records a class path source of an entry. The first source offered for a name is the one class and single-resource
+   * lookups use; later sources are kept, in the order offered, only for {@link #findResources(String)}. Nearly every
+   * name has exactly one source, so the common case costs one map entry.
+   *
+   * @param underConstructionSourceMap           first source of every name
+   * @param underConstructionAdditionalSourceMap later sources of the names that have them
+   * @param entryName                            the entry's name
+   * @param source                               the library jar that supplies it
+   */
+  private static void addClassPathSource (HashMap<String, String> underConstructionSourceMap, HashMap<String, List<String>> underConstructionAdditionalSourceMap, String entryName, String source) {
+
+    if (underConstructionSourceMap.putIfAbsent(entryName, source) != null) {
+
+      List<String> sourceList;
+
+      if ((sourceList = underConstructionAdditionalSourceMap.get(entryName)) == null) {
+        underConstructionAdditionalSourceMap.put(entryName, sourceList = new ArrayList<>(1));
+      }
+
+      sourceList.add(source);
+    }
+  }
+
+  /**
+   * @param entryName resource-style entry name without a leading slash
+   * @param source    {@link #OUTER_JAR_SOURCE} or the filename of a bundled library jar
+   * @return the URL of the entry in that source
+   */
+  private URL createClassPathURL (String entryName, String source) {
+
+    return OUTER_JAR_SOURCE.equals(source) ? SingularityIndex.createOuterJarURL(parentJarUrlPart, entryName) : SingularityIndex.createNestedJarURL(parentJarUrlPart, source, entryName);
+  }
+
+  /**
+   * Returns the URL of an entry's first class path source, forming it on first request and keeping it for later ones.
+   *
+   * @param entryName resource-style entry name without a leading slash
+   * @return the URL of the first source in class path order, or {@code null} if no class path source has the entry
+   */
+  private URL getClassPathURL (String entryName) {
+
+    URL url;
+    String source;
+
+    if ((url = resourceURLMap.get(entryName)) == null) {
+      if ((source = sourceMap.get(entryName)) == null) {
+
+        return null;
+      }
+
+      resourceURLMap.putIfAbsent(entryName, url = createClassPathURL(entryName, source));
+    }
+
+    return url;
+  }
+
+  /**
+   * Adds the URLs of an entry's later class path sources (every source after the first) to a list, in class path
+   * order, without keeping them.
+   *
+   * @param entryName resource-style entry name without a leading slash
+   * @param urlList   the list to add to
+   */
+  private void addAdditionalClassPathURLs (String entryName, List<URL> urlList) {
+
+    List<String> additionalSourceList;
+
+    if ((additionalSourceList = additionalSourceMap.get(entryName)) != null) {
+      for (String additionalSource : additionalSourceList) {
+        urlList.add(createClassPathURL(entryName, additionalSource));
+      }
+    }
+  }
+
+  /**
+   * Finds the first visible copy of a resource among the bundle's modules, routing by package: a name in a module
+   * package can only come from that module, and a name outside every module package comes from the modules indexed
+   * under it.
+   *
+   * @param entryName resource-style entry name without a leading slash
+   * @return the URL of the first visible module copy, or {@code null} if no module supplies a visible copy
+   */
+  private URL findModuleURL (String entryName) {
+
+    String packageName = SingularityModule.toPackageName(entryName);
+    SingularityModule packageModule;
+    List<SingularityModule> entryModuleList;
+    URL url;
+
+    if ((packageModule = packageModuleMap.get(packageName)) != null) {
+
+      return (((url = packageModule.getEntryURL(entryName)) != null) && packageModule.isVisible(entryName, packageName)) ? url : null;
+    } else if ((entryModuleList = nonPackageModuleMap.get(entryName)) != null) {
+
+      return entryModuleList.get(0).getEntryURL(entryName);
+    }
+
+    return null;
+  }
+
+  /**
+   * Adds every visible copy of a resource held by the bundle's modules to a list, routed as in
+   * {@link #findModuleURL(String)}.
+   *
+   * @param entryName resource-style entry name without a leading slash
+   * @param urlList   the list to add to
+   */
+  private void addModuleURLs (String entryName, List<URL> urlList) {
+
+    String packageName = SingularityModule.toPackageName(entryName);
+    SingularityModule packageModule;
+    List<SingularityModule> entryModuleList;
+    URL url;
+
+    if ((packageModule = packageModuleMap.get(packageName)) != null) {
+      if (((url = packageModule.getEntryURL(entryName)) != null) && packageModule.isVisible(entryName, packageName)) {
+        urlList.add(url);
+      }
+    } else if ((entryModuleList = nonPackageModuleMap.get(entryName)) != null) {
+      for (SingularityModule singularityModule : entryModuleList) {
+        urlList.add(singularityModule.getEntryURL(entryName));
+      }
+    }
+  }
+
+  /**
+   * Reports whether the bundle was built in modular mode, in which case a module layer must be defined over
+   * {@link #getModuleFinder()} before any class is loaded from it.
+   *
+   * @return {@code true} if the index records at least one module
+   */
+  public boolean isModular () {
+
+    return !moduleMap.isEmpty();
+  }
+
+  /**
+   * Returns a finder over the modules recorded in the bundle's index. Every module it finds must be mapped to this
+   * loader when the layer is defined.
+   *
+   * @return a module finder over this bundle's module path, empty for a bundle built in class path mode
+   */
+  public ModuleFinder getModuleFinder () {
+
+    return new SingularityModuleFinder(moduleMap.values());
   }
 
   /**
@@ -212,15 +408,39 @@ public class SingularityClassLoader extends ClassLoader {
   protected Class<?> findClass (String name)
     throws ClassNotFoundException {
 
+    SingularityModule packageModule;
+
+    if ((!packageModuleMap.isEmpty()) && ((packageModule = packageModuleMap.get(getPackageName(name))) != null)) {
+
+      Class<?> moduleClass;
+
+      try {
+        moduleClass = defineModuleClass(packageModule, name);
+      } catch (Exception exception) {
+        throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ") in module(" + packageModule.getName() + ")", exception);
+      }
+
+      if (moduleClass == null) {
+        throw new ClassNotFoundException(name);
+      }
+
+      return moduleClass;
+    }
+
     if (isOperableNamespace(name)) {
 
+      String classEntryName = name.replace('.', '/') + ".class";
+      String classSource;
       URL classURL;
       URL codeSourceUrl;
 
-      if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
+      if ((classSource = sourceMap.get(classEntryName)) != null) {
         try {
 
-          String classURLExternalForm = classURL.toExternalForm();
+          String classURLExternalForm;
+
+          classURL = createClassPathURL(classEntryName, classSource);
+          classURLExternalForm = classURL.toExternalForm();
 
           switch (classURL.getProtocol()) {
             case "jar":
@@ -263,14 +483,86 @@ public class SingularityClassLoader extends ClassLoader {
     throw new ClassNotFoundException(name);
   }
 
-  //TODO: Implement to load classes in modules (return null on not found)
-  /*
+  /**
+   * Finds a class in one of the bundle's modules, as used by {@code Class.forName(Module, String)} and by
+   * {@code ServiceLoader} when it instantiates providers. A {@code null} module name searches the class path entries.
+   *
+   * @param moduleName the module's name, or {@code null} for the class path
+   * @param name       fully qualified binary class name
+   * @return the class, or {@code null} if the module does not contain it
+   * @throws UncheckedIOException if the module contains the class but its bytes cannot be read
+   */
   @Override
-  protected Class<?> findClass (String moduleName, String name) {
+  protected synchronized Class<?> findClass (String moduleName, String name) {
 
-    return super.findClass(moduleName, name);
+    SingularityModule singularityModule;
+    Class<?> moduleClass;
+
+    if (moduleName == null) {
+      try {
+        return findClass(name);
+      } catch (ClassNotFoundException classNotFoundException) {
+        return null;
+      }
+    }
+
+    if (((singularityModule = moduleMap.get(moduleName)) == null) || (!singularityModule.containsPackage(getPackageName(name)))) {
+
+      return null;
+    }
+
+    if ((moduleClass = findLoadedClass(name)) != null) {
+
+      return moduleClass;
+    }
+
+    try {
+      return defineModuleClass(singularityModule, name);
+    } catch (IOException ioException) {
+      throw new UncheckedIOException("Unable to define class(" + name + ") in module(" + moduleName + ")", ioException);
+    }
   }
-  */
+
+  /**
+   * Defines a class from one of the bundle's modules. Because the module layer maps the class's package to this
+   * loader, the class becomes a member of that named module; its code source is the module's location.
+   *
+   * @param singularityModule the module that owns the class's package
+   * @param name              fully qualified binary class name
+   * @return the defined class, or {@code null} if the module has no such class file
+   * @throws IOException if the class bytes cannot be read
+   */
+  private Class<?> defineModuleClass (SingularityModule singularityModule, String name)
+    throws IOException {
+
+    URL classURL;
+    ProtectionDomain protectionDomain;
+    byte[] classData;
+
+    if ((classURL = singularityModule.getEntryURL(name.replace('.', '/') + ".class")) == null) {
+
+      return null;
+    }
+
+    protectionDomain = new ProtectionDomain(new CodeSource(singularityModule.getLocation().toURL(), (Certificate[])null), ALL_PERMISSION_COLLECTION, this, null);
+
+    try (InputStream classInputStream = classURL.openStream()) {
+      classData = getClassData(classInputStream);
+    }
+
+    return defineClass(name, classData, 0, classData.length, protectionDomain);
+  }
+
+  /**
+   * @param className fully qualified binary class name
+   * @return the name of the class's package, or the empty string for the unnamed package
+   */
+  private String getPackageName (String className) {
+
+    int lastDotPos;
+
+    return ((lastDotPos = className.lastIndexOf('.')) < 0) ? "" : className.substring(0, lastDotPos);
+  }
 
   /**
    * Decides whether a class name falls within the subset this loader is allowed to resolve.
@@ -325,21 +617,16 @@ public class SingularityClassLoader extends ClassLoader {
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
-    ByteArrayOutputStream classDataOutputStream = new ByteArrayOutputStream();
-    int singleByte;
-
-    while ((singleByte = classInputStream.read()) >= 0) {
-      classDataOutputStream.write(singleByte);
-    }
-
-    return classDataOutputStream.toByteArray();
+    return classInputStream.readAllBytes();
   }
 
   /**
-   * Looks up a single resource in the index, normalizing an optional leading slash.
+   * Looks up a single resource, normalizing an optional leading slash. A resource in a package of one of the bundle's
+   * modules is returned only if the module leaves it visible (see {@link SingularityModule#isVisible(String)}); a
+   * resource outside every module package is searched in the modules first and then in the class path entries.
    *
    * @param name resource name, with or without a leading {@code '/'}
-   * @return the URL recorded for that resource, or {@code null} if the name is empty or unknown
+   * @return the URL of the resource, or {@code null} if the name is empty, unknown, or encapsulated
    */
   @Override
   protected URL findResource (String name) {
@@ -348,23 +635,54 @@ public class SingularityClassLoader extends ClassLoader {
 
       return null;
     } else {
-      return urlMap.get((name.charAt(0) == '/') ? name.substring(1) : name);
+
+      String entryName = (name.charAt(0) == '/') ? name.substring(1) : name;
+      URL moduleURL;
+
+      if ((!moduleMap.isEmpty()) && ((moduleURL = findModuleURL(entryName)) != null)) {
+
+        return moduleURL;
+      }
+
+      return getClassPathURL(entryName);
     }
   }
 
-  //TODO: Implement to find resources in modules
-  /*
+  /**
+   * Looks up a resource inside a named module, as used by {@code Module.getResourceAsStream} once that method has
+   * applied the module's encapsulation rules for the caller. A {@code null} module name searches the class path entries.
+   *
+   * @param moduleName the module's name, or {@code null} for the class path
+   * @param name       resource name
+   * @return the URL of the resource, or {@code null} if the module does not contain it
+   */
   @Override
-  protected URL findResource (String moduleName, String name)
-    throws IOException {
+  protected URL findResource (String moduleName, String name) {
 
-    return super.findResource(moduleName, name);
+    SingularityModule singularityModule;
+
+    if ((name == null) || name.isEmpty()) {
+
+      return null;
+    }
+
+    if (moduleName == null) {
+
+      return getClassPathURL((name.charAt(0) == '/') ? name.substring(1) : name);
+    }
+
+    if ((singularityModule = moduleMap.get(moduleName)) == null) {
+
+      return null;
+    }
+
+    return singularityModule.getEntryURL((name.charAt(0) == '/') ? name.substring(1) : name);
   }
-  */
 
   /**
-   * Enumerates matching resources. For names ending in a slash this method behaves as a directory listing: every
-   * indexed file that begins with the given prefix (excluding directory placeholders) is returned.
+   * Enumerates matching resources: the visible copies held by the bundle's modules, then every class path source's
+   * copy in class path order. For names ending in a slash this method behaves as a directory listing: every indexed
+   * file that begins with the given prefix (excluding directory placeholders) is returned, once per source.
    *
    * @param name resource name or directory-style prefix
    * @return an {@link Enumeration} of matching URLs, possibly empty
@@ -377,86 +695,59 @@ public class SingularityClassLoader extends ClassLoader {
       return Collections.emptyEnumeration();
     } else if (!name.endsWith("/")) {
 
+      String entryName = (name.charAt(0) == '/') ? name.substring(1) : name;
+      ArrayList<URL> urlList;
       URL url;
 
-      if ((url = findResource(name)) == null) {
+      if (moduleMap.isEmpty() && (!additionalSourceMap.containsKey(entryName))) {
 
-        return Collections.emptyEnumeration();
+        return ((url = getClassPathURL(entryName)) == null) ? Collections.emptyEnumeration() : new ArrayEnumeration<>(new URL[] {url});
       }
 
-      return new SingleEnumeration<>(url);
+      urlList = new ArrayList<>();
+      addModuleURLs(entryName, urlList);
+      if ((url = getClassPathURL(entryName)) != null) {
+        urlList.add(url);
+        addAdditionalClassPathURLs(entryName, urlList);
+      }
+
+      return asEnumeration(urlList);
     } else {
 
-      LinkedList<URL> urlList = new LinkedList<>();
+      ArrayList<URL> urlList = new ArrayList<>();
 
-      for (Map.Entry<String, URL> resourceEntry : urlMap.entrySet()) {
-        if (resourceEntry.getKey().startsWith(name) && (!resourceEntry.getKey().endsWith("/"))) {
-          urlList.add(resourceEntry.getValue());
+      for (SingularityModule singularityModule : moduleMap.values()) {
+        singularityModule.streamEntryNames().filter((entryName) -> entryName.startsWith(name) && singularityModule.isVisible(entryName)).forEach((entryName) -> urlList.add(singularityModule.getEntryURL(entryName)));
+      }
+
+      // a listing can span the whole bundle, so its URLs are formed without being kept
+      for (Map.Entry<String, String> sourceEntry : sourceMap.entrySet()) {
+        if (sourceEntry.getKey().startsWith(name) && (!sourceEntry.getKey().endsWith("/"))) {
+          urlList.add(createClassPathURL(sourceEntry.getKey(), sourceEntry.getValue()));
+          addAdditionalClassPathURLs(sourceEntry.getKey(), urlList);
         }
       }
 
-      if (urlList.isEmpty()) {
-
-        return Collections.emptyEnumeration();
-      } else {
-
-        URL[] urls = new URL[urlList.size()];
-
-        urlList.toArray(urls);
-
-        return new ArrayEnumeration<>(urls);
-      }
+      return asEnumeration(urlList);
     }
   }
 
   /**
-   * Single-shot {@link Enumeration} used when exactly one resource must be exposed to an API that requires an
-   * enumeration.
-   *
-   * @param <T> the element type
+   * @param urlList the URLs to expose
+   * @return an enumeration over the list, or the shared empty enumeration when the list is empty
    */
-  private static class SingleEnumeration<T> implements Enumeration<T> {
+  private Enumeration<URL> asEnumeration (List<URL> urlList) {
 
-    private final T value;
-    private boolean used = false;
+    if (urlList.isEmpty()) {
 
-    /**
-     * Stores the sole value to hand out.
-     *
-     * @param value the only element the enumeration will ever return
-     */
-    private SingleEnumeration (T value) {
+      return Collections.emptyEnumeration();
+    } else {
 
-      this.value = value;
-    }
+      URL[] urls = new URL[urlList.size()];
 
-    /**
-     * Reports whether the value is still available.
-     *
-     * @return {@code true} until {@link #nextElement()} has consumed the value
-     */
-    @Override
-    public synchronized boolean hasMoreElements () {
+      urlList.toArray(urls);
 
-      return !used;
-    }
-
-    /**
-     * Returns the value once, then refuses further calls.
-     *
-     * @return the single element supplied at construction
-     * @throws NoSuchElementException on every call after the first
-     */
-    @Override
-    public synchronized T nextElement () {
-
-      if (used) {
-        throw new NoSuchElementException();
-      }
-
-      used = true;
-
-      return value;
+      return new ArrayEnumeration<>(urls);
     }
   }
 
@@ -495,9 +786,14 @@ public class SingularityClassLoader extends ClassLoader {
      * Advances the cursor and returns the next element.
      *
      * @return the next array element in order
+     * @throws NoSuchElementException once every element has been returned
      */
     @Override
     public T nextElement () {
+
+      if (index >= values.length) {
+        throw new NoSuchElementException();
+      }
 
       return values[index++];
     }

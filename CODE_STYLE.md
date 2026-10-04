@@ -253,10 +253,10 @@ Other rules:
 
 - `module-info.java` lives at `src/main/java/module-info.java` and starts with the same license header as every other source file.
 - The module name is `org.smallmind.` followed by the module's directory path, with `/` replaced by `.`.
-- Clause groups appear in this order, alphabetical within each group, with one blank line between groups: `requires`, `requires transitive`, `requires static`, `requires static transitive`, `exports`, `opens`, `uses`, `provides`. No comments inside the descriptor; the module's chapter explains the why.
+- Clause groups appear in this order, alphabetical within each group, with one blank line between groups: `requires`, `requires transitive`, `requires static`, `exports`, `opens`, `uses`, `provides`. No comments inside the descriptor; the module's chapter explains the why.
 - Export every package that contains classes. Packages that carry only resources are opened, not exported.
 - Every `<optional>true</optional>` dependency whose packages the module's classes use is `requires static`, and every `requires static` is an optional dependency in the POM. An optional dependency used only by shipped resources (for example a class named in a Spring XML file) is not named in the descriptor; the chapter says so. Every required module names an artifact the POM declares directly, not one that only arrives transitively.
-- Use `requires transitive` only for an explicit module whose types appear in exported signatures (`-Xlint:exports` reports these). Never use it for an automatic module; the chapter tells consumers to require that module themselves.
+- Use `requires transitive` only for a mandatory explicit module whose types appear in exported signatures (`-Xlint:exports` reports these). Never combine it with `static` — `javac` then demands the module when compiling every consumer, which makes the optional dependency mandatory — and never use it for an automatic module. In both cases the chapter tells consumers to require that module themselves.
 - Keep each `META-INF/services` file and add the matching `provides`; add `uses` beside every `ServiceLoader.load`.
 - Grant reflection with a qualified `opens … to` naming the framework module. Use an unconditional `opens` only for packages whose resources are loaded by path.
 
