@@ -15,6 +15,12 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
@@ -24,6 +30,11 @@
       <artifactId>jakarta.websocket-client-api</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.cometd.java</groupId>
@@ -133,6 +144,12 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>web-json-doppelganger</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

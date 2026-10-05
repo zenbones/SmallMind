@@ -69,7 +69,7 @@ Add the provider to the Surefire plugin's `<dependencies>` block. Surefire will 
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>surefire-sleuth-provider</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
   <configuration>

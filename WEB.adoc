@@ -171,8 +171,8 @@ Generated DTOs::
 
 == Versioning
 
-All examples in this document use `7.0.0-SNAPSHOT`. Substitute the project's
-current version or `${project.version}` as appropriate.
+Dependency examples in this document use `${project.version}` for SmallMind
+artifacts. Substitute the SmallMind version you build against.
 
 == Installation
 
@@ -183,7 +183,7 @@ Every module is a plain Maven artifact under `org.smallmind`:
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>web-grizzly</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
@@ -354,7 +354,64 @@ descriptor. Register endpoints as ordinary Spring beans annotated with
 Annotate a JAX-WS service class with `@ServicePath(value = "/echo",
 contextPath = "/")` and the `GrizzlyPostProcessor` will wrap it in a
 `WebServiceInstaller`. The endpoint is published at
-`contextPath + soapPath + servicePath` (default `/soap/echo`).
+`contextPath + soapPath + servicePath` (default `/soap/echo`), and its WSDL
+at the same URL with `?wsdl`.
+
+The SOAP runtime is Metro's `com.sun.xml.ws:jaxws-rt`, the artifact Grizzly's
+JAX-WS add-on compiles against. `web-grizzly` excludes the OSGi repackagings
+(`org.glassfish.metro:webservices-osgi` and `com.sun.xml.bind:jaxb-osgi`)
+that `grizzly-http-server-jaxws` would otherwise bring, because they cannot
+run on a module path. `jaxws-rt` is plain JAX-WS: the WS-* extensions
+(WS-Security, WS-ReliableMessaging, WS-Policy) that the full Metro bundle
+carried are not included, so an application that needs them adds Metro's
+WSIT artifacts itself.
+
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.grizzly`
+that exports all four of its packages and opens `org.smallmind.web.grizzly`
+unconditionally, so `classpath:org/smallmind/web/grizzly/grizzly.xml` stays
+loadable from other modules. On the classpath the descriptor is ignored. See
+xref:README.adoc#module-path[Module Path And Classpath] for the
+repository-wide rules.
+
+* It re-exports (`requires transitive`) the Servlet, WebSocket, Grizzly,
+  Tyrus, and Jersey server modules whose types appear in its public
+  signatures, plus `org.smallmind.nutsnbolts`. The Spring modules
+  (`spring.beans`, `spring.context`, `spring.web`) are automatic and not
+  re-exported; a module that calls the Spring callbacks on
+  `GrizzlyInitializingBean` or `GrizzlyPostProcessor` requires them itself.
+* It requires `org.glassfish.grizzly.npn`. `GrizzlyInitializingBean` always
+  registers Grizzly's HTTP/2 add-on, which needs that module, and
+  `grizzly-http2` only declares it `requires static`; naming it here brings
+  it into the module graph. (`web-grizzly` also depends on
+  `grizzly-npn-api` for the same reason on the classpath.)
+* `grizzly-http-server-jaxws` has no module name of its own, so its module
+  name, `grizzly.http.server.jaxws`, is derived from the jar's file name.
+
+A module-path application hosting REST resources follows the
+<<_web_jersey>> "Module path" rules. One that publishes SOAP endpoints also:
+
+* Exports each `@ServicePath` service package unconditionally (and opens it
+  to `spring.core` and `spring.beans` if Spring instantiates the bean).
+  Metro invokes service methods through a class in the unnamed module, so a
+  qualified `exports` or `opens` is not enough; without the unconditional
+  `exports` the call returns a SOAP fault reading `… cannot access class …
+  because module … does not export … to unnamed module`.
+* Passes `--add-reads com.sun.xml.ws=grizzly.http.server.jaxws` to `java`.
+  Metro inspects Grizzly's `JaxwsConnection` through method handles, which
+  need that read edge, and only the command line can add it for an automatic
+  module. Without it every request to the endpoint, including `?wsdl`,
+  fails with HTTP 500 and `IllegalAccessException: module com.sun.xml.ws does
+  not read module grizzly.http.server.jaxws`.
+
+Verified with everything on the module path, including `jersey-hk2` (minus
+`aopalliance-repackaged`): a `@ServicePath` service serves its WSDL and
+answers a SOAP call, and a Jersey resource with a private `@Context` field
+returns JSON through `JsonProvider`, in the same Grizzly server, run with
+`--add-modules org.apache.commons.logging,jakarta.el,org.glassfish.expressly`
+and the `--add-reads` above. WebSocket (Tyrus) endpoints have not been
+exercised on a module path.
 
 [[_web_jetty]]
 == web-jetty
@@ -478,6 +535,29 @@ Both accept the same installer POJOs with different package names.
 The Jetty module currently creates each `ServletContextHandler` with
 `NO_SESSIONS`. Request-scoped state is expected to come from Spring's
 `RequestContextHolder` via `SpringSupportOption`, not from HTTP sessions.
+
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.jetty`
+that exports all three of its packages; it needs no `opens`, because Jersey
+never reflects into it and Spring reaches `JettyInitializingBean` through
+public setters. It re-exports (`requires transitive`) `jakarta.servlet`,
+`org.eclipse.jetty.util`, `org.glassfish.jersey.core.server`, and
+`org.smallmind.nutsnbolts`, and requires the Jetty, Jersey servlet-container,
+WebSocket, and JAX-WS modules it uses, `jdk.httpserver`, and the automatic
+`spring.beans`, `spring.context`, and `spring.web`. Because the descriptor
+names Jetty's explicit modules, requiring `org.smallmind.web.jetty` brings
+them into the module graph. A module that implements or calls the Spring
+callbacks on `JettyInitializingBean` or `JettyPostProcessor` requires
+`spring.beans` and `spring.context` itself.
+
+A module-path application hosting `web-jersey` resources on `web-jetty`
+follows the <<_web_jersey>> "Module path" rules. Verified: with
+`jersey-hk2` (minus `aopalliance-repackaged`) on the module path, the two
+`--add-exports` flags, and `--add-modules
+org.apache.commons.logging,jakarta.el,org.glassfish.expressly`, a resource
+with a private `@Context` field, `JsonProvider` output, and `@EntityParam`
+parameters all work.
 
 [[_web_jersey]]
 == web-jersey
@@ -661,7 +741,7 @@ same proxies declarable in XML.
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>web-jersey</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
@@ -682,6 +762,100 @@ same proxies declarable in XML.
 
 Each extension is independent — leave any of them out and the feature is
 simply absent.
+
+`web-jersey` ships no Jersey injection manager, and neither do `web-jetty` or
+`web-grizzly`. Every deployment adds one at runtime, normally `jersey-hk2`;
+without it Jersey fails at startup with `IllegalStateException:
+InjectionManagerFactory not found.`
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.glassfish.jersey.inject</groupId>
+  <artifactId>jersey-hk2</artifactId>
+  <version>${jersey.version}</version>
+  <scope>runtime</scope>
+</dependency>
+----
+
+The POM's `jersey-spring6` dependency is optional and runtime-scoped (it also
+brings `jersey-hk2`); no `web-jersey` class references it.
+
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.jersey` that
+exports all ten of its packages. On the classpath the descriptor is ignored. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
+* It re-exports (`requires transitive`) `jakarta.annotation`, `jakarta.servlet`,
+  `jakarta.validation`, `jakarta.ws.rs`, `jakarta.xml.bind`,
+  `org.glassfish.jersey.core.server`, `org.glassfish.jersey.ext.bean.validation`,
+  `org.glassfish.jersey.media.multipart`, `org.smallmind.nutsnbolts`,
+  `org.smallmind.scribe.pen`, and `org.smallmind.web.json.scaffold`, whose types
+  appear in its public signatures. It also requires `jakarta.inject`,
+  `org.glassfish.jersey.core.common`, `org.hibernate.validator`,
+  `org.smallmind.web.http`, and the automatic modules `spring.beans`,
+  `spring.context`, `spring.web`, `org.apache.httpcomponents.client5.httpclient5`,
+  and `org.apache.httpcomponents.core5.httpcore5`. Automatic modules are never
+  re-exported: a module that uses the Spring factory beans, `JerseyPostProcessor`, or
+  `ExposedApplicationContext` also requires `spring.beans` (and `spring.context`), and
+  a module that calls the `JsonTarget` or `JsonBody` methods taking `HttpHost` or
+  `ContentType` also requires `org.apache.httpcomponents.core5.httpcore5`.
+* `org.aspectj.runtime` is `requires static`. `ResourceMethodAspect` and
+  `ValidatedAspect` advise nothing inside `web-jersey`; advice lands in the classes of
+  an application that weaves them, and that application supplies
+  `org.aspectj:aspectjrt` and, on a module path, requires `org.aspectj.runtime`
+  itself.
+* It opens `org.smallmind.web.jersey.aop` and `org.smallmind.web.jersey.page` to
+  `org.glassfish.hk2.locator`, `org.glassfish.hk2.utilities`, and
+  `org.glassfish.jersey.core.server`, because HK2 injects non-public members of
+  `EntityAwareContextResolver`, `EntityParamResolver`, `ResourceMethodFilter`, and
+  `PageRangeResponseFilter`. `org.smallmind.web.jersey.aop` is also opened to
+  `jakarta.xml.bind` and `tools.jackson.databind` for `Envelope`. The three Spring
+  packages (`spring`, `proxy.spring`, `cors.spring`) are opened to `spring.core` and
+  `spring.beans`. Compiling the module reports `[module] module not found` for the
+  two HK2 modules, which are not on its compile path; the `opens` clauses are
+  written anyway and take effect at run time.
+* `EntityParamResolver` and `EntityAwareContextResolver` use two packages that
+  Jersey does not export (`org.glassfish.jersey.innate.inject` and
+  `org.glassfish.jersey.server.validation.internal`). The build passes
+  `--add-exports` for both, and a module-path application that registers
+  `EntityParamExtension` passes the same two flags to `java`:
++
+[source,text]
+----
+--add-exports org.glassfish.jersey.core.common/org.glassfish.jersey.innate.inject=org.smallmind.web.jersey
+--add-exports org.glassfish.jersey.ext.bean.validation/org.glassfish.jersey.server.validation.internal=org.smallmind.web.jersey
+----
+* `jersey-spring6` is classpath-only. On a module path it brings HK2's
+  `class-model`, whose `asm-commons` requires `org.objectweb.asm.tree`, which nothing
+  supplies.
+
+A module-path application that hosts `web-jersey` resources also does the following:
+
+* Open each JAX-RS resource package to HK2 and Jersey:
++
+[source,java]
+----
+opens com.example.app.rest to org.glassfish.hk2.locator, org.glassfish.hk2.utilities, org.glassfish.jersey.core.server;
+----
++
+Without it, the first injection into a non-public member fails with
+`InaccessibleObjectException` naming `org.glassfish.hk2.utilities`.
+* Open each package whose types `JsonProvider` reads or writes to
+  `tools.jackson.databind` (see <<_web_json_scaffold>>).
+* Add `jersey-hk2` as above and exclude `org.glassfish.hk2.external:aopalliance-repackaged`
+  from it. That jar and `spring-aop` both contain `org.aopalliance.aop` and
+  `org.aopalliance.intercept`, which a module path refuses; HK2 runs on
+  `spring-aop`'s copy.
+* Resolve the explicit modules that only automatic modules need, by requiring them
+  or with `--add-modules`: `org.apache.commons.logging` (for Spring), and
+  `jakarta.el` and `org.glassfish.expressly` (for Hibernate Validator). A missing one
+  shows up as `NoClassDefFoundError` for a class whose jar is on the module path,
+  for example `org/apache/commons/logging/LogFactory`.
+
+For the container itself, both `web-grizzly` and `web-jetty` work on a module
+path; see their "Module path" sections (<<_web_grizzly>>, <<_web_jetty>>).
 
 [[_web_http]]
 == web-http
@@ -1101,6 +1275,18 @@ failures as `InvalidJWTSignatureException`.
 * `JWTCodec.encode` always produces a JWS (signed token). JWE is supported on
   the read side by jose4j when `JWTConsumer` is used directly.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.jwt` that exports
+`org.smallmind.web.jwt` and `org.smallmind.web.jwt.jose4j` and re-exports
+`org.smallmind.nutsnbolts` (`requires transitive`). It requires
+`org.smallmind.web.json.scaffold` and the jose4j automatic module `org.jose4j`.
+Automatic modules are never re-exported, and `JWTConsumer.processContext` exposes
+jose4j's `JsonWebStructure`, so a module that calls it also requires `org.jose4j`.
+Claims are written and read through `JsonCodec`, so open each claims package to
+`tools.jackson.databind` (see <<_web_json_scaffold>>). See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 [[_schema_validation_maven_plugin]]
 == schema-validation-maven-plugin
 
@@ -1131,7 +1317,7 @@ shipped alongside REST resources and the same projects tend to use them.
 <plugin>
   <groupId>org.smallmind</groupId>
   <artifactId>schema-validation-maven-plugin</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>${project.version}</version>
   <executions>
     <execution>
       <goals>
@@ -1194,6 +1380,25 @@ CORS preflight still fails::
     subrange, 200 when it is complete, and 416 when the requested range is
     out of bounds. Check that the `Page` you return has the correct
     `firstResult`, `resultSize`, and `totalResults` values.
+
+`IllegalAccessException: module com.sun.xml.ws does not read module grizzly.http.server.jaxws`::
+    A module-path application publishing SOAP endpoints on `web-grizzly`
+    lacks `--add-reads com.sun.xml.ws=grizzly.http.server.jaxws`. See
+    <<_web_grizzly>>, "Module path".
+
+`IllegalStateException: InjectionManagerFactory not found.`::
+    No Jersey injection manager is present. Add `jersey-hk2` (see <<_web_jersey>>,
+    "Installation").
+
+`IllegalAccessError: superclass access check failed: … cannot access class org.glassfish.jersey.innate.inject.InternalBinder`::
+    A module-path application registered `EntityParamExtension` without the two
+    `--add-exports` flags listed under <<_web_jersey>>, "Module path". Add both to
+    the `java` command line.
+
+`InaccessibleObjectException` naming `org.glassfish.hk2.utilities`::
+    On a module path, a JAX-RS resource package is not opened to HK2. Add
+    `opens <package> to org.glassfish.hk2.locator, org.glassfish.hk2.utilities,
+    org.glassfish.jersey.core.server;` to the application's descriptor.
 
 Grizzly or Jetty starts but nothing answers on the port::
     Both initializing beans defer actual startup to

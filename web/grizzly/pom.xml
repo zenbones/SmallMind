@@ -15,6 +15,11 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>com.sun.xml.ws</groupId>
+      <artifactId>jaxws-rt</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <scope>compile</scope>
@@ -53,6 +58,17 @@
       <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-http-server-jaxws</artifactId>
       <scope>compile</scope>
+      <exclusions>
+        <!-- OSGi repackagings of Metro and JAXB; replaced by jaxws-rt, which Grizzly compiles against and which works on a module path -->
+        <exclusion>
+          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-osgi</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.glassfish.metro</groupId>
+          <artifactId>webservices-osgi</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
@@ -66,8 +82,8 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-npn-bootstrap</artifactId>
-      <scope>test</scope>
+      <artifactId>grizzly-npn-api</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
@@ -146,4 +162,25 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <compilerArgs combine.children="append">
+                <arg>--add-modules</arg>
+                <arg>java.net.http</arg>
+                <arg>--add-reads</arg>
+                <arg>org.smallmind.web.grizzly=java.net.http</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -18,6 +18,7 @@
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>jakarta.xml.bind</groupId>
@@ -43,6 +44,7 @@
       <groupId>org.smallmind</groupId>
       <artifactId>web-json-doppelganger</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>

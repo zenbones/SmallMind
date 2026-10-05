@@ -252,8 +252,7 @@ understand which Scribe artifact to add.
 == Installation
 
 Scribe is a Maven-published multi-module project. Every dependency in this section
-assumes `${project.version}` resolves to the active version (`7.0.0-SNAPSHOT` at the
-time of writing).
+assumes `${project.version}` resolves to the SmallMind version you build against.
 
 === The Minimum: API Only
 

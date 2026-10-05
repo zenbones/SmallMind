@@ -71,9 +71,11 @@ The name reflects the intent: a *bench* of instruments a contributor reaches for
 
 The dependency edges among them are: `condition` depends on `docker`; `groundwater` depends on both `condition` and `docker` (and TestNG); `logger`, `foundation`, and `style` stand alone. The common entry point for an integration test is `groundwater`, which transitively brings in everything except `logger` and `foundation`.
 
-Tests on the classpath are the supported configuration for every testbench artifact; there, module descriptors are ignored. `testbench-docker`, `testbench-logger`, `testbench-foundation`, and `testbench-style` ship explicit module descriptors; `testbench-condition` and `testbench-groundwater` are currently automatic modules under the names above. See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+Tests on the classpath are the supported configuration for every testbench artifact; there, module descriptors are ignored. Every testbench artifact ships an explicit module descriptor. See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 * `org.smallmind.testbench.docker` exports `org.smallmind.testbench.docker` and re-exports `org.smallmind.nutsnbolts` (`requires transitive`). It requires `org.smallmind.scribe.pen` and the docker-java automatic modules `com.github.dockerjava.api`, `com.github.dockerjava.core`, and `com.github.dockerjava.transport.httpclient5`. `DockerClientUtility` (`DockerClient`), `DockerMount` (`MountType`), and `DockerVolume` (`AccessMode`) expose docker-java API types, and automatic modules are never re-exported, so a module that uses them also requires `com.github.dockerjava.api`.
+* `org.smallmind.testbench.condition` exports `org.smallmind.testbench.condition` and re-exports `org.smallmind.nutsnbolts` (`requires transitive`). It requires `org.smallmind.testbench.docker` and the automatic modules `com.github.dockerjava.api` and `com.rabbitmq.client`. `RabbitMQAvailableTestCondition` takes RabbitMQ `Address` arguments, and automatic modules are never re-exported, so a module that constructs it also requires `com.rabbitmq.client`. `amqp-client` brings Netty, and `netty-codec-marshalling` and `netty-codec-protobuf` declare `requires` on modules that are not supplied (`org.jboss.marshalling`, `com.google.protobuf`). Nothing in a normal graph resolves those two Netty modules, so this only surfaces with `--add-modules ALL-MODULE-PATH` or a tool that resolves every module, such as `jdeps`.
+* `org.smallmind.testbench.groundwater` exports `org.smallmind.testbench.groundwater` and re-exports `org.smallmind.testbench.docker` (`requires transitive`), whose types appear in `AbstractGroundwaterTest`'s constructor. It requires `org.smallmind.testbench.condition` and the TestNG automatic module `org.testng`; a test class that extends `AbstractGroundwaterTest` uses TestNG annotations and requires `org.testng` itself.
 * `org.smallmind.testbench.logger` requires `org.smallmind.scribe.pen` and opens `org.smallmind.testbench.logger` unconditionally so `classpath:org/smallmind/testbench/logger/logging.xml` stays loadable from other modules.
 * `org.smallmind.testbench.foundation` exports nothing, because it has no classes. It opens `org.smallmind.testbench.foundation` unconditionally so `classpath:org/smallmind/testbench/foundation/foundation.xml` and `global.yaml` stay loadable from other modules. It requires `org.smallmind.nutsnbolts`, `org.bouncycastle.provider`, and `org.yaml.snakeyaml`, the three modules `foundation.xml` and `global.yaml` need, so requiring `org.smallmind.testbench.foundation` brings them into the module graph. Spring itself is not named; the test that loads the context supplies it.
 * `org.smallmind.testbench.style` exports `org.smallmind.testbench.style`, re-exports `java.xml` (`requires transitive`), and requires `org.smallmind.nutsnbolts` and `jdk.jdi`. It opens its package unconditionally because `DependencyOrganizer` and `DependencyReducer` load `pretty-print.xslt` through the thread context class loader.
@@ -134,7 +136,7 @@ Reach for the narrower artifacts directly when you do not need the whole stack:
 
 [IMPORTANT]
 ====
-*`testbench-docker` depends on `docker-java-api` and `docker-java-core`, not on the aggregate `docker-java` artifact.* The aggregate adds nothing `DockerClientUtility` uses and drags in the Jersey and Netty transports and `jcl-over-slf4j`; it also repeats the `com.github.dockerjava.core` package from `docker-java-core`, which makes a module path impossible. `testbench-condition` still declares `docker-java`. That artifact's Jersey transport requests `org.glassfish.jersey.connectors:jersey-apache-connector` at a version that does not exist alongside Jersey 4 (the Jersey 4 line no longer publishes that artifact), so the root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java` in `dependencyManagement`. If you declare `docker-java` yourself without inheriting this project's dependency management, add the same exclusion (or pin a Jersey 3 connector) or resolution will fail.
+*No testbench artifact depends on the aggregate `docker-java` artifact.* `testbench-docker` depends on `docker-java-api` and `docker-java-core`, and `testbench-condition` on `docker-java-api` alone. The aggregate adds nothing either uses and drags in the Jersey and Netty transports and `jcl-over-slf4j`; it also repeats the `com.github.dockerjava.core` package from `docker-java-core`, which makes a module path impossible. Its Jersey transport also requests an `org.glassfish.jersey.connectors:jersey-apache-connector` version that does not exist alongside Jersey 4, so if you declare `docker-java` yourself, exclude `com.github.docker-java:docker-java-transport-jersey` (or pin a Jersey 3 connector) or resolution will fail.
 ====
 
 == Quick Start
@@ -444,9 +446,6 @@ Name or port collision on startup::
 No log output::
     `TestLoggerConfiguration.setup()` configures Scribe but does not provide a backend. Add `scribe-ink-indigenous` (test scope) so `LoggerManager` resolves a logging blueprint. See the installation note above.
 
-`jersey-apache-connector` resolution failure::
-    `docker-java`'s Jersey transport requests a `jersey-apache-connector` version that does not exist. `testbench-docker` no longer depends on `docker-java`, but `testbench-condition` does; the root `pom.xml` excludes `docker-java-transport-jersey` from `docker-java`, so reproduce that exclusion in any build that declares `docker-java` outside this project's dependency management. See the installation note above.
-
 `MissingHostResourceException` when declaring a mount::
     `DockerMount`/`DockerVolume` resolve the host resource from the classpath at construction. The named resource is not on the test classpath, or its URL is malformed. Confirm the resource path is correct and present under `src/test/resources`.
 
@@ -481,7 +480,6 @@ Plaintext daemon default::
 | Test log level              | `DEBUG`                | `TestLoggerConfiguration` / `global.yaml`
 | Wire default timeout        | `15` s                 | `global.yaml`
 | Subprocess exit grace       | `3` s                  | `ProcessOutputUtility`
-| `docker-java-transport-jersey` | excluded            | root `pom.xml` `dependencyManagement`
 |===
 
 == Package File Map

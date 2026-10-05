@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>com.github.docker-java</groupId>
-      <artifactId>docker-java</artifactId>
+      <artifactId>docker-java-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

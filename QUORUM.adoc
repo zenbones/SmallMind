@@ -81,7 +81,7 @@ subpackages, each independent from the others:
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind-quorum</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 

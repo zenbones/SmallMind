@@ -1513,7 +1513,7 @@ target/
         libwrapper.so                         Generic-name copy
         my-service-1.0.0.jar                  Your jar
         spring-context-6.1.0.jar              Dependencies (compile/runtime)
-        spark-tanukisoft-integration-7.0.0-SNAPSHOT.jar
+        spark-tanukisoft-integration-7.4.0-SNAPSHOT.jar
         ...
       conf/
         wrapper-license.conf                  Copied from licenseFile

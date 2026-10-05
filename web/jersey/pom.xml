@@ -15,6 +15,11 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>jakarta.inject</groupId>
       <artifactId>jakarta.inject-api</artifactId>
       <scope>compile</scope>
@@ -37,6 +42,16 @@
     <dependency>
       <groupId>jakarta.xml.bind</groupId>
       <artifactId>jakarta.xml.bind-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.core5</groupId>
+      <artifactId>httpcore5</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -123,6 +138,31 @@
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs combine.children="append">
+            <arg>--add-exports</arg>
+            <arg>org.glassfish.jersey.core.common/org.glassfish.jersey.innate.inject=org.smallmind.web.jersey</arg>
+            <arg>--add-exports</arg>
+            <arg>org.glassfish.jersey.ext.bean.validation/org.glassfish.jersey.server.validation.internal=org.smallmind.web.jersey</arg>
+          </compilerArgs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <compilerArgs combine.children="append">
+                <arg>--add-modules</arg>
+                <arg>jdk.httpserver</arg>
+                <arg>--add-reads</arg>
+                <arg>org.smallmind.web.jersey=jdk.httpserver</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>dev.aspectj</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>

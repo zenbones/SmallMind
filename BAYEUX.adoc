@@ -710,8 +710,11 @@ channel.publish(payload);
 | `json.ClassNameXmlAdapter` /
   `json.ClassNameArrayXmlAdapter` /
   `json.DoubleStringArrayXmlAdapter`
-| `web-json-doppelganger` XML adapters used when the
-  configuration is serialized for diagnostic logging at startup.
+| JAXB XML adapters used by the Doppelganger-generated configuration view
+  when the configuration is serialized for diagnostic logging at startup.
+  `web-json-doppelganger` itself is an optional, build-time-only dependency
+  of `oumuamua-server-impl`; the generated view needs `web-json-scaffold`
+  and `jakarta.xml.bind-api`, which the module declares directly.
 |===
 
 [[api-reference]]

@@ -75,7 +75,7 @@ have `roles`; neither of those should be a runtime assertion.
 
 | *Direction*
 | `IN` (deserialise from client) or `OUT` (serialise to client). Generated
-  class names are suffixed with `In` or `Out`.
+  class names end in `InView` or `OutView`.
 
 | *Purpose*
 | A caller-assigned label such as `"create"`, `"update"`, `"admin"`, or the
@@ -119,7 +119,7 @@ have `roles`; neither of those should be a runtime assertion.
 <dependency>
   <groupId>org.smallmind</groupId>
   <artifactId>web-json-doppelganger</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>${project.version}</version>
 </dependency>
 ----
 
@@ -128,10 +128,17 @@ Module name (for `requires`): `org.smallmind.web.json.doppelganger`
 The processor is registered as a Java SPI service (via Google Auto Service)
 at `META-INF/services/javax.annotation.processing.Processor`, so `javac`
 discovers it automatically as soon as the artifact is on the annotation
-processor path. For Maven, that means adding the dependency to the module
-that contains the annotated domain classes; no
-`maven-compiler-plugin` `<annotationProcessorPaths>` entry is required if the
-artifact is already on the compile classpath.
+processor path. For Maven, that means listing the artifact in the
+`maven-compiler-plugin` `<annotationProcessorPaths>` of the module that
+contains the annotated domain classes, as `claxon-registry` and
+`bayeux-oumuamua-server-impl` do. From JDK 23 on, `javac` does not run a
+processor it only finds on the compile classpath unless `-proc:full` is set
+(Maven: `<proc>full</proc>`); without either, compilation succeeds and no
+views are generated.
+
+Google Auto Service is a build-time concern of this artifact only: `auto-service`
+(the processor) is `provided` and `auto-service-annotations` is optional, so
+neither reaches your build.
 
 Generated sources land under `target/generated-sources/annotations/` in the
 same package as the annotated entity. The generated classes depend at
@@ -147,6 +154,48 @@ runtime on:
 The Doppelganger module itself does not need to be on the runtime classpath.
 Declaring it with `<scope>provided</scope>` is acceptable when you want to
 keep compile-time tooling out of deployed artefacts.
+
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.json.doppelganger`
+that exports `org.smallmind.web.json.doppelganger` and
+`org.smallmind.web.json.doppelganger.translator`, and declares
+`provides javax.annotation.processing.Processor with
+org.smallmind.web.json.doppelganger.DoppelgangerAnnotationProcessor` alongside the
+Auto Service file. It re-exports (`requires transitive`) `java.compiler`,
+`jakarta.xml.bind`, and `org.smallmind.nutsnbolts`, and requires
+`org.smallmind.web.json.scaffold`, `jakarta.validation`, and `tools.jackson.databind`.
+The Auto Service annotations module, `com.google.auto.service`, is `requires static`.
+See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide
+rules.
+
+When the module that holds your annotated classes has its own descriptor, `javac`
+does not look for processors on the module path. Put the artifact and its
+dependencies on `--processor-path` (Maven `<annotationProcessorPaths>`), or on
+`--processor-module-path`, where `javac` finds the processor through the `provides`
+clause. The generated views then need these clauses in your descriptor:
+
+[source,java]
+----
+module com.example.app {
+  requires org.smallmind.web.json.scaffold;
+  requires static jakarta.annotation;
+  requires static org.smallmind.web.json.doppelganger;
+  opens com.example.domain to tools.jackson.databind, jakarta.xml.bind;
+}
+----
+
+* `org.smallmind.web.json.scaffold` supplies the scaffold types the views use and
+  re-exports `jakarta.xml.bind` and Jackson.
+* `jakarta.annotation` is needed for the generated `@Generated` annotation, which has
+  source retention, so `requires static` is enough. Without it, compilation fails
+  with `package jakarta.annotation is not visible` in each generated view.
+* `org.smallmind.web.json.doppelganger` is needed only to compile the annotations on
+  your domain classes; `requires static` keeps it out of the runtime graph.
+* Add `requires jakarta.validation;` when your idioms apply constraints.
+* Open the package that holds the generated views to `tools.jackson.databind` for
+  `JsonCodec`, and to `jakarta.xml.bind` if you marshal them with JAXB (see
+  xref:WEB.adoc#_web_json_scaffold[web-json-scaffold]).
 
 == Quick Start
 
@@ -164,9 +213,10 @@ import jakarta.validation.constraints.Size;
 @Doppelganger(
   real = {
     @Real(field = "id", type = @Type(Long.class)),                       // <1>
-    @Real(field = "username", type = @Type(String.class),
+    @Real(field = "username", type = @Type(String.class),                // <2>
           idioms = {
             @Idiom(purposes = "create",
+                   visibility = Visibility.IN,
                    constraints = {
                      @Constraint(value = NotNull.class),
                      @Constraint(value = Size.class,
@@ -175,7 +225,7 @@ import jakarta.validation.constraints.Size;
                    required = true),
             @Idiom(purposes = {"create", "admin"}, visibility = Visibility.OUT)
           }),
-    @Real(field = "password", type = @Type(String.class),                // <2>
+    @Real(field = "password", type = @Type(String.class),                // <3>
           idioms = @Idiom(purposes = "create",
                           visibility = Visibility.IN,
                           constraints = @Constraint(value = NotNull.class),
@@ -196,7 +246,11 @@ public class User {
 ----
 <1> `id` participates only in the default purpose; no idioms means it is
     visible both inbound and outbound in views without a named purpose.
-<2> `password` is only ever accepted inbound on `create`; it never appears
+<2> `username` is accepted inbound on `create` with constraints and returned
+    outbound on `create` and `admin`. A property may be declared only once per
+    `(purpose, direction)`, which is why the inbound idiom says
+    `visibility = Visibility.IN` instead of the default `BOTH`.
+<3> `password` is only ever accepted inbound on `create`; it never appears
     outbound in any purpose.
 
 === Compile
@@ -206,11 +260,11 @@ annotation-processor path. The processor emits:
 
 [source,text]
 ----
-target/generated-sources/annotations/com/example/domain/UserIn.java
-target/generated-sources/annotations/com/example/domain/UserOut.java
-target/generated-sources/annotations/com/example/domain/UserCreateIn.java
-target/generated-sources/annotations/com/example/domain/UserCreateOut.java
-target/generated-sources/annotations/com/example/domain/UserAdminOut.java
+target/generated-sources/annotations/com/example/domain/UserInView.java
+target/generated-sources/annotations/com/example/domain/UserOutView.java
+target/generated-sources/annotations/com/example/domain/UserCreateInView.java
+target/generated-sources/annotations/com/example/domain/UserCreateOutView.java
+target/generated-sources/annotations/com/example/domain/UserAdminOutView.java
 ----
 
 === Use the generated views
@@ -221,30 +275,33 @@ target/generated-sources/annotations/com/example/domain/UserAdminOut.java
 public class UserResource {
 
   @POST
-  public UserCreateOut create(@Valid UserCreateIn in) {
-    User user = userService.create(in.getUsername(),
-                                   in.getPassword(),
-                                   in.getEmail());
-    return new UserCreateOut(user.getId(), user.getUsername());
+  public UserCreateOutView create(@Valid UserCreateInView in) {
+    User user = userService.create(in.factory());
+    return UserCreateOutView.instance(user);
   }
 
   @GET
   @Path("/{id}")
-  public UserOut read(@PathParam("id") Long id) {
-    return toOut(userService.find(id));
+  public UserOutView read(@PathParam("id") Long id) {
+    return UserOutView.instance(userService.find(id));
   }
 
   @GET
   @Path("/{id}/admin")
-  public UserAdminOut readAdmin(@PathParam("id") Long id) {
-    return toAdminOut(userService.find(id));
+  public UserAdminOutView readAdmin(@PathParam("id") Long id) {
+    return UserAdminOutView.instance(userService.find(id));
   }
 }
 ----
 
+`instance(entity)`, or the constructor that takes the entity, copies the view's
+real properties from the entity. `factory()` creates a new entity and copies them
+back; `factory(entity)` copies them onto an existing one. The entity therefore
+needs a getter and a setter for every real property.
+
 The generated classes are plain JAXB/Jackson POJOs. They serialise with
 `JsonCodec.instance().writeAsBytes(...)` and deserialise with
-`JsonCodec.instance().readAsObject(..., UserCreateIn.class)` without further wiring.
+`JsonCodec.instance().read(..., UserCreateInView.class)` without further wiring.
 
 == Conceptual Model
 
@@ -266,8 +323,11 @@ Purpose::
 Idiom::
     An `@Idiom` attaches a set of *constraints* and a *required* flag to a
     property for a given `(purposes, visibility)` tuple. A single property
-    can declare any number of idioms. If a property declares no idioms at
-    all, it participates in the default idiom with visibility `BOTH`.
+    can declare any number of idioms, but may reach each
+    `(purpose, direction)` only once. If a property declares no idioms at
+    all, it participates in the default purpose with visibility `BOTH`.
+    Declaring any idiom replaces that default: the property then appears
+    only where its idioms place it.
 
 For every `(direction, purpose)` tuple the processor can reach through the
 annotated class, it generates one view class. The class contains the
@@ -282,9 +342,8 @@ Two visibilities compose by rule:
 * if they differ and neither is `null`, the result is `BOTH`.
 
 `Visibility.matches(Direction)` is what the processor uses to decide whether
-a property appears in a view for a given direction. A field-level `@View`
-without idioms is, for visibility purposes, `BOTH` — unless a
-class-level `constrainingIdioms` entry on `@Doppelganger` narrows it.
+a property appears in a view for a given direction. A property declared
+without idioms has visibility `BOTH` in the default purpose.
 
 === Real vs. virtual vs. `@View`
 
@@ -292,9 +351,12 @@ Three equivalent ways to declare a view property exist:
 
 Field-level `@View`::
     Placed on a field or accessor method inside the domain class. Useful when
-    the domain class itself is what you want to annotate. Retention is
-    `RetentionPolicy.CLASS` specifically so annotations on fields in
-    other modules are still visible to the processor.
+    the domain class itself is what you want to annotate. An annotated field
+    needs a public getter for outbound views and a public setter for inbound
+    views. An annotated getter cannot be `IN`-only, and an annotated setter
+    must be `IN`-only. Retention is `RetentionPolicy.CLASS` specifically so
+    annotations on fields in other modules are still visible to the
+    processor.
 
 Class-level `@Real`::
     Placed inside `@Doppelganger.real`. References a real field of the
@@ -314,21 +376,60 @@ By default, the processor only generates a view class for a
 `(direction, purpose)` tuple if at least one property participates. A
 `@Pledge` forces generation even when no properties would otherwise exist.
 Pledges are the way to publish an intentionally-empty DTO — useful for
-API versioning or for endpoints whose only request body is "do it".
+API versioning or for endpoints whose only request body is "do it". A pledge
+only works for named purposes; one with an empty `purposes` list generates
+nothing. A pledge for a view that properties already produce draws a
+compiler warning.
 
 === Polymorphic vs. plain hierarchies
 
+When the superclass of a `@Doppelganger` class is itself annotated, each
+of the subclass's views extends the superclass's view for the same purpose
+and direction, whether or not either of the following is declared. When
+both are declared, `polymorphic` wins and `hierarchy` is ignored.
+
 `@Polymorphic`::
-    The generated views carry JAXB/Jackson type information so a polymorphic
-    payload can be deserialised to the right concrete view. `subClasses`
-    lists the leaf subtypes; `useAttribute` controls whether the
-    discriminator is an XML attribute or an element (JSON sees it as a
-    property either way).
+    The base views carry `@XmlJavaTypeAdapter` pointing at a generated
+    adapter and `@XmlPolymorphicSubClasses` listing the subclass views, so a
+    payload read as the base view becomes the right subclass view.
+    `subClasses` lists the leaf subtypes, which must be in the same package
+    as the base class. `useAttribute` selects the JSON shape, shown here for
+    a `CatOutView` whose root-element name is `cat`:
++
+--
+`useAttribute = false` (default)::: The subclass view is wrapped in a
+  single-key object keyed by its root-element name:
+  `{"cat":{"name":"tom","purrHz":25.0}}`.
+`useAttribute = true`::: The object stays flat, and the root-element name is
+  added as one more property: `{"name":"tom","purrHz":25.0,"java/object":"cat"}`.
+  The property is named `java/object` by default. When reading, the adapter
+  looks that property up, removes it, and builds the matching subclass view
+  from the rest; an object without it fails with `JAXBProcessingException:
+  The json for the sub-class of class(…) is improperly formatted`. Pick a
+  name that no view property uses.
+--
++
+The attribute name lives in `nutsnbolts`' `PerApplicationContext`, so
+attribute mode only works on a thread with a per-application context (in a
+web application, `PerApplicationContextFilter` provides one). Without one,
+the first use fails with `ExceptionInInitializerError` caused by
+`MissingPerApplicationContextException`. `PolymorphicAttributeManager`
+seeds `java/object` once per JVM, into the context that is current when the
+class first loads; any per-application context created after that has no
+name until the application sets one with
+`PolymorphicAttributeManager.setPolymorphicAttributeName(...)` or a
+`PolymorphicAttributeNameInitializingBean`, and writing fails with a
+`NullPointerException`. The default `useAttribute = false` mode needs none
+of this.
 
 `@Hierarchy`::
-    The generated views use generic type parameters instead of a
-    discriminator adapter. Appropriate when a parent view should expose a
-    subtype without the payload needing to identify itself.
+    No adapter and no discriminator. The base views take a self type
+    parameter (`AnimalOutView<D extends AnimalOutView<D>>`) so the fluent
+    setters return the subclass view, and `instance(entity)` returns the
+    subclass view that matches the entity's runtime class. Appropriate when
+    a parent view should expose a subtype without the payload needing to
+    identify itself. `@Polymorphic` base views get the same self type and
+    `instance` dispatch.
 
 == API Reference
 
@@ -343,9 +444,9 @@ API versioning or for endpoints whose only request body is "do it".
 | `pledges`             | `Pledge[]`        | `{}`              | Guarantee generation of specific `(purposes, visibility)` views.
 | `polymorphic`         | `Polymorphic`     | `@Polymorphic()`  | Polymorphic hierarchy configuration.
 | `hierarchy`           | `Hierarchy`       | `@Hierarchy()`    | Plain hierarchy configuration.
-| `constrainingIdioms`  | `Idiom[]`         | `{}`              | Class-level idioms applied to generated views for matching purposes/directions.
-| `implementations`     | `Implementation[]`| `{}`              | Additional interfaces on every generated view.
-| `imports`             | `Import[]`        | `{}`              | Additional `import` statements in the generated source.
+| `constrainingIdioms`  | `Idiom[]`         | `{}`              | Idioms whose constraints are placed on the generated class itself, in the views their purposes and visibility select.
+| `implementations`     | `Implementation[]`| `{}`              | Additional interfaces, in the views each entry's purposes and visibility select.
+| `imports`             | `Import[]`        | `{}`              | Additional `import` statements, in the views each entry's purposes and visibility select.
 | `name`                | `String`          | `""`              | XML root-element name; defaults to the decapitalised class name.
 | `namespace`           | `String`          | `"http://org.smallmind/web/json/doppelganger"` | XML namespace.
 | `serializable`        | `boolean`         | `false`           | If `true`, generated views implement `java.io.Serializable`.
@@ -359,11 +460,11 @@ API versioning or for endpoints whose only request body is "do it".
 | Element | Type | Default | Role
 
 | `idioms`   | `Idiom[]`                    | `{}`              | Idiom overrides for this property; empty means the default idiom only.
-| `adapter`  | `Class<? extends XmlAdapter>`| `NullXmlAdapter.class` | JAXB adapter for the property.
-| `as`       | `Class<?>`                   | `Void.class`      | Type hint for tooling; becomes an `@As` annotation on the generated field.
+| `adapter`  | `Class<? extends XmlAdapter>`| `NullXmlAdapter.class` | JAXB adapter for the property; when set, emitted as `@XmlJavaTypeAdapter` on the generated getter.
+| `as`       | `Class<?>`                   | `Void.class`      | Type hint for tooling; when set, emitted as `@As` on the generated getter.
 | `name`     | `String`                     | `""`              | XML element name; defaults to the field name.
-| `required` | `boolean`                    | `false`           | Default-idiom required flag; overridable per idiom.
-| `comment`  | `String`                     | `""`              | Text embedded in `@Comment` on the generated property.
+| `required` | `boolean`                    | `false`           | Marks the property required in every view it appears in; an idiom can add `required` but cannot remove it.
+| `comment`  | `String`                     | `""`              | Text embedded in `@Comment` on the generated getter.
 |===
 
 `@View`'s retention is deliberately `CLASS`, not `SOURCE`, so annotations on
@@ -397,7 +498,7 @@ the declared type.
 | `constraints`| `Constraint[]`| `{}`            | Constraints to apply within this idiom.
 | `visibility` | `Visibility`  | `Visibility.BOTH`| Which directions this idiom covers.
 | `purposes`   | `String[]`    | `{}`            | Purpose names this idiom covers; empty means the default purpose.
-| `required`   | `boolean`     | `false`         | Whether the property is required within this idiom.
+| `required`   | `boolean`     | `false`         | Whether the property is required within this idiom. A `@NotNull` constraint in the idiom also makes it required.
 |===
 
 === `@Constraint` (embedded)
@@ -425,7 +526,7 @@ The processor embeds the constraint as-is:
 | Element | Type | Default | Role
 
 | `visibility`| `Visibility` | `Visibility.BOTH`| Directions to guarantee generation for.
-| `purposes`  | `String[]`   | `{}`             | Purposes to guarantee generation for.
+| `purposes`  | `String[]`   | `{}`             | Purposes to guarantee generation for. An empty list pledges nothing.
 |===
 
 === `@Polymorphic` (embedded under `@Doppelganger.polymorphic`)
@@ -434,8 +535,8 @@ The processor embeds the constraint as-is:
 |===
 | Element | Type | Default | Role
 
-| `subClasses`   | `Class<?>[]` | `{}`   | Leaf subclasses for which to emit discriminator adapters.
-| `useAttribute` | `boolean`    | `false`| When `true`, the XML discriminator is an attribute; when `false`, an element.
+| `subClasses`   | `Class<?>[]` | `{}`   | Leaf subclasses, in the base class's package, that the generated adapter can produce.
+| `useAttribute` | `boolean`    | `false`| When `false`, a subclass view is wrapped in a single-key object keyed by its root-element name; when `true`, the object stays flat and carries the root-element name in an extra property (`java/object` by default). See <<_polymorphic_vs_plain_hierarchies>>.
 |===
 
 === `@Hierarchy` (embedded under `@Doppelganger.hierarchy`)
@@ -444,22 +545,28 @@ The processor embeds the constraint as-is:
 |===
 | Element | Type | Default | Role
 
-| `subClasses` | `Class<?>[]` | `{}` | Leaf subclasses exposed through generic type parameters on the generated view.
+| `subClasses` | `Class<?>[]` | `{}` | Leaf subclasses that the base view's `instance(entity)` dispatches to; the base view gains a self type parameter.
 |===
 
 === `@Type` / `@Implementation` / `@Import`
 
-`@Type` carries a raw class plus optional generic `parameters` for the
-property's declared type. `@Implementation` adds an interface to every
-generated view. `@Import` adds an `import` line to the generated source —
-useful when a constraint or adapter references a class whose fully-qualified
-name would otherwise collide or clutter the generated code.
+`@Type` carries a class (or array class) plus optional generic `parameters`
+for the property's declared type. Primitive types are rejected with
+`Illegal type definition in field(...)`; use the wrapper type. Arrays cannot
+take `parameters`.
+
+`@Implementation` adds interfaces, and `@Import` adds `import` lines, to the
+views selected by the entry's `purposes` and `visibility`. An empty
+`purposes` list selects the default-purpose views only, not every view.
+`@Import` is useful when a constraint or adapter references a class whose
+fully-qualified name would otherwise collide or clutter the generated code.
 
 === Direction and Visibility enums
 
 `Direction`::
     `IN` (code `"In"`, visibility `IN`), `OUT` (code `"Out"`, visibility
-    `OUT`). `getCode()` is the suffix appended to generated class names.
+    `OUT`). `getCode()` is placed before the `View` suffix in generated
+    class names.
 
 `Visibility`::
     `IN`, `OUT`, `BOTH`. `compose(other)` returns the common value when
@@ -468,74 +575,97 @@ name would otherwise collide or clutter the generated code.
 
 == Generated Class Shape
 
-For the `User` quick-start example above, `UserCreateIn` is a
-JAXB/Jackson-annotated POJO whose fields are the union of properties whose
-idioms include the `"create"` purpose with `IN` or `BOTH` visibility:
+For the `User` quick-start example above, `UserCreateInView` holds the
+properties whose idioms include the `"create"` purpose with `IN` or `BOTH`
+visibility: `username`, `password`, and `email`. Abridged to one property
+(the processor writes fully qualified names and its own import list):
 
 [source,java]
 ----
 package com.example.domain;
 
-import java.io.Serializable;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Email;
+@Generated("org.smallmind.web.json.doppelganger.DoppelgangerAnnotationProcessor")
+@XmlRootElement(name = "user", namespace = "http://org.smallmind/web/json/doppelganger")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public class UserCreateInView implements java.io.Serializable {
 
-@XmlRootElement(name = "user",
-                namespace = "http://org.smallmind/web/json/doppelganger")
-public final class UserCreateIn implements Serializable {
+  @jakarta.validation.constraints.NotNull
+  @jakarta.validation.constraints.Size(min = 1, max = 64)
+  private java.lang.String username;
+  // … password, email
 
-  @XmlElement(required = true)
-  @NotNull
-  @Size(min = 1, max = 64)
-  private String username;
+  public static UserCreateInView instance (User user) {
 
-  @XmlElement(required = true)
-  @NotNull
-  private String password;
-
-  @XmlElement
-  @Email
-  private String email;
-
-  public UserCreateIn () { }
-  public UserCreateIn (String username, String password, String email) {
-    this.username = username;
-    this.password = password;
-    this.email = email;
+    return new UserCreateInView(user);
   }
 
-  public String getUsername () { return username; }
-  public void setUsername (String username) { this.username = username; }
+  public UserCreateInView () {
 
-  public String getPassword () { return password; }
-  public void setPassword (String password) { this.password = password; }
+  }
 
-  public String getEmail () { return email; }
-  public void setEmail (String email) { this.email = email; }
+  public UserCreateInView (User user) {
+
+    this.username = user.getUsername();
+    // … password, email
+  }
+
+  public User factory () {
+
+    return factory(new com.example.domain.User());
+  }
+
+  public User factory (User user) {
+
+    user.setUsername(username);
+    // … password, email
+
+    return user;
+  }
+
+  @XmlElement(name = "username", required = true)
+  public java.lang.String getUsername () {
+
+    return username;
+  }
+
+  public UserCreateInView setUsername (java.lang.String username) {
+
+    this.username = username;
+
+    return this;
+  }
+  // … password, email accessors
+
+  @Override
+  public int hashCode () { … }    // over every getter
+
+  @Override
+  public boolean equals (Object obj) { … }    // over every getter
 }
 ----
 
-`UserCreateOut` is generated the same way but contains only the properties
-whose `"create"` idiom includes `OUT` or `BOTH` visibility — in this case
-`username` (via its second idiom) and `id` (via the default idiom, which is
-also emitted on the `create`-purpose outbound view because the `id`'s
-idiom-free `@Real` declaration participates in every purpose).
+Constraint annotations sit on the fields; JAXB annotations sit on the
+getters, which `@XmlAccessorType(XmlAccessType.PROPERTY)` makes the
+serialised properties. Setters are fluent and return the view. Virtual
+properties get a field and accessors but are not copied by the entity
+constructor or `factory`.
 
-`UserAdminOut` contains the properties whose `"admin"` idiom includes `OUT`
-or `BOTH`. In this case that is only `username`.
+`UserCreateOutView` contains the properties whose `"create"` idioms include
+`OUT` or `BOTH`: `username` (through its second idiom) and `email`. `id` is
+absent, because a property without idioms belongs to the default purpose
+only. `UserAdminOutView` contains only `username`, and `UserInView` and
+`UserOutView` contain only `id`.
 
 The class name composition rule is:
 
 [source,text]
 ----
-{ClassName} + {CapitalisedPurpose?} + {In|Out}
+{prefix?} + {ClassName} + {CapitalisedPurpose?} + {In|Out} + View
 ----
 
 Default purpose omits the purpose segment; named purposes produce distinct
-class names per direction.
+class names per direction. `prefix` is the processor option of that name
+(`-Aprefix=Api` gives `ApiUserCreateInView`); it is empty by default.
 
 == Processing Pipeline
 
@@ -547,8 +677,8 @@ processor path.
   per compilation round with the annotated elements. Each annotated
   `TypeElement` is handed to `generate(...)`. A `ClassTracker` records
   already-processed classes to avoid duplicate work.
-. *Validation.* The element must be a top-level, public class. Inner
-  classes, interfaces, and enums are rejected with a `DefinitionException`.
+. *Validation.* The element must be a top-level class. Nested classes,
+  interfaces, enums, and records are rejected with a `DefinitionException`.
 . *Metadata extraction.* `DoppelgangerInformation` parses the annotation.
   Properties from `@Real`, `@Virtual`, and field-level `@View` are
   normalised into `PropertyInformation` plus `PropertyBox` entries. Each
@@ -557,9 +687,11 @@ processor path.
 . *Visibility tracking.* `VisibilityTracker` records every
   `(purpose, visibility)` combination that must produce a generated class,
   including those contributed by `@Pledge` entries.
-. *Hierarchy resolution.* If the class is annotated with `@Polymorphic` or
-  `@Hierarchy`, `ClassTracker` marks the subclasses so their own
-  `@Doppelganger` processing takes the hierarchy into account.
+. *Hierarchy resolution.* If `@Doppelganger` declares `polymorphic` or
+  `hierarchy`, `ClassTracker` marks the subclasses so their own
+  `@Doppelganger` processing takes the hierarchy into account. The views of
+  an annotated superclass are generated first, so subclass views can extend
+  them.
 . *Recursion.* If a property type is itself a `@Doppelganger`-annotated
   class, the processor recurses so the referenced views exist before the
   current class tries to reference them.
@@ -567,20 +699,32 @@ processor path.
   recorded, `generate(...)` writes a Java source file through
   `processingEnv.getFiler().createSourceFile(...)`:
 +
-* class header with `@XmlRootElement`, Jackson `@JsonInclude` if warranted,
-  and any `@Implementation` interfaces;
-* a private field per property, with `@XmlElement(required=...)`,
-  `@XmlJavaTypeAdapter` when an adapter is declared, `@As` when a type hint
-  was supplied, and each constraint annotation's formatted text;
-* no-arg and all-args constructors;
-* getters and setters for every property.
+* class header with `@Generated`, `@Comment` when a comment is set,
+  `@XmlRootElement` (omitted when the entity is abstract),
+  `@XmlAccessorType(XmlAccessType.PROPERTY)` on views that do not extend
+  another view, the polymorphic adapter annotations, class-level
+  constraints from `constrainingIdioms`, and `Serializable` plus any
+  `@Implementation` interfaces;
+* a private field per property carrying its constraint annotations;
+* a static `instance(entity)` method, a no-arg constructor, and a
+  constructor that copies the real properties from the entity;
+* `factory()` and `factory(entity)`, which copy the real properties back to
+  an entity;
+* a getter per property carrying `@XmlElement(name=..., required=...)` and,
+  when declared, `@XmlJavaTypeAdapter`, `@As`, `@NullifiedBy`, and
+  `@Comment`, plus a fluent setter that returns the view;
+* `hashCode()` and `equals()` over the getters, combined with the
+  superclass view's when there is one.
 . *Translators.* Where a property references another `@Doppelganger` type,
   `TranslatorFactory` chooses a `Translator` — `NoopTranslator`,
   `ClassTranslator`, `ListTranslator`, or `ArrayTranslator` — which emits
-  the entity↔view conversion snippets.
+  the conversion code used by the entity constructor and `factory`.
 . *Polymorphic adapters.* For a `@Polymorphic` base class, a companion
-  `XmlAdapter` is generated that routes discriminator values to the
-  appropriate generated subclass.
+  adapter is generated per purpose and direction, named
+  `{View}PolymorphicXmlAdapter` (or `{View}AttributedPolymorphicXmlAdapter`
+  with `useAttribute = true`). It extends `PolymorphicXmlAdapter` (or
+  `AttributedPolymorphicXmlAdapter`) from `web-json-scaffold` and routes the
+  root-element key to the matching subclass view.
 
 Source emission is done with direct `BufferedWriter` output, not a
 templating engine. The generated files are ordinary `.java` files that
@@ -594,9 +738,13 @@ Generated views play by existing Jackson and JAXB rules.
   `ObjectMapper` facade. It already registers
   `JakartaXmlBindAnnotationModule`, so `@XmlElement(required=...)` and
   related JAXB metadata are honoured during JSON (de)serialisation.
-* Jackson sees each private field's JAXB annotations plus any
-  `@JsonProperty` and friends you add through `@Implementation` or
-  `@Import`.
+* Generated views use property access: Jackson and JAXB read the
+  annotations on the getters, and the element names come from
+  `@XmlElement(name = ...)`.
+* Reading a polymorphic payload goes through `PolymorphicXmlAdapter`, which
+  builds a proxy with `nutsnbolts`' `ProxyGenerator`. That needs
+  `org.ow2.asm:asm` and `org.ow2.asm:asm-util` at run time; both are
+  optional dependencies of `smallmind-nutsnbolts`, so add them yourself.
 * Bean Validation constraints (`@NotNull`, `@Size`, `@Email`, …) are
   enforced the same way they would be on any JAX-RS parameter annotated
   with `@Valid` — the processor does not validate at generation time; it
@@ -631,9 +779,11 @@ Generated views play by existing Jackson and JAXB rules.
 public class Widget { /* … */ }
 ----
 
-Yields `WidgetCreateIn`, `WidgetCreateOut`, `WidgetUpdateIn`, and
-`WidgetUpdateOut` — `id` present on `UpdateIn` but never on `CreateIn`;
-`createdAt` present on both `Out` views but never accepted inbound.
+Yields `WidgetCreateInView`, `WidgetCreateOutView`, `WidgetUpdateInView`,
+and `WidgetUpdateOutView` — `id` present on `WidgetUpdateInView` but never on
+`WidgetCreateInView`; `createdAt` present on both outbound views but never
+accepted inbound. Every property declares idioms, so there are no
+default-purpose views.
 
 === A pledge for an empty "delete confirmation"
 
@@ -645,9 +795,9 @@ Yields `WidgetCreateIn`, `WidgetCreateOut`, `WidgetUpdateIn`, and
 public class Widget { /* … */ }
 ----
 
-Generates `WidgetDeleteAckOut` even though no property participates. The
-class is a named, deserialisable return type without having to invent one
-by hand.
+Generates `WidgetDeleteAckOutView` even though no property participates.
+The class is a named, deserialisable return type without having to invent
+one by hand.
 
 === Polymorphic response
 
@@ -661,21 +811,27 @@ by hand.
 public class Animal { /* … */ }
 
 @Doppelganger(
-  real = @Real(field = "purrHz", type = @Type(double.class))
+  real = @Real(field = "purrHz", type = @Type(Double.class))
 )
 public class Cat extends Animal { /* … */ }
+
+// Dog is declared the same way, in the same package.
 ----
 
-`AnimalOut` emits a Jackson/JAXB discriminator-aware type, and an
-`AnimalXmlAdapter` is generated so JAXB knows how to marshal between an
-incoming discriminator value and the appropriate generated subclass view.
+`AnimalOutView` carries `@XmlJavaTypeAdapter(AnimalOutViewPolymorphicXmlAdapter.class)`
+and `@XmlPolymorphicSubClasses({CatOutView.class, DogOutView.class})`, and
+`CatOutView` extends `AnimalOutView<CatOutView>`. `AnimalOutView.instance(cat)`
+returns a `CatOutView`, which serialises as `{"cat":{"name":"tom","purrHz":25.0}}`;
+reading that JSON as `AnimalOutView` produces a `CatOutView` again. The same
+set is generated for the inbound direction (`AnimalInView`,
+`AnimalInViewPolymorphicXmlAdapter`, …).
 
 == Behavioral Reference
 
 Directional defaults::
     A property with no `@Idiom` declarations participates in the default
-    purpose with `Visibility.BOTH`. Both directions generate a class that
-    includes it.
+    purpose with `Visibility.BOTH`, so it appears in the default-purpose
+    `InView` and `OutView`. Declaring any idiom replaces that default.
 
 Purpose semantics::
     Purposes are entirely caller-chosen strings. The processor does not
@@ -683,9 +839,11 @@ Purpose semantics::
     string for class naming and idiom matching.
 
 Required merges::
-    The `required` flag on `@View` and `@Real` applies in the default
-    idiom. An explicit `@Idiom` can flip it on or off for a specific
-    purpose/visibility.
+    A property is required in a view (`@XmlElement(required = true)`) when
+    `required = true` is set on its `@View`, `@Real`, or `@Virtual`, or on
+    the matching `@Idiom`, or when that idiom carries a `@NotNull`
+    constraint. The flags combine with OR, so an idiom cannot turn off a
+    property-level `required = true`.
 
 Idiom expansion::
     When an idiom lists multiple purposes, the processor treats that as
@@ -694,20 +852,33 @@ Idiom expansion::
 
 Recursive properties::
     If property `Foo.bar` has type `Baz` and `Baz` is also
-    `@Doppelganger`-annotated, the generated `FooOut.bar` field will be
-    typed as `BazOut` (and `FooCreateOut.bar` as `BazCreateOut` when a
-    matching purpose exists). `ClassTracker` prevents infinite recursion on
-    self- or mutually-referential types.
+    `@Doppelganger`-annotated, the generated `FooOutView.bar` field is typed
+    as `BazOutView` when `Baz` has a default-purpose outbound view, and
+    `FooCreateOutView.bar` as `BazCreateOutView` when `Baz` has a `create`
+    outbound view. There is no fallback to the default purpose: when `Baz`
+    has no view for that purpose and direction, the field keeps the entity
+    type `Baz`. Views already compiled into another module are found by
+    class name when they are on the processor path. `ClassTracker` prevents infinite recursion on self- or
+    mutually-referential types.
 
 Generated modifiers::
-    Generated view classes are `public final` unless a hierarchy is in
-    play. Hierarchy-participating generated views are non-final so
-    subclass views can extend them.
+    Generated views are `public`, or `public abstract` when the entity is
+    abstract (an abstract view has no `@XmlRootElement` and declares
+    `factory()` abstract). They are never `final`. Polymorphic and
+    hierarchy base views take a self type parameter so subclass views can
+    extend them and their fluent setters return the subclass type.
 
 Constructors::
     Every generated view has a no-arg constructor (for JSON/JAXB
-    deserialisation) and an all-args constructor in declared property
-    order.
+    deserialisation) and a constructor that takes the entity and copies its
+    real properties. The static `instance(entity)` does the same and, on a
+    polymorphic or hierarchy base view, returns the subclass view matching
+    the entity's runtime class. There is no all-args constructor.
+
+Accessors::
+    Real properties are read with the entity's getter and written with its
+    setter, so each needs both. Property order in the generated source is
+    not the declaration order.
 
 Name overrides::
     `@View.name` and `@Real.name` control the XML element name; the root
@@ -716,19 +887,25 @@ Name overrides::
     configured `ObjectMapper`.
 
 Comments::
-    A non-empty `comment` on `@Doppelganger`, `@View`, or `@Real` becomes
-    an `@Comment("...")` annotation on the generated class or field.
+    A non-empty `comment` on `@Doppelganger`, `@View`, `@Real`, or `@Virtual`
+    becomes an `@Comment("...")` annotation on the generated class or
+    getter.
     `@Comment` lives in `web-json-scaffold` and carries no runtime
     behaviour; it is metadata for documentation tools.
 
 == Error Handling
 
 The processor reports issues through `processingEnv.getMessager()` at
-`Diagnostic.Kind.ERROR` so `javac` fails the build. Common diagnostics:
+`Diagnostic.Kind.ERROR` so `javac` fails the build. Errors carry no source
+position; the message names the class or field. Common diagnostics:
 
-"Class must be a root implementation of type 'class'"::
-    `@Doppelganger` placed on an inner class, interface, or enum. Move it
-    to a top-level class.
+"The class(X) must be a root implementation of type 'class'"::
+    `@Doppelganger` placed on a nested class, interface, enum, or record.
+    Move it to a top-level class.
+
+"The class(X) was annotated as @Doppelganger but contained no properties"::
+    A non-abstract class declares no properties and no pledge that
+    produces a view.
 
 "The purpose(X) must be a legal identifier fragment"::
     Purpose strings become class-name segments; they must be valid Java
@@ -736,8 +913,33 @@ The processor reports issues through `processingEnv.getMessager()` at
     digit).
 
 "The field(name=X, purpose=Y, direction=Z) has already been processed"::
-    Multiple `@Real`, `@Virtual`, or `@View` declarations target the same
-    property under the same `(purpose, direction)`. Consolidate them.
+    The same property reaches one `(purpose, direction)` twice: two
+    `@Real`, `@Virtual`, or `@View` declarations for it, or two idioms of
+    one declaration whose purposes and visibilities overlap (an idiom's
+    visibility defaults to `BOTH`). Narrow one of them.
+
+"Illegal type definition in field(X) of class(Y)"::
+    `@Type` names a primitive (use the wrapper type), or gives `parameters`
+    to an array type.
+
+"The class(X) must be in package(Y)"::
+    A `@Polymorphic` subclass is in a different package from its base
+    class.
+
+"The property field(X) has no 'getter' method in class(Y)" (or 'setter')::
+    A `@View` field lacks the public accessor its visibility needs.
+
+Warning "… was annotated with the unnecessary @Pledge(…)"::
+    The pledged view would have been generated anyway. Remove the pledge.
+
+`MissingPerApplicationContextException` or `NullPointerException` with `useAttribute = true`::
+    Attribute mode reads its property name from a per-application context.
+    Run inside one, and set the name in every context created after the
+    first (see <<_polymorphic_vs_plain_hierarchies>>).
+
+`NoClassDefFoundError: org/objectweb/asm/ClassVisitor` reading polymorphic JSON::
+    ASM is missing at run time. Add `org.ow2.asm:asm` and
+    `org.ow2.asm:asm-util` (see <<_integration_with_json_and_xml,Integration With JSON and XML>>).
 
 `DefinitionException` at compile time::
     General structural error from the processor. The message names the
@@ -750,14 +952,20 @@ Generics on the annotated class::
     `class Container<T>`. Generics on *properties* via `@Type.parameters`
     are supported.
 
-No `equals`, `hashCode`, or `toString` generation::
-    Generated views are mutable POJOs with only constructors and
-    accessors. Equality by value is out of scope; if you need it, add an
-    interface through `@Implementation` and implement the methods on your
-    own.
+No `toString` generation::
+    Generated views override `equals` and `hashCode` (over their getters)
+    but not `toString`.
 
-No copy constructor or builder::
-    Only no-arg and all-args constructors are emitted.
+No builder::
+    Views are built with the no-arg constructor and fluent setters, or
+    from an entity with `instance(entity)`. There is no builder and no
+    all-args constructor.
+
+No primitive property types::
+    `@Type` rejects primitives; declare `Double`, `Integer`, and so on.
+
+Polymorphic subclasses share a package::
+    Every `@Polymorphic` subclass must be in the base class's package.
 
 `serialVersionUID`::
     When `serializable = true`, the generated class implements
@@ -768,18 +976,22 @@ Dynamic purposes::
     names. A purpose cannot be decided at runtime.
 
 Implicit hierarchy merging::
-    If a superclass is `@Doppelganger`-annotated, the subclass inherits
-    view properties. Overriding a superclass property in the subclass's
+    If a superclass is `@Doppelganger`-annotated, each subclass view
+    extends the matching superclass view and so inherits its properties. Overriding a superclass property in the subclass's
     view declaration is not a supported operation; redeclaring it with the
     same name and type is.
 
 == Minimal Checklist
 
-. `web-json-doppelganger` is on the compile classpath (or annotation
-  processor path) of the module containing the domain classes.
-. Every annotated class is `public` and top-level.
-. Every `@Real.field` names an actual entity field; every `@Real.type`
-  matches the field's declared type.
+. `web-json-doppelganger` is on the annotation processor path of the module
+  containing the domain classes (or on the compile classpath with
+  `-proc:full`).
+. Every annotated class is a top-level class (not an interface, enum,
+  record, or nested class).
+. Every `@Real.field` names an actual entity field with a getter and a
+  setter; every `@Real.type` matches the field's declared type and is not
+  a primitive.
+. No property reaches the same `(purpose, direction)` twice.
 . Idiom purposes use valid identifier fragments.
 . The runtime classpath has `web-json-scaffold`,
   `jakarta.xml.bind-api`, `jakarta.validation-api`, and the Jackson

@@ -542,7 +542,7 @@ Unplugged instrumentation::
 == Installation
 
 Artifacts are published under `org.smallmind` with version
-`${project.version}` (currently `7.0.0-SNAPSHOT`).
+`${project.version}`.
 
 An application always depends on `claxon-registry` (plus one or more emitter
 artifacts):
@@ -617,12 +617,20 @@ target classes. The project's parent `claxon/pom.xml` already configures the
 it explicitly) is what activates the advice. Without weaving, the annotation
 is inert — the method runs normally and no meter is produced.
 
+The woven advice lands in your classes, so your application supplies
+`org.aspectj:aspectjrt` at run time; `claxon-registry` declares it optional
+and does not bring it.
+
 === Dependency notes
 
-* `claxon-registry` pulls in `HdrHistogram`, Jakarta annotations,
-  `jakarta.xml.bind-api`, `spring-beans`, `jackson-databind`, and the
-  SmallMind support libraries (`scribe-pen`, `smallmind-nutsnbolts`, the
-  `web-json-doppelganger`/`web-json-scaffold` pair used for JSON views).
+* `claxon-registry` pulls in `HdrHistogram`, `jakarta.xml.bind-api`,
+  `spring-beans`, `jackson-databind`, and the SmallMind support libraries
+  (`scribe-pen`, `smallmind-nutsnbolts`, and `web-json-scaffold`, which the
+  generated JSON views use at runtime). `web-json-doppelganger` and
+  `jakarta.annotation-api` are optional dependencies: the registry needs
+  them only to build (the Doppelganger annotations and processor, and the
+  source-retention `@Generated` on the generated views), so neither reaches
+  your classpath.
 * `claxon-emitter-aws` brings in the AWS SDK v2 (`cloudwatch`, `auth`,
   `regions`, `aws-core`).
 * `claxon-emitter-datadog` brings in `com.datadoghq:java-dogstatsd-client`.
@@ -631,6 +639,35 @@ is inert — the method runs normally and no meter is produced.
 * `claxon-emitter-prometheus` and `claxon-emitter-jmx` are SDK-free — they
   only depend on `claxon-registry` and, for Prometheus,
   `smallmind-nutsnbolts`.
+
+=== Module path
+
+`claxon-registry` ships an explicit module descriptor for
+`org.smallmind.claxon.registry` that exports all seven of its packages. On
+the classpath the descriptor is ignored. The README module table shows which
+of the other Claxon artifacts are explicit and which are still automatic.
+See xref:README.adoc#module-path[Module Path And Classpath] for the
+repository-wide rules.
+
+* It re-exports (`requires transitive`) `org.smallmind.nutsnbolts`,
+  `jakarta.xml.bind`, and `tools.jackson.databind`, and requires
+  `org.smallmind.scribe.pen`, `org.smallmind.web.json.scaffold`, and the
+  automatic modules `spring.beans` and `HdrHistogram`. Automatic modules are
+  never re-exported: a module that uses the Spring factory beans in
+  `org.smallmind.claxon.registry.spring` also requires `spring.beans`, and
+  one that calls the `HistogramTime` constructor or `getHistogram()` also
+  requires `HdrHistogram`. That name is derived from the jar's file name
+  (the HdrHistogram jar declares none), so it changes if the jar is renamed.
+* `org.aspectj.runtime`, `org.smallmind.web.json.doppelganger`, and
+  `jakarta.annotation` are `requires static`, matching their optional POM
+  dependencies. An application that weaves `@Instrumented` requires
+  `org.aspectj.runtime` itself.
+* It opens `org.smallmind.claxon.registry` unconditionally so
+  `classpath:org/smallmind/claxon/registry/claxon.xml` stays loadable from
+  other modules, `org.smallmind.claxon.registry.json` to `jakarta.xml.bind`
+  and `tools.jackson.databind` for the generated `*InView` classes the meter
+  parsers read, and `org.smallmind.claxon.registry.spring` to `spring.core`
+  and `spring.beans`.
 
 == Quick start
 

@@ -93,7 +93,7 @@
     <glassfish.jaxb.version>4.0.6</glassfish.jaxb.version>
     <google.autoservice.version>1.1.1</google.autoservice.version>
     <grizzly.version>5.0.2</grizzly.version>
-    <grizzly.npn.version>2.0.0</grizzly.npn.version>
+    <grizzly.npn.version>2.0.1</grizzly.npn.version>
     <hdrhistogram.version>2.2.2</hdrhistogram.version>
     <hibernate.version>7.2.0.Final</hibernate.version>
     <hibernate.annotations.version>7.0.3.Final</hibernate.annotations.version>
@@ -161,8 +161,8 @@
     <spring.rabbit.version>4.0.1</spring.rabbit.version>
     <sshd.version>2.16.0</sshd.version>
     <sun.mail.version>2.0.2</sun.mail.version>
-    <sun.xml.bind.version>4.0.6</sun.xml.bind.version>
-    <sun.xml.ws.version>4.0.3</sun.xml.ws.version>
+    <sun.xml.bind.version>4.0.9</sun.xml.bind.version>
+    <sun.xml.ws.version>4.0.5</sun.xml.ws.version>
     <surefire.version>3.5.3</surefire.version>
     <syslog4j.version>0.9.30</syslog4j.version>
     <tanukisoft.version>3.5.54</tanukisoft.version>
@@ -215,18 +215,6 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson2.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.github.docker-java</groupId>
-        <artifactId>docker-java</artifactId>
-        <version>${docker.java.version}</version>
-        <exclusions>
-          <!-- unused (testbench-docker uses the httpclient5 transport) and requests a jersey-apache-connector version that does not exist alongside Jersey 4 -->
-          <exclusion>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-transport-jersey</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.github.docker-java</groupId>
@@ -687,7 +675,7 @@
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-npn-bootstrap</artifactId>
+        <artifactId>grizzly-npn-api</artifactId>
         <version>${grizzly.npn.version}</version>
       </dependency>
       <dependency>
