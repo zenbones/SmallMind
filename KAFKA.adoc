@@ -270,6 +270,21 @@ the parent POM, `org.smallmind:scribe-pen` for logging, and
 `org.springframework:spring-beans` for the `FactoryBean` interface that
 `KafkaServerFactoryBean` implements.
 
+The jar ships an explicit module descriptor that exports `org.smallmind.kafka.utility` and
+re-exports `org.smallmind.nutsnbolts` (`requires transitive`). It also requires
+`org.smallmind.scribe.pen`, `spring.beans`, and `kafka.clients`, and opens its package to
+`spring.core` and `spring.beans` for `KafkaServerFactoryBean`. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+Two points are specific to this module:
+
+* `kafka-clients` declares no module name, so on a module path the JVM derives one from the
+  jar's file name: `kafka-clients-4.2.0.jar` becomes `kafka.clients`. A renamed jar becomes a
+  differently named module and `org.smallmind.kafka.utility` no longer resolves. Keep the
+  Maven file name.
+* `KafkaConnector` returns Kafka's `AdminClient`, `Producer`, and `Consumer` types. Neither
+  automatic nor derived modules are re-exported, so a module that calls those methods also
+  requires `kafka.clients`.
+
 === Runtime prerequisites
 
 * A running Kafka cluster reachable from the application process. The

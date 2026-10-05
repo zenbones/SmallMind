@@ -265,8 +265,7 @@ nothing else.
 
 The jar ships an explicit module descriptor that exports `org.smallmind.schedule.base`
 and re-exports `org.smallmind.nutsnbolts` (`requires transitive`), because
-`SuccessOrFailure` appears in the job contract. `schedule-quartz` is currently an
-automatic module under its name below. See
+`SuccessOrFailure` appears in the job contract. See
 xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 === `schedule-quartz`
@@ -301,6 +300,27 @@ classpath at `spring/org/smallmind/schedule/quartz/quartz.xml` and
 and `src/main/resources/liquibase`) into the jar root, so these classpath
 locations resolve without any further configuration on the consumer's side.
 ====
+
+The jar ships an explicit module descriptor for `org.smallmind.schedule.quartz` that
+exports `org.smallmind.schedule.quartz`, `.jmx`, and `.spring`. On the classpath the
+descriptor is ignored. On a module path:
+
+* It re-exports (`requires transitive`) `org.smallmind.schedule.base`,
+  `org.smallmind.nutsnbolts`, and `java.management`. It also requires `org.quartz`,
+  `spring.beans`, `spring.context`, and `org.smallmind.scribe.pen`. Quartz and Spring types
+  (`Scheduler`, `JobDetail`, `ApplicationContext`, `FactoryBean`, and others) appear in its
+  public signatures, but automatic modules are never re-exported, so require `org.quartz`
+  and the Spring modules you use yourself.
+* It opens `org.smallmind.schedule.quartz` unconditionally, so `quartz.xml`, `job.xml`,
+  `quartz-liquibase.xml`, and `Quartz.changelog.xml` stay loadable by path from Spring and
+  Liquibase. It opens `org.smallmind.schedule.quartz.spring` to `spring.core` and
+  `spring.beans`.
+* Your job classes are constructed reflectively: by Spring when `SpringJobFactory` supplies
+  them as prototype beans, or by Quartz if you install Quartz's own job factory instead. Open
+  each job package to the module that constructs it, `spring.beans` (with `spring.core`) or
+  `org.quartz`.
+
+See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 [[project-layout]]
 == Project Layout

@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>org.jfxtras</groupId>
-      <artifactId>jfxtras-all</artifactId>
+      <artifactId>jfxtras-common</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

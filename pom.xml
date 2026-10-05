@@ -230,6 +230,16 @@
       </dependency>
       <dependency>
         <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java-api</artifactId>
+        <version>${docker.java.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java-core</artifactId>
+        <version>${docker.java.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.docker-java</groupId>
         <artifactId>docker-java-transport-httpclient5</artifactId>
         <version>${docker.java.version}</version>
       </dependency>
@@ -808,6 +818,11 @@
       <dependency>
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-all</artifactId>
+        <version>${jfextras.labs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jfxtras</groupId>
+        <artifactId>jfxtras-common</artifactId>
         <version>${jfextras.labs.version}</version>
       </dependency>
       <dependency>

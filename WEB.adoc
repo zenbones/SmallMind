@@ -761,8 +761,8 @@ The jar ships an explicit module descriptor for `org.smallmind.web.http` that ex
 and `HttpClient.execute`, `HttpCallback`, and `SimpleCallback` expose `SimpleHttpRequest`,
 `SimpleHttpResponse`, and `FutureCallback`, so a module that calls them also requires
 `org.apache.httpcomponents.client5.httpclient5` and
-`org.apache.httpcomponents.core5.httpcore5`. The other web modules are currently automatic
-modules. See xref:README.adoc#module-path[Module Path And Classpath] for the
+`org.apache.httpcomponents.core5.httpcore5`. The README module table shows which of the
+other web modules are explicit and which are still automatic. See xref:README.adoc#module-path[Module Path And Classpath] for the
 repository-wide rules.
 
 [[_web_json_scaffold]]
@@ -860,6 +860,32 @@ byte[] payload = JsonCodec.instance().writeAsBytes(new Page<>(users, 0, 20, 135L
 String city = BeanReflector.get(order, "billingAddress.city");
 BeanReflector.set(order, "items[2].quantity", 5);
 ----
+
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.json.scaffold` that
+exports all six of its packages. On the classpath the descriptor is ignored. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
+* It re-exports (`requires transitive`) `tools.jackson.databind`, `tools.jackson.core`,
+  `jakarta.xml.bind`, `com.fasterxml.jackson.annotation`, and `org.smallmind.nutsnbolts`,
+  whose types appear in its public signatures, so a module that requires
+  `org.smallmind.web.json.scaffold` reads them without naming them. It also requires
+  `tools.jackson.module.jakarta.xmlbind` (resolved with it, so `JsonCodec`'s JAXB annotation
+  support works without `--add-modules`), `org.smallmind.scribe.pen`, and `spring.beans`.
+* It opens `org.smallmind.web.json.scaffold.fault` and `org.smallmind.web.json.scaffold.util`
+  to `jakarta.xml.bind` and `tools.jackson.databind`, and
+  `org.smallmind.web.json.scaffold.util.spring` to `spring.core` and `spring.beans`.
+* Open every package whose types `JsonCodec` reads or writes to `tools.jackson.databind`:
++
+[source,java]
+----
+opens com.example.app.model to tools.jackson.databind;
+----
++
+An unqualified `exports` also works when Jackson touches only public members. Without
+either, the first call fails with `DatabindException: access to public member failed:
+… from class tools.jackson.databind…`.
 
 [[_web_json_query]]
 == web-json-query

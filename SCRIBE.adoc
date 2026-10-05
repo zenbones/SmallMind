@@ -383,11 +383,10 @@ declares as `optional`. An application that uses them must explicitly depend on 
 [[module-path]]
 === Module Path
 
-`scribe-pen` ships an explicit module descriptor for `org.smallmind.scribe.pen`. The other
-Scribe artifacts are currently automatic modules under the names in the tables above. On
-the classpath the descriptor is ignored. The repository-wide rules are in
+Every Scribe artifact ships an explicit module descriptor under the names in the tables
+above. On the classpath the descriptors are ignored. The repository-wide rules are in
 xref:README.adoc#module-path[Module Path And Classpath]; this section lists what is specific
-to `scribe-pen`.
+to Scribe. It covers `scribe-pen` first, then the backends and bridges.
 
 *Required modules.* The descriptor exports all six packages and re-exports
 `org.smallmind.nutsnbolts` (`requires transitive`).
@@ -427,10 +426,31 @@ and `org.smallmind.scribe.pen.spring.plan` are opened to `spring.core` and `spri
 because appenders, formatters, and logging plans are configured from Spring XML.
 
 *Services.* The descriptor declares `uses org.smallmind.scribe.pen.adapter.LoggingBlueprint`,
-so `LoggingBlueprintFactory` can discover backends on the module path. A backend module on
-the module path is found through its `provides` clause. The `scribe-ink-*` artifacts are
-automatic modules today, and an automatic module provides whatever its
-`META-INF/services` files list, so they are found without further configuration.
+so `LoggingBlueprintFactory` can discover backends on the module path.
+
+*Backends.* Each `scribe-ink-*` module declares
+`provides org.smallmind.scribe.pen.adapter.LoggingBlueprint with …` next to its
+`META-INF/services` file, and re-exports `org.smallmind.scribe.pen`. Putting the backend jar
+on the module path is enough: because `org.smallmind.scribe.pen` uses the service, the JVM
+adds the backend module to the module graph without any `requires`. The one-backend rule
+applies on the module path as it does on the classpath. `scribe-ink-jdk` also re-exports
+`java.logging`, and `scribe-ink-log4j` re-exports `org.apache.logging.log4j` and
+`org.apache.logging.log4j.core`.
+
+*SLF4J bridge.* `org.smallmind.scribe.slf4j` declares
+`provides org.slf4j.spi.SLF4JServiceProvider with org.smallmind.scribe.slf4j.ScribeSLF4JServiceProvider`
+and re-exports `org.slf4j` and `org.smallmind.scribe.pen`. SLF4J 2 finds providers on the
+module path only through `provides`, and the JVM binds this one as soon as `org.slf4j` is in
+the module graph; no `requires` is needed.
+
+*Commons Logging bridge.* Commons Logging finds `CommonsLogWrapper` through the
+`commons-logging.properties` file at the root of `scribe-apache`, not through a service, so
+nothing pulls `org.smallmind.scribe.apache` into the module graph. Require it in your own
+descriptor, or add it with `--add-modules org.smallmind.scribe.apache`. Without it, Commons
+Logging silently falls back to its `java.util.logging` adapter (`Jdk14Logger`). As on the
+classpath, if `org.slf4j` is in the module graph, Commons Logging routes through SLF4J
+instead, which reaches Scribe when `scribe-slf4j` is present. The module re-exports
+`org.apache.commons.logging`.
 
 [[project-layout]]
 == Project Layout
@@ -1626,6 +1646,12 @@ Multiple backends discovered::
     LoggingBlueprint`. Fix: remove all but one `scribe-ink-*` dependency. Check transitive
     dependencies — a library pulling its own `scribe-ink-*` in by mistake is the common
     culprit. Run `mvn dependency:tree`.
+
+Commons Logging output bypasses Scribe on the module path::
+    `LogFactory.getLog` returns `org.apache.commons.logging.impl.Jdk14Logger` instead of
+    `CommonsLogWrapper`. `org.smallmind.scribe.apache` is on the module path but not in the
+    module graph. Require it, or add `--add-modules org.smallmind.scribe.apache`. See
+    <<module-path,Module Path>>.
 
 Records silently dropped::
     Several likely causes:

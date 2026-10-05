@@ -172,9 +172,17 @@ brings the utility jar.
 `org.smallmind.memcached.utility` and `org.smallmind.memcached.utility.spring` and
 re-exports `org.smallmind.nutsnbolts` (`requires transitive`). Spring is optional:
 `requires static spring.beans`, used only by the `FactoryBean` classes in the `spring`
-package, which is opened to `spring.core` and `spring.beans`. `memcached-cubby` is
-currently an automatic module under its name above. See
-xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+package, which is opened to `spring.core` and `spring.beans`.
+
+`memcached-cubby` ships an explicit module descriptor that exports all eight of its
+packages and re-exports `org.smallmind.memcached.utility` and `org.smallmind.nutsnbolts`
+(`requires transitive`). It also requires `org.smallmind.scribe.pen` and `spring.beans`. It
+opens `org.smallmind.memcached.cubby` unconditionally, so
+`classpath:org/smallmind/memcached/cubby/memcached.xml` stays loadable from other modules,
+and opens `org.smallmind.memcached.cubby.spring` to `spring.core` and `spring.beans`. SipHash
+is `requires static io.whitfin.siphash` (an automatic module whose name the jar declares).
+
+See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 Cubby has one optional external dependency. If the Maglev key locator is
 used, `io.whitfin:siphash` must be on the classpath:

@@ -147,9 +147,11 @@ compile scope, so adding the one dependency above pulls them transitively:
 | `org.openjfx:javafx-graphics`
 | `Region`, scene-graph nodes, `Image`, `ImageView`.
 
-| `org.jfxtras:jfxtras-all`
+| `org.jfxtras:jfxtras-common`
 | Supplies `jfxtras.util.PlatformUtil.runAndWait`, used by the debouncing
-  wrappers to dispatch synchronously on the FX thread.
+  wrappers to dispatch synchronously on the FX thread. Earlier releases
+  depended on the `jfxtras-all` bundle; if your application uses other
+  JFXtras controls, declare those artifacts yourself.
 
 | `org.smallmind:scribe-pen`
 | Logging façade (`LoggerManager`) used to report failures in the shared
@@ -172,6 +174,29 @@ distribution you must supply the OpenJFX native jars for each target platform
 classifier-less API jars only; selecting platform natives is the application's
 responsibility.
 ====
+
+[[module-path]]
+=== Module Path
+
+The jar ships an explicit module descriptor for `org.smallmind.javafx.extras` that exports
+all eight packages. On the classpath the descriptor is ignored. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
+* It re-exports (`requires transitive`) `javafx.base`, `javafx.controls`,
+  `javafx.graphics`, `java.management`, and `org.smallmind.nutsnbolts`, whose types appear
+  in its public signatures, so a module that requires `org.smallmind.javafx.extras` reads
+  them without naming them. It also requires `jfxtras.common` and
+  `org.smallmind.scribe.pen`.
+* It opens `org.smallmind.javafx.extras.dialog` unconditionally, because the dialogs load
+  their `dialog_*.png` icons through the thread context class loader.
+* The classifier-less OpenJFX jars contain no classes; on a module path the platform jars
+  supply the `javafx.*` modules.
+* Prefer the individual JFXtras artifacts to the `jfxtras-all` bundle. `jfxtras-all`
+  repeats the packages of the individual JFXtras jars and declares the module name
+  `jfxtras.icalendaragenda`, which `jfxtras-icalendaragenda` also declares. It is harmless
+  on the module path while nothing resolves that name, but resolving it (with
+  `--add-modules ALL-MODULE-PATH`, for example) fails at startup with
+  `FindException: Module jfxtras.icalendarfx not found, required by jfxtras.icalendaragenda`.
 
 [[quick-start]]
 == Quick Start
