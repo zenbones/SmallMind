@@ -334,15 +334,12 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
    * Runs the packet through every registered {@link PacketListener}, giving each one the
    * opportunity to transform or veto it.
    *
-   * @param sender the originating session, or {@code null} for backbone-sourced packets
+   * @param sender the originating session, or {@code null} for backbone-sourced or server-forwarded packets
    * @param packet the packet to process; the appropriate listener method is chosen based on its
    *               {@link PacketType}
-   * @param local  {@code true} if the packet originated on this node, {@code false} if it was
-   *               received from the backbone; consulted only for {@link PacketType#DELIVERY}
-   *               packets, as requests and responses never traverse the backbone
    * @return the (possibly transformed) packet, or {@code null} if a listener vetoed delivery
    */
-  private Packet<V> onProcessing (Session<V> sender, Packet<V> packet, boolean local) {
+  private Packet<V> onProcessing (Session<V> sender, Packet<V> packet) {
 
     for (Listener<V> listener : listenerList) {
       if (PacketListener.class.isAssignableFrom(listener.getClass())) {
@@ -355,7 +352,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
             break;
           }
         } else {
-          if ((packet = ((PacketListener<V>)listener).onDelivery(sender, packet, local)) == null) {
+          if ((packet = ((PacketListener<V>)listener).onDelivery(sender, packet)) == null) {
             break;
           }
         }
@@ -719,7 +716,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Packet<V> onRequest (Session<V> sender, Packet<V> packet) {
 
     // No need to freeze the packet as changes generated here should be by all further processing, including the response to the sender
-    return onProcessing(sender, packet, true);
+    return onProcessing(sender, packet);
   }
 
   /**
@@ -734,29 +731,28 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public Packet<V> onResponse (Session<V> sender, Packet<V> packet) {
 
     // No need to freeze the packet as any changes generated here are specifically for, and seen only by, the sender
-    return onProcessing(sender, packet, true);
+    return onProcessing(sender, packet);
   }
 
   /**
-   * Delivers a packet to all matching channel subscribers and, when requested, publishes it to the
-   * backbone for cluster-wide distribution.
+   * Delivers a packet to all matching channel subscribers and, when the packet originated on this
+   * node, publishes it to the backbone for cluster-wide distribution.
    *
-   * @param sender the session publishing the packet, or {@code null} for server-initiated delivery
+   * @param sender the session publishing the packet, or {@code null} for packets received from the
+   *               backbone, which are never republished to avoid re-broadcast loops
    * @param packet the packet to deliver; must carry a non-{@code null} route
-   * @param local  {@code true} to also publish through the backbone; pass {@code false} for
-   *               packets already received from the backbone to avoid re-broadcast loops
    */
   @Override
-  public void deliver (Session<V> sender, Packet<V> packet, boolean local) {
+  public void deliver (Session<V> sender, Packet<V> packet) {
 
     if (packet.getRoute() != null) {
       // Packet is not frozen as all channels should see these changes
-      if ((packet = onProcessing(sender, packet, local)) != null) {
+      if ((packet = onProcessing(sender, packet)) != null) {
 
         channelTree.deliver(sender, 0, packet, new HashSet<>());
 
-        // Do *not* redistribute packets from the backbone
-        if (local) {
+        // Do *not* redistribute packets from the backbone (which arrive without a sender)
+        if ((sender != null) && sender.isLocal()) {
 
           Backbone<V> backbone;
 
@@ -781,7 +777,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
     if (packet.getRoute() != null) {
       // Packet is not frozen as all channels should see these changes
-      if ((packet = onProcessing(null, packet, true)) != null) {
+      if ((packet = onProcessing(null, packet)) != null) {
 
         Backbone<V> backbone;
 

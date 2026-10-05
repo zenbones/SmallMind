@@ -156,13 +156,12 @@ public interface Server<V extends Value<V>> extends Attributed {
      * Called when a delivery packet is being routed to channel subscribers; may return
      * a replacement packet.
      *
-     * @param sender session that originally published the message
+     * @param sender session that originally published the message, or {@code null} if the packet
+     *               was received from the backbone or forwarded by the server itself
      * @param packet delivery packet being distributed
-     * @param local  {@code true} if the packet originated on this node, {@code false} if it was
-     *               received from the backbone
      * @return packet to continue delivering, possibly transformed
      */
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet, boolean local);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
   }
 
   /**
@@ -376,16 +375,14 @@ public interface Server<V extends Value<V>> extends Attributed {
   Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   /**
-   * Routes a packet to its target channel subscribers, optionally publishing to the backbone
-   * for cluster-wide distribution.
+   * Routes a packet to its target channel subscribers. A packet with a non-{@code null} sender
+   * originated on this node and is also published to the backbone for other nodes; a
+   * {@code null} sender marks a packet received from the backbone, which is never republished.
    *
-   * @param sender session originating the packet
+   * @param sender session originating the packet, or {@code null} for packets received from the backbone
    * @param packet packet to deliver
-   * @param local  {@code true} if the packet originated on this node, in which case it is also
-   *               forwarded to the backbone for other nodes; {@code false} for packets received
-   *               from the backbone
    */
-  void deliver (Session<V> sender, Packet<V> packet, boolean local);
+  void deliver (Session<V> sender, Packet<V> packet);
 
   /**
    * Pushes a packet directly to the packet listeners of a channel without involving transports,

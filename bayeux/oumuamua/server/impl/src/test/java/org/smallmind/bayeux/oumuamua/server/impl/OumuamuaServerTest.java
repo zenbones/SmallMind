@@ -370,7 +370,7 @@ public class OumuamuaServerTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
 
         return packet;
       }
@@ -391,7 +391,7 @@ public class OumuamuaServerTest {
     Message<OrthodoxValue> message = codec.create();
     Packet<OrthodoxValue> nullRoutePacket = new Packet<>(PacketType.DELIVERY, null, null, message);
 
-    server.deliver(null, nullRoutePacket, false);
+    server.deliver(null, nullRoutePacket);
   }
 
   public void testForwardWithNullRouteIsNoOp ()

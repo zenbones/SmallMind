@@ -292,7 +292,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
                     DebonedPacket<V> debonedPacket = RecordUtility.deserialize(server.getCodec(), record.value());
 
                     if (!nodeName.equals(debonedPacket.getNodeName())) {
-                      server.deliver(null, debonedPacket.getPacket(), false);
+                      server.deliver(null, debonedPacket.getPacket());
                     }
                   } catch (Exception exception) {
                     LoggerManager.getLogger(KafkaBackbone.class).error(exception);

@@ -76,12 +76,10 @@ public abstract class AbstractServerPacketListener<V extends Value<V>> implement
    *
    * @param sender the session the delivery is addressed to
    * @param packet the outbound delivery packet
-   * @param local  {@code true} if the packet originated on this node, {@code false} if it was
-   *               received from the backbone
    * @return {@code packet} unchanged
    */
   @Override
-  public Packet<V> onDelivery (Session<V> sender, Packet<V> packet, boolean local) {
+  public Packet<V> onDelivery (Session<V> sender, Packet<V> packet) {
 
     return packet;
   }
