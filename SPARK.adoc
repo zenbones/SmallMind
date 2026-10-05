@@ -409,6 +409,12 @@ Spring's `spring-context`, and `smallmind-nutsnbolts`.
 
 Module name (for `requires`): `org.smallmind.spark.tanukisoft.integration`
 
+This jar has no module descriptor and stays an automatic module under the name above. On
+a module path it depends on the Tanuki `wrapper` jar, which declares no module name of its
+own, so the JVM derives one from the file name: `wrapper-3.5.54.jar` becomes `wrapper`, and
+a renamed jar becomes a differently named module. Keep the jar's Maven file name. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 If you are using the shipped
 `ClassPathXmlSpringContextWrapperListener` and you do not need to
 compile any code against the wrapper API, a project with

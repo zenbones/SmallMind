@@ -103,6 +103,7 @@
     <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
     <jackson.version>3.1.0</jackson.version>
     <jackson.annotations.version>2.21</jackson.annotations.version>
+    <jackson2.version>2.18.4</jackson2.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.el.version>6.0.1</jakarta.el.version>
@@ -122,6 +123,7 @@
     <jetty.version>12.1.5</jetty.version>
     <jfextras.labs.version>9.0-r1</jfextras.labs.version>
     <jose4j.version>0.9.6</jose4j.version>
+    <jspecify.version>1.0.0</jspecify.version>
     <kafka.version>4.2.0</kafka.version>
     <liquibase.version>5.0.1</liquibase.version>
     <log4j.version>2.25.3</log4j.version>
@@ -203,6 +205,16 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>${jackson.annotations.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson2.version}</version>
       </dependency>
       <dependency>
         <groupId>com.github.docker-java</groupId>
@@ -802,6 +814,11 @@
         <groupId>org.jfxtras</groupId>
         <artifactId>jfxtras-labs</artifactId>
         <version>${jfextras.labs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jspecify</groupId>
+        <artifactId>jspecify</artifactId>
+        <version>${jspecify.version}</version>
       </dependency>
       <dependency>
         <groupId>org.liquibase</groupId>

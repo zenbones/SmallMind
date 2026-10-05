@@ -389,6 +389,12 @@ sufficient.
 
 Module name (for `requires`): `org.smallmind.ansible`
 
+The jar ships an explicit module descriptor that exports `org.smallmind.ansible` and
+re-exports `org.smallmind.nutsnbolts` (`requires transitive`), because
+`VaultCodecException` and `VaultId` expose its exception types. A module that requires
+`org.smallmind.ansible` needs nothing else. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 == Summary
 
 `smallmind-ansible` exists so that Java services can participate natively in

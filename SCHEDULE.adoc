@@ -263,6 +263,12 @@ Module name (for `requires`): `org.smallmind.schedule.base`
 This artifact brings in `smallmind-nutsnbolts` (for `SuccessOrFailure`) and
 nothing else.
 
+The jar ships an explicit module descriptor that exports `org.smallmind.schedule.base`
+and re-exports `org.smallmind.nutsnbolts` (`requires transitive`), because
+`SuccessOrFailure` appears in the job contract. `schedule-quartz` is currently an
+automatic module under its name below. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 === `schedule-quartz`
 
 Depend on this from the application or service that actually runs the

@@ -265,6 +265,15 @@ A consuming library that only needs to *type* Bayeux shapes depends on
 depends on `oumuamua-server-impl` (which pulls in the SPI and API
 transitively).
 
+`oumuamua-server-api` ships an explicit module descriptor that exports its three packages
+(`org.smallmind.bayeux.oumuamua.server.api`, `.backbone`, and `.json`) and re-exports
+`jakarta.servlet` and `org.smallmind.nutsnbolts` (`requires transitive`), whose types
+appear in the API's signatures. A module that requires
+`org.smallmind.bayeux.oumuamua.server.api` reads both without naming them.
+`oumuamua-server-spi` and `oumuamua-server-impl` are currently automatic modules under the
+names above. See xref:README.adoc#module-path[Module Path And Classpath] for the
+repository-wide rules.
+
 [[installation]]
 == Installation
 

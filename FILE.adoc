@@ -317,6 +317,27 @@ act, requested through
 <<ephemeral-provider-installation>>) — a decision an application must
 make on purpose, and one that constrains the configuration.
 
+[[module-path]]
+=== Module path
+
+Both jars ship explicit module descriptors. On the classpath the descriptors are ignored.
+The repository-wide rules are in xref:README.adoc#module-path[Module Path And Classpath];
+this section lists what is specific to these two modules.
+
+* Each descriptor declares its provider with
+  `provides java.nio.file.spi.FileSystemProvider with …`, alongside the
+  `META-INF/services` entry shown above. On a module path only the `provides` clause
+  counts, and the JDK's own use of the service brings a provider module on the module path
+  into the module graph without your module requiring it.
+* `org.smallmind.file.ephemeral` requires `org.smallmind.nutsnbolts` and exports
+  `org.smallmind.file.ephemeral`, `.heap`, and `.watch`.
+* `org.smallmind.file.jailed` exports `org.smallmind.file.jailed` and re-exports
+  `org.smallmind.nutsnbolts` (`requires transitive`), whose `ContextFactory` types appear in
+  its public signatures. JAXB is `requires static jakarta.xml.bind`: if you unmarshal
+  `RootedFileSystemContext` from XML on a module path, require `jakarta.xml.bind` yourself
+  or add it with `--add-modules`. The package is opened to `jakarta.xml.bind` for that
+  unmarshalling.
+
 [[ephemeral]]
 == The Ephemeral File System
 

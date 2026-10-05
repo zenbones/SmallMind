@@ -310,6 +310,55 @@ Optional dependencies:
   driver versions across modules is the common source of
   `NoSuchMethodError` at client construction.
 
+[[module-path]]
+=== Module Path
+
+Both jars ship explicit module descriptors (`org.smallmind.mongodb.utility` and
+`org.smallmind.mongodb.throng`, each exporting every package it contains). On the classpath
+the descriptors are ignored. The repository-wide rules are in
+xref:README.adoc#module-path[Module Path And Classpath]; this section lists what is specific
+to these two modules.
+
+*Required modules.* Both require the driver's automatic modules `org.mongodb.bson`,
+`org.mongodb.driver.core`, and `org.mongodb.driver.sync.client`, and re-export
+`org.smallmind.nutsnbolts` (`requires transitive`). Driver types such as `MongoClient`,
+`Bson`, and `CodecRegistry` appear in public signatures of both modules, but automatic
+modules are never re-exported, so require the driver modules you use in your own
+descriptor.
+
+*Optional modules.* `mongodb-utility` declares `requires static spring.beans` for its
+`FactoryBean` classes. `mongodb-throng` declares `requires static tools.jackson.databind`
+for `JsonUtility`; Jackson is an explicit module, so if you use `JsonUtility` on a module
+path, require `tools.jackson.databind` yourself or add it with `--add-modules`.
+
+*Packages these modules open.* `mongodb-utility` opens
+`org.smallmind.mongodb.utility.spring` to `spring.core` and `spring.beans`.
+
+*Packages you open.* Throng constructs your `@Entity` and `@Embedded` classes and the
+codecs named by `@Codec`, and invokes their lifecycle callbacks; the field access itself goes
+through `FieldUtility` in `org.smallmind.nutsnbolts`. Open each package holding mapped
+classes to both modules:
+
+[source,java]
+----
+module com.example.app {
+
+  requires org.mongodb.bson;
+  requires org.mongodb.driver.core;
+  requires org.mongodb.driver.sync.client;
+  requires org.smallmind.mongodb.throng;
+
+  opens com.example.app.model to org.smallmind.mongodb.throng, org.smallmind.nutsnbolts;
+}
+----
+
+Without the open to `org.smallmind.nutsnbolts`, building the class's codec (in
+`ThrongClient`'s constructor) fails with `InaccessibleObjectException: Unable to make field
+… accessible: module … does not "opens …" to module org.smallmind.nutsnbolts`. Without the
+open to `org.smallmind.mongodb.throng`, the codec builds but decoding a document fails with a
+`ThrongRuntimeException` wrapping `IllegalAccessException: … does not export … to module
+org.smallmind.mongodb.throng`.
+
 [[quick-start]]
 == Quick Start
 
@@ -1395,6 +1444,10 @@ Driver::
 `ThrongRuntimeException: Unmapped entity type(...)`::
     A CRUD call referenced a `Class` that was not passed in the
     `entityClasses` vararg to the `ThrongClient` constructor. Add it.
+
+`InaccessibleObjectException` naming `org.smallmind.nutsnbolts`, or `IllegalAccessException` naming `org.smallmind.mongodb.throng`::
+    The application runs on a module path and has not opened the package holding its mapped
+    classes. Open it to both modules; see <<module-path,Module Path>>.
 
 `IllegalFilterStateException: The filter(...) is closed`::
     A second comparison was applied to a filter that already had

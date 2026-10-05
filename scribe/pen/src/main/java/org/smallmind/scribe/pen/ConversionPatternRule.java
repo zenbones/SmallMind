@@ -92,7 +92,7 @@ public class ConversionPatternRule implements PatternRule {
    * @param conversion      the conversion character that identifies which record field to render
    * @param footer          optional footer text emitted after the field value, or {@code null}
    */
-  public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multiLinePrefix, char conversion, String footer) {
+  private ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multiLinePrefix, char conversion, String footer) {
 
     this.header = stripSlashes(header);
     this.padding = padding;

@@ -750,6 +750,21 @@ The pool size, socket timeout, and permissive TLS trust are hard-coded. If
 you need different defaults, fork `HttpClient`; the module is deliberately
 small.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.http` that exports
+`org.smallmind.web.http.apache` and re-exports `org.smallmind.nutsnbolts`
+(`requires transitive`). It requires the HttpComponents automatic modules
+`org.apache.httpcomponents.client5.httpclient5`,
+`org.apache.httpcomponents.core5.httpcore5`, and
+`org.apache.httpcomponents.core5.httpcore5.h2`. Automatic modules are never re-exported,
+and `HttpClient.execute`, `HttpCallback`, and `SimpleCallback` expose `SimpleHttpRequest`,
+`SimpleHttpResponse`, and `FutureCallback`, so a module that calls them also requires
+`org.apache.httpcomponents.client5.httpclient5` and
+`org.apache.httpcomponents.core5.httpcore5`. The other web modules are currently automatic
+modules. See xref:README.adoc#module-path[Module Path And Classpath] for the
+repository-wide rules.
+
 [[_web_json_scaffold]]
 == web-json-scaffold
 

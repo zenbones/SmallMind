@@ -14,7 +14,7 @@ Update this block at the end of every stage or wave; it is the entry point for a
 |---|---|
 | Stage 0 — `Automatic-Module-Name` everywhere (§4) | **Done** 2026-10-03 |
 | Stage 1 — build plumbing and spikes (§5) | **Done** 2026-10-03 |
-| Stage 2 — descriptors, waves A–I (§6) | Wave A **done** 2026-10-03. **Next: Wave B** — read "Wave A outcome" first |
+| Stage 2 — descriptors, waves A–I (§6) | Waves A, B **done** (2026-10-03, 2026-10-04). **Next: Wave C** — read "Wave A outcome" and "Wave B outcome" first |
 | Stage 3 — documentation pass (§7) | Repository-wide parts done with Wave A (`README.adoc` "Module Path And Classpath" + *Kind* column, `CODE_STYLE.md` "Module Descriptors", `DESIGN_PHILOSOPHY.md`); per-chapter parts continue with each wave |
 | Stage 4 — module-path verification (§8) | Not started |
 
@@ -53,7 +53,7 @@ Compile/provided/runtime dependencies between the 59 modules form a DAG with nin
 | Depth | Modules |
 |---|---|
 | 0 | `nutsnbolts`, `batch/base`, `spark/singularity/boot`, `license`†, `web/schema`† |
-| 1 | `ansible`, `scribe/pen`, `memcached/utility`, `mongodb/throng`, `bayeux/oumuamua/server/api`, `file/ephemeral`, `file/jailed`, `mongodb/utility`, `web/http`, `schedule/base`, `sleuth/runner`, `spark/tanukisoft/integration`, `testbench/foundation`, `testbench/style`, `spark/singularity/mojo`†, `spark/tanukisoft/mojo`† |
+| 1 | `ansible`, `scribe/pen`, `memcached/utility`, `mongodb/throng`, `bayeux/oumuamua/server/api`, `file/ephemeral`, `file/jailed`, `mongodb/utility`, `web/http`, `schedule/base`, `sleuth/runner`, `spark/tanukisoft/integration`†, `testbench/foundation`, `testbench/style`, `spark/singularity/mojo`†, `spark/tanukisoft/mojo`† |
 | 2 | `web/json/scaffold`, `testbench/docker`, `kafka/utility`, `javafx/extras`, `memcached/cubby`, `schedule/quartz`, `scribe/apache`, `scribe/ink/indigenous`, `scribe/ink/jdk`, `scribe/ink/log4j`, `scribe/slf4j`, `testbench/logger`, `artifact/maven`†, `sleuth/maven/surefire`† |
 | 3 | `web/json/doppelganger`, `testbench/condition`, `web/jersey`, `web/jwt` |
 | 4 | `claxon/registry`, `testbench/groundwater`, `web/grizzly`, `web/jetty` |
@@ -115,7 +115,7 @@ Consumer-facing documentation references these paths (`classpath:org/smallmind/p
 | JAXB (`@XmlRootElement` etc.) | `web/json/scaffold` (6 files), `web/json/query` (25), `phalanx.wire.signal` (5), `nutsnbolts.json` (1), `file/jailed` (1), `web.jersey.json`/`web.jersey.proxy` (1), `claxon/registry` (via scaffold types) | `jakarta.xml.bind`. The API module delegates `addOpens` to the implementation (`org.glassfish.jaxb.runtime`), so opening to the API module is sufficient. |
 | Jackson 3 (`tools.jackson.databind`) on the same JAXB types | same packages as above where Jackson serializes them | `tools.jackson.databind` |
 | JPA / Hibernate ORM | `persistence.orm.jpa`, `persistence.orm.hibernate`, entity-bearing packages (3 files) | `org.hibernate.orm.core` (automatic name declared by Hibernate). Consumers' entity packages must be opened by the consumer. |
-| Throng (this project's MongoDB mapper) | `mongodb/throng` reads consumer classes annotated with *its own* `@Entity`/`@Embedded`/`@Id` | consumers open entity packages **to `org.smallmind.mongodb.throng`** — document in `MONGODB.adoc` |
+| Throng (this project's MongoDB mapper) | `mongodb/throng` reads consumer classes annotated with *its own* `@Entity`/`@Embedded`/`@Id` | consumers open entity packages **to `org.smallmind.mongodb.throng` and `org.smallmind.nutsnbolts`** (corrected in Wave B and verified on a module path: field access goes through `nutsnbolts`' `FieldUtility`) — documented in `MONGODB.adoc` |
 | `nutsnbolts.reflection` (bean utilities, `setAccessible`) | reflects over caller-supplied classes | consumers open the relevant packages **to `org.smallmind.nutsnbolts`** — document in `NUTSNBOLTS.adoc` |
 | Quartz | instantiates job classes | consumers open job packages to `org.quartz` |
 | Jersey / HK2 | `web/jersey`, `web/grizzly`, `web/jetty`, `claxon/http` resource and provider classes | HK2 instantiates resources reflectively; on a module path resource packages typically need `opens … to org.glassfish.hk2.locator, org.glassfish.hk2.utilities` or must be exported. **Resolved by the §5.5 spike:** SmallMind needs `opens` only for `web.jersey.aop` and `web.jersey.page`; consumers open resource packages to `org.glassfish.hk2.locator, org.glassfish.hk2.utilities, org.glassfish.jersey.core.server`. |
@@ -225,7 +225,7 @@ These get a Stage 0 `Automatic-Module-Name` and **never** a descriptor:
 
 - The four `maven-plugin` artifacts (`license`, `spark/singularity/mojo`, `spark/tanukisoft/mojo`, `web/schema`). Maven loads plugins through Plexus class realms on a classpath; a descriptor gains nothing and the Maven core jars they compile against split packages among themselves (§2.8).
 - `artifact/maven` and `sleuth/maven/surefire`: same reason — they consume Maven/Surefire internals that are unnamed jars with split packages.
-- Candidates to leave automatic by choice: `spark/tanukisoft/integration` (its only external dependency is Tanuki `wrapper`, an unnamed jar whose derived name `wrapper` is as fragile as names get). The plan below gives it a descriptor with `requires wrapper;` and flags the fragility; if that is unpalatable, demote it to this list.
+- `spark/tanukisoft/integration` — **demoted in Wave B (2026-10-04).** Its only external dependency is Tanuki `wrapper`, an unnamed jar whose derived name `wrapper` is as fragile as names get, and its unit tests shadow `org.tanukisoftware.wrapper.WrapperManager`/`WrapperListener` with test doubles in that same package. With a descriptor, test compilation runs patched into the named module and fails with `package exists in another module: wrapper`. Keeping it automatic avoids both problems; `SPARK.adoc` documents the derived-name rule.
 
 ### 3.8 Resource-only packages and encapsulated resources
 
@@ -302,7 +302,7 @@ Each of the 59 artifact POMs: add `<properties><jigsaw.module.name>…</jigsaw.m
 | `web/http` | `web-http` | `org.smallmind.web.http` | yes (B) |
 | `schedule/base` | `schedule-base` | `org.smallmind.schedule.base` | yes (B) |
 | `sleuth/runner` | `sleuth-runner` | `org.smallmind.sleuth.runner` | yes (B) |
-| `spark/tanukisoft/integration` | `spark-tanukisoft-integration` | `org.smallmind.spark.tanukisoft.integration` | yes (B), see §3.7 |
+| `spark/tanukisoft/integration` | `spark-tanukisoft-integration` | `org.smallmind.spark.tanukisoft.integration` | **no** (demoted in B, §3.7) |
 | `testbench/foundation` | `testbench-foundation` | `org.smallmind.testbench.foundation` | yes (B), resources only |
 | `testbench/style` | `testbench-style` | `org.smallmind.testbench.style` | yes (B) |
 | `spark/singularity/mojo` | `spark-singularity-maven-plugin` | `org.smallmind.spark.singularity.mojo` | **no** |
@@ -556,9 +556,22 @@ Pre-flight, carrying Stage 1 findings that apply here:
 | `org.smallmind.web.http` | `org.smallmind.nutsnbolts`, `org.apache.httpcomponents.client5.httpclient5`, `org.apache.httpcomponents.core5.httpcore5`, `org.apache.httpcomponents.core5.httpcore5.h2` | `WEB.adoc` |
 | `org.smallmind.schedule.base` | `org.smallmind.nutsnbolts` | `SCHEDULE.adoc` |
 | `org.smallmind.sleuth.runner` | `org.smallmind.nutsnbolts`, **`org.testng`**; `org.aspectj.runtime` *static* (plugin applied, no aspects of its own) | Reflects over test classes; irrelevant while tests run on the classpath, but `SLEUTH.adoc` should say so. |
-| `org.smallmind.spark.tanukisoft.integration` | `org.smallmind.nutsnbolts`, `spring.context`, `wrapper` (unnamed, fragile — §3.7) | `SPARK.adoc` troubleshooting: the Tanuki jar's derived name. |
+| ~~`org.smallmind.spark.tanukisoft.integration`~~ | — | Demoted to automatic-only (§3.7, Wave B outcome). `SPARK.adoc` documents the Tanuki jar's derived name. |
 | `org.smallmind.testbench.foundation` | `org.smallmind.nutsnbolts` (declared; no code uses it — consider dropping the POM dependency) | `opens org.smallmind.testbench.foundation;` after §5.6; **no** `exports`. `TESTBENCH.adoc`. |
 | `org.smallmind.testbench.style` | `org.smallmind.nutsnbolts`, `java.xml`, `jdk.jdi` | `opens org.smallmind.testbench.style;` only if the XSLT is loaded through a `ClassLoader` (§3.8). `TESTBENCH.adoc`. |
+
+**Wave B outcome (2026-10-04).** Descriptors committed for 13 of the 14 modules; `spark/tanukisoft/integration` was demoted to automatic-only (§3.7). Tests: `ansible` 21, `scribe/pen` 272, `memcached/utility` 15, `bayeux/oumuamua/server/api` 101, `file/ephemeral` 168, `file/jailed` 127 (6 skipped), `mongodb/utility` 28, `web/http` 6, `sleuth/runner` 94, `spark/tanukisoft/integration` 18 — all green. `mongodb/throng`: 152 run without failure, but its four Docker-backed integration classes (`DriverCompatibilitySmokeTest`, `ThrongClientIntegrationTest`, `ThrongClientAdvancedIntegrationTest`, `ThrongClientPipelineIntegrationTest`) failed in `@BeforeClass` because no Docker daemon was running (`Connect to http://localhost:2375 failed`); **re-run `mvn -pl mongodb/throng install` with Docker up.** A full repository `install -DskipTests` is green; every wave jar describes as a named module; `jdeps --check` differs from the descriptors only in the deliberate ways noted under Wave A. Findings:
+
+- **`requires transitive org.smallmind.nutsnbolts`** in ten modules (`ansible`, `bayeux/oumuamua/server/api`, `file/jailed`, `memcached/utility`, `mongodb/throng`, `mongodb/utility`, `schedule/base`, `scribe/pen`, `sleuth/runner`, `web/http`): lint reports `nutsnbolts` exception and utility types in their exported signatures. Not in `file/ephemeral` or `testbench/style`. Also `requires transitive jakarta.servlet` (`bayeux` API) and `java.xml` (`testbench/style`). Downstream waves therefore read `nutsnbolts` through any of these.
+- **No `org.aspectj.runtime` in `scribe/pen` or `sleuth/runner`.** The AspectJ plugin runs there but `jdeps` finds no reference, so the §6 table's *static* entry was dropped (as in `batch/base`).
+- **`jdeps` misses dependencies that arrive only through a supertype.** `scribe.pen.json.LevelEnumXmlAdapter` extends `nutsnbolts`' `EnumXmlAdapter`, so its class file never names `jakarta.xml.bind`, but `javac` needs the module (`cannot access jakarta.xml.bind.annotation.adapters.XmlAdapter`). Treat a module-aware compile as the ground truth, not `jdeps`.
+- **`scribe/pen` uses Jackson 2, not Jackson 3.** `FluentBitAppender`/`MessagePackFormatter` import `com.fasterxml.jackson.databind` (brought by `jackson-dataformat-msgpack`). The POM's optional `tools.jackson.core:jackson-core`/`jackson-databind` were referenced by no main or test class and were removed; `com.fasterxml.jackson.core:jackson-core`/`jackson-databind` were added as optional, managed in the root POM at `${jackson2.version}` = 2.18.4 (the version msgpack already resolved, so nothing changes at run time). `DateTimeFormatterFactoryBean` uses JSpecify's `@Nullable` (arrives through `spring-core`), so `org.jspecify:jspecify` became an optional dependency (root `${jspecify.version}` = 1.0.0) with `requires static org.jspecify`. `SCRIBE.adoc`'s optional-feature table was wrong on both counts (it named Jackson 3 for Fluent Bit, and JAXB/Activation for `XMLFormatter`, which uses neither) and was corrected; `EmailAppender`'s Mail/Activation needs were added.
+- **Resource-driven `requires` in `testbench/foundation`.** It has no classes, but its `foundation.xml`/`global.yaml` need `nutsnbolts`, Bouncy Castle, and SnakeYAML, so the descriptor requires all three and a consumer that requires `org.smallmind.testbench.foundation` gets them resolved. `jdeps` suggests none of them; that is expected. SnakeYAML moved from `runtime` to `compile` scope because `javac` must see a module named in `requires`. The `[opens] package is empty` warning appears as predicted in §5.6.
+- **`testbench/style` loads `pretty-print.xslt` through the TCCL** (`ClassLoader.getResourceAsStream`), so it opens its package unconditionally (§3.8).
+- **Spring `FactoryBean` packages** in `memcached/utility` and `mongodb/utility` are opened to `spring.core, spring.beans`, matching how Wave A treated `nutsnbolts`' Spring packages.
+- **`web/http`** needed the §3.6 `default-testCompile` arguments (`jdk.httpserver`), as predicted. No other wave module did.
+- **Module-path spot checks** (scratch apps, not committed; partial evidence ahead of Stage 4): `org.smallmind.scribe.pen` binds the automatic `org.smallmind.scribe.ink.indigenous` through `uses` and logs; `java.base` binds `org.smallmind.file.ephemeral` and `FileSystems.getFileSystem(URI.create("ephemeral:///"))` works; Throng encodes and decodes an entity only when the entity package is opened to both `org.smallmind.mongodb.throng` and `org.smallmind.nutsnbolts`. The two failure signatures are recorded in `MONGODB.adoc`.
+- **Pre-existing, left alone:** lint reports `ConversionPatternRule` (`scribe/pen`) exposing the package-private enum `Padding` from a public signature (`[exports] ... not accessible to clients`). This is an API issue, not a descriptor issue.
 
 ### Wave C — depth 2
 

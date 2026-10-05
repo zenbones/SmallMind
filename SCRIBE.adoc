@@ -365,15 +365,72 @@ declares as `optional`. An application that uses them must explicitly depend on 
 | `org.syslog4j:syslog4j`
 
 | `FluentBitAppender` + `MessagePackFormatter`
-| `org.msgpack:jackson-dataformat-msgpack`, `tools.jackson.core:jackson-core`,
-  `tools.jackson.core:jackson-databind`
+| `org.msgpack:jackson-dataformat-msgpack`, which brings the Jackson 2 artifacts
+  `com.fasterxml.jackson.core:jackson-core` and `jackson-databind` that these classes use
 
-| `XMLFormatter`
-| `jakarta.activation:jakarta.activation-api`, `jakarta.xml.bind:jakarta.xml.bind-api`
+| `EmailAppender`
+| The Jakarta Mail dependencies of `smallmind-nutsnbolts`'s `Postman`:
+  `jakarta.mail:jakarta.mail-api` plus a Jakarta Mail runtime, and
+  `jakarta.activation:jakarta.activation-api`
+
+| `LevelEnumXmlAdapter` (JAXB binding of `Level`)
+| `jakarta.xml.bind:jakarta.xml.bind-api`
 
 | Spring bean support (`LoggingPlan`, factory beans)
 | `org.springframework:spring-beans`
 |===
+
+[[module-path]]
+=== Module Path
+
+`scribe-pen` ships an explicit module descriptor for `org.smallmind.scribe.pen`. The other
+Scribe artifacts are currently automatic modules under the names in the tables above. On
+the classpath the descriptor is ignored. The repository-wide rules are in
+xref:README.adoc#module-path[Module Path And Classpath]; this section lists what is specific
+to `scribe-pen`.
+
+*Required modules.* The descriptor exports all six packages and re-exports
+`org.smallmind.nutsnbolts` (`requires transitive`).
+
+*Optional modules.* Every dependency in the table above is `requires static`, and none of
+them is re-exported. On the module path, a module you use must be resolved by your own
+`requires` or by `--add-modules`; its jar being present is not enough. `@Nullable` from
+JSpecify, which arrives with Spring, is also `requires static`; it is needed only to compile
+against `DateTimeFormatterFactoryBean`.
+
+[cols="3,3,1",options="header"]
+|===
+| Artifact | Module name | Kind
+
+| `com.fasterxml.jackson.core:jackson-core` | `com.fasterxml.jackson.core` | explicit
+| `com.fasterxml.jackson.core:jackson-databind` | `com.fasterxml.jackson.databind` | explicit
+| `jakarta.activation:jakarta.activation-api` | `jakarta.activation` | explicit
+| `jakarta.xml.bind:jakarta.xml.bind-api` | `jakarta.xml.bind` | explicit
+| `org.jspecify:jspecify` | `org.jspecify` | explicit
+| `org.msgpack:jackson-dataformat-msgpack` | `jackson.dataformat.msgpack` | derived
+| `org.syslog4j:syslog4j` | `syslog4j` | derived
+| `software.amazon.awssdk:auth` | `software.amazon.awssdk.auth` | automatic
+| `software.amazon.awssdk:aws-core` | `software.amazon.awssdk.awscore` | automatic
+| `software.amazon.awssdk:cloudwatchlogs` | `software.amazon.awssdk.services.cloudwatchlogs` | automatic
+| `software.amazon.awssdk:regions` | `software.amazon.awssdk.regions` | automatic
+| `org.springframework:spring-beans` | `spring.beans` | automatic
+|===
+
+A *derived* name is not declared by the jar at all: the JVM derives it from the file name,
+so `jackson-dataformat-msgpack-0.9.11.jar` becomes `jackson.dataformat.msgpack` and
+`syslog4j-0.9.30.jar` becomes `syslog4j`. Renaming either jar changes its module name;
+`org.smallmind.scribe.pen` then no longer reads it, and the appender that uses it fails on
+first use. Keep the Maven file names.
+
+*Packages this module opens.* `org.smallmind.scribe.pen`, `org.smallmind.scribe.pen.spring`,
+and `org.smallmind.scribe.pen.spring.plan` are opened to `spring.core` and `spring.beans`,
+because appenders, formatters, and logging plans are configured from Spring XML.
+
+*Services.* The descriptor declares `uses org.smallmind.scribe.pen.adapter.LoggingBlueprint`,
+so `LoggingBlueprintFactory` can discover backends on the module path. A backend module on
+the module path is found through its `provides` clause. The `scribe-ink-*` artifacts are
+automatic modules today, and an automatic module provides whatever its
+`META-INF/services` files list, so they are found without further configuration.
 
 [[project-layout]]
 == Project Layout

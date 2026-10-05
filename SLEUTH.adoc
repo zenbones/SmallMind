@@ -38,6 +38,20 @@ The `sleuth` package is a Maven POM aggregator with two published artifacts:
 
 The `sleuth-runner` module name is the one to use in `requires`. Surefire loads `surefire-sleuth-provider` through its own class realms, so `org.smallmind.sleuth.maven.surefire` only identifies the jar; it is not intended for a consumer's `requires`.
 
+`sleuth-runner` ships an explicit module descriptor. It exports its three packages,
+re-exports `org.smallmind.nutsnbolts` (`requires transitive`), and requires TestNG as the
+automatic module `org.testng`, which it does not re-export. Tests normally run on the
+classpath, where the descriptor is ignored. If you drive `sleuth-runner` on a module path,
+open each test package to it, because it constructs test classes and invokes their annotated
+methods reflectively:
+
+[source,java]
+----
+opens com.example.app.tests to org.smallmind.sleuth.runner;
+----
+
+See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 Depend on `sleuth-runner` if you are embedding Sleuth in another tool, driving it from a main method, or writing your own reporter. Depend on `surefire-sleuth-provider` (and only that) when you want `mvn test` to execute Sleuth-annotated classes.
 
 == Quick Start

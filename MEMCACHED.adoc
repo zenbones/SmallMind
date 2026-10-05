@@ -168,6 +168,14 @@ Library code that only needs the abstraction (`ProxyMemcachedClient`,
 `memcached-utility` alone. Bringing in `memcached-cubby` also transitively
 brings the utility jar.
 
+`memcached-utility` ships an explicit module descriptor that exports
+`org.smallmind.memcached.utility` and `org.smallmind.memcached.utility.spring` and
+re-exports `org.smallmind.nutsnbolts` (`requires transitive`). Spring is optional:
+`requires static spring.beans`, used only by the `FactoryBean` classes in the `spring`
+package, which is opened to `spring.core` and `spring.beans`. `memcached-cubby` is
+currently an automatic module under its name above. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+
 Cubby has one optional external dependency. If the Maglev key locator is
 used, `io.whitfin:siphash` must be on the classpath:
 
