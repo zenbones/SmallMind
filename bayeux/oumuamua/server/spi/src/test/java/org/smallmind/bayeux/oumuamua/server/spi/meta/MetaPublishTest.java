@@ -201,7 +201,7 @@ public class MetaPublishTest {
     Message<OrthodoxValue> response = packet.getMessages()[0];
 
     Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.ERROR)).asText(), "Unauthorized: no publishes");
-    Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any());
+    Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.anyBoolean());
   }
 
   public void testCanCreateRejectionWithoutReasonProducesPlainUnauthorized ()
@@ -233,7 +233,7 @@ public class MetaPublishTest {
     Message<OrthodoxValue> response = packet.getMessages()[0];
 
     Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.ERROR)).asText(), "Unauthorized");
-    Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any());
+    Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.anyBoolean());
   }
 
   public void testSuccessfulPublishDeliversAndEchoesRequest ()
@@ -246,7 +246,7 @@ public class MetaPublishTest {
 
     ArgumentCaptor<Packet<OrthodoxValue>> deliveryPacket = ArgumentCaptor.forClass(Packet.class);
 
-    Mockito.verify(server).deliver(Mockito.eq(session), deliveryPacket.capture());
+    Mockito.verify(server).deliver(Mockito.eq(session), deliveryPacket.capture(), Mockito.eq(true));
 
     Assert.assertEquals(deliveryPacket.getValue().getPacketType(), PacketType.DELIVERY);
     Assert.assertEquals(deliveryPacket.getValue().getMessages()[0].getChannel(), "/foo");
@@ -307,14 +307,14 @@ public class MetaPublishTest {
     Meta.PUBLISH.process(protocol, route, server, session, request());
 
     Mockito.verify(server).requireChannel("/foo");
-    Mockito.verify(server).deliver(Mockito.eq(session), Mockito.any());
+    Mockito.verify(server).deliver(Mockito.eq(session), Mockito.any(), Mockito.eq(true));
   }
 
   public void testExceptionDuringDeliveryWrappedAsErrorResponse ()
     throws Exception {
 
     Mockito.when(server.findChannel("/foo")).thenReturn(channel);
-    Mockito.doThrow(new RuntimeException("kaboom")).when(server).deliver(Mockito.any(), Mockito.any());
+    Mockito.doThrow(new RuntimeException("kaboom")).when(server).deliver(Mockito.any(), Mockito.any(), Mockito.anyBoolean());
 
     Packet<OrthodoxValue> packet = Meta.PUBLISH.process(protocol, route, server, session, request());
     Message<OrthodoxValue> response = packet.getMessages()[0];

@@ -33,7 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import org.mockito.Mockito;
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
@@ -103,13 +102,12 @@ public class ChannelRootTest {
     throws Exception {
 
     Server<OrthodoxValue> server = mockServer();
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
     DefaultRoute route = new DefaultRoute("/foo");
     Message<OrthodoxValue> message = Mockito.mock(Message.class);
     Packet<OrthodoxValue> packet = new Packet<>(PacketType.DELIVERY, null, route, message);
 
-    new ChannelRoot<>(server).forward(channel, packet);
+    new ChannelRoot<>(server).forward(packet);
 
-    Mockito.verify(server).forward(channel, packet);
+    Mockito.verify(server).forward(packet);
   }
 }

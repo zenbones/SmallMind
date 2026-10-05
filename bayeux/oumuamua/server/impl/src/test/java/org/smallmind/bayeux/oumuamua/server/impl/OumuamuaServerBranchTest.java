@@ -165,7 +165,7 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         seenType.set(PacketType.DELIVERY);
 
@@ -201,7 +201,7 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         seenType.set(packet.getPacketType());
 
@@ -210,7 +210,7 @@ public class OumuamuaServerBranchTest {
     };
 
     server.addListener(listener);
-    server.deliver(null, deliveryPacket("/deliver/listener"));
+    server.deliver(null, deliveryPacket("/deliver/listener"), false);
 
     Assert.assertEquals(seenType.get(), PacketType.DELIVERY, "Server-level PacketListener must observe DELIVERY packets");
   }
@@ -235,16 +235,16 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return null;
       }
     });
 
-    server.deliver(null, deliveryPacket("/deliver/vetoed"));
+    server.deliver(null, deliveryPacket("/deliver/vetoed"), false);
   }
 
-  public void testDeliverWithSenderPublishesThroughBackbone ()
+  public void testDeliverWithLocalTruePublishesThroughBackbone ()
     throws Exception {
 
     Backbone<OrthodoxValue> backbone = Mockito.mock(Backbone.class);
@@ -255,12 +255,12 @@ public class OumuamuaServerBranchTest {
     Session<OrthodoxValue> sender = Mockito.mock(Session.class);
     Packet<OrthodoxValue> packet = deliveryPacket("/cluster/path");
 
-    server.deliver(sender, packet);
+    server.deliver(sender, packet, true);
 
     Mockito.verify(backbone).publish(Mockito.any());
   }
 
-  public void testDeliverWithoutSenderDoesNotRepublishThroughBackbone ()
+  public void testDeliverWithLocalFalseDoesNotRepublishThroughBackbone ()
     throws Exception {
 
     Backbone<OrthodoxValue> backbone = Mockito.mock(Backbone.class);
@@ -270,18 +270,18 @@ public class OumuamuaServerBranchTest {
     OumuamuaServer<OrthodoxValue> server = new OumuamuaServer<>(configuration);
     Packet<OrthodoxValue> packet = deliveryPacket("/cluster/from-backbone");
 
-    server.deliver(null, packet);
+    server.deliver(null, packet, false);
 
     Mockito.verify(backbone, Mockito.never()).publish(Mockito.any());
   }
 
-  public void testDeliverAndForwardPassSenderToPacketListener ()
+  public void testDeliverAndForwardPassSenderAndLocalFlagToPacketListener ()
     throws Exception {
 
     OumuamuaServer<OrthodoxValue> server = newServer();
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
     Session<OrthodoxValue> sender = Mockito.mock(Session.class);
     AtomicReference<Session<OrthodoxValue>> seenSender = new AtomicReference<>();
+    AtomicReference<Boolean> seenLocal = new AtomicReference<>();
     AtomicInteger deliveryCount = new AtomicInteger();
 
     server.addListener(new Server.PacketListener<OrthodoxValue>() {
@@ -299,26 +299,30 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         seenSender.set(sender);
+        seenLocal.set(local);
         deliveryCount.incrementAndGet();
 
         return packet;
       }
     });
 
-    server.deliver(null, deliveryPacket("/sender/backbone"));
+    server.deliver(null, deliveryPacket("/sender/backbone"), false);
     Assert.assertEquals(deliveryCount.get(), 1);
     Assert.assertNull(seenSender.get(), "Packets received from the backbone must be reported without a sender");
+    Assert.assertEquals(seenLocal.get(), Boolean.FALSE, "Packets received from the backbone must be reported as not local");
 
-    server.deliver(sender, deliveryPacket("/sender/node"));
+    server.deliver(sender, deliveryPacket("/sender/node"), true);
     Assert.assertEquals(deliveryCount.get(), 2);
     Assert.assertSame(seenSender.get(), sender, "Packets published on this node must be reported with their sender");
+    Assert.assertEquals(seenLocal.get(), Boolean.TRUE, "Packets published on this node must be reported as local");
 
-    server.forward(channel, deliveryPacket("/sender/forward"));
+    server.forward(deliveryPacket("/sender/forward"));
     Assert.assertEquals(deliveryCount.get(), 3);
     Assert.assertNull(seenSender.get(), "Forwarded packets are server-initiated and must be reported without a sender");
+    Assert.assertEquals(seenLocal.get(), Boolean.TRUE, "Forwarded packets always originate on this node and must be reported as local");
   }
 
   public void testForwardWithBackbonePublishes ()
@@ -329,12 +333,13 @@ public class OumuamuaServerBranchTest {
     configuration.setBackbone(backbone);
 
     OumuamuaServer<OrthodoxValue> server = new OumuamuaServer<>(configuration);
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
-    Packet<OrthodoxValue> packet = deliveryPacket("/forward/backbone");
+    Channel<OrthodoxValue> channel = server.requireChannel("/forward/backbone");
+    VetoingChannelPacketListener channelListener = new VetoingChannelPacketListener("veto:");
 
-    server.forward(channel, packet);
+    channel.addListener(channelListener);
+    server.forward(deliveryPacket("/forward/backbone"));
 
-    Mockito.verify(channel).deliver(Mockito.isNull(), Mockito.any(), Mockito.any());
+    Assert.assertEquals(channelListener.observedCount(), 1);
     Mockito.verify(backbone).publish(Mockito.any());
   }
 
@@ -342,7 +347,10 @@ public class OumuamuaServerBranchTest {
     throws Exception {
 
     OumuamuaServer<OrthodoxValue> server = newServer();
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
+    Channel<OrthodoxValue> channel = server.requireChannel("/forward/vetoed");
+    VetoingChannelPacketListener channelListener = new VetoingChannelPacketListener("veto:");
+
+    channel.addListener(channelListener);
 
     server.addListener(new Server.PacketListener<OrthodoxValue>() {
 
@@ -359,15 +367,15 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return null;
       }
     });
 
-    server.forward(channel, deliveryPacket("/forward/vetoed"));
+    server.forward(deliveryPacket("/forward/vetoed"));
 
-    Mockito.verify(channel, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.any());
+    Assert.assertEquals(channelListener.observedCount(), 0);
   }
 
   public void testRequireChannelAppliesPerCallInitializers ()
@@ -429,7 +437,7 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return packet;
       }
@@ -452,7 +460,7 @@ public class OumuamuaServerBranchTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return packet;
       }

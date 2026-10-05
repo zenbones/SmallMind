@@ -370,7 +370,7 @@ public class OumuamuaServerTest {
       }
 
       @Override
-      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet) {
+      public Packet<OrthodoxValue> onDelivery (Session<OrthodoxValue> sender, Packet<OrthodoxValue> packet, boolean local) {
 
         return packet;
       }
@@ -391,33 +391,57 @@ public class OumuamuaServerTest {
     Message<OrthodoxValue> message = codec.create();
     Packet<OrthodoxValue> nullRoutePacket = new Packet<>(PacketType.DELIVERY, null, null, message);
 
-    server.deliver(null, nullRoutePacket);
+    server.deliver(null, nullRoutePacket, false);
   }
 
   public void testForwardWithNullRouteIsNoOp ()
     throws Exception {
 
     OumuamuaServer<OrthodoxValue> server = newServer();
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
     OrthodoxCodec codec = new OrthodoxCodec(new JaxbDeserializer<>());
     Message<OrthodoxValue> message = codec.create();
     Packet<OrthodoxValue> nullRoutePacket = new Packet<>(PacketType.DELIVERY, null, null, message);
 
-    server.forward(channel, nullRoutePacket);
-
-    Mockito.verify(channel, Mockito.never()).deliver(Mockito.any(), Mockito.any(), Mockito.any());
+    server.forward(nullRoutePacket);
   }
 
   public void testForwardWithNonNullRouteDeliversToChannel ()
     throws Exception {
 
     OumuamuaServer<OrthodoxValue> server = newServer();
-    Channel<OrthodoxValue> channel = Mockito.mock(Channel.class);
-    Packet<OrthodoxValue> packet = deliveryPacket("/forward/test");
+    Channel<OrthodoxValue> channel = server.requireChannel("/forward/test");
+    VetoingChannelPacketListener channelListener = new VetoingChannelPacketListener("veto:");
 
-    server.forward(channel, packet);
+    channel.addListener(channelListener);
+    server.forward(deliveryPacket("/forward/test"));
 
-    Mockito.verify(channel).deliver(Mockito.isNull(), Mockito.eq(packet), Mockito.any());
+    Assert.assertEquals(channelListener.observedCount(), 1);
+  }
+
+  public void testForwardDeliversToWildcardChannels ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    Channel<OrthodoxValue> channel = server.requireChannel("/forward/wild/test");
+    Channel<OrthodoxValue> wildChannel = server.requireChannel("/forward/wild/*");
+    Channel<OrthodoxValue> deepWildChannel = server.requireChannel("/forward/**");
+    Channel<OrthodoxValue> unrelatedChannel = server.requireChannel("/forward/other");
+    VetoingChannelPacketListener channelListener = new VetoingChannelPacketListener("veto:");
+    VetoingChannelPacketListener wildChannelListener = new VetoingChannelPacketListener("veto:");
+    VetoingChannelPacketListener deepWildChannelListener = new VetoingChannelPacketListener("veto:");
+    VetoingChannelPacketListener unrelatedChannelListener = new VetoingChannelPacketListener("veto:");
+
+    channel.addListener(channelListener);
+    wildChannel.addListener(wildChannelListener);
+    deepWildChannel.addListener(deepWildChannelListener);
+    unrelatedChannel.addListener(unrelatedChannelListener);
+
+    server.forward(deliveryPacket("/forward/wild/test"));
+
+    Assert.assertEquals(channelListener.observedCount(), 1);
+    Assert.assertEquals(wildChannelListener.observedCount(), 1, "Forwarded packets must reach single-level wildcard channels on the publishing node");
+    Assert.assertEquals(deepWildChannelListener.observedCount(), 1, "Forwarded packets must reach deep wildcard channels on the publishing node");
+    Assert.assertEquals(unrelatedChannelListener.observedCount(), 0);
   }
 
   public void testGetMessageLogLevel ()

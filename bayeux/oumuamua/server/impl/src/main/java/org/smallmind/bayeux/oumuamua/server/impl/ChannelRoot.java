@@ -32,7 +32,6 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
-import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
@@ -106,14 +105,13 @@ public class ChannelRoot<V extends Value<V>> {
   }
 
   /**
-   * Forwards the packet through the server's {@link Server#forward} path, delivering it to the
-   * channel's local subscribers and publishing it to the backbone.
+   * Forwards the packet through the server's {@link Server#forward} path, delivering it to all
+   * matching local subscribers, including those of wildcard channels, and publishing it to the backbone.
    *
-   * @param channel the channel on which the packet originates
-   * @param packet  the packet to forward; must carry a non-{@code null} route
+   * @param packet the packet to forward; must carry a non-{@code null} route
    */
-  public void forward (Channel<V> channel, Packet<V> packet) {
+  public void forward (Packet<V> packet) {
 
-    server.forward(channel, packet);
+    server.forward(packet);
   }
 }

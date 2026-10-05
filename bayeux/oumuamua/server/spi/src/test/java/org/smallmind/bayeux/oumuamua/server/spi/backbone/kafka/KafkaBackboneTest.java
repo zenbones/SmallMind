@@ -220,7 +220,7 @@ public class KafkaBackboneTest {
     Mockito.doAnswer(invocation -> {
       delivered.countDown();
       return null;
-    }).when(server).deliver(Mockito.isNull(), Mockito.any(Packet.class));
+    }).when(server).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
 
     TopicPartition partition = new TopicPartition(PREFIXED_TOPIC, 0);
     List<ConsumerRecord<Long, byte[]>> list = new LinkedList<>();
@@ -245,7 +245,7 @@ public class KafkaBackboneTest {
       backbone.startUp(server);
 
       Assert.assertTrue(delivered.await(3, TimeUnit.SECONDS), "Expected remote packet to be delivered");
-      Mockito.verify(server, Mockito.times(1)).deliver(Mockito.isNull(), Mockito.any(Packet.class));
+      Mockito.verify(server, Mockito.times(1)).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
       Mockito.verify(consumer, Mockito.timeout(2000)).commitSync(Mockito.<Map<TopicPartition, OffsetAndMetadata>>any());
     } finally {
       backbone.shutDown();
@@ -268,7 +268,7 @@ public class KafkaBackboneTest {
       backbone.startUp(server);
 
       Mockito.verify(consumer, Mockito.timeout(2000)).commitSync(Mockito.<Map<TopicPartition, OffsetAndMetadata>>any());
-      Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any(Packet.class));
+      Mockito.verify(server, Mockito.never()).deliver(Mockito.any(), Mockito.any(Packet.class), Mockito.anyBoolean());
     } finally {
       backbone.shutDown();
     }

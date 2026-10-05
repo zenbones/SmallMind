@@ -441,12 +441,6 @@ public class OumuamuaSessionTest {
     Mockito.verify(connection).onCleanup();
   }
 
-  public void testIsLocalDelegatesToTransport () {
-
-    Mockito.when(transport.isLocal()).thenReturn(true);
-    Assert.assertTrue(session().isLocal());
-  }
-
   public void testAddListenerAndRemoveListenerControlPacketFiltering () {
 
     OumuamuaSession<OrthodoxValue> s = session();

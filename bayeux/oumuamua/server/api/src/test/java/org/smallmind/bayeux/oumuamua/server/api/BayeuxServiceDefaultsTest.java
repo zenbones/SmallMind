@@ -368,12 +368,12 @@ public class BayeuxServiceDefaultsTest {
       }
 
       @Override
-      public void deliver (Session<TestValueFactory.TestValue> sender, Packet<TestValueFactory.TestValue> packet) {
+      public void deliver (Session<TestValueFactory.TestValue> sender, Packet<TestValueFactory.TestValue> packet, boolean local) {
 
       }
 
       @Override
-      public void forward (Channel<TestValueFactory.TestValue> channel, Packet<TestValueFactory.TestValue> packet) {
+      public void forward (Packet<TestValueFactory.TestValue> packet) {
 
       }
 
@@ -416,12 +416,6 @@ public class BayeuxServiceDefaultsTest {
       public SessionState getState () {
 
         return SessionState.CONNECTED;
-      }
-
-      @Override
-      public boolean isLocal () {
-
-        return true;
       }
 
       @Override

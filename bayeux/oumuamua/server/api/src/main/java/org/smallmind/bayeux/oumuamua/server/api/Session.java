@@ -106,13 +106,6 @@ public interface Session<V extends Value<V>> extends Attributed {
   String getId ();
 
   /**
-   * Returns whether this session was created by a server-side component rather than a remote client.
-   *
-   * @return {@code true} for local (server-side) sessions
-   */
-  boolean isLocal ();
-
-  /**
    * Returns whether this session is currently using long polling for message delivery.
    *
    * @return {@code true} if long polling is active

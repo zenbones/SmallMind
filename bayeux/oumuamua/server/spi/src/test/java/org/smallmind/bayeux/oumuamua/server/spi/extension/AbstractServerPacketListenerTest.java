@@ -86,8 +86,8 @@ public class AbstractServerPacketListenerTest {
 
     Packet<OrthodoxValue> packet = newPacket(PacketType.DELIVERY);
 
-    // a session-originated publish will be forwarded to the backbone
-    Assert.assertSame(listener.onDelivery(session, packet), packet);
+    // a session-originated publish is local to this node and will be forwarded to the backbone
+    Assert.assertSame(listener.onDelivery(session, packet, true), packet);
   }
 
   public void testOnRequestAcceptsNullSender () {
@@ -108,8 +108,8 @@ public class AbstractServerPacketListenerTest {
 
     Packet<OrthodoxValue> packet = newPacket(PacketType.DELIVERY);
 
-    // backbone-sourced packets arrive with no sender
-    Assert.assertSame(listener.onDelivery(null, packet), packet);
+    // backbone-sourced packets arrive with no sender and are not local to this node
+    Assert.assertSame(listener.onDelivery(null, packet, false), packet);
   }
 
   public void testOnRequestAcceptsNullPacket () {
@@ -124,7 +124,7 @@ public class AbstractServerPacketListenerTest {
 
   public void testOnDeliveryAcceptsNullPacket () {
 
-    Assert.assertNull(listener.onDelivery(session, null));
+    Assert.assertNull(listener.onDelivery(session, null, true));
   }
 
   private static final class PassThroughListener extends AbstractServerPacketListener<OrthodoxValue> {

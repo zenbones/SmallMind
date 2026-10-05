@@ -159,9 +159,11 @@ public interface Server<V extends Value<V>> extends Attributed {
      * @param sender session that originally published the message, or {@code null} if the packet
      *               was received from the backbone or forwarded by the server itself
      * @param packet delivery packet being distributed
+     * @param local  {@code true} if the packet originated on this node, {@code false} if it was
+     *               received from the backbone
      * @return packet to continue delivering, possibly transformed
      */
-    Packet<V> onDelivery (Session<V> sender, Packet<V> packet);
+    Packet<V> onDelivery (Session<V> sender, Packet<V> packet, boolean local);
   }
 
   /**
@@ -375,21 +377,23 @@ public interface Server<V extends Value<V>> extends Attributed {
   Packet<V> onResponse (Session<V> sender, Packet<V> packet);
 
   /**
-   * Routes a packet to its target channel subscribers. A packet with a non-{@code null} sender
-   * originated on this node and is also published to the backbone for other nodes; a
-   * {@code null} sender marks a packet received from the backbone, which is never republished.
+   * Routes a packet to its target channel subscribers, optionally publishing to the backbone
+   * for cluster-wide distribution.
    *
    * @param sender session originating the packet, or {@code null} for packets received from the backbone
    * @param packet packet to deliver
+   * @param local  {@code true} if the packet originated on this node, in which case it is also
+   *               forwarded to the backbone for other nodes; {@code false} for packets received
+   *               from the backbone, which are never republished
    */
-  void deliver (Session<V> sender, Packet<V> packet);
+  void deliver (Session<V> sender, Packet<V> packet, boolean local);
 
   /**
-   * Pushes a packet directly to the packet listeners of a channel without involving transports,
-   * used for server-side local fan-out.
+   * Publishes a server-initiated packet, with no sender, to all matching channel subscribers,
+   * including those of wildcard channels, and to the backbone for other nodes. This is the path
+   * behind {@link Channel#publish}.
    *
-   * @param channel channel whose packet listeners should receive the packet
-   * @param packet  packet to forward
+   * @param packet packet to forward; its route selects the channels it is delivered to
    */
-  void forward (Channel<V> channel, Packet<V> packet);
+  void forward (Packet<V> packet);
 }

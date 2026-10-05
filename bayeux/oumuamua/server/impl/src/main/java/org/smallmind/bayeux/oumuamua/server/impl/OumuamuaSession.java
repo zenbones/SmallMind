@@ -208,18 +208,6 @@ public class OumuamuaSession<V extends Value<V>> extends AbstractAttributed impl
   }
 
   /**
-   * Indicates whether the session's transport communicates within the same JVM rather than over
-   * a network connection.
-   *
-   * @return {@code true} if the transport is local
-   */
-  @Override
-  public boolean isLocal () {
-
-    return connectionRef.get().getTransport().isLocal();
-  }
-
-  /**
    * Indicates whether this session is currently operating in long-polling mode.
    *
    * @return {@code true} if packets are queued for long-poll retrieval

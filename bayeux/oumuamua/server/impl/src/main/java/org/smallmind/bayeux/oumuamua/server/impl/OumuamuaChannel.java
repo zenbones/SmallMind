@@ -397,6 +397,6 @@ public class OumuamuaChannel<V extends Value<V>> extends AbstractAttributed impl
   @Override
   public void publish (ObjectValue<V> data) {
 
-    root.forward(this, new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)root.getCodec().create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)));
+    root.forward(new Packet<>(PacketType.DELIVERY, null, getRoute(), (Message<V>)root.getCodec().create().put(Message.CHANNEL, getRoute().getPath()).put(Message.DATA, data)));
   }
 }

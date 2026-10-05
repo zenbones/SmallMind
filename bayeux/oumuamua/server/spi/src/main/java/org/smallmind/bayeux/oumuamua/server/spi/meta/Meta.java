@@ -624,7 +624,7 @@ public enum Meta {
             Message<V> deliveryMessage = constructDeliveryMessage(server, route.getPath(), request.getId(), request.get(Message.DATA));
 
             ((AbstractProtocol<V>)protocol).onPublish(request, deliveryMessage);
-            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, deliveryMessage));
+            server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, deliveryMessage), true);
 
             if (getEchoFlag(request)) {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});
