@@ -87,6 +87,17 @@ subpackages, each independent from the others:
 
 Module name (for `requires`): `org.smallmind.quorum`
 
+The jar ships an explicit module descriptor that exports all twelve of its
+packages and re-exports (`requires transitive`) `java.management`,
+`java.naming`, and `org.smallmind.nutsnbolts`, whose types appear in its
+public signatures. It also requires `org.smallmind.claxon.registry` and
+`org.smallmind.scribe.pen`. No package is opened: JNDI instantiates
+`JavaURLContextFactory` by class name and the JMX layer works with the
+public MBean types, and both only need the packages exported.
+On the classpath the descriptor is ignored. See
+xref:README.adoc#module-path[Module Path And Classpath] for the
+repository-wide rules.
+
 === Compile-Time Dependencies
 
 * `org.smallmind:smallmind-nutsnbolts` -- general utilities (`Stint`,
@@ -1027,8 +1038,8 @@ translate between the two.
 
 `quorum.namespace` is that something. It provides:
 
-* A custom `ObjectFactory` (`JavaURLContextFactory`) registered for the
-  `java:` URL scheme.
+* A context factory (`JavaURLContextFactory`) that the application names as
+  its JNDI initial context factory.
 * A `DirContext` implementation (`JavaContext`) that translates names
   on every operation before delegating to a backing-store context.
 * An extensible backing-store SPI (`ContextCreator`, `NameTranslator`)
@@ -1038,12 +1049,12 @@ translate between the two.
 
 === How JNDI Finds Us
 
-Register the package as a URL context factory prefix:
+Name `JavaURLContextFactory` as the initial context factory:
 
 [source,java]
 ----
 Hashtable<String, Object> env = new Hashtable<>();
-env.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
+env.put(Context.INITIAL_CONTEXT_FACTORY, JavaURLContextFactory.class.getName());
 env.put(JavaContext.CONTEXT_STORE,        "ldap");
 env.put(JavaContext.CONNECTION_DETAILS,   new NamingConnectionDetails(
   "ldap.example.com", 389, false,
@@ -1055,10 +1066,9 @@ env.put(JavaContext.POOLED_CONNECTION,    "true");
 InitialContext root = new InitialContext(env);
 ----
 
-When the application calls `root.lookup("java:/comp/env/jdbc/myds")`,
-JNDI finds `JavaURLContextFactory` by the `java:` prefix, calls
-`getObjectInstance(null, ...)`, which in turn locates the backing-store
-classes by naming convention:
+`new InitialContext(env)` calls `JavaURLContextFactory.getInitialContext`,
+which builds a `JavaContext` through `getObjectInstance(null, ...)`. That
+method locates the backing-store classes by naming convention:
 
 [cols="1,3"]
 |===
@@ -1139,7 +1149,7 @@ contract: on `contextClosed` it calls `pool.returnInstance(this)`; on
 [source,java]
 ----
 Hashtable<String, Object> env = new Hashtable<>();
-env.put(Context.URL_PKG_PREFIXES, "org.smallmind.quorum.namespace");
+env.put(Context.INITIAL_CONTEXT_FACTORY, JavaURLContextFactory.class.getName());
 env.put(JavaContext.CONTEXT_STORE, "ldap");
 env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(
   "ldap.corp", 636, true,
@@ -1277,7 +1287,7 @@ the callers that got past the gate.
 | `juggler`   | `initialize()`, `startup()`.                                | `shutdown()`, `deconstruct()`.
 | `pool.simple`  | `new ComponentPool(factory, config)`; optional `register()`. | `close()` (blocks until all borrowed components return).
 | `pool.complex` | `new ComponentPool(...)`, `startup()`; optional event/JMX registration. | `shutdown()` (runs factory shutdown, terminates pins, deconstructs factory).
-| `namespace` | Register `URL_PKG_PREFIXES`; open `InitialContext`. Pool via `PooledJavaContextComponentInstanceFactory` if desired. | Close the root context; shut down the pool.
+| `namespace` | Set `INITIAL_CONTEXT_FACTORY` to `JavaURLContextFactory`; open `InitialContext`. Pool via `PooledJavaContextComponentInstanceFactory` if desired. | Close the root context; shut down the pool.
 |===
 
 == Further Reading in the Source

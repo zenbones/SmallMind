@@ -14,7 +14,7 @@ Update this block at the end of every stage or wave; it is the entry point for a
 |---|---|
 | Stage 0 — `Automatic-Module-Name` everywhere (§4) | **Done** 2026-10-03 |
 | Stage 1 — build plumbing and spikes (§5) | **Done** 2026-10-03 |
-| Stage 2 — descriptors, waves A–I (§6) | Waves A–E **done** (2026-10-03, 2026-10-04, 2026-10-04, 2026-10-05, 2026-10-05). **Next: Wave F**. Read the Wave A–E outcomes first |
+| Stage 2 — descriptors, waves A–I (§6) | Waves A–F **done** (2026-10-03 through 2026-10-05). **Next: Wave G**. Read the Wave A–F outcomes first |
 | Stage 3 — documentation pass (§7) | Repository-wide parts done with Wave A (`README.adoc` "Module Path And Classpath" + *Kind* column, `CODE_STYLE.md` "Module Descriptors", `DESIGN_PHILOSOPHY.md`); per-chapter parts continue with each wave |
 | Stage 4 — module-path verification (§8) | Not started |
 
@@ -705,6 +705,23 @@ Pre-flight, carrying Stage 1 findings that apply here:
 | `org.smallmind.claxon.emitter.prometheus` | `org.smallmind.claxon.registry`, `org.smallmind.nutsnbolts` | |
 | `org.smallmind.claxon.exotic` | `org.smallmind.claxon.registry`, `java.management`, probably `jdk.management` (verify the `com.sun.management` import) | |
 | `org.smallmind.claxon.http` | `org.smallmind.claxon.registry`, `jakarta.ws.rs` | One JAX-RS resource; no `opens` needed (verified, §5.5). All of wave F's claxon modules: `CLAXON.adoc`. |
+
+**Wave F outcome (2026-10-05).** Descriptors committed for all ten modules. Tests: `quorum` 208, `bayeux/oumuamua/server/spi` 529, `claxon/emitter/jmx` 14, `claxon/emitter/message` 11, `claxon/emitter/noop` 5, `claxon/emitter/prometheus` 11, `claxon/http` 6, `claxon/exotic` 6, all green (`claxon/emitter/aws` and `claxon/emitter/datadog` have no tests). A full repository `install -DskipTests` is green, every wave jar describes as a named module, and `jdeps --check` differs from the descriptors only in the deliberate ways. The only `[exports]` lint warnings name automatic modules (Spring, the AWS SDK) or `spi`'s static ones. Findings:
+
+- **No POM changes were needed.** No module ships resources or services files. None references `org.aspectj.runtime` (the inherited Claxon AspectJ plugin weaves nothing), so no emitter has the table's conditional `requires static`.
+- **`bayeux/oumuamua/server/spi`:**
+  - Eight `requires static` modules: `jakarta.websocket`, `jakarta.websocket.client`, `kafka.clients`, `org.smallmind.claxon.registry`, `org.smallmind.kafka.utility`, `org.smallmind.web.json.scaffold`, `tools.jackson.core`, `tools.jackson.databind`.
+  - Lint flags `kafka-utility` (`KafkaBackbone`) and WebSocket (`WebsocketConfiguration`, `WebsocketConfigurator`) types in exported signatures; they stay non-transitive per the Wave A rule.
+  - The optional `spring-beans` is referenced by no class, so it is not in the descriptor (the Wave A `shiro-spring` exception, here with no resource either). It was left in the POM.
+  - No `opens`: the codecs convert *consumer* types, which the consumer opens to `tools.jackson.databind` per the scaffold rule.
+  - **§3.4 verified on a module path.** A module requiring only `spi` and building `new OrthodoxCodec(new JaxbDeserializer<>())` compiles, then fails with `NoClassDefFoundError: org/smallmind/web/json/scaffold/util/JsonCodec` although `web-json-scaffold` is on the path. Adding `requires org.smallmind.web.json.scaffold` fixes it. `BAYEUX.adoc` carries this as a `[WARNING]` plus a feature-to-module table.
+- **`quorum`:** re-exports `java.management`, `java.naming`, and `nutsnbolts`; no `opens`. Module-path spot check: naming `JavaURLContextFactory` as `INITIAL_CONTEXT_FACTORY` reaches Quorum's code from `java.naming` exactly as on the classpath.
+  - **Pre-existing documentation bug:** `QUORUM.adoc`'s documented wiring, `Context.URL_PKG_PREFIXES = "org.smallmind.quorum.namespace"`, never reaches Quorum on either path (`NoInitialContextException`). JNDI resolves `<prefix>.java.javaURLContextFactory`, and no such class exists. **Fixed in the chapter (2026-10-05, owner):** `QUORUM.adoc` now documents `Context.INITIAL_CONTEXT_FACTORY = JavaURLContextFactory`, verified through `new InitialContext(env)` against the embedded LDAP server from Quorum's tests.
+- **Claxon emitters and add-ons:**
+  - Every one re-exports `org.smallmind.claxon.registry`.
+  - The Spring factory-bean packages are opened to `spring.core, spring.beans`: the `aws` root package, and the `spring` subpackages of `datadog`, `message`, and `noop`.
+  - `claxon/exotic` requires `jdk.management` (`OSFacts` uses `com.sun.management`).
+  - `java.dogstatsd.client` and `kafka.clients` are filename-derived names; the AWS SDK jars declare `Automatic-Module-Name`.
 
 ### Wave G — depth 6
 

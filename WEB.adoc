@@ -405,13 +405,9 @@ A module-path application hosting REST resources follows the
   fails with HTTP 500 and `IllegalAccessException: module com.sun.xml.ws does
   not read module grizzly.http.server.jaxws`.
 
-Verified with everything on the module path, including `jersey-hk2` (minus
-`aopalliance-repackaged`): a `@ServicePath` service serves its WSDL and
-answers a SOAP call, and a Jersey resource with a private `@Context` field
-returns JSON through `JsonProvider`, in the same Grizzly server, run with
-`--add-modules org.apache.commons.logging,jakarta.el,org.glassfish.expressly`
-and the `--add-reads` above. WebSocket (Tyrus) endpoints have not been
-exercised on a module path.
+SOAP endpoints and Jersey resources can share one Grizzly server on a module
+path; launch it with the `--add-modules` from the <<_web_jersey>> rules plus
+the `--add-reads` above.
 
 [[_web_jetty]]
 == web-jetty
@@ -552,12 +548,7 @@ callbacks on `JettyInitializingBean` or `JettyPostProcessor` requires
 `spring.beans` and `spring.context` itself.
 
 A module-path application hosting `web-jersey` resources on `web-jetty`
-follows the <<_web_jersey>> "Module path" rules. Verified: with
-`jersey-hk2` (minus `aopalliance-repackaged`) on the module path, the two
-`--add-exports` flags, and `--add-modules
-org.apache.commons.logging,jakarta.el,org.glassfish.expressly`, a resource
-with a private `@Context` field, `JsonProvider` output, and `@EntityParam`
-parameters all work.
+follows the <<_web_jersey>> "Module path" rules.
 
 [[_web_jersey]]
 == web-jersey

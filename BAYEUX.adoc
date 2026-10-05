@@ -270,9 +270,49 @@ transitively).
 `jakarta.servlet` and `org.smallmind.nutsnbolts` (`requires transitive`), whose types
 appear in the API's signatures. A module that requires
 `org.smallmind.bayeux.oumuamua.server.api` reads both without naming them.
-`oumuamua-server-spi` and `oumuamua-server-impl` are currently automatic modules under the
-names above. See xref:README.adoc#module-path[Module Path And Classpath] for the
-repository-wide rules.
+`oumuamua-server-spi` ships an explicit module descriptor that exports all ten of its
+packages and re-exports `org.smallmind.bayeux.oumuamua.server.api`, `jakarta.servlet`,
+`org.smallmind.nutsnbolts`, and `org.smallmind.scribe.pen`. Its eight optional
+dependencies are `requires static`, matching their optional POM dependencies, so each
+feature below works on a module path only when the application requires the listed
+module itself (or adds it with `--add-modules`):
+
+[cols="2,3",options="header"]
+|===
+| Feature (package) | Module the application requires
+
+| `OrthodoxCodec` and the Jackson deserializers (`spi.json.orthodox`, `spi.json.jackson`)
+| `org.smallmind.web.json.scaffold`, which re-exports `tools.jackson.core` and
+  `tools.jackson.databind`
+
+| `KafkaBackbone` (`spi.backbone.kafka`)
+| `org.smallmind.kafka.utility` (its constructor takes `KafkaServer[]` and
+  `KafkaGroupProtocol`), plus `kafka.clients` if the application uses Kafka types
+  itself. `kafka.clients` is derived from the jar's file name.
+
+| JSR-356 WebSocket protocol (`spi.websocket.jsr356`)
+| `jakarta.websocket` and `jakarta.websocket.client` (`WebsocketConfiguration` and
+  `WebsocketConfigurator` expose `Endpoint`, `Extension`, and `ServerEndpointConfig`)
+
+| Latency metrics (`spi.latency`)
+| `org.smallmind.claxon.registry`
+|===
+
+[WARNING]
+====
+A jar on the module path is not enough. A module that requires only
+`org.smallmind.bayeux.oumuamua.server.spi` and builds
+`new OrthodoxCodec(new JaxbDeserializer<>())` compiles, then fails at run time with
+`NoClassDefFoundError: org/smallmind/web/json/scaffold/util/JsonCodec` even though
+`web-json-scaffold` is on the module path; adding
+`requires org.smallmind.web.json.scaffold;` fixes it. The same applies to
+each row above. On the classpath nothing changes.
+====
+
+The POM's optional `spring-beans` dependency is not named in the descriptor; no
+`oumuamua-server-spi` class references it. `oumuamua-server-impl` is currently an
+automatic module under the name above. See
+xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 [[installation]]
 == Installation

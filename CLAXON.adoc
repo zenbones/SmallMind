@@ -642,12 +642,12 @@ and does not bring it.
 
 === Module path
 
-`claxon-registry` ships an explicit module descriptor for
-`org.smallmind.claxon.registry` that exports all seven of its packages. On
-the classpath the descriptor is ignored. The README module table shows which
-of the other Claxon artifacts are explicit and which are still automatic.
-See xref:README.adoc#module-path[Module Path And Classpath] for the
-repository-wide rules.
+Every Claxon artifact ships an explicit module descriptor under the name in
+the tables above, exporting all of its packages. On the classpath the
+descriptors are ignored. See xref:README.adoc#module-path[Module Path And Classpath]
+for the repository-wide rules.
+
+For `org.smallmind.claxon.registry`:
 
 * It re-exports (`requires transitive`) `org.smallmind.nutsnbolts`,
   `jakarta.xml.bind`, and `tools.jackson.databind`, and requires
@@ -668,6 +668,37 @@ repository-wide rules.
   and `tools.jackson.databind` for the generated `*InView` classes the meter
   parsers read, and `org.smallmind.claxon.registry.spring` to `spring.core`
   and `spring.beans`.
+
+For the emitters and add-ons, each re-exports `org.smallmind.claxon.registry`
+(`requires transitive`), so requiring one artifact is enough to use the
+registry API:
+
+* `org.smallmind.claxon.emitter.aws` requires the AWS SDK automatic modules
+  (`software.amazon.awssdk.auth`, `.awscore`, `.regions`,
+  `.services.cloudwatch`) and `spring.beans`. `AWSEmitter(CloudWatchClient, String)`
+  and `CloudWatchClientFactory.setRegion(Region)` expose SDK types, so a
+  module that calls them requires `software.amazon.awssdk.services.cloudwatch`
+  and `software.amazon.awssdk.regions` itself. It opens
+  `org.smallmind.claxon.emitter.aws` to `spring.core` and `spring.beans`.
+* `org.smallmind.claxon.emitter.datadog` requires `java.dogstatsd.client`, a
+  name derived from the jar's file name (the DogStatsD jar declares none),
+  and `spring.beans`. It opens `org.smallmind.claxon.emitter.datadog.spring`
+  to `spring.core` and `spring.beans`.
+* `org.smallmind.claxon.emitter.jmx` and `org.smallmind.claxon.exotic`
+  re-export `java.management`; `claxon-exotic` also requires
+  `jdk.management` for the `com.sun.management` beans `OSFacts` reads.
+* `org.smallmind.claxon.emitter.message` re-exports `org.smallmind.scribe.pen`
+  and opens `org.smallmind.claxon.emitter.message.spring` to `spring.core`
+  and `spring.beans`; `org.smallmind.claxon.emitter.noop` opens
+  `org.smallmind.claxon.emitter.noop.spring` the same way.
+* `org.smallmind.claxon.emitter.prometheus` requires `org.smallmind.nutsnbolts`.
+* `org.smallmind.claxon.http` re-exports `jakarta.ws.rs` and needs no
+  `opens`: `EmitterResource` is public with public constructors and no
+  injected fields. The host follows the `web-jersey` module-path rules in
+  xref:WEB.adoc#_web_jersey[WEB.adoc].
+* A module that uses the Spring factory beans of any of these artifacts
+  requires `spring.beans` itself, because automatic modules are never
+  re-exported.
 
 == Quick start
 
