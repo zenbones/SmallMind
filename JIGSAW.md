@@ -14,9 +14,9 @@ Update this block at the end of every stage or wave; it is the entry point for a
 |---|---|
 | Stage 0 — `Automatic-Module-Name` everywhere (§4) | **Done** 2026-10-03 |
 | Stage 1 — build plumbing and spikes (§5) | **Done** 2026-10-03 |
-| Stage 2 — descriptors, waves A–I (§6) | Waves A–G **done** (2026-10-03 through 2026-10-05). **Next: Wave H**. Read the Wave A–G outcomes first |
-| Stage 3 — documentation pass (§7) | Repository-wide parts done with Wave A (`README.adoc` "Module Path And Classpath" + *Kind* column, `CODE_STYLE.md` "Module Descriptors", `DESIGN_PHILOSOPHY.md`); per-chapter parts continue with each wave |
-| Stage 4 — module-path verification (§8) | Not started |
+| Stage 2 — descriptors, waves A–I (§6) | **Done** — waves A–I (2026-10-03 through 2026-10-05). Read the wave outcomes before Stage 4 |
+| Stage 3 — documentation pass (§7) | **Done** with Wave I (2026-10-05): repository-wide parts with Wave A, per-chapter parts with each wave; Stage 4 corrections applied |
+| Stage 4 — module-path verification (§8) | **Done** 2026-10-05. See the Stage 4 outcome in §8 |
 
 No open decisions. (§5.7 settled 2026-10-03: `aspectjrt` stays optional.)
 
@@ -787,11 +787,36 @@ Pre-flight, carrying Stage 1 findings that apply here:
 | `org.smallmind.liquibase` | `org.smallmind.nutsnbolts`, `org.smallmind.persistence`, `liquibase.core`, `java.sql`, `java.logging`; *static* `spring.beans` | **No** `provides` (§3.5). `opens org.smallmind.liquibase.spring;` unconditionally (`schema-hibernate.xml`, moved here in Wave G). The optional `smallmind-quorum` and `spring-orm` are used only by that file, so they are not in the descriptor (the Wave A `shiro-spring` exception). `LIQUIBASE.adoc`: add the modular-consumer subclass paragraph under "How Liquibase discovers the bridge". |
 | `org.smallmind.web.json.query` | `org.smallmind.nutsnbolts`, `org.smallmind.persistence`, **`org.smallmind.web.json.scaffold`**, **`jakarta.persistence`**, `jakarta.validation`, **`jakarta.xml.bind`**, `tools.jackson.core`, **`tools.jackson.databind`**; *static* `com.querydsl.core`, `org.smallmind.mongodb.throng` | 25 JAXB-annotated files across all five packages: `opens` each `→ jakarta.xml.bind, tools.jackson.databind`. `WEB.adoc`. |
 
+**Wave H outcome (2026-10-05).** Descriptors committed for both modules. Tests: `liquibase` 9, `web/json/query` 225, all green. A full repository `install -DskipTests` is green, both jars describe as named modules, and `jdeps --check` differs only in the deliberate ways. The only `[exports]` lint warnings name automatic modules (`liquibase.core`, `spring.beans`, `com.querydsl.core`) or static ones (`org.jspecify`, `org.smallmind.mongodb.throng`). Findings:
+
+- **`liquibase`.**
+  - `ScribeLogService`/`ScribeLiquibaseLogger` import `org.smallmind.scribe.pen`, which arrived only through `persistence`, so `scribe-pen` became a direct compile dependency (§3.3; no consumer change).
+  - `opens org.smallmind.liquibase.spring` unconditionally (`schema-hibernate.xml` and `SpringLiquibase`). The resource-only optional `smallmind-quorum` and `spring-orm` are not in the descriptor.
+  - No `provides`, as §3.5 decided.
+- **`liquibase-core` 5.0.1 depends on `javax.xml.bind:jaxb-api` 2.3.1** (module `java.xml.bind`, which requires a `java.activation` that is not present).
+  - `jdeps` runs must drop that jar from the path.
+  - On a module path it is harmless unless something resolves `java.xml.bind`, but `--add-modules ALL-MODULE-PATH` does, and startup then fails with `FindException: Module java.activation not found, required by java.xml.bind`. Adding `javax.activation:javax.activation-api` 1.2.0 fixes it.
+  - `LIQUIBASE.adoc` "Failure modes" has the entry.
+- **§3.5 verified on a module path.** A scratch module declaring `provides liquibase.logging.LogService with AppLogService` (`AppLogService extends ScribeLogService {}`) gets `ScribeLiquibaseLogger` from `Scope.getCurrentScope().getLog(...)`; without the clause Liquibase returns `JavaLogger`. A Scribe backend must be present, or the first log call fails with `No provider found for LoggingBlueprint`. `LIQUIBASE.adoc` "How Liquibase discovers the bridge" now has the modular-consumer paragraph.
+- **`web/json/query`.**
+  - All 25 JAXB-annotated files are in `org.smallmind.web.json.query`, not across all five packages as the table said, so only that package is opened (to `jakarta.xml.bind, tools.jackson.databind`).
+  - The module also owns the bare package `org.smallmind.web.json` (`NonTerminalWildcardException`); no other module uses it.
+  - `WhereOperand` imports JSpecify's `@NonNull`, which arrived only transitively, so `org.jspecify:jspecify` became an optional dependency with `requires static org.jspecify` (as `scribe/pen` in Wave B).
+  - The `annotationProcessorPaths` entry holds only `jakarta.persistence-api`; nothing is generated.
+- **Module-path spot check:** `schema-hibernate.xml` is visible from another module, and `JsonCodec` round-trips a `Sort` of `SortField`s.
+
 ### Wave I — depth 8
 
 | Module | `requires` | `opens` / `provides` / notes |
 |---|---|---|
 | `org.smallmind.batch.spring` | `org.smallmind.nutsnbolts`, `org.smallmind.scribe.pen`, `org.smallmind.batch.base`, `org.smallmind.liquibase`, `spring.beans`, `spring.context`, `spring.core`, `spring.batch.core`, `java.sql` | `opens org.smallmind.batch.spring;` (Spring XML + Liquibase changelog). `BATCH.adoc`. |
+
+**Wave I outcome (2026-10-05).** Descriptor committed for `batch/spring`. Tests: 39 green. A full repository `install -DskipTests` is green, and the jar describes as a named module. The only `[exports]` lint warnings name automatic Spring modules or the static `org.jspecify`. Findings:
+
+- `BatchJobExecutorFactory` imports JSpecify's `@Nullable`, which arrived only transitively, so `org.jspecify:jspecify` became an optional dependency with `requires static org.jspecify` (as `scribe/pen` and `web/json/query`).
+- **Resource-driven `requires org.smallmind.liquibase`.** No class uses it, but `batch-liquibase.xml` (imported by `batch.xml`) names `SpringLiquibase`, `ChangeLog`, and `persistence`'s `DriverManagerDataSource`, and `smallmind-liquibase` is already a mandatory POM dependency. `jdeps --check` omits it; that is deliberate, as with `testbench/foundation`.
+- `opens org.smallmind.batch.spring` unconditionally (Spring XML and the Liquibase changelog). `BatchJobExecutorFactory` and `BatchJobRegistry` are the Spring-facing classes in the same package, covered by that open.
+- **Module-path spot check:** a module requiring only `org.smallmind.batch.spring` sees `batch.xml`, `batch-liquibase.xml`, and `Batch.changelog.xml`, and has `org.smallmind.liquibase` and `org.smallmind.persistence` resolved.
 
 ### 6.1 Descriptor sketch (shape, not final content)
 
@@ -855,6 +880,31 @@ Tests run on the classpath (§3.6), so the module path needs a dedicated check o
 2. **Resolution smoke test.** A throwaway `main` (not committed, or committed under `testbench` only if the owner wants it) that runs with `--module-path <all smallmind jars + deps> --add-modules ALL-MODULE-PATH` and touches: `LoggingBlueprintFactory` (service lookup through `uses`/`provides` with `scribe-ink-indigenous` present), `EphemeralFileSystemProvider` via `FileSystems.newFileSystem`, a Spring `ClassPathXmlApplicationContext` over `classpath:org/smallmind/persistence/hibernate.xml` (encapsulated-resource open), one JAXB round-trip of a `web/json/scaffold` type, one `ScribeSLF4JServiceProvider` lookup via `LoggerFactory`. Include the web stack by re-running the §5.5 spike harness (Jetty, `web/jersey` providers, `claxon/http`) against the real descriptors; include `web/grizzly` with a SOAP endpoint and `--add-reads com.sun.xml.ws=grizzly.http.server.jaxws` (Wave E follow-up), and exercise a Tyrus WebSocket endpoint, which no harness has covered yet.
 3. **Negative check.** Run the same with `hibernate-core` on the module path but **without** `--add-modules org.hibernate.orm.core` and confirm the failure is the one documented in §3.4 — then confirm the chapter text matches the actual exception.
 4. **Classpath regression.** The full `mvn install` test suite is this check; nothing should have changed for classpath consumers.
+
+**Stage 4 outcome (2026-10-05).** Findings:
+
+- **`jdeps --check`** over all 52 descriptors differs only in the deliberate ways: the resource-driven `requires` (`batch/spring` → `org.smallmind.liquibase`, `testbench/foundation`) and `requires static` modules used only through annotations (`org.jspecify`, `jakarta.annotation`, `jakarta.xml.bind` in `scribe/pen`).
+  - One real gap: `testbench/docker` uses `com.github.dockerjava.transport` types (`DockerHttpClient`, `SSLConfig`) that arrived only transitively. It now declares `docker-java-transport` (root-managed) and `requires com.github.dockerjava.transport`.
+  - `testbench/condition` now depends on `docker-java-api` rather than the `docker-java` aggregate; the root `docker-java` entry is gone.
+- **No `ALL-MODULE-PATH` launch.** It resolves modules no real application needs and then fails on their descriptors (`io.netty.codec.marshalling` → `org.jboss.marshalling`, `liquibase-core`'s `jaxb-api` → `java.activation`, `jakarta.transaction` → `jakarta.cdi`). Step 2 ran as four scenario apps (scratch, not committed), each with only the modules it uses.
+- **Hibernate/JPA plus Liquibase**, through the shipped `schema-hibernate.xml` with the pool. An entity persists and reloads.
+  - Hibernate needs `--add-modules org.apache.commons.logging,java.instrument,org.jboss.logging,com.fasterxml.classmate,net.bytebuddy,jakarta.transaction`.
+  - `jakarta.transaction`'s descriptor requires `jakarta.cdi` and `jakarta.interceptor`, which Hibernate's POM does not bring. The CDI API, CDI lang-model, interceptor API, annotation API, and inject API jars must be added by hand.
+  - Liquibase needs `org.apache.commons.lang3,org.yaml.snakeyaml,org.apache.commons.io`. A changelog in a package-like directory needs an unconditional `opens`.
+  - Failure signatures for the entity `opens` and the changelog `opens` are in `PERSISTENCE.adoc` and `LIQUIBASE.adoc`.
+- **Negative check (step 3).** With `requires org.hibernate.orm.core` removed and no `--add-modules` for it, the app still runs: `hibernate-core` is automatic, and the automatic Spring modules resolve every automatic module. This confirms the §3.4 correction. The "present but unresolved" failure hits explicit modules instead (`commons-lang3`, `slf4j`, `jakarta.transaction`'s CDI modules), and the chapters now name them.
+- **Quartz through `SpringJobFactory`.** Opening the job package to `spring.core, spring.beans` is sufficient (the Wave C open question).
+  - Without it the scheduler starts but the job never runs, and the error is visible only through SLF4J and `SchedulerListener.schedulerError`.
+  - Quartz needs `--add-modules org.slf4j`.
+  - `SCHEDULE.adoc` has both.
+- **`phalanx` proxies** (mock transport, `JsonSignalCodec`). The consumer exports the service interface package to `org.smallmind.phalanx` (`MethodInvoker` calls it reflectively) and opens argument/result types to `tools.jackson.databind`.
+  - Arguments must be `Serializable` (`ArgumentRectifier`); `PHALANX.adoc` only mentioned results, and now covers both.
+- **Tyrus WebSockets on `web-grizzly`.** An annotated echo endpoint round-trips with a `java.net.http` client.
+  - The endpoint package must be exported to `org.glassfish.tyrus.core`. Without it the failure is silent: the handshake succeeds, `@OnError` is not called, and only a JUL `FINE` record says "Component provider … not found".
+  - `WEB.adoc` claimed `@ServerEndpoint` Spring beans were discovered automatically; nothing does that. The section now documents registration through the `jakarta.websocket.server.ServerContainer` servlet-context attribute from a `ListenerInstaller`.
+  - Installers configured by class (`servletClass`, `filterClass`, `listenerClass`) need their package exported to `org.smallmind.web.grizzly` / `org.smallmind.web.jetty`.
+- **Bug fixed: installers declared before the server bean could be dropped.** `GrizzlyPostProcessor` and `JettyPostProcessor` queued installer beans seen before the locator (the initializing bean) and replayed the queue only when a *later* bean was post-processed. If the initializing bean was the last bean in the context, the queued installers were never installed and nothing reported it. Both now replay the queue when the locator arrives, and the tests that pinned the old behavior are updated (`web-grizzly` 101, `web-jetty` 63, green).
+- **Classpath regression (step 4):** the full `mvn install` with tests is green across all 83 projects: 11,408 tests, 0 failures, 0 errors, 12 skipped (Docker-backed integration tests ran against Docker 29.6.2).
 
 ## 9. Verification Checklist (per wave and at the end)
 

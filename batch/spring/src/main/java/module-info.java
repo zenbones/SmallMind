@@ -30,15 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.testbench.docker {
+module org.smallmind.batch.spring {
 
-  requires com.github.dockerjava.api;
-  requires com.github.dockerjava.core;
-  requires com.github.dockerjava.transport;
-  requires com.github.dockerjava.transport.httpclient5;
+  requires org.smallmind.liquibase;
+  requires org.smallmind.nutsnbolts;
   requires org.smallmind.scribe.pen;
+  requires spring.batch.core;
+  requires spring.beans;
+  requires spring.context;
+  requires spring.core;
 
-  requires transitive org.smallmind.nutsnbolts;
+  requires transitive java.sql;
+  requires transitive org.smallmind.batch.base;
 
-  exports org.smallmind.testbench.docker;
+  requires static org.jspecify;
+
+  exports org.smallmind.batch.spring;
+
+  opens org.smallmind.batch.spring;
 }

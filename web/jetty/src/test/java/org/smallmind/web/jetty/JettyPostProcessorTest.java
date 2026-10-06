@@ -104,11 +104,11 @@ public class JettyPostProcessorTest {
     postProcessor.postProcessAfterInitialization(earlyListener, "early");
     Assert.assertTrue(locator.webAppStateFor("/early").getListenerInstallerList().isEmpty());
 
-    // The locator now appears; the next non-locator bean triggers the flush plus its own processing.
+    // The locator arriving flushes the queue, even when no bean follows it.
     postProcessor.postProcessAfterInitialization(locator, "locator");
-    postProcessor.postProcessAfterInitialization(lateServlet, "late");
-
     Assert.assertSame(locator.webAppStateFor("/early").getListenerInstallerList().getFirst(), earlyListener);
+
+    postProcessor.postProcessAfterInitialization(lateServlet, "late");
     Assert.assertSame(locator.webAppStateFor("/late").getServletInstallerList().getFirst(), lateServlet);
   }
 

@@ -346,8 +346,47 @@ extraction — it assumes an upstream proxy has already populated the
 `WebSocketOption` is a marker that causes the server to build a
 `TyrusGrizzlyServerContainer` per context and (optionally, when
 `includeWsadlSupport=true`) mount a `WsadlHttpHandler` that serves a WSADL
-descriptor. Register endpoints as ordinary Spring beans annotated with
-`@ServerEndpoint` and they will be discovered automatically.
+descriptor.
+
+Endpoints are not discovered from the Spring context. The container is
+published as the standard `jakarta.websocket.server.ServerContainer`
+servlet-context attribute, and the application registers its endpoints
+there, typically from a `ServletContextListener` installed with a
+`ListenerInstaller` for the same context path:
+
+[source,java]
+----
+public class EndpointRegistrar implements ServletContextListener {
+
+  @Override
+  public void contextInitialized (ServletContextEvent servletContextEvent) {
+
+    ServerContainer serverContainer = (ServerContainer)servletContextEvent.getServletContext().getAttribute(ServerContainer.class.getName());
+
+    try {
+      serverContainer.addEndpoint(EchoEndpoint.class);
+    } catch (DeploymentException deploymentException) {
+      throw new RuntimeException(deploymentException);
+    }
+  }
+}
+----
+
+[source,xml]
+----
+<bean class="org.smallmind.web.grizzly.installer.ListenerInstaller">
+  <property name="contextPath" value="/app"/>
+  <property name="listenerClass" value="com.example.ws.EndpointRegistrar"/>
+</bean>
+----
+
+`addEndpoint` accepts an annotated (`@ServerEndpoint`) class or a
+`ServerEndpointConfig`. Endpoint paths are relative to the context path, so
+`@ServerEndpoint("/echo")` above answers at `ws://host:port/app/echo`.
+A `WebSocketExtensionInstaller` for that context adds its extensions to an
+endpoint registered as a `ServerEndpointConfig` whose endpoint class and
+path match the installer's; annotated classes registered directly receive
+no installer extensions.
 
 === SOAP
 
@@ -388,6 +427,13 @@ repository-wide rules.
   `grizzly-npn-api` for the same reason on the classpath.)
 * `grizzly-http-server-jaxws` has no module name of its own, so its module
   name, `grizzly.http.server.jaxws`, is derived from the jar's file name.
+* An installer configured with a class (`servletClass`, `filterClass`, or
+  `listenerClass`) is instantiated by `org.smallmind.web.grizzly`, so the
+  application exports that class's package to `org.smallmind.web.grizzly`.
+  Without it startup fails with `GrizzlyInitializationException:
+  IllegalAccessException: class
+  org.smallmind.web.grizzly.installer.ListenerInstaller … cannot access class
+  …`. Installers configured with an instance need no export.
 
 A module-path application hosting REST resources follows the
 <<_web_jersey>> "Module path" rules. One that publishes SOAP endpoints also:
@@ -408,6 +454,15 @@ A module-path application hosting REST resources follows the
 SOAP endpoints and Jersey resources can share one Grizzly server on a module
 path; launch it with the `--add-modules` from the <<_web_jersey>> rules plus
 the `--add-reads` above.
+
+One that registers WebSocket endpoints exports each endpoint package to
+Tyrus (`exports com.example.ws to org.glassfish.tyrus.core;`), which
+instantiates the endpoint class reflectively. Without it the handshake
+succeeds but no message reaches the endpoint, its `@OnError` method is not
+called, and the only trace is a JUL `FINE` record from
+`org.glassfish.tyrus.core` reading `Component provider for class … not
+found`. WebSockets need no command-line flags beyond those the rest of the
+application needs.
 
 [[_web_jetty]]
 == web-jetty
@@ -546,6 +601,11 @@ names Jetty's explicit modules, requiring `org.smallmind.web.jetty` brings
 them into the module graph. A module that implements or calls the Spring
 callbacks on `JettyInitializingBean` or `JettyPostProcessor` requires
 `spring.beans` and `spring.context` itself.
+
+An installer configured with a class (`servletClass`, `filterClass`, or
+`listenerClass`) is instantiated by `org.smallmind.web.jetty`, so the
+application exports that class's package to `org.smallmind.web.jetty`;
+installers configured with an instance need no export.
 
 A module-path application hosting `web-jersey` resources on `web-jetty`
 follows the <<_web_jersey>> "Module path" rules.
@@ -1189,6 +1249,26 @@ and their polymorphic XML adapters let a server publish type metadata (for
 example, "this field is an enum; here are its choices") alongside a schema so
 a client form generator can render the right widget.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.web.json.query`
+that exports all five of its packages (including `org.smallmind.web.json`,
+which holds `NonTerminalWildcardException`) and opens
+`org.smallmind.web.json.query` to `jakarta.xml.bind` and
+`tools.jackson.databind` for its JAXB-annotated query types. On the classpath
+the descriptor is ignored. See xref:README.adoc#module-path[Module Path And Classpath]
+for the repository-wide rules.
+
+* It re-exports (`requires transitive`) `org.smallmind.web.json.scaffold`,
+  `org.smallmind.persistence`, `org.smallmind.nutsnbolts`,
+  `jakarta.persistence`, `jakarta.validation`, `jakarta.xml.bind`, and
+  `tools.jackson.databind`, and requires `tools.jackson.core`.
+* The backend translators depend on optional modules, which are
+  `requires static`: a module that uses `QueryDslQueryUtility` requires
+  `com.querydsl.core`, and one that uses `ThrongQueryUtility` requires
+  `org.smallmind.mongodb.throng`. `JPAQueryUtility` needs only
+  `jakarta.persistence`, which is re-exported.
+
 [[_web_jwt]]
 == web-jwt
 
@@ -1375,6 +1455,10 @@ CORS preflight still fails::
 `IllegalAccessException: module com.sun.xml.ws does not read module grizzly.http.server.jaxws`::
     A module-path application publishing SOAP endpoints on `web-grizzly`
     lacks `--add-reads com.sun.xml.ws=grizzly.http.server.jaxws`. See
+    <<_web_grizzly>>, "Module path".
+
+A WebSocket connects on a module path but the endpoint never answers::
+    The endpoint package is not exported to `org.glassfish.tyrus.core`. See
     <<_web_grizzly>>, "Module path".
 
 `IllegalStateException: InjectionManagerFactory not found.`::

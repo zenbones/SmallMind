@@ -30,15 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.testbench.docker {
+module org.smallmind.liquibase {
 
-  requires com.github.dockerjava.api;
-  requires com.github.dockerjava.core;
-  requires com.github.dockerjava.transport;
-  requires com.github.dockerjava.transport.httpclient5;
+  requires liquibase.core;
+  requires org.smallmind.nutsnbolts;
   requires org.smallmind.scribe.pen;
 
-  requires transitive org.smallmind.nutsnbolts;
+  requires transitive java.logging;
+  requires transitive java.sql;
+  requires transitive org.smallmind.persistence;
 
-  exports org.smallmind.testbench.docker;
+  requires static spring.beans;
+
+  exports org.smallmind.liquibase.spring;
+
+  opens org.smallmind.liquibase.spring;
 }

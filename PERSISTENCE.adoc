@@ -226,6 +226,25 @@ using the feature then fails with `NoClassDefFoundError` for one of its
 classes. Spring also needs `org.apache.commons.logging` resolved (add it with
 `requires` or `--add-modules`).
 
+Hibernate's own dependencies are automatic modules or are only reached
+reflectively, so a JPA + Hibernate application also resolves them with
+`--add-modules`:
+
+[source,text]
+----
+--add-modules org.apache.commons.logging,java.instrument,org.jboss.logging,com.fasterxml.classmate,net.bytebuddy,jakarta.transaction
+----
+
+`jakarta.transaction`'s descriptor requires `jakarta.cdi` and
+`jakarta.interceptor`, which Hibernate's Maven dependencies do not bring in.
+Put `jakarta.enterprise:jakarta.enterprise.cdi-api`,
+`jakarta.enterprise:jakarta.enterprise.lang-model`,
+`jakarta.interceptor:jakarta.interceptor-api`,
+`jakarta.annotation:jakarta.annotation-api`, and
+`jakarta.inject:jakarta.inject-api` on the module path as well; without them
+startup fails with `FindException: Module jakarta.cdi not found, required by
+jakarta.transaction`.
+
 The descriptor opens:
 
 * `org.smallmind.persistence` unconditionally, so
@@ -247,6 +266,10 @@ and `org.smallmind.nutsnbolts` (see xref:MONGODB.adoc[MONGODB.adoc]).
 ----
 opens com.example.app.entity to org.hibernate.orm.core;
 ----
+
+An entity package that is not opened fails when the entity manager factory
+is built, with `InaccessibleObjectException: … module com.example.app does
+not "exports com.example.app.entity" to module org.hibernate.orm.core`.
 
 [[core-durable]]
 == The Durable and DAO Core

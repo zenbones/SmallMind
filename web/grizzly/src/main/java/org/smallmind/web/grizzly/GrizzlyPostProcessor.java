@@ -72,8 +72,8 @@ public class GrizzlyPostProcessor implements BeanPostProcessor {
   }
 
   /**
-   * Registers the locator when it is first seen, replays any deferred installer beans, and then processes the current
-   * bean.
+   * Queues installer beans that arrive before the locator is known, replays the queue when the locator arrives, and
+   * processes later beans directly.
    *
    * @param bean     the fully initialized bean instance
    * @param beanName Spring name of the bean
@@ -84,6 +84,12 @@ public class GrizzlyPostProcessor implements BeanPostProcessor {
 
     if (bean instanceof GrizzlyWebAppStateLocator) {
       locator = (GrizzlyWebAppStateLocator)bean;
+
+      for (Object unprocessedBean : unprocessedBeans) {
+        processBean(unprocessedBean);
+      }
+
+      unprocessedBeans.clear();
     } else if (locator == null) {
       if (bean instanceof WebSocketExtensionInstaller) {
         unprocessedBeans.add(bean);
@@ -97,12 +103,6 @@ public class GrizzlyPostProcessor implements BeanPostProcessor {
         unprocessedBeans.add(bean);
       }
     } else {
-      for (Object unprocessedBean : unprocessedBeans) {
-        processBean(unprocessedBean);
-      }
-
-      unprocessedBeans.clear();
-
       processBean(bean);
     }
 

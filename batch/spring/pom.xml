@@ -15,6 +15,12 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>batch-base</artifactId>
       <scope>compile</scope>

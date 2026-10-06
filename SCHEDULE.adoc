@@ -324,7 +324,19 @@ descriptor is ignored. On a module path:
 * Your job classes are constructed reflectively: by Spring when `SpringJobFactory` supplies
   them as prototype beans, or by Quartz if you install Quartz's own job factory instead. Open
   each job package to the module that constructs it, `spring.beans` (with `spring.core`) or
-  `org.quartz`.
+  `org.quartz`:
++
+[source,java]
+----
+opens com.example.job to spring.core, spring.beans;
+----
++
+Without it the scheduler starts but the job never runs. Quartz reports `An error occurred
+instantiating job to be executed … Failed to instantiate [com.example.job.TickJob]: Is the
+constructor accessible?` only through its SLF4J log and `SchedulerListener.schedulerError`.
+* `org.quartz` is automatic and cannot bring SLF4J into the module graph, so the application
+  resolves it with `--add-modules org.slf4j` (or requires it). Without it creating the
+  `SpringSchedulerFactory` bean fails with `NoClassDefFoundError: org/slf4j/LoggerFactory`.
 
 See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 

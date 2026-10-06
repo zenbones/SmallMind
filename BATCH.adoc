@@ -280,9 +280,24 @@ The two artifacts are published under `org.smallmind`:
 |===
 
 `batch-base` ships an explicit module descriptor that exports
-`org.smallmind.batch.base` and requires nothing beyond `java.base`. `batch-spring`
-is currently an automatic module under the name above. See
-xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
+`org.smallmind.batch.base` and requires nothing beyond `java.base`.
+
+`batch-spring` ships an explicit module descriptor that exports
+`org.smallmind.batch.spring` and opens it unconditionally, so `batch.xml`,
+`batch-liquibase.xml`, and `Batch.changelog.xml` stay loadable by path from
+other modules and Spring can reach the classes they configure. It re-exports
+(`requires transitive`) `org.smallmind.batch.base` and `java.sql`, and
+requires `org.smallmind.nutsnbolts`, `org.smallmind.scribe.pen`, and the
+automatic Spring modules `spring.batch.core`, `spring.beans`,
+`spring.context`, and `spring.core`. Automatic modules are never
+re-exported, so a module that uses the Spring Batch or Spring types in
+`batch-spring`'s API requires those modules itself. It also requires
+`org.smallmind.liquibase`, which no class uses but `batch-liquibase.xml`
+does; requiring `org.smallmind.batch.spring` therefore brings Liquibase and
+`smallmind-persistence` (for `DriverManagerDataSource`) into the module
+graph.
+
+See xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 A reusable library that only needs to *describe* a batch launch (e.g., a
 service API module whose REST controllers accept parameter maps and hand them

@@ -297,6 +297,35 @@ the shipped <<schema-hibernate,`schema-hibernate.xml`>> uses them.
   discovers log services via `java.util.ServiceLoader`, so without this
   file it will fall back to its built-in JUL service.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.liquibase`
+that exports `org.smallmind.liquibase.spring` and opens it unconditionally,
+so `classpath:org/smallmind/liquibase/spring/schema-hibernate.xml` stays
+loadable from other modules and Spring can reach `SpringLiquibase`. It
+re-exports (`requires transitive`) `org.smallmind.persistence`, `java.sql`,
+and `java.logging`, and requires `org.smallmind.nutsnbolts`,
+`org.smallmind.scribe.pen`, and the automatic module `liquibase.core`;
+`spring.beans` is `requires static`. On the classpath the descriptor is
+ignored. See xref:README.adoc#module-path[Module Path And Classpath] for
+the repository-wide rules.
+
+* `liquibase.core` is automatic and never re-exported. `ScribeLogService`
+  and `ScribeLiquibaseLogger` expose Liquibase types, so a module that
+  uses them requires `liquibase.core` itself.
+* The Scribe bridge is registered differently on a module path; see
+  <<how-liquibase-discovers-the-bridge>>.
+* `liquibase.core` is automatic, so it cannot bring its own dependencies
+  into the module graph. The application resolves them with
+  `--add-modules org.apache.commons.lang3,org.yaml.snakeyaml,org.apache.commons.io`.
+  Without them creating a `SpringLiquibase` bean fails with
+  `NoClassDefFoundError: org/apache/commons/lang3/ObjectUtils`.
+* A changelog stored in a package-like directory of a named module (for
+  example `database/schema/schema.xml`) is encapsulated, so the module
+  opens that package unconditionally (`opens database.schema;`). Without it
+  the run fails with `ChangeLogParseException: The file
+  database/schema/schema.xml was not found in the configured search path`.
+
 == Wiring it up
 
 The typical wiring puts `SpringLiquibase` in a Spring XML file alongside
@@ -768,6 +797,7 @@ everything else has two options: configure JUL to forward to Scribe, or
 install `ScribeLogService` as Liquibase's log service. The second is
 simpler and requires no runtime configuration.
 
+[[how-liquibase-discovers-the-bridge]]
 === How Liquibase discovers the bridge
 
 Liquibase discovers `LogService` implementations through
@@ -786,6 +816,31 @@ in `src/main/resources/META-INF/services/liquibase.logging.LogService` in
 their own artifact. This is intentional: shipping the file in the module
 would force the bridge on every consumer of `smallmind-liquibase`,
 including ones that are not using Scribe.
+
+On a module path the services file is not consulted, and `provides` must
+name a class in the declaring module. A modular application therefore
+declares a subclass of its own and provides that:
+
+[source,java]
+----
+public class AppLogService extends ScribeLogService {
+}
+----
+
+[source,java]
+----
+module com.example.app {
+  requires liquibase.core;
+  requires org.smallmind.liquibase;
+
+  provides liquibase.logging.LogService with com.example.app.AppLogService;
+}
+----
+
+Without the `provides` clause Liquibase falls back to its own
+`JavaLogger`. A Scribe backend (for example `scribe-ink-indigenous`) must
+also be on the module path, or the first log call fails with
+`StaticInitializationError: No provider found for LoggingBlueprint`.
 
 === Priority
 
@@ -867,6 +922,13 @@ connection N+1's transaction dangling.
 
 == Failure modes
 
+* `FindException: Module java.activation not found, required by
+  java.xml.bind` at startup on a module path. `liquibase-core` depends on
+  the old `javax.xml.bind:jaxb-api`, whose module requires
+  `java.activation`. Nothing in a normal module graph resolves it; it is
+  resolved when the launch uses `--add-modules ALL-MODULE-PATH`. Name the
+  modules you need instead, or add `javax.activation:javax.activation-api`
+  to the module path.
 * `FileNotFoundException` from `setSource(Source.FILE)`. Thrown when
   `DirectoryResourceAccessor` cannot use `System.getProperty("user.home")`
   as a root — usually because the property is unset in the JVM. Either

@@ -87,9 +87,8 @@ public class GrizzlyPostProcessorTest {
 
     Assert.assertTrue(locator.webAppStateFor("/context").getServletInstallerList().isEmpty());
 
-    // The locator itself does not trigger a replay; a subsequent bean does.
+    // The locator arriving replays the queue, even when no bean follows it.
     postProcessor.postProcessAfterInitialization(locator, "locator");
-    postProcessor.postProcessAfterInitialization(new Object(), "trigger");
 
     Assert.assertEquals(locator.webAppStateFor("/context").getServletInstallerList().size(), 1);
     Assert.assertEquals(locator.webAppStateFor("/context").getListenerInstallerList().size(), 1);

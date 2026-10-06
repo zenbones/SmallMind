@@ -191,9 +191,27 @@ The descriptor opens `org.smallmind.phalanx.wire` unconditionally, so
 stay loadable from other modules; `org.smallmind.phalanx.wire.signal` to
 `jakarta.xml.bind` and `tools.jackson.databind`; and the two Spring packages
 (`wire.spring`, `wire.transport.amqp.rabbitmq.spring`) to `spring.core` and
-`spring.beans`. `JsonSignalCodec` serializes your service arguments and
-results with Jackson, so open the packages holding those types to
-`tools.jackson.databind`.
+`spring.beans`.
+
+An application on a module path also:
+
+* Exports each service interface package to `org.smallmind.phalanx`, which
+  invokes the interface's methods reflectively on the serving side:
++
+[source,java]
+----
+exports com.example.api to org.smallmind.phalanx;
+----
++
+Without it the call fails with `UndeclaredThrowableException` caused by
+`IllegalAccessException: class org.smallmind.phalanx.wire.transport.MethodInvoker
+… cannot access interface com.example.api.GreetService … because module …
+does not export com.example.api to module org.smallmind.phalanx`.
+* Opens the packages holding argument and result types to
+  `tools.jackson.databind`, because `JsonSignalCodec` serializes them with
+  Jackson. Without it a call passing or returning such a type fails with
+  `DatabindException: access to public member failed`. Strings, numbers,
+  and other JDK types need nothing.
 
 == Quick Start
 
@@ -984,9 +1002,13 @@ Shout has no collection or consensus::
     `@Shout` fans out but does not collect responses and does not
     coordinate subscribers. It is not a distributed-transaction primitive.
 
-Results must be `Serializable`::
-    `WireInvocationCircuit` rejects non-`Serializable` returns with a
-    `TransportException`, independent of which `SignalCodec` is in use.
+Arguments and results must be `Serializable`::
+    The proxy rejects a non-`Serializable` argument before sending, with
+    `TransportException: The argument(index=…, name=…, class=…) is not
+    Serializable` (surfacing as `UndeclaredThrowableException` from a method
+    that does not declare it), and `WireInvocationCircuit` rejects
+    non-`Serializable` returns with a `TransportException`, independent of
+    which `SignalCodec` is in use.
 
 `@InOnly` methods cannot declare checked exceptions::
     Fire-and-forget contracts cannot participate in checked-exception

@@ -30,15 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.testbench.docker {
+module org.smallmind.web.json.query {
 
-  requires com.github.dockerjava.api;
-  requires com.github.dockerjava.core;
-  requires com.github.dockerjava.transport;
-  requires com.github.dockerjava.transport.httpclient5;
-  requires org.smallmind.scribe.pen;
+  requires tools.jackson.core;
 
+  requires transitive jakarta.persistence;
+  requires transitive jakarta.validation;
+  requires transitive jakarta.xml.bind;
   requires transitive org.smallmind.nutsnbolts;
+  requires transitive org.smallmind.persistence;
+  requires transitive org.smallmind.web.json.scaffold;
+  requires transitive tools.jackson.databind;
 
-  exports org.smallmind.testbench.docker;
+  requires static com.querydsl.core;
+  requires static org.jspecify;
+  requires static org.smallmind.mongodb.throng;
+
+  exports org.smallmind.web.json;
+  exports org.smallmind.web.json.query;
+  exports org.smallmind.web.json.query.jpa;
+  exports org.smallmind.web.json.query.querydsl;
+  exports org.smallmind.web.json.query.throng;
+
+  opens org.smallmind.web.json.query to jakarta.xml.bind, tools.jackson.databind;
 }

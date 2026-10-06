@@ -68,7 +68,7 @@ public class JettyPostProcessor implements BeanPostProcessor {
   }
 
   /**
-   * Queues installer beans that arrive before the locator is known, then flushes the queue and processes the current bean once the locator is discovered.
+   * Queues installer beans that arrive before the locator is known, flushes the queue when the locator arrives, and processes later beans directly.
    *
    * @param bean     the bean that has just finished initialization
    * @param beanName the Spring bean name
@@ -79,6 +79,12 @@ public class JettyPostProcessor implements BeanPostProcessor {
 
     if (bean instanceof JettyWebAppStateLocator) {
       locator = (JettyWebAppStateLocator)bean;
+
+      for (Object unprocessedBean : unprocessedBeans) {
+        processBean(unprocessedBean);
+      }
+
+      unprocessedBeans.clear();
     } else if (locator == null) {
       if (bean instanceof ListenerInstaller) {
         unprocessedBeans.add(bean);
@@ -90,12 +96,6 @@ public class JettyPostProcessor implements BeanPostProcessor {
         unprocessedBeans.add(bean);
       }
     } else {
-      for (Object unprocessedBean : unprocessedBeans) {
-        processBean(unprocessedBean);
-      }
-
-      unprocessedBeans.clear();
-
       processBean(bean);
     }
 
