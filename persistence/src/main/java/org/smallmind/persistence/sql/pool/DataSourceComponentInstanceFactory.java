@@ -75,7 +75,7 @@ public class DataSourceComponentInstanceFactory<D extends CommonDataSource, P ex
   public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, int maxStatements, int validityTimeoutSeconds, ConnectionEndpoint... endpoints)
     throws SQLException {
 
-    this(maxStatements, validityTimeoutSeconds, dataSourceFactory.getPooledConnectionClass(), constructDataSources(dataSourceFactory, endpoints));
+    this(dataSourceFactory.getPooledConnectionClass(), maxStatements, validityTimeoutSeconds, constructDataSources(dataSourceFactory, endpoints));
   }
 
   /**
@@ -86,7 +86,7 @@ public class DataSourceComponentInstanceFactory<D extends CommonDataSource, P ex
    * @param pooledConnectionClass  pooled connection class
    * @param dataSources            data sources to wrap
    */
-  public DataSourceComponentInstanceFactory (int maxStatements, int validityTimeoutSeconds, Class<P> pooledConnectionClass, D... dataSources) {
+  public DataSourceComponentInstanceFactory (Class<P> pooledConnectionClass, int maxStatements, int validityTimeoutSeconds, D... dataSources) {
 
     super(60, pooledConnectionClass, constructConnectionPoolDataSources(maxStatements, validityTimeoutSeconds, pooledConnectionClass, dataSources));
   }
