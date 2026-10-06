@@ -45,29 +45,31 @@ public class DataSourcePooledConnection extends AbstractPooledConnection<DataSou
   /**
    * Wraps a physical connection obtained from the data source with statement caching.
    *
-   * @param dataSource    owning data source
-   * @param maxStatements maximum prepared statements to cache
+   * @param dataSource             owning data source
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
    * @throws SQLException if acquiring the connection or validating parameters fails
    */
-  public DataSourcePooledConnection (DataSource dataSource, int maxStatements)
+  public DataSourcePooledConnection (DataSource dataSource, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    super(dataSource, dataSource.getConnection(), maxStatements);
+    super(dataSource, dataSource.getConnection(), maxStatements, validityTimeoutSeconds);
   }
 
   /**
-   * Same as {@link #DataSourcePooledConnection(DataSource, int)} but uses explicit credentials.
+   * Same as {@link #DataSourcePooledConnection(DataSource, int, int)} but uses explicit credentials.
    *
-   * @param dataSource    owning data source
-   * @param user          user name
-   * @param password      password
-   * @param maxStatements maximum prepared statements to cache
+   * @param dataSource             owning data source
+   * @param user                   user name
+   * @param password               password
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
    * @throws SQLException if acquiring the connection or validating parameters fails
    */
-  public DataSourcePooledConnection (DataSource dataSource, String user, String password, int maxStatements)
+  public DataSourcePooledConnection (DataSource dataSource, String user, String password, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    super(dataSource, dataSource.getConnection(user, password), maxStatements);
+    super(dataSource, dataSource.getConnection(user, password), maxStatements, validityTimeoutSeconds);
   }
 
   /**

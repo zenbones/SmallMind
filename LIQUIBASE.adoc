@@ -279,7 +279,8 @@ It transitively pulls in `liquibase-core`, `smallmind-nutsnbolts`, and
 `smallmind-persistence`. `spring-beans` is declared as an `optional`
 dependency, which means a project consuming `smallmind-liquibase` also has
 to declare its own Spring dependencies — the module does not pin a Spring
-version for you.
+version for you. `spring-orm` and `smallmind-quorum` are optional too; only
+the shipped <<schema-hibernate,`schema-hibernate.xml`>> uses them.
 
 === Runtime prerequisites
 
@@ -401,7 +402,7 @@ liquibase.goal=GENERATE
 liquibase.output.dir=/home/dev/regen
 ----
 
-This is the pattern used by `schema-hibernate.xml` in `smallmind-persistence`.
+This is the pattern used by <<schema-hibernate,`schema-hibernate.xml`>>.
 
 == Usage examples
 
@@ -673,6 +674,91 @@ The class loader supplied here is the one `ClassLoaderResourceAccessor`
 will consult when `Source.CLASSPATH` is active; it has no effect when
 `Source.FILE` is used.
 
+[[schema-hibernate]]
+== schema-hibernate.xml — JPA On Hibernate Plus Schema Migration
+
+A complete stack under the session source key `schema`: a connection pool,
+Liquibase migration, a JPA `EntityManagerFactory` on Hibernate, and a
+`JPAProxySession`. Import it and supply the properties below:
+
+[source,xml]
+----
+<import resource="classpath:org/smallmind/liquibase/spring/schema-hibernate.xml"/>
+----
+
+What it defines:
+
+* `schemaPooledDataSource` -- a `PooledDataSource` over a `ComponentPool` of
+  `DriverManagerComponentInstanceFactory` connections. Hibernate uses it.
+* `schemaLiquibase` -- a `SpringLiquibase` that applies
+  `database/schema/schema.xml` from the classpath. It runs on its own
+  unpooled `DriverManagerDataSource` (`schemaLiquibaseDataSource`) against
+  the same database, and finishes before the entity manager factory starts.
+* `schemaEntityManagerFactory` -- an `EntitySeekingEntityManagerFactoryBean`
+  with session source key `schema` and the Hibernate persistence provider.
+* `schemaProxySession` -- a `JPAProxySession` for `schema`, registered with
+  `SessionManager` at startup.
+
+Entities join the persistence unit through their DAOs: declare each DAO as a
+bean and annotate its class with `@SessionSource("schema")`:
+
+[source,java]
+----
+@SessionSource("schema")
+public class WidgetDao extends JPADao<Long, Widget> {
+
+  public WidgetDao (JPAProxySession proxySession) {
+
+    super(proxySession);
+  }
+}
+----
+
+[source,xml]
+----
+<bean id="widgetDao" class="com.example.WidgetDao">
+  <constructor-arg index="0" ref="schemaProxySession"/>
+</bean>
+----
+
+Properties the file reads:
+
+[cols="1,2",options="header"]
+|===
+| Property | Used for
+
+| `jdbc.driver.class_name.pool`, `jdbc.url.pool`, `jdbc.user.pool`, `jdbc.password.pool`
+| The database, for both the pool and Liquibase
+
+| `jdbc.validation_query.pool`
+| Connection validation query
+
+| `jdbc.max_statements.pool`
+| Prepared statements cached per connection (`0` disables the cache)
+
+| `jdbc.validity_timeout_seconds.pool`
+| Seconds a connection may take to answer `Connection.isValid` after an error
+  before the pool discards it
+
+| `jdbc.pool.test_on_acquire.pool`, `jdbc.pool.initial_size.pool`, `jdbc.pool.min_size.pool`, `jdbc.pool.max_size.pool`
+| Pool sizing and testing
+
+| `liquibase.goal`
+| `UPDATE`, `PREVIEW`, `GENERATE`, `DOCUMENT`, or `NONE`
+
+| `hibernate.dialect`, `hibernate.hbm2ddl.auto`, `hibernate.connection.isolation`,
+  `hibernate.connection.autocommit`, `hibernate.jdbc.batch_size`, `hibernate.show_sql`,
+  `hibernate.format_sql`, `hibernate.cache.use_second_level_cache`
+| Hibernate settings
+|===
+
+The file wires classes from `smallmind-persistence`'s optional stack, so the
+application declares those dependencies itself: `smallmind-quorum`,
+`spring-orm`, `spring-context`, `hibernate-core`, and
+`jakarta.persistence-api`. It also starts the Spring context on a thread
+with a per-application context (the pool registers there); without one,
+startup fails with `MissingPerApplicationContextException`.
+
 == The Scribe logging bridge
 
 Liquibase writes a lot of output during a run, especially the first time a
@@ -761,7 +847,7 @@ they would for their own code.
 
 `afterPropertiesSet` carries a SmallMind `@Transactional` annotation (from
 `org.smallmind.persistence.orm.aop.Transactional`). The annotation is
-honoured when a `HibernateProxySession` or equivalent transactional
+honoured when a `JPAProxySession` or equivalent transactional
 context is in scope; when no such context is active, the annotation is a
 no-op.
 
@@ -813,10 +899,11 @@ continuing past one is almost always worse than aborting.
   native DDL applied.
 * **`smallmind-schedule-quartz`** — `quartz-liquibase.xml` does the same
   thing for Quartz's `QRTZ_*` tables.
-* **`smallmind-persistence`** — `schema-hibernate.xml` declares a
-  `SpringLiquibase` whose `goal` is driven by a placeholder, allowing
-  the same file to run `UPDATE`, `PREVIEW`, `DOCUMENT`, or `GENERATE`
-  depending on the environment.
+* **`smallmind-persistence`** — this module's
+  <<schema-hibernate,`schema-hibernate.xml`>> runs a `SpringLiquibase`
+  ahead of a `smallmind-persistence` JPA stack, with its `goal` driven by
+  a placeholder so the same file runs `UPDATE`, `PREVIEW`, `DOCUMENT`, or
+  `GENERATE` depending on the environment.
 * **`smallmind-scribe-pen`** — the logging target for
   `ScribeLiquibaseLogger`. Any Scribe appender configuration that applies
   to the `liquibase.*` package hierarchy applies to Liquibase's output.

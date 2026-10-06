@@ -177,6 +177,19 @@
           </annotationProcessorPaths>
           <proc>full</proc>
         </configuration>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <configuration>
+              <compilerArgs combine.children="append">
+                <arg>--add-modules</arg>
+                <arg>java.net.http</arg>
+                <arg>--add-reads</arg>
+                <arg>org.smallmind.bayeux.oumuamua.server.impl=java.net.http</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

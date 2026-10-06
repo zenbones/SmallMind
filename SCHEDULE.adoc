@@ -287,18 +287,24 @@ Module name (for `requires`): `org.smallmind.schedule.quartz`
 Brings in `schedule-base`, `smallmind-nutsnbolts`, `smallmind-scribe-pen`
 (for structured logging), Quartz (`org.quartz-scheduler:quartz`), and the
 Spring beans and context artifacts. The runtime classpath must also
-include a JDBC driver for the database holding the `QRTZ_*` tables and —
-if you want Liquibase migration — `smallmind-liquibase` plus the beans it
-requires.
+include a JDBC driver for the database holding the `QRTZ_*` tables.
+
+`smallmind-liquibase` and `smallmind-persistence` are optional dependencies
+used only by the shipped Spring XML: `quartz.xml` imports
+`quartz-liquibase.xml`, which runs `SpringLiquibase` on a
+`DriverManagerDataSource`. An application that imports `quartz.xml` or
+`quartz-liquibase.xml` declares both itself (and, on a module path,
+requires `org.smallmind.liquibase` and `org.smallmind.persistence`).
 
 [IMPORTANT]
 ====
-`schedule-quartz` is built expecting to find its resources on the
-classpath at `spring/org/smallmind/schedule/quartz/quartz.xml` and
-`liquibase/org/smallmind/schedule/quartz/Quartz.changelog.xml`. The module's
-`pom.xml` flattens its two resource directories (`src/main/resources/spring`
-and `src/main/resources/liquibase`) into the jar root, so these classpath
-locations resolve without any further configuration on the consumer's side.
+`schedule-quartz` ships its resources at
+`org/smallmind/schedule/quartz/quartz.xml`,
+`org/smallmind/schedule/quartz/quartz-liquibase.xml`, `job.xml`, and
+`org/smallmind/schedule/quartz/Quartz.changelog.xml` on the classpath. The
+build treats `src/main/resources/spring` and `src/main/resources/liquibase`
+as resource roots, so the `spring/` and `liquibase/` directory names are not
+part of the classpath path.
 ====
 
 The jar ships an explicit module descriptor for `org.smallmind.schedule.quartz` that
@@ -664,9 +670,9 @@ caller's responsibility (typically through Spring's `MBeanExporter`).
 == Spring Wiring
 
 The module ships three Spring XML files under
-`src/main/resources/spring/org/smallmind/schedule/quartz/`. They are flattened
-into the jar root by `schedule-quartz/pom.xml` so they resolve on the
-classpath at `spring/org/smallmind/schedule/quartz/*.xml`.
+`src/main/resources/spring/org/smallmind/schedule/quartz/`. The build treats
+`src/main/resources/spring` as a resource root, so they resolve on the
+classpath at `org/smallmind/schedule/quartz/*.xml`.
 
 === `quartz.xml` — the main wiring file
 
@@ -674,7 +680,7 @@ Importable as:
 
 [source,xml]
 ----
-<import resource="classpath:spring/org/smallmind/schedule/quartz/quartz.xml"/>
+<import resource="classpath:org/smallmind/schedule/quartz/quartz.xml"/>
 ----
 
 Defines three beans:

@@ -65,6 +65,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   <prefix>.jdbc.user.<pool name>.<context>.<#> (required, for at least connection '0')
   <prefix>.jdbc.password.<pool name>.<context>.<#> (required, for at least connection '0')
   <prefix>.jdbc.max_statements.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.validity_timeout_seconds.<pool name> (optional - defaults to '2')
   <prefix>.jdbc.validation_query.<pool name> (optional - defaults to 'select 1')
   <prefix>.jdbc.pool.test_on_create.<pool name> (optional - defaults to 'false')
   <prefix>.jdbc.pool.test_on_acquire.<pool name> (optional - defaults to 'false')
@@ -202,6 +203,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     Option<Long> acquireWaitTimeMillisOption;
     Option<Long> connectionTimeoutMillisOption;
     Option<Integer> maxStatementsOption;
+    Option<Integer> validityTimeoutSecondsOption;
     Option<Integer> initialSizeOption;
     Option<Integer> minSizeOption;
     Option<Integer> maxSizeOption;
@@ -268,6 +270,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     maxStatementsOption = springPropertyAccessor.asInt(prefix + "jdbc.max_statements." + poolName);
     validationQuery = springPropertyAccessor.asString(prefix + "jdbc.validation_query." + poolName);
+    validityTimeoutSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.validity_timeout_seconds." + poolName);
 
     if (!(testOnCreateOption = springPropertyAccessor.asBoolean(prefix + "jdbc.pool.test_on_create." + poolName)).isNone()) {
       complexPoolConfig.setTestOnCreate(testOnCreateOption.get());
@@ -305,7 +308,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     if (postContextMap.size() == 1) {
 
-      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null));
+      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, postContextMap.get(null));
     } else {
 
       ComponentPool[] componentPools = new ComponentPool[postContextMap.size()];
@@ -313,7 +316,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       int index = 0;
 
       for (Map.Entry<String, DatabaseConnection[]> contextEntry : postContextMap.entrySet()) {
-        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, contextEntry.getValue());
+        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, contextEntry.getValue());
       }
 
       return new ContextualPooledDataSource(poolNameTranslator, componentPools);

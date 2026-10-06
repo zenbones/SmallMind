@@ -75,6 +75,7 @@ public class PooledConnectionPoolIntegrationTest extends AbstractGroundwaterTest
   private static final String USER_NAME = "root";
   private static final String PASSWORD = "secret";
   private static final String VALIDATION_QUERY = "select 1";
+  private static final int VALIDITY_TIMEOUT_SECONDS = 2;
 
   public PooledConnectionPoolIntegrationTest () {
 
@@ -131,7 +132,7 @@ public class PooledConnectionPoolIntegrationTest extends AbstractGroundwaterTest
   public void testDriverManagerPooledStackServesReusesAndShutsDown ()
     throws Exception {
 
-    DriverManagerComponentInstanceFactory factory = new DriverManagerComponentInstanceFactory(DRIVER_CLASS_NAME, JDBC_URL, USER_NAME, PASSWORD);
+    DriverManagerComponentInstanceFactory factory = new DriverManagerComponentInstanceFactory(DRIVER_CLASS_NAME, JDBC_URL, USER_NAME, PASSWORD, 0, VALIDITY_TIMEOUT_SECONDS);
 
     factory.setValidationQuery(VALIDATION_QUERY);
 
@@ -174,7 +175,7 @@ public class PooledConnectionPoolIntegrationTest extends AbstractGroundwaterTest
 
     dataSourceFactory.setDriverClassName(DRIVER_CLASS_NAME);
 
-    DataSourceComponentInstanceFactory<DataSource, PooledConnection> factory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, JDBC_URL, USER_NAME, PASSWORD);
+    DataSourceComponentInstanceFactory<DataSource, PooledConnection> factory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, JDBC_URL, USER_NAME, PASSWORD, 0, VALIDITY_TIMEOUT_SECONDS);
 
     factory.setValidationQuery(VALIDATION_QUERY);
 
@@ -200,7 +201,7 @@ public class PooledConnectionPoolIntegrationTest extends AbstractGroundwaterTest
 
     // A single-connection pool guarantees the same physical connection is borrowed again, exercising the
     // per-connection prepared-statement cache (maxStatements > 0) and the PooledPreparedStatement proxy.
-    DriverManagerComponentInstanceFactory factory = new DriverManagerComponentInstanceFactory(DRIVER_CLASS_NAME, JDBC_URL, USER_NAME, PASSWORD, 16);
+    DriverManagerComponentInstanceFactory factory = new DriverManagerComponentInstanceFactory(DRIVER_CLASS_NAME, JDBC_URL, USER_NAME, PASSWORD, 16, VALIDITY_TIMEOUT_SECONDS);
 
     factory.setValidationQuery(VALIDATION_QUERY);
 

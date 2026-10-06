@@ -182,6 +182,72 @@ Hibernate entities are bytecode-enhanced at build time by the
 `hibernate-enhance-maven-plugin`. Consumers that provide their own entity
 classes normally declare the same plugin in their own builds.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.persistence`
+that exports all of its packages and re-exports (`requires transitive`)
+`org.smallmind.nutsnbolts`, `org.smallmind.scribe.pen`, `java.sql`,
+`java.logging`, and `java.transaction.xa`. On the classpath the descriptor
+is ignored. See xref:README.adoc#module-path[Module Path And Classpath] for
+the repository-wide rules.
+
+Every optional dependency in the table above is `requires static`, so on a
+module path the application requires the modules for the features it uses:
+
+[cols="1,3",options="header"]
+|===
+| You want to use... | Also require
+
+| JPA + Hibernate
+| `jakarta.persistence`, `org.hibernate.orm.core`, `spring.orm`, `spring.beans`,
+  `spring.context`
+
+| Throng (MongoDB)
+| `org.smallmind.mongodb.throng`, `org.mongodb.driver.sync.client`, `spring.beans`
+
+| QueryDSL against JPA
+| `com.querydsl.jpa`, `com.querydsl.core`
+
+| Memcached as the cache backend
+| `org.smallmind.memcached.utility`
+
+| The connection pool
+| `org.smallmind.quorum`, `spring.beans`
+
+| JDBC availability check in integration tests
+| `org.smallmind.testbench.condition`
+
+| The aspects (`@Transactional`, `@CacheAs`, …) in woven code
+| `org.aspectj.runtime`
+|===
+
+A jar on the module path that nothing requires is not in the module graph;
+using the feature then fails with `NoClassDefFoundError` for one of its
+classes. Spring also needs `org.apache.commons.logging` resolved (add it with
+`requires` or `--add-modules`).
+
+The descriptor opens:
+
+* `org.smallmind.persistence` unconditionally, so
+  `classpath:org/smallmind/persistence/hibernate.xml` and `mongo.xml` stay
+  loadable from other modules;
+* the Spring integration packages (`orm`, `orm.spring`, `orm.spring.jpa`,
+  `orm.spring.throng`, `sql.pool.spring`, `cache.memcached.spring`) to
+  `spring.core` and `spring.beans`;
+* `org.smallmind.persistence.orm.jpa` to `org.hibernate.orm.core`, for the
+  `JPADurable` mapped superclasses;
+* `org.smallmind.persistence.orm.throng` to `org.smallmind.mongodb.throng`
+  and `org.smallmind.nutsnbolts`, for `ThrongDurable`.
+
+Open your own entity packages the same way: JPA entities to
+`org.hibernate.orm.core`, Throng entities to `org.smallmind.mongodb.throng`
+and `org.smallmind.nutsnbolts` (see xref:MONGODB.adoc[MONGODB.adoc]).
+
+[source,java]
+----
+opens com.example.app.entity to org.hibernate.orm.core;
+----
+
 [[core-durable]]
 == The Durable and DAO Core
 
@@ -532,11 +598,11 @@ boundary.
 [source,xml]
 ----
 <bean id="schemaProxySession"
-      class="org.smallmind.persistence.orm.hibernate.HibernateProxySession"
+      class="org.smallmind.persistence.orm.jpa.JPAProxySession"
       init-method="register">
-  <constructor-arg index="0" value="orm"/>           <1>
+  <constructor-arg index="0" value="jpa"/>           <1>
   <constructor-arg index="1" value="schema"/>        <2>
-  <constructor-arg index="2" ref="schemaSessionFactory"/>
+  <constructor-arg index="2" ref="schemaEntityManagerFactory"/>
   <constructor-arg index="3" value="true"/>          <3>
   <constructor-arg index="4" value="true"/>          <4>
 </bean>
@@ -1086,7 +1152,7 @@ Order:orders.byCustomer[customerId=42]
 `DriverManager.getConnection(url, user, password)` on every
 `getConnection()`. No pooling, no statement caching, no login-timeout
 support. Useful for single-connection tools and for Liquibase migrations
-(see `schema-hibernate.xml`).
+(see `schema-hibernate.xml` in xref:LIQUIBASE.adoc#schema-hibernate[smallmind-liquibase]).
 
 === Connection Pool
 
@@ -1101,6 +1167,8 @@ The real pool is `PooledDataSource`, a `DataSource` wrapping a
   <constructor-arg index="1" value="${jdbc.url.pool}"/>
   <constructor-arg index="2" value="${jdbc.user.pool}"/>
   <constructor-arg index="3" value="${jdbc.password.pool}"/>
+  <constructor-arg index="4" value="${jdbc.max_statements.pool}"/>
+  <constructor-arg index="5" value="${jdbc.validity_timeout_seconds.pool}"/>
   <property name="validationQuery" value="${jdbc.validation_query.pool}"/>
 </bean>
 
@@ -1112,9 +1180,9 @@ The real pool is `PooledDataSource`, a `DataSource` wrapping a
   <property name="complexPoolConfig">
     <bean class="org.smallmind.quorum.pool.complex.ComplexPoolConfig">
       <property name="testOnAcquire"         value="${jdbc.pool.test_on_acquire.pool}"/>
-      <property name="initialPoolSize"       value="${jdbc.pool.initial_size.poo}"/>
-      <property name="minPoolSize"           value="${jdbc.pool.min_size.poo}"/>
-      <property name="maxPoolSize"           value="${jdbc.pool.max_size.poo}"/>
+      <property name="initialPoolSize"       value="${jdbc.pool.initial_size.pool}"/>
+      <property name="minPoolSize"           value="${jdbc.pool.min_size.pool}"/>
+      <property name="maxPoolSize"           value="${jdbc.pool.max_size.pool}"/>
       <property name="acquireWaitTimeMillis" value="750"/>
       <property name="creationTimeoutMillis" value="300"/>
       <property name="maxIdleTimeSeconds"    value="300"/>
@@ -1142,6 +1210,31 @@ Key traits:
   is what Hibernate and JPA expect.
 * For XA, `PooledXADataSource` uses the same pool infrastructure but
   exposes an `XADataSource`.
+* A connection is discarded only when an error leaves it unusable: a JDBC
+  connection exception (`SQLNonTransientConnectionException`,
+  `SQLTransientConnectionException`), an SQL state in class `08`, or a
+  connection that does not answer `Connection.isValid` within the validity
+  timeout after the error. Any other error -- a missing table, a constraint
+  violation -- reaches the caller as the driver's own `SQLException`, and the
+  connection stays in the pool.
+* The validity timeout, in seconds, has no default; every pool states it.
+  Pass it as the `validityTimeoutSeconds` constructor argument of
+  `DriverManagerComponentInstanceFactory` or
+  `DataSourceComponentInstanceFactory` (right after `maxStatements`, which is
+  likewise always passed), set the `validityTimeoutSeconds` property of
+  `PooledDataSourceFactoryBean`, or define
+  `jdbc.validity_timeout_seconds.<pool>` for
+  `DynamicPooledDataSourceInitializingBean`. The two Spring beans reject a
+  missing or non-positive value at startup; the factories reject a
+  non-positive value when the pool creates a connection.
+
+[NOTE]
+====
+Errors raised by a pooled connection reach the caller as the driver's
+`SQLException`. Code that unwrapped an `UndeclaredThrowableException` or a
+`PooledConnectionException` to find it no longer needs to, and a
+statement-level error no longer costs the pool a connection.
+====
 
 The `sql.pool.context` package provides "contextual" variants
 (`ContextualPooledDataSource`, `ContextualPooledXADataSource`) that pick
@@ -1293,7 +1386,7 @@ long orderNumber = SequenceManager.nextLong("orderNumber");
 == Spring Wiring
 
 The `src/main/resources/spring/org/smallmind/persistence/` directory
-ships three Spring XML files that show the canonical wiring for each
+ships two Spring XML files that show the canonical wiring for each
 supported stack:
 
 === hibernate.xml — JPA on Hibernate
@@ -1355,62 +1448,8 @@ addresses, write concern); the Throng client factory scans for
 `AnnotationSeekingBeanFactoryPostProcessor` (the Throng variant). The
 profile is `default` so the XML only activates outside test profiles.
 
-=== schema-hibernate.xml — Hibernate (Session API) Plus Schema Migration
-
-The full stack for the older Hibernate session API: connection pool,
-Liquibase migration, `SessionFactory`, and `HibernateProxySession`:
-
-[source,xml]
-----
-<import resource="classpath:org/smallmind/persistence/hibernate.xml"/>
-
-<!-- Liquibase updates -->
-<bean class="org.smallmind.liquibase.spring.SpringLiquibase">
-  <property name="dataSource" ref="schemaPooledDataSource"/>
-  <property name="source"     value="CLASSPATH"/>
-  <property name="goal"       value="${liquibase.goal}"/>
-  <property name="changeLogs">
-    <list>
-      <bean class="org.smallmind.liquibase.spring.ChangeLog">
-        <property name="input" value="database/schema/schema.xml"/>
-      </bean>
-    </list>
-  </property>
-</bean>
-
-<!-- Connection Pooling -->
-<bean id="schemaConnectionInstanceFactory" class="...DriverManagerComponentInstanceFactory">
-  ...
-</bean>
-<bean id="schemaDBPool" class="org.smallmind.quorum.pool.complex.ComponentPool"
-      init-method="startup" destroy-method="shutdown">
-  ...
-</bean>
-<bean id="schemaPooledDataSource" class="org.smallmind.persistence.sql.pool.PooledDataSource">
-  <constructor-arg index="0" value="schema"/>
-  <constructor-arg index="1" ref="schemaDBPool"/>
-</bean>
-
-<!-- Session and Transaction -->
-<bean id="schemaSessionFactory" class="...EntitySeekingSessionFactoryBean">
-  ...
-</bean>
-
-<bean id="schemaProxySession"
-      class="org.smallmind.persistence.orm.hibernate.HibernateProxySession"
-      init-method="register">
-  <constructor-arg index="0" value="orm"/>
-  <constructor-arg index="1" value="schema"/>
-  <constructor-arg index="2" ref="schemaSessionFactory"/>
-  <constructor-arg index="3" value="true"/>
-  <constructor-arg index="4" value="true"/>
-</bean>
-----
-
-Notice how `schemaPooledDataSource` is shared between Liquibase (which
-runs schema migrations at startup) and the Hibernate session factory
-(which executes application queries). Both participate in the same pool,
-so sizing is done once.
+For a pooled JPA stack that also runs Liquibase schema migrations, see
+`schema-hibernate.xml` in xref:LIQUIBASE.adoc#schema-hibernate[smallmind-liquibase].
 
 === Aspect Weaving
 

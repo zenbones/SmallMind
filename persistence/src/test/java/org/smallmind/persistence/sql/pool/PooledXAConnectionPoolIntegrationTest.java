@@ -74,6 +74,7 @@ public class PooledXAConnectionPoolIntegrationTest extends AbstractGroundwaterTe
   private static final String USER_NAME = "root";
   private static final String PASSWORD = "secret";
   private static final String VALIDATION_QUERY = "select 1";
+  private static final int VALIDITY_TIMEOUT_SECONDS = 2;
 
   public PooledXAConnectionPoolIntegrationTest () {
 
@@ -160,7 +161,7 @@ public class PooledXAConnectionPoolIntegrationTest extends AbstractGroundwaterTe
   public void testXaPooledStackServesReusesAndShutsDown ()
     throws Exception {
 
-    DataSourceComponentInstanceFactory<XADataSource, XAConnection> factory = new DataSourceComponentInstanceFactory<>(xaDataSourceFactory(), JDBC_URL, USER_NAME, PASSWORD);
+    DataSourceComponentInstanceFactory<XADataSource, XAConnection> factory = new DataSourceComponentInstanceFactory<>(xaDataSourceFactory(), JDBC_URL, USER_NAME, PASSWORD, 0, VALIDITY_TIMEOUT_SECONDS);
 
     factory.setValidationQuery(VALIDATION_QUERY);
 

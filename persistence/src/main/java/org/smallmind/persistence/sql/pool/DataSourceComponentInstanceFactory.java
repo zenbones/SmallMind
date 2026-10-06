@@ -47,73 +47,48 @@ import org.smallmind.persistence.sql.OmnivorousConnectionPoolDataSource;
 public class DataSourceComponentInstanceFactory<D extends CommonDataSource, P extends PooledConnection> extends PooledConnectionComponentInstanceFactory<P> {
 
   /**
-   * Creates a factory for a single endpoint with default validation and no statement caching.
+   * Creates a factory for a single endpoint.
    *
-   * @param dataSourceFactory factory used to construct concrete data sources
-   * @param jdbcUrl           JDBC URL
-   * @param user              user name
-   * @param password          password
+   * @param dataSourceFactory      factory used to construct concrete data sources
+   * @param jdbcUrl                JDBC URL
+   * @param user                   user name
+   * @param password               password
+   * @param maxStatements          maximum statements to cache per connection (0 to disable)
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
    * @throws SQLException if data source construction fails
    */
-  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, String jdbcUrl, String user, String password)
+  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, String jdbcUrl, String user, String password, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    this(dataSourceFactory, jdbcUrl, user, password, 0);
+    this(dataSourceFactory, maxStatements, validityTimeoutSeconds, new ConnectionEndpoint(jdbcUrl, user, password));
   }
 
   /**
-   * Creates a factory for a single endpoint with a prepared statement cache size.
+   * Creates a factory over multiple endpoints.
    *
-   * @param dataSourceFactory factory used to construct concrete data sources
-   * @param jdbcUrl           JDBC URL
-   * @param user              user name
-   * @param password          password
-   * @param maxStatements     maximum statements to cache per connection
+   * @param dataSourceFactory      factory used to construct concrete data sources
+   * @param maxStatements          maximum statements to cache per connection (0 to disable)
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
+   * @param endpoints              one or more JDBC endpoints
    * @throws SQLException if data source construction fails
    */
-  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, String jdbcUrl, String user, String password, int maxStatements)
+  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, int maxStatements, int validityTimeoutSeconds, ConnectionEndpoint... endpoints)
     throws SQLException {
 
-    this(dataSourceFactory, maxStatements, new ConnectionEndpoint(jdbcUrl, user, password));
-  }
-
-  /**
-   * Creates a factory over multiple endpoints without statement caching.
-   *
-   * @param dataSourceFactory factory used to construct concrete data sources
-   * @param endpoints         one or more JDBC endpoints
-   * @throws SQLException if data source construction fails
-   */
-  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, ConnectionEndpoint... endpoints)
-    throws SQLException {
-
-    this(dataSourceFactory, 0, endpoints);
-  }
-
-  /**
-   * Creates a factory over multiple endpoints with prepared statement cache size.
-   *
-   * @param dataSourceFactory factory used to construct concrete data sources
-   * @param maxStatements     maximum statements to cache per connection
-   * @param endpoints         one or more JDBC endpoints
-   * @throws SQLException if data source construction fails
-   */
-  public DataSourceComponentInstanceFactory (DataSourceFactory<D, P> dataSourceFactory, int maxStatements, ConnectionEndpoint... endpoints)
-    throws SQLException {
-
-    this(maxStatements, dataSourceFactory.getPooledConnectionClass(), constructDataSources(dataSourceFactory, endpoints));
+    this(maxStatements, validityTimeoutSeconds, dataSourceFactory.getPooledConnectionClass(), constructDataSources(dataSourceFactory, endpoints));
   }
 
   /**
    * Allows direct construction from already-built data sources.
    *
-   * @param maxStatements         maximum statements to cache per connection
-   * @param pooledConnectionClass pooled connection class
-   * @param dataSources           data sources to wrap
+   * @param maxStatements          maximum statements to cache per connection (0 to disable)
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
+   * @param pooledConnectionClass  pooled connection class
+   * @param dataSources            data sources to wrap
    */
-  public DataSourceComponentInstanceFactory (int maxStatements, Class<P> pooledConnectionClass, D... dataSources) {
+  public DataSourceComponentInstanceFactory (int maxStatements, int validityTimeoutSeconds, Class<P> pooledConnectionClass, D... dataSources) {
 
-    super(60, pooledConnectionClass, constructConnectionPoolDataSources(maxStatements, pooledConnectionClass, dataSources));
+    super(60, pooledConnectionClass, constructConnectionPoolDataSources(maxStatements, validityTimeoutSeconds, pooledConnectionClass, dataSources));
   }
 
   /**
@@ -142,19 +117,20 @@ public class DataSourceComponentInstanceFactory<D extends CommonDataSource, P ex
    * Wraps each data source in an {@link OmnivorousConnectionPoolDataSource} with the given cache
    * size.
    *
-   * @param maxStatements       maximum statements to cache
-   * @param connectionPoolClass pooled connection class
-   * @param dataSources         data sources to wrap
-   * @param <D>                 data source type
-   * @param <P>                 pooled connection type
+   * @param maxStatements          maximum statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
+   * @param connectionPoolClass    pooled connection class
+   * @param dataSources            data sources to wrap
+   * @param <D>                    data source type
+   * @param <P>                    pooled connection type
    * @return array of connection pool data sources
    */
-  private static <D extends CommonDataSource, P extends PooledConnection> ConnectionPoolDataSource[] constructConnectionPoolDataSources (int maxStatements, Class<P> connectionPoolClass, D... dataSources) {
+  private static <D extends CommonDataSource, P extends PooledConnection> ConnectionPoolDataSource[] constructConnectionPoolDataSources (int maxStatements, int validityTimeoutSeconds, Class<P> connectionPoolClass, D... dataSources) {
 
     ConnectionPoolDataSource[] connectionPoolDataSources = new ConnectionPoolDataSource[dataSources.length];
 
     for (int index = 0; index < dataSources.length; index++) {
-      connectionPoolDataSources[index] = new OmnivorousConnectionPoolDataSource<D, P>(dataSources[index], connectionPoolClass, maxStatements);
+      connectionPoolDataSources[index] = new OmnivorousConnectionPoolDataSource<D, P>(dataSources[index], connectionPoolClass, maxStatements, validityTimeoutSeconds);
     }
 
     return connectionPoolDataSources;

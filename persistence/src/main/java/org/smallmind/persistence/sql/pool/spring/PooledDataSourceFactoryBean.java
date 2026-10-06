@@ -49,13 +49,14 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends PooledConnection> implements FactoryBean<CommonDataSource>, InitializingBean, DisposableBean {
 
-  private AbstractPooledDataSource dataSource;
+  private AbstractPooledDataSource<D, P> dataSource;
   private DataSourceFactory<D, P> dataSourceFactory;
   private ComplexPoolConfig poolConfig;
   private DatabaseConnection[] connections;
   private String poolName;
   private String validationQuery;
   private int maxStatements;
+  private int validityTimeoutSeconds;
 
   /**
    * @return configured pool name
@@ -148,6 +149,25 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   }
 
   /**
+   * @return validity timeout used when deciding whether an error has left a connection unusable
+   */
+  public int getValidityTimeoutSeconds () {
+
+    return validityTimeoutSeconds;
+  }
+
+  /**
+   * Sets how long a connection may take to answer {@link java.sql.Connection#isValid(int)} after an
+   * error before it is discarded. Required; must be greater than zero.
+   *
+   * @param validityTimeoutSeconds validity timeout in seconds
+   */
+  public void setValidityTimeoutSeconds (int validityTimeoutSeconds) {
+
+    this.validityTimeoutSeconds = validityTimeoutSeconds;
+  }
+
+  /**
    * @return configuration of the component pool
    */
   public ComplexPoolConfig getPoolConfig () {
@@ -175,7 +195,11 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections);
+    if (validityTimeoutSeconds <= 0) {
+      throw new SQLException("The validity timeout for pool(" + poolName + ") must be set to > 0 seconds");
+    }
+
+    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections);
     dataSource.startup();
   }
 

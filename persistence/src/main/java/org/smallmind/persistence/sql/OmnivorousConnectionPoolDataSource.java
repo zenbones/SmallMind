@@ -52,32 +52,23 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
 
   private final D dataSource;
   private final Class<P> pooledConnectionClass;
-  private int maxStatements = 0;
+  private final int maxStatements;
+  private final int validityTimeoutSeconds;
 
   /**
    * Builds a pooling data source that wraps connections from the given data source.
    *
-   * @param dataSource            underlying data source
-   * @param pooledConnectionClass expected pooled connection type for casting
+   * @param dataSource             underlying data source
+   * @param pooledConnectionClass  expected pooled connection type for casting
+   * @param maxStatements          maximum prepared statements to cache per connection
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
    */
-  public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass) {
+  public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass, int maxStatements, int validityTimeoutSeconds) {
 
     this.dataSource = dataSource;
     this.pooledConnectionClass = pooledConnectionClass;
-  }
-
-  /**
-   * Builds a pooling data source with a prepared statement cache size.
-   *
-   * @param dataSource            underlying data source
-   * @param pooledConnectionClass expected pooled connection type for casting
-   * @param maxStatements         maximum prepared statements to cache per connection
-   */
-  public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass, int maxStatements) {
-
-    this(dataSource, pooledConnectionClass);
-
     this.maxStatements = maxStatements;
+    this.validityTimeoutSeconds = validityTimeoutSeconds;
   }
 
   /**
@@ -89,7 +80,7 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   public P getPooledConnection ()
     throws SQLException {
 
-    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, maxStatements));
+    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, maxStatements, validityTimeoutSeconds));
   }
 
   /**
@@ -103,7 +94,7 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
   public P getPooledConnection (String user, String password)
     throws SQLException {
 
-    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, user, password, maxStatements));
+    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, user, password, maxStatements, validityTimeoutSeconds));
   }
 
   /**

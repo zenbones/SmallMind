@@ -111,11 +111,6 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>web-jersey</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -128,11 +123,6 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>tools.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>tools.jackson.core</groupId>

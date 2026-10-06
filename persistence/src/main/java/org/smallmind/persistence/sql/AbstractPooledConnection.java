@@ -40,6 +40,8 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLTransientConnectionException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.CommonDataSource;
@@ -69,7 +71,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
   private final ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
   private final ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final long creationMilliseconds;
+  private final int validityTimeoutSeconds;
 
   static {
 
@@ -83,22 +85,27 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
   /**
    * Wraps a physical JDBC connection with pooling behavior and optional prepared statement cache.
    *
-   * @param dataSource       owning data source
-   * @param actualConnection physical JDBC connection being wrapped
-   * @param maxStatements    maximum number of prepared statements to cache (0 to disable)
-   * @throws SQLException if the max statements value is negative
+   * @param dataSource             owning data source
+   * @param actualConnection       physical JDBC connection being wrapped
+   * @param maxStatements          maximum number of prepared statements to cache (0 to disable)
+   * @param validityTimeoutSeconds how long to wait for {@link Connection#isValid(int)} when deciding whether an
+   *                               error has left the connection unusable
+   * @throws SQLException if the max statements value is negative or the validity timeout is not positive
    */
-  public AbstractPooledConnection (D dataSource, Connection actualConnection, int maxStatements)
+  public AbstractPooledConnection (D dataSource, Connection actualConnection, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
     this.dataSource = dataSource;
     this.actualConnection = actualConnection;
+    this.validityTimeoutSeconds = validityTimeoutSeconds;
 
     if (maxStatements < 0) {
       throw new SQLException("The maximum number of cached statements for this connection must be >= 0");
     }
+    if (validityTimeoutSeconds <= 0) {
+      throw new SQLException("The validity timeout for this connection must be > 0 seconds");
+    }
 
-    creationMilliseconds = System.currentTimeMillis();
     proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
 
     connectionEventListenerQueue = new ConcurrentLinkedQueue<>();
@@ -122,14 +129,15 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
 
   /**
    * Delegates JDBC calls to the underlying connection while intercepting close calls and wrapping
-   * prepared statements in the cache if enabled. Errors trigger a {@link PooledConnectionException}
-   * and fire {@link ConnectionEventListener#connectionErrorOccurred(ConnectionEvent)}.
+   * prepared statements in the cache if enabled. Errors from the underlying connection are rethrown
+   * unchanged; an {@link SQLException} that leaves the connection unusable (see {@link #isFatal(SQLException)})
+   * also fires {@link ConnectionEventListener#connectionErrorOccurred(ConnectionEvent)}.
    *
    * @param proxy  the proxy instance
    * @param method invoked method
    * @param args   arguments to the method
    * @return result of the underlying call or cached prepared statement
-   * @throws Throwable propagated underlying exception wrapped when needed
+   * @throws Throwable the exception thrown by the underlying connection
    */
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
@@ -166,7 +174,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
 
         closestCause = ((throwable instanceof InvocationTargetException) && (throwable.getCause() != null)) ? throwable.getCause() : throwable;
 
-        if (closestCause instanceof SQLException) {
+        if ((closestCause instanceof SQLException) && isFatal((SQLException)closestCause)) {
 
           ConnectionEvent event = getConnectionEvent((SQLException)closestCause);
 
@@ -175,7 +183,37 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
           }
         }
 
-        throw new PooledConnectionException(closestCause, "Connection encountered an exception after operation for %d milliseconds", System.currentTimeMillis() - creationMilliseconds);
+        throw closestCause;
+      }
+    }
+  }
+
+  /**
+   * Decides whether an error has left the connection unusable. Connection-level failures (the JDBC
+   * connection exception types, or an SQL state in class {@code 08}) are fatal; for any other error
+   * the connection is asked {@link Connection#isValid(int)} within the validity timeout, and a
+   * connection that cannot answer is treated as unusable.
+   *
+   * @param sqlException the error raised by the underlying connection
+   * @return {@code true} if the connection should be discarded
+   */
+  private boolean isFatal (SQLException sqlException) {
+
+    String sqlState;
+
+    if ((sqlException instanceof SQLNonTransientConnectionException) || (sqlException instanceof SQLTransientConnectionException)) {
+
+      return true;
+    } else if (((sqlState = sqlException.getSQLState()) != null) && sqlState.startsWith("08")) {
+
+      return true;
+    } else {
+      try {
+
+        return !actualConnection.isValid(validityTimeoutSeconds);
+      } catch (SQLException validityException) {
+
+        return true;
       }
     }
   }

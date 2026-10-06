@@ -310,8 +310,15 @@ each row above. On the classpath nothing changes.
 ====
 
 The POM's optional `spring-beans` dependency is not named in the descriptor; no
-`oumuamua-server-spi` class references it. `oumuamua-server-impl` is currently an
-automatic module under the name above. See
+`oumuamua-server-spi` class references it. `oumuamua-server-impl` ships an explicit module descriptor that exports its four
+packages and re-exports `org.smallmind.bayeux.oumuamua.server.api`,
+`org.smallmind.bayeux.oumuamua.server.spi`, `jakarta.servlet`, `jakarta.xml.bind`,
+`org.smallmind.nutsnbolts`, and `org.smallmind.scribe.pen`. It requires
+`org.smallmind.web.json.scaffold`, which the startup configuration log uses, and opens
+`org.smallmind.bayeux.oumuamua.server.impl` to `jakarta.xml.bind` and
+`tools.jackson.databind` for the configuration view it writes. `jakarta.websocket.client`
+is `requires static`: an application that uses the WebSocket endpoint
+(`websocket.WebSocketEndpoint`) requires it, as in the `spi` table above. See
 xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide rules.
 
 [[installation]]

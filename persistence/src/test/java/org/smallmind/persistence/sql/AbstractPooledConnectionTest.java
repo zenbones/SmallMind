@@ -37,6 +37,7 @@ import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
 import javax.sql.CommonDataSource;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -49,11 +50,13 @@ import org.testng.annotations.Test;
  * Unit tests for {@link AbstractPooledConnection}, which proxies a real JDBC {@link Connection} to intercept
  * {@code close()} and to surface connection errors as pool events. The data source and the wrapped connection
  * are Mockito mocks, so no database is involved; the tests drive the proxy's close interception, plain
- * delegation, the error path (event fired and wrapped in a {@link PooledConnectionException}), idempotent
- * {@code close()}, log-writer delegation, and listener registration.
+ * delegation, the error path (errors rethrown unchanged, with the error event fired only when the connection
+ * is unusable), idempotent {@code close()}, log-writer delegation, and listener registration.
  */
 @Test(groups = "unit")
 public class AbstractPooledConnectionTest {
+
+  private static final int VALIDITY_TIMEOUT_SECONDS = 2;
 
   private CommonDataSource dataSource;
   private Connection actualConnection;
@@ -68,14 +71,21 @@ public class AbstractPooledConnectionTest {
   private TestPooledConnection pooledConnection (int maxStatements)
     throws SQLException {
 
-    return new TestPooledConnection(dataSource, actualConnection, maxStatements);
+    return new TestPooledConnection(dataSource, actualConnection, maxStatements, VALIDITY_TIMEOUT_SECONDS);
   }
 
   @Test(groups = "unit", expectedExceptions = SQLException.class)
   public void testNegativeMaxStatementsIsRejected ()
     throws SQLException {
 
-    new TestPooledConnection(dataSource, actualConnection, -1);
+    new TestPooledConnection(dataSource, actualConnection, -1, VALIDITY_TIMEOUT_SECONDS);
+  }
+
+  @Test(groups = "unit", expectedExceptions = SQLException.class)
+  public void testNonPositiveValidityTimeoutIsRejected ()
+    throws SQLException {
+
+    new TestPooledConnection(dataSource, actualConnection, 0, 0);
   }
 
   public void testProxyCloseFiresConnectionClosedWithoutClosingTheActualConnection ()
@@ -99,26 +109,79 @@ public class AbstractPooledConnectionTest {
     Assert.assertEquals(pooledConnection(0).getConnection().getCatalog(), "inventory");
   }
 
-  public void testSqlErrorFiresConnectionErrorAndWrapsInPooledConnectionException ()
+  private ConnectionEventListener assertRethrown (TestPooledConnection pooledConnection, SQLException sqlException)
     throws Exception {
 
-    Mockito.when(actualConnection.getCatalog()).thenThrow(new SQLException("boom"));
-
-    TestPooledConnection pooledConnection = pooledConnection(0);
     ConnectionEventListener listener = Mockito.mock(ConnectionEventListener.class);
 
+    Mockito.when(actualConnection.getCatalog()).thenThrow(sqlException);
     pooledConnection.addConnectionEventListener(listener);
 
     try {
       pooledConnection.getConnection().getCatalog();
-      Assert.fail("a SQL error on a delegated call should surface as a PooledConnectionException");
-    } catch (Exception exception) {
-      // getCatalog() does not declare PooledConnectionException, so the JDK proxy wraps it in an
-      // UndeclaredThrowableException; the pooled-connection failure is the (root) cause.
-      Assert.assertTrue((exception instanceof PooledConnectionException) || (exception.getCause() instanceof PooledConnectionException), "the delegated SQL error should be wrapped in a PooledConnectionException");
+      Assert.fail("a SQL error on a delegated call should be rethrown");
+    } catch (SQLException thrownException) {
+      Assert.assertSame(thrownException, sqlException, "the driver's exception should reach the caller unchanged");
     }
 
+    return listener;
+  }
+
+  public void testStatementLevelErrorIsRethrownWithoutDiscardingTheConnection ()
+    throws Exception {
+
+    Mockito.when(actualConnection.isValid(Mockito.anyInt())).thenReturn(true);
+
+    ConnectionEventListener listener = assertRethrown(pooledConnection(0), new SQLException("Table not found", "42S02"));
+
+    Mockito.verify(listener, Mockito.never()).connectionErrorOccurred(Mockito.any(ConnectionEvent.class));
+  }
+
+  public void testConnectionLevelSqlStateFiresConnectionErrorWithoutAskingTheConnection ()
+    throws Exception {
+
+    ConnectionEventListener listener = assertRethrown(pooledConnection(0), new SQLException("Communications link failure", "08S01"));
+
     Mockito.verify(listener).connectionErrorOccurred(Mockito.any(ConnectionEvent.class));
+    Mockito.verify(actualConnection, Mockito.never()).isValid(Mockito.anyInt());
+  }
+
+  public void testConnectionExceptionTypeFiresConnectionError ()
+    throws Exception {
+
+    ConnectionEventListener listener = assertRethrown(pooledConnection(0), new SQLNonTransientConnectionException("connection lost"));
+
+    Mockito.verify(listener).connectionErrorOccurred(Mockito.any(ConnectionEvent.class));
+  }
+
+  public void testErrorOnAnInvalidConnectionFiresConnectionError ()
+    throws Exception {
+
+    Mockito.when(actualConnection.isValid(Mockito.anyInt())).thenReturn(false);
+
+    ConnectionEventListener listener = assertRethrown(pooledConnection(0), new SQLException("vendor failure", "HY000"));
+
+    Mockito.verify(listener).connectionErrorOccurred(Mockito.any(ConnectionEvent.class));
+  }
+
+  public void testFailedValidityCheckFiresConnectionError ()
+    throws Exception {
+
+    Mockito.when(actualConnection.isValid(Mockito.anyInt())).thenThrow(new SQLException("isValid unsupported"));
+
+    ConnectionEventListener listener = assertRethrown(pooledConnection(0), new SQLException("vendor failure", "HY000"));
+
+    Mockito.verify(listener).connectionErrorOccurred(Mockito.any(ConnectionEvent.class));
+  }
+
+  public void testValidityTimeoutIsPassedToIsValid ()
+    throws Exception {
+
+    Mockito.when(actualConnection.isValid(Mockito.anyInt())).thenReturn(true);
+
+    assertRethrown(new TestPooledConnection(dataSource, actualConnection, 0, 3), new SQLException("Table not found", "42S02"));
+
+    Mockito.verify(actualConnection).isValid(3);
   }
 
   public void testCloseClosesTheActualConnectionExactlyOnce ()
@@ -209,10 +272,10 @@ public class AbstractPooledConnectionTest {
 
   private static class TestPooledConnection extends AbstractPooledConnection<CommonDataSource> {
 
-    private TestPooledConnection (CommonDataSource dataSource, Connection actualConnection, int maxStatements)
+    private TestPooledConnection (CommonDataSource dataSource, Connection actualConnection, int maxStatements, int validityTimeoutSeconds)
       throws SQLException {
 
-      super(dataSource, actualConnection, maxStatements);
+      super(dataSource, actualConnection, maxStatements, validityTimeoutSeconds);
     }
 
     @Override

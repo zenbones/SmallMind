@@ -159,6 +159,42 @@ Runtime environment:
 Logging is routed through `scribe-pen`; `LoggerManager.getLogger(...)` is
 the internal entry point.
 
+=== Module path
+
+The jar ships an explicit module descriptor for `org.smallmind.phalanx`
+that exports all of its packages and re-exports (`requires transitive`)
+`jakarta.messaging`, `jakarta.xml.bind`, `tools.jackson.databind`,
+`java.management`, `java.naming`, `org.smallmind.nutsnbolts`,
+`org.smallmind.quorum`, and `org.smallmind.scribe.pen`. On the classpath the
+descriptor is ignored. See xref:README.adoc#module-path[Module Path And Classpath]
+for the repository-wide rules.
+
+The transport clients are `requires static`, so a module-path application
+requires the one it uses:
+
+[cols="1,2",options="header"]
+|===
+| Transport | Also require
+
+| RabbitMQ | `com.rabbitmq.client`
+| Kafka    | `org.smallmind.kafka.utility` and `kafka.clients`
+| JMS      | your Jakarta Messaging provider's module
+|===
+
+Without that `requires` (or `--add-modules`), the transport fails with
+`NoClassDefFoundError` even though the client jar is on the module path.
+`kafka.clients` is derived from the jar's file name. A module that uses the
+Spring factory beans also requires `spring.beans`.
+
+The descriptor opens `org.smallmind.phalanx.wire` unconditionally, so
+`classpath:org/smallmind/phalanx/wire/mock-wire.xml` and `rabbitmq-wire.xml`
+stay loadable from other modules; `org.smallmind.phalanx.wire.signal` to
+`jakarta.xml.bind` and `tools.jackson.databind`; and the two Spring packages
+(`wire.spring`, `wire.transport.amqp.rabbitmq.spring`) to `spring.core` and
+`spring.beans`. `JsonSignalCodec` serializes your service arguments and
+results with Jackson, so open the packages holding those types to
+`tools.jackson.databind`.
+
 == Quick Start
 
 A complete end-to-end example against the mock router. No broker is
@@ -971,16 +1007,26 @@ Compile-scope dependencies declared by the module (see `phalanx/pom.xml`):
   transports.
 * `claxon-registry` — latency and throughput metrics emitted from the
   work manager and transports.
-* `scribe-pen`, `scribe-ink-indigenous` — logging.
-* `web-jersey`, `web-json-scaffold` — `Fault`, `FaultElement`, and
-  `FaultWrappingException` used for cross-wire error propagation.
-* `jackson-core`, `jackson-databind` (Jackson 3.x) — `JsonSignalCodec`.
+* `scribe-pen` — logging API. Add a Scribe backend such as
+  `scribe-ink-indigenous` to the application to see the output.
+* `web-json-scaffold` — `Fault`, `FaultElement`, and
+  `FaultWrappingException` used for cross-wire error propagation, and
+  `JsonCodec`.
+* `jackson-databind` (Jackson 3.x) — `JsonSignalCodec`.
 * `jakarta.jms-api`, `jakarta.xml.bind-api`, `jakarta.ws.rs-api` —
   Jakarta API surfaces compiled against.
 * `spring-beans` — used by the Spring integration beans
   (`WireProxyFactoryBean`, `WireContextInitializingBean`,
   `StaticParameterExtractorFactoryBean`, `RabbitMQConnectorFactoryBean`,
   `RabbitMQServerFactoryBean`).
+
+[NOTE]
+====
+`smallmind-phalanx` does not depend on `web-jersey`, so Jersey, Hibernate
+Validator, the Servlet API, HttpComponents, `spring-context`, and
+`spring-web` do not arrive through it. An application that uses them
+declares them itself.
+====
 
 Optional dependencies, required only for the corresponding transport:
 

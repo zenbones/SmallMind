@@ -50,20 +50,21 @@ public class PooledConnectionComponentPoolFactory {
   /**
    * Creates a component pool configured with the provided connection endpoints and pooling options.
    *
-   * @param poolName          name of the pool
-   * @param dataSourceFactory factory used to create concrete data sources
-   * @param validationQuery   optional validation SQL
-   * @param maxStatements     maximum prepared statements to cache per connection
-   * @param poolConfig        pool behavior configuration
-   * @param connections       database connection definitions
-   * @param <D>               data source type
+   * @param poolName               name of the pool
+   * @param dataSourceFactory      factory used to create concrete data sources
+   * @param validationQuery        optional validation SQL
+   * @param maxStatements          maximum prepared statements to cache per connection
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
+   * @param poolConfig             pool behavior configuration
+   * @param connections            database connection definitions
+   * @param <D>                    data source type
    * @return initialized component pool ready for startup
    * @throws SQLException if data source or pool setup fails
    */
-  public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
+  public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
     throws SQLException {
 
-    DataSourceComponentInstanceFactory<D, ? extends PooledConnection> connectionInstanceFactory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, maxStatements, createConnectionEndpoints(connections));
+    DataSourceComponentInstanceFactory<D, ? extends PooledConnection> connectionInstanceFactory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, maxStatements, validityTimeoutSeconds, createConnectionEndpoints(connections));
 
     if (validationQuery != null) {
       connectionInstanceFactory.setValidationQuery(validationQuery);

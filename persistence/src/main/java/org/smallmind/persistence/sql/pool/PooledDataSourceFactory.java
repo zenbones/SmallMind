@@ -51,23 +51,24 @@ public class PooledDataSourceFactory {
   /**
    * Creates a pooled data source configured with the given pool parameters and database connections.
    *
-   * @param poolName          name for the underlying component pool
-   * @param dataSourceFactory factory for concrete data sources
-   * @param validationQuery   optional validation SQL to run on checkout
-   * @param maxStatements     maximum prepared statements to cache per connection
-   * @param poolConfig        configuration for the component pool
-   * @param connections       one or more database connection definitions
-   * @param <D>               data source type
+   * @param poolName               name for the underlying component pool
+   * @param dataSourceFactory      factory for concrete data sources
+   * @param validationQuery        optional validation SQL to run on checkout
+   * @param maxStatements          maximum prepared statements to cache per connection
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
+   * @param poolConfig             configuration for the component pool
+   * @param connections            one or more database connection definitions
+   * @param <D>                    data source type
    * @return pooled data source matching XA or non-XA capabilities
    * @throws SQLException if pool construction fails
    */
-  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
+  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
     throws SQLException {
 
     if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
-      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections));
     }
 
-    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections));
   }
 }

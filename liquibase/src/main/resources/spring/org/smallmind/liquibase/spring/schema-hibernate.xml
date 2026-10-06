@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <!-- Connection Pooling -->
+  <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory">
+    <constructor-arg index="0" value="${jdbc.driver.class_name.pool}"/>
+    <constructor-arg index="1" value="${jdbc.url.pool}"/>
+    <constructor-arg index="2" value="${jdbc.user.pool}"/>
+    <constructor-arg index="3" value="${jdbc.password.pool}"/>
+    <constructor-arg index="4" value="${jdbc.max_statements.pool}"/>
+    <constructor-arg index="5" value="${jdbc.validity_timeout_seconds.pool}"/>
+    <property name="validationQuery" value="${jdbc.validation_query.pool}"/>
+  </bean>
+
+  <bean id="schemaDBPool" class="org.smallmind.quorum.pool.complex.ComponentPool" init-method="startup" destroy-method="shutdown">
+    <constructor-arg index="0" value="schema"/>
+    <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
+    <constructor-arg index="2">
+      <bean class="org.smallmind.quorum.pool.complex.ComplexPoolConfig">
+        <property name="testOnAcquire" value="${jdbc.pool.test_on_acquire.pool}"/>
+        <property name="initialPoolSize" value="${jdbc.pool.initial_size.pool}"/>
+        <property name="minPoolSize" value="${jdbc.pool.min_size.pool}"/>
+        <property name="maxPoolSize" value="${jdbc.pool.max_size.pool}"/>
+        <property name="acquireWaitTimeMillis" value="750"/>
+        <property name="creationTimeoutMillis" value="300"/>
+        <property name="maxIdleTimeSeconds" value="300"/>
+        <property name="maxLeaseTimeSeconds" value="1800"/>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <bean id="schemaPooledDataSource" class="org.smallmind.persistence.sql.pool.PooledDataSource">
+    <constructor-arg index="0" value="schema"/>
+    <constructor-arg index="1" ref="schemaDBPool"/>
+  </bean>
+
+  <!-- Liquibase updates -->
+  <bean id="schemaLiquibaseDataSource" class="org.smallmind.persistence.sql.DriverManagerDataSource">
+    <constructor-arg index="0" value="${jdbc.driver.class_name.pool}"/>
+    <constructor-arg index="1" value="${jdbc.url.pool}"/>
+    <constructor-arg index="2" value="${jdbc.user.pool}"/>
+    <constructor-arg index="3" value="${jdbc.password.pool}"/>
+  </bean>
+
+  <bean id="schemaLiquibase" class="org.smallmind.liquibase.spring.SpringLiquibase">
+    <property name="dataSource" ref="schemaLiquibaseDataSource"/>
+    <property name="source" value="CLASSPATH"/>
+    <property name="goal" value="${liquibase.goal}"/>
+    <property name="changeLogs">
+      <list>
+        <bean class="org.smallmind.liquibase.spring.ChangeLog">
+          <property name="input" value="database/schema/schema.xml"/>
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Entity Manager -->
+  <bean id="schemaAnnotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
+
+  <bean id="schemaEntityManagerFactory" class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean" depends-on="schemaLiquibase">
+    <property name="sessionSourceKey" value="schema"/>
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="schemaAnnotationSeekingBeanFactoryPostProcessor"/>
+    <property name="dataSource" ref="schemaPooledDataSource"/>
+    <property name="persistenceUnitInfo">
+      <bean class="org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo">
+        <property name="persistenceUnitName" value="schema"/>
+        <property name="persistenceProviderClassName" value="org.hibernate.jpa.HibernatePersistenceProvider"/>
+        <property name="properties">
+          <value>
+            hibernate.dialect=${hibernate.dialect}
+            hibernate.hbm2ddl.auto=${hibernate.hbm2ddl.auto}
+            hibernate.connection.isolation=${hibernate.connection.isolation}
+            hibernate.connection.autocommit=${hibernate.connection.autocommit}
+            hibernate.jdbc.use_scrollable_resultset=true
+            hibernate.jdbc.batch_size=${hibernate.jdbc.batch_size}
+            hibernate.show_sql=${hibernate.show_sql}
+            hibernate.format_sql=${hibernate.format_sql}
+            hibernate.use_sql_comments=false
+            hibernate.generate_statistics=false
+            hibernate.cache.use_second_level_cache=${hibernate.cache.use_second_level_cache}
+            hibernate.cache.use_query_cache=false
+            hibernate.cache.use_minimal_puts=true
+          </value>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+  <!-- Proxy Session -->
+  <bean id="schemaProxySession" class="org.smallmind.persistence.orm.jpa.JPAProxySession" init-method="register">
+    <constructor-arg index="0" value="jpa"/>
+    <constructor-arg index="1" value="schema"/>
+    <constructor-arg index="2" ref="schemaEntityManagerFactory"/>
+    <constructor-arg index="3" value="true"/>
+    <constructor-arg index="4" value="true"/>
+  </bean>
+
+</beans>

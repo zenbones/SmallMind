@@ -47,40 +47,42 @@ public class PooledConnectionFactory {
   /**
    * Creates a pooled connection without credentials using the provided data source.
    *
-   * @param dataSource    {@link DataSource} or {@link XADataSource} instance
-   * @param maxStatements maximum prepared statements to cache
-   * @param <D>           data source type
+   * @param dataSource             {@link DataSource} or {@link XADataSource} instance
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
+   * @param <D>                    data source type
    * @return pooled connection wrapper
    * @throws SQLException if connection acquisition fails
    */
-  public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, int maxStatements)
+  public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
     if (XADataSource.class.isAssignableFrom(dataSource.getClass())) {
-      return new XADataSourcePooledConnection((XADataSource)dataSource, maxStatements);
+      return new XADataSourcePooledConnection((XADataSource)dataSource, maxStatements, validityTimeoutSeconds);
     }
 
-    return new DataSourcePooledConnection((DataSource)dataSource, maxStatements);
+    return new DataSourcePooledConnection((DataSource)dataSource, maxStatements, validityTimeoutSeconds);
   }
 
   /**
    * Creates a pooled connection using explicit credentials.
    *
-   * @param dataSource    {@link DataSource} or {@link XADataSource} instance
-   * @param user          user name
-   * @param password      password
-   * @param maxStatements maximum prepared statements to cache
-   * @param <D>           data source type
+   * @param dataSource             {@link DataSource} or {@link XADataSource} instance
+   * @param user                   user name
+   * @param password               password
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
+   * @param <D>                    data source type
    * @return pooled connection wrapper
    * @throws SQLException if connection acquisition fails
    */
-  public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, String user, String password, int maxStatements)
+  public static <D extends CommonDataSource> PooledConnection createPooledConnection (D dataSource, String user, String password, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
     if (XADataSource.class.isAssignableFrom(dataSource.getClass())) {
-      return new XADataSourcePooledConnection((XADataSource)dataSource, user, password, maxStatements);
+      return new XADataSourcePooledConnection((XADataSource)dataSource, user, password, maxStatements, validityTimeoutSeconds);
     }
 
-    return new DataSourcePooledConnection((DataSource)dataSource, user, password, maxStatements);
+    return new DataSourcePooledConnection((DataSource)dataSource, user, password, maxStatements, validityTimeoutSeconds);
   }
 }

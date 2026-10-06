@@ -184,7 +184,7 @@ public class PooledPreparedStatementTest {
     private TestPooledConnection (CommonDataSource dataSource, Connection actualConnection)
       throws SQLException {
 
-      super(dataSource, actualConnection, 0);
+      super(dataSource, actualConnection, 0, 1);
     }
 
     @Override

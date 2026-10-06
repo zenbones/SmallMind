@@ -49,43 +49,46 @@ public class XADataSourcePooledConnection extends AbstractPooledConnection<XADat
   /**
    * Acquires an XA connection from the data source and wraps it with pooling logic.
    *
-   * @param dataSource    XA data source
-   * @param maxStatements maximum prepared statements to cache
+   * @param dataSource             XA data source
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
    * @throws SQLException if obtaining the connection fails
    */
-  public XADataSourcePooledConnection (XADataSource dataSource, int maxStatements)
+  public XADataSourcePooledConnection (XADataSource dataSource, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    this(dataSource, dataSource.getXAConnection(), maxStatements);
+    this(dataSource, dataSource.getXAConnection(), maxStatements, validityTimeoutSeconds);
   }
 
   /**
-   * Same as {@link #XADataSourcePooledConnection(XADataSource, int)} but uses explicit credentials.
+   * Same as {@link #XADataSourcePooledConnection(XADataSource, int, int)} but uses explicit credentials.
    *
-   * @param dataSource    XA data source
-   * @param user          user name
-   * @param password      password
-   * @param maxStatements maximum prepared statements to cache
+   * @param dataSource             XA data source
+   * @param user                   user name
+   * @param password               password
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
    * @throws SQLException if obtaining the connection fails
    */
-  public XADataSourcePooledConnection (XADataSource dataSource, String user, String password, int maxStatements)
+  public XADataSourcePooledConnection (XADataSource dataSource, String user, String password, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    this(dataSource, dataSource.getXAConnection(user, password), maxStatements);
+    this(dataSource, dataSource.getXAConnection(user, password), maxStatements, validityTimeoutSeconds);
   }
 
   /**
    * Internal constructor used by public overloads after obtaining an {@link XAConnection}.
    *
-   * @param dataSource    XA data source
-   * @param xaConnection  underlying XA connection to wrap
-   * @param maxStatements maximum prepared statements to cache
+   * @param dataSource             XA data source
+   * @param xaConnection           underlying XA connection to wrap
+   * @param maxStatements          maximum prepared statements to cache
+   * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left the connection unusable
    * @throws SQLException if initializing the pooled connection fails
    */
-  private XADataSourcePooledConnection (XADataSource dataSource, XAConnection xaConnection, int maxStatements)
+  private XADataSourcePooledConnection (XADataSource dataSource, XAConnection xaConnection, int maxStatements, int validityTimeoutSeconds)
     throws SQLException {
 
-    super(dataSource, xaConnection.getConnection(), maxStatements);
+    super(dataSource, xaConnection.getConnection(), maxStatements, validityTimeoutSeconds);
 
     this.xaConnection = xaConnection;
   }
