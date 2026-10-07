@@ -32,22 +32,27 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Thread-safe cache keyed by {@link Method} and segmented by the defining class's {@link ClassLoader},
- * automatically expunging stale segments when their associated loader is garbage collected.
+ * Thread-safe cache keyed by {@link Method} and partitioned by the method's declaring class. Each partition is
+ * attached to its class through a {@link ClassValue}, so the cache never keeps a class, or its class loader,
+ * reachable: a partition and its entries become collectible along with the class. A value that references classes
+ * from a different class loader keeps that loader reachable for as long as the declaring class is reachable.
  *
  * @param <T> the type of value stored for each method
  */
 public class LoaderAwareMethodCache<T> {
 
-  private final ReferenceQueue<ClassLoader> referenceQueue = new ReferenceQueue<>();
-  private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<Method, T>> loaderMap = new ConcurrentHashMap<>();
+  private final ClassValue<ConcurrentHashMap<Method, T>> partitionValue = new ClassValue<>() {
+
+    @Override
+    protected ConcurrentHashMap<Method, T> computeValue (Class<?> type) {
+
+      return new ConcurrentHashMap<>();
+    }
+  };
 
   /**
    * Returns the cached value for the given method, or {@code null} if no entry exists.
@@ -69,8 +74,6 @@ public class LoaderAwareMethodCache<T> {
    */
   public T put (Method method, T value) {
 
-    clearExpiredReferences();
-
     return getMethodMap(method).put(method, value);
   }
 
@@ -83,91 +86,17 @@ public class LoaderAwareMethodCache<T> {
    */
   public T putIfAbsent (Method method, T value) {
 
-    clearExpiredReferences();
-
     return getMethodMap(method).putIfAbsent(method, value);
   }
 
   /**
-   * Returns the method-to-value map for the class loader that defined the given method, creating an
-   * empty map and registering it if one does not yet exist.
+   * Returns the method-to-value map for the class that declares the given method, creating it lazily if needed.
    *
-   * @param method the method whose declaring class's loader identifies the segment
-   * @return the concurrent map for that loader segment
+   * @param method the method whose declaring class identifies the partition
+   * @return the concurrent map for that partition
    */
   private ConcurrentHashMap<Method, T> getMethodMap (Method method) {
 
-    ConcurrentHashMap<Method, T> methodMap;
-    LoaderKey loaderKey = new LoaderKey(method.getDeclaringClass().getClassLoader());
-
-    if ((methodMap = loaderMap.get(loaderKey)) == null) {
-
-      ConcurrentHashMap<Method, T> priorMethodMap;
-
-      if ((priorMethodMap = loaderMap.putIfAbsent(loaderKey, methodMap = new ConcurrentHashMap<>())) != null) {
-        methodMap = priorMethodMap;
-      }
-    }
-
-    return methodMap;
-  }
-
-  /**
-   * Polls the reference queue and removes any loader segments whose class loaders have been
-   * garbage collected.
-   */
-  private void clearExpiredReferences () {
-
-    Reference<?> reference;
-
-    while ((reference = referenceQueue.poll()) != null) {
-      if (reference instanceof LoaderAwareMethodCache.LoaderKey) {
-        loaderMap.remove((LoaderAwareMethodCache<T>.LoaderKey)reference);
-      }
-    }
-  }
-
-  /**
-   * Phantom reference that serves as the map key for a class loader segment, enabling automatic
-   * removal of the segment once the loader is garbage collected.
-   */
-  private class LoaderKey extends PhantomReference<ClassLoader> {
-
-    private final int identityHashCode;
-
-    /**
-     * Constructs a key that tracks the given class loader via the enclosing cache's reference queue.
-     *
-     * @param classLoader the class loader to monitor for collection
-     */
-    public LoaderKey (ClassLoader classLoader) {
-
-      super(classLoader, referenceQueue);
-
-      identityHashCode = System.identityHashCode(classLoader);
-    }
-
-    /**
-     * Returns the identity hash code of the tracked class loader captured at construction time.
-     *
-     * @return the identity hash code of the tracked loader
-     */
-    @Override
-    public int hashCode () {
-
-      return identityHashCode;
-    }
-
-    /**
-     * Returns {@code true} if the other object is a {@code LoaderKey} with the same identity hash code.
-     *
-     * @param obj the object to compare with this key
-     * @return {@code true} if {@code obj} is a {@code LoaderKey} whose identity hash code matches
-     */
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof LoaderAwareMethodCache.LoaderKey) && (identityHashCode == obj.hashCode());
-    }
+    return partitionValue.get(method.getDeclaringClass());
   }
 }

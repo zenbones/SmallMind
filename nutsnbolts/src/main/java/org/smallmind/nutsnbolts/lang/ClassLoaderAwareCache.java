@@ -32,40 +32,47 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-import java.lang.ref.PhantomReference;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * A concurrent cache partitioned by {@link ClassLoader} identity, so that entries are automatically evicted when their associated loader is garbage-collected.
+ * A concurrent cache partitioned by the class each key belongs to. Each partition is attached to its class through a
+ * {@link ClassValue}, so the cache never keeps a class, or its class loader, reachable: a partition and its entries
+ * become collectible along with the class. A value that references classes from a different class loader keeps that
+ * loader reachable for as long as the key's class is reachable.
  *
  * @param <K> the type of keys stored in the cache
  * @param <V> the type of values stored in the cache
  */
 public class ClassLoaderAwareCache<K, V> {
 
-  private final ReferenceQueue<ClassLoader> referenceQueue = new ReferenceQueue<>();
-  private final ConcurrentHashMap<LoaderKey, ConcurrentHashMap<K, V>> loaderMap = new ConcurrentHashMap<>();
-  private final Function<K, ClassLoader> loaderExtractor;
+  private final ClassValue<ConcurrentHashMap<K, V>> partitionValue = new ClassValue<>() {
+
+    @Override
+    protected ConcurrentHashMap<K, V> computeValue (Class<?> type) {
+
+      return new ConcurrentHashMap<>();
+    }
+  };
+  private final Function<K, Class<?>> classExtractor;
 
   /**
-   * Creates a cache that uses the supplied function to determine which {@link ClassLoader} segment each key belongs to.
-   * Keys for which the extractor returns {@code null} are placed in the system class loader segment.
+   * Creates a cache that uses the supplied function to determine which class partition each key belongs to.
    *
-   * @param loaderExtractor a function that maps a cache key to its associated {@link ClassLoader}
+   * @param classExtractor a function that maps a cache key to the class whose lifetime bounds the key's entry;
+   *                       it must not return {@code null}
    */
-  public ClassLoaderAwareCache (Function<K, ClassLoader> loaderExtractor) {
+  public ClassLoaderAwareCache (Function<K, Class<?>> classExtractor) {
 
-    this.loaderExtractor = loaderExtractor;
+    this.classExtractor = classExtractor;
   }
 
   /**
-   * Returns the cached value for the given key within the key's class loader segment, or {@code null} if absent.
+   * Returns the cached value for the given key within the key's class partition, or {@code null} if absent.
    *
    * @param key the cache key
    * @return the cached value, or {@code null} if no mapping exists
+   * @throws NullPointerException if the class extractor returns {@code null} for the key
    */
   public V get (K key) {
 
@@ -73,111 +80,40 @@ public class ClassLoaderAwareCache<K, V> {
   }
 
   /**
-   * Associates the given value with the key in the key's class loader segment, replacing any existing mapping.
+   * Associates the given value with the key in the key's class partition, replacing any existing mapping.
    *
    * @param key   the cache key
    * @param value the value to associate with the key
    * @return the previous value associated with the key, or {@code null} if there was no prior mapping
+   * @throws NullPointerException if the class extractor returns {@code null} for the key
    */
   public V put (K key, V value) {
-
-    clearExpiredReferences();
 
     return getMap(key).put(key, value);
   }
 
   /**
-   * Associates the given value with the key in the key's class loader segment only if no mapping currently exists.
+   * Associates the given value with the key in the key's class partition only if no mapping currently exists.
    *
    * @param key   the cache key
    * @param value the value to store if no mapping is present
    * @return the existing value if one was already present, or {@code null} if the new value was stored
+   * @throws NullPointerException if the class extractor returns {@code null} for the key
    */
   public V putIfAbsent (K key, V value) {
-
-    clearExpiredReferences();
 
     return getMap(key).putIfAbsent(key, value);
   }
 
   /**
-   * Returns the inner map for the class loader segment associated with the given key, creating it lazily if needed.
+   * Returns the map for the class partition associated with the given key, creating it lazily if needed.
    *
-   * @param key the key whose class loader segment is required
-   * @return the concurrent map for the segment corresponding to the key's class loader
+   * @param key the key whose class partition is required
+   * @return the concurrent map for the partition corresponding to the key's class
+   * @throws NullPointerException if the class extractor returns {@code null} for the key
    */
-  private synchronized ConcurrentHashMap<K, V> getMap (K key) {
+  private ConcurrentHashMap<K, V> getMap (K key) {
 
-    ConcurrentHashMap<K, V> map;
-    ClassLoader extractedClassLoader;
-    LoaderKey loaderKey = new LoaderKey(((extractedClassLoader = loaderExtractor.apply(key)) == null) ? ClassLoader.getSystemClassLoader() : extractedClassLoader);
-
-    if ((map = loaderMap.get(loaderKey)) == null) {
-
-      ConcurrentHashMap<K, V> priorMap;
-
-      if ((priorMap = loaderMap.putIfAbsent(loaderKey, map = new ConcurrentHashMap<>())) != null) {
-        map = priorMap;
-      }
-    }
-
-    return map;
-  }
-
-  /**
-   * Polls the reference queue and removes any cache segments whose associated class loaders have been garbage-collected.
-   */
-  private void clearExpiredReferences () {
-
-    Reference<? extends ClassLoader> reference;
-
-    while ((reference = referenceQueue.poll()) != null) {
-      if (reference instanceof ClassLoaderAwareCache.LoaderKey) {
-        loaderMap.remove(reference);
-      }
-    }
-  }
-
-  /**
-   * A phantom reference to a {@link ClassLoader} that also serves as the map key, allowing the cache segment to be removed once the loader is garbage-collected.
-   */
-  private class LoaderKey extends PhantomReference<ClassLoader> {
-
-    private final int identityHashCode;
-
-    /**
-     * Creates a {@code LoaderKey} that tracks {@code classLoader} via a phantom reference registered on the enclosing cache's reference queue.
-     *
-     * @param classLoader the class loader to track
-     */
-    public LoaderKey (ClassLoader classLoader) {
-
-      super(classLoader, referenceQueue);
-
-      identityHashCode = System.identityHashCode(classLoader);
-    }
-
-    /**
-     * Returns the identity hash code captured at construction time, remaining stable even after the referent is collected.
-     *
-     * @return the identity hash code of the original class loader
-     */
-    @Override
-    public int hashCode () {
-
-      return identityHashCode;
-    }
-
-    /**
-     * Returns {@code true} when {@code obj} is a {@code LoaderKey} with the same identity hash code.
-     *
-     * @param obj the object to compare
-     * @return {@code true} if the other key has an equal identity hash code
-     */
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof ClassLoaderAwareCache.LoaderKey) && (identityHashCode == obj.hashCode());
-    }
+    return partitionValue.get(classExtractor.apply(key));
   }
 }

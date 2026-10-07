@@ -306,8 +306,12 @@ use it does not pay for the transitive closure.
 | `org.apache.shiro:shiro-spring` (which pulls in `shiro-core`); the directory
   access itself uses the JDK's built-in JNDI LDAP provider
 
+| `reflection` (proxy generation)
+| `ProxyGenerator`
+| `org.ow2.asm:asm`
+
 | `reflection` (bytecode trace, ASMify)
-| `ClassInspector.trace`, `.asmify`, `ClassVerifier`
+| `ClassInspector.trace`, `.asmify`
 | `org.ow2.asm:asm`, `org.ow2.asm:asm-util`
 
 | `ntp`
@@ -398,9 +402,153 @@ along with Spring.
   `security.spring`, `namespace.shiro.realm.spring`, and `resource` (all under
   `org.smallmind.nutsnbolts`) to `spring.core` and `spring.beans`.
 
-*Packages you open.* `FieldUtility.getFieldAccessor` and `getFieldAccessors` make
-non-public fields of your classes accessible, so the packages holding those classes must be
-opened to this module:
+*Packages you open to this module.* Every `ProxyGenerator.createProxy` overload takes a
+`defineInProxiedModule` flag that chooses where the proxy class is defined. Each setting
+has its own cache of generated classes, with one class per proxied class and
+`AnnotationFilter`. The cache does not keep a proxied class or its class loader reachable,
+so classes loaded by a discarded class loader or `ModuleLayer` can still be unloaded. When
+`org.smallmind.nutsnbolts` is itself the module in a discarded loader or layer, proxying a
+longer-lived type, such as a JDK interface, does not keep it loaded either, with one exception:
+a `false` proxy of a class whose loader is neither an ancestor nor a descendant of this
+module's loader keeps this module's loader reachable for as long as that class.
+
+`true`::
+    The proxy class is defined in the class loader, package, and module of the class it
+    proxies. This is the setting the `web-json-scaffold` polymorphic adapters use. When the
+    proxied class is in a named module, that module must open the class's package to
+    `org.smallmind.nutsnbolts`. The package does not need to be exported, and the module
+    does not need to read `org.smallmind.nutsnbolts`. For every type the proxied methods
+    return or declare as thrown, outside the proxied class's own package, the module must
+    also read the module of that type, and that type's package must be exported to it. This
+    matters when the proxied class inherits methods from another module that does not
+    `requires transitive` the modules its signatures use. JDK types cannot be proxied this
+    way, because the JDK does not open its packages.
+`false`::
+    The proxy class is defined in the unnamed module of a separate class loader whose
+    parent is the proxied class's loader, in a package of its own under
+    `org.smallmind.nutsnbolts.reflection.proxy`. Each proxy class gets a loader of its own,
+    which is released along with the proxy class. This setting can proxy JDK interfaces, such as
+    `java.util.function.Supplier`. When the proxied class is in a named module, that module
+    must export (or open) unconditionally the class's package and the packages of every
+    type its proxied methods return or declare as thrown. A qualified `exports … to` or
+    `opens … to` is not enough, because a qualified directive cannot name the unnamed module.
+
+In both settings, every type in the proxied method signatures, parameter types included, must
+be loadable through the proxied class's own class loader. This matters only with class loaders
+that do not delegate to one another, where a superclass or interface from another loader can
+mention a type the proxied class's loader cannot see.
+
+Proxy generation needs only the `org.objectweb.asm` module; `ClassInspector` also needs
+`org.objectweb.asm.util`. The methods of types in the proxied hierarchy are read from the class
+files their loaders provide as resources, so a hidden class, or a class defined from bytes that
+its loader does not also provide as a resource, cannot be proxied. JDK types, meaning those
+defined by the bootstrap or platform class loader, are read through reflection instead, so a
+JDK newer than the ASM release can still be proxied. That choice decides which annotations a
+proxy carries; see <<pkg-lang-reflection-apt,lang, reflection, apt>>.
+
+With `true`:
+
+[source,java]
+----
+module com.example.app {
+  requires org.smallmind.nutsnbolts;
+  requires org.objectweb.asm;
+  opens com.example.app.model to org.smallmind.nutsnbolts;
+}
+----
+
+Otherwise `createProxy(…, true)` throws `ByteCodeManipulationException` with `The module(…) of
+the proxy class(…) must open the package(…) to the module(org.smallmind.nutsnbolts)`. When
+`org.smallmind.nutsnbolts` is on the classpath, the last module is named `unnamed`, and only an
+unconditional `opens` satisfies it.
+
+`createProxy` checks the proxied class and the types in its method signatures before it
+defines the proxy class, and throws `ByteCodeManipulationException` naming the first problem:
+
+* `The proxy class(…) must not be hidden`
+* `The module(…) must export the package(…) of the proxy class(…) unconditionally` (`false`)
+* `Unable to locate the byte code of class(…), because its class loader does not provide it as
+  a resource`
+* `Unable to load the type(…) in the signature of method(…) through the class loader of the
+  proxy class(…)`
+* `The type(…) returned or thrown by method(…) of the proxy class(…) must be 'public'`
+  (`false`, or `true` for a type outside the proxied class's package)
+* `The module(…) of the proxy class(…) must read the module(…) of the type(…) returned or
+  thrown by method(…)` (`true`)
+* `The module(…) must export the package(…) to the module(…) of the proxy class(…), whose
+  method(…) returns or throws the type(…)` (`true`)
+* `The module(…) must export the package(…) unconditionally, because method(…) of the proxy
+  class(…) returns or throws the type(…)` (`false`)
+
+*Lookups you pass.* `FieldUtility.getFieldAccessor` and `getFieldAccessors`, and every
+`Overlay.overlay` method, take a `MethodHandles.Lookup`. They reach fields, getters, setters,
+and `OverlayNullifierValidator` constructors with the access of that lookup's module, never
+with the access of `org.smallmind.nutsnbolts`. Pass `MethodHandles.lookup()`, called in the
+module whose access should apply. A lookup without full privilege access, such as
+`MethodHandles.publicLookup()`, fails with `IllegalArgumentException: The lookup(…) must have
+full privilege access, as returned by MethodHandles.lookup()`.
+
+* A class in the lookup's own module needs no directive.
+* A field without a public getter, or without a public setter, is read or written directly.
+  The package declaring it, including a superclass's package, must be opened to the lookup's
+  module.
+* A public getter or setter needs its declaring package exported or opened to the lookup's
+  module.
+* When the lookup's module does not read the module of a class it reaches, the read edge is
+  added for it, through the lookup. A framework module therefore does not have to `requires`
+  the modules whose classes it is handed.
+* A `final` field without a setter can be read but not written: `FieldAccessor.set` throws
+  `IllegalAccessException: The field(…) of class(…) is 'final' and has no setter`.
+* A custom `OverlayNullifierValidator` is constructed through its no-argument constructor,
+  which must be accessible to the lookup's module.
+
+A refused access fails with `IllegalAccessException`, for example `module com.example.app does
+not open com.example.app.model to module com.example.framework`. `Overlay` wraps it in an
+`OverlayException`. Opening a package to `org.smallmind.nutsnbolts` gives these classes no
+access, and does not let any other caller reach the package through them.
+
+The accessors for a class are created on the first request from a module and cached for every
+later request from that module, including the requests `overlay` makes. A request from another
+module gets accessors created with its own access, or a refusal; it never receives accessors
+created for a different module. A failed request is not cached. `getFieldAccessors` returns a
+new array each time, holding the shared, immutable accessors. A `FieldAccessor` carries the
+access of the lookup it was created with, so hand it only to code that should have that access.
+
+The cache does not keep a class or its class loader reachable, so classes in a discarded class
+loader or `ModuleLayer` can still be unloaded. A class from a longer-lived loader, one that is an
+ancestor of the lookup's loader, does not keep the lookup's module or `org.smallmind.nutsnbolts`
+loaded either. The exception is a class whose loader is neither an ancestor nor a descendant of
+the lookup's loader: that class keeps the lookup's module, and `org.smallmind.nutsnbolts`, reachable
+for as long as it lives.
+
+To build an accessor from handles you create yourself, pass the field and its getter and setter
+handles to the `FieldAccessor` constructor. Each handle must come straight from a lookup's
+`unreflect`, `unreflectGetter`, `unreflectSetter`, `findVirtual`, `findGetter`, or `findSetter`
+method, without `asType`, `bindTo`, or other adaptation. A getter handle must read the field or
+invoke an instance method that takes no arguments and returns a value. A setter handle must
+write the field or invoke an instance method whose one parameter accepts the field's type,
+allowing for boxing. Pass `null` as the setter for an accessor that cannot write. Any other handle
+fails at construction with `IllegalArgumentException` naming the field and the member the handle
+reaches. Failures in getter and setter methods arrive wrapped in `InvocationTargetException`;
+failures of direct field access do not.
+
+[source,java]
+----
+FieldAccessor[] fieldAccessors = FieldUtility.getFieldAccessors(MethodHandles.lookup(), Settings.class);
+
+settings.overlay(MethodHandles.lookup(), overrides);
+----
+
+*Packages you open.* Some classes act with the access of `org.smallmind.nutsnbolts` itself:
+
+* `@LazyField` (through `LazyFieldAspect`) reads and writes the named field with this
+  module's access. Open the package declaring the field to `org.smallmind.nutsnbolts`, unless
+  the field has a public getter and a public setter.
+* `BeanUtility`, `AOPUtility`, `Getter`, `Setter`, and `OffloadingInvocationHandler` invoke
+  public methods reflectively. The package of the class that declares the method must be
+  exported to this module, or opened to it. When the runtime class of the target is not
+  accessible, as with JDK and library implementation classes, `BeanUtility` invokes the same
+  method as declared by an accessible superclass or interface.
 
 [source,java]
 ----
@@ -408,7 +556,7 @@ module com.example.app {
 
   requires org.smallmind.nutsnbolts;
 
-  opens com.example.app.model to org.smallmind.nutsnbolts;
+  opens com.example.app.lazy to org.smallmind.nutsnbolts;
 }
 ----
 
@@ -1417,13 +1565,15 @@ instances at runtime:
 
 `ClassGate`, `ClasspathClassGate`, `ClassGateTicket`,
 `ClassStreamTicket`, `ClassVerifier`::
-    Gate SPI, the classpath-based default, and ASM-backed bytecode
-    verification helpers.
+    Gate SPI, the classpath-based default, and a helper that verifies a
+    loaded class is signed with a certificate trusted by a given keystore.
 
 `ClassLoaderAwareCache`::
-    A cache whose entries are scoped to the classloader of the key
-    type — entries vanish when the classloader is collected,
-    preventing classloader leaks.
+    A concurrent cache partitioned by the class that a constructor-supplied
+    function maps each key to. The cache never keeps that class, or its
+    class loader, reachable, so a partition is released when its class is
+    unloaded. A value that references classes from another class loader
+    keeps that loader reachable for as long as the key's class is.
 
 `AllPermissionsClassLoader`::
     A trivial child loader that grants every permission; audit-only.
@@ -1455,9 +1605,33 @@ instances at runtime:
     `http.HTMLUtility.convertThrowable` and elsewhere.
 
 *`reflection`* provides field introspection (`FieldAccessor`,
-`FieldUtility`), annotation filtering (`AnnotationFilter`), bytecode
-debugging via ASM (`ClassInspector.trace`, `.asmify`), and getter
-matching.
+`FieldUtility`, and the `Overlay` mixin built on them, all of which work with the access of a
+`MethodHandles.Lookup` you pass; see <<module-path,Module Path>>), annotation filtering
+(`AnnotationFilter`), bytecode
+debugging via ASM (`ClassInspector.trace`, `.asmify`), ASM-generated
+subclass and interface proxies that route every public method through an
+`InvocationHandler` (`ProxyGenerator`; see <<module-path,Module Path>> for
+the `opens` it needs), and getter matching. A proxy also routes the methods of
+superinterfaces, the default methods a proxied class inherits from its interfaces,
+and `hashCode`, `equals`, and `toString`. A `null` handler makes every method return
+`null`, `false`, or zero. An exception thrown by the handler propagates unchanged when
+it is unchecked or declared by the method, and arrives wrapped in
+`UndeclaredThrowableException` otherwise. `OffloadingInvocationHandler` rethrows
+whatever the target method throws.
+
+Each proxy method carries copies of the method and parameter annotations of one declaration of
+the method it proxies, less any that the `AnnotationFilter` passed to `createProxy` excludes.
+That declaration is the first one found by searching the proxied class, then its superclasses,
+then its interfaces, so the annotations on an overriding method replace those on the method it
+overrides. Annotations on the proxied type itself are never copied.
+
+Annotations on methods declared by JDK types, meaning types defined by the bootstrap or platform
+class loader, are not copied, whatever the filter. A proxy method whose declaration comes from a
+JDK type, such as `get()` on a proxy of `java.util.function.Supplier`, or a JDK superclass method
+that your class inherits without overriding it, carries no annotations. To give such a method
+annotations, override or redeclare it in your own class or interface and annotate the
+declaration there. JDK modules that the application class loader defines, such as
+`jdk.compiler`, do not count as JDK types here, and their annotations are copied.
 
 *`apt`* exposes `AptUtility`, a small set of methods for reading
 `AnnotationMirror` values from the compile-time annotation-processor
@@ -1780,7 +1954,10 @@ compile-time). The nutsnbolts POM configures the
 `aspectj-maven-plugin` for its own build; consumers who want lazy
 fields in their own code must configure weaving separately and must
 supply `org.aspectj:aspectjrt`, which is optional in the nutsnbolts
-POM. On the module path its module name is `org.aspectj.runtime`.
+POM. On the module path its module name is `org.aspectj.runtime`, and
+the package declaring a lazy field must be opened to
+`org.smallmind.nutsnbolts` unless the field has a public getter and
+setter (see <<module-path,Module Path>>).
 ====
 
 [[pkg-servlet-soap]]

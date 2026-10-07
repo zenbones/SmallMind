@@ -32,6 +32,7 @@
  */
 module org.smallmind.web.json.scaffold {
 
+  requires org.objectweb.asm;
   requires org.smallmind.scribe.pen;
   requires spring.beans;
   requires tools.jackson.module.jakarta.xmlbind;

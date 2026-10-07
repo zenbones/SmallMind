@@ -1097,7 +1097,9 @@ xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide 
   whose types appear in its public signatures, so a module that requires
   `org.smallmind.web.json.scaffold` reads them without naming them. It also requires
   `tools.jackson.module.jakarta.xmlbind` (resolved with it, so `JsonCodec`'s JAXB annotation
-  support works without `--add-modules`), `org.smallmind.scribe.pen`, and `spring.beans`.
+  support works without `--add-modules`), `org.objectweb.asm` (resolved with it, for the
+  polymorphic adapters), `org.smallmind.scribe.pen`, and
+  `spring.beans`.
 * It opens `org.smallmind.web.json.scaffold.fault` and `org.smallmind.web.json.scaffold.util`
   to `jakarta.xml.bind` and `tools.jackson.databind`, and
   `org.smallmind.web.json.scaffold.util.spring` to `spring.core` and `spring.beans`.
@@ -1111,6 +1113,22 @@ opens com.example.app.model to tools.jackson.databind;
 An unqualified `exports` also works when Jackson touches only public members. Without
 either, the first call fails with `DatabindException: access to public member failed:
 … from class tools.jackson.databind…`.
+* Open every package that holds subclasses handled by `PolymorphicXmlAdapter` or
+  `AttributedPolymorphicXmlAdapter` to `org.smallmind.nutsnbolts` and
+  `org.smallmind.web.json.scaffold` as well. The adapters define a proxy subclass in
+  that package and module at run time, and create instances of the real subclass:
++
+[source,java]
+----
+opens com.example.app.model to tools.jackson.databind, org.smallmind.nutsnbolts, org.smallmind.web.json.scaffold;
+----
++
+Without the `org.smallmind.nutsnbolts` open, the first marshal or unmarshal fails with
+`ByteCodeManipulationException: The module(…) of the proxy class(…) must open the
+package(…) to the module(org.smallmind.nutsnbolts)`. Without the
+`org.smallmind.web.json.scaffold` open (or an unqualified `exports`), unmarshalling fails
+with a `JAXBProcessingException` caused by `IllegalAccessException: … does not export … to
+module org.smallmind.web.json.scaffold`.
 
 [[_web_json_query]]
 == web-json-query
@@ -1255,7 +1273,8 @@ The jar ships an explicit module descriptor for `org.smallmind.web.json.query`
 that exports all five of its packages (including `org.smallmind.web.json`,
 which holds `NonTerminalWildcardException`) and opens
 `org.smallmind.web.json.query` to `jakarta.xml.bind` and
-`tools.jackson.databind` for its JAXB-annotated query types. On the classpath
+`tools.jackson.databind` for its JAXB-annotated query types, and to
+`org.smallmind.nutsnbolts` for its polymorphic adapters. On the classpath
 the descriptor is ignored. See xref:README.adoc#module-path[Module Path And Classpath]
 for the repository-wide rules.
 

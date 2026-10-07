@@ -32,18 +32,29 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import javax.tools.ToolProvider;
+import org.smallmind.nutsnbolts.reflection.sample.AccessorBean;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
 public class FieldUtilityTest {
 
-  public void testFieldAccessorsWalkHierarchyAndSkipStaticAndTransient () {
+  public void testFieldAccessorsWalkHierarchyAndSkipStaticAndTransient ()
+    throws IllegalAccessException {
 
-    FieldAccessor[] accessors = FieldUtility.getFieldAccessors(ChildBean.class);
+    FieldAccessor[] accessors = FieldUtility.getFieldAccessors(MethodHandles.lookup(), ChildBean.class);
     Set<String> names = new HashSet<>();
 
     for (FieldAccessor accessor : accessors) {
@@ -56,17 +67,50 @@ public class FieldUtilityTest {
     Assert.assertFalse(names.contains("transientField"));
   }
 
-  public void testFieldAccessorsAreCached () {
+  public void testFieldAccessorsAreCachedAndReturnedInNewArrays ()
+    throws IllegalAccessException {
 
-    FieldAccessor[] first = FieldUtility.getFieldAccessors(ChildBean.class);
-    FieldAccessor[] second = FieldUtility.getFieldAccessors(ChildBean.class);
+    FieldAccessor[] first = FieldUtility.getFieldAccessors(MethodHandles.lookup(), ChildBean.class);
+    FieldAccessor[] second;
+    FieldAccessor firstAccessor = first[0];
 
-    Assert.assertSame(first, second);
+    first[0] = null;
+    second = FieldUtility.getFieldAccessors(MethodHandles.lookup(), ChildBean.class);
+
+    Assert.assertNotSame(first, second);
+    Assert.assertSame(second[0], firstAccessor);
+    Assert.assertSame(FieldUtility.getFieldAccessor(MethodHandles.lookup(), ChildBean.class, firstAccessor.getName()), firstAccessor);
   }
 
-  public void testFieldAccessorsSortedAlphaNumerically () {
+  public void testAccessorsOfClassFromAncestorLoaderAreHeldAgainstLookupClass ()
+    throws Exception {
 
-    FieldAccessor[] accessors = FieldUtility.getFieldAccessors(ChildBean.class);
+    Path classDirectory = Files.createTempDirectory("field-utility-child");
+    Path packageDirectory = Files.createDirectories(classDirectory.resolve("loaded").resolve("child"));
+    Path lookupSource = Files.writeString(packageDirectory.resolve("LookupSource.java"), "package loaded.child; import java.lang.invoke.MethodHandles; public class LookupSource { public static MethodHandles.Lookup lookup () { return MethodHandles.lookup(); } }");
+
+    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), lookupSource.toString()), 0);
+
+    try (URLClassLoader childLoader = new URLClassLoader(new URL[] {classDirectory.toUri().toURL()}, FieldUtilityTest.class.getClassLoader())) {
+
+      Class<?> lookupSourceClass = childLoader.loadClass("loaded.child.LookupSource");
+      MethodHandles.Lookup childLookup = (MethodHandles.Lookup)lookupSourceClass.getMethod("lookup").invoke(null);
+      ClassValue<?> fieldAccessorMapValue = (ClassValue<?>)readStaticField("FIELD_ACCESSOR_MAP_VALUE");
+      ClassValue<?> ancestorFieldAccessorMapValue = (ClassValue<?>)readStaticField("ANCESTOR_FIELD_ACCESSOR_MAP_VALUE");
+
+      FieldUtility.getFieldAccessors(childLookup, ChildBean.class);
+      FieldUtility.getFieldAccessors(MethodHandles.lookup(), ChildBean.class);
+
+      Assert.assertTrue(((Map<?, ?>)ancestorFieldAccessorMapValue.get(lookupSourceClass)).containsKey(ChildBean.class));
+      Assert.assertFalse(((Map<?, ?>)fieldAccessorMapValue.get(ChildBean.class)).containsKey(lookupSourceClass.getModule()));
+      Assert.assertTrue(((Map<?, ?>)fieldAccessorMapValue.get(ChildBean.class)).containsKey(FieldUtilityTest.class.getModule()));
+    }
+  }
+
+  public void testFieldAccessorsSortedAlphaNumerically ()
+    throws IllegalAccessException {
+
+    FieldAccessor[] accessors = FieldUtility.getFieldAccessors(MethodHandles.lookup(), ChildBean.class);
 
     String[] sorted = Arrays.stream(accessors).map(FieldAccessor::getName).toArray(String[]::new);
 
@@ -75,24 +119,120 @@ public class FieldUtilityTest {
     }
   }
 
-  public void testGetFieldAccessorReturnsMatchOrNull () {
+  public void testGetFieldAccessorReturnsMatchOrNull ()
+    throws IllegalAccessException {
 
-    FieldAccessor accessor = FieldUtility.getFieldAccessor(ChildBean.class, "childField");
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), ChildBean.class, "childField");
 
     Assert.assertNotNull(accessor);
     Assert.assertEquals(accessor.getName(), "childField");
-    Assert.assertNull(FieldUtility.getFieldAccessor(ChildBean.class, "no-such-field"));
+    Assert.assertNull(FieldUtility.getFieldAccessor(MethodHandles.lookup(), ChildBean.class, "no-such-field"));
   }
 
   public void testFieldAccessorWiresGetterAndSetterWhenPresent ()
     throws Exception {
 
-    FieldAccessor accessor = FieldUtility.getFieldAccessor(ChildBean.class, "childField");
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), ChildBean.class, "childField");
     ChildBean target = new ChildBean();
 
     accessor.set(target, "value");
 
     Assert.assertEquals(accessor.get(target), "value");
+  }
+
+  public void testNoFieldIsMadeAccessible ()
+    throws Exception {
+
+    AccessorBean target = new AccessorBean();
+    FieldAccessor describedAccessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), AccessorBean.class, "described");
+    FieldAccessor undescribedAccessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), AccessorBean.class, "undescribed");
+
+    Assert.assertFalse(describedAccessor.getField().canAccess(target));
+    Assert.assertFalse(undescribedAccessor.getField().canAccess(target));
+
+    describedAccessor.set(target, "through setter");
+    undescribedAccessor.set(target, "through field");
+
+    Assert.assertEquals(describedAccessor.get(target), "through setter");
+    Assert.assertEquals(undescribedAccessor.get(target), "through field");
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*must have full privilege access.*")
+  public void testRestrictedLookupIsRejected ()
+    throws IllegalAccessException {
+
+    FieldUtility.getFieldAccessors(MethodHandles.publicLookup(), ChildBean.class);
+  }
+
+  public void testFinalFieldWithoutSetterIsReadOnly ()
+    throws Exception {
+
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), FixedBean.class, "fixed");
+    FixedBean target = new FixedBean();
+
+    Assert.assertEquals(accessor.get(target), "fixed");
+
+    try {
+      accessor.set(target, "changed");
+      Assert.fail("A final field without a setter must not be writable");
+    } catch (IllegalAccessException illegalAccessException) {
+      Assert.assertTrue(illegalAccessException.getMessage().contains("is 'final' and has no setter"));
+    }
+  }
+
+  public void testGetterFailureIsWrappedAsInvocationTargetException ()
+    throws IllegalAccessException {
+
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), FailingBean.class, "broken");
+
+    try {
+      accessor.get(new FailingBean());
+      Assert.fail("The getter failure must surface");
+    } catch (InvocationTargetException invocationTargetException) {
+      Assert.assertTrue(invocationTargetException.getCause() instanceof IllegalStateException);
+    }
+  }
+
+  public void testPrimitiveFieldIsBoxedAndUnboxed ()
+    throws Exception {
+
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), FixedBean.class, "count");
+    FixedBean target = new FixedBean();
+
+    accessor.set(target, 42);
+
+    Assert.assertEquals(accessor.get(target), 42);
+  }
+
+  private static Object readStaticField (String name)
+    throws ReflectiveOperationException {
+
+    Field field = FieldUtility.class.getDeclaredField(name);
+
+    field.setAccessible(true);
+
+    return field.get(null);
+  }
+
+  public static class FixedBean {
+
+    private final String fixed = "fixed";
+    private int count;
+  }
+
+  public static class FailingBean {
+
+    private String broken;
+
+    public String getBroken () {
+
+      throw new IllegalStateException("broken");
+    }
+
+    public void setBroken (String broken) {
+
+      this.broken = broken;
+    }
   }
 
   public static class BaseBean {

@@ -32,7 +32,13 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import javax.tools.ToolProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -98,6 +104,41 @@ public class LoaderAwareMethodCacheTest {
 
     Assert.assertEquals(cache.get(first), "a");
     Assert.assertEquals(cache.get(second), "b");
+  }
+
+  public void testCacheDoesNotKeepClassLoaderReachable ()
+    throws Exception {
+
+    LoaderAwareMethodCache<String> cache = new LoaderAwareMethodCache<>();
+    WeakReference<ClassLoader> loaderReference = cacheMethodFromDiscardedLoader(cache);
+
+    for (int attempt = 0; (attempt < 50) && (loaderReference.get() != null); attempt++) {
+      System.gc();
+      Thread.sleep(20);
+    }
+
+    Assert.assertNull(loaderReference.get(), "The cache kept a discarded class loader reachable");
+    Assert.assertNull(cache.get(method("noArgs")));
+  }
+
+  private static WeakReference<ClassLoader> cacheMethodFromDiscardedLoader (LoaderAwareMethodCache<String> cache)
+    throws Exception {
+
+    Path classDirectory = Files.createTempDirectory("loader-aware-method-cache");
+    Path packageDirectory = Files.createDirectories(classDirectory.resolve("discarded"));
+    Path transientSource = Files.writeString(packageDirectory.resolve("Transient.java"), "package discarded; public class Transient { public String name () { return \"transient\"; } }");
+
+    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), transientSource.toString()), 0);
+
+    try (URLClassLoader classLoader = new URLClassLoader(new URL[] {classDirectory.toUri().toURL()}, LoaderAwareMethodCacheTest.class.getClassLoader())) {
+
+      Method transientMethod = classLoader.loadClass("discarded.Transient").getMethod("name");
+
+      cache.put(transientMethod, "transient");
+      Assert.assertEquals(cache.get(transientMethod), "transient");
+
+      return new WeakReference<>(classLoader);
+    }
   }
 
   static class Fixture {

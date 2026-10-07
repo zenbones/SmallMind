@@ -302,9 +302,9 @@ Optional dependencies:
   authentication mechanisms must be plugged into a caller-supplied
   `MongoCredential`.
 * Java reflection access to the `@Entity` / `@Embedded` classes'
-  private fields and no-arg constructors. Throng uses
-  `FieldUtility.getFieldAccessors`, which assumes the standard Java
-  reflection model; there is no `Unsafe` or `LambdaMetafactory`
+  private fields and no-arg constructors. Throng reads and writes
+  fields through `FieldUtility.getFieldAccessors`, with method handles
+  created from its own `MethodHandles.Lookup`; there is no `Unsafe`
   shortcut.
 * Exactly one version of the MongoDB driver on the classpath. Mixing
   driver versions across modules is the common source of
@@ -335,9 +335,9 @@ path, require `tools.jackson.databind` yourself or add it with `--add-modules`.
 `org.smallmind.mongodb.utility.spring` to `spring.core` and `spring.beans`.
 
 *Packages you open.* Throng constructs your `@Entity` and `@Embedded` classes and the
-codecs named by `@Codec`, and invokes their lifecycle callbacks; the field access itself goes
-through `FieldUtility` in `org.smallmind.nutsnbolts`. Open each package holding mapped
-classes to both modules:
+codecs named by `@Codec`, invokes their lifecycle callbacks, and reads and writes their fields,
+all with its own access. Open each package holding mapped classes to
+`org.smallmind.mongodb.throng`:
 
 [source,java]
 ----
@@ -348,16 +348,14 @@ module com.example.app {
   requires org.mongodb.driver.sync.client;
   requires org.smallmind.mongodb.throng;
 
-  opens com.example.app.model to org.smallmind.mongodb.throng, org.smallmind.nutsnbolts;
+  opens com.example.app.model to org.smallmind.mongodb.throng;
 }
 ----
 
-Without the open to `org.smallmind.nutsnbolts`, building the class's codec (in
-`ThrongClient`'s constructor) fails with `InaccessibleObjectException: Unable to make field
-… accessible: module … does not "opens …" to module org.smallmind.nutsnbolts`. Without the
-open to `org.smallmind.mongodb.throng`, the codec builds but decoding a document fails with a
-`ThrongRuntimeException` wrapping `IllegalAccessException: … does not export … to module
-org.smallmind.mongodb.throng`.
+Without it, building the class's codec (in `ThrongClient`'s constructor) fails with
+`IllegalAccessException: module com.example.app does not open com.example.app.model to module
+org.smallmind.mongodb.throng`. Throng does not need to read your module; the read edge is added
+when the codec is built.
 
 [[quick-start]]
 == Quick Start
@@ -1445,9 +1443,9 @@ Driver::
     A CRUD call referenced a `Class` that was not passed in the
     `entityClasses` vararg to the `ThrongClient` constructor. Add it.
 
-`InaccessibleObjectException` naming `org.smallmind.nutsnbolts`, or `IllegalAccessException` naming `org.smallmind.mongodb.throng`::
+`IllegalAccessException: module … does not open … to module org.smallmind.mongodb.throng`::
     The application runs on a module path and has not opened the package holding its mapped
-    classes. Open it to both modules; see <<module-path,Module Path>>.
+    classes. Open it to `org.smallmind.mongodb.throng`; see <<module-path,Module Path>>.
 
 `IllegalFilterStateException: The filter(...) is closed`::
     A second comparison was applied to a filter that already had

@@ -101,7 +101,7 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
       throw new JAXBProcessingException("Can not update a 'null' instance of the polymorphic sub-class(%s)", polymorphicSubClass.getName());
     } else {
       try {
-        return ProxyGenerator.createProxy(polymorphicSubClass, new OffloadingInvocationHandler(polymorphicInstance), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
+        return ProxyGenerator.createProxy(polymorphicSubClass, new OffloadingInvocationHandler(polymorphicInstance), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class), true);
       } finally {
         polymorphicInstanceThreadLocal.remove();
       }

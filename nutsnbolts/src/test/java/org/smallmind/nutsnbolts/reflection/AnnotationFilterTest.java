@@ -70,4 +70,14 @@ public class AnnotationFilterTest {
 
     Assert.assertTrue(filter.isAllowed(DEPRECATED_DESC));
   }
+
+  public void testFiltersWithTheSamePolicyAndAnnotationsAreEqual () {
+
+    AnnotationFilter filter = new AnnotationFilter(PassType.EXCLUDE, Deprecated.class);
+
+    Assert.assertEquals(new AnnotationFilter(PassType.EXCLUDE, Deprecated.class), filter);
+    Assert.assertEquals(new AnnotationFilter(PassType.EXCLUDE, Deprecated.class).hashCode(), filter.hashCode());
+    Assert.assertNotEquals(new AnnotationFilter(PassType.INCLUDE, Deprecated.class), filter);
+    Assert.assertNotEquals(new AnnotationFilter(PassType.EXCLUDE, Override.class), filter);
+  }
 }

@@ -155,6 +155,7 @@ The Doppelganger module itself does not need to be on the runtime classpath.
 Declaring it with `<scope>provided</scope>` is acceptable when you want to
 keep compile-time tooling out of deployed artefacts.
 
+[[doppelganger-module-path]]
 === Module path
 
 The jar ships an explicit module descriptor for `org.smallmind.web.json.doppelganger`
@@ -196,6 +197,14 @@ module com.example.app {
 * Open the package that holds the generated views to `tools.jackson.databind` for
   `JsonCodec`, and to `jakarta.xml.bind` if you marshal them with JAXB (see
   xref:WEB.adoc#_web_json_scaffold[web-json-scaffold]).
+* When the package holds `@Polymorphic` views, also open it to
+  `org.smallmind.nutsnbolts` and `org.smallmind.web.json.scaffold`, which the
+  polymorphic adapters need:
++
+[source,java]
+----
+opens com.example.domain to tools.jackson.databind, jakarta.xml.bind, org.smallmind.nutsnbolts, org.smallmind.web.json.scaffold;
+----
 
 == Quick Start
 
@@ -741,10 +750,11 @@ Generated views play by existing Jackson and JAXB rules.
 * Generated views use property access: Jackson and JAXB read the
   annotations on the getters, and the element names come from
   `@XmlElement(name = ...)`.
-* Reading a polymorphic payload goes through `PolymorphicXmlAdapter`, which
-  builds a proxy with `nutsnbolts`' `ProxyGenerator`. That needs
-  `org.ow2.asm:asm` and `org.ow2.asm:asm-util` at run time; both are
-  optional dependencies of `smallmind-nutsnbolts`, so add them yourself.
+* Polymorphic payloads are read and written through `PolymorphicXmlAdapter`,
+  which builds a proxy subclass of each polymorphic view at run time with
+  `nutsnbolts`' `ProxyGenerator`. The ASM jar that needs (`org.ow2.asm:asm`)
+  comes with `web-json-scaffold`. On a module path,
+  open the views' package as shown in <<doppelganger-module-path,Module path>>.
 * Bean Validation constraints (`@NotNull`, `@Size`, `@Email`, …) are
   enforced the same way they would be on any JAX-RS parameter annotated
   with `@Valid` — the processor does not validate at generation time; it
@@ -937,9 +947,13 @@ Warning "… was annotated with the unnecessary @Pledge(…)"::
     Run inside one, and set the name in every context created after the
     first (see <<_polymorphic_vs_plain_hierarchies>>).
 
-`NoClassDefFoundError: org/objectweb/asm/ClassVisitor` reading polymorphic JSON::
-    ASM is missing at run time. Add `org.ow2.asm:asm` and
-    `org.ow2.asm:asm-util` (see <<_integration_with_json_and_xml,Integration With JSON and XML>>).
+`ByteCodeManipulationException: The module(X) of the proxy class(Y) must open the package(Z) to the module(org.smallmind.nutsnbolts)`::
+    On a module path, the package holding the polymorphic views is not opened
+    to `org.smallmind.nutsnbolts` (see <<doppelganger-module-path,Module path>>).
+
+`JAXBProcessingException` caused by `IllegalAccessException: … cannot access class Y (in module X) because module X does not export Z to module org.smallmind.web.json.scaffold`::
+    On a module path, the package holding the polymorphic views is not opened
+    to `org.smallmind.web.json.scaffold` (see <<doppelganger-module-path,Module path>>).
 
 `DefinitionException` at compile time::
     General structural error from the processor. The message names the

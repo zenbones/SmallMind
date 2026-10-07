@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.orm.aop;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -53,7 +54,7 @@ public class RepositoryAspect {
    * corresponding ORM DAO from {@code OrmDaoManager}.
    *
    * @param constructed the newly constructed service instance whose fields are to be injected
-   * @throws IllegalAccessException    if a matching field is not accessible via reflection
+   * @throws IllegalAccessException    if this module cannot access a field of the service, or its getter or setter, or a matching field is final and has no setter
    * @throws InvocationTargetException if field access via a reflective accessor throws
    * @throws RepositoryError           if no DAO is registered for the declared durable type, or the DAO type is incompatible with the field type
    */
@@ -61,7 +62,7 @@ public class RepositoryAspect {
   public void afterInitializationOfService (Object constructed)
     throws IllegalAccessException, InvocationTargetException {
 
-    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(constructed.getClass())) {
+    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(MethodHandles.lookup(), constructed.getClass())) {
 
       Repository repository;
 

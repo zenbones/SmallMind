@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.reflection;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -61,12 +62,18 @@ public class OffloadingInvocationHandler implements Serializable, InvocationHand
    * @param method the reflected method that was called on the proxy
    * @param args   the arguments that were passed to the method call
    * @return the value returned by the delegate target's method
-   * @throws Throwable any exception thrown by the delegate target's method
+   * @throws Throwable the exception thrown by the delegate target's method, unwrapped from the
+   *                   {@link InvocationTargetException} that reports it, or the reflective failure
+   *                   when the method cannot be invoked on the target
    */
   @Override
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
-    return method.invoke(target, args);
+    try {
+      return method.invoke(target, args);
+    } catch (InvocationTargetException invocationTargetException) {
+      throw invocationTargetException.getCause();
+    }
   }
 }

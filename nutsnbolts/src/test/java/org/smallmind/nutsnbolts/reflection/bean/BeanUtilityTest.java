@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.reflection.bean;
 
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -130,11 +131,74 @@ public class BeanUtilityTest {
     Assert.assertEquals(BeanUtility.execute(person, "greet", "Hi"), "Hi Carol");
   }
 
+  public void testExecuteResolvesMethodOfInaccessibleImplementationClass ()
+    throws Exception {
+
+    Assert.assertEquals(BeanUtility.execute(List.of(1, 2, 3), "size"), 3);
+  }
+
+  public void testExecuteGetResolvesGetterOfInaccessibleImplementationClass ()
+    throws Exception {
+
+    Assert.assertEquals(BeanUtility.executeGet(List.of(), "empty", false), Boolean.TRUE);
+  }
+
   @Test(expectedExceptions = BeanAccessException.class)
   public void testMissingGetterThrowsBeanAccessException ()
     throws Exception {
 
     BeanUtility.executeGet(new Person(), "nonexistent", false);
+  }
+
+  public void testOverloadedSetterIsChosenByValueTypeOnEveryCall ()
+    throws Exception {
+
+    Overloaded overloaded = new Overloaded();
+
+    BeanUtility.executeSet(overloaded, "value", "text");
+    Assert.assertEquals(overloaded.getValue(), "string:text");
+
+    BeanUtility.executeSet(overloaded, "value", 7);
+    Assert.assertEquals(overloaded.getValue(), "integer:7");
+  }
+
+  public void testOverloadedMethodIsChosenByArgumentTypesOnEveryCall ()
+    throws Exception {
+
+    Overloaded overloaded = new Overloaded();
+
+    Assert.assertEquals(BeanUtility.execute(overloaded, "describe", "text"), "string:text");
+    Assert.assertEquals(BeanUtility.execute(overloaded, "describe", 7), "integer:7");
+  }
+
+  public static class Overloaded {
+
+    private String value;
+
+    public String getValue () {
+
+      return value;
+    }
+
+    public void setValue (String value) {
+
+      this.value = describe(value);
+    }
+
+    public void setValue (Integer value) {
+
+      this.value = describe(value);
+    }
+
+    public String describe (String text) {
+
+      return "string:" + text;
+    }
+
+    public String describe (Integer number) {
+
+      return "integer:" + number;
+    }
   }
 
   public static class Address {

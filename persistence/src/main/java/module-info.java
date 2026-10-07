@@ -90,6 +90,6 @@ module org.smallmind.persistence {
   opens org.smallmind.persistence.orm.spring to spring.core, spring.beans;
   opens org.smallmind.persistence.orm.spring.jpa to spring.core, spring.beans;
   opens org.smallmind.persistence.orm.spring.throng to spring.core, spring.beans;
-  opens org.smallmind.persistence.orm.throng to org.smallmind.mongodb.throng, org.smallmind.nutsnbolts;
+  opens org.smallmind.persistence.orm.throng to org.smallmind.mongodb.throng;
   opens org.smallmind.persistence.sql.pool.spring to spring.core, spring.beans;
 }

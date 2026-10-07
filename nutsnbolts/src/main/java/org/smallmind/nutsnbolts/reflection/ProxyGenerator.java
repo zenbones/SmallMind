@@ -32,33 +32,83 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
-import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.Type;
 
 /**
  * Uses ASM to dynamically generate a subclass or interface implementation that routes every public
  * non-final method call through a supplied {@link InvocationHandler}, with optional annotation filtering.
+ * The routed methods are those the proxied type declares or inherits, including the methods of its
+ * superinterfaces, the default methods of the interfaces a proxied class implements, and {@code hashCode},
+ * {@code equals} and {@code toString}. The handler receives the {@link java.lang.reflect.Method} that
+ * {@link Class#getMethod(String, Class[])} returns for the proxied type, or for {@link Object} in the case of
+ * those three methods on an interface proxy. Unchecked exceptions thrown by the handler, and checked exceptions
+ * the method declares, propagate unchanged; any other checked exception is wrapped in an
+ * {@link java.lang.reflect.UndeclaredThrowableException}. A generated class refers only to {@code java.base},
+ * the proxied type, and the types in the proxied method signatures. Generation needs only the
+ * {@code org.objectweb.asm} module.
+ * <p>
+ * Each generated method carries copies of the method and parameter annotations of one declaration of the method
+ * it proxies, less any that the annotation filter excludes. That declaration is the first one found by searching
+ * the proxied class, then its superclasses, then its interfaces, so an overriding method's annotations replace
+ * those of the method it overrides. Declarations are read from the byte code of the types that hold them, except
+ * in types defined by the bootstrap or platform class loader, which belong to the JDK. Those are read through
+ * reflection, so a JDK newer than the ASM release can still be proxied, and their annotations are not copied: a
+ * generated method whose declaration comes from a JDK type carries no annotations, whatever the filter.
+ * Annotations on the proxied type itself are never copied.
+ * <p>
+ * Where the generated class is defined is chosen per call by the {@code defineInProxiedModule} flag:
+ * <ul>
+ *   <li>{@code true} defines it in the class loader, runtime package, and module of the proxied class.
+ *   When the proxied class is in a named module, that module must open the proxied class's package to
+ *   {@code org.smallmind.nutsnbolts}. For every type the proxied methods return or declare as thrown that lies
+ *   outside the proxied class's runtime package, the proxied class's module must also read the type's module, and
+ *   the type's package must be exported to it.</li>
+ *   <li>{@code false} defines it in the unnamed module of a separate class loader whose parent is the
+ *   proxied class's loader, in a package of its own under {@code org.smallmind.nutsnbolts.reflection.proxy}.
+ *   When the proxied class is in a named module, that module must export (or open) the proxied class's
+ *   package, and the packages of every type the proxied methods return or declare as thrown, unconditionally.</li>
+ * </ul>
+ * In either mode, every type in the proxied method signatures must be loadable through the proxied class's
+ * class loader. These requirements are checked before the generated class is defined.
+ * <p>
+ * Generated classes are cached per proxied class and annotation filter, separately for each mode. The cache does
+ * not keep the proxied class, or its class loader, reachable. Nor does it keep this module's class loader
+ * reachable through a proxied class that outlives it, such as a JDK interface proxied from a discarded
+ * {@link ModuleLayer}, except when a {@code false} proxy is generated for a class whose loader is neither an
+ * ancestor nor a descendant of this module's loader; that class then keeps this module's loader reachable.
  */
 public class ProxyGenerator {
 
   private static final HashMap<String, String> OBJECT_METHOD_MAP = new HashMap<>();
-  private static final ConcurrentHashMap<Class<?>, Class<?>> INTERFACE_MAP = new ConcurrentHashMap<>();
-  private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<>();
+  private static final ClassValue<ConcurrentHashMap<String, Class<?>>> PROXY_CLASS_MAP_VALUE = new ClassValue<>() {
+
+    @Override
+    protected ConcurrentHashMap<String, Class<?>> computeValue (Class<?> type) {
+
+      return new ConcurrentHashMap<>();
+    }
+  };
+  private static final ConcurrentHashMap<Class<?>, ConcurrentHashMap<String, Class<?>>> ANCESTOR_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
+  private static final AtomicInteger PROXY_CLASS_COUNTER = new AtomicInteger();
   private static final String INVOCATION_HANDLER = "L" + InvocationHandler.class.getName().replace('.', '/') + ";";
+  private static final String METHOD = "Ljava/lang/reflect/Method;";
+  private static final String PROXY_CLASS_LOADER_PACKAGE = "org/smallmind/nutsnbolts/reflection/proxy/";
 
   static {
     OBJECT_METHOD_MAP.put("hashCode", "()I");
@@ -67,94 +117,133 @@ public class ProxyGenerator {
   }
 
   /**
-   * Generates and instantiates a proxy for the given type that routes all calls to the supplied handler.
+   * Generates and instantiates a proxy for the given type that routes all calls to the supplied handler. The
+   * generated methods carry every annotation that the class documentation describes as copied; in particular,
+   * methods declared by JDK types carry none.
    *
-   * @param toBeProxiedClass the public, non-abstract, non-static class or interface to proxy
-   * @param handler          the {@link InvocationHandler} that will receive every method invocation
-   * @param <T>              the type of the proxy
+   * @param toBeProxiedClass      the public, non-sealed, non-hidden class or interface to proxy; a class must also be
+   *                              neither an inner (non-static nested) class, abstract, nor final, and must
+   *                              have a non-private no-arg constructor, which must be public or protected
+   *                              unless {@code defineInProxiedModule} is {@code true}. To stand in for a
+   *                              sealed type, proxy a non-sealed type it permits, whose proxy is assignable
+   *                              to the sealed type
+   * @param handler               the {@link InvocationHandler} that will receive every method invocation;
+   *                              {@code null} makes every method return {@code null}, {@code false}, or zero
+   * @param defineInProxiedModule {@code true} to define the proxy class in the class loader, package, and
+   *                              module of {@code toBeProxiedClass}; {@code false} to define it in the
+   *                              unnamed module of a separate class loader
+   * @param <T>                   the type of the proxy
    * @return a new proxy instance that is assignable to {@code toBeProxiedClass}
-   * @throws ByteCodeManipulationException if the class is ineligible, byte code generation fails, or
-   *                                       the generated class cannot be instantiated
+   * @throws ByteCodeManipulationException if the class is ineligible, {@code defineInProxiedModule} is
+   *                                       {@code false} and its module does not export its package
+   *                                       unconditionally, {@code defineInProxiedModule} is {@code true} and its
+   *                                       module does not open its package to {@code org.smallmind.nutsnbolts},
+   *                                       the byte code of a type in its hierarchy cannot be located or read, a
+   *                                       type in the proxied method signatures cannot be loaded through its
+   *                                       class loader, a type the proxied methods return or declare as thrown
+   *                                       would not be accessible to the generated class, byte code generation
+   *                                       fails, or the generated class cannot be defined, initialized, or
+   *                                       instantiated
    */
-  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler) {
+  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, boolean defineInProxiedModule) {
 
-    return createProxy(toBeProxiedClass, handler, null);
+    return createProxy(toBeProxiedClass, handler, null, defineInProxiedModule);
   }
 
   /**
    * Generates and instantiates a proxy for the given type, routing all calls to the supplied handler,
-   * and filtering method-level annotations according to the provided filter.
+   * and filtering the method and parameter annotations copied onto the generated methods. Only annotations that the
+   * class documentation describes as copied are subject to the filter; in particular, methods declared by JDK types
+   * carry none, whatever the filter allows.
    *
-   * @param toBeProxiedClass the public, non-abstract, non-static class or interface to proxy
-   * @param handler          the {@link InvocationHandler} that will receive every method invocation
-   * @param annotationFilter an optional filter that controls which annotations are preserved on
-   *                         generated proxy methods; {@code null} preserves all annotations
-   * @param <T>              the type of the proxy
+   * @param toBeProxiedClass      the public, non-sealed, non-hidden class or interface to proxy; a class must also be
+   *                              neither an inner (non-static nested) class, abstract, nor final, and must
+   *                              have a non-private no-arg constructor, which must be public or protected
+   *                              unless {@code defineInProxiedModule} is {@code true}. To stand in for a
+   *                              sealed type, proxy a non-sealed type it permits, whose proxy is assignable
+   *                              to the sealed type
+   * @param handler               the {@link InvocationHandler} that will receive every method invocation;
+   *                              {@code null} makes every method return {@code null}, {@code false}, or zero
+   * @param annotationFilter      an optional filter that decides which of the copied method and parameter
+   *                              annotations the generated methods keep; {@code null} keeps all of them.
+   *                              Annotations on methods declared by JDK types are never copied, so no filter
+   *                              can keep them
+   * @param defineInProxiedModule {@code true} to define the proxy class in the class loader, package, and
+   *                              module of {@code toBeProxiedClass}; {@code false} to define it in the
+   *                              unnamed module of a separate class loader
+   * @param <T>                   the type of the proxy
    * @return a new proxy instance that is assignable to {@code toBeProxiedClass}
-   * @throws ByteCodeManipulationException if the class is ineligible, byte code generation fails, or
-   *                                       the generated class cannot be instantiated
+   * @throws ByteCodeManipulationException if the class is ineligible, {@code defineInProxiedModule} is
+   *                                       {@code false} and its module does not export its package
+   *                                       unconditionally, {@code defineInProxiedModule} is {@code true} and its
+   *                                       module does not open its package to {@code org.smallmind.nutsnbolts},
+   *                                       the byte code of a type in its hierarchy cannot be located or read, a
+   *                                       type in the proxied method signatures cannot be loaded through its
+   *                                       class loader, a type the proxied methods return or declare as thrown
+   *                                       would not be accessible to the generated class, byte code generation
+   *                                       fails, or the generated class cannot be defined, initialized, or
+   *                                       instantiated
    */
-  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
+  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, AnnotationFilter annotationFilter, boolean defineInProxiedModule) {
 
+    ConcurrentHashMap<String, Class<?>> proxyClassMap = getProxyClassMap(toBeProxiedClass, defineInProxiedModule);
+    String proxyKey = ((defineInProxiedModule) ? "module:" : "loader:") + annotationFilter;
     Class<?> extractedClass;
 
-    if ((extractedClass = INTERFACE_MAP.get(toBeProxiedClass)) == null) {
-      synchronized (INTERFACE_MAP) {
-        if ((extractedClass = INTERFACE_MAP.get(toBeProxiedClass)) == null) {
+    if ((extractedClass = proxyClassMap.get(proxyKey)) == null) {
+      synchronized (proxyClassMap) {
+        if ((extractedClass = proxyClassMap.get(proxyKey)) == null) {
 
-          int toBeProxiedClassModifiers = toBeProxiedClass.getModifiers();
+          ClassWriter classWriter;
+          HashSet<MethodTracker> methodTrackerSet;
+          LinkedList<MethodReference> methodReferenceList;
+          String proxyInternalName;
+          boolean initialized = false;
 
-          if (!Modifier.isPublic(toBeProxiedClassModifiers)) {
-            throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", toBeProxiedClass.getName());
-          }
-          if (Modifier.isStatic(toBeProxiedClassModifiers)) {
-            throw new ByteCodeManipulationException("The proxy class(%s) must not be 'static'", toBeProxiedClass.getName());
-          }
-          if ((!toBeProxiedClass.isInterface()) && Modifier.isAbstract(toBeProxiedClassModifiers)) {
-            throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", toBeProxiedClass.getName());
-          } else {
+          checkEligibility(toBeProxiedClass, defineInProxiedModule);
 
-            Class<?> currentClass;
-            ClassReader classReader;
-            ClassWriter classWriter;
-            CheckClassAdapter checkClassAdapter;
-            ProxyClassVisitor proxyClassVisitor;
-            ClassLoader toBeProxiedClassLoader;
-            ProxyClassLoader proxyClassLoader;
-            HashSet<MethodTracker> methodTrackerSet;
-            boolean initialized = false;
+          classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-            classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-            checkClassAdapter = new CheckClassAdapter(classWriter, true);
+          methodTrackerSet = new HashSet<>();
+          methodReferenceList = new LinkedList<>();
+          proxyInternalName = ((defineInProxiedModule) ? "" : PROXY_CLASS_LOADER_PACKAGE) + toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass" + PROXY_CLASS_COUNTER.incrementAndGet();
 
-            currentClass = toBeProxiedClass;
-            methodTrackerSet = new HashSet<>();
-            do {
-              if (currentClass.equals(Object.class)) {
-                currentClass = ObjectImpersonator.class;
-              }
+          for (Class<?> currentClass : assembleHierarchy(toBeProxiedClass)) {
 
-              try {
-                classReader = new ClassReader(currentClass.getClassLoader().getResourceAsStream(currentClass.getCanonicalName().replace('.', '/') + ".class"));
-              } catch (IOException ioException) {
-                throw new ByteCodeManipulationException(ioException);
-              }
+            ProxyClassVisitor proxyClassVisitor = new ProxyClassVisitor(classWriter, toBeProxiedClass, currentClass, proxyInternalName, annotationFilter, methodTrackerSet, methodReferenceList, initialized);
 
-              proxyClassVisitor = new ProxyClassVisitor(checkClassAdapter, toBeProxiedClass, currentClass, annotationFilter, methodTrackerSet, initialized);
-              classReader.accept(proxyClassVisitor, 0);
-              initialized = true;
-            } while ((currentClass = currentClass.equals(ObjectImpersonator.class) ? null : currentClass.getSuperclass()) != null);
-
-            checkClassAdapter.visitEnd();
-
-            synchronized (LOADER_MAP) {
-              if ((proxyClassLoader = LOADER_MAP.get(toBeProxiedClassLoader = toBeProxiedClass.getClassLoader())) == null) {
-                LOADER_MAP.put(toBeProxiedClassLoader, proxyClassLoader = new ProxyClassLoader(toBeProxiedClassLoader));
-              }
+            if (isDefinedByJdkLoader(currentClass)) {
+              visitReflectively(proxyClassVisitor, currentClass);
+            } else {
+              ByteCodeReader.createClassReader(currentClass).accept(proxyClassVisitor, 0);
             }
 
-            INTERFACE_MAP.put(toBeProxiedClass, extractedClass = proxyClassLoader.extractInterface(toBeProxiedClass.getName() + "$Proxy$_ExtractedSubclass", classWriter.toByteArray()));
+            initialized = true;
           }
+
+          createMethodInitializer(classWriter, proxyInternalName, methodReferenceList);
+          classWriter.visitEnd();
+
+          for (MethodReference methodReference : methodReferenceList) {
+            for (String parameter : methodReference.parameters()) {
+              loadSignatureClass(toBeProxiedClass, methodReference, parameter);
+            }
+
+            checkSignatureAccess(toBeProxiedClass, methodReference, methodReference.returnType(), defineInProxiedModule);
+            if (methodReference.exceptions() != null) {
+              for (String exception : methodReference.exceptions()) {
+                checkSignatureAccess(toBeProxiedClass, methodReference, "L" + exception + ";", defineInProxiedModule);
+              }
+            }
+          }
+
+          if (defineInProxiedModule) {
+            extractedClass = defineProxyClassInProxiedModule(toBeProxiedClass, classWriter.toByteArray());
+          } else {
+            extractedClass = defineProxyClassInProxyClassLoader(toBeProxiedClass, proxyInternalName.replace('/', '.'), classWriter.toByteArray());
+          }
+
+          proxyClassMap.put(proxyKey, extractedClass);
         }
       }
     }
@@ -164,6 +253,514 @@ public class ProxyGenerator {
     } catch (Exception exception) {
       throw new ByteCodeManipulationException(exception);
     }
+  }
+
+  /**
+   * Returns the map that caches the proxy classes generated for a proxied type in the given mode. A proxy
+   * defined in the proxied module refers to nothing in this module, so its classes are cached against the
+   * proxied type itself. A proxy defined in a {@link ProxyClassLoader} keeps this module's class loader
+   * reachable, so when the proxied type's loader is a strict ancestor of this module's loader, and might outlive
+   * it, its classes are cached in this module instead, where they cannot keep this module's loader reachable and
+   * do not keep the longer-lived proxied type reachable for any longer than it would be anyway.
+   *
+   * @param toBeProxiedClass      the class or interface being proxied
+   * @param defineInProxiedModule {@code true} when the proxy is defined in the proxied module
+   * @return the cache of generated classes, keyed by mode and annotation filter
+   */
+  private static ConcurrentHashMap<String, Class<?>> getProxyClassMap (Class<?> toBeProxiedClass, boolean defineInProxiedModule) {
+
+    if ((!defineInProxiedModule) && ClassLoaderAncestry.isStrictAncestor(toBeProxiedClass.getClassLoader(), ProxyGenerator.class.getClassLoader())) {
+
+      ConcurrentHashMap<String, Class<?>> proxyClassMap;
+
+      if ((proxyClassMap = ANCESTOR_PROXY_CLASS_MAP.get(toBeProxiedClass)) == null) {
+
+        ConcurrentHashMap<String, Class<?>> priorProxyClassMap;
+
+        if ((priorProxyClassMap = ANCESTOR_PROXY_CLASS_MAP.putIfAbsent(toBeProxiedClass, proxyClassMap = new ConcurrentHashMap<>())) != null) {
+          proxyClassMap = priorProxyClassMap;
+        }
+      }
+
+      return proxyClassMap;
+    }
+
+    return PROXY_CLASS_MAP_VALUE.get(toBeProxiedClass);
+  }
+
+  /**
+   * Determines whether a type belongs to the JDK, meaning it was defined by the bootstrap or platform class
+   * loader.
+   *
+   * @param type the type to test
+   * @return {@code true} if the bootstrap or platform class loader defined {@code type}
+   */
+  private static boolean isDefinedByJdkLoader (Class<?> type) {
+
+    ClassLoader classLoader;
+
+    return ((classLoader = type.getClassLoader()) == null) || (classLoader == ClassLoader.getPlatformClassLoader());
+  }
+
+  /**
+   * Feeds a type's constructors and methods to a {@link ProxyClassVisitor} from reflection rather than byte
+   * code, in the order a {@link org.objectweb.asm.ClassReader} would: the class header, then the members, then
+   * the end of the class. The header carries Java 8 as the class file version. No annotations are visited.
+   *
+   * @param classVisitor the visitor for the type
+   * @param type         the type to describe
+   */
+  private static void visitReflectively (ClassVisitor classVisitor, Class<?> type) {
+
+    classVisitor.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, Type.getInternalName(type), null, null, null);
+
+    for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+      visitReflectedMember(classVisitor, constructor.getModifiers(), constructor.isSynthetic(), "<init>", Type.getConstructorDescriptor(constructor), constructor.getExceptionTypes());
+    }
+    for (Method method : type.getDeclaredMethods()) {
+      visitReflectedMember(classVisitor, method.getModifiers(), method.isSynthetic(), method.getName(), Type.getMethodDescriptor(method), method.getExceptionTypes());
+    }
+
+    classVisitor.visitEnd();
+  }
+
+  /**
+   * Feeds one reflected constructor or method to a class visitor, ending the method visitor it returns.
+   *
+   * @param classVisitor   the visitor for the declaring type
+   * @param modifiers      the member's modifiers
+   * @param synthetic      {@code true} if the member is synthetic
+   * @param name           the member name, {@code <init>} for a constructor
+   * @param descriptor     the JVM method descriptor
+   * @param exceptionTypes the declared exception types
+   */
+  private static void visitReflectedMember (ClassVisitor classVisitor, int modifiers, boolean synthetic, String name, String descriptor, Class<?>[] exceptionTypes) {
+
+    MethodVisitor methodVisitor;
+    String[] exceptions = null;
+    int access = modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT);
+
+    if (synthetic) {
+      access |= Opcodes.ACC_SYNTHETIC;
+    }
+
+    if (exceptionTypes.length > 0) {
+      exceptions = new String[exceptionTypes.length];
+      for (int index = 0; index < exceptionTypes.length; index++) {
+        exceptions[index] = Type.getInternalName(exceptionTypes[index]);
+      }
+    }
+
+    if ((methodVisitor = classVisitor.visitMethod(access, name, descriptor, null, exceptions)) != null) {
+      methodVisitor.visitEnd();
+    }
+  }
+
+  /**
+   * Verifies that a proxy can be generated for the given type. Every proxied type must be public and neither
+   * sealed nor hidden. A proxy defined in a separate class loader also needs the type's package to be exported
+   * unconditionally, because the generated class extends or implements it from the unnamed module. A class must
+   * also be neither an inner (non-static nested) class, final, nor abstract, and must have a no-arg constructor the
+   * proxy can call: one that is public or protected, or, when the proxy is defined in the proxied module, one that
+   * is not private.
+   *
+   * @param toBeProxiedClass      the class or interface being proxied
+   * @param defineInProxiedModule {@code true} when the proxy will be defined in the runtime package of
+   *                              {@code toBeProxiedClass}
+   * @throws ByteCodeManipulationException if the type is ineligible
+   */
+  private static void checkEligibility (Class<?> toBeProxiedClass, boolean defineInProxiedModule) {
+
+    int toBeProxiedClassModifiers = toBeProxiedClass.getModifiers();
+
+    if (!Modifier.isPublic(toBeProxiedClassModifiers)) {
+      throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", toBeProxiedClass.getName());
+    }
+    if (toBeProxiedClass.isSealed()) {
+      throw new ByteCodeManipulationException("The proxy class(%s) must not be 'sealed'", toBeProxiedClass.getName());
+    }
+    if (toBeProxiedClass.isHidden()) {
+      throw new ByteCodeManipulationException("The proxy class(%s) must not be hidden", toBeProxiedClass.getName());
+    }
+    if ((!defineInProxiedModule) && (!toBeProxiedClass.getModule().isExported(toBeProxiedClass.getPackageName()))) {
+      throw new ByteCodeManipulationException("The module(%s) must export the package(%s) of the proxy class(%s) unconditionally", describeModule(toBeProxiedClass.getModule()), toBeProxiedClass.getPackageName(), toBeProxiedClass.getName());
+    }
+
+    if (!toBeProxiedClass.isInterface()) {
+
+      Constructor<?> noArgConstructor;
+      int noArgConstructorModifiers;
+
+      if (toBeProxiedClass.isMemberClass() && (!Modifier.isStatic(toBeProxiedClassModifiers))) {
+        throw new ByteCodeManipulationException("A nested proxy class(%s) must be 'static'", toBeProxiedClass.getName());
+      }
+      if (Modifier.isFinal(toBeProxiedClassModifiers)) {
+        throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'final'", toBeProxiedClass.getName());
+      }
+      if (Modifier.isAbstract(toBeProxiedClassModifiers)) {
+        throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", toBeProxiedClass.getName());
+      }
+
+      try {
+        noArgConstructor = toBeProxiedClass.getDeclaredConstructor();
+      } catch (NoSuchMethodException noSuchMethodException) {
+        throw new ByteCodeManipulationException(noSuchMethodException, "A concrete proxy class(%s) must have a no-arg constructor", toBeProxiedClass.getName());
+      }
+
+      if (Modifier.isPrivate(noArgConstructorModifiers = noArgConstructor.getModifiers())) {
+        throw new ByteCodeManipulationException("The no-arg constructor of the proxy class(%s) must not be 'private'", toBeProxiedClass.getName());
+      }
+      if (!(defineInProxiedModule || Modifier.isPublic(noArgConstructorModifiers) || Modifier.isProtected(noArgConstructorModifiers))) {
+        throw new ByteCodeManipulationException("The no-arg constructor of the proxy class(%s) must be 'public' or 'protected' unless the proxy is defined in the proxied module", toBeProxiedClass.getName());
+      }
+    }
+  }
+
+  /**
+   * Verifies that the generated class will be able to access a type that a proxied method returns or declares as
+   * thrown, because the generated method casts to the former and catches the latter. A type in the runtime package
+   * of the generated class is always accessible. Otherwise the type must be public (or a protected member type),
+   * and its package must be exported to the module of the generated class, which must read the type's module. A
+   * proxy defined in the proxied module therefore needs that module to read the type's module and to be exported
+   * the type's package; a proxy defined in a separate class loader, whose unnamed module reads every module, needs
+   * the type's package to be exported unconditionally. Primitive types need no access, and an array type needs
+   * access to its element type.
+   *
+   * @param toBeProxiedClass      the class or interface being proxied
+   * @param methodReference       the proxied method whose signature contains the type
+   * @param typeDescriptor        the JVM type descriptor of the type
+   * @param defineInProxiedModule {@code true} when the proxy will be defined in the class loader, runtime
+   *                              package, and module of {@code toBeProxiedClass}
+   * @throws ByteCodeManipulationException if the type cannot be loaded, or would not be accessible to the
+   *                                       generated class
+   */
+  private static void checkSignatureAccess (Class<?> toBeProxiedClass, MethodReference methodReference, String typeDescriptor, boolean defineInProxiedModule) {
+
+    Class<?> signatureClass;
+
+    if ((signatureClass = loadSignatureClass(toBeProxiedClass, methodReference, typeDescriptor)) != null) {
+
+      String binaryName = signatureClass.getName();
+
+      if (!(defineInProxiedModule && (signatureClass.getClassLoader() == toBeProxiedClass.getClassLoader()) && signatureClass.getPackageName().equals(toBeProxiedClass.getPackageName()))) {
+
+        Module signatureModule = signatureClass.getModule();
+        int signatureClassModifiers = signatureClass.getModifiers();
+
+        if (!(Modifier.isPublic(signatureClassModifiers) || (signatureClass.isMemberClass() && Modifier.isProtected(signatureClassModifiers)))) {
+          throw new ByteCodeManipulationException("The type(%s) returned or thrown by method(%s) of the proxy class(%s) must be 'public'", binaryName, methodReference.methodName(), toBeProxiedClass.getName());
+        }
+
+        if (defineInProxiedModule) {
+
+          Module toBeProxiedModule = toBeProxiedClass.getModule();
+
+          if (!toBeProxiedModule.canRead(signatureModule)) {
+            throw new ByteCodeManipulationException("The module(%s) of the proxy class(%s) must read the module(%s) of the type(%s) returned or thrown by method(%s)", describeModule(toBeProxiedModule), toBeProxiedClass.getName(), describeModule(signatureModule), binaryName, methodReference.methodName());
+          }
+          if (!signatureModule.isExported(signatureClass.getPackageName(), toBeProxiedModule)) {
+            throw new ByteCodeManipulationException("The module(%s) must export the package(%s) to the module(%s) of the proxy class(%s), whose method(%s) returns or throws the type(%s)", describeModule(signatureModule), signatureClass.getPackageName(), describeModule(toBeProxiedModule), toBeProxiedClass.getName(), methodReference.methodName(), binaryName);
+          }
+        } else if (!signatureModule.isExported(signatureClass.getPackageName())) {
+          throw new ByteCodeManipulationException("The module(%s) must export the package(%s) unconditionally, because method(%s) of the proxy class(%s) returns or throws the type(%s)", describeModule(signatureModule), signatureClass.getPackageName(), methodReference.methodName(), toBeProxiedClass.getName(), binaryName);
+        }
+      }
+    }
+  }
+
+  /**
+   * Loads, without initializing it, a type from the signature of a proxied method through the class loader of the
+   * proxied class, which is where the generated class resolves it: the generated class is defined either by that
+   * loader or by a {@link ProxyClassLoader} that delegates to it. A type that only the loader of a supertype can
+   * see therefore fails here, rather than when the generated class is initialized or the method is called.
+   *
+   * @param toBeProxiedClass the class or interface being proxied
+   * @param methodReference  the proxied method whose signature contains the type
+   * @param typeDescriptor   the JVM type descriptor of the type
+   * @return the type, or the element type of an array type, or {@code null} for a primitive type
+   * @throws ByteCodeManipulationException if the type cannot be loaded through the proxied class's loader
+   */
+  private static Class<?> loadSignatureClass (Class<?> toBeProxiedClass, MethodReference methodReference, String typeDescriptor) {
+
+    String elementDescriptor = typeDescriptor;
+
+    while (elementDescriptor.charAt(0) == '[') {
+      elementDescriptor = elementDescriptor.substring(1);
+    }
+
+    if (elementDescriptor.charAt(0) == 'L') {
+
+      String binaryName = elementDescriptor.substring(1, elementDescriptor.length() - 1).replace('/', '.');
+
+      try {
+        return Class.forName(binaryName, false, toBeProxiedClass.getClassLoader());
+      } catch (ClassNotFoundException | LinkageError exception) {
+        throw new ByteCodeManipulationException(exception, "Unable to load the type(%s) in the signature of method(%s) through the class loader of the proxy class(%s)", binaryName, methodReference.methodName(), toBeProxiedClass.getName());
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Names a module for an exception message.
+   *
+   * @param module the module to describe
+   * @return the module name, or {@code unnamed} for an unnamed module
+   */
+  private static String describeModule (Module module) {
+
+    return module.isNamed() ? module.getName() : "unnamed";
+  }
+
+  /**
+   * Lists the types whose byte code contributes proxy methods, in the order they are visited. For a class,
+   * that is the class and its superclasses up to but not including {@link Object}, followed by every interface
+   * they implement; for an interface, the interface followed by every superinterface. {@link ObjectImpersonator}
+   * always comes last, contributing {@code hashCode}, {@code equals} and {@code toString}. Each interface
+   * appears once.
+   *
+   * @param toBeProxiedClass the class or interface being proxied
+   * @return the ordered list of types to visit
+   */
+  private static LinkedList<Class<?>> assembleHierarchy (Class<?> toBeProxiedClass) {
+
+    LinkedList<Class<?>> hierarchyList = new LinkedList<>();
+    LinkedList<Class<?>> interfaceQueue = new LinkedList<>();
+    HashSet<Class<?>> interfaceSet = new HashSet<>();
+    Class<?> currentClass;
+
+    if (toBeProxiedClass.isInterface()) {
+      interfaceQueue.add(toBeProxiedClass);
+    } else {
+      currentClass = toBeProxiedClass;
+      do {
+        hierarchyList.add(currentClass);
+        for (Class<?> interfaceClass : currentClass.getInterfaces()) {
+          interfaceQueue.add(interfaceClass);
+        }
+      } while (((currentClass = currentClass.getSuperclass()) != null) && (!currentClass.equals(Object.class)));
+    }
+
+    while (!interfaceQueue.isEmpty()) {
+      if (interfaceSet.add(currentClass = interfaceQueue.removeFirst())) {
+        hierarchyList.add(currentClass);
+        for (Class<?> interfaceClass : currentClass.getInterfaces()) {
+          interfaceQueue.add(interfaceClass);
+        }
+      }
+    }
+
+    hierarchyList.add(ObjectImpersonator.class);
+
+    return hierarchyList;
+  }
+
+  /**
+   * Emits a static {@link java.lang.reflect.Method} field for every proxied method, and a static initializer
+   * that resolves each one through {@link Class#getMethod(String, Class[])}. Reference parameter types are
+   * loaded through the class loader of the proxy class.
+   *
+   * @param classVisitor        the visitor accumulating the generated class
+   * @param proxyInternalName   the internal name of the generated class
+   * @param methodReferenceList the proxied methods, each naming the field that will hold it
+   */
+  private static void createMethodInitializer (ClassVisitor classVisitor, String proxyInternalName, LinkedList<MethodReference> methodReferenceList) {
+
+    MethodVisitor initializerVisitor;
+
+    if (!methodReferenceList.isEmpty()) {
+      for (MethodReference methodReference : methodReferenceList) {
+        classVisitor.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, methodReference.fieldName(), METHOD, null, null).visitEnd();
+      }
+
+      initializerVisitor = classVisitor.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+      initializerVisitor.visitCode();
+
+      for (MethodReference methodReference : methodReferenceList) {
+        initializerVisitor.visitLdcInsn(Type.getObjectType(methodReference.ownerInternalName()));
+        initializerVisitor.visitLdcInsn(methodReference.methodName());
+        insertNumber(initializerVisitor, methodReference.parameters().length);
+        initializerVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+
+        for (int index = 0; index < methodReference.parameters().length; index++) {
+          initializerVisitor.visitInsn(Opcodes.DUP);
+          insertNumber(initializerVisitor, index);
+
+          switch (methodReference.parameters()[index].charAt(0)) {
+            case 'Z':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'B':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Byte", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'C':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Character", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'S':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Short", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'I':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Integer", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'J':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Long", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'F':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Float", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'D':
+              initializerVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Double", "TYPE", "Ljava/lang/Class;");
+              break;
+            case 'L':
+              insertClassForName(initializerVisitor, proxyInternalName, methodReference.parameters()[index].substring(1, methodReference.parameters()[index].length() - 1).replace('/', '.'));
+              break;
+            case '[':
+              insertClassForName(initializerVisitor, proxyInternalName, methodReference.parameters()[index].replace('/', '.'));
+              break;
+            default:
+              throw new ByteCodeManipulationException("Unknown format for parameter signature(%s)", methodReference.parameters()[index]);
+          }
+
+          initializerVisitor.visitInsn(Opcodes.AASTORE);
+        }
+
+        initializerVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)" + METHOD, false);
+        initializerVisitor.visitFieldInsn(Opcodes.PUTSTATIC, proxyInternalName, methodReference.fieldName(), METHOD);
+      }
+
+      initializerVisitor.visitInsn(Opcodes.RETURN);
+      initializerVisitor.visitMaxs(12, 0);
+      initializerVisitor.visitEnd();
+    }
+  }
+
+  /**
+   * Pushes the {@link Class} for the given binary name, loaded without initialization through the class
+   * loader of the proxy class.
+   *
+   * @param methodVisitor     the visitor that should receive the instructions
+   * @param proxyInternalName the internal name of the generated class
+   * @param binaryName        the binary class name, or array descriptor, to load
+   */
+  private static void insertClassForName (MethodVisitor methodVisitor, String proxyInternalName, String binaryName) {
+
+    methodVisitor.visitLdcInsn(binaryName);
+    methodVisitor.visitInsn(Opcodes.ICONST_0);
+    methodVisitor.visitLdcInsn(Type.getObjectType(proxyInternalName));
+    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
+    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;", false);
+  }
+
+  /**
+   * Pushes an integer constant onto the operand stack using the most compact opcode available.
+   *
+   * @param methodVisitor the visitor that should receive the push instruction
+   * @param number        the non-negative integer to push; values {@code 0}–{@code 5} use
+   *                      {@code ICONST_n}, values up to {@link Byte#MAX_VALUE} use {@code BIPUSH},
+   *                      and larger values use {@code SIPUSH}
+   */
+  private static void insertNumber (MethodVisitor methodVisitor, int number) {
+
+    switch (number) {
+      case 0:
+        methodVisitor.visitInsn(Opcodes.ICONST_0);
+        break;
+      case 1:
+        methodVisitor.visitInsn(Opcodes.ICONST_1);
+        break;
+      case 2:
+        methodVisitor.visitInsn(Opcodes.ICONST_2);
+        break;
+      case 3:
+        methodVisitor.visitInsn(Opcodes.ICONST_3);
+        break;
+      case 4:
+        methodVisitor.visitInsn(Opcodes.ICONST_4);
+        break;
+      case 5:
+        methodVisitor.visitInsn(Opcodes.ICONST_5);
+        break;
+      default:
+        if (number <= Byte.MAX_VALUE) {
+          methodVisitor.visitIntInsn(Opcodes.BIPUSH, number);
+        } else {
+          methodVisitor.visitIntInsn(Opcodes.SIPUSH, number);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Defines the generated proxy class in the class loader, runtime package, and module of the proxied class,
+   * and initializes it.
+   *
+   * @param toBeProxiedClass the class or interface being proxied
+   * @param proxyClassBytes  the raw class byte code produced by ASM
+   * @return the newly defined proxy {@link Class}
+   * @throws ByteCodeManipulationException if the proxied class's module does not open the proxied class's
+   *                                       package to this module, or the class cannot be defined or initialized
+   */
+  private static Class<?> defineProxyClassInProxiedModule (Class<?> toBeProxiedClass, byte[] proxyClassBytes) {
+
+    Module proxyGeneratorModule = ProxyGenerator.class.getModule();
+    Module toBeProxiedModule = toBeProxiedClass.getModule();
+    MethodHandles.Lookup proxiedLookup;
+    Class<?> proxyClass;
+
+    proxyGeneratorModule.addReads(toBeProxiedModule);
+
+    try {
+      proxiedLookup = MethodHandles.privateLookupIn(toBeProxiedClass, MethodHandles.lookup());
+    } catch (IllegalAccessException illegalAccessException) {
+      throw new ByteCodeManipulationException(illegalAccessException, "The module(%s) of the proxy class(%s) must open the package(%s) to the module(%s)", describeModule(toBeProxiedModule), toBeProxiedClass.getName(), toBeProxiedClass.getPackageName(), describeModule(proxyGeneratorModule));
+    }
+
+    try {
+      proxyClass = proxiedLookup.defineClass(proxyClassBytes);
+      proxiedLookup.ensureInitialized(proxyClass);
+    } catch (IllegalAccessException | LinkageError exception) {
+      throw new ByteCodeManipulationException(exception, "Unable to define the proxy for class(%s)", toBeProxiedClass.getName());
+    }
+
+    return proxyClass;
+  }
+
+  /**
+   * Defines the generated proxy class in the unnamed module of a new {@link ProxyClassLoader} whose parent is
+   * the class loader of the proxied class, and initializes it. Each generated class has a loader of its own,
+   * which nothing but that class retains.
+   *
+   * @param toBeProxiedClass the class or interface being proxied
+   * @param proxyClassName   the binary name of the generated class
+   * @param proxyClassBytes  the raw class byte code produced by ASM
+   * @return the newly defined proxy {@link Class}
+   * @throws ByteCodeManipulationException if the class cannot be defined or initialized
+   */
+  private static Class<?> defineProxyClassInProxyClassLoader (Class<?> toBeProxiedClass, String proxyClassName, byte[] proxyClassBytes) {
+
+    ProxyClassLoader proxyClassLoader = new ProxyClassLoader(toBeProxiedClass.getClassLoader());
+
+    try {
+      return Class.forName(proxyClassLoader.extractInterface(proxyClassName, proxyClassBytes).getName(), true, proxyClassLoader);
+    } catch (ClassNotFoundException | LinkageError exception) {
+      throw new ByteCodeManipulationException(exception, "Unable to define the proxy for class(%s)", toBeProxiedClass.getName());
+    }
+  }
+
+  /**
+   * Describes a proxied method, so that the static initializer of the generated class can resolve it into
+   * the named field, and so that the types in its signature can be checked for access.
+   *
+   * @param fieldName         the name of the static field that holds the resolved method
+   * @param ownerInternalName the internal name of the type the method is resolved on
+   * @param methodName        the method name
+   * @param parameters        the JVM type descriptors of the method parameters, in order
+   * @param returnType        the JVM type descriptor of the method's return type
+   * @param exceptions        the internal names of the method's declared exceptions, or {@code null}
+   */
+  private record MethodReference (String fieldName, String ownerInternalName, String methodName, String[] parameters, String returnType, String[] exceptions) {
+
   }
 
   /**
@@ -255,53 +852,65 @@ public class ProxyGenerator {
   }
 
   /**
-   * ASM {@link ClassVisitor} that walks the byte code of the proxied class hierarchy and emits a
-   * new class that dispatches every eligible method through the stored {@link InvocationHandler} field.
+   * ASM {@link ClassVisitor} that walks the byte code, or the reflected members, of one type in the proxied
+   * hierarchy and emits, into the
+   * generated class, a method that dispatches each eligible method through the stored {@link InvocationHandler}
+   * field.
    */
   private static class ProxyClassVisitor extends ClassVisitor {
 
     private final ClassVisitor nextClassVisitor;
     private final Class<?> toBeProxiedClass;
     private final Class<?> currentClass;
+    private final String proxyInternalName;
     private final AnnotationFilter annotationFilter;
     private final HashSet<MethodTracker> methodTrackerSet;
+    private final LinkedList<MethodReference> methodReferenceList;
     private final boolean initialized;
     private boolean constructed = false;
 
     /**
-     * Constructs the visitor for one class in the proxied class hierarchy.
+     * Constructs the visitor for one type in the proxied hierarchy.
      *
-     * @param nextClassVisitor downstream visitor that accumulates the generated byte code
-     * @param toBeProxiedClass the root type being proxied; used to form the generated class name
-     * @param currentClass     the specific class in the hierarchy currently being visited
-     * @param annotationFilter optional filter applied to method annotations; {@code null} passes all
-     * @param methodTrackerSet set of method signatures already emitted to prevent duplicates
-     * @param initialized      {@code true} when the class header and handler field have already been written
+     * @param nextClassVisitor    downstream visitor that accumulates the generated byte code
+     * @param toBeProxiedClass    the root type being proxied
+     * @param currentClass        the specific type in the hierarchy currently being visited
+     * @param proxyInternalName   the internal name of the generated class
+     * @param annotationFilter    optional filter applied to method annotations; {@code null} passes all
+     * @param methodTrackerSet    set of method signatures already emitted to prevent duplicates
+     * @param methodReferenceList the methods emitted so far, to which each newly emitted method is added
+     * @param initialized         {@code true} when the class header and handler field have already been written
      */
-    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class<?> toBeProxiedClass, Class<?> currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
+    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class<?> toBeProxiedClass, Class<?> currentClass, String proxyInternalName, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, LinkedList<MethodReference> methodReferenceList, boolean initialized) {
 
-      super(Opcodes.ASM8);
+      super(Opcodes.ASM9);
 
       this.nextClassVisitor = nextClassVisitor;
       this.toBeProxiedClass = toBeProxiedClass;
       this.currentClass = currentClass;
+      this.proxyInternalName = proxyInternalName;
       this.annotationFilter = annotationFilter;
       this.methodTrackerSet = methodTrackerSet;
+      this.methodReferenceList = methodReferenceList;
       this.initialized = initialized;
     }
 
     /**
      * Emits the generated class header and the {@code $proxy$_handler} field on the first call;
-     * subsequent calls (for superclasses) are ignored.
+     * subsequent calls (for supertypes) are ignored. The generated class uses the class file version of the
+     * proxied type, raised to at least Java 8.
      */
     @Override
     public void visit (int version, int access, String name, String signature, String superName, String[] interfaces) {
 
       if (!initialized) {
+
+        int proxyVersion = ((version & 0xFFFF) < Opcodes.V1_8) ? Opcodes.V1_8 : version;
+
         if (toBeProxiedClass.isInterface()) {
-          nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC, name + "$Proxy$_ExtractedSubclass", null, "java/lang/Object", new String[] {toBeProxiedClass.getName().replace('.', '/')});
+          nextClassVisitor.visit(proxyVersion, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, proxyInternalName, null, "java/lang/Object", new String[] {name});
         } else {
-          nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, name + "$Proxy$_ExtractedSubclass", null, name, null);
+          nextClassVisitor.visit(proxyVersion, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, proxyInternalName, null, name, null);
         }
 
         nextClassVisitor.visitField(Opcodes.ACC_PRIVATE, "$proxy$_handler", INVOCATION_HANDLER, null, null).visitEnd();
@@ -334,13 +943,13 @@ public class ProxyGenerator {
         initVisitor.visitLabel(l1);
         initVisitor.visitVarInsn(Opcodes.ALOAD, 0);
         initVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-        initVisitor.visitFieldInsn(Opcodes.PUTFIELD, toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
+        initVisitor.visitFieldInsn(Opcodes.PUTFIELD, proxyInternalName, "$proxy$_handler", INVOCATION_HANDLER);
         Label l2 = new Label();
         initVisitor.visitLabel(l2);
         initVisitor.visitInsn(Opcodes.RETURN);
         Label l3 = new Label();
         initVisitor.visitLabel(l3);
-        initVisitor.visitLocalVariable("this", "L" + toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, l3, 0);
+        initVisitor.visitLocalVariable("this", "L" + proxyInternalName + ";", null, l0, l3, 0);
         initVisitor.visitLocalVariable("$proxy$_handler", INVOCATION_HANDLER, null, l0, l3, 1);
         initVisitor.visitMaxs(2, 2);
         initVisitor.visitEnd();
@@ -350,8 +959,10 @@ public class ProxyGenerator {
     }
 
     /**
-     * Visits a method of the current class and emits a proxy dispatcher for it when the method is
-     * public, non-static, non-final, non-synthetic, and has not yet been emitted.
+     * Visits a method of the current type and emits a proxy dispatcher for it when the method is
+     * public, non-static, non-final, non-synthetic, and has not yet been emitted. For a class proxy, abstract
+     * methods are skipped, because the class hierarchy implements them. A final method is recorded without being
+     * emitted, so that the versions it overrides in supertypes are not emitted either.
      *
      * @return a {@link MethodVisitor} that copies annotations through the filter, or {@code null} to skip
      */
@@ -375,38 +986,11 @@ public class ProxyGenerator {
               if (((access & Opcodes.ACC_PUBLIC) != 0) && ((access & Opcodes.ACC_STATIC) == 0) && ((access & Opcodes.ACC_FINAL) == 0) && ((access & Opcodes.ACC_SYNTHETIC) == 0)) {
 
                 MethodVisitor proxyVisitor;
+                LinkedList<String> parameterList;
+                String[] parameters;
+                String methodField;
 
                 methodTrackerSet.add(methodTracker);
-                proxyVisitor = nextClassVisitor.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, name, desc, null, exceptions);
-
-                proxyVisitor.visitCode();
-                Label l0 = new Label();
-                Label l1 = new Label();
-
-                Label[] exceptionLabels;
-
-                exceptionLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
-
-                for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
-                  exceptionLabels[index] = new Label();
-                  proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[index], exceptions[index]);
-                }
-
-                exceptionLabels[(exceptions == null) ? 0 : exceptions.length] = new Label();
-                proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[(exceptions == null) ? 0 : exceptions.length], "java/lang/Throwable");
-
-                proxyVisitor.visitLabel(l0);
-                proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
-
-                proxyVisitor.visitInsn(toBeProxiedClass.isInterface() ? Opcodes.ICONST_0 : Opcodes.ICONST_1);
-                proxyVisitor.visitLdcInsn(UUID.randomUUID().toString());
-                proxyVisitor.visitLdcInsn(name);
-                proxyVisitor.visitLdcInsn(desc.substring(desc.indexOf(')') + 1));
-
-                String[] parameters;
-                LinkedList<String> parameterList;
 
                 parameterList = new LinkedList<>();
                 for (String parameter : new ParameterIterable(desc.substring(1, desc.indexOf(')')))) {
@@ -415,203 +999,15 @@ public class ProxyGenerator {
                 parameters = new String[parameterList.size()];
                 parameterList.toArray(parameters);
 
-                insertNumber(proxyVisitor, parameterList.size());
-                proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
-                for (int index = 0; index < parameters.length; index++) {
-                  proxyVisitor.visitInsn(Opcodes.DUP);
-                  insertNumber(proxyVisitor, index);
-                  proxyVisitor.visitLdcInsn(parameters[index]);
-                  proxyVisitor.visitInsn(Opcodes.AASTORE);
-                }
+                methodField = "$proxy$_method" + methodReferenceList.size();
+                methodReferenceList.add(new MethodReference(methodField, (toBeProxiedClass.isInterface() && currentClass.equals(ObjectImpersonator.class)) ? "java/lang/Object" : toBeProxiedClass.getName().replace('.', '/'), name, parameters, desc.substring(desc.indexOf(')') + 1), exceptions));
 
-                int[] parameterRegisters;
-                int variableIndex = 1;
-
-                insertNumber(proxyVisitor, parameterList.size());
-                proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-
-                parameterRegisters = new int[parameters.length];
-                for (int index = 0; index < parameters.length; index++) {
-                  proxyVisitor.visitInsn(Opcodes.DUP);
-                  insertNumber(proxyVisitor, index);
-
-                  if (parameters[index].length() == 1) {
-                    switch (parameters[index].charAt(0)) {
-                      case 'Z':
-                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-                        break;
-                      case 'B':
-                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-                        break;
-                      case 'C':
-                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                        break;
-                      case 'S':
-                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-                        break;
-                      case 'I':
-                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-                        break;
-                      case 'J':
-                        proxyVisitor.visitVarInsn(Opcodes.LLOAD, parameterRegisters[index] = variableIndex);
-                        variableIndex += 2;
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
-                        break;
-                      case 'F':
-                        proxyVisitor.visitVarInsn(Opcodes.FLOAD, parameterRegisters[index] = variableIndex++);
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
-                        break;
-                      case 'D':
-                        proxyVisitor.visitVarInsn(Opcodes.DLOAD, parameterRegisters[index] = variableIndex);
-                        variableIndex += 2;
-                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-                        break;
-                      default:
-                        throw new ByteCodeManipulationException("Unknown primitive type(%s)", parameters[index]);
-                    }
-                  } else {
-                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, parameterRegisters[index] = variableIndex++);
-                  }
-
-                  proxyVisitor.visitInsn(Opcodes.AASTORE);
-                }
-
-                proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, ProxyUtility.class.getName().replace('.', '/'), "invoke", "(Ljava/lang/Object;" + INVOCATION_HANDLER + "ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;", false);
-
-                String returnType;
-
-                if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
-                  switch (returnType.charAt(0)) {
-                    case 'V':
-                      proxyVisitor.visitInsn(Opcodes.POP);
-                      break;
-                    case 'Z':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Boolean");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-                      break;
-                    case 'B':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Byte");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
-                      break;
-                    case 'C':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Character");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
-                      break;
-                    case 'S':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Short");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
-                      break;
-                    case 'I':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-                      break;
-                    case 'J':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Long");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
-                      break;
-                    case 'F':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Float");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
-                      break;
-                    case 'D':
-                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Double");
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
-                      break;
-                    default:
-                      throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
-                  }
-                } else if (returnType.startsWith("L")) {
-                  proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType.substring(1, returnType.length() - 1));
-                } else {
-                  proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType);
-                }
-
-                proxyVisitor.visitLabel(l1);
-
-                Label lEnd = null;
-
-                if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
-                  switch (returnType.charAt(0)) {
-                    case 'V':
-                      lEnd = new Label();
-                      proxyVisitor.visitJumpInsn(Opcodes.GOTO, lEnd);
-                      break;
-                    case 'Z':
-                      proxyVisitor.visitInsn(Opcodes.IRETURN);
-                      break;
-                    case 'B':
-                      proxyVisitor.visitInsn(Opcodes.IRETURN);
-                      break;
-                    case 'C':
-                      proxyVisitor.visitInsn(Opcodes.IRETURN);
-                      break;
-                    case 'S':
-                      proxyVisitor.visitInsn(Opcodes.IRETURN);
-                      break;
-                    case 'I':
-                      proxyVisitor.visitInsn(Opcodes.IRETURN);
-                      break;
-                    case 'J':
-                      proxyVisitor.visitInsn(Opcodes.LRETURN);
-                      break;
-                    case 'F':
-                      proxyVisitor.visitInsn(Opcodes.FRETURN);
-                      break;
-                    case 'D':
-                      proxyVisitor.visitInsn(Opcodes.DRETURN);
-                      break;
-                    default:
-                      throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
-                  }
-                } else {
-                  proxyVisitor.visitInsn(Opcodes.ARETURN);
-                }
-
-                Label[] extraLabels;
-
-                extraLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
-                for (int index = 0; index <= ((exceptions == null) ? 0 : exceptions.length); index++) {
-                  proxyVisitor.visitLabel(exceptionLabels[index]);
-                  proxyVisitor.visitVarInsn(Opcodes.ASTORE, variableIndex);
-                  proxyVisitor.visitLabel(extraLabels[index] = new Label());
-
-                  if (index == ((exceptions == null) ? 0 : exceptions.length)) {
-                    proxyVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/reflect/UndeclaredThrowableException");
-                    proxyVisitor.visitInsn(Opcodes.DUP);
-                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/reflect/UndeclaredThrowableException", "<init>", "(Ljava/lang/Throwable;)V", false);
-                    proxyVisitor.visitInsn(Opcodes.ATHROW);
-                  } else {
-                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
-                    proxyVisitor.visitInsn(Opcodes.ATHROW);
-                  }
-                }
-
-                if (lEnd != null) {
-                  proxyVisitor.visitLabel(lEnd);
-                  proxyVisitor.visitInsn(Opcodes.RETURN);
-                }
-
-                Label lLocal;
-
-                proxyVisitor.visitLabel(lLocal = new Label());
-                proxyVisitor.visitLocalVariable("this", "L" + toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, lLocal, 0);
-                for (int index = 0; index < parameters.length; index++) {
-                  proxyVisitor.visitLocalVariable("$proxy$_var" + index, parameters[index], null, l0, lLocal, parameterRegisters[index]);
-                }
-                for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
-                  proxyVisitor.visitLocalVariable("$proxy$_exc" + index, "L" + exceptions[index] + ";", null, extraLabels[index], exceptionLabels[index + 1], variableIndex);
-                }
-                proxyVisitor.visitLocalVariable("$proxy$_exc" + ((exceptions == null) ? 0 : exceptions.length), "Ljava/lang/Throwable;", null, extraLabels[(exceptions == null) ? 0 : exceptions.length], lLocal, variableIndex);
-
-                proxyVisitor.visitMaxs(12, variableIndex + 2);
+                proxyVisitor = nextClassVisitor.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, name, desc, null, exceptions);
+                createProxyMethod(proxyVisitor, methodField, desc, parameters, exceptions);
 
                 return new ProxyMethodVisitor(proxyVisitor, annotationFilter);
+              } else if (((access & Opcodes.ACC_STATIC) == 0) && ((access & Opcodes.ACC_FINAL) != 0)) {
+                methodTrackerSet.add(methodTracker);
               }
             }
           }
@@ -632,42 +1028,243 @@ public class ProxyGenerator {
     }
 
     /**
-     * Pushes an integer constant onto the operand stack using the most compact opcode available.
+     * Emits the body of a proxy method. A {@code null} handler returns {@code null}, {@code false}, or zero.
+     * Otherwise the arguments are boxed into an array and passed, with the resolved method, to
+     * {@link InvocationHandler#invoke(Object, java.lang.reflect.Method, Object[])}, whose result is unboxed or
+     * cast to the return type. {@link RuntimeException}, {@link Error}, and the declared exceptions are rethrown
+     * unchanged; any other {@link Throwable} is wrapped in an {@link java.lang.reflect.UndeclaredThrowableException}.
      *
-     * @param methodVisitor the visitor that should receive the push instruction
-     * @param number        the non-negative integer to push; values {@code 0}–{@code 5} use
-     *                      {@code ICONST_n}, values up to {@link Byte#MAX_VALUE} use {@code BIPUSH},
-     *                      and larger values use {@code SIPUSH}
+     * @param proxyVisitor the visitor for the generated method
+     * @param methodField  the name of the static field holding the resolved method
+     * @param desc         the JVM descriptor of the method
+     * @param parameters   the JVM type descriptors of the method parameters, in order
+     * @param exceptions   the internal names of the declared exceptions, or {@code null}
      */
-    private void insertNumber (MethodVisitor methodVisitor, int number) {
+    private void createProxyMethod (MethodVisitor proxyVisitor, String methodField, String desc, String[] parameters, String[] exceptions) {
 
-      switch (number) {
-        case 0:
-          methodVisitor.visitInsn(Opcodes.ICONST_0);
+      Label startLabel = new Label();
+      Label tryStartLabel = new Label();
+      Label tryEndLabel = new Label();
+      Label undeclaredLabel = new Label();
+      Label endLabel = new Label();
+      LinkedList<String> rethrownList = new LinkedList<>();
+      Label[] rethrownLabels;
+      int[] parameterRegisters = new int[parameters.length];
+      String returnType = desc.substring(desc.indexOf(')') + 1);
+      int variableIndex = 1;
+      int rethrownIndex = 0;
+
+      rethrownList.add("java/lang/RuntimeException");
+      rethrownList.add("java/lang/Error");
+      if (exceptions != null) {
+        for (String exception : exceptions) {
+          rethrownList.add(exception);
+        }
+      }
+
+      proxyVisitor.visitCode();
+
+      rethrownLabels = new Label[rethrownList.size()];
+      for (String rethrown : rethrownList) {
+        proxyVisitor.visitTryCatchBlock(tryStartLabel, tryEndLabel, rethrownLabels[rethrownIndex++] = new Label(), rethrown);
+      }
+      proxyVisitor.visitTryCatchBlock(tryStartLabel, tryEndLabel, undeclaredLabel, "java/lang/Throwable");
+
+      proxyVisitor.visitLabel(startLabel);
+      proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+      proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, proxyInternalName, "$proxy$_handler", INVOCATION_HANDLER);
+      proxyVisitor.visitJumpInsn(Opcodes.IFNONNULL, tryStartLabel);
+
+      switch (returnType.charAt(0)) {
+        case 'V':
+          proxyVisitor.visitInsn(Opcodes.RETURN);
           break;
-        case 1:
-          methodVisitor.visitInsn(Opcodes.ICONST_1);
+        case 'Z':
+        case 'B':
+        case 'C':
+        case 'S':
+        case 'I':
+          proxyVisitor.visitInsn(Opcodes.ICONST_0);
+          proxyVisitor.visitInsn(Opcodes.IRETURN);
           break;
-        case 2:
-          methodVisitor.visitInsn(Opcodes.ICONST_2);
+        case 'J':
+          proxyVisitor.visitInsn(Opcodes.LCONST_0);
+          proxyVisitor.visitInsn(Opcodes.LRETURN);
           break;
-        case 3:
-          methodVisitor.visitInsn(Opcodes.ICONST_3);
+        case 'F':
+          proxyVisitor.visitInsn(Opcodes.FCONST_0);
+          proxyVisitor.visitInsn(Opcodes.FRETURN);
           break;
-        case 4:
-          methodVisitor.visitInsn(Opcodes.ICONST_4);
+        case 'D':
+          proxyVisitor.visitInsn(Opcodes.DCONST_0);
+          proxyVisitor.visitInsn(Opcodes.DRETURN);
           break;
-        case 5:
-          methodVisitor.visitInsn(Opcodes.ICONST_5);
+        case 'L':
+        case '[':
+          proxyVisitor.visitInsn(Opcodes.ACONST_NULL);
+          proxyVisitor.visitInsn(Opcodes.ARETURN);
           break;
         default:
-          if (number <= Byte.MAX_VALUE) {
-            methodVisitor.visitIntInsn(Opcodes.BIPUSH, number);
-          } else {
-            methodVisitor.visitIntInsn(Opcodes.SIPUSH, number);
-          }
-          break;
+          throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
       }
+
+      proxyVisitor.visitLabel(tryStartLabel);
+      proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+      proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, proxyInternalName, "$proxy$_handler", INVOCATION_HANDLER);
+      proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+      proxyVisitor.visitFieldInsn(Opcodes.GETSTATIC, proxyInternalName, methodField, METHOD);
+
+      insertNumber(proxyVisitor, parameters.length);
+      proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+
+      for (int index = 0; index < parameters.length; index++) {
+        proxyVisitor.visitInsn(Opcodes.DUP);
+        insertNumber(proxyVisitor, index);
+
+        if (parameters[index].length() == 1) {
+          switch (parameters[index].charAt(0)) {
+            case 'Z':
+              proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+              break;
+            case 'B':
+              proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+              break;
+            case 'C':
+              proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+              break;
+            case 'S':
+              proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+              break;
+            case 'I':
+              proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+              break;
+            case 'J':
+              proxyVisitor.visitVarInsn(Opcodes.LLOAD, parameterRegisters[index] = variableIndex);
+              variableIndex += 2;
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+              break;
+            case 'F':
+              proxyVisitor.visitVarInsn(Opcodes.FLOAD, parameterRegisters[index] = variableIndex++);
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+              break;
+            case 'D':
+              proxyVisitor.visitVarInsn(Opcodes.DLOAD, parameterRegisters[index] = variableIndex);
+              variableIndex += 2;
+              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+              break;
+            default:
+              throw new ByteCodeManipulationException("Unknown primitive type(%s)", parameters[index]);
+          }
+        } else {
+          proxyVisitor.visitVarInsn(Opcodes.ALOAD, parameterRegisters[index] = variableIndex++);
+        }
+
+        proxyVisitor.visitInsn(Opcodes.AASTORE);
+      }
+
+      proxyVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/lang/reflect/InvocationHandler", "invoke", "(Ljava/lang/Object;" + METHOD + "[Ljava/lang/Object;)Ljava/lang/Object;", true);
+
+      if (returnType.length() == 1) {
+        switch (returnType.charAt(0)) {
+          case 'V':
+            proxyVisitor.visitInsn(Opcodes.POP);
+            break;
+          case 'Z':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Boolean");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+            break;
+          case 'B':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Byte");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+            break;
+          case 'C':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Character");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+            break;
+          case 'S':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Short");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+            break;
+          case 'I':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+            break;
+          case 'J':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Long");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+            break;
+          case 'F':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Float");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+            break;
+          case 'D':
+            proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Double");
+            proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+            break;
+          default:
+            throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
+        }
+      } else if (returnType.startsWith("L")) {
+        proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType.substring(1, returnType.length() - 1));
+      } else {
+        proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType);
+      }
+
+      proxyVisitor.visitLabel(tryEndLabel);
+
+      switch (returnType.charAt(0)) {
+        case 'V':
+          proxyVisitor.visitInsn(Opcodes.RETURN);
+          break;
+        case 'Z':
+        case 'B':
+        case 'C':
+        case 'S':
+        case 'I':
+          proxyVisitor.visitInsn(Opcodes.IRETURN);
+          break;
+        case 'J':
+          proxyVisitor.visitInsn(Opcodes.LRETURN);
+          break;
+        case 'F':
+          proxyVisitor.visitInsn(Opcodes.FRETURN);
+          break;
+        case 'D':
+          proxyVisitor.visitInsn(Opcodes.DRETURN);
+          break;
+        case 'L':
+        case '[':
+          proxyVisitor.visitInsn(Opcodes.ARETURN);
+          break;
+        default:
+          throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
+      }
+
+      for (Label rethrownLabel : rethrownLabels) {
+        proxyVisitor.visitLabel(rethrownLabel);
+        proxyVisitor.visitInsn(Opcodes.ATHROW);
+      }
+
+      proxyVisitor.visitLabel(undeclaredLabel);
+      proxyVisitor.visitVarInsn(Opcodes.ASTORE, variableIndex);
+      proxyVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/reflect/UndeclaredThrowableException");
+      proxyVisitor.visitInsn(Opcodes.DUP);
+      proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
+      proxyVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/reflect/UndeclaredThrowableException", "<init>", "(Ljava/lang/Throwable;)V", false);
+      proxyVisitor.visitInsn(Opcodes.ATHROW);
+
+      proxyVisitor.visitLabel(endLabel);
+      proxyVisitor.visitLocalVariable("this", "L" + proxyInternalName + ";", null, startLabel, endLabel, 0);
+      for (int index = 0; index < parameters.length; index++) {
+        proxyVisitor.visitLocalVariable("$proxy$_var" + index, parameters[index], null, startLabel, endLabel, parameterRegisters[index]);
+      }
+
+      proxyVisitor.visitMaxs(12, variableIndex + 1);
     }
   }
 
@@ -688,7 +1285,7 @@ public class ProxyGenerator {
      */
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 
-      super(Opcodes.ASM8);
+      super(Opcodes.ASM9);
 
       this.nextMethodVisitor = nextMethodVisitor;
       this.annotationFilter = annotationFilter;

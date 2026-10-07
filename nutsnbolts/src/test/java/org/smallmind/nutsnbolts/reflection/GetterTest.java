@@ -32,6 +32,10 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -74,6 +78,48 @@ public class GetterTest {
     Assert.assertEquals(getter.invoke(new Bean()), Boolean.TRUE);
   }
 
+  public void testIsPrefixedPrimitiveBooleanMethodParsesAttribute ()
+    throws Exception {
+
+    Getter getter = new Getter(Bean.class.getDeclaredMethod("isActive"));
+
+    Assert.assertTrue(getter.isIs());
+    Assert.assertEquals(getter.getAttributeName(), "active");
+    Assert.assertEquals(getter.getAttributeClass(), boolean.class);
+  }
+
+  @Test(expectedExceptions = ReflectionContractException.class)
+  public void testVoidGetterIsRejected ()
+    throws Exception {
+
+    new Getter(Bean.class.getDeclaredMethod("getNothing"));
+  }
+
+  @Test(expectedExceptions = ReflectionContractException.class)
+  public void testIsPrefixedNonBooleanMethodIsRejected ()
+    throws Exception {
+
+    new Getter(Bean.class.getDeclaredMethod("isNamed"));
+  }
+
+  public void testSerializedGetterInvokesWrappedMethod ()
+    throws Exception {
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+      objectOutputStream.writeObject(new Getter(Bean.class.getDeclaredMethod("getName")));
+    }
+
+    try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+
+      Getter getter = (Getter)objectInputStream.readObject();
+
+      Assert.assertEquals(getter.getAttributeName(), "name");
+      Assert.assertEquals(getter.invoke(new Bean()), "Berkman");
+    }
+  }
+
   @Test(expectedExceptions = ReflectionContractException.class)
   public void testMethodWithNeitherGetNorIsPrefixIsRejected ()
     throws Exception {
@@ -98,6 +144,20 @@ public class GetterTest {
     public Boolean isReady () {
 
       return Boolean.TRUE;
+    }
+
+    public boolean isActive () {
+
+      return true;
+    }
+
+    public void getNothing () {
+
+    }
+
+    public String isNamed () {
+
+      return "no";
     }
 
     public String notAGetter () {

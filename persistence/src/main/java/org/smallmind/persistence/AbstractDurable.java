@@ -33,6 +33,7 @@
 package org.smallmind.persistence;
 
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
@@ -45,7 +46,9 @@ import org.smallmind.nutsnbolts.reflection.Overlay;
 /**
  * Base implementation of {@link Durable} that provides id-based equality, ordering, reflective
  * field comparison, and a cycle-safe {@code toString()}. Subclasses inherit all comparison
- * and display behaviour without additional code.
+ * and display behaviour without additional code. The reflective comparison and display read fields with the
+ * access of {@code org.smallmind.persistence}, so in a named module the package of a subclass must be opened to
+ * that module unless every field has a public getter and setter.
  *
  * @param <I> the identifier type, which must be {@link Comparable} and {@link java.io.Serializable}
  * @param <D> the concrete durable subtype
@@ -53,6 +56,23 @@ import org.smallmind.nutsnbolts.reflection.Overlay;
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
   private static final ThreadLocal<Set<Durable<?>>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+  /**
+   * Returns the accessors for the fields of a durable class, reached with the access of this module.
+   *
+   * @param durableClass the durable class whose fields should be accessed
+   * @return the field accessors, sorted by field name
+   * @throws PersistenceException if this module cannot access the fields of {@code durableClass}
+   */
+  private static FieldAccessor[] fieldAccessorsOf (Class<?> durableClass) {
+
+    try {
+      return FieldUtility.getFieldAccessors(LOOKUP, durableClass);
+    } catch (IllegalAccessException illegalAccessException) {
+      throw new PersistenceException(illegalAccessException, "Unable to access the fields of the durable(%s)", durableClass.getName());
+    }
+  }
 
   /**
    * Orders this durable relative to another by comparing identifiers. A {@code null} id
@@ -136,17 +156,18 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
    * @param durable the durable to compare against
    * @return {@code true} when all non-id fields are equal
    * @throws DataIntegrityException if the {@code id} field cannot be found on this type
+   * @throws PersistenceException   if the fields of this type cannot be accessed
    */
   public boolean mirrors (Durable<?> durable) {
 
-    FieldAccessor fieldAccessor;
+    for (FieldAccessor fieldAccessor : fieldAccessorsOf(this.getClass())) {
+      if (fieldAccessor.getName().equals("id")) {
 
-    if ((fieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id")) == null) {
-      throw new DataIntegrityException("The durable(%s) does not contain an 'id' field", this.getClass().getName());
-    } else {
-
-      return mirrors(durable, fieldAccessor.getField());
+        return mirrors(durable, fieldAccessor.getField());
+      }
     }
+
+    throw new DataIntegrityException("The durable(%s) does not contain an 'id' field", this.getClass().getName());
   }
 
   /**
@@ -157,7 +178,8 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
    * @param durable    the durable to compare against
    * @param exclusions fields to skip during comparison; {@code null} entries are ignored
    * @return {@code true} when all non-excluded fields are equal, {@code false} otherwise
-   * @throws PersistenceException if an exclusion field does not belong to this durable's class hierarchy
+   * @throws PersistenceException if an exclusion field does not belong to this durable's class hierarchy, or
+   *                              the fields of this type cannot be accessed
    */
   public boolean mirrors (Durable<?> durable, Field... exclusions) {
 
@@ -166,7 +188,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
       boolean excluded;
 
       try {
-        for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
+        for (FieldAccessor fieldAccessor : fieldAccessorsOf(this.getClass())) {
 
           excluded = false;
 
@@ -233,7 +255,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
         displayBuilder.append(this.getClass().getSimpleName()).append('[');
 
         try {
-          for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
+          for (FieldAccessor fieldAccessor : fieldAccessorsOf(this.getClass())) {
             if (first) {
               displayBuilder.append(',');
             }

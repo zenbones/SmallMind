@@ -32,6 +32,10 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -56,6 +60,27 @@ public class SetterTest {
     setter.invoke(bean, "Bartholomew");
 
     Assert.assertEquals(bean.getName(), "Bartholomew");
+  }
+
+  public void testSerializedSetterInvokesWrappedMethod ()
+    throws Exception {
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+      objectOutputStream.writeObject(new Setter(Bean.class.getDeclaredMethod("setName", String.class)));
+    }
+
+    try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+
+      Setter setter = (Setter)objectInputStream.readObject();
+      Bean bean = new Bean();
+
+      setter.invoke(bean, "Bartholomew");
+
+      Assert.assertEquals(setter.getAttributeName(), "name");
+      Assert.assertEquals(bean.getName(), "Bartholomew");
+    }
   }
 
   @Test(expectedExceptions = ReflectionContractException.class)

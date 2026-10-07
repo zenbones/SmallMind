@@ -30,27 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.web.json.query {
+package org.smallmind.nutsnbolts.reflection.sample;
 
-  requires tools.jackson.core;
+import java.io.IOException;
 
-  requires transitive jakarta.persistence;
-  requires transitive jakarta.validation;
-  requires transitive jakarta.xml.bind;
-  requires transitive org.smallmind.nutsnbolts;
-  requires transitive org.smallmind.persistence;
-  requires transitive org.smallmind.web.json.scaffold;
-  requires transitive tools.jackson.databind;
+public class Failing {
 
-  requires static com.querydsl.core;
-  requires static org.jspecify;
-  requires static org.smallmind.mongodb.throng;
+  public String fail () {
 
-  exports org.smallmind.web.json;
-  exports org.smallmind.web.json.query;
-  exports org.smallmind.web.json.query.jpa;
-  exports org.smallmind.web.json.query.querydsl;
-  exports org.smallmind.web.json.query.throng;
+    throw new IllegalStateException("target");
+  }
 
-  opens org.smallmind.web.json.query to jakarta.xml.bind, org.smallmind.nutsnbolts, tools.jackson.databind;
+  public String check ()
+    throws IOException {
+
+    throw new IOException("target");
+  }
 }

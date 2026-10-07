@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.reflection;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractList;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -71,5 +72,23 @@ public class ClassInspectorTest {
     Assert.assertFalse(output.isEmpty(), "asmify should write to standard out");
     Assert.assertTrue(output.contains("classWriter") || output.contains("ClassWriter"),
       "asmify output should include ASM generator vocabulary");
+  }
+
+  public void testTraceReadsBootstrapLoadedClass () {
+
+    String output = captureStdout(() -> ClassInspector.trace(AbstractList.class));
+
+    Assert.assertTrue(output.contains("java/util/AbstractList"), "trace output should reference the class name");
+  }
+
+  public void testTraceReadsNestedClass () {
+
+    String output = captureStdout(() -> ClassInspector.trace(Nested.class));
+
+    Assert.assertTrue(output.contains("ClassInspectorTest$Nested"), "trace output should reference the binary class name");
+  }
+
+  public static class Nested {
+
   }
 }

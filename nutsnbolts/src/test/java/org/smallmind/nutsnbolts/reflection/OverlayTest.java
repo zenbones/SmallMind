@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 import org.testng.Assert;
@@ -49,7 +50,7 @@ public class OverlayTest {
     Sample source = new Sample();
     source.setName("replacement");
 
-    target.overlay(source);
+    target.overlay(MethodHandles.lookup(), source);
 
     Assert.assertEquals(target.getName(), "replacement");
     Assert.assertEquals(target.getCount().intValue(), 7);
@@ -63,7 +64,7 @@ public class OverlayTest {
     Sample source = new Sample();
     source.setTag("");
 
-    target.overlay(source);
+    target.overlay(MethodHandles.lookup(), source);
 
     Assert.assertNull(target.getTag(), "Empty-string nullifier should have wiped tag");
   }
@@ -71,7 +72,7 @@ public class OverlayTest {
   public void testOverlaidCallbackInvokedAfterApply () {
 
     Sample target = new Sample();
-    target.overlay(new Sample());
+    target.overlay(MethodHandles.lookup(), new Sample());
 
     Assert.assertTrue(target.isOverlaidCalled());
   }
@@ -80,7 +81,7 @@ public class OverlayTest {
 
     Sample target = new Sample();
 
-    target.overlay((Sample)null);
+    target.overlay(MethodHandles.lookup(), (Sample)null);
 
     Assert.assertTrue(target.isOverlaidCalled());
   }
@@ -93,7 +94,7 @@ public class OverlayTest {
     Sample second = new Sample();
     second.setCount(42);
 
-    target.overlay(new Sample[] {first, second});
+    target.overlay(MethodHandles.lookup(), new Sample[] {first, second});
 
     Assert.assertEquals(target.getName(), "first-name");
     Assert.assertEquals(target.getCount().intValue(), 42);
@@ -105,7 +106,7 @@ public class OverlayTest {
     Sample source = new Sample();
     source.setName("only");
 
-    target.overlay(new Sample[] {null, source, null});
+    target.overlay(MethodHandles.lookup(), new Sample[] {null, source, null});
 
     Assert.assertEquals(target.getName(), "only");
   }
@@ -122,7 +123,7 @@ public class OverlayTest {
 
     Field nameField = Sample.class.getDeclaredField("name");
 
-    target.overlay(source, new Field[] {nameField});
+    target.overlay(MethodHandles.lookup(), source, new Field[] {nameField});
 
     Assert.assertEquals(target.getName(), "keep-me");
     Assert.assertEquals(target.getCount().intValue(), 9);
@@ -138,7 +139,7 @@ public class OverlayTest {
 
     Field strayField = String.class.getDeclaredField("hash");
 
-    target.overlay(source, new Field[] {strayField});
+    target.overlay(MethodHandles.lookup(), source, new Field[] {strayField});
   }
 
   public void testOverlayArrayWithEmptyArrayReturnsTargetUnchanged () {
@@ -146,9 +147,18 @@ public class OverlayTest {
     Sample target = new Sample();
     target.setName("untouched");
 
-    target.overlay(new Sample[0]);
+    target.overlay(MethodHandles.lookup(), new Sample[0]);
 
     Assert.assertEquals(target.getName(), "untouched");
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*must have full privilege access.*")
+  public void testRestrictedLookupIsRejected () {
+
+    Sample source = new Sample();
+    source.setName("replacement");
+
+    new Sample().overlay(MethodHandles.publicLookup(), source);
   }
 
   public static class Sample implements Overlay<Sample> {

@@ -32,6 +32,7 @@
  */
 package org.smallmind.mongodb.throng.mapping;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
@@ -66,7 +67,7 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
    * @throws ThrongMappingException    if id fields are missing or invalid, or annotations are misused
    * @throws NoSuchMethodException     if reflective codec construction fails
    * @throws InstantiationException    if codec construction fails
-   * @throws IllegalAccessException    if reflection cannot access members
+   * @throws IllegalAccessException    if this module cannot access a field of the entity, or its getter or setter
    * @throws InvocationTargetException if construction of codecs throws
    */
   public ThrongEntity (Class<T> entityClass, Entity entityAnnotation, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
@@ -82,7 +83,7 @@ public class ThrongEntity<T> extends ThrongProperties<T> {
     collection = entityAnnotation.value();
     lifecycle = new ThrongLifecycle<>(entityClass);
 
-    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
+    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(MethodHandles.lookup(), entityClass)) {
 
       Id idAnnotation;
 

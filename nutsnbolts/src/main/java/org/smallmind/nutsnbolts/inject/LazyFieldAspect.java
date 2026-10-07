@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.inject;
 
+import java.lang.invoke.MethodHandles;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -40,10 +41,14 @@ import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
 /**
  * AspectJ aspect that intercepts calls to {@link LazyField}-annotated methods, computing the value once
- * and caching it in the designated field for all future calls.
+ * and caching it in the designated field for all future calls. The field is reached with the access of this
+ * module, so in a named module the package declaring it must be opened to {@code org.smallmind.nutsnbolts}
+ * unless the field has a public getter and setter.
  */
 @Aspect
 public class LazyFieldAspect {
+
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
   /**
    * Intercepts any {@link LazyField}-annotated method invocation, returning the cached field value if already set
@@ -60,18 +65,16 @@ public class LazyFieldAspect {
     throws Throwable {
 
     FieldAccessor fieldAccessor;
+    Object fieldValue;
 
-    if ((fieldAccessor = FieldUtility.getFieldAccessor(called.getClass(), lazyField.value())) == null) {
+    if ((fieldAccessor = FieldUtility.getFieldAccessor(LOOKUP, called.getClass(), lazyField.value())) == null) {
       throw new LazyError("Missing field(%s) in type(%s) with @%s annotated method(%s)", lazyField.value(), called.getClass().getName(), LazyField.class.getSimpleName(), thisJoinPoint.getSignature().getName());
-    } else {
-
-      Object fieldValue;
-
-      if ((fieldValue = fieldAccessor.get(called)) == null) {
-        fieldAccessor.set(called, fieldValue = thisJoinPoint.proceed());
-      }
-
-      return fieldValue;
     }
+
+    if ((fieldValue = fieldAccessor.get(called)) == null) {
+      fieldAccessor.set(called, fieldValue = thisJoinPoint.proceed());
+    }
+
+    return fieldValue;
   }
 }

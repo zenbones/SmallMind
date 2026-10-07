@@ -30,27 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.web.json.query {
+package org.smallmind.nutsnbolts.reflection;
 
-  requires tools.jackson.core;
+/**
+ * Compares class loaders by their parent chains, so that a cache can tell when a class it would hold an entry
+ * against might outlive the classes the entry refers to.
+ */
+final class ClassLoaderAncestry {
 
-  requires transitive jakarta.persistence;
-  requires transitive jakarta.validation;
-  requires transitive jakarta.xml.bind;
-  requires transitive org.smallmind.nutsnbolts;
-  requires transitive org.smallmind.persistence;
-  requires transitive org.smallmind.web.json.scaffold;
-  requires transitive tools.jackson.databind;
+  private ClassLoaderAncestry () {
 
-  requires static com.querydsl.core;
-  requires static org.jspecify;
-  requires static org.smallmind.mongodb.throng;
+  }
 
-  exports org.smallmind.web.json;
-  exports org.smallmind.web.json.query;
-  exports org.smallmind.web.json.query.jpa;
-  exports org.smallmind.web.json.query.querydsl;
-  exports org.smallmind.web.json.query.throng;
+  /**
+   * Determines whether one class loader is a strict ancestor of another through the parent chain. The bootstrap
+   * loader, represented by {@code null}, is an ancestor of every other loader.
+   *
+   * @param candidateLoader the loader that might be the ancestor, or {@code null} for the bootstrap loader
+   * @param loader          the loader whose parents are searched, or {@code null} for the bootstrap loader
+   * @return {@code true} if {@code candidateLoader} is a parent, grandparent, or more distant parent of
+   * {@code loader}
+   */
+  static boolean isStrictAncestor (ClassLoader candidateLoader, ClassLoader loader) {
 
-  opens org.smallmind.web.json.query to jakarta.xml.bind, org.smallmind.nutsnbolts, tools.jackson.databind;
+    ClassLoader currentLoader = loader;
+
+    if (currentLoader == null) {
+
+      return false;
+    } else if (candidateLoader == null) {
+
+      return true;
+    }
+
+    while ((currentLoader = currentLoader.getParent()) != null) {
+      if (currentLoader == candidateLoader) {
+
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

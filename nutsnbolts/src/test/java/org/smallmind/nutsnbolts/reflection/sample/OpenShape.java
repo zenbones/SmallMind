@@ -30,27 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-module org.smallmind.web.json.query {
+package org.smallmind.nutsnbolts.reflection.sample;
 
-  requires tools.jackson.core;
+public non-sealed interface OpenShape extends SealedShape {
 
-  requires transitive jakarta.persistence;
-  requires transitive jakarta.validation;
-  requires transitive jakarta.xml.bind;
-  requires transitive org.smallmind.nutsnbolts;
-  requires transitive org.smallmind.persistence;
-  requires transitive org.smallmind.web.json.scaffold;
-  requires transitive tools.jackson.databind;
-
-  requires static com.querydsl.core;
-  requires static org.jspecify;
-  requires static org.smallmind.mongodb.throng;
-
-  exports org.smallmind.web.json;
-  exports org.smallmind.web.json.query;
-  exports org.smallmind.web.json.query.jpa;
-  exports org.smallmind.web.json.query.querydsl;
-  exports org.smallmind.web.json.query.throng;
-
-  opens org.smallmind.web.json.query to jakarta.xml.bind, org.smallmind.nutsnbolts, tools.jackson.databind;
+  String label ();
 }

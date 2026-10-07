@@ -32,6 +32,11 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,10 +50,9 @@ public class Getter implements Serializable {
   private static final Object[] NO_PARAMETERS = new Object[0];
 
   private final Class<?> attributeClass;
-  private final Method method;
+  private transient Method method;
   private final String attributeName;
   private final boolean is;
-  private Boolean bob;
 
   /**
    * Wraps the supplied method as a getter, parsing the attribute name from the method name and
@@ -76,10 +80,10 @@ public class Getter implements Serializable {
     if (method.getParameterTypes().length > 0) {
       throw new ReflectionContractException("Getter for attribute (%s) must declare no parameters", attributeName);
     }
-    if ((attributeClass = method.getReturnType()) == Void.class) {
+    if ((attributeClass = method.getReturnType()) == void.class) {
       throw new ReflectionContractException("Getter for attribute (%s) must not return void", attributeName);
     }
-    if (is && (attributeClass != Boolean.class)) {
+    if (is && (attributeClass != boolean.class) && (attributeClass != Boolean.class)) {
       throw new ReflectionContractException("Getter for attribute (%s) must return 'boolean'", attributeName);
     }
   }
@@ -127,5 +131,50 @@ public class Getter implements Serializable {
     throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
     return method.invoke(target, NO_PARAMETERS);
+  }
+
+  /**
+   * Writes the default fields followed by the declaring class and name of the wrapped method, which is
+   * not itself serializable.
+   *
+   * @param objectOutputStream the stream to write to
+   * @throws IOException if the stream cannot be written
+   */
+  @Serial
+  private void writeObject (ObjectOutputStream objectOutputStream)
+    throws IOException {
+
+    objectOutputStream.defaultWriteObject();
+    objectOutputStream.writeObject(method.getDeclaringClass());
+    objectOutputStream.writeObject(method.getName());
+  }
+
+  /**
+   * Reads the default fields, then re-resolves the wrapped method from its declaring class and name.
+   *
+   * @param objectInputStream the stream to read from
+   * @throws IOException            if the stream cannot be read, or the method no longer exists
+   * @throws ClassNotFoundException if the declaring class cannot be resolved
+   */
+  @Serial
+  private void readObject (ObjectInputStream objectInputStream)
+    throws IOException, ClassNotFoundException {
+
+    Class<?> declaringClass;
+    String methodName;
+
+    objectInputStream.defaultReadObject();
+    declaringClass = (Class<?>)objectInputStream.readObject();
+    methodName = (String)objectInputStream.readObject();
+
+    try {
+      method = declaringClass.getDeclaredMethod(methodName);
+    } catch (NoSuchMethodException noSuchMethodException) {
+
+      InvalidObjectException invalidObjectException = new InvalidObjectException("Missing method(" + methodName + ") in class(" + declaringClass.getName() + ")");
+
+      invalidObjectException.initCause(noSuchMethodException);
+      throw invalidObjectException;
+    }
   }
 }

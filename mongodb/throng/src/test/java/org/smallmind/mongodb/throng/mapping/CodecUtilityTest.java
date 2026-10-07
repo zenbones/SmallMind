@@ -32,6 +32,7 @@
  */
 package org.smallmind.mongodb.throng.mapping;
 
+import java.lang.invoke.MethodHandles;
 import org.smallmind.mongodb.throng.ThrongRuntimeException;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
@@ -41,18 +42,20 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class CodecUtilityTest {
 
-  public void testGetReifiedTypeReturnsConcreteFieldTypeWhenNotGeneric () {
+  public void testGetReifiedTypeReturnsConcreteFieldTypeWhenNotGeneric ()
+    throws IllegalAccessException {
 
-    FieldAccessor accessor = FieldUtility.getFieldAccessor(SimpleHolder.class, "name");
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), SimpleHolder.class, "name");
 
     Class<?> reified = CodecUtility.getReifiedType(SimpleHolder.class, accessor);
 
     Assert.assertEquals(reified, String.class);
   }
 
-  public void testGetReifiedTypeFailsWhenTypeVariableCannotBeResolved () {
+  public void testGetReifiedTypeFailsWhenTypeVariableCannotBeResolved ()
+    throws IllegalAccessException {
 
-    FieldAccessor accessor = FieldUtility.getFieldAccessor(GenericHolder.class, "value");
+    FieldAccessor accessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), GenericHolder.class, "value");
 
     Assert.assertThrows(ThrongRuntimeException.class, () -> CodecUtility.getReifiedType(GenericHolder.class, accessor));
   }

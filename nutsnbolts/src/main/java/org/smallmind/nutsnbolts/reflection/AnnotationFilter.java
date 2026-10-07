@@ -32,11 +32,14 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.util.Arrays;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 /**
- * Determines whether a given annotation descriptor should be copied to a generated proxy class,
+ * Determines whether a given annotation descriptor should be kept on the methods of a generated proxy class,
  * using an {@link PassType#INCLUDE} or {@link PassType#EXCLUDE} policy against a configured set of annotations.
+ * The filter applies to the method and parameter annotations that {@link ProxyGenerator} copies; it cannot add
+ * annotations that are not copied, such as those on methods declared by JDK types.
  */
 public class AnnotationFilter {
 
@@ -98,5 +101,42 @@ public class AnnotationFilter {
       default:
         throw new UnknownSwitchCaseException(passType.name());
     }
+  }
+
+  /**
+   * Computes a hash code from the policy and the annotation descriptors.
+   *
+   * @return the combined hash of the policy and descriptors
+   */
+  @Override
+  public int hashCode () {
+
+    return passType.hashCode() ^ Arrays.hashCode(annotationSignatures);
+  }
+
+  /**
+   * Returns {@code true} if {@code obj} is an {@code AnnotationFilter} with the same policy and the same
+   * annotation types in the same order, so that equal filters share a generated proxy class.
+   *
+   * @param obj the object to compare with this filter
+   * @return {@code true} if both filters apply the same policy to the same annotations
+   */
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof AnnotationFilter) && passType.equals(((AnnotationFilter)obj).passType) && Arrays.equals(annotationSignatures, ((AnnotationFilter)obj).annotationSignatures);
+  }
+
+  /**
+   * Describes the policy and the annotation descriptors, in order. Two filters have the same description
+   * exactly when they are {@link #equals(Object) equal}, which lets {@link ProxyGenerator} cache generated
+   * classes under a key that refers to no type in this module.
+   *
+   * @return the policy name followed by the annotation descriptors, e.g. {@code EXCLUDE[Ljava/lang/Deprecated;]}
+   */
+  @Override
+  public String toString () {
+
+    return passType.name() + Arrays.toString(annotationSignatures);
   }
 }

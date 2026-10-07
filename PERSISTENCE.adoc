@@ -255,21 +255,34 @@ The descriptor opens:
   `spring.core` and `spring.beans`;
 * `org.smallmind.persistence.orm.jpa` to `org.hibernate.orm.core`, for the
   `JPADurable` mapped superclasses;
-* `org.smallmind.persistence.orm.throng` to `org.smallmind.mongodb.throng`
-  and `org.smallmind.nutsnbolts`, for `ThrongDurable`.
+* `org.smallmind.persistence.orm.throng` to `org.smallmind.mongodb.throng`,
+  for `ThrongDurable`.
 
 Open your own entity packages the same way: JPA entities to
 `org.hibernate.orm.core`, Throng entities to `org.smallmind.mongodb.throng`
-and `org.smallmind.nutsnbolts` (see xref:MONGODB.adoc[MONGODB.adoc]).
+(see xref:MONGODB.adoc[MONGODB.adoc]). Also open them to
+`org.smallmind.persistence`: `AbstractDurable.toString()` and `mirrors(…)`
+read every field of the durable with this module's access. Open the
+packages of `@Service` classes with `@Repository` fields to
+`org.smallmind.persistence` too, because `RepositoryAspect` writes those
+fields with this module's access. A field with a public getter and a public
+setter is reached through them, and needs only an export. This module does
+not need to read yours; the read edge is added when the fields are first
+reached.
 
 [source,java]
 ----
-opens com.example.app.entity to org.hibernate.orm.core;
+opens com.example.app.entity to org.hibernate.orm.core, org.smallmind.persistence;
 ----
 
 An entity package that is not opened fails when the entity manager factory
 is built, with `InaccessibleObjectException: … module com.example.app does
 not "exports com.example.app.entity" to module org.hibernate.orm.core`.
+Without the open to `org.smallmind.persistence`, `toString()` and `mirrors(…)`
+fail with a `PersistenceException` wrapping `IllegalAccessException: module
+com.example.app does not open com.example.app.entity to module
+org.smallmind.persistence`, and `@Repository` injection fails on the same
+`IllegalAccessException`.
 
 [[core-durable]]
 == The Durable and DAO Core

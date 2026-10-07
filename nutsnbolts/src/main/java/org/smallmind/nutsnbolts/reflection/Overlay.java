@@ -33,6 +33,8 @@
 package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
@@ -40,7 +42,10 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 /**
  * Mixin interface that gives implementing classes the ability to copy non-null field values from one
  * instance to another, recursing into nested {@code Overlay} fields and honouring
- * {@link OverlayNullifier}-annotated sentinel values that should become {@code null}.
+ * {@link OverlayNullifier}-annotated sentinel values that should become {@code null}. Fields are reached
+ * through {@link FieldUtility#getFieldAccessors(MethodHandles.Lookup, Class)} with the access of the
+ * {@link MethodHandles.Lookup} each operation is given, which caches them for later operations from the same
+ * module.
  *
  * @param <O> the self-referential concrete type that implements this interface
  */
@@ -57,26 +62,30 @@ public interface Overlay<O extends Overlay<O>> {
   /**
    * Applies each element of the supplied array to this object in order, skipping {@code null} entries.
    *
+   * @param lookup   a full-privilege lookup, as returned by {@link MethodHandles#lookup()}, whose access is used
+   *                 to read and write fields
    * @param overlays the overlay objects to apply; may be {@code null} or empty
    * @return this instance after all overlays have been applied
    */
-  default O overlay (O[] overlays) {
+  default O overlay (MethodHandles.Lookup lookup, O[] overlays) {
 
-    return overlay(overlays, null);
+    return overlay(lookup, overlays, null);
   }
 
   /**
    * Applies each element of the supplied array to this object in order, skipping excluded fields.
    *
+   * @param lookup     a full-privilege lookup, as returned by {@link MethodHandles#lookup()}, whose access is
+   *                   used to read and write fields
    * @param overlays   the overlay objects to apply; may be {@code null} or empty
    * @param exclusions fields on this object that must not be overwritten; may be {@code null}
    * @return this instance after all overlays have been applied
    */
-  default O overlay (O[] overlays, Field[] exclusions) {
+  default O overlay (MethodHandles.Lookup lookup, O[] overlays, Field[] exclusions) {
 
-    if ((overlays != null) && (overlays.length > 0)) {
+    if (overlays != null) {
       for (O overlay : overlays) {
-        overlay(overlay, exclusions);
+        overlay(lookup, overlay, exclusions);
       }
     }
 
@@ -86,35 +95,50 @@ public interface Overlay<O extends Overlay<O>> {
   /**
    * Copies non-null field values from {@code overlay} to this object, honouring nullifier annotations.
    *
+   * @param lookup  a full-privilege lookup, as returned by {@link MethodHandles#lookup()}, whose access is used
+   *                to read and write fields
    * @param overlay the source object whose non-null values should be applied; may be {@code null}
    * @return this instance after the overlay has been applied
    */
-  default O overlay (O overlay) {
+  default O overlay (MethodHandles.Lookup lookup, O overlay) {
 
-    return overlay(overlay, null);
+    return overlay(lookup, overlay, null);
   }
 
   /**
    * Copies non-null field values from {@code overlay} to this object, skipping excluded fields and
-   * honouring nullifier annotations that convert sentinel values to {@code null}.
+   * honouring nullifier annotations that convert sentinel values to {@code null}. Nested {@code Overlay}
+   * fields are overlaid with the same {@code lookup}.
    *
+   * @param lookup     a full-privilege lookup, as returned by {@link MethodHandles#lookup()}, whose access is
+   *                   used to read and write fields and to construct {@link OverlayNullifierValidator}s
    * @param overlay    the source object whose non-null values should be applied; may be {@code null}
    * @param exclusions fields on this object that must not be overwritten; may be {@code null}
    * @return this instance after the overlay has been applied
-   * @throws TypeMismatchException if the overlay's type is not assignable to this object's type, or
-   *                               if an exclusion field belongs to an unrelated class
-   * @throws OverlayException      if a reflective read or write operation fails
+   * @throws TypeMismatchException    if the overlay's type is not assignable to this object's type, or
+   *                                  if an exclusion field belongs to an unrelated class
+   * @throws IllegalArgumentException if {@code lookup} does not have full privilege access
+   * @throws OverlayException         if {@code lookup} cannot access a field, its getter or setter, or a
+   *                                  validator's constructor, if a {@code final} field without a setter would
+   *                                  be written, or if a getter, setter, or validator constructor fails
    */
-  default O overlay (O overlay, Field[] exclusions) {
+  default O overlay (MethodHandles.Lookup lookup, O overlay, Field[] exclusions) {
 
     if (overlay != null) {
       if (!overlay.getClass().isAssignableFrom(this.getClass())) {
         throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
       } else {
 
+        FieldAccessor[] fieldAccessors;
         boolean excluded;
 
-        for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
+        try {
+          fieldAccessors = FieldUtility.getFieldAccessors(lookup, this.getClass());
+        } catch (IllegalAccessException illegalAccessException) {
+          throw new OverlayException(illegalAccessException);
+        }
+
+        for (FieldAccessor fieldAccessor : fieldAccessors) {
 
           excluded = false;
 
@@ -140,16 +164,16 @@ public interface Overlay<O extends Overlay<O>> {
                   Overlay original;
 
                   if ((original = (Overlay)fieldAccessor.get(this)) != null) {
-                    fieldAccessor.set(this, fieldAccessor.getType().cast(original.overlay((Overlay)value)));
+                    fieldAccessor.set(this, fieldAccessor.getType().cast(original.overlay(lookup, (Overlay)value)));
                   } else {
-                    if (equivalentToNull(fieldAccessor, value)) {
+                    if (equivalentToNull(lookup, fieldAccessor, value)) {
                       fieldAccessor.set(this, null);
                     } else {
                       fieldAccessor.set(this, value);
                     }
                   }
                 } else {
-                  if (equivalentToNull(fieldAccessor, value)) {
+                  if (equivalentToNull(lookup, fieldAccessor, value)) {
                     fieldAccessor.set(this, null);
                   } else {
                     fieldAccessor.set(this, value);
@@ -173,12 +197,13 @@ public interface Overlay<O extends Overlay<O>> {
    * Inspects the field's annotations for any {@link OverlayNullifier} meta-annotation and, if found,
    * delegates to the corresponding validator to determine whether {@code value} should become {@code null}.
    *
+   * @param lookup        the lookup used to construct the validator
    * @param fieldAccessor the accessor describing the field whose annotations should be checked
    * @param value         the non-null value read from the overlay source
    * @return {@code true} if a validator considers the value equivalent to {@code null}
-   * @throws OverlayException if the validator cannot be instantiated or invoked
+   * @throws OverlayException if the validator cannot be constructed
    */
-  private boolean equivalentToNull (FieldAccessor fieldAccessor, Object value)
+  private boolean equivalentToNull (MethodHandles.Lookup lookup, FieldAccessor fieldAccessor, Object value)
     throws OverlayException {
 
     for (Annotation fieldAnnotation : fieldAccessor.getField().getAnnotations()) {
@@ -187,7 +212,7 @@ public interface Overlay<O extends Overlay<O>> {
 
       if ((overlayNullifier = fieldAnnotation.annotationType().getAnnotation(OverlayNullifier.class)) != null) {
 
-        return internalEquivalentToNull(overlayNullifier, fieldAnnotation, value);
+        return internalEquivalentToNull(lookup, overlayNullifier, fieldAnnotation, value);
       }
     }
 
@@ -195,29 +220,35 @@ public interface Overlay<O extends Overlay<O>> {
   }
 
   /**
-   * Instantiates the {@link OverlayNullifierValidator} specified by {@code overlayNullifier}, initialises it
-   * with the field annotation, and asks it whether {@code object} is equivalent to {@code null}.
+   * Instantiates the {@link OverlayNullifierValidator} specified by {@code overlayNullifier} through its
+   * no-argument constructor, reached with the access of {@code lookup}, initialises it with the field
+   * annotation, and asks it whether {@code object} is equivalent to {@code null}.
    *
+   * @param lookup           the lookup used to construct the validator
    * @param overlayNullifier the meta-annotation identifying the validator class to use
    * @param annotation       the concrete annotation instance on the field, passed to the validator's initialiser
    * @param object           the value to be evaluated
    * @param <A>              the type of the field annotation
    * @param <T>              the type of the field value
    * @return {@code true} if the validator reports the value as equivalent to {@code null}
-   * @throws OverlayException if the validator cannot be constructed, initialised, or invoked
+   * @throws OverlayException if the validator cannot be constructed
    */
-  private <A extends Annotation, T> boolean internalEquivalentToNull (OverlayNullifier overlayNullifier, A annotation, T object)
+  private <A extends Annotation, T> boolean internalEquivalentToNull (MethodHandles.Lookup lookup, OverlayNullifier overlayNullifier, A annotation, T object)
     throws OverlayException {
 
+    OverlayNullifierValidator<A, T> overlayNullifierValidator;
+
     try {
-
-      OverlayNullifierValidator<A, T> overlayNullifierValidator = (OverlayNullifierValidator<A, T>)overlayNullifier.validatedBy().getConstructor().newInstance();
-
-      overlayNullifierValidator.initialize(annotation);
-
-      return overlayNullifierValidator.equivalentToNull(object);
-    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException exception) {
-      throw new OverlayException(exception);
+      FieldUtility.ensureReadable(lookup, overlayNullifier.validatedBy().getModule());
+      overlayNullifierValidator = (OverlayNullifierValidator<A, T>)lookup.findConstructor(overlayNullifier.validatedBy(), MethodType.methodType(void.class)).invoke();
+    } catch (Error error) {
+      throw error;
+    } catch (Throwable throwable) {
+      throw new OverlayException(throwable);
     }
+
+    overlayNullifierValidator.initialize(annotation);
+
+    return overlayNullifierValidator.equivalentToNull(object);
   }
 }

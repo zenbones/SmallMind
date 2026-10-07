@@ -32,7 +32,6 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.ASMifier;
@@ -48,18 +47,12 @@ public class ClassInspector {
    * Emits a human-readable byte code trace of the given class to {@link System#out}.
    *
    * @param parseClass the class whose byte code should be traced
-   * @throws ByteCodeManipulationException if the class resource stream cannot be opened
+   * @throws ByteCodeManipulationException if the class file cannot be located, read, or parsed by ASM
    */
   public static void trace (Class parseClass) {
 
-    ClassReader classReader;
+    ClassReader classReader = ByteCodeReader.createClassReader(parseClass);
     TraceClassVisitor classVisitor;
-
-    try {
-      classReader = new ClassReader(parseClass.getClassLoader().getResourceAsStream(parseClass.getCanonicalName().replace('.', '/') + ".class"));
-    } catch (IOException ioException) {
-      throw new ByteCodeManipulationException(ioException);
-    }
 
     classVisitor = new TraceClassVisitor(new PrintWriter(System.out));
     classReader.accept(classVisitor, 0);
@@ -69,18 +62,12 @@ public class ClassInspector {
    * Generates an ASMifier script that reproduces the byte code of the given class and writes it to {@link System#out}.
    *
    * @param parseClass the class whose byte code should be expressed as an ASMifier program
-   * @throws ByteCodeManipulationException if the class resource stream cannot be opened
+   * @throws ByteCodeManipulationException if the class file cannot be located, read, or parsed by ASM
    */
   public static void asmify (Class parseClass) {
 
-    ClassReader classReader;
+    ClassReader classReader = ByteCodeReader.createClassReader(parseClass);
     TraceClassVisitor classVisitor;
-
-    try {
-      classReader = new ClassReader(parseClass.getClassLoader().getResourceAsStream(parseClass.getCanonicalName().replace('.', '/') + ".class"));
-    } catch (IOException ioException) {
-      throw new ByteCodeManipulationException(ioException);
-    }
 
     classVisitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
     classReader.accept(classVisitor, 0);

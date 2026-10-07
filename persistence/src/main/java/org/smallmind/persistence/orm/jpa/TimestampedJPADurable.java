@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.jpa;
 
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
@@ -41,6 +42,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.PersistenceException;
 
 /**
  * JPA durable that automatically tracks creation and update timestamps and excludes those
@@ -104,13 +106,22 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
    *
    * @param durable the durable to compare
    * @return {@code true} when all other fields mirror
+   * @throws PersistenceException if the fields of this type cannot be accessed
    */
   @Override
   public boolean mirrors (Durable<?> durable) {
 
-    FieldAccessor idFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id");
-    FieldAccessor createdFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "created");
-    FieldAccessor lastUpdatedFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "lastUpdated");
+    FieldAccessor idFieldAccessor;
+    FieldAccessor createdFieldAccessor;
+    FieldAccessor lastUpdatedFieldAccessor;
+
+    try {
+      idFieldAccessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), this.getClass(), "id");
+      createdFieldAccessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), this.getClass(), "created");
+      lastUpdatedFieldAccessor = FieldUtility.getFieldAccessor(MethodHandles.lookup(), this.getClass(), "lastUpdated");
+    } catch (IllegalAccessException illegalAccessException) {
+      throw new PersistenceException(illegalAccessException, "Unable to access the fields of the durable(%s)", this.getClass().getName());
+    }
 
     return super.mirrors(durable, (idFieldAccessor == null) ? null : idFieldAccessor.getField(), (createdFieldAccessor == null) ? null : createdFieldAccessor.getField(), (lastUpdatedFieldAccessor == null) ? null : lastUpdatedFieldAccessor.getField());
   }

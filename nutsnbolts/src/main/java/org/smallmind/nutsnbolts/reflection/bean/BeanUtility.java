@@ -36,18 +36,22 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Map;
 import org.smallmind.nutsnbolts.lang.ClassLoaderAwareCache;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 /**
  * Static helpers for reflective JavaBean interaction, providing cached getter, setter, and method
- * lookup as well as dotted-path traversal for nested property access.
+ * lookup as well as dotted-path traversal for nested property access. Lookups are cached against the target's
+ * class, under keys and values made only of JDK types, so the cache keeps neither that class nor this module's
+ * class loader reachable. Setters and other methods are cached by name, and the overload whose parameter types
+ * match the arguments is chosen on every call.
  */
 public class BeanUtility {
 
-  private static final ClassLoaderAwareCache<MethodKey, Method> GETTER_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
-  private static final ClassLoaderAwareCache<MethodKey, Method> SETTER_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
-  private static final ClassLoaderAwareCache<MethodKey, Method> METHOD_MAP = new ClassLoaderAwareCache<>(methodKey -> methodKey.getMethodClass().getClassLoader());
+  private static final ClassLoaderAwareCache<Map.Entry<Class<?>, String>, Method> GETTER_MAP = new ClassLoaderAwareCache<>(Map.Entry::getKey);
+  private static final ClassLoaderAwareCache<Map.Entry<Class<?>, String>, Method[]> CANDIDATE_METHOD_MAP = new ClassLoaderAwareCache<>(Map.Entry::getKey);
 
   /**
    * Returns the parameter type that should be used when invoking the given setter, preferring the
@@ -274,9 +278,9 @@ public class BeanUtility {
     throws BeanAccessException {
 
     Method getterMethod;
-    MethodKey methodKey;
+    Map.Entry<Class<?>, String> methodKey;
 
-    methodKey = new MethodKey(target.getClass(), name);
+    methodKey = Map.entry(target.getClass(), name);
     // Check if we've already got it
     if ((getterMethod = GETTER_MAP.get(methodKey)) == null) {
       try {
@@ -301,8 +305,8 @@ public class BeanUtility {
   }
 
   /**
-   * Returns a cached setter method for the named property on the target's class, looking up and caching
-   * it if not yet known.
+   * Returns the setter method for the named property on the target's class whose parameter type matches the
+   * value's class.
    *
    * @param target the object whose class should be searched for the setter
    * @param name   the property name to look up via {@code setXxx}
@@ -314,23 +318,17 @@ public class BeanUtility {
     throws BeanAccessException {
 
     Method setterMethod;
-    MethodKey methodKey;
 
-    methodKey = new MethodKey(target.getClass(), name);
-    // Check if we've already got it
-    if ((setterMethod = SETTER_MAP.get(methodKey)) == null) {
-      if ((setterMethod = findMethod(target, asSetterName(name), value.getClass())) == null) {
-        throw new BeanAccessException("No 'setter' method(%s) found in class(%s)", asSetterName(name), target.getClass().getName());
-      }
-      SETTER_MAP.put(methodKey, setterMethod);
+    if ((setterMethod = findMethod(target, asSetterName(name), value.getClass())) == null) {
+      throw new BeanAccessException("No 'setter' method(%s) found in class(%s)", asSetterName(name), target.getClass().getName());
     }
 
     return setterMethod;
   }
 
   /**
-   * Returns a cached method with the given name on the target's class, looking up and caching
-   * it if not yet known.
+   * Returns the method with the given name on the target's class whose parameter types match the classes of
+   * the argument values.
    *
    * @param target the object whose class should be searched for the method
    * @param name   the method name to look up
@@ -342,23 +340,15 @@ public class BeanUtility {
     throws BeanAccessException {
 
     Method method;
-    MethodKey methodKey;
+    Class[] parameterTypes = new Class[(values == null) ? 0 : values.length];
 
-    methodKey = new MethodKey(target.getClass(), name);
-    // Check if we've already got it
-    if ((method = METHOD_MAP.get(methodKey)) == null) {
-
-      Class[] parameterTypes = new Class[(values == null) ? 0 : values.length];
-
-      if ((values != null) && (values.length > 0)) {
-        for (int parameterIndex = 0; parameterIndex < values.length; parameterIndex++) {
-          parameterTypes[parameterIndex] = values[parameterIndex].getClass();
-        }
+    if ((values != null) && (values.length > 0)) {
+      for (int parameterIndex = 0; parameterIndex < values.length; parameterIndex++) {
+        parameterTypes[parameterIndex] = values[parameterIndex].getClass();
       }
-      if ((method = findMethod(target, name, parameterTypes)) == null) {
-        throw new BeanAccessException("No method(%s) for parameter types(%s) found in class(%s)", name, Arrays.toString(parameterTypes), target.getClass().getName());
-      }
-      METHOD_MAP.put(methodKey, method);
+    }
+    if ((method = findMethod(target, name, parameterTypes)) == null) {
+      throw new BeanAccessException("No method(%s) for parameter types(%s) found in class(%s)", name, Arrays.toString(parameterTypes), target.getClass().getName());
     }
 
     return method;
@@ -366,17 +356,18 @@ public class BeanUtility {
 
   /**
    * Searches the target's class for a public non-static method with the given name and
-   * compatible parameter types.
+   * compatible parameter types, among the candidates cached for that name.
    *
    * @param target         the object whose class is searched
    * @param name           the exact method name
    * @param parameterTypes the expected parameter types in declaration order
-   * @return the matching {@link Method}, or {@code null} if none is found
+   * @return the matching {@link Method}, made accessible as described by {@link #accessibleMethod(Object, Method)},
+   * or {@code null} if none is found
    */
   private static Method findMethod (Object target, String name, Class... parameterTypes) {
 
-    for (Method method : target.getClass().getMethods()) {
-      if (method.getName().equals(name) && (!Modifier.isStatic(method.getModifiers())) && hasParameterTypes(method, parameterTypes)) {
+    for (Method method : acquireCandidateMethods(target, name)) {
+      if (hasParameterTypes(method, parameterTypes)) {
 
         return method;
       }
@@ -386,13 +377,42 @@ public class BeanUtility {
   }
 
   /**
+   * Returns every public non-static method with the given name on the target's class, each made accessible as
+   * described by {@link #accessibleMethod(Object, Method)}, looking them up and caching them if not yet known.
+   *
+   * @param target the object whose class is searched
+   * @param name   the exact method name
+   * @return the candidate methods, possibly empty
+   */
+  private static Method[] acquireCandidateMethods (Object target, String name) {
+
+    Method[] candidateMethods;
+    Map.Entry<Class<?>, String> methodKey = Map.entry(target.getClass(), name);
+
+    if ((candidateMethods = CANDIDATE_METHOD_MAP.get(methodKey)) == null) {
+
+      LinkedList<Method> candidateMethodList = new LinkedList<>();
+
+      for (Method method : target.getClass().getMethods()) {
+        if (method.getName().equals(name) && (!Modifier.isStatic(method.getModifiers()))) {
+          candidateMethodList.add(accessibleMethod(target, method));
+        }
+      }
+
+      CANDIDATE_METHOD_MAP.put(methodKey, candidateMethods = candidateMethodList.toArray(new Method[0]));
+    }
+
+    return candidateMethods;
+  }
+
+  /**
    * Retrieves the public method with the given name and parameter types from the target's class,
    * throwing {@link NoSuchMethodException} if the method is static.
    *
    * @param target         the object whose class is inspected
    * @param name           the exact method name
    * @param parameterTypes the expected parameter types in declaration order
-   * @return the matching non-static {@link Method}
+   * @return the matching non-static {@link Method}, made accessible as described by {@link #accessibleMethod(Object, Method)}
    * @throws NoSuchMethodException if the method does not exist or is static
    */
   private static Method getMethod (Object target, String name, Class... parameterTypes)
@@ -402,10 +422,75 @@ public class BeanUtility {
 
     if (!Modifier.isStatic((method = target.getClass().getMethod(name, parameterTypes)).getModifiers())) {
 
-      return method;
+      return accessibleMethod(target, method);
     }
 
     throw new NoSuchMethodException();
+  }
+
+  /**
+   * Returns {@code method} when this class can invoke it on {@code target}. Otherwise, because the method is
+   * declared by a class that is not public or whose package is not exported to this module (as with many
+   * collection and library implementation classes), returns the same method as declared by an accessible
+   * superclass or interface of the target's class. If there is no such declaration, {@code method} is returned
+   * unchanged and invoking it fails with {@link IllegalAccessException}.
+   *
+   * @param target the object the method will be invoked on
+   * @param method the public method found on the target's class
+   * @return an accessible declaration of the method, or {@code method} itself
+   */
+  private static Method accessibleMethod (Object target, Method method) {
+
+    Method accessibleMethod;
+
+    if (method.canAccess(target)) {
+
+      return method;
+    } else if ((accessibleMethod = findAccessibleMethod(target, target.getClass(), method.getName(), method.getParameterTypes())) != null) {
+
+      return accessibleMethod;
+    }
+
+    return method;
+  }
+
+  /**
+   * Walks {@code type}, its interfaces, and its superclasses looking for a declaration of the named public method
+   * that this class can invoke on {@code target}.
+   *
+   * @param target         the object the method will be invoked on
+   * @param type           the class or interface to search, or {@code null} at the top of the hierarchy
+   * @param name           the exact method name
+   * @param parameterTypes the exact parameter types
+   * @return an accessible declaration of the method, or {@code null} if none is found
+   */
+  private static Method findAccessibleMethod (Object target, Class<?> type, String name, Class<?>[] parameterTypes) {
+
+    Method method;
+
+    if (type == null) {
+
+      return null;
+    }
+
+    try {
+      if ((method = type.getMethod(name, parameterTypes)).canAccess(target)) {
+
+        return method;
+      }
+    } catch (NoSuchMethodException noSuchMethodException) {
+
+      return null;
+    }
+
+    for (Class<?> interfaceType : type.getInterfaces()) {
+      if ((method = findAccessibleMethod(target, interfaceType, name, parameterTypes)) != null) {
+
+        return method;
+      }
+    }
+
+    return findAccessibleMethod(target, type.getSuperclass(), name, parameterTypes);
   }
 
   /**
@@ -435,64 +520,5 @@ public class BeanUtility {
     }
 
     return true;
-  }
-
-  /**
-   * Composite cache key that pairs a declaring class with a method or property name to avoid
-   * redundant reflective lookups.
-   */
-  private static class MethodKey {
-
-    private final Class<?> methodClass;
-    private final String methodName;
-
-    private MethodKey (Class<?> methodClass, String methodName) {
-
-      this.methodClass = methodClass;
-      this.methodName = methodName;
-    }
-
-    /**
-     * Returns the class component of this cache key.
-     *
-     * @return the declaring class associated with this key
-     */
-    private Class<?> getMethodClass () {
-
-      return methodClass;
-    }
-
-    /**
-     * Returns the method or property name component of this cache key.
-     *
-     * @return the method or property name associated with this key
-     */
-    private String getMethodName () {
-
-      return methodName;
-    }
-
-    /**
-     * Computes a hash code from the class and method name for use in hash-based maps.
-     *
-     * @return the XOR of the class hash code and the method name hash code
-     */
-    @Override
-    public int hashCode () {
-
-      return methodClass.hashCode() ^ methodName.hashCode();
-    }
-
-    /**
-     * Returns {@code true} if {@code obj} is a {@code MethodKey} with the same class and method name.
-     *
-     * @param obj the object to compare with this key
-     * @return {@code true} if both keys identify the same class and method name
-     */
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof MethodKey) && methodClass.equals(((MethodKey)obj).getMethodClass()) && methodName.equals(((MethodKey)obj).getMethodName());
-    }
   }
 }

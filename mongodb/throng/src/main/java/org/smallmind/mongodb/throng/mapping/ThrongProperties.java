@@ -32,6 +32,7 @@
  */
 package org.smallmind.mongodb.throng.mapping;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -71,7 +72,7 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
    * @throws ThrongMappingException    if codecs cannot be resolved or properties conflict
    * @throws NoSuchMethodException     if codec instantiation fails
    * @throws InstantiationException    if codec instantiation fails
-   * @throws IllegalAccessException    if reflection cannot access constructors
+   * @throws IllegalAccessException    if this module cannot access a field of the entity, its getter or setter, or a codec constructor
    * @throws InvocationTargetException if codec constructors throw exceptions
    */
   public ThrongProperties (Class<T> entityClass, CodecRegistry codecRegistry, EmbeddedReferences embeddedReferences, boolean storeNulls)
@@ -82,7 +83,7 @@ public class ThrongProperties<T> extends TreeMap<String, ThrongProperty> impleme
 
     throngIndexes.addIndexes(entityClass.getAnnotationsByType(Indexes.class));
 
-    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(entityClass)) {
+    for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(MethodHandles.lookup(), entityClass)) {
 
       Property propertyAnnotation;
 
