@@ -105,7 +105,9 @@ public class SuiteRunner implements TestController {
    * Enabled test methods are added to a per-suite {@link DependencyAnalysis}, and the resulting
    * queue is drained by submitting each ready test to the {@link SleuthThreadPool}. After all tests
    * finish (or the run is cancelled), after-suite methods are invoked and the final culprit is stored
-   * on the suite dependency for downstream suites to read.
+   * on the suite dependency for downstream suites to read. An after-suite method marked
+   * {@link AfterSuite#alwaysRun()} still runs when the culprit arose within this suite, but not when
+   * the culprit was inherited from a failed prerequisite suite, since nothing here was set up.
    * <p>
    * Any exception that escapes this method body causes a {@link FatalSleuthEvent} to be fired and
    * optionally cancels the run. {@link #complete()} is always called in a {@code finally} block.
@@ -128,7 +130,8 @@ public class SuiteRunner implements TestController {
       AnnotationMethodology<AfterSuite> afterSuiteMethodology;
       AnnotationMethodology<Test> testMethodology;
       CountDownLatch testCompletedLatch;
-      Culprit culprit = suiteDependency.getCulprit();
+      Culprit inheritedCulprit = suiteDependency.getCulprit();
+      Culprit culprit = inheritedCulprit;
       Object instance;
 
       try {
@@ -167,7 +170,7 @@ public class SuiteRunner implements TestController {
       }
 
       if ((afterSuiteMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
-        culprit = afterSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance);
+        culprit = afterSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance, afterSuite -> (inheritedCulprit == null) && afterSuite.alwaysRun());
       }
 
       suiteDependency.setCulprit(culprit);

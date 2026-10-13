@@ -47,4 +47,29 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
  */
 public class AfterSuiteLiteral extends AnnotationLiteral<AfterSuite> implements AfterSuite {
 
+  private final boolean alwaysRun;
+
+  /**
+   * Constructs a literal whose {@link #alwaysRun()} is {@code false}, matching the annotation default.
+   */
+  public AfterSuiteLiteral () {
+
+    this(false);
+  }
+
+  /**
+   * Constructs a literal with an explicit {@link #alwaysRun()} value.
+   *
+   * @param alwaysRun {@code true} if the annotated method should run despite a prior culprit
+   */
+  public AfterSuiteLiteral (boolean alwaysRun) {
+
+    this.alwaysRun = alwaysRun;
+  }
+
+  @Override
+  public boolean alwaysRun () {
+
+    return alwaysRun;
+  }
 }

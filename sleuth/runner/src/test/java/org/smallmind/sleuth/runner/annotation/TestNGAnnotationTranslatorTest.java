@@ -88,6 +88,17 @@ public class TestNGAnnotationTranslatorTest {
     Assert.assertEquals(secondary.executeAfter().length, 0);
   }
 
+  public void testAlwaysRunIsForwarded () {
+
+    AnnotationDictionary alwaysRunDictionary = new TestNGAnnotationTranslator().process(AlwaysRunFixture.class);
+    AnnotationDictionary plainDictionary = new TestNGAnnotationTranslator().process(TestNgFixture.class);
+
+    Assert.assertTrue(alwaysRunDictionary.getAfterSuiteMethodology().iterator().next().second().alwaysRun());
+    Assert.assertTrue(alwaysRunDictionary.getAfterTestMethodology().iterator().next().second().alwaysRun());
+    Assert.assertFalse(plainDictionary.getAfterSuiteMethodology().iterator().next().second().alwaysRun(), "TestNG defaults alwaysRun to false");
+    Assert.assertFalse(plainDictionary.getAfterTestMethodology().iterator().next().second().alwaysRun(), "TestNG defaults alwaysRun to false");
+  }
+
   public void testEmptyGroupsBecomeNull () {
 
     AnnotationDictionary dictionary = new TestNGAnnotationTranslator().process(GrouplessFixture.class);
@@ -125,6 +136,25 @@ public class TestNGAnnotationTranslatorTest {
 
     @org.testng.annotations.Test(dependsOnMethods = {"primary"}, expectedExceptions = IllegalStateException.class)
     public void secondary () {
+
+    }
+  }
+
+  @org.testng.annotations.Test
+  public static class AlwaysRunFixture {
+
+    @AfterClass(alwaysRun = true)
+    public void afterClass () {
+
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod () {
+
+    }
+
+    @org.testng.annotations.Test
+    public void only () {
 
     }
   }

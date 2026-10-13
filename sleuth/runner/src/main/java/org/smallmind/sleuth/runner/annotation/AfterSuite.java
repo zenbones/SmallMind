@@ -43,8 +43,11 @@ import java.lang.annotation.Target;
  * Exactly one invocation of each annotated method occurs per suite instance, after the last
  * {@link Test}-annotated method finishes. Intended for suite-wide teardown such as releasing
  * shared connections or resetting global state. The annotated method must accept no arguments;
- * its return value is ignored. If a prior lifecycle or test failure produced a culprit, the
- * method is still scheduled but its outcome is reported as skipped in the event stream.
+ * its return value is ignored. Test failures do not prevent this method from running. If a
+ * {@link BeforeSuite} method failed, the method is skipped and reported as such in the event stream
+ * unless {@link #alwaysRun()} is {@code true}. A culprit inherited from a failed
+ * {@link Suite#dependsOn()} prerequisite skips the method regardless, because nothing in this suite
+ * ran. An exception thrown here becomes the suite culprit only when none existed beforehand.
  *
  * @see BeforeSuite
  * @see AfterTest
@@ -53,4 +56,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AfterSuite {
 
+  /**
+   * Whether this method runs even when a culprit arose within this suite, for example after a failed
+   * {@link BeforeSuite} method, so that teardown can release whatever setup acquired before failing.
+   * A culprit inherited from a failed {@link Suite#dependsOn()} prerequisite still skips the method.
+   *
+   * @return {@code true} to run despite a culprit that arose within this suite; defaults to {@code false}
+   */
+  boolean alwaysRun () default false;
 }

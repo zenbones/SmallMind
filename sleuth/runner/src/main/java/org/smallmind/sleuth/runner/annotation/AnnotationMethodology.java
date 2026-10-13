@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.sleuth.runner.Culprit;
 import org.smallmind.sleuth.runner.SleuthRunner;
@@ -55,7 +56,8 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
  * registrations — identified by method name and parameter signature — are silently ignored, so
  * overridden lifecycle methods appear only once. At invocation time each method is called in
  * registration order; if a prior culprit exists the method is skipped and a
- * {@link SkippedSleuthEvent} is emitted instead.
+ * {@link SkippedSleuthEvent} is emitted instead, unless the caller supplies a predicate that
+ * selects the annotation for execution regardless (see {@link #invoke(SleuthRunner, Culprit, Class, Object, Predicate)}).
  *
  * @param <A> annotation type shared by all methods in this collection
  */
@@ -84,11 +86,8 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   /**
    * Invokes each registered method in order, emitting Sleuth events and updating the culprit.
    * <p>
-   * For each method, a {@link StartSleuthEvent} is always emitted first. If {@code culprit} is
-   * non-null the method is not called and a {@link SkippedSleuthEvent} is emitted. Otherwise
-   * the method is invoked reflectively; a {@link SuccessSleuthEvent} is emitted on success or
-   * an {@link ErrorSleuthEvent} on any exception, and the culprit is set accordingly. The updated
-   * culprit — possibly set by an earlier method in this call — is returned.
+   * Equivalent to {@link #invoke(SleuthRunner, Culprit, Class, Object, Predicate)} with a predicate
+   * that selects nothing, so every method is skipped once a culprit exists.
    *
    * @param sleuthRunner runner used to dispatch events to registered listeners; must not be {@code null}
    * @param culprit      existing failure context that suppresses further invocations; {@code null} if none
@@ -99,10 +98,34 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
    */
   public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance) {
 
+    return invoke(sleuthRunner, culprit, clazz, instance, annotation -> false);
+  }
+
+  /**
+   * Invokes each registered method in order, emitting Sleuth events and updating the culprit.
+   * <p>
+   * For each method, a {@link StartSleuthEvent} is always emitted first. If {@code culprit} is
+   * non-null and {@code alwaysRunPredicate} rejects the annotation of the method, the method is not
+   * called and a {@link SkippedSleuthEvent} is emitted. Otherwise the method is invoked reflectively;
+   * a {@link SuccessSleuthEvent} is emitted on success or an {@link ErrorSleuthEvent} on any
+   * exception. An exception sets the culprit only when none existed beforehand, so a teardown method
+   * that runs after a prior failure reports its own error without masking the original culprit. The
+   * updated culprit — possibly set by an earlier method in this call — is returned.
+   *
+   * @param sleuthRunner       runner used to dispatch events to registered listeners; must not be {@code null}
+   * @param culprit            existing failure context that suppresses further invocations; {@code null} if none
+   * @param clazz              declaring class used for event class-name fields; must not be {@code null}
+   * @param instance           object instance on which to invoke the methods; must not be {@code null}
+   * @param alwaysRunPredicate selects annotations whose methods run even when a culprit already exists; must not be {@code null}
+   * @return updated culprit after all methods have been processed; may be the original value or a
+   * newly created one if a method threw while no culprit existed
+   */
+  public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance, Predicate<A> alwaysRunPredicate) {
+
     for (Pair<Method, A> pair : pairList) {
       sleuthRunner.fire(new StartSleuthEvent(clazz.getName(), pair.first().getName()));
 
-      if (culprit != null) {
+      if ((culprit != null) && (!alwaysRunPredicate.test(pair.second()))) {
         sleuthRunner.fire(new SkippedSleuthEvent(clazz.getName(), pair.first().getName(), 0, "Skipped due to prior error[" + culprit + "]"));
       } else {
 
@@ -112,10 +135,14 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
           pair.first().invoke(instance);
           sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds));
         } catch (InvocationTargetException invocationTargetException) {
-          culprit = new Culprit(clazz.getName(), pair.first().getName(), invocationTargetException.getCause());
+          if (culprit == null) {
+            culprit = new Culprit(clazz.getName(), pair.first().getName(), invocationTargetException.getCause());
+          }
           sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
         } catch (Exception exception) {
-          culprit = new Culprit(clazz.getName(), pair.first().getName(), exception);
+          if (culprit == null) {
+            culprit = new Culprit(clazz.getName(), pair.first().getName(), exception);
+          }
           sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), pair.first().getName(), System.currentTimeMillis() - startMilliseconds, exception));
         }
       }

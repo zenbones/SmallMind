@@ -148,6 +148,60 @@ public class AnnotationMethodologyTest {
     Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "alpha"));
   }
 
+  public void testAlwaysRunMethodRunsDespiteExistingCulprit ()
+    throws NoSuchMethodException {
+
+    AnnotationMethodology<AfterTest> methodology = new AnnotationMethodology<>();
+    Recorder recorder = new Recorder();
+    CapturingSleuthEventListener listener = new CapturingSleuthEventListener();
+    Culprit priorCulprit = new Culprit("org.example.Prior", "earlier", new RuntimeException("prior"));
+
+    methodology.add(Recorder.class.getMethod("alpha"), new AfterTestLiteral(true));
+    methodology.add(Recorder.class.getMethod("beta"), new AfterTestLiteral(false));
+
+    Culprit returned = methodology.invoke(runnerListeningWith(listener), priorCulprit, Recorder.class, recorder, AfterTest::alwaysRun);
+
+    Assert.assertSame(returned, priorCulprit, "A successful alwaysRun method must leave the existing culprit unchanged");
+    Assert.assertEquals(recorder.getCalls(), List.of("alpha"), "Only the alwaysRun method runs when a culprit is present");
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SUCCESS, "alpha"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "beta"));
+  }
+
+  public void testThrowingAlwaysRunMethodKeepsExistingCulprit ()
+    throws NoSuchMethodException {
+
+    AnnotationMethodology<AfterTest> methodology = new AnnotationMethodology<>();
+    Recorder recorder = new Recorder();
+    CapturingSleuthEventListener listener = new CapturingSleuthEventListener();
+    Culprit priorCulprit = new Culprit("org.example.Prior", "earlier", new RuntimeException("prior"));
+
+    methodology.add(Recorder.class.getMethod("boom"), new AfterTestLiteral(true));
+
+    Culprit returned = methodology.invoke(runnerListeningWith(listener), priorCulprit, Recorder.class, recorder, AfterTest::alwaysRun);
+
+    Assert.assertSame(returned, priorCulprit, "A teardown failure must not mask the original culprit");
+    Assert.assertEquals(recorder.getCalls(), List.of("boom"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "boom"));
+  }
+
+  public void testThrowingAlwaysRunMethodWithoutPriorCulpritSetsCulprit ()
+    throws NoSuchMethodException {
+
+    AnnotationMethodology<AfterTest> methodology = new AnnotationMethodology<>();
+    Recorder recorder = new Recorder();
+    CapturingSleuthEventListener listener = new CapturingSleuthEventListener();
+
+    methodology.add(Recorder.class.getMethod("boom"), new AfterTestLiteral(true));
+    methodology.add(Recorder.class.getMethod("alpha"), new AfterTestLiteral(true));
+
+    Culprit culprit = methodology.invoke(runnerListeningWith(listener), null, Recorder.class, recorder, AfterTest::alwaysRun);
+
+    Assert.assertNotNull(culprit, "A throwing method must produce a culprit when none existed");
+    Assert.assertEquals(recorder.getCalls(), List.of("boom", "alpha"), "A later alwaysRun method still runs after an earlier one threw");
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "boom"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SUCCESS, "alpha"));
+  }
+
   public void testSameNameDifferentParametersAreNotDeduplicated ()
     throws NoSuchMethodException {
 

@@ -197,15 +197,15 @@ When `expectedExceptions` is non-empty, entries that are not subtypes of `Except
 
 === Lifecycle annotations
 
-Four marker annotations, no attributes. Multiple methods in a class (including inherited ones) may carry any of them; they run in class-hierarchy order, superclass methods first.
+Four lifecycle annotations. `@AfterSuite` and `@AfterTest` carry a single `alwaysRun` attribute (default `false`); the two before-annotations have none. Multiple methods in a class (including inherited ones) may carry any of them; they run in class-hierarchy order, superclass methods first.
 
 [cols="1,2,3", options="header"]
 |===
 | Annotation | When it fires | If it throws
-| `@BeforeSuite` | Once, before the first `@Test` in the suite. | A culprit is recorded; every subsequent `@Test` and every `@AfterSuite` method in this suite is skipped.
-| `@AfterSuite`  | Once, after the last `@Test` in the suite (fires even if a culprit exists). | Produces an `ERROR` event; does not cascade.
+| `@BeforeSuite` | Once, before the first `@Test` in the suite. | A culprit is recorded; every subsequent `@Test` is skipped, as is every `@AfterSuite` method not marked `alwaysRun = true`.
+| `@AfterSuite`  | Once, after the last `@Test` in the suite. Test failures do not suppress it. Skipped when `@BeforeSuite` failed unless `alwaysRun = true`; always skipped when the suite inherited a culprit from a failed `dependsOn` prerequisite. | Produces an `ERROR` event and becomes the suite culprit only if none existed; does not cascade.
 | `@BeforeTest`  | Once per `@Test` method, immediately before it. | A culprit is recorded for the upcoming test, causing it to be skipped.
-| `@AfterTest`   | Once per `@Test` method, immediately after it (fires even if the test was skipped). | Produces an `ERROR` event.
+| `@AfterTest`   | Once per `@Test` method whose body ran, whether it passed or failed. Skipped when `@BeforeTest` failed or the test was skipped, unless `alwaysRun = true`. | Produces an `ERROR` event; becomes the culprit only if the test itself did not already fail.
 |===
 
 === What about `testng.xml`?
@@ -263,19 +263,21 @@ A complete run looks like this:
 .. Builds a per-suite `DependencyAnalysis<Test, Method>` from the suite's `@Test` methods.
 .. Drains the per-suite `DependencyQueue`, dispatching each ready test as a `TestRunner` on the `TEST`-tier semaphore.
 .. Awaits a per-suite `CountDownLatch`.
-.. Invokes `@AfterSuite` methods (even if setup or tests failed).
+.. Invokes `@AfterSuite` methods. Test failures do not suppress them; a `@BeforeSuite` failure skips those not marked `alwaysRun`, and a culprit inherited from a `dependsOn` prerequisite skips all of them.
 .. Stores the final culprit on its dependency node and calls `complete()`, which releases its semaphore permit, marks the suite done in the queue (waking threads blocked in `poll()`), and decrements the global suite latch.
 . Each `TestRunner`:
 .. Invokes `@BeforeTest` methods. Any failure becomes the initial culprit for the test body.
 .. Fires `StartSleuthEvent`. If a culprit exists (from setup or from a failed `dependsOn` prerequisite), fires `SkippedSleuthEvent` and proceeds to teardown.
 .. Otherwise invokes the `@Test` method. If it returns normally and the `expectedExceptions` list contains at least one `Exception` subtype, a `FailureSleuthEvent` is fired for the missing throw; otherwise `SuccessSleuthEvent`. If it throws, the exception is checked against `expectedExceptions`: a matching `Exception`-subtype entry → `SuccessSleuthEvent`; a non-matching `Exception`-subtype entry or an `AssertionError` → `FailureSleuthEvent`; any other exception → `ErrorSleuthEvent`.
-.. Invokes `@AfterTest` methods regardless of outcome.
+.. Invokes `@AfterTest` methods if the test body ran, whether it passed or failed; if the body was skipped, only hooks marked `alwaysRun` are invoked. A hook failure becomes the culprit only when the test did not already fail.
 .. Calls `complete()`.
 . When the global latch reaches zero, `execute()` returns. If the run was cancelled mid-flight a `CancelledSleuthEvent` is fired in lieu of awaiting the latch.
 
 === Setup-failure cascading, concretely
 
-If `@BeforeSuite` throws, every `@Test` in that suite emits a `SkippedSleuthEvent` and every `@AfterSuite` also emits `SkippedSleuthEvent` (after firing their own `StartSleuthEvent`). If `@BeforeTest` throws, only the corresponding `@Test` is skipped — the rest of the suite is untouched. This is the intended symmetry: a suite-level fixture is a suite-level responsibility, a test-level fixture is a test-level one.
+If `@BeforeSuite` throws, every `@Test` in that suite emits a `SkippedSleuthEvent`, as does every `@AfterSuite` not marked `alwaysRun = true` (after firing their own `StartSleuthEvent`); `alwaysRun` after-suite hooks still run so they can release whatever setup acquired before it failed, and an exception they throw is reported as an `ERROR` without replacing the original culprit. If `@BeforeTest` throws, only the corresponding `@Test` and its non-`alwaysRun` `@AfterTest` hooks are skipped — the rest of the suite is untouched. This is the intended symmetry: a suite-level fixture is a suite-level responsibility, a test-level fixture is a test-level one.
+
+A culprit inherited from a failed `dependsOn` suite is different: nothing in the dependent suite was ever set up, so every `@BeforeSuite`, `@Test`, and `@AfterSuite` there is skipped, `alwaysRun` included.
 
 == The Event Model
 
@@ -390,9 +392,9 @@ Sleuth bundles a second `AnnotationTranslator` that recognizes TestNG's annotati
 | TestNG                 | Sleuth                    | Notes
 | Class-level `@Test`    | `@Suite` (via `SuiteLiteral`) | Maps `groups`, `priority`, `dependsOnMethods`. No `executeAfter` equivalent.
 | `@BeforeClass`         | `@BeforeSuite`            |
-| `@AfterClass`          | `@AfterSuite`             |
+| `@AfterClass`          | `@AfterSuite`             | Maps `alwaysRun`.
 | `@BeforeMethod`        | `@BeforeTest`             |
-| `@AfterMethod`         | `@AfterTest`              |
+| `@AfterMethod`         | `@AfterTest`              | Maps `alwaysRun`.
 | Method-level `@Test`   | `@Test`                   | Maps `priority`, `dependsOnMethods`, `enabled`, `expectedExceptions`.
 |===
 
@@ -484,7 +486,7 @@ Its two `execute` overloads differ only in whether they accept varargs or an `It
 
 An `AnnotationDictionary` holds the `Suite` (class-level) plus up to five `AnnotationMethodology<A>` instances — one per lifecycle annotation kind, plus one for `@Test`. An `AnnotationMethodology` is an ordered, deduplicated collection of `(Method, A)` pairs. Deduplication is by `MethodKey` (method name + parameter types), so when `MethodCensus` walks the class hierarchy superclass-first, an overriding subclass method naturally replaces the superclass entry.
 
-`AnnotationMethodology.invoke(SleuthRunner, Culprit, Class<?>, Object)` is the single entry point that fires a batch of lifecycle methods. It emits a `StartSleuthEvent` before each method, a `SuccessSleuthEvent` or `ErrorSleuthEvent` after, and `SkippedSleuthEvent` for every method encountered once a culprit exists. The method returns the (possibly updated) culprit so the caller can chain calls.
+`AnnotationMethodology.invoke(SleuthRunner, Culprit, Class<?>, Object)` is the single entry point that fires a batch of lifecycle methods. It emits a `StartSleuthEvent` before each method, a `SuccessSleuthEvent` or `ErrorSleuthEvent` after, and `SkippedSleuthEvent` for every method encountered once a culprit exists. The five-argument overload takes a `Predicate<A>` naming the annotations whose methods run anyway (the runners pass `AfterSuite::alwaysRun` and `AfterTest::alwaysRun`); a method that throws while a culprit already exists is reported as an `ERROR` but does not replace that culprit. The method returns the (possibly updated) culprit so the caller can chain calls.
 
 === `Dependency`, `DependencyAnalysis`, `DependencyQueue`
 

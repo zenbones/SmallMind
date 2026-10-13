@@ -39,7 +39,8 @@ import org.smallmind.sleuth.runner.event.SleuthEventType;
 import org.testng.Assert;
 
 // End-to-end coverage of SuiteRunner's failure paths: instantiation problems surface as FatalSleuthEvent,
-// and a before-suite failure cascades into skipped tests and skipped after-suite hooks. Fixtures are
+// and a before-suite failure cascades into skipped tests and skipped after-suite hooks unless those
+// hooks are marked alwaysRun (which an inherited dependsOn culprit still overrides). Fixtures are
 // nested static classes using Sleuth's native annotations and are named so the project's Surefire scan
 // ignores them.
 @org.testng.annotations.Test(groups = "unit")
@@ -80,7 +81,7 @@ public class SuiteRunnerBehaviorTest {
   }
 
   // Item 5: a @BeforeSuite failure produces a suite-level culprit that skips every test and the
-  // @AfterSuite hook (AnnotationMethodology suppresses invocation while a culprit is present).
+  // @AfterSuite hook (which is not marked alwaysRun, so AnnotationMethodology suppresses it).
   public void testBeforeSuiteFailureSkipsTestsAndAfterSuite () {
 
     CapturingSleuthEventListener listener = run(BeforeSuiteThrowsSuite.class);
@@ -89,6 +90,30 @@ public class SuiteRunnerBehaviorTest {
     Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "suiteTest"));
     Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "suiteTeardown"));
     Assert.assertFalse(listener.hasEvent(SleuthEventType.SUCCESS, "suiteTest"));
+  }
+
+  // A @BeforeSuite failure still runs an @AfterSuite(alwaysRun = true) hook, because the culprit arose
+  // inside this suite; a sibling hook without alwaysRun remains skipped.
+  public void testBeforeSuiteFailureRunsAlwaysRunAfterSuite () {
+
+    CapturingSleuthEventListener listener = run(BeforeSuiteThrowsAlwaysRunSuite.class);
+
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "alwaysRunSuiteSetup"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "alwaysRunSuiteTest"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SUCCESS, "alwaysRunTeardown"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "plainTeardown"));
+  }
+
+  // A culprit inherited from a failed dependsOn prerequisite means nothing in this suite ran, so even an
+  // alwaysRun teardown is skipped.
+  public void testInheritedCulpritSkipsAlwaysRunAfterSuite () {
+
+    CapturingSleuthEventListener listener = run(false, false, PrerequisiteThrowsSuite.class, DependentAlwaysRunSuite.class);
+
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "prerequisiteSetup"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "dependentTest"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "dependentTeardown"));
+    Assert.assertFalse(listener.hasEvent(SleuthEventType.SUCCESS, "dependentTeardown"), "An inherited culprit must skip even alwaysRun teardown");
   }
 
   // The first suite (priority 0) fails to instantiate; with stopOnError the run is cancelled, so the
@@ -142,6 +167,59 @@ public class SuiteRunnerBehaviorTest {
 
     @AfterSuite
     public void suiteTeardown () {
+
+    }
+  }
+
+  public static class BeforeSuiteThrowsAlwaysRunSuite {
+
+    @BeforeSuite
+    public void alwaysRunSuiteSetup () {
+
+      throw new IllegalStateException("suite setup failed");
+    }
+
+    @org.smallmind.sleuth.runner.annotation.Test
+    public void alwaysRunSuiteTest () {
+
+    }
+
+    @AfterSuite(alwaysRun = true)
+    public void alwaysRunTeardown () {
+
+    }
+
+    @AfterSuite
+    public void plainTeardown () {
+
+    }
+  }
+
+  @Suite(groups = {})
+  public static class PrerequisiteThrowsSuite {
+
+    @BeforeSuite
+    public void prerequisiteSetup () {
+
+      throw new IllegalStateException("prerequisite setup failed");
+    }
+
+    @org.smallmind.sleuth.runner.annotation.Test
+    public void prerequisiteTest () {
+
+    }
+  }
+
+  @Suite(groups = {}, dependsOn = {"org.smallmind.sleuth.runner.SuiteRunnerBehaviorTest$PrerequisiteThrowsSuite"})
+  public static class DependentAlwaysRunSuite {
+
+    @org.smallmind.sleuth.runner.annotation.Test
+    public void dependentTest () {
+
+    }
+
+    @AfterSuite(alwaysRun = true)
+    public void dependentTeardown () {
 
     }
   }

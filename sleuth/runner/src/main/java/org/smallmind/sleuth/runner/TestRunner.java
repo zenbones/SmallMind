@@ -128,9 +128,11 @@ public class TestRunner implements TestController {
    * is fired. If it throws, {@link #categorizeExpectedException} determines the outcome: a matching
    * listed {@link Exception} type fires a {@link SuccessSleuthEvent}; a non-matching listed
    * {@link Exception} type or an {@link AssertionError} fires a {@link FailureSleuthEvent}; all
-   * other exceptions fire an {@link ErrorSleuthEvent}. In failure and error cases the culprit is
-   * set so after-test hooks see it. After-test methods run regardless of test outcome. The final
-   * culprit is stored on the dependency node for downstream tests.
+   * other exceptions fire an {@link ErrorSleuthEvent}. After-test methods run whenever the test body
+   * ran, whether it passed or failed; if the body was skipped, only those marked
+   * {@link AfterTest#alwaysRun()} run. A failing after-test method becomes the culprit only when the
+   * test itself did not already fail. The final culprit is stored on the dependency node for
+   * downstream tests.
    * <p>
    * {@link #complete()} is always called in a {@code finally} block.
    */
@@ -144,10 +146,13 @@ public class TestRunner implements TestController {
       AnnotationDictionary annotationDictionary = annotationProcessor.process(clazz);
       AnnotationMethodology<BeforeTest> beforeTestMethodology;
       AnnotationMethodology<AfterTest> afterTestMethodology;
+      Culprit entryCulprit;
 
       if ((beforeTestMethodology = annotationDictionary.getBeforeTestMethodology()) != null) {
         culprit = beforeTestMethodology.invoke(sleuthRunner, culprit, clazz, instance);
       }
+
+      entryCulprit = culprit;
 
       sleuthRunner.fire(new StartSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName()));
       if (culprit != null) {
@@ -205,7 +210,12 @@ public class TestRunner implements TestController {
       }
 
       if ((afterTestMethodology = annotationDictionary.getAfterTestMethodology()) != null) {
-        culprit = afterTestMethodology.invoke(sleuthRunner, culprit, clazz, instance);
+
+        Culprit afterTestCulprit = afterTestMethodology.invoke(sleuthRunner, entryCulprit, clazz, instance, AfterTest::alwaysRun);
+
+        if (culprit == null) {
+          culprit = afterTestCulprit;
+        }
       }
 
       testMethodDependency.setCulprit(culprit);

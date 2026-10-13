@@ -53,8 +53,9 @@ import org.testng.annotations.Test;
  *   <li>Method-level {@code @Test} → {@link org.smallmind.sleuth.runner.annotation.Test}
  *       (via {@link TestLiteral})</li>
  * </ul>
- * Group, priority, dependency, and enabled state are forwarded from the TestNG annotation where
- * TestNG provides equivalent attributes; attributes with no TestNG equivalent are left at defaults.
+ * Group, priority, dependency, enabled state, and the {@code alwaysRun} flag of {@code @AfterClass}
+ * and {@code @AfterMethod} are forwarded from the TestNG annotation where TestNG provides equivalent
+ * attributes; attributes with no TestNG equivalent are left at defaults.
  *
  * @see AnnotationTranslator
  * @see NativeAnnotationTranslator
@@ -86,13 +87,13 @@ public class TestNGAnnotationTranslator implements AnnotationTranslator {
           annotationDictionary.addBeforeSuiteMethod(method, new BeforeSuiteLiteral());
         }
         if (annotation instanceof AfterClass) {
-          annotationDictionary.addAfterSuiteMethod(method, new AfterSuiteLiteral());
+          annotationDictionary.addAfterSuiteMethod(method, new AfterSuiteLiteral(((AfterClass)annotation).alwaysRun()));
         }
         if (annotation instanceof BeforeMethod) {
           annotationDictionary.addBeforeTestMethod(method, new BeforeTestLiteral());
         }
         if (annotation instanceof AfterMethod) {
-          annotationDictionary.addAfterTestMethod(method, new AfterTestLiteral());
+          annotationDictionary.addAfterTestMethod(method, new AfterTestLiteral(((AfterMethod)annotation).alwaysRun()));
         }
         if (annotation instanceof Test) {
           annotationDictionary.addTestMethod(method, new TestLiteral(((Test)annotation).priority(), new String[0], ((Test)annotation).dependsOnMethods(), ((Test)annotation).expectedExceptions(), ((Test)annotation).enabled()));

@@ -40,11 +40,14 @@ import java.lang.annotation.Target;
 /**
  * Marks a method to be executed after each individual {@link Test}-annotated method.
  * <p>
- * One invocation occurs immediately following each test dispatch, including after tests that were
- * skipped. Intended for per-test teardown logic such as clearing thread-local state, rolling back
+ * One invocation occurs immediately following each test body that ran, whether it passed or failed.
+ * If the paired {@link BeforeTest} method failed, or the test was skipped because of a prior culprit,
+ * the method is skipped and reported as such in the event stream unless {@link #alwaysRun()} is
+ * {@code true}. Intended for per-test teardown logic such as clearing thread-local state, rolling back
  * transactions, or releasing resources acquired by the paired {@link BeforeTest} method. The
  * annotated method must accept no arguments; its return value is ignored. Errors thrown here are
- * captured as a culprit and reported via an {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent}.
+ * reported via an {@link org.smallmind.sleuth.runner.event.ErrorSleuthEvent} and become the culprit
+ * only when the test itself did not already fail.
  *
  * @see BeforeTest
  * @see AfterSuite
@@ -53,4 +56,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AfterTest {
 
+  /**
+   * Whether this method runs even when the test body was skipped, for example after a failed
+   * {@link BeforeTest} method or a failed {@link Test#dependsOn()} prerequisite, so that teardown can
+   * release whatever setup acquired before failing.
+   *
+   * @return {@code true} to run despite a prior culprit; defaults to {@code false}
+   */
+  boolean alwaysRun () default false;
 }

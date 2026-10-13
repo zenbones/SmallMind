@@ -98,7 +98,7 @@ public class TestRunnerBehaviorTest {
   }
 
   // Item 2: a @BeforeTest failure produces a culprit, which skips the test body; the @AfterTest hook is
-  // also skipped because AnnotationMethodology suppresses invocation whenever a culprit is present.
+  // also skipped because it is not marked alwaysRun.
   public void testBeforeTestFailureSkipsTestAndAfterHook () {
 
     CapturingSleuthEventListener listener = run(BeforeTestThrowsSuite.class);
@@ -107,6 +107,27 @@ public class TestRunnerBehaviorTest {
     Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "theTest"));
     Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "afterHook"));
     Assert.assertFalse(listener.hasEvent(SleuthEventType.SUCCESS, "theTest"));
+  }
+
+  // A test body that ran and failed still gets its @AfterTest hook, as TestNG runs @AfterMethod after a
+  // failed test; the FAILURE remains the recorded outcome.
+  public void testFailedTestBodyStillRunsAfterHook () {
+
+    CapturingSleuthEventListener listener = run(FailingBodySuite.class);
+
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.FAILURE, "failingBody"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SUCCESS, "afterFailingBody"));
+    Assert.assertFalse(listener.hasEvent(SleuthEventType.SKIPPED, "afterFailingBody"));
+  }
+
+  // With alwaysRun the @AfterTest hook runs even though the @BeforeTest failure skipped the test body.
+  public void testBeforeTestFailureRunsAlwaysRunAfterHook () {
+
+    CapturingSleuthEventListener listener = run(BeforeTestThrowsAlwaysRunSuite.class);
+
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.ERROR, "beforeThatThrowsAgain"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SKIPPED, "theSkippedTest"));
+    Assert.assertTrue(listener.hasEvent(SleuthEventType.SUCCESS, "alwaysAfterHook"));
   }
 
   // Item 3: a failure with stopOnFailure cancels the run, so a lower-priority test queued behind it
@@ -269,6 +290,39 @@ public class TestRunnerBehaviorTest {
 
     @org.smallmind.sleuth.runner.annotation.Test(priority = 1)
     public void secondAfterMissing () {
+
+    }
+  }
+
+  public static class FailingBodySuite {
+
+    @org.smallmind.sleuth.runner.annotation.Test
+    public void failingBody () {
+
+      throw new AssertionError("expected failure");
+    }
+
+    @AfterTest
+    public void afterFailingBody () {
+
+    }
+  }
+
+  public static class BeforeTestThrowsAlwaysRunSuite {
+
+    @BeforeTest
+    public void beforeThatThrowsAgain () {
+
+      throw new IllegalStateException("before failed");
+    }
+
+    @org.smallmind.sleuth.runner.annotation.Test
+    public void theSkippedTest () {
+
+    }
+
+    @AfterTest(alwaysRun = true)
+    public void alwaysAfterHook () {
 
     }
   }
