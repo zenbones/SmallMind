@@ -45,10 +45,10 @@ public class GenerateWrapperMojoTest {
 
     GenerateWrapperMojo mojo = new GenerateWrapperMojo();
 
-    TanukiMojoSupport.setField(mojo, "skip", skip);
-    TanukiMojoSupport.setField(mojo, "operatingSystem", operatingSystem);
-    TanukiMojoSupport.setField(mojo, "compression", compression);
-    TanukiMojoSupport.setField(mojo, "verbose", false);
+    TanukisoftPluginSupport.setField(mojo, "skip", skip);
+    TanukisoftPluginSupport.setField(mojo, "operatingSystem", operatingSystem);
+    TanukisoftPluginSupport.setField(mojo, "compression", compression);
+    TanukisoftPluginSupport.setField(mojo, "verbose", false);
 
     return mojo;
   }
@@ -69,5 +69,16 @@ public class GenerateWrapperMojoTest {
     throws Exception {
 
     Assert.assertThrows(MojoExecutionException.class, () -> mojo(false, "LINUX_X86_64", "rar").execute());
+  }
+
+  // Mirrors the listener's own rule so a bad timeout fails the build rather than the service launch.
+  public void testStartupTimeoutBetweenOneAndNineIsReported ()
+    throws Exception {
+
+    GenerateWrapperMojo mojo = mojo(false, "LINUX_X86_64", "zip");
+
+    TanukisoftPluginSupport.setField(mojo, "startupTimeoutSeconds", 5);
+
+    Assert.assertThrows(MojoExecutionException.class, mojo::execute);
   }
 }

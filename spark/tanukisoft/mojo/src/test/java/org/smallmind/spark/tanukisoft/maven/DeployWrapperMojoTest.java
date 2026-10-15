@@ -57,15 +57,15 @@ public class DeployWrapperMojoTest {
 
     DeployWrapperMojo mojo = new DeployWrapperMojo();
 
-    TanukiMojoSupport.setField(mojo, "project", project);
-    TanukiMojoSupport.setField(mojo, "localRepository", null);
-    TanukiMojoSupport.setField(mojo, "deploymentRepository", null);
-    TanukiMojoSupport.setField(mojo, "applicationName", "sample-app");
-    TanukiMojoSupport.setField(mojo, "classifier", null);
-    TanukiMojoSupport.setField(mojo, "compression", compression);
-    TanukiMojoSupport.setField(mojo, "skip", skip);
-    TanukiMojoSupport.setField(mojo, "artifactFactory", new StubArtifactFactory());
-    TanukiMojoSupport.setField(mojo, "artifactDeployer", deployer);
+    TanukisoftPluginSupport.setField(mojo, "project", project);
+    TanukisoftPluginSupport.setField(mojo, "localRepository", null);
+    TanukisoftPluginSupport.setField(mojo, "deploymentRepository", null);
+    TanukisoftPluginSupport.setField(mojo, "applicationName", "sample-app");
+    TanukisoftPluginSupport.setField(mojo, "classifier", null);
+    TanukisoftPluginSupport.setField(mojo, "compression", compression);
+    TanukisoftPluginSupport.setField(mojo, "skip", skip);
+    TanukisoftPluginSupport.setField(mojo, "artifactFactory", new StubArtifactFactory());
+    TanukisoftPluginSupport.setField(mojo, "artifactDeployer", deployer);
 
     return mojo;
   }

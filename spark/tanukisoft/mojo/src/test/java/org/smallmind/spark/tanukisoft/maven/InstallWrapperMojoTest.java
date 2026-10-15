@@ -57,14 +57,14 @@ public class InstallWrapperMojoTest {
 
     InstallWrapperMojo mojo = new InstallWrapperMojo();
 
-    TanukiMojoSupport.setField(mojo, "project", project);
-    TanukiMojoSupport.setField(mojo, "localRepository", null);
-    TanukiMojoSupport.setField(mojo, "applicationName", "sample-app");
-    TanukiMojoSupport.setField(mojo, "classifier", classifier);
-    TanukiMojoSupport.setField(mojo, "compression", compression);
-    TanukiMojoSupport.setField(mojo, "skip", skip);
-    TanukiMojoSupport.setField(mojo, "artifactFactory", new StubArtifactFactory());
-    TanukiMojoSupport.setField(mojo, "artifactInstaller", installer);
+    TanukisoftPluginSupport.setField(mojo, "project", project);
+    TanukisoftPluginSupport.setField(mojo, "localRepository", null);
+    TanukisoftPluginSupport.setField(mojo, "applicationName", "sample-app");
+    TanukisoftPluginSupport.setField(mojo, "classifier", classifier);
+    TanukisoftPluginSupport.setField(mojo, "compression", compression);
+    TanukisoftPluginSupport.setField(mojo, "skip", skip);
+    TanukisoftPluginSupport.setField(mojo, "artifactFactory", new StubArtifactFactory());
+    TanukisoftPluginSupport.setField(mojo, "artifactInstaller", installer);
 
     return mojo;
   }

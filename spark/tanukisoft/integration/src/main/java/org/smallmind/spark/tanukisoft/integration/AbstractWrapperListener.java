@@ -49,9 +49,13 @@ import org.tanukisoftware.wrapper.WrapperManager;
  * {@link #startup(String[])} and {@link #shutdown()} behavior; this class takes care of:
  * <ul>
  *   <li>reflectively instantiating the configured listener from {@code main} and handing it to {@link WrapperManager};</li>
- *   <li>scheduling a background "keep-alive" task on a single-thread scheduled executor that repeatedly calls
- *       {@link WrapperManager#signalStarting(int)} so slow startups are not killed by the wrapper watchdog
- *       (the task stops signalling and cancels itself once a fail-safe ceiling is reached);</li>
+ *   <li>scheduling a background "keep-alive" task on a single-thread scheduled executor that calls
+ *       {@link WrapperManager#signalStarting(int)}, promising the startup timeout ({@code wrapper.startup.timeout}
+ *       in {@code wrapper.conf}, converted to the milliseconds the wrapper expects) as soon as
+ *       {@link #start(String[])} begins and then at half that timeout, so slow startups are not killed by the
+ *       wrapper watchdog
+ *       (the task stops signalling and cancels itself once the fail-safe ceiling, {@code spark.startup.ceiling} in
+ *       {@code wrapper.conf} or 180 seconds, is reached);</li>
  *   <li>translating wrapper control events into {@link WrapperManager#stop(int)} calls when running without the
  *       native wrapper;</li>
  *   <li>converting exceptions thrown by {@link #startup(String[])} or {@link #shutdown()} into stack-trace exit codes.</li>
@@ -59,22 +63,26 @@ import org.tanukisoftware.wrapper.WrapperManager;
  */
 public abstract class AbstractWrapperListener extends PerApplicationContext implements WrapperListener {
 
-  private final static String DEFAULT_TIMEOUT_SECONDS = "30";
+  private static final String STARTUP_TIMEOUT_PROPERTY = "wrapper.startup.timeout";
+  private static final String STARTUP_CEILING_PROPERTY = "spark.startup.ceiling";
+  private static final int DEFAULT_STARTUP_TIMEOUT_SECONDS = 30;
+  private static final int DEFAULT_STARTUP_CEILING_SECONDS = 180;
   private static final int STACK_TRACE_ERROR_CODE = 2;
+  private static final int UNLIMITED_STARTUP_TIMEOUT_SECONDS = 0;
   private static final int MINIMUM_STARTUP_TIMEOUT_SECONDS = 10;
-  private static final int FAIL_SAFE_TIMEOUT_SECONDS = 180;
 
   /**
    * Entry point invoked by the wrapper. The first argument must name the concrete {@link WrapperListener} subclass
    * to instantiate; remaining arguments are expanded via {@link PropertyExpander} so that
-   * {@code ${system.property}}-style placeholders work, and the effective wrapper startup timeout is prepended for
-   * later consumption by {@link #start(String[])}.
+   * {@code ${system.property}}-style placeholders work, and are then handed, with the listener, to
+   * {@link WrapperManager#start(WrapperListener, String[])}. The wrapper configuration is deliberately not consulted
+   * here: {@link WrapperManager#getProperties()} is only populated once the JVM has connected to the native wrapper,
+   * which happens inside {@code WrapperManager.start}, so the startup timeout and fail-safe ceiling are read later,
+   * by {@link #start(String[])}.
    *
    * @param args the first element is the fully qualified listener class name; subsequent elements are passed to its
-   *             {@link #startup(String[])} after the timeout prefix is stripped again
+   *             {@link #startup(String[])}
    * @throws IllegalArgumentException if no listener class name is provided
-   * @throws IllegalStateException    if {@code wrapper.startup.timeout} is set but unparsable or smaller than the
-   *                                  allowed minimum
    * @throws Throwable                if reflectively instantiating the listener or handing it to the wrapper fails
    */
   static void main (String... args)
@@ -84,30 +92,14 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
       throw new IllegalArgumentException(String.format("First application parameter must be the class of the %s in use", WrapperListener.class.getSimpleName()));
     } else {
 
-      String[] modifiedArgs;
-      PropertyExpander propertyExpander;
-      String startupTimeoutSeconds;
+      String[] expandedArgs = new String[args.length - 1];
+      PropertyExpander propertyExpander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, true);
 
-      if ((startupTimeoutSeconds = WrapperManager.getProperties().getProperty("wrapper.startup.timeout")) != null) {
-        try {
-          if (Integer.parseInt(startupTimeoutSeconds) < MINIMUM_STARTUP_TIMEOUT_SECONDS) {
-            throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= %d", startupTimeoutSeconds, MINIMUM_STARTUP_TIMEOUT_SECONDS));
-          }
-        } catch (NumberFormatException numberFormatException) {
-          throw new IllegalStateException(String.format("Unable to parse the property(wrapper.startup.timeout) as in integer(%s)", startupTimeoutSeconds));
-        }
+      for (int count = 1; count < args.length; count++) {
+        expandedArgs[count - 1] = propertyExpander.expand(args[count]);
       }
 
-      modifiedArgs = new String[args.length];
-      modifiedArgs[0] = (startupTimeoutSeconds == null) ? DEFAULT_TIMEOUT_SECONDS : startupTimeoutSeconds;
-      System.arraycopy(args, 1, modifiedArgs, 1, args.length - 1);
-
-      propertyExpander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, true);
-      for (int count = 0; count < modifiedArgs.length; count++) {
-        modifiedArgs[count] = propertyExpander.expand(modifiedArgs[count]);
-      }
-
-      WrapperManager.start((WrapperListener)Class.forName(args[0]).getConstructor().newInstance(), modifiedArgs);
+      WrapperManager.start((WrapperListener)Class.forName(args[0]).getConstructor().newInstance(), expandedArgs);
     }
   }
 
@@ -144,18 +136,93 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Wrapper start callback. Opens a single-thread scheduled executor (its worker is a daemon named
-   * {@code spark-wrapper-signal}) in a try-with-resources block, schedules a "still starting" signaller on it via
-   * {@link ScheduledExecutorService#scheduleWithFixedDelay}, and invokes {@link #startup(String[])} on the calling
-   * thread. The signaller calls {@link WrapperManager#signalStarting(int)} on each firing so the wrapper watchdog
-   * keeps waiting while startup runs; once {@link #FAIL_SAFE_TIMEOUT_SECONDS} elapses it stops signalling and
-   * cancels its own future, after which the wrapper is free to time out and stop a stalled startup. When
-   * {@link #startup(String[])} returns or throws, the try-with-resources {@code close()} shuts the executor down.
+   * The wrapper's startup timeout in seconds, which is also the window each keep-alive signal promises. Taken from
+   * the {@code wrapper.startup.timeout} property in {@code wrapper.conf} when present, otherwise {@code 30}, the
+   * wrapper's own default. The property is only visible once the JVM has connected to the native wrapper, which is
+   * the case by the time {@link #start(String[])} runs; listeners that want a different policy override this, which
+   * replaces the property lookup. A value of zero means the wrapper has been told to wait indefinitely, so no
+   * keep-alive is scheduled.
    *
-   * @param args arguments where {@code args[0]} is the startup timeout in seconds and the remainder are the
-   *             application arguments forwarded to {@link #startup(String[])}
-   * @return {@code null} on success, or {@code 2} if {@link #startup(String[])} threw; {@code null} signals the
-   * wrapper to keep running
+   * @return the timeout in seconds, or zero for no timeout
+   * @throws IllegalStateException if {@code wrapper.startup.timeout} is set but unparsable, or is neither {@code 0}
+   *                               nor at least {@code 10}
+   */
+  protected int getStartupTimeoutSeconds () {
+
+    String startupTimeoutSeconds;
+    int parsedTimeoutSeconds;
+
+    if ((startupTimeoutSeconds = WrapperManager.getProperties().getProperty(STARTUP_TIMEOUT_PROPERTY)) == null) {
+
+      return DEFAULT_STARTUP_TIMEOUT_SECONDS;
+    }
+    try {
+      parsedTimeoutSeconds = Integer.parseInt(startupTimeoutSeconds.trim());
+    } catch (NumberFormatException numberFormatException) {
+      throw new IllegalStateException(String.format("Unable to parse the property(%s) as an integer(%s)", STARTUP_TIMEOUT_PROPERTY, startupTimeoutSeconds));
+    }
+    if ((parsedTimeoutSeconds != UNLIMITED_STARTUP_TIMEOUT_SECONDS) && (parsedTimeoutSeconds < MINIMUM_STARTUP_TIMEOUT_SECONDS)) {
+      throw new IllegalStateException(String.format("The property(%s) should be %s >= %d, or %d to have the wrapper wait indefinitely", STARTUP_TIMEOUT_PROPERTY, startupTimeoutSeconds, MINIMUM_STARTUP_TIMEOUT_SECONDS, UNLIMITED_STARTUP_TIMEOUT_SECONDS));
+    }
+
+    return parsedTimeoutSeconds;
+  }
+
+  /**
+   * Fail-safe ceiling, in seconds, after which the keep-alive stops signalling even though {@link #startup(String[])}
+   * has not returned, leaving the wrapper free to time out and stop a stalled startup. The wrapper only acts once
+   * the window granted by the last signal ({@code wrapper.startup.timeout} seconds) has also passed, so the longest
+   * startup that survives is roughly the ceiling plus the timeout. Taken from the {@code spark.startup.ceiling}
+   * property in {@code wrapper.conf} when present, otherwise {@code 180}; listeners that want a different policy
+   * override this, which replaces the property lookup. A value of zero or less removes the ceiling, so the
+   * keep-alive runs until {@code startup} returns or throws.
+   *
+   * @return the ceiling in seconds, or a non-positive value for no ceiling
+   * @throws IllegalStateException if {@code spark.startup.ceiling} is set but unparsable
+   */
+  protected int getStartupCeilingSeconds () {
+
+    Integer configuredCeilingSeconds;
+
+    return ((configuredCeilingSeconds = parseStartupCeilingProperty()) == null) ? DEFAULT_STARTUP_CEILING_SECONDS : configuredCeilingSeconds;
+  }
+
+  private static Integer parseStartupCeilingProperty () {
+
+    String ceilingSeconds;
+
+    if ((ceilingSeconds = WrapperManager.getProperties().getProperty(STARTUP_CEILING_PROPERTY)) == null) {
+
+      return null;
+    }
+    try {
+      return Integer.parseInt(ceilingSeconds.trim());
+    } catch (NumberFormatException numberFormatException) {
+      throw new IllegalStateException(String.format("Unable to parse the property(%s) as an integer(%s)", STARTUP_CEILING_PROPERTY, ceilingSeconds));
+    }
+  }
+
+  /**
+   * Wrapper start callback. Reads the startup timeout via {@link #getStartupTimeoutSeconds()}, opens a single-thread
+   * scheduled executor (its worker is a daemon named {@code spark-wrapper-signal}) in a try-with-resources block,
+   * schedules a "still starting" signaller on it via {@link ScheduledExecutorService#scheduleWithFixedDelay}, and
+   * invokes {@link #startup(String[])} on the calling thread. The signaller fires immediately and then every
+   * {@code startupTimeoutSeconds / 2} seconds (never less than one second), calling
+   * {@link WrapperManager#signalStarting(int)} on each firing with the timeout converted to milliseconds, which is
+   * the unit the wrapper reads the wait hint in; the wrapper's startup clock runs from JVM launch rather than from
+   * this callback, so the immediate signal resets it before it can expire and the half-timeout cadence keeps it from
+   * expiring while startup runs. A {@link RuntimeException} thrown by a signal is printed and the next firing still
+   * happens, since a scheduled task that throws would otherwise stop being rescheduled without any trace. Once
+   * {@link #getStartupCeilingSeconds()} elapses on the monotonic clock the signaller prints a notice to stderr,
+   * stops signalling and cancels its own future, after which the wrapper is free to time out and stop a stalled
+   * startup. A startup timeout of {@code 0} means the wrapper has been told to wait indefinitely, so no signaller is
+   * scheduled at all. When {@link #startup(String[])} returns or throws, the try-with-resources {@code close()} shuts
+   * the executor down.
+   *
+   * @param args the application arguments, forwarded unchanged to {@link #startup(String[])}
+   * @return {@code null} on success, or {@code 2} if the startup timeout or fail-safe ceiling is misconfigured or
+   * {@link #startup(String[])} threw anything, {@link Error} included; {@code null} signals the wrapper to keep
+   * running
    */
   public Integer start (String[] args) {
 
@@ -168,29 +235,39 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
       return thread;
     })) {
 
-      AtomicReference<ScheduledFuture<?>> signalFutureRef = new AtomicReference<>();
-      String[] trimmedArgs = new String[args.length - 1];
-      int startupTimeoutSeconds = Integer.parseInt(args[0]);
-      long startMillis = System.currentTimeMillis();
+      int startupTimeoutSeconds = getStartupTimeoutSeconds();
 
-      System.arraycopy(args, 1, trimmedArgs, 0, args.length - 1);
+      if (startupTimeoutSeconds != UNLIMITED_STARTUP_TIMEOUT_SECONDS) {
 
-      signalFutureRef.set(signalExecutor.scheduleWithFixedDelay(() -> {
-        if (System.currentTimeMillis() - startMillis < (FAIL_SAFE_TIMEOUT_SECONDS * 1000L)) {
-          WrapperManager.signalStarting(startupTimeoutSeconds);
-        } else {
+        AtomicReference<ScheduledFuture<?>> signalFutureRef = new AtomicReference<>();
+        int signalIntervalSeconds = Math.max(1, startupTimeoutSeconds / 2);
+        int waitHintMillis = Math.toIntExact(TimeUnit.SECONDS.toMillis(startupTimeoutSeconds));
+        int failSafeTimeoutSeconds = getStartupCeilingSeconds();
+        long startNanos = System.nanoTime();
 
-          ScheduledFuture<?> signalFuture;
+        signalFutureRef.set(signalExecutor.scheduleWithFixedDelay(() -> {
+          if ((failSafeTimeoutSeconds <= 0) || (System.nanoTime() - startNanos < TimeUnit.SECONDS.toNanos(failSafeTimeoutSeconds))) {
+            try {
+              WrapperManager.signalStarting(waitHintMillis);
+            } catch (RuntimeException runtimeException) {
+              runtimeException.printStackTrace();
+            }
+          } else {
 
-          if ((signalFuture = signalFutureRef.get()) != null) {
-            signalFuture.cancel(false);
+            ScheduledFuture<?> signalFuture;
+
+            System.err.println(String.format("Startup has run past the fail-safe ceiling of %d seconds; no further keep-alive signals will be sent, so the wrapper may stop this JVM once its startup timeout of %d seconds expires", failSafeTimeoutSeconds, startupTimeoutSeconds));
+
+            if ((signalFuture = signalFutureRef.get()) != null) {
+              signalFuture.cancel(false);
+            }
           }
-        }
-      }, startupTimeoutSeconds - 2, startupTimeoutSeconds - 2, TimeUnit.SECONDS));
+        }, 0, signalIntervalSeconds, TimeUnit.SECONDS));
+      }
 
-      startup(trimmedArgs);
-    } catch (Exception exception) {
-      exception.printStackTrace();
+      startup(args);
+    } catch (Throwable throwable) {
+      throwable.printStackTrace();
       return STACK_TRACE_ERROR_CODE;
     }
 

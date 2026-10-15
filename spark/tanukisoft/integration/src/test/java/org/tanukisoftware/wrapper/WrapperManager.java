@@ -54,8 +54,9 @@ public class WrapperManager {
 
   private static Properties properties = new Properties();
   private static boolean controlledByNativeWrapper = false;
-  private static int signalStartingCount = 0;
-  private static int lastSignalStartingTimeout = -1;
+  private static volatile int signalStartingCount = 0;
+  private static volatile int lastSignalStartingTimeout = -1;
+  private static volatile boolean signalStartingThrows = false;
   private static WrapperListener startedListener = null;
   private static String[] startedArguments = null;
   private static Integer lastStopCode = null;
@@ -69,6 +70,7 @@ public class WrapperManager {
     controlledByNativeWrapper = false;
     signalStartingCount = 0;
     lastSignalStartingTimeout = -1;
+    signalStartingThrows = false;
     startedListener = null;
     startedArguments = null;
     lastStopCode = null;
@@ -82,6 +84,15 @@ public class WrapperManager {
   public static int lastSignalStartingTimeout () {
 
     return lastSignalStartingTimeout;
+  }
+
+  /**
+   * Makes every subsequent {@link #signalStarting(int)} call throw after recording itself, so tests can check that a
+   * failing signal does not end the keep-alive schedule.
+   */
+  public static void setSignalStartingThrows (boolean throwing) {
+
+    signalStartingThrows = throwing;
   }
 
   public static WrapperListener startedListener () {
@@ -120,6 +131,10 @@ public class WrapperManager {
 
     signalStartingCount++;
     lastSignalStartingTimeout = timeout;
+
+    if (signalStartingThrows) {
+      throw new IllegalStateException("signalStarting failed");
+    }
   }
 
   public static void start (WrapperListener listener, String[] arguments) {

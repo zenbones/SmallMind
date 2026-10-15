@@ -42,9 +42,9 @@ import java.util.stream.Stream;
  * Shared helpers for driving the wrapper Mojos from tests. Their parameters are normally injected by Maven and have
  * no setters, so fields are populated reflectively on the concrete Mojo instance.
  */
-final class TanukiMojoSupport {
+final class TanukisoftPluginSupport {
 
-  private TanukiMojoSupport () {
+  private TanukisoftPluginSupport () {
 
   }
 

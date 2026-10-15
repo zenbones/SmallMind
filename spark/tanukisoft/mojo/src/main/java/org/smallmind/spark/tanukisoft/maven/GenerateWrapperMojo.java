@@ -104,6 +104,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String jvmInitMemoryMB;
   @Parameter
   private String jvmMaxMemoryMB;
+  @Parameter
+  private Integer startupTimeoutSeconds;
+  @Parameter
+  private Integer startupCeilingSeconds;
   @Parameter(defaultValue = "0022")
   private String umask;
   @Parameter
@@ -144,7 +148,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
    * {@code bin/}, {@code lib/}, {@code conf/} skeleton, copies the wrapper binaries and runtime artifacts, evaluates
    * the script and configuration templates, and (if requested) compresses the result into a single archive.
    *
-   * @throws MojoExecutionException if the {@code operatingSystem} or {@code compression} values are unknown, if any
+   * @throws MojoExecutionException if the {@code operatingSystem} or {@code compression} values are unknown, if
+   *                                {@code startupTimeoutSeconds} is neither {@code 0} nor at least {@code 10}, if any
    *                                file operation in the staging tree fails, if the OS style is unrecognized, or if a Freemarker template
    *                                cannot be located, rendered, or written
    */
@@ -180,6 +185,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
         }
       } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
+      }
+
+      if ((startupTimeoutSeconds != null) && (startupTimeoutSeconds != 0) && (startupTimeoutSeconds < 10)) {
+        throw new MojoExecutionException(String.format("The startupTimeoutSeconds(%d) must be 0, so that the wrapper waits indefinitely, or at least 10", startupTimeoutSeconds));
       }
 
       createDirectory("bin", binDirectory = Paths.get(project.getBuild().getDirectory(), applicationDir, constructArtifactName(includeVersion, false), "bin"));
@@ -243,6 +252,12 @@ public class GenerateWrapperMojo extends AbstractMojo {
       }
       if ((jvmMaxMemoryMB != null) && (!jvmMaxMemoryMB.isEmpty())) {
         freemarkerMap.put("jvmMaxMemoryMB", jvmMaxMemoryMB);
+      }
+      if (startupTimeoutSeconds != null) {
+        freemarkerMap.put("startupTimeoutSeconds", String.valueOf(startupTimeoutSeconds));
+      }
+      if (startupCeilingSeconds != null) {
+        freemarkerMap.put("startupCeilingSeconds", String.valueOf(startupCeilingSeconds));
       }
       if ((runAs != null) && (!runAs.isEmpty())) {
         freemarkerMap.put("runAs", runAs);

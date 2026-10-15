@@ -69,7 +69,7 @@ public class WrapperDistributionIntegrationTest {
   @AfterMethod(alwaysRun = true)
   public void deleteWorkspace () {
 
-    TanukiMojoSupport.deleteTree(workspace);
+    TanukisoftPluginSupport.deleteTree(workspace);
   }
 
   private Path stageDistribution (String operatingSystem)
@@ -108,23 +108,23 @@ public class WrapperDistributionIntegrationTest {
 
     GenerateWrapperMojo mojo = new GenerateWrapperMojo();
 
-    TanukiMojoSupport.setField(mojo, "project", project);
-    TanukiMojoSupport.setField(mojo, "operatingSystem", operatingSystem);
-    TanukiMojoSupport.setField(mojo, "wrapperListener", "org.smallmind.test.SampleWrapperListener");
-    TanukiMojoSupport.setField(mojo, "applicationDir", "application");
-    TanukiMojoSupport.setField(mojo, "applicationName", APP_NAME);
-    TanukiMojoSupport.setField(mojo, "applicationLongName", "Sample Application");
-    TanukiMojoSupport.setField(mojo, "umask", "0022");
-    TanukiMojoSupport.setField(mojo, "javaCommand", "java");
-    TanukiMojoSupport.setField(mojo, "compression", "zip");
-    TanukiMojoSupport.setField(mojo, "createArtifact", true);
-    TanukiMojoSupport.setField(mojo, "includeVersion", true);
-    TanukiMojoSupport.setField(mojo, "compactClasspath", true);
-    TanukiMojoSupport.setField(mojo, "useUpstart", false);
-    TanukiMojoSupport.setField(mojo, "useSystemD", false);
-    TanukiMojoSupport.setField(mojo, "waitAfterStartup", 0);
-    TanukiMojoSupport.setField(mojo, "skip", false);
-    TanukiMojoSupport.setField(mojo, "verbose", false);
+    TanukisoftPluginSupport.setField(mojo, "project", project);
+    TanukisoftPluginSupport.setField(mojo, "operatingSystem", operatingSystem);
+    TanukisoftPluginSupport.setField(mojo, "wrapperListener", "org.smallmind.test.SampleWrapperListener");
+    TanukisoftPluginSupport.setField(mojo, "applicationDir", "application");
+    TanukisoftPluginSupport.setField(mojo, "applicationName", APP_NAME);
+    TanukisoftPluginSupport.setField(mojo, "applicationLongName", "Sample Application");
+    TanukisoftPluginSupport.setField(mojo, "umask", "0022");
+    TanukisoftPluginSupport.setField(mojo, "javaCommand", "java");
+    TanukisoftPluginSupport.setField(mojo, "compression", "zip");
+    TanukisoftPluginSupport.setField(mojo, "createArtifact", true);
+    TanukisoftPluginSupport.setField(mojo, "includeVersion", true);
+    TanukisoftPluginSupport.setField(mojo, "compactClasspath", true);
+    TanukisoftPluginSupport.setField(mojo, "useUpstart", false);
+    TanukisoftPluginSupport.setField(mojo, "useSystemD", false);
+    TanukisoftPluginSupport.setField(mojo, "waitAfterStartup", 0);
+    TanukisoftPluginSupport.setField(mojo, "skip", false);
+    TanukisoftPluginSupport.setField(mojo, "verbose", false);
 
     mojo.execute();
 
@@ -147,6 +147,8 @@ public class WrapperDistributionIntegrationTest {
     String wrapperConf = Files.readString(applicationRoot.resolve("conf").resolve("wrapper.conf"), StandardCharsets.UTF_8);
 
     Assert.assertTrue(wrapperConf.contains("org.smallmind.test.SampleWrapperListener"), "the wrapper listener was not interpolated into wrapper.conf");
+    Assert.assertFalse(wrapperConf.contains("wrapper.startup.timeout="), "an unset startup timeout should leave the wrapper default in place");
+    Assert.assertFalse(wrapperConf.contains("spark.startup.ceiling="), "an unset startup ceiling should leave the listener default in place");
   }
 
   // A build that turns on the optional settings: a license and extra configuration files, JVM memory/args, a run-as
@@ -203,35 +205,37 @@ public class WrapperDistributionIntegrationTest {
 
     GenerateWrapperMojo mojo = new GenerateWrapperMojo();
 
-    TanukiMojoSupport.setField(mojo, "project", project);
-    TanukiMojoSupport.setField(mojo, "operatingSystem", "LINUX_X86_64");
-    TanukiMojoSupport.setField(mojo, "wrapperListener", "org.smallmind.test.SampleWrapperListener");
-    TanukiMojoSupport.setField(mojo, "applicationDir", "application");
-    TanukiMojoSupport.setField(mojo, "applicationName", APP_NAME);
-    TanukiMojoSupport.setField(mojo, "applicationLongName", "Sample Application");
-    TanukiMojoSupport.setField(mojo, "applicationDescription", "a fully configured sample");
-    TanukiMojoSupport.setField(mojo, "licenseFile", licenseFile.toString());
-    TanukiMojoSupport.setField(mojo, "configurations", new String[] {configurationFile.toString()});
-    TanukiMojoSupport.setField(mojo, "toSourceFiles", new String[] {"setenv.sh", "extra.sh"});
-    TanukiMojoSupport.setField(mojo, "jvmArgs", new String[] {"-Xss512k"});
-    TanukiMojoSupport.setField(mojo, "jvmInitMemoryMB", "64");
-    TanukiMojoSupport.setField(mojo, "jvmMaxMemoryMB", "256");
-    TanukiMojoSupport.setField(mojo, "runAs", "appuser");
-    TanukiMojoSupport.setField(mojo, "appParameters", new String[] {"--profile", "production"});
-    TanukiMojoSupport.setField(mojo, "envArgs", new EnvironmentArgument[] {environmentArgument});
-    TanukiMojoSupport.setField(mojo, "serviceDependencies", new String[] {"network"});
-    TanukiMojoSupport.setField(mojo, "dependencies", new Dependency[] {additionalDependency});
-    TanukiMojoSupport.setField(mojo, "umask", "0022");
-    TanukiMojoSupport.setField(mojo, "javaCommand", "java");
-    TanukiMojoSupport.setField(mojo, "compression", "zip");
-    TanukiMojoSupport.setField(mojo, "createArtifact", false);
-    TanukiMojoSupport.setField(mojo, "includeVersion", false);
-    TanukiMojoSupport.setField(mojo, "compactClasspath", false);
-    TanukiMojoSupport.setField(mojo, "useUpstart", false);
-    TanukiMojoSupport.setField(mojo, "useSystemD", false);
-    TanukiMojoSupport.setField(mojo, "waitAfterStartup", 0);
-    TanukiMojoSupport.setField(mojo, "skip", false);
-    TanukiMojoSupport.setField(mojo, "verbose", true);
+    TanukisoftPluginSupport.setField(mojo, "project", project);
+    TanukisoftPluginSupport.setField(mojo, "operatingSystem", "LINUX_X86_64");
+    TanukisoftPluginSupport.setField(mojo, "wrapperListener", "org.smallmind.test.SampleWrapperListener");
+    TanukisoftPluginSupport.setField(mojo, "applicationDir", "application");
+    TanukisoftPluginSupport.setField(mojo, "applicationName", APP_NAME);
+    TanukisoftPluginSupport.setField(mojo, "applicationLongName", "Sample Application");
+    TanukisoftPluginSupport.setField(mojo, "applicationDescription", "a fully configured sample");
+    TanukisoftPluginSupport.setField(mojo, "licenseFile", licenseFile.toString());
+    TanukisoftPluginSupport.setField(mojo, "configurations", new String[] {configurationFile.toString()});
+    TanukisoftPluginSupport.setField(mojo, "toSourceFiles", new String[] {"setenv.sh", "extra.sh"});
+    TanukisoftPluginSupport.setField(mojo, "jvmArgs", new String[] {"-Xss512k"});
+    TanukisoftPluginSupport.setField(mojo, "jvmInitMemoryMB", "64");
+    TanukisoftPluginSupport.setField(mojo, "jvmMaxMemoryMB", "256");
+    TanukisoftPluginSupport.setField(mojo, "startupTimeoutSeconds", 120);
+    TanukisoftPluginSupport.setField(mojo, "startupCeilingSeconds", 1200);
+    TanukisoftPluginSupport.setField(mojo, "runAs", "appuser");
+    TanukisoftPluginSupport.setField(mojo, "appParameters", new String[] {"--profile", "production"});
+    TanukisoftPluginSupport.setField(mojo, "envArgs", new EnvironmentArgument[] {environmentArgument});
+    TanukisoftPluginSupport.setField(mojo, "serviceDependencies", new String[] {"network"});
+    TanukisoftPluginSupport.setField(mojo, "dependencies", new Dependency[] {additionalDependency});
+    TanukisoftPluginSupport.setField(mojo, "umask", "0022");
+    TanukisoftPluginSupport.setField(mojo, "javaCommand", "java");
+    TanukisoftPluginSupport.setField(mojo, "compression", "zip");
+    TanukisoftPluginSupport.setField(mojo, "createArtifact", false);
+    TanukisoftPluginSupport.setField(mojo, "includeVersion", false);
+    TanukisoftPluginSupport.setField(mojo, "compactClasspath", false);
+    TanukisoftPluginSupport.setField(mojo, "useUpstart", false);
+    TanukisoftPluginSupport.setField(mojo, "useSystemD", false);
+    TanukisoftPluginSupport.setField(mojo, "waitAfterStartup", 0);
+    TanukisoftPluginSupport.setField(mojo, "skip", false);
+    TanukisoftPluginSupport.setField(mojo, "verbose", true);
 
     mojo.execute();
 
@@ -250,6 +254,8 @@ public class WrapperDistributionIntegrationTest {
 
     Assert.assertTrue(wrapperConf.contains("wrapper.java.initmemory=64"), "init memory was not rendered");
     Assert.assertTrue(wrapperConf.contains("wrapper.java.maxmemory=256"), "max memory was not rendered");
+    Assert.assertTrue(wrapperConf.contains("wrapper.startup.timeout=120"), "the startup timeout was not rendered");
+    Assert.assertTrue(wrapperConf.contains("spark.startup.ceiling=1200"), "the startup ceiling was not rendered");
     Assert.assertTrue(wrapperConf.contains("set.APP_HOME=/opt/sample-app"), "the environment argument was not rendered");
     Assert.assertTrue(wrapperConf.contains("appuser"), "the run-as account was not rendered");
     Assert.assertTrue(wrapperConf.contains("runtime-1.0.jar"), "the explicit classpath entry was not rendered");

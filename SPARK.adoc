@@ -619,8 +619,9 @@ Bridge::
     that reads the configured listener class name from the first
     argument and reflectively creates it; a Property-Expander pass
     over the remaining arguments; a daemon-backed scheduled task that
-    calls `WrapperManager.signalStarting(int)` on a fixed delay so a
-    slow `startup` is not killed by the watchdog.
+    calls `WrapperManager.signalStarting(int)` as soon as `start`
+    begins and then at half the startup timeout so a slow `startup`
+    is not killed by the watchdog.
 
 Spring specialization::
     `SpringContextWrapperListener` extends `AbstractWrapperListener` and
@@ -1090,6 +1091,21 @@ The full set of parameters, in the order a user typically cares about:
     `wrapper.java.maxmemory` properties (both in megabytes). Omit
     to let Tanuki use its own defaults.
 
+`startupTimeoutSeconds`::
+    Integer rendered as `wrapper.startup.timeout` in `wrapper.conf`:
+    how long the wrapper waits for the listener to report "started"
+    before stopping the JVM. `0` waits indefinitely; values from 1
+    to 9 fail the build, matching the listener's own check. Omit to
+    leave the wrapper's default of 30. The listener reads the same
+    property at `start` to size its keep-alive signals.
+
+`startupCeilingSeconds`::
+    Integer rendered as `spark.startup.ceiling` in `wrapper.conf`:
+    how long the listener keeps extending the startup timeout while
+    `startup` is still running. Zero or a negative value removes the
+    ceiling. Omit for the listener's default of 180. See
+    <<startup-timeout-and-keep-alive>>.
+
 `appParameters`::
     Ordered list of arguments passed to the wrapper listener's
     `main`. The plugin *prepends* `wrapperListener` to this list
@@ -1179,15 +1195,24 @@ The full set of parameters, in the order a user typically cares about:
 On `start(String[])`, opens a single-thread `ScheduledExecutorService`
 (daemon worker named `spark-wrapper-signal`) in a try-with-resources
 block and schedules a keep-alive task that calls
-`WrapperManager.signalStarting(timeout)` every `timeout - 2` seconds
-(`wrapper.startup.timeout`, default 30, minimum 10). That keeps the
-wrapper's watchdog from killing the JVM during slow context refreshes.
-Once the 180-second fail-safe ceiling passes the task stops signalling
-and cancels its own future; when `startup` returns or throws the
-try-with-resources `close()` shuts the executor down.
+`WrapperManager.signalStarting(timeout * 1000)` — the wrapper reads
+the wait hint in milliseconds — immediately and then every
+`timeout / 2` seconds (`wrapper.startup.timeout`, read from
+`WrapperManager.getProperties()` in `start`; default 30, minimum 10;
+`0` tells the wrapper to wait indefinitely, and no keep-alive is
+scheduled). That keeps the wrapper's watchdog from killing the JVM
+during slow context refreshes.
+Once the fail-safe ceiling passes (`spark.startup.ceiling` in
+`wrapper.conf`, 180 seconds when unset; see
+<<startup-timeout-and-keep-alive>>) the task prints a notice to
+stderr, stops signalling and cancels its own future; when `startup`
+returns or throws the try-with-resources `close()` shuts the
+executor down.
 +
-Converts uncaught exceptions from `startup` or `shutdown` into exit
-code `2` (`STACK_TRACE_ERROR_CODE`). Implements `controlEvent` to
+Converts anything thrown by `startup` or `shutdown`, an `Error`
+included, into exit code `2` (`STACK_TRACE_ERROR_CODE`), and returns
+the same code when `wrapper.startup.timeout` or `spark.startup.ceiling`
+cannot be parsed or is out of range. Implements `controlEvent` to
 translate Ctrl-C / Close / Shutdown into `WrapperManager.stop(0)`
 *only when the process is not under the native wrapper* — when the
 native wrapper is in charge, it delivers these events itself.
@@ -1263,9 +1288,10 @@ POM files and shell scripts.
     regardless of `OSStyle`. Its Freemarker model is populated with
     every plugin parameter that shapes wrapper behavior — the
     application name / long name / description, the Java command,
-    each JVM argument, heap sizes, umask, run-as user, Upstart /
-    systemd flags, wait-after-startup, appParameters, envArgs,
-    service dependencies, and the classpath element list.
+    each JVM argument, heap sizes, startup timeout and ceiling,
+    umask, run-as user, Upstart / systemd flags, wait-after-startup,
+    appParameters, envArgs, service dependencies, and the classpath
+    element list.
 
 [[maven-packaging-types]]
 == Maven Packaging Types
@@ -1465,6 +1491,8 @@ Tanuki-wrapped distribution:
           <licenseFile>${user.home}/.m2/wrapper-license.conf</licenseFile>
           <jvmInitMemoryMB>512</jvmInitMemoryMB>
           <jvmMaxMemoryMB>2048</jvmMaxMemoryMB>
+          <startupTimeoutSeconds>60</startupTimeoutSeconds>
+          <startupCeilingSeconds>600</startupCeilingSeconds>
           <jvmArgs>
             <jvmArg>-server</jvmArg>
             <jvmArg>-XX:+UseG1GC</jvmArg>
@@ -1613,8 +1641,9 @@ public class PlainWrapperListener extends AbstractWrapperListener {
 }
 ----
 <1> Called on the wrapper's start thread. The keep-alive daemon is
-    already running — take as long as you need, up to 180 seconds
-    (`FAIL_SAFE_TIMEOUT_SECONDS`).
+    already running — take as long as you need, up to the fail-safe
+    ceiling (`spark.startup.ceiling` in `wrapper.conf`, 180 seconds
+    when unset) plus one `wrapper.startup.timeout`.
 <2> Called on the wrapper's stop thread when the OS or an operator
     asks for shutdown.
 
@@ -1794,48 +1823,71 @@ the classes it defines.
 
 `AbstractWrapperListener.start(args)`:
 
-. Reads `args[0]` as the wrapper's startup timeout in seconds (the
-  value was prepended by `main` after consulting
+. Reads the wrapper's startup timeout in seconds through
+  `getStartupTimeoutSeconds()`, which consults
   `WrapperManager.getProperties().getProperty("wrapper.startup.timeout")`
-  and defaulting to 30).
+  and defaults to 30. The wrapper configuration only becomes readable
+  once the JVM has connected to the wrapper, so `main` leaves this
+  lookup to `start`. A non-numeric value, or one from 1 to 9, is
+  reported as exit code `2` without `startup` being invoked.
+  Listeners that want a different policy override
+  `getStartupTimeoutSeconds()`, which replaces the property lookup.
 . Opens a single-thread `ScheduledExecutorService` whose worker is a
   daemon named `spark-wrapper-signal`, declared in a try-with-resources
   block so it is shut down the moment `startup` returns or throws.
-. Schedules the keep-alive task with
-  `scheduleWithFixedDelay(..., startupTimeoutSeconds - 2,
-  startupTimeoutSeconds - 2, SECONDS)`, then invokes
-  `startup(trimmedArgs)` on the current thread.
+. Unless the timeout is `0` (the wrapper waits indefinitely, so no
+  keep-alive is scheduled), schedules the keep-alive task with
+  `scheduleWithFixedDelay(..., 0, max(1, startupTimeoutSeconds / 2),
+  SECONDS)`, then invokes `startup(args)` on the current thread.
 
 The scheduled keep-alive task, on each firing:
 
 [source,text]
 ----
-if (now - startMillis < 180_000):            // FAIL_SAFE_TIMEOUT_SECONDS
-  WrapperManager.signalStarting(startupTimeoutSeconds)
+ceiling = getFailSafeTimeoutSeconds()        // spark.startup.ceiling, or 180
+if ceiling <= 0 or (nanoTime() - startNanos < ceiling):
+  WrapperManager.signalStarting(startupTimeoutSeconds * 1000)   // wait hint in milliseconds
 else:
+  print notice to stderr
   signalFuture.cancel(false)                 // stop rescheduling
 ----
 
-The invariant: the wrapper's watchdog grants `startupTimeoutSeconds`
-of patience on each `signalStarting` call, so as long as the
-application signals at least once per `startupTimeoutSeconds - 2`
-seconds, the wrapper does not kill the JVM. The task keeps the
+A `RuntimeException` thrown by `signalStarting` is printed to stderr
+and the task keeps firing on schedule; a failed signal does not end
+the keep-alive.
+
+The invariant: the wrapper's startup clock runs from JVM launch, and
+each `signalStarting` call resets it to `startupTimeoutSeconds` (sent
+as a millisecond wait hint, the unit the wrapper expects). The
+first firing happens as soon as `start` is entered, so JVM launch and
+wrapper hand-shake time do not count against the application, and
+each later firing lands at half the timeout, well inside the window
+the previous one granted. The task keeps the
 wrapper patient until either `startup` returns — at which point the
 try-with-resources `close()` shuts the executor down and the periodic
 task is cancelled — or the fail-safe ceiling is reached.
 
 Tuning hints:
 
-* Set `wrapper.startup.timeout` in `wrapper.conf` (or pass it as a
-  `WrapperManager` property from elsewhere) when your application
-  routinely takes more than 30 seconds to reach "ready". Values
-  below 10 are rejected.
-* The 180-second fail-safe ceiling (`FAIL_SAFE_TIMEOUT_SECONDS`) is
-  a hard stop — once it passes the task stops signalling and cancels
-  itself even while `startup` is still running, after which the
-  wrapper is free to time out and stop the JVM — so very-long-startup
-  applications should invest in eager module loading or bean warmup
-  before `startup` returns.
+* Set `wrapper.startup.timeout` in `wrapper.conf`
+  (`startupTimeoutSeconds` on the Maven plugin) when your
+  application routinely takes more than 30 seconds to reach
+  "ready". Values from 1 to 9 are rejected; `0` tells the wrapper
+  to wait indefinitely, and the keep-alive is then not scheduled.
+* The fail-safe ceiling is a hard stop — once it passes the task
+  prints a notice to stderr, stops signalling and cancels itself
+  even while `startup` is still running, after which the wrapper
+  stops the JVM once the window granted by the last signal expires.
+  The longest startup that survives is therefore roughly the ceiling
+  plus `wrapper.startup.timeout` (about 195 seconds with defaults).
+* Set `spark.startup.ceiling` in `wrapper.conf`
+  (`startupCeilingSeconds` on the Maven plugin; 180 when unset) when
+  your application legitimately needs longer. Zero or a
+  negative value removes the ceiling, so the keep-alive runs until
+  `startup` returns. An unparsable value is reported as exit code
+  `2` from `start`.
+  Listeners that want a different policy altogether override
+  `getFailSafeTimeoutSeconds()`, which replaces the property lookup.
 
 === Exit Codes
 
@@ -1846,8 +1898,11 @@ follows:
     Startup succeeded; the wrapper keeps running.
 
 `2` (from `start` or `stop`)::
-    `STACK_TRACE_ERROR_CODE`. `startup` or `shutdown` threw; the
-    exception's stack trace was printed. The wrapper interprets a
+    `STACK_TRACE_ERROR_CODE`. `startup` or `shutdown` threw (an
+    `Error` such as `NoClassDefFoundError` counts), or
+    `wrapper.startup.timeout` / `spark.startup.ceiling` could not be
+    parsed or was out of range; the stack trace was printed. The
+    wrapper interprets a
     non-`null` return from `start` as "startup failed" and stops
     the JVM.
 

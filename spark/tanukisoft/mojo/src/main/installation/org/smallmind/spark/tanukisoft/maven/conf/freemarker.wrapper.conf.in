@@ -154,6 +154,19 @@ wrapper.pidfile.strict=TRUE
 # Title to use when running as a console
 wrapper.console.title=${applicationLongName}
 
+# Number of seconds the Wrapper waits for the JVM to report that the
+#  application has started before stopping it.  0 waits indefinitely.
+[#if startupTimeoutSeconds?exists]
+wrapper.startup.timeout=${startupTimeoutSeconds}
+[/#if]
+
+# Number of seconds after which the SmallMind wrapper listener stops
+#  extending the startup timeout while startup is still running.
+#  0 or less removes the ceiling.
+[#if startupCeilingSeconds?exists]
+spark.startup.ceiling=${startupCeilingSeconds}
+[/#if]
+
 #********************************************************************
 # Wrapper JVM Checks
 #********************************************************************
