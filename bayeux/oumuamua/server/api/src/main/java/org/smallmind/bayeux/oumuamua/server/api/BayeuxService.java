@@ -53,9 +53,7 @@ public interface BayeuxService<V extends Value<V>> {
    */
   default Message<V> createResponse (Route route, Server<V> server, Session<V> session, Message<V> request) {
 
-    Message<V> response = (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
-
-    return response;
+    return (Message<V>)server.getCodec().create().put(Message.CHANNEL, route.getPath()).put(Message.ID, request.getId()).put(Message.SESSION_ID, session.getId());
   }
 
   /**

@@ -83,8 +83,6 @@ public interface Channel<V extends Value<V>> extends Attributed {
     void onUnsubscribed (Session<V> session);
   }
 
-  // Messages are frozen before this call, guaranteeing that all sessions in this delivery stream, but not others, see any changes generated here
-
   /**
    * Intercepts packet delivery to channel subscribers; messages are frozen before this call, so
    * mutations are visible only within the current delivery stream.
@@ -99,8 +97,6 @@ public interface Channel<V extends Value<V>> extends Attributed {
      * @return {@code true} if the listener survives restart
      */
     boolean isPersistent ();
-
-    // For published messages delivered to receivers
 
     /**
      * Called when a publish packet is about to be delivered to subscribers; may return a
