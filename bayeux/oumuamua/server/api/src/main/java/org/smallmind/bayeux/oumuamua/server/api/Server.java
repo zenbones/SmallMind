@@ -167,11 +167,15 @@ public interface Server<V extends Value<V>> extends Attributed {
   }
 
   /**
-   * Registers a service and binds it to each of its declared routes.
+   * Registers a service and binds it to each of its declared routes. Every bound route must be a
+   * literal path beneath {@code /service/}; wildcard routes and routes outside the service
+   * namespace are rejected before any route is bound.
    *
    * @param service service to register
+   * @throws InvalidPathException if any bound route is not a literal {@code /service/...} path
    */
-  void addService (BayeuxService<V> service);
+  void addService (BayeuxService<V> service)
+    throws InvalidPathException;
 
   /**
    * Removes the service bound to the given route.

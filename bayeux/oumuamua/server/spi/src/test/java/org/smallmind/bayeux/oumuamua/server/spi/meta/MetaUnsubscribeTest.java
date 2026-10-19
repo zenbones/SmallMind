@@ -34,6 +34,7 @@ package org.smallmind.bayeux.oumuamua.server.spi.meta;
 
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
@@ -168,6 +169,31 @@ public class MetaUnsubscribeTest {
     Mockito.verify(channel).unsubscribe(session);
     Assert.assertTrue(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
     Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.SUBSCRIPTION)).asText(), "/foo");
+  }
+
+  public void testServiceChannelUnsubscribeIsAcknowledgedWithoutLookup ()
+    throws Exception {
+
+    Packet<OrthodoxValue> packet = Meta.UNSUBSCRIBE.process(protocol, DefaultRoute.UNSUBSCRIBE_ROUTE, server, session, request("/service/echo"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertTrue(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.SUBSCRIPTION)).asText(), "/service/echo");
+    Mockito.verify(server, Mockito.never()).findChannel(Mockito.anyString());
+  }
+
+  public void testInvalidPathProducesErrorWithSubscriptionEcho ()
+    throws Exception {
+
+    Mockito.when(server.findChannel("/bad path")).thenThrow(new InvalidPathException("bad path"));
+
+    Packet<OrthodoxValue> packet = Meta.UNSUBSCRIBE.process(protocol, DefaultRoute.UNSUBSCRIBE_ROUTE, server, session, request("/bad path"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertFalse(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.ERROR)).asText(), "bad path");
+    Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.SUBSCRIPTION)).asText(), "/bad path");
+    Assert.assertNull(response.getAdvice());
   }
 
   public void testNonStringSubscriptionFieldProducesError ()

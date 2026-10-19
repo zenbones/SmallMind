@@ -69,8 +69,9 @@ public class DefaultRoute implements Route {
    *
    * @param path channel path; must begin with {@code '/'} and contain at least one segment
    * @throws InvalidPathException if the path is null, empty, missing a leading slash,
-   *                              contains empty segments, has illegal characters, or
-   *                              uses a malformed wildcard expression
+   *                              contains empty segments, has illegal characters,
+   *                              uses a malformed wildcard expression, or is one of the
+   *                              reserved roots {@code /meta} or {@code /service}
    */
   public DefaultRoute (String path)
     throws InvalidPathException {
@@ -131,23 +132,25 @@ public class DefaultRoute implements Route {
   }
 
   /**
-   * Indicates whether this path belongs to the {@code /meta} namespace.
+   * Indicates whether this path belongs to the {@code /meta/} namespace. The bare path
+   * {@code /meta} is rejected at construction, so a route always has a further segment here.
    *
-   * @return {@code true} if the first segment is {@code meta}
+   * @return {@code true} if the first segment is {@code meta} and at least one further segment follows
    */
   public boolean isMeta () {
 
-    return matches(0, "meta");
+    return (segments.length > 0) && matches(0, "meta");
   }
 
   /**
-   * Indicates whether this path belongs to the {@code /service} namespace.
+   * Indicates whether this path belongs to the {@code /service/} namespace. The bare path
+   * {@code /service} is rejected at construction, so a route always has a further segment here.
    *
-   * @return {@code true} if the first segment is {@code service}
+   * @return {@code true} if the first segment is {@code service} and at least one further segment follows
    */
   public boolean isService () {
 
-    return matches(0, "service");
+    return (segments.length > 0) && matches(0, "service");
   }
 
   /**

@@ -105,7 +105,7 @@ public class OumuamuaServerBranchTest {
   public void testConstructorRegistersServicesFromConfiguration ()
     throws Exception {
 
-    Route serviceRoute = new DefaultRoute("/configured/service");
+    Route serviceRoute = new DefaultRoute("/service/configured");
     BayeuxService<OrthodoxValue> service = new SingleRouteService(serviceRoute);
 
     configuration.setServices(new BayeuxService[] {service});

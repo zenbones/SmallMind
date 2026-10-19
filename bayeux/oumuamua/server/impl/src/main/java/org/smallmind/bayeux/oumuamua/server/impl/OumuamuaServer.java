@@ -366,16 +366,28 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   }
 
   /**
-   * Registers a {@link BayeuxService} under every route it declares.
+   * Registers a {@link BayeuxService} under every route it declares, after verifying that each
+   * route is a literal path beneath {@code /service/}.
    *
-   * @param service the service to register; routes with no declared bound routes are silently ignored
+   * @param service the service to register; services with no declared bound routes are silently ignored
+   * @throws InvalidPathException if any bound route is wild, deep wild, or outside the {@code /service/}
+   *                              namespace; no routes are bound when the check fails
    */
   @Override
-  public void addService (BayeuxService<V> service) {
+  public void addService (BayeuxService<V> service)
+    throws InvalidPathException {
 
     Route[] boundRoutes;
 
     if ((boundRoutes = service.boundRoutes()) != null) {
+      for (Route boundRoute : boundRoutes) {
+        if (!boundRoute.isService()) {
+          throw new InvalidPathException("A service may only bind routes beneath '/service/' (%s)", boundRoute.getPath());
+        } else if (boundRoute.isWild() || boundRoute.isDeepWild()) {
+          throw new InvalidPathException("A service may not bind a wildcard route (%s)", boundRoute.getPath());
+        }
+      }
+
       for (Route boundRoute : boundRoutes) {
         serviceMap.put(boundRoute, service);
       }

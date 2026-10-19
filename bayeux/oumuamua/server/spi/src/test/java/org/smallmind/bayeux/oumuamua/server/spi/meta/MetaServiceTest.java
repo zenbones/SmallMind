@@ -128,4 +128,29 @@ public class MetaServiceTest {
 
     Assert.assertSame(result, serviceResponse);
   }
+
+  public void testProcessDoesNotAlterServiceResponseFields ()
+    throws Exception {
+
+    BayeuxService<OrthodoxValue> service = Mockito.mock(BayeuxService.class);
+    Message<OrthodoxValue> bare = codec.create();
+
+    Mockito.when(server.getService(route)).thenReturn(service);
+    Mockito.when(service.process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(new Packet<>(PacketType.RESPONSE, "alice", route, bare));
+
+    Meta.SERVICE.process(protocol, route, server, session, request());
+
+    Assert.assertNull(bare.get(Message.SUCCESSFUL));
+  }
+
+  public void testProcessPassesThroughNullServiceResponse ()
+    throws Exception {
+
+    BayeuxService<OrthodoxValue> service = Mockito.mock(BayeuxService.class);
+
+    Mockito.when(server.getService(route)).thenReturn(service);
+    Mockito.when(service.process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(null);
+
+    Assert.assertNull(Meta.SERVICE.process(protocol, route, server, session, request()));
+  }
 }

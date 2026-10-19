@@ -177,4 +177,27 @@ public class PathValidatorTest {
 
     PathValidator.validate("/foo/**/bar");
   }
+
+  @Test(expectedExceptions = InvalidPathException.class)
+  public void testBareMetaRootIsReserved ()
+    throws InvalidPathException {
+
+    PathValidator.validate("/meta");
+  }
+
+  @Test(expectedExceptions = InvalidPathException.class)
+  public void testBareServiceRootIsReserved ()
+    throws InvalidPathException {
+
+    PathValidator.validate("/service");
+  }
+
+  public void testNamespacedAndSimilarlyNamedPathsAreNotReserved ()
+    throws InvalidPathException {
+
+    Assert.assertEquals(PathValidator.validate("/meta/handshake").length, 1);
+    Assert.assertEquals(PathValidator.validate("/service/echo").length, 1);
+    Assert.assertEquals(PathValidator.validate("/metadata").length, 0);
+    Assert.assertEquals(PathValidator.validate("/services").length, 0);
+  }
 }

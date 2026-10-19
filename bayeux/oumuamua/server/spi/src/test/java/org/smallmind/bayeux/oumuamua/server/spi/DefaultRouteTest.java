@@ -134,6 +134,21 @@ public class DefaultRouteTest {
 
     Assert.assertTrue(new DefaultRoute("/service/echo").isService());
     Assert.assertFalse(new DefaultRoute("/meta/handshake").isService());
+    Assert.assertFalse(new DefaultRoute("/services/echo").isService());
+  }
+
+  @Test(expectedExceptions = InvalidPathException.class)
+  public void testBareMetaRootCannotBeConstructed ()
+    throws InvalidPathException {
+
+    new DefaultRoute("/meta");
+  }
+
+  @Test(expectedExceptions = InvalidPathException.class)
+  public void testBareServiceRootCannotBeConstructed ()
+    throws InvalidPathException {
+
+    new DefaultRoute("/service");
   }
 
   public void testIsDeliverable ()

@@ -40,6 +40,7 @@ import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Channel;
 import org.smallmind.bayeux.oumuamua.server.api.ChannelInitializer;
+import org.smallmind.bayeux.oumuamua.server.api.InvalidPathException;
 import org.smallmind.bayeux.oumuamua.server.api.OumuamuaException;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
@@ -234,6 +235,70 @@ public class OumuamuaServerTest {
     server.addService(service);
 
     Assert.assertNull(server.getService(new DefaultRoute("/service/echo")));
+  }
+
+  public void testAddServiceRejectsWildcardRoutes ()
+    throws Exception {
+
+    assertServiceRouteRejected("/service/echo/*");
+    assertServiceRouteRejected("/service/**");
+  }
+
+  public void testAddServiceRejectsRoutesOutsideTheServiceNamespace ()
+    throws Exception {
+
+    assertServiceRouteRejected("/echo");
+    assertServiceRouteRejected("/services/echo");
+  }
+
+  public void testReservedRootPathsAreRejectedByChannelLookup ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    for (String reservedPath : new String[] {"/meta", "/service"}) {
+      try {
+        server.findChannel(reservedPath);
+        Assert.fail("findChannel should have rejected " + reservedPath);
+      } catch (InvalidPathException invalidPathException) {
+        // expected
+      }
+
+      try {
+        server.requireChannel(reservedPath);
+        Assert.fail("requireChannel should have rejected " + reservedPath);
+      } catch (InvalidPathException invalidPathException) {
+        // expected
+      }
+    }
+  }
+
+  public void testAddServiceBindsNothingWhenAnyRouteIsRejected ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    Route echoRoute = new DefaultRoute("/service/echo");
+
+    try {
+      server.addService(new TwoRouteService(echoRoute, new DefaultRoute("/echo")));
+      Assert.fail("addService should have rejected the non-service route");
+    } catch (InvalidPathException invalidPathException) {
+      Assert.assertNull(server.getService(echoRoute));
+    }
+  }
+
+  private void assertServiceRouteRejected (String path)
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    Route route = new DefaultRoute(path);
+
+    try {
+      server.addService(new TwoRouteService(route, route));
+      Assert.fail("addService should have rejected " + path);
+    } catch (InvalidPathException invalidPathException) {
+      Assert.assertNull(server.getService(route));
+    }
   }
 
   public void testGetSessionReturnsNullForUnknownIdAndIterateSessionsIsEmptyByDefault ()

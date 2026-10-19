@@ -115,6 +115,13 @@ public class BayeuxServiceDefaultsTest {
     Assert.assertEquals(response.getSessionId(), "session-99");
   }
 
+  public void testCreateResponseLeavesSuccessfulUnset () {
+
+    Message<TestValueFactory.TestValue> response = service.createResponse(routeFor("/service/test"), serverFor(), sessionWithId("s-4"), requestWithId("r-4"));
+
+    Assert.assertNull(response.get(Message.SUCCESSFUL));
+  }
+
   public void testCreateResponseWithNullRequestIdProducesNullId () {
 
     Message<TestValueFactory.TestValue> response = service.createResponse(routeFor("/service/test"), serverFor(), sessionWithId("s-3"), requestWithId(null));

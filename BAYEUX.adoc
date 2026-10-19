@@ -211,7 +211,9 @@ Service channel::
     A channel beginning with `/service/`. It is never broadcast — the
     server hands incoming messages to a registered `BayeuxService`,
     which computes a response packet and sends it back to the caller only.
-    This is how a browser-to-server RPC looks in Bayeux.
+    A client subscription to a service channel is acknowledged but never
+    recorded, so nothing is ever delivered to it. This is how a
+    browser-to-server RPC looks in Bayeux.
 
 Ack extension::
     The standard `ack` protocol extension guarantees at-least-once delivery
@@ -549,10 +551,11 @@ channel.publish(payload);
   and an `init` hook called once during server start.
 
 | `BayeuxService<V>`
-| Server-side RPC handler. Declares the routes it binds to and processes
-  each request into a response packet; the helper `createResponse`
-  builds a minimal reply with `channel`, `id`, and
-  `clientId` pre-populated.
+| Server-side RPC handler. Declares the literal `/service/...` routes it
+  binds to and processes each request into a response packet; the helper
+  `createResponse` builds a minimal reply with `channel`, `id`, and
+  `clientId` pre-populated; the service sets `successful` and every
+  other field itself.
 
 | `SecurityPolicy<V>`
 | Veto points on handshake, channel creation, subscribe, and publish. All
@@ -791,7 +794,7 @@ public interface Server<V extends Value<V>> extends Attributed {
   Session<V>   getSession(String sessionId);
 
   // services
-  void         addService(BayeuxService<V> service);
+  void         addService(BayeuxService<V> service) throws InvalidPathException;
   void         removeService(Route route);
   BayeuxService<V> getService(Route route);
 
@@ -856,12 +859,16 @@ Four subtypes, each tied to a distinct event:
     `onConnected(Session)` / `onDisconnected(Session)`. Fires
     when a session has fully completed its handshake+connect and when a
     session has been disconnected (explicitly or by the idle inspector).
+    With `allowsImplicitConnection` enabled, a handshaken session is
+    also connected — and `onConnected` fires — by its first successful
+    subscribe or publish; a rejected one leaves the session handshaken
+    and fires nothing.
 
 `Server.ChannelListener`::
     `onCreated(Channel)` / `onRemoved(Channel)`. Fires when
-    a channel is added to the tree (by `requireChannel`, by an
-    implicit subscribe, or by a service registration) and when it is
-    removed (by `removeChannel` or the idle sifter).
+    a channel is added to the tree (by `requireChannel` or by an
+    implicit subscribe) and when it is removed (by `removeChannel` or
+    the idle sifter). Registering a service creates no channel.
 
 `Server.SubscriptionListener`::
     `onSubscribed(Channel, Session)` /
@@ -1005,6 +1012,37 @@ public interface BayeuxService<V extends Value<V>> {
 }
 ----
 
+`addService` binds the service to every route in `boundRoutes()`. Each
+route must be a literal path beneath `/service/`: wildcard routes
+(`/service/foo/*`, `/service/**`) and routes outside the service
+namespace are rejected with an `InvalidPathException`, and no route from
+that service is bound. The bare `/service` path cannot be bound either,
+because it is not a valid channel path at all (see
+<<troubleshooting,Troubleshooting>>). Lookup is by exact route, so a
+request to `/service/foo/bar` reaches only a service bound to exactly
+`/service/foo/bar`; a request to a service path with no registered
+service is answered with `successful: false` and the error
+`Unknown service`.
+
+`createResponse` returns a message with `channel`, `id`, and `clientId`
+already set. Everything else is the service's responsibility, and the
+messages it returns are sent exactly as built: set `successful: true` on
+a reply, or `successful: false` with an `error` field on a failure —
+Bayeux requires `successful` on every response, and the server does not
+fill it in. A service may return `null` from `process` to send no
+response at all.
+
+Service requests are not run through `SecurityPolicy.canCreate` or
+`canPublish`, and they are accepted from any session that has handshaken,
+whether or not it has completed `/meta/connect`. A service that needs
+either check performs it in `process` using the `session` and `request`
+it is handed.
+
+A client `/meta/subscribe` naming a `/service/...` channel receives a
+successful response but is not recorded: no channel is created,
+`SecurityPolicy.canSubscribe` is not consulted, and nothing is ever
+delivered to the subscriber.
+
 See <<writing-a-bayeux-service,Writing a Bayeux Service>> for a worked
 example.
 
@@ -1032,6 +1070,12 @@ explanation. The built-in `OpenSecurityPolicy` overrides all four methods
 to return `null` and may be wired in explicitly. When no policy is
 configured the server leaves the policy `null`, and the meta layer treats
 a null policy as allow-all.
+
+None of the four hooks is consulted for `/service/...` traffic. A service
+request goes straight to the registered `BayeuxService`, which applies
+any authorization it needs inside `process`, and a subscription to a
+service channel is acknowledged without being recorded, so
+`canSubscribe` never sees it.
 
 == Wiring It Up Without Spring
 
@@ -1100,7 +1144,8 @@ public class EchoService implements BayeuxService<OrthodoxValue> {
 ----
 <1> `createResponse` pre-populates `channel`, `id`, and
     `clientId` using the originating request so the client can
-    correlate the response.
+    correlate the response. The service sets `successful` itself —
+    `true` here; `false` plus an `error` field on a failure.
 <2> The service copies the inbound `data` field back out — a
     textbook echo.
 <3> The packet is tagged `RESPONSE`, which makes
@@ -1113,6 +1158,9 @@ Register the service during application startup:
 ----
 server.addService(new EchoService());
 ----
+
+`addService` throws `InvalidPathException` if any bound route is a
+wildcard or lies outside `/service/`.
 
 == Listeners and Observability
 
@@ -1518,13 +1566,13 @@ Backbone errors::
 The extension surface is deliberate rather than accidental.
 
 Custom `SecurityPolicy`::
-    Override only the hooks you need; all four defaults allow. Wire via
+    Override the hooks you need to open; all four defaults deny. Wire via
     `OumuamuaConfiguration.setSecurityPolicy`.
 
 Custom `BayeuxService`::
     Implement `BayeuxService<V>`, register with
-    `server.addService(...)`, bind any route starting with
-    `/service/...`.
+    `server.addService(...)`, bind one or more literal (non-wildcard)
+    routes beneath `/service/`.
 
 Custom `Server.Listener`::
     Four subtypes — session, channel, subscription, packet. Add via
@@ -1580,7 +1628,13 @@ Client subscribes but never receives::
     The path is malformed. Valid paths start with a slash, contain
     non-empty segments of allowed characters, and end with a segment
     (not a trailing slash). Use `*` or `**` only as the
-    final segment.
+    final segment. The bare paths `/meta` and `/service` are reserved
+    namespace roots and are rejected wherever a path is parsed: a client
+    that publishes, subscribes, or unsubscribes on either receives an
+    error response naming the path, and `findChannel` /
+    `requireChannel` throw rather than create them. `addService` also
+    throws it when a bound route is a wildcard or is not beneath
+    `/service/`; the service is then not registered on any route.
 
 Long-poll queue overflow::
     A session is being produced to faster than it can consume. The

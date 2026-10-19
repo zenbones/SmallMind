@@ -376,8 +376,10 @@ public enum Meta {
 
   /**
    * Handles {@code /meta/subscribe}: validates session state, rejects subscriptions to meta channels,
-   * enforces security policy for channel creation and subscription, creates the channel on demand when
-   * permitted, and adds the session as a subscriber.  Supports implicit connection when the server allows it.
+   * acknowledges but never records subscriptions to service channels, enforces security policy for
+   * channel creation and subscription, creates the channel on demand when permitted, and adds the
+   * session as a subscriber.  When the server allows implicit connection, a handshaken session is
+   * advanced to connected only by a subscription that succeeds.
    */
   SUBSCRIBE(DefaultRoute.SUBSCRIBE_ROUTE) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
@@ -396,17 +398,19 @@ public enum Meta {
       } else if (subscription.startsWith("/meta/")) {
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a meta channel", subscription, null));
+      } else if (subscription.startsWith("/service/")) {
+
+        // Service channels are request/response only, so the subscription is acknowledged but never recorded
+        if (session.getState().lt(SessionState.CONNECTED)) {
+          session.completeConnection();
+        }
+
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeSuccessResponse(server, route.getPath(), request.getId(), request.getSessionId(), subscription));
       } else {
 
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
         SecurityRejection rejection;
         Channel<V> channel;
-
-        // If we're here without a connection, it's because we're explicitly allowing implicit connections, which makes no sense in terms of the bayeux protocol,
-        // but cometd does it anyway, and the client expects it...
-        if (session.getState().lt(SessionState.CONNECTED)) {
-          session.completeConnection();
-        }
 
         try {
           if ((channel = server.findChannel(subscription)) == null) {
@@ -430,6 +434,12 @@ public enum Meta {
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a closed channel", subscription, null));
         } else {
+
+          // If we're here without a connection, it's because we're explicitly allowing implicit connections, which makes no sense in terms of the bayeux protocol,
+          // but cometd does it anyway, and the client expects it...
+          if (session.getState().lt(SessionState.CONNECTED)) {
+            session.completeConnection();
+          }
 
           return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructSubscribeSuccessResponse(server, route.getPath(), request.getId(), request.getSessionId(), subscription));
         }
@@ -488,12 +498,13 @@ public enum Meta {
 
   /**
    * Handles {@code /meta/unsubscribe}: validates session state, rejects unsubscription from meta
-   * channels, removes the session from the target channel's subscriber list if it exists,
-   * and always returns a success response (absent channels are silently ignored).
+   * channels, acknowledges unsubscription from service channels without a lookup (such subscriptions
+   * are never recorded), removes the session from the target channel's subscriber list if it exists,
+   * and otherwise returns a success response (absent channels are silently ignored). An invalid
+   * subscription path produces an error response that echoes the path.
    */
   UNSUBSCRIBE(DefaultRoute.UNSUBSCRIBE_ROUTE) {
-    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request)
-      throws InvalidPathException {
+    public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
 
       String subscription;
 
@@ -509,12 +520,21 @@ public enum Meta {
       } else if (subscription.startsWith("/meta/")) {
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructUnsubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), "Attempted subscription to a meta channel", subscription, null));
+      } else if (subscription.startsWith("/service/")) {
+
+        // Service channel subscriptions are never recorded, so there is nothing to remove
+        return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructUnsubscribeSuccessResponse(server, route.getPath(), request.getId(), request.getSessionId(), subscription));
       } else {
 
         Channel<V> channel;
 
-        if ((channel = server.findChannel(subscription)) != null) {
-          channel.unsubscribe(session);
+        try {
+          if ((channel = server.findChannel(subscription)) != null) {
+            channel.unsubscribe(session);
+          }
+        } catch (InvalidPathException invalidPathException) {
+
+          return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructUnsubscribeErrorResponse(server, route.getPath(), request.getId(), request.getSessionId(), invalidPathException.getMessage(), subscription, null));
         }
 
         return new Packet<>(PacketType.RESPONSE, session.getId(), route, constructUnsubscribeSuccessResponse(server, route.getPath(), request.getId(), request.getSessionId(), subscription));
@@ -575,7 +595,8 @@ public enum Meta {
    * Handles publish requests to normal (non-meta, non-service) channels: validates session state,
    * enforces security policy for channel creation and publishing, delivers the message to subscribers,
    * and optionally echoes the original message back to the publisher based on the
-   * {@code ext.oumuamua.echo} flag.
+   * {@code ext.oumuamua.echo} flag.  When the server allows implicit connection, a handshaken
+   * session is advanced to connected only by a publish that is delivered.
    */
   PUBLISH(null) {
     public <V extends Value<V>> Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request) {
@@ -594,12 +615,6 @@ public enum Meta {
         SecurityPolicy<V> securityPolicy = server.getSecurityPolicy();
         SecurityRejection rejection;
         Channel<V> channel;
-
-        // If we're here without a connection, it's because we're explicitly allowing implicit connections, which makes no sense in terms of the bayeux protocol,
-        // but cometd does it anyway, and the client expects it...
-        if (session.getState().lt(SessionState.CONNECTED)) {
-          session.completeConnection();
-        }
 
         try {
           if ((channel = server.findChannel(route.getPath())) == null) {
@@ -625,6 +640,12 @@ public enum Meta {
 
             ((AbstractProtocol<V>)protocol).onPublish(request, deliveryMessage);
             server.deliver(session, new Packet<>(PacketType.DELIVERY, session.getId(), route, deliveryMessage), true);
+
+            // If we're here without a connection, it's because we're explicitly allowing implicit connections, which makes no sense in terms of the bayeux protocol,
+            // but cometd does it anyway, and the client expects it...
+            if (session.getState().lt(SessionState.CONNECTED)) {
+              session.completeConnection();
+            }
 
             if (getEchoFlag(request)) {
               return new Packet<V>(PacketType.RESPONSE, session.getId(), route, new Message[] {constructPublishSuccessResponse(server, route.getPath(), request.getId(), session.getId()), request});

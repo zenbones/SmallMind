@@ -149,6 +149,24 @@ public class MetaPublishTest {
     Assert.assertTrue(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
   }
 
+  public void testRejectedPublishDoesNotCompleteImplicitConnection ()
+    throws Exception {
+
+    SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
+
+    Mockito.when(session.getState()).thenReturn(SessionState.HANDSHOOK);
+    Mockito.when(server.allowsImplicitConnection()).thenReturn(true);
+    Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
+    Mockito.when(server.findChannel("/foo")).thenReturn(channel);
+    Mockito.when(policy.canPublish(Mockito.eq(session), Mockito.eq(channel), Mockito.any())).thenReturn(SecurityRejection.reason("no publishes"));
+
+    Packet<OrthodoxValue> packet = Meta.PUBLISH.process(protocol, route, server, session, request());
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertFalse(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Mockito.verify(session, Mockito.never()).completeConnection();
+  }
+
   public void testMetaChannelRouteIsRejected ()
     throws Exception {
 

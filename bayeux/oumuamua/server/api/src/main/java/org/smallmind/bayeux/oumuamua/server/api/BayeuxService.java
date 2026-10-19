@@ -44,6 +44,8 @@ public interface BayeuxService<V extends Value<V>> {
 
   /**
    * Builds a minimal response message pre-filled with the channel path, request id, and session id.
+   * The {@code successful} field is not set; the service is responsible for setting it, along with
+   * an {@code error} field when reporting a failure, before returning the message from {@link #process}.
    *
    * @param route   route whose path is written into the {@code channel} field
    * @param server  server whose codec creates the message
@@ -64,14 +66,17 @@ public interface BayeuxService<V extends Value<V>> {
   Route[] boundRoutes ();
 
   /**
-   * Handles an incoming message and returns a response packet for the client.
+   * Handles an incoming message and returns a response packet for the client. The returned
+   * messages are sent exactly as built: the service owns every field, including
+   * {@code successful}, which the Bayeux specification requires on each response. Returning
+   * {@code null} sends no response at all.
    *
    * @param protocol active transport protocol
    * @param route    route the message was addressed to
    * @param server   hosting server
    * @param session  session that sent the request
    * @param request  incoming Bayeux message
-   * @return packet containing one or more response messages to deliver to the session
+   * @return packet containing one or more response messages to deliver to the session, or {@code null} for no response
    */
   Packet<V> process (Protocol<V> protocol, Route route, Server<V> server, Session<V> session, Message<V> request);
 }

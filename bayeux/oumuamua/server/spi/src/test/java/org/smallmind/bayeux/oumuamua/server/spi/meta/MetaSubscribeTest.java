@@ -164,6 +164,64 @@ public class MetaSubscribeTest {
     Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.ERROR)).asText(), "Attempted subscription to a meta channel");
   }
 
+  public void testServiceChannelSubscriptionIsAcknowledgedButNotRecorded ()
+    throws Exception {
+
+    Packet<OrthodoxValue> packet = Meta.SUBSCRIBE.process(protocol, DefaultRoute.SUBSCRIBE_ROUTE, server, session, request("/service/echo"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertTrue(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Assert.assertEquals(((StringValue<OrthodoxValue>)response.get(Message.SUBSCRIPTION)).asText(), "/service/echo");
+    Mockito.verify(server, Mockito.never()).findChannel(Mockito.anyString());
+    Mockito.verify(server, Mockito.never()).requireChannel(Mockito.anyString());
+    Mockito.verify(channel, Mockito.never()).subscribe(Mockito.any());
+  }
+
+  public void testServiceChannelSubscriptionCompletesImplicitConnection ()
+    throws Exception {
+
+    Mockito.when(session.getState()).thenReturn(SessionState.HANDSHOOK);
+    Mockito.when(server.allowsImplicitConnection()).thenReturn(true);
+
+    Packet<OrthodoxValue> packet = Meta.SUBSCRIBE.process(protocol, DefaultRoute.SUBSCRIBE_ROUTE, server, session, request("/service/echo"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Mockito.verify(session).completeConnection();
+    Assert.assertTrue(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+  }
+
+  public void testRejectedSubscribeDoesNotCompleteImplicitConnection ()
+    throws Exception {
+
+    SecurityPolicy<OrthodoxValue> policy = Mockito.mock(SecurityPolicy.class);
+
+    Mockito.when(session.getState()).thenReturn(SessionState.HANDSHOOK);
+    Mockito.when(server.allowsImplicitConnection()).thenReturn(true);
+    Mockito.when(server.getSecurityPolicy()).thenReturn(policy);
+    Mockito.when(server.findChannel("/foo")).thenReturn(null);
+    Mockito.when(policy.canCreate(Mockito.eq(session), Mockito.eq("/foo"), Mockito.any())).thenReturn(SecurityRejection.reason("no creates"));
+
+    Packet<OrthodoxValue> packet = Meta.SUBSCRIBE.process(protocol, DefaultRoute.SUBSCRIBE_ROUTE, server, session, request("/foo"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertFalse(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Mockito.verify(session, Mockito.never()).completeConnection();
+  }
+
+  public void testInvalidPathSubscribeDoesNotCompleteImplicitConnection ()
+    throws Exception {
+
+    Mockito.when(session.getState()).thenReturn(SessionState.HANDSHOOK);
+    Mockito.when(server.allowsImplicitConnection()).thenReturn(true);
+    Mockito.when(server.findChannel("/bad path")).thenThrow(new InvalidPathException("bad path"));
+
+    Packet<OrthodoxValue> packet = Meta.SUBSCRIBE.process(protocol, DefaultRoute.SUBSCRIBE_ROUTE, server, session, request("/bad path"));
+    Message<OrthodoxValue> response = packet.getMessages()[0];
+
+    Assert.assertFalse(((BooleanValue<OrthodoxValue>)response.get(Message.SUCCESSFUL)).asBoolean());
+    Mockito.verify(session, Mockito.never()).completeConnection();
+  }
+
   public void testInvalidPathProducesError ()
     throws Exception {
 
