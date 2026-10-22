@@ -30,43 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy;
+package org.smallmind.persistence.sql;
 
-import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.sql.CommonDataSource;
+import javax.sql.DataSource;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.persistence.orm.ORMInitializationException;
 
 /**
- * Registry that stores and retrieves generated resource proxies scoped to the current application context.
+ * Simple application-scoped registry mapping string keys to {@link CommonDataSource} instances.
+ * Intended for frameworks that need to look up named data sources at runtime.
  */
-public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
+public class DataSourceContextManager implements PerApplicationDataManager {
 
   /**
-   * Stores the given proxy under its resource interface in the per-application proxy map.
+   * Registers a data source under the given key in the per-application context.
    *
-   * @param resourceInterface interface key used to look up the proxy later
-   * @param proxy             proxy instance to register
+   * @param key        lookup key
+   * @param dataSource data source to store
    */
-  public static void register (Class<?> resourceInterface, Proxy proxy) {
+  public static void register (String key, CommonDataSource dataSource) {
 
-    ConcurrentHashMap<Class<?>, Proxy> proxyMap;
+    ConcurrentHashMap<String, CommonDataSource> dataSourceMap;
 
-    if ((proxyMap = PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, proxyMap = new ConcurrentHashMap<>());
+    if ((dataSourceMap = PerApplicationContext.getPerApplicationData(DataSourceContextManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(DataSourceContextManager.class, dataSourceMap = new ConcurrentHashMap<>());
     }
-    proxyMap.put(resourceInterface, proxy);
+    dataSourceMap.put(key, dataSource);
   }
 
   /**
-   * Returns the proxy previously registered for the given resource interface.
+   * Retrieves a data source for the provided key.
    *
-   * @param resourceInterface interface whose proxy is being requested
-   * @param <T>               resource type
-   * @return proxy cast to {@code T}
+   * @param key lookup key
+   * @return registered {@link CommonDataSource}
+   * @throws ORMInitializationException if no data source is registered for the key
    */
-  public static <T> T getProxy (Class<T> resourceInterface) {
+  public static CommonDataSource getDataSource (String key) {
 
-    return resourceInterface.cast(PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).get(resourceInterface));
+    CommonDataSource dataSource;
+
+    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourceContextManager.class, ConcurrentHashMap.class).get(key)) == null) {
+      throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
+    }
+
+    return dataSource;
   }
 }

@@ -422,14 +422,21 @@ The attribute name lives in `nutsnbolts`' `PerApplicationContext`, so
 attribute mode only works on a thread with a per-application context (in a
 web application, `PerApplicationContextFilter` provides one). Without one,
 the first use fails with `ExceptionInInitializerError` caused by
-`MissingPerApplicationContextException`. `PolymorphicAttributeManager`
+`MissingPerApplicationContextException`. `PolymorphicAttributeContextManager`
 seeds `java/object` once per JVM, into the context that is current when the
 class first loads; any per-application context created after that has no
 name until the application sets one with
-`PolymorphicAttributeManager.setPolymorphicAttributeName(...)` or a
+`PolymorphicAttributeContextManager.setPolymorphicAttributeName(...)` or a
 `PolymorphicAttributeNameInitializingBean`, and writing fails with a
 `NullPointerException`. The default `useAttribute = false` mode needs none
 of this.
++
+`PolymorphicAttributeScopeManager` holds the same setting in a
+`PerApplicationScope`. It has no static initializer: `getPolymorphicAttributeName()`
+returns the name stored in the bound scope, or `java/object` when nothing has
+been stored, and both accessors throw `MissingPerApplicationScopeException`
+on a thread with no bound scope. `AttributedPolymorphicXmlAdapter` reads
+`PolymorphicAttributeContextManager`; the two settings are unrelated.
 
 `@Hierarchy`::
     No adapter and no discriminator. The base views take a self type

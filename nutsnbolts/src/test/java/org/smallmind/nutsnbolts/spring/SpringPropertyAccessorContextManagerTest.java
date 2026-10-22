@@ -30,36 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.util;
+package org.smallmind.nutsnbolts.spring;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.property.PropertyClosure;
+import org.smallmind.nutsnbolts.property.PropertyExpander;
+import org.smallmind.nutsnbolts.property.PropertyExpanderException;
+import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * Covers {@link PolymorphicAttributeManager}, which stores the global polymorphic discriminator
- * attribute name in a {@link PerApplicationContext}. A fresh context is attached per method because
- * the manager resolves its value through the per-application data registry.
- */
 @Test(groups = "unit")
-public class PolymorphicAttributeManagerTest {
+public class SpringPropertyAccessorContextManagerTest {
 
   @BeforeMethod
-  public void beforeMethod () {
+  public void installPerApplicationContext () {
 
     new PerApplicationContext();
   }
 
-  public void testDefaultAttributeNameIsPresent () {
+  public void testRegisterAndRetrieveRoundTrip ()
+    throws PropertyExpanderException {
 
-    Assert.assertNotNull(PolymorphicAttributeManager.getPolymorphicAttributeName());
-  }
+    Map<String, Object> propertyMap = new HashMap<>();
+    propertyMap.put("answer", "42");
 
-  public void testSetAndGetRoundTrip () {
+    PropertyExpander expander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false);
+    PropertyPlaceholderStringValueResolver resolver = new PropertyPlaceholderStringValueResolver(expander, propertyMap);
+    SpringPropertyAccessor accessor = new SpringPropertyAccessor(resolver);
 
-    PolymorphicAttributeManager.setPolymorphicAttributeName("@kind");
+    SpringPropertyAccessorContextManager.register(accessor);
 
-    Assert.assertEquals(PolymorphicAttributeManager.getPolymorphicAttributeName(), "@kind");
+    SpringPropertyAccessor retrieved = SpringPropertyAccessorContextManager.getSpringPropertyAccessor();
+
+    Assert.assertSame(retrieved, accessor);
+    Assert.assertEquals(retrieved.asString("answer"), "42");
   }
 }

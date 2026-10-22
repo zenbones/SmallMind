@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
 /**
  * Unit tests for {@link ByKeyExtrinsicVector}, which stores elements as {@link org.smallmind.persistence.cache.DurableKey}
  * values inside an {@link ExtrinsicRoster} and hydrates them through the registered {@link ORMDao} when read. A Mockito DAO
- * mock is registered with {@link OrmDaoManager} (which requires a {@link PerApplicationContext} bound to the thread) so the
+ * mock is registered with {@link OrmDaoContextManager} (which requires a {@link PerApplicationContext} bound to the thread) so the
  * lazy list, prefetched list, and iterator access paths can resolve keys back to durables. The tests cover both
  * constructors, hydration ordering, {@code maxSize} truncation, {@code copy()} independence, and the prefetch path that
  * falls back to per-element ORM lookups when no {@code VectoredDao} is present.
@@ -96,7 +96,7 @@ public class ByKeyExtrinsicVectorTest {
       Mockito.when(ormDao.acquire(Gadget.class, id)).thenReturn(new Gadget(id));
     }
 
-    OrmDaoManager.register(Gadget.class, ormDao);
+    OrmDaoContextManager.register(Gadget.class, ormDao);
   }
 
   public void testLazyListHydratesKeysInOrder () {

@@ -43,7 +43,7 @@ import org.smallmind.persistence.Durable;
  * Provides lookup by class or class name to help wire DAOs in environments that cannot
  * rely on injection alone.
  */
-public class OrmDaoManager implements PerApplicationDataManager {
+public class OrmDaoContextManager implements PerApplicationDataManager {
 
   /**
    * Registers an ORM DAO for a durable class in the current application context.
@@ -55,8 +55,8 @@ public class OrmDaoManager implements PerApplicationDataManager {
 
     ConcurrentHashMap<Class<? extends Durable>, ORMDao> ormDaoMap;
 
-    if ((ormDaoMap = PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(OrmDaoManager.class, ormDaoMap = new ConcurrentHashMap<>());
+    if ((ormDaoMap = PerApplicationContext.getPerApplicationData(OrmDaoContextManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(OrmDaoContextManager.class, ormDaoMap = new ConcurrentHashMap<>());
     }
     ormDaoMap.put(durableClass, ormDao);
   }
@@ -71,7 +71,7 @@ public class OrmDaoManager implements PerApplicationDataManager {
 
     boolean isSimple = name.indexOf('.') < 0;
 
-    for (Object durableClass : PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).keySet()) {
+    for (Object durableClass : PerApplicationContext.getPerApplicationData(OrmDaoContextManager.class, ConcurrentHashMap.class).keySet()) {
       if ((isSimple) ? ((Class)durableClass).getSimpleName().equals(name) : ((Class)durableClass).getName().equals(name)) {
 
         return (Class)durableClass;
@@ -93,7 +93,7 @@ public class OrmDaoManager implements PerApplicationDataManager {
 
     if ((durableClass = findDurableClass(name)) != null) {
 
-      return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).get(durableClass);
+      return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoContextManager.class, ConcurrentHashMap.class).get(durableClass);
     }
 
     return null;
@@ -109,6 +109,6 @@ public class OrmDaoManager implements PerApplicationDataManager {
    */
   public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?, ?> get (Class<D> durableClass) {
 
-    return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).get(durableClass);
+    return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoContextManager.class, ConcurrentHashMap.class).get(durableClass);
   }
 }

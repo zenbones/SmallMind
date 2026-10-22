@@ -116,4 +116,21 @@ public class InstrumentTest {
       registry.stop();
     }
   }
+
+  public void testInstrumentDelegatesToClaxonRegistryContextManager ()
+    throws InterruptedException, TimeoutException {
+
+    ClaxonRegistry registry = new ClaxonRegistry(new ClaxonConfiguration());
+
+    try {
+      runInFreshContext(() -> {
+        ClaxonRegistryContextManager.register(registry);
+
+        Assert.assertSame(Instrument.getRegistry(), registry);
+        Assert.assertSame(ClaxonRegistryContextManager.getRegistry(), registry);
+      });
+    } finally {
+      registry.stop();
+    }
+  }
 }

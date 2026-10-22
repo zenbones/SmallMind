@@ -216,7 +216,12 @@ Spring container is the system of record: you declare a
     `afterPropertiesSet()` validates the configured
     `WebApplicationOption[]`; `onApplicationEvent(...)` constructs and starts
     the server when the Spring context finishes refreshing; `destroy()` stops
-    the server and its WebSocket containers.
+    the server and its WebSocket containers. Optional
+    `suppressConnectionClosedException` discards `"Connection is closed"`
+    `IOException`s thrown through the JAX-RS filter, and optional
+    `perApplicationScope` selects which per-application filter guards the
+    JAX-RS path (see <<web-grizzly-per-application-data,Per-application
+    data on request threads>>).
 
 `WebApplicationOption`::
     A value object describing one context path. Holds a
@@ -319,6 +324,40 @@ type.
     context for `@Path` beans and `ResourceConfigExtension` beans.
 <3> Declaring `JaxRSOption` causes the Jersey servlet to be bound at
     `contextPath + restPath + "/*"`.
+
+[[web-grizzly-per-application-data]]
+=== Per-application data on request threads
+
+Declaring `JaxRSOption` also maps a filter named `per-application-data` on
+`restPath + "/*"` for `REQUEST` dispatches. By default that filter is
+`org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter`, which
+installs the `PerApplicationContext` map found on the Spring refresh thread
+onto each request thread. Setting `perApplicationScope` on the bean
+registers `org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter`
+instead, which binds that `PerApplicationScope` for the extent of each
+request's filter chain:
+
+[source,xml]
+----
+<bean id="perApplicationScope"
+      class="org.smallmind.nutsnbolts.scope.PerApplicationScope"/>
+
+<bean id="grizzlyServer"
+      class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <property name="perApplicationScope" ref="perApplicationScope"/>
+  ...
+</bean>
+----
+
+The two per-application maps are unrelated: data registered through
+`PerApplicationContext` is not visible through `PerApplicationScope`, and
+nothing bridges them. Set `perApplicationScope` only when the application
+registers its per-application data through `PerApplicationScope` and binds
+this same instance (`run` / `call`) around the Spring refresh.
+`suppressConnectionClosedException` applies to whichever filter is
+registered. `JettyInitializingBean` exposes the same property with the same
+behavior. See xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]
+for the scope contract.
 
 === HTTPS
 
@@ -498,7 +537,9 @@ Both accept the same installer POJOs with different package names.
     stops it in `destroy()`. Configurable surface: `host`, `port`,
     `allowInsecure`, `sslInfo`, `resourceConfig`, `webApplicationOptions`,
     `initialWorkerPoolSize`, `maximumWorkerPoolSize`, `maxHttpHeaderSize`,
-    `suppressConnectionClosedException`, and `debug` (dumps SOAP traffic).
+    `suppressConnectionClosedException`, `perApplicationScope` (see
+    <<web-grizzly-per-application-data,Per-application data on request
+    threads>>), and `debug` (dumps SOAP traffic).
 
 `WebApplicationOption` (`org.smallmind.web.jetty.option`)::
     Mirrors the Grizzly version. Holds `ClassLoaderResourceOption`,
@@ -580,6 +621,10 @@ Both accept the same installer POJOs with different package names.
 <bean class="org.smallmind.web.jetty.JettyPostProcessor"/>
 ----
 <1> Omit to serve HTTP only.
+
+The optional `perApplicationScope` property selects the per-application
+filter on the JAX-RS path exactly as described for Grizzly in
+<<web-grizzly-per-application-data,Per-application data on request threads>>.
 
 === Session handling
 

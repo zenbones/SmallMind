@@ -140,9 +140,18 @@ against.
 
 | `Instrument`
 | Static façade over the registry. `Instrument.register(registry)` installs a
-  registry per application classloader via `PerApplicationContext`;
-  `Instrument.with(caller, builder, tags...)` returns a working or unplugged
-  `Instrumentation` depending on whether a registry has been installed.
+  registry per application classloader through `ClaxonRegistryContextManager`
+  (backed by `PerApplicationContext`); `Instrument.with(caller, builder,
+  tags...)` returns a working or unplugged `Instrumentation` depending on
+  whether a registry has been installed.
+
+| `ClaxonRegistryContextManager`, `ClaxonRegistryScopeManager`
+| The per-application registry holders. The context flavor stores the
+  registry in `PerApplicationContext` and is what `Instrument` reads. The
+  scope flavor has the same `register` / `getRegistry` API resolved through
+  `PerApplicationScope`; it throws `MissingPerApplicationScopeException` on a
+  thread that is not inside the scope's `run` / `call`, a carrier, or a
+  `wrapThreadFactory` thread. The two holders are unrelated.
 
 | `Instrumentation` / `WorkingInstrumentation` / `UnpluggedInstrumentation`
 | The fluent call-site API. `update(value)`, `on(executable)`, `track(object,
@@ -1204,9 +1213,9 @@ termination stint; if the in-flight pass does not finish within that window,
   `PullEmitter` implementations (e.g. `PrometheusEmitter`) additionally need
   to guard the pull path; the built-in Prometheus emitter uses a double-buffer
   swap plus a `synchronized emit()`.
-* `Instrument` is backed by `PerApplicationContext` — one registry per
-  application classloader. That is the right boundary for OSGi, app-server,
-  and multi-tenant deployments.
+* `Instrument` is backed by `ClaxonRegistryContextManager` and so by
+  `PerApplicationContext` — one registry per application classloader. That
+  is the right boundary for OSGi, app-server, and multi-tenant deployments.
 
 === `@Instrumented` behavior
 

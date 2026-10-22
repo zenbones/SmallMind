@@ -34,8 +34,6 @@ package org.smallmind.claxon.registry;
 
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
  * Static façade that allows application code to obtain {@link Instrumentation} instances
@@ -48,11 +46,11 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
  * metric updates, ensuring that instrumented code paths never throw a
  * {@link NullPointerException} due to a missing registry.
  *
- * <p>The registry is stored in a {@link PerApplicationContext} so that multi-application
- * environments (e.g., OSGi, application servers) can maintain independent registries per
- * application classloader.
+ * <p>The registry is stored through {@link ClaxonRegistryContextManager} so that
+ * multi-application environments (e.g., OSGi, application servers) can maintain independent
+ * registries per application classloader.
  */
-public class Instrument implements PerApplicationDataManager {
+public class Instrument {
 
   /**
    * Shared no-op instrumentation returned when no registry has been installed.
@@ -67,7 +65,7 @@ public class Instrument implements PerApplicationDataManager {
    */
   public static void register (ClaxonRegistry registry) {
 
-    PerApplicationContext.setPerApplicationData(Instrument.class, registry);
+    ClaxonRegistryContextManager.register(registry);
   }
 
   /**
@@ -78,7 +76,7 @@ public class Instrument implements PerApplicationDataManager {
    */
   public static ClaxonRegistry getRegistry () {
 
-    return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
+    return ClaxonRegistryContextManager.getRegistry();
   }
 
   /**

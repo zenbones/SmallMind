@@ -39,7 +39,7 @@ import java.util.Map;
 import javax.sql.CommonDataSource;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
@@ -139,7 +139,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorContextManager.getSpringPropertyAccessor();
 
     prefix = ((prefix == null) || prefix.isEmpty()) ? "" : prefix + ".";
 

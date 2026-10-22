@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 
 /**
  * Covers {@link PolymorphicAttributeNameInitializingBean}: the setter records the name and
- * {@code afterPropertiesSet} pushes it into the {@link PolymorphicAttributeManager}. A fresh
+ * {@code afterPropertiesSet} pushes it into the {@link PolymorphicAttributeContextManager}. A fresh
  * {@link PerApplicationContext} is attached per method because the manager resolves through the
  * per-application data registry.
  */
@@ -60,6 +60,6 @@ public class PolymorphicAttributeNameInitializingBeanTest {
     bean.setPolymorphicAttributeName("@type");
     bean.afterPropertiesSet();
 
-    Assert.assertEquals(PolymorphicAttributeManager.getPolymorphicAttributeName(), "@type");
+    Assert.assertEquals(PolymorphicAttributeContextManager.getPolymorphicAttributeName(), "@type");
   }
 }

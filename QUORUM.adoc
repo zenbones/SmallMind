@@ -143,20 +143,29 @@ pool misbehaves.
 
 The abstract base class for every pool implementation. Its only
 contribution is the `register()` method, which publishes the pool
-instance to the per-application `PoolManager` so that callers anywhere
+instance to the per-application `PoolContextManager` so that callers anywhere
 in the same `PerApplicationContext` can retrieve it without needing an
 injected reference.
 
-==== `PoolManager`
+==== `PoolContextManager`
 
 An application-scoped registry (not JVM-wide). Holds a single `Pool`
 instance per `PerApplicationContext`. Static accessors:
 
 [source,java]
 ----
-PoolManager.register(myPool);
-Pool pool = PoolManager.getPool();
+PoolContextManager.register(myPool);
+Pool pool = PoolContextManager.getPool();
 ----
+
+==== `PoolScopeManager`
+
+The same registry resolved through `nutsnbolts`' `PerApplicationScope`
+instead of `PerApplicationContext`. `register(pool)` and `getPool()` must be
+called on a thread inside the scope's `run` / `call`, an
+`ApplicationCarrier`, or a `wrapThreadFactory` thread, otherwise they throw
+`MissingPerApplicationScopeException`. `Pool.register()` publishes through
+`PoolContextManager`; the two registries are unrelated.
 
 ==== `PoolConfig`
 
@@ -205,7 +214,7 @@ public interface ComponentFactory<T extends PooledComponent> {
 ==== Lifecycle
 
 . `new ComponentPool<>(factory, config)` -- sized per `SimplePoolConfig`.
-. `pool.register()` -- optional, publishes to `PoolManager`.
+. `pool.register()` -- optional, publishes to `PoolContextManager`.
 . `pool.getComponent()` -- loops: return a free one; otherwise create
   one if below `maxPoolSize`; otherwise wait up to
   `acquireWaitTimeMillis`; otherwise throw `ComponentPoolException`.

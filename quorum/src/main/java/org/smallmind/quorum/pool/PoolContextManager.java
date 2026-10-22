@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
  * current application rather than shared statically across the JVM. Pools register themselves via
  * {@link Pool#register()}, which calls {@link #register(Pool)} here.
  */
-public class PoolManager implements PerApplicationDataManager {
+public class PoolContextManager implements PerApplicationDataManager {
 
   /**
    * Stores {@code pool} in the per-application context, making it retrievable via {@link #getPool()}.
@@ -53,7 +53,7 @@ public class PoolManager implements PerApplicationDataManager {
    */
   public static void register (Pool pool) {
 
-    PerApplicationContext.setPerApplicationData(PoolManager.class, pool);
+    PerApplicationContext.setPerApplicationData(PoolContextManager.class, pool);
   }
 
   /**
@@ -64,6 +64,6 @@ public class PoolManager implements PerApplicationDataManager {
    */
   public static Pool getPool () {
 
-    return PerApplicationContext.getPerApplicationData(PoolManager.class, Pool.class);
+    return PerApplicationContext.getPerApplicationData(PoolContextManager.class, Pool.class);
   }
 }

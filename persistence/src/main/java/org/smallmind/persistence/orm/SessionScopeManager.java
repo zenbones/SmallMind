@@ -33,19 +33,24 @@
 package org.smallmind.persistence.orm;
 
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * Application-scoped registry for {@link ProxySession} instances keyed by a session source.
+ * Application-scoped registry for {@link ProxySession} instances keyed by a session source, resolved through a
+ * {@link PerApplicationScope}. This is the scope flavor of {@link SessionContextManager}: the calling thread must be
+ * inside the scope's {@code run} / {@code call}, an {@code ApplicationCarrier}, or a thread created by
+ * {@code PerApplicationScope.wrapThreadFactory}, otherwise {@code MissingPerApplicationScopeException} is thrown.
+ * Library code in this module ({@code ProxySession.register()} and the session boundaries) resolves through the
+ * context flavor until this module is cut over.
  */
-public class SessionManager implements PerApplicationDataManager, ApplicationContextAware {
+public class SessionScopeManager implements PerApplicationDataManager, ApplicationContextAware {
 
   /**
-   * Registers a proxy session for the given key.
+   * Registers a proxy session for the given key in the per-application scope bound to the current thread.
    *
    * @param sessionSourceKey the key that identifies the session
    * @param proxySession     the session instance
@@ -54,17 +59,17 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
 
     ConcurrentHashMap<String, ProxySession> sessionMap;
 
-    if ((sessionMap = PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(SessionManager.class, sessionMap = new ConcurrentHashMap<>());
+    if ((sessionMap = PerApplicationScope.getPerApplicationData(SessionScopeManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationScope.setPerApplicationData(SessionScopeManager.class, sessionMap = new ConcurrentHashMap<>());
     }
     sessionMap.put(sessionSourceKey, proxySession);
   }
 
   /**
-   * Retrieves the default proxy session.
+   * Returns the session registered under the {@code null} key.
    *
-   * @return proxy session registered under the default key
-   * @throws ORMInitializationException if no default session is registered
+   * @return the default proxy session
+   * @throws ORMInitializationException if no session is registered under the {@code null} key
    */
   public static ProxySession getSession () {
 
@@ -72,10 +77,10 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Retrieves the registered proxy session for the default key.
+   * Returns the session registered under the {@code null} key.
    *
-   * @return default proxy session
-   * @throws ORMInitializationException if no session is registered
+   * @return the default proxy session
+   * @throws ORMInitializationException if no session is registered under the {@code null} key
    */
   public static ProxySession getDefaultSession () {
 
@@ -83,17 +88,17 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Retrieves a proxy session by key.
+   * Returns the session registered under the given key.
    *
-   * @param sessionSourceKey the key used during registration; may be {@code null} for default
-   * @return the matching proxy session
-   * @throws ORMInitializationException if no session is registered for the key
+   * @param sessionSourceKey the key that identifies the session
+   * @return the registered proxy session
+   * @throws ORMInitializationException if no session is registered under the key
    */
   public static ProxySession getSession (String sessionSourceKey) {
 
     ProxySession proxySession;
 
-    if ((proxySession = (ProxySession)PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).get(sessionSourceKey)) == null) {
+    if ((proxySession = (ProxySession)PerApplicationScope.getPerApplicationData(SessionScopeManager.class, ConcurrentHashMap.class).get(sessionSourceKey)) == null) {
       throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", sessionSourceKey);
     }
 
@@ -101,7 +106,7 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Closes the default proxy session.
+   * Closes the session registered under the {@code null} key.
    */
   public static void closeSession () {
 
@@ -109,9 +114,9 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Closes the session registered for the provided key.
+   * Closes the session registered under the given key.
    *
-   * @param sessionSourceKey the key identifying the session to close; may be {@code null} for default
+   * @param sessionSourceKey the key that identifies the session
    */
   public static void closeSession (String sessionSourceKey) {
 
@@ -119,15 +124,15 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Initializes the per-application session map when the Spring context is set.
+   * Replaces the session registry of the per-application scope bound to the current thread with an empty map.
    *
-   * @param applicationContext the Spring context
-   * @throws BeansException if initialization fails
+   * @param applicationContext the Spring application context (unused)
+   * @throws BeansException never thrown by this implementation
    */
   @Override
   public void setApplicationContext (ApplicationContext applicationContext)
     throws BeansException {
 
-    PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
+    PerApplicationScope.setPerApplicationData(SessionScopeManager.class, new ConcurrentHashMap<String, ProxySession>());
   }
 }

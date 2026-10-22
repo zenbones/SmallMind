@@ -35,13 +35,13 @@ package org.smallmind.persistence.sql.pool;
 import java.sql.SQLException;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
-import org.smallmind.persistence.sql.DataSourceManager;
+import org.smallmind.persistence.sql.DataSourceContextManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
  * XA-capable data source backed by a {@link ComponentPool} of {@link XAConnection}s. Supports
- * registration with {@link DataSourceManager} for keyed lookup.
+ * registration with {@link DataSourceContextManager} for keyed lookup.
  */
 public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
 
@@ -61,7 +61,7 @@ public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, X
   /**
    * Builds an XA pooled data source with an explicit registry key.
    *
-   * @param key           name used when registering with {@link DataSourceManager}
+   * @param key           name used when registering with {@link DataSourceContextManager}
    * @param componentPool pool of XA connections
    */
   public PooledXADataSource (String key, ComponentPool<XAConnection> componentPool) {
@@ -73,11 +73,11 @@ public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, X
   }
 
   /**
-   * Registers this data source for lookup via {@link DataSourceManager}.
+   * Registers this data source for lookup via {@link DataSourceContextManager}.
    */
   public void register () {
 
-    DataSourceManager.register(key, this);
+    DataSourceContextManager.register(key, this);
   }
 
   /**

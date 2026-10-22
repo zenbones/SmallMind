@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 import org.glassfish.grizzly.IOStrategy;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
@@ -59,6 +60,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.grizzly.installer.FilterInstaller;
 import org.smallmind.web.grizzly.installer.ListenerInstaller;
@@ -90,6 +93,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private AddOn[] addOns;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
+  private PerApplicationScope perApplicationScope;
   private String host;
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
@@ -227,6 +231,20 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
+  }
+
+  /**
+   * Sets the {@link PerApplicationScope} bound on JAX-RS request threads. When {@code null} (the default) the
+   * JAX-RS path is filtered by {@code PerApplicationContextFilter}; when set, a {@link PerApplicationScopeFilter}
+   * binding this scope is registered instead. The two per-application maps are unrelated, so set this only when the
+   * application registers its per-application data through {@code PerApplicationScope} and binds this same instance
+   * while the Spring context refreshes.
+   *
+   * @param perApplicationScope scope to bind per request, or {@code null} to keep the thread-local filter
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -379,7 +397,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
       if (webApplicationOption.getJaxRSOption() != null) {
         webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(resourceConfig)).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
-        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter(suppressConnectionClosedException)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+        webAppState.getWebAppContext().addFilter("per-application-data", createPerApplicationDataFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
       }
 
       if (webApplicationOption.getSpringSupportOption() != null) {
@@ -462,6 +480,17 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     }
 
     LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly service started...");
+  }
+
+  /**
+   * Creates the filter that makes per-application data available on JAX-RS request threads, according to whether
+   * a {@link PerApplicationScope} has been set.
+   *
+   * @return the scope filter when a scope is configured, otherwise the thread-local context filter
+   */
+  private Filter createPerApplicationDataFilter () {
+
+    return (perApplicationScope != null) ? new PerApplicationScopeFilter(perApplicationScope, suppressConnectionClosedException) : new PerApplicationContextFilter(suppressConnectionClosedException);
   }
 
   /**

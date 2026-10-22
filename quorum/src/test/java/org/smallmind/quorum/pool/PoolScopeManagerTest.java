@@ -32,48 +32,62 @@
  */
 package org.smallmind.quorum.pool;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Verifies that {@link PoolManager} publishes and resolves a single {@link Pool} per application
- * context. Each test installs a fresh {@link PerApplicationContext} so the registry never leaks
- * across methods.
+ * Verifies that {@link PoolScopeManager} publishes and resolves a single {@link Pool} per
+ * {@link PerApplicationScope}, and fails fast on an unbound thread.
  */
 @Test(groups = "unit")
-public class PoolManagerTest {
-
-  @BeforeMethod
-  public void establishPerApplicationContext () {
-
-    new PerApplicationContext();
-  }
+public class PoolScopeManagerTest {
 
   public void testGetPoolReturnsNullWhenNothingRegistered () {
 
-    Assert.assertNull(PoolManager.getPool(), "an application context with no registered pool should resolve to null");
+    Assert.assertNull(new PerApplicationScope().call(PoolScopeManager::getPool), "a scope with no registered pool should resolve to null");
   }
 
   public void testRegisterMakesThePoolRetrievable () {
 
+    PerApplicationScope scope = new PerApplicationScope();
     Pool pool = new StubPool();
 
-    pool.register();
+    scope.run(() -> PoolScopeManager.register(pool));
 
-    Assert.assertSame(PoolManager.getPool(), pool, "a registered pool should be retrievable from the manager");
+    Assert.assertSame(scope.call(PoolScopeManager::getPool), pool, "a registered pool should be retrievable from the manager");
   }
 
   public void testRegisterReplacesThePreviouslyRegisteredPool () {
 
+    PerApplicationScope scope = new PerApplicationScope();
     Pool first = new StubPool();
     Pool second = new StubPool();
 
-    first.register();
-    second.register();
+    scope.run(() -> {
+      PoolScopeManager.register(first);
+      PoolScopeManager.register(second);
+    });
 
-    Assert.assertSame(PoolManager.getPool(), second, "registering a second pool should replace the first");
+    Assert.assertSame(scope.call(PoolScopeManager::getPool), second, "registering a second pool should replace the first");
+  }
+
+  public void testSeparateScopesIsolatePools () {
+
+    PerApplicationScope first = new PerApplicationScope();
+    PerApplicationScope second = new PerApplicationScope();
+    Pool pool = new StubPool();
+
+    first.run(() -> PoolScopeManager.register(pool));
+
+    Assert.assertNull(second.call(PoolScopeManager::getPool));
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationScopeException.class)
+  public void testGetPoolWithoutScopeThrows () {
+
+    PoolScopeManager.getPool();
   }
 
   private static class StubPool extends Pool {

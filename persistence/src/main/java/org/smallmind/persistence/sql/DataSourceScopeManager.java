@@ -35,18 +35,22 @@ package org.smallmind.persistence.sql;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.CommonDataSource;
 import javax.sql.DataSource;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 /**
- * Simple application-scoped registry mapping string keys to {@link CommonDataSource} instances.
- * Intended for frameworks that need to look up named data sources at runtime.
+ * Application-scoped registry mapping string keys to {@link CommonDataSource} instances, resolved through a
+ * {@link PerApplicationScope}. This is the scope flavor of {@link DataSourceContextManager}: the calling thread must
+ * be inside the scope's {@code run} / {@code call}, an {@code ApplicationCarrier}, or a thread created by
+ * {@code PerApplicationScope.wrapThreadFactory}, otherwise {@code MissingPerApplicationScopeException} is thrown.
+ * Library code in this module (the pooled data sources' {@code register()}) resolves through the context flavor
+ * until this module is cut over.
  */
-public class DataSourceManager implements PerApplicationDataManager {
+public class DataSourceScopeManager implements PerApplicationDataManager {
 
   /**
-   * Registers a data source under the given key in the per-application context.
+   * Registers a data source under the given key in the per-application scope bound to the current thread.
    *
    * @param key        lookup key
    * @param dataSource data source to store
@@ -55,24 +59,24 @@ public class DataSourceManager implements PerApplicationDataManager {
 
     ConcurrentHashMap<String, CommonDataSource> dataSourceMap;
 
-    if ((dataSourceMap = PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(DataSourceManager.class, dataSourceMap = new ConcurrentHashMap<>());
+    if ((dataSourceMap = PerApplicationScope.getPerApplicationData(DataSourceScopeManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationScope.setPerApplicationData(DataSourceScopeManager.class, dataSourceMap = new ConcurrentHashMap<>());
     }
     dataSourceMap.put(key, dataSource);
   }
 
   /**
-   * Retrieves a data source for the provided key.
+   * Returns the data source registered under the given key.
    *
    * @param key lookup key
-   * @return registered {@link CommonDataSource}
-   * @throws ORMInitializationException if no data source is registered for the key
+   * @return the registered data source
+   * @throws ORMInitializationException if no data source is registered under the key
    */
   public static CommonDataSource getDataSource (String key) {
 
     CommonDataSource dataSource;
 
-    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).get(key)) == null) {
+    if ((dataSource = (DataSource)PerApplicationScope.getPerApplicationData(DataSourceScopeManager.class, ConcurrentHashMap.class).get(key)) == null) {
       throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
     }
 

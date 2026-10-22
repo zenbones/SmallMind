@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies that {@link JsonEntityResourceProxyFactory} generates a proxy implementing the requested interface and
- * registers it in {@link JsonEntityResourceProxyManager} so it can be retrieved by interface type. A fresh
+ * registers it in {@link JsonEntityResourceProxyContextManager} so it can be retrieved by interface type. A fresh
  * {@link PerApplicationContext} is attached per method because the manager stores its registry there.
  */
 @Test(groups = "unit")
@@ -65,7 +65,7 @@ public class JsonEntityResourceProxyFactoryTest {
     Proxy proxy = JsonEntityResourceProxyFactory.generateProxy(target, "v", 1, "sample-service", SampleResource.class);
 
     Assert.assertTrue(proxy instanceof SampleResource);
-    Assert.assertSame(JsonEntityResourceProxyManager.getProxy(SampleResource.class), proxy);
+    Assert.assertSame(JsonEntityResourceProxyContextManager.getProxy(SampleResource.class), proxy);
   }
 
   public void testGenerateProxyWithExplicitLevel ()
@@ -75,6 +75,6 @@ public class JsonEntityResourceProxyFactoryTest {
     Proxy proxy = JsonEntityResourceProxyFactory.generateProxy(target, "v", 2, "sample-service", SampleResource.class, Level.DEBUG);
 
     Assert.assertTrue(proxy instanceof SampleResource);
-    Assert.assertSame(JsonEntityResourceProxyManager.getProxy(SampleResource.class), proxy);
+    Assert.assertSame(JsonEntityResourceProxyContextManager.getProxy(SampleResource.class), proxy);
   }
 }

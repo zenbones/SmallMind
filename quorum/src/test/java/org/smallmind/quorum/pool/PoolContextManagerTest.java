@@ -30,33 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring;
+package org.smallmind.quorum.pool;
 
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
- * Stores and retrieves the application-scoped {@link SpringPropertyAccessor} through a {@link PerApplicationContext}.
+ * Verifies that {@link PoolContextManager} publishes and resolves a single {@link Pool} per application
+ * context. Each test installs a fresh {@link PerApplicationContext} so the registry never leaks
+ * across methods.
  */
-public class SpringPropertyAccessorManager implements PerApplicationDataManager {
+@Test(groups = "unit")
+public class PoolContextManagerTest {
 
-  /**
-   * Stores the given accessor in the per-application context so it can be retrieved globally.
-   *
-   * @param springPropertyAccessor the accessor to register for the current application
-   */
-  public static void register (SpringPropertyAccessor springPropertyAccessor) {
+  @BeforeMethod
+  public void establishPerApplicationContext () {
 
-    PerApplicationContext.setPerApplicationData(SpringPropertyAccessorManager.class, springPropertyAccessor);
+    new PerApplicationContext();
   }
 
-  /**
-   * Retrieves the {@link SpringPropertyAccessor} previously registered for the current application.
-   *
-   * @return the registered accessor, or {@code null} if none has been registered
-   */
-  public static SpringPropertyAccessor getSpringPropertyAccessor () {
+  public void testGetPoolReturnsNullWhenNothingRegistered () {
 
-    return PerApplicationContext.getPerApplicationData(SpringPropertyAccessorManager.class, SpringPropertyAccessor.class);
+    Assert.assertNull(PoolContextManager.getPool(), "an application context with no registered pool should resolve to null");
+  }
+
+  public void testRegisterMakesThePoolRetrievable () {
+
+    Pool pool = new StubPool();
+
+    pool.register();
+
+    Assert.assertSame(PoolContextManager.getPool(), pool, "a registered pool should be retrievable from the manager");
+  }
+
+  public void testRegisterReplacesThePreviouslyRegisteredPool () {
+
+    Pool first = new StubPool();
+    Pool second = new StubPool();
+
+    first.register();
+    second.register();
+
+    Assert.assertSame(PoolContextManager.getPool(), second, "registering a second pool should replace the first");
+  }
+
+  private static class StubPool extends Pool {
+
   }
 }

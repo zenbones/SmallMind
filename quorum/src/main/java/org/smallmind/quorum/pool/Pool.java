@@ -34,7 +34,7 @@ package org.smallmind.quorum.pool;
 
 /**
  * Base class for all component pool implementations that can be registered with the
- * application-wide {@link PoolManager}.
+ * application-wide {@link PoolContextManager}.
  * <p>
  * Subclasses inherit the ability to publish themselves globally via {@link #register()}, which
  * stores the pool instance in the current per-application context so that other components can
@@ -43,13 +43,13 @@ package org.smallmind.quorum.pool;
 public abstract class Pool {
 
   /**
-   * Publishes this pool instance to the application-wide {@link PoolManager}.
+   * Publishes this pool instance to the application-wide {@link PoolContextManager}.
    * <p>
-   * After this call, {@link PoolManager#getPool()} will return this instance for the current
+   * After this call, {@link PoolContextManager#getPool()} will return this instance for the current
    * per-application context.
    */
   public void register () {
 
-    PoolManager.register(this);
+    PoolContextManager.register(this);
   }
 }

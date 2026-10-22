@@ -292,7 +292,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       throw new RuntimeBeansException(propertyExpanderException);
     }
 
-    SpringPropertyAccessorManager.register(new SpringPropertyAccessor(valueResolver = new PropertyPlaceholderStringValueResolver(fullPropertyExpander, propertyMap)));
+    SpringPropertyAccessorContextManager.register(new SpringPropertyAccessor(valueResolver = new PropertyPlaceholderStringValueResolver(fullPropertyExpander, propertyMap)));
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       for (Map.Entry<String, Object> propertyEntry : propertyMap.entrySet()) {

@@ -40,7 +40,7 @@ import org.mockito.Mockito;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.testng.Assert;
@@ -76,7 +76,7 @@ public class DynamicPooledDataSourceInitializingBeanTest {
    */
   private static DynamicPooledDataSourceInitializingBean beanFor (String poolName, SpringPropertyAccessor accessor) {
 
-    SpringPropertyAccessorManager.register(accessor);
+    SpringPropertyAccessorContextManager.register(accessor);
 
     Map<String, DataSourceFactory<?, ?>> factoryMap = new HashMap<>();
     factoryMap.put(poolName, Mockito.mock(DataSourceFactory.class));
@@ -90,7 +90,7 @@ public class DynamicPooledDataSourceInitializingBeanTest {
 
   /**
    * Installs a per-application context on the current thread so that
-   * {@link SpringPropertyAccessorManager#register} (which writes to {@link PerApplicationContext})
+   * {@link SpringPropertyAccessorContextManager#register} (which writes to {@link PerApplicationContext})
    * does not fail. Runs before every test method.
    */
   @BeforeMethod

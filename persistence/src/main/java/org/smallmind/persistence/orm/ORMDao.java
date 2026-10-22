@@ -64,11 +64,11 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
   }
 
   /**
-   * Registers this DAO instance with the {@link OrmDaoManager} for lookup by managed class.
+   * Registers this DAO instance with the {@link OrmDaoContextManager} for lookup by managed class.
    */
   public void register () {
 
-    OrmDaoManager.register(getManagedClass(), this);
+    OrmDaoContextManager.register(getManagedClass(), this);
   }
 
   /**

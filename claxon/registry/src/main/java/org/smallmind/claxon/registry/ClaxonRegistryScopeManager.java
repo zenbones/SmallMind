@@ -30,36 +30,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.scaffold.util;
+package org.smallmind.claxon.registry;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Manages the application-wide JSON attribute name used to carry the polymorphic type key during
- * marshaling and unmarshaling.
+ * Stores and retrieves the per-application {@link ClaxonRegistry} through a {@link PerApplicationScope}. This is the
+ * scope flavor of {@link ClaxonRegistryContextManager}: the calling thread must be inside the scope's {@code run} /
+ * {@code call}, an {@code ApplicationCarrier}, or a thread created by {@code PerApplicationScope.wrapThreadFactory},
+ * otherwise {@code MissingPerApplicationScopeException} is thrown. {@link Instrument} resolves the registry through
+ * the context flavor until this module is cut over.
  */
-public class PolymorphicAttributeManager implements PerApplicationDataManager {
-
-  static {
-    PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
-  }
+public class ClaxonRegistryScopeManager implements PerApplicationDataManager {
 
   /**
-   * @return the current polymorphic attribute name used in JSON objects
-   */
-  public static String getPolymorphicAttributeName () {
-
-    return PerApplicationContext.getPerApplicationData(PolymorphicAttributeManager.class, String.class);
-  }
-
-  /**
-   * Replaces the global polymorphic attribute name used during marshaling and unmarshaling.
+   * Installs {@code registry} as the {@link ClaxonRegistry} of the per-application scope bound to the current thread.
    *
-   * @param polymorphicAttributeName new attribute name
+   * @param registry the registry to install for the current application scope
    */
-  public static void setPolymorphicAttributeName (String polymorphicAttributeName) {
+  public static void register (ClaxonRegistry registry) {
 
-    PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, polymorphicAttributeName);
+    PerApplicationScope.setPerApplicationData(ClaxonRegistryScopeManager.class, registry);
+  }
+
+  /**
+   * Returns the {@link ClaxonRegistry} installed in the per-application scope bound to the current thread, or
+   * {@code null} if none has been installed.
+   *
+   * @return the installed {@link ClaxonRegistry}, or {@code null}
+   */
+  public static ClaxonRegistry getRegistry () {
+
+    return PerApplicationScope.getPerApplicationData(ClaxonRegistryScopeManager.class, ClaxonRegistry.class);
   }
 }

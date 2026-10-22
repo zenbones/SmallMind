@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 import jakarta.xml.ws.Endpoint;
 import com.sun.net.httpserver.HttpContext;
 import org.eclipse.jetty.ee10.servlet.FilterHolder;
@@ -63,6 +64,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jetty.installer.FilterInstaller;
@@ -87,6 +90,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   private ResourceConfig resourceConfig;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
+  private PerApplicationScope perApplicationScope;
   private String host;
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
@@ -194,6 +198,20 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   public void setSuppressConnectionClosedException (boolean suppressConnectionClosedException) {
 
     this.suppressConnectionClosedException = suppressConnectionClosedException;
+  }
+
+  /**
+   * Sets the {@link PerApplicationScope} bound on JAX-RS request threads. When {@code null} (the default) the
+   * JAX-RS path is filtered by {@code PerApplicationContextFilter}; when set, a {@link PerApplicationScopeFilter}
+   * binding this scope is registered instead. The two per-application maps are unrelated, so set this only when the
+   * application registers its per-application data through {@code PerApplicationScope} and binds this same instance
+   * while the Spring context refreshes.
+   *
+   * @param perApplicationScope scope to bind per request, or {@code null} to keep the thread-local filter
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -447,7 +465,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
         if (webApplicationOption.getJaxRSOption() != null) {
 
           ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(resourceConfig));
-          FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter(suppressConnectionClosedException));
+          FilterHolder jerseyFilterHolder = new FilterHolder(createPerApplicationDataFilter());
 
           jerseyServletHolder.setName("JAX-RS Application");
           jerseyServletHolder.setDisplayName("JAX-RS Application");
@@ -482,6 +500,17 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     } catch (Exception exception) {
       throw new JettyInitializationException(exception);
     }
+  }
+
+  /**
+   * Creates the filter that makes per-application data available on JAX-RS request threads, according to whether
+   * a {@link PerApplicationScope} has been set.
+   *
+   * @return the scope filter when a scope is configured, otherwise the thread-local context filter
+   */
+  private Filter createPerApplicationDataFilter () {
+
+    return (perApplicationScope != null) ? new PerApplicationScopeFilter(perApplicationScope, suppressConnectionClosedException) : new PerApplicationContextFilter(suppressConnectionClosedException);
   }
 
   /**

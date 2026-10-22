@@ -962,7 +962,11 @@ the reply. Make the type serializable or return a serializable projection.
 **Wire contexts are missing on the server.**
 The handle must be registered on both sides with
 `WireContextManager.register("handle", Class)`; a mismatch causes the
-server to drop the context silently. Also verify the context was pushed
+server to drop the context silently. (`WireScopeManager` has the same API
+resolved through `nutsnbolts`' `PerApplicationScope` and throws
+`MissingPerApplicationScopeException` on an unbound thread; the transports
+and `WireContextXmlAdapter` read `WireContextManager`, and the two
+registries are unrelated.) Also verify the context was pushed
 before the call and popped in a `finally` block, and that the context
 class's no-arg constructor or adapter is reachable from the server
 classloader.

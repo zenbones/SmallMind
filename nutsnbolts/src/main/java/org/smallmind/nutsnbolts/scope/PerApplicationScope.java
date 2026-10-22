@@ -176,16 +176,7 @@ public class PerApplicationScope {
     }
   }
 
-  private static class WrappingThreadFactory implements ThreadFactory {
-
-    private final ApplicationCarrier applicationCarrier;
-    private final ThreadFactory threadFactory;
-
-    private WrappingThreadFactory (ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) {
-
-      this.applicationCarrier = applicationCarrier;
-      this.threadFactory = threadFactory;
-    }
+  private record WrappingThreadFactory(ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) implements ThreadFactory {
 
     @Override
     public Thread newThread (Runnable runnable) {

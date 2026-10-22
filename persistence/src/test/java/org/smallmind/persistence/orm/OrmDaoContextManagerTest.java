@@ -41,58 +41,58 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Exercises {@link OrmDaoManager} registration and lookup. The registry is backed by
+ * Exercises {@link OrmDaoContextManager} registration and lookup. The registry is backed by
  * {@link PerApplicationContext}, so each test attaches a fresh per-application context to the thread
  * first (matching {@code ByKeyRosterTest}). Covers simple-name versus fully-qualified-name resolution
- * in {@link OrmDaoManager#findDurableClass}, the absent-name {@code null} result, and both
- * {@link OrmDaoManager#get(String)} and {@link OrmDaoManager#get(Class)} resolution paths.
+ * in {@link OrmDaoContextManager#findDurableClass}, the absent-name {@code null} result, and both
+ * {@link OrmDaoContextManager#get(String)} and {@link OrmDaoContextManager#get(Class)} resolution paths.
  */
 @Test(groups = "unit")
-public class OrmDaoManagerTest {
+public class OrmDaoContextManagerTest {
 
   @BeforeMethod
   public void attachApplicationContext () {
 
-    // OrmDaoManager reads PerApplicationContext, which throws unless a context map is bound to this
+    // OrmDaoContextManager reads PerApplicationContext, which throws unless a context map is bound to this
     // thread. The thread-local map is reused across calls (and shared with other test classes on the
     // same thread), so install a fresh, empty registry per method to keep the absent-lookup cases honest.
     new PerApplicationContext();
-    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<>());
+    PerApplicationContext.setPerApplicationData(OrmDaoContextManager.class, new ConcurrentHashMap<>());
   }
 
   @SuppressWarnings("unchecked")
   public void testFindDurableClassMatchesBySimpleName () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Widget"), Widget.class);
+    Assert.assertEquals(OrmDaoContextManager.findDurableClass("Widget"), Widget.class);
   }
 
   @SuppressWarnings("unchecked")
   public void testFindDurableClassMatchesByFullyQualifiedName () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertEquals(OrmDaoManager.findDurableClass(Widget.class.getName()), Widget.class);
+    Assert.assertEquals(OrmDaoContextManager.findDurableClass(Widget.class.getName()), Widget.class);
   }
 
   @SuppressWarnings("unchecked")
   public void testFindDurableClassReturnsNullWhenNoNameMatches () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertNull(OrmDaoManager.findDurableClass("Gadget"));
-    Assert.assertNull(OrmDaoManager.findDurableClass("org.smallmind.persistence.orm.OrmDaoManagerTest$Gadget"));
+    Assert.assertNull(OrmDaoContextManager.findDurableClass("Gadget"));
+    Assert.assertNull(OrmDaoContextManager.findDurableClass("org.smallmind.persistence.orm.OrmDaoContextManagerTest$Gadget"));
   }
 
   @SuppressWarnings("unchecked")
   public void testFindDurableClassDistinguishesAmongMultipleRegistrations () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
-    OrmDaoManager.register(Gadget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Gadget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Widget"), Widget.class);
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Gadget"), Gadget.class);
+    Assert.assertEquals(OrmDaoContextManager.findDurableClass("Widget"), Widget.class);
+    Assert.assertEquals(OrmDaoContextManager.findDurableClass("Gadget"), Gadget.class);
   }
 
   @SuppressWarnings("unchecked")
@@ -100,18 +100,18 @@ public class OrmDaoManagerTest {
 
     ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
 
-    OrmDaoManager.register(Widget.class, widgetDao);
+    OrmDaoContextManager.register(Widget.class, widgetDao);
 
-    Assert.assertSame(OrmDaoManager.get("Widget"), widgetDao);
-    Assert.assertSame(OrmDaoManager.get(Widget.class.getName()), widgetDao);
+    Assert.assertSame(OrmDaoContextManager.get("Widget"), widgetDao);
+    Assert.assertSame(OrmDaoContextManager.get(Widget.class.getName()), widgetDao);
   }
 
   @SuppressWarnings("unchecked")
   public void testGetByNameReturnsNullWhenAbsent () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertNull(OrmDaoManager.get("Gadget"));
+    Assert.assertNull(OrmDaoContextManager.get("Gadget"));
   }
 
   @SuppressWarnings("unchecked")
@@ -119,17 +119,17 @@ public class OrmDaoManagerTest {
 
     ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
 
-    OrmDaoManager.register(Widget.class, widgetDao);
+    OrmDaoContextManager.register(Widget.class, widgetDao);
 
-    Assert.assertSame(OrmDaoManager.get(Widget.class), widgetDao);
+    Assert.assertSame(OrmDaoContextManager.get(Widget.class), widgetDao);
   }
 
   @SuppressWarnings("unchecked")
   public void testGetByClassReturnsNullWhenAbsent () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    OrmDaoContextManager.register(Widget.class, Mockito.mock(ORMDao.class));
 
-    Assert.assertNull(OrmDaoManager.get(Gadget.class));
+    Assert.assertNull(OrmDaoContextManager.get(Gadget.class));
   }
 
   public static class Widget extends AbstractDurable<Long, Widget> {

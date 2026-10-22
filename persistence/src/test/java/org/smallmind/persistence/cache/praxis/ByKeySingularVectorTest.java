@@ -41,14 +41,14 @@ import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
  * Exercises {@link ByKeySingularVector}. Its {@code head}/{@code add} paths resolve the referenced durable
- * lazily through an {@link ORMDao}, so those cases register a Mockito mock via {@link OrmDaoManager} on a
+ * lazily through an {@link ORMDao}, so those cases register a Mockito mock via {@link OrmDaoContextManager} on a
  * thread that has a {@link PerApplicationContext} attached. The DAO-free branches ({@code isSingular},
  * {@code copy}, {@code remove}) are tested directly.
  */
@@ -60,7 +60,7 @@ public class ByKeySingularVectorTest {
 
     ORMDao<Long, Sprocket, ?, ?> ormDao = Mockito.mock(ORMDao.class);
 
-    OrmDaoManager.register(Sprocket.class, ormDao);
+    OrmDaoContextManager.register(Sprocket.class, ormDao);
 
     return ormDao;
   }
@@ -68,7 +68,7 @@ public class ByKeySingularVectorTest {
   @BeforeMethod
   public void attachApplicationContext () {
 
-    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
+    // OrmDaoContextManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
     new PerApplicationContext();
   }
 

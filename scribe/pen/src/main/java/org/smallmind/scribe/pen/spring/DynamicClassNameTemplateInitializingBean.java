@@ -34,7 +34,7 @@ package org.smallmind.scribe.pen.spring;
 
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.ClassNameTemplate;
 import org.smallmind.scribe.pen.Enhancer;
@@ -111,7 +111,7 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
     HashMap<String, String> templateMap = new HashMap<>();
     HashMap<String, String> levelMap = new HashMap<>();
 
-    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorContextManager.getSpringPropertyAccessor();
 
     for (String propertyKey : springPropertyAccessor.getKeySet()) {
       if (propertyKey.startsWith("log.pattern.")) {

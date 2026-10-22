@@ -30,43 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring;
+package org.smallmind.web.json.scaffold.util;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.property.PropertyClosure;
-import org.smallmind.nutsnbolts.property.PropertyExpander;
-import org.smallmind.nutsnbolts.property.PropertyExpanderException;
-import org.smallmind.nutsnbolts.util.SystemPropertyMode;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-@Test(groups = "unit")
-public class SpringPropertyAccessorManagerTest {
+/**
+ * Manages the application-wide JSON attribute name used to carry the polymorphic type key during
+ * marshaling and unmarshaling.
+ */
+public class PolymorphicAttributeContextManager implements PerApplicationDataManager {
 
-  @BeforeMethod
-  public void installPerApplicationContext () {
-
-    new PerApplicationContext();
+  static {
+    PerApplicationContext.setPerApplicationData(PolymorphicAttributeContextManager.class, AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
   }
 
-  public void testRegisterAndRetrieveRoundTrip ()
-    throws PropertyExpanderException {
+  /**
+   * @return the current polymorphic attribute name used in JSON objects
+   */
+  public static String getPolymorphicAttributeName () {
 
-    Map<String, Object> propertyMap = new HashMap<>();
-    propertyMap.put("answer", "42");
+    return PerApplicationContext.getPerApplicationData(PolymorphicAttributeContextManager.class, String.class);
+  }
 
-    PropertyExpander expander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false);
-    PropertyPlaceholderStringValueResolver resolver = new PropertyPlaceholderStringValueResolver(expander, propertyMap);
-    SpringPropertyAccessor accessor = new SpringPropertyAccessor(resolver);
+  /**
+   * Replaces the global polymorphic attribute name used during marshaling and unmarshaling.
+   *
+   * @param polymorphicAttributeName new attribute name
+   */
+  public static void setPolymorphicAttributeName (String polymorphicAttributeName) {
 
-    SpringPropertyAccessorManager.register(accessor);
-
-    SpringPropertyAccessor retrieved = SpringPropertyAccessorManager.getSpringPropertyAccessor();
-
-    Assert.assertSame(retrieved, accessor);
-    Assert.assertEquals(retrieved.asString("answer"), "42");
+    PerApplicationContext.setPerApplicationData(PolymorphicAttributeContextManager.class, polymorphicAttributeName);
   }
 }
