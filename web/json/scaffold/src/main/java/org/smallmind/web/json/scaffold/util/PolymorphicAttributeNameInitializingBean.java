@@ -36,7 +36,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Spring {@link InitializingBean} that pushes the configured polymorphic attribute name into
- * {@link PolymorphicAttributeManager} during application context initialization.
+ * {@link PolymorphicAttributeContextManager} during application context initialization.
  */
 public class PolymorphicAttributeNameInitializingBean implements InitializingBean {
 
@@ -53,7 +53,7 @@ public class PolymorphicAttributeNameInitializingBean implements InitializingBea
   }
 
   /**
-   * Applies the configured attribute name to the global {@link PolymorphicAttributeManager}.
+   * Applies the configured attribute name to the global {@link PolymorphicAttributeContextManager}.
    *
    * @throws Exception if the manager rejects the configuration
    */
@@ -61,6 +61,6 @@ public class PolymorphicAttributeNameInitializingBean implements InitializingBea
   public void afterPropertiesSet ()
     throws Exception {
 
-    PolymorphicAttributeManager.setPolymorphicAttributeName(polymorphicAttributeName);
+    PolymorphicAttributeContextManager.setPolymorphicAttributeName(polymorphicAttributeName);
   }
 }

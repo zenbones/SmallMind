@@ -42,6 +42,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -53,6 +54,9 @@ import org.smallmind.scribe.pen.LoggerManager;
  * <p>A JMS message-selector is constructed from the {@code serviceGroup} and optional
  * {@code instanceId} at construction time and applied to the consumer, ensuring that only
  * messages addressed to the correct service and instance are delivered.
+ *
+ * <p>{@link #onMessage} is called on the JMS provider's delivery thread, which inherits no scope;
+ * a listener constructed with a {@link PerApplicationScope} runs the callback inside it.
  */
 public class RequestListener implements SessionEmployer, MessageListener {
 
@@ -60,8 +64,10 @@ public class RequestListener implements SessionEmployer, MessageListener {
   private final JmsResponseTransport jmsResponseTransport;
   private final ConnectionManager requestConnectionManager;
   private final Destination requestDestination;
+  private final PerApplicationScope perApplicationScope;
   private final String selector;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs the listener, builds a JMS message-selector from the service group and optional
    * instance id, creates the consumer, and starts the connection.
@@ -72,14 +78,17 @@ public class RequestListener implements SessionEmployer, MessageListener {
    * @param serviceGroup             service group name included in the message-selector filter
    * @param instanceId               optional instance id for whisper-mode filtering; {@code null}
    *                                 for shout and talk modes
+   * @param perApplicationScope      scope bound around every {@code onMessage} callback, or
+   *                                 {@code null} to leave the callback unbound
    * @throws JMSException if consumer creation fails
    */
-  public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String serviceGroup, String instanceId)
+  public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String serviceGroup, String instanceId, PerApplicationScope perApplicationScope)
     throws JMSException {
 
     this.jmsResponseTransport = jmsResponseTransport;
     this.requestConnectionManager = requestConnectionManager;
     this.requestDestination = requestDestination;
+    this.perApplicationScope = perApplicationScope;
 
     selector = (instanceId == null) ? WireProperty.SERVICE_GROUP.getKey() + "='" + serviceGroup + "'" : WireProperty.SERVICE_GROUP.getKey() + "='" + serviceGroup + "' AND " + WireProperty.INSTANCE_ID.getKey() + "='" + instanceId + "'";
 
@@ -153,6 +162,15 @@ public class RequestListener implements SessionEmployer, MessageListener {
    */
   @Override
   public void onMessage (final Message message) {
+
+    if (perApplicationScope == null) {
+      onBoundMessage(message);
+    } else {
+      perApplicationScope.run(() -> onBoundMessage(message));
+    }
+  }
+
+  private void onBoundMessage (Message message) {
 
     try {
 

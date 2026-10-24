@@ -3,7 +3,11 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
+  <bean id="perApplicationScope" class="org.smallmind.nutsnbolts.scope.PerApplicationScope"/>
+
+  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter">
+    <constructor-arg index="0" name="perApplicationScope" ref="perApplicationScope"/>
+  </bean>
 
   <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
     <property name="verbose" value="true"/>

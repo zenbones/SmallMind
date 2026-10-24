@@ -42,7 +42,7 @@ import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 
 /**
  * Singular {@link DurableVector} that references a single durable by a {@link DurableKey} and resolves
@@ -79,7 +79,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
-      if ((ormDao = OrmDaoManager.get(durableKey.getDurableClass())) == null) {
+      if ((ormDao = OrmDaoContextManager.get(durableKey.getDurableClass())) == null) {
         throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableKey.getDurableClass().getSimpleName());
       }
     }

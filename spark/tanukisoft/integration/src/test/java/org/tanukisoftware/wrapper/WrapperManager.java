@@ -60,6 +60,7 @@ public class WrapperManager {
   private static WrapperListener startedListener = null;
   private static String[] startedArguments = null;
   private static Integer lastStopCode = null;
+  private static Runnable stopHook = null;
 
   /**
    * Restores the double to its initial state; intended to be called before each test.
@@ -74,6 +75,16 @@ public class WrapperManager {
     startedListener = null;
     startedArguments = null;
     lastStopCode = null;
+    stopHook = null;
+  }
+
+  /**
+   * Installs a callback that {@link #stop(int)} runs on the calling thread, so tests can observe the thread state
+   * (for instance, which per-application scope is bound) at the moment the listener asks the wrapper to stop.
+   */
+  public static void setStopHook (Runnable hook) {
+
+    stopHook = hook;
   }
 
   public static int signalStartingCount () {
@@ -146,5 +157,9 @@ public class WrapperManager {
   public static void stop (int code) {
 
     lastStopCode = code;
+
+    if (stopHook != null) {
+      stopHook.run();
+    }
   }
 }

@@ -55,6 +55,7 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
@@ -66,6 +67,7 @@ import org.smallmind.phalanx.wire.transport.TransportState;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WiredService;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
+import org.smallmind.phalanx.worker.TransferringWorkQueue;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
@@ -99,6 +101,7 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
   private final String whisperTopicName;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs the response transport, verifies broker availability, starts the three topic
    * ingesters (whisper, talk, and shout) for the given service group, and initializes the
@@ -125,14 +128,16 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
    *                                  once; {@code false} to join as static members identified by
    *                                  {@code <nodeName>-<workerIndex>}, whose assignments are held until the
    *                                  session timeout expires
+   * @param perApplicationScope       the scope every invocation worker and every ingester consumer thread runs
+   *                                  inside, or {@code null} to start them unbound
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while starting ingesters or the worker pool
    */
-  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, KafkaServer... servers)
+  public KafkaResponseTransport (String nodeName, String serviceGroup, Class<InvocationWorker> workerClass, SignalCodec signalCodec, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
-    super(workerClass, concurrencyLimit);
+    super(workerClass, concurrencyLimit, new TransferringWorkQueue<>(), perApplicationScope);
 
     ResponseCallback responseCallback = new ResponseCallback(this);
     String talkTopicName;
@@ -162,9 +167,9 @@ public class KafkaResponseTransport extends WorkManager<InvocationWorker, Consum
       }
     });
 
-    whisperMessageIngester = new KafkaMessageIngester(nodeName, "wire-whisper-" + instanceId, whisperTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
-    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk-" + serviceGroup, talkTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
-    shoutMessageIngester = new KafkaMessageIngester(nodeName, "wire-shout-" + instanceId, shoutTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit).startUp();
+    whisperMessageIngester = new KafkaMessageIngester(nodeName, "wire-whisper-" + instanceId, whisperTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit, perApplicationScope).startUp();
+    talkMessageIngester = new KafkaMessageIngester(nodeName, "wire-talk-" + serviceGroup, talkTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit, perApplicationScope).startUp();
+    shoutMessageIngester = new KafkaMessageIngester(nodeName, "wire-shout-" + instanceId, shoutTopicName, connector, groupProtocol, dynamicConsumers, responseCallback, concurrencyLimit, perApplicationScope).startUp();
 
     if (!whisperMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
       throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");

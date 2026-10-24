@@ -35,7 +35,7 @@ package org.smallmind.phalanx.wire.transport.kafka;
 import java.util.HashMap;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.phalanx.wire.Talking;
 import org.smallmind.phalanx.wire.TwoWayConversation;
 import org.smallmind.phalanx.wire.signal.Function;
@@ -87,7 +87,7 @@ public class KafkaClosedTransportIntegrationTest extends AbstractGroundwaterTest
   public void testRequestTransmitAfterCloseThrows ()
     throws Throwable {
 
-    KafkaRequestTransport requestTransport = new KafkaRequestTransport("kafka-closed-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
+    KafkaRequestTransport requestTransport = new KafkaRequestTransport("kafka-closed-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, null, new KafkaServer("localhost", 9094));
 
     requestTransport.close();
 
@@ -98,7 +98,7 @@ public class KafkaClosedTransportIntegrationTest extends AbstractGroundwaterTest
   public void testResponseTransmitAfterCloseThrows ()
     throws Throwable {
 
-    KafkaResponseTransport responseTransport = new KafkaResponseTransport("kafka-closed-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
+    KafkaResponseTransport responseTransport = new KafkaResponseTransport("kafka-closed-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, null, new KafkaServer("localhost", 9094));
 
     responseTransport.close();
 

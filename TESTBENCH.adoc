@@ -410,6 +410,34 @@ The bundled `global.yaml` sets two defaults: `log.level.default: DEBUG` and `wir
 Tests that do not boot the Spring context but still touch components requiring a per-application context can construct one directly on the test thread with `new PerApplicationContext()` in `@BeforeClass`, as several integration tests in the repository do. The foundation context is the assembly-time convenience; the direct constructor is the programmatic equivalent.
 ====
 
+The foundation context deliberately declares no `PerApplicationScope` bean. A `ScopedValue` binding exists only for the extent of a `run` / `call`, so a scope created *during* the refresh can never be the instance that was bound *around* it; a bean would look right and bind nothing. Components that resolve through the scope flavor (xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]) need the test to own the instance instead:
+
+[source,java]
+----
+private static final PerApplicationScope SCOPE = new PerApplicationScope();
+private static ConfigurableApplicationContext context;
+
+@BeforeClass
+public void beforeClass () {
+
+  SCOPE.run(() -> {                                                        // <1>
+    context = new ClassPathXmlApplicationContext(new String[] {"..."}, false);
+    context.addBeanFactoryPostProcessor(                                   // <2>
+      (beanFactory) -> beanFactory.registerSingleton("perApplicationScope", SCOPE));
+    context.refresh();
+  });
+}
+
+@Override
+public void run (IHookCallBack callBack, ITestResult testResult) {          // <3>
+
+  SCOPE.run(callBack::runTestMethod);
+}
+----
+<1> The refresh runs bound, so beans that `register(...)` during initialization write into `SCOPE`'s map.
+<2> Only needed when a bean definition must `ref` the same instance (for example a web server's `perApplicationScope` property).
+<3> Implementing TestNG's `IHookable` binds every test method without per-method boilerplate; `@BeforeMethod` / `@AfterMethod` are outside the hook and must bind themselves if they touch scoped data.
+
 [[the-style-tools]]
 == The Style Tools
 

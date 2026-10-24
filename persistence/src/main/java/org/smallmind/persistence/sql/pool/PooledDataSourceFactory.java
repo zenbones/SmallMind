@@ -37,6 +37,7 @@ import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.sql.pool.spring.DatabaseConnection;
 import org.smallmind.persistence.sql.pool.spring.PooledConnectionComponentPoolFactory;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
@@ -48,6 +49,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
  */
 public class PooledDataSourceFactory {
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates a pooled data source configured with the given pool parameters and database connections.
    *
@@ -57,18 +59,20 @@ public class PooledDataSourceFactory {
    * @param maxStatements          maximum prepared statements to cache per connection
    * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
    * @param poolConfig             configuration for the component pool
+   * @param perApplicationScope    scope the pool's deconstruction and creator threads run inside, or {@code null}
+   *                               to leave them unbound
    * @param connections            one or more database connection definitions
    * @param <D>                    data source type
    * @return pooled data source matching XA or non-XA capabilities
    * @throws SQLException if pool construction fails
    */
-  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
+  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, PerApplicationScope perApplicationScope, DatabaseConnection[] connections)
     throws SQLException {
 
     if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
-      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections));
+      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, perApplicationScope, connections));
     }
 
-    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections));
+    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, perApplicationScope, connections));
   }
 }

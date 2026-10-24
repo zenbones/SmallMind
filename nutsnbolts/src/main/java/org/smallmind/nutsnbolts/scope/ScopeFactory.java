@@ -73,7 +73,7 @@ public class ScopeFactory {
   /**
    * Calls the operation with every supplied scope bound, each under its concrete class, for the dynamic extent of the operation. Scopes are bound in array order, so when two scopes share a class the later one is visible. A {@code null} or empty array calls the operation without adding any binding.
    * <p>
-   * For each scope implementing {@link LifecycleAware}, {@code beforeEnter} is called in array order before anything is bound, and {@code afterExit} is called in reverse order after the operation completes, whether normally or by throwing. If a {@code beforeEnter} call throws, {@code afterExit} is still called for the scopes already entered.
+   * For each scope implementing {@link ScopeLifecycleAware}, {@code beforeEnter} is called in array order before anything is bound, and {@code afterExit} is called in reverse order after the operation completes, whether normally or by throwing. If a {@code beforeEnter} call throws, {@code afterExit} is still called for the scopes already entered.
    *
    * @param scopes scopes to bind; elements must not be {@code null}
    * @param op     operation to call while the scopes are bound
@@ -98,8 +98,8 @@ public class ScopeFactory {
         if (scope == null) {
           throw new ScopeException("A null scope can not be entered");
         }
-        if (scope instanceof LifecycleAware) {
-          ((LifecycleAware)scope).beforeEnter();
+        if (scope instanceof ScopeLifecycleAware) {
+          ((ScopeLifecycleAware)scope).beforeEnter();
         }
         enteredCount++;
       }
@@ -107,8 +107,8 @@ public class ScopeFactory {
       return ScopedValue.where(SCOPE_MAP, bind(scopes)).call(op);
     } finally {
       for (int index = enteredCount - 1; index >= 0; index--) {
-        if (scopes[index] instanceof LifecycleAware) {
-          ((LifecycleAware)scopes[index]).afterExit();
+        if (scopes[index] instanceof ScopeLifecycleAware) {
+          ((ScopeLifecycleAware)scopes[index]).afterExit();
         }
       }
     }

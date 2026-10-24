@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import jakarta.servlet.ServletConfig;
@@ -56,6 +57,9 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -93,6 +97,68 @@ public class OumuamuaServerTest {
     throws OumuamuaException {
 
     return new OumuamuaServer<>(configuration);
+  }
+
+  private static Object probeScope ()
+    throws Exception {
+
+    try {
+
+      return PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+
+      return missingPerApplicationScopeException;
+    }
+  }
+
+  // The executor the server builds for itself runs every task inside the configured scope, so work submitted from
+  // an unbound thread still sees the scope's data.
+  @Test
+  public void testDefaultExecutorRunsTasksInsideTheConfiguredScope ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+    configuration.setPerApplicationScope(perApplicationScope);
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    Assert.assertSame(server.getPerApplicationScope(), perApplicationScope);
+    Assert.assertEquals(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get(), "scoped");
+  }
+
+  @Test
+  public void testDefaultExecutorIsUnboundWithoutAScope ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    Assert.assertNull(server.getPerApplicationScope());
+    Assert.assertTrue(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get() instanceof MissingPerApplicationScopeException);
+  }
+
+  // A supplied executor is the application's to wrap; the server does not rebind its threads.
+  @Test
+  public void testSuppliedExecutorIsUsedAsGiven ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    configuration.setPerApplicationScope(perApplicationScope);
+    configuration.setExecutorService(Executors.newSingleThreadExecutor());
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    try {
+      Assert.assertTrue(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get() instanceof MissingPerApplicationScopeException);
+    } finally {
+      server.getExecutorService().shutdown();
+    }
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
   }
 
   @Test(expectedExceptions = OumuamuaException.class)

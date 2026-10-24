@@ -46,6 +46,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
@@ -69,6 +70,7 @@ public class ResponseMessageRouter extends MessageRouter {
   private final CopyOnWriteArraySet<String> boundQueueSet = new CopyOnWriteArraySet<>();
   private final RabbitMQResponseTransport responseTransport;
   private final SignalCodec signalCodec;
+  private final PerApplicationScope perApplicationScope;
   private final String serviceGroup;
   private final String instanceId;
   private final boolean autoAcknowledge;
@@ -76,6 +78,7 @@ public class ResponseMessageRouter extends MessageRouter {
   private final int ttlSeconds;
   private final int quorumReplicationCount;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates a response message router for the given service group and instance.
    *
@@ -92,8 +95,11 @@ public class ResponseMessageRouter extends MessageRouter {
    *                                     tolerate no failures at all.
    * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
+   * @param perApplicationScope          scope bound around every delivery callback, which runs on the
+   *                                     RabbitMQ client's own consumer thread; {@code null} leaves the
+   *                                     callback unbound.
    */
-  public ResponseMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public ResponseMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler, PerApplicationScope perApplicationScope) {
 
     super(connectionManager, "wire", nameConfiguration, publisherConfirmationHandler);
 
@@ -105,6 +111,7 @@ public class ResponseMessageRouter extends MessageRouter {
     this.ttlSeconds = ttlSeconds;
     this.quorumReplicationCount = quorumReplicationCount;
     this.autoAcknowledge = autoAcknowledge;
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -296,6 +303,29 @@ public class ResponseMessageRouter extends MessageRouter {
     return (!boundQueueSet.isEmpty()) && consumerTagMap.keySet().containsAll(boundQueueSet);
   }
 
+  private void handleBoundDelivery (Channel channel, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+
+    try {
+
+      long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
+
+      LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
+      Instrument.with(ResponseMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
+
+      responseTransport.execute(new RabbitMQMessage(properties, body));
+    } catch (Throwable throwable) {
+      LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
+    } finally {
+      if (!autoAcknowledge) {
+        try {
+          channel.basicAck(envelope.getDeliveryTag(), true);
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+        }
+      }
+    }
+  }
+
   private void installConsumerInternal (Channel channel, String queueName)
     throws IOException {
 
@@ -308,27 +338,14 @@ public class ResponseMessageRouter extends MessageRouter {
       try {
         channel.basicConsume(queueName, autoAcknowledge, consumerTag, false, false, null, new DefaultConsumer(channel) {
 
+          //  The client library calls this on a consumer thread of its own, which inherits no scope.
           @Override
           public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
-            try {
-
-              long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
-
-              LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-              Instrument.with(ResponseMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.REQUEST_TRANSIT_TIME.getDisplay())).update((timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS);
-
-              responseTransport.execute(new RabbitMQMessage(properties, body));
-            } catch (Throwable throwable) {
-              LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
-            } finally {
-              if (!autoAcknowledge) {
-                try {
-                  channel.basicAck(envelope.getDeliveryTag(), true);
-                } catch (IOException ioException) {
-                  LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
-                }
-              }
+            if (perApplicationScope == null) {
+              handleBoundDelivery(channel, envelope, properties, body);
+            } else {
+              perApplicationScope.run(() -> handleBoundDelivery(channel, envelope, properties, body));
             }
           }
         });

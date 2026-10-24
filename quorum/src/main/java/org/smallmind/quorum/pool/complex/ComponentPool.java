@@ -38,6 +38,7 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
@@ -61,6 +62,12 @@ import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEv
  * Event listeners registered via {@link #addComponentPoolEventListener} receive error and
  * lease-time notifications. Acquisition wait time is instrumented with a Claxon speedometer
  * tagged {@link ClaxonTag#WAITED}.
+ * <p>
+ * The pool starts two kinds of thread of its own — the deconstruction timer that retires idle,
+ * over-leased, or over-processed components, and (when a creation timeout is configured) a
+ * creator thread per component construction — and neither inherits a {@code ScopedValue}
+ * binding. A pool given a {@link PerApplicationScope} through {@link #setPerApplicationScope}
+ * before {@link #startup()} runs both inside that scope; otherwise they run unbound.
  *
  * @param <C> the type of component dispensed by this pool
  */
@@ -71,6 +78,7 @@ public class ComponentPool<C> extends Pool {
   private final ComponentPinManager<C> componentPinManager;
   private final String name;
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
+  private PerApplicationScope perApplicationScope;
 
   /**
    * Creates a pool with the given name and factory, using default configuration.
@@ -144,6 +152,31 @@ public class ComponentPool<C> extends Pool {
   public ComponentPool<C> setComplexPoolConfig (ComplexPoolConfig complexPoolConfig) {
 
     this.complexPoolConfig = complexPoolConfig;
+
+    return this;
+  }
+
+  /**
+   * Returns the scope the pool's own threads run inside, or {@code null} when they run unbound.
+   *
+   * @return the per-application scope, or {@code null}
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Sets the scope the pool's deconstruction timer and creator threads run inside. Takes effect at
+   * {@link #startup()}; threads already started are not rebound.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to leave the pool's threads unbound
+   * @return this pool, for fluent chaining
+   */
+  public ComponentPool<C> setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
 
     return this;
   }

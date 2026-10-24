@@ -38,7 +38,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -64,13 +68,13 @@ public class WorkerPoolTest {
   public void testExecuteBeforeStartUpIsRejected ()
     throws Throwable {
 
-    new WorkManager<>(CollectingWorker.class, 1).execute("work");
+    new WorkManager<>(CollectingWorker.class, 1, null).execute("work");
   }
 
   @Test
   public void testConcurrencyLimitIsExposed () {
 
-    Assert.assertEquals(new WorkManager<>(CollectingWorker.class, 3).getConcurrencyLimit(), 3);
+    Assert.assertEquals(new WorkManager<>(CollectingWorker.class, 3, null).getConcurrencyLimit(), 3);
   }
 
   @Test
@@ -79,7 +83,7 @@ public class WorkerPoolTest {
 
     List<String> collected = new CopyOnWriteArrayList<>();
     CountDownLatch latch = new CountDownLatch(1);
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 2);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 2, null);
 
     manager.startUp(workQueue -> new CollectingWorker(workQueue, collected, latch));
     try {
@@ -130,7 +134,7 @@ public class WorkerPoolTest {
 
     List<String> collected = new CopyOnWriteArrayList<>();
     CountDownLatch latch = new CountDownLatch(1);
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, null);
 
     manager.startUp(workQueue -> new CollectingWorker(workQueue, collected, latch));
     try {
@@ -147,7 +151,7 @@ public class WorkerPoolTest {
   public void testShutDownWithoutStartUpIsSafe ()
     throws InterruptedException {
 
-    new WorkManager<>(CollectingWorker.class, 1).shutDown();
+    new WorkManager<>(CollectingWorker.class, 1, null).shutDown();
   }
 
   @Test
@@ -155,7 +159,7 @@ public class WorkerPoolTest {
     throws Throwable {
 
     RejectOnceWorkQueue<String> workQueue = new RejectOnceWorkQueue<>();
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, workQueue);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, workQueue, null);
 
     manager.startUp(queue -> new CollectingWorker(queue, new CopyOnWriteArrayList<>(), new CountDownLatch(1)));
     try {
@@ -164,6 +168,84 @@ public class WorkerPoolTest {
       Assert.assertTrue(workQueue.getOfferCount() >= 2, "execute should have retried the rejected first offer");
     } finally {
       manager.shutDown();
+    }
+  }
+
+  // A manager given a scope runs each worker's body inside it, so data registered in that scope is visible on
+  // the worker thread even though the thread was started from an unbound test thread.
+  @Test
+  public void testWorkersRunInsideTheScopeWhenOneIsGiven ()
+    throws Throwable {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager = new WorkManager<>(ScopeProbingWorker.class, 1, new TransferringWorkQueue<>(), perApplicationScope);
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertEquals(seen.get(), "scoped");
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  @Test
+  public void testWorkersAreUnboundWithoutAScope ()
+    throws Throwable {
+
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager = new WorkManager<>(ScopeProbingWorker.class, 1, null);
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertTrue(seen.get() instanceof MissingPerApplicationScopeException, "expected an unbound worker, saw " + seen.get());
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
+  }
+
+  public static class ScopeProbingWorker extends Worker<String> {
+
+    private final AtomicReference<Object> seen;
+    private final CountDownLatch latch;
+
+    public ScopeProbingWorker (WorkQueue<String> workQueue, AtomicReference<Object> seen, CountDownLatch latch) {
+
+      super(workQueue);
+
+      this.seen = seen;
+      this.latch = latch;
+    }
+
+    @Override
+    public void engageWork (String transfer) {
+
+      try {
+        seen.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class));
+      } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+        seen.set(missingPerApplicationScopeException);
+      }
+
+      latch.countDown();
+    }
+
+    @Override
+    public void close () {
+
     }
   }
 

@@ -1207,6 +1207,7 @@ implementation speaks Kafka.
     <constructor-arg name="groupProtocol"             value="CLASSIC"/>     <4>
     <constructor-arg name="dynamicConsumers"          value="true"/>        <5>
     <constructor-arg name="topicName"                 value="oumuamua"/>    <6>
+    <constructor-arg name="perApplicationScope"       ref="perApplicationScope"/> <8>
     <constructor-arg name="servers">                                         <7>
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="kafka-1:9094,kafka-2:9094"/>
@@ -1241,6 +1242,12 @@ implementation speaks Kafka.
 <7> Bootstrap servers. `KafkaServerFactoryBean` resolves
     comma-separated host:port patterns into the producer/consumer
     `bootstrap.servers` property.
+<8> Optional. The consumer workers inherit no `ScopedValue` binding; given
+    a `PerApplicationScope` they run their whole poll loop — and so every
+    packet they deliver to the local server — inside it. Pass `null` to leave them
+    unbound. Pass the same
+    instance set as the server configuration's `perApplicationScope`. The
+    producer's executor only calls `producer.send` and is never wrapped.
 
 How it works, concretely:
 
@@ -1536,8 +1543,12 @@ Backbone errors::
 | `OumuamuaConfiguration`
 
 | `executorService`
-| `Executors.newVirtualThreadPerTaskExecutor()`
+| A virtual-thread-per-task executor whose threads run inside `perApplicationScope` when one is set. A supplied executor is used as given — its threads are the application's to bind.
 | `OumuamuaServer` constructor
+
+| `perApplicationScope`
+| none — the server's default executor, its idle-channel and idle-session timers, the servlets' protocol-listener callbacks, and the WebSocket endpoint's delivery notification run unbound
+| `OumuamuaConfiguration`
 
 | `securityPolicy`
 | none — a `null` policy is treated as allow-all

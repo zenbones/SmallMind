@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire.transport.mock;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -42,6 +43,10 @@ import org.smallmind.scribe.pen.LoggerManager;
  * drains the queue and distributes messages to registered {@link MockMessageListener}s in
  * round-robin order.  Dispatch can be temporarily suspended via {@link #pause()} and resumed
  * via {@link #play()} without stopping the underlying thread.
+ *
+ * <p>The dispatch thread inherits no {@code ScopedValue} binding; a queue constructed with a
+ * {@link PerApplicationScope} runs the thread's whole body, and so every listener callback,
+ * inside that scope.
  */
 public class MockQueue {
 
@@ -52,12 +57,17 @@ public class MockQueue {
   private final ArrayList<MockMessageListener> listenerList = new ArrayList<>();
   private int listenerIndex = 0;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs the queue and starts the background daemon thread that drives message dispatch.
+   *
+   * @param perApplicationScope the scope the dispatch thread runs inside, or {@code null} to run it unbound
    */
-  public MockQueue () {
+  public MockQueue (PerApplicationScope perApplicationScope) {
 
-    Thread thread = new Thread(worker = new QueueWorker());
+    worker = new QueueWorker();
+
+    Thread thread = new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker));
 
     thread.setDaemon(true);
     thread.start();

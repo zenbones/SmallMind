@@ -52,16 +52,21 @@ import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTranspor
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
  * Async servlet endpoint that receives Bayeux messages over long-polling HTTP.
+ * <p>
+ * The container delivers {@link #service} and the async read callbacks on threads of its own, and the servlet's
+ * message executor starts threads of its own; none inherits a {@code ScopedValue} binding. When the server was
+ * configured with a {@code PerApplicationScope}, all of them run inside it.
  *
  * @param <V> value representation
  */
 public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
-  private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+  private ExecutorService executorService;
   private OumuamuaServer<V> server;
   private LongPollingConnection<V> connection;
 
@@ -101,6 +106,10 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
         if ((transport = (LongPollingTransport<V>)servletProtocol.getTransport(Transports.LONG_POLLING.getName())) == null) {
           throw new ServletException("No long polling transport support has been configured");
         } else {
+
+          PerApplicationScope perApplicationScope = server.getPerApplicationScope();
+
+          executorService = Executors.newThreadPerTaskExecutor((perApplicationScope == null) ? Thread.ofVirtual().factory() : (runnable) -> Thread.ofVirtual().unstarted(() -> perApplicationScope.run(runnable)));
           connection = new LongPollingConnection<>(transport, server);
           server.start(servletConfig);
         }
@@ -230,7 +239,8 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
           messages = server.getCodec().from(contentBuffer);
 
-          ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
+          //  The container delivers this callback on a thread of its own; the protocol listeners run bound.
+          server.runBound(() -> ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages));
 
           delivered = true;
           executorService.submit(() -> connection.onMessages(asyncContext, messages));

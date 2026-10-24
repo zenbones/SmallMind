@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.proxy.spring;
 
 import java.lang.reflect.Proxy;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.web.jersey.proxy.JsonTarget;
 import org.springframework.context.support.GenericApplicationContext;
 import org.testng.Assert;

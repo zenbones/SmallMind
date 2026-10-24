@@ -32,6 +32,10 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -201,6 +205,86 @@ public class AbstractWrapperListenerLifecycleTest {
     WrapperManager.setControlledByNativeWrapper(true);
     new RecordingListener(false).controlEvent(WrapperManager.WRAPPER_CTRL_C_EVENT);
     Assert.assertNull(WrapperManager.lastStopCode());
+  }
+
+  // startup() runs inside the listener's own scope: data it registers is visible through that scope afterwards,
+  // and the calling thread is unbound once start() returns.
+  public void testStartRunsStartupInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.registered(), "from-startup");
+    assertUnbound();
+  }
+
+  public void testStopRunsShutdownInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.stop(0), 0);
+    Assert.assertEquals(listener.seenOnShutdown, "from-startup");
+    assertUnbound();
+  }
+
+  // The wrapper's stop() is reached from inside controlEvent's binding, so the double's stop hook sees the scope.
+  public void testControlEventRunsInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+    AtomicReference<String> seenOnStop = new AtomicReference<>();
+
+    WrapperManager.setControlledByNativeWrapper(false);
+    WrapperManager.setStopHook(() -> seenOnStop.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    listener.controlEvent(WrapperManager.WRAPPER_CTRL_C_EVENT);
+    Assert.assertEquals(WrapperManager.lastStopCode(), Integer.valueOf(0));
+    Assert.assertEquals(seenOnStop.get(), "from-startup");
+    assertUnbound();
+  }
+
+  private static void assertUnbound () {
+
+    try {
+      PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+      Assert.fail("The binding should not survive the wrapper callback");
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+      // expected
+    }
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
+  }
+
+  // Registers a value during startup and reads it back from inside shutdown and controlEvent, proving all three run
+  // bound to the same scope instance.
+  private static class ScopeProbingListener extends AbstractWrapperListener {
+
+    private String seenOnShutdown;
+
+    private String registered () {
+
+      return getPerApplicationScope().call(() -> PerApplicationScope.getPerApplicationData(SampleManager.class, String.class));
+    }
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "from-startup");
+    }
+
+    @Override
+    public void shutdown () {
+
+      seenOnShutdown = PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    }
   }
 
   // The listener is instantiated by name and handed to the wrapper along with the (expanded) arguments, unchanged.

@@ -35,6 +35,7 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.smallmind.persistence.sql.pool.PooledDataSourceFactory;
@@ -52,6 +53,7 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   private AbstractPooledDataSource<D, P> dataSource;
   private DataSourceFactory<D, P> dataSourceFactory;
   private ComplexPoolConfig poolConfig;
+  private PerApplicationScope perApplicationScope;
   private DatabaseConnection[] connections;
   private String poolName;
   private String validationQuery;
@@ -185,6 +187,18 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
     this.poolConfig = poolConfig;
   }
 
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Sets the scope the component pool's own threads (deconstruction timer and, when a creation timeout is
+   * configured, the creator thread) run inside. Omit it to leave those threads unbound.
+   *
+   * @param perApplicationScope the scope to forward to the component pool, or {@code null}
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+  }
+
   /**
    * Builds and starts the pooled data source using the configured parameters.
    *
@@ -199,7 +213,7 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
       throw new SQLException("The validity timeout for pool(" + poolName + ") must be set to > 0 seconds");
     }
 
-    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections);
+    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, perApplicationScope, connections);
     dataSource.startup();
   }
 

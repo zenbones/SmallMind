@@ -58,6 +58,7 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.ComponentModulator;
 import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
@@ -75,6 +76,11 @@ import org.smallmind.scribe.pen.LoggerManager;
  * the packet to the local server.  Workers automatically recreate their consumers on recoverable
  * poll errors.
  *
+ * <p>Consumer worker threads inherit no {@code ScopedValue} binding. A backbone constructed with a
+ * {@link PerApplicationScope} runs each worker's whole poll loop, and so every packet it delivers to the
+ * local server, inside that scope; one constructed without starts its workers unbound. The producer's
+ * executor only calls {@code producer.send} and is left unwrapped.
+ *
  * @param <V> the concrete {@link Value} type carried in Bayeux messages
  */
 public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
@@ -84,6 +90,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
   private final KafkaGroupProtocol groupProtocol;
+  private final PerApplicationScope perApplicationScope;
   private final String nodeName;
   private final String topicName;
   private final String prefixedTopicName;
@@ -92,6 +99,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates the backbone, verifies broker availability, and opens a shared producer.
    *
@@ -105,14 +113,13 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
    *                                  leave the group immediately on shutdown; {@code false} to join as static
    *                                  members identified by {@code <nodeName>-<index>}
-   * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
-   *                                  leave the group immediately on shutdown; {@code false} to join as static
-   *                                  members identified by {@code <nodeName>-<index>}
    * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
+   * @param perApplicationScope       the scope every consumer worker thread runs inside, or {@code null} to
+   *                                  start them unbound
    * @param servers                   one or more Kafka bootstrap broker addresses
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    */
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException {
 
     this.nodeName = nodeName;
@@ -120,6 +127,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     this.groupProtocol = groupProtocol;
     this.dynamicConsumers = dynamicConsumers;
     this.topicName = topicName;
+    this.perApplicationScope = perApplicationScope;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
 
@@ -162,7 +170,10 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
+
+        ConsumerWorker<V> worker = workers[index] = new ConsumerWorker<V>(server, nodeName, index);
+
+        new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker)).start();
       }
       componentModulator.set(ComponentStatus.STARTED);
     } else if (ComponentStatus.STOPPED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {

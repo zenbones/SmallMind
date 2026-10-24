@@ -139,6 +139,53 @@ public class FieldAccessor {
   }
 
   /**
+   * Resolves the field, method, or constructor that a direct method handle accesses.
+   *
+   * @param field  the field the handle is meant for, named in the failure message
+   * @param handle the handle to resolve
+   * @param role   {@code getter} or {@code setter}, named in the failure message
+   * @return the member the handle accesses
+   * @throws IllegalArgumentException if {@code handle} is not a direct method handle
+   */
+  private static Member revealMember (Field field, MethodHandle handle, String role) {
+
+    try {
+      return MethodHandles.reflectAs(Member.class, handle);
+    } catch (IllegalArgumentException illegalArgumentException) {
+      throw new IllegalArgumentException("The " + role + " handle for the field(" + describeField(field) + ") must be a direct method handle, as returned by the unreflect, unreflectGetter, unreflectSetter, findVirtual, findGetter, or findSetter methods of a lookup", illegalArgumentException);
+    }
+  }
+
+  /**
+   * Verifies that the receiver a handle takes, its first parameter, could be an instance of the class declaring
+   * the field. An interface always could, because a subclass of the declaring class might implement it.
+   *
+   * @param field  the field the handle is meant for
+   * @param handle the handle, which takes at least one parameter
+   * @param role   {@code getter} or {@code setter}, named in the failure message
+   * @throws IllegalArgumentException if the receiver is a class unrelated to the class declaring the field
+   */
+  private static void checkReceiver (Field field, MethodHandle handle, String role) {
+
+    Class<?> receiverClass = handle.type().parameterType(0);
+
+    if (!(receiverClass.isInterface() || receiverClass.isAssignableFrom(field.getDeclaringClass()) || field.getDeclaringClass().isAssignableFrom(receiverClass))) {
+      throw new IllegalArgumentException("The " + role + " handle for the field(" + describeField(field) + ") takes a receiver of type(" + receiverClass.getName() + "), which is unrelated to the class declaring the field");
+    }
+  }
+
+  /**
+   * Names a field for an exception message.
+   *
+   * @param field the field to describe
+   * @return the binary name of the declaring class, a dot, and the field name
+   */
+  private static String describeField (Field field) {
+
+    return field.getDeclaringClass().getName() + "." + field.getName();
+  }
+
+  /**
    * Returns the name of the underlying field.
    *
    * @return the field name as declared in source code
@@ -240,52 +287,5 @@ public class FieldAccessor {
     } catch (Throwable throwable) {
       throw new InvocationTargetException(throwable);
     }
-  }
-
-  /**
-   * Resolves the field, method, or constructor that a direct method handle accesses.
-   *
-   * @param field  the field the handle is meant for, named in the failure message
-   * @param handle the handle to resolve
-   * @param role   {@code getter} or {@code setter}, named in the failure message
-   * @return the member the handle accesses
-   * @throws IllegalArgumentException if {@code handle} is not a direct method handle
-   */
-  private static Member revealMember (Field field, MethodHandle handle, String role) {
-
-    try {
-      return MethodHandles.reflectAs(Member.class, handle);
-    } catch (IllegalArgumentException illegalArgumentException) {
-      throw new IllegalArgumentException("The " + role + " handle for the field(" + describeField(field) + ") must be a direct method handle, as returned by the unreflect, unreflectGetter, unreflectSetter, findVirtual, findGetter, or findSetter methods of a lookup", illegalArgumentException);
-    }
-  }
-
-  /**
-   * Verifies that the receiver a handle takes, its first parameter, could be an instance of the class declaring
-   * the field. An interface always could, because a subclass of the declaring class might implement it.
-   *
-   * @param field  the field the handle is meant for
-   * @param handle the handle, which takes at least one parameter
-   * @param role   {@code getter} or {@code setter}, named in the failure message
-   * @throws IllegalArgumentException if the receiver is a class unrelated to the class declaring the field
-   */
-  private static void checkReceiver (Field field, MethodHandle handle, String role) {
-
-    Class<?> receiverClass = handle.type().parameterType(0);
-
-    if (!(receiverClass.isInterface() || receiverClass.isAssignableFrom(field.getDeclaringClass()) || field.getDeclaringClass().isAssignableFrom(receiverClass))) {
-      throw new IllegalArgumentException("The " + role + " handle for the field(" + describeField(field) + ") takes a receiver of type(" + receiverClass.getName() + "), which is unrelated to the class declaring the field");
-    }
-  }
-
-  /**
-   * Names a field for an exception message.
-   *
-   * @param field the field to describe
-   * @return the binary name of the declaring class, a dot, and the field name
-   */
-  private static String describeField (Field field) {
-
-    return field.getDeclaringClass().getName() + "." + field.getName();
   }
 }

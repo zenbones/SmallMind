@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.nutsnbolts.lang.FormattedTimeoutException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -54,6 +55,9 @@ import org.smallmind.scribe.pen.LoggerManager;
  * <p>
  * A per-queue {@link AtomicInteger} issues monotonically increasing ordinals so that no two
  * fuses registered with this queue share the same ordinal.
+ * <p>
+ * Ignition runs on the queue's own daemon thread, which inherits no {@code ScopedValue} binding;
+ * {@link #startup(PerApplicationScope)} runs that thread's whole body inside the given scope.
  */
 public class DeconstructionQueue {
 
@@ -62,14 +66,18 @@ public class DeconstructionQueue {
 
   private ScheduledExecutorService ignitionExecutor;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Starts the background daemon task that polls for expired fuses once per second.
+   *
+   * @param perApplicationScope the scope the ignition thread runs inside, so that every fuse fires bound to it,
+   *                            or {@code null} to run the thread unbound
    */
-  public void startup () {
+  public void startup (PerApplicationScope perApplicationScope) {
 
     ignitionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
 
-      Thread thread = new Thread(runnable, "quorum-deconstruction-queue");
+      Thread thread = new Thread((perApplicationScope == null) ? runnable : () -> perApplicationScope.run(runnable), "quorum-deconstruction-queue");
 
       thread.setDaemon(true);
 

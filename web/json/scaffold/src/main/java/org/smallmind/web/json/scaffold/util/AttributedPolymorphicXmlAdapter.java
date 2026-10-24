@@ -81,7 +81,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
 
     JsonNode polymorphicKeyNode;
 
-    if ((polymorphicKeyNode = objectNode.get(PolymorphicAttributeManager.getPolymorphicAttributeName())) == null) {
+    if ((polymorphicKeyNode = objectNode.get(PolymorphicAttributeContextManager.getPolymorphicAttributeName())) == null) {
       throw new JAXBProcessingException("The json for the sub-class of class(%s) is improperly formatted", baseClass.getName());
     } else {
 
@@ -102,7 +102,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
           PolymorphicClassCache.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
         }
 
-        objectNode.remove(PolymorphicAttributeManager.getPolymorphicAttributeName());
+        objectNode.remove(PolymorphicAttributeContextManager.getPolymorphicAttributeName());
 
         try {
           PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.getConstructor().newInstance());
@@ -142,7 +142,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
 
         PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
         objectNode = (ObjectNode)JsonCodec.instance().writeAsJsonNode(proxyObject);
-        objectNode.put(PolymorphicAttributeManager.getPolymorphicAttributeName(), xmlRootElementAnnotation.name());
+        objectNode.put(PolymorphicAttributeContextManager.getPolymorphicAttributeName(), xmlRootElementAnnotation.name());
 
         return objectNode;
       }

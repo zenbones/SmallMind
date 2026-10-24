@@ -726,7 +726,7 @@ What it defines:
 * `schemaEntityManagerFactory` -- an `EntitySeekingEntityManagerFactoryBean`
   with session source key `schema` and the Hibernate persistence provider.
 * `schemaProxySession` -- a `JPAProxySession` for `schema`, registered with
-  `SessionManager` at startup.
+  `SessionContextManager` at startup.
 
 Entities join the persistence unit through their DAOs: declare each DAO as a
 bean and annotate its class with `@SessionSource("schema")`:

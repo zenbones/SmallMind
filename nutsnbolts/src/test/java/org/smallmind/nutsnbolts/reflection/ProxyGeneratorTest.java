@@ -73,6 +73,38 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ProxyGeneratorTest {
 
+  private static void writeModuleSource (Path sourceDirectory, String moduleName, String moduleDeclaration, String className, String classSource)
+    throws IOException {
+
+    Path moduleDirectory = Files.createDirectories(sourceDirectory.resolve(moduleName));
+
+    Files.writeString(moduleDirectory.resolve("module-info.java"), moduleDeclaration);
+    Files.writeString(Files.createDirectories(moduleDirectory.resolve(moduleName.replace('.', '/'))).resolve(className + ".java"), classSource);
+  }
+
+  private static byte[] createPublicClassBytes (String internalName) {
+
+    ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    MethodVisitor constructorVisitor;
+
+    classWriter.visit(Opcodes.V17, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, internalName, null, "java/lang/Object", null);
+    constructorVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+    constructorVisitor.visitCode();
+    constructorVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+    constructorVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+    constructorVisitor.visitInsn(Opcodes.RETURN);
+    constructorVisitor.visitMaxs(1, 1);
+    constructorVisitor.visitEnd();
+    classWriter.visitEnd();
+
+    return classWriter.toByteArray();
+  }
+
+  public interface NestedSpeaker {
+
+    String speak ();
+  }
+
   public void testInterfaceProxyDispatchesEveryCallThroughHandler () {
 
     RecordingHandler recordingHandler = new RecordingHandler("answer");
@@ -554,35 +586,12 @@ public class ProxyGeneratorTest {
     ProxyGenerator.createProxy(ClosedShape.class, new RecordingHandler("x"), true);
   }
 
+  public class PublicInner {
+
+  }
+
   static class PackagePrivateClass {
 
-  }
-
-  private static void writeModuleSource (Path sourceDirectory, String moduleName, String moduleDeclaration, String className, String classSource)
-    throws IOException {
-
-    Path moduleDirectory = Files.createDirectories(sourceDirectory.resolve(moduleName));
-
-    Files.writeString(moduleDirectory.resolve("module-info.java"), moduleDeclaration);
-    Files.writeString(Files.createDirectories(moduleDirectory.resolve(moduleName.replace('.', '/'))).resolve(className + ".java"), classSource);
-  }
-
-  private static byte[] createPublicClassBytes (String internalName) {
-
-    ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    MethodVisitor constructorVisitor;
-
-    classWriter.visit(Opcodes.V17, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, internalName, null, "java/lang/Object", null);
-    constructorVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
-    constructorVisitor.visitCode();
-    constructorVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-    constructorVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-    constructorVisitor.visitInsn(Opcodes.RETURN);
-    constructorVisitor.visitMaxs(1, 1);
-    constructorVisitor.visitEnd();
-    classWriter.visitEnd();
-
-    return classWriter.toByteArray();
   }
 
   /**
@@ -651,11 +660,6 @@ public class ProxyGeneratorTest {
     }
   }
 
-  public interface NestedSpeaker {
-
-    String speak ();
-  }
-
   public static class PublicStaticNested {
 
     public String name () {
@@ -681,10 +685,6 @@ public class ProxyGeneratorTest {
 
       return "constructed";
     }
-  }
-
-  public class PublicInner {
-
   }
 
   private static class RecordingHandler implements InvocationHandler {

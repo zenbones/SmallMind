@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 /**
  * Owns a per-application map of data objects, keyed by {@link PerApplicationDataManager} implementation class, and binds that map to the current thread with a {@link ScopedValue} for the dynamic extent of an operation.
  * <p>
- * The map itself is mutable and shared: data stored during one {@link #run} or {@link #call} is visible in every later or concurrent entry on the same instance and to every {@link ApplicationCarrier} taken from it. Only the binding is scoped. Constructing an instance binds nothing; unlike {@code org.smallmind.nutsnbolts.lang.PerApplicationContext}, there is no way to install the map on a thread and leave it there, and threads started from inside a bound operation do not inherit the binding. Use {@link #generateCarrier()} or {@link #wrapThreadFactory(ThreadFactory)} to carry the binding onto other threads explicitly.
+ * The map itself is mutable and shared: data stored during one {@link #run} or {@link #call} is visible in every later or concurrent entry on the same instance and to every {@link ApplicationCarrier} taken from it. Only the binding is scoped. Constructing an instance binds nothing; unlike {@code org.smallmind.nutsnbolts.context.PerApplicationContext}, there is no way to install the map on a thread and leave it there, and threads started from inside a bound operation do not inherit the binding. Use {@link #generateCarrier()} or {@link #wrapThreadFactory(ThreadFactory)} to carry the binding onto other threads explicitly.
  */
 public class PerApplicationScope {
 
@@ -176,16 +176,7 @@ public class PerApplicationScope {
     }
   }
 
-  private static class WrappingThreadFactory implements ThreadFactory {
-
-    private final ApplicationCarrier applicationCarrier;
-    private final ThreadFactory threadFactory;
-
-    private WrappingThreadFactory (ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) {
-
-      this.applicationCarrier = applicationCarrier;
-      this.threadFactory = threadFactory;
-    }
+  private record WrappingThreadFactory(ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) implements ThreadFactory {
 
     @Override
     public Thread newThread (Runnable runnable) {

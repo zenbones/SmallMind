@@ -33,7 +33,7 @@
 package org.smallmind.nutsnbolts.spring.web;
 
 import jakarta.servlet.ServletContextEvent;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.springframework.web.context.ContextLoaderListener;
 
 /**

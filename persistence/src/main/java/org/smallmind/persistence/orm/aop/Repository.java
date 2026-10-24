@@ -40,7 +40,7 @@ import org.smallmind.persistence.Durable;
 
 /**
  * Field annotation that designates the target field for automatic ORM DAO injection by {@link RepositoryAspect}.
- * The injected DAO must be registered in {@code OrmDaoManager} for the specified durable type.
+ * The injected DAO must be registered in {@code OrmDaoContextManager} for the specified durable type.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

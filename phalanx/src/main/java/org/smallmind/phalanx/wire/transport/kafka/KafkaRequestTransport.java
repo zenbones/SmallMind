@@ -53,6 +53,7 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.Voice;
@@ -90,6 +91,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
   private final String responseTopicName;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs the transport, verifies Kafka broker availability, and starts the response ingester.
    *
@@ -107,11 +109,13 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
    * @param dynamicConsumers          {@code true} to join the response consumer group as dynamic members, which
    *                                  leave the group immediately on shutdown; {@code false} to join as static
    *                                  members identified by {@code <nodeName>-<workerIndex>}
+   * @param perApplicationScope       the scope every response consumer thread runs inside, or {@code null} to
+   *                                  start them unbound
    * @param servers                   Kafka bootstrap servers to connect to
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while the response ingester is starting
    */
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, KafkaServer... servers)
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(defaultTimeoutSeconds);
@@ -137,7 +141,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
       }
     });
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, dynamicConsumers, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, dynamicConsumers, new RequestCallback(this, signalCodec), concurrencyLimit, perApplicationScope).startUp();
 
     if (!responseMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
       throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");

@@ -32,14 +32,29 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+
 /**
  * In-memory router that exposes the shared queue and topics used by the mock transport for testing.
  */
 public class MockMessageRouter {
 
-  private final MockQueue talkRequestQueue = new MockQueue();
-  private final MockTopic whisperRequestTopic = new MockTopic();
-  private final MockTopic responseTopic = new MockTopic();
+  private final MockQueue talkRequestQueue;
+  private final MockTopic whisperRequestTopic;
+  private final MockTopic responseTopic;
+
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Constructs a router whose queue and topics dispatch inside the given scope.
+   *
+   * @param perApplicationScope the scope every dispatch thread runs inside, or {@code null} to run them unbound
+   */
+  public MockMessageRouter (PerApplicationScope perApplicationScope) {
+
+    talkRequestQueue = new MockQueue(perApplicationScope);
+    whisperRequestTopic = new MockTopic(perApplicationScope);
+    responseTopic = new MockTopic(perApplicationScope);
+  }
 
   /**
    * Returns the queue used to dispatch talk-mode invocation requests.

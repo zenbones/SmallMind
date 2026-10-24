@@ -37,9 +37,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.sql.CommonDataSource;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
@@ -85,6 +86,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
   private Map<String, DataSourceFactory<?, ?>> factoryMap;
+  private PerApplicationScope perApplicationScope;
   private String prefix;
 
   /**
@@ -95,6 +97,18 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   public void setFactoryMap (Map<String, DataSourceFactory<?, ?>> factoryMap) {
 
     this.factoryMap = factoryMap;
+  }
+
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Sets the scope every constructed component pool's own threads (deconstruction timer and, when a creation
+   * timeout is configured, the creator thread) run inside. Omit it to leave those threads unbound.
+   *
+   * @param perApplicationScope the scope to forward to each component pool, or {@code null}
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -139,7 +153,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorContextManager.getSpringPropertyAccessor();
 
     prefix = ((prefix == null) || prefix.isEmpty()) ? "" : prefix + ".";
 
@@ -308,7 +322,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     if (postContextMap.size() == 1) {
 
-      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, postContextMap.get(null));
+      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, perApplicationScope, postContextMap.get(null));
     } else {
 
       ComponentPool[] componentPools = new ComponentPool[postContextMap.size()];
@@ -316,7 +330,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       int index = 0;
 
       for (Map.Entry<String, DatabaseConnection[]> contextEntry : postContextMap.entrySet()) {
-        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, contextEntry.getValue());
+        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, perApplicationScope, contextEntry.getValue());
       }
 
       return new ContextualPooledDataSource(poolNameTranslator, componentPools);

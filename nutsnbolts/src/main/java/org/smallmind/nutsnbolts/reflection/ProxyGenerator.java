@@ -759,7 +759,7 @@ public class ProxyGenerator {
    * @param returnType        the JVM type descriptor of the method's return type
    * @param exceptions        the internal names of the method's declared exceptions, or {@code null}
    */
-  private record MethodReference (String fieldName, String ownerInternalName, String methodName, String[] parameters, String returnType, String[] exceptions) {
+  private record MethodReference(String fieldName, String ownerInternalName, String methodName, String[] parameters, String returnType, String[] exceptions) {
 
   }
 

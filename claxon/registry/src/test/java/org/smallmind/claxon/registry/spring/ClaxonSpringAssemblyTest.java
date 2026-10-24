@@ -49,7 +49,7 @@ import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.TallyBuilder;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;

@@ -125,7 +125,7 @@ public class KafkaBackboneTest {
   private KafkaBackbone<OrthodoxValue> createBackbone ()
     throws Exception {
 
-    return new KafkaBackbone<>(NODE_NAME, 1, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, new KafkaServer("localhost", 9094));
+    return new KafkaBackbone<>(NODE_NAME, 1, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, null, new KafkaServer("localhost", 9094));
   }
 
   private Packet<OrthodoxValue> makePacket ()
@@ -164,6 +164,7 @@ public class KafkaBackboneTest {
       KafkaGroupProtocol.CLASSIC,
       true,
       "unit-test-topic",
+      null,
       new KafkaServer("127.0.0.1", UNREACHABLE_PORT));
   }
 

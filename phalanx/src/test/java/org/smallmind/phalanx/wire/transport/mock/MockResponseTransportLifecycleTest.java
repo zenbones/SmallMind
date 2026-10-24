@@ -48,7 +48,7 @@ public class MockResponseTransportLifecycleTest {
   public void testPlayingPausedPlayingTransitions ()
     throws Exception {
 
-    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(), new JsonSignalCodec());
+    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(null), new JsonSignalCodec());
 
     Assert.assertEquals(responseTransport.getState(), TransportState.PLAYING);
 
@@ -63,7 +63,7 @@ public class MockResponseTransportLifecycleTest {
   public void testCloseIsTerminalAndPauseBecomesNoOp ()
     throws Exception {
 
-    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(), new JsonSignalCodec());
+    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(null), new JsonSignalCodec());
 
     responseTransport.close();
     Assert.assertEquals(responseTransport.getState(), TransportState.CLOSED);

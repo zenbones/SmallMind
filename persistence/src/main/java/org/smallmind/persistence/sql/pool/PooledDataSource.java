@@ -37,13 +37,13 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.nutsnbolts.lang.StackTrace;
-import org.smallmind.persistence.sql.DataSourceManager;
+import org.smallmind.persistence.sql.DataSourceContextManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 /**
  * {@link DataSource} implementation backed by a {@link ComponentPool} of {@link PooledConnection}s.
- * Provides integration with {@link DataSourceManager} for keyed lookup.
+ * Provides integration with {@link DataSourceContextManager} for keyed lookup.
  */
 public class PooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
@@ -63,7 +63,7 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
   /**
    * Constructs a pooled data source with an explicit registry key.
    *
-   * @param key           name used when registering with {@link DataSourceManager}
+   * @param key           name used when registering with {@link DataSourceContextManager}
    * @param componentPool pool that manages pooled connections
    */
   public PooledDataSource (String key, ComponentPool<PooledConnection> componentPool) {
@@ -75,11 +75,11 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
   }
 
   /**
-   * Registers this data source in the {@link DataSourceManager} under its key.
+   * Registers this data source in the {@link DataSourceContextManager} under its key.
    */
   public void register () {
 
-    DataSourceManager.register(key, this);
+    DataSourceContextManager.register(key, this);
   }
 
   /**

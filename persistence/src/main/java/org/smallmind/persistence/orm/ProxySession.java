@@ -74,7 +74,7 @@ public abstract class ProxySession<F, N> {
    * Creates a proxy session wrapper with configurable boundary and cache defaults.
    *
    * @param dataSourceType   descriptive name of the backing data source
-   * @param sessionSourceKey key used to register this session with the {@link SessionManager}
+   * @param sessionSourceKey key used to register this session with the {@link SessionContextManager}
    * @param boundaryEnforced default transactional boundary enforcement
    * @param cacheEnabled     default cache usage flag
    */
@@ -87,11 +87,11 @@ public abstract class ProxySession<F, N> {
   }
 
   /**
-   * Registers this session with the {@link SessionManager} for lookup by session source key.
+   * Registers this session with the {@link SessionContextManager} for lookup by session source key.
    */
   public void register () {
 
-    SessionManager.register(sessionSourceKey, this);
+    SessionContextManager.register(sessionSourceKey, this);
   }
 
   /**

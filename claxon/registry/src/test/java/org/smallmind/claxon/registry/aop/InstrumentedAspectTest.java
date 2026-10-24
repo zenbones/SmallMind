@@ -44,7 +44,7 @@ import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.json.TallyParser;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;

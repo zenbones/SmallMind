@@ -88,6 +88,12 @@ public class WebSocketEndpointTest {
     websocketSession = Mockito.mock(Session.class);
     endpointConfig = Mockito.mock(EndpointConfig.class);
     server = Mockito.mock(OumuamuaServer.class);
+    // The endpoint hands its protocol notifications to the server to run bound; the mock must still run them.
+    Mockito.doAnswer(invocation -> {
+      ((Runnable)invocation.getArgument(0)).run();
+
+      return null;
+    }).when(server).runBound(Mockito.any());
     transport = Mockito.mock(WebSocketTransport.class);
     container = Mockito.mock(WebSocketContainer.class);
 

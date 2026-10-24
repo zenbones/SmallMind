@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.quorum.pool.complex.AbstractComponentInstanceFactory;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentInstance;

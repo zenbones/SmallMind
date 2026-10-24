@@ -103,7 +103,7 @@ public class KafkaMessageIngesterTest {
     };
 
     KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
-    }, 1).startUp();
+    }, 1, null).startUp();
 
     try {
       Assert.assertTrue(ingester.awaitConsumerAssignment(5, TimeUnit.SECONDS), "a consumer reporting a non-empty assignment should satisfy the readiness wait");
@@ -127,7 +127,7 @@ public class KafkaMessageIngesterTest {
     };
 
     KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
-    }, 1).startUp();
+    }, 1, null).startUp();
 
     try {
       //  The consumer never reports an assignment, so the wait must time out and return false — this is
@@ -158,7 +158,7 @@ public class KafkaMessageIngesterTest {
     };
 
     KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
-    }, 1).startUp();
+    }, 1, null).startUp();
 
     try {
       Thread.sleep(500);
@@ -184,7 +184,7 @@ public class KafkaMessageIngesterTest {
     };
 
     KafkaMessageIngester ingester = new KafkaMessageIngester("test-node", "test-group", "test-topic", connector, KafkaGroupProtocol.CONSUMER, true, record -> {
-    }, 1).startUp();
+    }, 1, null).startUp();
 
     try {
       Thread.sleep(500);

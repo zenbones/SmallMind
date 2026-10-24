@@ -9,6 +9,8 @@
     <property name="heartbeatSeconds" value="5"/>
   </bean>
 
+  <bean id="perApplicationScope" class="org.smallmind.nutsnbolts.scope.PerApplicationScope"/>
+
   <bean id="nameConfiguration" class="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.NameConfiguration"/>
 
   <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
@@ -28,6 +30,7 @@
     <constructor-arg index="8" name="publisherConfirmationHandler">
       <null/>
     </constructor-arg>
+    <constructor-arg index="9" name="perApplicationScope" ref="perApplicationScope"/>
   </bean>
 
   <bean id="rabbitmqResponseTransport" class="org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RabbitMQResponseTransport" destroy-method="close">
@@ -39,10 +42,12 @@
     <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
     <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="7" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
-    <constructor-arg index="8" name="autoAcknowledge" value="false"/>
-    <constructor-arg index="9" name="publisherConfirmationHandler">
+    <constructor-arg index="8" name="quorumReplicationCount" value="3"/>
+    <constructor-arg index="9" name="autoAcknowledge" value="false"/>
+    <constructor-arg index="10" name="publisherConfirmationHandler">
       <null/>
     </constructor-arg>
+    <constructor-arg index="11" name="perApplicationScope" ref="perApplicationScope"/>
   </bean>
 
   <bean id="kafkaRequestTransport" class="org.smallmind.phalanx.wire.transport.kafka.KafkaRequestTransport" destroy-method="close">
@@ -53,7 +58,8 @@
     <constructor-arg index="4" name="startupGracePeriodSeconds" value="10"/>
     <constructor-arg index="5" name="groupProtocol" value="CONSUMER"/>
     <constructor-arg index="6" name="dynamicConsumers" value="true"/>
-    <constructor-arg index="7" name="servers">
+    <constructor-arg index="7" name="perApplicationScope" ref="perApplicationScope"/>
+    <constructor-arg index="8" name="servers">
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="localhost:9094"/>
         <property name="serverSpread" value=""/>
@@ -70,7 +76,8 @@
     <constructor-arg index="5" name="startupGracePeriodSeconds" value="10"/>
     <constructor-arg index="6" name="groupProtocol" value="CONSUMER"/>
     <constructor-arg index="7" name="dynamicConsumers" value="true"/>
-    <constructor-arg index="8" name="servers">
+    <constructor-arg index="8" name="perApplicationScope" ref="perApplicationScope"/>
+    <constructor-arg index="9" name="servers">
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="localhost:9094"/>
         <property name="serverSpread" value=""/>

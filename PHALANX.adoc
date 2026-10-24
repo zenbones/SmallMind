@@ -256,7 +256,7 @@ Wire both sides through a shared `MockMessageRouter`:
 
 [source,java]
 ----
-MockMessageRouter router = new MockMessageRouter();
+MockMessageRouter router = new MockMessageRouter(null);   // or the application's PerApplicationScope
 JsonSignalCodec   codec  = new JsonSignalCodec();
 
 MockResponseTransport server = new MockResponseTransport(router, codec);
@@ -447,7 +447,7 @@ listener thread, so there is no worker pool.
 
 [source,java]
 ----
-MockMessageRouter     router = new MockMessageRouter();
+MockMessageRouter     router = new MockMessageRouter(null);
 JsonSignalCodec       codec  = new JsonSignalCodec();
 MockRequestTransport  client = new MockRequestTransport(router, codec, 30);
 MockResponseTransport server = new MockResponseTransport(router, codec);
@@ -530,7 +530,8 @@ RabbitMQRequestTransport client = new RabbitMQRequestTransport(
     /* defaultTimeoutSeconds    */ 30L,
     /* messageTTLSeconds        */ 60,
     /* autoAcknowledge          */ true,
-    /* publisherConfirmationHandler */ null
+    /* publisherConfirmationHandler */ null,
+    /* perApplicationScope      */ scope            // <1>
 );
 
 RabbitMQResponseTransport server = new RabbitMQResponseTransport(
@@ -542,9 +543,14 @@ RabbitMQResponseTransport server = new RabbitMQResponseTransport(
     /* messageTTLSeconds        */ 60,
     /* quorumReplicationCount   */ 3,
     /* autoAcknowledge          */ true,
-    /* publisherConfirmationHandler */ null
+    /* publisherConfirmationHandler */ null,
+    /* perApplicationScope      */ scope            // <1>
 );
 ----
+<1> Trailing parameter on every transport constructor; pass `null` to
+    start the transport's threads unbound. See
+    <<phalanx-per-application-scope,Per-application scope on transport
+    threads>>.
 
 `clusterSize` sets how many distinct `RequestMessageRouter` (or
 `ResponseMessageRouter`) instances are created — each owns its own channel
@@ -612,6 +618,7 @@ KafkaRequestTransport client = new KafkaRequestTransport(
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     /* dynamicConsumers         */ true,
+    /* perApplicationScope      */ scope,           // <1>
     servers
 );
 
@@ -624,9 +631,14 @@ KafkaResponseTransport server = new KafkaResponseTransport(
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     /* dynamicConsumers         */ true,
+    /* perApplicationScope      */ scope,           // <1>
     servers
 );
 ----
+<1> Parameter placed before the `servers` varargs; pass `null` to start
+    the transport's threads unbound. See
+    <<phalanx-per-application-scope,Per-application scope on transport
+    threads>>.
 
 `groupProtocol` is the Kafka consumer group protocol applied to every worker
 consumer: `KafkaGroupProtocol.CLASSIC` (the classic client-side rebalance
@@ -744,20 +756,22 @@ JmsRequestTransport client = new JmsRequestTransport(
     /* clusterSize           */ 4,
     /* concurrencyLimit      */ 8,
     /* maximumMessageLength  */ 1 << 20,
-    /* defaultTimeoutSeconds */ 30L
+    /* defaultTimeoutSeconds */ 30L,
+    /* perApplicationScope   */ scope              // <1>
 );
 
 JmsResponseTransport server = new JmsResponseTransport(
     routingFactories, messagePolicy, reconnectionPolicy, codec,
-    InvocationWorker.class,
     /* serviceGroup           */ "default",
     /* clusterSize            */ 4,
     /* concurrencyLimit       */ 8,
     /* maximumMessageLength   */ 1 << 20,
-    /* transactedSession      */ false,
-    /* acknowledgeMode        */ JmsAcknowledgeMode.AUTO_ACKNOWLEDGE
+    /* perApplicationScope    */ scope             // <1>
 );
 ----
+<1> Trailing parameter; pass `null` to start the transport's threads
+    unbound. See <<phalanx-per-application-scope,Per-application scope on
+    transport threads>>.
 
 A JNDI-less Spring assembly is available via the `transport/jms/spring/`
 helper beans.
@@ -918,6 +932,36 @@ drain cleanly: stop issuing requests on the client, close the request
 transport, let the response transport's workers complete in-flight work,
 then close the response transport.
 
+[[phalanx-per-application-scope]]
+=== Per-application scope on transport threads
+
+Every transport records Claxon metrics through `Instrument.with`, and the
+service side deserializes `WireContext`s through `WireContextXmlAdapter`;
+both resolve per-application data on whatever thread they run on. The
+threads involved inherit no `ScopedValue` binding from the thread that
+constructed the transport: `WorkManager` worker threads, the Kafka
+ingester's consumer threads, the RabbitMQ client's consumer threads (which
+call `handleDelivery`), the JMS provider's delivery threads (which call
+`onMessage`), and the mock transport's dispatch threads.
+
+Each transport constructor therefore accepts a trailing
+`org.smallmind.nutsnbolts.scope.PerApplicationScope`, and `WorkManager`,
+`KafkaMessageIngester`, `MockQueue`, `MockTopic`, and `MockMessageRouter`
+accept one directly. With a scope, the owner runs each worker's whole body
+and each third-party callback inside `scope.run(...)`, so every lookup on
+those threads resolves through that scope's map. With `null` the threads start
+unbound, exactly as before; the parameter is required so that the choice
+is made at every construction site rather than defaulted. Pass the same instance the rest of the application
+binds (for example the one wired into a web server's `perApplicationScope`
+property or registered by the Tanuki listener as
+`org.smallmind.spark.perApplicationScope`) so that every reader sees one
+map.
+
+Deliberately left unbound, because the work they run never resolves
+per-application data: the Kafka transports' producer executors (they only
+call `producer.send`) and `RabbitMQConnectionManager`'s retry thread
+(it only reconnects).
+
 == Worker Pool Primitives
 
 `org.smallmind.phalanx.worker` is a small, self-contained worker-pool
@@ -929,7 +973,7 @@ its own.
 |===
 | Type | Role
 
-| `WorkManager<W, T>`       | Owns the worker pool's full lifecycle: creates workers via a `WorkerFactory`, wraps them in daemon threads, dispatches work through `execute(T)`, stops them via `shutDown()`. Concurrent `startUp`/`shutDown` calls spin-wait for the transition in flight. Claxon records acquire-worker latency.
+| `WorkManager<W, T>`       | Owns the worker pool's full lifecycle: creates workers via a `WorkerFactory`, wraps them in daemon threads, dispatches work through `execute(T)`, stops them via `shutDown()`. Concurrent `startUp`/`shutDown` calls spin-wait for the transition in flight. Claxon records acquire-worker latency. Both constructors take a `PerApplicationScope` and run each worker's body inside it; `null` starts the workers unbound.
 | `Worker<T>`               | `Runnable` subclass that drains the queue and processes one item at a time.
 | `WorkerFactory<W, T>`     | Produces `Worker` instances bound to the shared queue.
 | `WorkQueue<T>`            | Handoff between producer and workers.
@@ -962,7 +1006,14 @@ the reply. Make the type serializable or return a serializable projection.
 **Wire contexts are missing on the server.**
 The handle must be registered on both sides with
 `WireContextManager.register("handle", Class)`; a mismatch causes the
-server to drop the context silently. Also verify the context was pushed
+server to drop the context silently. (`WireScopeManager` has the same API
+resolved through `nutsnbolts`' `PerApplicationScope` and throws
+`MissingPerApplicationScopeException` on an unbound thread; the transports
+and `WireContextXmlAdapter` read `WireContextManager`, and the two
+registries are unrelated. A worker or consumer thread is bound to a scope
+only when the transport was constructed with one — see
+<<phalanx-per-application-scope,Per-application scope on transport
+threads>>.) Also verify the context was pushed
 before the call and popped in a `finally` block, and that the context
 class's no-arg constructor or adapter is reachable from the server
 classloader.

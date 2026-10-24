@@ -74,6 +74,7 @@ public class KafkaBackboneLifecycleIntegrationTest extends AbstractBayeuxIntegra
       KafkaGroupProtocol.CLASSIC,
       true,
       LIFECYCLE_TOPIC,
+      null,
       new KafkaServer("localhost", 9094));
 
     server = applicationContext().getBean("oumuamuaServer", OumuamuaServer.class);

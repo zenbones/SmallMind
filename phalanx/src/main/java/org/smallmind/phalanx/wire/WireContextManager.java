@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.phalanx.wire.signal.WireContext;
 

@@ -48,8 +48,8 @@ import java.lang.reflect.Method;
 public class Setter implements Serializable {
 
   private final Class<?> attributeClass;
-  private transient Method method;
   private final String attributeName;
+  private transient Method method;
 
   /**
    * Wraps the supplied method as a setter, parsing the attribute name from the method name and

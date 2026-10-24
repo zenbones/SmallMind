@@ -57,7 +57,7 @@ public class JsonEntityResourceProxyFactory {
   }
 
   /**
-   * Generates a proxy that wraps invocations as envelope-encoded JSON POST requests and registers it in {@link JsonEntityResourceProxyManager}.
+   * Generates a proxy that wraps invocations as envelope-encoded JSON POST requests and registers it in {@link JsonEntityResourceProxyContextManager}.
    *
    * @param target            base target endpoint
    * @param versionPrefix     path segment placed before the version number
@@ -72,7 +72,7 @@ public class JsonEntityResourceProxyFactory {
 
     Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, versionPrefix, serviceVersion, serviceName, level, headerInjectors));
 
-    JsonEntityResourceProxyManager.register(resourceInterface, proxy);
+    JsonEntityResourceProxyContextManager.register(resourceInterface, proxy);
 
     return proxy;
   }

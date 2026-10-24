@@ -32,12 +32,33 @@
  */
 package org.smallmind.spark.tanukisoft.integration.spring;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.testng.Assert;
 
 @org.testng.annotations.Test(groups = "unit")
 public class SpringContextWrapperListenerTest {
+
+  // The listener's own scope is published as a singleton before refresh, so bean definitions can ref it.
+  public void testStartupRegistersTheListenersScopeAsASingleton () {
+
+    CountingListener listener = new CountingListener();
+
+    listener.startup(new String[0]);
+
+    Assert.assertSame(listener.context.getBean(SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME, PerApplicationScope.class), listener.exposedScope());
+  }
+
+  // A context handed back already refreshed is left alone; there is no bean factory to register into.
+  public void testStartupLeavesAnAlreadyActiveContextWithoutTheScopeBean () {
+
+    CountingListener listener = new CountingListener(true);
+
+    listener.startup(new String[0]);
+
+    Assert.assertFalse(listener.context.containsBean(SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME));
+  }
 
   public void testStartupCreatesAndRefreshesTheContext () {
 
@@ -79,14 +100,36 @@ public class SpringContextWrapperListenerTest {
 
   private static class CountingListener extends SpringContextWrapperListener {
 
+    private final boolean preRefreshed;
+    private GenericApplicationContext context;
     private int loadCount = 0;
+
+    private CountingListener () {
+
+      this(false);
+    }
+
+    private CountingListener (boolean preRefreshed) {
+
+      this.preRefreshed = preRefreshed;
+    }
+
+    private PerApplicationScope exposedScope () {
+
+      return getPerApplicationScope();
+    }
 
     @Override
     public ConfigurableApplicationContext loadApplicationContext (String[] args) {
 
       loadCount++;
+      context = new GenericApplicationContext();
 
-      return new GenericApplicationContext();
+      if (preRefreshed) {
+        context.refresh();
+      }
+
+      return context;
     }
   }
 }

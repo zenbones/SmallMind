@@ -45,6 +45,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameArrayXmlAdapter;
 import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameXmlAdapter;
 import org.smallmind.bayeux.oumuamua.server.impl.json.DoubleStringArrayXmlAdapter;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.json.LevelEnumXmlAdapter;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -67,6 +68,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Codec<V> codec;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private ExecutorService executorService;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private PerApplicationScope perApplicationScope;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private SecurityPolicy<V> securityPolicy;
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
@@ -149,13 +152,36 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * Assigns the executor service used for background processing.
+   * Assigns the executor service used for background processing. Threads of a supplied executor inherit no
+   * {@code ScopedValue} binding, so an application that also sets {@link #setPerApplicationScope} must build this
+   * executor so that its threads run inside that scope (for example from
+   * {@code PerApplicationScope.wrapThreadFactory}); the server only wraps the executor it creates itself.
    *
    * @param executorService executor service
    */
   public void setExecutorService (ExecutorService executorService) {
 
     this.executorService = executorService;
+  }
+
+  /**
+   * @return the scope the server's own threads run inside, or {@code null} when they run unbound
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Assigns the scope the server binds on every thread it starts (its default executor, the idle-channel and
+   * idle-session timers, the servlets' async read callbacks, and WebSocket endpoint callbacks).
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to leave those threads unbound
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**

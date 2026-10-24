@@ -31,7 +31,7 @@ It is organised into six top-level packages under `org.smallmind.persistence`:
 * `persistence.cache.aop` — AspectJ annotations (`@CacheAs`, `@CachedWith`,
   `@CacheCoherent`) and the aspects that implement them.
 * `persistence.orm` — `ORMDao`, `ProxySession`, `ProxyTransaction`, the
-  `SessionManager`, and adapters for Hibernate (via JPA), JPA, Throng, and
+  `SessionContextManager`, and adapters for Hibernate (via JPA), JPA, Throng, and
   QueryDSL.
 * `persistence.orm.aop` — AspectJ annotations (`@Transactional`,
   `@NonTransactional`, `@Timed`) and the aspects and thread-local state that
@@ -360,7 +360,7 @@ The DAO contracts form a layered stack. Each layer adds exactly one concern.
 
 `ORMDao<I, D, F, N> extends AbstractVectorAwareManagedDao<I, D>`::
     The base every application-visible DAO extends. Holds a
-    `ProxySession<F, N>`, registers itself with `OrmDaoManager` via
+    `ProxySession<F, N>`, registers itself with `OrmDaoContextManager` via
     `register()`, and delegates `get`/`persist`/`delete` to framework
     subclasses (`JPADao`, `ThrongDao`, etc.).
 
@@ -627,7 +627,7 @@ public void runMigrationStep (int step) throws StopMigrationSignal {
 === Spring Wiring For Boundaries
 
 A `ProxySession` bean's `init-method="register"` places it into the
-`SessionManager` under a source key. The `boundaryEnforced` constructor
+`SessionContextManager` under a source key. The `boundaryEnforced` constructor
 argument chooses whether the session will refuse to open outside an AOP
 boundary.
 
@@ -1124,7 +1124,7 @@ along two axes:
 
 * *Singular vs plural* — one element or many.
 * *By-key vs by-reference* — whether the vector stores references to the
-  durable (lazy, fetched through `OrmDaoManager` on access) or the
+  durable (lazy, fetched through `OrmDaoContextManager` on access) or the
   durables themselves (eager).
 
 The plural vectors are backed by `Roster<T>` — a serialisable `List`
@@ -1237,8 +1237,8 @@ The real pool is `PooledDataSource`, a `DataSource` wrapping a
 Key traits:
 
 * Constructor arg 0 of `PooledDataSource` is the *registration key*. A
-  call to `register()` places the bean in `DataSourceManager` under that
-  key so `DataSourceManager.getDataSource("schema")` finds it.
+  call to `register()` places the bean in `DataSourceContextManager` under that
+  key so `DataSourceContextManager.getDataSource("schema")` finds it.
 * The pool is an active component: it has `startup` and `shutdown`
   methods, declared in Spring as `init-method`/`destroy-method`.
 * `AbstractPooledDataSource` implements `ConnectionPoolDataSource` and
@@ -1292,14 +1292,42 @@ The `sql.pool.spring` package adds Spring factory beans that build a
   beans by `ContextIndex` and build one pool per context.
 * `DataSourceLocator` — application-scoped lookup by key.
 
-=== DataSourceManager
+`PooledDataSourceFactoryBean` and `DynamicPooledDataSourceInitializingBean`
+accept an optional `perApplicationScope` property
+(`org.smallmind.nutsnbolts.scope.PerApplicationScope`) and forward it to
+every `ComponentPool` they build, so the pool's deconstruction timer and
+creator threads — which inherit no `ScopedValue` binding — run inside that
+scope (see xref:QUORUM.adoc[]). The same value reaches the programmatic
+path through the trailing `PerApplicationScope` parameter of
+`PooledDataSourceFactory.createPooledDataSource(...)` and
+`PooledConnectionComponentPoolFactory.constructComponentPool(...)`; `null`
+leaves those threads unbound.
 
-`DataSourceManager` is a static registry analogous to `SessionManager`:
-`DataSourceManager.register(key, dataSource)` places a
+[source,xml]
+----
+<bean id="dataSource"
+      class="org.smallmind.persistence.sql.pool.spring.PooledDataSourceFactoryBean">
+  <property name="perApplicationScope" ref="perApplicationScope"/>
+  ...
+</bean>
+----
+
+=== DataSourceContextManager
+
+`DataSourceContextManager` is a static registry analogous to `SessionContextManager`:
+`DataSourceContextManager.register(key, dataSource)` places a
 `CommonDataSource` into the per-application context, and
-`DataSourceManager.getDataSource(key)` retrieves it. Used by runtime
+`DataSourceContextManager.getDataSource(key)` retrieves it. Used by runtime
 components that need a data source but were not given one by
 constructor injection.
+
+`DataSourceScopeManager` offers the same `register` / `getDataSource`
+API resolved through `nutsnbolts`' `PerApplicationScope` instead of
+`PerApplicationContext`: the calling thread must be inside the scope's
+`run` / `call`, an `ApplicationCarrier`, or a `wrapThreadFactory` thread,
+or the call throws `MissingPerApplicationScopeException`. The pooled data
+sources' `register()` and the rest of this module still resolve through
+`DataSourceContextManager`; the two registries are unrelated.
 
 === DataSourceAvailableTestCondition
 
@@ -1530,15 +1558,23 @@ underlying backend actually failed mid-call. A cache that returns null
 for every key is a correct cache; `@CacheAs` will proceed to the ORM
 and attempt to repopulate.
 
-=== OrmDaoManager Registration Order
+=== OrmDaoContextManager Registration Order
 
 `ByKeySingularVector` and similar lazy-hydrating vectors call
-`OrmDaoManager.get(Class)` at iteration time. The DAO must have called
+`OrmDaoContextManager.get(Class)` at iteration time. The DAO must have called
 `register()` before the first such call. In the canonical Spring wiring
 that happens during context refresh, so a by-key vector read during a
 servlet request is always safe. For standalone tooling that reads from
 the cache outside a Spring context, either call `dao.register()`
 manually or avoid by-key vectors entirely.
+
+`OrmDaoScopeManager` and `SessionScopeManager` are the `PerApplicationScope`
+flavors of `OrmDaoContextManager` and `SessionContextManager`, with the same
+static API; they throw `MissingPerApplicationScopeException` on a thread
+that is not inside the scope's `run` / `call`, a carrier, or a
+`wrapThreadFactory` thread. `ORMDao.register()`, `ProxySession.register()`,
+the repository aspect, and the by-key vectors resolve through the context
+flavors; nothing registered through one flavor is visible through the other.
 
 == Minimal Checklist
 

@@ -290,7 +290,7 @@ public class ScopeFactoryTest {
 
   }
 
-  public static class Lifecycle implements Scope, LifecycleAware {
+  public static class Lifecycle implements Scope, ScopeLifecycleAware {
 
     private final LinkedList<String> events;
     private final String name;

@@ -56,9 +56,11 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.smallmind.nutsnbolts.context.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.io.PathUtility;
-import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.grizzly.installer.FilterInstaller;
 import org.smallmind.web.grizzly.installer.ListenerInstaller;
@@ -90,6 +92,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private AddOn[] addOns;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
+  private PerApplicationScope perApplicationScope;
   private String host;
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
@@ -229,6 +232,27 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
     this.suppressConnectionClosedException = suppressConnectionClosedException;
   }
 
+  // TODO: Per Application Scope Entry Point
+  /**
+   * Sets the {@link PerApplicationScope} bound on request threads. The JAX-RS path is always filtered by
+   * {@code PerApplicationContextFilter}; when a scope is set, a {@link PerApplicationScopeFilter} binding this scope
+   * is registered on {@code /*} of every configured context for {@code REQUEST} and {@code ASYNC} dispatches, so
+   * every servlet (JAX-RS, installer-declared, WebSocket handshake) and every {@code AsyncContext.dispatch} leg runs
+   * bound, and each JAX-WS handler is wrapped in a {@link PerApplicationScopeHttpHandler}. Work that leaves the
+   * filter chain is not bound: {@code AsyncContext.start}, {@code ReadListener} / {@code WriteListener} callbacks,
+   * WebSocket endpoint callbacks, and {@code AsyncProvider} services that complete on their own thread must hold this
+   * scope and run their bodies through its {@code run} / {@code call}. The two per-application maps are unrelated
+   * and nothing bridges them, so data registered through {@code PerApplicationScope} is only visible to readers that
+   * resolve through that scope, and the application must bind this same instance while the Spring context refreshes.
+   *
+   * @param perApplicationScope scope to additionally bind per request, or {@code null} (the default) to register
+   *                            only the thread-local context filter
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+  }
+
   /**
    * Enables verbose SOAP message logging when set to {@code true}.
    *
@@ -356,7 +380,11 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
         HttpHandler httpHandler = new JaxwsHandler(webServiceInstaller.getService(), Boolean.TRUE.equals(webServiceInstaller.getAsyncSupported()));
 
-        httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
+        if (perApplicationScope != null) {
+          httpHandler = new PerApplicationScopeHttpHandler(httpHandler, perApplicationScope);
+        }
+
+        httpServer.getServerConfiguration().addHttpHandler(httpHandler,combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
         LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed web service(%s)", webServiceInstaller.getService().getClass().getName());
       }
     }
@@ -377,9 +405,17 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
       GrizzlyWebAppState webAppState = webAppStateFor(webApplicationOption.getContextPath());
 
+      if (perApplicationScope != null) {
+
+        FilterRegistration perApplicationScopeFilterRegistration = webAppState.getWebAppContext().addFilter("per-application-scope", new PerApplicationScopeFilter(perApplicationScope, suppressConnectionClosedException));
+
+        perApplicationScopeFilterRegistration.setAsyncSupported(true);
+        perApplicationScopeFilterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC), "/*");
+      }
+
       if (webApplicationOption.getJaxRSOption() != null) {
         webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(resourceConfig)).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
-        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter(suppressConnectionClosedException)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+        webAppState.getWebAppContext().addFilter("per-application-context", new PerApplicationContextFilter(suppressConnectionClosedException)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
       }
 
       if (webApplicationOption.getSpringSupportOption() != null) {

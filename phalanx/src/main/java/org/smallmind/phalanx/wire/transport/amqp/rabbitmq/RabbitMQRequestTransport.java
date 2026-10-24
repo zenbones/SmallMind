@@ -42,6 +42,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.TransportException;
@@ -60,6 +61,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
   private final LinkedBlockingQueue<RequestMessageRouter> routerQueue;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates the transport, opens the shared connection, and initialises its pool of routers.
    *
@@ -73,10 +75,13 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
    * @param messageTTLSeconds            per-message TTL applied at publish time.
    * @param autoAcknowledge              {@code true} to ack response deliveries automatically.
    * @param publisherConfirmationHandler receives AMQP publisher confirms; {@code null} disables confirms.
+   * @param perApplicationScope          scope bound around every response delivery callback, which runs on the
+   *                                     RabbitMQ client's own consumer thread; {@code null} leaves the callbacks
+   *                                     unbound.
    * @throws IOException      if the transport cannot be started.
    * @throws TimeoutException if startup times out.
    */
-  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
+  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler, PerApplicationScope perApplicationScope)
     throws IOException, TimeoutException {
 
     super(defaultTimeoutSeconds);
@@ -92,7 +97,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(connectionManager, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler);
+      requestMessageRouters[index] = new RequestMessageRouter(connectionManager, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler, perApplicationScope);
     }
 
     connectionManager.start();

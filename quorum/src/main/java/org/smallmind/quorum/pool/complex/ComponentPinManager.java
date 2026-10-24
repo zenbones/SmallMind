@@ -48,6 +48,7 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -110,7 +111,7 @@ public class ComponentPinManager<C> {
     throws ComponentPoolException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
-      deconstructionQueue.startup();
+      deconstructionQueue.startup(componentPool.getPerApplicationScope());
 
       backingLock.writeLock().lock();
       try {
@@ -285,10 +286,13 @@ public class ComponentPinManager<C> {
       if (componentPool.getComplexPoolConfig().getCreationTimeoutMillis() > 0) {
 
         ComponentCreationWorker<C> creationWorker;
+        PerApplicationScope perApplicationScope;
         Thread workerThread;
 
         creationWorker = new ComponentCreationWorker<>(componentPool);
-        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start(creationWorker);
+        perApplicationScope = componentPool.getPerApplicationScope();
+        //  The creator thread runs the caller's ComponentInstanceFactory, which may resolve per-application data.
+        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start((perApplicationScope == null) ? creationWorker : () -> perApplicationScope.run(creationWorker));
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {

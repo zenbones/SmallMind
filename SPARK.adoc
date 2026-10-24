@@ -1823,6 +1823,10 @@ the classes it defines.
 
 `AbstractWrapperListener.start(args)`:
 
+. Binds the listener's own `PerApplicationScope` (see
+  <<the-per-application-scope,The Per-Application Scope>>) for the whole
+  of the call, so everything below, `startup(args)` included, runs
+  inside it.
 . Reads the wrapper's startup timeout in seconds through
   `getStartupTimeoutSeconds()`, which consults
   `WrapperManager.getProperties().getProperty("wrapper.startup.timeout")`
@@ -1834,7 +1838,9 @@ the classes it defines.
   `getStartupTimeoutSeconds()`, which replaces the property lookup.
 . Opens a single-thread `ScheduledExecutorService` whose worker is a
   daemon named `spark-wrapper-signal`, declared in a try-with-resources
-  block so it is shut down the moment `startup` returns or throws.
+  block so it is shut down the moment `startup` returns or throws. Its
+  thread factory is deliberately not wrapped in the scope: the keep-alive
+  task only talks to the wrapper and never resolves per-application data.
 . Unless the timeout is `0` (the wrapper waits indefinitely, so no
   keep-alive is scheduled), schedules the keep-alive task with
   `scheduleWithFixedDelay(..., 0, max(1, startupTimeoutSeconds / 2),
@@ -1888,6 +1894,56 @@ Tuning hints:
   `2` from `start`.
   Listeners that want a different policy altogether override
   `getFailSafeTimeoutSeconds()`, which replaces the property lookup.
+
+[[the-per-application-scope]]
+=== The Per-Application Scope
+
+Every `AbstractWrapperListener` owns one
+`org.smallmind.nutsnbolts.scope.PerApplicationScope`, reachable from
+subclasses through the protected `getPerApplicationScope()`. The three
+wrapper callbacks — `start` (and so `startup`), `stop` (and so
+`shutdown`), and `controlEvent` — each run their whole body inside that
+scope's `run` / `call`, so per-application data registered during
+`startup` is visible to `shutdown` and to the `WrapperManager.stop` call
+a control event makes. The binding ends when each callback returns;
+nothing is left attached to the wrapper's thread.
+
+The listener still extends `PerApplicationContext`, so the
+`InheritableThreadLocal` map is also established for readers that resolve
+through that flavor. The two maps are unrelated and nothing bridges them
+(see xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]).
+
+A `ScopedValue` binding is not inherited by threads the application
+starts. Pools whose threads resolve per-application data must be built
+from `PerApplicationScope.wrapThreadFactory(...)` inside `startup`, or
+have their work submitted through an `ApplicationCarrier`; the keep-alive
+executor described above is the one thread `start` creates itself, and
+it is left unwrapped because it never resolves such data.
+
+`SpringContextWrapperListener` makes the same instance available to the
+Spring assembly: when the context returned by `loadApplicationContext`
+has not been refreshed, `startup` registers the scope as the singleton
+bean named `org.smallmind.spark.perApplicationScope`
+(`SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME`) before
+refreshing, so a bean definition can `ref` it — for example into
+`GrizzlyInitializingBean` or `JettyInitializingBean`'s
+`perApplicationScope` property, which then binds the same scope on every
+request thread. A context that arrives already refreshed receives no
+such bean. `ClassPathXmlSpringContextWrapperListener` therefore builds
+its `ClassPathXmlApplicationContext` unrefreshed and leaves the refresh
+to `startup`.
+
+[source,xml]
+----
+<bean id="grizzlyServer"
+      class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <property name="perApplicationScope"
+            ref="org.smallmind.spark.perApplicationScope"/>  <!--1-->
+  ...
+</bean>
+----
+<1> Registered by `SpringContextWrapperListener.startup` before the
+    refresh; not declared in the XML.
 
 === Exit Codes
 
@@ -2226,8 +2282,9 @@ Singularity jars are not hermetic::
   `CompressionType` (used by both plugins for archive compression),
   `PropertyExpander` (used by `AbstractWrapperListener.main`),
   `PerApplicationContext` (base class of `AbstractWrapperListener`),
-  and `ClassPathTemplateLoader` (used by `generate-wrapper` for
-  Freemarker).
+  `PerApplicationScope` (owned by `AbstractWrapperListener`; see
+  <<the-per-application-scope,The Per-Application Scope>>), and
+  `ClassPathTemplateLoader` (used by `generate-wrapper` for Freemarker).
 * xref:PHALANX.adoc[] — for services that also need coordinated
   cluster membership in the wrapped runtime.
 * https://wrapper.tanukisoftware.com/[Tanuki Software Java Service

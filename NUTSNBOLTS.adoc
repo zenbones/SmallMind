@@ -382,8 +382,8 @@ the ones that catch people out, because nothing else pulls them into the graph.
 | `org.aspectj:aspectjrt` | `org.aspectj.runtime` | automatic
 |===
 
-Public signatures in `email`, `freemarker`, `json`, `lang.web`, `namespace.shiro.realm`,
-`inject`, `security`, `soap`, `validation`, and the `spring` packages expose types from these
+Public signatures in `email`, `freemarker`, `json`, `context.web`, `namespace.shiro.realm`,
+`inject`, `scope.web`, `security`, `soap`, `validation`, and the `spring` packages expose types from these
 modules. Require the module in your own descriptor when you use the package that exposes
 it. They are deliberately not re-exported: `javac` treats a `requires static transitive`
 dependency as mandatory when compiling every module that reads `org.smallmind.nutsnbolts`, so
@@ -733,12 +733,36 @@ different call sites or where child-thread inheritance is relied upon.
     active when the method runs. `ContextFactory.filterContextsOn(method)`
     validates and collects them.
 
-`LifecycleAware`::
+`ContextLifecycleAware`::
     Optional lifecycle hook (push/pop callbacks) for contexts that need
     to perform setup or teardown around their stack lifetime.
 
 `ContextException`::
     Unchecked, thrown when `ExpectedContexts` expectations are not met.
+
+`PerApplicationContext`::
+    Holds the per-application data map shared by every thread of one
+    application, keyed by `lang.PerApplicationDataManager` class, in an
+    `InheritableThreadLocal`. Constructing one on a thread adopts the map
+    already attached to that thread or creates and attaches a new one;
+    `prepareThread` installs the instance's map on the current thread.
+    Static `setPerApplicationData` / `getPerApplicationData` read and
+    write the current thread's map and throw
+    `lang.MissingPerApplicationContextException` when none is attached.
+    `generateCarrier` captures the current map in a `ContextCarrier` for
+    use on another thread, and `wrapThreadFactory` wraps a
+    `ThreadFactory` so the threads it creates start with the current map.
+    `PerApplicationScope` (<<pkg-scope>>) is the `ScopedValue` counterpart.
+
+`PerApplicationContextFilter` (`org.smallmind.nutsnbolts.context.web`)::
+    Servlet filter that installs a shared `PerApplicationContext` on every
+    request thread it is mapped to. `init` reads the context from the
+    servlet context attribute named `PerApplicationContext.class.getName()`
+    and creates and publishes one when none is present; `doFilter` calls
+    `prepareThread` and then the rest of the chain, discarding
+    `"Connection is closed"` `IOException`s when constructed with
+    `suppressConnectionClosedException`. The map stays attached to the
+    thread after the chain returns. Requires `jakarta.servlet`.
 
 *Example.*
 
@@ -808,7 +832,7 @@ propagation is explicit via `ScopeSnapshot`.
     scopes for the extent of the operation on whichever thread invokes
     them. Reusable any number of times; fires no lifecycle callbacks.
 
-`LifecycleAware`::
+`ScopeLifecycleAware`::
     Optional hook for scopes that need setup or teardown. `beforeEnter`
     runs on the entering thread before the scope is bound; `afterExit`
     runs after the operation completes, normally or by throwing. With
@@ -826,7 +850,7 @@ propagation is explicit via `ScopeSnapshot`.
     an attempt to bind a `null` scope.
 
 `PerApplicationScope`::
-    The `ScopedValue` counterpart to `lang.PerApplicationContext`. Each
+    The `ScopedValue` counterpart to `context.PerApplicationContext`. Each
     instance owns a mutable, thread-safe map keyed by
     `lang.PerApplicationDataManager` class; the instance methods `run` /
     `call` bind that map for the extent of an operation, and the static
@@ -848,6 +872,28 @@ propagation is explicit via `ScopeSnapshot`.
 `MissingPerApplicationScopeException`::
     Unchecked, thrown by the static accessors, `generateCarrier`, and
     `wrapThreadFactory` when no per-application scope is bound.
+
+`PerApplicationScopeFilter` (`org.smallmind.nutsnbolts.scope.web`)::
+    Servlet filter that binds a `PerApplicationScope` for the extent of
+    `chain.doFilter` on every request it is mapped to. Construct it with
+    the scope instance, optionally with
+    `suppressConnectionClosedException`, or use the no-arg constructor
+    for container-declared filters, in which case `init` reads the scope
+    from the servlet context attribute named
+    `PerApplicationScope.class.getName()` and throws
+    `MissingPerApplicationScopeException` when none is published. The
+    filter never creates a scope of its own. The binding ends when the
+    chain returns or throws; work dispatched asynchronously from the
+    request is not bound. Requires `jakarta.servlet`.
+
+`PerApplicationScopeContextLoaderListener` (`org.smallmind.nutsnbolts.spring.web`)::
+    Spring `ContextLoaderListener` that runs the web application
+    context's refresh and shutdown inside a `PerApplicationScope` and
+    publishes that scope under the servlet context attribute the filter
+    reads. The no-arg constructor reuses an already-published scope or
+    creates one; the one-argument constructor publishes the given scope
+    and throws `ScopeException` if a different scope is already
+    published. Requires `spring.web`.
 
 *Example — ambient value.*
 
@@ -886,8 +932,8 @@ applicationScope.run(() -> {
   executor = Executors.newFixedThreadPool(4, workers);
 });
 
-// On a request thread, later:
-applicationScope.call(() -> chain.doFilter(request, response));                  // <4>
+// Bind the same scope on each servlet request:
+Filter perApplicationFilter = new PerApplicationScopeFilter(applicationScope);   // <4>
 ----
 <1> The instance owns the map. Construction binds nothing to the
     current thread.
@@ -898,9 +944,11 @@ applicationScope.call(() -> chain.doFilter(request, response));                 
     for the whole life of each thread it creates. Pools built from an
     unwrapped factory see no binding and fail with
     `MissingPerApplicationScopeException` on first lookup.
-<4> `ScopedValue.CallableOp` carries a single checked exception type.
-    `doFilter` throws two, so a real filter declares `X = Exception` and
-    splits the rethrow.
+<4> `PerApplicationScopeFilter` binds the scope for the extent of
+    `chain.doFilter` on every request. `ScopedValue.CallableOp` carries a
+    single checked exception type, so the filter declares `X = Exception`
+    and rethrows `IOException`, `ServletException`, and runtime
+    exceptions unchanged.
 
 [[pkg-resource]]
 === resource — uniform addressable content
@@ -1771,6 +1819,24 @@ Spring-specific extensions built on the rest of this module.
     Interface that an extension's "root bean" should implement so
     the loader can report a coherent handle back to the host.
 
+`SpringPropertyAccessorContextManager`, `SpringPropertyAccessorScopeManager`::
+    Static holders for the application's `SpringPropertyAccessor`, keyed
+    through `lang.PerApplicationDataManager`. The context flavor stores it
+    in `context.PerApplicationContext` and is what `PropertyPlaceholderConfigurer`
+    registers into and the dynamic initializing beans read. The scope flavor
+    has the same `register` / `getSpringPropertyAccessor` API resolved
+    through `PerApplicationScope` (see <<pkg-scope,scope>>) and throws
+    `MissingPerApplicationScopeException` on an unbound thread. The two
+    holders are unrelated.
+
+`WebContextLoaderListener`, `PerApplicationScopeContextLoaderListener` (`spring.web`)::
+    `ContextLoaderListener` extensions for servlet deployments. The
+    first installs a `context.PerApplicationContext` as a servlet context
+    attribute before Spring's refresh; the second runs the refresh and
+    shutdown inside a `PerApplicationScope` and publishes that scope for
+    `PerApplicationScopeFilter`. See <<pkg-scope,scope>>. Both require
+    `spring.web` and `jakarta.servlet`.
+
 Three Spring XML fragments ship alongside in
 `src/main/resources/spring/org/smallmind/nutsnbolts/`:
 `jmx.xml`, `realm.xml`, and `rmi.xml`. These are ready-to-import
@@ -2168,7 +2234,7 @@ reused for any number of runs on any number of threads.
 
 As with context inheritance, the snapshot copies the *map*, not the
 scope objects. A scope that refers to mutable state is shared by
-reference with every thread that rebinds it. `LifecycleAware`
+reference with every thread that rebinds it. `ScopeLifecycleAware`
 callbacks fire only on the original entry through `ScopeFactory`, never
 on a snapshot rebind.
 
@@ -2178,6 +2244,12 @@ difference is what is copied: a `ScopeSnapshot` copies an immutable
 binding map, whereas an `ApplicationCarrier` refers to the scope's one
 shared, mutable map, so data stored after the capture — on any thread —
 is still visible through the carrier.
+
+In a servlet container the two bound entry points are
+`PerApplicationScopeContextLoaderListener`, which binds the scope around
+Spring's refresh and shutdown, and `PerApplicationScopeFilter`, which
+rebinds it for the extent of each request's filter chain. Both are
+described in <<pkg-scope,scope>>.
 
 Structured concurrency (`StructuredTaskScope`) propagates `ScopedValue`
 bindings to forked subtasks automatically, but that API is still a
@@ -2306,8 +2378,17 @@ Optional dependency failure modes::
     rebind explicitly. The same applies to `PerApplicationScope`: every
     thread pool that resolves per-application data must be built from
     `PerApplicationScope.wrapThreadFactory`, or its tasks run through an
-    `ApplicationCarrier`; unlike `lang.PerApplicationContext`, nothing
+    `ApplicationCarrier`; unlike `context.PerApplicationContext`, nothing
     is inherited. See <<behavioral-reference,Scope propagation>>.
+
+`PerApplicationScopeFilter` binds only the filter chain::
+    The scope is bound for the extent of `chain.doFilter` and nothing
+    else. Servlet async dispatch and any work the request hands to
+    another thread run unbound unless they go through an
+    `ApplicationCarrier`. The no-arg filter also requires the scope to be
+    published in the servlet context — by
+    `PerApplicationScopeContextLoaderListener` or application code —
+    before `init` runs; it does not create one.
 
 Optional modules on the module path::
     Every optional dependency is `requires static` in the module

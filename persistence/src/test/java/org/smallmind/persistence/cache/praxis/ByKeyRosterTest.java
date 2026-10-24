@@ -39,14 +39,14 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,7 +55,7 @@ import org.testng.annotations.Test;
  * Exercises {@link ByKeyRoster}. The type-guard, containment, and structural-delegation branches are
  * tested without a DAO because they only touch the backing key roster. The DAO-hydration path
  * ({@link ByKeyRoster#prefetch()}) is tested by registering a Mockito {@link ORMDao} mock through
- * {@link OrmDaoManager}, which requires a {@link PerApplicationContext} to be attached to the test
+ * {@link OrmDaoContextManager}, which requires a {@link PerApplicationContext} to be attached to the test
  * thread first.
  */
 @Test(groups = "unit")
@@ -92,14 +92,14 @@ public class ByKeyRosterTest {
   @SuppressWarnings("unchecked")
   public void attachApplicationContext () {
 
-    // OrmDaoManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
+    // OrmDaoContextManager.get(...) reads PerApplicationContext, which throws unless a context map is bound to this thread.
     // The map is a static InheritableThreadLocal that is reused (not recreated) across methods, so registrations leak
     // between tests on the same Surefire thread; install a fresh registry every method to keep the missing-DAO branch
     // observable and to stop a foreign DAO bleeding into hydration here.
     new PerApplicationContext();
-    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<>());
+    PerApplicationContext.setPerApplicationData(OrmDaoContextManager.class, new ConcurrentHashMap<>());
 
-    // ByKeyRoster hydrates each key through OrmDaoManager on get/iterate/remove, so register a DAO that turns the
+    // ByKeyRoster hydrates each key through OrmDaoContextManager on get/iterate/remove, so register a DAO that turns the
     // key's id string back into a Cog. Tests that need different hydration (prefetch) re-register their own mock.
     ORMDao<Long, Cog, ?, ?> ormDao = Mockito.mock(ORMDao.class);
 
@@ -109,7 +109,7 @@ public class ByKeyRosterTest {
       Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
     }
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
   }
 
   public void testContainsRejectsNonDurableClassElementWithoutDao () {
@@ -257,7 +257,7 @@ public class ByKeyRosterTest {
     Mockito.when(ormDao.getIdFromString("2")).thenReturn(2L);
     Mockito.when(ormDao.acquire(Cog.class, 2L)).thenReturn(acquired);
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
 
     ByKeyRoster<Long, Cog> roster = rosterFor(1L, 2L);
     List<Cog> prefetched = roster.prefetch();
@@ -283,7 +283,7 @@ public class ByKeyRosterTest {
     Mockito.when(ormDao.getIdFromString("2")).thenReturn(2L);
     Mockito.when(ormDao.acquire(Cog.class, 2L)).thenReturn(null);
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
 
     ByKeyRoster<Long, Cog> roster = rosterFor(1L, 2L);
     List<Cog> prefetched = roster.prefetch();
@@ -299,7 +299,7 @@ public class ByKeyRosterTest {
 
     Mockito.when(ormDao.getVectoredDao()).thenReturn(null);
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
 
     // With no vectored DAO the method returns new LinkedList<>(this), which copies via the roster's
     // iterator; that iterator hydrates each key through the same ORM DAO's get(...).
@@ -521,7 +521,7 @@ public class ByKeyRosterTest {
     Mockito.when(ormDao.getIdFromString("1")).thenReturn(1L);
     Mockito.when(ormDao.get(1L)).thenReturn(null);
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
 
     ByKeyRoster<Long, Cog> roster = rosterFor(1L);
 
@@ -555,7 +555,7 @@ public class ByKeyRosterTest {
   }
 
   /**
-   * A second durable type that is deliberately never registered with {@link OrmDaoManager}, used to exercise the
+   * A second durable type that is deliberately never registered with {@link OrmDaoContextManager}, used to exercise the
    * missing-DAO failure branch of {@link ByKeyRoster#getORMDao()}.
    */
   public static class Sprocket extends AbstractDurable<Long, Sprocket> {

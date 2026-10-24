@@ -74,7 +74,7 @@ public class MockWhisperShoutTest {
   public void beforeClass ()
     throws Exception {
 
-    MockMessageRouter messageRouter = new MockMessageRouter();
+    MockMessageRouter messageRouter = new MockMessageRouter(null);
     JsonSignalCodec signalCodec = new JsonSignalCodec();
 
     responseTransport = new MockResponseTransport(messageRouter, signalCodec);

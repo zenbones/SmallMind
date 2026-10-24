@@ -45,6 +45,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.TransportException;
@@ -78,6 +79,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
   private final ResponseListener[] responseListeners;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs a JMS request transport, creating clustered connection managers, message-handler
    * pools, and response listeners.
@@ -92,10 +94,12 @@ public class JmsRequestTransport extends AbstractRequestTransport {
    * @param concurrencyLimit      number of message-handler slots per channel pool
    * @param maximumMessageLength  maximum byte length of any single response payload
    * @param defaultTimeoutSeconds default request timeout in seconds when no explicit timeout is set
+   * @param perApplicationScope   scope bound around every response callback, which runs on the JMS provider's
+   *                              delivery thread; {@code null} leaves the callbacks unbound
    * @throws JMSException       if any JMS resource cannot be created
    * @throws TransportException if transport initialisation fails
    */
-  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds)
+  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds, PerApplicationScope perApplicationScope)
     throws JMSException, TransportException {
 
     super(defaultTimeoutSeconds);
@@ -131,7 +135,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
     responseListeners = new ResponseListener[clusterSize];
     for (int index = 0; index < responseListeners.length; index++) {
-      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, callerId, maximumMessageLength);
+      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, callerId, maximumMessageLength, perApplicationScope);
     }
   }
 

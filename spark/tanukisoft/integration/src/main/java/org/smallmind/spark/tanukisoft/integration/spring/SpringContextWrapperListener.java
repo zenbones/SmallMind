@@ -32,6 +32,7 @@
  */
 package org.smallmind.spark.tanukisoft.integration.spring;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -39,8 +40,20 @@ import org.springframework.context.ConfigurableApplicationContext;
  * {@link AbstractWrapperListener} specialization that maps the wrapper's start/stop lifecycle onto a Spring
  * {@link ConfigurableApplicationContext}: startup loads and refreshes the context, shutdown closes it. Concrete
  * subclasses decide how the context is produced.
+ * <p>
+ * The refresh runs inside the listener's {@code PerApplicationScope} (see
+ * {@link AbstractWrapperListener#getPerApplicationScope()}), and that same instance is registered as the singleton
+ * bean named {@value #PER_APPLICATION_SCOPE_BEAN_NAME} before the refresh when the context handed back by
+ * {@link #loadApplicationContext(String[])} is not yet active, so bean definitions can {@code ref} it (for example
+ * into a web server's {@code perApplicationScope} property). A context that arrives already refreshed receives no
+ * such bean.
  */
 public abstract class SpringContextWrapperListener extends AbstractWrapperListener {
+
+  /**
+   * Name of the singleton under which the listener's {@code PerApplicationScope} is registered before refresh.
+   */
+  public static final String PER_APPLICATION_SCOPE_BEAN_NAME = "org.smallmind.spark.perApplicationScope";
 
   private ConfigurableApplicationContext applicationContext;
 
@@ -48,12 +61,14 @@ public abstract class SpringContextWrapperListener extends AbstractWrapperListen
    * Factory hook implemented by subclasses to supply the Spring context that the listener should manage.
    *
    * @param args the wrapper-supplied arguments (after timeout stripping); normally interpreted as config locations
-   * @return a newly created context, typically unrefreshed
+   * @return a newly created context, which should be unrefreshed so that the scope singleton can be registered
    */
   public abstract ConfigurableApplicationContext loadApplicationContext (String[] args);
 
   /**
-   * Lazily creates the application context on first start and ensures it is refreshed so Spring beans are available.
+   * Lazily creates the application context on first start, registers the listener's {@code PerApplicationScope} as
+   * the {@value #PER_APPLICATION_SCOPE_BEAN_NAME} singleton if the context has not been refreshed, and ensures it is
+   * refreshed so Spring beans are available.
    *
    * @param args arguments forwarded from the wrapper, passed through to {@link #loadApplicationContext(String[])}
    */
@@ -63,6 +78,10 @@ public abstract class SpringContextWrapperListener extends AbstractWrapperListen
       applicationContext = loadApplicationContext(args);
     }
     if (!applicationContext.isActive()) {
+
+      PerApplicationScope perApplicationScope = getPerApplicationScope();
+
+      applicationContext.addBeanFactoryPostProcessor((beanFactory) -> beanFactory.registerSingleton(PER_APPLICATION_SCOPE_BEAN_NAME, perApplicationScope));
       applicationContext.refresh();
     }
   }

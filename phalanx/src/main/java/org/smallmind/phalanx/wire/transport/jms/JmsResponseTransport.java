@@ -43,6 +43,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.TransportException;
@@ -55,6 +56,7 @@ import org.smallmind.phalanx.wire.transport.TransportState;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.wire.transport.WiredService;
+import org.smallmind.phalanx.worker.TransferringWorkQueue;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
@@ -85,6 +87,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
   private final int maximumMessageLength;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Constructs the response transport, establishing all request listeners and response publisher
    * pools, then starting the worker thread pool.
@@ -98,14 +101,16 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
    * @param clusterSize          number of independent connection managers per channel
    * @param concurrencyLimit     maximum number of concurrent {@link InvocationWorker} threads
    * @param maximumMessageLength maximum byte length of any single inbound request payload
+   * @param perApplicationScope  the scope bound on every invocation worker thread and around every
+   *                             {@code onMessage} callback, or {@code null} to run them unbound
    * @throws InterruptedException if worker start-up is interrupted
    * @throws JMSException         if any JMS resource cannot be created
    * @throws TransportException   if transport initialisation fails
    */
-  public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
+  public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength, PerApplicationScope perApplicationScope)
     throws InterruptedException, JMSException, TransportException {
 
-    super(InvocationWorker.class, concurrencyLimit);
+    super(InvocationWorker.class, concurrencyLimit, new TransferringWorkQueue<>(), perApplicationScope);
 
     int topicIndex = 0;
 
@@ -114,15 +119,15 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
 
     shoutRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < shoutRequestListeners.length; index++) {
-      shoutRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, null);
+      shoutRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, null, perApplicationScope);
     }
     talkRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < talkRequestListeners.length; index++) {
-      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null);
+      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null, perApplicationScope);
     }
     whisperRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < whisperRequestListeners.length; index++) {
-      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId);
+      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId, perApplicationScope);
     }
 
     responseConnectionManagers = new ConnectionManager[clusterSize];

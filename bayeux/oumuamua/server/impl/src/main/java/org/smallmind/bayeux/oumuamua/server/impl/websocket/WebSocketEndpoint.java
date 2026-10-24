@@ -165,7 +165,8 @@ public class WebSocketEndpoint<V extends Value<V>> extends Endpoint implements M
         websocketSession.getBasicRemote().sendText(encodedPacket);
       }
 
-      ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onDelivery(packet);
+      //  Delivery may be driven from a container or backbone thread; the protocol listeners run bound.
+      server.runBound(() -> ((WebsocketProtocol<V>)websocketTransport.getProtocol()).onDelivery(packet));
 
       return true;
     } catch (TimeoutException timeoutException) {

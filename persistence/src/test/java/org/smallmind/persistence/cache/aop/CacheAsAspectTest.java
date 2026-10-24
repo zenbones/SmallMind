@@ -38,7 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectoredDao;

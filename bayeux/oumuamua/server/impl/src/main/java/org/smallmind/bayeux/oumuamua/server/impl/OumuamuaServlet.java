@@ -146,7 +146,8 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
           Message<V>[] messages = server.getCodec().from(contentBuffer);
 
-          ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
+          //  The request thread is the container's; the protocol listeners run bound.
+          server.runBound(() -> ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages));
           AsyncContext asyncContext = request.startAsync();
           asyncContext.setTimeout(0);
 

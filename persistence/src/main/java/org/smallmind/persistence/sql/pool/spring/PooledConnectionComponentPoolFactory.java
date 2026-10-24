@@ -35,6 +35,7 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DataSourceComponentInstanceFactory;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
@@ -47,6 +48,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
  */
 public class PooledConnectionComponentPoolFactory {
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates a component pool configured with the provided connection endpoints and pooling options.
    *
@@ -56,12 +58,14 @@ public class PooledConnectionComponentPoolFactory {
    * @param maxStatements          maximum prepared statements to cache per connection
    * @param validityTimeoutSeconds validity timeout used when deciding whether an error has left a connection unusable
    * @param poolConfig             pool behavior configuration
+   * @param perApplicationScope    scope the pool's deconstruction and creator threads run inside, or {@code null}
+   *                               to leave them unbound
    * @param connections            database connection definitions
    * @param <D>                    data source type
    * @return initialized component pool ready for startup
    * @throws SQLException if data source or pool setup fails
    */
-  public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
+  public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, int validityTimeoutSeconds, ComplexPoolConfig poolConfig, PerApplicationScope perApplicationScope, DatabaseConnection... connections)
     throws SQLException {
 
     DataSourceComponentInstanceFactory<D, ? extends PooledConnection> connectionInstanceFactory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, maxStatements, validityTimeoutSeconds, createConnectionEndpoints(connections));
@@ -70,7 +74,7 @@ public class PooledConnectionComponentPoolFactory {
       connectionInstanceFactory.setValidationQuery(validationQuery);
     }
 
-    return new ComponentPool<>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig);
+    return new ComponentPool<>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig).setPerApplicationScope(perApplicationScope);
   }
 
   /**

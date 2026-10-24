@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;

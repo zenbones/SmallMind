@@ -40,7 +40,7 @@ import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 
 /**
  * AspectJ aspect that injects ORM DAOs into fields annotated with {@link Repository} immediately after
@@ -51,7 +51,7 @@ public class RepositoryAspect {
 
   /**
    * Scans all fields of the newly constructed service for {@link Repository} annotations and injects the
-   * corresponding ORM DAO from {@code OrmDaoManager}.
+   * corresponding ORM DAO from {@code OrmDaoContextManager}.
    *
    * @param constructed the newly constructed service instance whose fields are to be injected
    * @throws IllegalAccessException    if this module cannot access a field of the service, or its getter or setter, or a matching field is final and has no setter
@@ -70,7 +70,7 @@ public class RepositoryAspect {
 
         ORMDao ormDao;
 
-        if ((ormDao = OrmDaoManager.get(repository.value())) == null) {
+        if ((ormDao = OrmDaoContextManager.get(repository.value())) == null) {
           throw new RepositoryError("The type(%s) of the @%s for field(%s) has no registered %s", repository.value().getName(), Repository.class.getSimpleName(), fieldAccessor.getField().getName(), ManagedDao.class.getSimpleName());
         } else if (!ormDao.getClass().isAssignableFrom(fieldAccessor.getField().getType())) {
           throw new RepositoryError("The type(%s) of field(%s) does not match that of its @%s(%s)", fieldAccessor.getField().getType().getName(), fieldAccessor.getField().getName(), Repository.class.getSimpleName(), ormDao.getClass().getName());

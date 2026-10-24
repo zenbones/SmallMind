@@ -49,6 +49,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -61,6 +62,10 @@ import org.smallmind.scribe.pen.LoggerManager;
  * and recreates its consumer, preserving its paused or playing state.  Offsets are committed
  * synchronously per partition after each batch; callback errors are logged but do not prevent
  * the commit.
+ *
+ * <p>Consumer threads inherit no {@code ScopedValue} binding. An ingester constructed with a
+ * {@link PerApplicationScope} runs each worker's whole poll loop, and so every callback, inside
+ * that scope; one constructed without starts its workers unbound.
  */
 public class KafkaMessageIngester {
 
@@ -70,6 +75,7 @@ public class KafkaMessageIngester {
   private final KafkaConnector connector;
   private final java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback;
   private final KafkaGroupProtocol groupProtocol;
+  private final PerApplicationScope perApplicationScope;
   private final String nodeName;
   private final String groupId;
   private final String topicName;
@@ -77,28 +83,28 @@ public class KafkaMessageIngester {
   private final int concurrencyLimit;
   private ConsumerWorker[] workers;
 
+  // TODO: Per Application Scope Entry Point
   /**
    * Creates an ingester configured for the named topic without starting any threads.
    * Call {@link #startUp()} before invoking {@link #play()} or {@link #pause()}.
    *
-   * @param nodeName         label appended to consumer client IDs for broker-side diagnostics; when
-   *                         {@code dynamicConsumers} is {@code false} it is also combined with the worker index
-   *                         to form each consumer's {@code group.instance.id}, in which case it must be unique
-   *                         among every node sharing {@code groupId} and stable across restarts
-   * @param groupId          Kafka consumer group identifier; governs offset coordination among workers
-   * @param topicName        topic to subscribe to when the ingester is in the playing state
-   * @param connector        factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
-   * @param groupProtocol    Kafka group protocol applied to each worker consumer
-   * @param dynamicConsumers {@code true} to join {@code groupId} as dynamic members, which leave the group
-   *                         immediately on shutdown; {@code false} to join as static members identified by
-   *                         {@code <nodeName>-<index>}
-   * @param dynamicConsumers {@code true} to join {@code groupId} as dynamic members, which leave the group
-   *                         immediately on shutdown; {@code false} to join as static members identified by
-   *                         {@code <nodeName>-<index>}
-   * @param callback         invoked for every record polled from the topic
-   * @param concurrencyLimit number of parallel consumer worker threads to maintain
+   * @param nodeName            label appended to consumer client IDs for broker-side diagnostics; when
+   *                            {@code dynamicConsumers} is {@code false} it is also combined with the worker
+   *                            index to form each consumer's {@code group.instance.id}, in which case it must be
+   *                            unique among every node sharing {@code groupId} and stable across restarts
+   * @param groupId             Kafka consumer group identifier; governs offset coordination among workers
+   * @param topicName           topic to subscribe to when the ingester is in the playing state
+   * @param connector           factory used to create {@link org.apache.kafka.clients.consumer.Consumer} instances
+   * @param groupProtocol       Kafka group protocol applied to each worker consumer
+   * @param dynamicConsumers    {@code true} to join {@code groupId} as dynamic members, which leave the group
+   *                            immediately on shutdown; {@code false} to join as static members identified by
+   *                            {@code <nodeName>-<index>}
+   * @param callback            invoked for every record polled from the topic
+   * @param concurrencyLimit    number of parallel consumer worker threads to maintain
+   * @param perApplicationScope the scope every consumer worker thread runs inside, so that every callback is
+   *                            bound, or {@code null} to start the workers unbound
    */
-  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit) {
+  public KafkaMessageIngester (String nodeName, String groupId, String topicName, KafkaConnector connector, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, java.util.function.Consumer<ConsumerRecord<Long, byte[]>> callback, int concurrencyLimit, PerApplicationScope perApplicationScope) {
 
     this.nodeName = nodeName;
     this.groupId = groupId;
@@ -108,6 +114,7 @@ public class KafkaMessageIngester {
     this.dynamicConsumers = dynamicConsumers;
     this.callback = callback;
     this.concurrencyLimit = concurrencyLimit;
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -141,7 +148,10 @@ public class KafkaMessageIngester {
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker(index)).start();
+
+        ConsumerWorker worker = workers[index] = new ConsumerWorker(index);
+
+        new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker)).start();
       }
       statusRef.set(ComponentStatus.STARTED);
     } else {
