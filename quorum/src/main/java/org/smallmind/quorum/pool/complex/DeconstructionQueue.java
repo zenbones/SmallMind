@@ -36,10 +36,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.smallmind.nutsnbolts.lang.FormattedTimeoutException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -54,6 +56,11 @@ import org.smallmind.scribe.pen.LoggerManager;
  * <p>
  * A per-queue {@link AtomicInteger} issues monotonically increasing ordinals so that no two
  * fuses registered with this queue share the same ordinal.
+ * <p>
+ * Ignition runs on the queue's own daemon thread, which inherits no {@code ScopedValue} binding;
+ * {@link #startup(PerApplicationScope)} runs that thread's whole body inside the given scope. Without
+ * one, the thread carries no scope and only the {@code PerApplicationContext} it inherits from the
+ * {@link #startup(PerApplicationScope)} caller.
  */
 public class DeconstructionQueue {
 
@@ -64,17 +71,23 @@ public class DeconstructionQueue {
 
   /**
    * Starts the background daemon task that polls for expired fuses once per second.
+   *
+   * @param perApplicationScope the scope the ignition thread runs inside, so that every fuse fires bound to it,
+   *                            or {@code null} to run the thread with no scope, carrying only the
+   *                            {@code PerApplicationContext} it inherits from the caller of this method
    */
-  public void startup () {
+  public void startup (PerApplicationScope perApplicationScope) {
 
-    ignitionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+    ThreadFactory threadFactory = (runnable) -> {
 
       Thread thread = new Thread(runnable, "quorum-deconstruction-queue");
 
       thread.setDaemon(true);
 
       return thread;
-    });
+    };
+
+    ignitionExecutor = Executors.newSingleThreadScheduledExecutor((perApplicationScope == null) ? threadFactory : perApplicationScope.boundThreadFactory(threadFactory));
     ignitionExecutor.scheduleWithFixedDelay(this::igniteExpired, 1, 1, TimeUnit.SECONDS);
   }
 

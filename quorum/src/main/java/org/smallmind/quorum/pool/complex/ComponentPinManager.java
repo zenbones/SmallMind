@@ -47,7 +47,9 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.claxon.registry.meter.TachometerBuilder;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -103,14 +105,19 @@ public class ComponentPinManager<C> {
    * If another thread is concurrently starting the manager, this method polls until that
    * thread completes.
    *
-   * @throws ComponentPoolException if any component cannot be created during startup or if
-   *                                the startup wait is interrupted
+   * @throws ComponentPoolException if any component cannot be created during startup (the pool returns to
+   *                                {@code STOPPED} first) or if the startup wait is interrupted
    */
   public void startup ()
     throws ComponentPoolException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
-      deconstructionQueue.startup();
+
+      if ((componentPool.getPerApplicationScope() == null) && PerApplicationScope.isBound() && (!PerApplicationContext.isBound())) {
+        LoggerManager.getLogger(ComponentPool.class).warn("Component pool(%s) was started on a thread bound to a PerApplicationScope without being given that scope, and no PerApplicationContext is attached; its deconstruction thread, and every creator thread triggered from a thread without a context (the deconstruction thread included), will carry no per-application binding, so Claxon metrics recorded from them will be dropped", componentPool.getPoolName());
+      }
+
+      deconstructionQueue.startup(componentPool.getPerApplicationScope());
 
       backingLock.writeLock().lock();
       try {
@@ -285,10 +292,13 @@ public class ComponentPinManager<C> {
       if (componentPool.getComplexPoolConfig().getCreationTimeoutMillis() > 0) {
 
         ComponentCreationWorker<C> creationWorker;
+        PerApplicationScope perApplicationScope;
         Thread workerThread;
 
         creationWorker = new ComponentCreationWorker<>(componentPool);
-        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start(creationWorker);
+        perApplicationScope = componentPool.getPerApplicationScope();
+        //  The creator thread runs the caller's ComponentInstanceFactory, which may resolve per-application data.
+        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start((perApplicationScope == null) ? creationWorker : () -> perApplicationScope.run(creationWorker));
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {

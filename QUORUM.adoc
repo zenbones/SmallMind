@@ -143,20 +143,85 @@ pool misbehaves.
 
 The abstract base class for every pool implementation. Its only
 contribution is the `register()` method, which publishes the pool
-instance to the per-application `PoolManager` so that callers anywhere
-in the same `PerApplicationContext` can retrieve it without needing an
-injected reference.
+instance to the per-application `PoolManager` so that callers anywhere in
+the same `PerApplicationScope` or `PerApplicationContext` can retrieve it
+without needing an injected reference.
 
-==== `PoolManager`
+==== `PoolContextManager`
 
 An application-scoped registry (not JVM-wide). Holds a single `Pool`
 instance per `PerApplicationContext`. Static accessors:
 
 [source,java]
 ----
-PoolManager.register(myPool);
-Pool pool = PoolManager.getPool();
+PoolContextManager.register(myPool);
+Pool pool = PoolContextManager.getPool();
 ----
+
+==== `PoolScopeManager`
+
+The same registry resolved through `nutsnbolts`' `PerApplicationScope`
+instead of `PerApplicationContext`. `register(pool)` and `getPool()` must be
+called on a thread inside the scope's `run` / `call`, an
+`ApplicationCarrier`, or a `wrapThreadFactory` thread, otherwise they throw
+`MissingPerApplicationScopeException`. Nothing registered directly through
+one flavor is visible through the other; `Pool.register()` publishes
+through `PoolManager`, below.
+
+A `ComponentPool` starts threads of its own — the deconstruction timer that
+reaps idle, over-leased, and over-processed components (whose retirement
+path records Claxon metrics), and, when `creationTimeoutMillis` is set, a
+virtual creator thread per component construction that runs the caller's
+`ComponentInstanceFactory`. Neither inherits a `ScopedValue` binding.
+`ComponentPool.setPerApplicationScope(scope)`, called before `startup()`,
+runs both inside that scope; left unset, they run with no scope and carry
+only the `PerApplicationContext` they inherit — the deconstruction timer
+from the thread that calls `startup()`, each creator thread from the thread
+whose request triggers the creation (a `getComponent()` caller, or the
+deconstruction thread replacing a retired component). In an application
+with both bindings that inherited context holds the same registrations, so
+the pool's Claxon metrics are recorded as before. In a scope-only
+application, leaving the scope unset means the deconstruction thread's
+`Instrument.with` returns `UnpluggedInstrumentation`, so every retirement
+and pool-size reading is dropped silently — the start-time WARN below is
+the only signal — and a `ComponentInstanceFactory` that resolves
+per-application data on a creator thread fails with
+`MissingPerApplicationContextException`. Call the setter before
+`startup()`: a later call is seen by creator threads started after it but
+never rebinds the running deconstruction thread. `startup()` logs a
+WARN through scribe's `LoggerManager` on every transition from `STOPPED`
+to `STARTING` — the first start, a start after `shutdown()`, and a retry
+after a start whose initial fill failed (a failure in the factory's own
+`startup()` leaves the pin manager started, so a retry logs nothing) —
+when the pool is started with no scope on a thread
+that is bound to a `PerApplicationScope` but has no
+`PerApplicationContext` attached; a repeated `startup()` on a pool that
+is already running does not warn again. The WARN describes the
+deconstruction thread and the creator threads triggered from any thread
+that carries no context, including those the unbound deconstruction
+thread triggers when replacing a retired component: they carry no
+per-application binding, so the Claxon metrics recorded from them are
+dropped. A creation triggered from a thread that carries a context still
+inherits it. The reverse case — a pool started on
+a thread with a context, whose `getComponent()` callers are scope-only
+request threads — yields unbound creator threads and no WARN; nothing is
+logged either for a pool started on a thread with neither binding, or on
+one whose inherited context holds an empty registry. The initial fill `startup()` performs
+(`max(minPoolSize, initialPoolSize)` components) constructs those
+instances on the `startup()` caller itself, not on creator threads. The
+persistence Spring beans forward their `perApplicationScope` property here
+(see xref:PERSISTENCE.adoc[]).
+
+==== `PoolManager`
+
+Bridges the two registries with the same `register(pool)` / `getPool()`
+API: `register` writes to every registry bound on the calling thread (the
+scope flavor when a scope is bound, the context flavor when a context is
+attached), and `getPool()` reads the scope flavor first, falling back to
+the context flavor when the scope holds nothing and a context is attached.
+A thread with neither bound fails with
+`MissingPerApplicationContextException`. `Pool.register()` publishes
+through it.
 
 ==== `PoolConfig`
 
@@ -178,7 +243,9 @@ All setters are fluent and return the correct subclass type (via
 
 Checked exception extending `FormattedException`. Thrown when acquisition
 fails: pool closed, factory raised an error, wait timer expired, thread
-interrupted, validation could not find a healthy instance.
+interrupted, validation could not find a healthy instance. Also thrown by
+`startup()` when the initial fill fails, after the pool has returned to
+`STOPPED`.
 
 === Simple Pool (`pool.simple`)
 
@@ -1286,7 +1353,7 @@ the callers that got past the gate.
 | `bucket`    | `new TokenBucket(...)`; optional `add(key, factory)` calls. | Garbage collection; no resources to release.
 | `juggler`   | `initialize()`, `startup()`.                                | `shutdown()`, `deconstruct()`.
 | `pool.simple`  | `new ComponentPool(factory, config)`; optional `register()`. | `close()` (blocks until all borrowed components return).
-| `pool.complex` | `new ComponentPool(...)`, `startup()`; optional event/JMX registration. | `shutdown()` (runs factory shutdown, terminates pins, deconstructs factory).
+| `pool.complex` | `new ComponentPool(...)`, optional `setPerApplicationScope(scope)` to bind the pool's own threads, `startup()`; optional event/JMX registration. | `shutdown()` (runs factory shutdown, terminates pins, deconstructs factory).
 | `namespace` | Set `INITIAL_CONTEXT_FACTORY` to `JavaURLContextFactory`; open `InitialContext`. Pool via `PooledJavaContextComponentInstanceFactory` if desired. | Close the root context; shut down the pool.
 |===
 

@@ -39,8 +39,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.persistence.sql.DataSourceManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.persistence.sql.DataSourceContextManager;
 import org.smallmind.persistence.sql.DriverManagerDataSourceFactory;
 import org.smallmind.persistence.sql.testbench.DataSourceAvailableTestCondition;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
@@ -59,7 +59,7 @@ import org.testng.annotations.Test;
  * the docker testbench. It drives the whole stack end to end — {@link DriverManagerComponentInstanceFactory}
  * and {@link DataSourceComponentInstanceFactory} feeding a {@link ComponentPool}, exposed as a
  * {@link PooledDataSource} — proving that connections are validated, served, reused across borrow/return
- * cycles without leaking, registered in the {@link DataSourceManager}, and released cleanly on shutdown.
+ * cycles without leaking, registered in the {@link DataSourceContextManager}, and released cleanly on shutdown.
  *
  * <p>The prepared-statement path is exercised against a single-connection pool so a physical connection is
  * borrowed, returned, and borrowed again, covering {@link org.smallmind.persistence.sql.AbstractPooledConnection}'s
@@ -144,7 +144,7 @@ public class PooledConnectionPoolIntegrationTest extends AbstractGroundwaterTest
     try {
       pooledDataSource.startup();
 
-      Assert.assertSame(DataSourceManager.getDataSource("driver-manager-ds"), pooledDataSource, "the pooled data source should be retrievable from the DataSourceManager under its key");
+      Assert.assertSame(DataSourceContextManager.getDataSource("driver-manager-ds"), pooledDataSource, "the pooled data source should be retrievable from the DataSourceContextManager under its key");
 
       try (Connection connection = pooledDataSource.getConnection()) {
         Assert.assertEquals(selectOne(connection), 1, "a borrowed pooled connection should execute the validation query");

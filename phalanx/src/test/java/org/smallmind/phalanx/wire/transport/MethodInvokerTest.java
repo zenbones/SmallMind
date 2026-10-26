@@ -34,13 +34,16 @@ package org.smallmind.phalanx.wire.transport;
 
 import java.lang.reflect.InvocationTargetException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.scope.ScopeFactory;
 import org.smallmind.phalanx.wire.MissingInvocationException;
 import org.smallmind.phalanx.wire.TestWireContext;
+import org.smallmind.phalanx.wire.TestWireScope;
 import org.smallmind.phalanx.wire.WireTestingException;
 import org.smallmind.phalanx.wire.WireTestingService;
 import org.smallmind.phalanx.wire.WireTestingServiceImpl;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -48,7 +51,8 @@ import org.testng.annotations.Test;
 /**
  * Tests the server-side method resolution and dispatch surface of {@link MethodInvoker}: matching a
  * partial (name-only) function descriptor to a complete one, reporting an unknown invocation, the
- * unwrapping of a service-thrown checked exception, and the push/pop of wire contexts around a call.
+ * unwrapping of a service-thrown checked exception, the push/pop of wire contexts around a call, and the
+ * binding of wire scopes for the extent of a call.
  */
 @Test(groups = "unit")
 public class MethodInvokerTest {
@@ -96,14 +100,14 @@ public class MethodInvokerTest {
 
     Function function = new Function(WireTestingService.class.getMethod("echoString", String.class));
 
-    Assert.assertEquals(methodInvoker.remoteInvocation(null, function, "hi"), "hi");
+    Assert.assertEquals(methodInvoker.remoteInvocation(null, null, function, "hi"), "hi");
   }
 
   @Test(expectedExceptions = WireTestingException.class)
   public void testRemoteInvocationUnwrapsServiceException ()
     throws Exception {
 
-    methodInvoker.remoteInvocation(null, new Function(WireTestingService.class.getMethod("throwError")));
+    methodInvoker.remoteInvocation(null, null, new Function(WireTestingService.class.getMethod("throwError")));
   }
 
   @Test
@@ -112,7 +116,7 @@ public class MethodInvokerTest {
 
     Function function = new Function(WireTestingService.class.getMethod("hasContext"));
 
-    Assert.assertEquals(methodInvoker.remoteInvocation(new WireContext[] {new TestWireContext("flibble")}, function), Boolean.TRUE);
+    Assert.assertEquals(methodInvoker.remoteInvocation(new WireContext[] {new TestWireContext("flibble")}, null, function), Boolean.TRUE);
     Assert.assertFalse(ContextFactory.exists(TestWireContext.class));
   }
 
@@ -125,16 +129,16 @@ public class MethodInvokerTest {
     Function equalsFunction = new Function(target.getClass().getMethod("equals", Object.class));
     Function hashCodeFunction = new Function(target.getClass().getMethod("hashCode"));
 
-    Assert.assertEquals(invoker.remoteInvocation(null, equalsFunction, target), Boolean.TRUE);
-    Assert.assertEquals(invoker.remoteInvocation(null, equalsFunction, new Object()), Boolean.FALSE);
-    Assert.assertEquals(invoker.remoteInvocation(null, hashCodeFunction), target.hashCode());
+    Assert.assertEquals(invoker.remoteInvocation(null, null, equalsFunction, target), Boolean.TRUE);
+    Assert.assertEquals(invoker.remoteInvocation(null, null, equalsFunction, new Object()), Boolean.FALSE);
+    Assert.assertEquals(invoker.remoteInvocation(null, null, hashCodeFunction), target.hashCode());
   }
 
   @Test(expectedExceptions = InvocationTargetException.class)
   public void testNonExceptionCauseIsRethrownAsInvocationTargetException ()
     throws Exception {
 
-    new MethodInvoker(new ErrorServiceImpl(), ErrorService.class).remoteInvocation(null, new Function(ErrorService.class.getMethod("boom")));
+    new MethodInvoker(new ErrorServiceImpl(), ErrorService.class).remoteInvocation(null, null, new Function(ErrorService.class.getMethod("boom")));
   }
 
   @Test
@@ -165,8 +169,29 @@ public class MethodInvokerTest {
     //  A null element interleaved with a real context must be skipped on both the push and the pop, and
     //  the context stack must be balanced afterward — an imbalance would leak the context onto this
     //  pooled thread and bleed it into the next invocation.
-    Assert.assertEquals(methodInvoker.remoteInvocation(new WireContext[] {new TestWireContext("flibble"), null}, function), Boolean.TRUE);
+    Assert.assertEquals(methodInvoker.remoteInvocation(new WireContext[] {new TestWireContext("flibble"), null}, null, function), Boolean.TRUE);
     Assert.assertFalse(ContextFactory.exists(TestWireContext.class));
+  }
+
+  @Test
+  public void testRemoteInvocationBindsScopeForTheCallAndUnbindsItAfter ()
+    throws Exception {
+
+    Function function = new Function(WireTestingService.class.getMethod("hasScope"));
+
+    Assert.assertEquals(methodInvoker.remoteInvocation(null, new WireScope[] {new TestWireScope("flibble")}, function), Boolean.TRUE);
+    Assert.assertNull(ScopeFactory.getScope(TestWireScope.class));
+  }
+
+  @Test
+  public void testNullScopeElementsAreSkipped ()
+    throws Exception {
+
+    Function function = new Function(WireTestingService.class.getMethod("hasScope"));
+
+    //  A null element must be dropped rather than rejected, matching the treatment of null contexts.
+    Assert.assertEquals(methodInvoker.remoteInvocation(null, new WireScope[] {null, new TestWireScope("flibble")}, function), Boolean.TRUE);
+    Assert.assertEquals(methodInvoker.remoteInvocation(null, new WireScope[] {null}, function), Boolean.FALSE);
   }
 
   public static class ErrorServiceImpl implements ErrorService {

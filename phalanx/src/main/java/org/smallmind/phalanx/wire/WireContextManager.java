@@ -33,15 +33,18 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.phalanx.wire.signal.WireContext;
 
 /**
  * Per-application registry that maps string handles to their corresponding {@link WireContext}
  * implementation classes.
- * The registry is stored in the {@link PerApplicationContext}, so each application classloader
- * maintains its own isolated mapping.
+ * The registry is stored in the {@link PerApplicationContext} attached to the calling thread, so each
+ * {@code PerApplicationContext} maintains its own isolated mapping and registrations made under one context are
+ * invisible under another. Both methods read only the context, never a {@code PerApplicationScope}, and throw
+ * {@code MissingPerApplicationContextException} on a thread with no context attached; this is the context
+ * counterpart of {@link WireScopeManager}.
  * Implements {@link PerApplicationDataManager} to participate in application lifecycle management.
  */
 public class WireContextManager implements PerApplicationDataManager {
@@ -52,13 +55,14 @@ public class WireContextManager implements PerApplicationDataManager {
    *
    * @param handle       the string key used to reference this context type in wire signals
    * @param contextClass the {@link WireContext} implementation class to associate with the handle
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if no per-application context is attached to the current thread
    */
   public static void register (String handle, Class<? extends WireContext> contextClass) {
 
     ConcurrentHashMap<String, Class<? extends WireContext>> wireContextMap;
 
     if ((wireContextMap = PerApplicationContext.getPerApplicationData(WireContextManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(WireContextManager.class, wireContextMap = new ConcurrentHashMap<>());
+      wireContextMap = PerApplicationContext.setPerApplicationDataIfAbsent(WireContextManager.class, new ConcurrentHashMap<>());
     }
 
     wireContextMap.put(handle, contextClass);
@@ -70,6 +74,7 @@ public class WireContextManager implements PerApplicationDataManager {
    *
    * @param handle the string key identifying the desired context type
    * @return the registered {@link WireContext} class, or {@code null} if no mapping exists for the handle
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if no per-application context is attached to the current thread
    */
   public static Class<? extends WireContext> getContextClass (String handle) {
 

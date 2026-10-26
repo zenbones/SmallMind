@@ -48,6 +48,12 @@ import tools.jackson.databind.node.ObjectNode;
  * JAXB {@link XmlAdapter} that converts between a JSON array node and a {@link WireContext}
  * array; known context types are resolved via {@link org.smallmind.phalanx.wire.WireContextManager}
  * and unknown types are preserved as {@link ProtoWireContext} instances.
+ * <p>
+ * Because {@link #unmarshal} consults {@link WireContextManager} for each element, it must run on a thread with a
+ * {@code PerApplicationContext} attached (a {@code PerApplicationScope} binding does not satisfy it) whenever the
+ * node carries at least one single-property element; on a thread with no context it then throws
+ * {@code MissingPerApplicationContextException}. Elements with any other property count are skipped without a
+ * lookup, a {@code null} node or an empty array decodes without any binding, and {@link #marshal} needs none.
  */
 public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
@@ -59,6 +65,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
    *
    * @param node the JSON array node to convert, or {@code null}
    * @return a (possibly empty) array of reconstructed {@link WireContext} objects
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if {@code node} carries at least one single-property element and no per-application context is attached to the current thread; a {@code null} node or an empty array needs no binding
    */
   @Override
   public WireContext[] unmarshal (JsonNode node) {

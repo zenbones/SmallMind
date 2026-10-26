@@ -3,9 +3,12 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
+  <bean id="perApplicationScope" class="org.smallmind.nutsnbolts.scope.PerApplicationScope"/>
+
   <bean id="oumuamuaServer" class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer">
     <constructor-arg index="0" name="configuration">
       <bean class="org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration">
+        <property name="perApplicationScope" ref="perApplicationScope"/>
         <property name="codec">
           <bean class="org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec">
             <constructor-arg index="0" name="deserializer">
@@ -43,7 +46,8 @@
             <constructor-arg index="3" value="CLASSIC"/>
             <constructor-arg index="4" name="dynamicConsumers" value="true"/>
             <constructor-arg index="5" name="topicName" value="oumuamua"/>
-            <constructor-arg index="6" name="servers">
+            <constructor-arg index="6" name="perApplicationScope" ref="perApplicationScope"/>
+            <constructor-arg index="7" name="servers">
               <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
                 <property name="serverPattern" value="localhost:9094"/>
                 <property name="serverSpread" value=""/>

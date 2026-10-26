@@ -32,48 +32,109 @@
  */
 package org.smallmind.quorum.pool;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Verifies that {@link PoolManager} publishes and resolves a single {@link Pool} per application
- * context. Each test installs a fresh {@link PerApplicationContext} so the registry never leaks
- * across methods.
+ * Exercises the bridge semantics of {@link PoolManager}.
  */
 @Test(groups = "unit")
 public class PoolManagerTest {
 
   @BeforeMethod
-  public void establishPerApplicationContext () {
+  public void attachApplicationContext () {
 
     new PerApplicationContext();
+    PerApplicationContext.setPerApplicationData(PoolContextManager.class, new StubPool());
   }
 
-  public void testGetPoolReturnsNullWhenNothingRegistered () {
+  public void testRegisterWithBothBoundWritesBothRegistries () {
 
-    Assert.assertNull(PoolManager.getPool(), "an application context with no registered pool should resolve to null");
-  }
-
-  public void testRegisterMakesThePoolRetrievable () {
-
+    PerApplicationScope scope = new PerApplicationScope();
     Pool pool = new StubPool();
 
-    pool.register();
+    scope.run(() -> PoolManager.register(pool));
 
-    Assert.assertSame(PoolManager.getPool(), pool, "a registered pool should be retrievable from the manager");
+    Assert.assertSame(scope.call(PoolScopeManager::getPool), pool);
+    Assert.assertSame(PoolContextManager.getPool(), pool);
   }
 
-  public void testRegisterReplacesThePreviouslyRegisteredPool () {
+  public void testLookupFallsBackToTheContextWhenTheScopeHoldsNothing () {
 
-    Pool first = new StubPool();
-    Pool second = new StubPool();
+    PerApplicationScope scope = new PerApplicationScope();
+    Pool pool = new StubPool();
 
-    first.register();
-    second.register();
+    PoolContextManager.register(pool);
 
-    Assert.assertSame(PoolManager.getPool(), second, "registering a second pool should replace the first");
+    Assert.assertSame(scope.call(PoolManager::getPool), pool);
+  }
+
+  public void testLookupPrefersTheScopeWhenBothHoldAValue () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    Pool scoped = new StubPool();
+    Pool context = new StubPool();
+
+    scope.run(() -> PoolScopeManager.register(scoped));
+    PoolContextManager.register(context);
+
+    Assert.assertSame(scope.call(PoolManager::getPool), scoped);
+    Assert.assertSame(PoolManager.getPool(), context);
+  }
+
+  public void testScopeOnlyThreadResolvesWithoutAContext ()
+    throws Exception {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    Pool pool = new StubPool();
+
+    Assert.assertSame(onIsolatedThread(() -> scope.call(() -> {
+      PoolManager.register(pool);
+
+      return PoolManager.getPool();
+    })), pool);
+    Assert.assertNull(onIsolatedThread(() -> new PerApplicationScope().call(PoolManager::getPool)), "nothing registered on a scope-only thread is null, not an exception");
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationContextException.class)
+  public void testUnboundThreadFailsThroughTheContextFlavor ()
+    throws Exception {
+
+    onIsolatedThread(PoolManager::getPool);
+  }
+
+  // The test thread carries an inherited PerApplicationContext shared with every other test on it, so the scope-only
+  // and unbound cases can only be observed on a thread that does not inherit it.
+  private static <T> T onIsolatedThread (Callable<T> body)
+    throws Exception {
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        result.set(body.call());
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      if (failure.get() instanceof Exception) {
+        throw (Exception)failure.get();
+      }
+      throw new RuntimeException(failure.get());
+    }
+
+    return result.get();
   }
 
   private static class StubPool extends Pool {

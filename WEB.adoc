@@ -216,7 +216,13 @@ Spring container is the system of record: you declare a
     `afterPropertiesSet()` validates the configured
     `WebApplicationOption[]`; `onApplicationEvent(...)` constructs and starts
     the server when the Spring context finishes refreshing; `destroy()` stops
-    the server and its WebSocket containers.
+    the server and its WebSocket containers. Optional
+    `suppressConnectionClosedException` discards `"Connection is closed"`
+    `IOException`s thrown through the per-application filters, and optional
+    `perApplicationScope` binds a scope on every request that passes
+    through the servlet filter chain (not the WebSocket upgrade) and every
+    JAX-WS call (see <<web-grizzly-per-application-data,Per-application data
+    on request threads>>).
 
 `WebApplicationOption`::
     A value object describing one context path. Holds a
@@ -243,6 +249,14 @@ Spring container is the system of record: you declare a
     Per-context accumulator. `GrizzlyInitializingBean` implements the locator
     interface so `GrizzlyPostProcessor` can reach the state for a given
     `contextPath`.
+
+`PerApplicationScopeHttpHandler`::
+    Grizzly `HttpHandler` that runs a delegate handler's `service` inside a
+    `PerApplicationScope` and forwards `start` / `destroy`. The bean wraps
+    each JAX-WS handler in one when `perApplicationScope` is set (see
+    <<web-grizzly-per-application-data,Per-application data on request
+    threads>>); it is public so any other `HttpHandler` registered by hand
+    can be wrapped the same way.
 
 `ClientAuthProxyFilter`::
     A Grizzly network filter that either repopulates `SSL_CLIENT_S_DN`,
@@ -319,6 +333,158 @@ type.
     context for `@Path` beans and `ResourceConfigExtension` beans.
 <3> Declaring `JaxRSOption` causes the Jersey servlet to be bound at
     `contextPath + restPath + "/*"`.
+
+[[web-grizzly-per-application-data]]
+=== Per-application data on request threads
+
+When `JaxRSOption` is declared and a `PerApplicationContext` is attached
+to the thread running the Spring refresh (`PerApplicationContext.isBound()`
+is `true` there), the bean also maps a filter named
+`per-application-context` on `restPath + "/*"` for `REQUEST` and `ASYNC`
+dispatches, with async support enabled. That filter is an
+`org.smallmind.nutsnbolts.context.web.PerApplicationContextFilter`
+constructed with that bound context, so each REST request thread carries
+the map the refresh registered into. Without a context on the refresh
+thread no context filter is registered. Both beans build and start the
+server from the `ContextRefreshedEvent`, on the refresh thread, so in a
+context-bound deployment the container's worker threads inherit the
+refresh thread's map as they are created; the REST-path filter guarantees
+the binding for requests served by threads that did not inherit it. If the
+Spring `ApplicationEventMulticaster` runs listeners on a task executor,
+the bean evaluates these bindings — and the scope check below — on that
+executor's thread rather than the one that called `refresh()`.
+
+Setting `perApplicationScope` on the bean, independently of the context
+filter:
+
+* maps a filter named `per-application-scope`, an
+  `org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter`, on `/*`
+  of every `WebApplicationOption` context for `REQUEST` and `ASYNC`
+  dispatches, with async support enabled. Every servlet in the context —
+  the JAX-RS servlet and each `ServletInstaller` servlet — and every
+  `AsyncContext.dispatch(...)` leg runs with that `PerApplicationScope`
+  bound for the extent of the filter chain. The WebSocket handshake is
+  not bound: Grizzly's Tyrus upgrade bypasses the servlet filter chain,
+  and on Jetty the upgrade filter runs ahead of this one;
+* wraps each `WebServiceInstaller` handler in a
+  `PerApplicationScopeHttpHandler`, so JAX-WS calls, which Grizzly serves
+  outside the servlet filter chain, are bound for the extent of the
+  handler's `service` call;
+* checks, before mapping anything, which scope is bound on the thread
+  delivering the `ContextRefreshedEvent`. When a scope is bound there and
+  it is not the configured instance, `onApplicationEvent` throws
+  `org.smallmind.nutsnbolts.scope.ScopeException` ("The configured
+  PerApplicationScope is not the scope bound on the thread refreshing the
+  Spring context..."). The bean refuses a scope only when a *different*
+  scope is bound on the refresh thread; when no scope is bound there at
+  all it accepts the property, which is the context-only host: its request
+  threads bind the given scope, and the bridging lookups fall back to the
+  inherited context.
+
+Leaving `perApplicationScope` unset while the thread delivering the
+`ContextRefreshedEvent` is bound to a `PerApplicationScope` and carries no
+`PerApplicationContext` logs a WARN through scribe's `LoggerManager`: no
+per-application filter is registered, so request threads carry no binding
+and resolve none of the registrations the refresh made into the scope. A
+refresh that carries both (the Tanuki wrapper) is not warned about — its
+registrations also landed in the context, which worker threads inherit
+and, when a `JaxRSOption` is declared, the context filter binds on the
+REST path.
+
+[source,xml]
+----
+<bean id="grizzlyServer"
+      class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <property name="perApplicationScope"
+            ref="org.smallmind.spark.perApplicationScope"/>  <!--1-->
+  ...
+</bean>
+----
+<1> The scope must be the instance that was bound around the Spring
+    refresh, so it cannot be declared as a bean in the same context (a
+    bean created *during* the refresh was never bound around it and holds
+    nothing). Under the Tanuki wrapper, `SpringContextWrapperListener`
+    registers the listener's scope under this name during the refresh,
+    through a post-processor it adds beforehand (see
+    xref:SPARK.adoc#the-per-application-scope[the per-application scope]);
+    elsewhere, register the test- or bootstrap-owned instance as a
+    singleton under the same name before `refresh()`, as `TESTBENCH.adoc`
+    shows. The bean enforces this only when a scope is bound on the refresh
+    thread: a different scope there fails `onApplicationEvent` with
+    `ScopeException`, while a refresh with no scope bound accepts the
+    property and the bridge falls back to the context.
+
+When the refresh thread carried both bindings (as under Tanuki) and a
+scope is set, both filters run on every JAX-RS request, so such a request
+thread carries both bindings. The bridging `*Manager` classes follow the
+rules in xref:NUTSNBOLTS.adoc#per-application-registries[Per-application
+registries]: a registration lands in every registry bound on the refresh
+thread, a lookup reads the scope first and falls back to the context, and
+a thread whose only binding is empty resolves nothing, reported per
+accessor: `null` from the `find*` methods and the getter-style managers,
+`UnpluggedInstrumentation` from Claxon's `Instrument.with`,
+`ORMInitializationException` from `SessionManager.getSession` and
+`DataSourceManager.getDataSource`, and the adapter default from
+`PolymorphicAttributeManager`. Wiring the same
+scope instance here is what makes the two consistent. Data written
+*directly* through `PerApplicationContext` or `PerApplicationScope` is
+still visible only through the flavor it was written to.
+
+In a context-only deployment (no `perApplicationScope`) the context filter
+covers `restPath + "/*"` for `REQUEST` and `ASYNC` dispatches and nothing
+else. Installer servlets, other paths, and JAX-WS handlers see only
+whatever `PerApplicationContext` map their serving thread inherited when
+it was created, if any; on a thread that inherited none, Claxon's
+`Instrument.with` returns `UnpluggedInstrumentation`, its registry
+getters return `null`, and every other library lookup throws
+`MissingPerApplicationContextException`. In a
+scope-only deployment no context filter is registered. A deployment with
+neither binding registers no per-application filter at all; its
+refresh-time registrations (`ClaxonRegistryFactoryBean`, `ORMDao`,
+`ProxySession`, the pooled data sources) would already have failed the
+refresh with `MissingPerApplicationContextException`, and lookups on its
+request threads behave as on an unbound thread: unplugged instrumentation
+and `null` registries for Claxon, `MissingPerApplicationContextException`
+for the rest.
+
+On both containers the chain runs the scope filter, then the context
+filter, then the `FilterInstaller` filters, so installer filters mapped
+under the REST path see both bindings. The context filter is mapped only
+there, so installer filters on other paths see the scope alone, plus
+whatever context their worker thread inherited from the refresh. Neither
+filter maps the `ERROR` dispatcher, so error pages run with the scope
+unbound.
+`suppressConnectionClosedException` applies to both filters.
+`JettyInitializingBean` exposes the same property with the same behavior
+and registers the context filter under the same condition (its JAX-WS
+contexts receive a `PerApplicationScopeHttpFilter` instead of a handler
+wrapper). See xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound
+scopes] for the scope contract.
+
+[NOTE]
+====
+The context filter does not create a `PerApplicationContext` of its own. A
+context-only deployment that relied on the filter creating one needs a
+context attached to the refresh thread, so the bean registers the filter
+with it, or — in a plain servlet container — `WebContextLoaderListener`
+(`ExposedWebContextLoaderListener` for Jersey), which publishes the
+context the container-declared filter reads.
+====
+
+The binding ends where the filter chain or the handler call ends. Work
+that leaves it is not bound and must hold the `PerApplicationScope`
+instance and run its body through `run` / `call`:
+
+* `AsyncContext.start(Runnable)` and `ReadListener` / `WriteListener`
+  callbacks (as opposed to `AsyncContext.dispatch`, which re-enters the
+  chain as an `ASYNC` dispatch and is bound);
+* the WebSocket handshake, which both containers upgrade outside the
+  scope filter, and the endpoint callbacks (`@OnOpen`, `@OnMessage`, ...),
+  which run on the container's WebSocket threads;
+* a JAX-WS `AsyncProvider` that completes on a thread of its own, or (on
+  Jetty) an endpoint given its own `Executor`;
+* any pool or thread the application starts (see
+  xref:NUTSNBOLTS.adoc#pkg-scope[`wrapThreadFactory`]).
 
 === HTTPS
 
@@ -498,7 +664,9 @@ Both accept the same installer POJOs with different package names.
     stops it in `destroy()`. Configurable surface: `host`, `port`,
     `allowInsecure`, `sslInfo`, `resourceConfig`, `webApplicationOptions`,
     `initialWorkerPoolSize`, `maximumWorkerPoolSize`, `maxHttpHeaderSize`,
-    `suppressConnectionClosedException`, and `debug` (dumps SOAP traffic).
+    `suppressConnectionClosedException`, `perApplicationScope` (see
+    <<web-grizzly-per-application-data,Per-application data on request
+    threads>>), and `debug` (dumps SOAP traffic).
 
 `WebApplicationOption` (`org.smallmind.web.jetty.option`)::
     Mirrors the Grizzly version. Holds `ClassLoaderResourceOption`,
@@ -525,6 +693,13 @@ Both accept the same installer POJOs with different package names.
 `JettyRequestContextListener`::
     Binds Spring's request context and locale for each request when
     `SpringSupportOption` is set.
+
+`PerApplicationScopeHttpFilter`::
+    `com.sun.net.httpserver.Filter` that runs the rest of an `HttpContext`
+    chain inside a `PerApplicationScope`. The bean adds one to each JAX-WS
+    `HttpContext` when `perApplicationScope` is set (see
+    <<web-grizzly-per-application-data,Per-application data on request
+    threads>>).
 
 `ByteArrayResource`::
     Minimal Jetty `Resource` backed by a byte array; used for in-memory
@@ -581,6 +756,14 @@ Both accept the same installer POJOs with different package names.
 ----
 <1> Omit to serve HTTP only.
 
+The optional `perApplicationScope` property maps the scope-binding filter on
+`/*` of every servlet context for `REQUEST` and `ASYNC` dispatches, exactly
+as described for Grizzly in
+<<web-grizzly-per-application-data,Per-application data on request threads>>,
+and adds a `PerApplicationScopeHttpFilter` to each JAX-WS `HttpContext` so
+SOAP calls, which Jetty serves through `JettyHttpServer` outside the servlet
+filter chain, are bound for the extent of the exchange.
+
 === Session handling
 
 The Jetty module currently creates each `ServletContextHandler` with
@@ -632,7 +815,15 @@ building blocks are:
 `org.smallmind.web.jersey.spring`::
     `JerseyPostProcessor`, `ResourceConfigExtension`,
     `PrioritizedResourceConfigExtension`, `ExposedApplicationContext` (static
-    hook so Jersey code can reach the Spring context).
+    hook so Jersey code can reach the Spring context),
+    `ExposedWebContextLoaderListener` (Spring `ContextLoaderListener` that
+    establishes a `PerApplicationContext` and registers the refreshed
+    context with `ExposedApplicationContext`), and
+    `ExposedPerApplicationScopeContextLoaderListener` (its scope flavor:
+    refreshes inside a `PerApplicationScope`, publishes the scope under the
+    servlet-context attribute `PerApplicationScopeFilter` reads, then
+    registers the context the same way; see
+    xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]).
 
 `org.smallmind.web.jersey.json`::
     `JsonProvider` (a `MessageBodyReader` + `MessageBodyWriter` for
@@ -783,7 +974,16 @@ for a service interface. Each method call is encoded as a JSON `Envelope`
 injectors (`JsonHeaderInjector`) can add per-request headers such as
 authorization tokens. The Spring factory beans
 `JsonEntityResourceProxyFactoryBean` and `JsonTargetFactoryBean` make the
-same proxies declarable in XML.
+same proxies declarable in XML. Each generated proxy is also registered by
+interface through `JsonEntityResourceProxyManager`, whose `getProxy(Class)`
+returns the proxy or null. It bridges `JsonEntityResourceProxyScopeManager`
+(a `PerApplicationScope` registry) and `JsonEntityResourceProxyContextManager`
+(the `PerApplicationContext` registry with the same API): `register` writes
+to every registry bound on the calling thread, and `getProxy` reads the
+scope flavor first, falling back to the context flavor when the scope
+holds nothing and a context is attached. `generateProxy` always registers,
+so generating a proxy — directly or through the factory beans — on a
+thread with neither bound fails with `MissingPerApplicationContextException`.
 
 === Installation
 

@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ import tools.jackson.databind.node.ObjectNode;
  * serialize-the-root-class error paths.
  *
  * <p>A fresh {@link PerApplicationContext} is attached per method because the attribute name is resolved
- * through {@link PolymorphicAttributeManager} and the per-application data registry. The fixture types
+ * through {@link PolymorphicAttributeContextManager} and the per-application data registry. The fixture types
  * (Animal/Dog/Cat) are public and top-level, since the underlying {@code ProxyGenerator} refuses to
  * subclass a {@code static} nested type.
  */
@@ -72,7 +72,7 @@ public class AttributedPolymorphicXmlAdapterTest {
     ObjectNode node = new AttributedAnimalAdapter().marshal(dog);
 
     Assert.assertEquals(node.get("legs").intValue(), 4);
-    Assert.assertEquals(node.get(PolymorphicAttributeManager.getPolymorphicAttributeName()).asString(), "dog");
+    Assert.assertEquals(node.get(PolymorphicAttributeContextManager.getPolymorphicAttributeName()).asString(), "dog");
   }
 
   public void testRoundTripResolvesConcreteSubclass () {
@@ -90,7 +90,7 @@ public class AttributedPolymorphicXmlAdapterTest {
 
   public void testRoundTripWithCustomAttributeName () {
 
-    PolymorphicAttributeManager.setPolymorphicAttributeName("@kind");
+    PolymorphicAttributeContextManager.setPolymorphicAttributeName("@kind");
 
     AttributedAnimalAdapter adapter = new AttributedAnimalAdapter();
 
@@ -116,7 +116,7 @@ public class AttributedPolymorphicXmlAdapterTest {
   @Test(expectedExceptions = JAXBProcessingException.class)
   public void testUnmarshalUnknownDiscriminatorFails () {
 
-    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.instance().readAsJsonNode("{\"" + PolymorphicAttributeManager.getPolymorphicAttributeName() + "\":\"fish\"}"));
+    new AttributedAnimalAdapter().unmarshal((ObjectNode)JsonCodec.instance().readAsJsonNode("{\"" + PolymorphicAttributeContextManager.getPolymorphicAttributeName() + "\":\"fish\"}"));
   }
 
   @Test(expectedExceptions = JAXBProcessingException.class)

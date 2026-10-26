@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.MessageHandler;
 import jakarta.websocket.RemoteEndpoint;
@@ -47,16 +48,22 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
 import org.smallmind.bayeux.oumuamua.server.api.PacketType;
+import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.Transport;
 import org.smallmind.bayeux.oumuamua.server.api.json.Message;
+import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaConfiguration;
 import org.smallmind.bayeux.oumuamua.server.impl.OumuamuaServer;
+import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebSocketTransport;
 import org.smallmind.bayeux.oumuamua.server.spi.websocket.jsr356.WebsocketProtocol;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -88,6 +95,12 @@ public class WebSocketEndpointTest {
     websocketSession = Mockito.mock(Session.class);
     endpointConfig = Mockito.mock(EndpointConfig.class);
     server = Mockito.mock(OumuamuaServer.class);
+    // The endpoint hands its protocol notifications to the server to run bound; the mock must still run them.
+    Mockito.doAnswer(invocation -> {
+      ((Runnable)invocation.getArgument(0)).run();
+
+      return null;
+    }).when(server).runBound(Mockito.any());
     transport = Mockito.mock(WebSocketTransport.class);
     container = Mockito.mock(WebSocketContainer.class);
 
@@ -367,5 +380,72 @@ public class WebSocketEndpointTest {
 
     // Error responses are built without a route, so the discard path must not assume one is present
     Assert.assertFalse(endpoint.deliver(new Packet<>(PacketType.RESPONSE, null, null, message)));
+  }
+
+  // The delivery notification goes through the server's real runBound(), so the protocol listener runs inside the
+  // scope the server was configured with.
+  public void testOnDeliveryRunsInsideTheServersScopeThroughARealRunBound ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    OumuamuaConfiguration<OrthodoxValue> configuration = new OumuamuaConfiguration<>();
+    OumuamuaServer<OrthodoxValue> realServer;
+    WebsocketProtocol<OrthodoxValue> wsProtocol = Mockito.mock(WebsocketProtocol.class);
+    RemoteEndpoint.Basic basicRemote = Mockito.mock(RemoteEndpoint.Basic.class);
+    EndpointConfig realServerEndpointConfig = Mockito.mock(EndpointConfig.class);
+    Map<String, Object> userProperties = new HashMap<>();
+    AtomicReference<Object> seenOnDelivery = new AtomicReference<>();
+    Packet<OrthodoxValue> packet;
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+    configuration.setCodec(codec);
+    configuration.setProtocols(new Protocol[] {new ServletProtocol<OrthodoxValue>(30000L, new Protocol.ProtocolListener[0])});
+    configuration.setPerApplicationScope(perApplicationScope);
+    configuration.setMessageLogLevel(Level.OFF);
+    // The spy keeps the real scope wiring and runBound(); only the maintenance threads start() would launch are skipped.
+    realServer = Mockito.spy(new OumuamuaServer<>(configuration));
+    Mockito.doNothing().when(realServer).start(Mockito.any());
+
+    userProperties.put(Server.ATTRIBUTE, realServer);
+    userProperties.put(WebSocketTransport.ATTRIBUTE, transport);
+    Mockito.when(realServerEndpointConfig.getUserProperties()).thenReturn(userProperties);
+    Mockito.when(websocketSession.isOpen()).thenReturn(true);
+    Mockito.when(websocketSession.getBasicRemote()).thenReturn(basicRemote);
+    Mockito.when(transport.getMaxIdleTimeoutMilliseconds()).thenReturn(-1L);
+    Mockito.when(transport.getMaximumTextMessageBufferSize()).thenReturn(-1);
+    Mockito.when(transport.getAsyncSendTimeoutMilliseconds()).thenReturn(0L);
+    Mockito.when(transport.getProtocol()).thenReturn(wsProtocol);
+    Mockito.doAnswer(invocation -> {
+      seenOnDelivery.set(probeScope());
+
+      return null;
+    }).when(wsProtocol).onDelivery(Mockito.any());
+
+    try {
+      endpoint.onOpen(websocketSession, realServerEndpointConfig);
+
+      packet = deliveryPacket("/scoped");
+
+      Assert.assertTrue(endpoint.deliver(packet));
+      Mockito.verify(wsProtocol).onDelivery(packet);
+      Assert.assertEquals(seenOnDelivery.get(), "scoped", "the delivery listener must run inside the server's scope");
+    } finally {
+      realServer.getExecutorService().shutdownNow();
+    }
+  }
+
+  private static Object probeScope () {
+
+    try {
+
+      return PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+
+      return missingPerApplicationScopeException;
+    }
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
   }
 }

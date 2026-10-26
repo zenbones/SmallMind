@@ -33,40 +33,66 @@
 package org.smallmind.web.jersey.proxy;
 
 import java.lang.reflect.Proxy;
-import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Registry that stores and retrieves generated resource proxies scoped to the current application context.
+ * Registry of resource proxies that bridges {@link JsonEntityResourceProxyScopeManager} and
+ * {@link JsonEntityResourceProxyContextManager}.
+ * <p>
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
+public class JsonEntityResourceProxyManager {
 
   /**
-   * Stores the given proxy under its resource interface in the per-application proxy map.
+   * Registers a proxy for a resource interface in every per-application registry bound on the current thread.
    *
-   * @param resourceInterface interface key used to look up the proxy later
-   * @param proxy             proxy instance to register
+   * @param resourceInterface the interface the proxy implements
+   * @param proxy             the proxy to register
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
-    ConcurrentHashMap<Class<?>, Proxy> proxyMap;
-
-    if ((proxyMap = PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, proxyMap = new ConcurrentHashMap<>());
+    if (PerApplicationScope.isBound()) {
+      JsonEntityResourceProxyScopeManager.register(resourceInterface, proxy);
+      if (PerApplicationContext.isBound()) {
+        JsonEntityResourceProxyContextManager.register(resourceInterface, proxy);
+      }
+    } else {
+      JsonEntityResourceProxyContextManager.register(resourceInterface, proxy);
     }
-    proxyMap.put(resourceInterface, proxy);
   }
 
   /**
-   * Returns the proxy previously registered for the given resource interface.
+   * Returns the proxy registered for the given resource interface, scope flavor first, then context flavor.
    *
-   * @param resourceInterface interface whose proxy is being requested
-   * @param <T>               resource type
-   * @return proxy cast to {@code T}
+   * @param resourceInterface the interface the proxy was registered under
+   * @param <T>               the resource interface type
+   * @return the registered proxy cast to {@code T}, or {@code null} if none is registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static <T> T getProxy (Class<T> resourceInterface) {
 
-    return resourceInterface.cast(PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).get(resourceInterface));
+    if (PerApplicationScope.isBound()) {
+
+      T proxy;
+
+      if ((proxy = JsonEntityResourceProxyScopeManager.getProxy(resourceInterface)) != null) {
+
+        return proxy;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return JsonEntityResourceProxyContextManager.getProxy(resourceInterface);
   }
 }

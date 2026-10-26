@@ -225,7 +225,7 @@ public class ContextFactory {
   }
 
   /**
-   * Pushes a context onto the stack for its concrete class on the current thread.
+   * Pushes a context onto the stack for its concrete class on the current thread. If the context implements {@link ContextLifecycleAware}, {@code beforePush} is called before the context is pushed; if that call throws, the context is not pushed.
    *
    * @param context context instance to push; the stack key is {@code context.getClass()}
    * @param <C>     context type
@@ -233,6 +233,10 @@ public class ContextFactory {
   public static <C extends Context> void pushContext (C context) {
 
     LinkedList<C> contextStack;
+
+    if (context instanceof ContextLifecycleAware) {
+      ((ContextLifecycleAware)context).beforePush();
+    }
 
     if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(context.getClass())) == null) {
       CONTEXT_MAP_LOCAL.get().put(context.getClass(), contextStack = new LinkedList<>());
@@ -242,7 +246,7 @@ public class ContextFactory {
   }
 
   /**
-   * Removes and returns the topmost context for the given type from the current thread's stack.
+   * Removes and returns the topmost context for the given type from the current thread's stack. If the removed context implements {@link ContextLifecycleAware}, {@code afterPop} is called after it has been removed from the stack.
    *
    * @param contextClass context class key identifying the stack to pop
    * @param <C>          context type
@@ -251,10 +255,17 @@ public class ContextFactory {
   public static <C extends Context> C popContext (Class<C> contextClass) {
 
     LinkedList<C> contextStack;
+    C context;
 
     if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
       if (!contextStack.isEmpty()) {
-        return contextStack.pop();
+        context = contextStack.pop();
+
+        if (context instanceof ContextLifecycleAware) {
+          ((ContextLifecycleAware)context).afterPop();
+        }
+
+        return context;
       }
     }
 

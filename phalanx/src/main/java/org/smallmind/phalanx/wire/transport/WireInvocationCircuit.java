@@ -87,7 +87,7 @@ public class WireInvocationCircuit {
    * @param signalCodec      codec used to deserialise invocation arguments from the signal payload
    * @param callerId         transport-level identifier of the originating caller
    * @param messageId        correlation identifier used to match this response to the original request
-   * @param invocationSignal the incoming signal describing the service, function, arguments, and contexts
+   * @param invocationSignal the incoming signal describing the service, function, arguments, contexts, and scopes
    */
   public void handle (ResponseTransmitter transmitter, SignalCodec signalCodec, String callerId, String messageId, InvocationSignal invocationSignal) {
 
@@ -121,7 +121,7 @@ public class WireInvocationCircuit {
         arguments = ArgumentRectifier.constructArray(signalCodec, invocationSignal, invocationFunction, methodology);
         nativeType = invocationFunction.getNativeType();
 
-        result = methodInvoker.remoteInvocation(invocationSignal.getContexts(), invocationFunction, arguments);
+        result = methodInvoker.remoteInvocation(invocationSignal.getContexts(), invocationSignal.getScopes(), invocationFunction, arguments);
 
         if ((result != null) && (!(result instanceof Serializable))) {
           throw new TransportException("The result(%s) of this call is not Serializable", result.getClass().getName());

@@ -32,14 +32,35 @@
  */
 package org.smallmind.phalanx.wire.transport.mock;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.phalanx.worker.BindingAdvisory;
+
 /**
  * In-memory router that exposes the shared queue and topics used by the mock transport for testing.
  */
 public class MockMessageRouter {
 
-  private final MockQueue talkRequestQueue = new MockQueue();
-  private final MockTopic whisperRequestTopic = new MockTopic();
-  private final MockTopic responseTopic = new MockTopic();
+  private final MockQueue talkRequestQueue;
+  private final MockTopic whisperRequestTopic;
+  private final MockTopic responseTopic;
+
+  /**
+   * Constructs a router whose queue and topics dispatch inside the given scope.
+   *
+   * @param perApplicationScope the scope every dispatch thread runs inside, or {@code null} to run them with no
+   *                            scope, carrying only the {@code PerApplicationContext} of the thread constructing
+   *                            this router (the mock transports take no scope of their own); a WARN is logged
+   *                            through {@code BindingAdvisory} when this is {@code null} but the constructing thread
+   *                            is bound to a scope and carries no context
+   */
+  public MockMessageRouter (PerApplicationScope perApplicationScope) {
+
+    BindingAdvisory.warnIfUnbound(MockMessageRouter.class, "Mock message router", perApplicationScope);
+
+    talkRequestQueue = new MockQueue("talk-request", perApplicationScope);
+    whisperRequestTopic = new MockTopic("whisper-request", perApplicationScope);
+    responseTopic = new MockTopic("response", perApplicationScope);
+  }
 
   /**
    * Returns the queue used to dispatch talk-mode invocation requests.
@@ -69,5 +90,16 @@ public class MockMessageRouter {
   public MockTopic getResponseTopic () {
 
     return responseTopic;
+  }
+
+  /**
+   * Stops the three dispatch threads this router started. The transports built on the router should be closed first;
+   * messages still queued when this is called are dropped.
+   */
+  public void close () {
+
+    talkRequestQueue.close();
+    whisperRequestTopic.close();
+    responseTopic.close();
   }
 }

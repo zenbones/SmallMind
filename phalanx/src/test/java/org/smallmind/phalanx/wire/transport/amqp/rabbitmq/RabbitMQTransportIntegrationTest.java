@@ -95,13 +95,13 @@ public class RabbitMQTransportIntegrationTest extends AbstractWireTransportContr
   protected ResponseTransport createResponseTransport ()
     throws Exception {
 
-    return new RabbitMQResponseTransport(connector, new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, 3, false, null);
+    return new RabbitMQResponseTransport(connector, new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, 3, false, null, null);
   }
 
   @Override
   protected RequestTransport createRequestTransport ()
     throws Exception {
 
-    return new RabbitMQRequestTransport(connector, new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, null);
+    return new RabbitMQRequestTransport(connector, new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, null, null);
   }
 }

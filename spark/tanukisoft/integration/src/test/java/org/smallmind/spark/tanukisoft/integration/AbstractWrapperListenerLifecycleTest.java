@@ -32,6 +32,19 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.property.PropertyClosure;
+import org.smallmind.nutsnbolts.property.PropertyExpander;
+import org.smallmind.nutsnbolts.property.PropertyExpanderException;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.spring.PropertyPlaceholderStringValueResolver;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -42,6 +55,16 @@ import org.testng.annotations.BeforeMethod;
 // executor closes promptly; the property path is exercised with values the real wrapper would accept.
 @org.testng.annotations.Test(groups = "unit")
 public class AbstractWrapperListenerLifecycleTest {
+
+  private static void assertUnbound () {
+
+    try {
+      PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+      Assert.fail("The binding should not survive the wrapper callback");
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+      // expected
+    }
+  }
 
   @BeforeMethod
   public void resetWrapperManager () {
@@ -203,6 +226,56 @@ public class AbstractWrapperListenerLifecycleTest {
     Assert.assertNull(WrapperManager.lastStopCode());
   }
 
+  // The listener extends PerApplicationContext and runs startup() inside its scope, so a bridging manager called from
+  // startup() writes both maps; a thread the application starts without the scope still finds the registration
+  // through the context it inherits, and a thread handed the scope finds it there.
+  public void testStartupRegistrationsReachBothBindings ()
+    throws Exception {
+
+    BridgeProbingListener listener = new BridgeProbingListener();
+
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertSame(listener.seenOnUnwrappedThread, listener.accessor, "an un-wrapped child thread must resolve through the inherited context");
+    Assert.assertSame(listener.getPerApplicationScope().call(SpringPropertyAccessorManager::getSpringPropertyAccessor), listener.accessor, "the scope must hold the same registration");
+    Assert.assertSame(SpringPropertyAccessorContextManager.getSpringPropertyAccessor(), listener.accessor, "the context must hold the same registration");
+  }
+
+  // startup() runs inside the listener's own scope: data it registers is visible through that scope afterwards,
+  // and the calling thread is unbound once start() returns.
+  public void testStartRunsStartupInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.registered(), "from-startup");
+    assertUnbound();
+  }
+
+  public void testStopRunsShutdownInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.stop(0), 0);
+    Assert.assertEquals(listener.seenOnShutdown, "from-startup");
+    assertUnbound();
+  }
+
+  // The wrapper's stop() is reached from inside controlEvent's binding, so the double's stop hook sees the scope.
+  public void testControlEventRunsInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+    AtomicReference<String> seenOnStop = new AtomicReference<>();
+
+    WrapperManager.setControlledByNativeWrapper(false);
+    WrapperManager.setStopHook(() -> seenOnStop.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    listener.controlEvent(WrapperManager.WRAPPER_CTRL_C_EVENT);
+    Assert.assertEquals(WrapperManager.lastStopCode(), Integer.valueOf(0));
+    Assert.assertEquals(seenOnStop.get(), "from-startup");
+    assertUnbound();
+  }
+
   // The listener is instantiated by name and handed to the wrapper along with the (expanded) arguments, unchanged.
   public void testMainBootstrapsTheListener ()
     throws Throwable {
@@ -221,6 +294,84 @@ public class AbstractWrapperListenerLifecycleTest {
     WrapperManager.getProperties().setProperty("spark.startup.ceiling", "later");
     AbstractWrapperListener.main(CapturingWrapperListener.class.getName(), "alpha");
     Assert.assertEquals(WrapperManager.startedArguments(), new String[] {"alpha"});
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
+  }
+
+  // Registers a value during startup and reads it back from inside shutdown and controlEvent, proving all three run
+  // bound to the same scope instance.
+  private static class ScopeProbingListener extends AbstractWrapperListener {
+
+    private String seenOnShutdown;
+
+    private String registered () {
+
+      return getPerApplicationScope().call(() -> PerApplicationScope.getPerApplicationData(SampleManager.class, String.class));
+    }
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "from-startup");
+    }
+
+    @Override
+    public void shutdown () {
+
+      seenOnShutdown = PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    }
+  }
+
+  private static SpringPropertyAccessor emptyAccessor () {
+
+    try {
+
+      return new SpringPropertyAccessor(new PropertyPlaceholderStringValueResolver(new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false), new HashMap<>()));
+    } catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeException(propertyExpanderException);
+    }
+  }
+
+  // Registers through a bridging manager during startup and, still inside startup, starts a plain thread that reads
+  // it back through the same manager without being handed the scope.
+  private static class BridgeProbingListener extends AbstractWrapperListener {
+
+    private final SpringPropertyAccessor accessor = emptyAccessor();
+    private SpringPropertyAccessor seenOnUnwrappedThread;
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      SpringPropertyAccessorManager.register(accessor);
+
+      Thread thread = new Thread(() -> seenOnUnwrappedThread = SpringPropertyAccessorManager.getSpringPropertyAccessor());
+
+      thread.start();
+      try {
+        thread.join();
+      } catch (InterruptedException interruptedException) {
+        Thread.currentThread().interrupt();
+      }
+    }
+
+    @Override
+    public void shutdown () {
+
+    }
   }
 
   private static class ErrorThrowingListener extends AbstractWrapperListener {

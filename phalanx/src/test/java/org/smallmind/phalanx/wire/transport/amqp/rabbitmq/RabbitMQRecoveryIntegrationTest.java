@@ -382,7 +382,7 @@ public class RabbitMQRecoveryIntegrationTest extends AbstractGroundwaterTest {
 
     //  Three, the floor the transport enforces, even though the harness runs one broker node - the
     //  broker clamps the initial group size to the nodes it has, so the queue comes up with one replica.
-    return new RabbitMQResponseTransport(rabbitMQConnector, new NameConfiguration(), InvocationWorker.class, new JsonSignalCodec(), serviceGroup, 1, 1, 60, 3, false, null);
+    return new RabbitMQResponseTransport(rabbitMQConnector, new NameConfiguration(), InvocationWorker.class, new JsonSignalCodec(), serviceGroup, 1, 1, 60, 3, false, null, null);
   }
 
   /*

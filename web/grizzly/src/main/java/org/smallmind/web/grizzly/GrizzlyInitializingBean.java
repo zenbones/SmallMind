@@ -56,9 +56,13 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.io.PathUtility;
-import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
+import org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.grizzly.installer.FilterInstaller;
 import org.smallmind.web.grizzly.installer.ListenerInstaller;
@@ -90,6 +94,7 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   private AddOn[] addOns;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
+  private PerApplicationScope perApplicationScope;
   private String host;
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
@@ -230,6 +235,32 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
   }
 
   /**
+   * Sets the {@link PerApplicationScope} bound on request threads. When a scope is set, a
+   * {@link PerApplicationScopeFilter} binding this scope is registered on {@code /*} of every configured context for
+   * {@code REQUEST} and {@code ASYNC} dispatches, so every servlet reached through the filter chain (JAX-RS,
+   * installer-declared) and every {@code AsyncContext.dispatch} leg runs bound, and each JAX-WS handler is wrapped in
+   * a {@link PerApplicationScopeHttpHandler}. The WebSocket upgrade is handled by the Tyrus add-on outside the servlet
+   * filter chain and is not bound. Independently, when a JAX-RS option is configured and a
+   * {@code PerApplicationContext} is attached to the thread that refreshes the Spring context, a
+   * {@code PerApplicationContextFilter} binding that context is registered on the REST path for {@code REQUEST} and
+   * {@code ASYNC} dispatches; no context filter is registered otherwise, so a scope-only deployment leaves no context
+   * on its workers. Work that leaves the filter chain is not bound: {@code AsyncContext.start}, {@code ReadListener}
+   * / {@code WriteListener} callbacks, WebSocket endpoint callbacks, and {@code AsyncProvider} services that complete
+   * on their own thread must hold this scope and run their bodies through its {@code run} / {@code call}. Library
+   * registries are reached through bridging managers that write to every binding present on the refresh thread and
+   * read the scope first, then the context, so the application must bind this same instance while the Spring
+   * context refreshes; if some other scope is bound on the refreshing thread instead, {@code onApplicationEvent}
+   * fails with {@code ScopeException} rather than wiring a scope that holds nothing.
+   *
+   * @param perApplicationScope scope to bind per request, or {@code null} (the default) to bind only whatever
+   *                            {@code PerApplicationContext} the refresh thread carries, and only on the REST path
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+  }
+
+  /**
    * Enables verbose SOAP message logging when set to {@code true}.
    *
    * @param debug {@code true} to turn on SOAP HTTP adapter logging
@@ -287,12 +318,21 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
    *
    * @param event Spring context-refreshed event
    * @throws GrizzlyInitializationException on any configuration or startup failure
+   * @throws ScopeException                 if a {@code PerApplicationScope} other than the configured one is bound on
+   *                                        the thread delivering the event
    */
   @Override
   public synchronized void onApplicationEvent (ContextRefreshedEvent event) {
 
     NetworkListener insecureNetworkListener = null;
     NetworkListener secureNetworkListener = null;
+
+    if ((perApplicationScope == null) && PerApplicationScope.isBound() && (!PerApplicationContext.isBound())) {
+      LoggerManager.getLogger(GrizzlyInitializingBean.class).warn("The Spring context is refreshing inside a PerApplicationScope but no perApplicationScope was set on this bean, so no per-application filter will be registered and request threads will carry no per-application binding");
+    }
+    if ((perApplicationScope != null) && PerApplicationScope.isBound() && (!perApplicationScope.isBoundOnCurrentThread())) {
+      throw new ScopeException("The configured PerApplicationScope is not the scope bound on the thread refreshing the Spring context; registrations made during the refresh went to a different scope, so request threads bound to this one would resolve nothing");
+    }
 
     if (debug) {
       System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
@@ -356,6 +396,10 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
         HttpHandler httpHandler = new JaxwsHandler(webServiceInstaller.getService(), Boolean.TRUE.equals(webServiceInstaller.getAsyncSupported()));
 
+        if (perApplicationScope != null) {
+          httpHandler = new PerApplicationScopeHttpHandler(httpHandler, perApplicationScope);
+        }
+
         httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
         LoggerManager.getLogger(GrizzlyInitializingBean.class).info("Grizzly installed web service(%s)", webServiceInstaller.getService().getClass().getName());
       }
@@ -379,7 +423,6 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
 
       if (webApplicationOption.getJaxRSOption() != null) {
         webAppState.getWebAppContext().addServlet("JAX-RS Application", new ServletContainer(resourceConfig)).addMapping(webApplicationOption.getJaxRSOption().getRestPath() + "/*");
-        webAppState.getWebAppContext().addFilter("per-application-data", new PerApplicationContextFilter(suppressConnectionClosedException)).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), webApplicationOption.getJaxRSOption().getRestPath() + "/*");
       }
 
       if (webApplicationOption.getSpringSupportOption() != null) {
@@ -432,6 +475,24 @@ public class GrizzlyInitializingBean implements GrizzlyWebAppStateLocator, Initi
         } catch (Exception exception) {
           throw new GrizzlyInitializationException(exception);
         }
+      }
+      // Registered after the installer filters with isMatchAfter=false, which Grizzly places at the front of the chain
+      // in reverse order of registration, so requests run through the scope filter, then the context filter, and only
+      // then any installer-declared filter.
+      if ((webApplicationOption.getJaxRSOption() != null) && PerApplicationContext.isBound()) {
+
+        // adopts the map already attached to this (refresh) thread; the filter never creates a context of its own
+        FilterRegistration perApplicationContextFilterRegistration = webAppState.getWebAppContext().addFilter("per-application-context", new PerApplicationContextFilter(new PerApplicationContext(), suppressConnectionClosedException));
+
+        perApplicationContextFilterRegistration.setAsyncSupported(true);
+        perApplicationContextFilterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC), false, webApplicationOption.getJaxRSOption().getRestPath() + "/*");
+      }
+      if (perApplicationScope != null) {
+
+        FilterRegistration perApplicationScopeFilterRegistration = webAppState.getWebAppContext().addFilter("per-application-scope", new PerApplicationScopeFilter(perApplicationScope, suppressConnectionClosedException));
+
+        perApplicationScopeFilterRegistration.setAsyncSupported(true);
+        perApplicationScopeFilterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC), false, "/*");
       }
       for (ServletInstaller servletInstaller : webAppState.getServletInstallerList()) {
         try {

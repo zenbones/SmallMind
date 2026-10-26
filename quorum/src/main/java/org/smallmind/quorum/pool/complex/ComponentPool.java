@@ -38,6 +38,7 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
@@ -61,6 +62,14 @@ import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEv
  * Event listeners registered via {@link #addComponentPoolEventListener} receive error and
  * lease-time notifications. Acquisition wait time is instrumented with a Claxon speedometer
  * tagged {@link ClaxonTag#WAITED}.
+ * <p>
+ * The pool starts two kinds of thread of its own — the deconstruction timer that retires idle,
+ * over-leased, or over-processed components, and (when a creation timeout is configured) a
+ * creator thread per component construction — and neither inherits a {@code ScopedValue}
+ * binding. A pool given a {@link PerApplicationScope} through {@link #setPerApplicationScope}
+ * before {@link #startup()} runs both inside that scope; otherwise they carry no scope and only the
+ * {@code PerApplicationContext} they inherit — the deconstruction timer from the {@link #startup()}
+ * caller, each creator thread from the thread whose request triggers the creation.
  *
  * @param <C> the type of component dispensed by this pool
  */
@@ -71,6 +80,7 @@ public class ComponentPool<C> extends Pool {
   private final ComponentPinManager<C> componentPinManager;
   private final String name;
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
+  private volatile PerApplicationScope perApplicationScope;
 
   /**
    * Creates a pool with the given name and factory, using default configuration.
@@ -149,6 +159,33 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
+   * Returns the scope the pool's own threads run inside, or {@code null} when they carry no scope.
+   *
+   * @return the per-application scope, or {@code null}
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  /**
+   * Sets the scope the pool's deconstruction timer and creator threads run inside. Call it before
+   * {@link #startup()}: the deconstruction timer is bound when it starts and is not rebound by a later
+   * call, while each creator thread reads the scope when its creation is triggered, so a later call
+   * binds only creator threads started after it.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to leave the pool's threads with no scope, carrying
+   *                            only the {@code PerApplicationContext} they inherit
+   * @return this pool, for fluent chaining
+   */
+  public ComponentPool<C> setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+
+    return this;
+  }
+
+  /**
    * Returns the acquisition stack traces of all components currently checked out by callers,
    * when existential awareness is enabled in the configuration.
    *
@@ -220,7 +257,12 @@ public class ComponentPool<C> extends Pool {
    * Starts the pool by invoking the factory lifecycle and pre-warming the component set.
    * <p>
    * Calls {@link ComponentInstanceFactory#initialize()}, then
-   * {@link ComponentPinManager#startup()}, then {@link ComponentInstanceFactory#startup()}.
+   * {@link ComponentPinManager#startup()}, then {@link ComponentInstanceFactory#startup()}. Each actual start of the
+   * pin manager (the first one, one after a shutdown, or a retry after a start whose initial fill failed — not a
+   * repeated call on a running pool, and not a retry after a failure in {@code ComponentInstanceFactory#startup()},
+   * which leaves the pin manager started) logs a WARN when the pool was given no {@code PerApplicationScope}, the
+   * thread it runs on is bound to one, and no {@code PerApplicationContext} is attached, because the deconstruction
+   * thread, and every creator thread triggered from a thread without a context, would then carry no binding.
    *
    * @throws ComponentPoolException if any step in the startup sequence fails
    */

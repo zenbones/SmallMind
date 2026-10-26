@@ -32,20 +32,86 @@
  */
 package org.smallmind.spark.tanukisoft.integration.spring;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 
 @org.testng.annotations.Test(groups = "unit")
 public class ClassPathXmlSpringContextWrapperListenerTest {
 
-  // The concrete listener resolves each argument as a classpath XML location and returns a refreshed context.
-  public void testLoadsAndRefreshesAContextFromClasspathXml () {
+  @BeforeMethod
+  public void resetWrapperManager () {
+
+    WrapperManager.reset();
+  }
+
+  // The concrete listener resolves each argument as a classpath XML location and hands back an unrefreshed context,
+  // leaving the refresh to startup(), which registers the scope singleton during the refresh, by a post-processor the
+  // listener adds.
+  public void testLoadsAnUnrefreshedContextFromClasspathXml () {
 
     ClassPathXmlSpringContextWrapperListener listener = new ClassPathXmlSpringContextWrapperListener();
 
     try (ConfigurableApplicationContext applicationContext = listener.loadApplicationContext(new String[] {"test-spring-context.xml"})) {
-      Assert.assertTrue(applicationContext.isActive());
+      Assert.assertFalse(applicationContext.isActive());
+
+      applicationContext.refresh();
+
       Assert.assertEquals(applicationContext.getBean("greeting", String.class), "hello from spring");
+    }
+  }
+
+  // Through startup() the same context comes up refreshed, with the listener's scope published under its bean name.
+  public void testStartupRefreshesTheContextWithTheScopeSingleton () {
+
+    ExposingListener listener = new ExposingListener();
+
+    listener.startup(new String[] {"test-spring-context.xml"});
+    try {
+      Assert.assertTrue(listener.context.isActive());
+      Assert.assertEquals(listener.context.getBean("greeting", String.class), "hello from spring");
+      Assert.assertSame(listener.context.getBean(SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME, PerApplicationScope.class), listener.exposedScope());
+    } finally {
+      listener.shutdown();
+    }
+  }
+
+  // The XML context can be refreshed again after close(), so the same listener can come back up within one JVM:
+  // the second refresh succeeds and the scope singleton is present once, still as the listener's own scope.
+  public void testStartupAfterStopRefreshesAgainWithTheScopeSingletonPresentOnce () {
+
+    ExposingListener listener = new ExposingListener();
+
+    Assert.assertNull(listener.start(new String[] {"test-spring-context.xml"}));
+    Assert.assertEquals(listener.stop(0), 0);
+    Assert.assertFalse(listener.context.isActive());
+
+    listener.startup(new String[] {"test-spring-context.xml"});
+    try {
+      Assert.assertTrue(listener.context.isActive());
+      Assert.assertEquals(listener.context.getBean("greeting", String.class), "hello from spring");
+      Assert.assertEquals(listener.context.getBeanNamesForType(PerApplicationScope.class), new String[] {SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME});
+      Assert.assertSame(listener.context.getBean(SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME, PerApplicationScope.class), listener.exposedScope());
+    } finally {
+      listener.shutdown();
+    }
+  }
+
+  private static class ExposingListener extends ClassPathXmlSpringContextWrapperListener {
+
+    private ConfigurableApplicationContext context;
+
+    private PerApplicationScope exposedScope () {
+
+      return getPerApplicationScope();
+    }
+
+    @Override
+    public ConfigurableApplicationContext loadApplicationContext (String[] args) {
+
+      return context = super.loadApplicationContext(args);
     }
   }
 }

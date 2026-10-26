@@ -1,6 +1,8 @@
 # Scope Upgrade: Migrating From Thread-Locals To `ScopedValue`
 
-This document is a work order for a later session. It describes how to move the repository off the two `InheritableThreadLocal`-backed utilities in `smallmind-nutsnbolts` — `lang.PerApplicationContext` and `context.ContextFactory` — onto their `ScopedValue`-backed replacements in `org.smallmind.nutsnbolts.scope`, which already exist, are tested, and are documented in `NUTSNBOLTS.adoc` (`pkg-scope`).
+> **Status (decision recorded).** The end state of this work is **coexistence, chosen by the client**, not replacement. `PerApplicationContext` and `PerApplicationScope` both stay, bridged for library lookups by the neutral `*Manager` classes (§6.2); `ContextFactory` and `ScopeFactory` both stay, with `WireContext` / `WireScope` as their wire-level counterparts (§8). Nothing in the `context` package is to be deprecated or removed. Sections below that describe cutting over, deprecating, or deleting the thread-local types are retained as the history of how the scope side was built; where they conflict with this note, this note wins.
+
+This document began as a work order for moving the repository off the two `InheritableThreadLocal`-backed utilities in `smallmind-nutsnbolts` — `context.PerApplicationContext` and `context.ContextFactory` — onto their `ScopedValue`-backed counterparts in `org.smallmind.nutsnbolts.scope`, which exist, are tested, and are documented in `NUTSNBOLTS.adoc` (`pkg-scope`). Per the status note above, that move was not taken; the sections below record what was built and decided along the way, and the passages marked **History** describe the plan as it stood before the coexistence decision.
 
 Read `AGENTS.md`, `CODE_STYLE.md`, and the `pkg-scope` section of `NUTSNBOLTS.adoc` before starting. Everything below assumes that style: explicit wiring, caller-owned lifecycle, no hidden inheritance, documentation kept in sync with code.
 
@@ -27,18 +29,20 @@ Package `org.smallmind.nutsnbolts.scope` (module `nutsnbolts`):
 | `Scope` | `context.Context` | Marker, `Serializable`, concrete class is the key |
 | `ScopeFactory` | `context.ContextFactory` | `callInScope(s)`, `runInScope(s)`, `getScope`, `filterScopesOn`, `snapshot` |
 | `ScopeSnapshot` | `InheritableThreadLocal` inheritance | Immutable capture; `run`/`call` on any thread |
-| `LifecycleAware` | `context.LifecycleAware` | `beforeEnter` / `afterExit`, **actually honored** (the old one never was) |
+| `ScopeLifecycleAware` | `context.ContextLifecycleAware` | `beforeEnter` / `afterExit` around the bound operation; the old hook fires only on explicit `pushContext` / `popContext` |
 | `ExpectedScopes` | `context.ExpectedContexts` | Same shape |
 | `ScopeException` | `context.ContextException` | Same constructors |
-| `PerApplicationScope` | `lang.PerApplicationContext` | Instance owns the shared map; `run`/`call` bind it; static `setPerApplicationData`/`getPerApplicationData`, `generateCarrier`, `wrapThreadFactory` |
+| `PerApplicationScope` | `context.PerApplicationContext` | Instance owns the shared map; `run`/`call` bind it; static `setPerApplicationData`/`getPerApplicationData`, `generateCarrier`, `wrapThreadFactory` |
 | `PerApplicationScope.ApplicationCarrier` | `PerApplicationContext.ContextCarrier` | `run`/`call` instead of `prepareThread` |
+| `PerApplicationScope.isBound()` (static) | `PerApplicationContext.isBound()` (static, added to the old type alongside) | `true` when any scope is bound on the calling thread; the bridging managers (§6.2) test both accessors to decide which registries to write |
+| `PerApplicationScope.isBoundOnCurrentThread()` | — | `true` when this instance's map is the one bound on the calling thread; the Grizzly/Jetty beans use it to reject a refresh bound to a different scope |
 | `MissingPerApplicationScopeException` | `lang.MissingPerApplicationContextException` | Same constructor |
 
 `PerApplicationScope` reuses `lang.PerApplicationDataManager` as its key type on purpose, so managers do not need an `implements` change.
 
-Tests: `nutsnbolts/src/test/java/org/smallmind/nutsnbolts/scope/ScopeFactoryTest.java` (20) and `PerApplicationScopeTest.java` (15).
+Tests: `nutsnbolts/src/test/java/org/smallmind/nutsnbolts/scope/ScopeFactoryTest.java` and `PerApplicationScopeTest.java`.
 
-The old types and every caller of them are untouched. Nothing is deprecated yet.
+The old types stay; several callers (`WebContextLoaderListener`, the Grizzly/Jetty beans) were revised to work alongside the scope types — see §6.4. Nothing is deprecated.
 
 ## 3. Semantic Differences You Must Design Around
 
@@ -60,7 +64,7 @@ Propagation is explicit:
 
 ### 3.3 `PerApplicationScope`: the binding is scoped, the map is not
 
-Each `PerApplicationScope` instance owns one `ConcurrentHashMap`. `run`/`call` bind a *reference* to it. Data written inside one `run` is visible inside every later or concurrent `run` on the same instance and through every carrier taken from it, including data written *after* the carrier was captured. This is what allows Spring-startup registration (`Instrument.register`, `OrmDaoManager.register`, …) to be seen by request threads later. Do not "fix" this into an immutable snapshot; it is the contract.
+Each `PerApplicationScope` instance owns one `ConcurrentHashMap`. `run`/`call` bind a *reference* to it. Data written inside one `run` is visible inside every later or concurrent `run` on the same instance and through every carrier taken from it, including data written *after* the carrier was captured. This is what allows Spring-startup registration (`Instrument.register`, `OrmDaoContextManager.register`, …) to be seen by request threads later. Do not "fix" this into an immutable snapshot; it is the contract.
 
 ### 3.4 Fail-fast on unbound threads
 
@@ -80,39 +84,50 @@ A body that throws two unrelated checked types (`IOException` and `ServletExcept
 
 ### 4.1 `PerApplicationContext` — production code
 
-**Entry points (things that bind a thread today):**
+**Entry points (things that bind a thread today):** (line numbers removed; see the classes)
 
-| File | Today | Line |
-|---|---|---|
-| `nutsnbolts/.../lang/web/PerApplicationContextFilter.java` | `init` fetches/creates the context from a servlet-context attribute; `doFilter` calls `prepareThread()` with no `finally` | 92-116 |
-| `nutsnbolts/.../spring/web/WebContextLoaderListener.java` | `contextInitialized` does `new PerApplicationContext()` (binds the startup thread as a side effect), stores it as a servlet-context attribute, then `super.contextInitialized` refreshes Spring on that same bound thread | 51-58 |
-| `spark/tanukisoft/integration/.../AbstractWrapperListener.java` | **`extends PerApplicationContext`** — constructing the listener binds the Tanuki main thread; everything the wrapper starts inherits | 60 |
-| `web/grizzly/.../GrizzlyInitializingBean.java` | Registers `new PerApplicationContextFilter(...)` on the JAX-RS path | 382 |
-| `web/jetty/.../JettyInitializingBean.java` | Registers `new PerApplicationContextFilter(...)` on the JAX-RS path | 450 |
-| `testbench/foundation/.../foundation.xml` | `<bean id="perApplicationContext" class="org.smallmind.nutsnbolts.lang.PerApplicationContext"/>` — bean construction binds the Spring bootstrap thread | 6 |
+| File | Today |
+|---|---|
+| `nutsnbolts/.../context/web/PerApplicationContextFilter.java` | `init` uses the instance supplied to the constructor or, for the no-arg forms, the context published under the `PerApplicationContext.class.getName()` servlet-context attribute, and throws `MissingPerApplicationContextException` otherwise; it never creates one. `doFilter` calls `prepareThread()` with no `finally` |
+| `nutsnbolts/.../spring/web/WebContextLoaderListener.java` | `contextInitialized` attaches the already-published context's map to the deploy thread (`prepareThread()`) when the attribute is present; otherwise does `new PerApplicationContext()` (adopting any map already attached, or creating one) and publishes it. Either way `super.contextInitialized` then refreshes Spring on that bound thread |
+| `spark/tanukisoft/integration/.../AbstractWrapperListener.java` | **`extends PerApplicationContext`** — constructing the listener binds the Tanuki main thread; everything the wrapper starts inherits |
+| `web/grizzly/.../GrizzlyInitializingBean.java` | Registers `new PerApplicationContextFilter(...)` on the JAX-RS path (`REQUEST` + `ASYNC`, async-supported) only when a `PerApplicationContext` is attached to the refresh thread. `setPerApplicationScope(PerApplicationScope)` registers a `PerApplicationScopeFilter` on `/*` *in addition*, and `onApplicationEvent` throws `ScopeException` when the refresh thread is bound to a different scope |
+| `web/jetty/.../JettyInitializingBean.java` | Same rules as Grizzly |
+| `testbench/foundation/.../foundation.xml` | `<bean id="perApplicationContext" class="org.smallmind.nutsnbolts.context.PerApplicationContext"/>` — bean construction binds the Spring bootstrap thread |
+
+**Scope-side entry points that already exist (added as prep, side by side with the above; nothing uses them by default):**
+
+| File | What it does |
+|---|---|
+| `nutsnbolts/.../scope/web/PerApplicationScopeFilter.java` | Binds a `PerApplicationScope` for the extent of `chain.doFilter` (§5.1 Option A). Takes the scope in its constructor; the no-arg form reads servlet-context attribute `PerApplicationScope.class.getName()` in `init` and throws `MissingPerApplicationScopeException` if none is published. Never creates a scope. Same `suppressConnectionClosedException` rule as the old filter. |
+| `nutsnbolts/.../spring/web/PerApplicationScopeContextLoaderListener.java` | Runs `super.contextInitialized` and `super.contextDestroyed` inside `scope.run(...)`, publishes the scope under the attribute above. No-arg reuses a published scope or creates one; the one-arg form publishes the given scope and throws `ScopeException` if a different one is already published. |
 
 **Managers (implement `PerApplicationDataManager`, call the static set/get):**
 
-| Manager | Module | Data shape | Read from (main code) |
-|---|---|---|---|
-| `SpringPropertyAccessorManager` | nutsnbolts | single value | `DynamicPooledDataSourceInitializingBean`, `DynamicClassNameTemplateInitializingBean` (Spring init — startup thread) |
-| `Instrument` | claxon/registry | single `ClaxonRegistry` | `InstrumentedAspect`, `Instrumentation`, `CacheAsAspect`, `CacheCoherentAspect`, `TimerAspect`, `InstrumentedLatencyListener`, and **all phalanx transports** (`RabbitMQRequestTransport`, `RequestMessageRouter`, `ResponseMessageRouter`, `InvocationWorker` ×2, `JmsRequestTransport`, `JmsResponseTransport`, `RequestListener`, `ResponseListener`) |
-| `OrmDaoManager` | persistence | lazily-created nested `ConcurrentHashMap` | `RepositoryAspect`, `ByKeyRoster`, `ByKeySingularVector` |
-| `SessionManager` | persistence | lazily-created nested map; `closeSession` **replaces** the map via `setPerApplicationData` | ORM session boundaries |
-| `DataSourceManager` | persistence | lazily-created nested map | pooled data source lookup |
-| `WireContextManager` | phalanx | lazily-created nested map | `WireContextXmlAdapter` — runs on **transport consumer threads** during deserialization |
-| `PoolManager` | quorum | single `Pool` | `Pool.java` |
-| `JsonEntityResourceProxyManager` | web/jersey | lazily-created nested map | proxy lookup |
-| `PolymorphicAttributeManager` | web/json/scaffold | single `String` | `AttributedPolymorphicXmlAdapter` — JAXB marshal/unmarshal, any thread |
+> **Superseded.** The paragraph and table below describe the prep state before the bridging managers (§6.2). Library code no longer reads the context flavor; it reads the neutral `*Manager` bridges, and the two maps *are* bridged for lookups. Retained for history.
 
-The managers themselves need only a text substitution (§6.2). The hard part is the **read-from** column: every thread listed there must be bound when it reaches the manager.
+**Prep done:** every implementor was renamed to `*ContextManager` (a deliberate, one-time compile break for client code, so that the mechanism is visible in the name and the cut-over cannot silently change a client's thread-minting contract), and each has a `*ScopeManager` twin with the same static API resolved through `PerApplicationScope`. `Instrument` keeps its name and delegates to `ClaxonRegistryContextManager`. "Either flavor" is a **migration staging device**, not a permanent feature: library-internal readers stay on the context flavor until their module is cut over, and nothing bridges the two maps.
+
+| Context flavor (what library code reads today) | Scope twin | Module | Data shape | Read from (main code) |
+|---|---|---|---|---|
+| `SpringPropertyAccessorContextManager` | `SpringPropertyAccessorScopeManager` | nutsnbolts | single value | `DynamicPooledDataSourceInitializingBean`, `DynamicClassNameTemplateInitializingBean` (Spring init — startup thread) |
+| `ClaxonRegistryContextManager` (via the `Instrument` façade) | `ClaxonRegistryScopeManager` | claxon/registry | single `ClaxonRegistry` | `Instrument.with` from `InstrumentedAspect`, `Instrumentation`, `CacheAsAspect`, `CacheCoherentAspect`, `TimerAspect`, `InstrumentedLatencyListener`, and **all phalanx transports** (`RabbitMQRequestTransport`, `RequestMessageRouter`, `ResponseMessageRouter`, `InvocationWorker` ×2, `JmsRequestTransport`, `JmsResponseTransport`, `RequestListener`, `ResponseListener`) |
+| `OrmDaoContextManager` | `OrmDaoScopeManager` | persistence | lazily-created nested `ConcurrentHashMap` | `RepositoryAspect`, `ByKeyRoster`, `ByKeySingularVector` |
+| `SessionContextManager` | `SessionScopeManager` | persistence | lazily-created nested map | written by `ProxySession.register()`; read by application code |
+| `DataSourceContextManager` | `DataSourceScopeManager` | persistence | lazily-created nested map | pooled data source lookup |
+| `WireContextManager` (name unchanged; it already names `WireContext`) | `WireScopeManager` | phalanx | lazily-created nested map | `WireContextXmlAdapter` — runs on **`WorkManager` worker threads** (or mock dispatch threads) during deserialization |
+| `PoolContextManager` | `PoolScopeManager` | quorum | single `Pool` | `Pool.java` |
+| `JsonEntityResourceProxyContextManager` | `JsonEntityResourceProxyScopeManager` | web/jersey | lazily-created nested map | proxy lookup |
+| `PolymorphicAttributeContextManager` | `PolymorphicAttributeScopeManager` (neither flavor has a static initializer any more; both `get`s fall back to the adapter default when nothing is stored) | web/json/scaffold | single `String` | `AttributedPolymorphicXmlAdapter` — JAXB marshal/unmarshal, any thread |
+
+The managers themselves are done. The **read-from** column is now served by the bridging managers (§6.2 decision) — except `WireContextManager` / `WireScopeManager`, which have no bridge (§8) and are read directly by their own adapters — so a thread listed there needs *some* binding whose registry was written: the scope the refresh ran in, or an inherited context from a refresh that carried one.
 
 ### 4.2 `PerApplicationContext` — tests (≈45 classes)
 
 Every test that does `new PerApplicationContext()` in `@BeforeClass`/`@BeforeMethod` to make the test thread ready. Notable patterns:
 
 - `claxon/.../InstrumentedAspectTest`, `ClaxonSpringAssemblyTest`: `priorContext = generateCarrier(); new PerApplicationContext(); … priorContext.prepareThread()` (save/restore).
-- `phalanx/.../WorkerPoolTest`: comment says worker threads forked later inherit the context — that inheritance is exactly what disappears.
+- `phalanx/.../WorkerPoolTest`: comment says worker threads forked later inherit the context — ~~that inheritance is exactly what disappears~~ (**History.** The inheritance stays; the test now covers a worker bound to a scope and one started with `null`.)
 - `persistence/.../OrmDaoManagerTest`: comment notes the map is shared across test classes on the same thread and installs a fresh one per method.
 - `nutsnbolts/.../PerApplicationContextTest`: `runIsolated` runs each body on a fresh thread to escape inherited state.
 
@@ -124,7 +139,9 @@ Full list: `grep -rln --include=*.java PerApplicationContext . | grep /src/test/
 
 ### 4.4 `ContextFactory` — production code
 
-| File | Call | Replacement |
+> **History.** The "Replacement" column and the `implements Scope` switch below were the conversion plan; per the §8 decision none of it was done. `ContextFactory` and `ScopeFactory` both stay, and every call site below still uses `ContextFactory`.
+
+| File | Call | Replacement (not taken; §8) |
 |---|---|---|
 | `phalanx/.../wire/transport/MethodInvoker.java` 155-179 | `pushContext` loop / `invoke` / `popContext` loop in `finally` | `ScopeFactory.callInScopes(contexts, () -> …)` |
 | `phalanx/.../wire/WireInvocationHandler.java` 174 | `filterContextsOn(method, WireContext.class)` | `filterScopesOn(method, WireContext.class)` |
@@ -132,7 +149,7 @@ Full list: `grep -rln --include=*.java PerApplicationContext . | grep /src/test/
 | `persistence/.../sql/pool/context/ContextualPooledXADataSource.java` 83 | same | same |
 | `file/jailed/.../ContextSensitiveRootedPathTranslator.java` 124 | `getContext(RootedFileSystemContext.class)` | `getScope(...)` |
 
-**`Context` implementors** (must switch to `implements Scope`): `phalanx/.../wire/signal/WireContext` (abstract base; `ProtoWireContext` extends it), `persistence/.../PooledDataSourceContext`, `file/jailed/.../RootedFileSystemContext`.
+**`Context` implementors** (would have switched to `implements Scope`; they stay `Context` implementors per §8): `phalanx/.../wire/signal/WireContext` (abstract base; `ProtoWireContext` extends it), `persistence/.../PooledDataSourceContext`, `file/jailed/.../RootedFileSystemContext`.
 
 **`ExpectedContexts` users:** only `phalanx/src/test/.../WireTestingService.java:42`.
 
@@ -183,6 +200,8 @@ public void doFilter (ServletRequest request, ServletResponse response, FilterCh
 
 The final `catch (Exception)` is unreachable in practice (the body can only throw the three types above) but the compiler needs it because `X = Exception`. Wrapping in `ServletException` is the honest fallback for a filter. Keep the existing `suppressConnectionClosedException` behavior exactly as it is today.
 
+**Status:** implemented as written in `scope/web/PerApplicationScopeFilter.java`, with `PerApplicationScopeFilterTest` covering every branch.
+
 **Option B — add a two-exception overload to `PerApplicationScope`.**
 
 ```java
@@ -197,6 +216,8 @@ Implementable by catching `Throwable` inside a `CallableOp<T, RuntimeException>`
 The same wrinkle appears anywhere else a bound body throws two checked types. `MethodInvoker.remoteInvocation` does not have it — its body throws `IllegalAccessException` and `InvocationTargetException`, but the method already declares `throws Exception`, so `X = Exception` is natural there.
 
 ### 5.2 The mandatory-pool-wrapping decision
+
+> **History.** The framing below ("fails with `MissingPerApplicationScopeException` on first lookup", "a missed pool fails loudly and early") predates the bridging managers. Under the bridge an un-wrapped thread falls back to the `PerApplicationContext` it inherited; with no binding at all a lookup throws `MissingPerApplicationContextException`, or, for Claxon, records nothing. The loud signal is now the WARN that `ComponentPool.startup()` and `WorkManager.startUp` log when started scope-less on a thread bound to a `PerApplicationScope` with no context attached. The "Decision taken (pool pass)" at the end of this section is what was built.
 
 With `PerApplicationContext`, any executor a Spring bean creates during startup inherits the application map for free. With `PerApplicationScope`, **every thread that reaches a manager in §4.1 must have been bound explicitly**, or it fails with `MissingPerApplicationScopeException` on first lookup. There are three ways to live with that.
 
@@ -214,9 +235,11 @@ Rejected by default: it reintroduces hidden static state and turns a loud failur
 
 **Option 3 — Keep `PerApplicationContext` for pools, use `PerApplicationScope` for requests.**
 
-Two sources of truth, each manager consults both. Rejected: it doubles every manager's lookup logic and never lets the old type go.
+Two sources of truth, each manager consults both. Rejected as a *pool* strategy: it doubles every manager's lookup logic and never lets the old type go. (The manager pass in §6.2 later adopted a bridging read for a different reason — supporting clients that bind both during a transition — without changing the pool decision below: pools are still wrapped explicitly, and the bridge never substitutes for wrapping.)
 
 **Decision to record:** Option 1 unless a specific module makes wrapping infeasible, in which case document that module's exception in its `.adoc` chapter.
+
+**Decision taken (pool pass):** Option 1, delivered as an optional `PerApplicationScope` collaborator rather than a `ThreadFactory` seam. Every pool or consumer owner takes a nullable `PerApplicationScope` (constructor overload, fluent setter, or configuration property) and runs each worker body and third-party callback through `scope.run(...)`. Chosen over the seam because (a) the RabbitMQ and JMS callbacks have no thread of ours to decorate, so a `ThreadFactory` cannot reach them while `scope.run` can; (b) the instance method binds from any thread, so construction need not happen on a bound thread; (c) it reuses the `perApplicationScope` vocabulary already on the Grizzly/Jetty/Tanuki entry points; and (d) the expectation is visible in each owner's signature rather than left to the client to remember. `null` means "start with no scope, carrying only the inherited `PerApplicationContext`" — today's behavior — so nothing breaks, since the readers go through the bridge. There are no scope-less overloads: every constructor or static factory that an owner exposes takes the scope (`WorkManager` has two constructors, both taking it; `ComponentPool` uses a fluent setter instead), so each construction site — Java or Spring XML — states its choice. No change to `nutsnbolts`.
 
 ---
 
@@ -228,21 +251,27 @@ Work module by module; each step should leave the build green. Suggested order f
 
 1. Confirm `mvn -q -pl nutsnbolts test -Dtest='ScopeFactoryTest,PerApplicationScopeTest'` is green before touching anything.
 2. Decide §5.1 (default: Option A) and §5.2 (default: Option 1).
-3. Do **not** add a `PerApplicationScope` no-arg static "current scope" accessor to make the migration easier. The whole point is that the instance is owned by the application assembly.
+3. Do **not** add a `PerApplicationScope` no-arg static "current scope" accessor to make the migration easier. The whole point is that the instance is owned by the application assembly. (During prep this item also ruled out `isBound()` and any dual-read seam; §6.2's **decision taken (manager pass)** supersedes that — see there for why. The no-accessor rule stands.)
 
-### 6.2 Managers (mechanical)
+### 6.2 Managers — bridge the readers (per module)
 
-For each manager in §4.1:
+The twins already exist (§4.1). Do **not** change the `*ContextManager` classes to use `PerApplicationScope`; that is exactly the silent cut-over the rename was done to prevent.
 
-- Replace `import org.smallmind.nutsnbolts.lang.PerApplicationContext;` with `import org.smallmind.nutsnbolts.scope.PerApplicationScope;`.
-- Replace `PerApplicationContext.setPerApplicationData` → `PerApplicationScope.setPerApplicationData`, `PerApplicationContext.getPerApplicationData` → `PerApplicationScope.getPerApplicationData`. Signatures are identical.
-- Update Javadoc that names `PerApplicationContext`.
+**Decision taken (manager pass).** Rather than flipping each reader straight to its `*ScopeManager` twin, every couplet gained a third, neutral `*Manager` (`OrmDaoManager`, `SessionManager`, `DataSourceManager`, `PoolManager`, `ClaxonRegistryManager`, `SpringPropertyAccessorManager`, `JsonEntityResourceProxyManager`, `PolymorphicAttributeManager`) and every library-internal reader and writer in the read-from column was switched to it. The neutral manager is a **bridge**, not a selector: `register` writes to every registry bound on the calling thread (`PerApplicationScope.isBound()` → scope twin; `PerApplicationContext.isBound()` → context twin), and lookups read the scope twin first, falling back to the context twin when the scope holds nothing and a context is attached. A thread with neither bound delegates to the context twin and fails with `MissingPerApplicationContextException` — except `ClaxonRegistryManager.getRegistry()`, which returns `null` there so that `Instrument.with` degrades to an `UnpluggedInstrumentation` and metrics never fail business code (its `register` still throws). Both `isBound()` accessors were added for this. Reasons: (a) a client may legitimately be in any of three states — context only, scope only, or both — for the length of its own migration, and the Tanuki wrapper, the stacked Grizzly/Jetty filters, and the testbench foundation all bind both on the refresh thread; (b) an earlier pure-selector version ("scope if bound, else context") sent every refresh-time registration to the scope map whenever both were bound, so an un-wrapped pool that inherited only the context read an empty map and missed *silently* — the exact failure this document set out to prevent, produced by the mechanism meant to prevent it; (c) the bridge turns that into a hit while still failing loudly on a thread with no binding at all. The `*ContextManager` twins are therefore **not** deprecated and will not be; they stay as the context-side store the bridge writes to. The pool-wrapping audit (§6.3) is unchanged and still required: the bridge resolves registrations across bindings, it does not create a binding where there is none. `WireContextManager` / `WireScopeManager` have no neutral manager because they store different types (`WireContext` vs. `WireScope`); see §8.
+
+> **History.** The bullets below were the per-module plan before the bridging decision and are superseded by it: readers go through the neutral `*Manager`, not the `*ScopeManager` twin, and nothing is deprecated. The only library code that calls a flavor directly is phalanx's `WireContextXmlAdapter` / `WireContextInitializingBean` (context) and `WireScopeXmlAdapter` / `WireScopeInitializingBean` (scope), by design (§8).
+
+- ~~Switch every library-internal writer and reader in the module's **read-from** column from `*ContextManager` to `*ScopeManager` (`ORMDao.register()`, `ProxySession.register()`, `RepositoryAspect`, `ByKeyRoster`, `WireContextXmlAdapter`, `WireContextInitializingBean`, `AttributedPolymorphicXmlAdapter`, `PolymorphicAttributeNameInitializingBean`, `JsonEntityResourceProxyFactory`, `PropertyPlaceholderConfigurer`, the dynamic initializing beans, `Pool.register()`, and `Instrument`, which flips its delegate to `ClaxonRegistryScopeManager`).
+- Do the pool-wrapping audit for that module (§6.3) in the same change, so the module's tests prove the wiring.
+- ~~Deprecate the module's `*ContextManager` with `@Deprecated(forRemoval = true)` and an `@see` to the twin; keep it one release as a client-facing shim.~~ Not planned; see the status note.
+- Update the module's chapter: the twin becomes the documented entry point; the "library code resolves through the context flavor" sentence goes away.
 - `PerApplicationDataManager` stays as-is (its Javadoc should mention both types until `PerApplicationContext` is removed).
-- Where a manager's Javadoc or callers name `MissingPerApplicationContextException`, switch to `MissingPerApplicationScopeException`.
 
-The lazily-created nested-map pattern (`if ((map = get(...)) == null) set(..., map = new ConcurrentHashMap<>())`) has a benign startup race today and keeps it; not this migration's problem. `SessionManager.closeSession` replacing the whole nested map via `setPerApplicationData` continues to work because the outer map is shared.
+The lazily-created nested-map pattern (`if ((map = get(...)) == null) map = setPerApplicationDataIfAbsent(..., new ConcurrentHashMap<>())`) formerly raced on the first registration (two threads could each create a map, the second overwriting the first); both bindings now expose `setPerApplicationDataIfAbsent`, and the ten lazily created registries go through it, so concurrent first registrations share one map. (The session managers' former `ApplicationContextAware` reset hook was removed as a vestige; none of them is a Spring bean.)
 
 ### 6.3 Pool-wrapping audit (Option 1)
+
+> **History.** The procedure and "known suspects" below are the audit plan as written for `wrapThreadFactory` / carriers; it was superseded by the "Decision taken (pool pass)" in §5.2 (a nullable `PerApplicationScope` collaborator on each owner). The "Audit closed (pool pass)" paragraph further down records what was actually done.
 
 Goal: every thread in the **read-from** column of §4.1 is bound.
 
@@ -257,13 +286,45 @@ Known suspects, from §4.1:
 
 - **phalanx** — transport consumer threads deserialize `WireContext` via `WireContextXmlAdapter` → `WireContextManager.getContextClass`, and every transport records Claxon metrics via `Instrument.with`. `WorkerPool` / `WorkManager` (see `WorkerPoolTest`'s comment) records metrics too. Every JMS `MessageListener`, Kafka poll loop, and RabbitMQ `Consumer` callback needs a carrier.
 - **claxon/registry** — the registry's own collection/emission worker: check whether it calls `Instrument.*` or only holds the registry by reference. If by reference, no wrapping needed; document that.
-- **quorum** — `ComponentPool` deconstruction / lease-timeout threads, if they reach `PoolManager.getPool`.
-- **persistence** — cache-praxis vectors and rosters call `OrmDaoManager.get`; if any run on a background refresh thread, wrap it.
+- **quorum** — `ComponentPool` deconstruction / lease-timeout threads, if they reach `PoolContextManager.getPool`.
+- **persistence** — cache-praxis vectors and rosters call `OrmDaoManager.get` (bridge); if any run on a background refresh thread, wrap it.
 - **web/jersey, web/json/scaffold** — JAXB adapters run on whatever thread marshals. Request threads are covered by the filter; anything that marshals off-request (async responders, scheduled pushes) needs a carrier.
+
+**Audit closed (pool pass).** Every `src/main` thread source was listed and traced to the managers it reaches. Mechanism per the §5.2 decision taken: a nullable `PerApplicationScope` on each owner, `null` = unbound.
+
+Bound when given a scope:
+
+- **phalanx** — `WorkManager` (four-argument constructor; the three `*ResponseTransport`s pass theirs through), `KafkaMessageIngester` (both transports' ingesters), `RequestMessageRouter` / `ResponseMessageRouter` (`handleDelivery` body moved to `handleBoundDelivery`, run through `scope.run` on the RabbitMQ client's consumer thread), `RequestListener` / `ResponseListener` (`onMessage` → `onBoundMessage`, same pattern on the JMS provider's delivery thread), `MockQueue` / `MockTopic` / `MockMessageRouter`. Every transport constructor gained a trailing `PerApplicationScope` parameter (before the `servers` varargs on Kafka); the shipped `mock-wire.xml` and `rabbitmq-wire.xml` originally declared a private `perApplicationScope` bean (never bound around any refresh, so always empty); they now `ref` `org.smallmind.spark.perApplicationScope`, the name the Tanuki wrapper registers, and `MockWireTest` registers a test-owned instance under that name. Tests: `WorkerPoolTest` (bound / unbound worker), `MockScopeBindingTest` (service invoked over the mock transport reports its own thread's binding).
+- **quorum** — `ComponentPool.setPerApplicationScope` (fluent, before `startup()`); `DeconstructionQueue.startup(scope)` wraps the ignition thread; `ComponentPinManager` wraps the virtual creator thread. Test: `ComponentPoolScopeTest` (component records the reaping thread's binding on `close`).
+- **persistence** — `perApplicationScope` property on `PooledDataSourceFactoryBean` and `DynamicPooledDataSourceInitializingBean`, forwarded through the `PerApplicationScope` parameter added to `PooledDataSourceFactory.createPooledDataSource` and `PooledConnectionComponentPoolFactory.constructComponentPool` (replacing the previous signatures — no scope-less overload remains, so context-only callers pass `null`; documented in `PERSISTENCE.adoc`) to every `ComponentPool`. No persistence thread of its own; cache-praxis readers run on the caller's thread.
+- **bayeux** — `OumuamuaConfiguration.perApplicationScope`; `OumuamuaServer` wraps the default executor (now `newThreadPerTaskExecutor` over a wrapped virtual-thread factory) and both idle timers, and exposes `getPerApplicationScope()` / `runBound(Runnable)`; `AsyncOumuamuaServlet` builds its executor in `init` with the same wrapping and runs the read-listener's `onReceipt` through `runBound`; `OumuamuaServlet` does the same for its synchronous `onReceipt`; `WebSocketEndpoint` runs `onDelivery` through `runBound`; `KafkaBackbone` replaced its constructor with one taking a `PerApplicationScope` (before the `servers` varargs) that wraps its consumer threads. A caller-supplied `executorService` is used as given and documented as the caller's to wrap. Test: `OumuamuaServerTest` (bound default executor, unbound without a scope, supplied executor untouched).
+
+The `// TODO: Per Application Scope Entry Point` markers that once tagged every constructor, setter, and entry method accepting a `PerApplicationScope` (32 sites) were removed once the entry points were documented in their chapters; `grep -rn "PerApplicationScope perApplicationScope" --include=*.java */src/main` lists the signatures instead. **Decision (B5): no scope-less overloads are being added back.** Each construction site states its choice explicitly; a context-only client passes `null` (`<null/>` in XML), and each chapter says so where the parameter is introduced.
+
+Deliberately unwrapped, verified to resolve no per-application data: `ClaxonRegistry`'s `claxon-collection` thread (holds the registry by reference; only `Instrument.register(this)` at construction), the Kafka transports' and `KafkaBackbone`'s producer executors (`producer.send` only), `RabbitMQConnectionManager`'s retry thread (reconnects only), and the `spark-wrapper-signal` keep-alive (§6.4). Caller-dependent and left to the caller: `BatchJobExecutorFactory`'s pool and `SleuthThreadPool` run only caller code.
 
 ### 6.4 Entry points
 
-**`PerApplicationContextFilter`** (`nutsnbolts/.../lang/web`):
+**Prep status.** The filter and listener below now exist as separate, side-by-side types (`scope/web/PerApplicationScopeFilter`, `spring/web/PerApplicationScopeContextLoaderListener`) rather than as in-place rewrites, and the Grizzly/Jetty beans accept a `perApplicationScope` property that registers the scope filter alongside the context filter, which is registered only when a `PerApplicationContext` is attached to the refresh thread (the two filters touch unrelated storage; with the bridging managers a request thread that carries both reads the scope first and falls back to the context, so stacking them is harmless as long as the refresh thread that registered also carried both, or only the context). The context filter and `WebContextLoaderListener` remain the context-flavor defaults, revised as the §4.1 table describes (the filter never creates a context; the listener attaches an already-published one on refresh and on destroy).
+
+**Entry-point pass (done, side by side with the context flavor):**
+
+- Grizzly/Jetty: when `perApplicationScope` is set, the scope filter is mapped on `/*` of every `WebApplicationOption` context for `REQUEST` + `ASYNC` dispatches with async support enabled (the context filter stays on `restPath/*`, also `REQUEST` + `ASYNC` with async support, and is registered only when a context is attached to the refresh thread). The bean throws `ScopeException` from `onApplicationEvent` when the refresh thread is bound to a scope other than the configured one. JAX-WS, which both containers serve outside the servlet filter chain, is bound by `web/grizzly/PerApplicationScopeHttpHandler` (a delegating `HttpHandler` around `JaxwsHandler`) and `web/jetty/PerApplicationScopeHttpFilter` (a `com.sun.net.httpserver.Filter` on each `HttpContext`). Not bound, by design and documented in `WEB.adoc`: `AsyncContext.start`, `ReadListener`/`WriteListener` callbacks, the WebSocket handshake (Tyrus upgrades outside the filter chain on Grizzly; Jetty's upgrade filter precedes ours) and endpoint callbacks, `AsyncProvider` services, and Jetty endpoints given their own `Executor` — those hold the scope instance and `run`/`call` their bodies.
+- `web/jersey/spring/ExposedPerApplicationScopeContextLoaderListener` is the scope twin of `ExposedWebContextLoaderListener`.
+- `AbstractWrapperListener` keeps `extends PerApplicationContext` and additionally owns a `PerApplicationScope` (`getPerApplicationScope()`), running `start`/`stop`/`controlEvent` inside it. The `spark-wrapper-signal` executor is deliberately **not** wrapped (it never resolves per-application data). `SpringContextWrapperListener.startup` always refreshes inside that scope (binding it itself when the caller is not already inside it) and, once when the context is first loaded, adds a `BeanFactoryPostProcessor` that registers the scope as the singleton bean `org.smallmind.spark.perApplicationScope` on every refresh, so XML can `ref` it into the web beans; a `shutdown()`→`startup()` restart in one JVM works only for contexts that support a second refresh (`ClassPathXmlApplicationContext`); `ClassPathXmlSpringContextWrapperListener` now builds its context unrefreshed.
+- Testbench: `foundation.xml` is unchanged (a scope bean created during refresh cannot be the one bound around it); `TESTBENCH.adoc` documents the test-owned-scope pattern instead.
+
+What remained for the cut-over, and what was decided instead:
+
+- ~~migrate the managers (§6.2)~~ done via the bridging managers; the bootstrap binders (`AbstractWrapperListener`, testbench) keep both flavors on purpose, since a refresh that binds both populates both maps;
+- ~~stop registering `PerApplicationContextFilter` in the Grizzly/Jetty beans (and make `perApplicationScope` required)~~ not planned; instead the beans register the context filter only when a `PerApplicationContext` is attached to the refresh thread, and `PerApplicationContextFilter.init` now fails fast (`MissingPerApplicationContextException`) rather than creating an empty context when none is supplied or published — the same rule the scope filter has always had;
+- ~~deprecate `PerApplicationContextFilter`, `WebContextLoaderListener`, and `ExposedWebContextLoaderListener` per §6.5~~ not planned (status note).
+
+Decisions recorded while building the prep: the no-arg scope filter fails fast in `init` instead of creating a scope (a filter-created map is silently empty); a scope passed to the filter's constructor ignores the servlet-context attribute; the listener throws `ScopeException` when handed a scope that differs from one already published; the Grizzly/Jetty beans do **not** wrap `deploy`/`server.start()` in `scope.run` — binding the refresh thread is the bootstrap's job and wrapping there would only mask its absence. Decisions recorded in the entry-point pass: whole-context `/*` mapping rather than a URL-pattern property (least to forget; the bean owns the policy once a scope is set); thin JAX-WS wrappers rather than documenting SOAP as unbound; Tanuki side by side rather than cut over; with the bridging managers (§6.2) a refresh that binds both registers into both, so Tanuki's inherited context keeps un-wrapped threads working while wrapped threads use the scope.
+
+> **History.** Everything from here to the end of §6.4 is the original in-place rewrite plan for the context-flavor entry points. None of it was applied: `PerApplicationContextFilter` and `WebContextLoaderListener` keep their context semantics (the listener now attaches an already-published map to the refresh thread, or constructs one adopting any map on the thread), `AbstractWrapperListener` keeps `extends PerApplicationContext`, and `foundation.xml` is unchanged. The scope-flavor types were added side by side instead, as recorded above.
+
+**`PerApplicationContextFilter`** (`nutsnbolts/.../context/web`):
 
 - Field type `PerApplicationContext` → `PerApplicationScope`. Servlet-context attribute key: keep `PerApplicationContext.class.getName()` **only** during a transition when both listener and filter must interoperate; otherwise switch to `PerApplicationScope.class.getName()` and change it in the listener in the same commit.
 - `doFilter` per §5.1 Option A.
@@ -312,9 +373,11 @@ public void contextDestroyed (ServletContextEvent servletContextEvent) {
 **`testbench/foundation/foundation.xml`**: a bean definition cannot express "run the rest of the context inside a scope". Options:
 
 - Replace the bean with a `PerApplicationScope` bean **and** a `BeanFactoryPostProcessor`/`ApplicationContextInitializer` in `testbench` that wraps refresh — heavy.
-- Simpler and honest: keep a `PerApplicationScope` bean for injection, and have the testbench base test class (or a TestNG `@BeforeClass`) call `scope.run(...)` around context creation. Update `TESTBENCH.adoc:386-395` to describe the new pattern instead of `new PerApplicationContext()` in `@BeforeClass`.
+- ~~Simpler and honest: keep a `PerApplicationScope` bean for injection~~ (superseded: no scope bean is declared, see `TESTBENCH.adoc`; the test registers its own instance as the singleton `org.smallmind.spark.perApplicationScope`), and have the testbench base test class (or a TestNG `@BeforeClass`) call `scope.run(...)` around context creation. Update `TESTBENCH.adoc:386-395` to describe the new pattern instead of `new PerApplicationContext()` in `@BeforeClass`.
 
 ### 6.5 `PerApplicationContext` itself
+
+**Not planned.** Per the status note at the top, `PerApplicationContext` stays as a supported binding model; the bridging managers read it. The steps below are retained for history only.
 
 After all callers are gone:
 
@@ -325,6 +388,8 @@ After all callers are gone:
 ---
 
 ## 7. Tests
+
+> **History.** §7.1–7.4 were written for the replacement plan. The tests on the context flavor stay as they are (`new PerApplicationContext()` in setup remains a supported pattern), the Claxon save/restore pattern in `InstrumentedAspectTest` / `ClaxonSpringAssemblyTest` stays, and `WorkerPoolTest` keeps its inherited-context setup alongside the bound/unbound worker cases. The "Done" items in §7.4 are what exists.
 
 ### 7.1 General pattern
 
@@ -355,12 +420,21 @@ Delete it. With scopes there is nothing to restore: the test's own `run` ends wh
 ### 7.4 What to add
 
 - One test per wrapped pool (§6.3 step 4).
-- A filter test proving the binding is gone after `doFilter` returns and that `suppressConnectionClosedException` still works through the `call` wrapper.
-- A `WebContextLoaderListener` test proving a bean's `afterPropertiesSet` sees the scope.
+- ~~A filter test proving the binding is gone after `doFilter` returns and that `suppressConnectionClosedException` still works through the `call` wrapper.~~ Done: `nutsnbolts/.../scope/web/PerApplicationScopeFilterTest`.
+- ~~A `WebContextLoaderListener` test proving a bean's `afterPropertiesSet` sees the scope.~~ Done for the scope listener: `nutsnbolts/.../spring/web/PerApplicationScopeContextLoaderListenerTest` (also proves `destroy` is bound and the calling thread is unbound afterwards).
+- Done: `GrizzlyPerApplicationScopeBootTest` and `JettyPerApplicationScopeBootTest` boot a server with and without `perApplicationScope` and probe which binding the request thread sees.
+- Done for the context listener: `nutsnbolts/.../spring/web/WebContextLoaderListenerTest`.
+- Done: `nutsnbolts/.../context/web/PerApplicationContextFilterTest` (expanded).
+- Done: `phalanx/.../wire/transport/mock/MockWireScopeRoundTripTest` and `MockReceiverBindingMismatchTest`.
+- Done: `quorum/.../pool/complex/ComponentPoolScopeTest`.
+- Done: `spark/tanukisoft/integration/.../spring/SpringContextWrapperListenerTest` and `ClassPathXmlSpringContextWrapperListenerTest`.
+- Done: `bayeux/.../server/impl/OumuamuaServletTest`, `AsyncOumuamuaServletTest`, and `bayeux/.../server/spi/backbone/kafka/KafkaBackboneTest`.
 
 ---
 
 ## 8. Migration Steps — `ContextFactory` → `ScopeFactory`
+
+**Decision taken: no migration. Both stay; the client decides.** `ContextFactory` / `Context` / `WireContext` and `ScopeFactory` / `Scope` / `WireScope` are parallel, supported mechanisms. phalanx carries both on the wire (`InvocationSignal` has independent context and scope arrays; `MethodInvoker` pushes/pops contexts and `callInScopes` scopes; `WireInvocationHandler` collects both), registers both (`WireContextInitializingBean` / `WireScopeInitializingBean`), and decodes each through its own registry (`WireContextManager` needs a `PerApplicationContext` on the worker thread, `WireScopeManager` the transport's `PerApplicationScope`; a receiver lacking the binding an element needs drops the message — see `PHALANX.adoc`). `PooledDataSourceContext` and `RootedFileSystemContext` remain `Context` implementors read through `ContextFactory`; a scope-flavored twin of either would be an additive feature, not a conversion. There is no neutral `Wire*Manager` because the two registries store different types. The subsections below describe what a conversion would have involved and are retained for history only.
 
 Smaller and independent of Part 6; can be done first or second.
 
@@ -403,7 +477,7 @@ Notes:
 
 - `callInScopes` treats a `null` or empty array as "run unbound", matching today's guard.
 - Today's loop skips `null` **elements**; `callInScopes` throws `ScopeException` on them. Decide: either filter nulls into a fresh array before the call (preserves behavior), or let it throw (a null wire context is a transport bug). Preserving behavior is the conservative choice; document whichever you pick in `PHALANX.adoc`.
-- `WireContext` subclasses may now implement `scope.LifecycleAware` to get `beforeEnter`/`afterExit` around the invocation. Mention this in `PHALANX.adoc` as new capability.
+- `WireContext` subclasses may now implement `scope.ScopeLifecycleAware` to get `beforeEnter`/`afterExit` around the invocation. Mention this in `PHALANX.adoc` as new capability.
 - Update the method's Javadoc (it currently describes push/pop).
 
 ### 8.3 `WireInvocationHandler.invoke`
@@ -439,11 +513,15 @@ The readers above only work if *something* entered the scope. Today that is:
 
 ### 8.8 `ContextFactory` itself
 
-Same two-release deprecation as §6.5: `Context`, `ContextFactory`, `ContextException`, `ExpectedContexts`, `context.LifecycleAware` → `@Deprecated(forRemoval = true)` with `@see`, then delete the `context` package.
+**Not planned** (see the decision at the top of §8).
+
+Same two-release deprecation as §6.5: `Context`, `ContextFactory`, `ContextException`, `ExpectedContexts`, `context.ContextLifecycleAware` → `@Deprecated(forRemoval = true)` with `@see`, then delete the `context` package.
 
 ---
 
 ## 9. Verification Checklist
+
+> **History.** Written for the replacement plan. Under the coexistence decision: context references in `src` are permanent, not shims; an un-wrapped thread that inherited a context resolves through the bridge (and one with no binding fails with `MissingPerApplicationContextException`, or records nothing for Claxon); and the chapters deliberately document context inheritance. The live checks are the per-module `mvn -q -pl <module> test`, the bridging-manager tests (`*ManagerTest` in each module), and the chapter rules in `NUTSNBOLTS.adoc` `per-application-registries`.
 
 Per module, in dependency order:
 
@@ -463,7 +541,9 @@ Repository-wide, at the end:
 
 ## 10. Rollback
 
-Each phase is independently revertible because the old types remain until §6.5/§8.8. If a module's pool audit proves impractical mid-migration, that module can stay on `PerApplicationContext` temporarily **only** if it does not share a JVM with modules already on `PerApplicationScope` that expect to see the same data — the two maps are unrelated and nothing bridges them. Do not build a bridge; finish the module instead.
+> **History.** The "do not build a bridge" rule below was reversed by the §6.2 decision; the bridge exists and is the supported way library code reads both maps. Nothing is scheduled for removal, so there is no rollback phase.
+
+Each phase is independently revertible because the old types remain. If a module's pool audit proves impractical mid-migration, that module can stay on `PerApplicationContext` temporarily **only** if it does not share a JVM with modules already on `PerApplicationScope` that expect to see the same data — ~~the two maps are unrelated and nothing bridges them. Do not build a bridge; finish the module instead.~~
 
 ---
 

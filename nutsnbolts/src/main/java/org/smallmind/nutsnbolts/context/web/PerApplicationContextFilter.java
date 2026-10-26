@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang.web;
+package org.smallmind.nutsnbolts.context.web;
 
 import java.io.IOException;
 import jakarta.servlet.Filter;
@@ -39,11 +39,16 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
 
 /**
  * Servlet filter that binds a shared {@link PerApplicationContext} to each request thread and optionally suppresses
- * "Connection is closed" {@link IOException}s thrown during filter chain execution.
+ * "Connection is closed" {@link IOException}s thrown during filter chain execution. The context is either supplied to
+ * a constructor or, for the no-arg forms, read in {@link #init} from the servlet-context attribute named
+ * {@code PerApplicationContext.class.getName()} (which {@code WebContextLoaderListener} publishes). The filter never
+ * creates a context of its own: a filter-created map would be empty and would shadow the registries the application
+ * actually wrote to, so {@code init} fails with {@link MissingPerApplicationContextException} when none is available.
  */
 public class PerApplicationContextFilter implements Filter {
 
@@ -69,6 +74,30 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
+   * Constructs a filter that binds the given context, ignoring any servlet-context attribute.
+   *
+   * @param perApplicationContext the context to bind on each request thread
+   */
+  public PerApplicationContextFilter (PerApplicationContext perApplicationContext) {
+
+    this.perApplicationContext = perApplicationContext;
+  }
+
+  /**
+   * Constructs a filter that binds the given context, ignoring any servlet-context attribute, with explicit control
+   * over connection-closed {@link IOException} suppression.
+   *
+   * @param perApplicationContext             the context to bind on each request thread
+   * @param suppressConnectionClosedException {@code true} to silently discard {@link IOException}s whose message is
+   *                                          {@code "Connection is closed"}
+   */
+  public PerApplicationContextFilter (PerApplicationContext perApplicationContext, boolean suppressConnectionClosedException) {
+
+    this.perApplicationContext = perApplicationContext;
+    this.suppressConnectionClosedException = suppressConnectionClosedException;
+  }
+
+  /**
    * Sets whether {@link IOException}s with the message {@code "Connection is closed"} are suppressed, and returns
    * this filter instance to support method chaining.
    *
@@ -83,16 +112,20 @@ public class PerApplicationContextFilter implements Filter {
   }
 
   /**
-   * Retrieves or creates the shared {@link PerApplicationContext} from the servlet context attribute keyed by
-   * {@link PerApplicationContext}'s class name.
+   * Resolves the shared {@link PerApplicationContext}: the instance given to the constructor, or else the servlet
+   * context attribute keyed by {@link PerApplicationContext}'s class name.
    *
    * @param filterConfig the filter configuration supplied by the servlet container
+   * @throws MissingPerApplicationContextException if no context was supplied and none is published as a servlet
+   *                                               context attribute
    */
   @Override
   public void init (FilterConfig filterConfig) {
 
-    if ((perApplicationContext = (PerApplicationContext)filterConfig.getServletContext().getAttribute(PerApplicationContext.class.getName())) == null) {
-      filterConfig.getServletContext().setAttribute(PerApplicationContext.class.getName(), perApplicationContext = new PerApplicationContext());
+    if (perApplicationContext == null) {
+      if ((perApplicationContext = (PerApplicationContext)filterConfig.getServletContext().getAttribute(PerApplicationContext.class.getName())) == null) {
+        throw new MissingPerApplicationContextException("No PerApplicationContext was supplied and none is published under servlet context attribute(%s)", PerApplicationContext.class.getName());
+      }
     }
   }
 

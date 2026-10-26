@@ -3,7 +3,7 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="perApplicationContext" class="org.smallmind.nutsnbolts.lang.PerApplicationContext"/>
+  <bean id="perApplicationContext" class="org.smallmind.nutsnbolts.context.PerApplicationContext"/>
 
   <bean id="contextRefreshedAnnouncer" class="org.smallmind.nutsnbolts.spring.SpringContextRefreshedAnnouncer">
     <property name="applicationName" value="Epicenter"/>

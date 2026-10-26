@@ -45,6 +45,7 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameArrayXmlAdapter;
 import org.smallmind.bayeux.oumuamua.server.impl.json.ClassNameXmlAdapter;
 import org.smallmind.bayeux.oumuamua.server.impl.json.DoubleStringArrayXmlAdapter;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.json.LevelEnumXmlAdapter;
 import org.smallmind.web.json.doppelganger.Doppelganger;
@@ -67,6 +68,8 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   private Codec<V> codec;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private ExecutorService executorService;
+  @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
+  private PerApplicationScope perApplicationScope;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private SecurityPolicy<V> securityPolicy;
   @View(adapter = ClassNameArrayXmlAdapter.class, idioms = @Idiom(visibility = OUT))
@@ -149,13 +152,44 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * Assigns the executor service used for background processing.
+   * Assigns the executor service used for background processing. Threads of a supplied executor inherit no
+   * {@code ScopedValue} binding, so an application that also sets {@link #setPerApplicationScope} must build this
+   * executor so that its threads run inside that scope (for example from the scope instance's
+   * {@code boundThreadFactory} or {@code boundExecutor}, which bind that scope without needing one on the
+   * constructing thread; the static {@code PerApplicationScope.wrapThreadFactory} captures the caller's binding and
+   * throws {@code MissingPerApplicationScopeException} when there is none); the server only wraps the executor it
+   * creates itself.
    *
    * @param executorService executor service
    */
   public void setExecutorService (ExecutorService executorService) {
 
     this.executorService = executorService;
+  }
+
+  /**
+   * @return the scope the server's own threads run inside, or {@code null} when they run with no scope, carrying
+   * only the {@code PerApplicationContext} inherited from the thread that started them
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  /**
+   * Assigns the scope the server binds on every thread it starts (its default executor, the idle-channel and
+   * idle-session timers, and the async servlet's message executor) and, through {@code runBound}, around the
+   * protocol listeners the servlets invoke on receipt and the WebSocket endpoint invokes on delivery. The endpoint's
+   * {@code onReceipt} runs inside its {@code onMessage} executor task rather than through {@code runBound}, so it is
+   * bound only when the server's default executor is in use and not when a caller-supplied executor is configured;
+   * {@code onOpen}, {@code onError}, and {@code onCleanup} are not bound.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to leave those threads with no scope, carrying
+   *                            only the {@code PerApplicationContext} inherited from the thread that started them
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**

@@ -36,9 +36,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -364,6 +366,74 @@ public class CacheAsAspectTest {
   public void testTimedDaoDisablesTimingWhenAdviceThrows () {
 
     new TimedCacheAsWidgetDao(proxySession(), vectoredDao(), null).illegalReturn();
+  }
+
+  // With neither a context nor a scope bound, the @Timed advice finds no registry and its metrics are unplugged
+  // rather than failing the call.
+  public void testTimedDaoServesCacheHitOnAThreadWithNeitherBinding ()
+    throws Throwable {
+
+    VectoredDao<Long, Widget> vectoredDao = vectoredDao();
+    Widget cached = new Widget(3L);
+    TimedCacheAsWidgetDao dao = new TimedCacheAsWidgetDao(proxySession(), vectoredDao, new Widget(99L));
+    AtomicReference<Widget> result = new AtomicReference<>();
+
+    Mockito.when(vectoredDao.getVector(Mockito.any())).thenReturn(new ByReferenceSingularVector<>(cached, 0));
+    Mockito.when(vectoredDao.getMetricSource()).thenReturn("test");
+
+    runIsolated(() -> {
+      Assert.assertFalse(PerApplicationContext.isBound(), "the isolated thread must carry no context");
+      Assert.assertFalse(PerApplicationScope.isBound(), "the isolated thread must carry no scope");
+      result.set(dao.loadActive());
+    });
+
+    Assert.assertSame(result.get(), cached, "a thread with neither binding must still be served the cache hit");
+    Assert.assertFalse(dao.wasInvoked());
+  }
+
+  // A scope holding no registry, with no context to fall back on, likewise leaves the metrics unplugged.
+  public void testTimedDaoServesCacheHitOnAScopeOnlyThread ()
+    throws Throwable {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    VectoredDao<Long, Widget> vectoredDao = vectoredDao();
+    Widget cached = new Widget(4L);
+    TimedCacheAsWidgetDao dao = new TimedCacheAsWidgetDao(proxySession(), vectoredDao, new Widget(99L));
+    AtomicReference<Widget> result = new AtomicReference<>();
+
+    Mockito.when(vectoredDao.getVector(Mockito.any())).thenReturn(new ByReferenceSingularVector<>(cached, 0));
+    Mockito.when(vectoredDao.getMetricSource()).thenReturn("test");
+
+    runIsolated(() -> perApplicationScope.run(() -> {
+      Assert.assertFalse(PerApplicationContext.isBound(), "the isolated thread must carry no context");
+      Assert.assertTrue(PerApplicationScope.isBound());
+      result.set(dao.loadActive());
+    }));
+
+    Assert.assertSame(result.get(), cached, "a scope-only thread must still be served the cache hit");
+    Assert.assertFalse(dao.wasInvoked());
+  }
+
+  // Runs on a platform thread that inherits no thread locals, so a context attached to the test thread cannot leak in.
+  private static void runIsolated (Runnable runnable)
+    throws Throwable {
+
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+
+      try {
+        runnable.run();
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      throw failure.get();
+    }
   }
 
   @SuppressWarnings("unchecked")

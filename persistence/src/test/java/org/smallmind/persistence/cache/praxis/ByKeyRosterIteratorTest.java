@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 /**
  * Exercises {@link ByKeyRosterIterator} directly. The iterator wraps a key-roster list iterator and hydrates each
  * {@link DurableKey} into a {@link Cog} via a supplied {@link ORMDao}. Because the DAO is handed to the constructor
- * explicitly (rather than resolved through {@code OrmDaoManager}), these tests need no {@code PerApplicationContext};
+ * explicitly (rather than resolved through {@code OrmDaoContextManager}), these tests need no {@code PerApplicationContext};
  * they simply register a Mockito {@link ORMDao} stub that round-trips ids and supplies the managed class used to
  * build replacement keys on {@code set}/{@code add}. Coverage spans forward and backward traversal, the raw
  * {@link ByKeyRosterIterator#nextKey()} accessor, index queries, structural mutation, and the not-found hydration

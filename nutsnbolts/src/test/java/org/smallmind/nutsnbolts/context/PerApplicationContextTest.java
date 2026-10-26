@@ -30,46 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang;
+package org.smallmind.nutsnbolts.context;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit")
 public class PerApplicationContextTest {
-
-  private static void runIsolated (ThrowingRunnable body)
-    throws Throwable {
-
-    Throwable[] caught = new Throwable[1];
-
-    Thread thread = new Thread(() -> {
-      try {
-        body.run();
-      } catch (Throwable throwable) {
-        caught[0] = throwable;
-      }
-    });
-
-    thread.setDaemon(true);
-    thread.setName("perapp-test-isolated");
-    thread.start();
-    thread.join();
-
-    if (caught[0] != null) {
-      throw caught[0];
-    }
-  }
-
-  @FunctionalInterface
-  private interface ThrowingRunnable {
-
-    void run ()
-      throws Throwable;
-  }
 
   public void testConstructorAttachesAndReusesContextOnSameThread ()
     throws Throwable {
@@ -101,6 +73,25 @@ public class PerApplicationContextTest {
     runIsolated(() -> PerApplicationContext.getPerApplicationData(SampleManager.class, String.class));
   }
 
+  public void testSetPerApplicationDataIfAbsentKeepsTheFirstValue ()
+    throws Throwable {
+
+    runIsolated(() -> {
+      new PerApplicationContext();
+
+      Assert.assertEquals(PerApplicationContext.setPerApplicationDataIfAbsent(SampleManager.class, "first"), "first");
+      Assert.assertEquals(PerApplicationContext.setPerApplicationDataIfAbsent(SampleManager.class, "second"), "first");
+      Assert.assertEquals(PerApplicationContext.getPerApplicationData(SampleManager.class, String.class), "first");
+    });
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationContextException.class)
+  public void testSetPerApplicationDataIfAbsentWithoutContextThrows ()
+    throws Throwable {
+
+    runIsolated(() -> PerApplicationContext.setPerApplicationDataIfAbsent(SampleManager.class, "value"));
+  }
+
   public void testCarrierPropagatesContextToAnotherThread ()
     throws Throwable {
 
@@ -112,7 +103,8 @@ public class PerApplicationContextTest {
       PerApplicationContext.ContextCarrier carrier = PerApplicationContext.generateCarrier();
       BlockingQueue<Object> result = new ArrayBlockingQueue<>(1);
 
-      Thread worker = new Thread(() -> {
+      // the worker must not inherit the map, or the carrier would have nothing to prove
+      Thread worker = Thread.ofPlatform().name("perapp-test-worker").daemon(true).inheritInheritableThreadLocals(false).unstarted(() -> {
         try {
           carrier.prepareThread();
           result.put(PerApplicationContext.getPerApplicationData(SampleManager.class, String.class));
@@ -124,7 +116,6 @@ public class PerApplicationContextTest {
         }
       });
 
-      worker.setDaemon(true);
       worker.start();
       worker.join();
 
@@ -141,15 +132,8 @@ public class PerApplicationContextTest {
       new PerApplicationContext();
       PerApplicationContext.setPerApplicationData(SampleManager.class, "wrapped");
 
-      ThreadFactory wrapped = PerApplicationContext.wrapThreadFactory(runnable -> {
-
-        Thread thread = new Thread(runnable);
-
-        thread.setDaemon(true);
-        thread.setName("perapp-test-worker");
-
-        return thread;
-      });
+      // the delegate factory's threads inherit nothing, so only the wrapping factory can carry the map onto them
+      ThreadFactory wrapped = PerApplicationContext.wrapThreadFactory(runnable -> Thread.ofPlatform().name("perapp-test-worker").daemon(true).inheritInheritableThreadLocals(false).unstarted(runnable));
 
       BlockingQueue<Object> result = new ArrayBlockingQueue<>(1);
 
@@ -183,7 +167,8 @@ public class PerApplicationContextTest {
 
       BlockingQueue<Object> result = new ArrayBlockingQueue<>(1);
 
-      Thread worker = new Thread(() -> {
+      // a bare thread: it must not inherit the map, or prepareThread would have nothing to prove
+      Thread worker = Thread.ofPlatform().name("perapp-test-worker").daemon(true).inheritInheritableThreadLocals(false).unstarted(() -> {
         try {
           context.prepareThread();
           result.put(PerApplicationContext.getPerApplicationData(SampleManager.class, String.class));
@@ -195,13 +180,42 @@ public class PerApplicationContextTest {
         }
       });
 
-      worker.setDaemon(true);
       worker.start();
       worker.join();
 
       Object outcome = result.take();
       Assert.assertEquals(outcome, "installed");
     });
+  }
+
+  private static void runIsolated (ThrowingRunnable body)
+    throws Throwable {
+
+    Throwable[] caught = new Throwable[1];
+
+    // inheritInheritableThreadLocals(false) keeps whatever map the TestNG thread carries out of this thread, so each
+    // case starts with no context attached regardless of which test classes ran before it
+    Thread thread = Thread.ofPlatform().name("perapp-test-isolated").daemon(true).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        body.run();
+      } catch (Throwable throwable) {
+        caught[0] = throwable;
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (caught[0] != null) {
+      throw caught[0];
+    }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingRunnable {
+
+    void run ()
+      throws Throwable;
   }
 
   public static class SampleManager implements PerApplicationDataManager {

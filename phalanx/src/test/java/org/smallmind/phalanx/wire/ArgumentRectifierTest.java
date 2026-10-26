@@ -120,7 +120,7 @@ public class ArgumentRectifierTest {
     HashMap<String, Object> arguments = new HashMap<>();
     arguments.put("text", "hi");
 
-    byte[] encoded = codec.encode(new InvocationSignal(false, new Route(1, "Sample", function), arguments));
+    byte[] encoded = codec.encode(new InvocationSignal(false, new Route(1, "Sample", function), arguments, null, null));
     InvocationSignal decoded = codec.decode(encoded, 0, encoded.length, InvocationSignal.class);
 
     Object[] reconstructed = ArgumentRectifier.constructArray(codec, decoded, function, methodology);
@@ -142,7 +142,7 @@ public class ArgumentRectifierTest {
     arguments.put("text", "hi");
     arguments.put("count", 3);
 
-    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments), function, methodology);
+    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments, null, null), function, methodology);
 
     Assert.assertEquals(reconstructed.length, 2);
     Assert.assertEquals(reconstructed[0], "hi");
@@ -161,7 +161,7 @@ public class ArgumentRectifierTest {
     HashMap<String, Object> arguments = new HashMap<>();
     arguments.put("text", null);
 
-    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments), function, methodology);
+    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments, null, null), function, methodology);
 
     Assert.assertEquals(reconstructed.length, 1);
     Assert.assertNull(reconstructed[0]);
@@ -179,7 +179,7 @@ public class ArgumentRectifierTest {
     HashMap<String, Object> arguments = new HashMap<>();
     arguments.put("bogus", "x");
 
-    ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments), function, methodology);
+    ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "Sample", function), arguments, null, null), function, methodology);
   }
 
   @Test
@@ -210,7 +210,7 @@ public class ArgumentRectifierTest {
     HashMap<String, Object> arguments = new HashMap<>();
     arguments.put("w", "hello");
 
-    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "AdapterSample", function), arguments), function, methodology);
+    Object[] reconstructed = ArgumentRectifier.constructArray(codec, new InvocationSignal(false, new Route(1, "AdapterSample", function), arguments, null, null), function, methodology);
 
     Assert.assertTrue(reconstructed[0] instanceof Widget);
     Assert.assertEquals(((Widget)reconstructed[0]).getLabel(), "hello");

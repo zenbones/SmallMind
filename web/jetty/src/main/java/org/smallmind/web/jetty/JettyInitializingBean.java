@@ -61,8 +61,12 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
-import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
+import org.smallmind.nutsnbolts.scope.web.PerApplicationScopeFilter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jetty.installer.FilterInstaller;
@@ -87,6 +91,7 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   private ResourceConfig resourceConfig;
   private WebApplicationOption[] webApplicationOptions;
   private SSLInfo sslInfo;
+  private PerApplicationScope perApplicationScope;
   private String host;
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
@@ -197,6 +202,32 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
   }
 
   /**
+   * Sets the {@link PerApplicationScope} bound on request threads. When a scope is set, a
+   * {@link PerApplicationScopeFilter} binding this scope is registered on {@code /*} of every configured servlet
+   * context for {@code REQUEST} and {@code ASYNC} dispatches, so every servlet reached through the filter chain
+   * (JAX-RS, installer-declared) and every {@code AsyncContext.dispatch} leg runs bound, and each JAX-WS
+   * {@code HttpContext} receives a {@link PerApplicationScopeHttpFilter}. The WebSocket upgrade filter precedes this
+   * filter in the chain, so the upgrade itself is not bound. Independently, when a JAX-RS option is configured and a
+   * {@code PerApplicationContext} is attached to the thread that refreshes the Spring context, a
+   * {@code PerApplicationContextFilter} binding that context is registered on the REST path for {@code REQUEST} and
+   * {@code ASYNC} dispatches; no context filter is registered otherwise, so a scope-only deployment leaves no context
+   * on its workers. Work that leaves the filter chain is not bound: {@code AsyncContext.start}, {@code ReadListener}
+   * / {@code WriteListener} callbacks, WebSocket endpoint callbacks, and JAX-WS endpoints given their own
+   * {@code Executor} must hold this scope and run their bodies through its {@code run} / {@code call}. Library
+   * registries are reached through bridging managers that write to every binding present on the refresh thread and
+   * read the scope first, then the context, so the application must bind this same instance while the Spring
+   * context refreshes; if some other scope is bound on the refreshing thread instead, {@code onApplicationEvent}
+   * fails with {@code ScopeException} rather than wiring a scope that holds nothing.
+   *
+   * @param perApplicationScope scope to bind per request, or {@code null} (the default) to bind only whatever
+   *                            {@code PerApplicationContext} the refresh thread carries, and only on the REST path
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+  }
+
+  /**
    * Enables verbose SOAP adapter request/response dumping for diagnostic purposes.
    *
    * @param debug {@code true} to activate SOAP transport logging
@@ -264,6 +295,8 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
    *
    * @param contextRefreshedEvent the Spring context-refreshed event that triggers server startup
    * @throws JettyInitializationException if any part of server construction or startup fails
+   * @throws ScopeException               if a {@code PerApplicationScope} other than the configured one is bound on the
+   *                                      thread delivering the event
    */
   @Override
   public void onApplicationEvent (ContextRefreshedEvent contextRefreshedEvent) {
@@ -271,6 +304,13 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
     QueuedThreadPool threadPool = new QueuedThreadPool();
     HttpConfiguration httpConfig = new HttpConfiguration();
     ContextHandlerCollection contextHandlerCollection = new ContextHandlerCollection();
+
+    if ((perApplicationScope == null) && PerApplicationScope.isBound() && (!PerApplicationContext.isBound())) {
+      LoggerManager.getLogger(JettyInitializingBean.class).warn("The Spring context is refreshing inside a PerApplicationScope but no perApplicationScope was set on this bean, so no per-application filter will be registered and request threads will carry no per-application binding");
+    }
+    if ((perApplicationScope != null) && PerApplicationScope.isBound() && (!perApplicationScope.isBoundOnCurrentThread())) {
+      throw new ScopeException("The configured PerApplicationScope is not the scope bound on the thread refreshing the Spring context; registrations made during the refresh went to a different scope, so request threads bound to this one would resolve nothing");
+    }
 
     if (debug) {
       System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
@@ -375,6 +415,10 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
           HttpContext httpContext = jettyHttpServer.createContext(combinePaths(combinePaths(webApplicationOption.getContextPath(), webApplicationOption.getSoapPath()), normalizePath(webServiceInstaller.getPath())));
           Endpoint endpoint = Endpoint.create(webServiceInstaller.getService());
 
+          if (perApplicationScope != null) {
+            httpContext.getFilters().add(new PerApplicationScopeHttpFilter(perApplicationScope));
+          }
+
           endpoint.publish(httpContext);
         }
       }
@@ -384,6 +428,31 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
         ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
 
         servletContextHandler.setContextPath(webApplicationOption.getContextPath());
+
+        if (perApplicationScope != null) {
+
+          FilterHolder perApplicationScopeFilterHolder = new FilterHolder(new PerApplicationScopeFilter(perApplicationScope, suppressConnectionClosedException));
+
+          perApplicationScopeFilterHolder.setName("per-application-scope");
+          perApplicationScopeFilterHolder.setDisplayName("per-application-scope");
+          perApplicationScopeFilterHolder.setAsyncSupported(true);
+
+          servletContextHandler.addFilter(perApplicationScopeFilterHolder, "/*", EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC));
+        }
+
+        // Added before the installer filters so that Jetty's in-order chain runs the scope filter, then this one, and
+        // only then any installer-declared filter.
+        if ((webApplicationOption.getJaxRSOption() != null) && PerApplicationContext.isBound()) {
+
+          // adopts the map already attached to this (refresh) thread; the filter never creates a context of its own
+          FilterHolder perApplicationContextFilterHolder = new FilterHolder(new PerApplicationContextFilter(new PerApplicationContext(), suppressConnectionClosedException));
+
+          perApplicationContextFilterHolder.setName("per-application-context");
+          perApplicationContextFilterHolder.setDisplayName("per-application-context");
+          perApplicationContextFilterHolder.setAsyncSupported(true);
+
+          servletContextHandler.addFilter(perApplicationContextFilterHolder, webApplicationOption.getJaxRSOption().getRestPath() + "/*", EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC));
+        }
 
         for (ListenerInstaller listenerInstaller : webAppState.getListenerInstallerList()) {
           try {
@@ -447,16 +516,11 @@ public class JettyInitializingBean implements JettyWebAppStateLocator, Initializ
         if (webApplicationOption.getJaxRSOption() != null) {
 
           ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(resourceConfig));
-          FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter(suppressConnectionClosedException));
 
           jerseyServletHolder.setName("JAX-RS Application");
           jerseyServletHolder.setDisplayName("JAX-RS Application");
 
-          jerseyFilterHolder.setName("per-application-data");
-          jerseyFilterHolder.setDisplayName("per-application-data");
-
           servletContextHandler.addServlet(jerseyServletHolder, webApplicationOption.getJaxRSOption().getRestPath() + "/*");
-          servletContextHandler.addFilter(jerseyFilterHolder, webApplicationOption.getJaxRSOption().getRestPath() + "/*", EnumSet.of(DispatcherType.REQUEST));
         }
 
         if (webApplicationOption.getSpringSupportOption() != null) {

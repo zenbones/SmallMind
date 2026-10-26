@@ -39,12 +39,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
@@ -53,6 +55,7 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -68,6 +71,7 @@ public class RequestMessageRouter extends MessageRouter {
 
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
+  private final PerApplicationScope perApplicationScope;
   private final String callerId;
   private final AtomicReference<String> consumerTagRef = new AtomicReference<>();
   private final boolean autoAcknowledge;
@@ -86,8 +90,13 @@ public class RequestMessageRouter extends MessageRouter {
    * @param ttlSeconds                   message time-to-live in seconds.
    * @param autoAcknowledge              whether the consumer should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
+   * @param perApplicationScope          scope bound around every delivery callback, which runs on the
+   *                                     RabbitMQ client's own consumer thread; {@code null} runs the
+   *                                     callback with no scope, carrying only the {@code PerApplicationContext}
+   *                                     the client's thread inherited from the connection thread chain (after a
+   *                                     reconnect, from {@link RabbitMQConnectionManager}'s retry thread).
    */
-  public RequestMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler) {
+  public RequestMessageRouter (RabbitMQConnectionManager connectionManager, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler, PerApplicationScope perApplicationScope) {
 
     super(connectionManager, "wire", nameConfiguration, publisherConfirmationHandler);
 
@@ -97,6 +106,7 @@ public class RequestMessageRouter extends MessageRouter {
     this.index = index;
     this.ttlSeconds = ttlSeconds;
     this.autoAcknowledge = autoAcknowledge;
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -192,35 +202,45 @@ public class RequestMessageRouter extends MessageRouter {
 
         channel.basicConsume(getCallerResponseQueueName(), autoAcknowledge, consumerTag, false, false, null, new DefaultConsumer(channel) {
 
+          //  The client library calls this on a consumer thread of its own, which inherits no scope.
           @Override
           public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
-            try {
-
-              long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
-
-              LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-              Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
-
-              Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
-                () -> requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class))
-              );
-            } catch (Throwable throwable) {
-              LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
-            } finally {
-              if (!autoAcknowledge) {
-                try {
-                  channel.basicAck(envelope.getDeliveryTag(), true);
-                } catch (IOException ioException) {
-                  LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
-                }
-              }
+            if (perApplicationScope == null) {
+              handleBoundDelivery(channel, envelope, properties, body);
+            } else {
+              perApplicationScope.run(() -> handleBoundDelivery(channel, envelope, properties, body));
             }
           }
         });
 
         consumerTagRef.set(consumerTag);
       });
+    }
+  }
+
+  private void handleBoundDelivery (Channel channel, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+
+    try {
+
+      long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
+
+      LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
+      Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("queue", ClaxonTag.RESPONSE_TRANSIT_TIME.getDisplay())).update((timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS);
+
+      Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.COMPLETE_CALLBACK.getDisplay())).on(
+        () -> requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class))
+      );
+    } catch (Throwable throwable) {
+      LoggerManager.getLogger(ResponseMessageRouter.class).error(throwable);
+    } finally {
+      if (!autoAcknowledge) {
+        try {
+          channel.basicAck(envelope.getDeliveryTag(), true);
+        } catch (IOException ioException) {
+          LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+        }
+      }
     }
   }
 
@@ -233,13 +253,14 @@ public class RequestMessageRouter extends MessageRouter {
    * @param route        target service, version and function.
    * @param arguments    named argument map to encode.
    * @param contexts     optional wire contexts propagated with the call.
+   * @param scopes       optional wire scopes propagated with the call.
    * @return the message id assigned to the published request.
    * @throws Throwable if encoding or publishing fails.
    */
-  public String publish (final boolean inOnly, final String serviceGroup, final Voice<?, ?> voice, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
+  public String publish (final boolean inOnly, final String serviceGroup, final Voice<?, ?> voice, final Route route, final Map<String, Object> arguments, final WireContext[] contexts, final WireScope[] scopes)
     throws Throwable {
 
-    RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, route, arguments, contexts);
+    RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, route, arguments, contexts, scopes);
     StringBuilder routingKeyBuilder = new StringBuilder(voice.getMode().getName()).append("-").append(serviceGroup);
 
     if (voice.getMode().equals(VocalMode.WHISPER)) {
@@ -251,7 +272,7 @@ public class RequestMessageRouter extends MessageRouter {
     return rabbitMQMessage.properties().getMessageId();
   }
 
-  private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
+  private RabbitMQMessage constructMessage (final boolean inOnly, final Route route, final Map<String, Object> arguments, final WireContext[] contexts, final WireScope[] scopes)
     throws Throwable {
 
     return Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
@@ -270,7 +291,7 @@ public class RequestMessageRouter extends MessageRouter {
           .expiration(String.valueOf(ttlSeconds * 1000))
           .headers(headerMap).build();
 
-      return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
+      return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts, scopes)));
     });
   }
 }

@@ -33,14 +33,18 @@
 package org.smallmind.phalanx.wire.spring;
 
 import java.util.Map;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.phalanx.wire.StaticParameterExtractor;
 import org.smallmind.phalanx.wire.TestWireContext;
+import org.smallmind.phalanx.wire.TestWireScope;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContextManager;
+import org.smallmind.phalanx.wire.WireScopeManager;
 import org.smallmind.phalanx.wire.WireTestingService;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -64,7 +68,7 @@ public class WireSpringFactoryBeanTest {
 
     Assert.assertEquals(factoryBean.getObjectType(), StaticParameterExtractor.class);
     Assert.assertTrue(factoryBean.isSingleton());
-    Assert.assertEquals(factoryBean.getObject().getParameter(null, null), "fixed-group");
+    Assert.assertEquals(factoryBean.getObject().getParameter(null, null, null, null), "fixed-group");
   }
 
   @Test
@@ -78,6 +82,25 @@ public class WireSpringFactoryBeanTest {
     initializingBean.afterPropertiesSet();
 
     Assert.assertEquals(WireContextManager.getContextClass("spring-bean-handle"), TestWireContext.class);
+  }
+
+  @Test
+  public void testWireScopeInitializingBeanRegistersHandleInsideTheScope ()
+    throws Exception {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    WireScopeInitializingBean initializingBean = new WireScopeInitializingBean();
+
+    initializingBean.setHandle("spring-scope-handle");
+    initializingBean.setScopeClass(TestWireScope.class);
+
+    scope.<Void, Exception>call(() -> {
+      initializingBean.afterPropertiesSet();
+
+      return null;
+    });
+
+    Assert.assertEquals(scope.call(() -> WireScopeManager.getScopeClass("spring-scope-handle")), TestWireScope.class);
   }
 
   @Test
@@ -115,7 +138,7 @@ public class WireSpringFactoryBeanTest {
     }
 
     @Override
-    public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts) {
+    public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes) {
 
       this.route = route;
 

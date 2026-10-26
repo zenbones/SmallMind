@@ -38,7 +38,13 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Spring {@link InitializingBean} that registers a {@link WireContext} implementation class
- * with the {@link WireContextManager} under a configured handle during Spring context startup.
+ * with the {@link WireContextManager} under a configured handle during Spring context startup. This is the context
+ * twin of {@link WireScopeInitializingBean}: {@code afterPropertiesSet} registers through {@link WireContextManager},
+ * which reads only the {@code PerApplicationContext} attached to the refresh thread, so the Spring refresh must run
+ * with a context attached (for example under {@code WebContextLoaderListener} or the Tanuki wrapper); a refresh
+ * under {@code PerApplicationScopeContextLoaderListener} alone fails with
+ * {@code MissingPerApplicationContextException}, which Spring surfaces from the refresh wrapped in a
+ * {@code BeanCreationException}.
  */
 public class WireContextInitializingBean implements InitializingBean {
 

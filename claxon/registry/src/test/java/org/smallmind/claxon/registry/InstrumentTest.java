@@ -34,7 +34,7 @@ package org.smallmind.claxon.registry;
 
 import java.util.concurrent.TimeoutException;
 import org.smallmind.claxon.registry.meter.TallyBuilder;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -45,7 +45,9 @@ public class InstrumentTest {
 
     Throwable[] propagated = new Throwable[1];
 
-    Thread thread = new Thread(() -> {
+    // inheritInheritableThreadLocals(false) keeps the parent's PerApplicationContext map out of this thread, so the
+    // context constructed below is genuinely empty rather than the one shared by every test on the calling thread
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
       try {
         new PerApplicationContext();
         runnable.run();
@@ -111,6 +113,23 @@ public class InstrumentTest {
         Instrument.register(registry);
 
         Assert.assertSame(Instrument.getRegistry(), registry);
+      });
+    } finally {
+      registry.stop();
+    }
+  }
+
+  public void testInstrumentDelegatesToClaxonRegistryManager ()
+    throws InterruptedException, TimeoutException {
+
+    ClaxonRegistry registry = new ClaxonRegistry(new ClaxonConfiguration());
+
+    try {
+      runInFreshContext(() -> {
+        ClaxonRegistryContextManager.register(registry);
+
+        Assert.assertSame(Instrument.getRegistry(), registry);
+        Assert.assertSame(ClaxonRegistryContextManager.getRegistry(), registry);
       });
     } finally {
       registry.stop();

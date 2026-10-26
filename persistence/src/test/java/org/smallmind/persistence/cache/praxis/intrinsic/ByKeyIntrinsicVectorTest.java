@@ -35,11 +35,11 @@ package org.smallmind.persistence.cache.praxis.intrinsic;
 import java.util.ArrayList;
 import java.util.List;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
 /**
  * Unit tests for {@link ByKeyIntrinsicVector}, which stores elements as keys in an {@link IntrinsicRoster}
  * and hydrates them through the registered {@link ORMDao} when read. A Mockito DAO mock is registered with
- * {@link OrmDaoManager} (which requires a {@link PerApplicationContext} bound to the thread) so the lazy list,
+ * {@link OrmDaoContextManager} (which requires a {@link PerApplicationContext} bound to the thread) so the lazy list,
  * iterator, and {@code head()} access paths can resolve keys back to durables. The tests cover hydration,
  * {@code copy()} independence, and add/remove mutation.
  */
@@ -89,7 +89,7 @@ public class ByKeyIntrinsicVectorTest {
       Mockito.when(ormDao.get(id)).thenReturn(new Cog(id));
     }
 
-    OrmDaoManager.register(Cog.class, ormDao);
+    OrmDaoContextManager.register(Cog.class, ormDao);
   }
 
   public void testLazyListHydratesKeysThroughDao () {

@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.spi.backbone.kafka;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,14 +40,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.smallmind.bayeux.oumuamua.server.api.Packet;
@@ -64,6 +68,12 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
+import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -125,7 +135,19 @@ public class KafkaBackboneTest {
   private KafkaBackbone<OrthodoxValue> createBackbone ()
     throws Exception {
 
-    return new KafkaBackbone<>(NODE_NAME, 1, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, new KafkaServer("localhost", 9094));
+    return createBackbone(null);
+  }
+
+  private KafkaBackbone<OrthodoxValue> createBackbone (PerApplicationScope perApplicationScope)
+    throws Exception {
+
+    return createBackbone(1, perApplicationScope);
+  }
+
+  private KafkaBackbone<OrthodoxValue> createBackbone (int concurrencyLimit, PerApplicationScope perApplicationScope)
+    throws Exception {
+
+    return new KafkaBackbone<>(NODE_NAME, concurrencyLimit, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, perApplicationScope, new KafkaServer("localhost", 9094));
   }
 
   private Packet<OrthodoxValue> makePacket ()
@@ -164,20 +186,25 @@ public class KafkaBackboneTest {
       KafkaGroupProtocol.CLASSIC,
       true,
       "unit-test-topic",
+      null,
       new KafkaServer("127.0.0.1", UNREACHABLE_PORT));
   }
 
   public void testConstructorOpensProducerAndChecksConnector ()
     throws Exception {
 
-    createBackbone();
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone();
 
-    Assert.assertEquals(mockedConnector.constructed().size(), 1);
+    try {
+      Assert.assertEquals(mockedConnector.constructed().size(), 1);
 
-    KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
+      KafkaConnector constructedConnector = mockedConnector.constructed().get(0);
 
-    Mockito.verify(constructedConnector).check(5);
-    Mockito.verify(constructedConnector).createProducer("oumuamua-producer-" + TOPIC + "-" + NODE_NAME);
+      Mockito.verify(constructedConnector).check(5);
+      Mockito.verify(constructedConnector).createProducer("oumuamua-producer-" + TOPIC + "-" + NODE_NAME);
+    } finally {
+      backbone.shutDown();
+    }
   }
 
   public void testPublishSendsSerializedRecordToPrefixedTopic ()
@@ -185,9 +212,17 @@ public class KafkaBackboneTest {
 
     KafkaBackbone<OrthodoxValue> backbone = createBackbone();
 
-    backbone.publish(makePacket());
+    try {
 
-    Mockito.verify(producer, Mockito.timeout(2000).times(1)).send(Mockito.any(ProducerRecord.class));
+      ArgumentCaptor<ProducerRecord<Long, byte[]>> recordCaptor = ArgumentCaptor.forClass(ProducerRecord.class);
+
+      backbone.publish(makePacket());
+
+      Mockito.verify(producer, Mockito.timeout(2000).times(1)).send(recordCaptor.capture(), Mockito.any(Callback.class));
+      Assert.assertEquals(recordCaptor.getValue().topic(), PREFIXED_TOPIC);
+    } finally {
+      backbone.shutDown();
+    }
   }
 
   public void testStartUpSpawnsOneConsumerPerWorker ()
@@ -247,6 +282,68 @@ public class KafkaBackboneTest {
       Assert.assertTrue(delivered.await(3, TimeUnit.SECONDS), "Expected remote packet to be delivered");
       Mockito.verify(server, Mockito.times(1)).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
       Mockito.verify(consumer, Mockito.timeout(2000)).commitSync(Mockito.<Map<TopicPartition, OffsetAndMetadata>>any());
+    } finally {
+      backbone.shutDown();
+    }
+  }
+
+  // The consumer worker's whole poll loop runs inside the backbone's scope, so the server sees that scope on delivery.
+  public void testWorkerDeliversInsideTheGivenScope ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    AtomicReference<Object> seenOnDeliver = new AtomicReference<>();
+    CountDownLatch delivered = new CountDownLatch(1);
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+
+    Mockito.doAnswer(invocation -> {
+      seenOnDeliver.set(probeScope());
+      delivered.countDown();
+      return null;
+    }).when(server).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
+
+    Mockito.when(consumer.poll(Mockito.any())).thenReturn(recordsFromBytes(RecordUtility.serialize(REMOTE_NODE, makePacket()))).thenAnswer(invocation -> {
+      Thread.sleep(100);
+      return ConsumerRecords.empty();
+    });
+
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone(perApplicationScope);
+
+    try {
+      backbone.startUp(server);
+
+      Assert.assertTrue(delivered.await(3, TimeUnit.SECONDS), "Expected remote packet to be delivered");
+      Assert.assertEquals(seenOnDeliver.get(), "scoped", "the consumer worker must run inside the backbone's scope");
+    } finally {
+      backbone.shutDown();
+    }
+  }
+
+  public void testWorkerDeliversUnboundWithoutAScope ()
+    throws Exception {
+
+    AtomicReference<Object> seenOnDeliver = new AtomicReference<>();
+    CountDownLatch delivered = new CountDownLatch(1);
+
+    Mockito.doAnswer(invocation -> {
+      seenOnDeliver.set(probeScope());
+      delivered.countDown();
+      return null;
+    }).when(server).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
+
+    Mockito.when(consumer.poll(Mockito.any())).thenReturn(recordsFromBytes(RecordUtility.serialize(REMOTE_NODE, makePacket()))).thenAnswer(invocation -> {
+      Thread.sleep(100);
+      return ConsumerRecords.empty();
+    });
+
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+    try {
+      backbone.startUp(server);
+
+      Assert.assertTrue(delivered.await(3, TimeUnit.SECONDS), "Expected remote packet to be delivered");
+      Assert.assertTrue(seenOnDeliver.get() instanceof MissingPerApplicationScopeException, "a backbone given no scope must leave its worker unbound, saw " + seenOnDeliver.get());
     } finally {
       backbone.shutDown();
     }
@@ -359,5 +456,235 @@ public class KafkaBackboneTest {
     backbone.shutDown();
 
     Mockito.verify(consumer, Mockito.times(1)).wakeup();
+  }
+
+  // A backbone given no scope starts its worker as a plain thread, which inherits whatever context the thread calling
+  // startUp() carries; the backbone itself is built on the test thread, where the construction mock is in force. A
+  // value written through the startUp() thread's map before the start is read back on the worker, so it is the same
+  // map and not merely some context.
+  public void testWorkerInheritsTheStartUpCallersContextWithoutAScope ()
+    throws Exception {
+
+    AtomicReference<Boolean> contextBoundOnDeliver = new AtomicReference<>();
+    AtomicReference<Object> seenOnDeliver = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    CountDownLatch delivered = new CountDownLatch(1);
+    KafkaBackbone<OrthodoxValue> backbone;
+    Thread thread;
+
+    Mockito.doAnswer(invocation -> {
+      contextBoundOnDeliver.set(PerApplicationContext.isBound());
+      if (PerApplicationContext.isBound()) {
+        seenOnDeliver.set(PerApplicationContext.getPerApplicationData(SampleManager.class, String.class));
+      }
+      delivered.countDown();
+      return null;
+    }).when(server).deliver(Mockito.isNull(), Mockito.any(Packet.class), Mockito.eq(false));
+
+    Mockito.when(consumer.poll(Mockito.any())).thenReturn(recordsFromBytes(RecordUtility.serialize(REMOTE_NODE, makePacket()))).thenAnswer(invocation -> {
+      Thread.sleep(100);
+      return ConsumerRecords.empty();
+    });
+
+    backbone = createBackbone();
+    thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        new PerApplicationContext();
+        PerApplicationContext.setPerApplicationData(SampleManager.class, "startup-thread-map");
+        backbone.startUp(server);
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    try {
+      Assert.assertNull(failure.get(), "startUp must succeed on the context-carrying thread, saw " + failure.get());
+      Assert.assertTrue(delivered.await(3, TimeUnit.SECONDS), "Expected remote packet to be delivered");
+      Assert.assertEquals(contextBoundOnDeliver.get(), Boolean.TRUE, "the consumer worker must inherit the context of the thread that called startUp()");
+      Assert.assertEquals(seenOnDeliver.get(), "startup-thread-map", "the consumer worker must carry the very map attached to the thread that called startUp()");
+    } finally {
+      backbone.shutDown();
+    }
+  }
+
+  // Once stopped the backbone is terminal: the send executor is shut down and the producer is closed, so a later
+  // publish is dropped with a warning rather than sent or thrown.
+  public void testShutDownClosesTheProducerAndDropsLaterPublishesWithAWarning ()
+    throws Exception {
+
+    CapturingAppender appender = CapturingAppender.attach(KafkaBackbone.class, Level.WARN);
+
+    try {
+      Mockito.when(consumer.poll(Mockito.any())).thenAnswer(invocation -> {
+        Thread.sleep(100);
+        return ConsumerRecords.empty();
+      });
+
+      KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+      backbone.startUp(server);
+      backbone.shutDown();
+
+      Mockito.verify(producer, Mockito.times(1)).close(Mockito.any(Duration.class));
+      Assert.assertEquals(appender.size(), 0, "a shutdown with nothing queued is expected to log no warning, saw " + appender.getRecords());
+
+      backbone.publish(makePacket());
+
+      Assert.assertEquals(appender.size(), 1, "a publish after shutdown is expected to warn exactly once, saw " + appender.getRecords());
+      Assert.assertEquals(appender.getRecords().get(0).getLevel(), Level.WARN);
+      Assert.assertTrue(appender.getRecords().get(0).getMessage().contains("has been shut down"), appender.getRecords().get(0).getMessage());
+      Mockito.verify(producer, Mockito.never()).send(Mockito.any(ProducerRecord.class), Mockito.any(Callback.class));
+    } finally {
+      CapturingAppender.release(KafkaBackbone.class);
+    }
+  }
+
+  // The send runs on the executor, so a producer failure is logged at ERROR there and never reaches the publisher.
+  public void testPublishLogsAtErrorWhenTheProducerThrows ()
+    throws Exception {
+
+    CapturingAppender appender = CapturingAppender.attach(KafkaBackbone.class, Level.ERROR);
+    RuntimeException sendFailure = new RuntimeException("simulated send failure");
+
+    try {
+      Mockito.when(producer.send(Mockito.any(ProducerRecord.class), Mockito.any(Callback.class))).thenThrow(sendFailure);
+
+      KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+      try {
+        backbone.publish(makePacket());
+
+        Mockito.verify(producer, Mockito.timeout(2000).times(1)).send(Mockito.any(ProducerRecord.class), Mockito.any(Callback.class));
+        awaitRecords(appender, 1, 2000);
+
+        Assert.assertEquals(appender.size(), 1, "the send failure is expected to be logged exactly once, saw " + appender.getRecords());
+        Assert.assertEquals(appender.getRecords().get(0).getLevel(), Level.ERROR);
+        Assert.assertSame(appender.getRecords().get(0).getThrown(), sendFailure, "the logged record must carry the producer's exception");
+      } finally {
+        backbone.shutDown();
+      }
+    } finally {
+      CapturingAppender.release(KafkaBackbone.class);
+    }
+  }
+
+  // The executor task logs after the mocked send returns, so the record can land a moment after the send is verified.
+  // Failures Kafka reports through the send callback, not by throwing, must be logged too.
+  @Test
+  public void testPublishLogsAtErrorWhenTheProducerReportsAnAsynchronousFailure ()
+    throws Exception {
+
+    RuntimeException asyncFailure = new RuntimeException("broker unavailable");
+    CapturingAppender appender = CapturingAppender.attach(KafkaBackbone.class, Level.ERROR);
+
+    try {
+      KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+      try {
+        Mockito.when(producer.send(Mockito.any(ProducerRecord.class), Mockito.any(Callback.class))).thenAnswer((invocation) -> {
+          ((Callback)invocation.getArgument(1)).onCompletion(null, asyncFailure);
+
+          return null;
+        });
+
+        backbone.publish(makePacket());
+        awaitRecords(appender, 1, 2000);
+
+        Assert.assertEquals(appender.size(), 1, "expected one ERROR record, saw " + appender.getRecords());
+        Assert.assertEquals(appender.getRecords().get(0).getLevel(), Level.ERROR);
+        Assert.assertSame(appender.getRecords().get(0).getThrown(), asyncFailure);
+      } finally {
+        backbone.shutDown();
+      }
+    } finally {
+      CapturingAppender.release(KafkaBackbone.class);
+    }
+  }
+
+  // After shutDown the backbone is terminal; a second startUp is refused rather than quietly starting consumers
+  // against a closed producer.
+  @Test
+  public void testStartUpAfterShutDownIsRefused ()
+    throws Exception {
+
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+    backbone.shutDown();
+
+    try {
+      backbone.startUp(server);
+      Assert.fail("startUp after shutDown must throw ComponentStateException");
+    } catch (ComponentStateException componentStateException) {
+      Assert.assertTrue(componentStateException.getMessage().contains("shut down"), componentStateException.getMessage());
+    }
+  }
+
+  // An interrupt during the wait for one worker must not strand the workers behind it: every worker is signalled
+  // before any is waited for, so all of them still exit, and the producer is still closed.
+  @Test
+  public void testInterruptedShutDownSignalsEveryWorkerAndReleasesResources ()
+    throws Exception {
+
+    Mockito.when(consumer.poll(Mockito.any())).thenAnswer(invocation -> {
+      Thread.sleep(100);
+      return ConsumerRecords.empty();
+    });
+
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone(2, null);
+
+    backbone.startUp(server);
+    Mockito.verify(consumer, Mockito.timeout(2000).atLeast(2)).poll(Mockito.any());
+
+    Thread.currentThread().interrupt();
+    try {
+      backbone.shutDown();
+      Assert.fail("shutDown on an interrupted thread must propagate the interrupt");
+    } catch (InterruptedException interruptedException) {
+      Assert.assertFalse(Thread.currentThread().isInterrupted(), "the wait consumed the interrupt flag");
+    }
+
+    Mockito.verify(producer, Mockito.times(1)).close(Mockito.any(Duration.class));
+    // both workers share the one mocked consumer, and each closes it on the way out even though neither was waited for
+    Mockito.verify(consumer, Mockito.timeout(2000).times(2)).close();
+  }
+
+  // A backbone that was constructed but never started still owns a producer; shutDown releases it.
+  @Test
+  public void testShutDownOnANeverStartedBackboneClosesTheProducer ()
+    throws Exception {
+
+    KafkaBackbone<OrthodoxValue> backbone = createBackbone();
+
+    backbone.shutDown();
+
+    Mockito.verify(producer, Mockito.times(1)).close(Mockito.any(Duration.class));
+  }
+
+  private static void awaitRecords (CapturingAppender appender, int count, long timeoutMillis)
+    throws InterruptedException {
+
+    long deadline = System.currentTimeMillis() + timeoutMillis;
+
+    while ((appender.size() < count) && (System.currentTimeMillis() < deadline)) {
+      Thread.sleep(20);
+    }
+  }
+
+  private static Object probeScope () {
+
+    try {
+
+      return PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+
+      return missingPerApplicationScopeException;
+    }
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
   }
 }

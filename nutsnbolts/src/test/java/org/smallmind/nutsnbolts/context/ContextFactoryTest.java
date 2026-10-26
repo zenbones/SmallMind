@@ -33,6 +33,8 @@
 package org.smallmind.nutsnbolts.context;
 
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -46,6 +48,7 @@ public class ContextFactoryTest {
 
     ContextFactory.clearContextTrace(TestContext.class);
     ContextFactory.clearContextTrace(OtherContext.class);
+    ContextFactory.clearContextTrace(LifecycleContext.class);
   }
 
   public void testPushAndGetReturnsTopOfStack () {
@@ -172,6 +175,44 @@ public class ContextFactoryTest {
     Assert.assertEquals(ContextFactory.sizeFor(TestContext.class), 1);
   }
 
+  public void testLifecycleCallbacksFireOnPushAndPop () {
+
+    LinkedList<String> events = new LinkedList<>();
+    LifecycleContext context = new LifecycleContext(events, false);
+
+    ContextFactory.pushContext(context);
+    Assert.assertEquals(events, List.of("push"));
+
+    Assert.assertSame(ContextFactory.popContext(LifecycleContext.class), context);
+    Assert.assertEquals(events, List.of("push", "pop"));
+    Assert.assertNull(ContextFactory.popContext(LifecycleContext.class));
+    Assert.assertEquals(events, List.of("push", "pop"));
+  }
+
+  public void testBeforePushFailurePreventsPush () {
+
+    LinkedList<String> events = new LinkedList<>();
+
+    Assert.assertThrows(IllegalStateException.class, () -> ContextFactory.pushContext(new LifecycleContext(events, true)));
+    Assert.assertFalse(ContextFactory.exists(LifecycleContext.class));
+    Assert.assertEquals(events, List.of("push"));
+  }
+
+  public void testLifecycleCallbacksDoNotFireOnTraceOrRemove () {
+
+    LinkedList<String> events = new LinkedList<>();
+    LifecycleContext context = new LifecycleContext(events, false);
+
+    ContextFactory.importContextTrace(LifecycleContext.class, context);
+    Assert.assertSame(ContextFactory.removeContext(context), context);
+    ContextFactory.importContextTrace(LifecycleContext.class, context);
+    ContextFactory.exportContextTrace(LifecycleContext.class);
+    ContextFactory.importContextTrace(LifecycleContext.class, context);
+    ContextFactory.clearContextTrace(LifecycleContext.class);
+
+    Assert.assertTrue(events.isEmpty());
+  }
+
   public static class TestContext implements Context {
 
     private final String value;
@@ -189,5 +230,33 @@ public class ContextFactoryTest {
 
   public static class OtherContext implements Context {
 
+  }
+
+  public static class LifecycleContext implements Context, ContextLifecycleAware {
+
+    private final LinkedList<String> events;
+    private final boolean failOnPush;
+
+    public LifecycleContext (LinkedList<String> events, boolean failOnPush) {
+
+      this.events = events;
+      this.failOnPush = failOnPush;
+    }
+
+    @Override
+    public void beforePush () {
+
+      events.add("push");
+
+      if (failOnPush) {
+        throw new IllegalStateException("push refused");
+      }
+    }
+
+    @Override
+    public void afterPop () {
+
+      events.add("pop");
+    }
   }
 }

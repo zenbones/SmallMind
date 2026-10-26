@@ -36,11 +36,14 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.testng.Assert;
@@ -76,7 +79,7 @@ public class DynamicPooledDataSourceInitializingBeanTest {
    */
   private static DynamicPooledDataSourceInitializingBean beanFor (String poolName, SpringPropertyAccessor accessor) {
 
-    SpringPropertyAccessorManager.register(accessor);
+    SpringPropertyAccessorContextManager.register(accessor);
 
     Map<String, DataSourceFactory<?, ?>> factoryMap = new HashMap<>();
     factoryMap.put(poolName, Mockito.mock(DataSourceFactory.class));
@@ -90,13 +93,81 @@ public class DynamicPooledDataSourceInitializingBeanTest {
 
   /**
    * Installs a per-application context on the current thread so that
-   * {@link SpringPropertyAccessorManager#register} (which writes to {@link PerApplicationContext})
+   * {@link SpringPropertyAccessorContextManager#register} (which writes to {@link PerApplicationContext})
    * does not fail. Runs before every test method.
    */
   @BeforeMethod
   public void installPerApplicationContext () {
 
     new PerApplicationContext();
+  }
+
+  // A context attached after the PropertyPlaceholderConfigurer registered (or a refresh under a different binding)
+  // holds no accessor; the bean must say so rather than fail on a null dereference.
+  @Test(groups = "unit")
+  public void testMissingAccessorUnderThisBindingFailsClearly ()
+    throws Exception {
+
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        new PerApplicationContext();
+        new DynamicPooledDataSourceInitializingBean().afterPropertiesSet();
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    Assert.assertTrue(failure.get() instanceof RuntimeBeansException, "expected RuntimeBeansException, saw " + failure.get());
+    Assert.assertTrue(failure.get().getMessage().contains("SpringPropertyAccessor"), failure.get().getMessage());
+  }
+
+  // Inside a scope holding no accessor, on a thread with no context, the lookup stops at the scope; the bean reports
+  // the missing accessor rather than letting a context lookup fail on a thread that has none.
+  @Test(groups = "unit")
+  public void testMissingAccessorInsideAScopeWithNoContextFailsClearly ()
+    throws Exception {
+
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> new PerApplicationScope().run(() -> {
+      try {
+        new DynamicPooledDataSourceInitializingBean().afterPropertiesSet();
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    }));
+
+    thread.start();
+    thread.join();
+
+    Assert.assertTrue(failure.get() instanceof RuntimeBeansException, "expected RuntimeBeansException, saw " + failure.get());
+    Assert.assertTrue(failure.get().getMessage().contains("SpringPropertyAccessor"), failure.get().getMessage());
+  }
+
+  // With neither binding on the thread the bridging lookup has no registry to consult at all; the failure names the
+  // missing context rather than a missing accessor.
+  @Test(groups = "unit")
+  public void testNeitherBindingOnTheThreadFailsWithMissingPerApplicationContext ()
+    throws Exception {
+
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        Assert.assertFalse(PerApplicationScope.isBound(), "the thread must carry no scope");
+        Assert.assertFalse(PerApplicationContext.isBound(), "the thread must carry no context");
+        new DynamicPooledDataSourceInitializingBean().afterPropertiesSet();
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    Assert.assertTrue(failure.get() instanceof MissingPerApplicationContextException, "expected MissingPerApplicationContextException, saw " + failure.get());
   }
 
   @Test(groups = "unit", expectedExceptions = RuntimeBeansException.class)

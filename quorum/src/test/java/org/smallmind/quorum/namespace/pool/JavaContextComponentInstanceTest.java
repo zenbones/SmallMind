@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.naming.CommunicationException;
 import javax.naming.Name;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.quorum.namespace.PooledJavaContext;
 import org.smallmind.quorum.namespace.PooledJavaContextTestKit;
 import org.smallmind.quorum.namespace.PooledJavaContextTestKit.ControllableBackingContext;

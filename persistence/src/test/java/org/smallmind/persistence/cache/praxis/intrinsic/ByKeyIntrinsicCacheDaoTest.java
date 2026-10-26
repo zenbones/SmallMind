@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
@@ -52,7 +52,7 @@ import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 import org.smallmind.persistence.cache.praxis.ByReferenceSingularVector;
 import org.smallmind.persistence.cache.praxis.Roster;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -61,7 +61,7 @@ import org.testng.annotations.Test;
  * Unit tests for {@link ByKeyIntrinsicCacheDao}, the key-based intrinsic (in-process) cache DAO. Unlike the
  * extrinsic twin it performs vector mutations directly on the shared in-memory vector (no compare-and-swap),
  * so the cache domain is backed by plain {@link java.util.HashMap}-based fakes. Because a {@link ByKeyIntrinsicVector}
- * stores {@link org.smallmind.persistence.cache.DurableKey} references and hydrates them through {@link OrmDaoManager}
+ * stores {@link org.smallmind.persistence.cache.DurableKey} references and hydrates them through {@link OrmDaoContextManager}
  * on add/iterate, the fixture binds a {@link PerApplicationContext} and registers a Mockito {@link ORMDao} stub.
  * Coverage spans the (mode-ignoring) put-if-absent persist, vector insert/remove (including the singular delete
  * short circuit and the absent/null no-ops), vector migration to and from the key-based forms, and the singular
@@ -75,7 +75,7 @@ public class ByKeyIntrinsicCacheDaoTest {
   public void registerDao () {
 
     // ByKeyIntrinsicVector.add iterates the key roster (for uniqueness), which hydrates keys through
-    // OrmDaoManager; that lookup requires a PerApplicationContext bound to the thread plus a registered DAO.
+    // OrmDaoContextManager; that lookup requires a PerApplicationContext bound to the thread plus a registered DAO.
     // Re-registering Widget.class every method overwrites any registration leaked from a prior test on this thread.
     new PerApplicationContext();
 
@@ -86,7 +86,7 @@ public class ByKeyIntrinsicCacheDaoTest {
       Mockito.when(ormDao.get(id)).thenReturn(new Widget(id));
     }
 
-    OrmDaoManager.register(Widget.class, ormDao);
+    OrmDaoContextManager.register(Widget.class, ormDao);
   }
 
   private InMemoryCacheDomain<Long, Widget> domain () {

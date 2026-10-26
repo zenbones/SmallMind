@@ -67,6 +67,7 @@ module org.smallmind.nutsnbolts {
   exports org.smallmind.nutsnbolts.command.sax;
   exports org.smallmind.nutsnbolts.command.template;
   exports org.smallmind.nutsnbolts.context;
+  exports org.smallmind.nutsnbolts.context.web;
   exports org.smallmind.nutsnbolts.csv;
   exports org.smallmind.nutsnbolts.email;
   exports org.smallmind.nutsnbolts.freemarker;
@@ -75,7 +76,6 @@ module org.smallmind.nutsnbolts {
   exports org.smallmind.nutsnbolts.io;
   exports org.smallmind.nutsnbolts.json;
   exports org.smallmind.nutsnbolts.lang;
-  exports org.smallmind.nutsnbolts.lang.web;
   exports org.smallmind.nutsnbolts.layout;
   exports org.smallmind.nutsnbolts.namespace.shiro.realm;
   exports org.smallmind.nutsnbolts.namespace.shiro.realm.spring;
@@ -89,6 +89,7 @@ module org.smallmind.nutsnbolts {
   exports org.smallmind.nutsnbolts.resource;
   exports org.smallmind.nutsnbolts.retry;
   exports org.smallmind.nutsnbolts.scope;
+  exports org.smallmind.nutsnbolts.scope.web;
   exports org.smallmind.nutsnbolts.security;
   exports org.smallmind.nutsnbolts.security.kms;
   exports org.smallmind.nutsnbolts.security.password;

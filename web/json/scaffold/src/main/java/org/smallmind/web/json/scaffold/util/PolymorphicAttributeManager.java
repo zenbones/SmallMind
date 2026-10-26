@@ -32,34 +32,86 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Manages the application-wide JSON attribute name used to carry the polymorphic type key during
- * marshaling and unmarshaling.
+ * Holder for the polymorphic attribute name that bridges {@link PolymorphicAttributeScopeManager} and
+ * {@link PolymorphicAttributeContextManager}.
+ * <p>
+ * {@link #setPolymorphicAttributeName} writes to every per-application registry bound on the calling thread: the
+ * scope flavor when a {@link PerApplicationScope} is bound, and the context flavor when a
+ * {@link PerApplicationContext} is attached, so a name set from a thread that has both is visible to threads that
+ * later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
+ * When a binding is present but no bound registry holds a name, {@link #getPolymorphicAttributeName} returns
+ * {@link AttributedPolymorphicXmlAdapter#getDefaultPolymorphicAttributeName()}.
  */
-public class PolymorphicAttributeManager implements PerApplicationDataManager {
-
-  static {
-    PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
-  }
+public class PolymorphicAttributeManager {
 
   /**
-   * @return the current polymorphic attribute name used in JSON objects
+   * Returns the polymorphic attribute name, scope flavor first, then context flavor, or the default when no bound
+   * registry holds one.
+   *
+   * @return the attribute name in effect for the calling thread
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static String getPolymorphicAttributeName () {
 
-    return PerApplicationContext.getPerApplicationData(PolymorphicAttributeManager.class, String.class);
+    String polymorphicAttributeName;
+
+    if ((polymorphicAttributeName = findPolymorphicAttributeName()) == null) {
+
+      return AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName();
+    }
+
+    return polymorphicAttributeName;
   }
 
   /**
-   * Replaces the global polymorphic attribute name used during marshaling and unmarshaling.
+   * Returns the stored polymorphic attribute name, scope flavor first, then context flavor, without applying the
+   * default.
    *
-   * @param polymorphicAttributeName new attribute name
+   * @return the stored attribute name, or {@code null} if none is stored in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
+   */
+  public static String findPolymorphicAttributeName () {
+
+    if (PerApplicationScope.isBound()) {
+
+      String polymorphicAttributeName;
+
+      if ((polymorphicAttributeName = PolymorphicAttributeScopeManager.findPolymorphicAttributeName()) != null) {
+
+        return polymorphicAttributeName;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return PolymorphicAttributeContextManager.findPolymorphicAttributeName();
+  }
+
+  /**
+   * Stores the polymorphic attribute name in every per-application registry bound on the current thread.
+   *
+   * @param polymorphicAttributeName the attribute name to store
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void setPolymorphicAttributeName (String polymorphicAttributeName) {
 
-    PerApplicationContext.setPerApplicationData(PolymorphicAttributeManager.class, polymorphicAttributeName);
+    if (PerApplicationScope.isBound()) {
+      PolymorphicAttributeScopeManager.setPolymorphicAttributeName(polymorphicAttributeName);
+      if (PerApplicationContext.isBound()) {
+        PolymorphicAttributeContextManager.setPolymorphicAttributeName(polymorphicAttributeName);
+      }
+    } else {
+      PolymorphicAttributeContextManager.setPolymorphicAttributeName(polymorphicAttributeName);
+    }
   }
 }

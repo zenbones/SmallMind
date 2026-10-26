@@ -42,7 +42,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
  * Wire signal that carries a service invocation request, including the target route,
- * named argument map, propagated contexts, and a flag indicating whether a response is expected.
+ * named argument map, propagated contexts and scopes, and a flag indicating whether a response is expected.
  */
 @XmlRootElement(name = "invocation", namespace = "http://org.smallmind/phalanx/wire")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -51,6 +51,7 @@ public class InvocationSignal implements Signal {
   private Route route;
   private Map<String, Object> arguments;
   private WireContext[] contexts;
+  private WireScope[] scopes;
   private boolean inOnly;
 
   /**
@@ -66,14 +67,16 @@ public class InvocationSignal implements Signal {
    * @param inOnly    {@code true} if the call is one-way and no response is expected
    * @param route     the target route identifying service, version, and function
    * @param arguments named arguments to pass to the remote function
-   * @param contexts  zero or more wire contexts to propagate with the invocation
+   * @param contexts  wire contexts to propagate with the invocation; may be {@code null} or empty
+   * @param scopes    wire scopes to propagate with the invocation; may be {@code null} or empty
    */
-  public InvocationSignal (boolean inOnly, Route route, Map<String, Object> arguments, WireContext... contexts) {
+  public InvocationSignal (boolean inOnly, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes) {
 
     this.inOnly = inOnly;
     this.route = route;
     this.arguments = arguments;
     this.contexts = contexts;
+    this.scopes = scopes;
   }
 
   /**
@@ -138,6 +141,28 @@ public class InvocationSignal implements Signal {
   public void setContexts (WireContext[] contexts) {
 
     this.contexts = contexts;
+  }
+
+  /**
+   * Returns the wire scopes propagated with this invocation, or {@code null} if none were set.
+   *
+   * @return array of {@link WireScope} instances, or {@code null}
+   */
+  @XmlJavaTypeAdapter(WireScopeXmlAdapter.class)
+  @XmlElement(name = "scopes")
+  public WireScope[] getScopes () {
+
+    return scopes;
+  }
+
+  /**
+   * Sets the wire scopes to propagate with this invocation.
+   *
+   * @param scopes scopes to attach to the signal
+   */
+  public void setScopes (WireScope[] scopes) {
+
+    this.scopes = scopes;
   }
 
   /**

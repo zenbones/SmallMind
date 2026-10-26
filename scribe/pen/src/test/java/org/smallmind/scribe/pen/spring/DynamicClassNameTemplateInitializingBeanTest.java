@@ -34,12 +34,12 @@ package org.smallmind.scribe.pen.spring;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
 import org.smallmind.nutsnbolts.spring.PropertyPlaceholderStringValueResolver;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
@@ -72,7 +72,7 @@ public class DynamicClassNameTemplateInitializingBeanTest {
     PropertyExpander expander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false);
     PropertyPlaceholderStringValueResolver resolver = new PropertyPlaceholderStringValueResolver(expander, propertyMap);
 
-    SpringPropertyAccessorManager.register(new SpringPropertyAccessor(resolver));
+    SpringPropertyAccessorContextManager.register(new SpringPropertyAccessor(resolver));
   }
 
   public void testSettersDoNotThrow () {

@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -58,6 +60,7 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.ComponentModulator;
 import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
@@ -68,12 +71,19 @@ import org.smallmind.scribe.pen.LoggerManager;
  * Kafka-backed {@link Backbone} that fans every published packet out to all nodes in the
  * Oumuamua cluster by writing to a shared topic prefixed with {@code oumuamua-}.
  *
- * <p>Each node creates a unique consumer group at startup (via a Snowflake-generated group ID)
+ * <p>Each node is given a unique consumer group when constructed (via a Snowflake-generated group ID)
  * so that every node independently receives every record.  Records produced by the local node
- * are skipped on consumption to prevent loopback delivery.  A pool of virtual-thread consumer
- * workers polls the topic, deserializes each record with {@link RecordUtility}, and delivers
+ * are skipped on consumption to prevent loopback delivery.  A pool of consumer workers, each on a
+ * platform thread of its own (not a virtual thread), polls the topic, deserializes each record with
+ * {@link RecordUtility}, and delivers
  * the packet to the local server.  Workers automatically recreate their consumers on recoverable
  * poll errors.
+ *
+ * <p>Consumer worker threads inherit no {@code ScopedValue} binding, but they do inherit the
+ * {@code PerApplicationContext} of the thread that calls {@link #startUp}. A backbone constructed with a
+ * {@link PerApplicationScope} runs each worker's whole poll loop, and so every packet it delivers to the
+ * local server, inside that scope; one constructed without starts its workers with no scope, carrying only
+ * that inherited context. The producer's executor only calls {@code producer.send} and is left unwrapped.
  *
  * @param <V> the concrete {@link Value} type carried in Bayeux messages
  */
@@ -84,9 +94,12 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
   private final KafkaGroupProtocol groupProtocol;
+  private final PerApplicationScope perApplicationScope;
   private final String nodeName;
   private final String topicName;
   private final String prefixedTopicName;
+  private final int startupGracePeriodSeconds;
+  private final AtomicBoolean resourcesReleased = new AtomicBoolean(false);
   private final String groupId;
   private final boolean dynamicConsumers;
   private final int concurrencyLimit;
@@ -105,21 +118,23 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
    *                                  leave the group immediately on shutdown; {@code false} to join as static
    *                                  members identified by {@code <nodeName>-<index>}
-   * @param dynamicConsumers          {@code true} to join the backbone's consumer group as dynamic members, which
-   *                                  leave the group immediately on shutdown; {@code false} to join as static
-   *                                  members identified by {@code <nodeName>-<index>}
    * @param topicName                 logical topic name; the actual Kafka topic is {@code oumuamua-<topicName>}
+   * @param perApplicationScope       the scope every consumer worker thread runs inside, or {@code null} to
+   *                                  start them with no scope; either way they inherit the
+   *                                  {@code PerApplicationContext} of the thread calling {@link #startUp}
    * @param servers                   one or more Kafka bootstrap broker addresses
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    */
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
+    this.startupGracePeriodSeconds = startupGracePeriodSeconds;
     this.groupProtocol = groupProtocol;
     this.dynamicConsumers = dynamicConsumers;
     this.topicName = topicName;
+    this.perApplicationScope = perApplicationScope;
 
     groupId = SnowflakeId.newInstance().generateHexEncoding();
 
@@ -151,7 +166,8 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    * {@link ComponentStatus#STARTED}.  Blocks if a concurrent state transition is in progress.
    *
    * @param server server to which deserialized packets from remote nodes will be delivered
-   * @throws ComponentStateException if the backbone cannot reach the started state
+   * @throws ComponentStateException if the backbone has already been shut down (it is terminal once stopped) or
+   *                                 cannot reach the started state
    * @throws InterruptedException    if interrupted while waiting for the state transition
    */
   @Override
@@ -159,10 +175,21 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     throws ComponentStateException, InterruptedException {
 
     if (componentModulator.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
+      if (resourcesReleased.get()) {
+        componentModulator.set(ComponentStatus.STOPPED);
+        throw new ComponentStateException("The backbone has been shut down and can not be started again");
+      }
+
       workers = new ConsumerWorker[concurrencyLimit];
 
       for (int index = 0; index < concurrencyLimit; index++) {
-        new Thread(workers[index] = new ConsumerWorker<V>(server, nodeName, index)).start();
+
+        ConsumerWorker<V> worker = workers[index] = new ConsumerWorker<V>(server, nodeName, index);
+        Thread workerThread = new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker));
+
+        workerThread.setName("oumuamua-kafka-consumer-" + nodeName + "-" + index);
+        workerThread.setDaemon(false);
+        workerThread.start();
       }
       componentModulator.set(ComponentStatus.STARTED);
     } else if (ComponentStatus.STOPPED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
@@ -171,42 +198,111 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   }
 
   /**
-   * Wakes up all consumer workers, waits for each to exit, and transitions the backbone to
-   * {@link ComponentStatus#STOPPED}.  Blocks if a concurrent state transition is in progress.
+   * Signals every consumer worker to stop and wakes it out of its poll, waits for each to exit, shuts down the send
+   * executor and waits up to the configured startup grace period for queued send tasks to hand their records to the
+   * producer, closes the
+   * producer — waiting up to the same grace period for buffered records to reach the broker, after which any still
+   * unsent are abandoned — and transitions the backbone to {@link ComponentStatus#STOPPED}. Once this call has taken
+   * the stopping transition, the executor and the producer are released even when a step throws or the thread is
+   * interrupted, and the backbone reaches {@code STOPPED} regardless. Calling this on a backbone that was never
+   * started releases the producer and the executor too. The backbone is terminal once stopped: a later
+   * {@link #publish} is dropped and logged rather than sent, and {@link #startUp(Server)} throws
+   * {@code ComponentStateException}. Blocks while a concurrent state transition is in progress; the two exceptions
+   * below are the only ways out of that wait that release nothing.
    *
-   * @throws ComponentStateException if the backbone cannot reach the stopped state
-   * @throws InterruptedException    if interrupted while waiting for worker exit or the state transition
+   * @throws ComponentStateException if a concurrent {@link #startUp(Server)} completed while this call waited, so
+   *                                 the backbone is {@code STARTED} and nothing was released
+   * @throws InterruptedException    if interrupted while waiting for a concurrent transition to end (nothing has been
+   *                                 released), or while waiting for worker exit or the executor drain (the resources
+   *                                 are released before the exception propagates, and every worker has already been
+   *                                 signalled, so the workers still exit on their own)
    */
   @Override
   public void shutDown ()
     throws ComponentStateException, InterruptedException {
 
     if (componentModulator.compareAndSet(ComponentStatus.STARTED, ComponentStatus.STOPPING)) {
-      for (ConsumerWorker<V> worker : workers) {
-        worker.stop();
+      try {
+        try {
+          stopWorkers();
+        } finally {
+          releaseResources();
+        }
+      } finally {
+        componentModulator.set(ComponentStatus.STOPPED);
       }
-      componentModulator.set(ComponentStatus.STOPPED);
+    } else if (componentModulator.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STOPPING)) {
+      // never started, or already stopped: the transition keeps a concurrent startUp from slipping in between the
+      // release and the terminal check it makes after winning its own transition
+      try {
+        releaseResources();
+      } finally {
+        componentModulator.set(ComponentStatus.STOPPED);
+      }
     } else if (ComponentStatus.STARTED.equals(componentModulator.awaitIn(ComponentStatus.STOPPED, ComponentStatus.STARTED))) {
       throw new ComponentStateException("Could not enter the stopped state");
+    } else {
+      releaseResources();
+    }
+  }
+
+  // Signals every worker before waiting on any, so an interrupt during one wait strands none of them.
+  private void stopWorkers ()
+    throws InterruptedException {
+
+    for (ConsumerWorker<V> worker : workers) {
+      worker.signalStop();
+    }
+    for (ConsumerWorker<V> worker : workers) {
+      worker.awaitExit();
+    }
+  }
+
+  private void releaseResources ()
+    throws InterruptedException {
+
+    if (resourcesReleased.compareAndSet(false, true)) {
+      executorService.shutdown();
+      try {
+        if (!executorService.awaitTermination(startupGracePeriodSeconds, TimeUnit.SECONDS)) {
+          LoggerManager.getLogger(KafkaBackbone.class).warn("Kafka backbone(%s) send executor did not drain within %d seconds; queued publishes were abandoned", prefixedTopicName, startupGracePeriodSeconds);
+        }
+      } finally {
+        producer.close(Duration.ofSeconds(startupGracePeriodSeconds));
+      }
     }
   }
 
   /**
-   * Serializes {@code packet} and publishes it to the backbone topic via the virtual-thread executor.
-   * Serialization and send errors are logged but not propagated; this is a best-effort fan-out.
+   * Serializes {@code packet} and publishes it to the backbone topic via the virtual-thread executor. Serialization
+   * failures, failures thrown by the producer, and failures the producer reports asynchronously through its send
+   * callback are logged but not propagated; this is a best-effort fan-out. A packet published after
+   * {@link #shutDown()} is dropped with a WARN.
    *
    * @param packet packet to distribute to all cluster nodes
    */
   @Override
   public void publish (Packet<V> packet) {
 
-    executorService.submit(() -> {
+    if (executorService.isShutdown()) {
+      LoggerManager.getLogger(KafkaBackbone.class).warn("Kafka backbone(%s) has been shut down; the packet was not published", prefixedTopicName);
+    } else {
       try {
-        producer.send(new ProducerRecord<>(prefixedTopicName, RecordUtility.serialize(nodeName, packet)));
-      } catch (IOException ioException) {
-        LoggerManager.getLogger(KafkaBackbone.class).error(ioException);
+        executorService.submit(() -> {
+          try {
+            producer.send(new ProducerRecord<>(prefixedTopicName, RecordUtility.serialize(nodeName, packet)), (metadata, exception) -> {
+              if (exception != null) {
+                LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+              }
+            });
+          } catch (IOException | RuntimeException exception) {
+            LoggerManager.getLogger(KafkaBackbone.class).error(exception);
+          }
+        });
+      } catch (RejectedExecutionException rejectedExecutionException) {
+        LoggerManager.getLogger(KafkaBackbone.class).warn("Kafka backbone(%s) was shut down while the packet was being published; the packet was not published", prefixedTopicName);
       }
-    });
+    }
   }
 
   /**
@@ -240,19 +336,27 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     }
 
     /**
-     * Signals the poll loop to stop and blocks until the worker thread has fully exited.
-     *
-     * @throws InterruptedException if interrupted while waiting on the exit latch
+     * Signals the poll loop to stop and wakes the consumer out of any blocking poll, without waiting for the thread
+     * to exit, so that every worker can be signalled before any is waited for.
      */
-    private void stop ()
-      throws InterruptedException {
+    private void signalStop () {
 
       if (finished.compareAndSet(false, true)) {
         consumer.wakeup();
-
-        exitLatch.await();
       }
     }
+
+    /**
+     * Blocks until the worker thread has fully exited.
+     *
+     * @throws InterruptedException if interrupted while waiting on the exit latch
+     */
+    private void awaitExit ()
+      throws InterruptedException {
+
+      exitLatch.await();
+    }
+
 
     private synchronized void recreateConsumer () {
 
@@ -269,7 +373,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
      * the producing node differs from the local node — delivers it to the server.  Offsets are
      * committed synchronously per partition after each batch.  On recoverable poll errors the
      * consumer is replaced before the next iteration.  A {@link WakeupException} from a
-     * {@link #stop()} call exits the loop cleanly; unexpected wakeups are logged as errors.
+     * {@link #signalStop()} call exits the loop cleanly; unexpected wakeups are logged as errors.
      */
     @Override
     public void run () {

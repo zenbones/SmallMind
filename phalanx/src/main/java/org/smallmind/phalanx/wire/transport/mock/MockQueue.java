@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire.transport.mock;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -42,6 +43,11 @@ import org.smallmind.scribe.pen.LoggerManager;
  * drains the queue and distributes messages to registered {@link MockMessageListener}s in
  * round-robin order.  Dispatch can be temporarily suspended via {@link #pause()} and resumed
  * via {@link #play()} without stopping the underlying thread.
+ *
+ * <p>The dispatch thread inherits no {@code ScopedValue} binding, only the {@code PerApplicationContext}
+ * of the thread that constructs the queue; a queue constructed with a
+ * {@link PerApplicationScope} runs the thread's whole body, and so every listener callback,
+ * inside that scope.
  */
 public class MockQueue {
 
@@ -54,11 +60,31 @@ public class MockQueue {
 
   /**
    * Constructs the queue and starts the background daemon thread that drives message dispatch.
+   *
+   * @param perApplicationScope the scope the dispatch thread runs inside, or {@code null} to run it with no scope,
+   *                            carrying only the {@code PerApplicationContext} inherited from the constructing thread
    */
-  public MockQueue () {
+  public MockQueue (PerApplicationScope perApplicationScope) {
 
-    Thread thread = new Thread(worker = new QueueWorker());
+    this(null, perApplicationScope);
+  }
 
+  /**
+   * Constructs the queue with a named dispatch thread; the name is appended to {@code phalanx-mock-queue-} so the
+   * thread can be told apart from the other mock dispatch threads in a thread dump.
+   *
+   * @param name                the role name for the dispatch thread, or {@code null} for the bare
+   *                            {@code phalanx-mock-queue} name
+   * @param perApplicationScope the scope the dispatch thread runs inside, or {@code null} to run it with no scope,
+   *                            carrying only the {@code PerApplicationContext} inherited from the constructing thread
+   */
+  public MockQueue (String name, PerApplicationScope perApplicationScope) {
+
+    worker = new QueueWorker();
+
+    Thread thread = new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker));
+
+    thread.setName((name == null) ? "phalanx-mock-queue" : "phalanx-mock-queue-" + name);
     thread.setDaemon(true);
     thread.start();
   }
@@ -115,6 +141,16 @@ public class MockQueue {
   }
 
   /**
+   * Stops the dispatch thread after its current iteration. Messages still queued are never dispatched, and the queue
+   * accepts no further work in any useful sense; this exists so a test or an application tearing down a
+   * {@link MockMessageRouter} does not leave the daemon thread spinning.
+   */
+  public void close () {
+
+    worker.close();
+  }
+
+  /**
    * Background daemon worker that polls the message queue and dispatches each message to the
    * next listener in round-robin order.
    */
@@ -129,31 +165,33 @@ public class MockQueue {
     }
 
     /**
-     * Continuously drains the queue and dispatches messages to listeners in round-robin order
-     * while the queue is active.  Sleeps 100 ms when the queue is empty or paused.
+     * Continuously drains the queue and dispatches messages to listeners in round-robin order while the queue is
+     * active. Sleeps 100 ms when the queue is empty, paused, or has no listener yet; a message that arrives before
+     * any listener is registered waits in the queue rather than being dropped.
      */
     @Override
     public void run () {
 
       while (!closed.get()) {
+
+        MockMessage message = null;
+
         if (active.get()) {
-
-          MockMessage message;
-
-          if ((message = messageQueue.poll()) != null) {
-            synchronized (listenerList) {
+          synchronized (listenerList) {
+            if ((!listenerList.isEmpty()) && ((message = messageQueue.poll()) != null)) {
               if (listenerIndex >= listenerList.size()) {
                 listenerIndex = 0;
               }
 
               listenerList.get(listenerIndex++).handle(message);
             }
-          } else {
-            try {
-              Thread.sleep(100);
-            } catch (InterruptedException interruptedException) {
-              LoggerManager.getLogger(MockQueue.class).error(interruptedException);
-            }
+          }
+        }
+        if (message == null) {
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(MockQueue.class).error(interruptedException);
           }
         }
       }

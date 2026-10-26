@@ -38,6 +38,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -46,6 +47,7 @@ import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.TransportState;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WiredService;
+import org.smallmind.phalanx.worker.TransferringWorkQueue;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
@@ -58,6 +60,12 @@ import org.smallmind.phalanx.worker.WorkerFactory;
  * is a requirement rather than an economy: every router declares the same per-instance queue names, and
  * an exclusive queue belongs to a connection, so a connection per router would mean a queue per router
  * and a shout delivered once per router instead of once.
+ *
+ * <p>A {@code WireContext} element of an inbound invocation can only be decoded on a worker carrying a
+ * {@code PerApplicationContext}, and a {@code WireScope} element only on one running inside the configured
+ * scope; a worker lacking the needed binding fails the decode after the delivery was acknowledged, so the
+ * invocation is dropped and logged rather than redelivered: an {@link org.smallmind.phalanx.wire.InOut} caller
+ * times out and an {@link org.smallmind.phalanx.wire.InOnly} message is lost.
  */
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport, ResponseTransmitter {
 
@@ -88,15 +96,21 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
    *                                     replicas tolerate no node failure at all.
    * @param autoAcknowledge              whether consumers should auto-ack delivered messages.
    * @param publisherConfirmationHandler optional handler for publisher confirms; may be {@code null}.
+   * @param perApplicationScope          the scope bound on every invocation worker thread and around every
+   *                                     delivery callback, or {@code null} to run them with no scope; the
+   *                                     workers then carry only the {@code PerApplicationContext} inherited from
+   *                                     the constructing thread, and the callbacks only the one the RabbitMQ
+   *                                     client's consumer thread inherited from the connection thread chain
+   *                                     (after a reconnect, from {@link RabbitMQConnectionManager}'s retry thread).
    * @throws IllegalArgumentException if {@code quorumReplicationCount} is less than three.
    * @throws IOException              if the transport cannot be started.
    * @throws InterruptedException     if startup is interrupted.
    * @throws TimeoutException         if startup times out.
    */
-  public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
+  public RabbitMQResponseTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, int quorumReplicationCount, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler, PerApplicationScope perApplicationScope)
     throws IOException, InterruptedException, TimeoutException {
 
-    super(workerClass, concurrencyLimit);
+    super(workerClass, concurrencyLimit, new TransferringWorkQueue<>(), perApplicationScope);
 
     if (quorumReplicationCount < MINIMUM_QUORUM_REPLICATION_COUNT) {
       throw new FormattedIllegalArgumentException("Quorum replication count must be >= %d", MINIMUM_QUORUM_REPLICATION_COUNT);
@@ -113,7 +127,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
 
     responseMessageRouters = new ResponseMessageRouter[clusterSize];
     for (int index = 0; index < responseMessageRouters.length; index++) {
-      responseMessageRouters[index] = new ResponseMessageRouter(connectionManager, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, quorumReplicationCount, autoAcknowledge, publisherConfirmationHandler);
+      responseMessageRouters[index] = new ResponseMessageRouter(connectionManager, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, quorumReplicationCount, autoAcknowledge, publisherConfirmationHandler, perApplicationScope);
     }
 
     connectionManager.start();

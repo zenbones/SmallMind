@@ -36,7 +36,11 @@ import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Spring {@link InitializingBean} that pushes the configured polymorphic attribute name into
- * {@link PolymorphicAttributeManager} during application context initialization.
+ * {@link PolymorphicAttributeManager} during application context initialization. The name is stored in every
+ * per-application registry bound on the refresh thread (the {@code PerApplicationScope} the refresh runs in, the
+ * {@code PerApplicationContext} attached to it, or both), so the refresh must carry at least one binding; with
+ * neither, {@code afterPropertiesSet} fails with {@code MissingPerApplicationContextException}, which Spring surfaces
+ * wrapped in a {@code BeanCreationException}.
  */
 public class PolymorphicAttributeNameInitializingBean implements InitializingBean {
 
@@ -53,9 +57,11 @@ public class PolymorphicAttributeNameInitializingBean implements InitializingBea
   }
 
   /**
-   * Applies the configured attribute name to the global {@link PolymorphicAttributeManager}.
+   * Stores the configured attribute name through {@link PolymorphicAttributeManager} in every per-application
+   * registry bound on the refresh thread.
    *
-   * @throws Exception if the manager rejects the configuration
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the refresh thread
+   * @throws Exception                                                            as declared by {@link InitializingBean}; nothing else is thrown here
    */
   @Override
   public void afterPropertiesSet ()

@@ -123,6 +123,8 @@ public class ClaxonRegistry {
   /**
    * Registers this registry as the per-application instrumentation source so that
    * static calls through {@link Instrument} resolve to this instance.
+   *
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public void initializeInstrumentation () {
 

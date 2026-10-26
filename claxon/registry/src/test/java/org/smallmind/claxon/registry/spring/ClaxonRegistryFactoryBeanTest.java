@@ -41,7 +41,7 @@ import org.smallmind.claxon.registry.Emitter;
 import org.smallmind.claxon.registry.PushEmitter;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

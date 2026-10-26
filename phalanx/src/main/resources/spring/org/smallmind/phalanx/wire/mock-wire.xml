@@ -3,20 +3,28 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
+  <!--
+    org.smallmind.spark.perApplicationScope is the PerApplicationScope the Tanuki wrapper
+    (SpringContextWrapperListener) registers as a singleton during the context refresh, so the transport
+    threads are bound to the same scope the refresh ran in. Outside Tanuki, register a singleton under that
+    name before refresh (see TESTBENCH.adoc), or replace each ref with <null/> for a context-only application.
+  -->
+  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter" destroy-method="close">
+    <constructor-arg index="0" name="perApplicationScope" ref="org.smallmind.spark.perApplicationScope"/>
+  </bean>
 
   <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
     <property name="verbose" value="true"/>
     <property name="verboseLogLevel" value="DEBUG"/>
   </bean>
 
-  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport">
+  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport" destroy-method="close">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
     <constructor-arg index="2" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
   </bean>
 
-  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport">
+  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport" destroy-method="close">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
   </bean>

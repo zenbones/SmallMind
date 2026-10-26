@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.signal;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.phalanx.wire.WireContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;

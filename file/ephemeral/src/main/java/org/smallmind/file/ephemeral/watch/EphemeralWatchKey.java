@@ -84,7 +84,6 @@ public class EphemeralWatchKey implements WatchKey {
    * @param kind the kind to narrow
    * @return the same kind, typed for an {@link EphemeralPath} context
    */
-  @SuppressWarnings("unchecked")
   private static WatchEvent.Kind<EphemeralPath> castKind (WatchEvent.Kind<?> kind) {
 
     return (WatchEvent.Kind<EphemeralPath>)kind;

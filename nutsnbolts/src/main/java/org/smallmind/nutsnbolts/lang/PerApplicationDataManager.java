@@ -32,9 +32,11 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+
 /**
  * Marker interface whose implementing class serves as the key for data stored in a
- * {@link PerApplicationContext}.
+ * {@link PerApplicationContext} or a {@link org.smallmind.nutsnbolts.scope.PerApplicationScope}.
  */
 public interface PerApplicationDataManager {
 

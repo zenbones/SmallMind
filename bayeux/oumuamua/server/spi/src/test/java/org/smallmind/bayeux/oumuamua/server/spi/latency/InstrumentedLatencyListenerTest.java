@@ -43,7 +43,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxMessage;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValueFactory;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

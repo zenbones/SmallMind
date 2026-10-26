@@ -33,7 +33,7 @@
 package org.smallmind.quorum.namespace.pool;
 
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.quorum.namespace.EmbeddedLdapSupport;
 import org.smallmind.quorum.namespace.PooledJavaContext;
 import org.smallmind.quorum.namespace.backingStore.StorageType;

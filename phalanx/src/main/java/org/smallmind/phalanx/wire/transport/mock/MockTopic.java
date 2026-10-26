@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire.transport.mock;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -42,6 +43,11 @@ import org.smallmind.scribe.pen.LoggerManager;
  * continuously drains the message queue and delivers each message to every registered
  * {@link MockMessageListener} whose {@link MockMessageListener#match} method returns {@code true}
  * for that message's properties.
+ *
+ * <p>The dispatch thread inherits no {@code ScopedValue} binding, only the {@code PerApplicationContext}
+ * of the thread that constructs the topic; a topic constructed with a
+ * {@link PerApplicationScope} runs the thread's whole body, and so every listener callback,
+ * inside that scope.
  */
 public class MockTopic {
 
@@ -53,11 +59,31 @@ public class MockTopic {
   /**
    * Constructs the topic and starts the background daemon thread that dispatches messages to
    * matching listeners.
+   *
+   * @param perApplicationScope the scope the dispatch thread runs inside, or {@code null} to run it with no scope,
+   *                            carrying only the {@code PerApplicationContext} inherited from the constructing thread
    */
-  public MockTopic () {
+  public MockTopic (PerApplicationScope perApplicationScope) {
 
-    Thread thread = new Thread(worker = new QueueWorker());
+    this(null, perApplicationScope);
+  }
 
+  /**
+   * Constructs the topic with a named dispatch thread; the name is appended to {@code phalanx-mock-topic-} so the
+   * thread can be told apart from the other mock dispatch threads in a thread dump.
+   *
+   * @param name                the role name for the dispatch thread, or {@code null} for the bare
+   *                            {@code phalanx-mock-topic} name
+   * @param perApplicationScope the scope the dispatch thread runs inside, or {@code null} to run it with no scope,
+   *                            carrying only the {@code PerApplicationContext} inherited from the constructing thread
+   */
+  public MockTopic (String name, PerApplicationScope perApplicationScope) {
+
+    worker = new QueueWorker();
+
+    Thread thread = new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker));
+
+    thread.setName((name == null) ? "phalanx-mock-topic" : "phalanx-mock-topic-" + name);
     thread.setDaemon(true);
     thread.start();
   }
@@ -98,6 +124,16 @@ public class MockTopic {
   }
 
   /**
+   * Stops the dispatch thread after its current iteration. Messages still queued are never dispatched, and the topic
+   * accepts no further work in any useful sense; this exists so a test or an application tearing down a
+   * {@link MockMessageRouter} does not leave the daemon thread spinning.
+   */
+  public void close () {
+
+    worker.close();
+  }
+
+  /**
    * Background daemon worker that drains the topic queue and delivers each message to every
    * matching {@link MockMessageListener}.
    */
@@ -135,7 +171,7 @@ public class MockTopic {
           try {
             Thread.sleep(100);
           } catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(MockQueue.class).error(interruptedException);
+            LoggerManager.getLogger(MockTopic.class).error(interruptedException);
           }
         }
       }

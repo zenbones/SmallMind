@@ -32,6 +32,7 @@
  */
 package org.smallmind.spark.tanukisoft.integration.spring;
 
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -39,8 +40,21 @@ import org.springframework.context.ConfigurableApplicationContext;
  * {@link AbstractWrapperListener} specialization that maps the wrapper's start/stop lifecycle onto a Spring
  * {@link ConfigurableApplicationContext}: startup loads and refreshes the context, shutdown closes it. Concrete
  * subclasses decide how the context is produced.
+ * <p>
+ * Loading, refreshing, and closing all run inside the listener's {@code PerApplicationScope} (see
+ * {@link AbstractWrapperListener#getPerApplicationScope()}), and that same instance is registered as the singleton
+ * bean named {@value #PER_APPLICATION_SCOPE_BEAN_NAME} during the refresh — by a {@code BeanFactoryPostProcessor}
+ * this listener adds when the context handed back by {@link #loadApplicationContext(String[])} is not yet active —
+ * so bean definitions can {@code ref} it (for example into a web server's {@code perApplicationScope} property). A
+ * bean-defined {@code BeanDefinitionRegistryPostProcessor} runs before that and cannot see it. A context that
+ * arrives already refreshed receives no such bean.
  */
 public abstract class SpringContextWrapperListener extends AbstractWrapperListener {
+
+  /**
+   * Name of the singleton under which the listener's {@code PerApplicationScope} is registered during each refresh.
+   */
+  public static final String PER_APPLICATION_SCOPE_BEAN_NAME = "org.smallmind.spark.perApplicationScope";
 
   private ConfigurableApplicationContext applicationContext;
 
@@ -48,32 +62,57 @@ public abstract class SpringContextWrapperListener extends AbstractWrapperListen
    * Factory hook implemented by subclasses to supply the Spring context that the listener should manage.
    *
    * @param args the wrapper-supplied arguments (after timeout stripping); normally interpreted as config locations
-   * @return a newly created context, typically unrefreshed
+   * @return a newly created context, which should be unrefreshed so that the scope singleton can be registered
    */
   public abstract ConfigurableApplicationContext loadApplicationContext (String[] args);
 
   /**
-   * Lazily creates the application context on first start and ensures it is refreshed so Spring beans are available.
+   * Runs entirely inside the listener's {@code PerApplicationScope}: lazily creates the application context on first
+   * start, adds (once per context instance) a post-processor that registers the scope as the
+   * {@value #PER_APPLICATION_SCOPE_BEAN_NAME} singleton on every refresh of that context, and refreshes it if it is
+   * not active, so Spring beans are available and every registration made while loading or refreshing lands in the
+   * scope (and in the inherited {@code PerApplicationContext}). A singleton already registered under that name by
+   * something else makes the refresh fail with Spring's {@code IllegalStateException} rather than being kept quietly.
+   * <p>
+   * Reached through {@link #start(String[])} the calling thread is already inside the scope; invoked directly, this
+   * method binds it itself, so both paths behave identically. A second {@code startup} after {@link #shutdown()} in
+   * the same JVM refreshes the same context again with the scope bean present, provided the context supports being
+   * refreshed more than once ({@code ClassPathXmlApplicationContext} does; {@code GenericApplicationContext} and its
+   * subclasses throw {@code IllegalStateException} on a second refresh). The context returned by
+   * {@link #loadApplicationContext(String[])} must be unrefreshed; one that arrives active is not refreshed on this
+   * call and never receives the scope bean, even if a later call refreshes it again.
    *
    * @param args arguments forwarded from the wrapper, passed through to {@link #loadApplicationContext(String[])}
    */
+  @Override
   public void startup (String[] args) {
 
-    if (applicationContext == null) {
-      applicationContext = loadApplicationContext(args);
-    }
-    if (!applicationContext.isActive()) {
-      applicationContext.refresh();
-    }
+    PerApplicationScope perApplicationScope = getPerApplicationScope();
+
+    perApplicationScope.run(() -> {
+      if (applicationContext == null) {
+        if (!(applicationContext = loadApplicationContext(args)).isActive()) {
+          applicationContext.addBeanFactoryPostProcessor((beanFactory) -> beanFactory.registerSingleton(PER_APPLICATION_SCOPE_BEAN_NAME, perApplicationScope));
+        }
+      }
+      if (!applicationContext.isActive()) {
+        applicationContext.refresh();
+      }
+    });
   }
 
   /**
-   * Closes the managed application context if one has been created and is still active.
+   * Closes the managed application context if one has been created and is still active, inside the listener's
+   * {@code PerApplicationScope} so that bean destruction callbacks resolve the same registrations the refresh made
+   * whether this method is reached through {@link #stop(int)} or called directly.
    */
+  @Override
   public void shutdown () {
 
-    if ((applicationContext != null) && applicationContext.isActive()) {
-      applicationContext.close();
-    }
+    getPerApplicationScope().run(() -> {
+      if ((applicationContext != null) && applicationContext.isActive()) {
+        applicationContext.close();
+      }
+    });
   }
 }

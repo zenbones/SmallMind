@@ -34,8 +34,6 @@ package org.smallmind.claxon.registry;
 
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
  * Static façade that allows application code to obtain {@link Instrumentation} instances
@@ -48,11 +46,14 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
  * metric updates, ensuring that instrumented code paths never throw a
  * {@link NullPointerException} due to a missing registry.
  *
- * <p>The registry is stored in a {@link PerApplicationContext} so that multi-application
- * environments (e.g., OSGi, application servers) can maintain independent registries per
- * application classloader.
+ * <p>The registry is stored through {@link ClaxonRegistryManager}, which keys it by the
+ * {@code PerApplicationScope} or {@code PerApplicationContext} bound on the calling thread (scope first,
+ * then context), so that multi-application environments can maintain an independent registry per
+ * binding. Lookups never throw: {@link #with} returns the {@link UnpluggedInstrumentation} both when
+ * nothing has been installed and when the calling thread carries neither binding, whereas
+ * {@link #register} fails with {@code MissingPerApplicationContextException} on a thread with no binding.
  */
-public class Instrument implements PerApplicationDataManager {
+public class Instrument {
 
   /**
    * Shared no-op instrumentation returned when no registry has been installed.
@@ -64,21 +65,23 @@ public class Instrument implements PerApplicationDataManager {
    * subsequent calls to {@link #with} can resolve meters through it.
    *
    * @param registry the registry to install for the current application context
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (ClaxonRegistry registry) {
 
-    PerApplicationContext.setPerApplicationData(Instrument.class, registry);
+    ClaxonRegistryManager.register(registry);
   }
 
   /**
    * Returns the {@link ClaxonRegistry} currently installed for the active application
    * context, or {@code null} if none has been installed.
    *
-   * @return the installed {@link ClaxonRegistry}, or {@code null}
+   * @return the installed {@link ClaxonRegistry}, or {@code null} if none has been installed or if no per-application
+   * scope or context is bound on the calling thread
    */
   public static ClaxonRegistry getRegistry () {
 
-    return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
+    return ClaxonRegistryManager.getRegistry();
   }
 
   /**

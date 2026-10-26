@@ -45,6 +45,26 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ClassLoaderAwareCacheTest {
 
+  private static WeakReference<ClassLoader> cacheClassFromDiscardedLoader (ClassLoaderAwareCache<Class<?>, Method> cache)
+    throws Exception {
+
+    Path classDirectory = Files.createTempDirectory("class-loader-aware-cache");
+    Path packageDirectory = Files.createDirectories(classDirectory.resolve("discarded"));
+    Path transientSource = Files.writeString(packageDirectory.resolve("Transient.java"), "package discarded; public class Transient { public String name () { return \"transient\"; } }");
+
+    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), transientSource.toString()), 0);
+
+    try (URLClassLoader classLoader = new URLClassLoader(new URL[] {classDirectory.toUri().toURL()}, ClassLoaderAwareCacheTest.class.getClassLoader())) {
+
+      Class<?> transientClass = classLoader.loadClass("discarded.Transient");
+
+      cache.put(transientClass, transientClass.getMethod("name"));
+      Assert.assertNotNull(cache.get(transientClass));
+
+      return new WeakReference<>(classLoader);
+    }
+  }
+
   public void testGetOnEmptyCacheReturnsNull () {
 
     ClassLoaderAwareCache<Class<?>, String> cache = new ClassLoaderAwareCache<>(clazz -> clazz);
@@ -97,26 +117,6 @@ public class ClassLoaderAwareCacheTest {
 
     Assert.assertNull(loaderReference.get(), "The cache kept a discarded class loader reachable");
     Assert.assertNull(cache.get(String.class));
-  }
-
-  private static WeakReference<ClassLoader> cacheClassFromDiscardedLoader (ClassLoaderAwareCache<Class<?>, Method> cache)
-    throws Exception {
-
-    Path classDirectory = Files.createTempDirectory("class-loader-aware-cache");
-    Path packageDirectory = Files.createDirectories(classDirectory.resolve("discarded"));
-    Path transientSource = Files.writeString(packageDirectory.resolve("Transient.java"), "package discarded; public class Transient { public String name () { return \"transient\"; } }");
-
-    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), transientSource.toString()), 0);
-
-    try (URLClassLoader classLoader = new URLClassLoader(new URL[] {classDirectory.toUri().toURL()}, ClassLoaderAwareCacheTest.class.getClassLoader())) {
-
-      Class<?> transientClass = classLoader.loadClass("discarded.Transient");
-
-      cache.put(transientClass, transientClass.getMethod("name"));
-      Assert.assertNotNull(cache.get(transientClass));
-
-      return new WeakReference<>(classLoader);
-    }
   }
 
   public static class Fixture {

@@ -35,9 +35,11 @@ package org.smallmind.phalanx.wire;
 import java.lang.reflect.Method;
 import java.util.Map;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.scope.ScopeFactory;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -238,12 +240,25 @@ public class WireInvocationHandlerTest {
     Assert.assertTrue(transport.contexts[0] instanceof TestWireContext);
   }
 
+  @Test
+  public void testActiveWireScopesArePassedToTransport ()
+    throws Throwable {
+
+    CapturingRequestTransport transport = new CapturingRequestTransport();
+
+    ScopeFactory.<Object, Throwable>callInScope(new TestWireScope("flibble"), () -> handler(new StaticParameterExtractor<>("group"), null, null, transport).invoke(null, method("talk"), new Object[] {"x"}));
+
+    Assert.assertEquals(transport.scopes.length, 1);
+    Assert.assertTrue(transport.scopes[0] instanceof TestWireScope);
+  }
+
   private static class CapturingRequestTransport implements RequestTransport {
 
     private Voice<?, ?> voice;
     private Route route;
     private Map<String, Object> arguments;
     private WireContext[] contexts;
+    private WireScope[] scopes;
 
     @Override
     public String getCallerId () {
@@ -252,12 +267,13 @@ public class WireInvocationHandlerTest {
     }
 
     @Override
-    public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts) {
+    public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes) {
 
       this.voice = voice;
       this.route = route;
       this.arguments = arguments;
       this.contexts = contexts;
+      this.scopes = scopes;
 
       return "RESULT";
     }

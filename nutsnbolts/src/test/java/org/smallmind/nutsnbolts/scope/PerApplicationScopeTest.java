@@ -33,6 +33,9 @@
 package org.smallmind.nutsnbolts.scope;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,25 +45,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit")
 public class PerApplicationScopeTest {
-
-  private static void joinChild (Runnable runnable) {
-
-    Thread child = new Thread(runnable);
-
-    child.setName("per-application-scope-test-child");
-    child.setDaemon(true);
-    joinThread(child);
-  }
-
-  private static void joinThread (Thread thread) {
-
-    thread.start();
-    try {
-      thread.join();
-    } catch (InterruptedException interruptedException) {
-      throw new IllegalStateException(interruptedException);
-    }
-  }
 
   public void testDataIsVisibleInsideRun () {
 
@@ -238,6 +222,200 @@ public class PerApplicationScopeTest {
   public void testWrapThreadFactoryWithoutScopeThrows () {
 
     PerApplicationScope.wrapThreadFactory(Thread::new);
+  }
+
+  public void testWrappedExecutorCarriesScopeBoundAtSubmission () {
+
+    LinkedList<Runnable> deferred = new LinkedList<>();
+    LinkedList<String> seen = new LinkedList<>();
+    Executor executor = PerApplicationScope.wrapExecutor(deferred::add);
+    PerApplicationScope first = new PerApplicationScope();
+    PerApplicationScope second = new PerApplicationScope();
+
+    first.run(() -> {
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "first");
+      executor.execute(() -> seen.add(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+    });
+    second.run(() -> {
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "second");
+      executor.execute(() -> seen.add(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+    });
+
+    for (Runnable runnable : deferred) {
+      joinChild(runnable);
+    }
+
+    Assert.assertEquals(seen, List.of("first", "second"));
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationScopeException.class)
+  public void testWrappedExecutorThrowsAtSubmissionWithoutScope () {
+
+    Executor executor = PerApplicationScope.wrapExecutor(Runnable::run);
+
+    executor.execute(() -> {
+    });
+  }
+
+  public void testBoundThreadFactoryBindsThisScopeWithoutAnyCurrentBinding () {
+
+    AtomicReference<String> seen = new AtomicReference<>();
+    PerApplicationScope scope = new PerApplicationScope();
+    ThreadFactory threadFactory = scope.boundThreadFactory(PerApplicationScopeTest::namedThread);
+
+    scope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "owned"));
+
+    joinThread(threadFactory.newThread(() -> seen.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class))));
+
+    Assert.assertEquals(seen.get(), "owned");
+  }
+
+  public void testBoundThreadFactoryIgnoresTheCallingThreadsBinding () {
+
+    AtomicReference<String> seen = new AtomicReference<>();
+    PerApplicationScope owned = new PerApplicationScope();
+    PerApplicationScope other = new PerApplicationScope();
+    ThreadFactory threadFactory = owned.boundThreadFactory(PerApplicationScopeTest::namedThread);
+
+    owned.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "owned"));
+    other.run(() -> {
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "other");
+      joinThread(threadFactory.newThread(() -> seen.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class))));
+    });
+
+    Assert.assertEquals(seen.get(), "owned");
+  }
+
+  public void testBoundExecutorBindsThisScopeAroundEachTask () {
+
+    LinkedList<Runnable> deferred = new LinkedList<>();
+    AtomicReference<String> seen = new AtomicReference<>();
+    PerApplicationScope scope = new PerApplicationScope();
+    Executor executor = scope.boundExecutor(deferred::add);
+
+    scope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "owned"));
+    executor.execute(() -> seen.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+
+    Assert.assertNull(seen.get());
+    joinChild(deferred.getFirst());
+    Assert.assertEquals(seen.get(), "owned");
+  }
+
+  public void testIsBoundOnCurrentThreadIsFalseWhenNothingIsBound () {
+
+    Assert.assertFalse(PerApplicationScope.isBound());
+    Assert.assertFalse(new PerApplicationScope().isBoundOnCurrentThread());
+  }
+
+  public void testIsBoundOnCurrentThreadIsTrueInsideRunAndCall () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> Assert.assertTrue(scope.isBoundOnCurrentThread()));
+    Assert.assertEquals(scope.call(scope::isBoundOnCurrentThread), Boolean.TRUE);
+  }
+
+  public void testIsBoundOnCurrentThreadIsFalseInsideAnotherScopesRun () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    PerApplicationScope other = new PerApplicationScope();
+
+    other.run(() -> {
+      Assert.assertTrue(PerApplicationScope.isBound(), "some scope is bound, just not this one");
+      Assert.assertFalse(scope.isBoundOnCurrentThread());
+      Assert.assertTrue(other.isBoundOnCurrentThread());
+    });
+  }
+
+  public void testIsBoundOnCurrentThreadIsTrueInsideACarrierTakenFromTheScope () {
+
+    AtomicBoolean seen = new AtomicBoolean(false);
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> {
+
+      PerApplicationScope.ApplicationCarrier carrier = PerApplicationScope.generateCarrier();
+
+      joinChild(() -> carrier.run(() -> seen.set(scope.isBoundOnCurrentThread())));
+    });
+
+    Assert.assertTrue(seen.get());
+  }
+
+  public void testIsBoundOnCurrentThreadIsTrueOnWrappedThreadFactoryThreads () {
+
+    AtomicBoolean seen = new AtomicBoolean(false);
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> joinThread(PerApplicationScope.wrapThreadFactory(PerApplicationScopeTest::namedThread).newThread(() -> seen.set(scope.isBoundOnCurrentThread()))));
+
+    Assert.assertTrue(seen.get());
+  }
+
+  public void testIsBoundOnCurrentThreadIsTrueOnBoundThreadFactoryThreads () {
+
+    AtomicBoolean seen = new AtomicBoolean(false);
+    PerApplicationScope scope = new PerApplicationScope();
+
+    joinThread(scope.boundThreadFactory(PerApplicationScopeTest::namedThread).newThread(() -> seen.set(scope.isBoundOnCurrentThread())));
+
+    Assert.assertTrue(seen.get());
+  }
+
+  public void testIsBoundOnCurrentThreadIsFalseAgainAfterRunReturns () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> Assert.assertTrue(scope.isBoundOnCurrentThread()));
+
+    Assert.assertFalse(scope.isBoundOnCurrentThread());
+    Assert.assertFalse(PerApplicationScope.isBound());
+  }
+
+  public void testSetPerApplicationDataIfAbsentKeepsTheFirstValue () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> {
+      Assert.assertEquals(PerApplicationScope.setPerApplicationDataIfAbsent(SampleManager.class, "first"), "first");
+      Assert.assertEquals(PerApplicationScope.setPerApplicationDataIfAbsent(SampleManager.class, "second"), "first");
+      Assert.assertEquals(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class), "first");
+    });
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationScopeException.class)
+  public void testSetPerApplicationDataIfAbsentRequiresABoundScope () {
+
+    PerApplicationScope.setPerApplicationDataIfAbsent(SampleManager.class, "unbound");
+  }
+
+  private static void joinChild (Runnable runnable) {
+
+    Thread child = new Thread(runnable);
+
+    child.setName("per-application-scope-test-child");
+    child.setDaemon(true);
+    joinThread(child);
+  }
+
+  private static void joinThread (Thread thread) {
+
+    thread.start();
+    try {
+      thread.join();
+    } catch (InterruptedException interruptedException) {
+      throw new IllegalStateException(interruptedException);
+    }
+  }
+
+  private static Thread namedThread (Runnable runnable) {
+
+    Thread thread = new Thread(runnable);
+
+    thread.setName("per-application-scope-test-factory");
+    thread.setDaemon(true);
+
+    return thread;
   }
 
   public static class SampleManager implements PerApplicationDataManager {

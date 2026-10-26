@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2007 through 2026 David Berkman
+ *
+ * This file is part of the SmallMind Code Project.
+ *
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ *
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ...or...
+ *
+ * 2) The terms of the Apache License, Version 2.0.
+ *
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ *
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
+package org.smallmind.web.jersey.spring;
+
+import jakarta.servlet.ServletContextEvent;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.spring.web.PerApplicationScopeContextLoaderListener;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
+/**
+ * Servlet context listener that initializes the Spring web application context inside a {@link PerApplicationScope}
+ * (see {@link PerApplicationScopeContextLoaderListener} for the scope publication and binding rules) and registers
+ * the resulting context with {@link ExposedApplicationContext}. This is the scope flavor of
+ * {@link ExposedWebContextLoaderListener}.
+ */
+public class ExposedPerApplicationScopeContextLoaderListener extends PerApplicationScopeContextLoaderListener {
+
+  /**
+   * Constructs a listener that reuses the scope already published in the servlet context, or creates a new one if
+   * none is published.
+   */
+  public ExposedPerApplicationScopeContextLoaderListener () {
+
+  }
+
+  /**
+   * Constructs a listener that publishes and binds the given scope.
+   *
+   * @param perApplicationScope the scope the web application context will be initialized within
+   */
+  public ExposedPerApplicationScopeContextLoaderListener (PerApplicationScope perApplicationScope) {
+
+    super(perApplicationScope);
+  }
+
+  /**
+   * Delegates to the parent initialization and then exposes the resulting web application context via
+   * {@link ExposedApplicationContext}.
+   *
+   * @param servletContextEvent the servlet context lifecycle event
+   */
+  @Override
+  public void contextInitialized (ServletContextEvent servletContextEvent) {
+
+    super.contextInitialized(servletContextEvent);
+
+    ExposedApplicationContext.register(WebApplicationContextUtils.getWebApplicationContext(servletContextEvent.getServletContext()));
+  }
+}

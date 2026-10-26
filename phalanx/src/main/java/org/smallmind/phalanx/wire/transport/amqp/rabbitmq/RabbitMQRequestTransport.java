@@ -42,6 +42,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.TransportException;
@@ -49,9 +50,22 @@ import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
+import org.smallmind.phalanx.worker.BindingAdvisory;
 
+/**
+ * RabbitMQ-backed request transport that publishes invocation signals through a pool of
+ * {@link RequestMessageRouter}s sharing one connection and completes pending calls from the correlated
+ * results delivered to this caller's exclusive response queue.
+ *
+ * <p>A {@code WireContext} element of an invocation can only be decoded on a responding worker that carries a
+ * {@code PerApplicationContext}, and a {@code WireScope} element only on one running inside the configured
+ * scope; a worker lacking the needed binding fails the decode after the message was acknowledged, so the
+ * invocation is dropped and logged rather than redelivered: an {@link org.smallmind.phalanx.wire.InOut} caller
+ * times out and an {@link org.smallmind.phalanx.wire.InOnly} message is lost.
+ */
 public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -73,13 +87,23 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
    * @param messageTTLSeconds            per-message TTL applied at publish time.
    * @param autoAcknowledge              {@code true} to ack response deliveries automatically.
    * @param publisherConfirmationHandler receives AMQP publisher confirms; {@code null} disables confirms.
+   * @param perApplicationScope          scope bound around every response delivery callback, which runs on the
+   *                                     RabbitMQ client's own consumer thread; {@code null} runs the callbacks
+   *                                     with no scope, carrying only the {@code PerApplicationContext} the
+   *                                     client's thread inherited from the connection thread chain (after a
+   *                                     reconnect, from {@link RabbitMQConnectionManager}'s retry thread); the
+   *                                     constructor logs a WARN through {@code BindingAdvisory} when this is
+   *                                     {@code null} but the constructing thread is bound to a scope and carries no
+   *                                     context
    * @throws IOException      if the transport cannot be started.
    * @throws TimeoutException if startup times out.
    */
-  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler)
+  public RabbitMQRequestTransport (RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, long defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge, PublisherConfirmationHandler publisherConfirmationHandler, PerApplicationScope perApplicationScope)
     throws IOException, TimeoutException {
 
     super(defaultTimeoutSeconds);
+
+    BindingAdvisory.warnIfUnbound(RabbitMQRequestTransport.class, "RabbitMQ request transport", perApplicationScope);
 
     RequestMessageRouter[] requestMessageRouters;
     int routerIndex = 0;
@@ -92,7 +116,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(connectionManager, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler);
+      requestMessageRouters[index] = new RequestMessageRouter(connectionManager, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge, publisherConfirmationHandler, perApplicationScope);
     }
 
     connectionManager.start();
@@ -126,12 +150,13 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
    * @param route     target service, version and function.
    * @param arguments named argument map to encode.
    * @param contexts  optional wire contexts propagated with the call.
+   * @param scopes    optional wire scopes propagated with the call.
    * @return the decoded return value for in/out calls, or null for in-only calls.
    * @throws Throwable if publishing fails, the transport is closed, the result signals an error, or the
    *                   response timeout elapses.
    */
   @Override
-  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes)
     throws Throwable {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -141,7 +166,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport {
       String messageId;
       boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, route, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, route, arguments, contexts, scopes);
 
       return Instrument.with(RabbitMQRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
         () -> acquireResult(signalCodec, route, voice, messageId, inOnly)

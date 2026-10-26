@@ -33,82 +33,121 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
-import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.Durable;
 
 /**
- * Application-wide registry for {@link ORMDao} instances keyed by their durable classes.
- * Provides lookup by class or class name to help wire DAOs in environments that cannot
- * rely on injection alone.
+ * Registry of {@link ORMDao} instances that bridges {@link OrmDaoScopeManager} and {@link OrmDaoContextManager}.
+ * <p>
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class OrmDaoManager implements PerApplicationDataManager {
+public class OrmDaoManager {
 
   /**
-   * Registers an ORM DAO for a durable class in the current application context.
+   * Registers an {@link ORMDao} for the given durable class in every per-application registry bound on the current
+   * thread.
    *
-   * @param durableClass the durable class the DAO manages
-   * @param ormDao       the DAO instance to register
+   * @param durableClass the durable type the DAO manages
+   * @param ormDao       the DAO to register
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (Class<? extends Durable> durableClass, ORMDao ormDao) {
 
-    ConcurrentHashMap<Class<? extends Durable>, ORMDao> ormDaoMap;
-
-    if ((ormDaoMap = PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(OrmDaoManager.class, ormDaoMap = new ConcurrentHashMap<>());
+    if (PerApplicationScope.isBound()) {
+      OrmDaoScopeManager.register(durableClass, ormDao);
+      if (PerApplicationContext.isBound()) {
+        OrmDaoContextManager.register(durableClass, ormDao);
+      }
+    } else {
+      OrmDaoContextManager.register(durableClass, ormDao);
     }
-    ormDaoMap.put(durableClass, ormDao);
   }
 
   /**
-   * Resolves a durable class by its simple or fully qualified name among registered DAOs.
+   * Finds a registered durable class by simple or fully qualified name, scope flavor first, then context flavor.
    *
-   * @param name simple or fully qualified class name
-   * @return the matching durable class, or {@code null} if none match
+   * @param name the simple name (no {@code '.'}) or fully qualified name of the durable class
+   * @return the matching registered class, or {@code null} if none matches in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static Class<? extends Durable> findDurableClass (String name) {
 
-    boolean isSimple = name.indexOf('.') < 0;
+    if (PerApplicationScope.isBound()) {
 
-    for (Object durableClass : PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).keySet()) {
-      if ((isSimple) ? ((Class)durableClass).getSimpleName().equals(name) : ((Class)durableClass).getName().equals(name)) {
+      Class<? extends Durable> durableClass;
 
-        return (Class)durableClass;
+      if ((durableClass = OrmDaoScopeManager.findDurableClass(name)) != null) {
+
+        return durableClass;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
       }
     }
 
-    return null;
+    return OrmDaoContextManager.findDurableClass(name);
   }
 
   /**
-   * Retrieves a registered DAO by the name of its durable class.
+   * Resolves the {@link ORMDao} registered for the durable class with the given name, scope flavor first, then
+   * context flavor.
    *
-   * @param name simple or fully qualified class name
-   * @return the DAO instance, or {@code null} if none is registered
+   * @param name the simple or fully qualified name of the durable class
+   * @return the registered DAO, or {@code null} if no durable class matches in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static ORMDao get (String name) {
 
-    Class<? extends Durable> durableClass;
+    if (PerApplicationScope.isBound()) {
 
-    if ((durableClass = findDurableClass(name)) != null) {
+      ORMDao ormDao;
 
-      return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).get(durableClass);
+      if ((ormDao = OrmDaoScopeManager.get(name)) != null) {
+
+        return ormDao;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
     }
 
-    return null;
+    return OrmDaoContextManager.get(name);
   }
 
   /**
-   * Retrieves a registered DAO by durable class.
+   * Resolves the {@link ORMDao} registered for the given durable class, scope flavor first, then context flavor.
    *
-   * @param durableClass the class managed by the DAO
-   * @param <I>          identifier type
-   * @param <D>          durable type
-   * @return the DAO instance, or {@code null} if none is registered
+   * @param durableClass the durable type
+   * @param <I>          the durable identifier type
+   * @param <D>          the durable type
+   * @return the registered DAO, or {@code null} if none is registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?, ?> get (Class<D> durableClass) {
 
-    return (ORMDao)PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).get(durableClass);
+    if (PerApplicationScope.isBound()) {
+
+      ORMDao<I, D, ?, ?> ormDao;
+
+      if ((ormDao = OrmDaoScopeManager.get(durableClass)) != null) {
+
+        return ormDao;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return OrmDaoContextManager.get(durableClass);
   }
 }
